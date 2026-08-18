@@ -1,0 +1,398 @@
+# Settings: every section is walked in page order, every control that can be
+# addressed is taken to a non-default value and back, and two of them are
+# checked for surviving a relaunch.
+#
+# The page order changed in card #678 and this flow changed with it. It is now
+# SERVERS, APPEARANCE, TERMINAL, ALERTS, SECURITY, ABOUT -- the machines first
+# because that is what a returning reader opens Settings for, appearance second
+# because it holds the language list and someone who cannot read the headings
+# has to be able to reach it. The flow still only ever scrolls *down*: scrolling
+# back up is unreliable, so anything needing a second look is checked on the
+# second pass after the relaunch.
+#
+# The section headings are asserted in upper case because that is what is on the
+# screen. They are written in the catalog in sentence case and rendered through
+# the design system's 11pt instrument label, which carries `textTransform:
+# uppercase` -- the same mechanism that makes the segmented controls read
+# `SYSTEM` and `COMPACT` below. Nothing calls `toUpperCase()` on a translated
+# string any more.
+#
+# The switch rows are driven here now. Each one carries `testID`
+# `toggle-<label>` on the `Toggle` itself, so they no longer need Maestro's
+# relative selectors -- which are not spatially constrained, and which on this
+# screen used to resolve to a layout container or to a switch several rows away.
+#
+# Card #683 moved two of the page's controls into form sheets: the theme pack
+# and the language, both decided once per install. Each is now a row naming the
+# current answer, so each is walked as a loop -- read the row, open the sheet,
+# choose, and read the row again -- instead of asserted in place. Colour mode
+# stayed on the page and is still driven inline: it is a frequent toggle.
+appId: dev.osuki.muqun
+name: settings
+tags:
+  - full
+---
+- runFlow: ../subflows/launch-home.yaml
+
+
+# Settings is a control in the home header now, not a drawer row (card #664).
+# The drawer is switched off entirely, so there is no hamburger and no edge
+# gesture -- which also retires the Android problem card #564 worked around:
+# a swipe from the left edge is the system Back gesture and backgrounded the app.
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "SERVERS"
+    timeout: 8000
+- runFlow: ../subflows/dismiss-logbox.yaml
+
+# ── Servers, first on the page ────────────────────────────────────────────
+# The suite starts from a fresh install, so what is on screen is the empty
+# state: the assertion is that the section says what to do about being empty
+# rather than showing a bare heading over nothing. The home-screen preference
+# that used to be a one-row `HOME SCREEN` section of its own now sits in this
+# card, under the list it describes.
+- assertVisible: "No servers paired yet"
+- assertVisible: "Use the scan button on the home screen to add one."
+- assertVisible: "Panes on server cards"
+
+# ── Appearance: the theme pack, in its own sheet ──────────────────────────
+# Card #683 moved the preview cards off the page. What is on the page is a
+# row that names the pack in force -- "Theme, Osuki" -- and opens a form sheet
+# where the packs live, and the flow now proves the whole loop: the row states
+# the answer, the sheet offers the alternatives, a tap applies and dismisses,
+# and the row states the new answer.
+#
+# The row is addressed by its full accessibility label rather than by the word
+# "Theme". A pressable row is one accessibility element, so its label is the
+# whole string; that is the same reason the quick-actions row further down is
+# tapped by its "label, detail" text. Here the string is composed deliberately
+# (`Theme, {0}` in the catalog) so the value is at the end of it instead of
+# buried behind the explanatory line.
+#
+# The tiles keep the radio semantics the cards had, so the choice is still
+# asserted on the control itself -- no test id needed, and a screen reader gets
+# the same information the test does.
+#
+# This leaves the app on Catppuccin on purpose: the relaunch further down is
+# where it gets checked for surviving a restart, and the flow puts it back to
+# Osuki there. Nothing after this point reads a colour, and every other flow in
+# the suite launches with `clearState`, so the detour stays inside this file.
+- scrollUntilVisible:
+    element:
+      text: "APPEARANCE"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Theme, Osuki"
+    direction: DOWN
+- tapOn: "Theme, Osuki"
+# The sheet is full height. The first alternatives stay above the fold; the
+# complete thirty-two-pack registry is checked by the theme registry unit test.
+- extendedWaitUntil:
+    visible: "Ayu"
+    timeout: 8000
+- assertVisible: "Catppuccin"
+- assertVisible: "Dracula"
+- assertVisible:
+    text: "Osuki"
+    selected: true
+- tapOn: "Catppuccin"
+- waitForAnimationToEnd:
+    timeout: 1500
+# Applied immediately and the sheet leaves on the choice, so the proof it landed
+# is the row on the page behind it naming the new pack.
+- extendedWaitUntil:
+    visible: "Theme, Catppuccin"
+    timeout: 8000
+
+# ── Appearance: colour mode round trip ────────────────────────────────────
+# The selected segment is a pill that slides between the three triggers now
+# rather than a fill that cuts from one to the next, so the round trip waits for
+# the animation before reading the state back.
+- scrollUntilVisible:
+    element:
+      text: "Color mode"
+    direction: DOWN
+- assertVisible:
+    text: "SYSTEM"
+    selected: true
+- tapOn: "DARK"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    text: "DARK"
+    selected: true
+- assertVisible:
+    text: "SYSTEM"
+    selected: false
+- tapOn: "SYSTEM"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    text: "SYSTEM"
+    selected: true
+- assertVisible:
+    text: "DARK"
+    selected: false
+
+# ── Appearance: the language sheet, round tripped ─────────────────────────
+# The nine-option list moved into a sheet of its own too, behind a row that
+# names the saved mode. A previous interrupted settings run can leave the
+# dedicated emulator pinned to English, so the first selector accepts either
+# valid starting state and the flow normalizes it to English before proving the
+# round trip back to System.
+#
+# The round trip is deliberately to English and back rather than to Chinese.
+# Picking 繁體中文 would re-render every heading below in Traditional Chinese
+# and the rest of this file would be asserting against the wrong strings; the
+# device runs in English, so pinning English exercises the same write, the same
+# persistence and the same row update while leaving the screen readable. That
+# the picker really offers the other eight is asserted on the list itself.
+- scrollUntilVisible:
+    element:
+      text: "Language, (System|English)"
+    direction: DOWN
+- tapOn: "Language, (System|English)"
+- extendedWaitUntil:
+    visible: "繁體中文"
+    timeout: 8000
+- assertVisible: "日本語"
+- assertVisible: "한국어"
+- tapOn:
+    id: "language-option-en"
+- waitForAnimationToEnd:
+    timeout: 1500
+- extendedWaitUntil:
+    visible: "Language, English"
+    timeout: 8000
+
+# And back, through the same sheet, which now opens on the pinned language.
+- tapOn: "Language, English"
+- extendedWaitUntil:
+    visible: "繁體中文"
+    timeout: 8000
+- assertVisible:
+    text: "English"
+    selected: true
+- assertVisible:
+    text: "System"
+    selected: false
+- tapOn:
+    id: "language-option-system"
+- waitForAnimationToEnd:
+    timeout: 1500
+- extendedWaitUntil:
+    visible:
+      id: "settings-language-row"
+    timeout: 8000
+
+# System can immediately switch the whole app away from English. Reopen and
+# prove the stored mode through locale-neutral ids, then pin English again so
+# the remaining cross-platform settings assertions keep one language.
+- tapOn:
+    id: "settings-language-row"
+- extendedWaitUntil:
+    visible:
+      id: "language-option-system-selected"
+    timeout: 8000
+- assertVisible:
+    id: "language-option-system-selected"
+- tapOn:
+    id: "language-option-en"
+- extendedWaitUntil:
+    visible:
+      id: "settings-language-row"
+    timeout: 8000
+
+# ── Terminal ──────────────────────────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "TERMINAL"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Terminal key row"
+    direction: DOWN
+
+# The agent view default is behind `AGENT_DEFAULT_VIEW_SETTING_ENABLED` (#659):
+# the terminal is the default and the view is switched for the pane in front of
+# you, from the pane header or from the row quick actions, so Settings no longer
+# asks the question globally. The setting and its migration are untouched, so an
+# assertion block belongs here again the day the flag is flipped back.
+
+# iOS keeps SecureStore in the keychain, which `clearState` does not wipe, so a
+# size another flow chose survives into this one and the round trip starts from
+# the wrong end. Android never showed it: there SecureStore lives in the app
+# data dir. Put it back first -- a no-op when it is already DEFAULT.
+- tapOn:
+    text: "DEFAULT"
+- waitForAnimationToEnd:
+    timeout: 1200
+
+# ── Terminal: text size round trip ────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "COMPACT"
+    direction: DOWN
+- assertVisible:
+    text: "DEFAULT"
+    selected: true
+- tapOn: "COMPACT"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    text: "COMPACT"
+    selected: true
+- assertVisible:
+    text: "DEFAULT"
+    selected: false
+
+# ── Alerts, and one switch driven end to end ──────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "ALERTS"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Haptic feedback"
+    direction: DOWN
+- assertVisible: "Gateway notifications"
+- assertVisible:
+    id: "toggle-Haptic feedback"
+    checked: true
+- tapOn:
+    id: "toggle-Haptic feedback"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    id: "toggle-Haptic feedback"
+    checked: false
+- tapOn:
+    id: "toggle-Haptic feedback"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    id: "toggle-Haptic feedback"
+    checked: true
+
+# One row is deliberately absent from this file. "Live Activity" is an iOS Lock
+# Screen feature; on Android the row is not rendered at all, and the Android
+# "Home screen widget" row is not rendered on iOS -- so neither can be asserted
+# from a flow that runs on both.
+
+# ── Security ──────────────────────────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "SECURITY"
+    direction: DOWN
+# The label names whatever the device offers (Face ID, biometrics, a passcode),
+# so only the stable half of it is matched.
+- scrollUntilVisible:
+    element:
+      text: "(?i)unlock with .*"
+    direction: DOWN
+
+# ── About: the support rows and the two feedback rows are one section now ─
+# Matched as regexes because a pressable row is one accessibility element: iOS
+# merges the label and its detail line into a single string, which is the same
+# reason the quick-actions row further down is tapped by its full
+# "label, detail" text. The regex keeps the assertion on the part that is the
+# row's name.
+- scrollUntilVisible:
+    element:
+      text: "ABOUT"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Report a bug or request a feature.*"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Contact us.*"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Privacy policy"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Muqun settings stay on this device."
+    direction: DOWN
+
+# ── The settings survive a relaunch ───────────────────────────────────────
+# Settings are written to SecureStore on change and read back on hydrate, so a
+# relaunch without clearing state has to come back to Catppuccin and to
+# "Compact". This is the only place in the suite that relaunches without
+# `clearState`, and it is the point of the step.
+- launchApp
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "SERVERS"
+    timeout: 8000
+
+# The theme survives, and then goes back to Osuki so the app is left as the rest
+# of the suite expects to find it. The row is the first proof -- it is rendered
+# from the hydrated store before anything is tapped -- and the sheet is the
+# second, since the tile that carries the radio state is only built when the
+# sheet opens.
+- scrollUntilVisible:
+    element:
+      text: "Theme, Catppuccin"
+    direction: DOWN
+- tapOn: "Theme, Catppuccin"
+- extendedWaitUntil:
+    visible: "Ayu"
+    timeout: 8000
+- assertVisible:
+    text: "Catppuccin"
+    selected: true
+- tapOn: "Osuki"
+- waitForAnimationToEnd:
+    timeout: 1500
+- extendedWaitUntil:
+    visible: "Theme, Osuki"
+    timeout: 8000
+
+- scrollUntilVisible:
+    element:
+      text: "COMPACT"
+    direction: DOWN
+- assertVisible:
+    text: "COMPACT"
+    selected: true
+
+# ── And back to the default ───────────────────────────────────────────────
+- tapOn: "DEFAULT"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    text: "DEFAULT"
+    selected: true
+
+# ── Quick actions management, reached from Settings ───────────────────────
+# Scrolled to, not assumed: where the COMPACT scroll above stops varies by a
+# few pixels between runs, and this row sits right at that boundary.
+- scrollUntilVisible:
+    element:
+      text: "Quick actions, Add commands and custom key combinations."
+    direction: DOWN
+- tapOn: "Quick actions, Add commands and custom key combinations."
+- extendedWaitUntil:
+    visible: "Quick action settings"
+    timeout: 8000
+- assertVisible: "Close quick actions"
+- tapOn: "Close quick actions"
+# The list keeps its mid-page scroll position on return, so wait on the header
+# rather than a row that may be above the fold.
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 8000
+
+# ── Back out to home ──────────────────────────────────────────────────────
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 8000

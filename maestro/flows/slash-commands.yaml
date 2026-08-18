@@ -1,0 +1,189 @@
+# The slash-command picker: the pane's own command surface, raised by typing "/"
+# as the first character of the composer.
+#
+# What this flow can and cannot reach, and why:
+#
+#  * The catalog is the gateway's, not the app's. Offline it comes from the
+#    bundled demo pane, whose descriptor is deliberately six entries long
+#    (`CLAUDE_COMPOSER` in `demo-gateway.ts`) with one workspace-sourced command
+#    and a mix of commands that take an argument and commands that do not -- so
+#    every branch the panel draws has something to draw.
+#  * The demo's shortcuts endpoint answers the same six under its older field
+#    names, so nothing here depends on which of the two sources landed first.
+#  * The composer is a real `TextInput` and is in the accessibility tree, so
+#    unlike the terminal canvas the draft can be typed into and asserted on
+#    through the picker's rows.
+#  * The capability gate cannot be proven offline. Demo mode always carries a
+#    descriptor, and a gateway without one needs a pairing that cannot be
+#    produced without a QR code; the negative case is a unit test
+#    (`composer-popup.test.ts`, "with no catalog the trigger character is plain
+#    text") and is written out at the bottom of this file for a paired run.
+#  * Esc is likewise out of reach: `onKeyPress` only sees "Escape" from a
+#    hardware keyboard, which Maestro does not emulate. Tap-outside is the
+#    dismissal this flow drives; the Esc path is covered by the unit tests.
+appId: dev.osuki.muqun
+name: slash-commands
+tags:
+  - full
+---
+- runFlow: ../subflows/open-demo.yaml
+
+# The demo's Claude pane is the one with a composer descriptor; the other two
+# panes are a shell and an editor with no agent behind them.
+- assertVisible: "Send to agent"
+- tapOn: "Switch to Claude Code"
+- waitForAnimationToEnd:
+    timeout: 2000
+- tapOn:
+    id: "terminal-composer-input"
+
+# ── "/" at position 0 opens the panel ─────────────────────────────────────
+# The panel is bounded to about five rows and scrolls past that, so only the top
+# of the catalog is asserted on here. The sixth entry is reached by filtering
+# further down.
+- inputText: "/"
+- extendedWaitUntil:
+    visible: "Insert /clear.*"
+    timeout: 8000
+- assertVisible: "Insert /compact.*"
+- assertVisible: "Insert /context.*"
+# The composer is still there and still usable: the panel floats over the
+# terminal, it does not replace the field being typed into.
+- assertVisible: "Send to agent"
+
+# ── The filter tracks the input ───────────────────────────────────────────
+# Typing narrows rather than closing: "/co" leaves the two commands whose names
+# start that way and drops the rest. A short term is matched against names only,
+# which is what keeps "/co" from matching every description with "context" or
+# "Claude Code" in it.
+- inputText: "co"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Insert /compact.*"
+- assertVisible: "Insert /context.*"
+- assertNotVisible: "Insert /clear.*"
+- assertNotVisible: "Insert /model.*"
+
+# Deleting characters widens it again -- the filter is a function of the draft,
+# not a one-way narrowing.
+- repeat:
+    times: 2
+    commands:
+      - pressKey: backspace
+- waitForAnimationToEnd:
+    timeout: 2000
+- extendedWaitUntil:
+    visible: "Insert /clear.*"
+    timeout: 6000
+
+# ── A workspace command is marked as one ──────────────────────────────────
+# `/release-notes` comes from the repository rather than from the agent, which
+# is the one thing its name cannot say.
+- inputText: "rel"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Insert /release-notes.*"
+# The tag is drawn in caps by the design system's own text transform, which the
+# accessibility tree may or may not have applied by the time it is read.
+- assertVisible: "(?i)workspace"
+- assertNotVisible: "Insert /clear.*"
+
+# ── Tap-outside dismisses ─────────────────────────────────────────────────
+# The backdrop covers the pane above the composer. Dismissal is scoped to this
+# trigger: the draft is untouched, which is why the send button is still live.
+- tapOn: "Close the command list"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Insert /release-notes.*"
+- assertVisible: "Send to agent"
+
+# Deleting the trigger and typing a new one reopens it: a dismissal is
+# remembered for the "/" it was made at, not for the composer.
+# The tap-outside dismissal above can drop the composer's focus. Refocus by its
+# stable id, then delete the four-character draft with individual hardware keys;
+# this deliberately avoids Maestro's unstable Android eraseText helper.
+- tapOn:
+    id: "terminal-composer-input"
+- repeat:
+    times: 4
+    commands:
+      - pressKey: backspace
+- waitForAnimationToEnd:
+    timeout: 1500
+- inputText: "/mod"
+- extendedWaitUntil:
+    visible: "Insert /model.*"
+    timeout: 8000
+# The hint is drawn as a placeholder next to the name -- what the user still has
+# to type, never what gets inserted. Asserted through the row's accessible name
+# rather than the child text: iOS collapses a labelled pressable's subtree, so
+# the hint is only in the tree as part of the row's own name (the label carries
+# it on both platforms for exactly this reason). Escaped, because Maestro
+# matches on a regex and a bare "[model]" is a character class.
+- assertVisible: "Insert /model \\[model\\]"
+
+# ── A pick inserts "/name " and closes the panel ──────────────────────────
+# The inserted text ends in a space, so the draft is no longer a bare command
+# and the panel closes by itself; the argument can be typed straight away.
+- tapOn: "Insert /model.*"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Insert /model.*"
+- assertNotVisible: "Insert /clear.*"
+- assertVisible: "Send to agent"
+
+# The hint was a placeholder, not text: typing continues from the space the pick
+# left, and the panel stays shut because the draft now carries an argument.
+- inputText: "opus"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Insert /model.*"
+- assertVisible: "Send to agent"
+
+# ── A slash that is not at position 0 is an ordinary character ────────────
+# A path typed into the composer must not raise the panel; a command only makes
+# sense as the whole message.
+# Relaunch instead of clearing the multiline input: eraseText stalls the Android
+# helper and native Select-all poisons its next inputText call.
+- runFlow: ../subflows/open-demo.yaml
+- tapOn: "Switch to Claude Code"
+- tapOn:
+    id: "terminal-composer-input"
+# Keep each Android Maestro payload below its 120-second bridge deadline. The
+# resulting draft is still byte-for-byte "look at src/lib".
+- inputText: "look at "
+- inputText: "src/lib"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Insert /clear.*"
+- assertNotVisible: "Insert /model.*"
+- assertVisible: "Send to agent"
+
+# ── A pane with no catalog ────────────────────────────────────────────────
+# The demo's shell pane has no agent and therefore no composer descriptor, so
+# "/" there is plain text and nothing is rendered.
+- runFlow: ../subflows/open-demo.yaml
+- tapOn: "Switch to zsh"
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn: "Run a terminal command"
+- waitForAnimationToEnd:
+    timeout: 2000
+- inputText: "/"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Insert /clear.*"
+- assertNotVisible: "Insert /compact.*"
+- assertVisible: "Run command"
+
+# ── Not reachable offline ─────────────────────────────────────────────────
+# Against a gateway that predates the composer descriptor and has no shortcuts
+# table for the pane's agent, the capability gate is:
+#
+#   - tapOn: "Message <agent>"
+#   - inputText: "/"
+#   - assertNotVisible: "Close the command list"   # no backdrop, so no panel
+#   - assertVisible: "Send to agent"               # "/" is just a character
+#
+# Those four lines are not in the suite because the demo always carries a
+# descriptor and a downgraded gateway cannot be paired offline.

@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Muqun",
+    "NSCameraUsageDescription": "Muqun scannt den Gateway-QR-Code, um sicher zu koppeln, und nimmt Fotos auf, die du an eine Terminal-Session anhängst.",
+    "NSPhotoLibraryUsageDescription": "Muqun sendet die Fotos, die du auswählst, an das gekoppelte Gateway, damit ein Agent sie lesen kann.",
+    "NSFaceIDUsageDescription": "Muqun schützt gekoppelte Server und Terminal-Sessions mit Face ID.",
+    "NSLocalNetworkUsageDescription": "Muqun verbindet sich mit dem Gateway auf deinem eigenen Rechner, das sich in deinem lokalen Netzwerk befinden kann."
+  },
+  "android": {
+    "app_name": "Muqun"
+  }
+}

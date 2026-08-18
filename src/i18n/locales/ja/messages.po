@@ -1,0 +1,2458 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-07-27 21:06+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ja\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "… truncated"
+msgstr "…以下省略"
+
+#: src/lib/demo-gateway.ts
+msgid "[instructions]"
+msgstr "[指示]"
+
+#: src/lib/demo-gateway.ts
+msgid "[model]"
+msgstr "[モデル]"
+
+#: src/lib/demo-gateway.ts
+msgid "[pr number]"
+msgstr "[PR 番号]"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# day} other {# days}}"
+msgstr "{0, plural, other {# 日}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# hour} other {# hours}}"
+msgstr "{0, plural, other {# 時間}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# minute} other {# minutes}}"
+msgstr "{0, plural, other {# 分}}"
+
+#. placeholder {0}: digest.otherAgents
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {and # more agent} other {and # more agents}}"
+msgstr "{0, plural, other {ほか # 件のエージェント}}"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "{0} (this device)"
+msgstr "{0}（このデバイス）"
+
+#. placeholder {0}: profile.kind
+#: src/components/new-task-sheet.tsx
+msgid "{0}, not found on this server's PATH"
+msgstr "{0}、このサーバーの PATH に見つかりません"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}d ago"
+msgstr "{0}日前"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}h ago"
+msgstr "{0}時間前"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}m ago"
+msgstr "{0}分前"
+
+#: src/components/away-digest-card.tsx
+msgid "{asked, plural, one {· asked once} other {· asked # times}}"
+msgstr "{asked, plural, other {· # 回確認あり}}"
+
+#: src/components/app-lock-gate.tsx
+msgid "{label} is temporarily locked. Use the system fallback or try later."
+msgstr "{label} は一時的にロックされています。システムの代替認証を使うか、しばらくしてからお試しください。"
+
+#: src/components/session-map.tsx
+msgid "{panelCount, plural, one {# panel} other {# panels}}"
+msgstr "{panelCount, plural, other {# パネル}}"
+
+#: src/components/row-action-menu.tsx
+msgid "{removeLabel}: {label}"
+msgstr "{removeLabel}：{label}"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "+{overflow} more"
+msgstr "ほか {overflow} 件"
+
+#: src/app/settings.tsx
+msgid "About"
+msgstr "アプリについて"
+
+#: src/components/settings-terminal.tsx
+msgid "Add commands and custom key combinations."
+msgstr "コマンドやカスタムのキー組み合わせを追加します。"
+
+#: src/components/new-task-sheet.tsx
+msgid "AGENT"
+msgstr "エージェント"
+
+#: src/app/commands.tsx
+msgid "AGENT COMMANDS"
+msgstr "エージェントコマンド"
+
+#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgid "Agent output reflowed for reading. Colour is lost."
+msgstr "エージェントの出力を読みやすく折り返します。色は失われます。"
+
+#: src/components/settings-terminal.tsx
+msgid "Agent panes open in"
+msgstr "エージェントのパネルの初期表示"
+
+#: src/components/settings-servers.tsx
+msgid "Agents"
+msgstr "エージェント"
+
+#: src/app/settings.tsx
+msgid "Alerts"
+msgstr "アラート"
+
+#: src/app/explore.tsx
+msgid "Align the QR inside the frame"
+msgstr "QR コードを枠に合わせてください"
+
+#: src/components/session-artifacts.tsx
+msgid "All"
+msgstr "すべて"
+
+#: src/components/settings-servers.tsx
+msgid "All panes"
+msgstr "すべてのパネル"
+
+#: src/components/pairing-camera.tsx
+msgid "Allow camera"
+msgstr "カメラを許可"
+
+#: src/app/explore.tsx
+msgid "Allow the camera, or enter the address instead."
+msgstr "カメラを許可するか、アドレスを入力してください。"
+
+#. placeholder {0}: option.label
+#: src/components/approval-banner.tsx
+msgid "Answer: {0}"
+msgstr "回答：{0}"
+
+#: src/components/settings-security.tsx
+msgid "App Lock enabled"
+msgstr "アプリロックを有効にしました"
+
+#: src/components/settings-security.tsx
+msgid "App Lock unavailable"
+msgstr "アプリロックを利用できません"
+
+#: src/app/settings.tsx
+msgid "Appearance"
+msgstr "外観"
+
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Appearance, terminal, security"
+msgstr "外観、ターミナル、セキュリティ"
+
+#: src/i18n/labels.ts
+msgid "Approve"
+msgstr "承認"
+
+#: src/i18n/labels.ts
+msgid "Approve and don't ask again"
+msgstr "承認し、今後は確認しない"
+
+#: src/lib/release-notes.ts
+msgid "Approve or deny that request straight from the notification, without opening the app."
+msgstr "その要求は通知から直接、承認も拒否もできます。アプリを開く必要はありません。"
+
+#: src/app/explore.tsx
+msgid "Asking the Gateway about that code."
+msgstr "そのコードを Gateway に確認しています。"
+
+#: src/components/new-task-sheet.tsx
+msgid "Asking the server what it can run…"
+msgstr "このサーバーで実行できるものを問い合わせています…"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Attach a file"
+msgstr "ファイルを添付"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticate with {authLabel} to continue."
+msgstr "続けるには {authLabel} で認証してください。"
+
+#: src/lib/local-authentication.ts
+msgid "Authenticate with {method} to continue"
+msgstr "続けるには {method} で認証してください"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating"
+msgstr "認証中"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating…"
+msgstr "認証中…"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication failed. Try again."
+msgstr "認証に失敗しました。もう一度お試しください。"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication is unavailable. Try again or check system settings."
+msgstr "認証を利用できません。もう一度試すか、システム設定を確認してください。"
+
+#: src/i18n/labels.ts
+msgid "Back one word"
+msgstr "1 単語戻る"
+
+#: src/components/app-drawer.tsx
+msgid "Back to servers"
+msgstr "サーバー一覧に戻る"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Backspace"
+msgstr "バックスペース"
+
+#: src/lib/local-authentication.ts
+msgid "biometrics"
+msgstr "生体認証"
+
+#: src/i18n/labels.ts
+msgid "Blocked"
+msgstr "応答待ち"
+
+#: src/lib/attachments.ts
+msgid "Camera access is off. Turn it on in Settings to take a photo."
+msgstr "カメラへのアクセスがオフです。写真を撮るには設定でオンにしてください。"
+
+#: src/components/pairing-camera.tsx
+msgid "Camera access needed"
+msgstr "カメラへのアクセスが必要です"
+
+#: src/components/row-action-menu.tsx
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+#: src/components/skia-terminal.tsx
+#: src/lib/local-authentication.ts
+msgid "Cancel"
+msgstr "キャンセル"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Cancel editing {0}"
+msgstr "{0} の編集をキャンセル"
+
+#: src/i18n/labels.ts
+msgid "Chat"
+msgstr "チャット"
+
+#: src/components/settings-security.tsx
+msgid "Check device authentication settings and try again."
+msgstr "デバイスの認証設定を確認して、もう一度お試しください。"
+
+#: src/components/settings-security.tsx
+msgid "Checking system authentication…"
+msgstr "システム認証を確認中…"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Checking…"
+msgstr "確認中…"
+
+#: src/components/attachment-menu.tsx
+msgid "Choose files"
+msgstr "ファイルを選択"
+
+#: src/i18n/labels.ts
+msgid "Clear line"
+msgstr "行をクリア"
+
+#: src/i18n/labels.ts
+msgid "Clear terminal"
+msgstr "ターミナルをクリア"
+
+#: src/components/asset-viewer.tsx
+msgid "Close file"
+msgstr "ファイルを閉じる"
+
+#: src/components/session-artifacts.tsx
+msgid "Close files"
+msgstr "ファイル一覧を閉じる"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Close language picker"
+msgstr "言語一覧を閉じる"
+
+#: src/components/new-task-sheet.tsx
+msgid "Close new task"
+msgstr "新規タスクを閉じる"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Close open a web service"
+msgstr "「ウェブサービスを開く」を閉じる"
+
+#: src/app/explore.tsx
+msgid "Close pairing"
+msgstr "ペアリングを閉じる"
+
+#: src/components/session-map.tsx
+msgid "Close panels"
+msgstr "パネル一覧を閉じる"
+
+#: src/components/asset-viewer.tsx
+#: src/components/image-preview-modal.tsx
+msgid "Close preview"
+msgstr "プレビューを閉じる"
+
+#: src/app/commands.tsx
+msgid "Close quick actions"
+msgstr "クイックアクションを閉じる"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the attachment menu"
+msgstr "添付メニューを閉じる"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the command list"
+msgstr "コマンド一覧を閉じる"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Close theme picker"
+msgstr "テーマ一覧を閉じる"
+
+#: src/components/session-artifacts.tsx
+msgid "Code"
+msgstr "コード"
+
+#: src/app/explore.tsx
+msgid "Code expired"
+msgstr "コードの有効期限が切れました"
+
+#: src/app/explore.tsx
+msgid "Code found. Reaching the Gateway."
+msgstr "コードを読み取りました。Gateway に接続しています。"
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Collapse {0}"
+msgstr "{0} を折りたたむ"
+
+#: src/components/settings-appearance.tsx
+msgid "Color mode"
+msgstr "カラーモード"
+
+#: src/app/commands.tsx
+msgid "Command"
+msgstr "コマンド"
+
+#: src/i18n/labels.ts
+msgid "Command mode"
+msgstr "コマンドモード"
+
+#: src/i18n/labels.ts
+msgid "Commit"
+msgstr "コミット"
+
+#: src/i18n/labels.ts
+msgid "Commit & push"
+msgstr "コミットしてプッシュ"
+
+#: src/components/settings-terminal.tsx
+msgid "Compact"
+msgstr "コンパクト"
+
+#: src/app/explore.tsx
+msgid "Confirm pairing"
+msgstr "ペアリングの確認"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Confirm revoke {0}"
+msgstr "{0} の取り消しを確認"
+
+#: src/components/settings-alerts.tsx
+msgid "Confirm taps, pairing, and gateway events."
+msgstr "タップ、ペアリング、Gateway のイベントを触覚で知らせます。"
+
+#: src/components/settings-servers.tsx
+msgid "Confirm unpair {label}"
+msgstr "{label} のペアリング解除を確認"
+
+#: src/components/row-action-menu.tsx
+msgid "Confirm: {removeLabel} {label}"
+msgstr "確認：{removeLabel} {label}"
+
+#: src/app/explore.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Connected"
+msgstr "接続済み"
+
+#: src/app/explore.tsx
+#: src/app/new-task.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Connecting"
+msgstr "接続中"
+
+#: src/app/settings.tsx
+msgid "Contact us"
+msgstr "お問い合わせ"
+
+#: src/app/explore.tsx
+msgid "Continue"
+msgstr "続行"
+
+#: src/i18n/labels.ts
+msgid "Continue task"
+msgstr "タスクを続行"
+
+#: src/i18n/labels.ts
+msgid "Control A, start of line"
+msgstr "コントロール A、行頭へ"
+
+#: src/i18n/labels.ts
+msgid "Control B, run in background"
+msgstr "コントロール B、バックグラウンドで実行"
+
+#: src/i18n/labels.ts
+msgid "Control C"
+msgstr "コントロール C"
+
+#: src/i18n/labels.ts
+msgid "Control D"
+msgstr "コントロール D"
+
+#: src/i18n/labels.ts
+msgid "Control D, half page down"
+msgstr "コントロール D、半ページ下へ"
+
+#: src/i18n/labels.ts
+msgid "Control E, end of line"
+msgstr "コントロール E、行末へ"
+
+#: src/i18n/labels.ts
+msgid "Control E, explain"
+msgstr "コントロール E、説明"
+
+#: src/i18n/labels.ts
+msgid "Control K, clear to end of line"
+msgstr "コントロール K、行末までクリア"
+
+#: src/i18n/labels.ts
+msgid "Control L, clear screen"
+msgstr "コントロール L、画面をクリア"
+
+#: src/i18n/labels.ts
+msgid "Control N, next"
+msgstr "コントロール N、次へ"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand"
+msgstr "コントロール O、展開"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand rows"
+msgstr "コントロール O、行を展開"
+
+#: src/i18n/labels.ts
+msgid "Control O, jump back"
+msgstr "コントロール O、前の位置へ戻る"
+
+#: src/i18n/labels.ts
+msgid "Control P, previous"
+msgstr "コントロール P、前へ"
+
+#: src/i18n/labels.ts
+msgid "Control R"
+msgstr "コントロール R"
+
+#: src/i18n/labels.ts
+msgid "Control R, redo"
+msgstr "コントロール R、やり直し"
+
+#: src/i18n/labels.ts
+msgid "Control R, reverse search"
+msgstr "コントロール R、逆方向に検索"
+
+#: src/i18n/labels.ts
+msgid "Control R, transcript"
+msgstr "コントロール R、トランスクリプト"
+
+#: src/i18n/labels.ts
+msgid "Control T, toggle tasks"
+msgstr "コントロール T、タスク表示を切り替え"
+
+#: src/i18n/labels.ts
+msgid "Control U, clear line"
+msgstr "コントロール U、行をクリア"
+
+#: src/i18n/labels.ts
+msgid "Control U, half page up"
+msgstr "コントロール U、半ページ上へ"
+
+#: src/i18n/labels.ts
+msgid "Control V, visual block"
+msgstr "コントロール V、ビジュアルブロック"
+
+#: src/i18n/labels.ts
+msgid "Control W, delete word"
+msgstr "コントロール W、単語を削除"
+
+#: src/i18n/labels.ts
+msgid "Control W, window prefix"
+msgstr "コントロール W、ウィンドウ操作のプレフィックス"
+
+#: src/i18n/labels.ts
+msgid "Control Y, paste"
+msgstr "コントロール Y、ペースト"
+
+#: src/i18n/labels.ts
+msgid "Control Z, suspend"
+msgstr "コントロール Z、一時停止"
+
+#: src/components/skia-terminal.tsx
+msgid "Copied to clipboard"
+msgstr "クリップボードにコピーしました"
+
+#: src/app/explore.tsx
+msgid "Copies it, ready to paste into a terminal"
+msgstr "コピーします。ターミナルにそのまま貼り付けられます"
+
+#: src/components/skia-terminal.tsx
+msgid "Copy"
+msgstr "コピー"
+
+#: src/app/explore.tsx
+msgid "Copy the install command"
+msgstr "インストールコマンドをコピー"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not add a file"
+msgstr "ファイルを追加できませんでした"
+
+#: src/components/skia-terminal.tsx
+msgid "Could not copy that"
+msgstr "コピーできませんでした"
+
+#: src/app/commands.tsx
+msgid "Could not create a panel."
+msgstr "パネルを作成できませんでした。"
+
+#: src/components/settings-security.tsx
+msgid "Could not enable App Lock"
+msgstr "アプリロックを有効にできませんでした"
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not list this server's agents."
+msgstr "このサーバーのエージェント一覧を取得できませんでした。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not load earlier output."
+msgstr "以前の出力を読み込めませんでした。"
+
+#: src/components/session-artifacts.tsx
+msgid "Could not load files."
+msgstr "ファイルを読み込めませんでした。"
+
+#: src/components/session-map.tsx
+msgid "Could not load panels."
+msgstr "パネルを読み込めませんでした。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open the file"
+msgstr "ファイルを開けませんでした"
+
+#: src/lib/attachments.ts
+msgid "Could not open the picker."
+msgstr "ピッカーを開けませんでした。"
+
+#: src/components/asset-viewer.tsx
+msgid "Could not open this file."
+msgstr "このファイルを開けませんでした。"
+
+#: src/app/explore.tsx
+msgid "Could not reach that address. Check it and make sure the Gateway is running."
+msgstr "そのアドレスに到達できませんでした。アドレスを確認し、Gateway が起動していることを確かめてください。"
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway."
+msgstr "Gateway に到達できませんでした。"
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
+msgstr "Gateway に到達できませんでした。起動していることを確かめて、QR コードを更新してからもう一度スキャンしてください。"
+
+#: src/app/new-task.tsx
+msgid "Could not reach this server."
+msgstr "このサーバーに接続できませんでした。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not read panel."
+msgstr "パネルを読み取れませんでした。"
+
+#: src/components/settings-servers.tsx
+msgid "Could not revoke device"
+msgstr "デバイスを取り消せませんでした"
+
+#: src/components/settings-servers.tsx
+msgid "Could not save changes"
+msgstr "変更を保存できませんでした"
+
+#: src/app/commands.tsx
+msgid "Could not send command."
+msgstr "コマンドを送信できませんでした。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send input."
+msgstr "入力を送信できませんでした。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send key."
+msgstr "キーを送信できませんでした。"
+
+#: src/app/commands.tsx
+msgid "Could not send shortcut."
+msgstr "ショートカットを送信できませんでした。"
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not start the task."
+msgstr "タスクを開始できませんでした。"
+
+#: src/app/commands.tsx
+msgid "Could not stop this agent."
+msgstr "このエージェントを停止できませんでした。"
+
+#: src/components/settings-servers.tsx
+msgid "Could not unpair server"
+msgstr "サーバーのペアリングを解除できませんでした"
+
+#: src/components/session-map.tsx
+msgid "Could not update the session."
+msgstr "セッションを更新できませんでした。"
+
+#: src/lib/attachments.ts
+msgid "Could not upload the file."
+msgstr "ファイルをアップロードできませんでした。"
+
+#: src/i18n/labels.ts
+msgid "Current path"
+msgstr "現在のパス"
+
+#: src/app/commands.tsx
+msgid "Customize terminal commands and key combinations."
+msgstr "ターミナルのコマンドとキーの組み合わせをカスタマイズします。"
+
+#: src/components/settings-appearance.tsx
+msgid "Dark"
+msgstr "ダーク"
+
+#: src/components/settings-terminal.tsx
+msgid "Default"
+msgstr "標準"
+
+#: src/components/approval-banner.tsx
+msgid "DEFAULT"
+msgstr "標準"
+
+#: src/components/row-action-menu.tsx
+msgid "Delete"
+msgstr "削除"
+
+#: src/app/commands.tsx
+msgid "Delete {name}"
+msgstr "{name} を削除"
+
+#: src/i18n/labels.ts
+msgid "Delete this line"
+msgstr "この行を削除"
+
+#: src/lib/demo-gateway.ts
+msgid "Demo workspace"
+msgstr "デモワークスペース"
+
+#: src/i18n/labels.ts
+msgid "Deny"
+msgstr "拒否"
+
+#: src/lib/demo-gateway.ts
+msgid "Development"
+msgstr "開発"
+
+#: src/components/settings-security.tsx
+#: src/lib/local-authentication.ts
+msgid "device authentication"
+msgstr "デバイス認証"
+
+#: src/i18n/labels.ts
+msgid "Diff summary"
+msgstr "差分の要約"
+
+#: src/components/new-task-sheet.tsx
+msgid "DIRECTORY"
+msgstr "ディレクトリ"
+
+#: src/components/approval-banner.tsx
+msgid "Dismiss the approval error"
+msgstr "承認エラーを閉じる"
+
+#: src/components/away-digest-card.tsx
+msgid "Dismiss what happened while you were away"
+msgstr "離席中の変化を閉じる"
+
+#: src/components/whats-new-card.tsx
+msgid "Dismiss what's new"
+msgstr "新着情報を閉じる"
+
+#: src/components/session-artifacts.tsx
+msgid "Docs"
+msgstr "ドキュメント"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+#: src/components/open-web-service-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Done"
+msgstr "完了"
+
+#: src/app/commands.tsx
+msgid "Done editing shortcuts"
+msgstr "ショートカットの編集を終了"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Down arrow"
+msgstr "下矢印"
+
+#: src/lib/demo-gateway.ts
+msgid "Draft the notes for the next build"
+msgstr "次のビルドのリリースノートを下書きします"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Each device holds its own token for {0}."
+msgstr "各デバイスは {0} 用のトークンをそれぞれ保持します。"
+
+#: src/app/commands.tsx
+msgid "Edit"
+msgstr "編集"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Edit {0}"
+msgstr "{0} を編集"
+
+#: src/app/commands.tsx
+msgid "Edit shortcuts"
+msgstr "ショートカットを編集"
+
+#: src/components/settings-servers.tsx
+msgid "Edit this server"
+msgstr "このサーバーを編集"
+
+#: src/lib/release-notes.ts
+msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "エディタのパネルには vim 専用のキー行が並びます。LazyVim のリーダーキー操作も含まれ、プログラムが指定した色もそのまま残ります。"
+
+#: src/i18n/labels.ts
+msgid "Enter"
+msgstr "エンター"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Enter a gateway URL."
+msgstr "Gateway の URL を入力してください。"
+
+#: src/components/settings-servers.tsx
+msgid "Enter a name."
+msgstr "名前を入力してください。"
+
+#: src/app/explore.tsx
+msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
+msgstr "{PAIRING_CODE_CHARACTER_COUNT} 文字のコードを入力してください。"
+
+#: src/app/explore.tsx
+msgid "Enter the Gateway's address instead."
+msgstr "代わりに Gateway のアドレスを入力してください。"
+
+#: src/app/explore.tsx
+msgid "Enter URL manually"
+msgstr "URL を手動で入力"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/i18n/labels.ts
+msgid "Escape"
+msgstr "エスケープ"
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Expand {0}"
+msgstr "{0} を展開"
+
+#. placeholder {0}: Math.floor(secondsRemaining / 60)
+#. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
+#: src/app/explore.tsx
+msgid "Expires in {0}:{1}"
+msgstr "あと {0}:{1} で期限切れ"
+
+#: src/components/file-mention-panel.tsx
+msgid "File mentions"
+msgstr "ファイルメンション"
+
+#: src/lib/attachments.ts
+msgid "File too large (25MB max)"
+msgstr "ファイルが大きすぎます（最大 25MB）"
+
+#: src/lib/attachments.ts
+msgid "File type not allowed"
+msgstr "このファイル形式は許可されていません"
+
+#: src/components/session-artifacts.tsx
+msgid "Files"
+msgstr "ファイル"
+
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "このワークスペースのファイル"
+
+#: src/i18n/labels.ts
+msgid "Find a file by name"
+msgstr "ファイル名で検索"
+
+#: src/components/new-task-sheet.tsx
+msgid "FIRST PROMPT"
+msgstr "最初のプロンプト"
+
+#: src/lib/release-notes.ts
+msgid "Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together."
+msgstr "Osuki、Catppuccin、Rosé Pine、Everforest、Tokyo Night の5つのテーマパックが、アプリとターミナルの配色をまとめて塗り替えます。"
+
+#: src/components/pane-chat-view.tsx
+msgid "Fold the tool steps away"
+msgstr "ツールの手順を折りたたむ"
+
+#: src/i18n/labels.ts
+msgid "Forward one word"
+msgstr "1 単語進む"
+
+#: src/lib/demo-gateway.ts
+msgid "Free up context by summarizing the conversation so far"
+msgstr "これまでの会話を要約してコンテキストを空けます"
+
+#: src/app/explore.tsx
+msgid "Front camera. Hold the QR up to the screen"
+msgstr "フロントカメラです。QR コードを画面に向けてください"
+
+#: src/app/explore.tsx
+msgid "Gateway"
+msgstr "Gateway"
+
+#: src/lib/network-error.ts
+msgid "Gateway did not respond in time."
+msgstr "Gateway が時間内に応答しませんでした。"
+
+#: src/lib/network-error.ts
+msgid "Gateway is temporarily unavailable."
+msgstr "Gateway を一時的に利用できません。"
+
+#: src/components/settings-alerts.tsx
+msgid "Gateway notifications"
+msgstr "Gateway の通知"
+
+#: src/lib/notifications.ts
+msgid "Gateway updates"
+msgstr "Gateway の更新"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL"
+msgstr "Gateway の URL"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL is not valid."
+msgstr "Gateway の URL が正しくありません。"
+
+#: src/i18n/labels.ts
+msgid "Git status"
+msgstr "Git ステータス"
+
+#: src/components/screen-header.tsx
+msgid "Go back"
+msgstr "戻る"
+
+#: src/i18n/labels.ts
+msgid "Go to the top of the file"
+msgstr "ファイルの先頭へ移動"
+
+#: src/app/+not-found.tsx
+msgid "Go to your servers"
+msgstr "サーバー一覧へ"
+
+#: src/components/settings-alerts.tsx
+msgid "Haptic feedback"
+msgstr "触覚フィードバック"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Hide {0}"
+msgstr "{0} を隠す"
+
+#: src/app/commands.tsx
+msgid "Hide {name}"
+msgstr "{name} を隠す"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Hide keyboard"
+msgstr "キーボードを隠す"
+
+#: src/components/settings-alerts.tsx
+msgid "Home screen widget"
+msgstr "ホーム画面ウィジェット"
+
+#: src/lib/release-notes.ts
+msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
+msgstr "ホーム、設定、サーバー画面を作り直しました。各サーバーが最後に実行していたエージェントが、その状態とともに並びます。"
+
+#: src/i18n/labels.ts
+msgid "Idle"
+msgstr "待機"
+
+#: src/components/session-artifacts.tsx
+msgid "Images"
+msgstr "画像"
+
+#. placeholder {0}: row.label
+#: src/components/composer-popup.tsx
+msgid "Insert {0}"
+msgstr "{0} を挿入"
+
+#. placeholder {0}: row.label
+#. placeholder {1}: row.hint
+#: src/components/composer-popup.tsx
+msgid "Insert {0} {1}"
+msgstr "{0} {1} を挿入"
+
+#: src/i18n/labels.ts
+msgid "Insert mode"
+msgstr "挿入モード"
+
+#: src/app/explore.tsx
+msgid "Install command copied"
+msgstr "インストールコマンドをコピーしました"
+
+#: src/i18n/labels.ts
+msgid "Interrupt"
+msgstr "中断"
+
+#: src/app/commands.tsx
+msgid "Interrupt process"
+msgstr "プロセスを中断"
+
+#: src/app/commands.tsx
+msgid "Interrupt what this agent is doing."
+msgstr "このエージェントが進めている作業を中断します。"
+
+#: src/lib/local-authentication.ts
+msgid "iris recognition"
+msgstr "虹彩認証"
+
+#: src/app/+not-found.tsx
+msgid "It may be out of date, or meant for a different app. Nothing was opened."
+msgstr "期限切れか、別のアプリ向けのリンクかもしれません。何も開いていません。"
+
+#: src/components/pairing-camera.tsx
+msgid "It was found, but never showed a picture. Another app may be holding it."
+msgstr "カメラは見つかりましたが、映像が出ませんでした。他のアプリが使用中かもしれません。"
+
+#: src/components/settings-servers.tsx
+msgid "Its details are stored securely on this device; try again."
+msgstr "その情報はこのデバイスに安全に保存されています。もう一度お試しください。"
+
+#: src/components/settings-servers.tsx
+msgid "Its paired devices are listed once it is the server in use."
+msgstr "使用中のサーバーになると、ペアリング済みのデバイスが一覧に表示されます。"
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.tsx
+msgid "Jump to latest output"
+msgstr "最新の出力へ移動"
+
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "just now"
+msgstr "たった今"
+
+#: src/components/settings-servers.tsx
+msgid "Keep {label}"
+msgstr "{label} を残す"
+
+#: src/components/settings-alerts.tsx
+msgid "Keep the panel you are watching on the Lock Screen while its agent works."
+msgstr "エージェントの作業中、見ているパネルをロック画面に表示し続けます。"
+
+#: src/app/commands.tsx
+msgid "Keys"
+msgstr "キー"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Language"
+msgstr "言語"
+
+#: src/components/settings-appearance.tsx
+msgid "Language, {languageName}"
+msgstr "言語、{languageName}"
+
+#: src/components/settings-terminal.tsx
+msgid "Large"
+msgstr "大"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {days}d ago"
+msgstr "最終接続: {days}日前"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {hours}h ago"
+msgstr "最終接続: {hours}時間前"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {minutes}m ago"
+msgstr "最終接続: {minutes}分前"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected just now"
+msgstr "最終接続: たった今"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {days}d ago"
+msgstr "最終確認: {days}日前"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {hours}h ago"
+msgstr "最終確認: {hours}時間前"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {minutes}m ago"
+msgstr "最終確認: {minutes}分前"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen just now"
+msgstr "最終確認: たった今"
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.tsx
+msgid "Latest"
+msgstr "最新"
+
+#: src/components/new-task-sheet.tsx
+msgid "Leave it empty to start where the session already is."
+msgstr "空のままにすると、セッションが今いる場所で開始します。"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Left arrow"
+msgstr "左矢印"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Letters"
+msgstr "英字"
+
+#: src/components/settings-appearance.tsx
+msgid "Light"
+msgstr "ライト"
+
+#: src/app/commands.tsx
+msgid "List branches"
+msgstr "ブランチ一覧"
+
+#: src/components/settings-servers.tsx
+msgid "List every pane, agent or not."
+msgstr "エージェントの有無にかかわらず、すべてのパネルを一覧表示します。"
+
+#: src/components/settings-servers.tsx
+msgid "List only the panes running a recognised agent."
+msgstr "認識済みのエージェントが動作しているパネルのみを一覧表示します。"
+
+#: src/components/settings-alerts.tsx
+msgid "Live Activity"
+msgstr "ライブアクティビティ"
+
+#: src/app/commands.tsx
+msgid "Loading commands"
+msgstr "コマンドを読み込み中"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading earlier output…"
+msgstr "以前の出力を読み込み中…"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "ペアリング済みデバイスを読み込み中…"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading panel"
+msgstr "パネルを読み込み中"
+
+#: src/components/session-map.tsx
+msgid "Loading panels"
+msgstr "パネル一覧を読み込み中"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/settings-servers.tsx
+msgid "Loading servers"
+msgstr "サーバーを読み込み中"
+
+#: src/components/app-lock-gate.tsx
+msgid "Loading settings"
+msgstr "設定を読み込み中"
+
+#: src/components/pane-chat-view.tsx
+msgid "Loading the transcript"
+msgstr "トランスクリプトを読み込み中"
+
+#: src/lib/demo-gateway.ts
+msgid "Logs"
+msgstr "ログ"
+
+#: src/lib/release-notes.ts
+msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
+msgstr "ターミナルを長押しすると出力を選択でき、ドラッグで範囲を広げてコピーできます。"
+
+#: src/app/explore.tsx
+msgid "Mac mini · Office"
+msgstr "Mac mini · オフィス"
+
+#. placeholder {0}: hit.path
+#: src/components/file-mention-panel.tsx
+msgid "Mention {0}"
+msgstr "{0} をメンション"
+
+#: src/components/asset-viewer.tsx
+msgid "Modified"
+msgstr "更新日時"
+
+#: src/components/virtual-keyboard.tsx
+msgid "More symbols"
+msgstr "その他の記号"
+
+#: src/app/(drawer)/_layout.tsx
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Muqun"
+msgstr "牧群"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Muqun agent status"
+msgstr "牧群（ぼくぐん）のエージェントの状態"
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun could not verify your identity. Try again."
+msgstr "牧群が本人確認できませんでした。もう一度お試しください。"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun follows the language your phone is set to."
+msgstr "牧群（ぼくぐん）は端末の言語設定に従います。"
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun is locked"
+msgstr "牧群（ぼくぐん）はロックされています"
+
+#: src/components/pairing-camera.tsx
+msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
+msgstr "Muqun はカメラで Gateway の QR コードを読み取ります。録画は行いません。"
+
+#: src/app/settings.tsx
+msgid "Muqun settings stay on this device."
+msgstr "牧群（ぼくぐん）の設定はこのデバイスの中だけに保存されます。"
+
+#: src/lib/release-notes.ts
+msgid "Muqun speaks eight languages. It follows your phone, or you can choose one in Settings."
+msgstr "牧群（ぼくぐん）は8つの言語を話します。スマートフォンの言語に従い、設定で選ぶこともできます。"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun stays in this language whatever the phone is set to."
+msgstr "端末の設定にかかわらず、牧群（ぼくぐん）はこの言語のままになります。"
+
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Muqun will use {0} when the app opens."
+msgstr "アプリを開くとき、牧群は {0} を使います。"
+
+#: src/app/commands.tsx
+msgid "Name"
+msgstr "名前"
+
+#: src/app/explore.tsx
+msgid "Name it, then enter the code shown by the Gateway."
+msgstr "名前を付けて、Gateway に表示されたコードを入力してください。"
+
+#: src/components/settings-servers.tsx
+msgid "Never connected"
+msgstr "一度も接続されていません"
+
+#: src/components/settings-servers.tsx
+msgid "Never seen"
+msgstr "一度も確認されていません"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New panel"
+msgstr "新規パネル"
+
+#: src/lib/release-notes.ts
+msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
+msgstr "「新規パネル」は今いるタブを分割するようになり、作られたパネルへすぐ移動します。"
+
+#: src/app/commands.tsx
+msgid "NEW SHORTCUT"
+msgstr "新規ショートカット"
+
+#: src/app/commands.tsx
+msgid "New tab"
+msgstr "新規タブ"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "New task"
+msgstr "新規タスク"
+
+#: src/components/new-task-action.tsx
+msgid "New task on {label}"
+msgstr "{label} で新規タスク"
+
+#: src/components/session-map.tsx
+msgid "New workspace"
+msgstr "新規ワークスペース"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "No agents running"
+msgstr "実行中のエージェントはありません"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "No app on this phone opens web pages."
+msgstr "この端末にはウェブページを開けるアプリがありません。"
+
+#: src/components/pairing-camera.tsx
+msgid "No camera to scan with"
+msgstr "スキャンできるカメラがありません"
+
+#: src/components/pairing-camera.tsx
+msgid "No camera was found on this device."
+msgstr "このデバイスでカメラが見つかりませんでした。"
+
+#: src/components/session-artifacts.tsx
+msgid "No files match."
+msgstr "一致するファイルはありません。"
+
+#: src/app/explore.tsx
+msgid "No Gateway yet?"
+msgstr "Gateway がまだありませんか？"
+
+#: src/app/settings.tsx
+msgid "No mail app configured"
+msgstr "メールアプリが設定されていません"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "No output."
+msgstr "出力はありません。"
+
+#: src/components/asset-viewer.tsx
+msgid "No preview for this kind of file. It stays on the server."
+msgstr "この種類のファイルはプレビューできません。ファイルはサーバー上に残ります。"
+
+#: src/app/new-task.tsx
+msgid "No server to start a task on."
+msgstr "タスクを開始できるサーバーがありません。"
+
+#: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
+msgid "No servers paired yet"
+msgstr "ペアリング済みのサーバーはまだありません"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Not available"
+msgstr "利用できません"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "not connected"
+msgstr "未接続"
+
+#: src/i18n/labels.ts
+msgid "Not connected"
+msgstr "未接続"
+
+#: src/i18n/labels.ts
+msgid "NOT CONNECTED"
+msgstr "未接続"
+
+#: src/app/+not-found.tsx
+msgid "Not found"
+msgstr "見つかりません"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
+msgstr "ポート {port} から応答がありませんでした。何も待ち受けていないか、localhost にのみバインドされています — --host 0.0.0.0 を付けて再起動すると、ここから接続できます。"
+
+#: src/components/session-artifacts.tsx
+msgid "Nothing here yet. Files the session writes show up on their own."
+msgstr "まだ何もありません。セッションが書き出したファイルは自動的に表示されます。"
+
+#: src/components/pane-chat-view.tsx
+msgid "Nothing to show yet."
+msgstr "まだ表示するものはありません。"
+
+#: src/i18n/labels.ts
+msgid "OFFLINE"
+msgstr "オフライン"
+
+#: src/i18n/labels.ts
+msgid "Offline, not answering"
+msgstr "オフライン、応答がありません"
+
+#: src/i18n/labels.ts
+msgid "Online"
+msgstr "オンラインです"
+
+#: src/i18n/labels.ts
+msgid "ONLINE"
+msgstr "オンライン"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open"
+msgstr "開く"
+
+#. placeholder {0}: asset.name
+#. placeholder {0}: part.fallback_text || part.asset_id
+#. placeholder {0}: server.label
+#: src/app/(drawer)/index.tsx
+#: src/components/pane-chat-blocks.tsx
+#: src/components/session-artifacts.tsx
+msgid "Open {0}"
+msgstr "{0} を開く"
+
+#: src/app/commands.tsx
+msgid "Open a port on this machine in your browser."
+msgstr "このマシンのポートをブラウザーで開きます。"
+
+#: src/app/commands.tsx
+msgid "Open a tab of its own and go to it."
+msgstr "専用のタブを開いて移動します。"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open a web service"
+msgstr "ウェブサービスを開く"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open anyway"
+msgstr "それでも開く"
+
+#: src/components/artifacts-button.tsx
+msgid "Open files"
+msgstr "ファイル一覧を開く"
+
+#: src/i18n/labels.ts
+msgid "Open Lazygit"
+msgstr "Lazygit を開く"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Open Muqun to connect"
+msgstr "牧群を開いて接続"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Open on-screen keyboard"
+msgstr "ソフトウェアキーボードを開く"
+
+#: src/components/session-map.tsx
+msgid "Open panel {title}. Long press to close."
+msgstr "パネル {title} を開く。長押しで閉じる。"
+
+#: src/components/app-drawer.tsx
+msgid "Open panels"
+msgstr "パネル一覧を開く"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open port {recent}"
+msgstr "ポート {recent} を開く"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Open quick actions"
+msgstr "クイックアクションを開く"
+
+#: src/i18n/labels.ts
+msgid "Open the file explorer"
+msgstr "ファイルツリーを開く"
+
+#. placeholder {0}: workspace.title
+#. placeholder {1}: inventory.panels
+#: src/components/session-map.tsx
+msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
+msgstr "ワークスペース {0}（{1, plural, other {# パネル}}）を開く。長押しで閉じる。"
+
+#: src/app/explore.tsx
+msgid "Opening the server."
+msgstr "サーバーを開いています。"
+
+#: src/app/settings.tsx
+msgid "Opens the Muqun issue tracker on GitHub."
+msgstr "GitHub の牧群（ぼくぐん）イシュートラッカーを開きます。"
+
+#: src/components/server-agent-rows.tsx
+msgid "Opens this agent's panel"
+msgstr "このエージェントのパネルを開きます"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Options for {0}"
+msgstr "{0} のオプション"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Pair a server"
+msgstr "サーバーをペアリング"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair again"
+msgstr "再ペアリング"
+
+#: src/app/explore.tsx
+msgid "Pair server"
+msgstr "サーバーをペアリング"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair this server again"
+msgstr "このサーバーを再ペアリング"
+
+#: src/lib/network-error.ts
+msgid "Pair this server again."
+msgstr "このサーバーをもう一度ペアリングしてください。"
+
+#: src/app/(drawer)/index.tsx
+msgid "Pair your first server"
+msgstr "最初のサーバーをペアリング"
+
+#: src/app/explore.tsx
+msgid "Pairing"
+msgstr "ペアリング中"
+
+#: src/app/explore.tsx
+msgid "Pairing code"
+msgstr "ペアリングコード"
+
+#: src/app/explore.tsx
+msgid "Pairing code expired. Scan again for a new code."
+msgstr "ペアリングコードの有効期限が切れました。もう一度スキャンして新しいコードを取得してください。"
+
+#: src/app/explore.tsx
+msgid "Pairing failed."
+msgstr "ペアリングに失敗しました。"
+
+#: src/app/commands.tsx
+msgid "PANEL COMMANDS"
+msgstr "パネルコマンド"
+
+#: src/components/session-map.tsx
+msgid "Panels"
+msgstr "パネル"
+
+#: src/components/settings-servers.tsx
+msgid "Panes on server cards"
+msgstr "サーバーカードのパネル"
+
+#: src/i18n/labels.ts
+msgid "Paste"
+msgstr "ペースト"
+
+#: src/components/asset-viewer.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Path"
+msgstr "パス"
+
+#: src/components/attachment-menu.tsx
+msgid "Photo library"
+msgstr "フォトライブラリ"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Port"
+msgstr "ポート"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "PORT"
+msgstr "ポート"
+
+#: src/components/approval-banner.tsx
+msgid "Press Escape to dismiss this request"
+msgstr "エスケープを送ってこのリクエストを閉じる"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Preview {0}, {status}"
+msgstr "{0} をプレビュー、{status}"
+
+#: src/app/settings.tsx
+msgid "Privacy policy"
+msgstr "プライバシーポリシー"
+
+#: src/app/commands.tsx
+msgid "Prompt"
+msgstr "プロンプト"
+
+#: src/components/settings-security.tsx
+msgid "Protect paired servers and terminal sessions."
+msgstr "ペアリング済みのサーバーとターミナルセッションを保護します。"
+
+#: src/i18n/labels.ts
+msgid "Pull"
+msgstr "プル"
+
+#: src/components/skia-terminal.tsx
+msgid "Pull for earlier output"
+msgstr "引っ張って以前の出力を読み込む"
+
+#: src/components/attachment-strip.tsx
+msgid "queued to upload"
+msgstr "アップロード待ち"
+
+#: src/app/commands.tsx
+msgid "Quick action settings"
+msgstr "クイックアクション設定"
+
+#: src/app/commands.tsx
+#: src/components/settings-terminal.tsx
+msgid "Quick actions"
+msgstr "クイックアクション"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Quit"
+msgstr "終了"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Reach a server running on {label} from this phone."
+msgstr "{label} で動作しているサーバーにこの端末から接続します。"
+
+#: src/app/settings.tsx
+msgid "Reach us at {SUPPORT_EMAIL}."
+msgstr "{SUPPORT_EMAIL} までご連絡ください。"
+
+#: src/app/explore.tsx
+msgid "Reaching the Gateway"
+msgstr "Gateway に接続中"
+
+#: src/components/settings-alerts.tsx
+msgid "Receive agent blocks and gateway updates."
+msgstr "エージェントが応答待ちになった通知と Gateway の更新を受け取ります。"
+
+#: src/i18n/labels.ts
+msgid "Recent commits"
+msgstr "最近のコミット"
+
+#. placeholder {0}: status.attempt
+#: src/components/server-terminal-workspace.tsx
+msgid "Reconnecting · {0}"
+msgstr "再接続中 · {0}"
+
+#: src/components/session-artifacts.tsx
+msgid "Refresh files"
+msgstr "ファイルを再読み込み"
+
+#: src/components/session-map.tsx
+msgid "Refresh panels"
+msgstr "パネルを再読み込み"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Remove {0}"
+msgstr "{0} を取り除く"
+
+#: src/components/row-action-menu.tsx
+msgid "Rename {label}"
+msgstr "{label} の名前を変更"
+
+#: src/components/session-map.tsx
+msgid "Rename panel"
+msgstr "パネル名を変更"
+
+#: src/components/session-map.tsx
+msgid "Rename tab"
+msgstr "タブ名を変更"
+
+#: src/components/session-map.tsx
+msgid "Rename workspace"
+msgstr "ワークスペース名を変更"
+
+#: src/app/commands.tsx
+msgid "Render as terminal"
+msgstr "ターミナルとして表示"
+
+#: src/app/commands.tsx
+msgid "Render as text"
+msgstr "テキストとして表示"
+
+#: src/app/settings.tsx
+msgid "Report a bug or request a feature"
+msgstr "不具合の報告・機能のリクエスト"
+
+#: src/lib/network-error.ts
+msgid "Request failed."
+msgstr "リクエストに失敗しました。"
+
+#: src/components/settings-security.tsx
+msgid "Required on launch and after 30 seconds in the background."
+msgstr "起動時と、バックグラウンドで 30 秒経過した後に認証を求めます。"
+
+#: src/components/settings-alerts.tsx
+msgid "Requires iOS 16.1 or later."
+msgstr "iOS 16.1 以降が必要です。"
+
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "更新を完了するには牧群を再起動してください"
+
+#: src/app/commands.tsx
+msgid "Restore hidden default commands"
+msgstr "非表示にした標準コマンドを元に戻す"
+
+#: src/app/commands.tsx
+msgid "Restore hidden defaults"
+msgstr "非表示の標準を元に戻す"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/terminal-boundary.tsx
+msgid "Retry"
+msgstr "再試行"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry connection"
+msgstr "接続をやり直す"
+
+#: src/components/terminal-boundary.tsx
+msgid "Retry drawing the panel"
+msgstr "パネルの描画をやり直す"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry the ones marked in red, or remove them, then send again."
+msgstr "赤で示された項目を再試行するか、削除してからもう一度送信してください。"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Retry uploading {0}"
+msgstr "{0} のアップロードを再試行"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Return"
+msgstr "リターンキー"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Return to the server list and pair again."
+msgstr "サーバー一覧に戻って、もう一度ペアリングしてください。"
+
+#: src/lib/demo-gateway.ts
+msgid "Review"
+msgstr "レビュー"
+
+#: src/lib/demo-gateway.ts
+msgid "Review a GitHub pull request"
+msgstr "GitHub のプルリクエストをレビューします"
+
+#: src/app/commands.tsx
+msgid "Review changes"
+msgstr "変更をレビュー"
+
+#: src/app/commands.tsx
+msgid "Review the current changes."
+msgstr "現在の変更をレビューしてください。"
+
+#: src/components/new-task-sheet.tsx
+msgid "Review the failing test and fix it."
+msgstr "失敗しているテストを調べて直して。"
+
+#: src/components/settings-servers.tsx
+msgid "Revoke"
+msgstr "取り消す"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Revoke {0}"
+msgstr "{0} を取り消す"
+
+#: src/components/settings-servers.tsx
+msgid "Revoking…"
+msgstr "取り消し中…"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Right arrow"
+msgstr "右矢印"
+
+#: src/app/commands.tsx
+msgid "Run a command or key combo."
+msgstr "コマンドまたはキーの組み合わせを実行します。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Run a terminal command"
+msgstr "ターミナルコマンドを実行"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Run command"
+msgstr "コマンドを実行"
+
+#: src/i18n/labels.ts
+msgid "Run relevant tests"
+msgstr "関連するテストを実行"
+
+#: src/app/(drawer)/index.tsx
+msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
+msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります。"
+
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Save"
+msgstr "保存"
+
+#: src/app/commands.tsx
+msgid "Save a command or key combo you reach for."
+msgstr "よく使うコマンドやキーの組み合わせを保存します。"
+
+#: src/app/commands.tsx
+msgid "Save a prompt you send this agent often."
+msgstr "このエージェントによく送るプロンプトを保存します。"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Save changes to {0}"
+msgstr "{0} への変更を保存"
+
+#: src/app/commands.tsx
+msgid "Save shortcut"
+msgstr "ショートカットを保存"
+
+#: src/components/settings-servers.tsx
+msgid "Saving…"
+msgstr "保存中…"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/explore.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Scan a gateway QR"
+msgstr "Gateway の QR をスキャン"
+
+#: src/app/explore.tsx
+msgid "Scan again"
+msgstr "もう一度スキャン"
+
+#: src/app/explore.tsx
+msgid "Scan the Gateway QR."
+msgstr "Gateway の QR コードをスキャンしてください。"
+
+#: src/components/pairing-camera.tsx
+msgid "Scanning needs a camera, which this browser does not offer."
+msgstr "スキャンにはカメラが必要ですが、このブラウザでは使えません。"
+
+#: src/i18n/labels.ts
+msgid "Search"
+msgstr "検索"
+
+#: src/components/session-artifacts.tsx
+msgid "Search files"
+msgstr "ファイルを検索"
+
+#: src/i18n/labels.ts
+msgid "Search the whole project"
+msgstr "プロジェクト全体を検索"
+
+#: src/app/settings.tsx
+msgid "Security"
+msgstr "セキュリティ"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}d ago"
+msgstr "確認: {0}日前"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}h ago"
+msgstr "確認: {0}時間前"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}m ago"
+msgstr "確認: {0}分前"
+
+#: src/components/server-agent-rows.tsx
+msgid "Seen just now"
+msgstr "確認: たった今"
+
+#: src/components/skia-terminal.tsx
+msgid "Select all"
+msgstr "すべて選択"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send {spoken}"
+msgstr "{spoken} を送信"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send a message"
+msgstr "メッセージを送信"
+
+#: src/app/commands.tsx
+msgid "Send a prompt to this agent."
+msgstr "このエージェントにプロンプトを送ります。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send to agent"
+msgstr "エージェントに送信"
+
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Server"
+msgstr "サーバー"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Server name"
+msgstr "サーバー名"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server not found"
+msgstr "サーバーが見つかりません"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server offline"
+msgstr "サーバーはオフライン"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server unavailable."
+msgstr "サーバーを利用できません。"
+
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Servers"
+msgstr "サーバー"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set a device passcode before using App Lock."
+msgstr "アプリロックを使う前に、デバイスのパスコードを設定してください。"
+
+#: src/app/explore.tsx
+msgid "Set one up on your computer"
+msgstr "自分のパソコンに用意する"
+
+#: src/lib/demo-gateway.ts
+msgid "Set the AI model for Claude Code"
+msgstr "Claude Code が使う AI モデルを設定します"
+
+#. placeholder {0}: authAvailability.label
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Set up {0} in system settings first."
+msgstr "先にシステム設定で {0} を設定してください。"
+
+#. placeholder {0}: availability.label
+#: src/components/app-lock-gate.tsx
+msgid "Set up {0} in system settings to unlock Muqun."
+msgstr "牧群のロックを解除するには、システム設定で {0} を設定してください。"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {label} in system settings first."
+msgstr "先にシステム設定で {label} を設定してください。"
+
+#: src/app/explore.tsx
+msgid "Set up a Gateway on your computer"
+msgstr "自分のパソコンに Gateway を用意する"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Settings"
+msgstr "設定"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Shift"
+msgstr "シフト"
+
+#: src/i18n/labels.ts
+msgid "Shift Enter, newline without sending"
+msgstr "シフト エンター、送信せずに改行"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab"
+msgstr "シフト タブ"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab, cycle mode"
+msgstr "シフト タブ、モードを切り替え"
+
+#: src/app/commands.tsx
+msgid "SHORTCUTS"
+msgstr "ショートカット"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Show {0}"
+msgstr "{0} を表示"
+
+#: src/components/settings-alerts.tsx
+msgid "Show agents and their status on the home screen. Updates while Muqun is open."
+msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます。"
+
+#: src/components/session-artifacts.tsx
+msgid "Show all files"
+msgstr "すべてのファイルを表示"
+
+#: src/components/pairing-camera.tsx
+msgid "Show camera details"
+msgstr "カメラの詳細を表示"
+
+#: src/components/session-artifacts.tsx
+msgid "Show code"
+msgstr "コードを表示"
+
+#: src/components/session-artifacts.tsx
+msgid "Show documents"
+msgstr "ドキュメントを表示"
+
+#: src/components/settings-terminal.tsx
+msgid "Show Esc, Tab, Ctrl and navigation keys above input."
+msgstr "入力欄の上に Esc、Tab、Ctrl と方向キーを表示します。"
+
+#: src/components/pane-chat-view.tsx
+msgid "Show every tool step"
+msgstr "ツールの手順をすべて表示"
+
+#: src/components/session-artifacts.tsx
+msgid "Show images"
+msgstr "画像を表示"
+
+#: src/components/asset-viewer.tsx
+msgid "Size"
+msgstr "サイズ"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Some files did not upload"
+msgstr "一部のファイルをアップロードできませんでした"
+
+#: src/components/app-error-boundary.tsx
+msgid "Something went wrong"
+msgstr "問題が発生しました"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Space"
+msgstr "スペース"
+
+#: src/app/commands.tsx
+msgid "Split this tab and go to what it makes."
+msgstr "このタブを分割して、作成したパネルに移動します。"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "stale · {age}"
+msgstr "古い情報 · {age}"
+
+#: src/lib/demo-gateway.ts
+msgid "Start a new session with empty context"
+msgstr "空のコンテキストで新しいセッションを開始します"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do."
+msgstr "エージェントを起動して、最初にやることを伝えます。"
+
+#: src/components/new-task-sheet.tsx
+msgid "Start task"
+msgstr "タスクを開始"
+
+#: src/app/explore.tsx
+#: src/components/pairing-camera.tsx
+msgid "Starting the camera"
+msgstr "カメラを起動しています"
+
+#: src/components/new-task-sheet.tsx
+msgid "Starting…"
+msgstr "開始しています…"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "Still running…"
+msgstr "実行中…"
+
+#: src/app/commands.tsx
+msgid "Stop"
+msgstr "停止"
+
+#: src/app/commands.tsx
+msgid "Stop this agent"
+msgstr "このエージェントを停止"
+
+#: src/i18n/labels.ts
+msgid "Summarize progress"
+msgstr "進捗を要約"
+
+#: src/i18n/labels.ts
+msgid "Suspend"
+msgstr "一時停止"
+
+#: src/components/workspace-title-switcher.tsx
+msgid "Swipe left or right to switch workspace"
+msgstr "左右にスワイプしてワークスペースを切り替えます"
+
+#: src/i18n/labels.ts
+msgid "Switch between open files"
+msgstr "開いているファイルを切り替え"
+
+#. placeholder {0}: panelTitle(pane, paneAgent)
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch to {0}"
+msgstr "{0} に切り替える"
+
+#: src/i18n/labels.ts
+msgid "Switch to the chat view"
+msgstr "チャット表示に切り替える"
+
+#: src/i18n/labels.ts
+msgid "Switch to the terminal view"
+msgstr "ターミナル表示に切り替える"
+
+#: src/i18n/labels.ts
+msgid "Switch to the text view"
+msgstr "テキスト表示に切り替える"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Symbols"
+msgstr "記号"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "System"
+msgstr "システム設定"
+
+#: src/i18n/labels.ts
+msgid "Tab"
+msgstr "タブ"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Tab {0}. Long press for actions."
+msgstr "タブ {0}。長押しで操作を表示。"
+
+#: src/components/attachment-menu.tsx
+msgid "Take photo"
+msgstr "写真を撮る"
+
+#: src/app/settings.tsx
+#: src/i18n/labels.ts
+msgid "Terminal"
+msgstr "ターミナル"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Terminal colours follow the theme."
+msgstr "ターミナルの色はテーマに従います。"
+
+#: src/components/settings-terminal.tsx
+msgid "Terminal key row"
+msgstr "ターミナルキー行"
+
+#: src/i18n/labels.ts
+msgid "Text"
+msgstr "テキスト"
+
+#: src/components/settings-terminal.tsx
+msgid "Text size"
+msgstr "文字サイズ"
+
+#: src/hooks/use-pane-approval.ts
+msgid "That answer did not reach the agent."
+msgstr "この回答はエージェントに届きませんでした。"
+
+#: src/app/explore.tsx
+msgid "That code was refused. Hold still for a new one."
+msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください。"
+
+#: src/components/settings-servers.tsx
+msgid "The address is where this paired server is reached. Changing it does not unpair the device."
+msgstr "アドレスは、このペアリング済みサーバーに接続する場所です。変更してもデバイスのペアリングは解除されません。"
+
+#: src/app/explore.tsx
+msgid "The address the Gateway prints when it starts."
+msgstr "Gateway が起動時に表示するアドレスです。"
+
+#: src/i18n/labels.ts
+msgid "The agent is asking something else now."
+msgstr "エージェントは今、別のことを尋ねています。"
+
+#: src/i18n/labels.ts
+msgid "The agent is no longer waiting."
+msgstr "エージェントはもう待っていません。"
+
+#: src/components/pairing-camera.tsx
+msgid "The camera did not start"
+msgstr "カメラが起動しませんでした"
+
+#: src/components/pairing-camera.tsx
+msgid "The camera reported an error."
+msgstr "カメラがエラーを報告しました。"
+
+#: src/lib/release-notes.ts
+msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
+msgstr "ソフトウェアキーボードがキーボードらしい配列になり、押した瞬間にそのキーが送信されます。"
+
+#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgid "The raw pane, on its grid and in its own colours."
+msgstr "素のパネルを、文字グリッドと本来の色のまま表示します。"
+
+#: src/components/app-error-boundary.tsx
+msgid "The screen hit an error. Try again — your servers stay paired."
+msgstr "この画面でエラーが発生しました。もう一度お試しください。サーバーのペアリングはそのまま残ります。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The server did not return it."
+msgstr "サーバーから返ってきませんでした。"
+
+#: src/app/commands.tsx
+msgid "The server did not say which panel it made."
+msgstr "サーバーがどのパネルを作成したか返しませんでした。"
+
+#: src/components/settings-servers.tsx
+msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "サーバーはこのデバイスに残っています。Gateway が動いていることを確認してから、もう一度お試しください。"
+
+#: src/i18n/labels.ts
+msgid "The transcript as a conversation, with tool steps folded away."
+msgstr "やり取りを会話として表示し、ツールの手順は折りたたみます。"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme"
+msgstr "テーマ"
+
+#. placeholder {0}: pack.label
+#: src/components/settings-appearance.tsx
+msgid "Theme, {0}"
+msgstr "テーマ、{0}"
+
+#: src/i18n/labels.ts
+msgid "This agent did not offer that answer."
+msgstr "このエージェントはその選択肢を提示していません。"
+
+#: src/lib/attachments.ts
+msgid "This device has no camera available."
+msgstr "このデバイスには使用できるカメラがありません。"
+
+#: src/components/asset-viewer.tsx
+msgid "This file is empty."
+msgstr "このファイルは空です。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This file is not among the session artifacts."
+msgstr "このファイルはセッションの成果物に含まれていません。"
+
+#: src/lib/network-error.ts
+msgid "This Gateway does not answer to that address."
+msgstr "この Gateway はそのアドレスに応答しません。"
+
+#: src/components/session-artifacts.tsx
+msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "この Gateway はまだファイルを提供していません。セッションが書き出したファイルを見るには、牧群（ぼくぐん）の Gateway プラグインを更新してください。"
+
+#: src/components/settings-servers.tsx
+msgid "This gateway has not listed any paired devices."
+msgstr "この Gateway はペアリング済みデバイスを返していません。"
+
+#: src/components/image-preview-modal.tsx
+msgid "This image could not be loaded."
+msgstr "この画像を読み込めませんでした。"
+
+#: src/app/+not-found.tsx
+msgid "This link goes nowhere"
+msgstr "このリンクの先には何もありません"
+
+#: src/components/terminal-boundary.tsx
+msgid "This panel could not be drawn."
+msgstr "このパネルを描画できませんでした。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This panel is no longer available."
+msgstr "このパネルはもう存在しません。"
+
+#: src/app/explore.tsx
+msgid "This QR code is not valid."
+msgstr "この QR コードは正しくありません。"
+
+#: src/lib/network-error.ts
+msgid "This server cannot use this device's stored key. Pair it again to reconnect."
+msgstr "このサーバーはこのデバイスに保存された鍵を使えません。もう一度ペアリングすると再接続できます。"
+
+#: src/lib/network-error.ts
+msgid "This server could not read the request. Check this device's date and time."
+msgstr "このサーバーはリクエストを読み取れませんでした。このデバイスの日付と時刻を確認してください。"
+
+#: src/components/new-task-sheet.tsx
+msgid "This server did not name any agents it can start."
+msgstr "このサーバーは起動できるエージェントを挙げませんでした。"
+
+#: src/lib/network-error.ts
+msgid "This server had a problem answering."
+msgstr "このサーバーの応答中に問題が起きました。"
+
+#: src/lib/network-error.ts
+msgid "This server has already handled that request."
+msgstr "このサーバーはそのリクエストをすでに処理しています。"
+
+#: src/app/new-task.tsx
+msgid "This server has no session to start an agent in."
+msgstr "このサーバーにはエージェントを起動できるセッションがありません。"
+
+#: src/app/new-task.tsx
+#: src/app/web-service.tsx
+msgid "This server is no longer paired."
+msgstr "このサーバーはもうペアリングされていません。"
+
+#: src/lib/network-error.ts
+msgid "This server no longer recognises this device. Pair it again to reconnect."
+msgstr "このサーバーはこのデバイスを認識しなくなりました。もう一度ペアリングすると再接続できます。"
+
+#: src/lib/network-error.ts
+msgid "This server refused the request."
+msgstr "このサーバーはリクエストを拒否しました。"
+
+#: src/components/session-map.tsx
+msgid "This tab has no panels."
+msgstr "このタブにはパネルがありません。"
+
+#: src/components/session-map.tsx
+msgid "This workspace has no tabs yet."
+msgstr "このワークスペースにはまだタブがありません。"
+
+#: src/i18n/labels.ts
+msgid "Today"
+msgstr "今日"
+
+#: src/components/code-view.tsx
+msgid "Too large to colour. Shown as plain text."
+msgstr "大きすぎて色付けできません。プレーンテキストで表示します。"
+
+#: src/components/code-view.tsx
+msgid "Too many lines to colour. Shown as plain text."
+msgstr "行数が多すぎて色付けできません。プレーンテキストで表示します。"
+
+#: src/components/app-error-boundary.tsx
+#: src/components/asset-viewer.tsx
+msgid "Try again"
+msgstr "もう一度試す"
+
+#: src/components/settings-servers.tsx
+msgid "Try again once the gateway responds."
+msgstr "Gateway が応答したらもう一度試してください。"
+
+#: src/app/(drawer)/index.tsx
+msgid "Try the demo"
+msgstr "デモを試す"
+
+#: src/components/asset-viewer.tsx
+msgid "Type"
+msgstr "種類"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Type into this editor"
+msgstr "このエディタに入力"
+
+#: src/components/new-task-sheet.tsx
+msgid "Type it, or use your keyboard's dictation key."
+msgstr "入力するか、キーボードの音声入力キーを使ってください。"
+
+#: src/i18n/labels.ts
+msgid "Undo"
+msgstr "取り消し"
+
+#: src/components/asset-viewer.tsx
+msgid "unknown"
+msgstr "不明"
+
+#: src/i18n/labels.ts
+msgid "Unknown"
+msgstr "不明"
+
+#: src/i18n/labels.ts
+msgid "Unknown date"
+msgstr "日付不明"
+
+#: src/lib/local-authentication.ts
+msgid "Unlock Muqun"
+msgstr "牧群（ぼくぐん）のロックを解除"
+
+#. placeholder {0}: authAvailability?.label ?? t`device authentication`
+#: src/components/settings-security.tsx
+msgid "Unlock with {0}"
+msgstr "{0} でロック解除"
+
+#: src/components/app-lock-gate.tsx
+msgid "Unlock with {authLabel}"
+msgstr "{authLabel} でロック解除"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair"
+msgstr "ペアリングを解除"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair {label}"
+msgstr "{label} のペアリングを解除"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair this server"
+msgstr "このサーバーのペアリングを解除"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Up arrow"
+msgstr "上矢印"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready · restarting…"
+msgstr "更新の準備完了 · 再起動中…"
+
+#: src/components/update-status-banner.tsx
+msgid "Updating Muqun…"
+msgstr "牧群（ぼくぐん）を更新中…"
+
+#: src/components/attachment-strip.tsx
+msgid "upload failed"
+msgstr "アップロード失敗"
+
+#: src/components/attachment-strip.tsx
+msgid "uploaded"
+msgstr "アップロード済み"
+
+#: src/components/attachment-strip.tsx
+msgid "uploading"
+msgstr "アップロード中"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Use {0}"
+msgstr "{0} を使用"
+
+#: src/lib/local-authentication.ts
+msgid "Use device passcode"
+msgstr "デバイスのパスコードを使用"
+
+#: src/components/settings-servers.tsx
+msgid "Use the scan button on the home screen to add one."
+msgstr "ホーム画面のスキャンボタンから追加してください。"
+
+#: src/components/settings-servers.tsx
+msgid "Use this server"
+msgstr "このサーバーを使用"
+
+#: src/components/settings-servers.tsx
+msgid "USING"
+msgstr "使用中"
+
+#. placeholder {0}: build ? ` (${build})` : ''
+#: src/app/settings.tsx
+msgid "Version {version}{0}"
+msgstr "バージョン {version}{0}"
+
+#: src/i18n/labels.ts
+msgid "Visual mode"
+msgstr "ビジュアルモード"
+
+#: src/lib/demo-gateway.ts
+msgid "Visualize current context usage as a colored grid"
+msgstr "現在のコンテキスト使用量を色分けしたグリッドで表示します"
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.web.tsx
+msgid "Waiting for output…"
+msgstr "出力を待っています…"
+
+#: src/lib/network-error.ts
+msgid "Waiting for the network."
+msgstr "ネットワークを待っています。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Waiting for uploads to finish…"
+msgstr "アップロードの完了を待っています…"
+
+#: src/lib/release-notes.ts
+msgid "What's new"
+msgstr "新着情報"
+
+#: src/lib/release-notes.ts
+msgid "When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it."
+msgstr "エージェントが許可を求めると、牧群（ぼくぐん）はその質問をカードとして描き直し、答えるまで入力欄を空にします。"
+
+#: src/components/away-digest-card.tsx
+msgid "While you were away"
+msgstr "離席中の変化"
+
+#: src/i18n/labels.ts
+msgid "Working"
+msgstr "作業中"
+
+#: src/components/session-map.tsx
+msgid "Workspace"
+msgstr "ワークスペース"
+
+#: src/components/session-map.tsx
+msgid "WORKSPACE"
+msgstr "ワークスペース"
+
+#: src/lib/demo-gateway.ts
+msgid "Write and quit"
+msgstr "書き込んで終了"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Write the file"
+msgstr "ファイルを書き込む"
+
+#: src/i18n/labels.ts
+msgid "Write the file and quit"
+msgstr "ファイルを書き込んで終了"
+
+#: src/i18n/labels.ts
+msgid "Yank this line"
+msgstr "この行をヤンク"
+
+#: src/i18n/labels.ts
+msgid "Yesterday"
+msgstr "昨日"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Your agents, anywhere."
+msgstr "どこでも、エージェントと。"
+
+#: src/components/app-drawer-content.tsx
+msgid "Your paired gateways"
+msgstr "ペアリング済みの Gateway"

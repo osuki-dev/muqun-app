@@ -1,0 +1,207 @@
+# Full offline tour of the app through demo mode. Doubles as the source of the
+# marketing screenshots (saved under the run's takeScreenshot/ artifacts).
+#
+# Demo mode is fully bundled, so nothing here touches a gateway or the network.
+# The terminal itself is a Skia canvas (not in the accessibility tree), so steps
+# wait on animations and act on the surrounding chrome rather than on terminal
+# text.
+#
+# Two platform quirks used to break this tour (card #564) and both fixes are
+# structural rather than local:
+#
+#  * Android gesture navigation owns the left screen edge. The drawer used to be
+#    opened with a swipe starting at 2% of the width, which the system read as
+#    Back: the app went to the launcher and the next assertion saw the home
+#    screen. The drawer is now opened with its own hamburger button, which
+#    behaves identically on both platforms and cannot be mistaken for a system
+#    gesture.
+#  * A dev build's LogBox banner reappears on every new warning and swallows the
+#    next tap. Dismissing it once was not enough, so it is now a subflow run
+#    defensively before each tap-sensitive step. On a release build it is a
+#    no-op.
+#
+# Coordinate taps have also been replaced by the controls' own accessibility
+# labels wherever one exists; a percentage point silently lands on whatever the
+# layout moved into that spot.
+appId: dev.osuki.muqun
+name: demo-tour
+tags:
+  - smoke
+  - full
+---
+- runFlow: ../subflows/launch-home.yaml
+- takeScreenshot: shots/00-home
+
+# ── Terminal ──────────────────────────────────────────────────────────────
+- tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: ../subflows/dismiss-logbox.yaml
+# The digest raised on returning to a server after a long absence, which
+# demo mode fabricates once per launch (card #691). A no-op wherever there is
+# nothing standing.
+- runFlow: ../subflows/dismiss-away-digest.yaml
+- takeScreenshot: shots/01-terminal
+
+# ── Quick actions ─────────────────────────────────────────────────────────
+# The lightning button is at the left end of the terminal key row -- and with
+# that row switched off it floats bottom-left over the pane instead, level with
+# "↓ Latest", which the last section of this flow checks. Matched by label
+# rather than by point either way: its offset follows the composer's height.
+- tapOn: "Open quick actions"
+- extendedWaitUntil:
+    visible: "Close quick actions"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- takeScreenshot: shots/02-actions
+# Closed by its own button: swiping a bottom sheet down is a race between the
+# sheet's own gesture handler and the list inside it.
+- tapOn: "Close quick actions"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Panels — the session map, from the panels button, top-right ───────────
+# One outline of the whole workspace: a workspace rail, then every panel grouped
+# under the tab that owns it and addressed the way tmux addresses it. The tab is
+# a heading here rather than a filter, which is what card #633 changed -- so the
+# panels of every tab are on screen at once, and the assertion below can name
+# one without first tapping a tab chip to reveal it.
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Open panels"
+- extendedWaitUntil:
+    visible: "Close panels"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: "WORKSPACE"
+# The workspace chip's count, which is the whole of card #830. It is counted
+# from the panes the sheet loaded, not read off the workspace record: the demo
+# fixture deliberately no longer sends `pane_count`, exactly as a tmux gateway
+# does not, so a chip that has gone back to trusting the record reads `0 panels`
+# here and fails this line. Five panes in three tabs is the demo session.
+#
+# Read off the chip's accessibility label rather than the caption drawn inside
+# it. The chip is a Pressable with a label, so on iOS it is a single
+# accessibility element and its own children are not in the tree at all -- this
+# line asserted a bare "5 panels" for as long as it only ever ran on Android,
+# and could never have passed on a phone. Matched as a whole-string regex,
+# which is how Maestro matches text.
+- assertVisible: "Open workspace .*, 5 panels\\. Long press to close\\."
+- takeScreenshot: shots/03-panels
+# "New panel" lives under the last group, and the demo session grew a second and
+# third tab with a panel each when the two-finger tab swipe landed (commit
+# 746fe8c). Five panels in three groups is taller than the sheet, so on a
+# 1080x2400 screen the button is below the fold -- which is the sheet working,
+# because it scrolls. The assertion is a scroll to it rather than a bare
+# `assertVisible`, which only passed while the list was short enough to fit.
+- scrollUntilVisible:
+    element:
+      text: "New panel"
+    direction: DOWN
+    timeout: 15000
+- scrollUntilVisible:
+    element:
+      text: "Close panels"
+    direction: UP
+- tapOn: "Close panels"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Files — what the session produced, from the pane's action row ─────────
+# Its own sheet rather than a section under the panel list (card #633), and its
+# own entry beside Quick actions: what goes into the session, and what came out.
+# The `artifacts` flow covers the search, the filters and the viewer; this is
+# the tour, so it opens it, shows it, and leaves.
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Open files"
+- extendedWaitUntil:
+    visible: "Close files"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: "Open dark-mode.md"
+- takeScreenshot: shots/03b-files
+- tapOn: "Close files"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── nvim pane (second chip in the pane strip) for a full-terminal view ────
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Switch to nvim"
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- takeScreenshot: shots/04-terminal
+
+# ── Settings (privacy / controls) via the drawer ──────────────────────────
+- tapOn:
+    text: "Back to servers"
+    # Phone dismisses the server screen to reach Settings. Pad keeps the
+    # server rail visible beside the workspace, so there is nothing to dismiss.
+    optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 8000
+# The gear in the home header. The drawer it used to open is switched off
+# (card #664), which also retires the Android edge-swipe problem card #564
+# worked around.
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Color mode"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 2000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- takeScreenshot: shots/05-privacy
+
+# ── The key row switched off, and where its two entries go ────────────────
+# Switching the row off used to leave the row itself standing, holding quick
+# actions and files and nothing else -- a full-width bar over the pane for two
+# buttons. The row now goes with its keys and the two entries float in the
+# pane's bottom-left corner instead, level with "↓ Latest".
+#
+# What this checks is the part that must never break: whichever way the setting
+# is thrown, both entries are still on the screen and still openable. A rule
+# that hid them would take quick actions and the session's files with it, and
+# nothing else on the screen leads to either.
+- scrollUntilVisible:
+    element:
+      text: "Terminal key row"
+    direction: DOWN
+- tapOn:
+    id: "toggle-Terminal key row"
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn: "Go back"
+- runFlow:
+    # Phone returns to its home list and must reopen the demo. Pad returns to
+    # the workspace that remained visible beside Settings.
+    when:
+      visible: "Try the demo"
+    commands:
+      - tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- runFlow: ../subflows/dismiss-away-digest.yaml
+- assertVisible: "Open quick actions"
+- assertVisible: "Open files"
+- takeScreenshot: shots/06-floating-entries
+# Openable, not merely drawn: a tray behind the dock or outside its parent's
+# bounds would assert visible and take no taps at all.
+- tapOn: "Open quick actions"
+- extendedWaitUntil:
+    visible: "Close quick actions"
+    timeout: 8000
+- tapOn: "Close quick actions"
+- waitForAnimationToEnd:
+    timeout: 2000

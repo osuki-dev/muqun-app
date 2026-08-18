@@ -1,0 +1,2458 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-07-27 21:06+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: ko\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "… truncated"
+msgstr "…이후 생략"
+
+#: src/lib/demo-gateway.ts
+msgid "[instructions]"
+msgstr "[지시]"
+
+#: src/lib/demo-gateway.ts
+msgid "[model]"
+msgstr "[모델]"
+
+#: src/lib/demo-gateway.ts
+msgid "[pr number]"
+msgstr "[PR 번호]"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# day} other {# days}}"
+msgstr "{0, plural, other {#일}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# hour} other {# hours}}"
+msgstr "{0, plural, other {#시간}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# minute} other {# minutes}}"
+msgstr "{0, plural, other {#분}}"
+
+#. placeholder {0}: digest.otherAgents
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {and # more agent} other {and # more agents}}"
+msgstr "{0, plural, other {외 #개 에이전트}}"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "{0} (this device)"
+msgstr "{0} (이 기기)"
+
+#. placeholder {0}: profile.kind
+#: src/components/new-task-sheet.tsx
+msgid "{0}, not found on this server's PATH"
+msgstr "{0}, 이 서버의 PATH에서 찾을 수 없음"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}d ago"
+msgstr "{0}일 전"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}h ago"
+msgstr "{0}시간 전"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}m ago"
+msgstr "{0}분 전"
+
+#: src/components/away-digest-card.tsx
+msgid "{asked, plural, one {· asked once} other {· asked # times}}"
+msgstr "{asked, plural, other {· #번 확인 요청}}"
+
+#: src/components/app-lock-gate.tsx
+msgid "{label} is temporarily locked. Use the system fallback or try later."
+msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단을 쓰거나 나중에 다시 시도하세요."
+
+#: src/components/session-map.tsx
+msgid "{panelCount, plural, one {# panel} other {# panels}}"
+msgstr "{panelCount, plural, other {패널 #개}}"
+
+#: src/components/row-action-menu.tsx
+msgid "{removeLabel}: {label}"
+msgstr "{removeLabel}: {label}"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "+{overflow} more"
+msgstr "외 {overflow}개"
+
+#: src/app/settings.tsx
+msgid "About"
+msgstr "정보"
+
+#: src/components/settings-terminal.tsx
+msgid "Add commands and custom key combinations."
+msgstr "명령과 사용자 지정 조합 키를 추가합니다."
+
+#: src/components/new-task-sheet.tsx
+msgid "AGENT"
+msgstr "에이전트"
+
+#: src/app/commands.tsx
+msgid "AGENT COMMANDS"
+msgstr "에이전트 명령"
+
+#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgid "Agent output reflowed for reading. Colour is lost."
+msgstr "에이전트 출력을 읽기 좋게 다시 흘려 배치합니다. 색상은 사라집니다."
+
+#: src/components/settings-terminal.tsx
+msgid "Agent panes open in"
+msgstr "에이전트 패널 기본 보기"
+
+#: src/components/settings-servers.tsx
+msgid "Agents"
+msgstr "에이전트"
+
+#: src/app/settings.tsx
+msgid "Alerts"
+msgstr "알림"
+
+#: src/app/explore.tsx
+msgid "Align the QR inside the frame"
+msgstr "QR 코드를 테두리 안에 맞춰 주세요"
+
+#: src/components/session-artifacts.tsx
+msgid "All"
+msgstr "전체"
+
+#: src/components/settings-servers.tsx
+msgid "All panes"
+msgstr "모든 패널"
+
+#: src/components/pairing-camera.tsx
+msgid "Allow camera"
+msgstr "카메라 허용"
+
+#: src/app/explore.tsx
+msgid "Allow the camera, or enter the address instead."
+msgstr "카메라를 허용하거나 주소를 입력하세요."
+
+#. placeholder {0}: option.label
+#: src/components/approval-banner.tsx
+msgid "Answer: {0}"
+msgstr "응답: {0}"
+
+#: src/components/settings-security.tsx
+msgid "App Lock enabled"
+msgstr "앱 잠금 켜짐"
+
+#: src/components/settings-security.tsx
+msgid "App Lock unavailable"
+msgstr "앱 잠금 사용 불가"
+
+#: src/app/settings.tsx
+msgid "Appearance"
+msgstr "외관"
+
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Appearance, terminal, security"
+msgstr "외관, 터미널, 보안"
+
+#: src/i18n/labels.ts
+msgid "Approve"
+msgstr "승인"
+
+#: src/i18n/labels.ts
+msgid "Approve and don't ask again"
+msgstr "승인하고 다시 묻지 않기"
+
+#: src/lib/release-notes.ts
+msgid "Approve or deny that request straight from the notification, without opening the app."
+msgstr "그 요청은 앱을 열지 않고 알림에서 바로 승인하거나 거부할 수 있습니다."
+
+#: src/app/explore.tsx
+msgid "Asking the Gateway about that code."
+msgstr "Gateway에 해당 코드를 확인하는 중입니다."
+
+#: src/components/new-task-sheet.tsx
+msgid "Asking the server what it can run…"
+msgstr "이 서버에서 실행할 수 있는 항목을 확인하는 중…"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Attach a file"
+msgstr "파일 첨부"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticate with {authLabel} to continue."
+msgstr "계속하려면 {authLabel}(으)로 인증하세요."
+
+#: src/lib/local-authentication.ts
+msgid "Authenticate with {method} to continue"
+msgstr "계속하려면 {method}(으)로 인증하세요"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating"
+msgstr "인증 중"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating…"
+msgstr "인증 중…"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication failed. Try again."
+msgstr "인증에 실패했습니다. 다시 시도하세요."
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication is unavailable. Try again or check system settings."
+msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 시스템 설정을 확인하세요."
+
+#: src/i18n/labels.ts
+msgid "Back one word"
+msgstr "한 단어 뒤로"
+
+#: src/components/app-drawer.tsx
+msgid "Back to servers"
+msgstr "서버 목록으로"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Backspace"
+msgstr "백스페이스"
+
+#: src/lib/local-authentication.ts
+msgid "biometrics"
+msgstr "생체 인식"
+
+#: src/i18n/labels.ts
+msgid "Blocked"
+msgstr "응답 대기"
+
+#: src/lib/attachments.ts
+msgid "Camera access is off. Turn it on in Settings to take a photo."
+msgstr "카메라 접근이 꺼져 있습니다. 사진을 찍으려면 설정에서 켜 주세요."
+
+#: src/components/pairing-camera.tsx
+msgid "Camera access needed"
+msgstr "카메라 접근 권한 필요"
+
+#: src/components/row-action-menu.tsx
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+#: src/components/skia-terminal.tsx
+#: src/lib/local-authentication.ts
+msgid "Cancel"
+msgstr "취소"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Cancel editing {0}"
+msgstr "{0} 편집 취소"
+
+#: src/i18n/labels.ts
+msgid "Chat"
+msgstr "대화"
+
+#: src/components/settings-security.tsx
+msgid "Check device authentication settings and try again."
+msgstr "기기 인증 설정을 확인한 뒤 다시 시도하세요."
+
+#: src/components/settings-security.tsx
+msgid "Checking system authentication…"
+msgstr "시스템 인증 확인 중…"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Checking…"
+msgstr "확인 중…"
+
+#: src/components/attachment-menu.tsx
+msgid "Choose files"
+msgstr "파일 선택"
+
+#: src/i18n/labels.ts
+msgid "Clear line"
+msgstr "줄 지우기"
+
+#: src/i18n/labels.ts
+msgid "Clear terminal"
+msgstr "터미널 지우기"
+
+#: src/components/asset-viewer.tsx
+msgid "Close file"
+msgstr "파일 닫기"
+
+#: src/components/session-artifacts.tsx
+msgid "Close files"
+msgstr "파일 목록 닫기"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Close language picker"
+msgstr "언어 목록 닫기"
+
+#: src/components/new-task-sheet.tsx
+msgid "Close new task"
+msgstr "새 작업 닫기"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Close open a web service"
+msgstr "웹 서비스 열기 닫기"
+
+#: src/app/explore.tsx
+msgid "Close pairing"
+msgstr "페어링 닫기"
+
+#: src/components/session-map.tsx
+msgid "Close panels"
+msgstr "패널 목록 닫기"
+
+#: src/components/asset-viewer.tsx
+#: src/components/image-preview-modal.tsx
+msgid "Close preview"
+msgstr "미리보기 닫기"
+
+#: src/app/commands.tsx
+msgid "Close quick actions"
+msgstr "빠른 동작 닫기"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the attachment menu"
+msgstr "첨부 메뉴 닫기"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the command list"
+msgstr "명령 목록 닫기"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Close theme picker"
+msgstr "테마 목록 닫기"
+
+#: src/components/session-artifacts.tsx
+msgid "Code"
+msgstr "코드"
+
+#: src/app/explore.tsx
+msgid "Code expired"
+msgstr "코드가 만료되었습니다"
+
+#: src/app/explore.tsx
+msgid "Code found. Reaching the Gateway."
+msgstr "코드를 찾았습니다. Gateway에 연결하는 중입니다."
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Collapse {0}"
+msgstr "{0} 접기"
+
+#: src/components/settings-appearance.tsx
+msgid "Color mode"
+msgstr "색상 모드"
+
+#: src/app/commands.tsx
+msgid "Command"
+msgstr "명령"
+
+#: src/i18n/labels.ts
+msgid "Command mode"
+msgstr "명령 모드"
+
+#: src/i18n/labels.ts
+msgid "Commit"
+msgstr "커밋"
+
+#: src/i18n/labels.ts
+msgid "Commit & push"
+msgstr "커밋 후 푸시"
+
+#: src/components/settings-terminal.tsx
+msgid "Compact"
+msgstr "작게"
+
+#: src/app/explore.tsx
+msgid "Confirm pairing"
+msgstr "페어링 확인"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Confirm revoke {0}"
+msgstr "{0} 해제 확인"
+
+#: src/components/settings-alerts.tsx
+msgid "Confirm taps, pairing, and gateway events."
+msgstr "탭, 페어링, Gateway 이벤트를 진동으로 알립니다."
+
+#: src/components/settings-servers.tsx
+msgid "Confirm unpair {label}"
+msgstr "{label} 페어링 해제 확인"
+
+#: src/components/row-action-menu.tsx
+msgid "Confirm: {removeLabel} {label}"
+msgstr "확인: {removeLabel} {label}"
+
+#: src/app/explore.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Connected"
+msgstr "연결됨"
+
+#: src/app/explore.tsx
+#: src/app/new-task.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Connecting"
+msgstr "연결 중"
+
+#: src/app/settings.tsx
+msgid "Contact us"
+msgstr "문의하기"
+
+#: src/app/explore.tsx
+msgid "Continue"
+msgstr "계속"
+
+#: src/i18n/labels.ts
+msgid "Continue task"
+msgstr "작업 계속"
+
+#: src/i18n/labels.ts
+msgid "Control A, start of line"
+msgstr "컨트롤 A, 줄 맨 앞으로"
+
+#: src/i18n/labels.ts
+msgid "Control B, run in background"
+msgstr "컨트롤 B, 백그라운드에서 실행"
+
+#: src/i18n/labels.ts
+msgid "Control C"
+msgstr "컨트롤 C"
+
+#: src/i18n/labels.ts
+msgid "Control D"
+msgstr "컨트롤 D"
+
+#: src/i18n/labels.ts
+msgid "Control D, half page down"
+msgstr "컨트롤 D, 반 페이지 아래로"
+
+#: src/i18n/labels.ts
+msgid "Control E, end of line"
+msgstr "컨트롤 E, 줄 맨 끝으로"
+
+#: src/i18n/labels.ts
+msgid "Control E, explain"
+msgstr "컨트롤 E, 설명"
+
+#: src/i18n/labels.ts
+msgid "Control K, clear to end of line"
+msgstr "컨트롤 K, 줄 끝까지 지우기"
+
+#: src/i18n/labels.ts
+msgid "Control L, clear screen"
+msgstr "컨트롤 L, 화면 지우기"
+
+#: src/i18n/labels.ts
+msgid "Control N, next"
+msgstr "컨트롤 N, 다음"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand"
+msgstr "컨트롤 O, 펼치기"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand rows"
+msgstr "컨트롤 O, 줄 펼치기"
+
+#: src/i18n/labels.ts
+msgid "Control O, jump back"
+msgstr "컨트롤 O, 이전 위치로"
+
+#: src/i18n/labels.ts
+msgid "Control P, previous"
+msgstr "컨트롤 P, 이전"
+
+#: src/i18n/labels.ts
+msgid "Control R"
+msgstr "컨트롤 R"
+
+#: src/i18n/labels.ts
+msgid "Control R, redo"
+msgstr "컨트롤 R, 다시 실행"
+
+#: src/i18n/labels.ts
+msgid "Control R, reverse search"
+msgstr "컨트롤 R, 역방향 검색"
+
+#: src/i18n/labels.ts
+msgid "Control R, transcript"
+msgstr "컨트롤 R, 대화 기록"
+
+#: src/i18n/labels.ts
+msgid "Control T, toggle tasks"
+msgstr "컨트롤 T, 작업 표시 전환"
+
+#: src/i18n/labels.ts
+msgid "Control U, clear line"
+msgstr "컨트롤 U, 줄 지우기"
+
+#: src/i18n/labels.ts
+msgid "Control U, half page up"
+msgstr "컨트롤 U, 반 페이지 위로"
+
+#: src/i18n/labels.ts
+msgid "Control V, visual block"
+msgstr "컨트롤 V, 비주얼 블록"
+
+#: src/i18n/labels.ts
+msgid "Control W, delete word"
+msgstr "컨트롤 W, 단어 삭제"
+
+#: src/i18n/labels.ts
+msgid "Control W, window prefix"
+msgstr "컨트롤 W, 창 접두 키"
+
+#: src/i18n/labels.ts
+msgid "Control Y, paste"
+msgstr "컨트롤 Y, 붙여넣기"
+
+#: src/i18n/labels.ts
+msgid "Control Z, suspend"
+msgstr "컨트롤 Z, 일시 중단"
+
+#: src/components/skia-terminal.tsx
+msgid "Copied to clipboard"
+msgstr "클립보드에 복사됨"
+
+#: src/app/explore.tsx
+msgid "Copies it, ready to paste into a terminal"
+msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
+
+#: src/components/skia-terminal.tsx
+msgid "Copy"
+msgstr "복사"
+
+#: src/app/explore.tsx
+msgid "Copy the install command"
+msgstr "설치 명령어 복사"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not add a file"
+msgstr "파일을 추가하지 못했습니다"
+
+#: src/components/skia-terminal.tsx
+msgid "Could not copy that"
+msgstr "복사하지 못했습니다"
+
+#: src/app/commands.tsx
+msgid "Could not create a panel."
+msgstr "패널을 만들지 못했습니다."
+
+#: src/components/settings-security.tsx
+msgid "Could not enable App Lock"
+msgstr "앱 잠금을 켜지 못했습니다"
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not list this server's agents."
+msgstr "이 서버의 에이전트 목록을 가져오지 못했습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not load earlier output."
+msgstr "이전 출력을 불러오지 못했습니다."
+
+#: src/components/session-artifacts.tsx
+msgid "Could not load files."
+msgstr "파일을 불러오지 못했습니다."
+
+#: src/components/session-map.tsx
+msgid "Could not load panels."
+msgstr "패널을 불러오지 못했습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open the file"
+msgstr "파일을 열지 못했습니다"
+
+#: src/lib/attachments.ts
+msgid "Could not open the picker."
+msgstr "선택기를 열지 못했습니다."
+
+#: src/components/asset-viewer.tsx
+msgid "Could not open this file."
+msgstr "이 파일을 열지 못했습니다."
+
+#: src/app/explore.tsx
+msgid "Could not reach that address. Check it and make sure the Gateway is running."
+msgstr "그 주소에 연결하지 못했습니다. 주소를 확인하고 Gateway가 실행 중인지 확인하세요."
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway."
+msgstr "Gateway에 연결하지 못했습니다."
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
+msgstr "Gateway에 연결하지 못했습니다. 실행 중인지 확인한 뒤 QR 코드를 새로 고쳐 다시 스캔하세요."
+
+#: src/app/new-task.tsx
+msgid "Could not reach this server."
+msgstr "이 서버에 연결하지 못했습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not read panel."
+msgstr "패널을 읽지 못했습니다."
+
+#: src/components/settings-servers.tsx
+msgid "Could not revoke device"
+msgstr "기기를 해제하지 못했습니다"
+
+#: src/components/settings-servers.tsx
+msgid "Could not save changes"
+msgstr "변경 사항을 저장하지 못했습니다"
+
+#: src/app/commands.tsx
+msgid "Could not send command."
+msgstr "명령을 보내지 못했습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send input."
+msgstr "입력을 보내지 못했습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send key."
+msgstr "키를 보내지 못했습니다."
+
+#: src/app/commands.tsx
+msgid "Could not send shortcut."
+msgstr "단축 명령을 보내지 못했습니다."
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not start the task."
+msgstr "작업을 시작하지 못했습니다."
+
+#: src/app/commands.tsx
+msgid "Could not stop this agent."
+msgstr "이 에이전트를 중지하지 못했습니다."
+
+#: src/components/settings-servers.tsx
+msgid "Could not unpair server"
+msgstr "서버 페어링을 해제하지 못했습니다"
+
+#: src/components/session-map.tsx
+msgid "Could not update the session."
+msgstr "세션을 업데이트하지 못했습니다."
+
+#: src/lib/attachments.ts
+msgid "Could not upload the file."
+msgstr "파일을 업로드하지 못했습니다."
+
+#: src/i18n/labels.ts
+msgid "Current path"
+msgstr "현재 경로"
+
+#: src/app/commands.tsx
+msgid "Customize terminal commands and key combinations."
+msgstr "터미널 명령과 키 조합을 사용자 지정합니다."
+
+#: src/components/settings-appearance.tsx
+msgid "Dark"
+msgstr "다크"
+
+#: src/components/settings-terminal.tsx
+msgid "Default"
+msgstr "기본"
+
+#: src/components/approval-banner.tsx
+msgid "DEFAULT"
+msgstr "기본"
+
+#: src/components/row-action-menu.tsx
+msgid "Delete"
+msgstr "삭제"
+
+#: src/app/commands.tsx
+msgid "Delete {name}"
+msgstr "{name} 삭제"
+
+#: src/i18n/labels.ts
+msgid "Delete this line"
+msgstr "이 줄 삭제"
+
+#: src/lib/demo-gateway.ts
+msgid "Demo workspace"
+msgstr "데모 워크스페이스"
+
+#: src/i18n/labels.ts
+msgid "Deny"
+msgstr "거부"
+
+#: src/lib/demo-gateway.ts
+msgid "Development"
+msgstr "개발"
+
+#: src/components/settings-security.tsx
+#: src/lib/local-authentication.ts
+msgid "device authentication"
+msgstr "기기 인증"
+
+#: src/i18n/labels.ts
+msgid "Diff summary"
+msgstr "변경 요약"
+
+#: src/components/new-task-sheet.tsx
+msgid "DIRECTORY"
+msgstr "디렉터리"
+
+#: src/components/approval-banner.tsx
+msgid "Dismiss the approval error"
+msgstr "승인 오류 닫기"
+
+#: src/components/away-digest-card.tsx
+msgid "Dismiss what happened while you were away"
+msgstr "자리를 비운 사이의 변화 닫기"
+
+#: src/components/whats-new-card.tsx
+msgid "Dismiss what's new"
+msgstr "새로운 기능 닫기"
+
+#: src/components/session-artifacts.tsx
+msgid "Docs"
+msgstr "문서"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+#: src/components/open-web-service-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Done"
+msgstr "완료"
+
+#: src/app/commands.tsx
+msgid "Done editing shortcuts"
+msgstr "단축 명령 편집 마치기"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Down arrow"
+msgstr "아래쪽 화살표"
+
+#: src/lib/demo-gateway.ts
+msgid "Draft the notes for the next build"
+msgstr "다음 빌드의 릴리스 노트 초안을 작성합니다"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Each device holds its own token for {0}."
+msgstr "각 기기는 {0}의 토큰을 따로 보관합니다."
+
+#: src/app/commands.tsx
+msgid "Edit"
+msgstr "편집"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Edit {0}"
+msgstr "{0} 편집"
+
+#: src/app/commands.tsx
+msgid "Edit shortcuts"
+msgstr "단축 명령 편집"
+
+#: src/components/settings-servers.tsx
+msgid "Edit this server"
+msgstr "이 서버 편집"
+
+#: src/lib/release-notes.ts
+msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "에디터 패널에는 vim 전용 키 줄이 놓이며, LazyVim 리더 조합도 함께 들어가고 프로그램이 요청한 색도 그대로 유지됩니다."
+
+#: src/i18n/labels.ts
+msgid "Enter"
+msgstr "엔터"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Enter a gateway URL."
+msgstr "Gateway URL을 입력하세요."
+
+#: src/components/settings-servers.tsx
+msgid "Enter a name."
+msgstr "이름을 입력하세요."
+
+#: src/app/explore.tsx
+msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
+msgstr "{PAIRING_CODE_CHARACTER_COUNT}자리 코드를 입력하세요."
+
+#: src/app/explore.tsx
+msgid "Enter the Gateway's address instead."
+msgstr "대신 Gateway 주소를 입력하세요."
+
+#: src/app/explore.tsx
+msgid "Enter URL manually"
+msgstr "URL 직접 입력"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/i18n/labels.ts
+msgid "Escape"
+msgstr "이스케이프"
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Expand {0}"
+msgstr "{0} 펼치기"
+
+#. placeholder {0}: Math.floor(secondsRemaining / 60)
+#. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
+#: src/app/explore.tsx
+msgid "Expires in {0}:{1}"
+msgstr "{0}:{1} 후 만료"
+
+#: src/components/file-mention-panel.tsx
+msgid "File mentions"
+msgstr "파일 멘션"
+
+#: src/lib/attachments.ts
+msgid "File too large (25MB max)"
+msgstr "파일이 너무 큽니다(최대 25MB)"
+
+#: src/lib/attachments.ts
+msgid "File type not allowed"
+msgstr "허용되지 않는 파일 형식"
+
+#: src/components/session-artifacts.tsx
+msgid "Files"
+msgstr "파일"
+
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "이 워크스페이스의 파일"
+
+#: src/i18n/labels.ts
+msgid "Find a file by name"
+msgstr "이름으로 파일 찾기"
+
+#: src/components/new-task-sheet.tsx
+msgid "FIRST PROMPT"
+msgstr "첫 프롬프트"
+
+#: src/lib/release-notes.ts
+msgid "Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together."
+msgstr "Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night 등 다섯 가지 테마 팩이 앱과 터미널의 색을 함께 바꿉니다."
+
+#: src/components/pane-chat-view.tsx
+msgid "Fold the tool steps away"
+msgstr "도구 단계 접기"
+
+#: src/i18n/labels.ts
+msgid "Forward one word"
+msgstr "한 단어 앞으로"
+
+#: src/lib/demo-gateway.ts
+msgid "Free up context by summarizing the conversation so far"
+msgstr "지금까지의 대화를 요약해 컨텍스트를 확보합니다"
+
+#: src/app/explore.tsx
+msgid "Front camera. Hold the QR up to the screen"
+msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
+
+#: src/app/explore.tsx
+msgid "Gateway"
+msgstr "Gateway"
+
+#: src/lib/network-error.ts
+msgid "Gateway did not respond in time."
+msgstr "Gateway가 제때 응답하지 않았습니다."
+
+#: src/lib/network-error.ts
+msgid "Gateway is temporarily unavailable."
+msgstr "Gateway를 일시적으로 사용할 수 없습니다."
+
+#: src/components/settings-alerts.tsx
+msgid "Gateway notifications"
+msgstr "Gateway 알림"
+
+#: src/lib/notifications.ts
+msgid "Gateway updates"
+msgstr "Gateway 업데이트"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL"
+msgstr "Gateway URL"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL is not valid."
+msgstr "Gateway URL이 올바르지 않습니다."
+
+#: src/i18n/labels.ts
+msgid "Git status"
+msgstr "Git 상태"
+
+#: src/components/screen-header.tsx
+msgid "Go back"
+msgstr "뒤로 가기"
+
+#: src/i18n/labels.ts
+msgid "Go to the top of the file"
+msgstr "파일 맨 위로 이동"
+
+#: src/app/+not-found.tsx
+msgid "Go to your servers"
+msgstr "서버 목록으로"
+
+#: src/components/settings-alerts.tsx
+msgid "Haptic feedback"
+msgstr "햅틱 피드백"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Hide {0}"
+msgstr "{0} 숨기기"
+
+#: src/app/commands.tsx
+msgid "Hide {name}"
+msgstr "{name} 숨기기"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Hide keyboard"
+msgstr "키보드 숨기기"
+
+#: src/components/settings-alerts.tsx
+msgid "Home screen widget"
+msgstr "홈 화면 위젯"
+
+#: src/lib/release-notes.ts
+msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
+msgstr "홈, 설정, 서버 화면을 다시 설계했습니다. 각 서버가 마지막으로 실행한 에이전트가 상태와 함께 나열됩니다."
+
+#: src/i18n/labels.ts
+msgid "Idle"
+msgstr "대기"
+
+#: src/components/session-artifacts.tsx
+msgid "Images"
+msgstr "이미지"
+
+#. placeholder {0}: row.label
+#: src/components/composer-popup.tsx
+msgid "Insert {0}"
+msgstr "{0} 삽입"
+
+#. placeholder {0}: row.label
+#. placeholder {1}: row.hint
+#: src/components/composer-popup.tsx
+msgid "Insert {0} {1}"
+msgstr "{0} {1} 삽입"
+
+#: src/i18n/labels.ts
+msgid "Insert mode"
+msgstr "입력 모드"
+
+#: src/app/explore.tsx
+msgid "Install command copied"
+msgstr "설치 명령어를 복사했습니다"
+
+#: src/i18n/labels.ts
+msgid "Interrupt"
+msgstr "중단"
+
+#: src/app/commands.tsx
+msgid "Interrupt process"
+msgstr "프로세스 중단"
+
+#: src/app/commands.tsx
+msgid "Interrupt what this agent is doing."
+msgstr "이 에이전트가 하고 있는 작업을 중단합니다."
+
+#: src/lib/local-authentication.ts
+msgid "iris recognition"
+msgstr "홍채 인식"
+
+#: src/app/+not-found.tsx
+msgid "It may be out of date, or meant for a different app. Nothing was opened."
+msgstr "만료되었거나 다른 앱을 위한 링크일 수 있습니다. 아무것도 열지 않았습니다."
+
+#: src/components/pairing-camera.tsx
+msgid "It was found, but never showed a picture. Another app may be holding it."
+msgstr "카메라를 찾았지만 화면이 나오지 않았습니다. 다른 앱이 사용 중일 수 있습니다."
+
+#: src/components/settings-servers.tsx
+msgid "Its details are stored securely on this device; try again."
+msgstr "해당 정보는 이 기기에 안전하게 저장되어 있습니다. 다시 시도하세요."
+
+#: src/components/settings-servers.tsx
+msgid "Its paired devices are listed once it is the server in use."
+msgstr "사용 중인 서버가 되면 페어링된 기기가 목록에 표시됩니다."
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.tsx
+msgid "Jump to latest output"
+msgstr "최신 출력으로 이동"
+
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "just now"
+msgstr "방금"
+
+#: src/components/settings-servers.tsx
+msgid "Keep {label}"
+msgstr "{label} 유지"
+
+#: src/components/settings-alerts.tsx
+msgid "Keep the panel you are watching on the Lock Screen while its agent works."
+msgstr "에이전트가 작업하는 동안 보고 있던 패널을 잠금 화면에 띄워 둡니다."
+
+#: src/app/commands.tsx
+msgid "Keys"
+msgstr "키"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Language"
+msgstr "언어"
+
+#: src/components/settings-appearance.tsx
+msgid "Language, {languageName}"
+msgstr "언어, {languageName}"
+
+#: src/components/settings-terminal.tsx
+msgid "Large"
+msgstr "크게"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {days}d ago"
+msgstr "마지막 연결: {days}일 전"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {hours}h ago"
+msgstr "마지막 연결: {hours}시간 전"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {minutes}m ago"
+msgstr "마지막 연결: {minutes}분 전"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected just now"
+msgstr "마지막 연결: 방금"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {days}d ago"
+msgstr "마지막 확인: {days}일 전"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {hours}h ago"
+msgstr "마지막 확인: {hours}시간 전"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {minutes}m ago"
+msgstr "마지막 확인: {minutes}분 전"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen just now"
+msgstr "마지막 확인: 방금"
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.tsx
+msgid "Latest"
+msgstr "최신"
+
+#: src/components/new-task-sheet.tsx
+msgid "Leave it empty to start where the session already is."
+msgstr "비워 두면 세션이 지금 있는 위치에서 시작합니다."
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Left arrow"
+msgstr "왼쪽 화살표"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Letters"
+msgstr "문자"
+
+#: src/components/settings-appearance.tsx
+msgid "Light"
+msgstr "라이트"
+
+#: src/app/commands.tsx
+msgid "List branches"
+msgstr "브랜치 목록"
+
+#: src/components/settings-servers.tsx
+msgid "List every pane, agent or not."
+msgstr "에이전트 유무와 관계없이 모든 패널을 나열합니다."
+
+#: src/components/settings-servers.tsx
+msgid "List only the panes running a recognised agent."
+msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다."
+
+#: src/components/settings-alerts.tsx
+msgid "Live Activity"
+msgstr "실시간 액티비티"
+
+#: src/app/commands.tsx
+msgid "Loading commands"
+msgstr "명령 불러오는 중"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading earlier output…"
+msgstr "이전 출력 불러오는 중…"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "페어링된 기기를 불러오는 중…"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading panel"
+msgstr "패널 불러오는 중"
+
+#: src/components/session-map.tsx
+msgid "Loading panels"
+msgstr "패널 목록 불러오는 중"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/settings-servers.tsx
+msgid "Loading servers"
+msgstr "서버 불러오는 중"
+
+#: src/components/app-lock-gate.tsx
+msgid "Loading settings"
+msgstr "설정 불러오는 중"
+
+#: src/components/pane-chat-view.tsx
+msgid "Loading the transcript"
+msgstr "대화 기록 불러오는 중"
+
+#: src/lib/demo-gateway.ts
+msgid "Logs"
+msgstr "로그"
+
+#: src/lib/release-notes.ts
+msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
+msgstr "터미널을 길게 누르면 출력을 선택할 수 있고, 끌어서 범위를 넓힌 뒤 복사할 수 있습니다."
+
+#: src/app/explore.tsx
+msgid "Mac mini · Office"
+msgstr "Mac mini · 사무실"
+
+#. placeholder {0}: hit.path
+#: src/components/file-mention-panel.tsx
+msgid "Mention {0}"
+msgstr "{0} 멘션"
+
+#: src/components/asset-viewer.tsx
+msgid "Modified"
+msgstr "수정일"
+
+#: src/components/virtual-keyboard.tsx
+msgid "More symbols"
+msgstr "기호 더 보기"
+
+#: src/app/(drawer)/_layout.tsx
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Muqun"
+msgstr "Muqun"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Muqun agent status"
+msgstr "Muqun 에이전트 상태"
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun could not verify your identity. Try again."
+msgstr "Muqun이 본인 확인에 실패했습니다. 다시 시도하세요."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun follows the language your phone is set to."
+msgstr "Muqun이 휴대폰에 설정된 언어를 따릅니다."
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun is locked"
+msgstr "Muqun 잠김"
+
+#: src/components/pairing-camera.tsx
+msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
+msgstr "Muqun은 카메라로 Gateway의 QR 코드를 읽습니다. 아무것도 기록하지 않습니다."
+
+#: src/app/settings.tsx
+msgid "Muqun settings stay on this device."
+msgstr "Muqun 설정은 이 기기에만 남습니다."
+
+#: src/lib/release-notes.ts
+msgid "Muqun speaks eight languages. It follows your phone, or you can choose one in Settings."
+msgstr "Muqun은 여덟 개 언어를 말합니다. 기본적으로 휴대폰을 따르고, 설정에서 직접 고를 수도 있습니다."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun stays in this language whatever the phone is set to."
+msgstr "휴대폰 설정과 상관없이 Muqun은 이 언어를 유지합니다."
+
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Muqun will use {0} when the app opens."
+msgstr "앱을 열면 Muqun이 {0}을(를) 사용합니다."
+
+#: src/app/commands.tsx
+msgid "Name"
+msgstr "이름"
+
+#: src/app/explore.tsx
+msgid "Name it, then enter the code shown by the Gateway."
+msgstr "이름을 지정한 뒤 Gateway에 표시된 코드를 입력하세요."
+
+#: src/components/settings-servers.tsx
+msgid "Never connected"
+msgstr "연결된 적 없음"
+
+#: src/components/settings-servers.tsx
+msgid "Never seen"
+msgstr "확인된 적 없음"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New panel"
+msgstr "새 패널"
+
+#: src/lib/release-notes.ts
+msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
+msgstr "새 패널은 이제 지금 있는 탭을 분할하고, 만들어진 패널로 바로 이동합니다."
+
+#: src/app/commands.tsx
+msgid "NEW SHORTCUT"
+msgstr "새 단축 명령"
+
+#: src/app/commands.tsx
+msgid "New tab"
+msgstr "새 탭"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "New task"
+msgstr "새 작업"
+
+#: src/components/new-task-action.tsx
+msgid "New task on {label}"
+msgstr "{label}에서 새 작업"
+
+#: src/components/session-map.tsx
+msgid "New workspace"
+msgstr "새 워크스페이스"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "No agents running"
+msgstr "실행 중인 에이전트 없음"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "No app on this phone opens web pages."
+msgstr "이 휴대폰에는 웹 페이지를 열 수 있는 앱이 없습니다."
+
+#: src/components/pairing-camera.tsx
+msgid "No camera to scan with"
+msgstr "스캔할 카메라가 없습니다"
+
+#: src/components/pairing-camera.tsx
+msgid "No camera was found on this device."
+msgstr "이 기기에서 카메라를 찾지 못했습니다."
+
+#: src/components/session-artifacts.tsx
+msgid "No files match."
+msgstr "일치하는 파일이 없습니다."
+
+#: src/app/explore.tsx
+msgid "No Gateway yet?"
+msgstr "아직 Gateway가 없나요?"
+
+#: src/app/settings.tsx
+msgid "No mail app configured"
+msgstr "설정된 메일 앱 없음"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "No output."
+msgstr "출력이 없습니다."
+
+#: src/components/asset-viewer.tsx
+msgid "No preview for this kind of file. It stays on the server."
+msgstr "이 형식의 파일은 미리 볼 수 없습니다. 파일은 서버에 그대로 있습니다."
+
+#: src/app/new-task.tsx
+msgid "No server to start a task on."
+msgstr "작업을 시작할 서버가 없습니다."
+
+#: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
+msgid "No servers paired yet"
+msgstr "아직 페어링된 서버가 없습니다"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Not available"
+msgstr "사용 불가"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "not connected"
+msgstr "연결 안 됨"
+
+#: src/i18n/labels.ts
+msgid "Not connected"
+msgstr "연결되지 않음"
+
+#: src/i18n/labels.ts
+msgid "NOT CONNECTED"
+msgstr "연결 안 됨"
+
+#: src/app/+not-found.tsx
+msgid "Not found"
+msgstr "찾을 수 없음"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
+msgstr "포트 {port}에서 응답이 없습니다. 아무것도 수신 대기하지 않거나 localhost에만 바인딩되어 있습니다 — --host 0.0.0.0으로 다시 시작하면 여기에서 연결할 수 있습니다."
+
+#: src/components/session-artifacts.tsx
+msgid "Nothing here yet. Files the session writes show up on their own."
+msgstr "아직 아무것도 없습니다. 세션이 쓴 파일은 저절로 나타납니다."
+
+#: src/components/pane-chat-view.tsx
+msgid "Nothing to show yet."
+msgstr "아직 표시할 내용이 없습니다."
+
+#: src/i18n/labels.ts
+msgid "OFFLINE"
+msgstr "오프라인"
+
+#: src/i18n/labels.ts
+msgid "Offline, not answering"
+msgstr "오프라인 상태, 응답 없음"
+
+#: src/i18n/labels.ts
+msgid "Online"
+msgstr "온라인 상태"
+
+#: src/i18n/labels.ts
+msgid "ONLINE"
+msgstr "온라인"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open"
+msgstr "열기"
+
+#. placeholder {0}: asset.name
+#. placeholder {0}: part.fallback_text || part.asset_id
+#. placeholder {0}: server.label
+#: src/app/(drawer)/index.tsx
+#: src/components/pane-chat-blocks.tsx
+#: src/components/session-artifacts.tsx
+msgid "Open {0}"
+msgstr "{0} 열기"
+
+#: src/app/commands.tsx
+msgid "Open a port on this machine in your browser."
+msgstr "이 컴퓨터의 포트를 브라우저에서 엽니다."
+
+#: src/app/commands.tsx
+msgid "Open a tab of its own and go to it."
+msgstr "별도의 탭을 열고 그곳으로 이동합니다."
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open a web service"
+msgstr "웹 서비스 열기"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open anyway"
+msgstr "그래도 열기"
+
+#: src/components/artifacts-button.tsx
+msgid "Open files"
+msgstr "파일 목록 열기"
+
+#: src/i18n/labels.ts
+msgid "Open Lazygit"
+msgstr "Lazygit 열기"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Open Muqun to connect"
+msgstr "Muqun을 열어 연결하세요"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Open on-screen keyboard"
+msgstr "화면 키보드 열기"
+
+#: src/components/session-map.tsx
+msgid "Open panel {title}. Long press to close."
+msgstr "{title} 패널 열기. 길게 누르면 닫힙니다."
+
+#: src/components/app-drawer.tsx
+msgid "Open panels"
+msgstr "패널 목록 열기"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open port {recent}"
+msgstr "포트 {recent} 열기"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Open quick actions"
+msgstr "빠른 동작 열기"
+
+#: src/i18n/labels.ts
+msgid "Open the file explorer"
+msgstr "파일 탐색기 열기"
+
+#. placeholder {0}: workspace.title
+#. placeholder {1}: inventory.panels
+#: src/components/session-map.tsx
+msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
+msgstr "{0} 워크스페이스({1, plural, other {패널 #개}}) 열기. 길게 누르면 닫힙니다."
+
+#: src/app/explore.tsx
+msgid "Opening the server."
+msgstr "서버를 여는 중입니다."
+
+#: src/app/settings.tsx
+msgid "Opens the Muqun issue tracker on GitHub."
+msgstr "GitHub의 Muqun 이슈 트래커를 엽니다."
+
+#: src/components/server-agent-rows.tsx
+msgid "Opens this agent's panel"
+msgstr "이 에이전트의 패널을 엽니다"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Options for {0}"
+msgstr "{0} 옵션"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Pair a server"
+msgstr "서버 페어링"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair again"
+msgstr "다시 페어링"
+
+#: src/app/explore.tsx
+msgid "Pair server"
+msgstr "서버 페어링"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair this server again"
+msgstr "이 서버를 다시 페어링"
+
+#: src/lib/network-error.ts
+msgid "Pair this server again."
+msgstr "이 서버를 다시 페어링하세요."
+
+#: src/app/(drawer)/index.tsx
+msgid "Pair your first server"
+msgstr "첫 서버 페어링하기"
+
+#: src/app/explore.tsx
+msgid "Pairing"
+msgstr "페어링 중"
+
+#: src/app/explore.tsx
+msgid "Pairing code"
+msgstr "페어링 코드"
+
+#: src/app/explore.tsx
+msgid "Pairing code expired. Scan again for a new code."
+msgstr "페어링 코드가 만료되었습니다. 다시 스캔해 새 코드를 받으세요."
+
+#: src/app/explore.tsx
+msgid "Pairing failed."
+msgstr "페어링에 실패했습니다."
+
+#: src/app/commands.tsx
+msgid "PANEL COMMANDS"
+msgstr "패널 명령"
+
+#: src/components/session-map.tsx
+msgid "Panels"
+msgstr "패널"
+
+#: src/components/settings-servers.tsx
+msgid "Panes on server cards"
+msgstr "서버 카드의 패널"
+
+#: src/i18n/labels.ts
+msgid "Paste"
+msgstr "붙여넣기"
+
+#: src/components/asset-viewer.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Path"
+msgstr "경로"
+
+#: src/components/attachment-menu.tsx
+msgid "Photo library"
+msgstr "사진 보관함"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Port"
+msgstr "포트"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "PORT"
+msgstr "포트"
+
+#: src/components/approval-banner.tsx
+msgid "Press Escape to dismiss this request"
+msgstr "이스케이프를 눌러 이 요청 닫기"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Preview {0}, {status}"
+msgstr "{0} 미리보기, {status}"
+
+#: src/app/settings.tsx
+msgid "Privacy policy"
+msgstr "개인정보 처리방침"
+
+#: src/app/commands.tsx
+msgid "Prompt"
+msgstr "프롬프트"
+
+#: src/components/settings-security.tsx
+msgid "Protect paired servers and terminal sessions."
+msgstr "페어링된 서버와 터미널 세션을 보호합니다."
+
+#: src/i18n/labels.ts
+msgid "Pull"
+msgstr "풀"
+
+#: src/components/skia-terminal.tsx
+msgid "Pull for earlier output"
+msgstr "당겨서 이전 출력 불러오기"
+
+#: src/components/attachment-strip.tsx
+msgid "queued to upload"
+msgstr "업로드 대기 중"
+
+#: src/app/commands.tsx
+msgid "Quick action settings"
+msgstr "빠른 동작 설정"
+
+#: src/app/commands.tsx
+#: src/components/settings-terminal.tsx
+msgid "Quick actions"
+msgstr "빠른 동작"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Quit"
+msgstr "종료"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Reach a server running on {label} from this phone."
+msgstr "{label}에서 실행 중인 서버에 이 휴대폰에서 연결합니다."
+
+#: src/app/settings.tsx
+msgid "Reach us at {SUPPORT_EMAIL}."
+msgstr "{SUPPORT_EMAIL}(으)로 문의해 주세요."
+
+#: src/app/explore.tsx
+msgid "Reaching the Gateway"
+msgstr "Gateway에 연결하는 중"
+
+#: src/components/settings-alerts.tsx
+msgid "Receive agent blocks and gateway updates."
+msgstr "에이전트의 응답 대기 알림과 Gateway 소식을 받습니다."
+
+#: src/i18n/labels.ts
+msgid "Recent commits"
+msgstr "최근 커밋"
+
+#. placeholder {0}: status.attempt
+#: src/components/server-terminal-workspace.tsx
+msgid "Reconnecting · {0}"
+msgstr "다시 연결 중 · {0}"
+
+#: src/components/session-artifacts.tsx
+msgid "Refresh files"
+msgstr "파일 새로 고침"
+
+#: src/components/session-map.tsx
+msgid "Refresh panels"
+msgstr "패널 새로 고침"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Remove {0}"
+msgstr "{0} 제거"
+
+#: src/components/row-action-menu.tsx
+msgid "Rename {label}"
+msgstr "{label} 이름 바꾸기"
+
+#: src/components/session-map.tsx
+msgid "Rename panel"
+msgstr "패널 이름 변경"
+
+#: src/components/session-map.tsx
+msgid "Rename tab"
+msgstr "탭 이름 변경"
+
+#: src/components/session-map.tsx
+msgid "Rename workspace"
+msgstr "워크스페이스 이름 변경"
+
+#: src/app/commands.tsx
+msgid "Render as terminal"
+msgstr "터미널로 표시"
+
+#: src/app/commands.tsx
+msgid "Render as text"
+msgstr "텍스트로 표시"
+
+#: src/app/settings.tsx
+msgid "Report a bug or request a feature"
+msgstr "버그 신고 또는 기능 제안"
+
+#: src/lib/network-error.ts
+msgid "Request failed."
+msgstr "요청에 실패했습니다."
+
+#: src/components/settings-security.tsx
+msgid "Required on launch and after 30 seconds in the background."
+msgstr "앱을 실행할 때와 백그라운드에서 30초가 지난 뒤에 인증을 요구합니다."
+
+#: src/components/settings-alerts.tsx
+msgid "Requires iOS 16.1 or later."
+msgstr "iOS 16.1 이상이 필요합니다."
+
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "업데이트를 마치려면 Muqun을 다시 실행하세요"
+
+#: src/app/commands.tsx
+msgid "Restore hidden default commands"
+msgstr "숨긴 기본 명령 복원"
+
+#: src/app/commands.tsx
+msgid "Restore hidden defaults"
+msgstr "숨긴 기본 항목 복원"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/terminal-boundary.tsx
+msgid "Retry"
+msgstr "재시도"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry connection"
+msgstr "연결 재시도"
+
+#: src/components/terminal-boundary.tsx
+msgid "Retry drawing the panel"
+msgstr "패널 다시 그리기"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry the ones marked in red, or remove them, then send again."
+msgstr "빨간색으로 표시된 항목을 다시 시도하거나 삭제한 뒤 다시 보내세요."
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Retry uploading {0}"
+msgstr "{0} 업로드 다시 시도"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Return"
+msgstr "엔터 키"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Return to the server list and pair again."
+msgstr "서버 목록으로 돌아가 다시 페어링하세요."
+
+#: src/lib/demo-gateway.ts
+msgid "Review"
+msgstr "검토"
+
+#: src/lib/demo-gateway.ts
+msgid "Review a GitHub pull request"
+msgstr "GitHub 풀 리퀘스트를 검토합니다"
+
+#: src/app/commands.tsx
+msgid "Review changes"
+msgstr "변경 사항 검토"
+
+#: src/app/commands.tsx
+msgid "Review the current changes."
+msgstr "현재 변경 사항을 검토해 주세요."
+
+#: src/components/new-task-sheet.tsx
+msgid "Review the failing test and fix it."
+msgstr "실패한 테스트를 살펴보고 고쳐 줘."
+
+#: src/components/settings-servers.tsx
+msgid "Revoke"
+msgstr "해제"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Revoke {0}"
+msgstr "{0} 해제"
+
+#: src/components/settings-servers.tsx
+msgid "Revoking…"
+msgstr "해제 중…"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Right arrow"
+msgstr "오른쪽 화살표"
+
+#: src/app/commands.tsx
+msgid "Run a command or key combo."
+msgstr "명령이나 키 조합을 실행합니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Run a terminal command"
+msgstr "터미널 명령 실행"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Run command"
+msgstr "명령 실행"
+
+#: src/i18n/labels.ts
+msgid "Run relevant tests"
+msgstr "관련 테스트 실행"
+
+#: src/app/(drawer)/index.tsx
+msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
+msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다."
+
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Save"
+msgstr "저장"
+
+#: src/app/commands.tsx
+msgid "Save a command or key combo you reach for."
+msgstr "자주 쓰는 명령이나 키 조합을 저장합니다."
+
+#: src/app/commands.tsx
+msgid "Save a prompt you send this agent often."
+msgstr "이 에이전트에 자주 보내는 프롬프트를 저장합니다."
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Save changes to {0}"
+msgstr "{0}에 대한 변경 사항 저장"
+
+#: src/app/commands.tsx
+msgid "Save shortcut"
+msgstr "단축 명령 저장"
+
+#: src/components/settings-servers.tsx
+msgid "Saving…"
+msgstr "저장 중…"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/explore.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Scan a gateway QR"
+msgstr "Gateway QR 코드 스캔"
+
+#: src/app/explore.tsx
+msgid "Scan again"
+msgstr "다시 스캔"
+
+#: src/app/explore.tsx
+msgid "Scan the Gateway QR."
+msgstr "Gateway QR 코드를 스캔하세요."
+
+#: src/components/pairing-camera.tsx
+msgid "Scanning needs a camera, which this browser does not offer."
+msgstr "스캔하려면 카메라가 필요하지만 이 브라우저에서는 쓸 수 없습니다."
+
+#: src/i18n/labels.ts
+msgid "Search"
+msgstr "검색"
+
+#: src/components/session-artifacts.tsx
+msgid "Search files"
+msgstr "파일 검색"
+
+#: src/i18n/labels.ts
+msgid "Search the whole project"
+msgstr "프로젝트 전체 검색"
+
+#: src/app/settings.tsx
+msgid "Security"
+msgstr "보안"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}d ago"
+msgstr "확인: {0}일 전"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}h ago"
+msgstr "확인: {0}시간 전"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}m ago"
+msgstr "확인: {0}분 전"
+
+#: src/components/server-agent-rows.tsx
+msgid "Seen just now"
+msgstr "확인: 방금"
+
+#: src/components/skia-terminal.tsx
+msgid "Select all"
+msgstr "모두 선택"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send {spoken}"
+msgstr "{spoken} 보내기"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send a message"
+msgstr "메시지 보내기"
+
+#: src/app/commands.tsx
+msgid "Send a prompt to this agent."
+msgstr "이 에이전트에 프롬프트를 보냅니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send to agent"
+msgstr "에이전트에게 보내기"
+
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Server"
+msgstr "서버"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Server name"
+msgstr "서버 이름"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server not found"
+msgstr "서버를 찾을 수 없음"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server offline"
+msgstr "서버 오프라인"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server unavailable."
+msgstr "서버를 사용할 수 없습니다."
+
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Servers"
+msgstr "서버"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set a device passcode before using App Lock."
+msgstr "앱 잠금을 사용하려면 먼저 기기 암호를 설정하세요."
+
+#: src/app/explore.tsx
+msgid "Set one up on your computer"
+msgstr "내 컴퓨터에 하나 설치하기"
+
+#: src/lib/demo-gateway.ts
+msgid "Set the AI model for Claude Code"
+msgstr "Claude Code가 사용할 AI 모델을 설정합니다"
+
+#. placeholder {0}: authAvailability.label
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Set up {0} in system settings first."
+msgstr "먼저 시스템 설정에서 {0}을(를) 설정하세요."
+
+#. placeholder {0}: availability.label
+#: src/components/app-lock-gate.tsx
+msgid "Set up {0} in system settings to unlock Muqun."
+msgstr "Muqun을 잠금 해제하려면 시스템 설정에서 {0}을(를) 설정하세요."
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {label} in system settings first."
+msgstr "먼저 시스템 설정에서 {label}을(를) 설정하세요."
+
+#: src/app/explore.tsx
+msgid "Set up a Gateway on your computer"
+msgstr "내 컴퓨터에 Gateway 설치하기"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Settings"
+msgstr "설정"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Shift"
+msgstr "시프트"
+
+#: src/i18n/labels.ts
+msgid "Shift Enter, newline without sending"
+msgstr "시프트 엔터, 보내지 않고 줄 바꿈"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab"
+msgstr "시프트 탭"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab, cycle mode"
+msgstr "시프트 탭, 모드 전환"
+
+#: src/app/commands.tsx
+msgid "SHORTCUTS"
+msgstr "단축 명령"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Show {0}"
+msgstr "{0} 표시"
+
+#: src/components/settings-alerts.tsx
+msgid "Show agents and their status on the home screen. Updates while Muqun is open."
+msgstr "홈 화면에 에이전트와 상태를 표시합니다. Muqun이 열려 있는 동안 갱신됩니다."
+
+#: src/components/session-artifacts.tsx
+msgid "Show all files"
+msgstr "모든 파일 표시"
+
+#: src/components/pairing-camera.tsx
+msgid "Show camera details"
+msgstr "카메라 세부 정보 표시"
+
+#: src/components/session-artifacts.tsx
+msgid "Show code"
+msgstr "코드 표시"
+
+#: src/components/session-artifacts.tsx
+msgid "Show documents"
+msgstr "문서 표시"
+
+#: src/components/settings-terminal.tsx
+msgid "Show Esc, Tab, Ctrl and navigation keys above input."
+msgstr "입력창 위에 Esc, Tab, Ctrl과 방향키를 표시합니다."
+
+#: src/components/pane-chat-view.tsx
+msgid "Show every tool step"
+msgstr "모든 도구 단계 표시"
+
+#: src/components/session-artifacts.tsx
+msgid "Show images"
+msgstr "이미지 표시"
+
+#: src/components/asset-viewer.tsx
+msgid "Size"
+msgstr "크기"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Some files did not upload"
+msgstr "일부 파일을 업로드하지 못했습니다"
+
+#: src/components/app-error-boundary.tsx
+msgid "Something went wrong"
+msgstr "문제가 발생했습니다"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Space"
+msgstr "스페이스"
+
+#: src/app/commands.tsx
+msgid "Split this tab and go to what it makes."
+msgstr "이 탭을 분할하고 만들어진 패널로 이동합니다."
+
+#: src/lib/agent-widget-layout.tsx
+msgid "stale · {age}"
+msgstr "오래됨 · {age}"
+
+#: src/lib/demo-gateway.ts
+msgid "Start a new session with empty context"
+msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do."
+msgstr "에이전트를 시작하고 가장 먼저 할 일을 보냅니다."
+
+#: src/components/new-task-sheet.tsx
+msgid "Start task"
+msgstr "작업 시작"
+
+#: src/app/explore.tsx
+#: src/components/pairing-camera.tsx
+msgid "Starting the camera"
+msgstr "카메라를 시작하는 중"
+
+#: src/components/new-task-sheet.tsx
+msgid "Starting…"
+msgstr "시작하는 중…"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "Still running…"
+msgstr "아직 실행 중…"
+
+#: src/app/commands.tsx
+msgid "Stop"
+msgstr "중지"
+
+#: src/app/commands.tsx
+msgid "Stop this agent"
+msgstr "이 에이전트 중지"
+
+#: src/i18n/labels.ts
+msgid "Summarize progress"
+msgstr "진행 상황 요약"
+
+#: src/i18n/labels.ts
+msgid "Suspend"
+msgstr "일시 중단"
+
+#: src/components/workspace-title-switcher.tsx
+msgid "Swipe left or right to switch workspace"
+msgstr "좌우로 쓸어넘겨 워크스페이스를 전환합니다"
+
+#: src/i18n/labels.ts
+msgid "Switch between open files"
+msgstr "열려 있는 파일 전환"
+
+#. placeholder {0}: panelTitle(pane, paneAgent)
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch to {0}"
+msgstr "{0}(으)로 전환"
+
+#: src/i18n/labels.ts
+msgid "Switch to the chat view"
+msgstr "대화 보기로 전환"
+
+#: src/i18n/labels.ts
+msgid "Switch to the terminal view"
+msgstr "터미널 보기로 전환"
+
+#: src/i18n/labels.ts
+msgid "Switch to the text view"
+msgstr "텍스트 보기로 전환"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Symbols"
+msgstr "기호"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "System"
+msgstr "시스템"
+
+#: src/i18n/labels.ts
+msgid "Tab"
+msgstr "탭"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Tab {0}. Long press for actions."
+msgstr "{0} 탭. 길게 누르면 동작 메뉴가 열립니다."
+
+#: src/components/attachment-menu.tsx
+msgid "Take photo"
+msgstr "사진 찍기"
+
+#: src/app/settings.tsx
+#: src/i18n/labels.ts
+msgid "Terminal"
+msgstr "터미널"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Terminal colours follow the theme."
+msgstr "터미널 색상은 테마를 따릅니다."
+
+#: src/components/settings-terminal.tsx
+msgid "Terminal key row"
+msgstr "터미널 키 막대"
+
+#: src/i18n/labels.ts
+msgid "Text"
+msgstr "텍스트"
+
+#: src/components/settings-terminal.tsx
+msgid "Text size"
+msgstr "텍스트 크기"
+
+#: src/hooks/use-pane-approval.ts
+msgid "That answer did not reach the agent."
+msgstr "응답이 에이전트에 전달되지 않았습니다."
+
+#: src/app/explore.tsx
+msgid "That code was refused. Hold still for a new one."
+msgstr "해당 코드가 거부되었습니다. 그대로 두면 새 코드를 읽습니다."
+
+#: src/components/settings-servers.tsx
+msgid "The address is where this paired server is reached. Changing it does not unpair the device."
+msgstr "주소는 페어링된 이 서버에 접속하는 위치입니다. 주소를 변경해도 기기 페어링은 해제되지 않습니다."
+
+#: src/app/explore.tsx
+msgid "The address the Gateway prints when it starts."
+msgstr "Gateway가 시작할 때 표시하는 주소입니다."
+
+#: src/i18n/labels.ts
+msgid "The agent is asking something else now."
+msgstr "에이전트가 지금은 다른 것을 묻고 있습니다."
+
+#: src/i18n/labels.ts
+msgid "The agent is no longer waiting."
+msgstr "에이전트가 더 이상 기다리지 않습니다."
+
+#: src/components/pairing-camera.tsx
+msgid "The camera did not start"
+msgstr "카메라가 시작되지 않았습니다"
+
+#: src/components/pairing-camera.tsx
+msgid "The camera reported an error."
+msgstr "카메라에서 오류가 보고되었습니다."
+
+#: src/lib/release-notes.ts
+msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
+msgstr "화면 키보드가 진짜 키보드처럼 배열되고, 누르는 순간 그 키가 바로 전송됩니다."
+
+#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgid "The raw pane, on its grid and in its own colours."
+msgstr "원본 패널 그대로, 문자 격자와 고유 색상을 유지합니다."
+
+#: src/components/app-error-boundary.tsx
+msgid "The screen hit an error. Try again — your servers stay paired."
+msgstr "이 화면에서 오류가 발생했습니다. 다시 시도하세요. 페어링된 서버는 그대로 유지됩니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The server did not return it."
+msgstr "서버가 파일을 돌려주지 않았습니다."
+
+#: src/app/commands.tsx
+msgid "The server did not say which panel it made."
+msgstr "서버가 어떤 패널을 만들었는지 알려주지 않았습니다."
+
+#: src/components/settings-servers.tsx
+msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "서버는 이 기기에 그대로 남아 있습니다. 해당 Gateway가 실행 중인지 확인한 뒤 다시 시도하세요."
+
+#: src/i18n/labels.ts
+msgid "The transcript as a conversation, with tool steps folded away."
+msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니다."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme"
+msgstr "테마"
+
+#. placeholder {0}: pack.label
+#: src/components/settings-appearance.tsx
+msgid "Theme, {0}"
+msgstr "테마, {0}"
+
+#: src/i18n/labels.ts
+msgid "This agent did not offer that answer."
+msgstr "이 에이전트는 그 답변을 제시하지 않았습니다."
+
+#: src/lib/attachments.ts
+msgid "This device has no camera available."
+msgstr "이 기기에는 사용할 수 있는 카메라가 없습니다."
+
+#: src/components/asset-viewer.tsx
+msgid "This file is empty."
+msgstr "이 파일은 비어 있습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This file is not among the session artifacts."
+msgstr "이 파일은 세션 산출물에 없습니다."
+
+#: src/lib/network-error.ts
+msgid "This Gateway does not answer to that address."
+msgstr "이 Gateway는 그 주소에 응답하지 않습니다."
+
+#: src/components/session-artifacts.tsx
+msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "이 Gateway는 아직 파일을 제공하지 않습니다. Muqun Gateway 플러그인을 업데이트하면 세션이 쓴 파일을 둘러볼 수 있습니다."
+
+#: src/components/settings-servers.tsx
+msgid "This gateway has not listed any paired devices."
+msgstr "이 Gateway는 페어링된 기기를 나열하지 않았습니다."
+
+#: src/components/image-preview-modal.tsx
+msgid "This image could not be loaded."
+msgstr "이 이미지를 불러오지 못했습니다."
+
+#: src/app/+not-found.tsx
+msgid "This link goes nowhere"
+msgstr "이 링크는 아무 데도 연결되지 않습니다"
+
+#: src/components/terminal-boundary.tsx
+msgid "This panel could not be drawn."
+msgstr "이 패널을 그리지 못했습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This panel is no longer available."
+msgstr "이 패널은 더 이상 사용할 수 없습니다."
+
+#: src/app/explore.tsx
+msgid "This QR code is not valid."
+msgstr "이 QR 코드는 올바르지 않습니다."
+
+#: src/lib/network-error.ts
+msgid "This server cannot use this device's stored key. Pair it again to reconnect."
+msgstr "이 서버는 이 기기에 저장된 키를 사용할 수 없습니다. 다시 페어링하면 연결됩니다."
+
+#: src/lib/network-error.ts
+msgid "This server could not read the request. Check this device's date and time."
+msgstr "이 서버가 요청을 읽지 못했습니다. 이 기기의 날짜와 시간을 확인하세요."
+
+#: src/components/new-task-sheet.tsx
+msgid "This server did not name any agents it can start."
+msgstr "이 서버는 시작할 수 있는 에이전트를 알려 주지 않았습니다."
+
+#: src/lib/network-error.ts
+msgid "This server had a problem answering."
+msgstr "이 서버가 응답하는 중에 문제가 생겼습니다."
+
+#: src/lib/network-error.ts
+msgid "This server has already handled that request."
+msgstr "이 서버는 그 요청을 이미 처리했습니다."
+
+#: src/app/new-task.tsx
+msgid "This server has no session to start an agent in."
+msgstr "이 서버에는 에이전트를 시작할 세션이 없습니다."
+
+#: src/app/new-task.tsx
+#: src/app/web-service.tsx
+msgid "This server is no longer paired."
+msgstr "이 서버는 더 이상 페어링되어 있지 않습니다."
+
+#: src/lib/network-error.ts
+msgid "This server no longer recognises this device. Pair it again to reconnect."
+msgstr "이 서버는 더 이상 이 기기를 알아보지 못합니다. 다시 페어링하면 연결됩니다."
+
+#: src/lib/network-error.ts
+msgid "This server refused the request."
+msgstr "이 서버가 요청을 거부했습니다."
+
+#: src/components/session-map.tsx
+msgid "This tab has no panels."
+msgstr "이 탭에는 패널이 없습니다."
+
+#: src/components/session-map.tsx
+msgid "This workspace has no tabs yet."
+msgstr "이 워크스페이스에는 아직 탭이 없습니다."
+
+#: src/i18n/labels.ts
+msgid "Today"
+msgstr "오늘"
+
+#: src/components/code-view.tsx
+msgid "Too large to colour. Shown as plain text."
+msgstr "너무 커서 색을 입힐 수 없습니다. 일반 텍스트로 표시합니다."
+
+#: src/components/code-view.tsx
+msgid "Too many lines to colour. Shown as plain text."
+msgstr "줄이 너무 많아 색을 입힐 수 없습니다. 일반 텍스트로 표시합니다."
+
+#: src/components/app-error-boundary.tsx
+#: src/components/asset-viewer.tsx
+msgid "Try again"
+msgstr "다시 시도"
+
+#: src/components/settings-servers.tsx
+msgid "Try again once the gateway responds."
+msgstr "Gateway가 응답하면 다시 시도하세요."
+
+#: src/app/(drawer)/index.tsx
+msgid "Try the demo"
+msgstr "데모 사용해 보기"
+
+#: src/components/asset-viewer.tsx
+msgid "Type"
+msgstr "종류"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Type into this editor"
+msgstr "이 편집기에 입력"
+
+#: src/components/new-task-sheet.tsx
+msgid "Type it, or use your keyboard's dictation key."
+msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요."
+
+#: src/i18n/labels.ts
+msgid "Undo"
+msgstr "실행 취소"
+
+#: src/components/asset-viewer.tsx
+msgid "unknown"
+msgstr "알 수 없음"
+
+#: src/i18n/labels.ts
+msgid "Unknown"
+msgstr "알 수 없음"
+
+#: src/i18n/labels.ts
+msgid "Unknown date"
+msgstr "날짜 알 수 없음"
+
+#: src/lib/local-authentication.ts
+msgid "Unlock Muqun"
+msgstr "Muqun 잠금 해제"
+
+#. placeholder {0}: authAvailability?.label ?? t`device authentication`
+#: src/components/settings-security.tsx
+msgid "Unlock with {0}"
+msgstr "{0}(으)로 잠금 해제"
+
+#: src/components/app-lock-gate.tsx
+msgid "Unlock with {authLabel}"
+msgstr "{authLabel}(으)로 잠금 해제"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair"
+msgstr "페어링 해제"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair {label}"
+msgstr "{label} 페어링 해제"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair this server"
+msgstr "이 서버 페어링 해제"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Up arrow"
+msgstr "위쪽 화살표"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready · restarting…"
+msgstr "업데이트 준비 완료 · 다시 실행 중…"
+
+#: src/components/update-status-banner.tsx
+msgid "Updating Muqun…"
+msgstr "Muqun 업데이트 중…"
+
+#: src/components/attachment-strip.tsx
+msgid "upload failed"
+msgstr "업로드 실패"
+
+#: src/components/attachment-strip.tsx
+msgid "uploaded"
+msgstr "업로드됨"
+
+#: src/components/attachment-strip.tsx
+msgid "uploading"
+msgstr "업로드 중"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Use {0}"
+msgstr "{0} 사용"
+
+#: src/lib/local-authentication.ts
+msgid "Use device passcode"
+msgstr "기기 암호 사용"
+
+#: src/components/settings-servers.tsx
+msgid "Use the scan button on the home screen to add one."
+msgstr "홈 화면의 스캔 버튼으로 추가하세요."
+
+#: src/components/settings-servers.tsx
+msgid "Use this server"
+msgstr "이 서버 사용"
+
+#: src/components/settings-servers.tsx
+msgid "USING"
+msgstr "사용 중"
+
+#. placeholder {0}: build ? ` (${build})` : ''
+#: src/app/settings.tsx
+msgid "Version {version}{0}"
+msgstr "버전 {version}{0}"
+
+#: src/i18n/labels.ts
+msgid "Visual mode"
+msgstr "비주얼 모드"
+
+#: src/lib/demo-gateway.ts
+msgid "Visualize current context usage as a colored grid"
+msgstr "현재 컨텍스트 사용량을 색상 격자로 보여 줍니다"
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.web.tsx
+msgid "Waiting for output…"
+msgstr "출력을 기다리는 중…"
+
+#: src/lib/network-error.ts
+msgid "Waiting for the network."
+msgstr "네트워크를 기다리는 중입니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Waiting for uploads to finish…"
+msgstr "업로드가 끝나기를 기다리는 중…"
+
+#: src/lib/release-notes.ts
+msgid "What's new"
+msgstr "새로운 기능"
+
+#: src/lib/release-notes.ts
+msgid "When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it."
+msgstr "에이전트가 권한을 물으면 Muqun이 그 질문을 카드로 다시 그리고, 답할 때까지 입력창을 비웁니다."
+
+#: src/components/away-digest-card.tsx
+msgid "While you were away"
+msgstr "자리를 비운 사이"
+
+#: src/i18n/labels.ts
+msgid "Working"
+msgstr "작업 중"
+
+#: src/components/session-map.tsx
+msgid "Workspace"
+msgstr "워크스페이스"
+
+#: src/components/session-map.tsx
+msgid "WORKSPACE"
+msgstr "워크스페이스"
+
+#: src/lib/demo-gateway.ts
+msgid "Write and quit"
+msgstr "저장 후 종료"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Write the file"
+msgstr "파일 저장"
+
+#: src/i18n/labels.ts
+msgid "Write the file and quit"
+msgstr "파일 저장 후 종료"
+
+#: src/i18n/labels.ts
+msgid "Yank this line"
+msgstr "이 줄 복사"
+
+#: src/i18n/labels.ts
+msgid "Yesterday"
+msgstr "어제"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Your agents, anywhere."
+msgstr "어디서나, 내 에이전트와 함께."
+
+#: src/components/app-drawer-content.tsx
+msgid "Your paired gateways"
+msgstr "페어링된 Gateway"

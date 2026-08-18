@@ -1,0 +1,83 @@
+# One theme pack, one colour mode, three screens.
+#
+# Starts and ends on the server list, so the caller can run it sixty-four times in a
+# row without relaunching -- which is the point. Nothing here clears state or
+# restarts the app, so every screenshot after the first is also evidence that
+# switching a theme repaints the live app rather than needing a cold start.
+#
+# The order is deliberate: Settings is captured first, while the picker that
+# made the change is still on screen and the swatch row can be read against the
+# screen it just repainted.
+appId: dev.osuki.muqun
+name: capture-theme
+---
+# Settings is a control in the home header now, not a drawer row (card #664).
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Color mode"
+    timeout: 10000
+- runFlow: dismiss-logbox.yaml
+
+# The pack, then the mode. The pack lives in a form sheet since card #683,
+# behind a row that names whichever one is in force -- so the row is opened by
+# the pattern rather than by a fixed string, and the pack is asserted on the
+# tile's own selected state before the sheet is allowed to leave. A screenshot
+# can still never be written under a name the app is not actually wearing.
+- tapOn:
+    text: "Theme, .*"
+- scrollUntilVisible:
+    element:
+      text: "${THEME_LABEL}"
+    direction: DOWN
+- tapOn: "${THEME_LABEL}"
+- waitForAnimationToEnd:
+    timeout: 1500
+- extendedWaitUntil:
+    visible: "Theme, ${THEME_LABEL}"
+    timeout: 8000
+- tapOn: "${MODE_LABEL}"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertVisible:
+    text: "${MODE_LABEL}"
+    selected: true
+- takeScreenshot: shots/themes/${SHOT}-1-settings
+
+- runFlow: dismiss-logbox.yaml
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: shots/themes/${SHOT}-2-home
+
+# The demo session is the only terminal available offline, and its scrollback is
+# the bundled agent output -- which is where the ANSI colours are, and so the
+# only screen on which the pack's sixteen terminal colours can be seen at all.
+- runFlow: dismiss-logbox.yaml
+- tapOn: "Try the demo"
+# The demo used to announce itself with a banner and this waited on that; card
+# #672 took the banner away and nothing here was updated, so every theme
+# capture run since has stalled here and the website's theme rail has been
+# stuck on the batch taken the day before. What is left that means "the session
+# is up" is the session's own content: the pane strip's first chip, which is
+# what open-demo waits on for the same reason.
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 25000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: dismiss-logbox.yaml
+# The digest raised on returning to a server after a long absence, which
+# demo mode fabricates once per launch (card #691). A no-op wherever there is
+# nothing standing.
+- runFlow: dismiss-away-digest.yaml
+- takeScreenshot: shots/themes/${SHOT}-3-terminal
+
+- tapOn: "Back to servers"
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 1500

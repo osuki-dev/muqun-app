@@ -1,0 +1,148 @@
+name: Bug report
+description: Something in the Muqun app is broken or behaves unexpectedly.
+labels: ["bug"]
+
+# The order of the fields is the order they are useful in.
+#
+# "Does it happen in the demo?" is third rather than last, and it is the most
+# valuable question on this form: the demo runs entirely offline on data bundled
+# in the binary, so a bug that reproduces there is in the app and nothing about
+# the reporter's machine, network or Gateway can be the cause. It splits the
+# triage in two before anyone reads a version number.
+#
+# Everything below it about the Gateway is optional for the same reason. A form
+# that demands eight facts from someone whose terminal is blank is a form that
+# gets abandoned, and six of those facts are irrelevant half the time.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **Never paste a Gateway token, a pairing QR code, or a pairing URL.**
+        Any of them grants full control of the computer running the Gateway — the
+        same control as a shell on it. Muqun keeps them encrypted on your device
+        for exactly that reason, and a public issue undoes it.
+
+        Found a security problem? Email <muqun@osuki.dev> instead of opening an
+        issue, and give us a chance to ship a fix first.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+      placeholder: I tapped the second panel in the workspace and the terminal stayed blank, with the pane still listed as running.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Number them. The shortest path that still shows the problem is the most useful one.
+      placeholder: |
+        1. Pair a server
+        2. Open it from the home screen
+        3. Tap the second panel in the strip
+        4. The terminal never renders
+    validations:
+      required: true
+
+  - type: dropdown
+    id: demo
+    attributes:
+      label: Does it happen in the demo?
+      description: >-
+        Home screen → "Try the demo". It runs offline on sample data bundled in
+        the app and makes no network requests, so if the bug shows up there too,
+        nothing about your machine or your network is involved and you can skip
+        every Gateway question below.
+      options:
+        - "Yes — it happens in the demo too"
+        - "No — only against a real Gateway"
+        - "Not applicable / cannot tell"
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Muqun version
+      description: Settings → About. Include the build number in brackets.
+      placeholder: 1.3.0 (31)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - iPhone
+        - iPad
+        - Android
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device and OS version
+      placeholder: iPhone 15 Pro, iOS 26.5
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-source
+    attributes:
+      label: Where did you install it from?
+      description: >-
+        The sideloaded APK and the Play build are the same code, but they are
+        signed differently, so it is worth knowing which one you are on.
+      options:
+        - App Store
+        - Google Play
+        - APK from a GitHub release
+        - Built it myself from source
+    validations:
+      required: true
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Which backend is the Gateway using?
+      description: Leave this alone if the bug happens in the demo.
+      options:
+        - tmux
+        - Herdr
+        - Not sure
+        - "Not applicable — it happens in the demo"
+
+  - type: input
+    id: gateway-version
+    attributes:
+      label: Gateway version
+      description: "Output of `muqun-gateway status`, if you can get to it."
+      placeholder: "0.6.1"
+
+  - type: dropdown
+    id: connection
+    attributes:
+      label: How does the phone reach the Gateway?
+      options:
+        - Tailscale Serve (HTTPS)
+        - Tailscale IP (HTTP)
+        - Same Wi-Fi / LAN
+        - Other private network
+        - Not sure
+        - "Not applicable — it happens in the demo"
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots, recordings, anything else
+      description: >-
+        These help more than anything else on this form. Please check them for
+        tokens, hostnames and anything on screen you would not post publicly
+        before you attach them.

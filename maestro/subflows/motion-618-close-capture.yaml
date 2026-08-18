@@ -1,0 +1,84 @@
+# Screenshots of the surfaces card #618's closing batch touched.
+#
+# Deliberately a subflow rather than a flow, for the same reason
+# `motion-p2-capture.yaml` is: it is a capture run, not an assertion, so
+# `maestro/config.yaml`'s glob does not pick it up and the e2e gate does not run
+# it. Point Maestro at it by path when evidence is wanted:
+#
+#   maestro --device <udid> test maestro/subflows/motion-618-close-capture.yaml
+#
+# It does not clear state and it does not need a gateway; the demo session is the
+# way in. Two things about it are worth knowing before it is re-run.
+#
+# It deliberately does not `launchApp`. On a dev build the JS comes from whatever
+# Metro the app was last pointed at, and this machine runs more than one; a
+# relaunch from here would silently drop the app back onto the default port and
+# photograph somebody else's branch. Start the app yourself, at the bundler you
+# mean to capture:
+#
+#   xcrun simctl launch --terminate-running-process <udid> dev.osuki.muqun \
+#     --args -RCT_jsLocation localhost:<port>
+#
+# And it stops short of two surfaces on purpose rather than by omission. The
+# attachment menu is gated on `!demoMode` (see `attachmentsAvailable` on the
+# server screen), so a demo session cannot open it; and the scan reticle needs a
+# rear camera, which a simulator does not have -- there, `CameraContent` takes
+# its "camera unavailable" branch, which is a different item on the same card
+# and is what `50-pair-scan` actually shows. Both want a phone.
+appId: dev.osuki.muqun
+name: motion-618-close-capture
+---
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: dismiss-logbox.yaml
+
+# --- The live view-mode swap ------------------------------------------------
+# The grid and the reading view are two readings of one pane and used to replace
+# each other on a single frame. The commands sheet is the only surface that
+# switches it now, so the crossfade runs as the sheet dismisses.
+- takeScreenshot: dist/shots-618/60-view-mode-terminal-before
+- tapOn: "Open quick actions"
+- extendedWaitUntil:
+    visible: "(?i).*render as.*"
+    timeout: 15000
+- tapOn:
+    text: "(?i).*render as text.*"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dist/shots-618/61-view-mode-text
+- tapOn: "Open quick actions"
+- extendedWaitUntil:
+    visible: "(?i).*render as.*"
+    timeout: 15000
+- tapOn:
+    text: "(?i).*render as terminal.*"
+- waitForAnimationToEnd:
+    timeout: 5000
+# The one worth reading: the Skia canvas comes back whole after being faded out
+# and in, with its palette, its highlighting and its cursor intact.
+- takeScreenshot: dist/shots-618/62-view-mode-terminal-after
+
+# --- The shared row action menu ---------------------------------------------
+# `RowActionMenu` is the same component the home screen's cards use, so the
+# session map is where it can be exercised without a paired server.
+- tapOn: "Open panels"
+- extendedWaitUntil:
+    visible: "(?i)open panel .*"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 4000
+- takeScreenshot: dist/shots-618/70-map-row-rest
+- longPressOn:
+    text: "(?i)open panel nvim.*"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: dist/shots-618/71-map-row-menu
+# Arming. The menu's own buttons sit inside the row's accessible element, so the
+# red square is reached by position rather than by label.
+- tapOn:
+    point: "77%,69%"
+- waitForAnimationToEnd:
+    timeout: 3000
+# The 36pt square has widened into a labelled pill -- fill, glyph and label
+# crossing together -- and Cancel has travelled rather than teleported.
+- takeScreenshot: dist/shots-618/72-map-row-armed

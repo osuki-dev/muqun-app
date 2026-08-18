@@ -1,0 +1,34 @@
+# Guard: clear React Native's LogBox out of the way before a tap.
+#
+# LogBox only exists in a dev build. There it floats above the app, reappears on
+# every new warning, and swallows whichever tap lands on it -- and a tap near the
+# top-left corner expands the banner into the full-screen console, which then
+# hides the screen the flow was about to assert on. A release build has no
+# LogBox at all, so every command below is skipped and this subflow costs one
+# element lookup and changes nothing. That is what makes it safe to call
+# defensively before each tap-sensitive step instead of once per flow.
+appId: dev.osuki.muqun
+name: dismiss-logbox
+---
+# The expanded console comes first: it covers the whole screen, so while it is
+# open the banner check below could never see anything.
+- runFlow:
+    when:
+      visible:
+        text: "^Dismiss$"
+    commands:
+      - tapOn:
+          text: "^Dismiss$"
+      - waitForAnimationToEnd:
+          timeout: 1000
+
+# The collapsed banner. Its close control sits in the bottom-right corner and
+# has no label of its own, so it is tapped by point.
+- runFlow:
+    when:
+      visible: "Open debugger to view warnings."
+    commands:
+      - tapOn:
+          point: "92%,95%"
+      - waitForAnimationToEnd:
+          timeout: 1000

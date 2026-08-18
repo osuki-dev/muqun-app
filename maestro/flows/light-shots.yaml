@@ -1,0 +1,125 @@
+# Light mode, every screen a surface is visible on, in one run.
+#
+# The companion to `i18n-shots`: same idea, different axis. This one pins the
+# colour mode to Light from inside the app and then walks settings, home, the
+# server page, the panels sheet and the Files sheet, so that a change to the
+# surface ladder in `constants/theme-colors.ts` can be judged against a fixed
+# route rather than against whatever a reviewer happened to tap.
+#
+# It is written to be run twice -- once with the palette change stashed and once
+# with it applied -- so the pairs line up frame for frame. The screens are
+# ordered so that the five things card #662 fixes each appear in a named shot:
+#
+#   02-settings-appearance  the tab pill's trough and its selected fill
+#   03-settings-alerts      switch tracks, and the last row of a section where
+#                           the double hairline used to be
+#   04-settings-terminal    a section that mixes toggles with control blocks,
+#                           which is where the three separator conventions used
+#                           to collide
+#   06-server               the glass fallback dock and connection capsule
+#   07-panels / 08-files    raised fills on a sheet
+#
+# Not tagged `smoke` or `full`: this is a screenshot run for review, not a gate.
+appId: dev.osuki.muqun
+name: light-shots
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow:
+    when:
+      visible: "Dismiss what's new"
+    commands:
+      - tapOn: "Dismiss what's new"
+      - waitForAnimationToEnd:
+          timeout: 2000
+- runFlow: ../subflows/dismiss-logbox.yaml
+
+# ── Pin the colour mode to Light ───────────────────────────────────────────
+# The device may be in either mode and "System" is the default, so Light is
+# chosen explicitly rather than inherited. Everything below this line is a
+# light-mode screenshot by construction.
+# Settings is a control in the home header now, not a drawer row (card #664).
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Color mode"
+    timeout: 10000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn:
+    text: "(?i)^light$"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Settings ───────────────────────────────────────────────────────────────
+# The appearance block is the tab pill's own screenshot: three pills in a
+# trough, one of them selected. If the trough and the selected fill are the same
+# colour, this is the frame that shows it.
+- takeScreenshot: shots/light/01-settings-top
+- waitForAnimationToEnd:
+    timeout: 1000
+- takeScreenshot: shots/light/02-settings-appearance
+
+- scroll
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: shots/light/03-settings-alerts
+
+- scroll
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: shots/light/04-settings-terminal
+
+- scroll
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: shots/light/05-settings-about
+
+# ── Home ───────────────────────────────────────────────────────────────────
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: shots/light/06-home
+
+# ── Server page ────────────────────────────────────────────────────────────
+# The dock, the connection capsule and the header circles are the glass
+# fallback: on Android a near-opaque fill, on iOS 25 a blur, on iOS 26 real
+# glass. Which one this frame shows depends on the device it ran on.
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Demo · sample data"
+    timeout: 25000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: ../subflows/dismiss-logbox.yaml
+# The digest raised on returning to a server after a long absence, which
+# demo mode fabricates once per launch (card #691). A no-op wherever there is
+# nothing standing.
+- runFlow: ../subflows/dismiss-away-digest.yaml
+- takeScreenshot: shots/light/07-server
+
+# ── Panels sheet ───────────────────────────────────────────────────────────
+- tapOn: "Open panels"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: shots/light/08-panels
+- tapOn: "Close panels"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Files sheet ────────────────────────────────────────────────────────────
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Open files"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: shots/light/09-files
+- tapOn: "Close files"
+- waitForAnimationToEnd:
+    timeout: 2000

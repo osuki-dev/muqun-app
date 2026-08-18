@@ -1,0 +1,23 @@
+# Rebuild the in-memory demo session without repeatedly clearing Android app
+# data. Flows use this when they need a fresh composer/component tree inside one
+# test: demo mode itself is intentionally transient, so a normal process restart
+# returns to the empty home screen and keeps the already-initialised dev client,
+# permissions and immersive-mode state intact.
+appId: dev.osuki.muqun
+name: restart-demo
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 60000
+- runFlow: dismiss-logbox.yaml
+- tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: dismiss-logbox.yaml
+- runFlow: dismiss-away-digest.yaml

@@ -1,0 +1,68 @@
+# Keep this file in sync with .gitignore. EAS prioritizes .easignore when present.
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+credentials.json
+eas.json.tmp
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders
+/ios
+/android
+
+# Files that are not used by the cloud build
+.git
+/.agents/
+/.claude/
+/.codex/
+/.vscode/
+/docs/
+/maestro/
+/marketing/
+# Untracked here, so .gitignore does not keep it out of an upload: EAS reads
+# this file instead the moment it exists.
+/private/
+.fizzyx.yaml
+store.config.json
+AGENTS.md
+CLAUDE.md
+LICENSE
+README.md
+
+# `eas metadata:pull` writes App Store Connect's own copy of the screenshots
+# here -- 47MB the build has no use for.
+/store/

@@ -1,0 +1,37 @@
+# Maestro workspace configuration.
+#
+# Run the suite through the repo's own runner rather than by hand, so the device
+# selection and the report location are the same everywhere:
+#
+#   bash scripts/e2e.sh            # everything tagged `full`
+#   bash scripts/e2e.sh --smoke    # just the `smoke` subset
+#
+# Two tags, and every flow carries at least one:
+#
+#   smoke  the one flow that proves the app boots, enters demo mode and reaches
+#          every top-level screen. If it fails, nothing else is worth reading.
+#   full   the whole suite. This is what the promote-time gate runs
+#          (`bash scripts/e2e.sh`), so a flow that is not tagged `full` is a
+#          flow the gate does not enforce.
+#
+# `flows` matches flows/ only. maestro/subflows/ is outside the glob on purpose:
+# anything the glob picks up is executed as a top-level flow, and a guard like
+# dismiss-logbox has no meaning on its own.
+flows:
+  - flows/*.yaml
+
+executionOrder:
+  # Report on every flow rather than stopping at the first failure: a run that
+  # ends early cannot say whether the other four surfaces are also broken, and
+  # the exit code is non-zero either way.
+  continueOnFailure: true
+  # Cheapest and broadest first, so a total breakage is visible in the first
+  # minute of the run instead of the last.
+  flowsOrder:
+    - demo-tour
+    - pairing-manual
+    - terminal-interactions
+    - file-mentions
+    - attachments-ui
+    - artifacts
+    - settings

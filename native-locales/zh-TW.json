@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "牧群",
+    "NSCameraUsageDescription": "牧群會掃描 Gateway 的 QR code 以安全配對，並拍攝你要附加到終端機工作階段的照片。",
+    "NSPhotoLibraryUsageDescription": "牧群會把你挑選的照片傳送到已配對的 Gateway，讓代理程式讀取。",
+    "NSFaceIDUsageDescription": "牧群使用 Face ID 保護已配對的伺服器與終端機工作階段。",
+    "NSLocalNetworkUsageDescription": "牧群會連線到在你電腦上執行的 Gateway，它可能位於你的區域網路。"
+  },
+  "android": {
+    "app_name": "牧群"
+  }
+}

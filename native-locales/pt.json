@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Muqun",
+    "NSCameraUsageDescription": "O Muqun lê o código QR do Gateway para emparelhar em segurança e tira as fotos que anexa a uma sessão de terminal.",
+    "NSPhotoLibraryUsageDescription": "O Muqun envia as fotos que escolhe para o Gateway emparelhado, para que um agente as possa ler.",
+    "NSFaceIDUsageDescription": "O Muqun usa o Face ID para proteger servidores emparelhados e sessões de terminal.",
+    "NSLocalNetworkUsageDescription": "O Muqun liga-se ao Gateway em execução no seu computador, que pode estar na sua rede local."
+  },
+  "android": {
+    "app_name": "Muqun"
+  }
+}
