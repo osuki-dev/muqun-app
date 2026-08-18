@@ -1,0 +1,212 @@
+# Direct manipulation of the terminal pane: panning the Skia canvas, switching
+# panes, re-laying the grid out at a different cell size, and the two pieces of
+# scroll chrome ("↓ Latest" and the pull-for-earlier indicator).
+#
+# What this flow can and cannot reach, and why:
+#
+#  * The terminal is a Skia canvas and is not in the accessibility tree. Nothing
+#    here can assert on terminal text; the assertions are the chrome around the
+#    canvas plus the absence of the TerminalBoundary's error state ("Retry
+#    drawing the panel"), which is what a Skia crash surfaces as. That absence is
+#    the point of the flow: every historical failure in this area was the canvas
+#    tearing down under a gesture or a re-layout, not a wrong glyph.
+#  * Maestro drives a single pointer, so two of the pane's gestures cannot be
+#    performed at all: the pinch-to-zoom, and the two-finger horizontal swipe
+#    that switches tabs (the canvas's own `Gesture.Pan().minPointers(2)` in
+#    `skia-terminal.tsx` never sees a single pointer). The zoom path is instead
+#    exercised through the terminal text size setting, which recomputes cell
+#    size, content size and the fit scale through exactly the same code the
+#    pinch drives. Telling those two gestures apart is pure arithmetic and is
+#    covered exhaustively by `src/lib/__tests__/tab-swipe.test.ts`, which is
+#    where the boundary between "the pair moved" and "the gap changed" is
+#    actually pinned down; a single-pointer flow could not reach it. Both
+#    two-finger gestures are driven for real by the UiAutomator harness in
+#    `android/app/src/androidTest/.../TwoFingerGestures.java` (cards #635/#636),
+#    which builds genuine two-pointer MotionEvents and injects them through
+#    UiAutomation. Pane switching below is performed through the pane strip,
+#    which is the same `choosePane` call it always was.
+#  * A third gesture is out of reach, for a different reason: the double tap.
+#    Maestro's Android driver always takes `hierarchyBasedTap` (it is chosen on
+#    the driver's own FAST_HIERARCHY capability, not on anything a flow can
+#    set), and that path reads the view hierarchy *between* the two taps of the
+#    repeat. The read goes through UiAutomator's idle wait, and this screen
+#    never reaches idle, so it returns only on its own ~10s timeout. Measured on
+#    emulator-5560 with `onTouchesDown`/`onTouchesUp` probes rendered into the
+#    UI: the two taps arrived 10151ms apart, each a clean 106ms press, and the
+#    recogniser correctly failed the double tap and correctly resolved two
+#    single taps. `waitToSettleTimeoutMs: 0` does not help -- with it the pair
+#    still took 22.5s. `uiautomator dump` on this screen fails with "could not
+#    get idle state" after 11.0s, against 3.1s on the Android launcher. The
+#    double tap itself is healthy: two taps injected back to back with
+#    `adb shell "input tap X Y; input tap X Y"` select the line under the finger
+#    and raise the controls every time. What it selects -- the whole row, from
+#    column 0 to the last cell that exists -- is `lineSelectionAt`, pinned in
+#    `src/terminal/__tests__/selection.test.ts`. The selection below is
+#    therefore committed with a long press, which is one gesture and cannot be
+#    split in half by a hierarchy read, and which is in any case the pane's
+#    primary way in.
+#  * The Claude pane now behaves like a real paged gateway: 600 stable rows,
+#    an initial 240-row tail, then disjoint range pages above it. A single
+#    upward-reading gesture releases follow-output and exposes "↓ Latest".
+#    "Pull for earlier output" still only appears at the exact top stop, so it
+#    is absent after this one gesture. The range arithmetic, two page folds,
+#    and final start=0 retirement are covered without screen-density timing in
+#    `src/lib/__tests__/demo-gateway-pagination.test.ts`.
+appId: dev.osuki.muqun
+name: terminal-interactions
+tags:
+  - full
+---
+- runFlow: ../subflows/open-demo.yaml
+
+# ── Panning the canvas ────────────────────────────────────────────────────
+# The demo output is wider than the phone, so horizontal panning is real
+# movement rather than a no-op. The pan gesture sets `hitSlop({ left: -32 })` to
+# leave the drawer's edge swipe alone, so the drag starts well inside the pane.
+- swipe:
+    start: "80%,45%"
+    end: "25%,45%"
+    duration: 500
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Retry drawing the panel"
+- swipe:
+    start: "25%,45%"
+    end: "80%,45%"
+    duration: 500
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Retry drawing the panel"
+
+# Vertically. The demo has enough real scrollback to move away from the tail;
+# this verifies that the canvas settles in history rather than snapping back.
+- swipe:
+    start: "50%,30%"
+    end: "50%,70%"
+    duration: 600
+- waitForAnimationToEnd:
+    timeout: 2500
+- assertNotVisible: "Retry drawing the panel"
+# The demo is still up: its first pane is still named in the strip.
+- assertVisible: "Claude Code"
+
+# ── Scroll chrome ─────────────────────────────────────────────────────────
+# We left follow-output, but have not reached the current page's exact top stop.
+- assertVisible: "Jump to latest output"
+- assertNotVisible: "Pull for earlier output"
+
+# ── Selecting text ────────────────────────────────────────────────────────
+# A long press turns the pane into something text can be picked out of. The
+# Skia highlight is not exposed to accessibility, but the selection controls
+# are, so their appearance proves the recogniser won, that it beat the pan and
+# the tap it is composed with, and that a selection was committed. The controls
+# deliberately wait for the finger to leave -- a button that appears under a
+# moving thumb gets pressed by accident -- so this also proves the release path
+# hands the drag back.
+#
+# Not `doubleTapOn`: see the header. Maestro cannot deliver a double tap to this
+# screen at all, and asserting on one only ever tested the harness.
+- longPressOn:
+    point: "50%,55%"
+- extendedWaitUntil:
+    visible: "COPY"
+    timeout: 3000
+- assertVisible: "SELECT ALL"
+- assertVisible: "CANCEL"
+# Keep the selection finger beyond the visible terminal edge long enough for
+# frame-driven auto-scroll to run. It must leave a live selection and a healthy
+# canvas when the finger lifts.
+- swipe:
+    start: "50%,55%"
+    end: "50%,95%"
+    duration: 3000
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "COPY"
+- assertNotVisible: "Retry drawing the panel"
+- tapOn: "CANCEL"
+- assertNotVisible: "COPY"
+
+# ── Switching panes on a live canvas ──────────────────────────────────────
+# The canvas is deliberately never remounted on a pane switch -- rebuilding it
+# raced the native side and crashed -- so switching back and forth is the
+# regression test for that.
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Switch to nvim"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertNotVisible: "Retry drawing the panel"
+- tapOn: "Switch to zsh"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertNotVisible: "Retry drawing the panel"
+- tapOn: "Switch to Claude Code"
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertNotVisible: "Retry drawing the panel"
+
+# ── Re-laying the grid out (the automatable half of pinch-to-zoom) ────────
+# Changing the terminal text size changes cell size, content size and the fit
+# scale on a mounted canvas, which is the same recomputation a pinch performs.
+# Compact leaves the session before opening Settings. Pad keeps Settings in its
+# persistent rail, so the same optional tap becomes a no-op there.
+- tapOn:
+    text: "Back to servers"
+    optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 8000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "APPEARANCE"
+    timeout: 8000
+# "Text size" sits below the fold now that the alerts section grew; scrolling
+# to it is the wait-and-assert in one step.
+- scrollUntilVisible:
+    element:
+      text: "Text size"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "LARGE"
+    direction: DOWN
+- tapOn: "LARGE"
+- waitForAnimationToEnd:
+    timeout: 1500
+- tapOn: "Go back"
+# Compact returns to home and re-enters the demo. Pad returns directly to the
+# detail column because its rail and detail are one master-detail workspace.
+- runFlow:
+    when:
+      visible: "Try the demo"
+    commands:
+      - runFlow: ../subflows/dismiss-logbox.yaml
+      - tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+# The digest raised on returning to a server after a long absence, which
+# demo mode fabricates once per launch (card #691). A no-op wherever there is
+# nothing standing.
+- runFlow: ../subflows/dismiss-away-digest.yaml
+- assertNotVisible: "Retry drawing the panel"
+# Pan again at the new cell size: the fit scale and the pan bounds were both
+# recomputed, and a stale bound is what strands the output off-screen.
+- swipe:
+    start: "80%,45%"
+    end: "25%,45%"
+    duration: 500
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Retry drawing the panel"
+# The demo is still up: its first pane is still named in the strip.
+- assertVisible: "Claude Code"
+
+# The range protocol itself is deliberately tested below the gesture layer:
+# reaching the exact top stop takes a device-dependent number of flings, while
+# the contract is device-independent. The pure regression test proves the first
+# request is [120,360), the second is [0,120), all 600 rows are retained, and
+# the pull retires at start=0. This flow proves the same fixture is scrollable on
+# a mounted Skia canvas and its surrounding chrome remains healthy.

@@ -1,0 +1,2458 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-07-27 21:06+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: pt\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "… truncated"
+msgstr "… truncado"
+
+#: src/lib/demo-gateway.ts
+msgid "[instructions]"
+msgstr "[instruções]"
+
+#: src/lib/demo-gateway.ts
+msgid "[model]"
+msgstr "[modelo]"
+
+#: src/lib/demo-gateway.ts
+msgid "[pr number]"
+msgstr "[número do pr]"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# day} other {# days}}"
+msgstr "{0, plural, one {# dia} other {# dias}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# hour} other {# hours}}"
+msgstr "{0, plural, one {# hora} other {# horas}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# minute} other {# minutes}}"
+msgstr "{0, plural, one {# minuto} other {# minutos}}"
+
+#. placeholder {0}: digest.otherAgents
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {and # more agent} other {and # more agents}}"
+msgstr "{0, plural, one {e mais # agente} other {e mais # agentes}}"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "{0} (this device)"
+msgstr "{0} (este dispositivo)"
+
+#. placeholder {0}: profile.kind
+#: src/components/new-task-sheet.tsx
+msgid "{0}, not found on this server's PATH"
+msgstr "{0}, não encontrado no PATH deste servidor"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}d ago"
+msgstr "há {0} d"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}h ago"
+msgstr "há {0} h"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}m ago"
+msgstr "há {0} min"
+
+#: src/components/away-digest-card.tsx
+msgid "{asked, plural, one {· asked once} other {· asked # times}}"
+msgstr "{asked, plural, one {· perguntou uma vez} other {· perguntou # vezes}}"
+
+#: src/components/app-lock-gate.tsx
+msgid "{label} is temporarily locked. Use the system fallback or try later."
+msgstr "{label} está temporariamente bloqueado. Use a alternativa do sistema ou tente mais tarde."
+
+#: src/components/session-map.tsx
+msgid "{panelCount, plural, one {# panel} other {# panels}}"
+msgstr "{panelCount, plural, one {# painel} other {# painéis}}"
+
+#: src/components/row-action-menu.tsx
+msgid "{removeLabel}: {label}"
+msgstr "{removeLabel}: {label}"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "+{overflow} more"
+msgstr "+{overflow} mais"
+
+#: src/app/settings.tsx
+msgid "About"
+msgstr "Acerca"
+
+#: src/components/settings-terminal.tsx
+msgid "Add commands and custom key combinations."
+msgstr "Adicione comandos e combinações de teclas personalizadas."
+
+#: src/components/new-task-sheet.tsx
+msgid "AGENT"
+msgstr "AGENTE"
+
+#: src/app/commands.tsx
+msgid "AGENT COMMANDS"
+msgstr "COMANDOS DO AGENTE"
+
+#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgid "Agent output reflowed for reading. Colour is lost."
+msgstr "Saída do agente reformatada para leitura. A cor perde-se."
+
+#: src/components/settings-terminal.tsx
+msgid "Agent panes open in"
+msgstr "Os painéis de agente abrem em"
+
+#: src/components/settings-servers.tsx
+msgid "Agents"
+msgstr "Agentes"
+
+#: src/app/settings.tsx
+msgid "Alerts"
+msgstr "Alertas"
+
+#: src/app/explore.tsx
+msgid "Align the QR inside the frame"
+msgstr "Alinhe o código QR dentro da moldura"
+
+#: src/components/session-artifacts.tsx
+msgid "All"
+msgstr "Todos"
+
+#: src/components/settings-servers.tsx
+msgid "All panes"
+msgstr "Todos os painéis"
+
+#: src/components/pairing-camera.tsx
+msgid "Allow camera"
+msgstr "Permitir câmara"
+
+#: src/app/explore.tsx
+msgid "Allow the camera, or enter the address instead."
+msgstr "Permita a câmara ou introduza o endereço."
+
+#. placeholder {0}: option.label
+#: src/components/approval-banner.tsx
+msgid "Answer: {0}"
+msgstr "Resposta: {0}"
+
+#: src/components/settings-security.tsx
+msgid "App Lock enabled"
+msgstr "Bloqueio da app ativado"
+
+#: src/components/settings-security.tsx
+msgid "App Lock unavailable"
+msgstr "Bloqueio da app indisponível"
+
+#: src/app/settings.tsx
+msgid "Appearance"
+msgstr "Aspeto"
+
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Appearance, terminal, security"
+msgstr "Aspeto, terminal, segurança"
+
+#: src/i18n/labels.ts
+msgid "Approve"
+msgstr "Aprovar"
+
+#: src/i18n/labels.ts
+msgid "Approve and don't ask again"
+msgstr "Aprovar e não perguntar novamente"
+
+#: src/lib/release-notes.ts
+msgid "Approve or deny that request straight from the notification, without opening the app."
+msgstr "Aprove ou recuse esse pedido diretamente na notificação, sem abrir a aplicação."
+
+#: src/app/explore.tsx
+msgid "Asking the Gateway about that code."
+msgstr "A consultar esse código no Gateway."
+
+#: src/components/new-task-sheet.tsx
+msgid "Asking the server what it can run…"
+msgstr "A perguntar ao servidor o que pode executar…"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Attach a file"
+msgstr "Anexar um ficheiro"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticate with {authLabel} to continue."
+msgstr "Autentique-se com {authLabel} para continuar."
+
+#: src/lib/local-authentication.ts
+msgid "Authenticate with {method} to continue"
+msgstr "Autentique-se com {method} para continuar"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating"
+msgstr "A autenticar"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating…"
+msgstr "A autenticar…"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication failed. Try again."
+msgstr "A autenticação falhou. Tente novamente."
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication is unavailable. Try again or check system settings."
+msgstr "A autenticação está indisponível. Tente novamente ou verifique as definições do sistema."
+
+#: src/i18n/labels.ts
+msgid "Back one word"
+msgstr "Recuar uma palavra"
+
+#: src/components/app-drawer.tsx
+msgid "Back to servers"
+msgstr "Voltar aos servidores"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Backspace"
+msgstr "Retrocesso"
+
+#: src/lib/local-authentication.ts
+msgid "biometrics"
+msgstr "biometria"
+
+#: src/i18n/labels.ts
+msgid "Blocked"
+msgstr "Bloqueado"
+
+#: src/lib/attachments.ts
+msgid "Camera access is off. Turn it on in Settings to take a photo."
+msgstr "O acesso à câmara está desativado. Ative-o nas Definições para tirar uma foto."
+
+#: src/components/pairing-camera.tsx
+msgid "Camera access needed"
+msgstr "É preciso acesso à câmara"
+
+#: src/components/row-action-menu.tsx
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+#: src/components/skia-terminal.tsx
+#: src/lib/local-authentication.ts
+msgid "Cancel"
+msgstr "Cancelar"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Cancel editing {0}"
+msgstr "Cancelar edição de {0}"
+
+#: src/i18n/labels.ts
+msgid "Chat"
+msgstr "Conversa"
+
+#: src/components/settings-security.tsx
+msgid "Check device authentication settings and try again."
+msgstr "Verifique as definições de autenticação do dispositivo e tente novamente."
+
+#: src/components/settings-security.tsx
+msgid "Checking system authentication…"
+msgstr "A verificar a autenticação do sistema…"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Checking…"
+msgstr "A verificar…"
+
+#: src/components/attachment-menu.tsx
+msgid "Choose files"
+msgstr "Escolher ficheiros"
+
+#: src/i18n/labels.ts
+msgid "Clear line"
+msgstr "Limpar linha"
+
+#: src/i18n/labels.ts
+msgid "Clear terminal"
+msgstr "Limpar terminal"
+
+#: src/components/asset-viewer.tsx
+msgid "Close file"
+msgstr "Fechar o ficheiro"
+
+#: src/components/session-artifacts.tsx
+msgid "Close files"
+msgstr "Fechar a lista de ficheiros"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Close language picker"
+msgstr "Fechar a lista de idiomas"
+
+#: src/components/new-task-sheet.tsx
+msgid "Close new task"
+msgstr "Fechar a nova tarefa"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Close open a web service"
+msgstr "Fechar «Abrir um serviço web»"
+
+#: src/app/explore.tsx
+msgid "Close pairing"
+msgstr "Fechar o emparelhamento"
+
+#: src/components/session-map.tsx
+msgid "Close panels"
+msgstr "Fechar a lista de painéis"
+
+#: src/components/asset-viewer.tsx
+#: src/components/image-preview-modal.tsx
+msgid "Close preview"
+msgstr "Fechar a pré-visualização"
+
+#: src/app/commands.tsx
+msgid "Close quick actions"
+msgstr "Fechar as ações rápidas"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the attachment menu"
+msgstr "Fechar o menu de anexos"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the command list"
+msgstr "Fechar a lista de comandos"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Close theme picker"
+msgstr "Fechar a lista de temas"
+
+#: src/components/session-artifacts.tsx
+msgid "Code"
+msgstr "Código"
+
+#: src/app/explore.tsx
+msgid "Code expired"
+msgstr "Código expirado"
+
+#: src/app/explore.tsx
+msgid "Code found. Reaching the Gateway."
+msgstr "Código detetado. A contactar o Gateway."
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Collapse {0}"
+msgstr "Recolher {0}"
+
+#: src/components/settings-appearance.tsx
+msgid "Color mode"
+msgstr "Modo de cor"
+
+#: src/app/commands.tsx
+msgid "Command"
+msgstr "Comando"
+
+#: src/i18n/labels.ts
+msgid "Command mode"
+msgstr "Modo de comando"
+
+#: src/i18n/labels.ts
+msgid "Commit"
+msgstr "Commit"
+
+#: src/i18n/labels.ts
+msgid "Commit & push"
+msgstr "Commit e push"
+
+#: src/components/settings-terminal.tsx
+msgid "Compact"
+msgstr "Compacto"
+
+#: src/app/explore.tsx
+msgid "Confirm pairing"
+msgstr "Confirmar o emparelhamento"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Confirm revoke {0}"
+msgstr "Confirmar a revogação de {0}"
+
+#: src/components/settings-alerts.tsx
+msgid "Confirm taps, pairing, and gateway events."
+msgstr "Confirma toques, emparelhamentos e eventos do Gateway."
+
+#: src/components/settings-servers.tsx
+msgid "Confirm unpair {label}"
+msgstr "Confirmar o desemparelhamento de {label}"
+
+#: src/components/row-action-menu.tsx
+msgid "Confirm: {removeLabel} {label}"
+msgstr "Confirmar: {removeLabel} {label}"
+
+#: src/app/explore.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Connected"
+msgstr "Ligado"
+
+#: src/app/explore.tsx
+#: src/app/new-task.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Connecting"
+msgstr "A ligar"
+
+#: src/app/settings.tsx
+msgid "Contact us"
+msgstr "Contacte-nos"
+
+#: src/app/explore.tsx
+msgid "Continue"
+msgstr "Continuar"
+
+#: src/i18n/labels.ts
+msgid "Continue task"
+msgstr "Continuar a tarefa"
+
+#: src/i18n/labels.ts
+msgid "Control A, start of line"
+msgstr "Control A, início da linha"
+
+#: src/i18n/labels.ts
+msgid "Control B, run in background"
+msgstr "Control B, executar em segundo plano"
+
+#: src/i18n/labels.ts
+msgid "Control C"
+msgstr "Control C"
+
+#: src/i18n/labels.ts
+msgid "Control D"
+msgstr "Control D"
+
+#: src/i18n/labels.ts
+msgid "Control D, half page down"
+msgstr "Control D, meia página abaixo"
+
+#: src/i18n/labels.ts
+msgid "Control E, end of line"
+msgstr "Control E, fim da linha"
+
+#: src/i18n/labels.ts
+msgid "Control E, explain"
+msgstr "Control E, explicar"
+
+#: src/i18n/labels.ts
+msgid "Control K, clear to end of line"
+msgstr "Control K, limpar até ao fim da linha"
+
+#: src/i18n/labels.ts
+msgid "Control L, clear screen"
+msgstr "Control L, limpar o ecrã"
+
+#: src/i18n/labels.ts
+msgid "Control N, next"
+msgstr "Control N, seguinte"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand"
+msgstr "Control O, expandir"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand rows"
+msgstr "Control O, expandir as linhas"
+
+#: src/i18n/labels.ts
+msgid "Control O, jump back"
+msgstr "Control O, voltar atrás"
+
+#: src/i18n/labels.ts
+msgid "Control P, previous"
+msgstr "Control P, anterior"
+
+#: src/i18n/labels.ts
+msgid "Control R"
+msgstr "Control R"
+
+#: src/i18n/labels.ts
+msgid "Control R, redo"
+msgstr "Control R, refazer"
+
+#: src/i18n/labels.ts
+msgid "Control R, reverse search"
+msgstr "Control R, procura inversa"
+
+#: src/i18n/labels.ts
+msgid "Control R, transcript"
+msgstr "Control R, transcrição"
+
+#: src/i18n/labels.ts
+msgid "Control T, toggle tasks"
+msgstr "Control T, mostrar ou ocultar tarefas"
+
+#: src/i18n/labels.ts
+msgid "Control U, clear line"
+msgstr "Control U, limpar linha"
+
+#: src/i18n/labels.ts
+msgid "Control U, half page up"
+msgstr "Control U, meia página acima"
+
+#: src/i18n/labels.ts
+msgid "Control V, visual block"
+msgstr "Control V, bloco visual"
+
+#: src/i18n/labels.ts
+msgid "Control W, delete word"
+msgstr "Control W, eliminar palavra"
+
+#: src/i18n/labels.ts
+msgid "Control W, window prefix"
+msgstr "Control W, prefixo de janela"
+
+#: src/i18n/labels.ts
+msgid "Control Y, paste"
+msgstr "Control Y, colar"
+
+#: src/i18n/labels.ts
+msgid "Control Z, suspend"
+msgstr "Control Z, suspender"
+
+#: src/components/skia-terminal.tsx
+msgid "Copied to clipboard"
+msgstr "Copiado para a área de transferência"
+
+#: src/app/explore.tsx
+msgid "Copies it, ready to paste into a terminal"
+msgstr "Copia-o, pronto a colar num terminal"
+
+#: src/components/skia-terminal.tsx
+msgid "Copy"
+msgstr "Copiar"
+
+#: src/app/explore.tsx
+msgid "Copy the install command"
+msgstr "Copiar o comando de instalação"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not add a file"
+msgstr "Não foi possível adicionar o ficheiro"
+
+#: src/components/skia-terminal.tsx
+msgid "Could not copy that"
+msgstr "Não foi possível copiar"
+
+#: src/app/commands.tsx
+msgid "Could not create a panel."
+msgstr "Não foi possível criar um painel."
+
+#: src/components/settings-security.tsx
+msgid "Could not enable App Lock"
+msgstr "Não foi possível ativar o bloqueio da app"
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not list this server's agents."
+msgstr "Não foi possível listar os agentes deste servidor."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not load earlier output."
+msgstr "Não foi possível carregar a saída anterior."
+
+#: src/components/session-artifacts.tsx
+msgid "Could not load files."
+msgstr "Não foi possível carregar os ficheiros."
+
+#: src/components/session-map.tsx
+msgid "Could not load panels."
+msgstr "Não foi possível carregar os painéis."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open the file"
+msgstr "Não foi possível abrir o ficheiro"
+
+#: src/lib/attachments.ts
+msgid "Could not open the picker."
+msgstr "Não foi possível abrir o seletor."
+
+#: src/components/asset-viewer.tsx
+msgid "Could not open this file."
+msgstr "Não foi possível abrir este ficheiro."
+
+#: src/app/explore.tsx
+msgid "Could not reach that address. Check it and make sure the Gateway is running."
+msgstr "Não foi possível contactar esse endereço. Confirme-o e certifique-se de que o Gateway está em execução."
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway."
+msgstr "Não foi possível contactar o Gateway."
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
+msgstr "Não foi possível contactar o Gateway. Confirme que está em execução, atualize o código QR e volte a lê-lo."
+
+#: src/app/new-task.tsx
+msgid "Could not reach this server."
+msgstr "Não foi possível contactar este servidor."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not read panel."
+msgstr "Não foi possível ler o painel."
+
+#: src/components/settings-servers.tsx
+msgid "Could not revoke device"
+msgstr "Não foi possível revogar o dispositivo"
+
+#: src/components/settings-servers.tsx
+msgid "Could not save changes"
+msgstr "Não foi possível guardar as alterações"
+
+#: src/app/commands.tsx
+msgid "Could not send command."
+msgstr "Não foi possível enviar o comando."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send input."
+msgstr "Não foi possível enviar o texto introduzido."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send key."
+msgstr "Não foi possível enviar a tecla."
+
+#: src/app/commands.tsx
+msgid "Could not send shortcut."
+msgstr "Não foi possível enviar o atalho."
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not start the task."
+msgstr "Não foi possível iniciar a tarefa."
+
+#: src/app/commands.tsx
+msgid "Could not stop this agent."
+msgstr "Não foi possível parar este agente."
+
+#: src/components/settings-servers.tsx
+msgid "Could not unpair server"
+msgstr "Não foi possível desemparelhar o servidor"
+
+#: src/components/session-map.tsx
+msgid "Could not update the session."
+msgstr "Não foi possível atualizar a sessão."
+
+#: src/lib/attachments.ts
+msgid "Could not upload the file."
+msgstr "Não foi possível carregar o ficheiro."
+
+#: src/i18n/labels.ts
+msgid "Current path"
+msgstr "Caminho atual"
+
+#: src/app/commands.tsx
+msgid "Customize terminal commands and key combinations."
+msgstr "Personalize comandos de terminal e combinações de teclas."
+
+#: src/components/settings-appearance.tsx
+msgid "Dark"
+msgstr "Escuro"
+
+#: src/components/settings-terminal.tsx
+msgid "Default"
+msgstr "Predefinido"
+
+#: src/components/approval-banner.tsx
+msgid "DEFAULT"
+msgstr "PREDEFINIDO"
+
+#: src/components/row-action-menu.tsx
+msgid "Delete"
+msgstr "Eliminar"
+
+#: src/app/commands.tsx
+msgid "Delete {name}"
+msgstr "Eliminar {name}"
+
+#: src/i18n/labels.ts
+msgid "Delete this line"
+msgstr "Eliminar esta linha"
+
+#: src/lib/demo-gateway.ts
+msgid "Demo workspace"
+msgstr "Espaço de trabalho de demo"
+
+#: src/i18n/labels.ts
+msgid "Deny"
+msgstr "Recusar"
+
+#: src/lib/demo-gateway.ts
+msgid "Development"
+msgstr "Desenvolvimento"
+
+#: src/components/settings-security.tsx
+#: src/lib/local-authentication.ts
+msgid "device authentication"
+msgstr "autenticação do dispositivo"
+
+#: src/i18n/labels.ts
+msgid "Diff summary"
+msgstr "Resumo do diff"
+
+#: src/components/new-task-sheet.tsx
+msgid "DIRECTORY"
+msgstr "DIRETÓRIO"
+
+#: src/components/approval-banner.tsx
+msgid "Dismiss the approval error"
+msgstr "Dispensar o erro de aprovação"
+
+#: src/components/away-digest-card.tsx
+msgid "Dismiss what happened while you were away"
+msgstr "Dispensar o que aconteceu enquanto você esteve fora"
+
+#: src/components/whats-new-card.tsx
+msgid "Dismiss what's new"
+msgstr "Dispensar as novidades"
+
+#: src/components/session-artifacts.tsx
+msgid "Docs"
+msgstr "Docs"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+#: src/components/open-web-service-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Done"
+msgstr "Concluído"
+
+#: src/app/commands.tsx
+msgid "Done editing shortcuts"
+msgstr "Terminar de editar os atalhos"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Down arrow"
+msgstr "Seta para baixo"
+
+#: src/lib/demo-gateway.ts
+msgid "Draft the notes for the next build"
+msgstr "Redija as notas da próxima versão"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Each device holds its own token for {0}."
+msgstr "Cada dispositivo guarda o seu próprio token para {0}."
+
+#: src/app/commands.tsx
+msgid "Edit"
+msgstr "Editar"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Edit {0}"
+msgstr "Editar {0}"
+
+#: src/app/commands.tsx
+msgid "Edit shortcuts"
+msgstr "Editar atalhos"
+
+#: src/components/settings-servers.tsx
+msgid "Edit this server"
+msgstr "Editar este servidor"
+
+#: src/lib/release-notes.ts
+msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "Os painéis de editor recebem a fila de teclas do vim, com as combinações leader do LazyVim incluídas, e mantêm as cores que o programa pediu."
+
+#: src/i18n/labels.ts
+msgid "Enter"
+msgstr "Enter"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Enter a gateway URL."
+msgstr "Introduza um URL do Gateway."
+
+#: src/components/settings-servers.tsx
+msgid "Enter a name."
+msgstr "Introduza um nome."
+
+#: src/app/explore.tsx
+msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
+msgstr "Introduza o código de {PAIRING_CODE_CHARACTER_COUNT} caracteres."
+
+#: src/app/explore.tsx
+msgid "Enter the Gateway's address instead."
+msgstr "Introduza antes o endereço do Gateway."
+
+#: src/app/explore.tsx
+msgid "Enter URL manually"
+msgstr "Introduzir URL manualmente"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/i18n/labels.ts
+msgid "Escape"
+msgstr "Escape"
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Expand {0}"
+msgstr "Expandir {0}"
+
+#. placeholder {0}: Math.floor(secondsRemaining / 60)
+#. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
+#: src/app/explore.tsx
+msgid "Expires in {0}:{1}"
+msgstr "Expira em {0}:{1}"
+
+#: src/components/file-mention-panel.tsx
+msgid "File mentions"
+msgstr "Menções de ficheiros"
+
+#: src/lib/attachments.ts
+msgid "File too large (25MB max)"
+msgstr "Ficheiro demasiado grande (máx. 25 MB)"
+
+#: src/lib/attachments.ts
+msgid "File type not allowed"
+msgstr "Tipo de ficheiro não permitido"
+
+#: src/components/session-artifacts.tsx
+msgid "Files"
+msgstr "Ficheiros"
+
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "Ficheiros deste espaço de trabalho"
+
+#: src/i18n/labels.ts
+msgid "Find a file by name"
+msgstr "Procurar um ficheiro pelo nome"
+
+#: src/components/new-task-sheet.tsx
+msgid "FIRST PROMPT"
+msgstr "PRIMEIRO PROMPT"
+
+#: src/lib/release-notes.ts
+msgid "Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together."
+msgstr "Cinco pacotes de temas — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repintam a aplicação e o terminal ao mesmo tempo."
+
+#: src/components/pane-chat-view.tsx
+msgid "Fold the tool steps away"
+msgstr "Recolher os passos de ferramentas"
+
+#: src/i18n/labels.ts
+msgid "Forward one word"
+msgstr "Avançar uma palavra"
+
+#: src/lib/demo-gateway.ts
+msgid "Free up context by summarizing the conversation so far"
+msgstr "Liberte contexto resumindo a conversa até agora"
+
+#: src/app/explore.tsx
+msgid "Front camera. Hold the QR up to the screen"
+msgstr "Câmara frontal. Aponte o código QR ao ecrã"
+
+#: src/app/explore.tsx
+msgid "Gateway"
+msgstr "Gateway"
+
+#: src/lib/network-error.ts
+msgid "Gateway did not respond in time."
+msgstr "O Gateway não respondeu a tempo."
+
+#: src/lib/network-error.ts
+msgid "Gateway is temporarily unavailable."
+msgstr "O Gateway está temporariamente indisponível."
+
+#: src/components/settings-alerts.tsx
+msgid "Gateway notifications"
+msgstr "Notificações do Gateway"
+
+#: src/lib/notifications.ts
+msgid "Gateway updates"
+msgstr "Atualizações do Gateway"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL"
+msgstr "URL do Gateway"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL is not valid."
+msgstr "O URL do Gateway não é válido."
+
+#: src/i18n/labels.ts
+msgid "Git status"
+msgstr "Estado do Git"
+
+#: src/components/screen-header.tsx
+msgid "Go back"
+msgstr "Voltar"
+
+#: src/i18n/labels.ts
+msgid "Go to the top of the file"
+msgstr "Ir para o início do ficheiro"
+
+#: src/app/+not-found.tsx
+msgid "Go to your servers"
+msgstr "Ir para os seus servidores"
+
+#: src/components/settings-alerts.tsx
+msgid "Haptic feedback"
+msgstr "Feedback háptico"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Hide {0}"
+msgstr "Ocultar {0}"
+
+#: src/app/commands.tsx
+msgid "Hide {name}"
+msgstr "Ocultar {name}"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Hide keyboard"
+msgstr "Ocultar o teclado"
+
+#: src/components/settings-alerts.tsx
+msgid "Home screen widget"
+msgstr "Widget no ecrã principal"
+
+#: src/lib/release-notes.ts
+msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
+msgstr "O início, as Definições e o ecrã do servidor foram redesenhados — cada servidor lista os agentes que executou por último, com o respetivo estado."
+
+#: src/i18n/labels.ts
+msgid "Idle"
+msgstr "Inativo"
+
+#: src/components/session-artifacts.tsx
+msgid "Images"
+msgstr "Imagens"
+
+#. placeholder {0}: row.label
+#: src/components/composer-popup.tsx
+msgid "Insert {0}"
+msgstr "Inserir {0}"
+
+#. placeholder {0}: row.label
+#. placeholder {1}: row.hint
+#: src/components/composer-popup.tsx
+msgid "Insert {0} {1}"
+msgstr "Inserir {0} {1}"
+
+#: src/i18n/labels.ts
+msgid "Insert mode"
+msgstr "Modo de inserção"
+
+#: src/app/explore.tsx
+msgid "Install command copied"
+msgstr "Comando de instalação copiado"
+
+#: src/i18n/labels.ts
+msgid "Interrupt"
+msgstr "Interromper"
+
+#: src/app/commands.tsx
+msgid "Interrupt process"
+msgstr "Interromper o processo"
+
+#: src/app/commands.tsx
+msgid "Interrupt what this agent is doing."
+msgstr "Interrompe o que este agente está a fazer."
+
+#: src/lib/local-authentication.ts
+msgid "iris recognition"
+msgstr "reconhecimento da íris"
+
+#: src/app/+not-found.tsx
+msgid "It may be out of date, or meant for a different app. Nothing was opened."
+msgstr "Pode estar desatualizado ou destinar-se a outra aplicação. Não foi aberto nada."
+
+#: src/components/pairing-camera.tsx
+msgid "It was found, but never showed a picture. Another app may be holding it."
+msgstr "Foi encontrada, mas nunca mostrou imagem. Outra app pode estar a usá-la."
+
+#: src/components/settings-servers.tsx
+msgid "Its details are stored securely on this device; try again."
+msgstr "Os detalhes dele estão guardados de forma segura neste dispositivo; tente novamente."
+
+#: src/components/settings-servers.tsx
+msgid "Its paired devices are listed once it is the server in use."
+msgstr "Os seus dispositivos emparelhados aparecem quando este for o servidor em uso."
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.tsx
+msgid "Jump to latest output"
+msgstr "Ir para a saída mais recente"
+
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "just now"
+msgstr "agora mesmo"
+
+#: src/components/settings-servers.tsx
+msgid "Keep {label}"
+msgstr "Manter {label}"
+
+#: src/components/settings-alerts.tsx
+msgid "Keep the panel you are watching on the Lock Screen while its agent works."
+msgstr "Mantém no ecrã bloqueado o painel que está a ver enquanto o agente trabalha."
+
+#: src/app/commands.tsx
+msgid "Keys"
+msgstr "Teclas"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Language"
+msgstr "Idioma"
+
+#: src/components/settings-appearance.tsx
+msgid "Language, {languageName}"
+msgstr "Idioma, {languageName}"
+
+#: src/components/settings-terminal.tsx
+msgid "Large"
+msgstr "Grande"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {days}d ago"
+msgstr "Conectado há {days} d"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {hours}h ago"
+msgstr "Conectado há {hours} h"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected {minutes}m ago"
+msgstr "Conectado há {minutes} min"
+
+#: src/components/settings-servers.tsx
+msgid "Last connected just now"
+msgstr "Conectado agora mesmo"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {days}d ago"
+msgstr "Visto há {days} d"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {hours}h ago"
+msgstr "Visto há {hours} h"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {minutes}m ago"
+msgstr "Visto há {minutes} min"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen just now"
+msgstr "Visto agora mesmo"
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.tsx
+msgid "Latest"
+msgstr "Mais recente"
+
+#: src/components/new-task-sheet.tsx
+msgid "Leave it empty to start where the session already is."
+msgstr "Deixe vazio para começar onde a sessão já está."
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Left arrow"
+msgstr "Seta para a esquerda"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Letters"
+msgstr "Letras"
+
+#: src/components/settings-appearance.tsx
+msgid "Light"
+msgstr "Claro"
+
+#: src/app/commands.tsx
+msgid "List branches"
+msgstr "Listar ramos"
+
+#: src/components/settings-servers.tsx
+msgid "List every pane, agent or not."
+msgstr "Lista todos os painéis, com ou sem agente."
+
+#: src/components/settings-servers.tsx
+msgid "List only the panes running a recognised agent."
+msgstr "Lista apenas os painéis com um agente reconhecido."
+
+#: src/components/settings-alerts.tsx
+msgid "Live Activity"
+msgstr "Atividade ao vivo"
+
+#: src/app/commands.tsx
+msgid "Loading commands"
+msgstr "A carregar comandos"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading earlier output…"
+msgstr "A carregar a saída anterior…"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "A carregar dispositivos emparelhados…"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading panel"
+msgstr "A carregar o painel"
+
+#: src/components/session-map.tsx
+msgid "Loading panels"
+msgstr "A carregar os painéis"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/settings-servers.tsx
+msgid "Loading servers"
+msgstr "A carregar servidores"
+
+#: src/components/app-lock-gate.tsx
+msgid "Loading settings"
+msgstr "A carregar definições"
+
+#: src/components/pane-chat-view.tsx
+msgid "Loading the transcript"
+msgstr "A carregar a transcrição"
+
+#: src/lib/demo-gateway.ts
+msgid "Logs"
+msgstr "Logs"
+
+#: src/lib/release-notes.ts
+msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
+msgstr "Toque sem largar no terminal para selecionar a saída, arraste para alargar a seleção e copie-a."
+
+#: src/app/explore.tsx
+msgid "Mac mini · Office"
+msgstr "Mac mini · Escritório"
+
+#. placeholder {0}: hit.path
+#: src/components/file-mention-panel.tsx
+msgid "Mention {0}"
+msgstr "Mencionar {0}"
+
+#: src/components/asset-viewer.tsx
+msgid "Modified"
+msgstr "Modificado"
+
+#: src/components/virtual-keyboard.tsx
+msgid "More symbols"
+msgstr "Mais símbolos"
+
+#: src/app/(drawer)/_layout.tsx
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Muqun"
+msgstr "Muqun"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Muqun agent status"
+msgstr "Estado dos agentes do Muqun"
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun could not verify your identity. Try again."
+msgstr "O Muqun não conseguiu verificar a sua identidade. Tente novamente."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun follows the language your phone is set to."
+msgstr "O Muqun segue o idioma definido no telemóvel."
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun is locked"
+msgstr "O Muqun está bloqueado"
+
+#: src/components/pairing-camera.tsx
+msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
+msgstr "O Muqun lê o código QR do Gateway pela câmara. Nada é gravado."
+
+#: src/app/settings.tsx
+msgid "Muqun settings stay on this device."
+msgstr "As definições do Muqun ficam neste dispositivo."
+
+#: src/lib/release-notes.ts
+msgid "Muqun speaks eight languages. It follows your phone, or you can choose one in Settings."
+msgstr "O Muqun fala oito idiomas. Segue o seu telemóvel, ou pode escolher um nas Definições."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun stays in this language whatever the phone is set to."
+msgstr "O Muqun mantém este idioma, independentemente do que estiver definido no telemóvel."
+
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Muqun will use {0} when the app opens."
+msgstr "O Muqun vai usar {0} ao abrir a app."
+
+#: src/app/commands.tsx
+msgid "Name"
+msgstr "Nome"
+
+#: src/app/explore.tsx
+msgid "Name it, then enter the code shown by the Gateway."
+msgstr "Dê-lhe um nome e depois introduza o código mostrado pelo Gateway."
+
+#: src/components/settings-servers.tsx
+msgid "Never connected"
+msgstr "Nunca conectado"
+
+#: src/components/settings-servers.tsx
+msgid "Never seen"
+msgstr "Nunca visto"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New panel"
+msgstr "Novo painel"
+
+#: src/lib/release-notes.ts
+msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
+msgstr "Novo painel divide agora o separador em que está, e o telemóvel vai direto para o que acabou de criar."
+
+#: src/app/commands.tsx
+msgid "NEW SHORTCUT"
+msgstr "NOVO ATALHO"
+
+#: src/app/commands.tsx
+msgid "New tab"
+msgstr "Novo separador"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "New task"
+msgstr "Nova tarefa"
+
+#: src/components/new-task-action.tsx
+msgid "New task on {label}"
+msgstr "Nova tarefa em {label}"
+
+#: src/components/session-map.tsx
+msgid "New workspace"
+msgstr "Novo espaço de trabalho"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "No agents running"
+msgstr "Nenhum agente em execução"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "No app on this phone opens web pages."
+msgstr "Nenhuma aplicação neste telemóvel abre páginas web."
+
+#: src/components/pairing-camera.tsx
+msgid "No camera to scan with"
+msgstr "Sem câmara para digitalizar"
+
+#: src/components/pairing-camera.tsx
+msgid "No camera was found on this device."
+msgstr "Não foi encontrada nenhuma câmara neste dispositivo."
+
+#: src/components/session-artifacts.tsx
+msgid "No files match."
+msgstr "Nenhum ficheiro corresponde."
+
+#: src/app/explore.tsx
+msgid "No Gateway yet?"
+msgstr "Ainda não tem um Gateway?"
+
+#: src/app/settings.tsx
+msgid "No mail app configured"
+msgstr "Nenhuma app de e-mail configurada"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "No output."
+msgstr "Sem saída."
+
+#: src/components/asset-viewer.tsx
+msgid "No preview for this kind of file. It stays on the server."
+msgstr "Sem pré-visualização para este tipo de ficheiro. Fica no servidor."
+
+#: src/app/new-task.tsx
+msgid "No server to start a task on."
+msgstr "Não há nenhum servidor onde iniciar uma tarefa."
+
+#: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
+msgid "No servers paired yet"
+msgstr "Ainda não há servidores emparelhados"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Not available"
+msgstr "Indisponível"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "not connected"
+msgstr "sem ligação"
+
+#: src/i18n/labels.ts
+msgid "Not connected"
+msgstr "Sem ligação"
+
+#: src/i18n/labels.ts
+msgid "NOT CONNECTED"
+msgstr "SEM LIGAÇÃO"
+
+#: src/app/+not-found.tsx
+msgid "Not found"
+msgstr "Não encontrado"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
+msgstr "Nada respondeu na porta {port}. Ou não está nada à escuta, ou está ligado apenas a localhost — reinicie-o com --host 0.0.0.0 para lhe chegar a partir daqui."
+
+#: src/components/session-artifacts.tsx
+msgid "Nothing here yet. Files the session writes show up on their own."
+msgstr "Ainda não há nada aqui. Os ficheiros que a sessão escrever aparecem sozinhos."
+
+#: src/components/pane-chat-view.tsx
+msgid "Nothing to show yet."
+msgstr "Ainda não há nada para mostrar."
+
+#: src/i18n/labels.ts
+msgid "OFFLINE"
+msgstr "OFFLINE"
+
+#: src/i18n/labels.ts
+msgid "Offline, not answering"
+msgstr "Offline, sem resposta"
+
+#: src/i18n/labels.ts
+msgid "Online"
+msgstr "Online, a responder"
+
+#: src/i18n/labels.ts
+msgid "ONLINE"
+msgstr "ONLINE"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open"
+msgstr "Abrir"
+
+#. placeholder {0}: asset.name
+#. placeholder {0}: part.fallback_text || part.asset_id
+#. placeholder {0}: server.label
+#: src/app/(drawer)/index.tsx
+#: src/components/pane-chat-blocks.tsx
+#: src/components/session-artifacts.tsx
+msgid "Open {0}"
+msgstr "Abrir {0}"
+
+#: src/app/commands.tsx
+msgid "Open a port on this machine in your browser."
+msgstr "Abre uma porta desta máquina no seu navegador."
+
+#: src/app/commands.tsx
+msgid "Open a tab of its own and go to it."
+msgstr "Abre um separador próprio e vai para ele."
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open a web service"
+msgstr "Abrir um serviço web"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open anyway"
+msgstr "Abrir mesmo assim"
+
+#: src/components/artifacts-button.tsx
+msgid "Open files"
+msgstr "Abrir a lista de ficheiros"
+
+#: src/i18n/labels.ts
+msgid "Open Lazygit"
+msgstr "Abrir o Lazygit"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Open Muqun to connect"
+msgstr "Abre o Muqun para ligares"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Open on-screen keyboard"
+msgstr "Abrir o teclado no ecrã"
+
+#: src/components/session-map.tsx
+msgid "Open panel {title}. Long press to close."
+msgstr "Abrir o painel {title}. Toque sem soltar para fechar."
+
+#: src/components/app-drawer.tsx
+msgid "Open panels"
+msgstr "Abrir a lista de painéis"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open port {recent}"
+msgstr "Abrir a porta {recent}"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Open quick actions"
+msgstr "Abrir as ações rápidas"
+
+#: src/i18n/labels.ts
+msgid "Open the file explorer"
+msgstr "Abrir o explorador de ficheiros"
+
+#. placeholder {0}: workspace.title
+#. placeholder {1}: inventory.panels
+#: src/components/session-map.tsx
+msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
+msgstr "Abrir o espaço de trabalho {0}, {1, plural, one {# painel} other {# painéis}}. Toque sem soltar para fechar."
+
+#: src/app/explore.tsx
+msgid "Opening the server."
+msgstr "A abrir o servidor."
+
+#: src/app/settings.tsx
+msgid "Opens the Muqun issue tracker on GitHub."
+msgstr "Abre o rastreador de problemas do Muqun no GitHub."
+
+#: src/components/server-agent-rows.tsx
+msgid "Opens this agent's panel"
+msgstr "Abre o painel deste agente"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Options for {0}"
+msgstr "Opções de {0}"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Pair a server"
+msgstr "Emparelhar um servidor"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair again"
+msgstr "Emparelhar novamente"
+
+#: src/app/explore.tsx
+msgid "Pair server"
+msgstr "Emparelhar servidor"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair this server again"
+msgstr "Emparelhar novamente este servidor"
+
+#: src/lib/network-error.ts
+msgid "Pair this server again."
+msgstr "Emparelhe novamente este servidor."
+
+#: src/app/(drawer)/index.tsx
+msgid "Pair your first server"
+msgstr "Emparelhar o primeiro servidor"
+
+#: src/app/explore.tsx
+msgid "Pairing"
+msgstr "A emparelhar"
+
+#: src/app/explore.tsx
+msgid "Pairing code"
+msgstr "Código de emparelhamento"
+
+#: src/app/explore.tsx
+msgid "Pairing code expired. Scan again for a new code."
+msgstr "O código de emparelhamento expirou. Leia novamente para obter um novo código."
+
+#: src/app/explore.tsx
+msgid "Pairing failed."
+msgstr "O emparelhamento falhou."
+
+#: src/app/commands.tsx
+msgid "PANEL COMMANDS"
+msgstr "COMANDOS DO PAINEL"
+
+#: src/components/session-map.tsx
+msgid "Panels"
+msgstr "Painéis"
+
+#: src/components/settings-servers.tsx
+msgid "Panes on server cards"
+msgstr "Painéis nos cartões de servidor"
+
+#: src/i18n/labels.ts
+msgid "Paste"
+msgstr "Colar"
+
+#: src/components/asset-viewer.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Path"
+msgstr "Caminho"
+
+#: src/components/attachment-menu.tsx
+msgid "Photo library"
+msgstr "Galeria de fotos"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Port"
+msgstr "Porta"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "PORT"
+msgstr "PORTA"
+
+#: src/components/approval-banner.tsx
+msgid "Press Escape to dismiss this request"
+msgstr "Pressione Escape para dispensar esta solicitação"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Preview {0}, {status}"
+msgstr "Pré-visualizar {0}, {status}"
+
+#: src/app/settings.tsx
+msgid "Privacy policy"
+msgstr "Política de Privacidade"
+
+#: src/app/commands.tsx
+msgid "Prompt"
+msgstr "Prompt"
+
+#: src/components/settings-security.tsx
+msgid "Protect paired servers and terminal sessions."
+msgstr "Protege os servidores emparelhados e as sessões de terminal."
+
+#: src/i18n/labels.ts
+msgid "Pull"
+msgstr "Pull"
+
+#: src/components/skia-terminal.tsx
+msgid "Pull for earlier output"
+msgstr "Puxe para carregar a saída anterior"
+
+#: src/components/attachment-strip.tsx
+msgid "queued to upload"
+msgstr "na fila para carregar"
+
+#: src/app/commands.tsx
+msgid "Quick action settings"
+msgstr "Definições de ações rápidas"
+
+#: src/app/commands.tsx
+#: src/components/settings-terminal.tsx
+msgid "Quick actions"
+msgstr "Ações rápidas"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Quit"
+msgstr "Sair"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Reach a server running on {label} from this phone."
+msgstr "Chegue a partir deste telemóvel a um servidor que corre em {label}."
+
+#: src/app/settings.tsx
+msgid "Reach us at {SUPPORT_EMAIL}."
+msgstr "Contacte-nos através de {SUPPORT_EMAIL}."
+
+#: src/app/explore.tsx
+msgid "Reaching the Gateway"
+msgstr "A contactar o Gateway"
+
+#: src/components/settings-alerts.tsx
+msgid "Receive agent blocks and gateway updates."
+msgstr "Recebe os bloqueios de agentes e as atualizações do Gateway."
+
+#: src/i18n/labels.ts
+msgid "Recent commits"
+msgstr "Commits recentes"
+
+#. placeholder {0}: status.attempt
+#: src/components/server-terminal-workspace.tsx
+msgid "Reconnecting · {0}"
+msgstr "A ligar novamente · {0}"
+
+#: src/components/session-artifacts.tsx
+msgid "Refresh files"
+msgstr "Atualizar os ficheiros"
+
+#: src/components/session-map.tsx
+msgid "Refresh panels"
+msgstr "Atualizar os painéis"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Remove {0}"
+msgstr "Remover {0}"
+
+#: src/components/row-action-menu.tsx
+msgid "Rename {label}"
+msgstr "Mudar o nome de {label}"
+
+#: src/components/session-map.tsx
+msgid "Rename panel"
+msgstr "Mudar o nome do painel"
+
+#: src/components/session-map.tsx
+msgid "Rename tab"
+msgstr "Mudar o nome do separador"
+
+#: src/components/session-map.tsx
+msgid "Rename workspace"
+msgstr "Mudar o nome do espaço de trabalho"
+
+#: src/app/commands.tsx
+msgid "Render as terminal"
+msgstr "Mostrar como terminal"
+
+#: src/app/commands.tsx
+msgid "Render as text"
+msgstr "Mostrar como texto"
+
+#: src/app/settings.tsx
+msgid "Report a bug or request a feature"
+msgstr "Comunicar um erro ou pedir uma funcionalidade"
+
+#: src/lib/network-error.ts
+msgid "Request failed."
+msgstr "O pedido falhou."
+
+#: src/components/settings-security.tsx
+msgid "Required on launch and after 30 seconds in the background."
+msgstr "Obrigatório ao abrir a app e após 30 segundos em segundo plano."
+
+#: src/components/settings-alerts.tsx
+msgid "Requires iOS 16.1 or later."
+msgstr "Requer iOS 16.1 ou posterior."
+
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "Reinicie o Muqun para concluir a atualização"
+
+#: src/app/commands.tsx
+msgid "Restore hidden default commands"
+msgstr "Restaurar os comandos predefinidos ocultos"
+
+#: src/app/commands.tsx
+msgid "Restore hidden defaults"
+msgstr "Restaurar predefinições ocultas"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/terminal-boundary.tsx
+msgid "Retry"
+msgstr "Repetir"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry connection"
+msgstr "Repetir a ligação"
+
+#: src/components/terminal-boundary.tsx
+msgid "Retry drawing the panel"
+msgstr "Voltar a desenhar o painel"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry the ones marked in red, or remove them, then send again."
+msgstr "Repita os que estão marcados a vermelho, ou remova-os, e envie novamente."
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Retry uploading {0}"
+msgstr "Repetir o carregamento de {0}"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Return"
+msgstr "Enter"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Return to the server list and pair again."
+msgstr "Volte à lista de servidores e emparelhe novamente."
+
+#: src/lib/demo-gateway.ts
+msgid "Review"
+msgstr "Revisão"
+
+#: src/lib/demo-gateway.ts
+msgid "Review a GitHub pull request"
+msgstr "Reveja um pull request do GitHub"
+
+#: src/app/commands.tsx
+msgid "Review changes"
+msgstr "Rever alterações"
+
+#: src/app/commands.tsx
+msgid "Review the current changes."
+msgstr "Reveja as alterações atuais."
+
+#: src/components/new-task-sheet.tsx
+msgid "Review the failing test and fix it."
+msgstr "Vê o teste que está a falhar e corrige-o."
+
+#: src/components/settings-servers.tsx
+msgid "Revoke"
+msgstr "Revogar"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Revoke {0}"
+msgstr "Revogar {0}"
+
+#: src/components/settings-servers.tsx
+msgid "Revoking…"
+msgstr "A revogar…"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Right arrow"
+msgstr "Seta para a direita"
+
+#: src/app/commands.tsx
+msgid "Run a command or key combo."
+msgstr "Execute um comando ou uma combinação de teclas."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Run a terminal command"
+msgstr "Executar um comando de terminal"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Run command"
+msgstr "Executar comando"
+
+#: src/i18n/labels.ts
+msgid "Run relevant tests"
+msgstr "Executar os testes relevantes"
+
+#: src/app/(drawer)/index.tsx
+msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
+msgstr "Execute o Gateway no seu computador e leia o código QR que ele mostra. O emparelhamento fica neste dispositivo."
+
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+msgid "Save"
+msgstr "Guardar"
+
+#: src/app/commands.tsx
+msgid "Save a command or key combo you reach for."
+msgstr "Guarde um comando ou uma combinação de teclas que usa muitas vezes."
+
+#: src/app/commands.tsx
+msgid "Save a prompt you send this agent often."
+msgstr "Guarde um prompt que envia muitas vezes a este agente."
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Save changes to {0}"
+msgstr "Guardar alterações em {0}"
+
+#: src/app/commands.tsx
+msgid "Save shortcut"
+msgstr "Guardar atalho"
+
+#: src/components/settings-servers.tsx
+msgid "Saving…"
+msgstr "A guardar…"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/explore.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Scan a gateway QR"
+msgstr "Ler o QR de um Gateway"
+
+#: src/app/explore.tsx
+msgid "Scan again"
+msgstr "Ler novamente"
+
+#: src/app/explore.tsx
+msgid "Scan the Gateway QR."
+msgstr "Leia o código QR do Gateway."
+
+#: src/components/pairing-camera.tsx
+msgid "Scanning needs a camera, which this browser does not offer."
+msgstr "Digitalizar precisa de uma câmara, que este navegador não oferece."
+
+#: src/i18n/labels.ts
+msgid "Search"
+msgstr "Pesquisar"
+
+#: src/components/session-artifacts.tsx
+msgid "Search files"
+msgstr "Pesquisar ficheiros"
+
+#: src/i18n/labels.ts
+msgid "Search the whole project"
+msgstr "Procurar em todo o projeto"
+
+#: src/app/settings.tsx
+msgid "Security"
+msgstr "Segurança"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}d ago"
+msgstr "Visto há {0} d"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}h ago"
+msgstr "Visto há {0} h"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}m ago"
+msgstr "Visto há {0} min"
+
+#: src/components/server-agent-rows.tsx
+msgid "Seen just now"
+msgstr "Visto agora mesmo"
+
+#: src/components/skia-terminal.tsx
+msgid "Select all"
+msgstr "Selecionar tudo"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send {spoken}"
+msgstr "Enviar {spoken}"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send a message"
+msgstr "Enviar uma mensagem"
+
+#: src/app/commands.tsx
+msgid "Send a prompt to this agent."
+msgstr "Envie um prompt a este agente."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send to agent"
+msgstr "Enviar ao agente"
+
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Server"
+msgstr "Servidor"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Server name"
+msgstr "Nome do servidor"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server not found"
+msgstr "Servidor não encontrado"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server offline"
+msgstr "Servidor offline"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server unavailable."
+msgstr "Servidor indisponível."
+
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Servers"
+msgstr "Servidores"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set a device passcode before using App Lock."
+msgstr "Defina um código no dispositivo antes de usar o bloqueio da app."
+
+#: src/app/explore.tsx
+msgid "Set one up on your computer"
+msgstr "Instale um no seu computador"
+
+#: src/lib/demo-gateway.ts
+msgid "Set the AI model for Claude Code"
+msgstr "Defina o modelo de IA do Claude Code"
+
+#. placeholder {0}: authAvailability.label
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Set up {0} in system settings first."
+msgstr "Configure primeiro o {0} nas definições do sistema."
+
+#. placeholder {0}: availability.label
+#: src/components/app-lock-gate.tsx
+msgid "Set up {0} in system settings to unlock Muqun."
+msgstr "Configure {0} nas definições do sistema para desbloquear o Muqun."
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {label} in system settings first."
+msgstr "Comece por configurar o {label} nas definições do sistema."
+
+#: src/app/explore.tsx
+msgid "Set up a Gateway on your computer"
+msgstr "Instalar um Gateway no seu computador"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Settings"
+msgstr "Definições"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Shift"
+msgstr "Shift"
+
+#: src/i18n/labels.ts
+msgid "Shift Enter, newline without sending"
+msgstr "Shift Enter, nova linha sem enviar"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab"
+msgstr "Shift Tab"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab, cycle mode"
+msgstr "Shift Tab, mudar de modo"
+
+#: src/app/commands.tsx
+msgid "SHORTCUTS"
+msgstr "ATALHOS"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Show {0}"
+msgstr "Mostrar {0}"
+
+#: src/components/settings-alerts.tsx
+msgid "Show agents and their status on the home screen. Updates while Muqun is open."
+msgstr "Mostra os agentes e o respetivo estado no ecrã principal. Atualiza enquanto o Muqun estiver aberto."
+
+#: src/components/session-artifacts.tsx
+msgid "Show all files"
+msgstr "Mostrar todos os ficheiros"
+
+#: src/components/pairing-camera.tsx
+msgid "Show camera details"
+msgstr "Mostrar detalhes da câmara"
+
+#: src/components/session-artifacts.tsx
+msgid "Show code"
+msgstr "Mostrar código"
+
+#: src/components/session-artifacts.tsx
+msgid "Show documents"
+msgstr "Mostrar documentos"
+
+#: src/components/settings-terminal.tsx
+msgid "Show Esc, Tab, Ctrl and navigation keys above input."
+msgstr "Mostra as teclas Esc, Tab, Ctrl e de navegação por cima do campo de entrada."
+
+#: src/components/pane-chat-view.tsx
+msgid "Show every tool step"
+msgstr "Mostrar todos os passos de ferramentas"
+
+#: src/components/session-artifacts.tsx
+msgid "Show images"
+msgstr "Mostrar imagens"
+
+#: src/components/asset-viewer.tsx
+msgid "Size"
+msgstr "Tamanho"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Some files did not upload"
+msgstr "Alguns ficheiros não foram carregados"
+
+#: src/components/app-error-boundary.tsx
+msgid "Something went wrong"
+msgstr "Algo correu mal"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Space"
+msgstr "Espaço"
+
+#: src/app/commands.tsx
+msgid "Split this tab and go to what it makes."
+msgstr "Divide este separador e vai para o painel que cria."
+
+#: src/lib/agent-widget-layout.tsx
+msgid "stale · {age}"
+msgstr "desatualizado · {age}"
+
+#: src/lib/demo-gateway.ts
+msgid "Start a new session with empty context"
+msgstr "Inicie uma sessão nova com o contexto vazio"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do."
+msgstr "Inicie um agente e diga-lhe a primeira coisa a fazer."
+
+#: src/components/new-task-sheet.tsx
+msgid "Start task"
+msgstr "Iniciar tarefa"
+
+#: src/app/explore.tsx
+#: src/components/pairing-camera.tsx
+msgid "Starting the camera"
+msgstr "A iniciar a câmara"
+
+#: src/components/new-task-sheet.tsx
+msgid "Starting…"
+msgstr "A iniciar…"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "Still running…"
+msgstr "Ainda em execução…"
+
+#: src/app/commands.tsx
+msgid "Stop"
+msgstr "Parar"
+
+#: src/app/commands.tsx
+msgid "Stop this agent"
+msgstr "Parar este agente"
+
+#: src/i18n/labels.ts
+msgid "Summarize progress"
+msgstr "Resumir o progresso"
+
+#: src/i18n/labels.ts
+msgid "Suspend"
+msgstr "Suspender"
+
+#: src/components/workspace-title-switcher.tsx
+msgid "Swipe left or right to switch workspace"
+msgstr "Deslize para a esquerda ou direita para mudar de espaço de trabalho"
+
+#: src/i18n/labels.ts
+msgid "Switch between open files"
+msgstr "Alternar entre ficheiros abertos"
+
+#. placeholder {0}: panelTitle(pane, paneAgent)
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch to {0}"
+msgstr "Mudar para {0}"
+
+#: src/i18n/labels.ts
+msgid "Switch to the chat view"
+msgstr "Mudar para a vista de conversa"
+
+#: src/i18n/labels.ts
+msgid "Switch to the terminal view"
+msgstr "Mudar para a vista de terminal"
+
+#: src/i18n/labels.ts
+msgid "Switch to the text view"
+msgstr "Mudar para a vista de texto"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Symbols"
+msgstr "Símbolos"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "System"
+msgstr "Sistema"
+
+#: src/i18n/labels.ts
+msgid "Tab"
+msgstr "Tab"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Tab {0}. Long press for actions."
+msgstr "Separador {0}. Toque sem soltar para ver as ações."
+
+#: src/components/attachment-menu.tsx
+msgid "Take photo"
+msgstr "Tirar foto"
+
+#: src/app/settings.tsx
+#: src/i18n/labels.ts
+msgid "Terminal"
+msgstr "Terminal"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Terminal colours follow the theme."
+msgstr "As cores do terminal seguem o tema."
+
+#: src/components/settings-terminal.tsx
+msgid "Terminal key row"
+msgstr "Linha de teclas do terminal"
+
+#: src/i18n/labels.ts
+msgid "Text"
+msgstr "Texto"
+
+#: src/components/settings-terminal.tsx
+msgid "Text size"
+msgstr "Tamanho do texto"
+
+#: src/hooks/use-pane-approval.ts
+msgid "That answer did not reach the agent."
+msgstr "Essa resposta não chegou ao agente."
+
+#: src/app/explore.tsx
+msgid "That code was refused. Hold still for a new one."
+msgstr "Esse código foi recusado. Mantenha firme para ler outro."
+
+#: src/components/settings-servers.tsx
+msgid "The address is where this paired server is reached. Changing it does not unpair the device."
+msgstr "O endereço é onde este servidor emparelhado é alcançado. Alterá-lo não desemparelha o dispositivo."
+
+#: src/app/explore.tsx
+msgid "The address the Gateway prints when it starts."
+msgstr "O endereço que o Gateway mostra ao arrancar."
+
+#: src/i18n/labels.ts
+msgid "The agent is asking something else now."
+msgstr "O agente está agora a perguntar outra coisa."
+
+#: src/i18n/labels.ts
+msgid "The agent is no longer waiting."
+msgstr "O agente já não está à espera."
+
+#: src/components/pairing-camera.tsx
+msgid "The camera did not start"
+msgstr "A câmara não arrancou"
+
+#: src/components/pairing-camera.tsx
+msgid "The camera reported an error."
+msgstr "A câmara comunicou um erro."
+
+#: src/lib/release-notes.ts
+msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
+msgstr "O teclado no ecrã está disposto como um teclado a sério, e cada tecla é enviada no momento em que a carrega."
+
+#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgid "The raw pane, on its grid and in its own colours."
+msgstr "O painel em bruto, na sua grelha e com as suas cores."
+
+#: src/components/app-error-boundary.tsx
+msgid "The screen hit an error. Try again — your servers stay paired."
+msgstr "Este ecrã deu erro. Tente novamente — os seus servidores continuam emparelhados."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The server did not return it."
+msgstr "O servidor não o devolveu."
+
+#: src/app/commands.tsx
+msgid "The server did not say which panel it made."
+msgstr "O servidor não disse qual painel criou."
+
+#: src/components/settings-servers.tsx
+msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "O servidor continua guardado neste dispositivo. Confirme que o Gateway dele está a correr e tente novamente."
+
+#: src/i18n/labels.ts
+msgid "The transcript as a conversation, with tool steps folded away."
+msgstr "A transcrição como uma conversa, com os passos das ferramentas recolhidos."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme"
+msgstr "Tema"
+
+#. placeholder {0}: pack.label
+#: src/components/settings-appearance.tsx
+msgid "Theme, {0}"
+msgstr "Tema, {0}"
+
+#: src/i18n/labels.ts
+msgid "This agent did not offer that answer."
+msgstr "Este agente não ofereceu essa resposta."
+
+#: src/lib/attachments.ts
+msgid "This device has no camera available."
+msgstr "Este dispositivo não tem câmara disponível."
+
+#: src/components/asset-viewer.tsx
+msgid "This file is empty."
+msgstr "Este ficheiro está vazio."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This file is not among the session artifacts."
+msgstr "Este ficheiro não está entre os artefactos da sessão."
+
+#: src/lib/network-error.ts
+msgid "This Gateway does not answer to that address."
+msgstr "Este Gateway não responde nesse endereço."
+
+#: src/components/session-artifacts.tsx
+msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "Este gateway ainda não serve ficheiros. Atualize o plugin de gateway do Muqun para percorrer o que uma sessão escreve."
+
+#: src/components/settings-servers.tsx
+msgid "This gateway has not listed any paired devices."
+msgstr "Este Gateway não listou dispositivos emparelhados."
+
+#: src/components/image-preview-modal.tsx
+msgid "This image could not be loaded."
+msgstr "Não foi possível carregar esta imagem."
+
+#: src/app/+not-found.tsx
+msgid "This link goes nowhere"
+msgstr "Esta ligação não leva a lado nenhum"
+
+#: src/components/terminal-boundary.tsx
+msgid "This panel could not be drawn."
+msgstr "Não foi possível desenhar este painel."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This panel is no longer available."
+msgstr "Este painel já não está disponível."
+
+#: src/app/explore.tsx
+msgid "This QR code is not valid."
+msgstr "Este código QR não é válido."
+
+#: src/lib/network-error.ts
+msgid "This server cannot use this device's stored key. Pair it again to reconnect."
+msgstr "Este servidor não consegue usar a chave guardada neste dispositivo. Emparelhe-o novamente para voltar a ligar."
+
+#: src/lib/network-error.ts
+msgid "This server could not read the request. Check this device's date and time."
+msgstr "Este servidor não conseguiu ler o pedido. Verifique a data e a hora deste dispositivo."
+
+#: src/components/new-task-sheet.tsx
+msgid "This server did not name any agents it can start."
+msgstr "Este servidor não indicou nenhum agente que possa iniciar."
+
+#: src/lib/network-error.ts
+msgid "This server had a problem answering."
+msgstr "Este servidor teve um problema ao responder."
+
+#: src/lib/network-error.ts
+msgid "This server has already handled that request."
+msgstr "Este servidor já tratou esse pedido."
+
+#: src/app/new-task.tsx
+msgid "This server has no session to start an agent in."
+msgstr "Este servidor não tem nenhuma sessão onde iniciar um agente."
+
+#: src/app/new-task.tsx
+#: src/app/web-service.tsx
+msgid "This server is no longer paired."
+msgstr "Este servidor já não está emparelhado."
+
+#: src/lib/network-error.ts
+msgid "This server no longer recognises this device. Pair it again to reconnect."
+msgstr "Este servidor já não reconhece este dispositivo. Emparelhe-o novamente para voltar a ligar."
+
+#: src/lib/network-error.ts
+msgid "This server refused the request."
+msgstr "Este servidor recusou o pedido."
+
+#: src/components/session-map.tsx
+msgid "This tab has no panels."
+msgstr "Este separador não tem painéis."
+
+#: src/components/session-map.tsx
+msgid "This workspace has no tabs yet."
+msgstr "Este espaço de trabalho ainda não tem separadores."
+
+#: src/i18n/labels.ts
+msgid "Today"
+msgstr "Hoje"
+
+#: src/components/code-view.tsx
+msgid "Too large to colour. Shown as plain text."
+msgstr "Demasiado grande para colorir. Mostrado como texto simples."
+
+#: src/components/code-view.tsx
+msgid "Too many lines to colour. Shown as plain text."
+msgstr "Demasiadas linhas para colorir. Mostrado como texto simples."
+
+#: src/components/app-error-boundary.tsx
+#: src/components/asset-viewer.tsx
+msgid "Try again"
+msgstr "Tentar novamente"
+
+#: src/components/settings-servers.tsx
+msgid "Try again once the gateway responds."
+msgstr "Tente novamente quando o Gateway responder."
+
+#: src/app/(drawer)/index.tsx
+msgid "Try the demo"
+msgstr "Experimentar a demo"
+
+#: src/components/asset-viewer.tsx
+msgid "Type"
+msgstr "Tipo"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Type into this editor"
+msgstr "Escrever neste editor"
+
+#: src/components/new-task-sheet.tsx
+msgid "Type it, or use your keyboard's dictation key."
+msgstr "Escreva-o ou use a tecla de ditado do teclado."
+
+#: src/i18n/labels.ts
+msgid "Undo"
+msgstr "Desfazer"
+
+#: src/components/asset-viewer.tsx
+msgid "unknown"
+msgstr "desconhecido"
+
+#: src/i18n/labels.ts
+msgid "Unknown"
+msgstr "Desconhecido"
+
+#: src/i18n/labels.ts
+msgid "Unknown date"
+msgstr "Data desconhecida"
+
+#: src/lib/local-authentication.ts
+msgid "Unlock Muqun"
+msgstr "Desbloquear o Muqun"
+
+#. placeholder {0}: authAvailability?.label ?? t`device authentication`
+#: src/components/settings-security.tsx
+msgid "Unlock with {0}"
+msgstr "Desbloquear com {0}"
+
+#: src/components/app-lock-gate.tsx
+msgid "Unlock with {authLabel}"
+msgstr "Desbloquear com {authLabel}"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair"
+msgstr "Desemparelhar"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair {label}"
+msgstr "Desemparelhar {label}"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair this server"
+msgstr "Desemparelhar este servidor"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Up arrow"
+msgstr "Seta para cima"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready · restarting…"
+msgstr "Atualização pronta · a reiniciar…"
+
+#: src/components/update-status-banner.tsx
+msgid "Updating Muqun…"
+msgstr "A atualizar o Muqun…"
+
+#: src/components/attachment-strip.tsx
+msgid "upload failed"
+msgstr "falha no carregamento"
+
+#: src/components/attachment-strip.tsx
+msgid "uploaded"
+msgstr "carregado"
+
+#: src/components/attachment-strip.tsx
+msgid "uploading"
+msgstr "a carregar"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Use {0}"
+msgstr "Usar {0}"
+
+#: src/lib/local-authentication.ts
+msgid "Use device passcode"
+msgstr "Usar o código do dispositivo"
+
+#: src/components/settings-servers.tsx
+msgid "Use the scan button on the home screen to add one."
+msgstr "Adicione um com o botão de leitura no ecrã principal."
+
+#: src/components/settings-servers.tsx
+msgid "Use this server"
+msgstr "Usar este servidor"
+
+#: src/components/settings-servers.tsx
+msgid "USING"
+msgstr "EM USO"
+
+#. placeholder {0}: build ? ` (${build})` : ''
+#: src/app/settings.tsx
+msgid "Version {version}{0}"
+msgstr "Versão {version}{0}"
+
+#: src/i18n/labels.ts
+msgid "Visual mode"
+msgstr "Modo visual"
+
+#: src/lib/demo-gateway.ts
+msgid "Visualize current context usage as a colored grid"
+msgstr "Visualize o uso atual do contexto como uma grelha colorida"
+
+#: src/components/agent-markdown-output.tsx
+#: src/components/skia-terminal.web.tsx
+msgid "Waiting for output…"
+msgstr "À espera de saída…"
+
+#: src/lib/network-error.ts
+msgid "Waiting for the network."
+msgstr "À espera da rede."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Waiting for uploads to finish…"
+msgstr "À espera de que os carregamentos terminem…"
+
+#: src/lib/release-notes.ts
+msgid "What's new"
+msgstr "Novidades"
+
+#: src/lib/release-notes.ts
+msgid "When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it."
+msgstr "Quando um agente pede permissão, o Muqun redesenha a pergunta como um cartão e limpa a área de escrita até lhe responder."
+
+#: src/components/away-digest-card.tsx
+msgid "While you were away"
+msgstr "Enquanto você esteve fora"
+
+#: src/i18n/labels.ts
+msgid "Working"
+msgstr "A trabalhar"
+
+#: src/components/session-map.tsx
+msgid "Workspace"
+msgstr "Espaço de trabalho"
+
+#: src/components/session-map.tsx
+msgid "WORKSPACE"
+msgstr "ESPAÇO DE TRABALHO"
+
+#: src/lib/demo-gateway.ts
+msgid "Write and quit"
+msgstr "Gravar e sair"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Write the file"
+msgstr "Gravar o ficheiro"
+
+#: src/i18n/labels.ts
+msgid "Write the file and quit"
+msgstr "Gravar o ficheiro e sair"
+
+#: src/i18n/labels.ts
+msgid "Yank this line"
+msgstr "Copiar esta linha"
+
+#: src/i18n/labels.ts
+msgid "Yesterday"
+msgstr "Ontem"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Your agents, anywhere."
+msgstr "Os seus agentes, onde quer que esteja."
+
+#: src/components/app-drawer-content.tsx
+msgid "Your paired gateways"
+msgstr "Os seus Gateways emparelhados"

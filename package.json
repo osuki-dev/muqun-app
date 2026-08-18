@@ -1,0 +1,142 @@
+{
+  "name": "muqun",
+  "main": "index.ts",
+  "version": "1.2.0",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@expo/ui": "~57.0.8",
+    "@formatjs/intl-getcanonicallocales": "^3.2.11",
+    "@formatjs/intl-locale": "^5.3.10",
+    "@formatjs/intl-pluralrules": "^6.3.13",
+    "@legendapp/list": "^3.3.3",
+    "@lingui/core": "^6.6.0",
+    "@lingui/react": "^6.6.0",
+    "@osuki-dev/ui": "^0.0.1",
+    "@shopify/react-native-skia": "2.10.1",
+    "expo": "~57.0.9",
+    "expo-application": "~57.0.2",
+    "expo-asset": "~57.0.8",
+    "expo-blur": "~57.0.2",
+    "expo-build-properties": "~57.0.8",
+    "expo-clipboard": "~57.0.1",
+    "expo-constants": "~57.0.8",
+    "expo-device": "~57.0.1",
+    "expo-document-picker": "~57.0.1",
+    "expo-file-system": "~57.0.1",
+    "expo-font": "~57.0.1",
+    "expo-glass-effect": "~57.0.1",
+    "expo-haptics": "~57.0.1",
+    "expo-image": "~57.0.1",
+    "expo-image-manipulator": "~57.0.7",
+    "expo-image-picker": "~57.0.7",
+    "expo-linking": "~57.0.4",
+    "expo-local-authentication": "~57.0.2",
+    "expo-localization": "^57.0.1",
+    "expo-navigation-bar": "~57.0.2",
+    "expo-notifications": "~57.0.8",
+    "expo-router": "~57.0.9",
+    "expo-screen-capture": "~57.0.1",
+    "expo-screen-orientation": "~57.0.1",
+    "expo-secure-store": "^57.0.1",
+    "expo-splash-screen": "~57.0.5",
+    "expo-status-bar": "~57.0.1",
+    "expo-symbols": "~57.0.1",
+    "expo-system-ui": "~57.0.2",
+    "expo-updates": "~57.0.11",
+    "expo-web-browser": "~57.0.2",
+    "expo-widgets": "~57.0.7",
+    "highlight.js": "^11.11.1",
+    "lucide-react-native": "^1.28.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-native": "0.86.2",
+    "react-native-android-widget": "^0.21.0",
+    "react-native-enriched-markdown": "^0.7.4",
+    "react-native-gesture-handler": "~3.1.0",
+    "react-native-keyboard-controller": "1.22.2",
+    "react-native-mmkv": "^4.3.2",
+    "react-native-nitro-fetch": "1.5.4",
+    "react-native-nitro-image": "^0.15.1",
+    "react-native-nitro-modules": "0.36.5",
+    "react-native-nitro-text-decoder": "0.2.0",
+    "react-native-quick-base64": "^3.0.1",
+    "react-native-quick-crypto": "^1.1.6",
+    "react-native-reanimated": "4.5.3",
+    "react-native-safe-area-context": "~5.8.1",
+    "react-native-screens": "4.26.2",
+    "react-native-svg": "15.15.5",
+    "react-native-vision-camera": "^5.2.1",
+    "react-native-vision-camera-barcode-scanner": "^5.2.2",
+    "react-native-web": "~0.21.0",
+    "react-native-worklets": "0.11.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@lingui/babel-plugin-lingui-macro": "^6.6.0",
+    "@lingui/cli": "^6.6.0",
+    "@lingui/format-po": "^6.6.0",
+    "@types/react": "~19.2.18",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.1",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "reset-project": "node ./scripts/reset-project.js",
+    "android": "expo run:android",
+    "build:android": "eas build --platform android --profile preview",
+    "build:android:local": "NODE_ENV=production _JAVA_OPTIONS='-Xmx4g -XX:MaxMetaspaceSize=2g' EAS_LOCAL_BUILD_ARTIFACTS_DIR=\"$PWD/dist/eas-builds\" eas build --platform android --profile preview --local",
+    "build:android:production": "eas build --platform android --profile production",
+    "build:android:production:local": "EAS_LOCAL_BUILD_ARTIFACTS_DIR=\"$PWD/dist/eas-builds\" eas build --platform android --profile production --local",
+    "build:android:production-apk:local": "EAS_LOCAL_BUILD_WORKINGDIR=$(mktemp -d \"${TMPDIR:-/tmp}/muqun-eas-production.XXXXXX\") EAS_LOCAL_BUILD_ARTIFACTS_DIR=\"$PWD/dist/eas-builds\" eas build --platform android --profile production-apk --local",
+    "submit:android": "npx eas-cli@latest build --platform android --profile production --auto-submit",
+    "submit:android:latest": "npx eas-cli@latest submit --platform android --profile production --latest",
+    "build:ios": "eas build --platform ios --profile testflight --auto-submit",
+    "build:ios:production": "eas build --platform ios --profile production",
+    "submit:ios": "eas build --platform ios --profile production --auto-submit",
+    "credentials:ios": "eas credentials --platform ios",
+    "credentials:android": "eas credentials --platform android",
+    "credentials:android:configure": "eas credentials:configure-build --platform android",
+    "update:preview": "eas update --channel preview --environment preview",
+    "update:production": "eas update --channel production --environment production",
+    "update:republish": "eas update:republish",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "mock:gateway": "bun scripts/mock-gateway.ts",
+    "serve:apk": "bun scripts/serve-local-apk.ts",
+    "test:notifications": "bun scripts/test-notification-route.ts",
+    "test:pairing": "bun scripts/test-pairing.ts",
+    "test:terminal": "bun scripts/test-terminal.ts",
+    "lint": "expo lint --max-warnings 0",
+    "i18n:extract": "lingui extract --clean",
+    "i18n:compile": "lingui compile --typescript",
+    "i18n": "bun run i18n:extract && bun run i18n:compile"
+  },
+  "expo": {
+    "autolinking": {
+      "ios": {
+        "exclude": [
+          "react-native-vision-camera-barcode-scanner"
+        ]
+      }
+    },
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "react-native-nitro-fetch",
+          "react-native-nitro-image"
+        ]
+      }
+    }
+  },
+  "private": true,
+  "trustedDependencies": [
+    "@shopify/react-native-skia"
+  ],
+  "overrides": {
+    "react-native-screens": "4.26.2"
+  },
+  "patchedDependencies": {
+    "@osuki-dev/ui@0.0.1": "patches/@osuki-dev%2Fui@0.0.1.patch"
+  }
+}

@@ -1,0 +1,71 @@
+# Cold start to a known home screen.
+#
+# `clearState` is what keeps the suite deterministic: every flow starts from a
+# freshly installed app with no paired servers, so the home screen is always the
+# empty state and "Try the demo" is always on it.
+appId: dev.osuki.muqun
+name: launch-home
+---
+- launchApp:
+    clearState: true
+- runFlow:
+    # A development build loses its saved Metro URL when its state is cleared.
+    # Wait until either its fallback bundle or its explicit load-error surface
+    # proves the dev-client Activity is ready before delivering a new intent.
+    # Sending the link on the tick after launch races React context creation on
+    # tablets; sending it as the initial intent is ignored by Expo dev client.
+    when:
+      true: ${E2E_RECONNECT_DEV_CLIENT == 'true'}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            text: "(?i).*(Try the demo|Unable to load script|Got it|don.?t allow).*"
+          timeout: 60000
+      - tapOn:
+          text: "Got it"
+          optional: true
+      - runFlow:
+          when:
+            visible:
+              text: "(?i).*don.?t allow.*"
+          commands:
+            - tapOn:
+                text: "(?i).*don.?t allow.*"
+      - extendedWaitUntil:
+          visible:
+            text: "(?i).*(Try the demo|Unable to load script).*"
+          timeout: 60000
+      - openLink: ${E2E_DEV_CLIENT_URL}
+- waitForAnimationToEnd:
+    timeout: 3000
+# The navigation bar is hidden (card #681), and Android teaches immersive mode
+# exactly once per app state with a full-width "Viewing full screen" sheet.
+# Every flow here clears state, so every flow meets it.
+- tapOn:
+    text: "Got it"
+    optional: true
+
+# A fresh install asks for notification permission (iOS, and Android 13+). The
+# prompt is a system dialog, so its wording and casing differ per platform; the
+# flows only ever need it gone, so the deny button is matched loosely and the
+# permission is declined rather than granted.
+# Matched as a whole-string regex, which is how Maestro matches text.
+- runFlow:
+    when:
+      visible:
+        text: "(?i).*don.?t allow.*"
+    commands:
+      - tapOn:
+          text: "(?i).*don.?t allow.*"
+
+# The release-notes card is shown once per version and covers the server list.
+- runFlow:
+    when:
+      visible: "Dismiss what's new"
+    commands:
+      - tapOn: "Dismiss what's new"
+
+- runFlow: dismiss-logbox.yaml
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 60000

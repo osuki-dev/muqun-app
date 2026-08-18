@@ -1,0 +1,138 @@
+# Screenshots of the surfaces card #618's P2 batch touched.
+#
+# Deliberately a subflow rather than a flow: it is a capture run, not an
+# assertion, so `maestro/config.yaml`'s glob does not pick it up and the e2e
+# gate does not run it. Point Maestro at it by path when evidence is wanted:
+#
+#   maestro --device <udid> test maestro/subflows/motion-p2-capture.yaml
+#
+# It does not clear state and it does not require a gateway. The demo session is
+# the way in, because the pane strip, the composer dock and the session map are
+# most of what this batch touched and all three need a session to exist.
+appId: dev.osuki.muqun
+name: motion-p2-capture
+---
+- launchApp
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: dismiss-logbox.yaml
+
+# The home screen. Its loading state is now two cards built from the same
+# `serverCard` style the real ones use, which is a shot only a slow start can
+# catch; what this one holds is that the list it crossfades into is unchanged.
+- takeScreenshot: dist/motion-618-p2/10-home
+
+- runFlow:
+    when:
+      visible: "Try the demo"
+    commands:
+      - tapOn: "Try the demo"
+- runFlow:
+    when:
+      notVisible: "Try the demo"
+    commands:
+      - tapOn: "Open Local Herdr"
+- extendedWaitUntil:
+    visible: "Open panels"
+    timeout: 20000
+# The digest raised on returning to a server after a long absence, which
+# demo mode fabricates once per launch (card #691). A no-op wherever there is
+# nothing standing.
+- runFlow: dismiss-away-digest.yaml
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: dismiss-logbox.yaml
+
+# The pane strip, either side of a switch. The selected chip is a fill, a glyph
+# and a label crossing together on the toggle token rather than three inline
+# colours changing on the frame the selection did.
+- takeScreenshot: dist/motion-618-p2/11-pane-strip-before
+- tapOn:
+    text: "Switch to nvim"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: dist/motion-618-p2/12-pane-strip-after
+- tapOn:
+    text: "Switch to Claude Code"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Send, unarmed and armed: the fill ramps on the button token and the glyph
+# crossfades, instead of the circle changing colour between two frames.
+- takeScreenshot: dist/motion-618-p2/13-send-unarmed
+# The composer has no test id and its placeholder is the pane's own name, so it
+# is reached by position: the full-width field along the bottom of the dock.
+- tapOn:
+    point: "45%,94%"
+- inputText: "echo hello"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: dist/motion-618-p2/14-send-armed
+- eraseText
+- hideKeyboard
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# The on-screen keyboard, and Shift -- the one key on it that holds a state, and
+# therefore the only one this batch was allowed to animate.
+- tapOn:
+    text: "Open on-screen keyboard"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: dist/motion-618-p2/15-virtual-keyboard
+- tapOn:
+    text: "Shift"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: dist/motion-618-p2/16-virtual-keyboard-shift
+- tapOn:
+    text: "Hide keyboard"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Quick actions: saved rows that arrive as a list, a tapped row that says so,
+# and a section that states its own shape while the gateway is asked for it.
+- tapOn:
+    text: "Open quick actions"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dist/motion-618-p2/17-quick-actions
+- tapOn:
+    text: "Close quick actions"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# The session map -- the panels sheet in the audit's words: rows that arrive and
+# leave, a selection that travels, and a skeleton in place of a blank sheet.
+- tapOn:
+    text: "Open panels"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dist/motion-618-p2/18-session-map
+- tapOn:
+    text: "Close panels"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Settings, for the paired-device block: a skeleton while the gateway is asked,
+# and rows that leave rather than disappearing when one is revoked.
+- tapOn:
+    text: "Back to servers"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn:
+    text: "Settings"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dist/motion-618-p2/19-settings

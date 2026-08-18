@@ -1,0 +1,70 @@
+# The composer's attachment surface.
+#
+# Attachments are the gateway's own upload endpoint, and the bundled demo has no
+# counterpart for it, so `attachmentsAvailable` is `composerVisible && !demoMode`
+# and the paperclip is deliberately absent from a demo session. That absence is
+# the first half of this flow, and it is a real assertion rather than a
+# placeholder: shipping the paperclip into demo mode would offer an upload that
+# cannot go anywhere, which is exactly the regression worth catching.
+#
+# The second half is the popup behaviour the attachment menu is built on.
+# `AttachmentMenu` is, by its own comment, the slash-command picker's shape -- a
+# small popup anchored above the composer that opens without displacing the
+# message being written and closes when a row is chosen. The picker is driven by
+# the same composer state and is fully available offline, so one round trip
+# through it stands in for the menu's open/close behaviour here; the picker's own
+# behaviour is covered in full by `slash-commands.yaml`. The steps that need a
+# paired gateway are written out at the bottom of the file; they are not in the
+# suite because a QR pairing cannot be produced offline, and a flow that silently
+# passes when its precondition is missing is worse than no flow.
+appId: dev.osuki.muqun
+name: attachments-ui
+tags:
+  - full
+---
+- runFlow: ../subflows/open-demo.yaml
+
+# ── Demo mode hides the paperclip ─────────────────────────────────────────
+# Asserted against a composer that is demonstrably rendered: without the send
+# button check, the absence below would also hold on a blank screen.
+- assertVisible: "Send to agent"
+- assertVisible: "Open quick actions"
+- assertNotVisible: "Attach a file"
+- assertNotVisible: "Close the attachment menu"
+- assertNotVisible: "Take photo"
+- assertNotVisible: "Photo library"
+
+# ── Popup over the composer: open, choose, close ──────────────────────────
+# One round trip through the picker: it opens over the composer without
+# displacing it, and choosing a row closes it and leaves the composer where it
+# was. Anchoring is what this asserts; filtering, dismissal and the source tag
+# belong to `slash-commands.yaml`.
+- tapOn: "Switch to Claude Code"
+- tapOn:
+    id: "terminal-composer-input"
+- inputText: "/comp"
+- extendedWaitUntil:
+    visible: "Insert /compact.*"
+    timeout: 8000
+- assertVisible: "Send to agent"
+- tapOn: "Insert /compact.*"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertNotVisible: "Insert /compact.*"
+- assertVisible: "Send to agent"
+
+# ── Not reachable offline ─────────────────────────────────────────────────
+# Against a paired gateway, the menu's own open/close is:
+#
+#   - assertVisible: "Attach a file"
+#   - tapOn: "Attach a file"
+#   - assertVisible: "Take photo"
+#   - assertVisible: "Photo library"
+#   - assertVisible: "Close the attachment menu"   # the backdrop
+#   - tapOn: "Close the attachment menu"
+#   - assertNotVisible: "Take photo"
+#
+# Picking a source from there hands off to the system camera or photo picker,
+# which is outside the app under test; `addMedia` can seed the library, but the
+# picker itself still needs per-OS-version coordinates, so the upload path stays
+# a manual check.

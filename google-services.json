@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "521698972445",
+    "project_id": "muqun-ae0d9",
+    "storage_bucket": "muqun-ae0d9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:521698972445:android:7e2b0f71d4f6a7f2f0c7f4",
+        "android_client_info": {
+          "package_name": "dev.osuki.muqun"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqsi27GB-LSqcMZWShc_R6E1hTE5lXWac"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

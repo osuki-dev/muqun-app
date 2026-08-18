@@ -1,0 +1,95 @@
+# The five packs the website's theme rail shows, both ways round.
+#
+# `theme-shots.yaml` captures all thirty-two packs on three screens, which is
+# 192 frames and the better part of an hour -- right for reviewing a palette
+# change, wrong for refreshing one strip on a marketing page. This runs the same
+# subflow over the five the site actually draws, so the rail can be re-cut in a
+# few minutes after any release.
+#
+# The five are the site's, not the app's first five: Osuki because it is ours,
+# then four a reader is likely to recognise by name. If the rail on the site
+# changes, change this list to match -- a capture nobody publishes is waste, and
+# a placement with no capture is a build error in the web repo.
+#
+# Not tagged `smoke` or `full`: this is a capture run, not a gate.
+#
+# Ends on Osuki in system mode, because the preference lives in SecureStore and
+# SecureStore survives `clearState` -- a run that ended on Gruvbox would hand
+# the next one a starting state it did not choose (learned in i18n-shots).
+appId: dev.osuki.muqun
+name: web-theme-shots
+---
+- runFlow: ../subflows/launch-home.yaml
+
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Osuki"
+      MODE_LABEL: "LIGHT"
+      SHOT: "osuki-light"
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Osuki"
+      MODE_LABEL: "DARK"
+      SHOT: "osuki-dark"
+
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Catppuccin"
+      MODE_LABEL: "LIGHT"
+      SHOT: "catppuccin-light"
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Catppuccin"
+      MODE_LABEL: "DARK"
+      SHOT: "catppuccin-dark"
+
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Rosé Pine"
+      MODE_LABEL: "LIGHT"
+      SHOT: "rose-pine-light"
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Rosé Pine"
+      MODE_LABEL: "DARK"
+      SHOT: "rose-pine-dark"
+
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Gruvbox"
+      MODE_LABEL: "LIGHT"
+      SHOT: "gruvbox-light"
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Gruvbox"
+      MODE_LABEL: "DARK"
+      SHOT: "gruvbox-dark"
+
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Tokyo Night"
+      MODE_LABEL: "LIGHT"
+      SHOT: "tokyo-night-light"
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Tokyo Night"
+      MODE_LABEL: "DARK"
+      SHOT: "tokyo-night-dark"
+
+# Back to the pack this ships with, in the mode that follows the phone.
+- runFlow:
+    file: ../subflows/capture-theme.yaml
+    env:
+      THEME_LABEL: "Osuki"
+      MODE_LABEL: "SYSTEM"
+      SHOT: "reset-osuki-system"

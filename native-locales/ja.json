@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "牧群",
+    "NSCameraUsageDescription": "牧群（ぼくぐん）は Gateway の QR コードをスキャンして安全にペアリングし、ターミナルセッションに添付する写真を撮影します。",
+    "NSPhotoLibraryUsageDescription": "牧群は選んだ写真をペアリング済みの Gateway に送信し、エージェントが読み取れるようにします。",
+    "NSFaceIDUsageDescription": "牧群は Face ID を使ってペアリング済みのサーバーとターミナルセッションを保護します。",
+    "NSLocalNetworkUsageDescription": "牧群は自分のマシンで動いている Gateway に接続します。ローカルネットワーク上にある場合があります。"
+  },
+  "android": {
+    "app_name": "牧群"
+  }
+}

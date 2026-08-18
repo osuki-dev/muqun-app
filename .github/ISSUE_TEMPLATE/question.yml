@@ -1,0 +1,47 @@
+name: Question
+description: Ask how something works, or get help with pairing and connections.
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two places answer most questions faster than we can:
+
+        - **[muqun.dev/support](https://muqun.dev/support)** — pairing, connections, notifications, removing a device
+        - **[the Gateway's README](https://github.com/osuki-dev/muqun-gateway#readme)** — installing it, tmux and Herdr, the `muqun-gateway` commands
+
+        **Never paste a Gateway token, a pairing QR code, or a pairing URL.**
+        Any of them grants full control of the computer running the Gateway.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried so far?
+      description: What you have already ruled out saves us both a round trip.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: What is this about?
+      options:
+        - Pairing a server
+        - Connection or network
+        - The terminal, panels and tabs
+        - Keyboard, gestures and text selection
+        - Agents, approvals and notifications
+        - Files, previews and attachments
+        - Themes, languages and appearance
+        - App Lock and security
+        - iPad layout
+        - Purchases
+        - Building it from source
+        - Something else
+    validations:
+      required: true

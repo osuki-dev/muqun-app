@@ -1,0 +1,104 @@
+# One store screenshot -- quick actions, open, over a live pane -- in whichever
+# language is passed in.
+#
+# It exists because the deck's fourth slide showed the New Task sheet, which
+# 1.2.0 does not ship (see `AGENT_SPAWN_SHIPPED`): a store screenshot of a
+# screen the app cannot reach is a rejection waiting to happen. This captures
+# the screen that slide's own label already claimed -- QUICK ACTIONS.
+#
+# The language is switched inside the app, so the selectors change halfway
+# through the flow, and that is why they are parameters rather than literals.
+# Everything before the switch is matched in English (a wiped Android app
+# follows the device, and this emulator is English); everything after it is
+# matched in the language just chosen, with the strings taken from that
+# language's own catalog:
+#
+#   maestro test -e LANG_NAME=日本語 \
+#                -e DEMO_LABEL=デモを試す \
+#                -e ACTIONS_LABEL=クイックアクションを開く \
+#                maestro/flows/store-shot-actions.yaml
+#
+# `LANG_NAME` is the one selector that is the same in every run: the language
+# list writes each language in itself, which is the only labelling that is
+# readable to the person looking for their own.
+#
+# The screenshot lands at `shots/actions` in the run's artifacts; the caller
+# renames it into the deck. Not tagged -- this is an asset run, not a gate.
+appId: dev.osuki.muqun
+name: store-shot-actions
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 3000
+# Immersive mode teaches itself once per app data wipe, and every run wipes.
+- tapOn:
+    text: "Got it"
+    optional: true
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+
+# ── Language, set inside the app, in English ──────────────────────────────
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "SERVERS"
+    timeout: 8000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- scrollUntilVisible:
+    element:
+      text: "Language, System"
+    direction: DOWN
+- tapOn: "Language, System"
+- extendedWaitUntil:
+    visible: "${LANG_NAME}"
+    timeout: 8000
+- tapOn: "${LANG_NAME}"
+- waitForAnimationToEnd:
+    timeout: 2500
+- runFlow: ../subflows/dismiss-logbox.yaml
+# Out of Settings. The system back is used rather than the header's own
+# control: every label on screen has just changed language, and back is the one
+# control that never had a name to change.
+#
+# How many times to press it is not fixed, which cost a run: choosing a language
+# closes its own sheet, so the first back already leaves Settings and the second
+# one left the app. Each press is now conditional on not being home yet, and
+# home is named in the language just chosen.
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+- runFlow:
+    when:
+      notVisible: "${DEMO_LABEL}"
+    commands:
+      - back
+      - waitForAnimationToEnd:
+          timeout: 2000
+# And if a press did go one too far, come back in without clearing state --
+# the language is the one thing this run must not lose.
+- runFlow:
+    when:
+      notVisible: "${DEMO_LABEL}"
+    commands:
+      - launchApp
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# ── The demo session, and the sheet ───────────────────────────────────────
+- runFlow: ../subflows/dismiss-logbox.yaml
+- extendedWaitUntil:
+    visible: "${DEMO_LABEL}"
+    timeout: 10000
+- tapOn: "${DEMO_LABEL}"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: ../subflows/dismiss-logbox.yaml
+- runFlow: ../subflows/dismiss-away-digest.yaml
+- tapOn: "${ACTIONS_LABEL}"
+- waitForAnimationToEnd:
+    timeout: 3500
+- runFlow: ../subflows/dismiss-logbox.yaml
+- takeScreenshot: shots/actions

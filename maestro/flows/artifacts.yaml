@@ -1,0 +1,187 @@
+# Session artifacts: the Files sheet, its search and kind filters, and the asset
+# viewer's branches -- rendered markdown, a colour-coded diff, highlighted
+# source, and the "no preview" description for a file the app will not display.
+#
+# The demo session bundles one artifact of each kind the viewer knows, so every
+# branch is reachable offline; opening the image goes through the same bundled
+# path (`demoAssetContentUri`) rather than a gateway request.
+#
+# WHERE THIS LIVES NOW (card #633): artifacts used to be a fourth section at the
+# bottom of the panels sheet, below a panel list of unpredictable length, which
+# is exactly why the old version of this flow had to `scrollUntilVisible` its way
+# to every single file. They now have a sheet of their own, reached by the Files
+# button in the pane's action row beside Quick actions, and the list is the first
+# thing in it -- so the top of it is simply visible.
+#
+# The sheet says so plainly when a gateway has no asset routes, which is the
+# honest way to treat an older server. That is why this flow asserts the sheet
+# opened before it asserts anything inside it: without that, every assertion
+# below would be reporting on a surface that was never rendered.
+#
+# Day headings ("Today", "Yesterday") are deliberately not asserted: the demo
+# assets are aged in minutes from `Date.now()`, so which heading a file lands
+# under depends on the wall clock at run time.
+#
+# NOTE ON BUILDS: this surface landed on release/2.0 (commit 3c4f6a3, "session
+# artifacts entry and asset viewer") and moved in #633. Any build older than
+# that fails at the first assertion, which is the correct outcome -- it is a
+# feature the suite covers, not a flaky test.
+appId: dev.osuki.muqun
+name: artifacts
+tags:
+  - full
+---
+- runFlow: ../subflows/open-demo.yaml
+
+# ── The list ──────────────────────────────────────────────────────────────
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Open files"
+- extendedWaitUntil:
+    visible: "Close files"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 3000
+# Newest first, and no longer behind a fold: the two most recent are on screen
+# as soon as the sheet is.
+- assertVisible: "Open dark-mode.md"
+- assertVisible: "Open settings-dark.png"
+- takeScreenshot: shots/06-files
+- scrollUntilVisible:
+    element:
+      text: "Open theme.diff"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Open coverage.json"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Open design-spec.pdf"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      text: "Open dark-mode.md"
+    direction: UP
+
+# ── Search narrows the list, and clearing restores it ─────────────────────
+- runFlow: ../subflows/dismiss-logbox.yaml
+- scrollUntilVisible:
+    element:
+      text: "Search files"
+    direction: UP
+- tapOn: "Search files"
+- inputText: "diff"
+# Android emulators with hardware-keyboard input accept `inputText` without
+# opening the software keyboard. `hideKeyboard` is a back press in that state,
+# so it closes the whole sheet. The filtered row sits directly below the search
+# field and remains tappable whether the software keyboard is present or not.
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Open theme.diff"
+- assertNotVisible: "Open coverage.json"
+- tapOn: "Clear search"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Open dark-mode.md"
+
+# ── The kind filter ───────────────────────────────────────────────────────
+- tapOn: "Show images"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Open settings-dark.png"
+- assertNotVisible: "Open dark-mode.md"
+- tapOn: "Show all files"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Open dark-mode.md"
+
+# ── Markdown: opened, rendered, closed ────────────────────────────────────
+- tapOn: "Open dark-mode.md"
+- extendedWaitUntil:
+    visible: "Close file"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "dark-mode.md"
+# Rendered markdown, not the raw source: the heading is shown without its "#".
+- assertVisible:
+    text: "Dark mode — change summary"
+- assertVisible: "Files touched"
+- assertNotVisible:
+    text: "# Dark mode — change summary"
+- takeScreenshot: shots/07-artifact-markdown
+- tapOn: "Close file"
+- extendedWaitUntil:
+    visible: "Close files"
+    timeout: 8000
+
+# ── Diff: line-level colour (card #634) ───────────────────────────────────
+# Colour is not in the accessibility tree, so the screenshot is what actually
+# checks this; the text assertions only prove the right file opened and that the
+# diff survived the render with its markers intact.
+- scrollUntilVisible:
+    element:
+      text: "Open theme.diff"
+    direction: DOWN
+- tapOn: "Open theme.diff"
+- extendedWaitUntil:
+    visible: "Close file"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "theme.diff"
+- takeScreenshot: shots/08-artifact-diff
+- tapOn: "Close file"
+- extendedWaitUntil:
+    visible: "Close files"
+    timeout: 8000
+
+# ── Source: highlighted through the JSON grammar ──────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "Open coverage.json"
+    direction: DOWN
+- tapOn: "Open coverage.json"
+- extendedWaitUntil:
+    visible: "Close file"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "coverage.json"
+- takeScreenshot: shots/09-artifact-source
+- tapOn: "Close file"
+- extendedWaitUntil:
+    visible: "Close files"
+    timeout: 8000
+
+# ── No preview: described rather than displayed ───────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "Open design-spec.pdf"
+    direction: DOWN
+- tapOn: "Open design-spec.pdf"
+- extendedWaitUntil:
+    visible: "Close file"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "No preview for this kind of file. It stays on the server."
+- assertVisible: "Type"
+- assertVisible: "Size"
+- assertVisible: "Modified"
+- assertVisible: "Path"
+- assertVisible: "~/code/muqun/docs/design-spec.pdf"
+- tapOn: "Close file"
+- extendedWaitUntil:
+    visible: "Close files"
+    timeout: 8000
+
+# ── Back out of the sheet ─────────────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "Close files"
+    direction: UP
+- tapOn: "Close files"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 8000

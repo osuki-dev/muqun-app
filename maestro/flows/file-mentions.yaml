@@ -1,0 +1,121 @@
+# The composer's `@` file mention picker, driven end to end against the bundled
+# demo workspace.
+#
+# What this flow is actually asserting, and why each piece is here:
+#
+#  * The trigger rule. "@" after whitespace opens the picker; an "@" inside a
+#    word does not. That second half matters more than the first -- an email
+#    address or a version pin in a message must never turn the composer into a
+#    file browser, and it is the only part of the rule a user notices when it is
+#    wrong.
+#  * The query narrowing. Typing after the "@" has to actually filter, and the
+#    "Files in this workspace" heading is the opening screen only, so its
+#    disappearance is the cheapest proof the panel changed mode.
+#  * The insert contract. Tapping a row must put the relative path into the
+#    draft and close the panel. After the tap the panel is gone, so the path
+#    still being on screen is the draft holding it and nothing else.
+#  * The capability gate. The demo's editor pane carries no composer descriptor,
+#    the way the gateway answers for an agent it has no table for, so "@" there
+#    is an ordinary character. A gate that is only ever tested in the "on"
+#    position is not a gate.
+#
+# The demo catalog lives in src/lib/demo-gateway.ts (DEMO_FILES). The names
+# below are chosen from it so that "the" matches src/theme.ts and docs/theming.md
+# and misses package.json -- if that catalog changes, these assertions are what
+# will say so.
+appId: dev.osuki.muqun
+name: file-mentions
+tags:
+  - full
+---
+- runFlow: ../subflows/open-demo.yaml
+
+# ── "@" opens the picker on the workspace's shallowest files ──────────────
+# The demo session opens on the Claude Code pane, whose descriptor turns file
+# mentions on. A bare "@" skips the debounce, so the first screen is immediate.
+- tapOn: "Switch to Claude Code"
+- tapOn:
+    id: "terminal-composer-input"
+- inputText: "@"
+- extendedWaitUntil:
+    visible: "Files in this workspace"
+    timeout: 6000
+# The first two rows of the catalog, which are the two that cannot be pushed
+# under the five-row cap however the panel is sized.
+- assertVisible: "Mention app.json"
+- assertVisible: "Mention package.json"
+
+# ── Typing narrows it ─────────────────────────────────────────────────────
+# "the" hits src/theme.ts and docs/theming.md and nothing else in the catalog.
+# The heading belongs to the opening screen, so it goes away here.
+- inputText: "the"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Mention src/theme.ts"
+- assertVisible: "Mention docs/theming.md"
+- assertNotVisible: "Files in this workspace"
+- assertNotVisible: "Mention package.json"
+
+# ── Picking one inserts the path and closes the panel ─────────────────────
+- tapOn: "Mention src/theme.ts"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Mention src/theme.ts"
+- assertNotVisible: "Mention docs/theming.md"
+# The draft, asserted as the insert contract writes it: the path byte for byte
+# plus one separating space. The space is not incidental -- it is what the
+# contract promises, and it is also what makes this assertion name the composer
+# and nothing else. The bare path would not: the demo transcript has a
+# `Read(src/theme.ts)` step that renders the path on its own, so an assertion on
+# "src/theme.ts" passes whether or not the pick ever reached the draft. It did
+# exactly that until the chat view started folding tool steps away by default.
+- assertVisible: 'src/theme\.ts '
+- assertVisible: "Send to agent"
+
+# ── An "@" inside a word is just an "@" ───────────────────────────────────
+# Start from a fresh draft. Maestro's Android eraseText RPC stalls on this
+# multiline React Native input, while native Select-all leaves its IME helper in
+# a state where the following inputText stalls instead. Restarting the process
+# rebuilds the transient demo and its draft without repeatedly clearing Android
+# app data and racing a fresh Fabric surface inside one flow.
+- runFlow: ../subflows/restart-demo.yaml
+- tapOn: "Switch to Claude Code"
+- tapOn:
+    id: "terminal-composer-input"
+# Inject the address incrementally. Maestro's Android text bridge deadlocks when
+# an at-sign is embedded in a larger inputText payload, while the same key sent
+# on its own follows the real incremental onChangeText path correctly.
+- inputText: "mail ellen"
+- inputText: "@"
+- inputText: "exa"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Files in this workspace"
+- assertNotVisible: "Mention app.json"
+
+# ── The capability gate, in the off position ──────────────────────────────
+# The editor pane has no composer descriptor at all, which is how the gateway
+# answers for an agent it has no command table for.
+- runFlow: ../subflows/restart-demo.yaml
+- tapOn: "Switch to nvim"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Type into this editor"
+- inputText: "@"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Files in this workspace"
+- assertNotVisible: "Mention app.json"
+- assertNotVisible: "Mention src/theme.ts"
+
+# ── Not reachable offline ─────────────────────────────────────────────────
+# Two behaviours the demo cannot express, because its search answers instantly
+# and never fails:
+#
+#   * the debounce coalescing a fast typist's keystrokes into one request, and
+#   * a slow answer for an older prefix being dropped instead of repainting the
+#     panel.
+#
+# Both are pinned as unit tests instead, in src/lib/__tests__/file-mentions.test.ts,
+# where the clock and the in-flight promises can be held still. A flow that
+# asserted on them here would only be asserting that a local function is fast.

@@ -1,0 +1,90 @@
+name: android apk
+
+# Build the sideloadable Android APK and attach it to the GitHub release for
+# the tag, so anyone can install Muqun without a store account.
+#
+# It builds the `production-apk` profile -- the same app as the Play build,
+# same applicationId, same everything, just packaged as an APK instead of an
+# App Bundle. Nothing about this build is special, which is the point: no
+# second Firebase app, no second keystore, no config that only one distribution
+# path exercises and therefore only one path can break.
+#
+# The one consequence, stated so nobody has to discover it: Android identifies
+# an installation by applicationId *and* signature. Play signs its own
+# artifact; this one is signed with the upload key. So the two cannot sit on
+# one phone and cannot update over each other -- moving between them means
+# uninstalling, which takes the paired gateways with it. That is invisible to
+# anyone who picks one and stays, and it is the trade for having nothing to
+# configure.
+#
+# Requires one secret:
+#
+#   EXPO_TOKEN  a robot access token from https://expo.dev/settings/access-tokens
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to attach the APK to (blank = build only)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build the APK on EAS
+        id: build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "::error::EXPO_TOKEN is not set. Add it under Settings -> Secrets -> Actions."
+            exit 1
+          fi
+          # --wait, because the artifact is the point; --json so the URL is read
+          # rather than scraped out of a progress log.
+          bunx eas-cli@latest build \
+            --platform android \
+            --profile production-apk \
+            --non-interactive \
+            --wait \
+            --json > build.json
+          url="$(node -e 'const b=require("./build.json");const one=Array.isArray(b)?b[0]:b;const u=one?.artifacts?.buildUrl||one?.artifacts?.applicationArchiveUrl;if(!u){console.error("no artifact URL in the build result");process.exit(1)}console.log(u)')"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Download it
+        run: |
+          set -euo pipefail
+          curl -fsSL "${{ steps.build.outputs.url }}" -o muqun.apk
+          ls -l muqun.apk
+
+      - name: Keep it on the run
+        uses: actions/upload-artifact@v4
+        with:
+          name: muqun-apk
+          path: muqun.apk
+
+      - name: Attach it to the release
+        # Only when there is a tag to attach to: a manual run with no tag is a
+        # build, and its APK is on the run above.
+        if: startsWith(github.ref, 'refs/tags/') || inputs.tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          files: muqun.apk

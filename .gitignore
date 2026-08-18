@@ -1,0 +1,111 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+# Maestro e2e reports and per-run artifacts (already under dist/, kept explicit
+# so the path is not accidentally un-ignored when dist/ is narrowed).
+dist/e2e-reports/
+credentials.json
+eas.json.tmp
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders
+/ios
+/android
+/.claude/worktrees
+
+# The App Store Connect metadata `eas metadata:push` reads. It carries the
+# review contact -- a named individual and their personal mobile number -- so
+# an earlier pass untracked it.
+#
+# Kept tracked by the owner's decision: the contact fields are theirs to
+# publish or not, and the file carries the store URLs for eight locales, which
+# are worth versioning. `.easignore` still keeps it out of build uploads.
+# If that call is ever reversed, the way back is a dynamic `store.config.js`
+# reading the contact from the environment -- not a redacted copy of this file,
+# which would be pushed to Apple and be wrong.
+
+# The maintainers' card tracker: a private board's api_url, account, board id,
+# column ids and user ids. Nothing a reader of this repo can use, and not ours
+# to publish. It stays on the machines that have the CLI. NOTE: a fresh `git
+# worktree add` will not have it -- copy it in, or `git add -f` this line away
+# if that trade stops being worth it.
+/.fizzyx.yaml
+
+# Another agent's local settings, ignored here rather than only in the
+# maintainers' global gitignore, so a contributor's copy does not get committed
+# by accident.
+.claude/settings.local.json
+
+# Internal runbooks, kept out of a public repo on their own stated grounds --
+# each of them says "nothing in this file is ever pasted anywhere". Store
+# submission checklists, the paste runs, the App Review demo-QR reply, the two
+# launch manuals and the roadmap. They stay with the maintainers.
+/private/
+
+# The store-facing trees, which this repository deliberately does not carry.
+#
+#   /store/       what `eas metadata:pull` writes back from App Store Connect
+#   /docs/store/  the listing copy per locale, the App Review notes, the
+#                 submitted screenshots
+#   /marketing/   the screenshot-rendering project: its own bun.lock and
+#                 tsconfig, its raw captures, backgrounds and rendered decks
+#
+# Together they were 93MB of a 103MB tree, none of it read by the app, the
+# build or the tests -- so they live with the maintainers, next to the runbooks
+# above. The three screenshots the README shows were copied into
+# `assets/readme/` instead, which is where a front page's images belong.
+#
+# These rules exist so that copying one of those trees back in does not quietly
+# commit it. Bringing one back for real means deleting its line and saying why.
+/store/
+/docs/store/
+/marketing/
+
+# The maintainers own agent skills. Useful to them, noise in a public tree,
+# and they name a workflow a contributor does not have to follow. Kept on the
+# machines that use them.
+/.agents/
+
+# One machine's LaunchAgent: it hardcodes that machine's home directory, its
+# tailnet address and its log paths. Useful to its owner, meaningless to anyone
+# else, and not ours to publish.
+/scripts/dev.osuki.muqun-apk-server.plist
+
+# Scratch renders the maintainers look at while designing. They were committed
+# by accident; they are working files, not source.
+/design-preview/

@@ -1,0 +1,26 @@
+# Blank issues are off: the three forms cover what arrives, and the fields they
+# ask for -- version, platform, and whether the bug reproduces in the offline
+# demo -- are the ones that decide where a report goes next. Anything that fits
+# none of them has a contact link below.
+blank_issues_enabled: false
+
+contact_links:
+  - name: Security issue
+    url: mailto:muqun@osuki.dev
+    about: Report privately by email, never as a public issue. Please give us a chance to ship a fix first.
+
+  - name: Setup, pairing and connection help
+    url: https://muqun.dev/support
+    about: Covers most of what goes wrong before an issue is worth opening.
+
+  - name: Gateway issues (muqun-gateway)
+    url: https://github.com/osuki-dev/muqun-gateway/issues
+    about: The Rust Gateway itself — installing it, tmux and Herdr backends, its API and its commands.
+
+  - name: Purchases, refunds and private enquiries
+    url: mailto:muqun@osuki.dev
+    about: Anything you would rather not discuss in public.
+
+  - name: Privacy policy
+    url: https://muqun.dev/privacy
+    about: How Muqun handles credentials, terminal content and permissions.

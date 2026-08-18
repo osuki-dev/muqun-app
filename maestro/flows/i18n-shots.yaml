@@ -1,0 +1,214 @@
+# Both languages, the same screens, in one run.
+#
+# The point is the pair: settings, home, the server page and the panels sheet
+# are captured in English, the language is then switched *inside the app* (not
+# in the simulator's own settings), and the same screens are captured again.
+# That order proves two things at once -- that the catalog is complete on those
+# screens, and that the manual override in Settings takes effect without a
+# relaunch.
+#
+# Two things this flow had to learn the hard way, both worth keeping:
+#
+#  * `clearState: true` does not reset the language. The preference lives in
+#    SecureStore, which is the Keychain, and the Keychain survives clearing an
+#    iOS app's data. So the flow cannot assume it starts in English -- it sets
+#    the language explicitly first, with selectors that match either language,
+#    and puts it back to "system" at the end so the next run starts clean.
+#  * The notification prompt is a system dialog and speaks the *simulator's*
+#    language, not the app's. This device is set to Simplified Chinese, so the
+#    shared `launch-home` subflow -- which matches the English "Don't Allow" --
+#    leaves it on screen to swallow the next tap. It also does not reliably
+#    arrive at launch: push registration can raise it several screens in. Hence
+#    `dismiss-permission.yaml`, called defensively before anything that taps,
+#    rather than a change to a subflow every other flow already depends on.
+#
+# (What the device incidentally proves is worth noting: its system language is
+# Simplified Chinese and the app defaults to English. `matchLocale` deliberately
+# refuses to fold zh-Hans onto the Traditional catalog -- serving Traditional
+# characters to a Simplified reader is a worse answer than English.)
+#
+# Not tagged `smoke` or `full`: this is a screenshot run for review, not a gate.
+appId: dev.osuki.muqun
+name: i18n-shots
+---
+- launchApp:
+    clearState: true
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- runFlow: ../subflows/dismiss-permission.yaml
+
+- runFlow:
+    when:
+      visible: "Dismiss what's new"
+    commands:
+      - tapOn: "Dismiss what's new"
+      - waitForAnimationToEnd:
+          timeout: 2000
+
+# ── Pin the language to English, whatever the run inherited ────────────────
+# Every selector until the language is set matches both spellings, because
+# which one is on screen is exactly what is not yet known.
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+# The gear in the home header, whose accessible label is the same word the
+# screen it opens is titled with. The drawer is switched off (card #664).
+- extendedWaitUntil:
+    visible:
+      text: "^(Settings|設定)$"
+    timeout: 10000
+- tapOn:
+    text: "^(Settings|設定)$"
+- extendedWaitUntil:
+    visible:
+      text: "^(Color mode|色彩模式)$"
+    timeout: 10000
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn:
+    text: "(?i)^english$"
+- extendedWaitUntil:
+    visible: "Color mode"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── English ───────────────────────────────────────────────────────────────
+- takeScreenshot: shots/en-1-settings
+
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: shots/en-2-home
+
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 25000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+# The digest raised on returning to a server after a long absence, which
+# demo mode fabricates once per launch (card #691). A no-op wherever there is
+# nothing standing.
+- runFlow: ../subflows/dismiss-away-digest.yaml
+- takeScreenshot: shots/en-3-server
+
+- runFlow: ../subflows/dismiss-permission.yaml
+- tapOn: "Open panels"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: shots/en-4-panels
+- tapOn: "Close panels"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Switch to Traditional Chinese, from inside the app ─────────────────────
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Back to servers"
+- extendedWaitUntil:
+    visible: "Try the demo"
+    timeout: 10000
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 10000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Color mode"
+    timeout: 10000
+# The picker is a form sheet since card #683, behind a row that names the
+# language in force. The option inside is still written in its own language, so
+# this tap doubles as the assertion that the picker is rendered the way a reader
+# would look for it.
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Language, System"
+- extendedWaitUntil:
+    visible: "繁體中文"
+    timeout: 8000
+- tapOn: "繁體中文"
+
+# ── Traditional Chinese ───────────────────────────────────────────────────
+# 色彩模式 rather than "Color mode": had the switch not taken effect this fails
+# here, instead of quietly writing an English screenshot under a zh name.
+- extendedWaitUntil:
+    visible: "色彩模式"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: shots/zh-1-settings
+
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "返回"
+- extendedWaitUntil:
+    visible: "試用示範"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: shots/zh-2-home
+
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "試用示範"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 25000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- takeScreenshot: shots/zh-3-server
+
+- runFlow: ../subflows/dismiss-permission.yaml
+- tapOn: "開啟面板清單"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: shots/zh-4-panels
+- tapOn: "關閉面板清單"
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ── Leave the device as it was found ──────────────────────────────────────
+# The preference outlives `clearState`, so a run that ends in Chinese hands the
+# next one a starting state it did not choose.
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "回到伺服器列表"
+- extendedWaitUntil:
+    visible: "試用示範"
+    timeout: 10000
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "開啟導覽"
+- extendedWaitUntil:
+    visible: "設定"
+    timeout: 10000
+- tapOn: "設定"
+- extendedWaitUntil:
+    visible: "色彩模式"
+    timeout: 10000
+- runFlow: ../subflows/dismiss-permission.yaml
+- runFlow: ../subflows/dismiss-logbox.yaml
+# The row, then the option inside the sheet. Opening the sheet first is also
+# what makes this unambiguous: 系統 is both the language option and the colour
+# mode segment, and only one of the two is on screen at a time now.
+- tapOn:
+    text: "語言.*"
+- extendedWaitUntil:
+    visible: "繁體中文"
+    timeout: 8000
+- tapOn: "系統"
+- waitForAnimationToEnd:
+    timeout: 2000

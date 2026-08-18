@@ -1,0 +1,27 @@
+# Cold start straight into the bundled demo session.
+#
+# Demo mode is the whole reason this suite runs offline: the session, its panes,
+# its scrollback and its artifacts are all bundled, so nothing below touches a
+# gateway or the network.
+appId: dev.osuki.muqun
+name: open-demo
+---
+- runFlow: launch-home.yaml
+- tapOn: "Try the demo"
+
+# The demo used to announce itself with a banner and this waited on that; card
+# #672 took the banner away, on the grounds that a demo should look like the app
+# being used. What is left that means "the session is up" is the session's own
+# content: the pane strip's first chip. It is data, not chrome, so it is the
+# same string in every locale, it cannot be on screen before the panes have
+# loaded, and unlike the terminal canvas it is in the accessibility tree.
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: dismiss-logbox.yaml
+# The digest raised on returning to a server after a long absence, which
+# demo mode fabricates once per launch (card #691). A no-op wherever there is
+# nothing standing.
+- runFlow: dismiss-away-digest.yaml

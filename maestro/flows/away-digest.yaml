@@ -1,0 +1,86 @@
+# "While you were away" (card #691): the digest raised on returning to a server
+# that was last on screen more than fifteen minutes ago.
+#
+# The window is real -- it comes from a per-server mark in the keychain, written
+# every time the screen opens -- so a flow could not wait one out. Demo mode
+# fabricates one instead, once per launch and only where the stored mark would
+# not have produced a card anyway (`demoAwayWindowStart`), which is the same
+# arrangement every other demo surface has: bundled data standing in for a
+# machine the reviewer does not own.
+#
+# What is asserted here is the contract the card exists to keep:
+#
+#  * it says what changed, per agent, in the language the app is in;
+#  * it never blocks the pane -- the dock is reachable with the card standing;
+#  * reading it dismisses it, and it does not come back on the next entry into
+#    the same server, because the window it was built from has been consumed.
+#
+# The row wording is deliberately not asserted verbatim beyond the agent names:
+# the status word is translated, and pinning "Done" here would make this flow
+# fail in every locale but English.
+appId: dev.osuki.muqun
+name: away-digest
+tags:
+  - full
+---
+- runFlow: ../subflows/launch-home.yaml
+- tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow: ../subflows/dismiss-logbox.yaml
+
+# ── The card ──────────────────────────────────────────────────────────────
+- extendedWaitUntil:
+    visible: "While you were away"
+    timeout: 8000
+# The demo's window holds three agents: Claude finished after stopping twice,
+# the editor pane settled, and one is still running. Names rather than statuses,
+# for the reason in the header.
+- assertVisible: "claude"
+- assertVisible: "nvim"
+- assertVisible: "codex"
+- takeScreenshot: shots/away-digest
+
+# ── It never blocks the pane ──────────────────────────────────────────────
+# The dock is fully reachable while the card is standing: it floats in the
+# notice column over the top of the terminal, not over the controls.
+- assertVisible: "Open quick actions"
+
+# ── Reading it dismisses it ───────────────────────────────────────────────
+- tapOn:
+    id: "away-digest-dismiss"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "While you were away"
+
+# ── And it does not come back ─────────────────────────────────────────────
+# Leaving and re-entering the server is not being away: the visit mark was
+# replaced when the card was built, so the second entry finds a window a few
+# seconds wide and correctly says nothing. Compact leaves through its back
+# button; Pad already exposes Settings in the persistent rail.
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn:
+    text: "Back to servers"
+    optional: true
+- extendedWaitUntil:
+    visible: "Settings"
+    timeout: 8000
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "APPEARANCE"
+    timeout: 8000
+- tapOn: "Go back"
+- runFlow:
+    when:
+      visible: "Try the demo"
+    commands:
+      - tapOn: "Try the demo"
+- extendedWaitUntil:
+    visible: "Claude Code"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 4000
+- assertNotVisible: "While you were away"

@@ -1,0 +1,24 @@
+# Decline the notification prompt, in whatever language the *device* speaks.
+#
+# The existing handling lives inline in `launch-home.yaml` and matches only the
+# English "Don't Allow", which is enough on an English simulator. Two things
+# make that insufficient for the i18n run: the device under test is set to
+# Simplified Chinese, so the button reads 不允许; and the prompt does not
+# necessarily arrive at launch -- push registration can raise it several screens
+# in, where it silently swallows the next tap.
+#
+# So this is defensive and idempotent, like `dismiss-logbox.yaml` beside it:
+# call it before any tap that matters and it is a no-op when there is nothing to
+# dismiss.
+appId: dev.osuki.muqun
+name: dismiss-permission
+---
+- runFlow:
+    when:
+      visible:
+        text: "(?i).*(don.?t allow|不允許|不允许).*"
+    commands:
+      - tapOn:
+          text: "(?i).*(don.?t allow|不允許|不允许).*"
+      - waitForAnimationToEnd:
+          timeout: 2000

@@ -1,0 +1,33 @@
+# Guard: clear the "while you were away" digest out of the way.
+#
+# The card is raised over the top of the terminal on the first entry into a
+# server the user has not looked at in fifteen minutes -- and in demo mode, once
+# per launch, so the surface is reachable offline (see `demoAwayWindowStart`).
+# Every flow here clears state and enters the demo, so every flow meets it.
+#
+# It sits in the notice column above the terminal, so it covers no dock control
+# and swallows no tap that any flow makes -- but it is in the screenshots, and a
+# marketing shot of the terminal should be of the terminal. Dismissed rather
+# than waited out: the card has no timeout, because a digest that vanished
+# before it was read would be worse than none.
+#
+# Optional throughout. A build older than card #691, a gateway with no
+# `agent_events` capability, and a second entry within the same launch all leave
+# nothing to dismiss, and this then costs one element lookup and changes
+# nothing -- which is what makes it safe to call defensively.
+appId: dev.osuki.muqun
+name: dismiss-away-digest
+---
+# Keyed on the close control rather than on the card itself. The card's own
+# tap target is `accessible={false}` so that a screen reader can read the rows
+# under it, which also keeps it out of the hierarchy Maestro walks; the button
+# is the element both a person and this flow are offered.
+- runFlow:
+    when:
+      visible:
+        id: "away-digest-dismiss"
+    commands:
+      - tapOn:
+          id: "away-digest-dismiss"
+      - waitForAnimationToEnd:
+          timeout: 1000
