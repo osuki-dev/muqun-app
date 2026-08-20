@@ -105,7 +105,7 @@ Windows is not supported yet.
 On that machine:
 
 ```sh
-curl -fsSL https://osuki.dev/muqun/gateway.sh | sh
+curl -fsSL https://muqun.dev/gateway.sh | sh
 ```
 
 That downloads a ready-built Gateway — no Rust toolchain, no compiler —

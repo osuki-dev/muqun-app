@@ -80,17 +80,17 @@ export const GATEWAY_SETUP_URL = 'https://www.osuki.dev/muqun/';
  * open a browser on the phone to find out what to type on the laptop -- and
  * that detour is most of why the pairing screen reads as a dead end.
  *
- * `osuki.dev/muqun/gateway.sh` is a 302 to the script in the Gateway's own
- * repository, so this address survives the repository moving and the script
- * has exactly one copy. Deliberately without `www`, unlike the links above:
- * this is the string in the README, and a command that ends up in shell
- * histories and chat logs should be the one everyone else is already writing.
+ * `muqun.dev/gateway.sh` is the canonical 302 to the script in the Gateway's
+ * own repository, so this address survives the repository moving and the
+ * script has exactly one copy. The old `osuki.dev/muqun/gateway.sh` address
+ * stays live for released builds, while new builds and documentation publish
+ * the product domain consistently.
  *
  * It is a `| sh` pipeline because the reader is on a phone, and the two-step
  * download-read-run form is three lines nobody will retype from a 390pt
  * screen. The site carries the inspectable form for anyone who wants it.
  */
-export const GATEWAY_INSTALL_COMMAND = 'curl -fsSL https://osuki.dev/muqun/gateway.sh | sh';
+export const GATEWAY_INSTALL_COMMAND = 'curl -fsSL https://muqun.dev/gateway.sh | sh';
 
 /**
  * The issue tracker, opened from Settings -> About.
