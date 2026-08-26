@@ -21,6 +21,7 @@ import {
   simfarmDevicesUrl,
   simfarmHealthUrl,
   simfarmClientUrl,
+  simfarmThemedClientUrl,
   SIMFARM_DEFAULT_PORT,
 } from '@/lib/simfarm';
 
@@ -129,5 +130,66 @@ describe('parseSimfarmDevices', () => {
     for (const body of [null, undefined, 42, 'text', {}, { devices: null }, { devices: {} }, []]) {
       expect(parseSimfarmDevices(body)).toEqual([]);
     }
+  });
+});
+
+describe('simfarmThemedClientUrl', () => {
+  const COLORS = {
+    background: '#0B0F14',
+    surface: '#141A21',
+    text: '#E6EDF3',
+    textMuted: '#8B98A5',
+    border: '#232B33',
+    primary: '#FF6B53',
+    success: '#3FB950',
+    warning: '#D29922',
+    danger: '#F85149',
+  };
+
+  test('hands simfarm a palette it can read before its first paint', () => {
+    const url = simfarmThemedClientUrl(GATEWAY, 8801, COLORS);
+    expect(url).not.toBeNull();
+    const param = new URL(url!).searchParams.get('theme');
+    expect(param).not.toBeNull();
+
+    // base64url: no padding, and none of the two characters standard base64
+    // would have used. A `+` here becomes a space when the URL is parsed, which
+    // is exactly the corruption this encoding exists to avoid.
+    expect(param).not.toContain('=');
+    expect(param).not.toContain('+');
+    expect(param).not.toContain('/');
+
+    // Round trip, through simfarm's own decoding steps.
+    const b64 = param!.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(
+      Buffer.from(b64.padEnd(Math.ceil(b64.length / 4) * 4, '='), 'base64').toString('utf8')
+    );
+    expect(decoded).toEqual({
+      bg: '#0B0F14',
+      bgAlt: '#141A21',
+      fg: '#E6EDF3',
+      fgDim: '#8B98A5',
+      line: '#232B33',
+      accent: '#FF6B53',
+      ok: '#3FB950',
+      warn: '#D29922',
+      bad: '#F85149',
+    });
+  });
+
+  test('every key it sends is one simfarm actually applies', () => {
+    // simfarm drops unknown keys silently, so a rename upstream would show up
+    // as a panel that quietly stopped following the app rather than an error.
+    const THEME_KEYS = ['bg', 'bgAlt', 'fg', 'fgDim', 'line', 'accent', 'ok', 'warn', 'bad'];
+    const param = new URL(simfarmThemedClientUrl(GATEWAY, 8801, COLORS)!).searchParams.get('theme')!;
+    const b64 = param.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(
+      Buffer.from(b64.padEnd(Math.ceil(b64.length / 4) * 4, '='), 'base64').toString('utf8')
+    );
+    expect(Object.keys(decoded).sort()).toEqual([...THEME_KEYS].sort());
+  });
+
+  test('no gateway is still no URL', () => {
+    expect(simfarmThemedClientUrl(undefined, 8801, COLORS)).toBeNull();
   });
 });

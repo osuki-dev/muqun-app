@@ -102,6 +102,82 @@ export function simfarmDeviceKind(id: string): SimfarmDeviceKind {
   return 'other';
 }
 
+/**
+ * The nine colours simfarm's client will adopt, in its own vocabulary.
+ *
+ * Its `?theme=` is base64url JSON, read before the first paint precisely so the
+ * panel does not flash the wrong colour -- which is the same problem this app
+ * solves with its splash overlay. The keys are simfarm's; the values are this
+ * app's semantic tokens, and the mapping is one-to-one because both palettes are
+ * built on the same idea of what a colour is *for* rather than what it is.
+ *
+ * `accent` is deliberately the app's primary. simfarm reserves it for the status
+ * dot and says so: it is the one saturated colour with no semantic meaning
+ * there, and letting it onto borders is how an instrument stops being neutral.
+ * That is the same rule this app applies to its own accent, so handing it over
+ * is safe.
+ */
+export interface SimfarmThemeColors {
+  background: string;
+  surface: string;
+  text: string;
+  textMuted: string;
+  border: string;
+  primary: string;
+  success: string;
+  warning: string;
+  danger: string;
+}
+
+/** base64url: standard base64 with `-_` for `+/`, and no padding. */
+function base64Url(value: string): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  // The JSON is hex colours and ASCII keys, so UTF-8 is one byte per character
+  // and a full encoder would be weight with nothing to carry. Anything outside
+  // ASCII would be a bug in the caller, not a colour.
+  const bytes: number[] = [];
+  for (let i = 0; i < value.length; i += 1) bytes.push(value.charCodeAt(i) & 0x7f);
+
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const chunk = (bytes[i] << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0);
+    const left = bytes.length - i;
+    out += alphabet[(chunk >> 18) & 63] + alphabet[(chunk >> 12) & 63];
+    if (left > 1) out += alphabet[(chunk >> 6) & 63];
+    if (left > 2) out += alphabet[chunk & 63];
+  }
+  return out;
+}
+
+/**
+ * The client URL with this app's palette on it.
+ *
+ * Falls back to the bare URL when there is no gateway or no port, so a caller
+ * never has to guard two things. A malformed parameter is simfarm's problem to
+ * ignore -- its own comment says a bad `?theme=` keeps the defaults rather than
+ * taking the page down -- but there is no reason to hand it one.
+ */
+export function simfarmThemedClientUrl(
+  gatewayUrl: string | undefined,
+  port: number,
+  colors: SimfarmThemeColors
+): string | null {
+  const base = simfarmClientUrl(gatewayUrl, port);
+  if (base === null) return null;
+  const theme = {
+    bg: colors.background,
+    bgAlt: colors.surface,
+    fg: colors.text,
+    fgDim: colors.textMuted,
+    line: colors.border,
+    accent: colors.primary,
+    ok: colors.success,
+    warn: colors.warning,
+    bad: colors.danger,
+  };
+  return `${base}?theme=${base64Url(JSON.stringify(theme))}`;
+}
+
 export interface SimfarmDevice {
   id: string;
   name: string;
