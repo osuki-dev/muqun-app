@@ -97,6 +97,10 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "+{overflow} mais"
 
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "A pré-visualização só é oferecida através de Tailscale ou HTTPS."
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "Acerca"
@@ -1136,6 +1140,14 @@ msgstr "Logs"
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "Toque sem largar no terminal para selecionar a saída, arraste para alargar a seleção e copie-a."
 
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "Procurar de novo"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "A procurar um simulador"
+
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · Escritório"
@@ -1290,6 +1302,10 @@ msgstr "Não há nenhum servidor onde iniciar uma tarefa."
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "Ainda não há servidores emparelhados"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "Nenhum simulador na porta {port}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1512,6 +1528,10 @@ msgstr "Pressione Escape para dispensar esta solicitação"
 msgid "Preview {0}, {status}"
 msgstr "Pré-visualizar {0}, {status}"
 
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "Ver um simulador"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "Política de Privacidade"
@@ -1723,6 +1743,10 @@ msgstr "Executar comando"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "Executar os testes relevantes"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "Execute o simfarm nessa máquina, ou indique em que porta está."
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1952,6 +1976,10 @@ msgstr "Mostrar todos os passos de ferramentas"
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Mostrar imagens"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "Porta do simfarm"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -2232,6 +2260,7 @@ msgid "This server has no session to start an agent in."
 msgstr "Este servidor não tem nenhuma sessão onde iniciar um agente."
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "Este servidor já não está emparelhado."
@@ -2401,6 +2430,10 @@ msgstr "À espera da rede."
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "À espera de que os carregamentos terminem…"
+
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "Veja o simulador de iOS, Android ou WeChat desta máquina."
 
 #: src/lib/release-notes.ts
 msgid "What's new"

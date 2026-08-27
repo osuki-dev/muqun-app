@@ -265,6 +265,21 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            {/*
+              Full height, and for a plainer reason than the artifacts sheet's:
+              what is inside is a simulator drawn at 1:1. A partial detent would
+              crop the device it exists to show, and a phone is already the
+              smaller screen of the two.
+            */}
+            <Stack.Screen
+              name="simfarm"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: [1],
+                sheetGrabberVisible: true,
+                contentStyle: { backgroundColor: 'transparent' },
+              }}
+            />
             <Stack.Screen
               name="explore"
               options={{

@@ -366,6 +366,23 @@ export default function QuickCommandsScreen() {
   }
 
   /**
+   * Hand over to the simulator preview.
+   *
+   * `canOpenWeb` travels on rather than being recomputed: the screen that
+   * opened this sheet is the one holding the health answer, and its gate has a
+   * term nothing downstream can see -- the demo is excluded before the
+   * transport is even consulted, because its record points at an address that
+   * does not exist. Re-deriving here would quietly drop that.
+   */
+  function openSimulatorPreview() {
+    if (!available.canPreviewSimulator) return;
+    router.replace({
+      pathname: '/simfarm',
+      params: { serverId: params.serverId, allowed: params.canOpenWeb === '1' ? '1' : '' },
+    } as Href);
+  }
+
+  /**
    * Stop what this pane's agent is doing.
    *
    * The app sends one interrupt and says nothing else about it: which agent
@@ -541,6 +558,15 @@ export default function QuickCommandsScreen() {
             {/* Last, because it is the only row that does not act on the pane
                 behind this sheet: it reaches past it to the machine that pane
                 runs on, and leaves the app for the browser. */}
+            {available.canPreviewSimulator ? (
+              <ActionRow
+                accessibilityLabel={t`Preview a simulator`}
+                name={t`Preview a simulator`}
+                detail={t`Watch this machine's iOS, Android or WeChat simulator.`}
+                detailColor={theme.colors.textMuted}
+                onPress={openSimulatorPreview}
+              />
+            ) : null}
             {available.canOpenWebService ? (
               <ActionRow
                 accessibilityLabel={t`Open a web service`}

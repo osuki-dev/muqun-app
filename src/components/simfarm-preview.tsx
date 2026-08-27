@@ -40,14 +40,15 @@ import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';
  */
 export function SimfarmPreview({
   gatewayUrl,
-  protection,
+  allowed,
   initialPort,
   onPortFound,
   /** Beside the terminal rather than in a sheet: no padding, no heading. */
   embedded = false,
 }: {
   gatewayUrl: string | undefined;
-  protection: string | undefined;
+  /** Whether this connection may be offered the preview; see `probeSimfarm`. */
+  allowed: boolean;
   initialPort?: number;
   /** Called with a port that answered, so the caller can remember it. */
   onPortFound?: (port: number) => void;
@@ -67,12 +68,12 @@ export function SimfarmPreview({
     async (candidate: number) => {
       const mine = (attempt.current += 1);
       setProbe(null);
-      const result = await probeSimfarm(gatewayUrl, candidate, protection);
+      const result = await probeSimfarm(gatewayUrl, candidate, allowed);
       if (attempt.current !== mine) return;
       setProbe(result);
       if (result.found) onPortFound?.(candidate);
     },
-    [gatewayUrl, onPortFound, protection]
+    [allowed, gatewayUrl, onPortFound]
   );
 
   useEffect(() => {

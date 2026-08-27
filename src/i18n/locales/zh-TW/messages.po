@@ -97,6 +97,10 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
 
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "只有透過 Tailscale 或 HTTPS 才會提供預覽。"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "關於"
@@ -1136,6 +1140,14 @@ msgstr "紀錄"
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "長按終端機即可選取輸出，拖曳延伸選取範圍，再複製下來。"
 
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "重新尋找"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "正在尋找模擬器"
+
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · 辦公室"
@@ -1290,6 +1302,10 @@ msgstr "沒有可以開始任務的伺服器。"
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "尚未配對任何伺服器"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "連接埠 {port} 上沒有模擬器"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1512,6 +1528,10 @@ msgstr "按 Esc 鍵關閉這項請求"
 msgid "Preview {0}, {status}"
 msgstr "預覽 {0}，{status}"
 
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "預覽模擬器"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "隱私政策"
@@ -1723,6 +1743,10 @@ msgstr "執行指令"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "執行相關測試"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "在那台電腦上執行 simfarm，或告訴我們它在哪個連接埠。"
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1952,6 +1976,10 @@ msgstr "顯示每個工具步驟"
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "顯示圖片"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "simfarm 連接埠"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -2232,6 +2260,7 @@ msgid "This server has no session to start an agent in."
 msgstr "這台伺服器沒有可以啟動代理程式的工作階段。"
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "這台伺服器已經解除配對。"
@@ -2401,6 +2430,10 @@ msgstr "正在等待網路。"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "正在等待上傳完成…"
+
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "看這台電腦的 iOS、Android 或 WeChat 模擬器。"
 
 #: src/lib/release-notes.ts
 msgid "What's new"

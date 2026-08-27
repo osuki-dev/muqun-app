@@ -1,5 +1,4 @@
 import {
-  allowsSimfarmPreview,
   parseSimfarmDevices,
   simfarmDevicesUrl,
   simfarmHealthUrl,
@@ -61,9 +60,20 @@ export type SimfarmProbe =
 export async function probeSimfarm(
   gatewayUrl: string | undefined,
   port: number,
-  protection: string | undefined
+  /**
+   * Whether this connection may be offered the preview at all, decided by the
+   * screen that already holds the health answer.
+   *
+   * Passed in rather than re-derived here from a protection string, because the
+   * real gate has a term this module cannot see: the demo is excluded *before*
+   * the transport is consulted, since its record points at an address that does
+   * not exist and every port on it is a page that will never load. A module
+   * re-deriving the answer from the string alone would quietly drop that term
+   * and offer the demo a preview it can only fail to load.
+   */
+  allowed: boolean
 ): Promise<SimfarmProbe> {
-  if (!allowsSimfarmPreview(protection)) return { found: false, reason: 'blocked' };
+  if (!allowed) return { found: false, reason: 'blocked' };
 
   const health = simfarmHealthUrl(gatewayUrl, port);
   const devices = simfarmDevicesUrl(gatewayUrl, port);

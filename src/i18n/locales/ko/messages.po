@@ -97,6 +97,10 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
 
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "미리보기는 Tailscale 또는 HTTPS 연결에서만 제공됩니다."
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "정보"
@@ -1136,6 +1140,14 @@ msgstr "로그"
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "터미널을 길게 누르면 출력을 선택할 수 있고, 끌어서 범위를 넓힌 뒤 복사할 수 있습니다."
 
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "다시 찾기"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "시뮬레이터를 찾는 중"
+
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · 사무실"
@@ -1290,6 +1302,10 @@ msgstr "작업을 시작할 서버가 없습니다."
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "아직 페어링된 서버가 없습니다"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "{port} 포트에 시뮬레이터가 없습니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1512,6 +1528,10 @@ msgstr "이스케이프를 눌러 이 요청 닫기"
 msgid "Preview {0}, {status}"
 msgstr "{0} 미리보기, {status}"
 
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "시뮬레이터 보기"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "개인정보 처리방침"
@@ -1723,6 +1743,10 @@ msgstr "명령 실행"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "관련 테스트 실행"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "그 컴퓨터에서 simfarm을 실행하거나, 어느 포트인지 알려주세요."
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1952,6 +1976,10 @@ msgstr "모든 도구 단계 표시"
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "이미지 표시"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "simfarm 포트"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -2232,6 +2260,7 @@ msgid "This server has no session to start an agent in."
 msgstr "이 서버에는 에이전트를 시작할 세션이 없습니다."
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "이 서버는 더 이상 페어링되어 있지 않습니다."
@@ -2401,6 +2430,10 @@ msgstr "네트워크를 기다리는 중입니다."
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "업로드가 끝나기를 기다리는 중…"
+
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "이 컴퓨터의 iOS·Android·WeChat 시뮬레이터를 봅니다."
 
 #: src/lib/release-notes.ts
 msgid "What's new"

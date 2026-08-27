@@ -97,6 +97,10 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "プレビューは Tailscale または HTTPS 経由でのみ利用できます。"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "アプリについて"
@@ -1136,6 +1140,14 @@ msgstr "ログ"
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "ターミナルを長押しすると出力を選択でき、ドラッグで範囲を広げてコピーできます。"
 
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "もう一度探す"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "シミュレータを探しています"
+
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · オフィス"
@@ -1290,6 +1302,10 @@ msgstr "タスクを開始できるサーバーがありません。"
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "ペアリング済みのサーバーはまだありません"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "ポート {port} にシミュレータがありません"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1512,6 +1528,10 @@ msgstr "エスケープを送ってこのリクエストを閉じる"
 msgid "Preview {0}, {status}"
 msgstr "{0} をプレビュー、{status}"
 
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "シミュレータを見る"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "プライバシーポリシー"
@@ -1723,6 +1743,10 @@ msgstr "コマンドを実行"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "関連するテストを実行"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "そのマシンで simfarm を起動するか、ポート番号を指定してください。"
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1952,6 +1976,10 @@ msgstr "ツールの手順をすべて表示"
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "画像を表示"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "simfarm のポート"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
@@ -2232,6 +2260,7 @@ msgid "This server has no session to start an agent in."
 msgstr "このサーバーにはエージェントを起動できるセッションがありません。"
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "このサーバーはもうペアリングされていません。"
@@ -2401,6 +2430,10 @@ msgstr "ネットワークを待っています。"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "アップロードの完了を待っています…"
+
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "このマシンの iOS・Android・WeChat シミュレータを見ます。"
 
 #: src/lib/release-notes.ts
 msgid "What's new"
