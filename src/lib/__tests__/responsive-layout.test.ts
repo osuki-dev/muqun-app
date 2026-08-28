@@ -238,3 +238,28 @@ describe('the simulator preview column', () => {
     expect(layout.terminalWidth).toBe(402);
   });
 });
+
+describe('the widths the preview actually meets', () => {
+  // Measured from the simulators, in logical points. The first cut of
+  // PAD_TERMINAL_MIN_WIDTH was ten points too high and closed the preview on
+  // the most common iPad, so the sizes are pinned rather than reasoned about.
+  const IPAD_11_LANDSCAPE = 1210;
+  const IPAD_11_PORTRAIT = 834;
+  const IPAD_13_LANDSCAPE = 1366;
+
+  test('opens on an 11-inch iPad in landscape', () => {
+    const layout = responsiveWorkspaceLayout(IPAD_11_LANDSCAPE, true);
+    expect(layout.previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(layout.terminalWidth).toBeGreaterThanOrEqual(PAD_TERMINAL_MIN_WIDTH);
+  });
+
+  test('opens on a 13-inch iPad in landscape', () => {
+    expect(responsiveWorkspaceLayout(IPAD_13_LANDSCAPE, true).previewWidth).toBe(
+      PAD_PREVIEW_WIDTH
+    );
+  });
+
+  test('declines in portrait, where neither half would survive', () => {
+    expect(responsiveWorkspaceLayout(IPAD_11_PORTRAIT, true).previewWidth).toBe(0);
+  });
+});

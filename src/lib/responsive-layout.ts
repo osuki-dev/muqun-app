@@ -17,12 +17,20 @@ export const PAD_PREVIEW_WIDTH = 452;
 /**
  * What the terminal must keep for the preview to be allowed to open.
  *
- * Roughly sixty columns at the default text size -- enough for the diffs and
- * tables an agent prints to still be worth reading. Below it the reader would
+ * About fifty-four columns at the default text size -- the cell advance is
+ * 0.6em and the default is 13pt, so this is 420/7.8. Enough for the diffs and
+ * tables an agent prints to still be worth reading; below it the reader would
  * be closing the preview to get their terminal back, so the layout declines
  * instead.
+ *
+ * Calibrated against the device rather than guessed, because the first guess
+ * (480) was wrong in the way that matters. An 11-inch iPad in landscape is
+ * 1210pt, which leaves 922 beside the rail and 470 after the preview -- ten
+ * points short. The feature would have been dead on the most common iPad and
+ * alive only on the 13-inch, which is exactly the kind of threshold nothing
+ * reports: it does not fail, it silently never opens.
  */
-export const PAD_TERMINAL_MIN_WIDTH = 480;
+export const PAD_TERMINAL_MIN_WIDTH = 420;
 
 export type ResponsiveWorkspaceLayout = {
   mode: 'compact' | 'pad';
