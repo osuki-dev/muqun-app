@@ -5,8 +5,10 @@ import {
   homeServerListLayout,
   HOME_LIST_MEASURE,
   PAD_LAYOUT_MIN_WIDTH,
+  PAD_PREVIEW_WIDTH,
   PAD_RAIL_MAX_WIDTH,
   PAD_RAIL_MIN_WIDTH,
+  PAD_TERMINAL_MIN_WIDTH,
   responsiveWorkspaceLayout,
 } from '../responsive-layout';
 
@@ -17,6 +19,7 @@ describe('responsive workspace mode', () => {
       availableWidth: PAD_LAYOUT_MIN_WIDTH - 1,
       railWidth: 0,
       terminalWidth: PAD_LAYOUT_MIN_WIDTH - 1,
+      previewWidth: 0,
     });
   });
 
@@ -26,6 +29,7 @@ describe('responsive workspace mode', () => {
       availableWidth: PAD_LAYOUT_MIN_WIDTH,
       railWidth: PAD_RAIL_MIN_WIDTH,
       terminalWidth: PAD_LAYOUT_MIN_WIDTH - PAD_RAIL_MIN_WIDTH,
+      previewWidth: 0,
     });
   });
 
@@ -73,6 +77,7 @@ describe('invalid measurements', () => {
         availableWidth: 0,
         railWidth: 0,
         terminalWidth: 0,
+        previewWidth: 0,
       });
     }
   });
@@ -187,5 +192,49 @@ describe('home brand weight', () => {
     // pad branch and the phone branch have to reach the same weight.
     expect(homeServerListLayout(1280, 2).brand).toEqual(homeServerListLayout(390, 2).brand);
     expect(homeServerListLayout(1280, 0).brand).toEqual(homeServerListLayout(390, 0).brand);
+  });
+});
+
+describe('the simulator preview column', () => {
+  test('takes its width out of the terminal, never out of the rail', () => {
+    // The rail is a list of names and stops being readable the moment it is
+    // squeezed; the terminal simply shows fewer columns.
+    const wide = 1366;
+    const without = responsiveWorkspaceLayout(wide);
+    const with_ = responsiveWorkspaceLayout(wide, true);
+    expect(with_.railWidth).toBe(without.railWidth);
+    expect(with_.previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(with_.terminalWidth).toBe(without.terminalWidth - PAD_PREVIEW_WIDTH);
+    // Nothing is lost or invented between the three columns.
+    expect(with_.railWidth + with_.terminalWidth + with_.previewWidth).toBe(wide);
+  });
+
+  test('declines to open where it would leave an unreadable terminal', () => {
+    // A device at 1:1 needs its own width. Below this the reader would close
+    // the preview to get their terminal back, so the layout does not open it.
+    const tight = PAD_LAYOUT_MIN_WIDTH;
+    const layout = responsiveWorkspaceLayout(tight, true);
+    expect(layout.previewWidth).toBe(0);
+    expect(layout.terminalWidth).toBe(tight - layout.railWidth);
+  });
+
+  test('opens at the first width where both halves survive', () => {
+    // Walk up until it opens, and check the terminal really did keep its floor.
+    let width = PAD_LAYOUT_MIN_WIDTH;
+    while (width < 2400 && responsiveWorkspaceLayout(width, true).previewWidth === 0) {
+      width += 1;
+    }
+    const layout = responsiveWorkspaceLayout(width, true);
+    expect(layout.previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(layout.terminalWidth).toBeGreaterThanOrEqual(PAD_TERMINAL_MIN_WIDTH);
+    // One point narrower and it is still closed, so this is the real edge.
+    expect(responsiveWorkspaceLayout(width - 1, true).previewWidth).toBe(0);
+  });
+
+  test('a phone is never split, whatever it is asked for', () => {
+    const layout = responsiveWorkspaceLayout(402, true);
+    expect(layout.mode).toBe('compact');
+    expect(layout.previewWidth).toBe(0);
+    expect(layout.terminalWidth).toBe(402);
   });
 });

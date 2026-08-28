@@ -918,6 +918,10 @@ msgstr "Gateway URL is not valid."
 msgid "Git status"
 msgstr "Git status"
 
+#: src/app/commands.tsx
+msgid "Give the whole width back to the terminal."
+msgstr "Give the whole width back to the terminal."
+
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "Go back"
@@ -951,6 +955,10 @@ msgstr "Hide {name}"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
+
+#: src/app/commands.tsx
+msgid "Hide the simulator"
+msgstr "Hide the simulator"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -1973,6 +1981,10 @@ msgstr "Show every tool step"
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Show images"
+
+#: src/app/commands.tsx
+msgid "Show it beside the terminal, and watch it redraw."
+msgstr "Show it beside the terminal, and watch it redraw."
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"

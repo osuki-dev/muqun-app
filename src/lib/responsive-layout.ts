@@ -4,18 +4,58 @@ export const PAD_RAIL_MAX_WIDTH = 288;
 
 const PAD_RAIL_WIDTH_RATIO = 0.25;
 
+/**
+ * The simulator preview's column.
+ *
+ * A fixed width, not a ratio, because what it holds is a device drawn at 1:1 --
+ * an iPhone is 402pt wide whatever the window is, and a column that grew with
+ * the window would only add margin around a picture that cannot use it. This is
+ * that 402 plus the client's own chrome and gutters.
+ */
+export const PAD_PREVIEW_WIDTH = 452;
+
+/**
+ * What the terminal must keep for the preview to be allowed to open.
+ *
+ * Roughly sixty columns at the default text size -- enough for the diffs and
+ * tables an agent prints to still be worth reading. Below it the reader would
+ * be closing the preview to get their terminal back, so the layout declines
+ * instead.
+ */
+export const PAD_TERMINAL_MIN_WIDTH = 480;
+
 export type ResponsiveWorkspaceLayout = {
   mode: 'compact' | 'pad';
   availableWidth: number;
   railWidth: number;
   terminalWidth: number;
+  /**
+   * The simulator preview's column, or 0 when it is not showing.
+   *
+   * Taken out of the terminal's share rather than out of the rail's: the rail
+   * is a list of names and stops being readable the moment it is squeezed,
+   * while the terminal is the one thing on this screen that can usefully take
+   * any width it is given and simply shows fewer columns.
+   */
+  previewWidth: number;
 };
 
 /**
  * Divides the currently available window width, including resized iPad windows.
  * Device type and orientation deliberately do not participate in this policy.
  */
-export function responsiveWorkspaceLayout(availableWidth: number): ResponsiveWorkspaceLayout {
+export function responsiveWorkspaceLayout(
+  availableWidth: number,
+  /**
+   * Whether the simulator preview is showing beside the terminal.
+   *
+   * Only ever true on a Pad: a phone that split this way would leave two
+   * columns too narrow to be either a terminal or a device at 1:1, which is the
+   * one thing the preview exists to be. The compact branch ignores it rather
+   * than guarding at the call site.
+   */
+  showsPreview = false
+): ResponsiveWorkspaceLayout {
   const safeWidth = Number.isFinite(availableWidth) ? Math.max(0, availableWidth) : 0;
 
   if (safeWidth < PAD_LAYOUT_MIN_WIDTH) {
@@ -24,6 +64,7 @@ export function responsiveWorkspaceLayout(availableWidth: number): ResponsiveWor
       availableWidth: safeWidth,
       railWidth: 0,
       terminalWidth: safeWidth,
+      previewWidth: 0,
     };
   }
 
@@ -31,12 +72,21 @@ export function responsiveWorkspaceLayout(availableWidth: number): ResponsiveWor
     PAD_RAIL_MAX_WIDTH,
     Math.max(PAD_RAIL_MIN_WIDTH, safeWidth * PAD_RAIL_WIDTH_RATIO)
   );
+  const beside = safeWidth - railWidth;
+
+  // The preview only opens where both halves survive it. A device drawn at 1:1
+  // needs its own width, and a terminal squeezed under `PAD_TERMINAL_MIN_WIDTH`
+  // is a terminal showing so few columns that the reader would close the
+  // preview to get it back -- so the app does not open it for them.
+  const previewWidth =
+    showsPreview && beside - PAD_PREVIEW_WIDTH >= PAD_TERMINAL_MIN_WIDTH ? PAD_PREVIEW_WIDTH : 0;
 
   return {
     mode: 'pad',
     availableWidth: safeWidth,
     railWidth,
-    terminalWidth: safeWidth - railWidth,
+    terminalWidth: beside - previewWidth,
+    previewWidth,
   };
 }
 

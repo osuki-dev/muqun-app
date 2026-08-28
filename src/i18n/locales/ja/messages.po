@@ -918,6 +918,10 @@ msgstr "Gateway の URL が正しくありません。"
 msgid "Git status"
 msgstr "Git ステータス"
 
+#: src/app/commands.tsx
+msgid "Give the whole width back to the terminal."
+msgstr "幅をすべてターミナルに戻します。"
+
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "戻る"
@@ -951,6 +955,10 @@ msgstr "{name} を隠す"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "キーボードを隠す"
+
+#: src/app/commands.tsx
+msgid "Hide the simulator"
+msgstr "シミュレータを隠す"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -1973,6 +1981,10 @@ msgstr "ツールの手順をすべて表示"
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "画像を表示"
+
+#: src/app/commands.tsx
+msgid "Show it beside the terminal, and watch it redraw."
+msgstr "ターミナルの横に表示して、描き直される様子を見ます。"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"

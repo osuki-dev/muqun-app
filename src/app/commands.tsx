@@ -76,6 +76,7 @@ import { quickActionAvailability } from '@/lib/quick-actions';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { usePanelPickerStore } from '@/stores/panel-picker';
+import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   addQuickCommand,
   hasHiddenDefaults,
@@ -122,6 +123,10 @@ export default function QuickCommandsScreen() {
   const { bottom: bottomInset } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
+  const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
+  const simfarmSplitOpen = useSimfarmSplit((state) =>
+    params.serverId ? state.openByServer[params.serverId] === true : false
+  );
   const params = useLocalSearchParams<{
     sessionId: string;
     paneId: string;
@@ -376,6 +381,16 @@ export default function QuickCommandsScreen() {
    */
   function openSimulatorPreview() {
     if (!available.canPreviewSimulator) return;
+    // On a Pad the preview belongs beside the terminal, not over it: the whole
+    // reason to want it there is watching the simulator redraw *while* the
+    // agent works, and a sheet covering the terminal gives back exactly the
+    // one-at-a-time reading you already have on the desktop. A phone has no
+    // second column to give, so it opens the sheet.
+    if (isPadLayout && params.serverId) {
+      toggleSimfarmSplit(params.serverId);
+      router.back();
+      return;
+    }
     router.replace({
       pathname: '/simfarm',
       params: { serverId: params.serverId, allowed: params.canOpenWeb === '1' ? '1' : '' },
@@ -560,9 +575,19 @@ export default function QuickCommandsScreen() {
                 runs on, and leaves the app for the browser. */}
             {available.canPreviewSimulator ? (
               <ActionRow
-                accessibilityLabel={t`Preview a simulator`}
-                name={t`Preview a simulator`}
-                detail={t`Watch this machine's iOS, Android or WeChat simulator.`}
+                accessibilityLabel={
+                  isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
+                }
+                name={
+                  isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
+                }
+                detail={
+                  isPadLayout
+                    ? simfarmSplitOpen
+                      ? t`Give the whole width back to the terminal.`
+                      : t`Show it beside the terminal, and watch it redraw.`
+                    : t`Watch this machine's iOS, Android or WeChat simulator.`
+                }
                 detailColor={theme.colors.textMuted}
                 onPress={openSimulatorPreview}
               />

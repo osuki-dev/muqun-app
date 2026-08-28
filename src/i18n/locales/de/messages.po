@@ -918,6 +918,10 @@ msgstr "Die Gateway-URL ist ungültig."
 msgid "Git status"
 msgstr "Git-Status"
 
+#: src/app/commands.tsx
+msgid "Give the whole width back to the terminal."
+msgstr "Die volle Breite zurück an das Terminal geben."
+
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "Zurück"
@@ -951,6 +955,10 @@ msgstr "{name} ausblenden"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Tastatur ausblenden"
+
+#: src/app/commands.tsx
+msgid "Hide the simulator"
+msgstr "Simulator ausblenden"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -1973,6 +1981,10 @@ msgstr "Alle Tool-Schritte anzeigen"
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Bilder anzeigen"
+
+#: src/app/commands.tsx
+msgid "Show it beside the terminal, and watch it redraw."
+msgstr "Neben dem Terminal anzeigen und beim Neuzeichnen zusehen."
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"

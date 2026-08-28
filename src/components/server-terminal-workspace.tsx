@@ -158,6 +158,9 @@ import {
   type TabPaneMemory,
 } from '@/lib/tab-swipe';
 import { allowsWebServiceOpen } from '@/lib/web-service';
+import { SimfarmPreview } from '@/components/simfarm-preview';
+import { useServerSimfarm } from '@/stores/server-simfarm';
+import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   recallWorkspaceSelection,
   rememberWorkspaceSelection,
@@ -387,7 +390,29 @@ export function ServerTerminalWorkspace({
   const router = useRouter();
   const isFocused = useIsFocused();
   const { width: windowWidth } = useWindowDimensions();
-  const isPadLayout = responsiveWorkspaceLayout(windowWidth).mode === 'pad';
+  /**
+   * The three columns, and whether the middle one gives room to the third.
+   *
+   * `responsiveWorkspaceLayout` decides: it declines to open the preview where
+   * the terminal would be left too narrow to read, so this screen never has to
+   * ask that question itself and a window dragged narrower closes the preview
+   * on its own rather than squeezing both halves into uselessness.
+   */
+  const previewOpen = useSimfarmSplit((state) => state.openByServer[serverId] === true);
+  const workspaceLayout = responsiveWorkspaceLayout(windowWidth, previewOpen);
+  const isPadLayout = workspaceLayout.mode === 'pad';
+  const simfarmPorts = useServerSimfarm((state) => state.byServer);
+  const hydrateSimfarmPorts = useServerSimfarm((state) => state.hydrate);
+  const rememberSimfarmPortForServer = useServerSimfarm((state) => state.remember);
+  useEffect(() => {
+    void hydrateSimfarmPorts();
+  }, [hydrateSimfarmPorts]);
+  const rememberSimfarmPort = useCallback(
+    (port: number) => {
+      if (serverId) void rememberSimfarmPortForServer(serverId, port);
+    },
+    [rememberSimfarmPortForServer, serverId]
+  );
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
@@ -2467,6 +2492,11 @@ export function ServerTerminalWorkspace({
     </Animated.ScrollView>
   );
 
+  const simfarmSplit = {
+    previewWidth: workspaceLayout.previewWidth,
+    allowed: !demoMode && allowsWebServiceOpen(data.health?.transportSecurity?.protection),
+  };
+
   return (
     <AppDrawer
       padRail={
@@ -2501,6 +2531,14 @@ export function ServerTerminalWorkspace({
       // with two modes the setting's default covers it, and the header keeps
       // one job. Restore alongside CHAT_VIEW_ENABLED if the cycle returns.
       detailAccessory={undefined}>
+      {/* The terminal and, beside it, the simulator it is changing.
+
+          A row rather than a third column of the drawer's own: the rail belongs
+          to the drawer and lists machines, while these two are one machine's
+          screen split in half. `previewWidth` is 0 whenever the preview is off
+          or the window is too narrow to keep both halves usable, so this is a
+          row of one for the whole of the compact layout and most of the Pad. */}
+      <View style={styles.workspaceSplit}>
       <View style={[styles.page, { backgroundColor: terminalBackground }]}>
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
         {/*
@@ -3069,6 +3107,22 @@ export function ServerTerminalWorkspace({
           <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} />
         ) : null}
       </View>
+        {simfarmSplit.previewWidth > 0 ? (
+          <View
+            style={[
+              styles.previewColumn,
+              { width: simfarmSplit.previewWidth, borderLeftColor: theme.colors.border },
+            ]}>
+            <SimfarmPreview
+              embedded
+              gatewayUrl={record?.url}
+              allowed={simfarmSplit.allowed}
+              initialPort={simfarmPorts[record?.serverId ?? '']}
+              onPortFound={rememberSimfarmPort}
+            />
+          </View>
+        ) : null}
+      </View>
     </AppDrawer>
   );
 }
@@ -3630,6 +3684,16 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     position: 'relative',
+  },
+  workspaceSplit: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  previewColumn: {
+    // A hairline is the whole of the seam. The two halves are one machine's
+    // screen, not two documents, and a heavier divider would read as a second
+    // window standing beside the first.
+    borderLeftWidth: StyleSheet.hairlineWidth,
   },
   centerState: {
     flex: 1,
