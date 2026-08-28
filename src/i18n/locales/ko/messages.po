@@ -97,6 +97,10 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "이 컴퓨터에서 실행 중인 개발 서버나 미리보기."
+
 #: src/components/simfarm-preview.tsx
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "미리보기는 Tailscale 또는 HTTPS 연결에서만 제공됩니다."
@@ -104,6 +108,18 @@ msgstr "미리보기는 Tailscale 또는 HTTPS 연결에서만 제공됩니다."
 #: src/app/settings.tsx
 msgid "About"
 msgstr "정보"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "이 터미널을 조작하거나 명령을 보냅니다."
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "이 터미널을 조작하거나 에이전트에 프롬프트를 보냅니다."
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "옆에 터미널을 추가하고 그곳으로 이동합니다."
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -118,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "에이전트 명령"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "에이전트 출력을 일반 텍스트로 표시합니다. 읽기 쉽지만 색은 사라집니다."
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "에이전트 출력을 읽기 좋게 다시 흘려 배치합니다. 색상은 사라집니다."
@@ -158,6 +177,10 @@ msgstr "카메라를 허용하거나 주소를 입력하세요."
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "응답: {0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "{label}이 포트로 제공하는 모든 것 — 개발 서버, 미리보기, 대시보드."
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -294,6 +317,7 @@ msgstr "줄 지우기"
 msgid "Clear terminal"
 msgstr "터미널 지우기"
 
+#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "닫기"
@@ -313,10 +337,6 @@ msgstr "언어 목록 닫기"
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "새 작업 닫기"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "웹 서비스 열기 닫기"
 
 #: src/app/explore.tsx
 msgid "Close pairing"
@@ -1377,19 +1397,6 @@ msgstr "{0} 열기"
 msgid "Open {title}. Long press to close."
 msgstr "{title} 열기. 길게 눌러 닫기."
 
-#: src/app/commands.tsx
-msgid "Open a group of its own and go to it."
-msgstr "별도의 그룹을 열고 그곳으로 이동합니다."
-
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "이 컴퓨터의 포트를 브라우저에서 엽니다."
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "웹 서비스 열기"
-
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "그래도 열기"
@@ -1397,6 +1404,11 @@ msgstr "그래도 열기"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "파일 목록 열기"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "브라우저에서 열기"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1563,10 +1575,6 @@ msgstr "빠른 동작"
 msgid "Quit"
 msgstr "종료"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "{label}에서 실행 중인 서버에 이 휴대폰에서 연결합니다."
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "{SUPPORT_EMAIL}(으)로 문의해 주세요."
@@ -1721,10 +1729,6 @@ msgstr "해제 중…"
 msgid "Right arrow"
 msgstr "오른쪽 화살표"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "명령이나 키 조합을 실행합니다."
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "터미널 명령 실행"
@@ -1766,6 +1770,14 @@ msgstr "{0}에 대한 변경 사항 저장"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "단축 명령 저장"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "저장한 명령어"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "저장한 프롬프트"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1836,10 +1848,6 @@ msgstr "{spoken} 보내기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "메시지 보내기"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "이 에이전트에 프롬프트를 보냅니다."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1929,10 +1937,6 @@ msgstr "시프트 탭"
 msgid "Shift Tab, cycle mode"
 msgstr "시프트 탭, 모드 전환"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "단축 명령"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1994,13 +1998,13 @@ msgstr "문제가 발생했습니다"
 msgid "Space"
 msgstr "스페이스"
 
-#: src/app/commands.tsx
-msgid "Split this group and go to what it makes."
-msgstr "이 그룹을 분할하고 만들어진 곳으로 이동합니다."
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "오래됨 · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "별도의 그룹을 만들고 그곳으로 이동합니다."
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"

@@ -97,6 +97,10 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "這台電腦上執行中的開發伺服器或預覽。"
+
 #: src/components/simfarm-preview.tsx
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "只有透過 Tailscale 或 HTTPS 才會提供預覽。"
@@ -104,6 +108,18 @@ msgstr "只有透過 Tailscale 或 HTTPS 才會提供預覽。"
 #: src/app/settings.tsx
 msgid "About"
 msgstr "關於"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "操作這個終端機，或送一個指令給它。"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "操作這個終端機，或送一段提示給它的代理程式。"
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "在旁邊加一個終端機，並前往。"
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -118,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "代理程式指令"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "把代理程式的輸出顯示為純文字。比較好讀，但沒有顏色。"
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "代理程式的輸出重新排版以便閱讀，色彩會消失。"
@@ -158,6 +177,10 @@ msgstr "允許使用相機，或改為輸入位址。"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "回答：{0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "{label} 在某個連接埠上提供的任何東西——開發伺服器、預覽、儀表板。"
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -294,6 +317,7 @@ msgstr "清除目前行"
 msgid "Clear terminal"
 msgstr "清除終端機"
 
+#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "關閉"
@@ -313,10 +337,6 @@ msgstr "關閉語言清單"
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "關閉新增任務"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "關閉「開啟網頁服務」"
 
 #: src/app/explore.tsx
 msgid "Close pairing"
@@ -1377,19 +1397,6 @@ msgstr "開啟 {0}"
 msgid "Open {title}. Long press to close."
 msgstr "開啟 {title}。長按可關閉。"
 
-#: src/app/commands.tsx
-msgid "Open a group of its own and go to it."
-msgstr "開一個自己的群組並前往。"
-
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "在瀏覽器中開啟這台機器上的連接埠。"
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "開啟網頁服務"
-
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "仍要開啟"
@@ -1397,6 +1404,11 @@ msgstr "仍要開啟"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "開啟檔案"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "在瀏覽器開啟"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1563,10 +1575,6 @@ msgstr "快速動作"
 msgid "Quit"
 msgstr "離開"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "從這支手機連上在 {label} 執行的伺服器。"
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "請寫信到 {SUPPORT_EMAIL} 與我們聯絡。"
@@ -1721,10 +1729,6 @@ msgstr "撤銷中…"
 msgid "Right arrow"
 msgstr "向右鍵"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "執行指令或按鍵組合。"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "執行終端機指令"
@@ -1766,6 +1770,14 @@ msgstr "儲存對 {0} 的變更"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "儲存快捷指令"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "已儲存的指令"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "已儲存的提示"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1836,10 +1848,6 @@ msgstr "送出 {spoken}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "傳送訊息"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "傳送提示詞給這個代理程式。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1929,10 +1937,6 @@ msgstr "Shift Tab 鍵"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab 鍵，循環切換模式"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "快捷指令"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1994,13 +1998,13 @@ msgstr "發生錯誤"
 msgid "Space"
 msgstr "空白鍵"
 
-#: src/app/commands.tsx
-msgid "Split this group and go to what it makes."
-msgstr "分割這個群組並前往新建的那一個。"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "資料過舊 · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "開一個自己的群組，並前往。"
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"

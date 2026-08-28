@@ -97,6 +97,10 @@ msgstr "{removeLabel} : {label}"
 msgid "+{overflow} more"
 msgstr "+{overflow} autres"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "Un serveur de dev ou un aperçu tournant sur cette machine."
+
 #: src/components/simfarm-preview.tsx
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "L'aperçu n'est proposé que via Tailscale ou HTTPS."
@@ -104,6 +108,18 @@ msgstr "L'aperçu n'est proposé que via Tailscale ou HTTPS."
 #: src/app/settings.tsx
 msgid "About"
 msgstr "À propos"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "Agir sur ce terminal, ou lui envoyer une commande."
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "Agir sur ce terminal, ou envoyer un prompt à son agent."
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "Ajouter un terminal à côté de celui-ci et s'y rendre."
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -118,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "COMMANDES DE L’AGENT"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "Sortie de l'agent en texte brut. Plus lisible, sans couleur."
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "La sortie de l’agent est remise en forme pour la lecture. Les couleurs sont perdues."
@@ -158,6 +177,10 @@ msgstr "Autorisez la caméra, ou saisissez l'adresse."
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Réponse : {0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "Tout ce que {label} sert sur un port : un serveur de dev, un aperçu, un tableau de bord."
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -294,6 +317,7 @@ msgstr "Effacer la ligne"
 msgid "Clear terminal"
 msgstr "Effacer le terminal"
 
+#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Fermer"
@@ -313,10 +337,6 @@ msgstr "Fermer la liste des langues"
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Fermer la nouvelle tâche"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "Fermer « Ouvrir un service web »"
 
 #: src/app/explore.tsx
 msgid "Close pairing"
@@ -1377,19 +1397,6 @@ msgstr "Ouvrir {0}"
 msgid "Open {title}. Long press to close."
 msgstr "Ouvrir {title}. Appui long pour fermer."
 
-#: src/app/commands.tsx
-msgid "Open a group of its own and go to it."
-msgstr "Ouvrir un groupe à part et s'y rendre."
-
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "Ouvre un port de cette machine dans votre navigateur."
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "Ouvrir un service web"
-
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "Ouvrir quand même"
@@ -1397,6 +1404,11 @@ msgstr "Ouvrir quand même"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Ouvrir les fichiers"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "Ouvrir dans le navigateur"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1563,10 +1575,6 @@ msgstr "Actions rapides"
 msgid "Quit"
 msgstr "Quitter"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "Joignez depuis ce téléphone un serveur qui tourne sur {label}."
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "Écrivez-nous à {SUPPORT_EMAIL}."
@@ -1721,10 +1729,6 @@ msgstr "Révocation…"
 msgid "Right arrow"
 msgstr "Flèche droite"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "Exécutez une commande ou une combinaison de touches."
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "Exécuter une commande de terminal"
@@ -1766,6 +1770,14 @@ msgstr "Enregistrer les modifications de {0}"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Enregistrer le raccourci"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "COMMANDES ENREGISTRÉES"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "PROMPTS ENREGISTRÉS"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1836,10 +1848,6 @@ msgstr "Envoyer {spoken}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "Envoyer un message"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "Envoyez un prompt à cet agent."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1929,10 +1937,6 @@ msgstr "Maj Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Maj Tab, changer de mode"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "RACCOURCIS"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1994,13 +1998,13 @@ msgstr "Une erreur s’est produite"
 msgid "Space"
 msgstr "Espace"
 
-#: src/app/commands.tsx
-msgid "Split this group and go to what it makes."
-msgstr "Diviser ce groupe et aller au résultat."
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "obsolète · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "Créer un groupe à part et s'y rendre."
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"

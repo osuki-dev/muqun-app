@@ -459,8 +459,8 @@ export default function QuickCommandsScreen() {
               {manageOnly
                 ? t`Customize terminal commands and key combinations.`
                 : mode === 'agent'
-                  ? t`Send a prompt to this agent.`
-                  : t`Run a command or key combo.`}
+                  ? t`Act on this terminal, or send its agent a prompt.`
+                  : t`Act on this terminal, or send it a command.`}
             </Text>
           </View>
           <PressableScale
@@ -516,7 +516,7 @@ export default function QuickCommandsScreen() {
               <ActionRow
                 accessibilityLabel={t`New terminal`}
                 name={t`New terminal`}
-                detail={t`Split this group and go to what it makes.`}
+                detail={t`Add a terminal beside this one, and go to it.`}
                 detailColor={theme.colors.textMuted}
                 busy={creating === 'panel'}
                 busyColor={theme.colors.primary}
@@ -528,7 +528,7 @@ export default function QuickCommandsScreen() {
               <ActionRow
                 accessibilityLabel={t`New group`}
                 name={t`New group`}
-                detail={t`Open a group of its own and go to it.`}
+                detail={t`Start a group of its own, and go to it.`}
                 detailColor={theme.colors.textMuted}
                 busy={creating === 'tab'}
                 busyColor={theme.colors.primary}
@@ -547,7 +547,7 @@ export default function QuickCommandsScreen() {
                 name={paneView.mode === 'terminal' ? t`Render as text` : t`Render as terminal`}
                 detail={
                   paneView.mode === 'terminal'
-                    ? t`Agent output reflowed for reading. Colour is lost.`
+                    ? t`Agent output as plain text. Easier to read, no colour.`
                     : t`The raw pane, on its grid and in its own colours.`
                 }
                 detailColor={theme.colors.textMuted}
@@ -569,9 +569,9 @@ export default function QuickCommandsScreen() {
             ) : null}
             {available.canOpenWebService ? (
               <ActionRow
-                accessibilityLabel={t`Open a web service`}
-                name={t`Open a web service`}
-                detail={t`Open a port on this machine in your browser.`}
+                accessibilityLabel={t`Open in your browser`}
+                name={t`Open in your browser`}
+                detail={t`A dev server or preview running on this machine.`}
                 detailColor={theme.colors.textMuted}
                 onPress={openWebService}
               />
@@ -581,7 +581,7 @@ export default function QuickCommandsScreen() {
 
         <View style={styles.section}>
           <SectionHeading
-            title={t`SHORTCUTS`}
+            title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`}
             // Settings' entry is the editor, so it has no state to toggle and
             // offers no way to leave a mode that is the whole screen.
             action={

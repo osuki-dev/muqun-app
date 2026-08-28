@@ -97,6 +97,10 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "このマシンで動いている開発サーバーやプレビュー。"
+
 #: src/components/simfarm-preview.tsx
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "プレビューは Tailscale または HTTPS 経由でのみ利用できます。"
@@ -104,6 +108,18 @@ msgstr "プレビューは Tailscale または HTTPS 経由でのみ利用でき
 #: src/app/settings.tsx
 msgid "About"
 msgstr "アプリについて"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "このターミナルを操作するか、コマンドを送ります。"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "このターミナルを操作するか、エージェントにプロンプトを送ります。"
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "隣にターミナルを追加して、そこへ移動します。"
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -118,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "エージェントコマンド"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "エージェントの出力をプレーンテキストで表示します。読みやすくなりますが、色は失われます。"
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "エージェントの出力を読みやすく折り返します。色は失われます。"
@@ -158,6 +177,10 @@ msgstr "カメラを許可するか、アドレスを入力してください。
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "回答：{0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "{label} がポートで公開しているもの——開発サーバー、プレビュー、ダッシュボードなど。"
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -294,6 +317,7 @@ msgstr "行をクリア"
 msgid "Clear terminal"
 msgstr "ターミナルをクリア"
 
+#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "閉じる"
@@ -313,10 +337,6 @@ msgstr "言語一覧を閉じる"
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "新規タスクを閉じる"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "「ウェブサービスを開く」を閉じる"
 
 #: src/app/explore.tsx
 msgid "Close pairing"
@@ -1377,19 +1397,6 @@ msgstr "{0} を開く"
 msgid "Open {title}. Long press to close."
 msgstr "{title} を開く。長押しで閉じる。"
 
-#: src/app/commands.tsx
-msgid "Open a group of its own and go to it."
-msgstr "専用のグループを開いて移動します。"
-
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "このマシンのポートをブラウザーで開きます。"
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "ウェブサービスを開く"
-
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "それでも開く"
@@ -1397,6 +1404,11 @@ msgstr "それでも開く"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "ファイル一覧を開く"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "ブラウザで開く"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1563,10 +1575,6 @@ msgstr "クイックアクション"
 msgid "Quit"
 msgstr "終了"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "{label} で動作しているサーバーにこの端末から接続します。"
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "{SUPPORT_EMAIL} までご連絡ください。"
@@ -1721,10 +1729,6 @@ msgstr "取り消し中…"
 msgid "Right arrow"
 msgstr "右矢印"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "コマンドまたはキーの組み合わせを実行します。"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "ターミナルコマンドを実行"
@@ -1766,6 +1770,14 @@ msgstr "{0} への変更を保存"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "ショートカットを保存"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "保存したコマンド"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "保存したプロンプト"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1836,10 +1848,6 @@ msgstr "{spoken} を送信"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "メッセージを送信"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "このエージェントにプロンプトを送ります。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1929,10 +1937,6 @@ msgstr "シフト タブ"
 msgid "Shift Tab, cycle mode"
 msgstr "シフト タブ、モードを切り替え"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "ショートカット"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1994,13 +1998,13 @@ msgstr "問題が発生しました"
 msgid "Space"
 msgstr "スペース"
 
-#: src/app/commands.tsx
-msgid "Split this group and go to what it makes."
-msgstr "このグループを分割して、作成されたものへ移動します。"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "古い情報 · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "専用のグループを作って、そこへ移動します。"
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
