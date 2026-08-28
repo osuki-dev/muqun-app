@@ -150,7 +150,7 @@ export default function AppDrawer({
               {onDetailAction ? (
                 <NavHeaderCircle>
                   <PressableScale
-                    accessibilityLabel={t`Open panels`}
+                    accessibilityLabel={t`Show what is running`}
                     onPress={onDetailAction}
                     style={navHeaderButtonStyle}>
                     <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />

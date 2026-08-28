@@ -1388,7 +1388,7 @@ export function ServerTerminalWorkspace({
       setSelection(target);
       setError(null);
     } else {
-      setError(t`This panel is no longer available.`);
+      setError(t`This terminal is no longer available.`);
     }
   }, [data, notificationId, requestedPaneId, requestedSessionId, serverId, t]);
 
@@ -1414,7 +1414,7 @@ export function ServerTerminalWorkspace({
     if (panelPickAttempt >= PANEL_PICK_ATTEMPTS) {
       clearPanelPick();
       setPanelPickAttempt(0);
-      setError(t`This panel is no longer available.`);
+      setError(t`This terminal is no longer available.`);
       return;
     }
     const timer = setTimeout(() => {
@@ -1545,7 +1545,7 @@ export function ServerTerminalWorkspace({
       );
     } catch (failure) {
       if (isCurrentRequest()) {
-        const description = describeGatewayFailure(failure, t`Could not read panel.`);
+        const description = describeGatewayFailure(failure, t`Could not read the terminal.`);
         if (!description.retryable) setError(description.message);
       }
     }

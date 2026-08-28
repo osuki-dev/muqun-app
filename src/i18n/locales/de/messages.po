@@ -86,8 +86,8 @@ msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} ist vorübergehend gesperrt. Nutze die Systemalternative oder versuche es später."
 
 #: src/components/session-map.tsx
-msgid "{panelCount, plural, one {# panel} other {# panels}}"
-msgstr "{panelCount, plural, one {# Panel} other {# Panels}}"
+msgid "{panelCount, plural, one {# running} other {# running}}"
+msgstr "{panelCount, plural, one {# aktiv} other {# aktiv}}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -294,6 +294,10 @@ msgstr "Zeile löschen"
 msgid "Clear terminal"
 msgstr "Terminal leeren"
 
+#: src/components/session-map.tsx
+msgid "Close"
+msgstr "Schließen"
+
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Datei schließen"
@@ -317,10 +321,6 @@ msgstr "„Webdienst öffnen“ schließen"
 #: src/app/explore.tsx
 msgid "Close pairing"
 msgstr "Kopplung schließen"
-
-#: src/components/session-map.tsx
-msgid "Close panels"
-msgstr "Panel-Liste schließen"
 
 #: src/components/asset-viewer.tsx
 #: src/components/image-preview-modal.tsx
@@ -556,10 +556,6 @@ msgstr "Datei konnte nicht hinzugefügt werden"
 msgid "Could not copy that"
 msgstr "Konnte nicht kopiert werden"
 
-#: src/app/commands.tsx
-msgid "Could not create a panel."
-msgstr "Panel konnte nicht erstellt werden."
-
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "App-Sperre konnte nicht aktiviert werden"
@@ -577,8 +573,8 @@ msgid "Could not load files."
 msgstr "Dateien konnten nicht geladen werden."
 
 #: src/components/session-map.tsx
-msgid "Could not load panels."
-msgstr "Panels konnten nicht geladen werden."
+msgid "Could not load what is running."
+msgstr "Konnte nicht laden, was gerade läuft."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
@@ -609,8 +605,8 @@ msgid "Could not reach this server."
 msgstr "Dieser Server war nicht erreichbar."
 
 #: src/components/server-terminal-workspace.tsx
-msgid "Could not read panel."
-msgstr "Panel konnte nicht gelesen werden."
+msgid "Could not read the terminal."
+msgstr "Terminal konnte nicht gelesen werden."
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -635,6 +631,10 @@ msgstr "Taste konnte nicht gesendet werden."
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Shortcut konnte nicht gesendet werden."
+
+#: src/app/commands.tsx
+msgid "Could not start a terminal."
+msgstr "Terminal konnte nicht gestartet werden."
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
@@ -772,8 +772,8 @@ msgid "Edit this server"
 msgstr "Diesen Server bearbeiten"
 
 #: src/lib/release-notes.ts
-msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "Editor-Panels bekommen vims eigene Tastenreihe, samt LazyVims Leader-Kombinationen, und behalten die Farben, die das Programm verlangt hat."
+msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "Editor-Terminals bekommen vims eigene Tastenreihe samt LazyVim-Leader-Kombis und behalten die Farben, die das Programm angefordert hat."
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -910,6 +910,11 @@ msgstr "Zum Anfang der Datei springen"
 msgid "Go to your servers"
 msgstr "Zu deinen Servern"
 
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Group {0}. Long press for actions."
+msgstr "Gruppe {0}. Lange drücken für Aktionen."
+
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Haptisches Feedback"
@@ -1009,8 +1014,8 @@ msgid "Keep {label}"
 msgstr "{label} behalten"
 
 #: src/components/settings-alerts.tsx
-msgid "Keep the panel you are watching on the Lock Screen while its agent works."
-msgstr "Behält das Panel, das du gerade verfolgst, auf dem Sperrbildschirm, solange sein Agent arbeitet."
+msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
+msgstr "Das Terminal, das du beobachtest, auf dem Sperrbildschirm behalten, während sein Agent arbeitet."
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -1099,6 +1104,10 @@ msgstr "Listet nur Panels mit einem erkannten Agenten."
 msgid "Live Activity"
 msgstr "Live-Aktivität"
 
+#: src/components/session-map.tsx
+msgid "Loading"
+msgstr "Wird geladen"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Befehle werden geladen"
@@ -1111,14 +1120,6 @@ msgstr "Frühere Ausgabe wird geladen…"
 msgid "Loading paired devices…"
 msgstr "Gekoppelte Geräte werden geladen…"
 
-#: src/components/skia-terminal.tsx
-msgid "Loading panel"
-msgstr "Panel wird geladen"
-
-#: src/components/session-map.tsx
-msgid "Loading panels"
-msgstr "Panels werden geladen"
-
 #: src/app/(drawer)/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -1127,6 +1128,10 @@ msgstr "Server werden geladen"
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
 msgstr "Einstellungen werden geladen"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading terminal"
+msgstr "Terminal wird geladen"
 
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
@@ -1229,21 +1234,12 @@ msgid "Never seen"
 msgstr "Nie gesehen"
 
 #: src/app/commands.tsx
-#: src/components/session-map.tsx
-msgid "New panel"
-msgstr "Neues Panel"
-
-#: src/lib/release-notes.ts
-msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
-msgstr "Neues Panel teilt jetzt den Tab, in dem du bist, und das Telefon springt direkt zu dem, was es angelegt hat."
+msgid "New group"
+msgstr "Neue Gruppe"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "NEUER SHORTCUT"
-
-#: src/app/commands.tsx
-msgid "New tab"
-msgstr "Neuer Tab"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1253,6 +1249,15 @@ msgstr "Neue Aufgabe"
 #: src/components/new-task-action.tsx
 msgid "New task on {label}"
 msgstr "Neue Aufgabe auf {label}"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New terminal"
+msgstr "Neues Terminal"
+
+#: src/lib/release-notes.ts
+msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
+msgstr "Neues Terminal teilt jetzt die Gruppe, in der du bist, und das Telefon springt direkt zum Ergebnis."
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -1368,13 +1373,17 @@ msgstr "Öffnen"
 msgid "Open {0}"
 msgstr "{0} öffnen"
 
+#: src/components/session-map.tsx
+msgid "Open {title}. Long press to close."
+msgstr "{title} öffnen. Lange drücken zum Schließen."
+
+#: src/app/commands.tsx
+msgid "Open a group of its own and go to it."
+msgstr "Eine eigene Gruppe öffnen und dorthin wechseln."
+
 #: src/app/commands.tsx
 msgid "Open a port on this machine in your browser."
 msgstr "Öffnet einen Port auf diesem Rechner im Browser."
-
-#: src/app/commands.tsx
-msgid "Open a tab of its own and go to it."
-msgstr "Öffnet einen eigenen Tab und springt dorthin."
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1401,14 +1410,6 @@ msgstr "Muqun öffnen, um zu verbinden"
 msgid "Open on-screen keyboard"
 msgstr "Bildschirmtastatur öffnen"
 
-#: src/components/session-map.tsx
-msgid "Open panel {title}. Long press to close."
-msgstr "Panel {title} öffnen. Zum Schließen lang drücken."
-
-#: src/components/app-drawer.tsx
-msgid "Open panels"
-msgstr "Panel-Liste öffnen"
-
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
 msgstr "Port {recent} öffnen"
@@ -1424,8 +1425,8 @@ msgstr "Dateibaum öffnen"
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
-msgstr "Workspace {0} öffnen, {1, plural, one {# Panel} other {# Panels}}. Zum Schließen lang drücken."
+msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
+msgstr "Arbeitsbereich {0} öffnen, {1, plural, one {# aktiv} other {# aktiv}}. Lange drücken zum Schließen."
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -1436,8 +1437,8 @@ msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "Öffnet den Muqun-Issue-Tracker auf GitHub."
 
 #: src/components/server-agent-rows.tsx
-msgid "Opens this agent's panel"
-msgstr "Öffnet das Panel dieses Agents"
+msgid "Opens this agent's terminal"
+msgstr "Öffnet das Terminal dieses Agenten"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -1485,14 +1486,6 @@ msgstr "Der Kopplungscode ist abgelaufen. Scanne erneut für einen neuen Code."
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Kopplung fehlgeschlagen."
-
-#: src/app/commands.tsx
-msgid "PANEL COMMANDS"
-msgstr "PANEL-BEFEHLE"
-
-#: src/components/session-map.tsx
-msgid "Panels"
-msgstr "Panels"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -1595,13 +1588,13 @@ msgstr "Letzte Commits"
 msgid "Reconnecting · {0}"
 msgstr "Neuer Verbindungsversuch · {0}"
 
+#: src/components/session-map.tsx
+msgid "Refresh"
+msgstr "Aktualisieren"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "Dateien aktualisieren"
-
-#: src/components/session-map.tsx
-msgid "Refresh panels"
-msgstr "Panels aktualisieren"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -1613,12 +1606,12 @@ msgid "Rename {label}"
 msgstr "{label} umbenennen"
 
 #: src/components/session-map.tsx
-msgid "Rename panel"
-msgstr "Panel umbenennen"
+msgid "Rename group"
+msgstr "Gruppe umbenennen"
 
 #: src/components/session-map.tsx
-msgid "Rename tab"
-msgstr "Tab umbenennen"
+msgid "Rename terminal"
+msgstr "Terminal umbenennen"
 
 #: src/components/session-map.tsx
 msgid "Rename workspace"
@@ -1670,8 +1663,8 @@ msgid "Retry connection"
 msgstr "Verbindung erneut herstellen"
 
 #: src/components/terminal-boundary.tsx
-msgid "Retry drawing the panel"
-msgstr "Panel erneut rendern"
+msgid "Retry drawing the terminal"
+msgstr "Terminal erneut zeichnen"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
@@ -1977,6 +1970,10 @@ msgstr "Alle Tool-Schritte anzeigen"
 msgid "Show images"
 msgstr "Bilder anzeigen"
 
+#: src/components/app-drawer.tsx
+msgid "Show what is running"
+msgstr "Zeigen, was gerade läuft"
+
 #: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm-Port"
@@ -1998,8 +1995,8 @@ msgid "Space"
 msgstr "Leertaste"
 
 #: src/app/commands.tsx
-msgid "Split this tab and go to what it makes."
-msgstr "Teilt diesen Tab und springt zum neuen Panel."
+msgid "Split this group and go to what it makes."
+msgstr "Diese Gruppe teilen und zum Ergebnis wechseln."
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
@@ -2085,11 +2082,6 @@ msgstr "System"
 msgid "Tab"
 msgstr "Tab"
 
-#. placeholder {0}: group.tab.title
-#: src/components/session-map.tsx
-msgid "Tab {0}. Long press for actions."
-msgstr "Tab {0}. Für Aktionen lang drücken."
-
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Foto aufnehmen"
@@ -2103,6 +2095,10 @@ msgstr "Terminal"
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
 msgstr "Die Terminalfarben folgen dem Theme."
+
+#: src/app/commands.tsx
+msgid "TERMINAL COMMANDS"
+msgstr "TERMINAL-BEFEHLE"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -2166,8 +2162,8 @@ msgid "The server did not return it."
 msgstr "Der Server hat sie nicht zurückgegeben."
 
 #: src/app/commands.tsx
-msgid "The server did not say which panel it made."
-msgstr "Der Server hat nicht gesagt, welches Panel er erstellt hat."
+msgid "The server did not say which terminal it made."
+msgstr "Der Server hat nicht gesagt, welches Terminal er erstellt hat."
 
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
@@ -2215,6 +2211,10 @@ msgstr "Dieses Gateway liefert noch keine Dateien. Aktualisiere das Muqun-Gatewa
 msgid "This gateway has not listed any paired devices."
 msgstr "Dieses Gateway hat keine gekoppelten Geräte aufgelistet."
 
+#: src/components/session-map.tsx
+msgid "This group has no terminals."
+msgstr "Diese Gruppe hat keine Terminals."
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "Dieses Bild konnte nicht geladen werden."
@@ -2222,14 +2222,6 @@ msgstr "Dieses Bild konnte nicht geladen werden."
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
 msgstr "Dieser Link führt ins Leere"
-
-#: src/components/terminal-boundary.tsx
-msgid "This panel could not be drawn."
-msgstr "Dieses Panel konnte nicht gerendert werden."
-
-#: src/components/server-terminal-workspace.tsx
-msgid "This panel is no longer available."
-msgstr "Dieses Panel gibt es nicht mehr."
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -2273,13 +2265,17 @@ msgstr "Dieser Server kennt dieses Gerät nicht mehr. Koppel es erneut, um die V
 msgid "This server refused the request."
 msgstr "Dieser Server hat die Anfrage abgelehnt."
 
-#: src/components/session-map.tsx
-msgid "This tab has no panels."
-msgstr "Dieser Tab hat keine Panels."
+#: src/components/terminal-boundary.tsx
+msgid "This terminal could not be drawn."
+msgstr "Dieses Terminal konnte nicht gezeichnet werden."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available."
+msgstr "Dieses Terminal ist nicht mehr verfügbar."
 
 #: src/components/session-map.tsx
-msgid "This workspace has no tabs yet."
-msgstr "Dieser Workspace hat noch keine Tabs."
+msgid "This workspace has no groups yet."
+msgstr "Dieser Arbeitsbereich hat noch keine Gruppen."
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -2435,6 +2431,10 @@ msgstr "Warten auf den Abschluss der Uploads…"
 msgid "Watch this machine's iOS, Android or WeChat simulator."
 msgstr "Den iOS-, Android- oder WeChat-Simulator dieses Rechners ansehen."
 
+#: src/components/session-map.tsx
+msgid "What is running"
+msgstr "Was gerade läuft"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Neuigkeiten"
@@ -2454,10 +2454,6 @@ msgstr "Arbeitet"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Workspace"
-
-#: src/components/session-map.tsx
-msgid "WORKSPACE"
-msgstr "WORKSPACE"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"

@@ -50,7 +50,7 @@ export function SettingsAlerts({ title }: { title: string }) {
           label={t`Live Activity`}
           detail={
             liveActivitySupported
-              ? t`Keep the panel you are watching on the Lock Screen while its agent works.`
+              ? t`Keep the terminal you are watching on the Lock Screen while its agent works.`
               : t`Requires iOS 16.1 or later.`
           }
           value={liveActivityEnabled}

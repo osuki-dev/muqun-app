@@ -312,7 +312,7 @@ export default function QuickCommandsScreen() {
       // to send the phone to, and choosing an empty one would clear the
       // terminal instead -- so say so and stay put.
       if (!target.paneId) {
-        setError(t`The server did not say which panel it made.`);
+        setError(t`The server did not say which terminal it made.`);
         setCreating(null);
         return;
       }
@@ -321,7 +321,7 @@ export default function QuickCommandsScreen() {
     } catch (failure) {
       // Reported here rather than by closing the sheet: a sheet that dismisses
       // itself onto the pane you were already on has told you nothing.
-      setError(failure instanceof Error ? failure.message : t`Could not create a panel.`);
+      setError(failure instanceof Error ? failure.message : t`Could not start a terminal.`);
       setCreating(null);
     }
   }
@@ -514,9 +514,9 @@ export default function QuickCommandsScreen() {
             ) : null}
             {available.canCreate ? (
               <ActionRow
-                accessibilityLabel={t`New panel`}
-                name={t`New panel`}
-                detail={t`Split this tab and go to what it makes.`}
+                accessibilityLabel={t`New terminal`}
+                name={t`New terminal`}
+                detail={t`Split this group and go to what it makes.`}
                 detailColor={theme.colors.textMuted}
                 busy={creating === 'panel'}
                 busyColor={theme.colors.primary}
@@ -526,9 +526,9 @@ export default function QuickCommandsScreen() {
             ) : null}
             {available.canCreate ? (
               <ActionRow
-                accessibilityLabel={t`New tab`}
-                name={t`New tab`}
-                detail={t`Open a tab of its own and go to it.`}
+                accessibilityLabel={t`New group`}
+                name={t`New group`}
+                detail={t`Open a group of its own and go to it.`}
                 detailColor={theme.colors.textMuted}
                 busy={creating === 'tab'}
                 busyColor={theme.colors.primary}
@@ -689,7 +689,7 @@ export default function QuickCommandsScreen() {
 
         {!manageOnly && !loadingAgentCommands && agentCommands.length > 0 ? (
           <Animated.View entering={fadeIn('short')} style={styles.section}>
-            <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`PANEL COMMANDS`} />
+            <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`TERMINAL COMMANDS`} />
             <SettingsCard>
               {agentCommands.map((entry, index) => (
                 <Animated.View

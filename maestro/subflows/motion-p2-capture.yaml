@@ -33,7 +33,7 @@ name: motion-p2-capture
     commands:
       - tapOn: "Open Local Herdr"
 - extendedWaitUntil:
-    visible: "Open panels"
+    visible: "Show what is running"
     timeout: 20000
 # The digest raised on returning to a server after a long absence, which
 # demo mode fabricates once per launch (card #691). A no-op wherever there is
@@ -112,13 +112,13 @@ name: motion-p2-capture
 # The session map -- the panels sheet in the audit's words: rows that arrive and
 # leave, a selection that travels, and a skeleton in place of a blank sheet.
 - tapOn:
-    text: "Open panels"
+    text: "Show what is running"
     optional: true
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: dist/motion-618-p2/18-session-map
 - tapOn:
-    text: "Close panels"
+    text: "Close"
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000

@@ -206,7 +206,7 @@ export function ServerAgentRows({
             accessibilityLabel={
               spokenCaption ? `${agent.name}, ${spokenCaption}` : agent.name
             }
-            accessibilityHint={t`Opens this agent's panel`}
+            accessibilityHint={t`Opens this agent's terminal`}
             testID={`server-agent-${agent.paneId ?? agent.id}`}
             delay={entranceDelay + index * STAGGER.row}
             minHeight={rowMinHeight}

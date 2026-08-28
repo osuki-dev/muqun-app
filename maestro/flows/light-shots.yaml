@@ -106,11 +106,11 @@ name: light-shots
 - takeScreenshot: shots/light/07-server
 
 # ── Panels sheet ───────────────────────────────────────────────────────────
-- tapOn: "Open panels"
+- tapOn: "Show what is running"
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: shots/light/08-panels
-- tapOn: "Close panels"
+- tapOn: "Close"
 - waitForAnimationToEnd:
     timeout: 2000
 
