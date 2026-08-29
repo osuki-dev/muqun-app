@@ -94,7 +94,11 @@ describe('simfarmDeviceKind', () => {
 
 describe('parseSimfarmDevices', () => {
   test('reads the shape the server actually sends', () => {
-    // Copied from a live `/devices?booted=1` on the development machine.
+    // The shape of a live `/devices?booted=1`, with invented ids. Deliberately
+    // not the real answer from a development machine: a fixture pasted from a
+    // running server carries that machine's identifiers into a public
+    // repository, which is how a WeChat app id and a simulator UDID were
+    // committed here once already.
     const body = {
       devices: [
         { id: 'mock:phone', name: 'Mock Phone', state: 'booted' },
