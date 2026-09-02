@@ -956,6 +956,10 @@ msgstr "隱藏 {name}"
 msgid "Hide keyboard"
 msgstr "隱藏鍵盤"
 
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "隱藏伺服器清單"
+
 #: src/app/commands.tsx
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
@@ -1985,6 +1989,10 @@ msgstr "顯示圖片"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "顯示在終端機旁邊，看著它重繪。"
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "顯示伺服器清單"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"

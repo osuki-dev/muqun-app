@@ -2,8 +2,9 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { PanelsTopLeft } from 'lucide-react-native';
-import { type ReactNode } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -22,6 +23,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { appChrome } from '@/constants/appearance';
 import { isDrawerPermanent } from '@/constants/navigation';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { fadeIn, fadeInLeft, fadeOut, fadeOutLeft, listLayout } from '@/lib/motion';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 
 type AppDrawerProps = {
@@ -32,6 +34,16 @@ type AppDrawerProps = {
    * The caller owns its data; this frame owns only where it is placed.
    */
   padRail?: ReactNode;
+  /**
+   * Whether the rail should stand down and give its column to the workspace.
+   *
+   * Set while the simulator preview is up: two columns the reader is looking at
+   * beat three where one is a list of names they are not. It is never a way to
+   * make the rail unreachable -- collapsed, it comes back as an overlay from
+   * the edge handle, and returns to its column on its own when the caller stops
+   * asking for this.
+   */
+  padRailCollapsed?: boolean;
   detailTitle?: string;
   onDetailAction?: () => void;
   /**
@@ -60,6 +72,7 @@ type AppDrawerProps = {
 export default function AppDrawer({
   children,
   padRail,
+  padRailCollapsed = false,
   detailTitle,
   onDetailAction,
   onDetailBack,
@@ -83,7 +96,19 @@ export default function AppDrawer({
   const { width } = useWindowDimensions();
   const { record } = useGatewayRecord();
   const workspaceLayout = responsiveWorkspaceLayout(width);
-  const showsPadRail = padRail !== undefined && workspaceLayout.mode === 'pad';
+  const hasPadRail = padRail !== undefined && workspaceLayout.mode === 'pad';
+  // Peeking is per-visit, not remembered: the reader opened it to reach one
+  // server, and a rail that stayed out would have taken back the width the
+  // preview was opened for.
+  const [railPeeked, setRailPeeked] = useState(false);
+  const showsPadRail = hasPadRail && !padRailCollapsed;
+  const peeksPadRail = hasPadRail && padRailCollapsed && railPeeked;
+  // A rail that is not in the layout must not keep a stale peek alive: closing
+  // the preview puts it back in its own column, and it would otherwise return
+  // as an overlay over itself the next time the preview opened.
+  useEffect(() => {
+    if (!padRailCollapsed) setRailPeeked(false);
+  }, [padRailCollapsed]);
   // The back control is hidden only when a permanent drawer is already showing
   // the way out. With the drawer off (card #664) that is never, so a wide
   // screen keeps its back button rather than losing it to a panel that is not
@@ -93,9 +118,19 @@ export default function AppDrawer({
 
   return (
     <View style={[styles.shell, { backgroundColor: theme.colors.background }]}>
+      {/*
+        Entering and exiting rather than a width animated to nothing: the rail
+        carries a shadow, and clipping a column down to zero would have meant
+        `overflow: hidden` on the layer drawing it, which on iOS removes the
+        shadow outright. Sliding the whole column out and letting the workspace
+        beside it take the space with a layout transition costs no clipping and
+        is the motion this repo already uses for a panel that leaves sideways.
+      */}
       {showsPadRail ? (
-        <View
+        <Animated.View
           testID="pad-server-rail-container"
+          entering={fadeInLeft()}
+          exiting={fadeOutLeft()}
           style={[
             styles.padRail,
             {
@@ -108,10 +143,73 @@ export default function AppDrawer({
             },
           ]}>
           {padRail}
-        </View>
+        </Animated.View>
       ) : null}
-      <View style={styles.main}>
+      {peeksPadRail ? (
+        <>
+          {/* Under the rail and over everything else, so anywhere the reader
+              was aiming that is not the rail puts the width back. */}
+          <Animated.View
+            entering={fadeIn()}
+            exiting={fadeOut()}
+            style={styles.railScrim}
+            pointerEvents="auto">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t`Hide the server list`}
+              onPress={() => setRailPeeked(false)}
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
+          <Animated.View
+            testID="pad-server-rail-peek"
+            entering={fadeInLeft()}
+            exiting={fadeOutLeft()}
+            style={[
+              styles.padRail,
+              styles.padRailPeek,
+              {
+                width: workspaceLayout.railWidth,
+                backgroundColor: theme.colors.surface,
+                marginTop: insets.top + appChrome.layout.padWorkspaceGutter,
+              },
+            ]}>
+            {padRail}
+          </Animated.View>
+        </>
+      ) : null}
+      {/* The layout transition is what makes the rail leaving read as the
+          workspace widening, rather than as a column blinking out and the rest
+          jumping sideways to fill the hole. */}
+      <Animated.View style={styles.main} layout={listLayout()}>
         {children}
+
+        {/*
+          The way back to a rail that stood down for the preview. A handle
+          rather than an edge swipe alone: the terminal beside it pans
+          horizontally, and an invisible gesture on its edge would be competing
+          with the thing the reader is actually driving.
+        */}
+        {hasPadRail && padRailCollapsed && !railPeeked ? (
+          <Animated.View
+            entering={fadeIn()}
+            exiting={fadeOut()}
+            pointerEvents="box-none"
+            style={styles.railHandleSlot}>
+            <SafeAreaView edges={['top']} pointerEvents="box-none">
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Show the server list`}
+                onPress={() => setRailPeeked(true)}
+                style={[
+                  styles.railHandle,
+                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                ]}>
+                <PanelsTopLeft size={18} color={theme.colors.textMuted} />
+              </PressableScale>
+            </SafeAreaView>
+          </Animated.View>
+        ) : null}
 
         {serverDetail ? (
           <SafeAreaView
@@ -162,7 +260,7 @@ export default function AppDrawer({
             </View>
           </SafeAreaView>
         ) : null}
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -185,6 +283,45 @@ const styles = StyleSheet.create({
   main: {
     flex: 1,
     minWidth: 0,
+  },
+  /**
+   * The peeked rail floats over the workspace instead of taking a column back.
+   * Reclaiming the column would undo the width the preview was opened for, for
+   * as long as the reader was looking at a list of names.
+   */
+  padRailPeek: {
+    position: 'absolute',
+    zIndex: 40,
+    top: 0,
+    bottom: 0,
+    left: 0,
+  },
+  railScrim: {
+    position: 'absolute',
+    zIndex: 35,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'rgba(3, 8, 14, 0.5)',
+  },
+  railHandleSlot: {
+    position: 'absolute',
+    zIndex: 20,
+    top: 0,
+    left: 0,
+  },
+  railHandle: {
+    marginTop: appChrome.layout.padWorkspaceGutter,
+    marginLeft: appChrome.layout.padWorkspaceGutter,
+    height: 44,
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 22,
+    borderCurve: 'continuous',
+    boxShadow: appChrome.shadow.workspaceRail,
   },
   detailHeaderOverlay: {
     position: 'absolute',

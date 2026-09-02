@@ -196,17 +196,43 @@ describe('home brand weight', () => {
 });
 
 describe('the simulator preview column', () => {
-  test('takes its width out of the terminal, never out of the rail', () => {
-    // The rail is a list of names and stops being readable the moment it is
-    // squeezed; the terminal simply shows fewer columns.
+  test('stands the rail down rather than squeezing either column', () => {
+    // The rail is a list of names, so narrowing it is what breaks it. It yields
+    // entirely instead, and the terminal keeps everything the preview does not
+    // take -- which is more than it had before the preview opened, not less.
     const wide = 1366;
     const without = responsiveWorkspaceLayout(wide);
     const with_ = responsiveWorkspaceLayout(wide, true);
-    expect(with_.railWidth).toBe(without.railWidth);
+    expect(without.railWidth).toBeGreaterThan(0);
+    expect(with_.railWidth).toBe(0);
     expect(with_.previewWidth).toBe(PAD_PREVIEW_WIDTH);
-    expect(with_.terminalWidth).toBe(without.terminalWidth - PAD_PREVIEW_WIDTH);
-    // Nothing is lost or invented between the three columns.
+    expect(with_.terminalWidth).toBe(wide - PAD_PREVIEW_WIDTH);
+    expect(with_.terminalWidth).toBeGreaterThan(without.terminalWidth - PAD_PREVIEW_WIDTH);
+    // Nothing is lost or invented between the columns.
     expect(with_.railWidth + with_.terminalWidth + with_.previewWidth).toBe(wide);
+  });
+
+  test('opens on the windows a rail used to shut it out of', () => {
+    // The whole point of standing the rail down: beside one, the preview needed
+    // about 1160pt and quietly never opened below that. These are real windows
+    // an iPad hands the app -- an 11-inch Split View share, and the width where
+    // the terminal exactly meets its floor.
+    const splitView = 981;
+    expect(responsiveWorkspaceLayout(splitView, true).previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(responsiveWorkspaceLayout(splitView, true).railWidth).toBe(0);
+
+    const floor = PAD_PREVIEW_WIDTH + PAD_TERMINAL_MIN_WIDTH;
+    expect(responsiveWorkspaceLayout(floor, true).previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(responsiveWorkspaceLayout(floor, true).terminalWidth).toBe(PAD_TERMINAL_MIN_WIDTH);
+    expect(responsiveWorkspaceLayout(floor - 1, true).previewWidth).toBe(0);
+  });
+
+  test('gives the rail back the moment the preview closes', () => {
+    const wide = 1210;
+    const closed = responsiveWorkspaceLayout(wide, false);
+    expect(closed.railWidth).toBeGreaterThan(0);
+    expect(closed.previewWidth).toBe(0);
+    expect(closed.railWidth + closed.terminalWidth).toBe(wide);
   });
 
   test('declines to open where it would leave an unreadable terminal', () => {

@@ -7,6 +7,7 @@ import {
   Paperclip,
   Send,
   SquareTerminal,
+  X,
   Zap,
 } from 'lucide-react-native';
 import {
@@ -55,6 +56,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
+import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { PressableScale } from '@/components/pressable-scale';
@@ -399,6 +401,7 @@ export function ServerTerminalWorkspace({
    * on its own rather than squeezing both halves into uselessness.
    */
   const previewOpen = useSimfarmSplit((state) => state.openByServer[serverId] === true);
+  const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
   const workspaceLayout = responsiveWorkspaceLayout(windowWidth, previewOpen);
   const isPadLayout = workspaceLayout.mode === 'pad';
   const simfarmPorts = useServerSimfarm((state) => state.byServer);
@@ -2499,6 +2502,10 @@ export function ServerTerminalWorkspace({
 
   return (
     <AppDrawer
+      // Not `previewOpen`: the layout is what decides, and it declines the
+      // preview on a window too narrow to hold both. Reading its answer keeps
+      // the rail from standing down for a preview that never opened.
+      padRailCollapsed={workspaceLayout.previewWidth > 0}
       padRail={
         <PadServerRail
           servers={railServers}
@@ -2527,10 +2534,26 @@ export function ServerTerminalWorkspace({
         />
       }
       onDetailAction={hasLoadedData ? openPanelPicker : undefined}
-      // The header's view toggle left with the chat view (Ellen, 2026-07-27):
-      // with two modes the setting's default covers it, and the header keeps
-      // one job. Restore alongside CHAT_VIEW_ENABLED if the cycle returns.
-      detailAccessory={undefined}>
+      /*
+        The way out of the split, beside the control that arranges panes.
+
+        The chat-view toggle that used to sit here left with the chat view
+        (Ellen, 2026-07-27) and the slot stayed empty. It earns its place again
+        only while the preview is up: opening it took a trip through quick
+        actions, and closing it should not cost the same trip back. An icon
+        alone, because it appears exactly when there is a simulator on screen to
+        close and nothing else the header could mean by it.
+      */
+      detailAccessory={
+        simfarmSplit.previewWidth > 0 ? (
+          <PressableScale
+            accessibilityLabel={t`Hide the simulator`}
+            onPress={() => toggleSimfarmSplit(serverId)}
+            style={navHeaderButtonStyle}>
+            <X size={18} color={theme.colors.text} strokeWidth={2} />
+          </PressableScale>
+        ) : undefined
+      }>
       {/* The terminal and, beside it, the simulator it is changing.
 
           A row rather than a third column of the drawer's own: the rail belongs

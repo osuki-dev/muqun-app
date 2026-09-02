@@ -956,6 +956,10 @@ msgstr "Hide {name}"
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
 
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "Hide the server list"
+
 #: src/app/commands.tsx
 msgid "Hide the simulator"
 msgstr "Hide the simulator"
@@ -1985,6 +1989,10 @@ msgstr "Show images"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "Show it beside the terminal, and watch it redraw."
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "Show the server list"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"

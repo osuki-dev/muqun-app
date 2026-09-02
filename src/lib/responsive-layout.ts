@@ -40,10 +40,11 @@ export type ResponsiveWorkspaceLayout = {
   /**
    * The simulator preview's column, or 0 when it is not showing.
    *
-   * Taken out of the terminal's share rather than out of the rail's: the rail
-   * is a list of names and stops being readable the moment it is squeezed,
-   * while the terminal is the one thing on this screen that can usefully take
-   * any width it is given and simply shows fewer columns.
+   * Its width comes out of the rail, which stands down to nothing while the
+   * preview is up, rather than out of the terminal. Squeezing the rail was
+   * never the alternative -- it is a list of names and stops being readable the
+   * moment it narrows -- but hiding it outright costs only a tap to get back,
+   * and hands the terminal the whole remainder.
    */
   previewWidth: number;
 };
@@ -76,24 +77,38 @@ export function responsiveWorkspaceLayout(
     };
   }
 
-  const railWidth = Math.min(
+  const naturalRail = Math.min(
     PAD_RAIL_MAX_WIDTH,
     Math.max(PAD_RAIL_MIN_WIDTH, safeWidth * PAD_RAIL_WIDTH_RATIO)
   );
-  const beside = safeWidth - railWidth;
 
   // The preview only opens where both halves survive it. A device drawn at 1:1
   // needs its own width, and a terminal squeezed under `PAD_TERMINAL_MIN_WIDTH`
   // is a terminal showing so few columns that the reader would close the
   // preview to get it back -- so the app does not open it for them.
+  //
+  // Measured against the *whole* width, because the rail stands down entirely
+  // while the preview is up rather than being squeezed (card #700, Ellen). The
+  // rail is a list of names, so narrowing it is what breaks it -- but removing
+  // it costs nothing that is not one tap away, and the two columns that remain
+  // are the two the reader is actually looking at.
+  //
+  // This is also what makes the feature reachable at all. Beside a rail the
+  // preview needs about 1160pt of window, which the 11-inch iPad clears by ten
+  // points and every narrower window -- Split View, portrait -- misses
+  // silently. Without it the floor is 872, so the same window opens the preview
+  // with 758pt of terminal instead of 470.
   const previewWidth =
-    showsPreview && beside - PAD_PREVIEW_WIDTH >= PAD_TERMINAL_MIN_WIDTH ? PAD_PREVIEW_WIDTH : 0;
+    showsPreview && safeWidth - PAD_PREVIEW_WIDTH >= PAD_TERMINAL_MIN_WIDTH
+      ? PAD_PREVIEW_WIDTH
+      : 0;
+  const railWidth = previewWidth > 0 ? 0 : naturalRail;
 
   return {
     mode: 'pad',
     availableWidth: safeWidth,
     railWidth,
-    terminalWidth: beside - previewWidth,
+    terminalWidth: safeWidth - railWidth - previewWidth,
     previewWidth,
   };
 }

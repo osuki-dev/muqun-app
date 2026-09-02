@@ -956,6 +956,10 @@ msgstr "{name} 숨기기"
 msgid "Hide keyboard"
 msgstr "키보드 숨기기"
 
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "서버 목록 숨기기"
+
 #: src/app/commands.tsx
 msgid "Hide the simulator"
 msgstr "시뮬레이터 숨기기"
@@ -1985,6 +1989,10 @@ msgstr "이미지 표시"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "터미널 옆에 표시하고, 다시 그려지는 것을 봅니다."
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "서버 목록 표시"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
