@@ -59,28 +59,6 @@ function pairedPack(seed: PairSeed): ThemePack {
   };
 }
 
-const bamboo = pairedPack({
-  id: 'bamboo',
-  label: 'Bamboo',
-  source: 'https://github.com/ribru17/bamboo.nvim',
-  lightName: 'Light',
-  darkName: 'Vulgaris',
-  light: [
-    '#fafae0', '#fff8f0', '#eaead0', '#dadac2',
-    '#838781', '#5d665b', '#3a4238', '#252623',
-    '#c72a3c', '#df5926', '#a77b00', '#27850b',
-    '#188a9e', '#1745d5', '#8a4adf', '#c05050',
-  ],
-  dark: [
-    '#252623', '#2f312c', '#383b35', '#5b5e5a',
-    '#838781', '#b8b29f', '#f1e9d2', '#ffffff',
-    '#e75a7c', '#ff9966', '#dbb651', '#8fb573',
-    '#70c2be', '#57a5e5', '#aaaaff', '#f08080',
-  ],
-  lightOnPrimary: '#fff8f0',
-  darkOnPrimary: '#111210',
-});
-
 const bluloco = pairedPack({
   id: 'bluloco',
   label: 'Bluloco',
@@ -187,44 +165,6 @@ const iceberg = pairedPack({
   },
 });
 
-const kanso = pairedPack({
-  id: 'kanso',
-  label: 'Kanso',
-  source: 'https://github.com/webhooked/kanso.nvim',
-  lightName: 'Pearl',
-  darkName: 'Ink',
-  light: [
-    '#f2f1ef', '#e2e1df', '#dddddb', '#cacac7',
-    '#9f9f99', '#545464', '#43436c', '#22262d',
-    '#c84053', '#cc6d00', '#77713f', '#6f894e',
-    '#597b75', '#4d699b', '#b35b79', '#836f4a',
-  ],
-  dark: [
-    '#14171d', '#1f1f26', '#22262d', '#393b44',
-    '#717c7c', '#a4a7a4', '#c5c9c7', '#f2f1ef',
-    '#c34043', '#b6927b', '#dca561', '#98bb6c',
-    '#8ea4a2', '#7fb4ca', '#938aa9', '#b98d7b',
-  ],
-  lightOnPrimary: '#f2f1ef',
-  darkOnPrimary: '#14171d',
-  lightTerminal: {
-    ansi: [
-      '#22262d', '#c84053', '#6f894e', '#77713f',
-      '#4d699b', '#b35b79', '#597b75', '#545464',
-      '#6d6f6e', '#d7474b', '#6e915f', '#836f4a',
-      '#6693bf', '#624c83', '#5e857a', '#43436c',
-    ],
-  },
-  darkTerminal: {
-    ansi: [
-      '#14171d', '#c4746e', '#8a9a7b', '#c4b28a',
-      '#8ba4b0', '#a292a3', '#8ea4a2', '#c8c093',
-      '#a4a7a4', '#e46876', '#87a987', '#e6c384',
-      '#7fb4ca', '#938aa9', '#7aa89f', '#c5c9c7',
-    ],
-  },
-});
-
 const material = pairedPack({
   id: 'material',
   label: 'Material',
@@ -267,28 +207,6 @@ const monokaiPro = pairedPack({
   ],
   lightOnPrimary: '#faf4f2',
   darkOnPrimary: '#2c2525',
-});
-
-const melange = pairedPack({
-  id: 'melange',
-  label: 'Mélange',
-  source: 'https://github.com/savq/melange-nvim',
-  lightName: 'Light',
-  darkName: 'Dark',
-  light: [
-    '#f1f1f1', '#e9e1db', '#d9d3ce', '#bda99b',
-    '#7d6658', '#6a5448', '#54433a', '#342923',
-    '#bf0021', '#bc5c00', '#806000', '#3a684a',
-    '#3d6568', '#465aa4', '#904180', '#8c4d2f',
-  ],
-  dark: [
-    '#292522', '#34302c', '#403a36', '#5d5147',
-    '#867462', '#c1a78e', '#ece1d7', '#fff8f0',
-    '#d47766', '#e49b5d', '#ebc06d', '#85b695',
-    '#89b3b6', '#a3a9ce', '#cf9bc2', '#bd8183',
-  ],
-  lightOnPrimary: '#f1f1f1',
-  darkOnPrimary: '#292522',
 });
 
 const modus = pairedPack({
@@ -401,134 +319,16 @@ const osakaJade = pairedPack({
   darkOnPrimary: '#111c18',
 });
 
-const paperColor = pairedPack({
-  id: 'papercolor',
-  label: 'PaperColor',
-  source: 'https://github.com/NLKNguyen/papercolor-theme',
-  lightName: 'Light',
-  darkName: 'Dark',
-  light: [
-    '#eeeeee', '#ffffff', '#d7d7d7', '#bcbcbc',
-    '#858585', '#666666', '#525252', '#262626',
-    '#d70000', '#af5f00', '#875f00', '#008700',
-    '#0087af', '#005f87', '#8700af', '#af0000',
-  ],
-  dark: [
-    '#1c1c1c', '#262626', '#363636', '#585858',
-    '#808080', '#9e9e9e', '#d0d0d0', '#eeeeee',
-    '#ff5faf', '#d7af5f', '#ffaf00', '#5faf5f',
-    '#00afaf', '#5fafd7', '#af87d7', '#af005f',
-  ],
-  lightOnPrimary: '#ffffff',
-  darkOnPrimary: '#1c1c1c',
-});
-
-const selenized = pairedPack({
-  id: 'selenized',
-  label: 'Selenized',
-  source: 'https://github.com/jan-warchol/selenized/blob/master/the-values.md',
-  lightName: 'Light',
-  darkName: 'Dark',
-  light: [
-    '#fbf3db', '#ece3cc', '#d5cdb6', '#b9b19d',
-    '#737c79', '#53676d', '#3a4d53', '#112e38',
-    '#cc1729', '#bc5819', '#8c6d00', '#428b00',
-    '#007f75', '#006dce', '#825dc0', '#c44392',
-  ],
-  dark: [
-    '#103c48', '#184956', '#2d5b69', '#456b76',
-    '#72898f', '#adbcbc', '#cad8d9', '#ffffff',
-    '#fa5750', '#ed8649', '#dbb32d', '#75b938',
-    '#41c7b9', '#4695f7', '#af88eb', '#f275be',
-  ],
-  lightOnPrimary: '#fbf3db',
-  darkOnPrimary: '#103c48',
-});
-
-const tomorrow = pairedPack({
-  id: 'tomorrow',
-  label: 'Tomorrow',
-  source: 'https://github.com/chriskempson/tomorrow-theme',
-  lightName: 'Tomorrow',
-  darkName: 'Tomorrow Night',
-  light: [
-    '#ffffff', '#f4f4f4', '#e0e0e0', '#c5c8c6',
-    '#969896', '#5f6268', '#373b41', '#1d1f21',
-    '#c82829', '#a84b0f', '#8f7200', '#597000',
-    '#277b80', '#315d99', '#8959a8', '#a3685a',
-  ],
-  dark: [
-    '#1d1f21', '#282a2e', '#373b41', '#4d5057',
-    '#73767c', '#969896', '#e0e0e0', '#ffffff',
-    '#cc6666', '#de935f', '#f0c674', '#b5bd68',
-    '#8abeb7', '#81a2be', '#b294bb', '#a3685a',
-  ],
-  lightOnPrimary: '#ffffff',
-  darkOnPrimary: '#1d1f21',
-});
-
-const vsCode2026 = pairedPack({
-  id: 'vs-code-2026',
-  label: 'VS Code 2026',
-  source: 'https://github.com/microsoft/vscode/tree/main/extensions/theme-defaults/themes',
-  lightName: '2026 Light',
-  darkName: '2026 Dark',
-  light: [
-    '#ffffff', '#fafafd', '#f0f0f3', '#d8d8dc',
-    '#8b8b8f', '#606064', '#3d3d40', '#202020',
-    '#ad0707', '#953800', '#667309', '#388a34',
-    '#0a6b70', '#0069cc', '#8250df', '#8b326c',
-  ],
-  dark: [
-    '#121314', '#191a1b', '#242526', '#333536',
-    '#616365', '#8c8c8c', '#bfbfbf', '#ffffff',
-    '#f48771', '#ffa657', '#e5ba7d', '#86cf86',
-    '#6bcbd1', '#48a0c7', '#d2a8ff', '#e184aa',
-  ],
-  lightOnPrimary: '#ffffff',
-  darkOnPrimary: '#121314',
-});
-
-const zenwritten = pairedPack({
-  id: 'zenwritten',
-  label: 'Zenwritten',
-  source: 'https://github.com/zenbones-theme/zenbones.nvim',
-  lightName: 'Light',
-  darkName: 'Dark',
-  light: [
-    '#eeeeee', '#f7f7f7', '#d7d7d7', '#c6c3c3',
-    '#777777', '#5c5c5c', '#454545', '#353535',
-    '#a8334c', '#944927', '#7a5b22', '#4f6c31',
-    '#3b8992', '#286486', '#88507d', '#803d1c',
-  ],
-  dark: [
-    '#191919', '#242424', '#2a2a2a', '#404040',
-    '#6b6b6b', '#8e8e8e', '#bbbbbb', '#e5e5e5',
-    '#de6e7c', '#b77e64', '#c49a70', '#819b69',
-    '#66a5ad', '#6099c0', '#b279a7', '#d68c67',
-  ],
-  lightOnPrimary: '#eeeeee',
-  darkOnPrimary: '#191919',
-});
-
 export const DEVELOPER_THEME_PACKS_2026_BY_ID = {
-  bamboo,
   bluloco,
   cyberdream,
   edge,
   iceberg,
-  kanso,
   material,
-  melange,
   monokaiPro,
   modus,
   neovim,
   nightfox,
   oxocarbon,
   osakaJade,
-  paperColor,
-  selenized,
-  tomorrow,
-  vsCode2026,
-  zenwritten,
 } as const;
