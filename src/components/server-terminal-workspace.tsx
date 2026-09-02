@@ -5,6 +5,7 @@ import {
   Bot,
   Keyboard as KeyboardIcon,
   Paperclip,
+  PenLine,
   Send,
   SquareTerminal,
   X,
@@ -470,6 +471,11 @@ export function ServerTerminalWorkspace({
   // that types straight into the pane -- the way to drive a TUI like nvim from
   // a phone. Off by default so the output stays visible.
   const [keyboardMode, setKeyboardMode] = useState(false);
+  // Asked for, per visit to the keyboard: an editor's composer stands down so
+  // the file gets the height, and this is the reader saying they want it back
+  // for one line. Cleared whenever the keyboard closes or the pane changes,
+  // both of which end the visit it belongs to.
+  const [composerRevealed, setComposerRevealed] = useState(false);
   const [stickBottomNonce, setStickBottomNonce] = useState(0);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
@@ -1143,6 +1149,34 @@ export function ServerTerminalWorkspace({
     selectedPane ? field(selectedPane, 'terminal_title_stripped') : null,
     selectedPane ? field(selectedPane, 'foreground_command') : null
   );
+  /*
+    An editor opens straight into the keyboard.
+
+    The pane is driven a keystroke at a time, so the composer -- a line buffer
+    that needs Enter to send -- is the wrong instrument for it, and reaching the
+    right one was a tap the reader had to know about. Arriving on nvim with the
+    keyboard already up is the difference between a viewer and an editor.
+
+    Only on the way *in* to an editor pane. Keyed on the pane rather than run
+    whenever `fullScreenPane` is true, so closing the keyboard on an editor
+    keeps it closed -- otherwise the toggle would fight the effect and the
+    keyboard would spring back on the next render.
+  */
+  const autoKeyboardPaneRef = useRef<string | null>(null);
+  useEffect(() => {
+    const paneId = selection.paneId;
+    if (!paneId || !fullScreenPane) return;
+    if (autoKeyboardPaneRef.current === paneId) return;
+    autoKeyboardPaneRef.current = paneId;
+    setKeyboardMode(true);
+  }, [fullScreenPane, selection.paneId]);
+
+  // Leaving the pane, or the keyboard, ends the visit a revealed composer
+  // belonged to: the next arrival starts with the file having the height again.
+  useEffect(() => {
+    if (!keyboardMode) setComposerRevealed(false);
+  }, [keyboardMode, selection.paneId]);
+
   // A ref mirror of the value above, synced a layout effect ahead of paint.
   // `applyPaneOutput` reads this instead of closing over `fullScreenPane`
   // directly: the 1-second poll and an SSE frame push both call it, and one of
@@ -1839,11 +1873,15 @@ export function ServerTerminalWorkspace({
         attachmentsAvailable,
         stagedAttachments: attachments.length,
         screenOnTop: isFocused,
+        editorPane: fullScreenPane,
+        composerRevealed,
       }),
     [
       approval.state.approval,
       attachments.length,
       attachmentsAvailable,
+      composerRevealed,
+      fullScreenPane,
       isFocused,
       keyboardMode,
       showTerminalKeyRow,
@@ -2413,6 +2451,34 @@ export function ServerTerminalWorkspace({
   // does not change them. Only the fill differs: on the dock's glass they are
   // tinted circles, over the pane they are transparent and their tray is what
   // holds the light.
+  // The scrolling terminal keys, written once because they are the same keys
+  // wherever they are drawn: on their own row when the dock is ordinary, and
+  // inside the keyboard panel when that is up. Opening the keyboard used to
+  // take this row away, which on an editor meant losing `esc`, `:w` and the
+  // Ctrl chords at the moment the reader started typing.
+  const terminalKeyStrip = (
+    <ScrollView
+      horizontal
+      keyboardShouldPersistTaps="always"
+      showsHorizontalScrollIndicator={false}
+      style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
+      contentContainerStyle={styles.terminalKeyList}>
+      {terminalKeys.map((item) => (
+        <TerminalKeyButton
+          key={item.key}
+          item={item}
+          sending={sendingKey === item.key}
+          disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
+          onPress={() => void sendTerminalKey(item)}
+          textColor={chromeText}
+          background={chromeGlass}
+          activeBackground={theme.colors.primary}
+          activeText={theme.colors.onPrimary}
+        />
+      ))}
+    </ScrollView>
+  );
+
   const paneEntries = (fill: string) => (
     <>
       <PressableScale
@@ -2924,9 +2990,33 @@ export function ServerTerminalWorkspace({
                   onText={typeText}
                   onKey={typeKey}
                   onClose={() => setKeyboardMode(false)}
+                  shortcuts={dock.keysInKeyboard ? terminalKeyStrip : undefined}
                 />
               </Animated.View>
-            ) : (
+            ) : null}
+            {/* The way back to the composer without putting the keyboard away.
+                Closing the keyboard was the only route to it, which on an
+                editor meant giving up `esc`, `:w` and the Ctrl chords for as
+                long as it took to paste a line. A single control, so it floats
+                in the dock's corner rather than taking a row -- the same rent
+                argument as `floatingActions`. */}
+            {dock.composerEntry ? (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOutDown('short')}
+                layout={dockRowLayout}
+                style={styles.composerEntryRow}>
+                <PressableScale
+                  accessibilityLabel={t`Write a line`}
+                  feedback="selection"
+                  pressedScale={0.9}
+                  onPress={() => setComposerRevealed(true)}
+                  style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+                  <PenLine size={16} color={chromeText} />
+                </PressableScale>
+              </Animated.View>
+            ) : null}
+            {!dock.virtualKeyboard ? (
               <>
             {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
               <Animated.View
@@ -2969,26 +3059,7 @@ export function ServerTerminalWorkspace({
                   style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
                   <KeyboardIcon size={16} color={chromeText} />
                 </PressableScale>
-                <ScrollView
-                  horizontal
-                  keyboardShouldPersistTaps="always"
-                  showsHorizontalScrollIndicator={false}
-                  style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
-                  contentContainerStyle={styles.terminalKeyList}>
-                  {terminalKeys.map((item) => (
-                    <TerminalKeyButton
-                      key={item.key}
-                      item={item}
-                      sending={sendingKey === item.key}
-                      disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
-                      onPress={() => void sendTerminalKey(item)}
-                      textColor={chromeText}
-                      background={chromeGlass}
-                      activeBackground={theme.colors.primary}
-                      activeText={theme.colors.onPrimary}
-                    />
-                  ))}
-                </ScrollView>
+                {terminalKeyStrip}
               </Animated.View>
             ) : null}
             {/* The files staged for the next message. They are not lost while
@@ -3027,12 +3098,20 @@ export function ServerTerminalWorkspace({
                 </Text>
               </Animated.View>
             ) : null}
-            {/* The input goes too. It is the strongest of the "send the pane
-                something else" surfaces, and a text field left under a standing
-                permission menu invites typing into a program that is not
-                reading typing. Nothing already drafted is lost -- `draft` is
+              </>
+            ) : null}
+            {/* The input goes for an approval. It is the strongest of the "send
+                the pane something else" surfaces, and a text field left under a
+                standing permission menu invites typing into a program that is
+                not reading typing. Nothing already drafted is lost -- `draft` is
                 the screen's state, not the field's, so the words come back with
-                the dock. */}
+                the dock.
+
+                It sits outside the keyboard's branch rather than inside its
+                else, because the keyboard is no longer the end of it: an editor
+                can summon this back over the keys to paste a line without
+                giving up `esc` and the chords to do it. `dock.composer` is what
+                decides now, and it accounts for both. */}
             {dock.composer ? (
               <Animated.View
                 entering={fadeInDown('short')}
@@ -3111,8 +3190,6 @@ export function ServerTerminalWorkspace({
                 />
               </Animated.View>
             ) : null}
-              </>
-            )}
             </AnimatedSafeAreaView>
             </GlassChrome>
           </Animated.View>
@@ -3926,6 +4003,15 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  /**
+   * The lone control that summons the composer back over the keyboard. Right-
+   * aligned, where the send button it stands in for would be, so the thumb that
+   * reaches for one reaches for the other.
+   */
+  composerEntryRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
   padKeyRowEntry: {
     width: 34,

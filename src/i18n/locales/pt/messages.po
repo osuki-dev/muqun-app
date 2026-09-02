@@ -448,6 +448,10 @@ msgstr "Continuar"
 msgid "Continue task"
 msgstr "Continuar a tarefa"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Control"
+msgstr "Tecla Control"
+
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "Control A, início da linha"
@@ -961,6 +965,7 @@ msgid "Hide the server list"
 msgstr "Ocultar a lista de servidores"
 
 #: src/app/commands.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "Ocultar o simulador"
 
@@ -2478,6 +2483,10 @@ msgstr "A trabalhar"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Espaço de trabalho"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Write a line"
+msgstr "Escrever uma linha"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"

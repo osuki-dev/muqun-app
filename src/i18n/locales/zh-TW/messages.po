@@ -448,6 +448,10 @@ msgstr "繼續"
 msgid "Continue task"
 msgstr "繼續任務"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Control"
+msgstr "Control 鍵"
+
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "Ctrl A 鍵，移到行首"
@@ -961,6 +965,7 @@ msgid "Hide the server list"
 msgstr "隱藏伺服器清單"
 
 #: src/app/commands.tsx
+#: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
 
@@ -2478,6 +2483,10 @@ msgstr "工作中"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "工作區"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Write a line"
+msgstr "輸入一行"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"

@@ -7,7 +7,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ArrowBigUp, Delete, Keyboard as KeyboardIcon } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Pressable,
   type PressableProps,
@@ -110,14 +110,39 @@ type VirtualKeyboardProps = {
   onKey: (key: string) => void;
   /** Return to the compact key row. */
   onClose: () => void;
+  /**
+   * The terminal keys, drawn inside this panel instead of on their own row.
+   *
+   * Passed in rather than built here because which keys a pane gets is the
+   * screen's question -- it depends on the agent, the pane title and the usage
+   * ordering -- while this component only owns where they sit.
+   */
+  shortcuts?: ReactNode;
 };
 
-export function VirtualKeyboard({ disabled, onText, onKey, onClose }: VirtualKeyboardProps) {
+export function VirtualKeyboard({
+  disabled,
+  onText,
+  onKey,
+  onClose,
+  shortcuts,
+}: VirtualKeyboardProps) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const [shift, setShift] = useState(false);
   const [symbols, setSymbols] = useState(false);
+  /**
+   * Ctrl is held for one key, the way Shift is.
+   *
+   * It exists because the six chords an editor is driven by -- `⌃W` to change
+   * window, `⌃D`/`⌃U` to scroll, `⌃O` to jump back, `⌃R` to redo, `⌃V` for
+   * visual block -- lived only on the terminal key row, and opening this
+   * keyboard used to hide that row. A modifier reaches all of them and every
+   * other chord besides, rather than the app choosing six on the reader's
+   * behalf.
+   */
+  const [ctrl, setCtrl] = useState(false);
 
   const keyText = theme.colors.text;
   const keyFill = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
@@ -128,6 +153,17 @@ export function VirtualKeyboard({ disabled, onText, onKey, onClose }: VirtualKey
   const rows = symbols ? (shift ? SHIFTED_SYMBOL_ROWS : SYMBOL_ROWS) : LETTER_ROWS;
 
   function pressChar(char: string) {
+    // A chord is a key name, not text: `ctrl+w` goes through the key endpoint
+    // the way `esc` does, because what it sends is a control byte and not a
+    // character the pane could have received by typing. Ctrl wins over Shift,
+    // since `⌃W` and `⌃⇧W` are the same byte and only one of them is a name
+    // the gateway takes.
+    if (ctrl) {
+      onKey(`ctrl+${char.toLowerCase()}`);
+      setCtrl(false);
+      if (shift) setShift(false);
+      return;
+    }
     const value = !symbols && shift ? char.toUpperCase() : char;
     onText(value);
     // Shift is one-shot for letters, the way a phone keyboard behaves.
@@ -136,12 +172,29 @@ export function VirtualKeyboard({ disabled, onText, onKey, onClose }: VirtualKey
 
   return (
     <View style={styles.keyboard}>
+      {/* The terminal keys, when the dock hands them over rather than drawing
+          a row of its own. They sit above the function row because that is
+          where the row they came from was: at the top of the dock, nearest the
+          pane they act on. */}
+      {shortcuts}
       {/* esc and tab at real-keyboard size, and the way out in the corner.
           esc at this width is the difference between leaving insert mode and
           missing. */}
       <View style={styles.functionRow}>
         <FunctionKey label="esc" color={keyText} fill={fnFill} disabled={disabled} onPress={() => onKey('esc')} />
         <FunctionKey label="tab" color={keyText} fill={fnFill} disabled={disabled} onPress={() => onKey('tab')} />
+        {/* Spelled, not `⌃`. Its two neighbours are words, and the glyph is a
+            thin chevron that reads as the `^` character sitting one page away
+            on the symbol layout -- a modifier and a character that look alike
+            is the wrong pair to make a reader tell apart mid-edit. */}
+        <FunctionKey
+          label="ctrl"
+          color={ctrl ? activeText : keyText}
+          fill={ctrl ? activeFill : fnFill}
+          disabled={disabled}
+          accessibilityLabel={t`Control`}
+          onPress={() => setCtrl((value) => !value)}
+        />
         <VirtualKey
           accessibilityLabel={t`Hide keyboard`}
           commit="up"
@@ -340,16 +393,22 @@ function FunctionKey({
   fill,
   disabled,
   onPress,
+  accessibilityLabel,
 }: {
   label: string;
   color: string;
   fill: string;
   disabled: boolean;
   onPress: () => void;
+  /**
+   * Spoken instead of the cap, for a key whose cap is a glyph. `esc` and `tab`
+   * read correctly as themselves; `⌃` does not read as anything.
+   */
+  accessibilityLabel?: string;
 }) {
   return (
     <VirtualKey
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       disabled={disabled}
       onPress={onPress}
       style={[styles.key, styles.functionWide, { backgroundColor: fill }]}>
