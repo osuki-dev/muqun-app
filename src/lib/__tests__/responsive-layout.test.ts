@@ -178,8 +178,7 @@ describe('home brand weight', () => {
     const hero = homeBrandWeight(0);
     const mark = homeBrandWeight(1);
 
-    expect(mark.tileSize).toBeLessThan(hero.tileSize);
-    expect(mark.tileRadius).toBeLessThan(hero.tileRadius);
+    expect(mark.markSize).toBeLessThan(hero.markSize);
     expect(mark.titleSize).toBeLessThan(hero.titleSize);
     expect(mark.minHeight).toBeLessThan(hero.minHeight);
     // Tracking is pulled in harder the larger the name is set, so the smaller

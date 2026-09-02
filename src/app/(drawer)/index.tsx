@@ -299,19 +299,15 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           entering={riseIn()}
           layout={listLayout('medium')}
           style={[styles.brandBlock, { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap }]}>
-          <View
-            style={[
-              styles.appIconFrame,
-              {
-                width: metrics.brand.tileSize,
-                height: metrics.brand.tileSize,
-                borderRadius: metrics.brand.tileRadius,
-                boxShadow: metrics.brand.tileShadow,
-                backgroundColor: theme.colors.surfaceRaised,
-              },
-            ]}>
-            <Image source={brandMark} contentFit="contain" style={styles.appIcon} />
-          </View>
+          {/* The mark alone, on the page. The rounded tile it used to sit in
+              gave a shape the mark already has, and cost it 30% of its own
+              footprint to draw -- so the part meant to be read was the smaller
+              half of the thing drawing attention to it. */}
+          <Image
+            source={brandMark}
+            contentFit="contain"
+            style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
+          />
           <View style={styles.titleCopy}>
             <Text
               style={[

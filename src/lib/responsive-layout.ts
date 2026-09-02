@@ -169,21 +169,21 @@ export type HomeServerListLayout = {
 
 /**
  * The brand block's two weights. Both are real layouts, not a scale factor: the
- * tagline belongs to exactly one of them, and a tile that shrinks by a third
- * needs a corner radius that shrinks with it or it stops looking like the same
- * object.
+ * tagline belongs to exactly one of them, and the wordmark's tracking is pulled
+ * in harder the larger it is set.
  */
 export type HomeBrandWeight = {
   weight: 'hero' | 'mark';
-  /** The rounded tile the app mark sits in. */
-  tileSize: number;
-  tileRadius: number;
   /**
-   * Cast from the tile. It travels with the tile because a drop shadow is a
-   * statement about how far off the page something is sitting, and one sized
-   * for a 72pt mark under a 46pt one reads as a smudge rather than as lift.
+   * The app mark, drawn straight onto the page.
+   *
+   * It used to sit in a rounded tile with a fill and a drop shadow, and the
+   * mark itself was 70% of that -- so the thing the eye was meant to read was
+   * the smallest part of it, and the tile repeated a shape the mark already
+   * has. Standing it on the background gives the same footprint to the mark
+   * alone (Ellen), which is both larger and quieter than the tile it replaces.
    */
-  tileShadow: string;
+  markSize: number;
   /** The wordmark. Tracking is pulled in harder the larger it is set. */
   titleSize: number;
   titleLineHeight: number;
@@ -198,9 +198,7 @@ export type HomeBrandWeight = {
 
 const HOME_BRAND_HERO: HomeBrandWeight = {
   weight: 'hero',
-  tileSize: 72,
-  tileRadius: 21,
-  tileShadow: '0 10px 26px rgba(0, 0, 0, 0.10)',
+  markSize: 72,
   titleSize: 36,
   titleLineHeight: 41,
   titleTracking: -1.2,
@@ -211,9 +209,7 @@ const HOME_BRAND_HERO: HomeBrandWeight = {
 
 const HOME_BRAND_MARK: HomeBrandWeight = {
   weight: 'mark',
-  tileSize: 46,
-  tileRadius: 14,
-  tileShadow: '0 5px 14px rgba(0, 0, 0, 0.08)',
+  markSize: 46,
   titleSize: 26,
   titleLineHeight: 31,
   titleTracking: -0.8,

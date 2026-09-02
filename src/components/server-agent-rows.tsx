@@ -13,10 +13,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { StatusDot } from '@/components/status-dot';
 import { agentStatusWord } from '@/i18n/labels';
 import { feedback } from '@/lib/feedback';
-import { agentStatusTone } from '@/lib/herdr-entity';
 import { fadeIn, PRESS, STAGGER, timing } from '@/lib/motion';
 import {
   isServerAgentsStale,
@@ -33,24 +31,19 @@ import {
 import { useAppSettings } from '@/stores/app-settings';
 
 /**
- * The status light every row leads with, and the column those lights make.
+ * The rows start at the card's own edge.
  *
- * The card used to hang its rows off a drawn tree -- a trunk under the server's
- * status dot and a rounded elbow into each name. The line was redundant with
- * what it connected: a column of lights at a shared left edge already says these
- * rows are one list, and the card's own surface already says whose list it is.
- * So the ornament is gone and the dots are what the eye follows down, which is
- * also the one thing in the row carrying information the reader can act on.
+ * They used to lead with a status light, and before that hung off a drawn tree.
+ * Both are gone now (Ellen): the tree was redundant with what it connected, and
+ * the column of lights that replaced it turned out to be a column of grey --
+ * a pane is idle almost all of the time, so the dot was decoration on nearly
+ * every row and an indent on all of them. What a reader is scanning for is the
+ * name, and it now begins where the card does.
  *
- * `DOT_GAP` is `spacing.sm`. Together they are the whole indent -- there is no
- * loom axis to clear any more, and a row that started 42pt in with a 6pt dot at
- * the end of the run read as a hole in the card once the line stopped filling it.
+ * Status has not gone anywhere: it is still in the row's caption, still in the
+ * accessibility label, and still on the server's own dot above the list, which
+ * is the one place a colour is worth a glance.
  */
-const DOT_SIZE = 7;
-const DOT_GAP = 12;
-
-/** Where a row's text begins, so the stale-snapshot note can start there too. */
-const LABEL_X = DOT_SIZE + DOT_GAP;
 
 /**
  * How far the press band reaches past the row's own box, into the card's
@@ -92,7 +85,6 @@ export function ServerAgentRows({
   onOpenAgent,
   selectedPaneId,
   showsPressBackground = true,
-  keepsAgentDotsFilled = false,
   compactLabels = false,
   style,
   // Only a fallback: the list passes one clock down so every card ages against
@@ -121,11 +113,6 @@ export function ServerAgentRows({
    * without leaving a filled row behind.
    */
   showsPressBackground?: boolean;
-  /**
-   * Pad rails keep the compact bullets solid even when mirrored status data
-   * is stale. The default remains status-aware for the existing phone card.
-   */
-  keepsAgentDotsFilled?: boolean;
   /**
    * Persistent Pad rails trade the card's two-line detail for a one-line
    * navigator label. The cwd remains in the accessibility label, so compacting
@@ -174,7 +161,6 @@ export function ServerAgentRows({
     <View style={[style, stale ? styles.stale : null]}>
       {visibleAgents.map((agent, index) => {
         const selected = Boolean(agent.paneId && agent.paneId === selectedPaneId);
-        const tone = current ? agentStatusTone(agent.status) : 'textSubtle';
         const status = _(agentStatusWord[agent.status ?? ''] ?? agentStatusWord.unknown);
         // Blocked is the one status that is asking for something -- everything
         // else the dot's colour already says (working blue, done green, idle
@@ -214,11 +200,6 @@ export function ServerAgentRows({
             showsPressBackground={showsPressBackground}
             compact={compactLabels}
             onPress={() => onOpenAgent(agent)}>
-            <StatusDot
-              color={theme.colors[tone]}
-              filled={keepsAgentDotsFilled || current}
-              size={DOT_SIZE}
-            />
             <View style={styles.nameColumn}>
               {/* Two lines, not one: the name is the row's most informative
                   element, and a long one clipped mid-word is the one thing
@@ -345,7 +326,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: DOT_GAP,
     // `minHeight`, not `height`: a wrapped two-line name has to be able to
     // grow the row rather than being clipped by a box sized for one line. The
     // vertical padding is what keeps a wrapped name from reading as more
@@ -375,7 +355,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   age: {
-    marginLeft: LABEL_X,
     marginTop: 6,
   },
 });
