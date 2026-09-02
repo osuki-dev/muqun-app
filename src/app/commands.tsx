@@ -123,10 +123,6 @@ export default function QuickCommandsScreen() {
   const { bottom: bottomInset } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
-  const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
-  const simfarmSplitOpen = useSimfarmSplit((state) =>
-    params.serverId ? state.openByServer[params.serverId] === true : false
-  );
   const params = useLocalSearchParams<{
     sessionId: string;
     paneId: string;
@@ -161,6 +157,13 @@ export default function QuickCommandsScreen() {
     agentTarget?: string;
     agentStatus?: string;
   }>();
+  // Below `params`, not above it: the selector closure reads `params.serverId`
+  // and zustand runs it synchronously during this hook call, so declaring these
+  // first read the binding before `useLocalSearchParams` had assigned it.
+  const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
+  const simfarmSplitOpen = useSimfarmSplit((state) =>
+    params.serverId ? state.openByServer[params.serverId] === true : false
+  );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
   const manageOnly = params.manage === '1';
   const [commands, setCommands] = useState<QuickCommand[]>([]);
