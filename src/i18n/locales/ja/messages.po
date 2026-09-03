@@ -113,6 +113,10 @@ msgstr "このマシンで動いている開発サーバーやプレビュー。
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "プレビューは Tailscale または HTTPS 経由でのみ利用できます。"
 
+#: src/lib/release-notes.ts
+msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
+msgstr "サーバーの鍵は初回に記憶し、以後は毎回照合します。鍵が変わったら、あなたが認めるまで接続を止めます。"
+
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "sshd があるどのマシンでも使えるシェル"
@@ -234,10 +238,6 @@ msgstr "承認"
 #: src/i18n/labels.ts
 msgid "Approve and don't ask again"
 msgstr "承認し、今後は確認しない"
-
-#: src/lib/release-notes.ts
-msgid "Approve or deny that request straight from the notification, without opening the app."
-msgstr "その要求は通知から直接、承認も拒否もできます。アプリを開く必要はありません。"
 
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
@@ -912,10 +912,6 @@ msgstr "SSH ホストを編集"
 msgid "Edit this server"
 msgstr "このサーバーを編集"
 
-#: src/lib/release-notes.ts
-msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "エディタのターミナルには vim 用のキー行（LazyVim の leader 組み合わせを含む）が付き、プログラムが指定した色をそのまま保ちます。"
-
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "エンター"
@@ -993,10 +989,6 @@ msgstr "フィンガープリント"
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
 msgstr "最初のプロンプト"
-
-#: src/lib/release-notes.ts
-msgid "Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together."
-msgstr "Osuki、Catppuccin、Rosé Pine、Everforest、Tokyo Night の5つのテーマパックが、アプリとターミナルの配色をまとめて塗り替えます。"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -1107,10 +1099,6 @@ msgstr "シミュレータを隠す"
 msgid "Home screen widget"
 msgstr "ホーム画面ウィジェット"
 
-#: src/lib/release-notes.ts
-msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
-msgstr "ホーム、設定、サーバー画面を作り直しました。各サーバーが最後に実行していたエージェントが、その状態とともに並びます。"
-
 #: src/components/ssh-host-form.tsx
 msgid "Host"
 msgstr "ホスト"
@@ -1212,6 +1200,10 @@ msgstr "エージェントの作業中、見ているターミナルをロック
 #: src/app/commands.tsx
 msgid "Keys"
 msgstr "キー"
+
+#: src/lib/release-notes.ts
+msgid "Keys are generated on the device and never leave it."
+msgstr "鍵は端末上で生成され、外に出ることはありません。"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -1337,10 +1329,6 @@ msgstr "トランスクリプトを読み込み中"
 msgid "Logs"
 msgstr "ログ"
 
-#: src/lib/release-notes.ts
-msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
-msgstr "ターミナルを長押しすると出力を選択でき、ドラッグで範囲を広げてコピーできます。"
-
 #: src/components/simfarm-preview.tsx
 msgid "Look again"
 msgstr "もう一度探す"
@@ -1408,8 +1396,8 @@ msgid "Muqun settings stay on this device."
 msgstr "牧群（ぼくぐん）の設定はこのデバイスの中だけに保存されます。"
 
 #: src/lib/release-notes.ts
-msgid "Muqun speaks eight languages. It follows your phone, or you can choose one in Settings."
-msgstr "牧群（ぼくぐん）は8つの言語を話します。スマートフォンの言語に従い、設定で選ぶこともできます。"
+msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
+msgstr "Muqun が SSH を話します。ホストを保存してホーム画面でタップすれば、本物のシェルへ — パスワード、鍵、あるいは認証アプリのコードで。"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -1468,10 +1456,6 @@ msgstr "{label} で新規タスク"
 #: src/components/session-map.tsx
 msgid "New terminal"
 msgstr "新しいターミナル"
-
-#: src/lib/release-notes.ts
-msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
-msgstr "「新しいターミナル」は今いるグループを分割し、作成されたものへ直接移動します。"
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -2441,6 +2425,10 @@ msgstr "この回答はエージェントに届きませんでした。"
 msgid "That code was refused. Hold still for a new one."
 msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください。"
 
+#: src/lib/release-notes.ts
+msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
+msgstr "そのシェルは見慣れたターミナルそのもの。同じキーボード、同じキー列、同じ配色。入力したいときはスマホ自身のキーボードも使えます。"
+
 #: src/components/settings-servers.tsx
 msgid "The address is where this paired server is reached. Changing it does not unpair the device."
 msgstr "アドレスは、このペアリング済みサーバーに接続する場所です。変更してもデバイスのペアリングは解除されません。"
@@ -2473,10 +2461,6 @@ msgstr "接続が切れました。"
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズを確認してください。"
-
-#: src/lib/release-notes.ts
-msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
-msgstr "ソフトウェアキーボードがキーボードらしい配列になり、押した瞬間にそのキーが送信されます。"
 
 #: src/app/commands.tsx
 #: src/i18n/labels.ts
@@ -2809,10 +2793,6 @@ msgstr "実行中のもの"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新着情報"
-
-#: src/lib/release-notes.ts
-msgid "When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it."
-msgstr "エージェントが許可を求めると、牧群（ぼくぐん）はその質問をカードとして描き直し、答えるまで入力欄を空にします。"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

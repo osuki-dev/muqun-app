@@ -113,6 +113,10 @@ msgstr "這台電腦上執行中的開發伺服器或預覽。"
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "只有透過 Tailscale 或 HTTPS 才會提供預覽。"
 
+#: src/lib/release-notes.ts
+msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
+msgstr "伺服器的金鑰第一次就記住，之後每次都會核對；金鑰變了就中止連線，除非你另行確認。"
+
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "任何裝有 sshd 的機器上的 shell"
@@ -234,10 +238,6 @@ msgstr "核准"
 #: src/i18n/labels.ts
 msgid "Approve and don't ask again"
 msgstr "核准且不再詢問"
-
-#: src/lib/release-notes.ts
-msgid "Approve or deny that request straight from the notification, without opening the app."
-msgstr "也可以直接在通知上核准或拒絕，不必打開牧群。"
 
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
@@ -912,10 +912,6 @@ msgstr "編輯 SSH 主機"
 msgid "Edit this server"
 msgstr "編輯這台伺服器"
 
-#: src/lib/release-notes.ts
-msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "編輯器終端機會顯示 vim 自己的按鍵列（含 LazyVim 的 leader 組合鍵），並保留程式指定的顏色。"
-
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter 鍵"
@@ -993,10 +989,6 @@ msgstr "指紋"
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
 msgstr "第一則提示詞"
-
-#: src/lib/release-notes.ts
-msgid "Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together."
-msgstr "五組主題套件——Osuki、Catppuccin、Rosé Pine、Everforest、Tokyo Night——會同時換掉牧群與終端機的配色。"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -1107,10 +1099,6 @@ msgstr "隱藏模擬器"
 msgid "Home screen widget"
 msgstr "主畫面小工具"
 
-#: src/lib/release-notes.ts
-msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
-msgstr "首頁、設定與伺服器頁面全部重新設計——每台伺服器都會列出它上次執行的代理程式與狀態。"
-
 #: src/components/ssh-host-form.tsx
 msgid "Host"
 msgstr "主機"
@@ -1212,6 +1200,10 @@ msgstr "代理程式工作時，把你正在看的終端機留在鎖定畫面上
 #: src/app/commands.tsx
 msgid "Keys"
 msgstr "按鍵"
+
+#: src/lib/release-notes.ts
+msgid "Keys are generated on the device and never leave it."
+msgstr "金鑰在裝置上產生，絕不外傳。"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -1337,10 +1329,6 @@ msgstr "正在載入對話記錄"
 msgid "Logs"
 msgstr "紀錄"
 
-#: src/lib/release-notes.ts
-msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
-msgstr "長按終端機即可選取輸出，拖曳延伸選取範圍，再複製下來。"
-
 #: src/components/simfarm-preview.tsx
 msgid "Look again"
 msgstr "重新尋找"
@@ -1408,8 +1396,8 @@ msgid "Muqun settings stay on this device."
 msgstr "牧群的設定只留在這台裝置上。"
 
 #: src/lib/release-notes.ts
-msgid "Muqun speaks eight languages. It follows your phone, or you can choose one in Settings."
-msgstr "牧群會說八種語言，預設跟著手機走，也可以在設定裡自己挑一種。"
+msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
+msgstr "Muqun 會說 SSH。儲存一台主機，在首頁點一下，就進入真正的 shell — 密碼、金鑰，或驗證器上的驗證碼。"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -1468,10 +1456,6 @@ msgstr "在 {label} 上新增任務"
 #: src/components/session-map.tsx
 msgid "New terminal"
 msgstr "新增終端機"
-
-#: src/lib/release-notes.ts
-msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
-msgstr "「新增終端機」現在會分割你所在的群組，手機也會直接跳到新建的那一個。"
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -2441,6 +2425,10 @@ msgstr "這個回答沒有送達代理程式。"
 msgid "That code was refused. Hold still for a new one."
 msgstr "這組代碼被拒絕了，請保持穩定以讀取新的代碼。"
 
+#: src/lib/release-notes.ts
+msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
+msgstr "那個 shell 就是你熟悉的終端機：同樣的鍵盤、同樣的按鍵列、同樣的配色，想打字時也能用手機自己的輸入法。"
+
 #: src/components/settings-servers.tsx
 msgid "The address is where this paired server is reached. Changing it does not unpair the device."
 msgstr "位址是連上這台已配對伺服器的地方。變更位址不會解除裝置的配對。"
@@ -2473,10 +2461,6 @@ msgstr "連線已中斷。"
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語。"
-
-#: src/lib/release-notes.ts
-msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
-msgstr "螢幕鍵盤現在照著鍵盤的樣子排列，每個鍵一按下去就送出。"
 
 #: src/app/commands.tsx
 #: src/i18n/labels.ts
@@ -2809,10 +2793,6 @@ msgstr "正在執行的項目"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新功能"
-
-#: src/lib/release-notes.ts
-msgid "When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it."
-msgstr "代理程式要求授權時，牧群會把問題重畫成一張卡片，並在你回答之前清空輸入區。"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

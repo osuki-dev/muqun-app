@@ -13,24 +13,20 @@ import type { MessageDescriptor } from '@lingui/core';
  * text, which is the one form that does not change when the phone's language
  * does.
  *
- * These are the 1.2.0 notes, and the one launch nobody will see them at is 1.2.0's
- * own. `whats-new-card` returns early on `Updates.isEmbeddedLaunch`, so a fresh
- * store install shows nothing; and `runtimeVersion` follows `appVersion`, so no
- * 1.1.0 install can ever be handed this bundle. They first appear on the first
- * bundle update published on top of the 1.2.0 binary — which is the honest place for them,
- * since a store listing has already said all of this to anyone updating.
+ * These are the 2.0.0 notes, and the one launch nobody will see them at is
+ * 2.0.0's own. `whats-new-card` returns early on `Updates.isEmbeddedLaunch`, so
+ * a fresh store install shows nothing; and `runtimeVersion` follows
+ * `appVersion`, so no 1.3.0 install can ever be handed this bundle. They first
+ * appear on the first bundle update published on top of the 2.0.0 binary —
+ * which is the honest place for them, since a store listing has already said
+ * all of this to anyone updating.
  */
 export const RELEASE_NOTES: { title: MessageDescriptor; items: MessageDescriptor[] } = {
   title: msg`What's new`,
   items: [
-    msg`Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together.`,
-    msg`Long-press the terminal to select output, drag to extend the selection, and copy it.`,
-    msg`The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it.`,
-    msg`Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for.`,
-    msg`Muqun speaks eight languages. It follows your phone, or you can choose one in Settings.`,
-    msg`Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status.`,
-    msg`When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it.`,
-    msg`Approve or deny that request straight from the notification, without opening the app.`,
-    msg`New terminal now splits the group you are in, and the phone goes straight to what it made.`,
+    msg`Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator.`,
+    msg`That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type.`,
+    msg`A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise.`,
+    msg`Keys are generated on the device and never leave it.`,
   ],
 };
