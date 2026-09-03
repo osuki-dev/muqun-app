@@ -529,10 +529,6 @@ msgstr "SSH 経由で接続しています…"
 msgid "Connecting to {address}"
 msgstr "{address} に接続しています"
 
-#: src/app/settings.tsx
-msgid "Contact us"
-msgstr "お問い合わせ"
-
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1436,6 +1432,10 @@ msgstr "牧群（ぼくぐん）は端末の言語設定に従います。"
 msgid "Muqun is locked"
 msgstr "牧群（ぼくぐん）はロックされています"
 
+#: src/app/settings.tsx
+msgid "Muqun is open source. Read it, or build it yourself."
+msgstr "Muqun はオープンソースです。読むことも、自分でビルドすることもできます。"
+
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun はカメラで Gateway の QR コードを読み取ります。録画は行いません。"
@@ -1533,10 +1533,6 @@ msgstr "一致するファイルはありません。"
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "Gateway がまだありませんか？"
-
-#: src/app/settings.tsx
-msgid "No mail app configured"
-msgstr "メールアプリが設定されていません"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1884,10 +1880,6 @@ msgstr "クイックアクション"
 #: src/lib/demo-gateway.ts
 msgid "Quit"
 msgstr "終了"
-
-#: src/app/settings.tsx
-msgid "Reach us at {SUPPORT_EMAIL}."
-msgstr "{SUPPORT_EMAIL} までご連絡ください。"
 
 #: src/app/commands.tsx
 msgid "Reached the same way as a browser, so the same tunnel limit applies."
@@ -2384,6 +2376,10 @@ msgstr "一部のファイルをアップロードできませんでした"
 #: src/components/app-error-boundary.tsx
 msgid "Something went wrong"
 msgstr "問題が発生しました"
+
+#: src/app/settings.tsx
+msgid "Source code"
+msgstr "ソースコード"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
