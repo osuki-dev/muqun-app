@@ -44,6 +44,18 @@ export interface SshShellEventsHandle {
   onClosed?: (exitCode: number | undefined) => void;
 }
 
+/**
+ * A loopback port forward opened over the session (`direct-tcpip`): a listener
+ * on `127.0.0.1:<localPort>` on the phone tunnelled to `remoteHost:remotePort`
+ * as seen from the server. Point an HTTP client at
+ * `http://127.0.0.1:<localPort>`; the library closes it when the connection
+ * drops. See `ssh-tunnel.ts` and `docs/ssh-gateway-tunnel.md`.
+ */
+export interface SshForwardHandle {
+  readonly localPort: number;
+  close(): Promise<void>;
+}
+
 export interface SshSessionHandle {
   readonly hostKey: SshTrustedHostKey;
   readonly isConnected: boolean;
@@ -51,7 +63,24 @@ export interface SshSessionHandle {
     options: { cols: number; rows: number; term?: string },
     events: SshShellEventsHandle
   ): Promise<SshShellHandle>;
+  forwardLocal(
+    options: { remoteHost: string; remotePort: number; maxConnections?: number },
+    events: { onClosed?: (reason: string) => void }
+  ): Promise<SshForwardHandle>;
   disconnect(): Promise<void>;
+}
+
+/**
+ * The subset of the library's connection this facade calls into for a forward.
+ * Declared locally and cast onto the native connection so a build that predates
+ * local port forwarding still type-checks -- calling it there simply rejects,
+ * the same way any other unavailable native capability does.
+ */
+interface NativeForwardCapable {
+  forwardLocal(
+    options: { bindAddress?: string; localPort?: number; remoteHost: string; remotePort: number; maxConnections?: number },
+    events: { onClosed?: (reason: string) => void }
+  ): Promise<{ readonly localPort: number; close(): Promise<void> }>;
 }
 
 export interface SshConnectRequest {
@@ -191,6 +220,24 @@ export async function connectSsh(request: SshConnectRequest): Promise<SshSession
         write: (data) => shell.write(data),
         resize: (cols, rows) => shell.resize(cols, rows),
         close: () => shell.close(),
+      };
+    },
+    async forwardLocal(options, events) {
+      const forward = await (connection as unknown as NativeForwardCapable).forwardLocal(
+        {
+          bindAddress: '127.0.0.1',
+          localPort: 0,
+          remoteHost: options.remoteHost,
+          remotePort: options.remotePort,
+          maxConnections: options.maxConnections ?? 0,
+        },
+        { onClosed: events.onClosed }
+      );
+      return {
+        get localPort() {
+          return forward.localPort;
+        },
+        close: () => forward.close(),
       };
     },
     disconnect: () => connection.disconnect(),
