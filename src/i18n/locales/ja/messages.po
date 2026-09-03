@@ -415,6 +415,10 @@ msgstr "プレビューを閉じる"
 msgid "Close quick actions"
 msgstr "クイックアクションを閉じる"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Close session picker"
+msgstr "セッション一覧を閉じる"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the attachment menu"
 msgstr "添付メニューを閉じる"
@@ -2240,6 +2244,20 @@ msgstr "サーバーを利用できません。"
 msgid "Servers"
 msgstr "サーバー"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Session"
+msgstr "セッション"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}"
+msgstr "セッション {0}"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}, current"
+msgstr "セッション {0}、現在のセッション"
+
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "アプリロックを使う前に、デバイスのパスコードを設定してください。"
@@ -2450,6 +2468,10 @@ msgstr "左右にスワイプしてワークスペースを切り替えます"
 msgid "Switch between open files"
 msgstr "開いているファイルを切り替え"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch session"
+msgstr "セッションを切り替える"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -2641,6 +2663,10 @@ msgstr "この Gateway はまだファイルを提供していません。セッ
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "この Gateway はペアリング済みデバイスを返していません。"
+
+#: src/components/session-switcher-sheet.tsx
+msgid "This gateway runs more than one terminal backend. Pick the one to read."
+msgstr "この Gateway は複数のターミナルバックエンドを動かしています。読むものを選んでください。"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."

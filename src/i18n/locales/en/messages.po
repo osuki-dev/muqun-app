@@ -415,6 +415,10 @@ msgstr "Close preview"
 msgid "Close quick actions"
 msgstr "Close quick actions"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Close session picker"
+msgstr "Close session picker"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the attachment menu"
 msgstr "Close the attachment menu"
@@ -2240,6 +2244,20 @@ msgstr "Server unavailable."
 msgid "Servers"
 msgstr "Servers"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Session"
+msgstr "Session"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}"
+msgstr "Session {0}"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}, current"
+msgstr "Session {0}, current"
+
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "Set a device passcode before using App Lock."
@@ -2450,6 +2468,10 @@ msgstr "Swipe left or right to switch workspace"
 msgid "Switch between open files"
 msgstr "Switch between open files"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch session"
+msgstr "Switch session"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -2641,6 +2663,10 @@ msgstr "This gateway does not serve files yet. Update the Muqun gateway plugin t
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "This gateway has not listed any paired devices."
+
+#: src/components/session-switcher-sheet.tsx
+msgid "This gateway runs more than one terminal backend. Pick the one to read."
+msgstr "This gateway runs more than one terminal backend. Pick the one to read."
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."

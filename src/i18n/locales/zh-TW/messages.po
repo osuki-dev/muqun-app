@@ -415,6 +415,10 @@ msgstr "關閉預覽"
 msgid "Close quick actions"
 msgstr "關閉快速動作"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Close session picker"
+msgstr "關閉工作階段清單"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the attachment menu"
 msgstr "關閉附件選單"
@@ -2240,6 +2244,20 @@ msgstr "伺服器無法使用。"
 msgid "Servers"
 msgstr "伺服器"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Session"
+msgstr "工作階段"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}"
+msgstr "工作階段 {0}"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}, current"
+msgstr "工作階段 {0}，目前使用中"
+
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "使用應用程式鎖之前，請先設定裝置密碼。"
@@ -2450,6 +2468,10 @@ msgstr "左右滑動以切換工作區"
 msgid "Switch between open files"
 msgstr "切換開啟中的檔案"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch session"
+msgstr "切換工作階段"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -2641,6 +2663,10 @@ msgstr "這個 gateway 尚未提供檔案服務。更新牧群的 gateway 外掛
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "這個 Gateway 尚未列出任何已配對的裝置。"
+
+#: src/components/session-switcher-sheet.tsx
+msgid "This gateway runs more than one terminal backend. Pick the one to read."
+msgstr "這個 Gateway 執行了不只一個終端機後端。挑一個來閱讀。"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
