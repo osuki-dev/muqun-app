@@ -4,43 +4,23 @@
 // gateway rather than dropping the record. Node's crypto stands in for the
 // phone's; a map stands in for the keychain.
 import * as bunTest from 'bun:test';
-import nodeCrypto from 'node:crypto';
+
+import { fakeQuickCrypto, fakeSecureStore, resetVault } from './gateway-vault';
 
 const { beforeEach, describe, expect, test } = bunTest;
 const { module: mockModule } = (
   bunTest as unknown as { mock: { module: (id: string, factory: () => unknown) => void } }
 ).mock;
 
-let vault: Record<string, string> = {};
-
-mockModule('expo-secure-store', () => ({
-  WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'whenUnlockedThisDeviceOnly',
-  getItemAsync: async (key: string) => vault[key] ?? null,
-  setItemAsync: async (key: string, value: string) => {
-    vault[key] = value;
-  },
-  deleteItemAsync: async (key: string) => {
-    delete vault[key];
-  },
-}));
-
-mockModule('react-native-quick-crypto', () => ({
-  default: {
-    Buffer,
-    randomBytes: (size: number) => nodeCrypto.randomBytes(size),
-    createCipheriv: nodeCrypto.createCipheriv,
-    createDecipheriv: nodeCrypto.createDecipheriv,
-  },
-}));
+// One shared fake, so the store test that also needs real record storage cannot
+// end up owning the vault this suite resets. See `gateway-vault.ts`.
+mockModule('expo-secure-store', () => fakeSecureStore);
+mockModule('react-native-quick-crypto', () => fakeQuickCrypto);
 
 const storage = await import('../gateway-storage');
 const { normalizeGatewaySshTunnel, saveGateway, loadGateways } = storage;
 
-function reset() {
-  vault = {};
-}
-
-beforeEach(reset);
+beforeEach(resetVault);
 
 const PAYLOAD = {
   kind: 'muqun-gateway' as const,

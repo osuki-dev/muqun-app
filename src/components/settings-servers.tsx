@@ -24,6 +24,7 @@ import { feedback } from '@/lib/feedback';
 import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
+import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 import { useRenderTally } from '@/lib/render-tally';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { normalizeGatewayUrl } from '@/lib/pairing';
@@ -592,6 +593,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
   const theme = useThemeTokens();
   const [armed, setArmed] = useState(false);
   const [pending, setPending] = useState(false);
+  const view = unpairView({ armed, pending });
 
   // Collapsing the row and coming back must not leave a primed destructive
   // button waiting.
@@ -602,7 +604,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
   // tap looks ignored -- the row sits there, unchanged, until the record
   // vanishes on its own. Say what is happening instead.
   async function confirm() {
-    if (pending) return;
+    if (!acceptsConfirm({ armed, pending })) return;
     setPending(true);
     try {
       await onUnpair();
@@ -611,41 +613,43 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
     }
   }
 
-  return armed ? (
+  return view.showArmedPair ? (
     <View style={styles.armedRow}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel={pending ? t`Unpairing ${label}` : t`Confirm unpair ${label}`}
-        accessibilityState={{ disabled: pending, busy: pending }}
-        disabled={pending}
+        accessibilityLabel={view.confirm.busy ? t`Unpairing ${label}` : t`Confirm unpair ${label}`}
+        accessibilityState={{ disabled: view.confirm.disabled, busy: view.confirm.busy }}
+        disabled={view.confirm.disabled}
         feedback="selection"
         onPress={() => void confirm()}
         style={[
           styles.action,
           styles.armedButton,
           { backgroundColor: theme.colors.danger },
-          pending && styles.pendingAction,
+          view.confirm.dimmed && styles.pendingAction,
         ]}>
-        {pending ? (
+        {view.confirm.icon === 'spinner' ? (
           <Spinner size="sm" color={theme.colors.onPrimary} />
         ) : (
           <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
         )}
         <Text variant="caption" color={theme.colors.onPrimary} style={styles.armedText}>
-          {pending ? <Trans>Unpairing…</Trans> : <Trans>Unpair</Trans>}
+          {view.confirm.phase === 'working' ? <Trans>Unpairing…</Trans> : <Trans>Unpair</Trans>}
         </Text>
       </PressableScale>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={t`Keep ${label}`}
-        accessibilityState={{ disabled: pending }}
-        disabled={pending}
-        onPress={() => setArmed(false)}
+        accessibilityState={{ disabled: view.cancel.disabled }}
+        disabled={view.cancel.disabled}
+        onPress={() => {
+          if (acceptsCancel({ armed, pending })) setArmed(false);
+        }}
         style={[
           styles.action,
           styles.armedButton,
           { backgroundColor: theme.colors.surfaceRaised },
-          pending && styles.pendingAction,
+          view.cancel.dimmed && styles.pendingAction,
         ]}>
         <Text variant="caption" color={theme.colors.textMuted}>
           <Trans>Cancel</Trans>
