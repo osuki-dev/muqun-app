@@ -168,3 +168,27 @@ need them again:
 observed=other/SSH`) while the selector itself matched exactly one element.
   Without the comments the steps resolve by selector, which is what the labels
   are for.
+
+## Android
+
+`ssh-demo.ad` is an iOS script: agent-device gates suite selection on the
+`context platform=…` line, `${VAR}` interpolation is not applied to it, and
+removing the line makes `--platform android` match nothing. So Android gets its
+own copy, `ssh-demo.android.ad`, which differs in exactly three places and is
+otherwise the same script:
+
+- the `context` line names `platform=android`, an emulator, and the AVD;
+- the `open` line passes `--platform android` and the Android Metro port;
+- the first `wait` is given 120 s, because a cold `--relaunch` on an emulator
+  spends most of a minute starting the app and pulling the bundle.
+
+Every other step -- the selectors, `Send Enter`, `id="ssh-composer-input"`,
+`type "hello"`, `Run command` and the destination guard -- runs unchanged on
+Android. When you edit one script, edit both: they are deliberately line-for-line
+the same so a diff shows only those three lines.
+
+Run it with the device name your AVD reports to `agent-device devices`:
+
+```sh
+agent-device test e2e/agent-device/ssh-demo.android.ad --platform android --device "<your avd>"
+```
