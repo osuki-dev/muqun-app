@@ -1038,6 +1038,15 @@ function KeyboardInteractiveDialog({
 }) {
   const { t } = useLingui();
   const [answers, setAnswers] = useState<string[]>([]);
+  const [keyboardUp, setKeyboardUp] = useState(false);
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', () => setKeyboardUp(true));
+    const hidden = Keyboard.addListener('keyboardDidHide', () => setKeyboardUp(false));
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
   const { challenge } = prompt;
   const name = sanitizeServerText(challenge.name, 80);
   const instruction = sanitizeServerText(challenge.instruction);
@@ -1045,10 +1054,24 @@ function KeyboardInteractiveDialog({
     label: sanitizeServerText(item.prompt, SERVER_LINE_LIMIT),
     echo: item.echo === true,
   }));
+  // Android draws this dialog behind the soft keyboard, so Continue can end up
+  // out of reach, and the system back gesture -- the obvious way to get the
+  // keyboard out of the way -- closes the dialog instead, which cancels the
+  // sign-in. Two answers: the keyboard's own return key submits, and a close
+  // request while the keyboard is up puts the keyboard away rather than
+  // abandoning the connection.
+  const submit = () => prompt.resolve(prompts.map((_item, index) => answers[index] ?? ''));
+
   return (
     <Dialog
       visible
-      onClose={() => prompt.resolve(undefined)}
+      onClose={() => {
+        if (keyboardUp) {
+          Keyboard.dismiss();
+          return;
+        }
+        prompt.resolve(undefined);
+      }}
       title={name || t`Sign in`}
       message={instruction || t`The server is asking for more before it lets you in.`}
       actionLayout="row"
@@ -1058,7 +1081,7 @@ function KeyboardInteractiveDialog({
           id: 'submit',
           label: t`Continue`,
           tone: 'primary',
-          onPress: () => prompt.resolve(prompts.map((_item, index) => answers[index] ?? '')),
+          onPress: submit,
         },
       ]}>
       <View style={styles.prompts}>
@@ -1079,6 +1102,8 @@ function KeyboardInteractiveDialog({
             autoCorrect={false}
             variant="outline"
             size="compact"
+            returnKeyType={index === prompts.length - 1 ? 'go' : 'next'}
+            onSubmitEditing={index === prompts.length - 1 ? submit : undefined}
           />
         ))}
       </View>
