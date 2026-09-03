@@ -69,7 +69,10 @@ export function sshNvimMode(frame: TerminalFrame | undefined, alternateScreen: b
  * Whether the shell is running an editor now, given whether it was a moment
  * ago. `previous` is the latch described above.
  */
-export function sshEditorPane(previous: boolean, { alternateScreen, title, nvimMode }: SshEditorSignals): boolean {
+export function sshEditorPane(
+  previous: boolean,
+  { alternateScreen, title, nvimMode }: SshEditorSignals
+): boolean {
   if (!alternateScreen) return false;
   if (previous) return true;
   return nvimMode !== null || isFullScreenTuiPane(null, title);

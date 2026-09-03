@@ -29,8 +29,8 @@ is authored and replayed as native `.ad` scripts here.
 
   It reaches the shell through the header's `SSH` button rather than through
   the home screen's own `SSH HOSTS` row, and that is not laziness. The home
-  section lists the saved hosts, plus the demo host *while the demo gateway is
-  the record in use*; on a phone that state is not reachable from the home
+  section lists the saved hosts, plus the demo host _while the demo gateway is
+  the record in use_; on a phone that state is not reachable from the home
   screen, because the demo's way out is the workspace's back button and that
   button hangs the demo session up on its way past (`leaveDetail`, card #672).
   So a phone that has just left the demo has no demo row to tap, and a phone

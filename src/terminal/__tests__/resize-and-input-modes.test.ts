@@ -159,7 +159,11 @@ describe('resize', () => {
 describe('input modes', () => {
   test('start off and reset off', () => {
     const term = emulator(10, 2);
-    expect(term.modes).toEqual({ applicationCursorKeys: false, bracketedPaste: false, alternateScreen: false });
+    expect(term.modes).toEqual({
+      applicationCursorKeys: false,
+      bracketedPaste: false,
+      alternateScreen: false,
+    });
   });
 
   test('DECCKM follows CSI ?1 h and l', () => {
@@ -198,19 +202,31 @@ describe('input modes', () => {
   test('several modes in one sequence', () => {
     const term = emulator(10, 2);
     term.write(`${CSI}?1;25;2004h`);
-    expect(term.modes).toEqual({ applicationCursorKeys: true, bracketedPaste: true, alternateScreen: false });
+    expect(term.modes).toEqual({
+      applicationCursorKeys: true,
+      bracketedPaste: true,
+      alternateScreen: false,
+    });
   });
 
   test('a non-private mode 1 or 2004 is not DECCKM or bracketed paste', () => {
     const term = emulator(10, 2);
     term.write(`${CSI}1h${CSI}2004h`);
-    expect(term.modes).toEqual({ applicationCursorKeys: false, bracketedPaste: false, alternateScreen: false });
+    expect(term.modes).toEqual({
+      applicationCursorKeys: false,
+      bracketedPaste: false,
+      alternateScreen: false,
+    });
   });
 
   test('RIS clears them', () => {
     const term = emulator(10, 2);
     term.write(`${CSI}?1h${CSI}?2004h\x1bc`);
-    expect(term.modes).toEqual({ applicationCursorKeys: false, bracketedPaste: false, alternateScreen: false });
+    expect(term.modes).toEqual({
+      applicationCursorKeys: false,
+      bracketedPaste: false,
+      alternateScreen: false,
+    });
   });
 
   test('the modes object is live, not a snapshot', () => {

@@ -345,7 +345,9 @@ function SshHostPill({
   const address = sshHomeSubtitle(host);
   const trusted = Boolean(host.trustedHostKey);
   const lastConnected = useSshHostAgeLabel(sshHomeAge(host, nowMs));
-  const hint = trusted ? `${address} · ${lastConnected} · ${t`Host key trusted`}` : `${address} · ${lastConnected}`;
+  const hint = trusted
+    ? `${address} · ${lastConnected} · ${t`Host key trusted`}`
+    : `${address} · ${lastConnected}`;
 
   return (
     <Pressable
