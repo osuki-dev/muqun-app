@@ -10,8 +10,15 @@ is authored and replayed as native `.ad` scripts here.
 - `ssh-demo.ad` — the offline demo shell, end to end: home → the header's
   `SSH` button → the bundled demo host → the connected chrome
   (`Disconnect from Demo shell`, `Connected to demo@demo.invalid`) → one key
-  from the key row (`Send Enter`) → back to the host list, guarded by a
-  selector wait on `Open Demo shell`.
+  from the key row (`Send Enter`) → one line through the composer (focus
+  `ssh-composer-input`, type `hello`, press `Run command`) → back to the host
+  list, guarded by a selector wait on `Open Demo shell`.
+
+  The composer step asserts nothing about what the canvas drew -- the
+  terminal is a Skia surface with no accessibility text -- only that the
+  chrome is still standing afterwards. What the demo shell answers
+  (`you said: hello`) is `demo-ssh-transcript.ts`'s contract and is covered
+  by its unit test.
 
   It needs no server, no network and no credentials: the demo host is the one
   `src/lib/demo-ssh.ts` puts on an otherwise empty host list. Nothing in the
@@ -23,8 +30,8 @@ is authored and replayed as native `.ad` scripts here.
    --platform ios`, then build the `Muqun` scheme for the simulator). There is
    no expo-dev-client in this project, so the app loads its bundle from
    whichever Metro `RCT_jsLocation` points at.
-2. Metro running, e.g. `bunx expo start --port 8093`. The `open` line in the
-   script carries `--metro-host 127.0.0.1 --metro-port 8093`; agent-device
+2. Metro running, e.g. `bunx expo start --port 8096`. The `open` line in the
+   script carries `--metro-host 127.0.0.1 --metro-port 8096`; agent-device
    writes that into the simulator's React Native debug-server prefs before
    launch, so the port only has to match the Metro you started.
 3. **No saved SSH hosts** on that install. The demo host is only offered when
@@ -39,9 +46,9 @@ is authored and replayed as native `.ad` scripts here.
 
 ```sh
 agent-device --version                       # 0.20.10 is what this was recorded with
-agent-device replay e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ssh-3" --timeout 300000
+agent-device replay e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ssh-4" --timeout 300000
 # or as a suite entry with a JUnit report:
-agent-device test e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ssh-3" \
+agent-device test e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ssh-4" \
   --artifacts-dir dist/e2e-reports/agent-device --reporter junit:dist/e2e-reports/agent-device/junit.xml
 ```
 
@@ -61,8 +68,8 @@ agent-device daemon"; run `agent-device daemon stop --clean` first.
 ## Re-recording
 
 ```sh
-agent-device open dev.osuki.muqun --platform ios --device "muqun-ssh-3" \
-  --metro-host 127.0.0.1 --metro-port 8093 --relaunch \
+agent-device open dev.osuki.muqun --platform ios --device "muqun-ssh-4" \
+  --metro-host 127.0.0.1 --metro-port 8096 --relaunch \
   --save-script=e2e/agent-device/ssh-demo.ad
 # … press/wait with selectors (never bare @refs), fix app state with --no-record …
 agent-device wait 'role=button label="Open Demo shell"'   # the destination guard
@@ -74,7 +81,7 @@ what `session save-script` uses as the destination guard, and a duration wait
 or a `wait @ref` is not accepted as one. Never record a real password without
 `--record-as` (see `agent-device help scripting`).
 
-Three edits were made to the published script by hand, and a re-recording will
+Four edits were made to the published script by hand, and a re-recording will
 need them again:
 
 - A `wait "text" "Try the demo"` right after `open`. Without it the first
@@ -87,6 +94,12 @@ need them again:
   drops it. Without a settle the next `press` resolves its target while the
   screen is still sliding in and taps a stale position; the run then times
   out waiting for the connected chrome while still on the host list.
+- The composer steps (`press "id=\"ssh-composer-input\""`, `type "hello"`,
+  `press … "Run command"`) were written in by hand after the `Send Enter`
+  step rather than recorded: `type` records as the keystrokes it sent, and
+  the field is best addressed by its test id, which the recorder does not
+  prefer over the label. The `wait "stable"` after the field press is what
+  gives the system keyboard time to finish rising before the text goes in.
 - The `# agent-device:target-v1 {…}` comment lines were removed. They pin each
   step to the accessibility ancestry seen while recording, and iOS does not
   report this app's tree in one stable shape: a capture right after launch
