@@ -1,3 +1,14 @@
+diff --git a/lib/components/toast.d.ts b/lib/components/toast.d.ts
+--- a/lib/components/toast.d.ts
++++ b/lib/components/toast.d.ts
+@@ -27,6 +27,7 @@ export interface ToastProviderProps {
+     placement?: ToastPlacement;
+     maxToasts?: number;
+     defaultDurationMs?: number;
++    maxWidth?: number;
+ }
+ export declare const ToastProvider: React.FC<ToastProviderProps>;
+ export declare function useToast(): ToastController;
 diff --git a/src/components/toast.tsx b/src/components/toast.tsx
 --- a/src/components/toast.tsx
 +++ b/src/components/toast.tsx
@@ -9,7 +20,7 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  }
  
  const ToastContext = createContext<ToastController | undefined>(undefined);
-@@ -138,6 +139,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
+@@ -142,6 +143,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
  	placement = "top",
  	maxToasts = 3,
  	defaultDurationMs = 3600,
@@ -17,7 +28,7 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  }) => {
  	const storeRef = useRef<ToastStore | null>(null);
  	if (!storeRef.current) storeRef.current = createToastStore({ maxToasts, defaultDurationMs });
-@@ -151,7 +153,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
+@@ -155,7 +157,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
  	return (
  		<ToastContext.Provider value={store.controller}>
  			{children}
@@ -26,7 +37,7 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  		</ToastContext.Provider>
  	);
  };
-@@ -165,9 +167,10 @@ export function useToast(): ToastController {
+@@ -169,9 +171,10 @@ export function useToast(): ToastController {
  interface ToastViewportProps {
  	store: ToastStore;
  	placement: ToastPlacement;
@@ -38,7 +49,7 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  	const theme = useThemeTokens();
  	const insets = useSafeAreaInsets();
  	const toasts = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
-@@ -181,6 +184,7 @@ const ToastViewport: React.FC<ToastViewportProps> = ({ store, placement }) => {
+@@ -185,6 +188,7 @@ const ToastViewport: React.FC<ToastViewportProps> = ({ store, placement }) => {
  			right: theme.spacing.md,
  			...(placement === "top" ? { top: verticalOffset } : { bottom: verticalOffset }),
  			gap: theme.spacing.sm,
@@ -46,7 +57,7 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  			zIndex: 1000,
  		}),
  		[placement, theme.spacing, verticalOffset],
-@@ -191,7 +195,12 @@ const ToastViewport: React.FC<ToastViewportProps> = ({ store, placement }) => {
+@@ -195,7 +199,12 @@ const ToastViewport: React.FC<ToastViewportProps> = ({ store, placement }) => {
  	return (
  		<View pointerEvents="box-none" style={viewportStyle}>
  			{toasts.map((toast) => (
@@ -60,7 +71,7 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  			))}
  		</View>
  	);
-@@ -199,10 +208,11 @@ const ToastViewport: React.FC<ToastViewportProps> = ({ store, placement }) => {
+@@ -203,10 +212,11 @@ const ToastViewport: React.FC<ToastViewportProps> = ({ store, placement }) => {
  
  interface ToastCardProps {
  	toast: ToastItem;
@@ -73,7 +84,7 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  	const theme = useThemeTokens();
  	const tokens = toastTokens[toast.variant];
  
-@@ -213,6 +223,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onDismiss }) => {
+@@ -217,6 +227,7 @@ const ToastCard: React.FC<ToastCardProps> = ({ toast, onDismiss }) => {
  			layout={Layout.springify().damping(24).stiffness(280)}
  			style={{
  				width: "100%",
@@ -81,14 +92,3 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  				flexDirection: "row",
  				alignItems: "flex-start",
  				gap: theme.spacing.sm,
-diff --git a/lib/components/toast.d.ts b/lib/components/toast.d.ts
---- a/lib/components/toast.d.ts
-+++ b/lib/components/toast.d.ts
-@@ -27,6 +27,7 @@ export interface ToastProviderProps {
-     placement?: ToastPlacement;
-     maxToasts?: number;
-     defaultDurationMs?: number;
-+    maxWidth?: number;
- }
- export declare const ToastProvider: React.FC<ToastProviderProps>;
- export declare function useToast(): ToastController;
