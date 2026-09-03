@@ -15,23 +15,33 @@
 // First in the file on purpose: ES module imports evaluate in source order, so
 // these have to sit above `@lingui/core` for it to find a complete `Intl`.
 //
+// The `.js` on every one of these is load-bearing, not a stylistic slip. Each
+// package's `exports` map lists `"./polyfill-force.js"` literally, and
+// `"./locale-data/*": "./locale-data/*"` substitutes the subpath verbatim
+// rather than appending an extension -- so `locale-data/en` maps to a file
+// named `en`, which does not exist. Metro honours `exports` since Expo 57
+// (`unstable_enablePackageExports` defaults on), and answered the eleven
+// extensionless specifiers with eleven warnings before falling back to
+// file-based resolution. Same modules, same order; only the resolution path
+// changes.
+//
 // One plural-rules data file per language we ship, named by the *language*
 // subtag rather than the locale: the data for `zh-TW` is `zh`, and there is no
 // `zh-TW.js` to import. A locale whose data is missing does not throw -- it
 // falls back to English pluralisation, which is wrong in exactly the languages
 // that need it most, and wrong silently. So this list has to grow with
 // `APP_LOCALES` even though nothing type-checks that it did.
-import '@formatjs/intl-getcanonicallocales/polyfill-force';
-import '@formatjs/intl-locale/polyfill-force';
-import '@formatjs/intl-pluralrules/polyfill-force';
-import '@formatjs/intl-pluralrules/locale-data/en';
-import '@formatjs/intl-pluralrules/locale-data/zh';
-import '@formatjs/intl-pluralrules/locale-data/ja';
-import '@formatjs/intl-pluralrules/locale-data/ko';
-import '@formatjs/intl-pluralrules/locale-data/de';
-import '@formatjs/intl-pluralrules/locale-data/fr';
-import '@formatjs/intl-pluralrules/locale-data/es';
-import '@formatjs/intl-pluralrules/locale-data/pt';
+import '@formatjs/intl-getcanonicallocales/polyfill-force.js';
+import '@formatjs/intl-locale/polyfill-force.js';
+import '@formatjs/intl-pluralrules/polyfill-force.js';
+import '@formatjs/intl-pluralrules/locale-data/en.js';
+import '@formatjs/intl-pluralrules/locale-data/zh.js';
+import '@formatjs/intl-pluralrules/locale-data/ja.js';
+import '@formatjs/intl-pluralrules/locale-data/ko.js';
+import '@formatjs/intl-pluralrules/locale-data/de.js';
+import '@formatjs/intl-pluralrules/locale-data/fr.js';
+import '@formatjs/intl-pluralrules/locale-data/es.js';
+import '@formatjs/intl-pluralrules/locale-data/pt.js';
 
 import { i18n } from '@lingui/core';
 

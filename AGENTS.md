@@ -11,6 +11,54 @@ The maintainers use a card tracker and a branch tool of their own, and its
 configuration is not in this repository. Nothing about it is needed to
 contribute here, and nothing in this file assumes you have it.
 
+## Installing behind a proxy
+
+```sh
+NODE_USE_ENV_PROXY=1 bun install
+```
+
+The variable is not belt-and-braces, and "behind a proxy" is not on its own
+the explanation. `curl`, `git` and `bun`'s own registry client read
+`http_proxy` / `https_proxy` and go through the proxy. Node's global `fetch`
+does not read them at all unless `NODE_USE_ENV_PROXY=1` is set. Measured here
+on Node v26.8.1, with the proxy up and the variables exported, against the
+RaTeX release asset the postinstall wants:
+
+```
+node -e "fetch(<url>, {method:'HEAD'})"                    # hangs; no answer in 15s
+NODE_USE_ENV_PROXY=1 node -e "fetch(<url>, {method:'HEAD'})"  # status 200
+```
+
+So a proxy that works for everything else still leaves every `fetch`-based
+postinstall reaching for the open internet. `vendor-ratex.mjs` in
+`react-native-enriched-markdown` is one of those: it pulls RaTeX in two pieces
+-- the prebuilt XCFramework, then the tarball holding the four Swift sources
+and the KaTeX fonts -- and both go through `fetch`.
+
+It does not fail the install. The postinstall warns and exits zero when a
+vendor step fails, so `bun install` reports success over an incomplete tree.
+The podspec then decides whether to compile math by checking for the
+XCFramework _only_, so a tree with the framework and not the sources compiles
+a Swift bridge whose types are missing, and the whole thing surfaces hundreds
+of lines into an Xcode build as
+
+```
+ENRMRaTeXBridge.swift:18:25: error: cannot find type 'RaTeXRenderer' in scope
+```
+
+Filed upstream as software-mansion/enriched-markdown#745.
+
+`scripts/check-vendored-ratex.ts` runs on `postinstall` and turns that into a
+sentence naming the missing files, at install time rather than at build time.
+If it fires, the recovery is one command:
+
+```sh
+NODE_USE_ENV_PROXY=1 node node_modules/react-native-enriched-markdown/postinstall.mjs
+```
+
+The same variable belongs on any `bunx expo prebuild` or CI install step that
+runs behind a proxy.
+
 ## End-to-end test gate
 
 Finishing a feature means the whole app still works, not just the screen that was touched.

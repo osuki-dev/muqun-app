@@ -2425,6 +2425,10 @@ msgstr "Diese Antwort hat den Agent nicht erreicht."
 msgid "That code was refused. Hold still for a new one."
 msgstr "Der Code wurde abgelehnt. Halte still für einen neuen."
 
+#: src/components/ssh-host-list.tsx
+msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
+msgstr "Das ist die mitgelieferte Demo-Shell und der einzige Host hier. Füge einen eigenen hinzu, um eine Shell auf jedem erreichbaren Rechner zu öffnen."
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "Diese Shell ist das Terminal, das du kennst: dieselbe Tastatur, dieselbe Tastenzeile, dieselben Farben – und die Tastatur deines Telefons, wann immer du lieber tippst."
