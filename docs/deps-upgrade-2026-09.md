@@ -531,9 +531,21 @@ only be used in web implementation.`); the list is ignored and the hook re-regis
   from this repo — a scan of every `useAnimatedStyle` / `useAnimatedReaction` / `useHandler` / `useDerivedValue` /
   `useAnimatedProps` / `useAnimatedScrollHandler` / `useFrameCallback` call in `src/` finds no dependency list
   left (the only two-argument call remaining is `useFrameCallback(cb, false)`, whose second argument is
-  `autostart`). Runtime attribution of the library warnings was attempted by patching the reanimated logger in
+  `autostart`). **That scan was wrong.** It was done by hand, and it missed
+  `useAnimatedStyle(..., [bottomInset])` in `src/components/ssh-terminal-workspace.tsx` — a file that arrived in
+  this same PR, from `feature/ssh-client`, after the terminal's own arrays had already been removed. It is gone
+  now, and `src/components/__tests__/reanimated-dependencies.test.ts` walks the TypeScript AST for the rule so
+  the next hand scan is not what stands behind it. Runtime attribution of the library warnings was attempted by patching the reanimated logger in
   `node_modules` to print a stack; Metro did not pick the patched module up even after `--clear`, so the
   attribution above rests on the source scan of the two libraries, which do forward a `deps` argument.
+- The warning is not only noise, which is why `src/app/_layout.tsx` now mutes it by its exact text. LogBox
+  answers a warning with a notification pinned across the bottom of the screen, and the bottom of the screen is
+  where a terminal dock is: on the SSH shell it covered `ssh-composer-input` outright, so the first tap on the
+  composer went to the notification and dismissed it and only the second reached the field — which is also what
+  failed `e2e/agent-device/ssh-demo.ad` at its `type "hello"` step. The gateway workspace escaped it by height
+  alone: its dock carries a pane strip and an actions row above the input, so only its send button sits in the
+  notification's band. Muting one library warning is a smaller thing than it looks — the app's own call sites
+  are covered by the AST test above, and every other warning still raises the notification.
 - The reactions the arrays were dropped from still fire: scrolling the demo terminal up shows scrollback and
   raises the "Latest" pill, pressing it returns to the tail and hides the pill, opening the composer keyboard
   (workspace and SSH demo shell) lifts the terminal by the keyboard offset, and a text-size change re-lays the

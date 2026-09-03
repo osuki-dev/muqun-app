@@ -12,7 +12,7 @@ import {
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useMemo } from 'react';
-import { Platform } from 'react-native';
+import { LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
@@ -27,6 +27,29 @@ import { useThemePack } from '@/hooks/use-theme-pack';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
 import { useAppSettings } from '@/stores/app-settings';
+
+/**
+ * One library warning, silenced, because LogBox answers it by covering the
+ * composer.
+ *
+ * reanimated 4.6 warns on native -- per render, `__DEV__` only -- whenever a
+ * dependency list is passed to one of its hooks, and it arrives several hundred
+ * times in a session. Every remaining source is a library:
+ * react-native-keyboard-controller's `useHandler` and its scroll views,
+ * gesture-handler's `ReanimatedSwipeable` and `ReanimatedDrawerLayout`. This
+ * app's own call sites have none left, and
+ * `src/components/__tests__/reanimated-dependencies.test.ts` is what keeps it
+ * that way, so nothing of ours is being hidden here.
+ *
+ * Silenced rather than tolerated because LogBox does not merely log it. The
+ * warning notification is pinned across the bottom of the screen, which is
+ * where a terminal dock is: on the SSH shell it landed exactly on
+ * `ssh-composer-input`, so the first tap on the field went to the notification
+ * and dismissed it and only the second reached the field. Ignored by its exact
+ * text and nothing else, so every other warning still raises the notification
+ * the way it always did.
+ */
+LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web implementation.']);
 
 SplashScreen.preventAutoHideAsync();
 
