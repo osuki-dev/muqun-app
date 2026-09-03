@@ -12,7 +12,10 @@ is authored and replayed as native `.ad` scripts here.
   (`Disconnect from Demo shell`, `Connected to demo@demo.invalid`) → one key
   from the key row (`Send Enter`) → one line through the composer (focus
   `ssh-composer-input`, type `hello`, press `Run command`) → back to the host
-  list, guarded by a selector wait on `Open Demo shell`.
+  list, guarded by a selector wait on `Open SSH host Demo shell`.
+
+  The row label is `Open SSH host <label>` on both surfaces, because the list
+  and the home screen draw the same `SshHostRow`.
 
   The composer step asserts nothing about what the canvas drew -- the
   terminal is a Skia surface with no accessibility text -- only that the
@@ -24,14 +27,27 @@ is authored and replayed as native `.ad` scripts here.
   `src/lib/demo-ssh.ts` puts on an otherwise empty host list. Nothing in the
   script is a `fill`, so there is no secret to keep out of it.
 
+  It reaches the shell through the header's `SSH` button rather than through
+  the home screen's own `SSH HOSTS` row, and that is not laziness. The home
+  section lists the saved hosts, plus the demo host *while the demo gateway is
+  the record in use*; on a phone that state is not reachable from the home
+  screen, because the demo's way out is the workspace's back button and that
+  button hangs the demo session up on its way past (`leaveDetail`, card #672).
+  So a phone that has just left the demo has no demo row to tap, and a phone
+  that has never entered it has no SSH section at all -- which is the point of
+  the section. The home row is covered by hand on a saved host, and by the
+  Pad rail's own group, which does show the demo host beside the demo
+  workspace. Scripting the home row would mean adding a host through the form,
+  which is four `fill`s and a password.
+
 ## Preconditions
 
 1. A Debug build of the app installed on the simulator (`bunx expo prebuild
    --platform ios`, then build the `Muqun` scheme for the simulator). There is
    no expo-dev-client in this project, so the app loads its bundle from
    whichever Metro `RCT_jsLocation` points at.
-2. Metro running, e.g. `bunx expo start --port 8096`. The `open` line in the
-   script carries `--metro-host 127.0.0.1 --metro-port 8096`; agent-device
+2. Metro running, e.g. `bunx expo start --port 8098`. The `open` line in the
+   script carries `--metro-host 127.0.0.1 --metro-port 8098`; agent-device
    writes that into the simulator's React Native debug-server prefs before
    launch, so the port only has to match the Metro you started.
 3. **No saved SSH hosts** on that install. The demo host is only offered when
@@ -45,10 +61,10 @@ is authored and replayed as native `.ad` scripts here.
 ## Run it
 
 ```sh
-agent-device --version                       # 0.20.10 is what this was recorded with
-agent-device replay e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ssh-4" --timeout 300000
+agent-device --version                       # 0.20.10 is what this was recorded and last replayed with
+agent-device replay e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-home" --timeout 300000
 # or as a suite entry with a JUnit report:
-agent-device test e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ssh-4" \
+agent-device test e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-home" \
   --artifacts-dir dist/e2e-reports/agent-device --reporter junit:dist/e2e-reports/agent-device/junit.xml
 ```
 
@@ -68,11 +84,11 @@ agent-device daemon"; run `agent-device daemon stop --clean` first.
 ## Re-recording
 
 ```sh
-agent-device open dev.osuki.muqun --platform ios --device "muqun-ssh-4" \
-  --metro-host 127.0.0.1 --metro-port 8096 --relaunch \
+agent-device open dev.osuki.muqun --platform ios --device "muqun-home" \
+  --metro-host 127.0.0.1 --metro-port 8098 --relaunch \
   --save-script=e2e/agent-device/ssh-demo.ad
 # … press/wait with selectors (never bare @refs), fix app state with --no-record …
-agent-device wait 'role=button label="Open Demo shell"'   # the destination guard
+agent-device wait 'role=button label="Open SSH host Demo shell"'   # the destination guard
 agent-device session save-script --force
 ```
 
