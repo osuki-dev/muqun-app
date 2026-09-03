@@ -9,6 +9,10 @@ dist/
 # Maestro e2e reports and per-run artifacts (already under dist/, kept explicit
 # so the path is not accidentally un-ignored when dist/ is narrowed).
 dist/e2e-reports/
+# agent-device's own artifact root: `agent-device test` writes each attempt's
+# capture here when it is run without `--artifacts-dir`. Run output, like the
+# reports above.
+.agent-device/
 credentials.json
 eas.json.tmp
 web-build/

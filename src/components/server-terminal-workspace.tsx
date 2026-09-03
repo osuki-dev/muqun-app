@@ -6,7 +6,6 @@ import {
   Keyboard as KeyboardIcon,
   Paperclip,
   PenLine,
-  Send,
   SquareTerminal,
   X,
   Zap,
@@ -27,7 +26,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -64,6 +62,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SwitchIndicator } from '@/components/switch-indicator';
 import { TerminalBoundary } from '@/components/terminal-boundary';
+import { composerStyles, TerminalComposer } from '@/components/terminal-composer';
 import { TerminalPanel } from '@/components/terminal-output';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { WorkspaceTitleSwitcher } from '@/components/workspace-title-switcher';
@@ -127,8 +126,10 @@ import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer'
 import { asAgentWidgetStatus, syncAgentWidget } from '@/lib/agent-widget';
 import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
+import { demoSshHost } from '@/lib/demo-ssh';
 import { field, numberField, panelTitle, statusColor } from '@/lib/herdr-entity';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { sshHomeRows } from '@/lib/ssh-home';
 import type { PaneAddress } from '@/lib/pane-address';
 import {
   hasEarlierPaneParts,
@@ -176,6 +177,7 @@ import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useSshHostsStore } from '@/stores/ssh-hosts';
 import {
   type TerminalKey,
   INSERT_MODE_KEYS,
@@ -1401,14 +1403,6 @@ export function ServerTerminalWorkspace({
   // mode-only blue-grey literals.
   const chromeText = theme.colors.text;
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
-  const chromeGlassQuiet = withAlpha(
-    theme.colors.text,
-    appChrome.opacity.chromeControlQuiet
-  );
-  // The composer is the app's only raw TextInput; every other field is <Input>,
-  // which reads this token itself. Resolving it here rather than naming a colour
-  // is what keeps the two from drifting apart again.
-  const placeholderText = theme.colors[theme.components.Input.placeholder];
 
   // Clearing belongs here rather than in the poller: opening a sheet over the
   // terminal unfocuses this screen, and blanking on every refocus made the
@@ -2109,6 +2103,17 @@ export function ServerTerminalWorkspace({
     });
   }
 
+  // The saved SSH hosts, for the rail's own group under the servers. Hydrated
+  // here as well as on the home list, since on a Pad this screen *is* the
+  // home; the demo host rides along while the demo is on, as it does there.
+  const sshHosts = useSshHostsStore((state) => state.hosts);
+  const sshHostsLoading = useSshHostsStore((state) => state.loading);
+  const hydrateSshHosts = useSshHostsStore((state) => state.hydrate);
+  useEffect(() => {
+    if (sshHostsLoading) void hydrateSshHosts();
+  }, [hydrateSshHosts, sshHostsLoading]);
+  const railSshHosts = sshHostsLoading ? [] : sshHomeRows(sshHosts, demoMode ? demoSshHost() : null);
+
   const railServers = useMemo<GatewayRecord[]>(() => {
     if (!routeRecord || records.some((server) => server.serverId === routeRecord.serverId)) {
       return records;
@@ -2582,6 +2587,11 @@ export function ServerTerminalWorkspace({
           onSelectAgent={selectPadAgent}
           onPairServer={() => router.push('/explore')}
           onOpenSettings={() => router.push('/settings')}
+          onOpenSsh={() => router.push('/ssh')}
+          sshHosts={railSshHosts}
+          // The shell cannot open in this column: the workspace is keyed by
+          // the selected gateway record, so a host leaves for its own screen.
+          onSelectSshHost={(host) => router.navigate(`/ssh/${host.id}`)}
         />
       }
       detailTitle={detailTitle}
@@ -3113,45 +3123,44 @@ export function ServerTerminalWorkspace({
                 giving up `esc` and the chords to do it. `dock.composer` is what
                 decides now, and it accounts for both. */}
             {dock.composer ? (
-              <Animated.View
+              <TerminalComposer
                 entering={fadeInDown('short')}
                 exiting={fadeOutDown('short')}
                 layout={dockRowLayout}
-                style={[styles.composer, { backgroundColor: chromeGlassQuiet }]}>
-                {dock.attachEntry ? (
-                  <PressableScale
-                    accessibilityLabel={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
-                    // A file picked now would join a message that is already on
-                    // its way out, so the menu closes for the length of the send.
-                    disabled={!selectedPane || sending}
-                    onPress={() => setAttachmentMenuOpen((open) => !open)}
-                    style={[
-                      styles.composerButton,
-                      { backgroundColor: chromeGlass },
-                      attachmentMenuOpen ? { backgroundColor: theme.colors.primarySubtle } : null,
-                    ]}>
-                    <Paperclip size={17} color={theme.colors.primary} />
-                  </PressableScale>
-                ) : null}
-                <TextInput
-                  testID="terminal-composer-input"
-                  value={draft}
-                  onChangeText={setDraft}
+                leading={
+                  dock.attachEntry ? (
+                    <PressableScale
+                      accessibilityLabel={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
+                      // A file picked now would join a message that is already on
+                      // its way out, so the menu closes for the length of the send.
+                      disabled={!selectedPane || sending}
+                      onPress={() => setAttachmentMenuOpen((open) => !open)}
+                      style={[
+                        composerStyles.button,
+                        { backgroundColor: chromeGlass },
+                        attachmentMenuOpen ? { backgroundColor: theme.colors.primarySubtle } : null,
+                      ]}>
+                      <Paperclip size={17} color={theme.colors.primary} />
+                    </PressableScale>
+                  ) : null
+                }
+                inputProps={{
+                  testID: 'terminal-composer-input',
+                  value: draft,
+                  onChangeText: setDraft,
                   // The picker follows the caret, and takes Esc from a hardware
                   // keyboard. Both are inert when no catalog is in hand.
-                  {...slashPopup.inputProps}
+                  ...slashPopup.inputProps,
                   // Both popups read the caret: the slash picker through its own
                   // inputProps handler, the @ mention trigger through `caret`.
                   // The spread must not eat the second one.
-                  onSelectionChange={(event) => {
+                  onSelectionChange: (event) => {
                     slashPopup.inputProps.onSelectionChange(event);
                     setCaret(event.nativeEvent.selection.start);
-                  }}
-                  editable={connection.phase === 'connected' && Boolean(selectedPane) && !sending}
-                  multiline
-                  maxLength={64 * 1024}
-                  autoCapitalize="sentences"
-                  autoCorrect={false}
+                  },
+                  editable: connection.phase === 'connected' && Boolean(selectedPane) && !sending,
+                  maxLength: 64 * 1024,
+                  autoCapitalize: 'sentences',
                   // Names the surface, never the pane. The agent's name is already
                   // in the header a few points above this field, and repeating it
                   // here cost more than it said: a real agent title -- "分析
@@ -3161,34 +3170,24 @@ export function ServerTerminalWorkspace({
                   // on the one screen where
                   // vertical space is worth most -- and on the Pad's compact
                   // composer, which the tablet branch hit independently.
-                  placeholder={
-                    selectedAgent
-                      ? t`Send a message`
-                      : fullScreenPane
+                  placeholder: selectedAgent
+                    ? t`Send a message`
+                    : fullScreenPane
                       ? t`Type into this editor`
-                      : t`Run a terminal command`
-                  }
-                  placeholderTextColor={placeholderText}
-                  selectionColor={theme.colors.primary}
-                  style={[styles.input, { color: chromeText }]}
-                />
-                <ComposerSendButton
-                  accessibilityLabel={selectedAgent ? t`Send to agent` : t`Run command`}
-                  armed={Boolean(hasSendableContent && selectedPane)}
-                  sending={sending}
-                  disabled={
+                      : t`Run a terminal command`,
+                }}
+                send={{
+                  accessibilityLabel: selectedAgent ? t`Send to agent` : t`Run command`,
+                  armed: Boolean(hasSendableContent && selectedPane),
+                  sending,
+                  disabled:
                     connection.phase !== 'connected'
                     || !hasSendableContent
                     || !selectedPane
-                    || sending
-                  }
-                  onPress={() => void sendInput()}
-                  armedFill={theme.colors.primary}
-                  restFill={chromeGlass}
-                  restText={theme.colors.textMuted}
-                  activeText={theme.colors.onPrimary}
-                />
-              </Animated.View>
+                    || sending,
+                  onPress: () => void sendInput(),
+                }}
+              />
             ) : null}
             </AnimatedSafeAreaView>
             </GlassChrome>
@@ -3317,83 +3316,6 @@ function PaneChip({
           </Text>
         </Animated.View>
       </View>
-    </PressableScale>
-  );
-}
-
-/**
- * Send, which has three things to say and used to say all of them in one frame:
- * whether there is anything to send, whether a send is in flight, and -- by the
- * fill -- how much attention it wants.
- *
- * The fill rides the button token. The glyph and the spinner cross-fade rather
- * than swap, because a spinner appearing exactly where an arrow was, on the
- * same frame, reads as the arrow having broken.
- */
-function ComposerSendButton({
-  accessibilityLabel,
-  armed,
-  sending,
-  disabled,
-  onPress,
-  armedFill,
-  restFill,
-  restText,
-  activeText,
-}: {
-  accessibilityLabel: string;
-  /** There is something to send, and somewhere to send it. */
-  armed: boolean;
-  sending: boolean;
-  disabled: boolean;
-  onPress: () => void;
-  armedFill: string;
-  restFill: string;
-  restText: string;
-  activeText: string;
-}) {
-  const armedValue = useSharedValue(armed ? 1 : 0);
-  const sendingValue = useSharedValue(sending ? 1 : 0);
-  useEffect(() => {
-    armedValue.value = withTiming(armed ? 1 : 0, timing('button'));
-  }, [armed, armedValue]);
-  useEffect(() => {
-    sendingValue.value = withTiming(sending ? 1 : 0, timing('button'));
-  }, [sending, sendingValue]);
-
-  const fillStyle = useAnimatedStyle(() => ({ opacity: armedValue.value }));
-  const restGlyphStyle = useAnimatedStyle(() => ({
-    opacity: (1 - armedValue.value) * (1 - sendingValue.value),
-  }));
-  const armedGlyphStyle = useAnimatedStyle(() => ({
-    opacity: armedValue.value * (1 - sendingValue.value),
-  }));
-  const spinnerStyle = useAnimatedStyle(() => ({ opacity: sendingValue.value }));
-
-  return (
-    <PressableScale
-      accessibilityLabel={accessibilityLabel}
-      disabled={disabled}
-      onPress={onPress}
-      style={[styles.composerButton, { backgroundColor: restFill }]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          styles.composerButtonFill,
-          { backgroundColor: armedFill },
-          fillStyle,
-        ]}
-      />
-      <Animated.View style={[StyleSheet.absoluteFill, styles.composerButtonGlyph, restGlyphStyle]}>
-        <Send size={18} color={restText} />
-      </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.composerButtonGlyph, armedGlyphStyle]}>
-        <Send size={18} color={activeText} />
-      </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.composerButtonGlyph, spinnerStyle]}>
-        <Spinner size="sm" color={activeText} />
-      </Animated.View>
     </PressableScale>
   );
 }
@@ -3934,19 +3856,6 @@ const styles = StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 2,
   },
-  composer: {
-    minHeight: 50,
-    maxHeight: 150,
-    borderRadius: appChrome.radius.composerField,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-    // The faint fill is supplied at render time from the active pack.
-  },
   composerPopup: {
     width: '100%',
     maxWidth: 840,
@@ -4128,34 +4037,9 @@ const styles = StyleSheet.create({
   terminalKeyEmphasisText: {
     fontWeight: '700',
   },
-  input: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 126,
-    paddingHorizontal: 4,
-    paddingVertical: 10,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 14,
-    lineHeight: 19,
-    textAlignVertical: 'top',
-  },
   viewToggle: {
     width: 46,
     height: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  composerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: appChrome.radius.roundControl,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  composerButtonFill: {
-    borderRadius: appChrome.radius.roundControl,
-  },
-  composerButtonGlyph: {
     alignItems: 'center',
     justifyContent: 'center',
   },

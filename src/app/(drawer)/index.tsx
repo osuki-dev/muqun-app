@@ -1,7 +1,7 @@
 import { Button, Card, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
-import { Play, ScanLine, Server, Settings, SquareTerminal } from 'lucide-react-native';
+import { ChevronRight, Play, ScanLine, Server, Settings, SquareTerminal } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -23,10 +23,12 @@ import { PadServerRail } from '@/components/pad-server-rail';
 import { PressableScale } from '@/components/pressable-scale';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
 import { ServerAgentRows } from '@/components/server-agent-rows';
+import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
-import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
+import { DEMO_SERVER_ID, isDemoRecord } from '@/lib/demo-gateway';
+import { demoSshHost } from '@/lib/demo-ssh';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import {
@@ -40,9 +42,12 @@ import {
   reachabilityFromProbe,
   type ServerReachability,
 } from '@/lib/server-reachability';
+import { sshHomeRows } from '@/lib/ssh-home';
+import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useSshHostsStore } from '@/stores/ssh-hosts';
 
 const brandMark = require('../../../assets/images/loading-mark.png');
 
@@ -109,6 +114,28 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   useEffect(() => {
     void hydrateServerAgents();
   }, [hydrateServerAgents]);
+
+  // The saved SSH hosts, read here as well as on `/ssh`: a host already
+  // configured is one tap from this screen, not two. Nothing SSH is drawn
+  // until the keychain has answered -- a section that appears empty and then
+  // fills is the flicker the server skeleton above exists to avoid, and an
+  // SSH section has no skeleton because most installs have no hosts at all.
+  const sshHosts = useSshHostsStore((state) => state.hosts);
+  const sshLoading = useSshHostsStore((state) => state.loading);
+  const hydrateSshHosts = useSshHostsStore((state) => state.hydrate);
+  useEffect(() => {
+    if (sshLoading) void hydrateSshHosts();
+  }, [hydrateSshHosts, sshLoading]);
+  // The demo host rides along only while the demo is on, which on a phone is
+  // never by the time this screen is back (the server header hangs it up on
+  // the way out) and on a Pad is exactly while the demo workspace is beside
+  // the rail -- see `ssh-home.ts`.
+  const sshRows = sshLoading ? [] : sshHomeRows(sshHosts, isDemoRecord(record) ? demoSshHost() : null);
+
+  // Read at render because the SSH rows' "last connected" is relative to
+  // *now*; `ServerCard` makes the same call for the same reason.
+  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  const nowMs = Date.now();
 
   // Unpairing a server has to take its agent names and its status with it, and
   // this catches every route to that -- Settings > SERVERS, the drawer, a
@@ -203,6 +230,12 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
     router.navigate({ pathname: '/servers/[serverId]', params: { serverId: DEMO_SERVER_ID } } as Href);
   }
 
+  // The shell screen connects on mount, the same way it does from `/ssh`, so
+  // a row here is the whole trip: no list in between.
+  function openSshHost(host: SshHostRecord) {
+    router.navigate(`/ssh/${host.id}`);
+  }
+
   return (
     <AppDrawer
       padRail={
@@ -215,6 +248,10 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             onSelectAgent={(server, agent) => openServer(server.serverId, agent.paneId)}
             onPairServer={() => router.push('/explore')}
             onOpenSettings={() => router.push('/settings')}
+            onOpenSsh={() => router.push('/ssh')}
+            sshHosts={sshRows}
+            onSelectSshHost={openSshHost}
+            nowMs={nowMs}
           />
         ) : undefined
       }>
@@ -248,6 +285,12 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
         <View style={styles.headerActions}>
+          {/* A plain shell on any machine with sshd, beside the gateway
+              entries rather than among them: it pairs nothing and needs no
+              herdr, so it is the one door here that is not about a gateway. */}
+          <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
+            <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
+          </HeaderButton>
           <HeaderButton
             label={t`Scan a gateway QR`}
             onPress={() => router.push('/explore')}>
@@ -414,6 +457,51 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             />
           ))}
         </View>
+
+        {/* The saved SSH hosts, under the gateways and apart from them: a
+            gateway hands the app a workspace, an SSH host is a machine with
+            sshd, and the two are added and trusted in different ways -- see
+            `SshHostList` for why they are not one list. Absent entirely until
+            there is a host to show, so a reader who has never added one is not
+            told about the feature by an empty heading; the header's SSH
+            button is the door to that. The eyebrow is the one place this
+            screen labels a group, because here there are two. */}
+        {sshRows.length > 0 ? (
+          <Animated.View
+            entering={riseIn(records.length * STAGGER.card)}
+            layout={listLayout()}
+            style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
+            testID="home-ssh-hosts">
+            <View style={styles.sshHeading}>
+              <Text variant="label" color={theme.colors.textMuted}>
+                <Trans>SSH hosts</Trans>
+              </Text>
+              {/* The way to the list this section is a view of: adding,
+                  editing and forgetting a host happen there, not here. */}
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Manage SSH hosts`}
+                hitSlop={8}
+                onPress={() => router.push('/ssh')}
+                style={styles.sshManage}>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  <Trans>Manage</Trans>
+                </Text>
+                <ChevronRight size={14} color={theme.colors.textMuted} strokeWidth={2} />
+              </PressableScale>
+            </View>
+            <View style={styles.sshList}>
+              {sshRows.map((host) => (
+                <SshHostRow
+                  key={host.id}
+                  record={host}
+                  nowMs={nowMs}
+                  onOpen={() => openSshHost(host)}
+                />
+              ))}
+            </View>
+          </Animated.View>
+        ) : null}
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
       </KeyboardAwareScrollView>
@@ -1076,5 +1164,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  // The gap above comes from `cardGap` at the call site, and only when there
+  // is a card above to gap from.
+  sshSection: {
+    gap: 10,
+  },
+  sshHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  sshManage: {
+    minHeight: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  // The same gap the list on `/ssh` uses between its rows.
+  sshList: {
+    gap: 10,
   },
 });

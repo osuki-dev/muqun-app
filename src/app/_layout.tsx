@@ -147,6 +147,14 @@ function RootContent() {
               name="servers/[serverId]"
               options={{ animation: 'slide_from_bottom' }}
             />
+            {/*
+              SSH: the host list and one host's shell, both on the root stack
+              and both rising from the bottom for the same reasons as the
+              terminal above -- the shell screen reuses its canvas and its
+              horizontal panning, and the list is the door to it.
+            */}
+            <Stack.Screen name="ssh" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="ssh/[hostId]" options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen
               name="commands"
               options={{

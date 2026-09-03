@@ -1,0 +1,22 @@
+context platform=ios device="muqun-home" kind=simulator theme=unknown
+open "dev.osuki.muqun" --relaunch --platform ios --metro-host 127.0.0.1 --metro-port 8098
+wait "text" "Try the demo"
+press "role=\"button\" label=\"SSH\" || label=\"SSH\""
+wait "stable" 800 10000
+wait "role=button label=\"Open SSH host Demo shell\""
+press "role=\"button\" label=\"Open SSH host Demo shell\" || label=\"Open SSH host Demo shell\""
+wait "stable" 800 10000
+wait "role=button label=\"Disconnect from Demo shell\""
+wait "text" "Connected to demo@demo.invalid"
+press "role=\"button\" label=\"Send Enter\" || label=\"Send Enter\""
+wait "stable" 800 10000
+wait "role=button label=\"Disconnect from Demo shell\""
+press "id=\"ssh-composer-input\""
+wait "stable" 800 10000
+type "hello"
+press "role=\"button\" label=\"Run command\" || label=\"Run command\""
+wait "stable" 800 10000
+wait "role=button label=\"Disconnect from Demo shell\""
+press "role=\"button\" label=\"Go back\" || label=\"Go back\""
+wait "stable" 800 10000
+wait "role=button label=\"Open SSH host Demo shell\""

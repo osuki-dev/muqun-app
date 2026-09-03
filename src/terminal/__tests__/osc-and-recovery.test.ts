@@ -122,12 +122,10 @@ describe('malformed / unsupported sequence recovery', () => {
     expect(frame.lines[0].cells.map((c) => c.text).join('').trimEnd()).toBe('visible');
   });
 
-  // DEVIATION: write() has no cross-call parser state, so an escape sequence
-  // split across two writes is not reassembled — the incomplete first half is
-  // dropped and the second half prints literally. Our gateway feed always hands
-  // over whole frames, so this streaming case cannot occur in practice; skipped
-  // rather than reworked into a stateful byte-at-a-time parser.
-  test.skip('an escape sequence split across two write() calls is reassembled', () => {
+  // `write` holds an unfinished sequence for the next call (the SSH shell feeds
+  // it a byte stream cut at arbitrary points); `stream.test.ts` has the full
+  // chunk-boundary suite, this is the one case that used to be a deviation.
+  test('an escape sequence split across two write() calls is reassembled', () => {
     const term = emulator(20, 2);
     term.write(`${CSI}3`);
     term.write('1mX');

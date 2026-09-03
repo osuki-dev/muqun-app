@@ -2,18 +2,31 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
-import { ChevronRight, ScanLine, Server, Settings } from 'lucide-react-native';
+import {
+  ChevronRight,
+  Fingerprint,
+  KeyRound,
+  Lock,
+  ScanLine,
+  Server,
+  Settings,
+  ShieldCheck,
+  SquareTerminal,
+} from 'lucide-react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ServerAgentRows } from '@/components/server-agent-rows';
+import { useSshHostAgeLabel } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { duplicatePadServerRailLabels } from '@/lib/pad-server-rail';
 import { type ServerAgent, type ServerAgentsSnapshot } from '@/lib/server-agents';
 import { type ServerReachability } from '@/lib/server-reachability';
+import { sshHomeAge, sshHomeSubtitle } from '@/lib/ssh-home';
+import type { SshHostRecord } from '@/lib/ssh-hosts';
 
 const brandMark = require('../../assets/images/loading-mark.png');
 
@@ -28,6 +41,24 @@ export type PadServerRailProps = {
   onSelectAgent: (server: GatewayRecord, agent: ServerAgent) => void;
   onPairServer: () => void;
   onOpenSettings: () => void;
+  /**
+   * The SSH hosts, a plain shell on any machine with sshd. Beside the
+   * gateway actions rather than among the servers: it pairs nothing and needs
+   * no herdr. Optional so a caller that has no such door renders none.
+   */
+  onOpenSsh?: () => void;
+  /**
+   * The saved SSH hosts, already in the order the rail should list them
+   * (`sshHomeRows`). Under the gateway servers rather than among them, for
+   * the reason `onOpenSsh` gives. Empty or absent renders no group at all.
+   */
+  sshHosts?: readonly SshHostRecord[];
+  /**
+   * Opens a host's shell. The rail cannot show the shell in the detail column
+   * beside it -- that column is the gateway workspace, keyed by the selected
+   * record -- so the caller navigates to the shell's own screen.
+   */
+  onSelectSshHost?: (host: SshHostRecord) => void;
   /** One clock for every group, so snapshots age consistently. */
   nowMs?: number;
   style?: StyleProp<ViewStyle>;
@@ -51,6 +82,9 @@ export function PadServerRail({
   onSelectAgent,
   onPairServer,
   onOpenSettings,
+  onOpenSsh,
+  sshHosts,
+  onSelectSshHost,
   // eslint-disable-next-line react-hooks/purity -- a shared render-time freshness boundary.
   nowMs = Date.now(),
   style,
@@ -59,6 +93,7 @@ export function PadServerRail({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const duplicateLabels = duplicatePadServerRailLabels(servers.map((server) => server.label));
+  const showsSshHosts = Boolean(sshHosts && sshHosts.length > 0 && onSelectSshHost);
 
   return (
     <SafeAreaView
@@ -120,6 +155,31 @@ export function PadServerRail({
             );
           })
         )}
+
+        {/* The SSH hosts, as their own group under the servers with their own
+            eyebrow: same pill, different door. A gateway entry selects a
+            workspace in the column beside this; an SSH entry leaves for the
+            shell's own screen, and the reader should not be surprised by
+            that. The group is absent until there is a host to list -- the
+            `SSH` action below is where a first one is added. */}
+        {showsSshHosts && sshHosts && onSelectSshHost ? (
+          <View style={styles.group} testID={`${testID}-ssh`}>
+            <View style={styles.groupHeading}>
+              <Text variant="label" color={theme.colors.textMuted}>
+                <Trans>SSH hosts</Trans>
+              </Text>
+            </View>
+            {sshHosts.map((host) => (
+              <SshHostPill
+                key={host.id}
+                host={host}
+                nowMs={nowMs}
+                testID={`${testID}-ssh-${host.id}`}
+                onPress={() => onSelectSshHost(host)}
+              />
+            ))}
+          </View>
+        ) : null}
       </ScrollView>
 
       <View style={styles.actions}>
@@ -129,6 +189,14 @@ export function PadServerRail({
           icon={ScanLine}
           onPress={onPairServer}
         />
+        {onOpenSsh ? (
+          <RailAction
+            label={t`SSH`}
+            detail={t`A shell on any machine with sshd`}
+            icon={SquareTerminal}
+            onPress={onOpenSsh}
+          />
+        ) : null}
         <RailAction
           label={t`Settings`}
           detail={t`Appearance, terminal, security`}
@@ -260,6 +328,76 @@ function ServerGroup({
 }
 
 /**
+ * One SSH host, in the server pill's chassis.
+ *
+ * The same 34pt circle and two-line copy as a server pill, so the group reads
+ * as part of the rail rather than a list pasted under it; what differs is
+ * what the parts say. The glyph is the login method (a key, a fingerprint for
+ * keyboard-interactive, a lock for a password), the shield beside the name is
+ * a pinned host key, and the caption is the address -- which every host shows,
+ * since a host with no address is not a host, where a server shows its URL
+ * only to tell two of the same name apart. The age is spoken, not drawn: a
+ * rail row has one caption line and the address is the one that identifies.
+ */
+function SshHostPill({
+  host,
+  nowMs,
+  testID,
+  onPress,
+}: {
+  host: SshHostRecord;
+  nowMs: number;
+  testID: string;
+  onPress: () => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const address = sshHomeSubtitle(host);
+  const trusted = Boolean(host.trustedHostKey);
+  const lastConnected = useSshHostAgeLabel(sshHomeAge(host, nowMs));
+  const hint = trusted ? `${address} · ${lastConnected} · ${t`Host key trusted`}` : `${address} · ${lastConnected}`;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={t`Open SSH host ${host.label}`}
+      accessibilityHint={hint}
+      testID={testID}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.serverPill,
+        { backgroundColor: pressed ? theme.colors.surfaceRaised : 'transparent' },
+      ]}>
+      <View style={[styles.serverIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
+        {host.auth.type === 'privateKey' ? (
+          <KeyRound size={17} color={theme.colors.textMuted} strokeWidth={2} />
+        ) : host.auth.type === 'keyboardInteractive' ? (
+          <Fingerprint size={17} color={theme.colors.textMuted} strokeWidth={2} />
+        ) : (
+          <Lock size={17} color={theme.colors.textMuted} strokeWidth={2} />
+        )}
+      </View>
+      <View style={styles.serverCopy}>
+        <View style={styles.serverHeadline}>
+          <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.serverName}>
+            {host.label}
+          </Text>
+          {trusted ? (
+            <View importantForAccessibility="no" accessibilityElementsHidden>
+              <ShieldCheck size={13} color={theme.colors.success} strokeWidth={2.2} />
+            </View>
+          ) : null}
+        </View>
+        <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
+          {address}
+        </Text>
+      </View>
+      <ChevronRight size={16} color={theme.colors.textMuted} />
+    </Pressable>
+  );
+}
+
+/**
  * A rail row is a navigator entry, not a card row: one line, no cwd, and short
  * enough that a machine with a dozen panes still fits the window.
  */
@@ -347,6 +485,12 @@ const styles = StyleSheet.create({
   },
   group: {
     gap: 6,
+  },
+  // Inset to the pill's own text edge, so the eyebrow sits over the names
+  // rather than over the icons.
+  groupHeading: {
+    paddingHorizontal: 6,
+    paddingBottom: 2,
   },
   // The pill insets its own icon by `serverPill.paddingHorizontal`, so the pane
   // lights below have to be inset by the same amount to share that left edge.
