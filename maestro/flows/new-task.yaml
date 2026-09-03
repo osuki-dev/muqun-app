@@ -163,7 +163,7 @@ tags: []
 # nothing to assert on -- no greyed row and no explanation:
 #
 #   - tapOn: "Open quick actions"
-#   - assertVisible: "New panel"        # the sheet is otherwise unchanged
+#   - assertVisible: "New terminal"        # the sheet is otherwise unchanged
 #   - assertNotVisible: "New task"
 #   - assertNotVisible: "Stop this agent"
 #

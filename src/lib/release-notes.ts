@@ -26,11 +26,11 @@ export const RELEASE_NOTES: { title: MessageDescriptor; items: MessageDescriptor
     msg`Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together.`,
     msg`Long-press the terminal to select output, drag to extend the selection, and copy it.`,
     msg`The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it.`,
-    msg`Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for.`,
+    msg`Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for.`,
     msg`Muqun speaks eight languages. It follows your phone, or you can choose one in Settings.`,
     msg`Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status.`,
     msg`When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it.`,
     msg`Approve or deny that request straight from the notification, without opening the app.`,
-    msg`New panel now splits the tab you are in, and the phone goes straight to what it made.`,
+    msg`New terminal now splits the group you are in, and the phone goes straight to what it made.`,
   ],
 };

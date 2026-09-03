@@ -86,8 +86,8 @@ msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단을 쓰거나 나중에 다시 시도하세요."
 
 #: src/components/session-map.tsx
-msgid "{panelCount, plural, one {# panel} other {# panels}}"
-msgstr "{panelCount, plural, other {패널 #개}}"
+msgid "{panelCount, plural, one {# running} other {# running}}"
+msgstr "{panelCount, plural, one {# 실행 중} other {# 실행 중}}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -97,9 +97,29 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "이 컴퓨터에서 실행 중인 개발 서버나 미리보기."
+
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "미리보기는 Tailscale 또는 HTTPS 연결에서만 제공됩니다."
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "정보"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "이 터미널을 조작하거나 명령을 보냅니다."
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "이 터미널을 조작하거나 에이전트에 프롬프트를 보냅니다."
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "옆에 터미널을 추가하고 그곳으로 이동합니다."
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -114,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "에이전트 명령"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "에이전트 출력을 일반 텍스트로 표시합니다. 읽기 쉽지만 색은 사라집니다."
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "에이전트 출력을 읽기 좋게 다시 흘려 배치합니다. 색상은 사라집니다."
@@ -154,6 +177,10 @@ msgstr "카메라를 허용하거나 주소를 입력하세요."
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "응답: {0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "{label}이 포트로 제공하는 모든 것 — 개발 서버, 미리보기, 대시보드."
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -290,6 +317,11 @@ msgstr "줄 지우기"
 msgid "Clear terminal"
 msgstr "터미널 지우기"
 
+#: src/components/open-web-service-sheet.tsx
+#: src/components/session-map.tsx
+msgid "Close"
+msgstr "닫기"
+
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "파일 닫기"
@@ -306,17 +338,9 @@ msgstr "언어 목록 닫기"
 msgid "Close new task"
 msgstr "새 작업 닫기"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "웹 서비스 열기 닫기"
-
 #: src/app/explore.tsx
 msgid "Close pairing"
 msgstr "페어링 닫기"
-
-#: src/components/session-map.tsx
-msgid "Close panels"
-msgstr "패널 목록 닫기"
 
 #: src/components/asset-viewer.tsx
 #: src/components/image-preview-modal.tsx
@@ -423,6 +447,10 @@ msgstr "계속"
 #: src/i18n/labels.ts
 msgid "Continue task"
 msgstr "작업 계속"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Control"
+msgstr "Control 키"
 
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
@@ -552,10 +580,6 @@ msgstr "파일을 추가하지 못했습니다"
 msgid "Could not copy that"
 msgstr "복사하지 못했습니다"
 
-#: src/app/commands.tsx
-msgid "Could not create a panel."
-msgstr "패널을 만들지 못했습니다."
-
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "앱 잠금을 켜지 못했습니다"
@@ -573,8 +597,8 @@ msgid "Could not load files."
 msgstr "파일을 불러오지 못했습니다."
 
 #: src/components/session-map.tsx
-msgid "Could not load panels."
-msgstr "패널을 불러오지 못했습니다."
+msgid "Could not load what is running."
+msgstr "실행 중인 것을 불러오지 못했습니다."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
@@ -605,8 +629,8 @@ msgid "Could not reach this server."
 msgstr "이 서버에 연결하지 못했습니다."
 
 #: src/components/server-terminal-workspace.tsx
-msgid "Could not read panel."
-msgstr "패널을 읽지 못했습니다."
+msgid "Could not read the terminal."
+msgstr "터미널을 읽지 못했습니다."
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -631,6 +655,10 @@ msgstr "키를 보내지 못했습니다."
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "단축 명령을 보내지 못했습니다."
+
+#: src/app/commands.tsx
+msgid "Could not start a terminal."
+msgstr "터미널을 시작하지 못했습니다."
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
@@ -768,8 +796,8 @@ msgid "Edit this server"
 msgstr "이 서버 편집"
 
 #: src/lib/release-notes.ts
-msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "에디터 패널에는 vim 전용 키 줄이 놓이며, LazyVim 리더 조합도 함께 들어가고 프로그램이 요청한 색도 그대로 유지됩니다."
+msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "에디터 터미널에는 vim 전용 키 행(LazyVim leader 조합 포함)이 표시되고, 프로그램이 요청한 색을 그대로 유지합니다."
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -894,6 +922,10 @@ msgstr "Gateway URL이 올바르지 않습니다."
 msgid "Git status"
 msgstr "Git 상태"
 
+#: src/app/commands.tsx
+msgid "Give the whole width back to the terminal."
+msgstr "전체 너비를 터미널에 돌려줍니다."
+
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "뒤로 가기"
@@ -905,6 +937,11 @@ msgstr "파일 맨 위로 이동"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "서버 목록으로"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Group {0}. Long press for actions."
+msgstr "그룹 {0}. 길게 눌러 작업 보기."
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -922,6 +959,15 @@ msgstr "{name} 숨기기"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "키보드 숨기기"
+
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "서버 목록 숨기기"
+
+#: src/app/commands.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Hide the simulator"
+msgstr "시뮬레이터 숨기기"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -1005,8 +1051,8 @@ msgid "Keep {label}"
 msgstr "{label} 유지"
 
 #: src/components/settings-alerts.tsx
-msgid "Keep the panel you are watching on the Lock Screen while its agent works."
-msgstr "에이전트가 작업하는 동안 보고 있던 패널을 잠금 화면에 띄워 둡니다."
+msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
+msgstr "에이전트가 작업하는 동안 보고 있던 터미널을 잠금 화면에 유지합니다."
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -1095,6 +1141,10 @@ msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다."
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
+#: src/components/session-map.tsx
+msgid "Loading"
+msgstr "불러오는 중"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "명령 불러오는 중"
@@ -1107,14 +1157,6 @@ msgstr "이전 출력 불러오는 중…"
 msgid "Loading paired devices…"
 msgstr "페어링된 기기를 불러오는 중…"
 
-#: src/components/skia-terminal.tsx
-msgid "Loading panel"
-msgstr "패널 불러오는 중"
-
-#: src/components/session-map.tsx
-msgid "Loading panels"
-msgstr "패널 목록 불러오는 중"
-
 #: src/app/(drawer)/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -1123,6 +1165,10 @@ msgstr "서버 불러오는 중"
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
 msgstr "설정 불러오는 중"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading terminal"
+msgstr "터미널 불러오는 중"
 
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
@@ -1135,6 +1181,14 @@ msgstr "로그"
 #: src/lib/release-notes.ts
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "터미널을 길게 누르면 출력을 선택할 수 있고, 끌어서 범위를 넓힌 뒤 복사할 수 있습니다."
+
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "다시 찾기"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "시뮬레이터를 찾는 중"
 
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
@@ -1217,21 +1271,12 @@ msgid "Never seen"
 msgstr "확인된 적 없음"
 
 #: src/app/commands.tsx
-#: src/components/session-map.tsx
-msgid "New panel"
-msgstr "새 패널"
-
-#: src/lib/release-notes.ts
-msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
-msgstr "새 패널은 이제 지금 있는 탭을 분할하고, 만들어진 패널로 바로 이동합니다."
+msgid "New group"
+msgstr "새 그룹"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "새 단축 명령"
-
-#: src/app/commands.tsx
-msgid "New tab"
-msgstr "새 탭"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1241,6 +1286,15 @@ msgstr "새 작업"
 #: src/components/new-task-action.tsx
 msgid "New task on {label}"
 msgstr "{label}에서 새 작업"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New terminal"
+msgstr "새 터미널"
+
+#: src/lib/release-notes.ts
+msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
+msgstr "이제 ‘새 터미널’은 현재 그룹을 분할하고, 만들어진 곳으로 바로 이동합니다."
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -1290,6 +1344,10 @@ msgstr "작업을 시작할 서버가 없습니다."
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "아직 페어링된 서버가 없습니다"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "{port} 포트에 시뮬레이터가 없습니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1352,18 +1410,9 @@ msgstr "열기"
 msgid "Open {0}"
 msgstr "{0} 열기"
 
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "이 컴퓨터의 포트를 브라우저에서 엽니다."
-
-#: src/app/commands.tsx
-msgid "Open a tab of its own and go to it."
-msgstr "별도의 탭을 열고 그곳으로 이동합니다."
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "웹 서비스 열기"
+#: src/components/session-map.tsx
+msgid "Open {title}. Long press to close."
+msgstr "{title} 열기. 길게 눌러 닫기."
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -1372,6 +1421,11 @@ msgstr "그래도 열기"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "파일 목록 열기"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "브라우저에서 열기"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1384,14 +1438,6 @@ msgstr "Muqun을 열어 연결하세요"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "화면 키보드 열기"
-
-#: src/components/session-map.tsx
-msgid "Open panel {title}. Long press to close."
-msgstr "{title} 패널 열기. 길게 누르면 닫힙니다."
-
-#: src/components/app-drawer.tsx
-msgid "Open panels"
-msgstr "패널 목록 열기"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
@@ -1408,8 +1454,8 @@ msgstr "파일 탐색기 열기"
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
-msgstr "{0} 워크스페이스({1, plural, other {패널 #개}}) 열기. 길게 누르면 닫힙니다."
+msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
+msgstr "작업 공간 {0} 열기, {1, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기."
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -1420,8 +1466,8 @@ msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "GitHub의 Muqun 이슈 트래커를 엽니다."
 
 #: src/components/server-agent-rows.tsx
-msgid "Opens this agent's panel"
-msgstr "이 에이전트의 패널을 엽니다"
+msgid "Opens this agent's terminal"
+msgstr "이 에이전트의 터미널을 엽니다"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -1470,14 +1516,6 @@ msgstr "페어링 코드가 만료되었습니다. 다시 스캔해 새 코드�
 msgid "Pairing failed."
 msgstr "페어링에 실패했습니다."
 
-#: src/app/commands.tsx
-msgid "PANEL COMMANDS"
-msgstr "패널 명령"
-
-#: src/components/session-map.tsx
-msgid "Panels"
-msgstr "패널"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "서버 카드의 패널"
@@ -1511,6 +1549,10 @@ msgstr "이스케이프를 눌러 이 요청 닫기"
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
 msgstr "{0} 미리보기, {status}"
+
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "시뮬레이터 보기"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -1550,10 +1592,6 @@ msgstr "빠른 동작"
 msgid "Quit"
 msgstr "종료"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "{label}에서 실행 중인 서버에 이 휴대폰에서 연결합니다."
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "{SUPPORT_EMAIL}(으)로 문의해 주세요."
@@ -1575,13 +1613,13 @@ msgstr "최근 커밋"
 msgid "Reconnecting · {0}"
 msgstr "다시 연결 중 · {0}"
 
+#: src/components/session-map.tsx
+msgid "Refresh"
+msgstr "새로고침"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "파일 새로 고침"
-
-#: src/components/session-map.tsx
-msgid "Refresh panels"
-msgstr "패널 새로 고침"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -1593,12 +1631,12 @@ msgid "Rename {label}"
 msgstr "{label} 이름 바꾸기"
 
 #: src/components/session-map.tsx
-msgid "Rename panel"
-msgstr "패널 이름 변경"
+msgid "Rename group"
+msgstr "그룹 이름 변경"
 
 #: src/components/session-map.tsx
-msgid "Rename tab"
-msgstr "탭 이름 변경"
+msgid "Rename terminal"
+msgstr "터미널 이름 변경"
 
 #: src/components/session-map.tsx
 msgid "Rename workspace"
@@ -1650,8 +1688,8 @@ msgid "Retry connection"
 msgstr "연결 재시도"
 
 #: src/components/terminal-boundary.tsx
-msgid "Retry drawing the panel"
-msgstr "패널 다시 그리기"
+msgid "Retry drawing the terminal"
+msgstr "터미널 다시 그리기"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
@@ -1708,10 +1746,6 @@ msgstr "해제 중…"
 msgid "Right arrow"
 msgstr "오른쪽 화살표"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "명령이나 키 조합을 실행합니다."
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "터미널 명령 실행"
@@ -1723,6 +1757,10 @@ msgstr "명령 실행"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "관련 테스트 실행"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "그 컴퓨터에서 simfarm을 실행하거나, 어느 포트인지 알려주세요."
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1749,6 +1787,14 @@ msgstr "{0}에 대한 변경 사항 저장"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "단축 명령 저장"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "저장한 명령어"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "저장한 프롬프트"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1819,10 +1865,6 @@ msgstr "{spoken} 보내기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "메시지 보내기"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "이 에이전트에 프롬프트를 보냅니다."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1912,10 +1954,6 @@ msgstr "시프트 탭"
 msgid "Shift Tab, cycle mode"
 msgstr "시프트 탭, 모드 전환"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "단축 명령"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1953,6 +1991,22 @@ msgstr "모든 도구 단계 표시"
 msgid "Show images"
 msgstr "이미지 표시"
 
+#: src/app/commands.tsx
+msgid "Show it beside the terminal, and watch it redraw."
+msgstr "터미널 옆에 표시하고, 다시 그려지는 것을 봅니다."
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "서버 목록 표시"
+
+#: src/components/app-drawer.tsx
+msgid "Show what is running"
+msgstr "실행 중인 것 보기"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "simfarm 포트"
+
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "크기"
@@ -1969,13 +2023,13 @@ msgstr "문제가 발생했습니다"
 msgid "Space"
 msgstr "스페이스"
 
-#: src/app/commands.tsx
-msgid "Split this tab and go to what it makes."
-msgstr "이 탭을 분할하고 만들어진 패널로 이동합니다."
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "오래됨 · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "별도의 그룹을 만들고 그곳으로 이동합니다."
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
@@ -2057,11 +2111,6 @@ msgstr "시스템"
 msgid "Tab"
 msgstr "탭"
 
-#. placeholder {0}: group.tab.title
-#: src/components/session-map.tsx
-msgid "Tab {0}. Long press for actions."
-msgstr "{0} 탭. 길게 누르면 동작 메뉴가 열립니다."
-
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "사진 찍기"
@@ -2075,6 +2124,10 @@ msgstr "터미널"
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
 msgstr "터미널 색상은 테마를 따릅니다."
+
+#: src/app/commands.tsx
+msgid "TERMINAL COMMANDS"
+msgstr "터미널 명령어"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -2138,8 +2191,8 @@ msgid "The server did not return it."
 msgstr "서버가 파일을 돌려주지 않았습니다."
 
 #: src/app/commands.tsx
-msgid "The server did not say which panel it made."
-msgstr "서버가 어떤 패널을 만들었는지 알려주지 않았습니다."
+msgid "The server did not say which terminal it made."
+msgstr "서버가 어떤 터미널을 만들었는지 알려주지 않았습니다."
 
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
@@ -2187,6 +2240,10 @@ msgstr "이 Gateway는 아직 파일을 제공하지 않습니다. Muqun Gateway
 msgid "This gateway has not listed any paired devices."
 msgstr "이 Gateway는 페어링된 기기를 나열하지 않았습니다."
 
+#: src/components/session-map.tsx
+msgid "This group has no terminals."
+msgstr "이 그룹에는 터미널이 없습니다."
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "이 이미지를 불러오지 못했습니다."
@@ -2194,14 +2251,6 @@ msgstr "이 이미지를 불러오지 못했습니다."
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
 msgstr "이 링크는 아무 데도 연결되지 않습니다"
-
-#: src/components/terminal-boundary.tsx
-msgid "This panel could not be drawn."
-msgstr "이 패널을 그리지 못했습니다."
-
-#: src/components/server-terminal-workspace.tsx
-msgid "This panel is no longer available."
-msgstr "이 패널은 더 이상 사용할 수 없습니다."
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -2232,6 +2281,7 @@ msgid "This server has no session to start an agent in."
 msgstr "이 서버에는 에이전트를 시작할 세션이 없습니다."
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "이 서버는 더 이상 페어링되어 있지 않습니다."
@@ -2244,13 +2294,17 @@ msgstr "이 서버는 더 이상 이 기기를 알아보지 못합니다. 다시
 msgid "This server refused the request."
 msgstr "이 서버가 요청을 거부했습니다."
 
-#: src/components/session-map.tsx
-msgid "This tab has no panels."
-msgstr "이 탭에는 패널이 없습니다."
+#: src/components/terminal-boundary.tsx
+msgid "This terminal could not be drawn."
+msgstr "이 터미널을 그릴 수 없습니다."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available."
+msgstr "이 터미널은 더 이상 사용할 수 없습니다."
 
 #: src/components/session-map.tsx
-msgid "This workspace has no tabs yet."
-msgstr "이 워크스페이스에는 아직 탭이 없습니다."
+msgid "This workspace has no groups yet."
+msgstr "이 작업 공간에는 아직 그룹이 없습니다."
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -2402,6 +2456,14 @@ msgstr "네트워크를 기다리는 중입니다."
 msgid "Waiting for uploads to finish…"
 msgstr "업로드가 끝나기를 기다리는 중…"
 
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "이 컴퓨터의 iOS·Android·WeChat 시뮬레이터를 봅니다."
+
+#: src/components/session-map.tsx
+msgid "What is running"
+msgstr "실행 중인 것"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "새로운 기능"
@@ -2422,9 +2484,9 @@ msgstr "작업 중"
 msgid "Workspace"
 msgstr "워크스페이스"
 
-#: src/components/session-map.tsx
-msgid "WORKSPACE"
-msgstr "워크스페이스"
+#: src/components/server-terminal-workspace.tsx
+msgid "Write a line"
+msgstr "한 줄 입력"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"

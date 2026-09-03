@@ -36,6 +36,17 @@ name: launch-home
             text: "(?i).*(Try the demo|Unable to load script).*"
           timeout: 60000
       - openLink: ${E2E_DEV_CLIENT_URL}
+      # iOS asks before handing a custom scheme to an app -- "Open in
+      # <app>?" -- and the link above is a `muqun://` one. Nothing else
+      # dismisses it, so the confirm sat over a home screen that had in fact
+      # loaded, and every flow failed asserting "Try the demo" was visible
+      # while it was plainly behind the dialog. Android delivers the intent
+      # with no prompt, which is why this only bites the iOS dev build.
+      # Optional and matched loosely, for the same reason as the permission
+      # and immersive-mode taps below: wording is the system's, not ours.
+      - tapOn:
+          text: "(?i)^(open|打开)$"
+          optional: true
 - waitForAnimationToEnd:
     timeout: 3000
 # The navigation bar is hidden (card #681), and Android teaches immersive mode

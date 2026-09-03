@@ -86,8 +86,8 @@ msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} は一時的にロックされています。システムの代替認証を使うか、しばらくしてからお試しください。"
 
 #: src/components/session-map.tsx
-msgid "{panelCount, plural, one {# panel} other {# panels}}"
-msgstr "{panelCount, plural, other {# パネル}}"
+msgid "{panelCount, plural, one {# running} other {# running}}"
+msgstr "{panelCount, plural, one {# 実行中} other {# 実行中}}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -97,9 +97,29 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "このマシンで動いている開発サーバーやプレビュー。"
+
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "プレビューは Tailscale または HTTPS 経由でのみ利用できます。"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "アプリについて"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "このターミナルを操作するか、コマンドを送ります。"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "このターミナルを操作するか、エージェントにプロンプトを送ります。"
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "隣にターミナルを追加して、そこへ移動します。"
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -114,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "エージェントコマンド"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "エージェントの出力をプレーンテキストで表示します。読みやすくなりますが、色は失われます。"
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "エージェントの出力を読みやすく折り返します。色は失われます。"
@@ -154,6 +177,10 @@ msgstr "カメラを許可するか、アドレスを入力してください。
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "回答：{0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "{label} がポートで公開しているもの——開発サーバー、プレビュー、ダッシュボードなど。"
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -290,6 +317,11 @@ msgstr "行をクリア"
 msgid "Clear terminal"
 msgstr "ターミナルをクリア"
 
+#: src/components/open-web-service-sheet.tsx
+#: src/components/session-map.tsx
+msgid "Close"
+msgstr "閉じる"
+
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ファイルを閉じる"
@@ -306,17 +338,9 @@ msgstr "言語一覧を閉じる"
 msgid "Close new task"
 msgstr "新規タスクを閉じる"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "「ウェブサービスを開く」を閉じる"
-
 #: src/app/explore.tsx
 msgid "Close pairing"
 msgstr "ペアリングを閉じる"
-
-#: src/components/session-map.tsx
-msgid "Close panels"
-msgstr "パネル一覧を閉じる"
 
 #: src/components/asset-viewer.tsx
 #: src/components/image-preview-modal.tsx
@@ -423,6 +447,10 @@ msgstr "続行"
 #: src/i18n/labels.ts
 msgid "Continue task"
 msgstr "タスクを続行"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Control"
+msgstr "Control キー"
 
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
@@ -552,10 +580,6 @@ msgstr "ファイルを追加できませんでした"
 msgid "Could not copy that"
 msgstr "コピーできませんでした"
 
-#: src/app/commands.tsx
-msgid "Could not create a panel."
-msgstr "パネルを作成できませんでした。"
-
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "アプリロックを有効にできませんでした"
@@ -573,8 +597,8 @@ msgid "Could not load files."
 msgstr "ファイルを読み込めませんでした。"
 
 #: src/components/session-map.tsx
-msgid "Could not load panels."
-msgstr "パネルを読み込めませんでした。"
+msgid "Could not load what is running."
+msgstr "実行中のものを読み込めませんでした。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
@@ -605,8 +629,8 @@ msgid "Could not reach this server."
 msgstr "このサーバーに接続できませんでした。"
 
 #: src/components/server-terminal-workspace.tsx
-msgid "Could not read panel."
-msgstr "パネルを読み取れませんでした。"
+msgid "Could not read the terminal."
+msgstr "ターミナルを読み取れませんでした。"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -631,6 +655,10 @@ msgstr "キーを送信できませんでした。"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "ショートカットを送信できませんでした。"
+
+#: src/app/commands.tsx
+msgid "Could not start a terminal."
+msgstr "ターミナルを開始できませんでした。"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
@@ -768,8 +796,8 @@ msgid "Edit this server"
 msgstr "このサーバーを編集"
 
 #: src/lib/release-notes.ts
-msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "エディタのパネルには vim 専用のキー行が並びます。LazyVim のリーダーキー操作も含まれ、プログラムが指定した色もそのまま残ります。"
+msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "エディタのターミナルには vim 用のキー行（LazyVim の leader 組み合わせを含む）が付き、プログラムが指定した色をそのまま保ちます。"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -894,6 +922,10 @@ msgstr "Gateway の URL が正しくありません。"
 msgid "Git status"
 msgstr "Git ステータス"
 
+#: src/app/commands.tsx
+msgid "Give the whole width back to the terminal."
+msgstr "幅をすべてターミナルに戻します。"
+
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "戻る"
@@ -905,6 +937,11 @@ msgstr "ファイルの先頭へ移動"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "サーバー一覧へ"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Group {0}. Long press for actions."
+msgstr "グループ {0}。長押しで操作。"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -922,6 +959,15 @@ msgstr "{name} を隠す"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "キーボードを隠す"
+
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "サーバー一覧を隠す"
+
+#: src/app/commands.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Hide the simulator"
+msgstr "シミュレータを隠す"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -1005,8 +1051,8 @@ msgid "Keep {label}"
 msgstr "{label} を残す"
 
 #: src/components/settings-alerts.tsx
-msgid "Keep the panel you are watching on the Lock Screen while its agent works."
-msgstr "エージェントの作業中、見ているパネルをロック画面に表示し続けます。"
+msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
+msgstr "エージェントの作業中、見ているターミナルをロック画面に表示し続けます。"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -1095,6 +1141,10 @@ msgstr "認識済みのエージェントが動作しているパネルのみを
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
+#: src/components/session-map.tsx
+msgid "Loading"
+msgstr "読み込み中"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "コマンドを読み込み中"
@@ -1107,14 +1157,6 @@ msgstr "以前の出力を読み込み中…"
 msgid "Loading paired devices…"
 msgstr "ペアリング済みデバイスを読み込み中…"
 
-#: src/components/skia-terminal.tsx
-msgid "Loading panel"
-msgstr "パネルを読み込み中"
-
-#: src/components/session-map.tsx
-msgid "Loading panels"
-msgstr "パネル一覧を読み込み中"
-
 #: src/app/(drawer)/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -1123,6 +1165,10 @@ msgstr "サーバーを読み込み中"
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
 msgstr "設定を読み込み中"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading terminal"
+msgstr "ターミナルを読み込み中"
 
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
@@ -1135,6 +1181,14 @@ msgstr "ログ"
 #: src/lib/release-notes.ts
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "ターミナルを長押しすると出力を選択でき、ドラッグで範囲を広げてコピーできます。"
+
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "もう一度探す"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "シミュレータを探しています"
 
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
@@ -1217,21 +1271,12 @@ msgid "Never seen"
 msgstr "一度も確認されていません"
 
 #: src/app/commands.tsx
-#: src/components/session-map.tsx
-msgid "New panel"
-msgstr "新規パネル"
-
-#: src/lib/release-notes.ts
-msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
-msgstr "「新規パネル」は今いるタブを分割するようになり、作られたパネルへすぐ移動します。"
+msgid "New group"
+msgstr "新しいグループ"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "新規ショートカット"
-
-#: src/app/commands.tsx
-msgid "New tab"
-msgstr "新規タブ"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1241,6 +1286,15 @@ msgstr "新規タスク"
 #: src/components/new-task-action.tsx
 msgid "New task on {label}"
 msgstr "{label} で新規タスク"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New terminal"
+msgstr "新しいターミナル"
+
+#: src/lib/release-notes.ts
+msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
+msgstr "「新しいターミナル」は今いるグループを分割し、作成されたものへ直接移動します。"
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -1290,6 +1344,10 @@ msgstr "タスクを開始できるサーバーがありません。"
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "ペアリング済みのサーバーはまだありません"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "ポート {port} にシミュレータがありません"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1352,18 +1410,9 @@ msgstr "開く"
 msgid "Open {0}"
 msgstr "{0} を開く"
 
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "このマシンのポートをブラウザーで開きます。"
-
-#: src/app/commands.tsx
-msgid "Open a tab of its own and go to it."
-msgstr "専用のタブを開いて移動します。"
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "ウェブサービスを開く"
+#: src/components/session-map.tsx
+msgid "Open {title}. Long press to close."
+msgstr "{title} を開く。長押しで閉じる。"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -1372,6 +1421,11 @@ msgstr "それでも開く"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "ファイル一覧を開く"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "ブラウザで開く"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1384,14 +1438,6 @@ msgstr "牧群を開いて接続"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "ソフトウェアキーボードを開く"
-
-#: src/components/session-map.tsx
-msgid "Open panel {title}. Long press to close."
-msgstr "パネル {title} を開く。長押しで閉じる。"
-
-#: src/components/app-drawer.tsx
-msgid "Open panels"
-msgstr "パネル一覧を開く"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
@@ -1408,8 +1454,8 @@ msgstr "ファイルツリーを開く"
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
-msgstr "ワークスペース {0}（{1, plural, other {# パネル}}）を開く。長押しで閉じる。"
+msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
+msgstr "ワークスペース {0} を開く（{1, plural, one {# 実行中} other {# 実行中}}）。長押しで閉じる。"
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -1420,8 +1466,8 @@ msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "GitHub の牧群（ぼくぐん）イシュートラッカーを開きます。"
 
 #: src/components/server-agent-rows.tsx
-msgid "Opens this agent's panel"
-msgstr "このエージェントのパネルを開きます"
+msgid "Opens this agent's terminal"
+msgstr "このエージェントのターミナルを開きます"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -1470,14 +1516,6 @@ msgstr "ペアリングコードの有効期限が切れました。もう一度
 msgid "Pairing failed."
 msgstr "ペアリングに失敗しました。"
 
-#: src/app/commands.tsx
-msgid "PANEL COMMANDS"
-msgstr "パネルコマンド"
-
-#: src/components/session-map.tsx
-msgid "Panels"
-msgstr "パネル"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "サーバーカードのパネル"
@@ -1511,6 +1549,10 @@ msgstr "エスケープを送ってこのリクエストを閉じる"
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
 msgstr "{0} をプレビュー、{status}"
+
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "シミュレータを見る"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -1550,10 +1592,6 @@ msgstr "クイックアクション"
 msgid "Quit"
 msgstr "終了"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "{label} で動作しているサーバーにこの端末から接続します。"
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "{SUPPORT_EMAIL} までご連絡ください。"
@@ -1575,13 +1613,13 @@ msgstr "最近のコミット"
 msgid "Reconnecting · {0}"
 msgstr "再接続中 · {0}"
 
+#: src/components/session-map.tsx
+msgid "Refresh"
+msgstr "更新"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "ファイルを再読み込み"
-
-#: src/components/session-map.tsx
-msgid "Refresh panels"
-msgstr "パネルを再読み込み"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -1593,12 +1631,12 @@ msgid "Rename {label}"
 msgstr "{label} の名前を変更"
 
 #: src/components/session-map.tsx
-msgid "Rename panel"
-msgstr "パネル名を変更"
+msgid "Rename group"
+msgstr "グループの名前を変更"
 
 #: src/components/session-map.tsx
-msgid "Rename tab"
-msgstr "タブ名を変更"
+msgid "Rename terminal"
+msgstr "ターミナルの名前を変更"
 
 #: src/components/session-map.tsx
 msgid "Rename workspace"
@@ -1650,8 +1688,8 @@ msgid "Retry connection"
 msgstr "接続をやり直す"
 
 #: src/components/terminal-boundary.tsx
-msgid "Retry drawing the panel"
-msgstr "パネルの描画をやり直す"
+msgid "Retry drawing the terminal"
+msgstr "ターミナルの描画をやり直す"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
@@ -1708,10 +1746,6 @@ msgstr "取り消し中…"
 msgid "Right arrow"
 msgstr "右矢印"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "コマンドまたはキーの組み合わせを実行します。"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "ターミナルコマンドを実行"
@@ -1723,6 +1757,10 @@ msgstr "コマンドを実行"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "関連するテストを実行"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "そのマシンで simfarm を起動するか、ポート番号を指定してください。"
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1749,6 +1787,14 @@ msgstr "{0} への変更を保存"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "ショートカットを保存"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "保存したコマンド"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "保存したプロンプト"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1819,10 +1865,6 @@ msgstr "{spoken} を送信"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "メッセージを送信"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "このエージェントにプロンプトを送ります。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1912,10 +1954,6 @@ msgstr "シフト タブ"
 msgid "Shift Tab, cycle mode"
 msgstr "シフト タブ、モードを切り替え"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "ショートカット"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1953,6 +1991,22 @@ msgstr "ツールの手順をすべて表示"
 msgid "Show images"
 msgstr "画像を表示"
 
+#: src/app/commands.tsx
+msgid "Show it beside the terminal, and watch it redraw."
+msgstr "ターミナルの横に表示して、描き直される様子を見ます。"
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "サーバー一覧を表示"
+
+#: src/components/app-drawer.tsx
+msgid "Show what is running"
+msgstr "実行中のものを表示"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "simfarm のポート"
+
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "サイズ"
@@ -1969,13 +2023,13 @@ msgstr "問題が発生しました"
 msgid "Space"
 msgstr "スペース"
 
-#: src/app/commands.tsx
-msgid "Split this tab and go to what it makes."
-msgstr "このタブを分割して、作成したパネルに移動します。"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "古い情報 · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "専用のグループを作って、そこへ移動します。"
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
@@ -2057,11 +2111,6 @@ msgstr "システム設定"
 msgid "Tab"
 msgstr "タブ"
 
-#. placeholder {0}: group.tab.title
-#: src/components/session-map.tsx
-msgid "Tab {0}. Long press for actions."
-msgstr "タブ {0}。長押しで操作を表示。"
-
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "写真を撮る"
@@ -2075,6 +2124,10 @@ msgstr "ターミナル"
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
 msgstr "ターミナルの色はテーマに従います。"
+
+#: src/app/commands.tsx
+msgid "TERMINAL COMMANDS"
+msgstr "ターミナルコマンド"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -2138,8 +2191,8 @@ msgid "The server did not return it."
 msgstr "サーバーから返ってきませんでした。"
 
 #: src/app/commands.tsx
-msgid "The server did not say which panel it made."
-msgstr "サーバーがどのパネルを作成したか返しませんでした。"
+msgid "The server did not say which terminal it made."
+msgstr "サーバーはどのターミナルを作成したか返しませんでした。"
 
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
@@ -2187,6 +2240,10 @@ msgstr "この Gateway はまだファイルを提供していません。セッ
 msgid "This gateway has not listed any paired devices."
 msgstr "この Gateway はペアリング済みデバイスを返していません。"
 
+#: src/components/session-map.tsx
+msgid "This group has no terminals."
+msgstr "このグループにはターミナルがありません。"
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "この画像を読み込めませんでした。"
@@ -2194,14 +2251,6 @@ msgstr "この画像を読み込めませんでした。"
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
 msgstr "このリンクの先には何もありません"
-
-#: src/components/terminal-boundary.tsx
-msgid "This panel could not be drawn."
-msgstr "このパネルを描画できませんでした。"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "This panel is no longer available."
-msgstr "このパネルはもう存在しません。"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -2232,6 +2281,7 @@ msgid "This server has no session to start an agent in."
 msgstr "このサーバーにはエージェントを起動できるセッションがありません。"
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "このサーバーはもうペアリングされていません。"
@@ -2244,13 +2294,17 @@ msgstr "このサーバーはこのデバイスを認識しなくなりました
 msgid "This server refused the request."
 msgstr "このサーバーはリクエストを拒否しました。"
 
-#: src/components/session-map.tsx
-msgid "This tab has no panels."
-msgstr "このタブにはパネルがありません。"
+#: src/components/terminal-boundary.tsx
+msgid "This terminal could not be drawn."
+msgstr "このターミナルは描画できませんでした。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available."
+msgstr "このターミナルはもう利用できません。"
 
 #: src/components/session-map.tsx
-msgid "This workspace has no tabs yet."
-msgstr "このワークスペースにはまだタブがありません。"
+msgid "This workspace has no groups yet."
+msgstr "このワークスペースにはまだグループがありません。"
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -2402,6 +2456,14 @@ msgstr "ネットワークを待っています。"
 msgid "Waiting for uploads to finish…"
 msgstr "アップロードの完了を待っています…"
 
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "このマシンの iOS・Android・WeChat シミュレータを見ます。"
+
+#: src/components/session-map.tsx
+msgid "What is running"
+msgstr "実行中のもの"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新着情報"
@@ -2422,9 +2484,9 @@ msgstr "作業中"
 msgid "Workspace"
 msgstr "ワークスペース"
 
-#: src/components/session-map.tsx
-msgid "WORKSPACE"
-msgstr "ワークスペース"
+#: src/components/server-terminal-workspace.tsx
+msgid "Write a line"
+msgstr "一行入力"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"

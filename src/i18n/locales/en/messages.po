@@ -86,8 +86,8 @@ msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} is temporarily locked. Use the system fallback or try later."
 
 #: src/components/session-map.tsx
-msgid "{panelCount, plural, one {# panel} other {# panels}}"
-msgstr "{panelCount, plural, one {# panel} other {# panels}}"
+msgid "{panelCount, plural, one {# running} other {# running}}"
+msgstr "{panelCount, plural, one {# running} other {# running}}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -97,9 +97,29 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "+{overflow} more"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "A dev server or preview running on this machine."
+
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "A preview is only offered over Tailscale or HTTPS."
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "About"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "Act on this terminal, or send it a command."
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "Act on this terminal, or send its agent a prompt."
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "Add a terminal beside this one, and go to it."
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -114,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "AGENT COMMANDS"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "Agent output as plain text. Easier to read, no colour."
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "Agent output reflowed for reading. Colour is lost."
@@ -154,6 +177,10 @@ msgstr "Allow the camera, or enter the address instead."
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Answer: {0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -290,6 +317,11 @@ msgstr "Clear line"
 msgid "Clear terminal"
 msgstr "Clear terminal"
 
+#: src/components/open-web-service-sheet.tsx
+#: src/components/session-map.tsx
+msgid "Close"
+msgstr "Close"
+
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Close file"
@@ -306,17 +338,9 @@ msgstr "Close language picker"
 msgid "Close new task"
 msgstr "Close new task"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "Close open a web service"
-
 #: src/app/explore.tsx
 msgid "Close pairing"
 msgstr "Close pairing"
-
-#: src/components/session-map.tsx
-msgid "Close panels"
-msgstr "Close panels"
 
 #: src/components/asset-viewer.tsx
 #: src/components/image-preview-modal.tsx
@@ -423,6 +447,10 @@ msgstr "Continue"
 #: src/i18n/labels.ts
 msgid "Continue task"
 msgstr "Continue task"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Control"
+msgstr "Control"
 
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
@@ -552,10 +580,6 @@ msgstr "Could not add a file"
 msgid "Could not copy that"
 msgstr "Could not copy that"
 
-#: src/app/commands.tsx
-msgid "Could not create a panel."
-msgstr "Could not create a panel."
-
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Could not enable App Lock"
@@ -573,8 +597,8 @@ msgid "Could not load files."
 msgstr "Could not load files."
 
 #: src/components/session-map.tsx
-msgid "Could not load panels."
-msgstr "Could not load panels."
+msgid "Could not load what is running."
+msgstr "Could not load what is running."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
@@ -605,8 +629,8 @@ msgid "Could not reach this server."
 msgstr "Could not reach this server."
 
 #: src/components/server-terminal-workspace.tsx
-msgid "Could not read panel."
-msgstr "Could not read panel."
+msgid "Could not read the terminal."
+msgstr "Could not read the terminal."
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -631,6 +655,10 @@ msgstr "Could not send key."
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Could not send shortcut."
+
+#: src/app/commands.tsx
+msgid "Could not start a terminal."
+msgstr "Could not start a terminal."
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
@@ -768,8 +796,8 @@ msgid "Edit this server"
 msgstr "Edit this server"
 
 #: src/lib/release-notes.ts
-msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -894,6 +922,10 @@ msgstr "Gateway URL is not valid."
 msgid "Git status"
 msgstr "Git status"
 
+#: src/app/commands.tsx
+msgid "Give the whole width back to the terminal."
+msgstr "Give the whole width back to the terminal."
+
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "Go back"
@@ -905,6 +937,11 @@ msgstr "Go to the top of the file"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "Go to your servers"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Group {0}. Long press for actions."
+msgstr "Group {0}. Long press for actions."
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -922,6 +959,15 @@ msgstr "Hide {name}"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
+
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "Hide the server list"
+
+#: src/app/commands.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Hide the simulator"
+msgstr "Hide the simulator"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -1005,8 +1051,8 @@ msgid "Keep {label}"
 msgstr "Keep {label}"
 
 #: src/components/settings-alerts.tsx
-msgid "Keep the panel you are watching on the Lock Screen while its agent works."
-msgstr "Keep the panel you are watching on the Lock Screen while its agent works."
+msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
+msgstr "Keep the terminal you are watching on the Lock Screen while its agent works."
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -1095,6 +1141,10 @@ msgstr "List only the panes running a recognised agent."
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/session-map.tsx
+msgid "Loading"
+msgstr "Loading"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Loading commands"
@@ -1107,14 +1157,6 @@ msgstr "Loading earlier output…"
 msgid "Loading paired devices…"
 msgstr "Loading paired devices…"
 
-#: src/components/skia-terminal.tsx
-msgid "Loading panel"
-msgstr "Loading panel"
-
-#: src/components/session-map.tsx
-msgid "Loading panels"
-msgstr "Loading panels"
-
 #: src/app/(drawer)/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -1123,6 +1165,10 @@ msgstr "Loading servers"
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
 msgstr "Loading settings"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading terminal"
+msgstr "Loading terminal"
 
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
@@ -1135,6 +1181,14 @@ msgstr "Logs"
 #: src/lib/release-notes.ts
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "Long-press the terminal to select output, drag to extend the selection, and copy it."
+
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "Look again"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "Looking for a simulator"
 
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
@@ -1217,21 +1271,12 @@ msgid "Never seen"
 msgstr "Never seen"
 
 #: src/app/commands.tsx
-#: src/components/session-map.tsx
-msgid "New panel"
-msgstr "New panel"
-
-#: src/lib/release-notes.ts
-msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
-msgstr "New panel now splits the tab you are in, and the phone goes straight to what it made."
+msgid "New group"
+msgstr "New group"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "NEW SHORTCUT"
-
-#: src/app/commands.tsx
-msgid "New tab"
-msgstr "New tab"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1241,6 +1286,15 @@ msgstr "New task"
 #: src/components/new-task-action.tsx
 msgid "New task on {label}"
 msgstr "New task on {label}"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New terminal"
+msgstr "New terminal"
+
+#: src/lib/release-notes.ts
+msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
+msgstr "New terminal now splits the group you are in, and the phone goes straight to what it made."
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -1290,6 +1344,10 @@ msgstr "No server to start a task on."
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "No servers paired yet"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "No simulator on port {port}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1352,18 +1410,9 @@ msgstr "Open"
 msgid "Open {0}"
 msgstr "Open {0}"
 
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "Open a port on this machine in your browser."
-
-#: src/app/commands.tsx
-msgid "Open a tab of its own and go to it."
-msgstr "Open a tab of its own and go to it."
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "Open a web service"
+#: src/components/session-map.tsx
+msgid "Open {title}. Long press to close."
+msgstr "Open {title}. Long press to close."
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -1372,6 +1421,11 @@ msgstr "Open anyway"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Open files"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "Open in your browser"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1384,14 +1438,6 @@ msgstr "Open Muqun to connect"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "Open on-screen keyboard"
-
-#: src/components/session-map.tsx
-msgid "Open panel {title}. Long press to close."
-msgstr "Open panel {title}. Long press to close."
-
-#: src/components/app-drawer.tsx
-msgid "Open panels"
-msgstr "Open panels"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
@@ -1408,8 +1454,8 @@ msgstr "Open the file explorer"
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
-msgstr "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
+msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
+msgstr "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -1420,8 +1466,8 @@ msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "Opens the Muqun issue tracker on GitHub."
 
 #: src/components/server-agent-rows.tsx
-msgid "Opens this agent's panel"
-msgstr "Opens this agent's panel"
+msgid "Opens this agent's terminal"
+msgstr "Opens this agent's terminal"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -1470,14 +1516,6 @@ msgstr "Pairing code expired. Scan again for a new code."
 msgid "Pairing failed."
 msgstr "Pairing failed."
 
-#: src/app/commands.tsx
-msgid "PANEL COMMANDS"
-msgstr "PANEL COMMANDS"
-
-#: src/components/session-map.tsx
-msgid "Panels"
-msgstr "Panels"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Panes on server cards"
@@ -1511,6 +1549,10 @@ msgstr "Press Escape to dismiss this request"
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
 msgstr "Preview {0}, {status}"
+
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "Preview a simulator"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -1550,10 +1592,6 @@ msgstr "Quick actions"
 msgid "Quit"
 msgstr "Quit"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "Reach a server running on {label} from this phone."
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "Reach us at {SUPPORT_EMAIL}."
@@ -1575,13 +1613,13 @@ msgstr "Recent commits"
 msgid "Reconnecting · {0}"
 msgstr "Reconnecting · {0}"
 
+#: src/components/session-map.tsx
+msgid "Refresh"
+msgstr "Refresh"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "Refresh files"
-
-#: src/components/session-map.tsx
-msgid "Refresh panels"
-msgstr "Refresh panels"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -1593,12 +1631,12 @@ msgid "Rename {label}"
 msgstr "Rename {label}"
 
 #: src/components/session-map.tsx
-msgid "Rename panel"
-msgstr "Rename panel"
+msgid "Rename group"
+msgstr "Rename group"
 
 #: src/components/session-map.tsx
-msgid "Rename tab"
-msgstr "Rename tab"
+msgid "Rename terminal"
+msgstr "Rename terminal"
 
 #: src/components/session-map.tsx
 msgid "Rename workspace"
@@ -1650,8 +1688,8 @@ msgid "Retry connection"
 msgstr "Retry connection"
 
 #: src/components/terminal-boundary.tsx
-msgid "Retry drawing the panel"
-msgstr "Retry drawing the panel"
+msgid "Retry drawing the terminal"
+msgstr "Retry drawing the terminal"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
@@ -1708,10 +1746,6 @@ msgstr "Revoking…"
 msgid "Right arrow"
 msgstr "Right arrow"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "Run a command or key combo."
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "Run a terminal command"
@@ -1723,6 +1757,10 @@ msgstr "Run command"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "Run relevant tests"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "Run simfarm on that machine, or say which port it is on."
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1749,6 +1787,14 @@ msgstr "Save changes to {0}"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Save shortcut"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "SAVED COMMANDS"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "SAVED PROMPTS"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1819,10 +1865,6 @@ msgstr "Send {spoken}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "Send a message"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "Send a prompt to this agent."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1912,10 +1954,6 @@ msgstr "Shift Tab"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab, cycle mode"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "SHORTCUTS"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1953,6 +1991,22 @@ msgstr "Show every tool step"
 msgid "Show images"
 msgstr "Show images"
 
+#: src/app/commands.tsx
+msgid "Show it beside the terminal, and watch it redraw."
+msgstr "Show it beside the terminal, and watch it redraw."
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "Show the server list"
+
+#: src/components/app-drawer.tsx
+msgid "Show what is running"
+msgstr "Show what is running"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "simfarm port"
+
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "Size"
@@ -1969,13 +2023,13 @@ msgstr "Something went wrong"
 msgid "Space"
 msgstr "Space"
 
-#: src/app/commands.tsx
-msgid "Split this tab and go to what it makes."
-msgstr "Split this tab and go to what it makes."
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "stale · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "Start a group of its own, and go to it."
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
@@ -2057,11 +2111,6 @@ msgstr "System"
 msgid "Tab"
 msgstr "Tab"
 
-#. placeholder {0}: group.tab.title
-#: src/components/session-map.tsx
-msgid "Tab {0}. Long press for actions."
-msgstr "Tab {0}. Long press for actions."
-
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Take photo"
@@ -2075,6 +2124,10 @@ msgstr "Terminal"
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
 msgstr "Terminal colours follow the theme."
+
+#: src/app/commands.tsx
+msgid "TERMINAL COMMANDS"
+msgstr "TERMINAL COMMANDS"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -2138,8 +2191,8 @@ msgid "The server did not return it."
 msgstr "The server did not return it."
 
 #: src/app/commands.tsx
-msgid "The server did not say which panel it made."
-msgstr "The server did not say which panel it made."
+msgid "The server did not say which terminal it made."
+msgstr "The server did not say which terminal it made."
 
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
@@ -2187,6 +2240,10 @@ msgstr "This gateway does not serve files yet. Update the Muqun gateway plugin t
 msgid "This gateway has not listed any paired devices."
 msgstr "This gateway has not listed any paired devices."
 
+#: src/components/session-map.tsx
+msgid "This group has no terminals."
+msgstr "This group has no terminals."
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "This image could not be loaded."
@@ -2194,14 +2251,6 @@ msgstr "This image could not be loaded."
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
 msgstr "This link goes nowhere"
-
-#: src/components/terminal-boundary.tsx
-msgid "This panel could not be drawn."
-msgstr "This panel could not be drawn."
-
-#: src/components/server-terminal-workspace.tsx
-msgid "This panel is no longer available."
-msgstr "This panel is no longer available."
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -2232,6 +2281,7 @@ msgid "This server has no session to start an agent in."
 msgstr "This server has no session to start an agent in."
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "This server is no longer paired."
@@ -2244,13 +2294,17 @@ msgstr "This server no longer recognises this device. Pair it again to reconnect
 msgid "This server refused the request."
 msgstr "This server refused the request."
 
-#: src/components/session-map.tsx
-msgid "This tab has no panels."
-msgstr "This tab has no panels."
+#: src/components/terminal-boundary.tsx
+msgid "This terminal could not be drawn."
+msgstr "This terminal could not be drawn."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available."
+msgstr "This terminal is no longer available."
 
 #: src/components/session-map.tsx
-msgid "This workspace has no tabs yet."
-msgstr "This workspace has no tabs yet."
+msgid "This workspace has no groups yet."
+msgstr "This workspace has no groups yet."
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -2402,6 +2456,14 @@ msgstr "Waiting for the network."
 msgid "Waiting for uploads to finish…"
 msgstr "Waiting for uploads to finish…"
 
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "Watch this machine's iOS, Android or WeChat simulator."
+
+#: src/components/session-map.tsx
+msgid "What is running"
+msgstr "What is running"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "What's new"
@@ -2422,9 +2484,9 @@ msgstr "Working"
 msgid "Workspace"
 msgstr "Workspace"
 
-#: src/components/session-map.tsx
-msgid "WORKSPACE"
-msgstr "WORKSPACE"
+#: src/components/server-terminal-workspace.tsx
+msgid "Write a line"
+msgstr "Write a line"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"
