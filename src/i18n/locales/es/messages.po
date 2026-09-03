@@ -113,6 +113,10 @@ msgstr "Un servidor de desarrollo o una vista previa en esta máquina."
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "La vista previa solo se ofrece a través de Tailscale o HTTPS."
 
+#: src/lib/release-notes.ts
+msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
+msgstr "La clave de un servidor se recuerda la primera vez y se comprueba siempre después; si cambia, la conexión se detiene hasta que tú digas lo contrario."
+
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "Una shell en cualquier máquina con sshd"
@@ -234,10 +238,6 @@ msgstr "Aprobar"
 #: src/i18n/labels.ts
 msgid "Approve and don't ask again"
 msgstr "Aprobar y no volver a preguntar"
-
-#: src/lib/release-notes.ts
-msgid "Approve or deny that request straight from the notification, without opening the app."
-msgstr "Aprueba o deniega esa solicitud directamente desde la notificación, sin abrir la app."
 
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
@@ -912,10 +912,6 @@ msgstr "Editar host SSH"
 msgid "Edit this server"
 msgstr "Editar este servidor"
 
-#: src/lib/release-notes.ts
-msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "Los terminales de editor tienen la fila de teclas de vim, incluidas las combinaciones leader de LazyVim, y conservan los colores que pidió el programa."
-
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Intro"
@@ -993,10 +989,6 @@ msgstr "Huella"
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
 msgstr "PRIMER PROMPT"
-
-#: src/lib/release-notes.ts
-msgid "Five theme packs — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repaint the app and the terminal together."
-msgstr "Cinco paquetes de temas — Osuki, Catppuccin, Rosé Pine, Everforest, Tokyo Night — repintan la app y el terminal a la vez."
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -1107,10 +1099,6 @@ msgstr "Ocultar el simulador"
 msgid "Home screen widget"
 msgstr "Widget en la pantalla de inicio"
 
-#: src/lib/release-notes.ts
-msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
-msgstr "El inicio, los Ajustes y la pantalla del servidor se han rediseñado: cada servidor enumera los agentes que ejecutaba por última vez, con su estado."
-
 #: src/components/ssh-host-form.tsx
 msgid "Host"
 msgstr "Host"
@@ -1212,6 +1200,10 @@ msgstr "Mantén en la pantalla de bloqueo el terminal que estás viendo mientras
 #: src/app/commands.tsx
 msgid "Keys"
 msgstr "Teclas"
+
+#: src/lib/release-notes.ts
+msgid "Keys are generated on the device and never leave it."
+msgstr "Las claves se generan en el dispositivo y nunca salen de él."
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -1337,10 +1329,6 @@ msgstr "Cargando la transcripción"
 msgid "Logs"
 msgstr "Logs"
 
-#: src/lib/release-notes.ts
-msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
-msgstr "Mantén pulsado el terminal para seleccionar la salida, arrastra para ampliar la selección y cópiala."
-
 #: src/components/simfarm-preview.tsx
 msgid "Look again"
 msgstr "Buscar de nuevo"
@@ -1408,8 +1396,8 @@ msgid "Muqun settings stay on this device."
 msgstr "Los ajustes de Muqun se quedan en este dispositivo."
 
 #: src/lib/release-notes.ts
-msgid "Muqun speaks eight languages. It follows your phone, or you can choose one in Settings."
-msgstr "Muqun habla ocho idiomas. Sigue a tu teléfono, o eliges uno en los Ajustes."
+msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
+msgstr "Muqun habla SSH. Guarda un host, tócalo en la pantalla de inicio y ya estás en un shell de verdad: contraseña, clave o un código de tu autenticador."
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -1468,10 +1456,6 @@ msgstr "Nueva tarea en {label}"
 #: src/components/session-map.tsx
 msgid "New terminal"
 msgstr "Nuevo terminal"
-
-#: src/lib/release-notes.ts
-msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
-msgstr "Nuevo terminal ahora divide el grupo en el que estás, y el teléfono va directo a lo que creó."
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -2441,6 +2425,10 @@ msgstr "Esa respuesta no llegó al agente."
 msgid "That code was refused. Hold still for a new one."
 msgstr "Ese código fue rechazado. Mantén el pulso para leer otro."
 
+#: src/lib/release-notes.ts
+msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
+msgstr "Ese shell es la terminal que ya conoces: el mismo teclado, la misma fila de teclas, los mismos colores y el teclado del propio teléfono cuando prefieras escribir."
+
 #: src/components/settings-servers.tsx
 msgid "The address is where this paired server is reached. Changing it does not unpair the device."
 msgstr "La dirección es el lugar donde se accede a este servidor vinculado. Cambiarla no desvincula el dispositivo."
@@ -2473,10 +2461,6 @@ msgstr "La conexión se cortó."
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "No se pudo leer la clave ({0}). Revisa la clave y su frase de contraseña."
-
-#: src/lib/release-notes.ts
-msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
-msgstr "El teclado en pantalla está dispuesto como un teclado de verdad, y cada tecla se envía en el momento en que la pulsas."
 
 #: src/app/commands.tsx
 #: src/i18n/labels.ts
@@ -2809,10 +2793,6 @@ msgstr "Qué se está ejecutando"
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Novedades"
-
-#: src/lib/release-notes.ts
-msgid "When an agent asks permission, Muqun redraws the question as a card and clears the composer until you answer it."
-msgstr "Cuando un agente pide permiso, Muqun vuelve a dibujar la pregunta como una tarjeta y deja vacía la zona de escritura hasta que respondas."
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
