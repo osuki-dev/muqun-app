@@ -81,6 +81,14 @@ msgstr "{0}분 전"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· #번 확인 요청}}"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
+msgstr "{host}이(가) 저장된 키와 다른 키를 제시했습니다. 재설치 후에 일어나는 일이지만, 연결이 가로채기당할 때도 일어납니다. 바뀐 이유를 모른다면 교체하지 마세요."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "{host} presented a key this app has not seen before. Compare the fingerprint with the server before trusting it."
+msgstr "{host}이(가) 이 앱이 처음 보는 키를 제시했습니다. 신뢰하기 전에 서버의 지문과 비교하세요."
+
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단을 쓰거나 나중에 다시 시도하세요."
@@ -105,6 +113,10 @@ msgstr "이 컴퓨터에서 실행 중인 개발 서버나 미리보기."
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "미리보기는 Tailscale 또는 HTTPS 연결에서만 제공됩니다."
 
+#: src/components/pad-server-rail.tsx
+msgid "A shell on any machine with sshd"
+msgstr "sshd가 있는 어떤 머신에서든 쓰는 셸"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "정보"
@@ -117,13 +129,25 @@ msgstr "이 터미널을 조작하거나 명령을 보냅니다."
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "이 터미널을 조작하거나 에이전트에 프롬프트를 보냅니다."
 
+#: src/components/ssh-host-list.tsx
+msgid "Add a host"
+msgstr "호스트 추가"
+
 #: src/app/commands.tsx
 msgid "Add a terminal beside this one, and go to it."
 msgstr "옆에 터미널을 추가하고 그곳으로 이동합니다."
 
+#: src/components/ssh-host-list.tsx
+msgid "Add an SSH host"
+msgstr "SSH 호스트 추가"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "명령과 사용자 지정 조합 키를 추가합니다."
+
+#: src/components/ssh-host-form.tsx
+msgid "Add this line to ~/.ssh/authorized_keys on the server:"
+msgstr "이 줄을 서버의 ~/.ssh/authorized_keys에 추가하세요:"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -173,6 +197,10 @@ msgstr "카메라 허용"
 msgid "Allow the camera, or enter the address instead."
 msgstr "카메라를 허용하거나 주소를 입력하세요."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Answer"
+msgstr "답변"
+
 #. placeholder {0}: option.label
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
@@ -211,6 +239,10 @@ msgstr "승인하고 다시 묻지 않기"
 msgid "Approve or deny that request straight from the notification, without opening the app."
 msgstr "그 요청은 앱을 열지 않고 알림에서 바로 승인하거나 거부할 수 있습니다."
 
+#: src/components/ssh-host-form.tsx
+msgid "Ask each time"
+msgstr "매번 묻기"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "Gateway에 해당 코드를 확인하는 중입니다."
@@ -247,6 +279,10 @@ msgstr "인증에 실패했습니다. 다시 시도하세요."
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 시스템 설정을 확인하세요."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back"
+msgstr "뒤로"
+
 #: src/i18n/labels.ts
 msgid "Back one word"
 msgstr "한 단어 뒤로"
@@ -254,6 +290,10 @@ msgstr "한 단어 뒤로"
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "서버 목록으로"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to SSH hosts"
+msgstr "SSH 호스트 목록으로"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -280,14 +320,25 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
+#: src/components/ssh-host-form.tsx
+#: src/components/ssh-terminal-workspace.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "취소"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancel connecting to {0}"
+msgstr "{0} 연결 취소"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Cancel editing {0}"
 msgstr "{0} 편집 취소"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancelled"
+msgstr "취소됨"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -408,6 +459,11 @@ msgstr "작게"
 msgid "Confirm pairing"
 msgstr "페어링 확인"
 
+#. placeholder {0}: record.label
+#: src/components/ssh-host-form.tsx
+msgid "Confirm removing {0}"
+msgstr "{0} 제거 확인"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "Confirm revoke {0}"
@@ -430,17 +486,26 @@ msgstr "확인: {removeLabel} {label}"
 msgid "Connected"
 msgstr "연결됨"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connected to {address}"
+msgstr "{address}에 연결됨"
+
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Connecting"
 msgstr "연결 중"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connecting to {address}"
+msgstr "{address}에 연결하는 중"
+
 #: src/app/settings.tsx
 msgid "Contact us"
 msgstr "문의하기"
 
 #: src/app/explore.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Continue"
 msgstr "계속"
 
@@ -568,13 +633,25 @@ msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 msgid "Copy"
 msgstr "복사"
 
+#: src/components/ssh-host-form.tsx
+msgid "Copy public key"
+msgstr "공개 키 복사"
+
 #: src/app/explore.tsx
 msgid "Copy the install command"
 msgstr "설치 명령어 복사"
 
+#: src/components/ssh-host-form.tsx
+msgid "Copy the public key"
+msgstr "공개 키를 복사"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "파일을 추가하지 못했습니다"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not connect"
+msgstr "연결할 수 없습니다"
 
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
@@ -583,6 +660,10 @@ msgstr "복사하지 못했습니다"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "앱 잠금을 켜지 못했습니다"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not generate a key"
+msgstr "키를 생성할 수 없습니다"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -632,6 +713,10 @@ msgstr "이 서버에 연결하지 못했습니다."
 msgid "Could not read the terminal."
 msgstr "터미널을 읽지 못했습니다."
 
+#: src/components/ssh-host-form.tsx
+msgid "Could not remove host"
+msgstr "호스트를 제거할 수 없습니다"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "기기를 해제하지 못했습니다"
@@ -639,6 +724,14 @@ msgstr "기기를 해제하지 못했습니다"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "변경 사항을 저장하지 못했습니다"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not save host"
+msgstr "호스트를 저장할 수 없습니다"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not send"
+msgstr "보낼 수 없습니다"
 
 #: src/app/commands.tsx
 msgid "Could not send command."
@@ -712,6 +805,10 @@ msgstr "{name} 삭제"
 msgid "Delete this line"
 msgstr "이 줄 삭제"
 
+#: src/lib/demo-ssh.ts
+msgid "Demo shell"
+msgstr "데모 셸"
+
 #: src/lib/demo-gateway.ts
 msgid "Demo workspace"
 msgstr "데모 워크스페이스"
@@ -736,6 +833,20 @@ msgstr "변경 요약"
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "디렉터리"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnect from {0}"
+msgstr "{0} 연결 끊기"
+
+#. placeholder {0}: status.reason
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected · {0}"
+msgstr "연결 끊김 · {0}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected."
+msgstr "연결이 끊겼습니다."
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
@@ -782,14 +893,20 @@ msgstr "각 기기는 {0}의 토큰을 따로 보관합니다."
 msgid "Edit"
 msgstr "편집"
 
+#. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Edit {0}"
 msgstr "{0} 편집"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
 msgstr "단축 명령 편집"
+
+#: src/components/ssh-host-list.tsx
+msgid "Edit SSH host"
+msgstr "SSH 호스트 편집"
 
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
@@ -840,6 +957,11 @@ msgstr "{0} 펼치기"
 msgid "Expires in {0}:{1}"
 msgstr "{0}:{1} 후 만료"
 
+#. placeholder {0}: status.code
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Failed · {0}"
+msgstr "실패 · {0}"
+
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
 msgstr "파일 멘션"
@@ -863,6 +985,10 @@ msgstr "이 워크스페이스의 파일"
 #: src/i18n/labels.ts
 msgid "Find a file by name"
 msgstr "이름으로 파일 찾기"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Fingerprint"
+msgstr "지문"
 
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
@@ -917,6 +1043,14 @@ msgstr "Gateway URL"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Gateway URL이 올바르지 않습니다."
+
+#: src/components/ssh-host-form.tsx
+msgid "Generate an Ed25519 key"
+msgstr "Ed25519 키 생성"
+
+#: src/components/ssh-host-form.tsx
+msgid "Generating…"
+msgstr "생성 중…"
 
 #: src/i18n/labels.ts
 msgid "Git status"
@@ -977,6 +1111,19 @@ msgstr "홈 화면 위젯"
 msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
 msgstr "홈, 설정, 서버 화면을 다시 설계했습니다. 각 서버가 마지막으로 실행한 에이전트가 상태와 함께 나열됩니다."
 
+#: src/components/ssh-host-form.tsx
+msgid "Host"
+msgstr "호스트"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Host key changed"
+msgstr "호스트 키가 바뀌었습니다"
+
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Host key trusted"
+msgstr "호스트 키 신뢰됨"
+
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "대기"
@@ -1032,6 +1179,14 @@ msgstr "카메라를 찾았지만 화면이 나오지 않았습니다. 다른 �
 msgid "Its details are stored securely on this device; try again."
 msgstr "해당 정보는 이 기기에 안전하게 저장되어 있습니다. 다시 시도하세요."
 
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be removed from secure storage."
+msgstr "해당 정보를 보안 저장소에서 제거할 수 없었습니다."
+
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be written to secure storage."
+msgstr "해당 정보를 보안 저장소에 쓸 수 없었습니다."
+
 #: src/components/settings-servers.tsx
 msgid "Its paired devices are listed once it is the server in use."
 msgstr "사용 중인 서버가 되면 페어링된 기기가 목록에 표시됩니다."
@@ -1072,18 +1227,22 @@ msgid "Large"
 msgstr "크게"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {days}d ago"
 msgstr "마지막 연결: {days}일 전"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {hours}h ago"
 msgstr "마지막 연결: {hours}시간 전"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {minutes}m ago"
 msgstr "마지막 연결: {minutes}분 전"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected just now"
 msgstr "마지막 연결: 방금"
 
@@ -1194,6 +1353,14 @@ msgstr "시뮬레이터를 찾는 중"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 사무실"
 
+#: src/app/(drawer)/index.tsx
+msgid "Manage"
+msgstr "관리"
+
+#: src/app/(drawer)/index.tsx
+msgid "Manage SSH hosts"
+msgstr "SSH 호스트 관리"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
@@ -1255,6 +1422,7 @@ msgid "Muqun will use {0} when the app opens."
 msgstr "앱을 열면 Muqun이 {0}을(를) 사용합니다."
 
 #: src/app/commands.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "이름"
 
@@ -1263,6 +1431,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "이름을 지정한 뒤 Gateway에 표시된 코드를 입력하세요."
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Never connected"
 msgstr "연결된 적 없음"
 
@@ -1274,9 +1443,17 @@ msgstr "확인된 적 없음"
 msgid "New group"
 msgstr "새 그룹"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "New host key"
+msgstr "새 호스트 키"
+
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "새 단축 명령"
+
+#: src/components/ssh-host-list.tsx
+msgid "New SSH host"
+msgstr "새 SSH 호스트"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1332,6 +1509,10 @@ msgstr "설정된 메일 앱 없음"
 msgid "No output."
 msgstr "출력이 없습니다."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "No password or key is saved for this host."
+msgstr "이 호스트에 저장된 비밀번호나 키가 없습니다."
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "이 형식의 파일은 미리 볼 수 없습니다. 파일은 서버에 그대로 있습니다."
@@ -1348,6 +1529,10 @@ msgstr "아직 페어링된 서버가 없습니다"
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
 msgstr "{port} 포트에 시뮬레이터가 없습니다"
+
+#: src/components/ssh-host-list.tsx
+msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
+msgstr "아직 SSH 호스트가 없습니다. 하나 추가하면 닿을 수 있는 어떤 컴퓨터에서든 셸을 열 수 있습니다."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1368,6 +1553,10 @@ msgstr "연결 안 됨"
 #: src/app/+not-found.tsx
 msgid "Not found"
 msgstr "찾을 수 없음"
+
+#: src/components/ssh-host-form.tsx
+msgid "Not valid."
+msgstr "올바르지 않습니다."
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
@@ -1436,6 +1625,7 @@ msgid "Open Muqun to connect"
 msgstr "Muqun을 열어 연결하세요"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "화면 키보드 열기"
 
@@ -1446,6 +1636,13 @@ msgstr "포트 {recent} 열기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "빠른 동작 열기"
+
+#. placeholder {0}: host.label
+#. placeholder {0}: record.label
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Open SSH host {0}"
+msgstr "SSH 호스트 {0} 열기"
 
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
@@ -1520,6 +1717,22 @@ msgstr "페어링에 실패했습니다."
 msgid "Panes on server cards"
 msgstr "서버 카드의 패널"
 
+#: src/components/ssh-host-form.tsx
+msgid "Passphrase (optional)"
+msgstr "암호 문구(선택)"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password"
+msgstr "비밀번호"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password (leave blank to keep the saved one)"
+msgstr "비밀번호(비워 두면 저장된 값 유지)"
+
+#: src/components/ssh-host-form.tsx
+msgid "Passwords and keys are sealed in the keychain on this device and never leave it."
+msgstr "비밀번호와 키는 이 기기의 키체인에 봉인되며 기기를 떠나지 않습니다."
+
 #: src/i18n/labels.ts
 msgid "Paste"
 msgstr "붙여넣기"
@@ -1534,12 +1747,17 @@ msgid "Photo library"
 msgstr "사진 보관함"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Port"
 msgstr "포트"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "포트"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Presented now"
+msgstr "지금 제시됨"
 
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
@@ -1558,6 +1776,14 @@ msgstr "시뮬레이터 보기"
 msgid "Privacy policy"
 msgstr "개인정보 처리방침"
 
+#: src/components/ssh-host-form.tsx
+msgid "Private key"
+msgstr "개인 키"
+
+#: src/components/ssh-host-form.tsx
+msgid "Private key (leave blank to keep the saved one)"
+msgstr "개인 키(비워 두면 저장된 값 유지)"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "프롬프트"
@@ -1565,6 +1791,10 @@ msgstr "프롬프트"
 #: src/components/settings-security.tsx
 msgid "Protect paired servers and terminal sessions."
 msgstr "페어링된 서버와 터미널 세션을 보호합니다."
+
+#: src/components/ssh-host-form.tsx
+msgid "Public key copied"
+msgstr "공개 키를 복사했습니다"
 
 #: src/i18n/labels.ts
 msgid "Pull"
@@ -1608,6 +1838,15 @@ msgstr "에이전트의 응답 대기 알림과 Gateway 소식을 받습니다."
 msgid "Recent commits"
 msgstr "최근 커밋"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect"
+msgstr "다시 연결"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect to {0}"
+msgstr "{0}에 다시 연결"
+
 #. placeholder {0}: status.attempt
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
@@ -1622,9 +1861,15 @@ msgid "Refresh files"
 msgstr "파일 새로 고침"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} 제거"
+
+#: src/components/ssh-host-form.tsx
+msgid "Remove host"
+msgstr "호스트 제거"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -1650,6 +1895,10 @@ msgstr "터미널로 표시"
 msgid "Render as text"
 msgstr "텍스트로 표시"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Replace key"
+msgstr "키 교체"
+
 #: src/app/settings.tsx
 msgid "Report a bug or request a feature"
 msgstr "버그 신고 또는 기능 제안"
@@ -1661,6 +1910,10 @@ msgstr "요청에 실패했습니다."
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "앱을 실행할 때와 백그라운드에서 30초가 지난 뒤에 인증을 요구합니다."
+
+#: src/components/ssh-host-form.tsx
+msgid "Required."
+msgstr "필수입니다."
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -1747,10 +2000,12 @@ msgid "Right arrow"
 msgstr "오른쪽 화살표"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "터미널 명령 실행"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
 msgstr "명령 실행"
 
@@ -1768,6 +2023,7 @@ msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코�
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Save"
 msgstr "저장"
 
@@ -1779,14 +2035,24 @@ msgstr "자주 쓰는 명령이나 키 조합을 저장합니다."
 msgid "Save a prompt you send this agent often."
 msgstr "이 에이전트에 자주 보내는 프롬프트를 저장합니다."
 
+#. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Save changes to {0}"
 msgstr "{0}에 대한 변경 사항 저장"
+
+#: src/components/ssh-host-form.tsx
+msgid "Save host"
+msgstr "호스트 저장"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "단축 명령 저장"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Saved"
+msgstr "저장됨"
 
 #: src/app/commands.tsx
 msgid "SAVED COMMANDS"
@@ -1797,6 +2063,7 @@ msgid "SAVED PROMPTS"
 msgstr "저장한 프롬프트"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Saving…"
 msgstr "저장 중…"
 
@@ -1859,6 +2126,7 @@ msgid "Select all"
 msgstr "모두 선택"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Send {spoken}"
 msgstr "{spoken} 보내기"
 
@@ -2003,6 +2271,14 @@ msgstr "서버 목록 표시"
 msgid "Show what is running"
 msgstr "실행 중인 것 보기"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Sign in"
+msgstr "로그인"
+
+#: src/components/ssh-host-form.tsx
+msgid "Sign in with"
+msgstr "로그인 방식"
+
 #: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm 포트"
@@ -2022,6 +2298,18 @@ msgstr "문제가 발생했습니다"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "스페이스"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-list.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "SSH"
+msgstr "SSH"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+msgid "SSH hosts"
+msgstr "SSH 호스트"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
@@ -2115,6 +2403,10 @@ msgstr "탭"
 msgid "Take photo"
 msgstr "사진 찍기"
 
+#: src/components/ssh-host-form.tsx
+msgid "Tap again to remove"
+msgstr "한 번 더 탭하면 제거"
+
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -2173,6 +2465,15 @@ msgstr "카메라가 시작되지 않았습니다"
 msgid "The camera reported an error."
 msgstr "카메라에서 오류가 보고되었습니다."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The connection dropped."
+msgstr "연결이 끊어졌습니다."
+
+#. placeholder {0}: failure.code
+#: src/components/ssh-host-form.tsx
+msgid "The key could not be read ({0}). Check the key and its passphrase."
+msgstr "키를 읽을 수 없습니다({0}). 키와 암호 문구를 확인하세요."
+
 #: src/lib/release-notes.ts
 msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
 msgstr "화면 키보드가 진짜 키보드처럼 배열되고, 누르는 순간 그 키가 바로 전송됩니다."
@@ -2186,6 +2487,10 @@ msgstr "원본 패널 그대로, 문자 격자와 고유 색상을 유지합니�
 msgid "The screen hit an error. Try again — your servers stay paired."
 msgstr "이 화면에서 오류가 발생했습니다. 다시 시도하세요. 페어링된 서버는 그대로 유지됩니다."
 
+#: src/components/ssh-host-form.tsx
+msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
+msgstr "연결할 때 서버가 비밀번호나 일회용 코드 등을 직접 묻습니다. 이 기기에는 아무것도 저장되지 않습니다."
+
 #: src/components/server-terminal-workspace.tsx
 msgid "The server did not return it."
 msgstr "서버가 파일을 돌려주지 않았습니다."
@@ -2194,9 +2499,17 @@ msgstr "서버가 파일을 돌려주지 않았습니다."
 msgid "The server did not say which terminal it made."
 msgstr "서버가 어떤 터미널을 만들었는지 알려주지 않았습니다."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The server is asking for more before it lets you in."
+msgstr "서버가 들어가기 전에 추가 정보를 요구합니다."
+
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
 msgstr "서버는 이 기기에 그대로 남아 있습니다. 해당 Gateway가 실행 중인지 확인한 뒤 다시 시도하세요."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The shell exited."
+msgstr "셸이 종료되었습니다."
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
@@ -2244,9 +2557,17 @@ msgstr "이 Gateway는 페어링된 기기를 나열하지 않았습니다."
 msgid "This group has no terminals."
 msgstr "이 그룹에는 터미널이 없습니다."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "This host is no longer saved."
+msgstr "이 호스트는 더 이상 저장되어 있지 않습니다."
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "이 이미지를 불러오지 못했습니다."
+
+#: src/lib/demo-ssh.ts
+msgid "This is a bundled transcript, not a real server."
+msgstr "이것은 번들된 기록이며 실제 서버가 아닙니다."
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -2318,6 +2639,10 @@ msgstr "너무 커서 색을 입힐 수 없습니다. 일반 텍스트로 표시
 msgid "Too many lines to colour. Shown as plain text."
 msgstr "줄이 너무 많아 색을 입힐 수 없습니다. 일반 텍스트로 표시합니다."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Trust"
+msgstr "신뢰"
+
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 msgid "Try again"
@@ -2335,7 +2660,12 @@ msgstr "데모 사용해 보기"
 msgid "Type"
 msgstr "종류"
 
+#: src/lib/demo-ssh.ts
+msgid "Type a line and press Enter; it is echoed back."
+msgstr "한 줄을 입력하고 Enter를 누르면 그대로 돌려줍니다."
+
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Type into this editor"
 msgstr "이 편집기에 입력"
 
@@ -2426,6 +2756,10 @@ msgstr "홈 화면의 스캔 버튼으로 추가하세요."
 msgid "Use this server"
 msgstr "이 서버 사용"
 
+#: src/components/ssh-host-form.tsx
+msgid "Username"
+msgstr "사용자 이름"
+
 #: src/components/settings-servers.tsx
 msgid "USING"
 msgstr "사용 중"
@@ -2485,6 +2819,7 @@ msgid "Workspace"
 msgstr "워크스페이스"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Write a line"
 msgstr "한 줄 입력"
 

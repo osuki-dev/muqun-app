@@ -1,3 +1,39 @@
+/**
+ * The terminal emulator: a byte stream in, a grid of styled cells out.
+ *
+ * ## What the stream is allowed to do
+ *
+ * Everything this module parses comes from the far side of a connection --
+ * the gateway's rendered panes, or, on the SSH screen, a shell on a host
+ * that may be hostile or compromised. The emulator therefore has *no reply
+ * channel and no side effects*: it draws cells, moves the cursor, keeps a
+ * title and marks hyperlinks, and nothing else. In particular:
+ *
+ *  - It never answers the stream. Device attributes (`CSI c`, `ESC Z`),
+ *    status and cursor-position reports (`CSI n`), `DECRQSS`, `XTGETTCAP`,
+ *    window and size reports (`CSI ... t`), colour and clipboard queries --
+ *    all are consumed and produce no output anywhere. Nothing here holds a
+ *    handle to the shell, so a reply is not a thing this module *can* send.
+ *  - Of the OSC commands only 0 and 2 (title) and 8 (hyperlink) do anything.
+ *    52 (clipboard, both directions), 7 (working directory), 9 and 777
+ *    (notifications), 4/10/11 (palette) and everything else are swallowed.
+ *  - A title is plain text: control characters are stripped and it is cut
+ *    at `TERMINAL_TITLE_LIMIT`. A hyperlink is kept only when it is an
+ *    `http(s)` URI no longer than `TERMINAL_LINK_LIMIT` with nothing but
+ *    printable characters in it; a link is never opened by this module --
+ *    `SkiaTerminal` opens one on a tap, and checks it again first.
+ *  - DCS, APC and PM strings are consumed whole and ignored.
+ *  - Every count and position a sequence carries is parsed as an unsigned
+ *    decimal, capped at `CSI_PARAMETER_LIMIT`, and then clamped to the grid,
+ *    so no parameter can address a cell outside it.
+ *  - A string sequence (OSC, DCS, APC, PM) longer than
+ *    `STRING_SEQUENCE_LIMIT` is abandoned where the cap is; what follows is
+ *    ordinary input. A cell's text (a base plus its combining marks) is cut
+ *    at `CELL_TEXT_LIMIT` marks. Scrollback is bounded by the constructor's
+ *    `scrollback`, and the grid by `MAX_GRID_COLUMNS` × `EMULATED_ROW_CAP`.
+ *
+ * `__tests__/hostile-output.test.ts` pins each of these.
+ */
 import { TerminalGrid } from '@/terminal/grid';
 import { DEFAULT_TERMINAL_THEME, type TerminalTheme } from '@/terminal/palette';
 import { applySgrCodes, parseSgrValues } from '@/terminal/sgr';
@@ -37,15 +73,71 @@ type TerminalOptions = {
   theme?: TerminalTheme;
 };
 
+/**
+ * The terminal modes a program flips that change what the *input* side has to
+ * send, rather than how the screen is drawn. Read by whoever encodes keys for
+ * a PTY (`@/lib/ssh-key-bytes`); nothing in the renderer looks at them.
+ */
+export type TerminalModes = {
+  /** DECCKM (`CSI ?1 h/l`): arrows and Home/End go out as `ESC O x`, not `ESC [ x`. */
+  applicationCursorKeys: boolean;
+  /** `CSI ?2004 h/l`: pasted text is to be wrapped in `CSI 200~` … `CSI 201~`. */
+  bracketedPaste: boolean;
+  /**
+   * `CSI ?47 / ?1047 / ?1049 h/l`: the program has taken the alternate screen.
+   * Not an input mode, but the same kind of fact -- what the far side is,
+   * rather than how it is drawn -- and the one true answer to "does this
+   * program own the screen", which a gateway pane can only guess from names.
+   */
+  alternateScreen: boolean;
+};
+
 const CSI_FINAL = /[@-~]/;
 
+/**
+ * The most an OSC, DCS, APC or PM string may run to before it is abandoned.
+ * A real terminal swallows everything until BEL or ST arrives; a stream that
+ * never sends one would otherwise hold every byte after it forever, and one
+ * that sends a terminator only after a hundred megabytes would have the
+ * emulator hold those. Past this the sequence is dropped -- not acted on --
+ * and parsing resumes with what follows as ordinary input. The cap is on the
+ * string wherever the chunk boundaries fall, so a stream cut anywhere still
+ * parses as the uncut text does. The same limit bounds what `write` holds
+ * for a next chunk of any unfinished sequence.
+ */
+const STRING_SEQUENCE_LIMIT = 64 * 1024;
+
+/** A title longer than this is cut; xterm sets no limit, and nobody needs one. */
+export const TERMINAL_TITLE_LIMIT = 256;
+
+/** A hyperlink longer than this is not one. Browsers cope with more; a tap target does not need to. */
+export const TERMINAL_LINK_LIMIT = 2048;
+
+/**
+ * The largest value a CSI parameter can carry; xterm's own ceiling is 65535.
+ * Every use is clamped to the grid anyway; this keeps an absurd count from
+ * being an absurd number of iterations on the way there.
+ */
+const CSI_PARAMETER_LIMIT = 65535;
+
+/**
+ * How many combining marks a cell keeps after its base character. A real
+ * cluster -- a flag, a family emoji, a letter under a few diacritics -- is a
+ * handful of code points; a stream that sends a million marks is filling one
+ * cell's string, and the renderer would shape all of it on every frame.
+ */
+const CELL_TEXT_LIMIT = 32;
+
+/** C0 and C1 controls and DEL: nothing a title or a link may carry. */
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f-\u009f]/gu;
+
 export class TerminalEmulator {
-  readonly columns: number;
-  readonly rows: number;
+  private columnsValue: number;
+  private rowsValue: number;
 
   private readonly maxScrollback: number;
   private readonly convertEol: boolean;
-  private readonly theme: TerminalTheme;
+  private theme: TerminalTheme;
   private main: BufferState;
   private alternate: BufferState;
   private active: BufferState;
@@ -55,16 +147,58 @@ export class TerminalEmulator {
   private autoWrap = true;
   private pendingWrap = false;
   private title: string | null = null;
+  private readonly modeState: TerminalModes = {
+    applicationCursorKeys: false,
+    bracketedPaste: false,
+    alternateScreen: false,
+  };
+  /**
+   * The tail of the last `write` that could not be acted on yet: an escape
+   * sequence whose final byte, or string terminator, is in the next chunk, or
+   * the high half of a surrogate pair. Prepended to the next write, so a
+   * stream cut at any byte parses exactly as the uncut text does.
+   */
+  private pending = '';
+  /**
+   * Whether the last `write` ended inside a run of printable text. A grapheme
+   * cluster can straddle a chunk boundary -- half a flag, an emoji before its
+   * ZWJ partner or skin tone -- and the segmenter only sees the halves
+   * together if the next chunk's first grapheme is offered to the cell the
+   * previous chunk ended on (see `joinPrevious`).
+   */
+  private openRun = false;
 
   constructor(options: TerminalOptions) {
-    this.columns = clamp(options.columns, 2, MAX_GRID_COLUMNS);
-    this.rows = clamp(options.rows, 2, EMULATED_ROW_CAP);
+    this.columnsValue = clamp(options.columns, 2, MAX_GRID_COLUMNS);
+    this.rowsValue = clamp(options.rows, 2, EMULATED_ROW_CAP);
     this.maxScrollback = Math.max(0, options.scrollback ?? 1000);
     this.convertEol = options.convertEol ?? false;
     this.theme = options.theme ?? DEFAULT_TERMINAL_THEME;
     this.main = this.createBuffer(true);
     this.alternate = this.createBuffer(false);
     this.active = this.main;
+  }
+
+  get columns(): number {
+    return this.columnsValue;
+  }
+
+  get rows(): number {
+    return this.rowsValue;
+  }
+
+  /** The input-side modes the program has set; see `TerminalModes`. Live, not a copy. */
+  get modes(): Readonly<TerminalModes> {
+    return this.modeState;
+  }
+
+  /**
+   * The palette SGR colours resolve against from now on. Cells already written
+   * keep the colours they were written with: the grid stores resolved strings,
+   * not palette indices.
+   */
+  setTheme(theme: TerminalTheme): void {
+    this.theme = theme;
   }
 
   reset(): void {
@@ -77,14 +211,35 @@ export class TerminalEmulator {
     this.autoWrap = true;
     this.pendingWrap = false;
     this.title = null;
+    this.modeState.applicationCursorKeys = false;
+    this.modeState.bracketedPaste = false;
+    this.modeState.alternateScreen = false;
+    this.pending = '';
+    this.openRun = false;
   }
 
+  /**
+   * Feeds text. Safe to call with a stream cut anywhere: an incomplete escape
+   * sequence (or half a surrogate pair) at the end is held and completed by
+   * the next call, so the frame after N chunks is the frame after their
+   * concatenation. `flush` is what ends a stream; nothing here assumes one.
+   */
   write(input: string): void {
+    const text = this.pending === '' ? input : this.pending + input;
+    this.pending = '';
+    const joinable = this.openRun;
+    this.openRun = false;
+    const length = text.length;
     let index = 0;
-    while (index < input.length) {
-      const code = input.charCodeAt(index);
+    while (index < length) {
+      const code = text.charCodeAt(index);
       if (code === 0x1b) {
-        index = this.consumeEscape(input, index);
+        const next = this.consumeEscape(text, index, false);
+        if (next < 0) {
+          this.hold(text.slice(index));
+          return;
+        }
+        index = next;
         continue;
       }
       if (code < 0x20 || code === 0x7f) {
@@ -93,14 +248,68 @@ export class TerminalEmulator {
         continue;
       }
       let end = index + 1;
-      while (end < input.length) {
-        const next = input.charCodeAt(end);
+      while (end < length) {
+        const next = text.charCodeAt(end);
         if (next === 0x1b || next < 0x20 || next === 0x7f) break;
         end += 1;
       }
-      for (const grapheme of splitGraphemes(input.slice(index, end))) this.putGrapheme(grapheme);
+      // A high surrogate on the very last code unit is half a code point whose
+      // other half is in the next chunk. Written now it would be a lone
+      // surrogate cell; held, the pair is written whole.
+      const open = end === length;
+      const held = open && isHighSurrogate(text.charCodeAt(end - 1));
+      const run = text.slice(index, held ? end - 1 : end);
+      const graphemes = (index === 0 && joinable ? this.joinPrevious(run) : null) ?? splitGraphemes(run);
+      for (const grapheme of graphemes) this.putGrapheme(grapheme);
+      if (held) {
+        this.pending = text.slice(end - 1);
+        this.openRun = true;
+        return;
+      }
+      this.openRun = open;
       index = end;
     }
+  }
+
+  /**
+   * Ends the stream: whatever `write` was holding for a next chunk that will
+   * not come is handled the way a single `write` of the whole text always
+   * handled its tail -- an unterminated OSC is acted on with what it has, an
+   * unfinished CSI is dropped, a lone surrogate is written as it is. This is
+   * exactly the pre-streaming behaviour, which is what keeps
+   * `parseTerminalSnapshot` (one write, then this) byte-identical.
+   */
+  flush(): void {
+    const rest = this.pending;
+    if (rest === '') return;
+    this.pending = '';
+    if (rest.charCodeAt(0) === 0x1b) this.consumeEscape(rest, 0, true);
+    else for (const grapheme of splitGraphemes(rest)) this.putGrapheme(grapheme);
+  }
+
+  /**
+   * A new grid size, keeping the scrollback.
+   *
+   * No reflow: rows are cut or padded to the new width (a wide glyph cut in
+   * half is blanked), never re-wrapped. Shrinking pushes rows off the top of
+   * the screen into scrollback only as far as is needed to keep the cursor
+   * row and the last row with content on screen -- so a prompt at the top of
+   * an otherwise empty screen stays where it is -- and growing pulls rows back
+   * out of scrollback to fill the new space, so a shrink followed by the same
+   * grow is a round trip. The alternate screen has no scrollback and simply
+   * loses rows off its top, which is what every full-screen program expects: it
+   * repaints on SIGWINCH. Scroll margins are reset, as xterm resets them.
+   */
+  resize(columns: number, rows: number): void {
+    const nextColumns = clamp(columns, 2, MAX_GRID_COLUMNS);
+    const nextRows = clamp(rows, 2, EMULATED_ROW_CAP);
+    if (nextColumns === this.columnsValue && nextRows === this.rowsValue) return;
+    this.resizeBuffer(this.main, nextColumns, nextRows);
+    this.resizeBuffer(this.alternate, nextColumns, nextRows);
+    this.columnsValue = nextColumns;
+    this.rowsValue = nextRows;
+    this.pendingWrap = false;
+    this.openRun = false;
   }
 
   frame(): TerminalFrame {
@@ -142,20 +351,56 @@ export class TerminalEmulator {
     };
   }
 
-  private consumeEscape(input: string, start: number): number {
+  private resizeBuffer(buffer: BufferState, columns: number, rows: number): void {
+    const grid = buffer.grid;
+    let shift: number;
+    if (rows < this.rowsValue) {
+      const needed = Math.max(buffer.cursorY, grid.lastScreenRowWithContent()) + 1;
+      shift = Math.max(0, needed - rows);
+    } else {
+      shift = -Math.min(grid.scrollbackCount(), rows - this.rowsValue);
+    }
+    buffer.grid = grid.resized(columns, rows, shift);
+    buffer.cursorY = clamp(buffer.cursorY - shift, 0, rows - 1);
+    buffer.cursorX = clamp(buffer.cursorX, 0, columns - 1);
+    buffer.savedCursorY = clamp(buffer.savedCursorY - shift, 0, rows - 1);
+    buffer.savedCursorX = clamp(buffer.savedCursorX, 0, columns - 1);
+    buffer.scrollTop = 0;
+    buffer.scrollBottom = rows - 1;
+  }
+
+  /**
+   * Keeps an unfinished sequence for the next write, within the limit. A
+   * string sequence never reaches the limit here -- `consumeEscape` abandons
+   * it at the cap -- so what can exceed it is a CSI whose final byte never
+   * comes, and that is dropped as `flush` would drop it.
+   */
+  private hold(rest: string): void {
+    this.pending = rest.length > STRING_SEQUENCE_LIMIT ? '' : rest;
+  }
+
+  /**
+   * Handles the escape sequence at `start` and returns the index after it, or
+   * -1 when the sequence is not complete in `input` -- unless `atEnd`, in
+   * which case there is no more input coming and the sequence is dealt with
+   * as it stands: an OSC acts on what it has, everything else is dropped.
+   */
+  private consumeEscape(input: string, start: number, atEnd: boolean): number {
     const introducer = input[start + 1];
-    if (!introducer) return input.length;
+    if (!introducer) return atEnd ? input.length : -1;
     if (introducer === '[') {
       let end = start + 2;
       while (end < input.length && !CSI_FINAL.test(input[end])) end += 1;
-      if (end >= input.length) return input.length;
+      if (end >= input.length) return atEnd ? input.length : -1;
       this.handleCsi(input.slice(start + 2, end), input[end]);
       return end + 1;
     }
     if (introducer === ']' || introducer === 'P' || introducer === '^' || introducer === '_') {
-      let end = start + 2;
+      const payloadStart = start + 2;
+      const cap = payloadStart + STRING_SEQUENCE_LIMIT;
+      let end = payloadStart;
       let terminatorLength = 0;
-      while (end < input.length) {
+      while (end < input.length && end < cap) {
         if (input.charCodeAt(end) === 0x07) {
           terminatorLength = 1;
           break;
@@ -166,10 +411,17 @@ export class TerminalEmulator {
         }
         end += 1;
       }
-      if (introducer === ']') this.handleOsc(input.slice(start + 2, end));
+      // Over the cap with no terminator in sight: the string is abandoned
+      // here and whatever follows is ordinary input (see the module notes).
+      if (terminatorLength === 0 && end >= cap) return cap;
+      if (terminatorLength === 0 && !atEnd) return -1;
+      if (introducer === ']') this.handleOsc(input.slice(payloadStart, end));
       return Math.min(input.length, end + terminatorLength);
     }
-    if ('()#%*+-./'.includes(introducer)) return Math.min(input.length, start + 3);
+    if ('()#%*+-./'.includes(introducer)) {
+      if (start + 2 >= input.length && !atEnd) return -1;
+      return Math.min(input.length, start + 3);
+    }
     this.handleEscape(introducer);
     return start + 2;
   }
@@ -201,12 +453,18 @@ export class TerminalEmulator {
     else if (final === 'c') this.reset();
   }
 
+  /**
+   * Only the title (0, 2) and hyperlinks (8) are acted on; every other OSC --
+   * the clipboard (52), the working directory (7), notifications (9, 777),
+   * palette queries (4, 10, 11), semantic prompts (133) and any number this
+   * module has never heard of -- is swallowed without effect.
+   */
   private handleOsc(value: string): void {
     const separator = value.indexOf(';');
     if (separator < 0) return;
     const command = value.slice(0, separator);
     if (command === '0' || command === '2') {
-      this.title = value.slice(separator + 1);
+      this.title = sanitizeTerminalTitle(value.slice(separator + 1));
     } else if (command === '8') {
       const parametersAndUri = value.slice(separator + 1);
       const uriSeparator = parametersAndUri.indexOf(';');
@@ -219,10 +477,8 @@ export class TerminalEmulator {
 
   private handleCsi(raw: string, final: string): void {
     const privateMode = raw.startsWith('?');
-    const values = raw
-      .replace(/^[?>!]/, '')
-      .split(';')
-      .map((entry) => Number(entry.replace(/:/g, ';').split(';')[0] || 0));
+    const prefixed = /^[?>=!]/.test(raw);
+    const values = parseCsiParameters(raw);
     const first = values[0] || 1;
     const buffer = this.active;
     this.pendingWrap = false;
@@ -252,17 +508,28 @@ export class TerminalEmulator {
     else if (final === 'S') this.scrollUp(first);
     else if (final === 'T') this.scrollDown(first);
     else if (final === 'm') this.applySgr(parseSgrValues(raw));
-    else if (final === 's') this.saveCursor();
-    else if (final === 'u') this.restoreCursor();
+    // `CSI s` / `CSI u` save and restore the cursor; with a private prefix
+    // (`CSI ? u` is the kitty keyboard-protocol query) they are something
+    // else, and something this emulator does not do.
+    else if (final === 's' && !prefixed) this.saveCursor();
+    else if (final === 'u' && !prefixed) this.restoreCursor();
     else if (final === 'r') this.setScrollRegion(values);
     else if (final === 'h' || final === 'l') this.setMode(values, privateMode, final === 'h');
   }
 
-  private putGrapheme(grapheme: string): void {
+  private putGrapheme(cluster: string): void {
+    // One cluster can be a base and any number of marks; past the limit the
+    // rest are dropped, so a stream of them fills nothing (`CELL_TEXT_LIMIT`).
+    const grapheme = cluster.length > CELL_TEXT_LIMIT ? truncateCluster(cluster) : cluster;
     const width = graphemeWidth(grapheme);
     if (width === 0) {
       const column = this.previousWritableColumn();
-      if (column >= 0) this.active.grid.appendGrapheme(this.active.cursorY, column, grapheme);
+      if (column < 0) return;
+      const row = this.active.cursorY;
+      // A cell is a base plus its marks; past the limit the marks are dropped,
+      // so a stream of them fills nothing (see `CELL_TEXT_LIMIT`).
+      if (this.active.grid.textAt(row, column).length >= CELL_TEXT_LIMIT) return;
+      this.active.grid.appendGrapheme(row, column, grapheme);
       return;
     }
     if (this.pendingWrap && this.autoWrap) {
@@ -290,6 +557,30 @@ export class TerminalEmulator {
     } else {
       buffer.cursorX = next;
     }
+  }
+
+  /**
+   * Segments a chunk's opening run of text together with the cell the previous
+   * chunk's text ended on, as one write would have seen them. If the first
+   * cluster turns out to reach into the new text, it is put again from that
+   * cell -- through `putGrapheme`, so its width is measured exactly as a single
+   * write measures it -- and the graphemes still to put are returned. Null
+   * means there was nothing to join and the run segments on its own. Not in
+   * insert mode, where a re-put would insert cells.
+   */
+  private joinPrevious(run: string): string[] | null {
+    if (this.insertMode || run === '') return null;
+    const column = this.previousWritableColumn();
+    if (column < 0) return null;
+    const buffer = this.active;
+    const previous = buffer.grid.textAt(buffer.cursorY, column);
+    if (previous === '') return null;
+    const graphemes = splitGraphemes(previous + run);
+    if (graphemes[0].length <= previous.length) return null;
+    buffer.cursorX = column;
+    this.pendingWrap = false;
+    this.putGrapheme(graphemes[0]);
+    return graphemes.slice(1);
   }
 
   private previousWritableColumn(): number {
@@ -406,8 +697,10 @@ export class TerminalEmulator {
   private setMode(values: number[], privateMode: boolean, enabled: boolean): void {
     for (const mode of values) {
       if (!privateMode && mode === 4) this.insertMode = enabled;
+      else if (privateMode && mode === 1) this.modeState.applicationCursorKeys = enabled;
       else if (privateMode && mode === 7) this.autoWrap = enabled;
       else if (privateMode && mode === 25) this.cursorVisible = enabled;
+      else if (privateMode && mode === 2004) this.modeState.bracketedPaste = enabled;
       else if (privateMode && (mode === 47 || mode === 1047 || mode === 1049)) {
         if (enabled) {
           if (mode === 1049) this.saveCursor();
@@ -417,6 +710,7 @@ export class TerminalEmulator {
           this.active = this.main;
           if (mode === 1049) this.restoreCursor();
         }
+        this.modeState.alternateScreen = enabled;
       } else if (privateMode && mode === 1048) {
         if (enabled) this.saveCursor();
         else this.restoreCursor();
@@ -508,6 +802,10 @@ export function parseTerminalSnapshot(
     theme,
   });
   terminal.write(input);
+  // A snapshot is the whole text: a sequence its last bytes cut short is not
+  // going to be finished by a next chunk, and `flush` handles it exactly as
+  // the single write did before `write` learned to wait for one.
+  terminal.flush();
   return terminal.frame();
 }
 
@@ -973,8 +1271,53 @@ function countCharacter(value: string, character: string): number {
   return Array.from(value).filter((entry) => entry === character).length;
 }
 
+/**
+ * A link the app is prepared to hand to the system: `http(s)` only, no
+ * whitespace or control characters, and no longer than `TERMINAL_LINK_LIMIT`.
+ * Anything else -- `javascript:`, `file:`, a custom scheme, a URI with a
+ * control character folded into it -- is not a link at all.
+ */
 function isSupportedTerminalUri(value: string): boolean {
+  if (value.length > TERMINAL_LINK_LIMIT) return false;
+  CONTROL_CHARACTERS.lastIndex = 0;
+  if (CONTROL_CHARACTERS.test(value)) return false;
   return /^https?:\/\/[^\s]+$/iu.test(value);
+}
+
+/** The first `CELL_TEXT_LIMIT` code points of a cluster, cut on a code point boundary. */
+function truncateCluster(cluster: string): string {
+  let end = 0;
+  let count = 0;
+  while (end < cluster.length && count < CELL_TEXT_LIMIT) {
+    end += isHighSurrogate(cluster.charCodeAt(end)) ? 2 : 1;
+    count += 1;
+  }
+  return cluster.slice(0, end);
+}
+
+/** The title a stream set, as plain text: no control characters, and no longer than the limit. */
+function sanitizeTerminalTitle(value: string): string {
+  const plain = value.replace(CONTROL_CHARACTERS, '');
+  return plain.length > TERMINAL_TITLE_LIMIT ? plain.slice(0, TERMINAL_TITLE_LIMIT) : plain;
+}
+
+/**
+ * The numeric parameters of a CSI sequence. Each `;`-separated entry is an
+ * unsigned decimal (a `:` sub-parameter list contributes its first value);
+ * anything else -- a sign, a decimal point, a stray intermediate -- reads as
+ * 0, which every use here treats as "default". Values are capped at
+ * `CSI_PARAMETER_LIMIT`. Never negative and never fractional, so a cursor
+ * moved by one cannot leave the grid (the negative-count bug this replaced).
+ */
+function parseCsiParameters(raw: string): number[] {
+  return raw
+    .replace(/^[?>!]/, '')
+    .split(';')
+    .map((entry) => {
+      const digits = entry.split(':')[0];
+      if (!/^\d+$/.test(digits)) return 0;
+      return Math.min(CSI_PARAMETER_LIMIT, Number(digits));
+    });
 }
 
 function terminalLinksOverlap(left: TerminalLink, right: TerminalLink): boolean {
@@ -987,4 +1330,8 @@ function terminalLinksOverlap(left: TerminalLink, right: TerminalLink): boolean 
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(maximum, Math.round(value)));
+}
+
+function isHighSurrogate(code: number): boolean {
+  return code >= 0xd800 && code <= 0xdbff;
 }

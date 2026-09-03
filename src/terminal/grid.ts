@@ -329,6 +329,12 @@ export class TerminalGrid {
     this.markDirty(row, slot);
   }
 
+  /** The grapheme in a screen cell; empty for a wide glyph's continuation cell. */
+  textAt(row: number, col: number): string {
+    const base = this.screenSlot(row) * this.rowStride + col * WORDS_PER_CELL;
+    return this.decodeText(this.words[base]);
+  }
+
   widthAt(row: number, col: number): number {
     const base = this.screenSlot(row) * this.rowStride + col * WORDS_PER_CELL;
     return (this.words[base] & WIDTH_MASK) >>> WIDTH_SHIFT;
@@ -437,6 +443,65 @@ export class TerminalGrid {
       this.sbHead = (this.sbHead + 1) % this.sbRing.length;
       this.sbCount -= 1;
     }
+  }
+
+  // --- resizing ----------------------------------------------------------
+
+  /**
+   * A grid of another size holding this grid's rows, in order and without
+   * reflow. `shift` is how many rows move across the screen's top edge: positive
+   * pushes that many rows off the top of the screen into scrollback, negative
+   * pulls that many back out of scrollback onto the screen. Rows are cut at
+   * the new width (a wide glyph left without its second cell is blanked) or
+   * padded with blank cells; rows past the new screen's bottom are dropped,
+   * and scrollback beyond `maxScrollback` loses its oldest rows.
+   *
+   * A new grid rather than a rebuild in place because everything here --
+   * the word buffer, the two rings, the slot pool -- is sized once from the
+   * dimensions, and a resize is rare enough (a rotation, a keyboard) that one
+   * allocation and one row-by-row `set` is the simplest thing that is also
+   * fast: no cell is decoded, no line object is built.
+   */
+  resized(columns: number, rows: number, shift: number): TerminalGrid {
+    const next = new TerminalGrid(columns, rows, this.maxScrollback);
+    const total = this.sbCount + this.rows;
+    const screenStart = Math.max(0, Math.min(total, this.sbCount + shift));
+    const kept = Math.min(screenStart, this.maxScrollback);
+    const dropped = screenStart - kept;
+    for (let index = 0; index < kept; index += 1) {
+      const slot = next.freeStack.pop() as number;
+      next.sbRing[index] = slot;
+      this.copyRowInto(next, this.physicalOf(dropped + index), slot);
+    }
+    next.sbCount = kept;
+    for (let row = 0; row < rows; row += 1) {
+      const source = screenStart + row;
+      if (source >= total) break;
+      this.copyRowInto(next, this.physicalOf(source), next.screenSlot(row));
+      next.dirtyRows.add(row);
+    }
+    return next;
+  }
+
+  /** The last screen row holding anything drawn, or -1 for a blank screen. */
+  lastScreenRowWithContent(): number {
+    for (let row = this.rows - 1; row >= 0; row -= 1) {
+      if (this.rowHasContent(this.sbCount + row)) return row;
+    }
+    return -1;
+  }
+
+  private copyRowInto(target: TerminalGrid, sourceSlot: number, targetSlot: number): void {
+    const copied = Math.min(this.columns, target.columns);
+    const from = sourceSlot * this.rowStride;
+    const to = targetSlot * target.rowStride;
+    target.words.set(this.words.subarray(from, from + copied * WORDS_PER_CELL), to);
+    if (target.columns < this.columns) {
+      // The cut may fall between a wide glyph and its continuation cell.
+      const last = to + (target.columns - 1) * WORDS_PER_CELL;
+      if (((target.words[last] & WIDTH_MASK) >>> WIDTH_SHIFT) === 2) target.words[last] = SPACE_WORD0;
+    }
+    target.lineCache[targetSlot] = null;
   }
 
   // --- frame reconstruction ---------------------------------------------

@@ -75,6 +75,27 @@ export function terminalLineHeight(fontSize: number): number {
 export const TERMINAL_ADVANCE_RATIO = 0.6;
 
 /**
+ * The margin the grid keeps between the canvas edge and its first column and
+ * row, in points. The canvas draws with these, and the SSH grid sizing
+ * (`@/lib/ssh-grid-metrics`) subtracts them, so they live here rather than as
+ * two private constants that would have to agree by luck.
+ */
+export const TERMINAL_GRID_HORIZONTAL_PADDING = 7;
+export const TERMINAL_GRID_VERTICAL_PADDING = 8;
+
+/**
+ * The part of the canvas height the grid does not rest in, in points. Output
+ * resting flush against the dock reads as clipped, so the canvas keeps its
+ * last line a couple of lines short of the bottom edge (see
+ * `animatedVisibleHeight` in `skia-terminal.tsx`). A caller fitting a PTY
+ * into that canvas has to leave the same room, or the top row of a full
+ * screen sits above the viewport.
+ */
+export function terminalViewportClearance(lineHeight: number): number {
+  return lineHeight * 1.8 - 14;
+}
+
+/**
  * Rounds a horizontal length onto the device pixel grid.
  *
  * The renderer's single horizontal rounding step, and the reason cell positions

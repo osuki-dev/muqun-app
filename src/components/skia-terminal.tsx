@@ -127,17 +127,20 @@ import {
   terminalTopStop,
 } from '@/terminal/scroll-anchor';
 import { parseTerminalSnapshot, terminalFrameLinks } from '@/terminal/terminal-core';
-import type { TerminalLine, TerminalLink, TerminalRun, TerminalStyle } from '@/terminal/types';
+import type { TerminalFrame, TerminalLine, TerminalLink, TerminalRun, TerminalStyle } from '@/terminal/types';
 import {
   TERMINAL_ADVANCE_RATIO,
+  TERMINAL_GRID_HORIZONTAL_PADDING,
+  TERMINAL_GRID_VERTICAL_PADDING,
   fitFallbackToSpan,
   snapToDevicePixel,
   terminalLineHeight,
+  terminalViewportClearance,
 } from '@/terminal/text-scale';
 import { graphemeWidth, splitGraphemes, substituteRenderedGrapheme } from '@/terminal/unicode';
 
-const horizontalPadding = 7;
-const verticalPadding = 8;
+const horizontalPadding = TERMINAL_GRID_HORIZONTAL_PADDING;
+const verticalPadding = TERMINAL_GRID_VERTICAL_PADDING;
 const AXIS_UNDECIDED = 0;
 const AXIS_HORIZONTAL = 1;
 const AXIS_VERTICAL = 2;
@@ -245,8 +248,19 @@ function savePaneScales(next: TerminalPaneScales): void {
   }
 }
 
+/**
+ * The two numbers a caller sizing a PTY to this canvas needs: the measured
+ * cell advance and the row pitch, in points. See `onCellMetrics`.
+ */
+export type TerminalCellMetrics = {
+  cellWidth: number;
+  lineHeight: number;
+};
+
 export function SkiaTerminal({
-  output,
+  output = '',
+  frame: frameProp,
+  onCellMetrics,
   terminalId,
   bottomInset = 0,
   topInset = 0,
@@ -265,7 +279,26 @@ export function SkiaTerminal({
   screenFocused = true,
   paneColumns,
 }: {
-  output: string;
+  /**
+   * The pane's rendered text, parsed here on every change. What the gateway
+   * path passes; a caller that has a `frame` leaves it out.
+   */
+  output?: string;
+  /**
+   * A frame from a long-lived emulator -- the SSH shell's -- drawn as it is,
+   * with no parse: the emulator already holds its own scrollback, so the frame
+   * IS the window and the caller never pages history in. Identity is the
+   * version: a new object per change is what re-records the picture, and a
+   * held object is what the gesture freeze holds. `output` is ignored while
+   * this is set.
+   */
+  frame?: TerminalFrame;
+  /**
+   * The measured cell advance and row pitch, reported whenever either
+   * changes -- the font loading, a text-size change -- so a caller sizing a
+   * PTY can use the canvas's own numbers (see `@/lib/ssh-grid-metrics`).
+   */
+  onCellMetrics?: (metrics: TerminalCellMetrics) => void;
   terminalId: string;
   bottomInset?: number;
   /**
@@ -404,8 +437,8 @@ export function SkiaTerminal({
   // ahead of its coalesced output would see zero added rows and silently skip
   // the scroll compensation for prepended history.
   const snapshot = useMemo(
-    () => ({ output, historyRevision }),
-    [historyRevision, output]
+    () => ({ output, frame: frameProp, historyRevision }),
+    [frameProp, historyRevision, output]
   );
   // Interaction freeze. While a finger owns the pane -- or the fling it let go
   // of is still coasting -- new snapshots are not applied at all: the frame on
@@ -437,14 +470,24 @@ export function SkiaTerminal({
   const coalesced = useCoalescedValue(held, terminalId, TERMINAL_APPLIED_FRAME_MS);
   const applied = useFrozenValue(coalesced, gate.frozen, terminalId);
   const coalescedOutput = applied.output;
+  const appliedFrame = applied.frame;
   const coalescedRevision = applied.historyRevision;
-  // Parsed from the snapshot exactly as it arrived. Glyphs the bundled font
-  // cannot draw are swapped at the moment they are drawn (see
-  // `substituteRenderedGrapheme`) rather than here, so the cells hold the text
-  // the agent printed -- which is what the clipboard has to be given.
+  // What the effects below key an applied frame on: the frame when a caller
+  // supplies one, the text otherwise -- so the gateway path keys on exactly
+  // what it keyed on before frames could be handed in.
+  const appliedContent: unknown = appliedFrame ?? coalescedOutput;
+  // Whether there is anything to draw yet, for the loader and the caret. A
+  // supplied frame counts even when it is empty: the emulator behind it is
+  // the screen, and a screen exists before anything is printed on it.
+  const hasOutput = output !== '' || frameProp !== undefined;
+  // Parsed from the snapshot exactly as it arrived -- or taken as it is from
+  // the emulator that supplied it. Glyphs the bundled font cannot draw are
+  // swapped at the moment they are drawn (see `substituteRenderedGrapheme`)
+  // rather than here, so the cells hold the text the agent printed -- which is
+  // what the clipboard has to be given.
   const frame = useMemo(
-    () => parseTerminalSnapshot(coalescedOutput, terminalTheme, paneColumns),
-    [coalescedOutput, terminalTheme, paneColumns]
+    () => appliedFrame ?? parseTerminalSnapshot(coalescedOutput, terminalTheme, paneColumns),
+    [appliedFrame, coalescedOutput, terminalTheme, paneColumns]
   );
   // The pane's own colours, which are the app's unless the frame says the
   // program owns the screen and is painting in colours we never named. The
@@ -476,6 +519,9 @@ export function SkiaTerminal({
     () => measureCellWidth(fontSize, fontManager, nerdFont),
     [fontManager, fontSize, nerdFont]
   );
+  useEffect(() => {
+    onCellMetrics?.({ cellWidth, lineHeight });
+  }, [cellWidth, lineHeight, onCellMetrics]);
   const contentWidth = Math.max(viewport.width, frame.columns * cellWidth + horizontalPadding * 2);
   const contentWidthRef = useRef(contentWidth);
   // `terminalContentRows`, not `frame.lines.length`: a freshly opened pane's
@@ -849,7 +895,7 @@ export function SkiaTerminal({
   useEffect(() => {
     animatedTopInset.value = withTiming(topInset, timing('short'));
   }, [animatedTopInset, topInset]);
-  const unobstructedHeight = viewport.height - lineHeight * 1.8 + 14;
+  const unobstructedHeight = viewport.height - terminalViewportClearance(lineHeight);
   const animatedVisibleHeight = useDerivedValue(() =>
     Math.max(
       1,
@@ -1108,7 +1154,7 @@ export function SkiaTerminal({
     translateY.value = withTiming(bottom, { duration }, () => {
       catchingUp.value = false;
     });
-  }, [animatedTopInset, animatedVisibleHeight, catchingUp, contentHeight, followOutput, gate.frozen, historyHeight, coalescedOutput, lineHeight, scale, snapToBottomNext, translateY, viewport.height]);
+  }, [animatedTopInset, animatedVisibleHeight, catchingUp, contentHeight, followOutput, gate.frozen, historyHeight, appliedContent, lineHeight, scale, snapToBottomNext, translateY, viewport.height]);
 
   useAnimatedReaction(
     () => animatedVisibleHeight.value - contentHeight * scale.value,
@@ -1996,7 +2042,7 @@ export function SkiaTerminal({
                 color={selectionFill}
               />
             ))}
-            {frame.cursor.visible && output ? (
+            {frame.cursor.visible && hasOutput ? (
               // A slim beam caret rather than a full-cell underline: the
               // underline read as a stray horizontal bar sitting under the
               // last line.
@@ -2123,7 +2169,7 @@ export function SkiaTerminal({
             {fontError}
           </Text>
         </View>
-      ) : !nerdFont || !output ? (
+      ) : !nerdFont || !hasOutput ? (
         <Animated.View
           pointerEvents="none"
           exiting={fadeOut('short')}
@@ -2772,7 +2818,7 @@ function glyphMetrics(
  * an accumulation, and the one rounding step happens here rather than per glyph,
  * so column 200 is as exact as column 1 and error cannot build across a line.
  */
-function measureCellWidth(
+export function measureCellWidth(
   fontSize: number,
   fontManager: SkTypefaceFontProvider | null,
   nerdFont: SkFont | null

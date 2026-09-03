@@ -1,0 +1,106 @@
+# The SSH entry, offline: the host list, the bundled demo host, and one shell
+# on it driven from the key row.
+#
+# The demo host is what makes this possible with no network. `demo-ssh.ts`
+# puts one host on the list whenever the list is otherwise empty (and while
+# the demo is on) and "connects" it to a transcript played from the bundle,
+# so nothing here reaches a server -- but every screen and control between
+# the home header and the shell is the real one, drawn by the same code a
+# real host gets. A cleared state has no saved hosts, which is why the flow
+# can go straight from the home header to the demo host without entering the
+# gateway demo first -- and it could not do otherwise: the server screen's
+# back button hangs the demo up, so on a phone the demo is never "on" by the
+# time the home header is reachable.
+#
+# What this flow can and cannot reach, and why (the same rules as
+# `terminal-interactions.yaml`):
+#
+#  * The terminal is a Skia canvas and is not in the accessibility tree, so no
+#    step asserts on terminal text. The evidence that the shell is up is the
+#    chrome around it: the status line's own label, the key row's send
+#    buttons enabling, and the header's disconnect control appearing -- and
+#    the absence of the TerminalBoundary's error state, which is what a canvas
+#    crash surfaces as.
+#  * Keys are sent through the key row by their accessibility labels, which
+#    are `Send <description>` -- the same strings the gateway screen's row
+#    uses, translated through `terminalKeyDescription`.
+#
+appId: dev.osuki.muqun
+name: ssh
+tags:
+  - full
+---
+- runFlow: ../subflows/launch-home.yaml
+
+# ── The SSH door ──────────────────────────────────────────────────────────
+# The home header's control on a phone; the rail's action on a Pad. Both
+# carry the same label, so the tap below finds whichever is on screen.
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "SSH"
+- extendedWaitUntil:
+    visible: "Open Demo shell"
+    timeout: 8000
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertVisible: "Add an SSH host"
+- takeScreenshot: shots/ssh-01-hosts
+
+# ── The shell ─────────────────────────────────────────────────────────────
+- runFlow: ../subflows/dismiss-logbox.yaml
+- tapOn: "Open Demo shell"
+# Connected: the header's control flips from reconnect to disconnect, and the
+# status line says so in its own words. The demo takes about half a second to
+# "connect", which is why this is a wait and not an assert.
+- extendedWaitUntil:
+    visible: "Disconnect from Demo shell"
+    timeout: 10000
+- assertVisible: "Connected to demo@demo.invalid"
+- waitForAnimationToEnd:
+    timeout: 2000
+- assertNotVisible: "Retry drawing the terminal"
+- takeScreenshot: shots/ssh-02-shell
+
+# ── Keys from the row ─────────────────────────────────────────────────────
+# Enter answers the prompt with an empty line, Control C prints ^C and a new
+# prompt. Neither can be read off the canvas; what is asserted is that the
+# canvas survived both and the session is still up.
+- tapOn: "Send Enter"
+- tapOn: "Send Control C"
+- waitForAnimationToEnd:
+    timeout: 1500
+- assertNotVisible: "Retry drawing the terminal"
+- assertVisible: "Disconnect from Demo shell"
+
+# ── The on-screen keyboard rises and goes ─────────────────────────────────
+- tapOn: "Open on-screen keyboard"
+- extendedWaitUntil:
+    visible: "Hide keyboard"
+    timeout: 4000
+- takeScreenshot: shots/ssh-03-keyboard
+- tapOn: "Return"
+- tapOn: "Hide keyboard"
+- extendedWaitUntil:
+    visible: "Open on-screen keyboard"
+    timeout: 4000
+- assertNotVisible: "Retry drawing the terminal"
+
+# ── Disconnect, reconnect ─────────────────────────────────────────────────
+- tapOn: "Disconnect from Demo shell"
+- extendedWaitUntil:
+    visible: "Reconnect to Demo shell"
+    timeout: 4000
+- assertVisible: "Reconnect"
+- tapOn: "Reconnect"
+- extendedWaitUntil:
+    visible: "Disconnect from Demo shell"
+    timeout: 10000
+
+# ── Back out ──────────────────────────────────────────────────────────────
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Open Demo shell"
+    timeout: 8000
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "SSH"
+    timeout: 8000

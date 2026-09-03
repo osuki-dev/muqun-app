@@ -11,6 +11,7 @@
     "@legendapp/list": "^3.3.3",
     "@lingui/core": "^6.6.0",
     "@lingui/react": "^6.6.0",
+    "@osuki-dev/react-native-ssh": "0.2.0",
     "@osuki-dev/ui": "^0.0.1",
     "@shopify/react-native-skia": "2.10.1",
     "expo": "~57.0.9",
@@ -124,6 +125,7 @@
     "doctor": {
       "reactNativeDirectoryCheck": {
         "exclude": [
+          "@osuki-dev/react-native-ssh",
           "react-native-nitro-fetch",
           "react-native-nitro-image"
         ]

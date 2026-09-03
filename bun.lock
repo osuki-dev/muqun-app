@@ -12,6 +12,7 @@
         "@legendapp/list": "^3.3.3",
         "@lingui/core": "^6.6.0",
         "@lingui/react": "^6.6.0",
+        "@osuki-dev/react-native-ssh": "0.2.0",
         "@osuki-dev/ui": "^0.0.1",
         "@shopify/react-native-skia": "2.10.1",
         "expo": "~57.0.9",
@@ -403,6 +404,8 @@
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.6", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg=="],
 
     "@nolyfill/is-core-module": ["@nolyfill/is-core-module@1.0.39", "", {}, "sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA=="],
+
+    "@osuki-dev/react-native-ssh": ["@osuki-dev/react-native-ssh@0.2.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-5eiz/OGQ+jTD8EXb1n3pxK3B7ttnTeOqYCvboOXLc2E4asfTlGW3yAJ5gcQYwZsmGKltW2MtmODNdm7MvW7+4A=="],
 
     "@osuki-dev/ui": ["@osuki-dev/ui@0.0.1", "", { "peerDependencies": { "@expo/ui": "^57.0.4", "expo-font": "~57.0.0", "expo-image": ">=56.0.0", "expo-router": "~57.0.4", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.2.3", "react-native": ">=0.85.0", "react-native-keyboard-controller": ">=1.21.6", "react-native-reanimated": ">=4.3.1", "react-native-safe-area-context": "~5.7.0", "react-native-svg": ">=15.15.4", "react-native-worklets": ">=0.10.0 <0.11.0" } }, "sha512-krUSX2Z4UdoqySfiJCP50cl767G4PMzpSKZcsenxyj8cKbSvZLVIAZhnFm7kI2FbDGC3uIuQ3IMgjwVO5BQmVw=="],
 
