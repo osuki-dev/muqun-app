@@ -16,6 +16,7 @@ import {
   sortSshHosts,
   sshHostAddress,
   sshHostDraftFrom,
+  sshHostListView,
   validateSshHostDraft,
   type SshHostRecord,
 } from '@/lib/ssh-hosts';
@@ -324,5 +325,55 @@ describe('newSshId', () => {
     expect(first.startsWith('host-')).toBe(true);
     expect(first < second).toBe(true);
     expect(newSshId('key', 1000, () => 0.1)).not.toBe(newSshId('key', 1000, () => 0.9));
+  });
+});
+
+describe('sshHostListView', () => {
+  const demo: SshHostRecord = {
+    id: 'ssh-demo',
+    label: 'Demo shell',
+    host: 'demo.invalid',
+    port: SSH_DEFAULT_PORT,
+    username: 'demo',
+    auth: { type: 'password' },
+    createdAt: 0,
+  };
+
+  test('shows no prompt at all once there is a saved host', () => {
+    const view = sshHostListView([RECORD], null);
+    expect(view.rows.map((row) => row.id)).toEqual(['host-1']);
+    expect(view.prompt).toBe('none');
+  });
+
+  test('does not claim the list is empty while the demo host is on it', () => {
+    // The regression: the screen counted only the saved hosts, so it drew a
+    // tappable "Demo shell" card and "No SSH hosts yet." underneath it.
+    const view = sshHostListView([], demo);
+    expect(view.rows.map((row) => row.id)).toEqual(['ssh-demo']);
+    expect(view.prompt).toBe('demoOnly');
+  });
+
+  test('still invites a first host when the demo is the only row', () => {
+    expect(sshHostListView([], demo).prompt).not.toBe('none');
+  });
+
+  test('keeps the empty state for a list with nothing on it at all', () => {
+    const view = sshHostListView([], null);
+    expect(view.rows).toEqual([]);
+    expect(view.prompt).toBe('empty');
+  });
+
+  test('pins the demo host above the saved ones and says nothing more', () => {
+    const view = sshHostListView([RECORD], demo);
+    expect(view.rows.map((row) => row.id)).toEqual(['ssh-demo', 'host-1']);
+    expect(view.prompt).toBe('none');
+  });
+
+  test('keeps the order it is handed and does not mutate it', () => {
+    const hosts = [RECORD, { ...RECORD, id: 'host-2' }];
+    const view = sshHostListView(hosts, demo);
+    expect(view.rows.map((row) => row.id)).toEqual(['ssh-demo', 'host-1', 'host-2']);
+    expect(hosts.map((row) => row.id)).toEqual(['host-1', 'host-2']);
+    expect(view.rows).not.toBe(hosts);
   });
 });

@@ -2425,6 +2425,10 @@ msgstr "這個回答沒有送達代理程式。"
 msgid "That code was refused. Hold still for a new one."
 msgstr "這組代碼被拒絕了，請保持穩定以讀取新的代碼。"
 
+#: src/components/ssh-host-list.tsx
+msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
+msgstr "這是內建的示範 Shell，也是這裡唯一的主機。新增你自己的主機，即可在任何連得到的機器上開啟 Shell。"
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "那個 shell 就是你熟悉的終端機：同樣的鍵盤、同樣的按鍵列、同樣的配色，想打字時也能用手機自己的輸入法。"

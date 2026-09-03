@@ -353,6 +353,48 @@ export function sortSshHosts(records: readonly SshHostRecord[]): SshHostRecord[]
   );
 }
 
+/**
+ * What `/ssh` draws under its header: the rows, and which invitation (if any)
+ * belongs beneath them.
+ *
+ * Split out of the screen because the screen got it wrong. The demo host is
+ * pinned above the saved ones -- see `demo-ssh.ts` for when it is offered --
+ * and the empty state was gated on `hosts.length === 0`, counting only the
+ * saved half. So the one arrangement where the demo host appears at all is
+ * exactly the arrangement where the empty state appeared *with* it: a
+ * tappable "Demo shell" card, and directly underneath it the sentence "No SSH
+ * hosts yet." That is not a layout slip, it is the screen contradicting
+ * itself -- the row is a real host that really opens a real (bundled) shell.
+ *
+ * The reader still needs the invitation, though: a list holding nothing but
+ * the demo is a list with no host of *theirs* on it, and the `+` in the header
+ * is not an explanation. So there are three answers rather than two, and the
+ * prompt says which one is true rather than assuming the list is empty:
+ *
+ *  - `'none'`     at least one saved host; the rows speak for themselves.
+ *  - `'demoOnly'` the bundled demo and nothing else. Invite, but do not claim
+ *                 there is nothing here.
+ *  - `'empty'`    nothing at all, not even the demo.
+ *
+ * `hosts` arrives in the store's own order (`sortSshHosts`) and is not
+ * re-sorted here; only the demo host is placed, and it goes first.
+ */
+export type SshHostListPrompt = 'none' | 'demoOnly' | 'empty';
+
+export interface SshHostListView {
+  rows: SshHostRecord[];
+  prompt: SshHostListPrompt;
+}
+
+export function sshHostListView(
+  hosts: readonly SshHostRecord[],
+  demoHost: SshHostRecord | null
+): SshHostListView {
+  const rows = demoHost ? [demoHost, ...hosts] : [...hosts];
+  const prompt: SshHostListPrompt = hosts.length > 0 ? 'none' : demoHost ? 'demoOnly' : 'empty';
+  return { rows, prompt };
+}
+
 /** `user@host`, with the port only when it is not the default. */
 export function sshHostAddress(record: Pick<SshHostRecord, 'host' | 'port' | 'username'>): string {
   const port = record.port === SSH_DEFAULT_PORT ? '' : `:${record.port}`;
