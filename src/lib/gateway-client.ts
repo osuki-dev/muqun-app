@@ -546,6 +546,59 @@ export interface PairingRequestResponse {
 // codegen doesn't know about (e.g. PATCH /api/meta) can reuse the same base+token.
 let currentBaseUrl = '';
 let currentToken: string | null = null;
+/**
+ * The record the client is currently configured for, kept so the base URL can
+ * be recomputed when a tunnel opens or closes without a re-pair.
+ */
+let currentRecord: GatewayRecord | null = null;
+
+/**
+ * The one seam a tunnelled record needs. `stores/ssh-tunnels.ts` installs this
+ * resolver: for a record whose gateway is reached through an SSH host it
+ * returns the live `http://127.0.0.1:<localPort>` while the forward is open, or
+ * null when it is not yet up. A direct record ignores it. The client is not
+ * forked -- only its base URL is resolved through here, and because the request
+ * AAD is path-only (see `requestAad`), repointing the origin to the loopback
+ * forward is transparent to the gateway and keeps the encrypted transport
+ * intact.
+ */
+let tunnelBaseUrlResolver: ((record: GatewayRecord) => string | null) | null = null;
+
+export function setGatewayTunnelResolver(
+  resolver: ((record: GatewayRecord) => string | null) | null
+): void {
+  tunnelBaseUrlResolver = resolver;
+}
+
+/**
+ * The base URL a record's requests should use: the live tunnel URL for a
+ * tunnelled record, otherwise the record's own stored URL. Exported so the
+ * screens that build their own requests (event stream, reachability) resolve
+ * the same address the shared client does.
+ */
+export function effectiveGatewayBaseUrl(record: GatewayRecord | null): string {
+  if (!record) return '';
+  if (record.sshTunnel && tunnelBaseUrlResolver) return tunnelBaseUrlResolver(record) ?? '';
+  return record.url;
+}
+
+/**
+ * Recompute the active record's base URL and repoint the client at it, used
+ * when a tunnel forward opens or closes under the record already in use. A
+ * no-op when nothing is configured or the record is direct.
+ */
+export function refreshGatewayBaseUrl(): void {
+  if (!currentRecord) return;
+  const baseUrl = effectiveGatewayBaseUrl(currentRecord);
+  if (baseUrl === currentBaseUrl) return;
+  configureApi(
+    baseUrl,
+    currentRecord.token,
+    currentRecord.deviceId ?? null,
+    currentRecord.transportKey ?? null,
+    currentRecord.transport === GATEWAY_TRANSPORT ? currentRecord.transport : null
+  );
+}
 let currentDeviceId: string | null = null;
 let currentTransportKey: string | null = null;
 let currentTransport: typeof GATEWAY_TRANSPORT | null = null;
@@ -1310,8 +1363,11 @@ export function configureGateway(record: GatewayRecord | null): void {
   // Demo mode is a separate, offline code path: while it is on, every function
   // below short-circuits to bundled data and never touches the network.
   setDemoActive(isDemoRecord(record));
+  currentRecord = record;
   configureApi(
-    record?.url ?? '',
+    // A tunnelled record's real URL is unreachable directly; its base is the
+    // loopback forward, resolved live and empty until the forward is up.
+    effectiveGatewayBaseUrl(record),
     record?.token ?? null,
     record?.deviceId ?? null,
     record?.transportKey ?? null,
