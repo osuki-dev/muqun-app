@@ -15,6 +15,7 @@ import {
   SettingsSeparator,
 } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
+import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { StatusDot } from '@/components/status-dot';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
@@ -103,7 +104,7 @@ export function SettingsServers({ title }: { title: string }) {
   // `stores/server-reachability.ts`.
   useFocusEffect(
     useCallback(() => {
-      if (!record || record.serverId === DEMO_SERVER_ID) return;
+      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) return;
       void refreshReachability({
         serverId: record.serverId,
         url: record.url,
@@ -361,6 +362,8 @@ function ServerRow({
                 : t`Never connected`}
             </Text>
           ) : null}
+          {/* Which SSH host this gateway rides on, if any. */}
+          <GatewayTunnelBadge record={server} />
         </View>
         <Animated.View style={chevronStyle}>
           <ChevronDown size={18} color={theme.colors.textMuted} />

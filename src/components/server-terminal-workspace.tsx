@@ -51,6 +51,7 @@ import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview
 import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
 import { PadServerRail } from '@/components/pad-server-rail';
+import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SwitchIndicator } from '@/components/switch-indicator';
@@ -65,6 +66,7 @@ import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useAwayDigest } from '@/hooks/use-away-digest';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
@@ -621,7 +623,13 @@ export function ServerTerminalWorkspace({
     records.find((item) => item.serverId === serverId) ??
     (serverId === DEMO_SERVER_ID ? demoRecord : undefined);
   const selectedServer = Boolean(record && record.serverId === serverId);
-  const ready = isFocused && selectedServer;
+  // A tunnelled gateway is only reachable once its SSH forward is up. Hold the
+  // tunnel while this server is the selected one, and gate readiness on it: the
+  // shared client's base URL points at the loopback forward, which is empty
+  // until `open`. A direct record reports `open` at once and holds nothing.
+  const tunnel = useGatewayTunnel(record, selectedServer);
+  const tunnelReady = !tunnel.tunnelled || tunnel.phase === 'open';
+  const ready = isFocused && selectedServer && tunnelReady;
   /**
    * Whether the reader can still see this screen -- which is not whether it is
    * focused.
@@ -1902,7 +1910,9 @@ export function ServerTerminalWorkspace({
   // full read, because the stream has no replay and anything during the gap is
   // lost.
   usePaneEvents(
-    selectedServer ? (record?.url ?? null) : null,
+    // The event stream rides the same forward as every other request for a
+    // tunnelled record: its base is the loopback URL, not the record's own.
+    selectedServer ? tunnel.baseUrl : null,
     selectedServer ? (record?.token ?? null) : null,
     data.sessionId,
     selectedServer ? selection.paneId || null : null,
@@ -2666,7 +2676,19 @@ export function ServerTerminalWorkspace({
                 </Text>
               </Animated.View>
             ) : null}
-            {!error || connection.needsPairing ? (
+            {/* The tunnel's own status, above the gateway connection notice: a
+                tunnelled gateway cannot connect until its SSH forward is up, so
+                while it is connecting or down this is the news, and the gateway
+                notice below stays quiet (it would only say "Connecting"). */}
+            {tunnel.tunnelled && tunnel.phase !== 'open' ? (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOut('micro')}
+                layout={listLayout('short')}>
+                <GatewayTunnelBadge record={record} variant="notice" />
+              </Animated.View>
+            ) : null}
+            {tunnelReady && (!error || connection.needsPairing) ? (
               <ConnectionNotice
                 status={connection}
                 onRetry={() => setRetryNonce((value) => value + 1)}
