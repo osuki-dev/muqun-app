@@ -1654,6 +1654,10 @@ msgstr "파일 목록 열기"
 msgid "Open in your browser"
 msgstr "브라우저에서 열기"
 
+#: src/app/commands.tsx
+msgid "Open in your browser, unavailable over the SSH tunnel"
+msgstr "브라우저에서 열기, SSH 터널에서는 사용할 수 없음"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Lazygit 열기"
@@ -1823,6 +1827,10 @@ msgstr "{0} 미리보기, {status}"
 msgid "Preview a simulator"
 msgstr "시뮬레이터 보기"
 
+#: src/app/commands.tsx
+msgid "Preview a simulator, unavailable over the SSH tunnel"
+msgstr "시뮬레이터 미리보기, SSH 터널에서는 사용할 수 없음"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "개인정보 처리방침"
@@ -1876,6 +1884,10 @@ msgstr "종료"
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "{SUPPORT_EMAIL}(으)로 문의해 주세요."
+
+#: src/app/commands.tsx
+msgid "Reached the same way as a browser, so the same tunnel limit applies."
+msgstr "브라우저와 같은 경로라, 같은 터널 제한을 받습니다."
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -2583,6 +2595,10 @@ msgstr "서버는 이 기기에 그대로 남아 있습니다. 해당 Gateway가
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
 msgstr "셸이 종료되었습니다."
+
+#: src/app/commands.tsx
+msgid "The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one."
+msgstr "SSH 터널은 게이트웨이의 포트 하나만 전달하고 다른 포트는 전달하지 않아, 여기서는 브라우저로 머신의 나머지에 닿을 수 없습니다. 로컬 네트워크나 Tailscale로 연결하면 열 수 있습니다."
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."

@@ -2342,6 +2342,18 @@ export function ServerTerminalWorkspace({
         // that will never load.
         canOpenWeb:
           !demoMode && allowsWebServiceOpen(data.health?.transportSecurity?.protection) ? '1' : '',
+        // Why it is off, when the why is worth saying. A tunnelled gateway
+        // is loopback-bound on its own machine, so the transport reads
+        // `local-only` and the gate closes -- correctly, since the tunnel
+        // carries one port and vouches for no other. The reader who paired
+        // through SSH deliberately is the one who will go looking for these
+        // rows, so the sheet says so instead of quietly dropping them.
+        webBlockedBy:
+          !demoMode &&
+          record?.sshTunnel &&
+          !allowsWebServiceOpen(data.health?.transportSecurity?.protection)
+            ? 'tunnel'
+            : '',
         // What Stop is offered for, and what it would be sent to. Passed
         // rather than looked up there: this screen already polls both, and a
         // sheet that re-read them could offer Stop for an agent that stopped

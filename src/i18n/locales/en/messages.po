@@ -1654,6 +1654,10 @@ msgstr "Open files"
 msgid "Open in your browser"
 msgstr "Open in your browser"
 
+#: src/app/commands.tsx
+msgid "Open in your browser, unavailable over the SSH tunnel"
+msgstr "Open in your browser, unavailable over the SSH tunnel"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Open Lazygit"
@@ -1823,6 +1827,10 @@ msgstr "Preview {0}, {status}"
 msgid "Preview a simulator"
 msgstr "Preview a simulator"
 
+#: src/app/commands.tsx
+msgid "Preview a simulator, unavailable over the SSH tunnel"
+msgstr "Preview a simulator, unavailable over the SSH tunnel"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "Privacy policy"
@@ -1876,6 +1884,10 @@ msgstr "Quit"
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "Reach us at {SUPPORT_EMAIL}."
+
+#: src/app/commands.tsx
+msgid "Reached the same way as a browser, so the same tunnel limit applies."
+msgstr "Reached the same way as a browser, so the same tunnel limit applies."
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -2583,6 +2595,10 @@ msgstr "The server was kept on this device. Make sure its Gateway is running, th
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
 msgstr "The shell exited."
+
+#: src/app/commands.tsx
+msgid "The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one."
+msgstr "The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one."
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."

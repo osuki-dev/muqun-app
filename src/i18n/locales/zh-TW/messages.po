@@ -1654,6 +1654,10 @@ msgstr "開啟檔案"
 msgid "Open in your browser"
 msgstr "在瀏覽器開啟"
 
+#: src/app/commands.tsx
+msgid "Open in your browser, unavailable over the SSH tunnel"
+msgstr "在瀏覽器開啟，透過 SSH 通道時無法使用"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "開啟 Lazygit"
@@ -1823,6 +1827,10 @@ msgstr "預覽 {0}，{status}"
 msgid "Preview a simulator"
 msgstr "預覽模擬器"
 
+#: src/app/commands.tsx
+msgid "Preview a simulator, unavailable over the SSH tunnel"
+msgstr "預覽模擬器，透過 SSH 通道時無法使用"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "隱私政策"
@@ -1876,6 +1884,10 @@ msgstr "離開"
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "請寫信到 {SUPPORT_EMAIL} 與我們聯絡。"
+
+#: src/app/commands.tsx
+msgid "Reached the same way as a browser, so the same tunnel limit applies."
+msgstr "與瀏覽器走同一條路，因此受同樣的通道限制。"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -2583,6 +2595,10 @@ msgstr "這台伺服器仍保留在裝置上。請確認它的 Gateway 正在執
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
 msgstr "Shell 已結束。"
+
+#: src/app/commands.tsx
+msgid "The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one."
+msgstr "SSH 通道只帶 Gateway 這一個連接埠，不含其他，所以這裡的瀏覽器碰不到機器的其餘部分。改用區域網路或 Tailscale 連線即可開啟。"
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
