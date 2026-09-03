@@ -24,6 +24,7 @@ import {
 import { feedback } from '@/lib/feedback';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { notificationRoute } from '@/lib/notification-route';
+import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import { useAppSettings } from '@/stores/app-settings';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
@@ -46,6 +47,16 @@ function endpointForServer(serverId: string): GatewayEndpoint | null {
   const match =
     records.find((entry) => entry.serverId === serverId) ??
     (record?.serverId === serverId ? record : null);
+  // A tunnelled record has no address that is meaningful from here: its stored
+  // `url` is the gateway's address on the SSH host, and for the usual
+  // loopback-only gateway that is `127.0.0.1:23847` -- which from the phone is
+  // *the phone's own* loopback, where a hostile local app may be listening for
+  // exactly this bearer token (see `docs/ssh-gateway-tunnel.md`, T1). Answering
+  // straight from the notification would also need an SSH connection dialled
+  // from a backgrounded app, possibly behind a host-key prompt nobody can see.
+  // So: no endpoint. The caller already treats that as `open-pane`, which is
+  // the right outcome -- the workspace holds the tunnel up and asks properly.
+  if (!directGatewayBaseUrl(match)) return null;
   return match
     ? {
         url: match.url,

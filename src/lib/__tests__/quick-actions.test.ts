@@ -17,6 +17,7 @@ const overALivePane: QuickActionParams = {
 describe('quickActionAvailability', () => {
   test('offers every row over a working agent on a capable gateway', () => {
     expect(quickActionAvailability(overALivePane)).toEqual({
+      webServiceBlockedByTunnel: false,
       canCreate: true,
       canStartTask: true,
       canStopAgent: true,
@@ -134,5 +135,39 @@ describe('the simulator preview row', () => {
     });
     expect(availability.canPreviewSimulator).toBe(false);
     expect(availability.hasActions).toBe(false);
+  });
+});
+
+describe('a gateway reached through an SSH tunnel', () => {
+  test('says why the two rows are off rather than dropping them', () => {
+    const availability = quickActionAvailability({
+      ...overALivePane,
+      webServiceSupported: false,
+      webServiceBlockedByTunnel: true,
+    });
+    expect(availability.canOpenWebService).toBe(false);
+    expect(availability.canPreviewSimulator).toBe(false);
+    expect(availability.webServiceBlockedByTunnel).toBe(true);
+    // A sheet that would otherwise be empty still opens, to carry the reason.
+    expect(availability.hasActions).toBe(true);
+  });
+
+  test('an unencrypted gateway is refused without an explanation to give', () => {
+    const availability = quickActionAvailability({
+      ...overALivePane,
+      webServiceSupported: false,
+    });
+    expect(availability.canOpenWebService).toBe(false);
+    expect(availability.webServiceBlockedByTunnel).toBe(false);
+  });
+
+  test('the Settings entry explains nothing, having offered nothing', () => {
+    const availability = quickActionAvailability({
+      ...overALivePane,
+      manageOnly: true,
+      webServiceSupported: false,
+      webServiceBlockedByTunnel: true,
+    });
+    expect(availability.webServiceBlockedByTunnel).toBe(false);
   });
 });

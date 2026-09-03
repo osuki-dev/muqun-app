@@ -4,6 +4,14 @@ export interface PairingOffer {
   serverId?: string;
   /** QR bootstrap secret. Absent when the Gateway owner disables encryption. */
   transportKey?: string;
+  /**
+   * Set when the pairing runs through an SSH tunnel: `url` is then the
+   * loopback forward (`http://127.0.0.1:<port>`), which is ephemeral and must
+   * not be what the record remembers -- see `validateClaimedPairing`. The
+   * shape is `GatewaySshTunnel`, restated here so this module keeps importing
+   * nothing.
+   */
+  sshTunnel?: { hostId: string; remoteHost: string; remotePort: number };
 }
 
 export interface ResolvedPairingOffer extends PairingOffer {
@@ -194,8 +202,11 @@ export function validateClaimedPairing(
   return {
     ...payload,
     server_id: serverId,
-    // The manually entered address is the one the request/claim exchange reached.
-    url: offer.verifyAdvertisedUrl ? advertisedUrl : requestedUrl,
+    // The manually entered address is the one the request/claim exchange
+    // reached. Through an SSH tunnel that address is a loopback port that will
+    // not exist next time, so the record keeps the gateway's own advertised URL
+    // and reaches it through the tunnel named on the record instead.
+    url: offer.verifyAdvertisedUrl || offer.sshTunnel ? advertisedUrl : requestedUrl,
     label: payload.label.trim(),
   };
 }

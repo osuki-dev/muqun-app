@@ -24,6 +24,18 @@ export interface QuickActionParams {
   spawnSupported: boolean;
   /** Whether opening a plain URL on the machine behind the pane is honest. */
   webServiceSupported: boolean;
+  /**
+   * Whether the only thing standing in the way is that this gateway is reached
+   * through an SSH tunnel.
+   *
+   * A tunnelled gateway is bound to its machine's loopback, so its transport
+   * reads as `local-only` and the two rows below fail closed -- correctly: the
+   * tunnel forwards one port and says nothing about any other. But a row that
+   * simply vanishes teaches nobody anything, and the reader who paired through
+   * SSH on purpose is exactly the reader who will look for it. Offered as a
+   * disabled row with the reason on it instead.
+   */
+  webServiceBlockedByTunnel?: boolean;
   /** This pane's agent, and what it is doing. */
   agentTarget?: string;
   agentStatus?: string;
@@ -37,6 +49,8 @@ export interface QuickActionAvailability {
   canStartTask: boolean;
   canStopAgent: boolean;
   canOpenWebService: boolean;
+  /** Show the two rows, greyed out, with the tunnel as the stated reason. */
+  webServiceBlockedByTunnel: boolean;
   /**
    * Whether to offer the simulator preview.
    *
@@ -86,7 +100,17 @@ export function quickActionAvailability(params: QuickActionParams): QuickActionA
   // either: a simulator belongs to the machine, not to the panel being read.
   const canPreviewSimulator = canOpenWebService;
 
+  // Only a reason worth stating when the row would otherwise have been there:
+  // a sheet opened from Settings, or with no server behind it, has nothing to
+  // explain.
+  const webServiceBlockedByTunnel =
+    !canOpenWebService &&
+    !params.manageOnly &&
+    Boolean(params.serverId) &&
+    Boolean(params.webServiceBlockedByTunnel);
+
   return {
+    webServiceBlockedByTunnel,
     canCreate,
     canStartTask,
     canStopAgent,
@@ -97,6 +121,11 @@ export function quickActionAvailability(params: QuickActionParams): QuickActionA
     // so on the day the two gates diverge it has to already know about both --
     // the failure is silent spacing, which nothing would report.
     hasActions:
-      canCreate || canStartTask || canStopAgent || canOpenWebService || canPreviewSimulator,
+      canCreate ||
+      canStartTask ||
+      canStopAgent ||
+      canOpenWebService ||
+      canPreviewSimulator ||
+      webServiceBlockedByTunnel,
   };
 }

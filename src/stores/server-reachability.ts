@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { probeGatewayReachable } from '@/lib/gateway-client';
+import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import {
   needsReachabilityProbe,
@@ -39,7 +40,8 @@ type ServerReachabilityState = {
     endpoint: Pick<
       GatewayRecord,
       'serverId' | 'url' | 'token' | 'deviceId' | 'transportKey' | 'transport'
-    >,
+    > &
+      Pick<GatewayRecord, 'sshTunnel'>,
     options?: { force?: boolean }
   ) => Promise<void>;
   /** Drops results for servers this device no longer has. */
@@ -57,6 +59,14 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
 
   async refresh(endpoint, options) {
     const { serverId } = endpoint;
+    // A tunnelled record is never probed at its stored `url`: that address
+    // belongs to the SSH host, and for a loopback-only gateway probing it from
+    // here would put the bearer token on *this phone's* loopback, which the
+    // threat model treats as hostile (`docs/ssh-gateway-tunnel.md`, T1). The
+    // callers already skip these; this is the structural half of that, so a new
+    // caller cannot reintroduce the leak. A tunnelled server reports through
+    // its tunnel badge instead.
+    if (!directGatewayBaseUrl(endpoint)) return;
     // Still one flight per server even when forced: two pulls in a second are
     // one question, and the second would only race the first.
     if (inFlight.has(serverId)) return;
