@@ -139,6 +139,21 @@
           "react-native-nitro-image"
         ]
       }
+    },
+    "install": {
+      "exclude": [
+        "react",
+        "react-dom",
+        "react-native-gesture-handler",
+        "react-native-keyboard-controller",
+        "react-native-reanimated",
+        "react-native-safe-area-context",
+        "react-native-svg",
+        "react-native-webview",
+        "react-native-worklets",
+        "@shopify/react-native-skia",
+        "react-native-screens"
+      ]
     }
   },
   "patchedDependencies": {
