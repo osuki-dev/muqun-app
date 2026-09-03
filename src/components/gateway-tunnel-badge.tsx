@@ -31,7 +31,9 @@ export function GatewayTunnelBadge({
   // forward *up* hold it through `useGatewayTunnel(record, true)`.
   const tunnel = useGatewayTunnel(record, false);
   const hostLabel = useSshHostsStore((state) =>
-    record?.sshTunnel ? state.hosts.find((item) => item.id === record.sshTunnel!.hostId)?.label : undefined
+    record?.sshTunnel
+      ? state.hosts.find((item) => item.id === record.sshTunnel!.hostId)?.label
+      : undefined
   );
 
   if (!record?.sshTunnel) return null;

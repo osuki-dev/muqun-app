@@ -49,7 +49,12 @@ export function SshHostKeyDialog({
       actions={[
         { id: 'cancel', label: t`Cancel`, onPress: () => onResolve(false) },
         mismatch
-          ? { id: 'replace', label: t`Replace key`, tone: 'destructive', onPress: () => onResolve(true) }
+          ? {
+              id: 'replace',
+              label: t`Replace key`,
+              tone: 'destructive',
+              onPress: () => onResolve(true),
+            }
           : { id: 'trust', label: t`Trust`, tone: 'primary', onPress: () => onResolve(true) },
       ]}>
       <View style={styles.fingerprints}>

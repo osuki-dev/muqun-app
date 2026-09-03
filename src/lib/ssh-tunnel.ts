@@ -300,7 +300,11 @@ export class SshTunnelManager {
     } catch (error) {
       if (entry.generation !== generation) return;
       this.pruneHostRider(host, entry.serverId);
-      this.setState(entry, { phase: 'down', baseUrl: null, reason: this.deps.describeFailure(error) });
+      this.setState(entry, {
+        phase: 'down',
+        baseUrl: null,
+        reason: this.deps.describeFailure(error),
+      });
     }
   }
 
@@ -308,7 +312,9 @@ export class SshTunnelManager {
     if (host.handle) return Promise.resolve(host.handle);
     if (host.connection) return host.connection;
     const pending = this.deps
-      .openConnection(host.hostId, { onDropped: (reason) => this.onHostDropped(host.hostId, reason) })
+      .openConnection(host.hostId, {
+        onDropped: (reason) => this.onHostDropped(host.hostId, reason),
+      })
       .then((handle) => {
         host.handle = handle;
         return handle;
@@ -329,7 +335,11 @@ export class SshTunnelManager {
     const host = this.hosts.get(entry.hostId);
     if (host) this.pruneHostRider(host, serverId);
     if (entry.refs > 0) {
-      this.setState(entry, { phase: 'down', baseUrl: null, reason: this.deps.describeFailure(reason) });
+      this.setState(entry, {
+        phase: 'down',
+        baseUrl: null,
+        reason: this.deps.describeFailure(reason),
+      });
     } else {
       this.setState(entry, IDLE_STATE);
     }
@@ -348,7 +358,11 @@ export class SshTunnelManager {
       entry.forward = null;
       entry.generation += 1;
       if (entry.refs > 0) {
-        this.setState(entry, { phase: 'down', baseUrl: null, reason: this.deps.describeFailure(reason) });
+        this.setState(entry, {
+          phase: 'down',
+          baseUrl: null,
+          reason: this.deps.describeFailure(reason),
+        });
       } else {
         this.setState(entry, IDLE_STATE);
       }

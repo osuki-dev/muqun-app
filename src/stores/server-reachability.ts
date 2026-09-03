@@ -40,7 +40,8 @@ type ServerReachabilityState = {
     endpoint: Pick<
       GatewayRecord,
       'serverId' | 'url' | 'token' | 'deviceId' | 'transportKey' | 'transport'
-    > & Pick<GatewayRecord, 'sshTunnel'>,
+    > &
+      Pick<GatewayRecord, 'sshTunnel'>,
     options?: { force?: boolean }
   ) => Promise<void>;
   /** Drops results for servers this device no longer has. */

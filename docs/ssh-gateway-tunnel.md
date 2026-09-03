@@ -20,6 +20,7 @@ and the app's `src/lib/gateway-transport.ts`, `gateway-client.ts`,
 `gateway-storage.ts`, `pairing*.ts`.
 
 ### The token
+
 Every non-pairing route runs through `require_device` (`main.rs`): it reads the
 `Authorization: Bearer <token>` header, hashes it (`hash_token` = SHA-256,
 base64), and matches it against the stored device records in constant time
@@ -27,6 +28,7 @@ base64), and matches it against the stored device records in constant time
 never the token. A request with no valid token gets `403 invalid_token`.
 
 ### The encrypted transport (`muqun-aes-256-gcm-v1`)
+
 When a Gateway is in the default `transport_encryption = required` mode, each
 newly paired device also gets an independent 256-bit AEAD key (the
 **transport key**, `transport_key` on the device record). From then on, a bare
@@ -38,12 +40,12 @@ an AES-256-GCM envelope:
 - The client seals each request with `encryptJson(material, 'request', aad, …)`
   (`gateway-transport.ts`). `material` is the 32-byte transport key; the
   per-direction key is `HKDF-SHA256(material, salt="muqun-transport-v1",
-  info="muqun-transport-v1/<direction>")` — directions `request`, `response`,
+info="muqun-transport-v1/<direction>")` — directions `request`, `response`,
   `pairing-request`, `pairing-response`. The gateway derives the identical key
   (`transport.rs::derive_key`, same salt/info strings) — the two sides must
   match byte for byte.
 - **AAD** is `"<METHOD> <path><search>"` (`requestAad`), i.e. the request line
-  only — *not* the origin/host. Confirmed against the gateway: `main.rs`
+  only — _not_ the origin/host. Confirmed against the gateway: `main.rs`
   builds `format!("{} {}", parts.method, parts.uri.path_and_query()…)`. This is
   why swapping the host to a loopback tunnel address changes nothing the AEAD
   checks.
@@ -64,8 +66,9 @@ an AES-256-GCM envelope:
 the key and pairing is not sealed.
 
 ### The `Host` header is checked, and this is why the forward uses an IP literal
+
 The AAD is not the only thing that could have objected to a swapped origin. The
-gateway runs a `known_host` middleware (`main.rs`) *before* auth: a request
+gateway runs a `known_host` middleware (`main.rs`) _before_ auth: a request
 whose `Host` header is not a name the gateway answers to is refused with
 `403 unknown_host`. `host_is_known` accepts any **IP literal**, `localhost` and
 `*.localhost`, and `*.ts.net`.
@@ -77,6 +80,7 @@ start failing `unknown_host` — with an error that says nothing about the real
 cause. It is pinned by `tunnelBaseUrl`'s test.
 
 ### Pairing (QR / code)
+
 - The manager (`muqun-gateway manage`) prints a QR whose payload is
   `muqun://pair?u=<gateway url>&s=<server_id>&k=<transport bootstrap key>`
   (`pairing_qr_offer`, `main.rs`). `k` is the QR-only bootstrap secret; it is
@@ -93,18 +97,19 @@ cause. It is pinned by `tunnelBaseUrl`'s test.
   (`codePairingMaterial` client, `code_pairing_material` gateway — identical
   params: argon2id, mem 19456 KiB, time 2, lanes 1, out 32, salt =
   `SHA256("muqun-pairing-code-salt-v1" ‖ request_id)`), AAD
-  `CODE_PAIRING_CLAIM_AAD`. A typed address therefore *requires* the encrypted
+  `CODE_PAIRING_CLAIM_AAD`. A typed address therefore _requires_ the encrypted
   transport (`transportRequired`), refusing a token-only downgrade
   (`validateClaimedPairing`).
 
 ### Default listen address / port, and loopback handling
+
 - `DEFAULT_PORT = 23847` (`main.rs`). The public listener is normally localhost
   behind Tailscale Serve HTTPS or a Tailnet IPv4 (`auto_public_url`); the
   loopback fallback URL is `http://127.0.0.1:23847`.
 - **The gateway gives loopback clients no special treatment.** There is no
   code path that skips `require_device` or the transport proof for a request
   arriving on `127.0.0.1`. `is_local_public_url` / `unreachable_listen_warning`
-  only classify the *advertised URL* for a startup warning; they never gate
+  only classify the _advertised URL_ for a startup warning; they never gate
   auth. A request that reaches the socket over an SSH forward is
   indistinguishable from any other loopback request and is authenticated
   identically. **This is exactly why the tunnel must still present the token and
@@ -112,8 +117,8 @@ cause. It is pinned by `tunnelBaseUrl`'s test.
 
 **Conclusion for this feature:** over the tunnel the client keeps sending the
 same token and the same AES-GCM-sealed envelopes it sends today. The tunnel
-only changes *where the bytes go* (a loopback port forwarded through SSH),
-never *what the bytes are*. The stored `GatewayRecord.token` / `transportKey` /
+only changes _where the bytes go_ (a loopback port forwarded through SSH),
+never _what the bytes are_. The stored `GatewayRecord.token` / `transportKey` /
 `deviceId` / `transport` are used unchanged; only the base URL is swapped for
 `http://127.0.0.1:<localPort>` at runtime.
 
@@ -147,7 +152,7 @@ See the normaliser test in `gateway-storage.test.ts`.
 ## 3. Runtime
 
 - **`src/lib/ssh-tunnel.ts`** — pure. The tunnel state machine (`idle →
-  connecting → open → down`, plus `closed`), the reference-count / idle rules,
+connecting → open → down`, plus `closed`), the reference-count / idle rules,
   and `tunnelBaseUrl(port)` URL derivation. It takes an injected SSH facade so
   it runs under `bun test` with a fake; it imports nothing native.
 - **`src/stores/ssh-tunnels.ts`** — the live manager (Zustand). Given a
@@ -208,6 +213,7 @@ The reader asked for this explicitly. Each item is a claim the code is built to
 satisfy.
 
 ### T1 — The loopback forward is reachable by other apps on the device
+
 On both iOS and Android, a listener on `127.0.0.1:<port>` is reachable by **any
 other app on the same device**. The forward is a plain TCP loopback listener, so
 we must assume a hostile local app can connect to it and speak HTTP to the
@@ -216,7 +222,7 @@ gateway through it.
 **Mitigation — the tunnel never bypasses gateway auth.** This is defense in
 depth on top of the gateway's own refusal to trust loopback (§1): a local
 attacker who connects to the forward reaches the gateway, but the gateway still
-demands the bearer token *and*, in `required` mode, a correctly sealed
+demands the bearer token _and_, in `required` mode, a correctly sealed
 per-device AES-GCM envelope. Neither the token nor the transport key is on the
 forward or derivable from it — both live only in the sealed gateway blob in the
 keychain. So the attacker can open a TCP connection and receive `403`s. To limit
@@ -234,6 +240,7 @@ The token and encrypted transport are **mandatory over the tunnel** — there is
 no code path that talks to a tunnelled gateway without them.
 
 ### T2 — SSH host-key trust
+
 The tunnel uses the **same** TOFU + "Replace key" rules as the SSH terminal
 screen, factored into a reusable hook (`useSshHostKeyPrompt`) that renders the
 identical red mismatch dialog. `compareSshHostKey` decides `unknown | match |
@@ -243,6 +250,7 @@ writes a trusted key without the reader's explicit acceptance, and reuses the
 host's pinned `hostKeyAlgorithms` exactly as the SSH screen does.
 
 ### T3 — Credentials never leak
+
 - The SSH password / private key stay in the **sealed SSH secrets blob**
   (`ssh-host-storage.ts`), read at connect time via
   `useSshHostsStore.credentialFor` and never held in tunnel state longer than
@@ -255,11 +263,13 @@ host's pinned `hostKeyAlgorithms` exactly as the SSH screen does.
   status strings name only the host label, never a secret.
 
 ### T4 — Server-controlled strings
+
 Host names and transport disconnect reasons are server/host-controlled. Every
 such string shown in tunnel chrome goes through `sanitizeServerText`
 (control-char / bidi / length sanitised), exactly as the SSH screen does.
 
 ### T5 — A malicious SSH host
+
 The SSH host carries the tunnel's bytes and can see, drop, or tamper with them.
 But that traffic is **still AES-256-GCM sealed to the gateway's per-device
 transport key** (§1), which the SSH host does not have: it cannot read request
@@ -274,6 +284,7 @@ recommends `required` (the default). A malicious host can of course refuse to
 forward (denial of service); that surfaces as "Tunnel down".
 
 ### T6 — Two records, one host, two gateways
+
 Two `GatewayRecord`s with `sshTunnel.hostId` equal but different
 `remoteHost:remotePort` share one SSH connection and open **two independent
 `direct-tcpip` forwards**. There is no shared listener and no cross-talk: each
@@ -282,10 +293,11 @@ device key. The manager keys forwards by `serverId`, connections by `hostId`,
 and reference-counts each independently.
 
 ### T7 — A tunnelled record has no address this phone may use
+
 Found while auditing this branch, and fixed in it. A `GatewayRecord`'s stored
 `url` is the gateway's address **as seen from the SSH host** — for the
 loopback-only gateway this feature exists for, `http://127.0.0.1:23847`. Sent
-*from the phone*, that names **the phone's own loopback** — the very place T1
+_from the phone_, that names **the phone's own loopback** — the very place T1
 says a hostile local app may be listening. Three code paths addressed a stored
 record by its `url` with `Authorization: Bearer <token>` attached:
 
@@ -314,6 +326,7 @@ tunnelled record, and all three go through it:
   badge instead.
 
 ### Confirmed against the gateway source
+
 Read directly from `/Users/okk/.repos/muqun-gateway` while writing this:
 
 - **No loopback shortcut exists.** `require_device` is unconditional on every
@@ -328,9 +341,9 @@ Read directly from `/Users/okk/.repos/muqun-gateway` while writing this:
   `X-Muqun-Device` + `X-Muqun-Envelope` on the wire. It never sends the
   device-proof header itself, so the transport key does not transit the SSH
   session and a malicious host sees only sealed bodies.
-- **An upstream note, not an app issue:** the gateway *accepts* a client-supplied
+- **An upstream note, not an app issue:** the gateway _accepts_ a client-supplied
   `x-muqun-internal-device-proof` on the unencrypted path and nothing strips it,
-  so some *other* client could authenticate by sending the transport key in
+  so some _other_ client could authenticate by sending the transport key in
   cleartext. Muqun does not, and a tunnel does not make it easier — but the
   "the key never transits the network" property is the client's discipline
   rather than something the gateway enforces. Worth raising on the gateway.
@@ -341,6 +354,7 @@ Read directly from `/Users/okk/.repos/muqun-gateway` while writing this:
   see the open question in the pull request.
 
 ### Residual risks (stated, not mitigated away)
+
 - Token-only (`disabled`) gateways expose the token to the SSH host and to a
   local app that races the port; use `required` (default).
 - A local app can cause `403` load against the gateway through the port while it

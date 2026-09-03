@@ -78,7 +78,13 @@ export interface SshSessionHandle {
  */
 interface NativeForwardCapable {
   forwardLocal(
-    options: { bindAddress?: string; localPort?: number; remoteHost: string; remotePort: number; maxConnections?: number },
+    options: {
+      bindAddress?: string;
+      localPort?: number;
+      remoteHost: string;
+      remotePort: number;
+      maxConnections?: number;
+    },
     events: { onClosed?: (reason: string) => void }
   ): Promise<{ readonly localPort: number; close(): Promise<void> }>;
 }

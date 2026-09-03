@@ -73,7 +73,11 @@ async function openConnection(
   return {
     forwardLocal: (options, forwardEvents) =>
       session.forwardLocal(
-        { remoteHost: options.remoteHost, remotePort: options.remotePort, maxConnections: MAX_TUNNEL_CONNECTIONS },
+        {
+          remoteHost: options.remoteHost,
+          remotePort: options.remotePort,
+          maxConnections: MAX_TUNNEL_CONNECTIONS,
+        },
         forwardEvents
       ),
     disconnect: () => session.disconnect(),

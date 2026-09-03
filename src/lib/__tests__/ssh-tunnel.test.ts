@@ -41,7 +41,10 @@ class FakeSsh {
         this.connectCount += 1;
         this.dropped.set(hostId, events.onDropped);
         const handle: TunnelConnectionHandle = {
-          forwardLocal: (opts: { remoteHost: string; remotePort: number }, fwEvents: { onClosed?: (reason: string) => void }) => {
+          forwardLocal: (
+            opts: { remoteHost: string; remotePort: number },
+            fwEvents: { onClosed?: (reason: string) => void }
+          ) => {
             const port = this.nextPort++;
             // Key the close trigger by the port so two forwards on one host stay distinct.
             const forward: TunnelForwardHandle = {

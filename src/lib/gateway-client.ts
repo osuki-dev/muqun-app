@@ -588,9 +588,7 @@ export interface GatewayTunnelSession {
   release: () => void;
 }
 
-let tunnelSessionOpener:
-  | ((record: GatewayRecord) => Promise<GatewayTunnelSession>)
-  | null = null;
+let tunnelSessionOpener: ((record: GatewayRecord) => Promise<GatewayTunnelSession>) | null = null;
 
 export function setGatewayTunnelSessionOpener(
   opener: ((record: GatewayRecord) => Promise<GatewayTunnelSession>) | null
