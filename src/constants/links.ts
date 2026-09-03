@@ -1,12 +1,12 @@
 /**
  * Every address the app hands to the outside world, in one file.
  *
- * These four values are the whole of Muqun's outbound surface: three links and
- * an email, all of them reachable from two screens. They used to live as string
- * constants next to the screens that opened them, which was fine while nothing
- * moved. Two things are about to move at once -- the marketing site to
- * `muqun.dev`, and the source to `github.com/osuki-dev/muqun` -- and a rename
- * spread across two files is a rename that gets half done.
+ * These five values are the whole of Muqun's outbound surface: four links and
+ * the source repository, all of them reachable from two screens. They used to
+ * live as string constants next to the screens that opened them, which was fine
+ * while nothing moved. Two things moved at once -- the site to `muqun.dev`, and
+ * the source to `github.com/osuki-dev/muqun-app` -- and a rename spread across
+ * two files is a rename that gets half done.
  *
  * ## The constraint, and it is the point of this file
  *
@@ -23,15 +23,20 @@
  *
  * Never step 2 before step 1. A link that 404s in the hand of a reader who has
  * just failed to pair is worse than the dead end it replaced, and a link that
- * 404s in front of App Review costs a release -- 1.3.0 already came back once.
+ * 404s in front of App Review costs a release -- 1.3.0 already came back once,
+ * because these values were moved to `muqun.dev` while that domain had no DNS
+ * record at all.
  *
- * That rule has already been broken once here, which is why it is written down.
- * These three values were changed to `muqun.dev` while that site existed only as
- * a repository: the domain had no DNS record, so `muqun.dev/privacy/` -- the URL
- * App Review opens first -- resolved to nothing at all. They are back on
- * `www.osuki.dev/muqun`, which answers 200 today, and they stay there until
- * `muqun.dev` is serving. The new site being *finished* is not the trigger; the
- * trigger is a 200 from the live domain.
+ * That is why step 1 is written down as a check rather than a belief. It was
+ * run again on 2026-09-03, unauthenticated, before the values below changed:
+ * `muqun.dev/`, `muqun.dev/privacy`, `muqun.dev/gateway.sh` and the GitHub
+ * repository and its issue form each answered 200, and the repository reports
+ * `private: false`, so the Feedback button resolves for a reader with no push
+ * access. Only then were these edited.
+ *
+ * `osuki.dev` is no longer this app's home: Muqun is its own product on its own
+ * domain from 2.0.0. The old addresses stay alive as redirects for the 1.3.0
+ * binaries already installed, which is step 4 and has no end date.
  *
  * ## What is not in this file
  *
@@ -47,14 +52,13 @@
  */
 
 /**
- * The privacy policy, opened from Settings -> About.
+ * The privacy policy, opened from Settings -> About, and the first URL App
+ * Review opens.
  *
- * No trailing slash, unlike the `privacyPolicyUrl` in `store.config.json`.
- * That is not tidiness waiting to happen: this exact string is what 1.3.0
- * shipped and what the site is known to answer. Normalising it is a change to
- * a live URL for no gain.
+ * No trailing slash: `muqun.dev/privacy` and `muqun.dev/privacy/` both answer
+ * 200, and the form without it is the one this app has always sent.
  */
-export const PRIVACY_POLICY_URL = 'https://www.osuki.dev/muqun/privacy';
+export const PRIVACY_POLICY_URL = 'https://muqun.dev/privacy';
 
 /**
  * Where a reader with no Gateway is sent, from the pairing screen.
@@ -66,11 +70,10 @@ export const PRIVACY_POLICY_URL = 'https://www.osuki.dev/muqun/privacy';
  * App Store reviewer landed in the same place, which is part of why 1.3.0 came
  * back.
  *
- * The marketing page rather than a deeper one: `/muqun/setup` and
- * `/muqun/gateway` are both 404 today, and a link that 404s in review is worse
- * than no link at all.
+ * The site root rather than a deeper page: only `/` and `/privacy` are known
+ * to answer, and a link that 404s in review is worse than no link at all.
  */
-export const GATEWAY_SETUP_URL = 'https://www.osuki.dev/muqun/';
+export const GATEWAY_SETUP_URL = 'https://muqun.dev/';
 
 /**
  * The one command that installs the Gateway, printed on the pairing screen.
@@ -83,8 +86,7 @@ export const GATEWAY_SETUP_URL = 'https://www.osuki.dev/muqun/';
  * `muqun.dev/gateway.sh` is the canonical 302 to the script in the Gateway's
  * own repository, so this address survives the repository moving and the
  * script has exactly one copy. The old `osuki.dev/muqun/gateway.sh` address
- * stays live for released builds, while new builds and documentation publish
- * the product domain consistently.
+ * stays live as a redirect for the builds already installed.
  *
  * It is a `| sh` pipeline because the reader is on a phone, and the two-step
  * download-read-run form is three lines nobody will retype from a 390pt
@@ -127,10 +129,23 @@ export const GATEWAY_INSTALL_COMMAND = 'curl -fsSL https://muqun.dev/gateway.sh 
 export const FEEDBACK_URL = 'https://github.com/osuki-dev/muqun-app/issues/new/choose';
 
 /**
- * The support address, shown and mailto'd from Settings -> About.
+ * The source, opened from Settings -> About.
  *
- * A mailbox, not a page: it survives the site move on its own MX records and
- * has no reason to change with the domain. It is also the address in
- * `store.config.json`'s review contact, so the two should stay the same string.
+ * Muqun is open source from 2.0.0, and this is the repository that Feedback
+ * above files into -- the same tree, so a reader who wants to read the code
+ * that produced a bug and a reader who wants to report it end up in one place.
+ *
+ * ── WHY THERE IS NO SUPPORT EMAIL ANY MORE ──────────────────────────────────
+ * There was a `muqun@osuki.dev` mailbox here, shown and mailto'd from a
+ * "Contact us" row. It went with the domain. A mailbox is also the wrong
+ * instrument for an open-source app: a bug reported by mail is invisible to
+ * everyone else who has it, cannot be linked to the commit that fixes it, and
+ * dies if nobody is reading that inbox. Both of the things it was used for --
+ * report something, ask something -- are the issue tracker now.
+ *
+ * The 1.3.0 binaries still show the old address. That is harmless in a way a
+ * dead link is not: an address that no longer receives mail bounces, rather
+ * than presenting a 404 to someone who is already having a bad time.
+ * ────────────────────────────────────────────────────────────────────────────
  */
-export const SUPPORT_EMAIL = 'muqun@osuki.dev';
+export const SOURCE_URL = 'https://github.com/osuki-dev/muqun-app';
