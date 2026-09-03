@@ -92,3 +92,36 @@ diff --git a/src/components/toast.tsx b/src/components/toast.tsx
  				flexDirection: "row",
  				alignItems: "flex-start",
  				gap: theme.spacing.sm,
+diff --git a/src/components/segmented-control.tsx b/src/components/segmented-control.tsx
+--- a/src/components/segmented-control.tsx
++++ b/src/components/segmented-control.tsx
+@@ -1,5 +1,5 @@
+ import React from "react";
+-import { TouchableOpacity, View, type ViewProps, type ViewStyle } from "react-native";
++import { Platform, TouchableOpacity, View, type ViewProps, type ViewStyle } from "react-native";
+ import ExpoSegmentedControl from "@expo/ui/community/segmented-control";
+ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+ import { useThemeTokens } from "../theme";
+@@ -86,7 +86,21 @@
+ 		...(mode === "light" ? shadow.soft : {}),
+ 	};
+ 
+-	if (!hasDisabledOptions) {
++	// The native control only fits this container on iOS.
++	//
++	// `@expo/ui/community/segmented-control` renders the platform's own widget.
++	// On iOS that is `UISegmentedControl`, which is compact and chromeless enough
++	// to sit inside the decorative track above. On Android it is Material's
++	// `SegmentedButtonRow`, which draws a full outlined track of its own: its own
++	// border, its own dividers between segments and its own selected fill. Nested
++	// in this one you get two tracks, and Material's row wants more height than
++	// the 36pt this container leaves it, so the selected segment overflows top and
++	// bottom while the labels overflow the parent's rounded clip on the right.
++	//
++	// The branch below is not a fallback -- it is this design system's own
++	// rendering of the control, and it is what the rules in the doc comment
++	// describe. Android takes it.
++	if (Platform.OS === "ios" && !hasDisabledOptions) {
+ 		return (
+ 			<View accessibilityRole="tablist" testID={testID} style={[containerStyles, style]} {...rest}>
+ 				<ExpoSegmentedControl
