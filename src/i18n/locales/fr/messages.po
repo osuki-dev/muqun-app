@@ -81,6 +81,14 @@ msgstr "il y a {0} min"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· a demandé une fois} other {· a demandé # fois}}"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
+msgstr "{host} a présenté une clé différente de celle enregistrée. Cela arrive après une réinstallation, et aussi quand quelque chose intercepte la connexion. Ne la remplacez pas sans savoir pourquoi elle a changé."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "{host} presented a key this app has not seen before. Compare the fingerprint with the server before trusting it."
+msgstr "{host} a présenté une clé que cette app n’a jamais vue. Comparez l’empreinte avec le serveur avant de lui faire confiance."
+
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} : accès temporairement verrouillé. Utilisez la solution de secours du système ou réessayez plus tard."
@@ -105,6 +113,10 @@ msgstr "Un serveur de dev ou un aperçu tournant sur cette machine."
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "L'aperçu n'est proposé que via Tailscale ou HTTPS."
 
+#: src/components/pad-server-rail.tsx
+msgid "A shell on any machine with sshd"
+msgstr "Un shell sur n’importe quelle machine avec sshd"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "À propos"
@@ -117,13 +129,25 @@ msgstr "Agir sur ce terminal, ou lui envoyer une commande."
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "Agir sur ce terminal, ou envoyer un prompt à son agent."
 
+#: src/components/ssh-host-list.tsx
+msgid "Add a host"
+msgstr "Ajouter un hôte"
+
 #: src/app/commands.tsx
 msgid "Add a terminal beside this one, and go to it."
 msgstr "Ajouter un terminal à côté de celui-ci et s'y rendre."
 
+#: src/components/ssh-host-list.tsx
+msgid "Add an SSH host"
+msgstr "Ajouter un hôte SSH"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Ajoutez des commandes et des combinaisons de touches personnalisées."
+
+#: src/components/ssh-host-form.tsx
+msgid "Add this line to ~/.ssh/authorized_keys on the server:"
+msgstr "Ajoutez cette ligne à ~/.ssh/authorized_keys sur le serveur :"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -173,6 +197,10 @@ msgstr "Autoriser la caméra"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Autorisez la caméra, ou saisissez l'adresse."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Answer"
+msgstr "Réponse"
+
 #. placeholder {0}: option.label
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
@@ -211,6 +239,10 @@ msgstr "Approuver et ne plus demander"
 msgid "Approve or deny that request straight from the notification, without opening the app."
 msgstr "Approuvez ou refusez cette demande directement depuis la notification, sans ouvrir l’app."
 
+#: src/components/ssh-host-form.tsx
+msgid "Ask each time"
+msgstr "Demander à chaque fois"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "Vérification du code auprès du Gateway."
@@ -247,6 +279,10 @@ msgstr "Échec de l’authentification. Réessayez."
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "L’authentification est indisponible. Réessayez ou vérifiez les paramètres système."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back"
+msgstr "Retour"
+
 #: src/i18n/labels.ts
 msgid "Back one word"
 msgstr "Un mot en arrière"
@@ -254,6 +290,10 @@ msgstr "Un mot en arrière"
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "Retour aux serveurs"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to SSH hosts"
+msgstr "Retour aux hôtes SSH"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -280,14 +320,25 @@ msgstr "Accès à la caméra requis"
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
+#: src/components/ssh-host-form.tsx
+#: src/components/ssh-terminal-workspace.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Annuler"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancel connecting to {0}"
+msgstr "Annuler la connexion à {0}"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Cancel editing {0}"
 msgstr "Annuler la modification de {0}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancelled"
+msgstr "Annulé"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -408,6 +459,11 @@ msgstr "Compact"
 msgid "Confirm pairing"
 msgstr "Confirmer l’appairage"
 
+#. placeholder {0}: record.label
+#: src/components/ssh-host-form.tsx
+msgid "Confirm removing {0}"
+msgstr "Confirmer la suppression de {0}"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "Confirm revoke {0}"
@@ -430,17 +486,26 @@ msgstr "Confirmer : {removeLabel} {label}"
 msgid "Connected"
 msgstr "Connecté"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connected to {address}"
+msgstr "Connecté à {address}"
+
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Connecting"
 msgstr "Connexion en cours"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connecting to {address}"
+msgstr "Connexion à {address}"
+
 #: src/app/settings.tsx
 msgid "Contact us"
 msgstr "Contactez-nous"
 
 #: src/app/explore.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Continue"
 msgstr "Continuer"
 
@@ -568,13 +633,25 @@ msgstr "La copie, prête à coller dans un terminal"
 msgid "Copy"
 msgstr "Copier"
 
+#: src/components/ssh-host-form.tsx
+msgid "Copy public key"
+msgstr "Copier la clé publique"
+
 #: src/app/explore.tsx
 msgid "Copy the install command"
 msgstr "Copier la commande d'installation"
 
+#: src/components/ssh-host-form.tsx
+msgid "Copy the public key"
+msgstr "Copier la clé publique"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Impossible d’ajouter le fichier"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not connect"
+msgstr "Connexion impossible"
 
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
@@ -583,6 +660,10 @@ msgstr "Impossible de copier"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Impossible d’activer le verrouillage de l’app"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not generate a key"
+msgstr "Impossible de générer une clé"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -632,6 +713,10 @@ msgstr "Impossible de joindre ce serveur."
 msgid "Could not read the terminal."
 msgstr "Impossible de lire le terminal."
 
+#: src/components/ssh-host-form.tsx
+msgid "Could not remove host"
+msgstr "Impossible de supprimer l’hôte"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Impossible de révoquer l’appareil"
@@ -639,6 +724,14 @@ msgstr "Impossible de révoquer l’appareil"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "Impossible d’enregistrer les modifications"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not save host"
+msgstr "Impossible d’enregistrer l’hôte"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not send"
+msgstr "Envoi impossible"
 
 #: src/app/commands.tsx
 msgid "Could not send command."
@@ -712,6 +805,10 @@ msgstr "Supprimer {name}"
 msgid "Delete this line"
 msgstr "Supprimer cette ligne"
 
+#: src/lib/demo-ssh.ts
+msgid "Demo shell"
+msgstr "Shell de démonstration"
+
 #: src/lib/demo-gateway.ts
 msgid "Demo workspace"
 msgstr "Espace de travail de démo"
@@ -736,6 +833,20 @@ msgstr "Résumé du diff"
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "RÉPERTOIRE"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnect from {0}"
+msgstr "Se déconnecter de {0}"
+
+#. placeholder {0}: status.reason
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected · {0}"
+msgstr "Déconnecté · {0}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected."
+msgstr "Déconnecté."
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
@@ -782,14 +893,20 @@ msgstr "Chaque appareil détient son propre jeton pour {0}."
 msgid "Edit"
 msgstr "Modifier"
 
+#. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-list.tsx
 msgid "Edit {0}"
 msgstr "Modifier {0}"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
 msgstr "Modifier les raccourcis"
+
+#: src/components/ssh-host-list.tsx
+msgid "Edit SSH host"
+msgstr "Modifier l’hôte SSH"
 
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
@@ -840,6 +957,11 @@ msgstr "Déplier {0}"
 msgid "Expires in {0}:{1}"
 msgstr "Expire dans {0}:{1}"
 
+#. placeholder {0}: status.code
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Failed · {0}"
+msgstr "Échec · {0}"
+
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
 msgstr "Mentions de fichiers"
@@ -863,6 +985,10 @@ msgstr "Fichiers de cet espace de travail"
 #: src/i18n/labels.ts
 msgid "Find a file by name"
 msgstr "Rechercher un fichier par son nom"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Fingerprint"
+msgstr "Empreinte"
 
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
@@ -917,6 +1043,14 @@ msgstr "URL du Gateway"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "L’URL du Gateway n’est pas valide."
+
+#: src/components/ssh-host-form.tsx
+msgid "Generate an Ed25519 key"
+msgstr "Générer une clé Ed25519"
+
+#: src/components/ssh-host-form.tsx
+msgid "Generating…"
+msgstr "Génération…"
 
 #: src/i18n/labels.ts
 msgid "Git status"
@@ -977,6 +1111,14 @@ msgstr "Widget de l’écran d’accueil"
 msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
 msgstr "L’accueil, les Paramètres et l’écran du serveur ont été repensés — chaque serveur liste les agents qu’il exécutait en dernier, avec leur statut."
 
+#: src/components/ssh-host-form.tsx
+msgid "Host"
+msgstr "Hôte"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Host key changed"
+msgstr "La clé de l’hôte a changé"
+
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inactif"
@@ -1031,6 +1173,14 @@ msgstr "Elle a été trouvée, mais n'a jamais affiché d'image. Une autre app l
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
 msgstr "Ses informations sont stockées en toute sécurité sur cet appareil ; réessayez."
+
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be removed from secure storage."
+msgstr "Ses informations n’ont pas pu être retirées du stockage sécurisé."
+
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be written to secure storage."
+msgstr "Ses informations n’ont pas pu être écrites dans le stockage sécurisé."
 
 #: src/components/settings-servers.tsx
 msgid "Its paired devices are listed once it is the server in use."
@@ -1255,6 +1405,7 @@ msgid "Muqun will use {0} when the app opens."
 msgstr "Muqun utilisera {0} à l’ouverture de l’app."
 
 #: src/app/commands.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "Nom"
 
@@ -1274,9 +1425,17 @@ msgstr "Jamais vu"
 msgid "New group"
 msgstr "Nouveau groupe"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "New host key"
+msgstr "Nouvelle clé d’hôte"
+
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "NOUVEAU RACCOURCI"
+
+#: src/components/ssh-host-list.tsx
+msgid "New SSH host"
+msgstr "Nouvel hôte SSH"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1332,6 +1491,10 @@ msgstr "Aucune app de messagerie configurée"
 msgid "No output."
 msgstr "Aucune sortie."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "No password or key is saved for this host."
+msgstr "Aucun mot de passe ni clé n’est enregistré pour cet hôte."
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "Aucun aperçu pour ce type de fichier. Il reste sur le serveur."
@@ -1348,6 +1511,10 @@ msgstr "Aucun serveur appairé pour l’instant"
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
 msgstr "Aucun simulateur sur le port {port}"
+
+#: src/components/ssh-host-list.tsx
+msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
+msgstr "Aucun hôte SSH pour l’instant. Ajoutez-en un pour ouvrir un shell sur n’importe quelle machine joignable."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1368,6 +1535,10 @@ msgstr "NON CONNECTÉ"
 #: src/app/+not-found.tsx
 msgid "Not found"
 msgstr "Introuvable"
+
+#: src/components/ssh-host-form.tsx
+msgid "Not valid."
+msgstr "Non valide."
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
@@ -1403,10 +1574,11 @@ msgstr "Ouvrir"
 
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
+#. placeholder {0}: record.label
 #: src/app/(drawer)/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
+#: src/components/ssh-host-list.tsx
 msgid "Open {0}"
 msgstr "Ouvrir {0}"
 
@@ -1520,6 +1692,22 @@ msgstr "Échec de l’appairage."
 msgid "Panes on server cards"
 msgstr "Panneaux sur les fiches serveur"
 
+#: src/components/ssh-host-form.tsx
+msgid "Passphrase (optional)"
+msgstr "Phrase secrète (facultatif)"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password"
+msgstr "Mot de passe"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password (leave blank to keep the saved one)"
+msgstr "Mot de passe (laisser vide pour garder celui enregistré)"
+
+#: src/components/ssh-host-form.tsx
+msgid "Passwords and keys are sealed in the keychain on this device and never leave it."
+msgstr "Les mots de passe et les clés sont scellés dans le trousseau de cet appareil et ne le quittent jamais."
+
 #: src/i18n/labels.ts
 msgid "Paste"
 msgstr "Coller"
@@ -1534,12 +1722,17 @@ msgid "Photo library"
 msgstr "Photothèque"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Port"
 msgstr "Port"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "PORT"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Presented now"
+msgstr "Présentée maintenant"
 
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
@@ -1558,6 +1751,14 @@ msgstr "Voir un simulateur"
 msgid "Privacy policy"
 msgstr "Politique de confidentialité"
 
+#: src/components/ssh-host-form.tsx
+msgid "Private key"
+msgstr "Clé privée"
+
+#: src/components/ssh-host-form.tsx
+msgid "Private key (leave blank to keep the saved one)"
+msgstr "Clé privée (laisser vide pour garder celle enregistrée)"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "Prompt"
@@ -1565,6 +1766,10 @@ msgstr "Prompt"
 #: src/components/settings-security.tsx
 msgid "Protect paired servers and terminal sessions."
 msgstr "Protégez les serveurs appairés et les sessions de terminal."
+
+#: src/components/ssh-host-form.tsx
+msgid "Public key copied"
+msgstr "Clé publique copiée"
 
 #: src/i18n/labels.ts
 msgid "Pull"
@@ -1608,6 +1813,15 @@ msgstr "Recevez les blocages d’agents et les mises à jour du Gateway."
 msgid "Recent commits"
 msgstr "Commits récents"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect"
+msgstr "Reconnecter"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect to {0}"
+msgstr "Reconnecter à {0}"
+
 #. placeholder {0}: status.attempt
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
@@ -1622,9 +1836,15 @@ msgid "Refresh files"
 msgstr "Actualiser les fichiers"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Retirer {0}"
+
+#: src/components/ssh-host-form.tsx
+msgid "Remove host"
+msgstr "Supprimer l’hôte"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -1650,6 +1870,10 @@ msgstr "Afficher comme terminal"
 msgid "Render as text"
 msgstr "Afficher comme texte"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Replace key"
+msgstr "Remplacer la clé"
+
 #: src/app/settings.tsx
 msgid "Report a bug or request a feature"
 msgstr "Signaler un bug ou proposer une fonctionnalité"
@@ -1661,6 +1885,10 @@ msgstr "Échec de la requête."
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "Requis au lancement et après 30 secondes en arrière-plan."
+
+#: src/components/ssh-host-form.tsx
+msgid "Required."
+msgstr "Obligatoire."
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -1768,6 +1996,7 @@ msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affich
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -1779,14 +2008,24 @@ msgstr "Enregistrez une commande ou une combinaison de touches que vous utilisez
 msgid "Save a prompt you send this agent often."
 msgstr "Enregistrez un prompt que vous envoyez souvent à cet agent."
 
+#. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Save changes to {0}"
 msgstr "Enregistrer les modifications de {0}"
+
+#: src/components/ssh-host-form.tsx
+msgid "Save host"
+msgstr "Enregistrer l’hôte"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Enregistrer le raccourci"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Saved"
+msgstr "Enregistrée"
 
 #: src/app/commands.tsx
 msgid "SAVED COMMANDS"
@@ -1797,6 +2036,7 @@ msgid "SAVED PROMPTS"
 msgstr "PROMPTS ENREGISTRÉS"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Saving…"
 msgstr "Enregistrement…"
 
@@ -1859,6 +2099,7 @@ msgid "Select all"
 msgstr "Tout sélectionner"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Send {spoken}"
 msgstr "Envoyer {spoken}"
 
@@ -1995,6 +2236,10 @@ msgstr "Afficher les images"
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "L'afficher à côté du terminal et le voir se redessiner."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Show keyboard"
+msgstr "Afficher le clavier"
+
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Afficher la liste des serveurs"
@@ -2002,6 +2247,14 @@ msgstr "Afficher la liste des serveurs"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Voir ce qui tourne"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Sign in"
+msgstr "Connexion"
+
+#: src/components/ssh-host-form.tsx
+msgid "Sign in with"
+msgstr "Se connecter avec"
 
 #: src/components/simfarm-preview.tsx
 msgid "simfarm port"
@@ -2022,6 +2275,13 @@ msgstr "Une erreur s’est produite"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Espace"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-list.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "SSH"
+msgstr "SSH"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
@@ -2115,6 +2375,10 @@ msgstr "Tab"
 msgid "Take photo"
 msgstr "Prendre une photo"
 
+#: src/components/ssh-host-form.tsx
+msgid "Tap again to remove"
+msgstr "Touchez à nouveau pour supprimer"
+
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -2173,6 +2437,15 @@ msgstr "La caméra n'a pas démarré"
 msgid "The camera reported an error."
 msgstr "La caméra a signalé une erreur."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The connection dropped."
+msgstr "La connexion a été coupée."
+
+#. placeholder {0}: failure.code
+#: src/components/ssh-host-form.tsx
+msgid "The key could not be read ({0}). Check the key and its passphrase."
+msgstr "La clé n’a pas pu être lue ({0}). Vérifiez la clé et sa phrase secrète."
+
 #: src/lib/release-notes.ts
 msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
 msgstr "Le clavier à l’écran est disposé comme un vrai clavier, et chaque touche est envoyée à l’instant où vous la pressez."
@@ -2186,6 +2459,10 @@ msgstr "Le panneau brut, sur sa grille et dans ses propres couleurs."
 msgid "The screen hit an error. Try again — your servers stay paired."
 msgstr "L’écran a rencontré une erreur. Réessayez — vos serveurs restent appairés."
 
+#: src/components/ssh-host-form.tsx
+msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
+msgstr "Le serveur pose ses propres questions à la connexion, un mot de passe ou un code à usage unique, et rien n’est enregistré sur cet appareil."
+
 #: src/components/server-terminal-workspace.tsx
 msgid "The server did not return it."
 msgstr "Le serveur ne l’a pas renvoyé."
@@ -2194,9 +2471,17 @@ msgstr "Le serveur ne l’a pas renvoyé."
 msgid "The server did not say which terminal it made."
 msgstr "Le serveur n'a pas dit quel terminal il a créé."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The server is asking for more before it lets you in."
+msgstr "Le serveur demande autre chose avant de vous laisser entrer."
+
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
 msgstr "Le serveur a été conservé sur cet appareil. Vérifiez que son Gateway est en cours d’exécution, puis réessayez."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The shell exited."
+msgstr "Le shell s’est terminé."
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
@@ -2244,9 +2529,17 @@ msgstr "Ce Gateway n’a listé aucun appareil appairé."
 msgid "This group has no terminals."
 msgstr "Ce groupe n'a aucun terminal."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "This host is no longer saved."
+msgstr "Cet hôte n’est plus enregistré."
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "Impossible de charger cette image."
+
+#: src/lib/demo-ssh.ts
+msgid "This is a bundled transcript, not a real server."
+msgstr "Ceci est une transcription intégrée, pas un vrai serveur."
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -2318,6 +2611,10 @@ msgstr "Trop volumineux pour la coloration. Affiché en texte brut."
 msgid "Too many lines to colour. Shown as plain text."
 msgstr "Trop de lignes pour la coloration. Affiché en texte brut."
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Trust"
+msgstr "Faire confiance"
+
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 msgid "Try again"
@@ -2334,6 +2631,10 @@ msgstr "Essayer la démo"
 #: src/components/asset-viewer.tsx
 msgid "Type"
 msgstr "Type"
+
+#: src/lib/demo-ssh.ts
+msgid "Type a line and press Enter; it is echoed back."
+msgstr "Tapez une ligne et appuyez sur Entrée ; elle vous est renvoyée."
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Type into this editor"
@@ -2425,6 +2726,10 @@ msgstr "Ajoutez-en un avec le bouton de scan de l’écran d’accueil."
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "Utiliser ce serveur"
+
+#: src/components/ssh-host-form.tsx
+msgid "Username"
+msgstr "Nom d’utilisateur"
 
 #: src/components/settings-servers.tsx
 msgid "USING"

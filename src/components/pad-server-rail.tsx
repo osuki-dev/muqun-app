@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
-import { ChevronRight, ScanLine, Server, Settings } from 'lucide-react-native';
+import { ChevronRight, ScanLine, Server, Settings, SquareTerminal } from 'lucide-react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,6 +28,12 @@ export type PadServerRailProps = {
   onSelectAgent: (server: GatewayRecord, agent: ServerAgent) => void;
   onPairServer: () => void;
   onOpenSettings: () => void;
+  /**
+   * The SSH hosts, a plain shell on any machine with sshd. Beside the
+   * gateway actions rather than among the servers: it pairs nothing and needs
+   * no herdr. Optional so a caller that has no such door renders none.
+   */
+  onOpenSsh?: () => void;
   /** One clock for every group, so snapshots age consistently. */
   nowMs?: number;
   style?: StyleProp<ViewStyle>;
@@ -51,6 +57,7 @@ export function PadServerRail({
   onSelectAgent,
   onPairServer,
   onOpenSettings,
+  onOpenSsh,
   // eslint-disable-next-line react-hooks/purity -- a shared render-time freshness boundary.
   nowMs = Date.now(),
   style,
@@ -129,6 +136,14 @@ export function PadServerRail({
           icon={ScanLine}
           onPress={onPairServer}
         />
+        {onOpenSsh ? (
+          <RailAction
+            label={t`SSH`}
+            detail={t`A shell on any machine with sshd`}
+            icon={SquareTerminal}
+            onPress={onOpenSsh}
+          />
+        ) : null}
         <RailAction
           label={t`Settings`}
           detail={t`Appearance, terminal, security`}

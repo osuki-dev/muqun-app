@@ -215,6 +215,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             onSelectAgent={(server, agent) => openServer(server.serverId, agent.paneId)}
             onPairServer={() => router.push('/explore')}
             onOpenSettings={() => router.push('/settings')}
+            onOpenSsh={() => router.push('/ssh')}
           />
         ) : undefined
       }>
@@ -248,6 +249,12 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
         <View style={styles.headerActions}>
+          {/* A plain shell on any machine with sshd, beside the gateway
+              entries rather than among them: it pairs nothing and needs no
+              herdr, so it is the one door here that is not about a gateway. */}
+          <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
+            <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
+          </HeaderButton>
           <HeaderButton
             label={t`Scan a gateway QR`}
             onPress={() => router.push('/explore')}>

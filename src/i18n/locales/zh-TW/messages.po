@@ -81,6 +81,14 @@ msgstr "{0} 分鐘前"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· 詢問 # 次}}"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
+msgstr "{host} 出示的金鑰與已儲存的不同。這會在重新安裝後發生，也會在連線遭到攔截時發生。除非你知道它為何改變，否則不要取代。"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "{host} presented a key this app has not seen before. Compare the fingerprint with the server before trusting it."
+msgstr "{host} 出示了此 App 從未見過的金鑰。信任之前，請先與伺服器上的指紋比對。"
+
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} 目前已鎖定。請改用系統備援方式，或稍後再試。"
@@ -105,6 +113,10 @@ msgstr "這台電腦上執行中的開發伺服器或預覽。"
 msgid "A preview is only offered over Tailscale or HTTPS."
 msgstr "只有透過 Tailscale 或 HTTPS 才會提供預覽。"
 
+#: src/components/pad-server-rail.tsx
+msgid "A shell on any machine with sshd"
+msgstr "任何裝有 sshd 的機器上的 shell"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "關於"
@@ -117,13 +129,25 @@ msgstr "操作這個終端機，或送一個指令給它。"
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "操作這個終端機，或送一段提示給它的代理程式。"
 
+#: src/components/ssh-host-list.tsx
+msgid "Add a host"
+msgstr "新增主機"
+
 #: src/app/commands.tsx
 msgid "Add a terminal beside this one, and go to it."
 msgstr "在旁邊加一個終端機，並前往。"
 
+#: src/components/ssh-host-list.tsx
+msgid "Add an SSH host"
+msgstr "新增 SSH 主機"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "新增指令與自訂組合鍵。"
+
+#: src/components/ssh-host-form.tsx
+msgid "Add this line to ~/.ssh/authorized_keys on the server:"
+msgstr "將這一行加到伺服器的 ~/.ssh/authorized_keys："
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -173,6 +197,10 @@ msgstr "允許相機"
 msgid "Allow the camera, or enter the address instead."
 msgstr "允許使用相機，或改為輸入位址。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Answer"
+msgstr "回答"
+
 #. placeholder {0}: option.label
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
@@ -211,6 +239,10 @@ msgstr "核准且不再詢問"
 msgid "Approve or deny that request straight from the notification, without opening the app."
 msgstr "也可以直接在通知上核准或拒絕，不必打開牧群。"
 
+#: src/components/ssh-host-form.tsx
+msgid "Ask each time"
+msgstr "每次詢問"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "正在向 Gateway 確認這組代碼。"
@@ -247,6 +279,10 @@ msgstr "驗證失敗。請再試一次。"
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "目前無法驗證。請再試一次，或檢查系統設定。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back"
+msgstr "返回"
+
 #: src/i18n/labels.ts
 msgid "Back one word"
 msgstr "往回一個字詞"
@@ -254,6 +290,10 @@ msgstr "往回一個字詞"
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "回到伺服器列表"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to SSH hosts"
+msgstr "返回 SSH 主機"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -280,14 +320,25 @@ msgstr "需要相機存取權"
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
+#: src/components/ssh-host-form.tsx
+#: src/components/ssh-terminal-workspace.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancel connecting to {0}"
+msgstr "取消連線至 {0}"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Cancel editing {0}"
 msgstr "取消編輯 {0}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancelled"
+msgstr "已取消"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -408,6 +459,11 @@ msgstr "緊湊"
 msgid "Confirm pairing"
 msgstr "確認配對"
 
+#. placeholder {0}: record.label
+#: src/components/ssh-host-form.tsx
+msgid "Confirm removing {0}"
+msgstr "確認移除 {0}"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "Confirm revoke {0}"
@@ -430,17 +486,26 @@ msgstr "確認：{removeLabel} {label}"
 msgid "Connected"
 msgstr "已連線"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connected to {address}"
+msgstr "已連線至 {address}"
+
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Connecting"
 msgstr "連線中"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connecting to {address}"
+msgstr "正在連線至 {address}"
+
 #: src/app/settings.tsx
 msgid "Contact us"
 msgstr "聯絡我們"
 
 #: src/app/explore.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Continue"
 msgstr "繼續"
 
@@ -568,13 +633,25 @@ msgstr "複製指令，可直接貼到終端機"
 msgid "Copy"
 msgstr "複製"
 
+#: src/components/ssh-host-form.tsx
+msgid "Copy public key"
+msgstr "複製公開金鑰"
+
 #: src/app/explore.tsx
 msgid "Copy the install command"
 msgstr "複製安裝指令"
 
+#: src/components/ssh-host-form.tsx
+msgid "Copy the public key"
+msgstr "複製公開金鑰"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "無法加入檔案"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not connect"
+msgstr "無法連線"
 
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
@@ -583,6 +660,10 @@ msgstr "無法複製"
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "無法啟用 App 鎖定"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not generate a key"
+msgstr "無法產生金鑰"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -632,6 +713,10 @@ msgstr "無法連線到這台伺服器。"
 msgid "Could not read the terminal."
 msgstr "無法讀取終端機。"
 
+#: src/components/ssh-host-form.tsx
+msgid "Could not remove host"
+msgstr "無法移除主機"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "無法撤銷裝置"
@@ -639,6 +724,14 @@ msgstr "無法撤銷裝置"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "無法儲存變更"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not save host"
+msgstr "無法儲存主機"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not send"
+msgstr "無法傳送"
 
 #: src/app/commands.tsx
 msgid "Could not send command."
@@ -712,6 +805,10 @@ msgstr "刪除 {name}"
 msgid "Delete this line"
 msgstr "刪除這一行"
 
+#: src/lib/demo-ssh.ts
+msgid "Demo shell"
+msgstr "示範 Shell"
+
 #: src/lib/demo-gateway.ts
 msgid "Demo workspace"
 msgstr "示範工作區"
@@ -736,6 +833,20 @@ msgstr "Diff 摘要"
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "目錄"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnect from {0}"
+msgstr "中斷與 {0} 的連線"
+
+#. placeholder {0}: status.reason
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected · {0}"
+msgstr "已中斷 · {0}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected."
+msgstr "已中斷連線。"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
@@ -782,14 +893,20 @@ msgstr "每台裝置各自持有 {0} 的權杖。"
 msgid "Edit"
 msgstr "編輯"
 
+#. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-list.tsx
 msgid "Edit {0}"
 msgstr "編輯 {0}"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
 msgstr "編輯快捷指令"
+
+#: src/components/ssh-host-list.tsx
+msgid "Edit SSH host"
+msgstr "編輯 SSH 主機"
 
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
@@ -840,6 +957,11 @@ msgstr "展開 {0}"
 msgid "Expires in {0}:{1}"
 msgstr "將於 {0}:{1} 後過期"
 
+#. placeholder {0}: status.code
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Failed · {0}"
+msgstr "失敗 · {0}"
+
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
 msgstr "檔案提及"
@@ -863,6 +985,10 @@ msgstr "此工作區的檔案"
 #: src/i18n/labels.ts
 msgid "Find a file by name"
 msgstr "依名稱尋找檔案"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Fingerprint"
+msgstr "指紋"
 
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
@@ -917,6 +1043,14 @@ msgstr "Gateway 網址"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Gateway 網址無效。"
+
+#: src/components/ssh-host-form.tsx
+msgid "Generate an Ed25519 key"
+msgstr "產生 Ed25519 金鑰"
+
+#: src/components/ssh-host-form.tsx
+msgid "Generating…"
+msgstr "產生中…"
 
 #: src/i18n/labels.ts
 msgid "Git status"
@@ -977,6 +1111,14 @@ msgstr "主畫面小工具"
 msgid "Home, Settings and the server screen are redesigned — every server lists the agents it was last running, with their status."
 msgstr "首頁、設定與伺服器頁面全部重新設計——每台伺服器都會列出它上次執行的代理程式與狀態。"
 
+#: src/components/ssh-host-form.tsx
+msgid "Host"
+msgstr "主機"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Host key changed"
+msgstr "主機金鑰已改變"
+
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "閒置"
@@ -1031,6 +1173,14 @@ msgstr "找到了相機，但它始終沒有畫面。可能有其他 app 正在�
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
 msgstr "它的詳細資料已安全地儲存在這台裝置上，請再試一次。"
+
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be removed from secure storage."
+msgstr "無法從安全儲存空間移除其資料。"
+
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be written to secure storage."
+msgstr "無法將其資料寫入安全儲存空間。"
 
 #: src/components/settings-servers.tsx
 msgid "Its paired devices are listed once it is the server in use."
@@ -1255,6 +1405,7 @@ msgid "Muqun will use {0} when the app opens."
 msgstr "開啟 App 時，牧群會使用 {0}。"
 
 #: src/app/commands.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "名稱"
 
@@ -1274,9 +1425,17 @@ msgstr "從未連線"
 msgid "New group"
 msgstr "新增群組"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "New host key"
+msgstr "新的主機金鑰"
+
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "新增快捷指令"
+
+#: src/components/ssh-host-list.tsx
+msgid "New SSH host"
+msgstr "新增 SSH 主機"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1332,6 +1491,10 @@ msgstr "尚未設定郵件 App"
 msgid "No output."
 msgstr "沒有輸出。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "No password or key is saved for this host."
+msgstr "此主機沒有儲存密碼或金鑰。"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "這種檔案無法預覽，它會留在伺服器上。"
@@ -1348,6 +1511,10 @@ msgstr "尚未配對任何伺服器"
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
 msgstr "連接埠 {port} 上沒有模擬器"
+
+#: src/components/ssh-host-list.tsx
+msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
+msgstr "尚無 SSH 主機。新增一個，即可在任何連得到的機器上開啟 Shell。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1368,6 +1535,10 @@ msgstr "未連線"
 #: src/app/+not-found.tsx
 msgid "Not found"
 msgstr "找不到"
+
+#: src/components/ssh-host-form.tsx
+msgid "Not valid."
+msgstr "無效。"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
@@ -1403,10 +1574,11 @@ msgstr "開啟"
 
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
+#. placeholder {0}: record.label
 #: src/app/(drawer)/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
+#: src/components/ssh-host-list.tsx
 msgid "Open {0}"
 msgstr "開啟 {0}"
 
@@ -1520,6 +1692,22 @@ msgstr "配對失敗。"
 msgid "Panes on server cards"
 msgstr "伺服器卡片上的面板"
 
+#: src/components/ssh-host-form.tsx
+msgid "Passphrase (optional)"
+msgstr "通行密語（選填）"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password"
+msgstr "密碼"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password (leave blank to keep the saved one)"
+msgstr "密碼（留空以保留已儲存的密碼）"
+
+#: src/components/ssh-host-form.tsx
+msgid "Passwords and keys are sealed in the keychain on this device and never leave it."
+msgstr "密碼與金鑰會封存在此裝置的鑰匙圈中，絕不會離開裝置。"
+
 #: src/i18n/labels.ts
 msgid "Paste"
 msgstr "貼上"
@@ -1534,12 +1722,17 @@ msgid "Photo library"
 msgstr "照片圖庫"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Port"
 msgstr "連接埠"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "連接埠"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Presented now"
+msgstr "本次出示"
 
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
@@ -1558,6 +1751,14 @@ msgstr "預覽模擬器"
 msgid "Privacy policy"
 msgstr "隱私政策"
 
+#: src/components/ssh-host-form.tsx
+msgid "Private key"
+msgstr "私密金鑰"
+
+#: src/components/ssh-host-form.tsx
+msgid "Private key (leave blank to keep the saved one)"
+msgstr "私密金鑰（留空以保留已儲存的金鑰）"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "提示詞"
@@ -1565,6 +1766,10 @@ msgstr "提示詞"
 #: src/components/settings-security.tsx
 msgid "Protect paired servers and terminal sessions."
 msgstr "保護已配對的伺服器與終端機工作階段。"
+
+#: src/components/ssh-host-form.tsx
+msgid "Public key copied"
+msgstr "已複製公開金鑰"
 
 #: src/i18n/labels.ts
 msgid "Pull"
@@ -1608,6 +1813,15 @@ msgstr "接收代理程式的等待回應事件與 Gateway 更新。"
 msgid "Recent commits"
 msgstr "最近的提交"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect"
+msgstr "重新連線"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect to {0}"
+msgstr "重新連線至 {0}"
+
 #. placeholder {0}: status.attempt
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
@@ -1622,9 +1836,15 @@ msgid "Refresh files"
 msgstr "重新整理檔案"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
+
+#: src/components/ssh-host-form.tsx
+msgid "Remove host"
+msgstr "移除主機"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -1650,6 +1870,10 @@ msgstr "以終端機顯示"
 msgid "Render as text"
 msgstr "以文字顯示"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Replace key"
+msgstr "取代金鑰"
+
 #: src/app/settings.tsx
 msgid "Report a bug or request a feature"
 msgstr "回報問題或提出功能建議"
@@ -1661,6 +1885,10 @@ msgstr "請求失敗。"
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
 msgstr "啟動時，以及在背景超過 30 秒後都會要求驗證。"
+
+#: src/components/ssh-host-form.tsx
+msgid "Required."
+msgstr "必填。"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -1768,6 +1996,7 @@ msgstr "在你的電腦上執行 Gateway，然後掃描它印出的 QR code。�
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Save"
 msgstr "儲存"
 
@@ -1779,14 +2008,24 @@ msgstr "儲存你常用的指令或按鍵組合。"
 msgid "Save a prompt you send this agent often."
 msgstr "儲存你常傳給這個代理程式的提示詞。"
 
+#. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Save changes to {0}"
 msgstr "儲存對 {0} 的變更"
+
+#: src/components/ssh-host-form.tsx
+msgid "Save host"
+msgstr "儲存主機"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "儲存快捷指令"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Saved"
+msgstr "已儲存"
 
 #: src/app/commands.tsx
 msgid "SAVED COMMANDS"
@@ -1797,6 +2036,7 @@ msgid "SAVED PROMPTS"
 msgstr "已儲存的提示"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
 msgid "Saving…"
 msgstr "儲存中…"
 
@@ -1859,6 +2099,7 @@ msgid "Select all"
 msgstr "全選"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Send {spoken}"
 msgstr "送出 {spoken}"
 
@@ -1995,6 +2236,10 @@ msgstr "顯示圖片"
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "顯示在終端機旁邊，看著它重繪。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Show keyboard"
+msgstr "顯示鍵盤"
+
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "顯示伺服器清單"
@@ -2002,6 +2247,14 @@ msgstr "顯示伺服器清單"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "查看正在執行的項目"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Sign in"
+msgstr "登入"
+
+#: src/components/ssh-host-form.tsx
+msgid "Sign in with"
+msgstr "登入方式"
 
 #: src/components/simfarm-preview.tsx
 msgid "simfarm port"
@@ -2022,6 +2275,13 @@ msgstr "發生錯誤"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "空白鍵"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-list.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "SSH"
+msgstr "SSH"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
@@ -2115,6 +2375,10 @@ msgstr "Tab 鍵"
 msgid "Take photo"
 msgstr "拍照"
 
+#: src/components/ssh-host-form.tsx
+msgid "Tap again to remove"
+msgstr "再點一次以移除"
+
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -2173,6 +2437,15 @@ msgstr "相機沒有啟動"
 msgid "The camera reported an error."
 msgstr "相機回報了錯誤。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The connection dropped."
+msgstr "連線已中斷。"
+
+#. placeholder {0}: failure.code
+#: src/components/ssh-host-form.tsx
+msgid "The key could not be read ({0}). Check the key and its passphrase."
+msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語。"
+
 #: src/lib/release-notes.ts
 msgid "The on-screen keyboard is laid out like a keyboard, and every key sends the moment you press it."
 msgstr "螢幕鍵盤現在照著鍵盤的樣子排列，每個鍵一按下去就送出。"
@@ -2186,6 +2459,10 @@ msgstr "原始面板，保留它的字元格線與色彩。"
 msgid "The screen hit an error. Try again — your servers stay paired."
 msgstr "這個畫面發生錯誤。請再試一次，你配對的伺服器不受影響。"
 
+#: src/components/ssh-host-form.tsx
+msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
+msgstr "連線時由伺服器自行提問，例如密碼或一次性驗證碼，此裝置不會儲存任何內容。"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "The server did not return it."
 msgstr "伺服器沒有回傳這個檔案。"
@@ -2194,9 +2471,17 @@ msgstr "伺服器沒有回傳這個檔案。"
 msgid "The server did not say which terminal it made."
 msgstr "伺服器沒有說明它建立了哪一個終端機。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The server is asking for more before it lets you in."
+msgstr "伺服器在放行之前還需要更多資訊。"
+
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
 msgstr "這台伺服器仍保留在裝置上。請確認它的 Gateway 正在執行，然後再試一次。"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The shell exited."
+msgstr "Shell 已結束。"
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
@@ -2244,9 +2529,17 @@ msgstr "這個 Gateway 尚未列出任何已配對的裝置。"
 msgid "This group has no terminals."
 msgstr "這個群組沒有終端機。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "This host is no longer saved."
+msgstr "此主機已不再儲存。"
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "這張圖片載入失敗。"
+
+#: src/lib/demo-ssh.ts
+msgid "This is a bundled transcript, not a real server."
+msgstr "這是內建的紀錄，不是真正的伺服器。"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -2318,6 +2611,10 @@ msgstr "檔案太大，無法上色。以純文字顯示。"
 msgid "Too many lines to colour. Shown as plain text."
 msgstr "行數太多，無法上色。以純文字顯示。"
 
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Trust"
+msgstr "信任"
+
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 msgid "Try again"
@@ -2334,6 +2631,10 @@ msgstr "試用示範"
 #: src/components/asset-viewer.tsx
 msgid "Type"
 msgstr "類型"
+
+#: src/lib/demo-ssh.ts
+msgid "Type a line and press Enter; it is echoed back."
+msgstr "輸入一行並按 Enter，它會被原樣回傳。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Type into this editor"
@@ -2425,6 +2726,10 @@ msgstr "使用主畫面上的掃描按鈕來新增。"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "使用這台伺服器"
+
+#: src/components/ssh-host-form.tsx
+msgid "Username"
+msgstr "使用者名稱"
 
 #: src/components/settings-servers.tsx
 msgid "USING"
