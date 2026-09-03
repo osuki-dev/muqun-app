@@ -149,9 +149,9 @@ export function SessionMap({
       case 'workspace':
         return t`Rename workspace`;
       case 'tab':
-        return t`Rename tab`;
+        return t`Rename group`;
       default:
-        return t`Rename panel`;
+        return t`Rename terminal`;
     }
   }
 
@@ -217,7 +217,7 @@ export function SessionMap({
             ?? ''
       );
     } catch (failure) {
-      setError(describeGatewayFailure(failure, t`Could not load panels.`).message);
+      setError(describeGatewayFailure(failure, t`Could not load what is running.`).message);
     } finally {
       setLoading(false);
     }
@@ -415,7 +415,7 @@ export function SessionMap({
       <View style={styles.header}>
         <View style={styles.flexOne}>
           <Text variant="bodySmall" style={styles.headerTitle}>
-            <Trans>Panels</Trans>
+            <Trans>What is running</Trans>
           </Text>
           <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
             {activeWorkspace ? `${label} · ${activeWorkspace.title}` : label}
@@ -426,7 +426,7 @@ export function SessionMap({
             where the thick material would only read as a grey disc. */}
         <GlassChrome face="sheet" style={styles.iconButton}>
           <PressableScale
-            accessibilityLabel={t`Refresh panels`}
+            accessibilityLabel={t`Refresh`}
             onPress={() => void load()}
             style={styles.iconButtonHit}>
             {loading ? (
@@ -438,7 +438,7 @@ export function SessionMap({
         </GlassChrome>
         <GlassChrome face="sheet" style={styles.iconButton}>
           <PressableScale
-            accessibilityLabel={t`Close panels`}
+            accessibilityLabel={t`Close`}
             onPress={onClose}
             style={styles.iconButtonHit}>
             <X size={18} color={theme.colors.text} />
@@ -487,9 +487,6 @@ export function SessionMap({
             it counted begin two lines below -- so it was answering a question
             the reader was not asking in the one place it could be misread as
             being about the rail. */}
-        <Text variant="caption" color={theme.colors.textMuted} style={styles.eyebrow}>
-          <Trans>WORKSPACE</Trans>
-        </Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -507,7 +504,7 @@ export function SessionMap({
                 // far as VoiceOver, or a test, is concerned. Android happens to
                 // expose the children anyway, which is why the count read as
                 // present until this ran on a phone that does not.
-                accessibilityLabel={t`Open workspace ${workspace.title}, ${plural(inventory.panels, { one: '# panel', other: '# panels' })}. Long press to close.`}
+                accessibilityLabel={t`Open workspace ${workspace.title}, ${plural(inventory.panels, { one: '# running', other: '# running' })}. Long press to close.`}
                 panelCount={inventory.panels}
                 selected={workspace.id === workspaceId}
                 statusColor={statusColor(inventory.status)}
@@ -571,18 +568,18 @@ export function SessionMap({
               and close live, the same long press every other row in the app uses.
             */}
             <PressableScale
-              accessibilityLabel={t`Tab ${group.tab.title}. Long press for actions.`}
+              accessibilityLabel={t`Group ${group.tab.title}. Long press for actions.`}
               feedback={false}
               onLongPress={() =>
                 setMenuFor({ kind: 'tab', id: group.tab.id, label: group.tab.title })
               }
               style={styles.groupHeader}>
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                style={[styles.address, styles.groupAddress]}>
-                {group.address}
-              </Text>
+              {/* The tmux window number used to sit here, in the leftmost and
+                  most-scanned column of every heading. It addresses nothing the
+                  reader can act on: you cannot type `2` at this sheet, and the
+                  heading beside it already carries the name its owner gave it.
+                  A number that cannot be used is a number being read for
+                  nothing, so the name starts at the edge instead. */}
               <Text variant="label" numberOfLines={1} style={styles.flexOne}>
                 {group.tab.title}
               </Text>
@@ -611,7 +608,7 @@ export function SessionMap({
                 return (
                   <PanelRow
                     key={pane.id}
-                    accessibilityLabel={t`Open panel ${title}. Long press to close.`}
+                    accessibilityLabel={t`Open ${title}. Long press to close.`}
                     title={title}
                     detail={pane.cwd ?? pane.id}
                     status={status}
@@ -630,7 +627,7 @@ export function SessionMap({
                   layout={listLayout('short')}
                   style={styles.panelRow}>
                   <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>This tab has no panels.</Trans>
+                    <Trans>This group has no terminals.</Trans>
                   </Text>
                 </Animated.View>
               ) : null}
@@ -642,7 +639,7 @@ export function SessionMap({
       {!loading && groups.length === 0 ? (
         <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
           <Text variant="bodySmall" color={theme.colors.textMuted}>
-            <Trans>This workspace has no tabs yet.</Trans>
+            <Trans>This workspace has no groups yet.</Trans>
           </Text>
         </Animated.View>
       ) : null}
@@ -651,7 +648,7 @@ export function SessionMap({
           small phone screen is unreadable, and the pane strip already lets you
           flip between panels. */}
       <PressableScale
-        accessibilityLabel={t`New panel`}
+        accessibilityLabel={t`New terminal`}
         disabled={busy || !workspaceId}
         onPress={() =>
           void createAndSelect(() =>
@@ -669,7 +666,7 @@ export function SessionMap({
             one colour that now means "you are here". */}
         <Plus size={17} color={theme.colors.textMuted} />
         <Text variant="bodySmall" color={theme.colors.text}>
-          <Trans>New panel</Trans>
+          <Trans>New terminal</Trans>
         </Text>
       </PressableScale>
     </ScrollScreen>
@@ -773,7 +770,7 @@ function WorkspaceChip({
               {/* One ICU message rather than a ternary over two strings: which
                   forms a language needs is the language's business, and Chinese
                   needs one where English needs two. */}
-              <Plural value={panelCount} one="# panel" other="# panels" />
+              <Plural value={panelCount} one="# running" other="# running" />
             </Text>
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, selectedStyle]}>
@@ -781,7 +778,7 @@ function WorkspaceChip({
               {title}
             </Text>
             <Text variant="caption" color={theme.colors.surface} numberOfLines={1}>
-              <Plural value={panelCount} one="# panel" other="# panels" />
+              <Plural value={panelCount} one="# running" other="# running" />
             </Text>
           </Animated.View>
         </View>
@@ -956,7 +953,7 @@ function SessionMapSkeleton({ width }: { width: number }) {
       entering={fadeIn('micro')}
       exiting={fadeOut('short')}
       style={[styles.group, { width }]}
-      accessibilityLabel={t`Loading panels`}>
+      accessibilityLabel={t`Loading`}>
       <View style={styles.groupHeader}>
         <Skeleton variant="text" width={25} height={12} />
         <Skeleton variant="text" width={120} height={12} />

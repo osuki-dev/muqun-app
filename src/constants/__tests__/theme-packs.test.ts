@@ -58,7 +58,11 @@ describe('registry shape', () => {
   test('every declared id has exactly one pack, and no pack is undeclared', () => {
     expect(THEME_PACKS.map((pack) => pack.id).sort()).toEqual([...THEME_PACK_IDS].sort());
     expect(THEME_PACKS.length).toBe(THEME_PACK_IDS.length);
-    expect(THEME_PACKS.length).toBe(32);
+    // Twenty-four, down from thirty-two. The eight that went were each within
+    // a hair of one that stayed -- measured in OKLab across every token both
+    // packs ship, not judged by name -- and a picker where two rows look the
+    // same is a picker asking the reader to tell apart what the app could not.
+    expect(THEME_PACKS.length).toBe(24);
   });
 
   test('the default id resolves, and it is the pack the app falls back to', () => {
@@ -294,5 +298,89 @@ describe('swatches', () => {
       const seen = THEME_PACKS.map((pack) => themeSwatch(pack, mode).join('|'));
       expect(new Set(seen).size).toBe(THEME_PACKS.length);
     }
+  });
+});
+
+/**
+ * How alike two packs are allowed to look.
+ *
+ * Mean OKLab distance across every colour both packs ship -- all seventeen UI
+ * tokens and the terminal's surface plus its ANSI 16, in both modes. OKLab
+ * because the question is whether an eye can tell them apart, and sRGB numbers
+ * do not answer that.
+ *
+ * The registry went from thirty-two packs to twenty-four by measuring this: the
+ * eight that went were each a near-twin of one that stayed (`kanso` of
+ * `kanagawa` at 0.040, `vs-code-2026` of `github` at 0.047, `tomorrow` of
+ * `edge` at 0.049, and so on). The closest surviving pair is comfortably above
+ * the floor below, so this fails on a *new* near-duplicate rather than
+ * grandfathering the ones already here.
+ */
+const MIN_PACK_DISTANCE = 0.06;
+
+/** sRGB hex to OKLab. Non-hex tokens (the rgba() tints) are skipped. */
+function oklab(value: string): [number, number, number] | null {
+  const match = value.trim().match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
+  if (!match) return null;
+  const hex = match[1].length === 3 ? match[1].replace(/./g, (c) => c + c) : match[1];
+  const channel = (index: number) => {
+    const raw = parseInt(hex.slice(index, index + 2), 16) / 255;
+    return raw <= 0.04045 ? raw / 12.92 : Math.pow((raw + 0.055) / 1.055, 2.4);
+  };
+  const r = channel(0);
+  const g = channel(2);
+  const b = channel(4);
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+  ];
+}
+
+/** Every colour a pack ships, in a fixed order, so two packs line up term for term. */
+function packColours(pack: ThemePack): ([number, number, number] | null)[] {
+  const out: ([number, number, number] | null)[] = [];
+  for (const mode of ['light', 'dark'] as const) {
+    const variant = themeVariant(pack, mode);
+    // `Object.entries` rather than an index signature the token type does not
+    // have: the pack contract is a fixed set of named roles, not a bag.
+    for (const [, value] of Object.entries(variant.colors).sort(([a], [b]) => a.localeCompare(b))) {
+      out.push(oklab(value));
+    }
+    out.push(oklab(variant.terminal.background), oklab(variant.terminal.foreground));
+    for (const ansi of variant.terminal.ansi) out.push(oklab(ansi));
+  }
+  return out;
+}
+
+describe('no two packs are the same theme twice', () => {
+  test('every pair is far enough apart to be worth its own row', () => {
+    const vectors = THEME_PACKS.map((pack) => [pack.id, packColours(pack)] as const);
+    const tooClose: string[] = [];
+    for (let i = 0; i < vectors.length; i += 1) {
+      for (let j = i + 1; j < vectors.length; j += 1) {
+        const [aId, a] = vectors[i];
+        const [bId, b] = vectors[j];
+        let sum = 0;
+        let counted = 0;
+        for (let k = 0; k < a.length; k += 1) {
+          const x = a[k];
+          const y = b[k];
+          if (!x || !y) continue;
+          sum += Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+          counted += 1;
+        }
+        const distance = counted > 0 ? sum / counted : Infinity;
+        if (distance < MIN_PACK_DISTANCE) {
+          tooClose.push(`${aId} and ${bId} differ by only ${distance.toFixed(4)}`);
+        }
+      }
+    }
+    // Named, so a failure says which two packs to look at rather than that a
+    // number moved.
+    expect(tooClose).toEqual([]);
   });
 });

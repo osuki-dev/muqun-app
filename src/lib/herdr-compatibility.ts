@@ -11,6 +11,16 @@ type HerdrCompatibility = {
 
 type HerdrCompatibilityHealth = {
   herdr?: HerdrCompatibility;
+  /**
+   * The session the gateway leads with, which is the one `herdr` describes.
+   *
+   * The `herdr` key is a legacy envelope: it carries the primary backend's
+   * verdict whatever that backend is, so on a server configured with both, and
+   * with tmux ordered first, `herdr.connected: false` is a report about *tmux*.
+   * `kind` is the only thing that says which, and without it this file can
+   * only guess -- see `explainDisconnected`.
+   */
+  backend?: { kind?: string };
 };
 
 function describeHerdr(herdr: HerdrCompatibility): string {
@@ -46,6 +56,31 @@ function explainIncompatibility(herdr: HerdrCompatibility): string {
 }
 
 /**
+ * Ask for the backend that is actually down to be started.
+ *
+ * This used to say "Start Herdr" whatever had failed, because the field it
+ * reads is named `herdr`. On a server running tmux it therefore named a program
+ * the reader may not even have installed, while the tmux they were looking at
+ * ran perfectly -- so the message read as wrong rather than as a clue, and the
+ * real fault (a gateway under launchd that could not find tmux, and could not
+ * have parsed its output if it had) went undiagnosed for days.
+ *
+ * An absent `kind` still says Herdr: a gateway old enough not to send the field
+ * is one from before tmux was a backend at all.
+ */
+function explainDisconnected(kind: string | undefined): string {
+  if (kind === 'tmux') {
+    return 'Muqun Gateway cannot reach tmux on this server. Check that a tmux server is '
+      + 'running and that the gateway can find the tmux program, then try again.';
+  }
+  if (kind !== undefined && kind !== 'herdr') {
+    return `Muqun Gateway cannot reach the ${kind} backend on this server. `
+      + 'Start it, then try again.';
+  }
+  return `Start Herdr ${MINIMUM_HERDR_VERSION} or newer, then try again.`;
+}
+
+/**
  * Refuse a backend the gateway itself has refused.
  *
  * The gateway is the only side that knows which Herdr protocols it can speak,
@@ -61,7 +96,7 @@ function explainIncompatibility(herdr: HerdrCompatibility): string {
 export function assertSupportedHerdr(health: HerdrCompatibilityHealth): void {
   const herdr = health.herdr;
   if (!herdr?.connected) {
-    throw new Error(`Start Herdr ${MINIMUM_HERDR_VERSION} or newer, then try again.`);
+    throw new Error(explainDisconnected(health.backend?.kind));
   }
   // Only an explicit `false` is a refusal. A gateway old enough to omit the
   // field has still told us it connected, and that is the only verdict it has;

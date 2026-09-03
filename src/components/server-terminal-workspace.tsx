@@ -5,8 +5,10 @@ import {
   Bot,
   Keyboard as KeyboardIcon,
   Paperclip,
+  PenLine,
   Send,
   SquareTerminal,
+  X,
   Zap,
 } from 'lucide-react-native';
 import {
@@ -55,6 +57,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
+import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { PressableScale } from '@/components/pressable-scale';
@@ -158,6 +161,9 @@ import {
   type TabPaneMemory,
 } from '@/lib/tab-swipe';
 import { allowsWebServiceOpen } from '@/lib/web-service';
+import { SimfarmPreview } from '@/components/simfarm-preview';
+import { useServerSimfarm } from '@/stores/server-simfarm';
+import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   recallWorkspaceSelection,
   rememberWorkspaceSelection,
@@ -387,7 +393,30 @@ export function ServerTerminalWorkspace({
   const router = useRouter();
   const isFocused = useIsFocused();
   const { width: windowWidth } = useWindowDimensions();
-  const isPadLayout = responsiveWorkspaceLayout(windowWidth).mode === 'pad';
+  /**
+   * The three columns, and whether the middle one gives room to the third.
+   *
+   * `responsiveWorkspaceLayout` decides: it declines to open the preview where
+   * the terminal would be left too narrow to read, so this screen never has to
+   * ask that question itself and a window dragged narrower closes the preview
+   * on its own rather than squeezing both halves into uselessness.
+   */
+  const previewOpen = useSimfarmSplit((state) => state.openByServer[serverId] === true);
+  const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
+  const workspaceLayout = responsiveWorkspaceLayout(windowWidth, previewOpen);
+  const isPadLayout = workspaceLayout.mode === 'pad';
+  const simfarmPorts = useServerSimfarm((state) => state.byServer);
+  const hydrateSimfarmPorts = useServerSimfarm((state) => state.hydrate);
+  const rememberSimfarmPortForServer = useServerSimfarm((state) => state.remember);
+  useEffect(() => {
+    void hydrateSimfarmPorts();
+  }, [hydrateSimfarmPorts]);
+  const rememberSimfarmPort = useCallback(
+    (port: number) => {
+      if (serverId) void rememberSimfarmPortForServer(serverId, port);
+    },
+    [rememberSimfarmPortForServer, serverId]
+  );
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
@@ -442,6 +471,11 @@ export function ServerTerminalWorkspace({
   // that types straight into the pane -- the way to drive a TUI like nvim from
   // a phone. Off by default so the output stays visible.
   const [keyboardMode, setKeyboardMode] = useState(false);
+  // Asked for, per visit to the keyboard: an editor's composer stands down so
+  // the file gets the height, and this is the reader saying they want it back
+  // for one line. Cleared whenever the keyboard closes or the pane changes,
+  // both of which end the visit it belongs to.
+  const [composerRevealed, setComposerRevealed] = useState(false);
   const [stickBottomNonce, setStickBottomNonce] = useState(0);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
@@ -1115,6 +1149,34 @@ export function ServerTerminalWorkspace({
     selectedPane ? field(selectedPane, 'terminal_title_stripped') : null,
     selectedPane ? field(selectedPane, 'foreground_command') : null
   );
+  /*
+    An editor opens straight into the keyboard.
+
+    The pane is driven a keystroke at a time, so the composer -- a line buffer
+    that needs Enter to send -- is the wrong instrument for it, and reaching the
+    right one was a tap the reader had to know about. Arriving on nvim with the
+    keyboard already up is the difference between a viewer and an editor.
+
+    Only on the way *in* to an editor pane. Keyed on the pane rather than run
+    whenever `fullScreenPane` is true, so closing the keyboard on an editor
+    keeps it closed -- otherwise the toggle would fight the effect and the
+    keyboard would spring back on the next render.
+  */
+  const autoKeyboardPaneRef = useRef<string | null>(null);
+  useEffect(() => {
+    const paneId = selection.paneId;
+    if (!paneId || !fullScreenPane) return;
+    if (autoKeyboardPaneRef.current === paneId) return;
+    autoKeyboardPaneRef.current = paneId;
+    setKeyboardMode(true);
+  }, [fullScreenPane, selection.paneId]);
+
+  // Leaving the pane, or the keyboard, ends the visit a revealed composer
+  // belonged to: the next arrival starts with the file having the height again.
+  useEffect(() => {
+    if (!keyboardMode) setComposerRevealed(false);
+  }, [keyboardMode, selection.paneId]);
+
   // A ref mirror of the value above, synced a layout effect ahead of paint.
   // `applyPaneOutput` reads this instead of closing over `fullScreenPane`
   // directly: the 1-second poll and an SSE frame push both call it, and one of
@@ -1388,7 +1450,7 @@ export function ServerTerminalWorkspace({
       setSelection(target);
       setError(null);
     } else {
-      setError(t`This panel is no longer available.`);
+      setError(t`This terminal is no longer available.`);
     }
   }, [data, notificationId, requestedPaneId, requestedSessionId, serverId, t]);
 
@@ -1414,7 +1476,7 @@ export function ServerTerminalWorkspace({
     if (panelPickAttempt >= PANEL_PICK_ATTEMPTS) {
       clearPanelPick();
       setPanelPickAttempt(0);
-      setError(t`This panel is no longer available.`);
+      setError(t`This terminal is no longer available.`);
       return;
     }
     const timer = setTimeout(() => {
@@ -1545,7 +1607,7 @@ export function ServerTerminalWorkspace({
       );
     } catch (failure) {
       if (isCurrentRequest()) {
-        const description = describeGatewayFailure(failure, t`Could not read panel.`);
+        const description = describeGatewayFailure(failure, t`Could not read the terminal.`);
         if (!description.retryable) setError(description.message);
       }
     }
@@ -1811,11 +1873,15 @@ export function ServerTerminalWorkspace({
         attachmentsAvailable,
         stagedAttachments: attachments.length,
         screenOnTop: isFocused,
+        editorPane: fullScreenPane,
+        composerRevealed,
       }),
     [
       approval.state.approval,
       attachments.length,
       attachmentsAvailable,
+      composerRevealed,
+      fullScreenPane,
       isFocused,
       keyboardMode,
       showTerminalKeyRow,
@@ -2385,6 +2451,34 @@ export function ServerTerminalWorkspace({
   // does not change them. Only the fill differs: on the dock's glass they are
   // tinted circles, over the pane they are transparent and their tray is what
   // holds the light.
+  // The scrolling terminal keys, written once because they are the same keys
+  // wherever they are drawn: on their own row when the dock is ordinary, and
+  // inside the keyboard panel when that is up. Opening the keyboard used to
+  // take this row away, which on an editor meant losing `esc`, `:w` and the
+  // Ctrl chords at the moment the reader started typing.
+  const terminalKeyStrip = (
+    <ScrollView
+      horizontal
+      keyboardShouldPersistTaps="always"
+      showsHorizontalScrollIndicator={false}
+      style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
+      contentContainerStyle={styles.terminalKeyList}>
+      {terminalKeys.map((item) => (
+        <TerminalKeyButton
+          key={item.key}
+          item={item}
+          sending={sendingKey === item.key}
+          disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
+          onPress={() => void sendTerminalKey(item)}
+          textColor={chromeText}
+          background={chromeGlass}
+          activeBackground={theme.colors.primary}
+          activeText={theme.colors.onPrimary}
+        />
+      ))}
+    </ScrollView>
+  );
+
   const paneEntries = (fill: string) => (
     <>
       <PressableScale
@@ -2467,8 +2561,17 @@ export function ServerTerminalWorkspace({
     </Animated.ScrollView>
   );
 
+  const simfarmSplit = {
+    previewWidth: workspaceLayout.previewWidth,
+    allowed: !demoMode && allowsWebServiceOpen(data.health?.transportSecurity?.protection),
+  };
+
   return (
     <AppDrawer
+      // Not `previewOpen`: the layout is what decides, and it declines the
+      // preview on a window too narrow to hold both. Reading its answer keeps
+      // the rail from standing down for a preview that never opened.
+      padRailCollapsed={workspaceLayout.previewWidth > 0}
       padRail={
         <PadServerRail
           servers={railServers}
@@ -2497,10 +2600,34 @@ export function ServerTerminalWorkspace({
         />
       }
       onDetailAction={hasLoadedData ? openPanelPicker : undefined}
-      // The header's view toggle left with the chat view (Ellen, 2026-07-27):
-      // with two modes the setting's default covers it, and the header keeps
-      // one job. Restore alongside CHAT_VIEW_ENABLED if the cycle returns.
-      detailAccessory={undefined}>
+      /*
+        The way out of the split, beside the control that arranges panes.
+
+        The chat-view toggle that used to sit here left with the chat view
+        (Ellen, 2026-07-27) and the slot stayed empty. It earns its place again
+        only while the preview is up: opening it took a trip through quick
+        actions, and closing it should not cost the same trip back. An icon
+        alone, because it appears exactly when there is a simulator on screen to
+        close and nothing else the header could mean by it.
+      */
+      detailAccessory={
+        simfarmSplit.previewWidth > 0 ? (
+          <PressableScale
+            accessibilityLabel={t`Hide the simulator`}
+            onPress={() => toggleSimfarmSplit(serverId)}
+            style={navHeaderButtonStyle}>
+            <X size={18} color={theme.colors.text} strokeWidth={2} />
+          </PressableScale>
+        ) : undefined
+      }>
+      {/* The terminal and, beside it, the simulator it is changing.
+
+          A row rather than a third column of the drawer's own: the rail belongs
+          to the drawer and lists machines, while these two are one machine's
+          screen split in half. `previewWidth` is 0 whenever the preview is off
+          or the window is too narrow to keep both halves usable, so this is a
+          row of one for the whole of the compact layout and most of the Pad. */}
+      <View style={styles.workspaceSplit}>
       <View style={[styles.page, { backgroundColor: terminalBackground }]}>
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
         {/*
@@ -2863,9 +2990,33 @@ export function ServerTerminalWorkspace({
                   onText={typeText}
                   onKey={typeKey}
                   onClose={() => setKeyboardMode(false)}
+                  shortcuts={dock.keysInKeyboard ? terminalKeyStrip : undefined}
                 />
               </Animated.View>
-            ) : (
+            ) : null}
+            {/* The way back to the composer without putting the keyboard away.
+                Closing the keyboard was the only route to it, which on an
+                editor meant giving up `esc`, `:w` and the Ctrl chords for as
+                long as it took to paste a line. A single control, so it floats
+                in the dock's corner rather than taking a row -- the same rent
+                argument as `floatingActions`. */}
+            {dock.composerEntry ? (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOutDown('short')}
+                layout={dockRowLayout}
+                style={styles.composerEntryRow}>
+                <PressableScale
+                  accessibilityLabel={t`Write a line`}
+                  feedback="selection"
+                  pressedScale={0.9}
+                  onPress={() => setComposerRevealed(true)}
+                  style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+                  <PenLine size={16} color={chromeText} />
+                </PressableScale>
+              </Animated.View>
+            ) : null}
+            {!dock.virtualKeyboard ? (
               <>
             {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
               <Animated.View
@@ -2908,26 +3059,7 @@ export function ServerTerminalWorkspace({
                   style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
                   <KeyboardIcon size={16} color={chromeText} />
                 </PressableScale>
-                <ScrollView
-                  horizontal
-                  keyboardShouldPersistTaps="always"
-                  showsHorizontalScrollIndicator={false}
-                  style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
-                  contentContainerStyle={styles.terminalKeyList}>
-                  {terminalKeys.map((item) => (
-                    <TerminalKeyButton
-                      key={item.key}
-                      item={item}
-                      sending={sendingKey === item.key}
-                      disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
-                      onPress={() => void sendTerminalKey(item)}
-                      textColor={chromeText}
-                      background={chromeGlass}
-                      activeBackground={theme.colors.primary}
-                      activeText={theme.colors.onPrimary}
-                    />
-                  ))}
-                </ScrollView>
+                {terminalKeyStrip}
               </Animated.View>
             ) : null}
             {/* The files staged for the next message. They are not lost while
@@ -2966,12 +3098,20 @@ export function ServerTerminalWorkspace({
                 </Text>
               </Animated.View>
             ) : null}
-            {/* The input goes too. It is the strongest of the "send the pane
-                something else" surfaces, and a text field left under a standing
-                permission menu invites typing into a program that is not
-                reading typing. Nothing already drafted is lost -- `draft` is
+              </>
+            ) : null}
+            {/* The input goes for an approval. It is the strongest of the "send
+                the pane something else" surfaces, and a text field left under a
+                standing permission menu invites typing into a program that is
+                not reading typing. Nothing already drafted is lost -- `draft` is
                 the screen's state, not the field's, so the words come back with
-                the dock. */}
+                the dock.
+
+                It sits outside the keyboard's branch rather than inside its
+                else, because the keyboard is no longer the end of it: an editor
+                can summon this back over the keys to paste a line without
+                giving up `esc` and the chords to do it. `dock.composer` is what
+                decides now, and it accounts for both. */}
             {dock.composer ? (
               <Animated.View
                 entering={fadeInDown('short')}
@@ -3050,8 +3190,6 @@ export function ServerTerminalWorkspace({
                 />
               </Animated.View>
             ) : null}
-              </>
-            )}
             </AnimatedSafeAreaView>
             </GlassChrome>
           </Animated.View>
@@ -3067,6 +3205,22 @@ export function ServerTerminalWorkspace({
 
         {openAsset ? (
           <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} />
+        ) : null}
+      </View>
+        {simfarmSplit.previewWidth > 0 ? (
+          <View
+            style={[
+              styles.previewColumn,
+              { width: simfarmSplit.previewWidth, borderLeftColor: theme.colors.border },
+            ]}>
+            <SimfarmPreview
+              embedded
+              gatewayUrl={record?.url}
+              allowed={simfarmSplit.allowed}
+              initialPort={simfarmPorts[record?.serverId ?? '']}
+              onPortFound={rememberSimfarmPort}
+            />
+          </View>
         ) : null}
       </View>
     </AppDrawer>
@@ -3631,6 +3785,16 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
+  workspaceSplit: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  previewColumn: {
+    // A hairline is the whole of the seam. The two halves are one machine's
+    // screen, not two documents, and a heavier divider would read as a second
+    // window standing beside the first.
+    borderLeftWidth: StyleSheet.hairlineWidth,
+  },
   centerState: {
     flex: 1,
     alignItems: 'center',
@@ -3839,6 +4003,15 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  /**
+   * The lone control that summons the composer back over the keyboard. Right-
+   * aligned, where the send button it stands in for would be, so the thumb that
+   * reaches for one reaches for the other.
+   */
+  composerEntryRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
   padKeyRowEntry: {
     width: 34,

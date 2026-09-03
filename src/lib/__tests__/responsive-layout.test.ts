@@ -5,8 +5,10 @@ import {
   homeServerListLayout,
   HOME_LIST_MEASURE,
   PAD_LAYOUT_MIN_WIDTH,
+  PAD_PREVIEW_WIDTH,
   PAD_RAIL_MAX_WIDTH,
   PAD_RAIL_MIN_WIDTH,
+  PAD_TERMINAL_MIN_WIDTH,
   responsiveWorkspaceLayout,
 } from '../responsive-layout';
 
@@ -17,6 +19,7 @@ describe('responsive workspace mode', () => {
       availableWidth: PAD_LAYOUT_MIN_WIDTH - 1,
       railWidth: 0,
       terminalWidth: PAD_LAYOUT_MIN_WIDTH - 1,
+      previewWidth: 0,
     });
   });
 
@@ -26,6 +29,7 @@ describe('responsive workspace mode', () => {
       availableWidth: PAD_LAYOUT_MIN_WIDTH,
       railWidth: PAD_RAIL_MIN_WIDTH,
       terminalWidth: PAD_LAYOUT_MIN_WIDTH - PAD_RAIL_MIN_WIDTH,
+      previewWidth: 0,
     });
   });
 
@@ -73,6 +77,7 @@ describe('invalid measurements', () => {
         availableWidth: 0,
         railWidth: 0,
         terminalWidth: 0,
+        previewWidth: 0,
       });
     }
   });
@@ -173,8 +178,7 @@ describe('home brand weight', () => {
     const hero = homeBrandWeight(0);
     const mark = homeBrandWeight(1);
 
-    expect(mark.tileSize).toBeLessThan(hero.tileSize);
-    expect(mark.tileRadius).toBeLessThan(hero.tileRadius);
+    expect(mark.markSize).toBeLessThan(hero.markSize);
     expect(mark.titleSize).toBeLessThan(hero.titleSize);
     expect(mark.minHeight).toBeLessThan(hero.minHeight);
     // Tracking is pulled in harder the larger the name is set, so the smaller
@@ -187,5 +191,100 @@ describe('home brand weight', () => {
     // pad branch and the phone branch have to reach the same weight.
     expect(homeServerListLayout(1280, 2).brand).toEqual(homeServerListLayout(390, 2).brand);
     expect(homeServerListLayout(1280, 0).brand).toEqual(homeServerListLayout(390, 0).brand);
+  });
+});
+
+describe('the simulator preview column', () => {
+  test('stands the rail down rather than squeezing either column', () => {
+    // The rail is a list of names, so narrowing it is what breaks it. It yields
+    // entirely instead, and the terminal keeps everything the preview does not
+    // take -- which is more than it had before the preview opened, not less.
+    const wide = 1366;
+    const without = responsiveWorkspaceLayout(wide);
+    const with_ = responsiveWorkspaceLayout(wide, true);
+    expect(without.railWidth).toBeGreaterThan(0);
+    expect(with_.railWidth).toBe(0);
+    expect(with_.previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(with_.terminalWidth).toBe(wide - PAD_PREVIEW_WIDTH);
+    expect(with_.terminalWidth).toBeGreaterThan(without.terminalWidth - PAD_PREVIEW_WIDTH);
+    // Nothing is lost or invented between the columns.
+    expect(with_.railWidth + with_.terminalWidth + with_.previewWidth).toBe(wide);
+  });
+
+  test('opens on the windows a rail used to shut it out of', () => {
+    // The whole point of standing the rail down: beside one, the preview needed
+    // about 1160pt and quietly never opened below that. These are real windows
+    // an iPad hands the app -- an 11-inch Split View share, and the width where
+    // the terminal exactly meets its floor.
+    const splitView = 981;
+    expect(responsiveWorkspaceLayout(splitView, true).previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(responsiveWorkspaceLayout(splitView, true).railWidth).toBe(0);
+
+    const floor = PAD_PREVIEW_WIDTH + PAD_TERMINAL_MIN_WIDTH;
+    expect(responsiveWorkspaceLayout(floor, true).previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(responsiveWorkspaceLayout(floor, true).terminalWidth).toBe(PAD_TERMINAL_MIN_WIDTH);
+    expect(responsiveWorkspaceLayout(floor - 1, true).previewWidth).toBe(0);
+  });
+
+  test('gives the rail back the moment the preview closes', () => {
+    const wide = 1210;
+    const closed = responsiveWorkspaceLayout(wide, false);
+    expect(closed.railWidth).toBeGreaterThan(0);
+    expect(closed.previewWidth).toBe(0);
+    expect(closed.railWidth + closed.terminalWidth).toBe(wide);
+  });
+
+  test('declines to open where it would leave an unreadable terminal', () => {
+    // A device at 1:1 needs its own width. Below this the reader would close
+    // the preview to get their terminal back, so the layout does not open it.
+    const tight = PAD_LAYOUT_MIN_WIDTH;
+    const layout = responsiveWorkspaceLayout(tight, true);
+    expect(layout.previewWidth).toBe(0);
+    expect(layout.terminalWidth).toBe(tight - layout.railWidth);
+  });
+
+  test('opens at the first width where both halves survive', () => {
+    // Walk up until it opens, and check the terminal really did keep its floor.
+    let width = PAD_LAYOUT_MIN_WIDTH;
+    while (width < 2400 && responsiveWorkspaceLayout(width, true).previewWidth === 0) {
+      width += 1;
+    }
+    const layout = responsiveWorkspaceLayout(width, true);
+    expect(layout.previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(layout.terminalWidth).toBeGreaterThanOrEqual(PAD_TERMINAL_MIN_WIDTH);
+    // One point narrower and it is still closed, so this is the real edge.
+    expect(responsiveWorkspaceLayout(width - 1, true).previewWidth).toBe(0);
+  });
+
+  test('a phone is never split, whatever it is asked for', () => {
+    const layout = responsiveWorkspaceLayout(402, true);
+    expect(layout.mode).toBe('compact');
+    expect(layout.previewWidth).toBe(0);
+    expect(layout.terminalWidth).toBe(402);
+  });
+});
+
+describe('the widths the preview actually meets', () => {
+  // Measured from the simulators, in logical points. The first cut of
+  // PAD_TERMINAL_MIN_WIDTH was ten points too high and closed the preview on
+  // the most common iPad, so the sizes are pinned rather than reasoned about.
+  const IPAD_11_LANDSCAPE = 1210;
+  const IPAD_11_PORTRAIT = 834;
+  const IPAD_13_LANDSCAPE = 1366;
+
+  test('opens on an 11-inch iPad in landscape', () => {
+    const layout = responsiveWorkspaceLayout(IPAD_11_LANDSCAPE, true);
+    expect(layout.previewWidth).toBe(PAD_PREVIEW_WIDTH);
+    expect(layout.terminalWidth).toBeGreaterThanOrEqual(PAD_TERMINAL_MIN_WIDTH);
+  });
+
+  test('opens on a 13-inch iPad in landscape', () => {
+    expect(responsiveWorkspaceLayout(IPAD_13_LANDSCAPE, true).previewWidth).toBe(
+      PAD_PREVIEW_WIDTH
+    );
+  });
+
+  test('declines in portrait, where neither half would survive', () => {
+    expect(responsiveWorkspaceLayout(IPAD_11_PORTRAIT, true).previewWidth).toBe(0);
   });
 });

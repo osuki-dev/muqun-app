@@ -252,7 +252,6 @@ function ServerGroup({
         nowMs={nowMs}
         selectedPaneId={server.serverId === selectedServerId ? selectedPaneId : null}
         showsPressBackground={false}
-        keepsAgentDotsFilled
         compactLabels
         onOpenAgent={(agent) => onSelectAgent(server, agent)}
       />

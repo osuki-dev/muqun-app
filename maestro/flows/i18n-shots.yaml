@@ -103,11 +103,11 @@ name: i18n-shots
 - takeScreenshot: shots/en-3-server
 
 - runFlow: ../subflows/dismiss-permission.yaml
-- tapOn: "Open panels"
+- tapOn: "Show what is running"
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: shots/en-4-panels
-- tapOn: "Close panels"
+- tapOn: "Close"
 - waitForAnimationToEnd:
     timeout: 2000
 

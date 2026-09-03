@@ -32,6 +32,8 @@ function input(overrides: Partial<DockPresentationInput> = {}): DockPresentation
     attachmentsAvailable: true,
     stagedAttachments: 1,
     screenOnTop: true,
+    editorPane: false,
+    composerRevealed: false,
     ...overrides,
   };
 }
@@ -168,6 +170,66 @@ describe('dock presentation', () => {
           }
         }
       }
+    });
+  });
+
+  // An editor is driven a keystroke at a time, so on those panes the keyboard
+  // is the input and the composer is a line buffer taking up the height the
+  // file wanted. It stands down -- and only there, and only behind a way back.
+  describe('an editor pane behind the keyboard', () => {
+    const editing = { keyboardMode: true, editorPane: true };
+
+    test('stands the composer down and leaves a way back to it', () => {
+      const dock = dockPresentation(input(editing));
+      expect(dock.composer).toBe(false);
+      expect(dock.composerEntry).toBe(true);
+    });
+
+    test('keeps the keys reachable by moving them into the keyboard', () => {
+      // The defect this replaces: opening the keyboard hid the row carrying
+      // esc, `:w` and the Ctrl chords, so typing and reaching for them were
+      // mutually exclusive on the one pane that wants both.
+      const dock = dockPresentation(input(editing));
+      expect(dock.virtualKeyboard).toBe(true);
+      expect(dock.keyRow).toBe(false);
+      expect(dock.keysInKeyboard).toBe(true);
+    });
+
+    test('gives the composer back when it is asked for', () => {
+      const dock = dockPresentation(input({ ...editing, composerRevealed: true }));
+      expect(dock.composer).toBe(true);
+      expect(dock.composerEntry).toBe(false);
+    });
+
+    test('a reader who switched the row off does not get it back in the keyboard', () => {
+      const dock = dockPresentation(input({ ...editing, showTerminalKeyRow: false }));
+      expect(dock.keysInKeyboard).toBe(false);
+    });
+
+    test('the composer stands down behind the keyboard on any pane', () => {
+      // Not an editor-only rule: a full QWERTY and a line buffer are two inputs
+      // arguing whatever the pane runs. This is what the screen already did by
+      // nesting the composer inside the keyboard's else-branch; naming it is
+      // what let a way back exist.
+      const shell = dockPresentation(input({ keyboardMode: true }));
+      expect(shell.composer).toBe(false);
+      expect(shell.composerEntry).toBe(true);
+    });
+
+    test('a pane with the keyboard closed keeps its composer and grows no button', () => {
+      for (const editorPane of [true, false]) {
+        const dock = dockPresentation(input({ editorPane }));
+        expect(dock.composer).toBe(true);
+        expect(dock.composerEntry).toBe(false);
+      }
+    });
+
+    test('an approval still clears the dock, editor or not', () => {
+      const dock = dockPresentation(input({ ...editing, approval: APPROVAL }));
+      expect(dock.approvalOnly).toBe(true);
+      expect(dock.composer).toBe(false);
+      expect(dock.composerEntry).toBe(false);
+      expect(dock.keysInKeyboard).toBe(false);
     });
   });
 });

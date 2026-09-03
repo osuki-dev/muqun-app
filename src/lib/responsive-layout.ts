@@ -4,18 +4,67 @@ export const PAD_RAIL_MAX_WIDTH = 288;
 
 const PAD_RAIL_WIDTH_RATIO = 0.25;
 
+/**
+ * The simulator preview's column.
+ *
+ * A fixed width, not a ratio, because what it holds is a device drawn at 1:1 --
+ * an iPhone is 402pt wide whatever the window is, and a column that grew with
+ * the window would only add margin around a picture that cannot use it. This is
+ * that 402 plus the client's own chrome and gutters.
+ */
+export const PAD_PREVIEW_WIDTH = 452;
+
+/**
+ * What the terminal must keep for the preview to be allowed to open.
+ *
+ * About fifty-four columns at the default text size -- the cell advance is
+ * 0.6em and the default is 13pt, so this is 420/7.8. Enough for the diffs and
+ * tables an agent prints to still be worth reading; below it the reader would
+ * be closing the preview to get their terminal back, so the layout declines
+ * instead.
+ *
+ * Calibrated against the device rather than guessed, because the first guess
+ * (480) was wrong in the way that matters. An 11-inch iPad in landscape is
+ * 1210pt, which leaves 922 beside the rail and 470 after the preview -- ten
+ * points short. The feature would have been dead on the most common iPad and
+ * alive only on the 13-inch, which is exactly the kind of threshold nothing
+ * reports: it does not fail, it silently never opens.
+ */
+export const PAD_TERMINAL_MIN_WIDTH = 420;
+
 export type ResponsiveWorkspaceLayout = {
   mode: 'compact' | 'pad';
   availableWidth: number;
   railWidth: number;
   terminalWidth: number;
+  /**
+   * The simulator preview's column, or 0 when it is not showing.
+   *
+   * Its width comes out of the rail, which stands down to nothing while the
+   * preview is up, rather than out of the terminal. Squeezing the rail was
+   * never the alternative -- it is a list of names and stops being readable the
+   * moment it narrows -- but hiding it outright costs only a tap to get back,
+   * and hands the terminal the whole remainder.
+   */
+  previewWidth: number;
 };
 
 /**
  * Divides the currently available window width, including resized iPad windows.
  * Device type and orientation deliberately do not participate in this policy.
  */
-export function responsiveWorkspaceLayout(availableWidth: number): ResponsiveWorkspaceLayout {
+export function responsiveWorkspaceLayout(
+  availableWidth: number,
+  /**
+   * Whether the simulator preview is showing beside the terminal.
+   *
+   * Only ever true on a Pad: a phone that split this way would leave two
+   * columns too narrow to be either a terminal or a device at 1:1, which is the
+   * one thing the preview exists to be. The compact branch ignores it rather
+   * than guarding at the call site.
+   */
+  showsPreview = false
+): ResponsiveWorkspaceLayout {
   const safeWidth = Number.isFinite(availableWidth) ? Math.max(0, availableWidth) : 0;
 
   if (safeWidth < PAD_LAYOUT_MIN_WIDTH) {
@@ -24,19 +73,43 @@ export function responsiveWorkspaceLayout(availableWidth: number): ResponsiveWor
       availableWidth: safeWidth,
       railWidth: 0,
       terminalWidth: safeWidth,
+      previewWidth: 0,
     };
   }
 
-  const railWidth = Math.min(
+  const naturalRail = Math.min(
     PAD_RAIL_MAX_WIDTH,
     Math.max(PAD_RAIL_MIN_WIDTH, safeWidth * PAD_RAIL_WIDTH_RATIO)
   );
+
+  // The preview only opens where both halves survive it. A device drawn at 1:1
+  // needs its own width, and a terminal squeezed under `PAD_TERMINAL_MIN_WIDTH`
+  // is a terminal showing so few columns that the reader would close the
+  // preview to get it back -- so the app does not open it for them.
+  //
+  // Measured against the *whole* width, because the rail stands down entirely
+  // while the preview is up rather than being squeezed (card #700, Ellen). The
+  // rail is a list of names, so narrowing it is what breaks it -- but removing
+  // it costs nothing that is not one tap away, and the two columns that remain
+  // are the two the reader is actually looking at.
+  //
+  // This is also what makes the feature reachable at all. Beside a rail the
+  // preview needs about 1160pt of window, which the 11-inch iPad clears by ten
+  // points and every narrower window -- Split View, portrait -- misses
+  // silently. Without it the floor is 872, so the same window opens the preview
+  // with 758pt of terminal instead of 470.
+  const previewWidth =
+    showsPreview && safeWidth - PAD_PREVIEW_WIDTH >= PAD_TERMINAL_MIN_WIDTH
+      ? PAD_PREVIEW_WIDTH
+      : 0;
+  const railWidth = previewWidth > 0 ? 0 : naturalRail;
 
   return {
     mode: 'pad',
     availableWidth: safeWidth,
     railWidth,
-    terminalWidth: safeWidth - railWidth,
+    terminalWidth: safeWidth - railWidth - previewWidth,
+    previewWidth,
   };
 }
 
@@ -96,21 +169,21 @@ export type HomeServerListLayout = {
 
 /**
  * The brand block's two weights. Both are real layouts, not a scale factor: the
- * tagline belongs to exactly one of them, and a tile that shrinks by a third
- * needs a corner radius that shrinks with it or it stops looking like the same
- * object.
+ * tagline belongs to exactly one of them, and the wordmark's tracking is pulled
+ * in harder the larger it is set.
  */
 export type HomeBrandWeight = {
   weight: 'hero' | 'mark';
-  /** The rounded tile the app mark sits in. */
-  tileSize: number;
-  tileRadius: number;
   /**
-   * Cast from the tile. It travels with the tile because a drop shadow is a
-   * statement about how far off the page something is sitting, and one sized
-   * for a 72pt mark under a 46pt one reads as a smudge rather than as lift.
+   * The app mark, drawn straight onto the page.
+   *
+   * It used to sit in a rounded tile with a fill and a drop shadow, and the
+   * mark itself was 70% of that -- so the thing the eye was meant to read was
+   * the smallest part of it, and the tile repeated a shape the mark already
+   * has. Standing it on the background gives the same footprint to the mark
+   * alone (Ellen), which is both larger and quieter than the tile it replaces.
    */
-  tileShadow: string;
+  markSize: number;
   /** The wordmark. Tracking is pulled in harder the larger it is set. */
   titleSize: number;
   titleLineHeight: number;
@@ -125,9 +198,7 @@ export type HomeBrandWeight = {
 
 const HOME_BRAND_HERO: HomeBrandWeight = {
   weight: 'hero',
-  tileSize: 72,
-  tileRadius: 21,
-  tileShadow: '0 10px 26px rgba(0, 0, 0, 0.10)',
+  markSize: 72,
   titleSize: 36,
   titleLineHeight: 41,
   titleTracking: -1.2,
@@ -138,9 +209,7 @@ const HOME_BRAND_HERO: HomeBrandWeight = {
 
 const HOME_BRAND_MARK: HomeBrandWeight = {
   weight: 'mark',
-  tileSize: 46,
-  tileRadius: 14,
-  tileShadow: '0 5px 14px rgba(0, 0, 0, 0.08)',
+  markSize: 46,
   titleSize: 26,
   titleLineHeight: 31,
   titleTracking: -0.8,

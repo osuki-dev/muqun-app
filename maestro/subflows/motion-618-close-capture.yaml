@@ -61,7 +61,7 @@ name: motion-618-close-capture
 # --- The shared row action menu ---------------------------------------------
 # `RowActionMenu` is the same component the home screen's cards use, so the
 # session map is where it can be exercised without a paired server.
-- tapOn: "Open panels"
+- tapOn: "Show what is running"
 - extendedWaitUntil:
     visible: "(?i)open panel .*"
     timeout: 20000

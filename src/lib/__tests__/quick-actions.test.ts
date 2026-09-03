@@ -21,6 +21,7 @@ describe('quickActionAvailability', () => {
       canStartTask: true,
       canStopAgent: true,
       canOpenWebService: true,
+      canPreviewSimulator: true,
       hasActions: true,
     });
   });
@@ -91,6 +92,47 @@ describe('quickActionAvailability', () => {
       webServiceSupported: true,
       manageOnly: false,
     });
+    expect(availability.hasActions).toBe(false);
+  });
+});
+
+describe('the simulator preview row', () => {
+  test('is offered exactly when the web service row is', () => {
+    // They reach the same machine the same way, so they stand or fall together
+    // until someone deliberately separates them.
+    for (const webServiceSupported of [true, false]) {
+      const availability = quickActionAvailability({
+        serverId: 'srv-a',
+        sessionId: 'sess',
+        paneId: 'wM:p1',
+        spawnSupported: true,
+        webServiceSupported,
+        manageOnly: false,
+      });
+      expect(availability.canPreviewSimulator).toBe(availability.canOpenWebService);
+      expect(availability.canPreviewSimulator).toBe(webServiceSupported);
+    }
+  });
+
+  test('needs a server but not a pane: a simulator belongs to the machine', () => {
+    const availability = quickActionAvailability({
+      serverId: 'srv-a',
+      spawnSupported: false,
+      webServiceSupported: true,
+      manageOnly: false,
+    });
+    expect(availability.canPreviewSimulator).toBe(true);
+    expect(availability.canCreate).toBe(false);
+  });
+
+  test('is never offered from the Settings entry, which has no machine in front of it', () => {
+    const availability = quickActionAvailability({
+      serverId: 'srv-a',
+      spawnSupported: true,
+      webServiceSupported: true,
+      manageOnly: true,
+    });
+    expect(availability.canPreviewSimulator).toBe(false);
     expect(availability.hasActions).toBe(false);
   });
 });

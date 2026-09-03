@@ -45,10 +45,10 @@ export class TerminalBoundary extends Component<Props, State> {
     return (
       <View style={[styles.shell, { backgroundColor: this.props.background }]}>
         <Text variant="bodySmall" color={this.props.textColor} style={styles.text}>
-          <Trans>This panel could not be drawn.</Trans>
+          <Trans>This terminal could not be drawn.</Trans>
         </Text>
         <PressableScale
-          accessibilityLabel={t`Retry drawing the panel`}
+          accessibilityLabel={t`Retry drawing the terminal`}
           onPress={() => this.setState({ failed: false })}
           style={[styles.retry, { borderColor: this.props.textColor }]}>
           <Text variant="caption" color={this.props.textColor}>

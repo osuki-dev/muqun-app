@@ -38,6 +38,16 @@ export interface QuickActionAvailability {
   canStopAgent: boolean;
   canOpenWebService: boolean;
   /**
+   * Whether to offer the simulator preview.
+   *
+   * The same condition as the web-service row, and for the same reason: both
+   * reach a port on the paired machine directly, so both stand or fall on
+   * whether the connection is one where that is honest. They are separate
+   * fields rather than one because they are separate features -- the day either
+   * gate moves, it should move alone.
+   */
+  canPreviewSimulator: boolean;
+  /**
    * Whether any row above the shortcut list is drawn at all. When nothing is,
    * the list is the whole sheet and must not be pushed down by the gap that
    * would have separated it from the rows above.
@@ -71,11 +81,22 @@ export function quickActionAvailability(params: QuickActionParams): QuickActionA
   const canOpenWebService =
     !params.manageOnly && Boolean(params.serverId) && params.webServiceSupported;
 
+  // simfarm is another port on that same machine, reached the same way, so it
+  // is offered exactly when opening a URL there is offered. It needs no pane
+  // either: a simulator belongs to the machine, not to the panel being read.
+  const canPreviewSimulator = canOpenWebService;
+
   return {
     canCreate,
     canStartTask,
     canStopAgent,
     canOpenWebService,
-    hasActions: canCreate || canStartTask || canStopAgent || canOpenWebService,
+    canPreviewSimulator,
+    // Both machine-scoped rows are counted even though they currently answer
+    // together. This decides whether the shortcut list is pushed down by a gap,
+    // so on the day the two gates diverge it has to already know about both --
+    // the failure is silent spacing, which nothing would report.
+    hasActions:
+      canCreate || canStartTask || canStopAgent || canOpenWebService || canPreviewSimulator,
   };
 }

@@ -25,19 +25,19 @@ because there isn't one.
 
 - **Answers the question.** The permission prompt arrives as a push —
   Approve, Approve always, Deny — from the Lock Screen, without opening the
-  app. On iOS a Live Activity keeps the panel you are watching on screen; on
+  app. On iOS a Live Activity keeps the terminal you are watching on screen; on
   Android there is a home-screen widget.
 - **Draws a real terminal.** Output goes onto a terminal grid in the program's
   own colours, so diffs, tables, spinners and TUIs look the way they look on
   your desk. Long-press to select and copy the exact bytes.
 - **Sends real keys.** The on-screen row is laid out like a keyboard and every
   key sends the moment you press it, so nvim, `less` and REPLs behave. Editor
-  panels get vim's key row and follow nvim's current mode.
+  terminals get vim's key row and follow nvim's current mode.
 - **Finds its way around a busy machine.** One sheet outlines the whole
-  workspace — every tab, every panel, addressed the way tmux addresses it — and
+  workspace — every group, every terminal, addressed the way tmux addresses it — and
   you can open a port on that machine in your phone's browser.
 - **Starts the next one.** Pick an agent, pick a directory the session already
-  knows, type or dictate the prompt; Muqun opens the panel it just made.
+  knows, type or dictate the prompt; Muqun opens the terminal it just made.
 - **Looks like your setup.** 32 theme packs, each with a light half and a dark
   one, repainting the app and the terminal together. Eight languages: English,
   繁體中文, 日本語, 한국어, Deutsch, Français, Español, Português.

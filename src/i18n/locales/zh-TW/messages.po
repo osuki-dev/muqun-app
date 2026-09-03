@@ -86,8 +86,8 @@ msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} 目前已鎖定。請改用系統備援方式，或稍後再試。"
 
 #: src/components/session-map.tsx
-msgid "{panelCount, plural, one {# panel} other {# panels}}"
-msgstr "{panelCount, plural, other {# 個面板}}"
+msgid "{panelCount, plural, one {# running} other {# running}}"
+msgstr "{panelCount, plural, one {# 個執行中} other {# 個執行中}}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
@@ -97,9 +97,29 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
 
+#: src/app/commands.tsx
+msgid "A dev server or preview running on this machine."
+msgstr "這台電腦上執行中的開發伺服器或預覽。"
+
+#: src/components/simfarm-preview.tsx
+msgid "A preview is only offered over Tailscale or HTTPS."
+msgstr "只有透過 Tailscale 或 HTTPS 才會提供預覽。"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "關於"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "操作這個終端機，或送一個指令給它。"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "操作這個終端機，或送一段提示給它的代理程式。"
+
+#: src/app/commands.tsx
+msgid "Add a terminal beside this one, and go to it."
+msgstr "在旁邊加一個終端機，並前往。"
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
@@ -114,6 +134,9 @@ msgid "AGENT COMMANDS"
 msgstr "代理程式指令"
 
 #: src/app/commands.tsx
+msgid "Agent output as plain text. Easier to read, no colour."
+msgstr "把代理程式的輸出顯示為純文字。比較好讀，但沒有顏色。"
+
 #: src/i18n/labels.ts
 msgid "Agent output reflowed for reading. Colour is lost."
 msgstr "代理程式的輸出重新排版以便閱讀，色彩會消失。"
@@ -154,6 +177,10 @@ msgstr "允許使用相機，或改為輸入位址。"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "回答：{0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "{label} 在某個連接埠上提供的任何東西——開發伺服器、預覽、儀表板。"
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
@@ -290,6 +317,11 @@ msgstr "清除目前行"
 msgid "Clear terminal"
 msgstr "清除終端機"
 
+#: src/components/open-web-service-sheet.tsx
+#: src/components/session-map.tsx
+msgid "Close"
+msgstr "關閉"
+
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "關閉檔案"
@@ -306,17 +338,9 @@ msgstr "關閉語言清單"
 msgid "Close new task"
 msgstr "關閉新增任務"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Close open a web service"
-msgstr "關閉「開啟網頁服務」"
-
 #: src/app/explore.tsx
 msgid "Close pairing"
 msgstr "關閉配對"
-
-#: src/components/session-map.tsx
-msgid "Close panels"
-msgstr "關閉面板清單"
 
 #: src/components/asset-viewer.tsx
 #: src/components/image-preview-modal.tsx
@@ -423,6 +447,10 @@ msgstr "繼續"
 #: src/i18n/labels.ts
 msgid "Continue task"
 msgstr "繼續任務"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Control"
+msgstr "Control 鍵"
 
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
@@ -552,10 +580,6 @@ msgstr "無法加入檔案"
 msgid "Could not copy that"
 msgstr "無法複製"
 
-#: src/app/commands.tsx
-msgid "Could not create a panel."
-msgstr "無法建立面板。"
-
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "無法啟用 App 鎖定"
@@ -573,8 +597,8 @@ msgid "Could not load files."
 msgstr "無法載入檔案。"
 
 #: src/components/session-map.tsx
-msgid "Could not load panels."
-msgstr "無法載入面板。"
+msgid "Could not load what is running."
+msgstr "無法載入正在執行的項目。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
@@ -605,8 +629,8 @@ msgid "Could not reach this server."
 msgstr "無法連線到這台伺服器。"
 
 #: src/components/server-terminal-workspace.tsx
-msgid "Could not read panel."
-msgstr "無法讀取面板。"
+msgid "Could not read the terminal."
+msgstr "無法讀取終端機。"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -631,6 +655,10 @@ msgstr "無法送出按鍵。"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "無法傳送快捷指令。"
+
+#: src/app/commands.tsx
+msgid "Could not start a terminal."
+msgstr "無法啟動終端機。"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
@@ -768,8 +796,8 @@ msgid "Edit this server"
 msgstr "編輯這台伺服器"
 
 #: src/lib/release-notes.ts
-msgid "Editor panels get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
-msgstr "編輯器面板會拿到 vim 自己的按鍵列，含 LazyVim 的 leader 組合鍵，也保留程式要求的色彩。"
+msgid "Editor terminals get vim’s own key row, LazyVim leader combos included, and keep the colours the program asked for."
+msgstr "編輯器終端機會顯示 vim 自己的按鍵列（含 LazyVim 的 leader 組合鍵），並保留程式指定的顏色。"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -894,6 +922,10 @@ msgstr "Gateway 網址無效。"
 msgid "Git status"
 msgstr "Git 狀態"
 
+#: src/app/commands.tsx
+msgid "Give the whole width back to the terminal."
+msgstr "把整個寬度還給終端機。"
+
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "返回"
@@ -905,6 +937,11 @@ msgstr "跳到檔案開頭"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "前往你的伺服器"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Group {0}. Long press for actions."
+msgstr "群組 {0}。長按顯示操作。"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -922,6 +959,15 @@ msgstr "隱藏 {name}"
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "隱藏鍵盤"
+
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "隱藏伺服器清單"
+
+#: src/app/commands.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Hide the simulator"
+msgstr "隱藏模擬器"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
@@ -1005,8 +1051,8 @@ msgid "Keep {label}"
 msgstr "保留 {label}"
 
 #: src/components/settings-alerts.tsx
-msgid "Keep the panel you are watching on the Lock Screen while its agent works."
-msgstr "代理程式執行期間，把你正在看的面板留在鎖定畫面上。"
+msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
+msgstr "代理程式工作時，把你正在看的終端機留在鎖定畫面上。"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -1095,6 +1141,10 @@ msgstr "只列出正在執行可辨識代理程式的面板。"
 msgid "Live Activity"
 msgstr "即時動態"
 
+#: src/components/session-map.tsx
+msgid "Loading"
+msgstr "載入中"
+
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "正在載入指令"
@@ -1107,14 +1157,6 @@ msgstr "正在載入先前的輸出…"
 msgid "Loading paired devices…"
 msgstr "正在載入已配對的裝置…"
 
-#: src/components/skia-terminal.tsx
-msgid "Loading panel"
-msgstr "正在載入面板"
-
-#: src/components/session-map.tsx
-msgid "Loading panels"
-msgstr "正在載入面板清單"
-
 #: src/app/(drawer)/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -1123,6 +1165,10 @@ msgstr "正在載入伺服器"
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
 msgstr "正在載入設定"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading terminal"
+msgstr "正在載入終端機"
 
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
@@ -1135,6 +1181,14 @@ msgstr "紀錄"
 #: src/lib/release-notes.ts
 msgid "Long-press the terminal to select output, drag to extend the selection, and copy it."
 msgstr "長按終端機即可選取輸出，拖曳延伸選取範圍，再複製下來。"
+
+#: src/components/simfarm-preview.tsx
+msgid "Look again"
+msgstr "重新尋找"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "正在尋找模擬器"
 
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
@@ -1217,21 +1271,12 @@ msgid "Never seen"
 msgstr "從未連線"
 
 #: src/app/commands.tsx
-#: src/components/session-map.tsx
-msgid "New panel"
-msgstr "新增面板"
-
-#: src/lib/release-notes.ts
-msgid "New panel now splits the tab you are in, and the phone goes straight to what it made."
-msgstr "「新增面板」現在會在你所在的分頁底下切出新面板，手機也會直接跳過去。"
+msgid "New group"
+msgstr "新增群組"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
 msgstr "新增快捷指令"
-
-#: src/app/commands.tsx
-msgid "New tab"
-msgstr "新增分頁"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
@@ -1241,6 +1286,15 @@ msgstr "新增任務"
 #: src/components/new-task-action.tsx
 msgid "New task on {label}"
 msgstr "在 {label} 上新增任務"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New terminal"
+msgstr "新增終端機"
+
+#: src/lib/release-notes.ts
+msgid "New terminal now splits the group you are in, and the phone goes straight to what it made."
+msgstr "「新增終端機」現在會分割你所在的群組，手機也會直接跳到新建的那一個。"
 
 #: src/components/session-map.tsx
 msgid "New workspace"
@@ -1290,6 +1344,10 @@ msgstr "沒有可以開始任務的伺服器。"
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "尚未配對任何伺服器"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "連接埠 {port} 上沒有模擬器"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -1352,18 +1410,9 @@ msgstr "開啟"
 msgid "Open {0}"
 msgstr "開啟 {0}"
 
-#: src/app/commands.tsx
-msgid "Open a port on this machine in your browser."
-msgstr "在瀏覽器中開啟這台機器上的連接埠。"
-
-#: src/app/commands.tsx
-msgid "Open a tab of its own and go to it."
-msgstr "另開一個分頁並前往。"
-
-#: src/app/commands.tsx
-#: src/components/open-web-service-sheet.tsx
-msgid "Open a web service"
-msgstr "開啟網頁服務"
+#: src/components/session-map.tsx
+msgid "Open {title}. Long press to close."
+msgstr "開啟 {title}。長按可關閉。"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -1372,6 +1421,11 @@ msgstr "仍要開啟"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "開啟檔案"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "在瀏覽器開啟"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
@@ -1384,14 +1438,6 @@ msgstr "開啟牧群以連線"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "開啟螢幕鍵盤"
-
-#: src/components/session-map.tsx
-msgid "Open panel {title}. Long press to close."
-msgstr "開啟面板 {title}。長按可關閉。"
-
-#: src/components/app-drawer.tsx
-msgid "Open panels"
-msgstr "開啟面板清單"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
@@ -1408,8 +1454,8 @@ msgstr "開啟檔案瀏覽器"
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# panel} other {# panels}}. Long press to close."
-msgstr "開啟工作區 {0}，{1, plural, other {# 個面板}}。長按可關閉。"
+msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
+msgstr "開啟工作區 {0}，{1, plural, one {# 個執行中} other {# 個執行中}}。長按可關閉。"
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -1420,8 +1466,8 @@ msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "開啟 GitHub 上的牧群問題追蹤頁。"
 
 #: src/components/server-agent-rows.tsx
-msgid "Opens this agent's panel"
-msgstr "開啟這個代理程式的面板"
+msgid "Opens this agent's terminal"
+msgstr "開啟這個代理程式的終端機"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -1470,14 +1516,6 @@ msgstr "配對碼已過期。請重新掃描取得新的代碼。"
 msgid "Pairing failed."
 msgstr "配對失敗。"
 
-#: src/app/commands.tsx
-msgid "PANEL COMMANDS"
-msgstr "面板指令"
-
-#: src/components/session-map.tsx
-msgid "Panels"
-msgstr "面板"
-
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "伺服器卡片上的面板"
@@ -1511,6 +1549,10 @@ msgstr "按 Esc 鍵關閉這項請求"
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
 msgstr "預覽 {0}，{status}"
+
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "預覽模擬器"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -1550,10 +1592,6 @@ msgstr "快速動作"
 msgid "Quit"
 msgstr "離開"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "Reach a server running on {label} from this phone."
-msgstr "從這支手機連上在 {label} 執行的伺服器。"
-
 #: src/app/settings.tsx
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "請寫信到 {SUPPORT_EMAIL} 與我們聯絡。"
@@ -1575,13 +1613,13 @@ msgstr "最近的提交"
 msgid "Reconnecting · {0}"
 msgstr "重新連線中 · {0}"
 
+#: src/components/session-map.tsx
+msgid "Refresh"
+msgstr "重新整理"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "重新整理檔案"
-
-#: src/components/session-map.tsx
-msgid "Refresh panels"
-msgstr "重新整理面板"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -1593,12 +1631,12 @@ msgid "Rename {label}"
 msgstr "重新命名 {label}"
 
 #: src/components/session-map.tsx
-msgid "Rename panel"
-msgstr "重新命名面板"
+msgid "Rename group"
+msgstr "重新命名群組"
 
 #: src/components/session-map.tsx
-msgid "Rename tab"
-msgstr "重新命名分頁"
+msgid "Rename terminal"
+msgstr "重新命名終端機"
 
 #: src/components/session-map.tsx
 msgid "Rename workspace"
@@ -1650,8 +1688,8 @@ msgid "Retry connection"
 msgstr "重新連線"
 
 #: src/components/terminal-boundary.tsx
-msgid "Retry drawing the panel"
-msgstr "重新繪製面板"
+msgid "Retry drawing the terminal"
+msgstr "重新繪製終端機"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
@@ -1708,10 +1746,6 @@ msgstr "撤銷中…"
 msgid "Right arrow"
 msgstr "向右鍵"
 
-#: src/app/commands.tsx
-msgid "Run a command or key combo."
-msgstr "執行指令或按鍵組合。"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "執行終端機指令"
@@ -1723,6 +1757,10 @@ msgstr "執行指令"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "執行相關測試"
+
+#: src/components/simfarm-preview.tsx
+msgid "Run simfarm on that machine, or say which port it is on."
+msgstr "在那台電腦上執行 simfarm，或告訴我們它在哪個連接埠。"
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -1749,6 +1787,14 @@ msgstr "儲存對 {0} 的變更"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "儲存快捷指令"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "已儲存的指令"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "已儲存的提示"
 
 #: src/components/settings-servers.tsx
 msgid "Saving…"
@@ -1819,10 +1865,6 @@ msgstr "送出 {spoken}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "傳送訊息"
-
-#: src/app/commands.tsx
-msgid "Send a prompt to this agent."
-msgstr "傳送提示詞給這個代理程式。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -1912,10 +1954,6 @@ msgstr "Shift Tab 鍵"
 msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab 鍵，循環切換模式"
 
-#: src/app/commands.tsx
-msgid "SHORTCUTS"
-msgstr "快捷指令"
-
 #. placeholder {0}: item.summary
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -1953,6 +1991,22 @@ msgstr "顯示每個工具步驟"
 msgid "Show images"
 msgstr "顯示圖片"
 
+#: src/app/commands.tsx
+msgid "Show it beside the terminal, and watch it redraw."
+msgstr "顯示在終端機旁邊，看著它重繪。"
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "顯示伺服器清單"
+
+#: src/components/app-drawer.tsx
+msgid "Show what is running"
+msgstr "查看正在執行的項目"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "simfarm 連接埠"
+
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "大小"
@@ -1969,13 +2023,13 @@ msgstr "發生錯誤"
 msgid "Space"
 msgstr "空白鍵"
 
-#: src/app/commands.tsx
-msgid "Split this tab and go to what it makes."
-msgstr "分割這個分頁，並前往新建的面板。"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "資料過舊 · {age}"
+
+#: src/app/commands.tsx
+msgid "Start a group of its own, and go to it."
+msgstr "開一個自己的群組，並前往。"
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
@@ -2057,11 +2111,6 @@ msgstr "系統"
 msgid "Tab"
 msgstr "Tab 鍵"
 
-#. placeholder {0}: group.tab.title
-#: src/components/session-map.tsx
-msgid "Tab {0}. Long press for actions."
-msgstr "分頁 {0}。長按可顯示動作。"
-
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "拍照"
@@ -2075,6 +2124,10 @@ msgstr "終端機"
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
 msgstr "終端機色彩會跟隨主題。"
+
+#: src/app/commands.tsx
+msgid "TERMINAL COMMANDS"
+msgstr "終端機指令"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -2138,8 +2191,8 @@ msgid "The server did not return it."
 msgstr "伺服器沒有回傳這個檔案。"
 
 #: src/app/commands.tsx
-msgid "The server did not say which panel it made."
-msgstr "伺服器沒有說明它建立了哪個面板。"
+msgid "The server did not say which terminal it made."
+msgstr "伺服器沒有說明它建立了哪一個終端機。"
 
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
@@ -2187,6 +2240,10 @@ msgstr "這個 gateway 尚未提供檔案服務。更新牧群的 gateway 外掛
 msgid "This gateway has not listed any paired devices."
 msgstr "這個 Gateway 尚未列出任何已配對的裝置。"
 
+#: src/components/session-map.tsx
+msgid "This group has no terminals."
+msgstr "這個群組沒有終端機。"
+
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
 msgstr "這張圖片載入失敗。"
@@ -2194,14 +2251,6 @@ msgstr "這張圖片載入失敗。"
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
 msgstr "這個連結沒有指向任何地方"
-
-#: src/components/terminal-boundary.tsx
-msgid "This panel could not be drawn."
-msgstr "無法繪製這個面板。"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "This panel is no longer available."
-msgstr "這個面板已經不存在了。"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -2232,6 +2281,7 @@ msgid "This server has no session to start an agent in."
 msgstr "這台伺服器沒有可以啟動代理程式的工作階段。"
 
 #: src/app/new-task.tsx
+#: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
 msgstr "這台伺服器已經解除配對。"
@@ -2244,13 +2294,17 @@ msgstr "這台伺服器已經不認得這台裝置了。請重新配對以恢復
 msgid "This server refused the request."
 msgstr "這台伺服器拒絕了這個請求。"
 
-#: src/components/session-map.tsx
-msgid "This tab has no panels."
-msgstr "這個分頁沒有面板。"
+#: src/components/terminal-boundary.tsx
+msgid "This terminal could not be drawn."
+msgstr "無法繪製這個終端機。"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available."
+msgstr "這個終端機已經不存在。"
 
 #: src/components/session-map.tsx
-msgid "This workspace has no tabs yet."
-msgstr "這個工作區還沒有分頁。"
+msgid "This workspace has no groups yet."
+msgstr "這個工作區還沒有群組。"
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -2402,6 +2456,14 @@ msgstr "正在等待網路。"
 msgid "Waiting for uploads to finish…"
 msgstr "正在等待上傳完成…"
 
+#: src/app/commands.tsx
+msgid "Watch this machine's iOS, Android or WeChat simulator."
+msgstr "看這台電腦的 iOS、Android 或 WeChat 模擬器。"
+
+#: src/components/session-map.tsx
+msgid "What is running"
+msgstr "正在執行的項目"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新功能"
@@ -2422,9 +2484,9 @@ msgstr "工作中"
 msgid "Workspace"
 msgstr "工作區"
 
-#: src/components/session-map.tsx
-msgid "WORKSPACE"
-msgstr "工作區"
+#: src/components/server-terminal-workspace.tsx
+msgid "Write a line"
+msgstr "輸入一行"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"

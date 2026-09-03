@@ -43,6 +43,24 @@ export interface DockPresentationInput {
   /** Files already staged for the next message. */
   stagedAttachments: number;
   /**
+   * The selected pane is a modal editor -- nvim, helix, emacs, nano.
+   *
+   * Such a pane is driven a keystroke at a time, which is what the keyboard
+   * sends and what the composer, a line buffer needing Enter, does not. The
+   * screen opens the keyboard on arrival for these; the dock records the fact
+   * so the rule stays in one table rather than being re-derived at the call
+   * site.
+   */
+  editorPane: boolean;
+  /**
+   * The reader asked for the composer back on a pane where it had stood down.
+   *
+   * Per visit and not remembered: the composer is summoned to send one line,
+   * and a pane that kept it out would have taken back the height the keyboard
+   * was opened for.
+   */
+  composerRevealed: boolean;
+  /**
    * This screen is the one on top -- no sheet is covering the dock.
    *
    * The panels sheet is a full-height `formSheet`, so a pane picked on it
@@ -79,6 +97,24 @@ export interface DockPresentation {
   attachmentStrip: boolean;
   /** The input, its send button, and the popups that hang off the caret. */
   composer: boolean;
+  /**
+   * The way back to a composer that stood down for an editor's keyboard.
+   *
+   * A floating button rather than a row, for the same reason `floatingActions`
+   * is one: a line of the pane is too much rent for a single control, and the
+   * height it would take is the height the keyboard was opened to get.
+   */
+  composerEntry: boolean;
+  /**
+   * The terminal keys ride inside the keyboard panel instead of on their own
+   * row.
+   *
+   * `esc`, `:w`, the leader combos and the Ctrl chords are what an editor is
+   * driven by, and the keyboard used to replace the row that carried them --
+   * so typing and reaching for them were mutually exclusive, on the one surface
+   * where both are wanted at once.
+   */
+  keysInKeyboard: boolean;
   /** A compact `esc` on the banner, standing in for the row that carried it. */
   bannerEscape: boolean;
   /**
@@ -104,6 +140,8 @@ export function dockPresentation({
   attachmentsAvailable,
   stagedAttachments,
   screenOnTop,
+  editorPane,
+  composerRevealed,
 }: DockPresentationInput): DockPresentation {
   // A question with no answers on it clears nothing: see the note above. The
   // banner still draws -- the prompt and its context are worth reading even
@@ -115,6 +153,17 @@ export function dockPresentation({
   // decides only *where*, so exactly one of these is ever true.
   const entriesShown = !answerable && !virtualKeyboard;
   const keyRow = entriesShown && showTerminalKeyRow;
+  // The keys do not leave when the keyboard arrives -- they move into it. The
+  // setting still governs whether they exist at all, so a reader who switched
+  // the row off does not get it back by opening the keyboard.
+  const keysInKeyboard = virtualKeyboard && showTerminalKeyRow;
+  // The keyboard already took the composer's place -- it is the input now, and
+  // a line buffer under a full QWERTY is two inputs arguing. What was missing
+  // was the way back to it *without* dismissing the keyboard, which on an
+  // editor is the difference between pasting a line and losing your keys to do
+  // it. So this is not a new hiding rule; it is the old one, named, with a door
+  // in it.
+  const composerStandsDown = virtualKeyboard && !composerRevealed;
 
   return {
     approvalOnly: answerable,
@@ -124,7 +173,9 @@ export function dockPresentation({
     floatingActions: entriesShown && !showTerminalKeyRow,
     attachEntry: !answerable && attachmentsAvailable,
     attachmentStrip: !answerable && stagedAttachments > 0,
-    composer: !answerable,
+    composer: !answerable && !composerStandsDown,
+    composerEntry: composerStandsDown,
+    keysInKeyboard,
     // Derived from the two surfaces that carry a real `esc` rather than from
     // the flag alone, so that a rule which one day keeps the row up through
     // some approval cannot silently produce two escapes side by side. The

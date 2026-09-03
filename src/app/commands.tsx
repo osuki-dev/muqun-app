@@ -76,6 +76,7 @@ import { quickActionAvailability } from '@/lib/quick-actions';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { usePanelPickerStore } from '@/stores/panel-picker';
+import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   addQuickCommand,
   hasHiddenDefaults,
@@ -156,6 +157,13 @@ export default function QuickCommandsScreen() {
     agentTarget?: string;
     agentStatus?: string;
   }>();
+  // Below `params`, not above it: the selector closure reads `params.serverId`
+  // and zustand runs it synchronously during this hook call, so declaring these
+  // first read the binding before `useLocalSearchParams` had assigned it.
+  const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
+  const simfarmSplitOpen = useSimfarmSplit((state) =>
+    params.serverId ? state.openByServer[params.serverId] === true : false
+  );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
   const manageOnly = params.manage === '1';
   const [commands, setCommands] = useState<QuickCommand[]>([]);
@@ -312,7 +320,7 @@ export default function QuickCommandsScreen() {
       // to send the phone to, and choosing an empty one would clear the
       // terminal instead -- so say so and stay put.
       if (!target.paneId) {
-        setError(t`The server did not say which panel it made.`);
+        setError(t`The server did not say which terminal it made.`);
         setCreating(null);
         return;
       }
@@ -321,7 +329,7 @@ export default function QuickCommandsScreen() {
     } catch (failure) {
       // Reported here rather than by closing the sheet: a sheet that dismisses
       // itself onto the pane you were already on has told you nothing.
-      setError(failure instanceof Error ? failure.message : t`Could not create a panel.`);
+      setError(failure instanceof Error ? failure.message : t`Could not start a terminal.`);
       setCreating(null);
     }
   }
@@ -362,6 +370,33 @@ export default function QuickCommandsScreen() {
     router.replace({
       pathname: '/web-service',
       params: { serverId: params.serverId },
+    } as Href);
+  }
+
+  /**
+   * Hand over to the simulator preview.
+   *
+   * `canOpenWeb` travels on rather than being recomputed: the screen that
+   * opened this sheet is the one holding the health answer, and its gate has a
+   * term nothing downstream can see -- the demo is excluded before the
+   * transport is even consulted, because its record points at an address that
+   * does not exist. Re-deriving here would quietly drop that.
+   */
+  function openSimulatorPreview() {
+    if (!available.canPreviewSimulator) return;
+    // On a Pad the preview belongs beside the terminal, not over it: the whole
+    // reason to want it there is watching the simulator redraw *while* the
+    // agent works, and a sheet covering the terminal gives back exactly the
+    // one-at-a-time reading you already have on the desktop. A phone has no
+    // second column to give, so it opens the sheet.
+    if (isPadLayout && params.serverId) {
+      toggleSimfarmSplit(params.serverId);
+      router.back();
+      return;
+    }
+    router.replace({
+      pathname: '/simfarm',
+      params: { serverId: params.serverId, allowed: params.canOpenWeb === '1' ? '1' : '' },
     } as Href);
   }
 
@@ -442,8 +477,8 @@ export default function QuickCommandsScreen() {
               {manageOnly
                 ? t`Customize terminal commands and key combinations.`
                 : mode === 'agent'
-                  ? t`Send a prompt to this agent.`
-                  : t`Run a command or key combo.`}
+                  ? t`Act on this terminal, or send its agent a prompt.`
+                  : t`Act on this terminal, or send it a command.`}
             </Text>
           </View>
           <PressableScale
@@ -497,9 +532,9 @@ export default function QuickCommandsScreen() {
             ) : null}
             {available.canCreate ? (
               <ActionRow
-                accessibilityLabel={t`New panel`}
-                name={t`New panel`}
-                detail={t`Split this tab and go to what it makes.`}
+                accessibilityLabel={t`New terminal`}
+                name={t`New terminal`}
+                detail={t`Add a terminal beside this one, and go to it.`}
                 detailColor={theme.colors.textMuted}
                 busy={creating === 'panel'}
                 busyColor={theme.colors.primary}
@@ -509,9 +544,9 @@ export default function QuickCommandsScreen() {
             ) : null}
             {available.canCreate ? (
               <ActionRow
-                accessibilityLabel={t`New tab`}
-                name={t`New tab`}
-                detail={t`Open a tab of its own and go to it.`}
+                accessibilityLabel={t`New group`}
+                name={t`New group`}
+                detail={t`Start a group of its own, and go to it.`}
                 detailColor={theme.colors.textMuted}
                 busy={creating === 'tab'}
                 busyColor={theme.colors.primary}
@@ -530,7 +565,7 @@ export default function QuickCommandsScreen() {
                 name={paneView.mode === 'terminal' ? t`Render as text` : t`Render as terminal`}
                 detail={
                   paneView.mode === 'terminal'
-                    ? t`Agent output reflowed for reading. Colour is lost.`
+                    ? t`Agent output as plain text. Easier to read, no colour.`
                     : t`The raw pane, on its grid and in its own colours.`
                 }
                 detailColor={theme.colors.textMuted}
@@ -541,11 +576,30 @@ export default function QuickCommandsScreen() {
             {/* Last, because it is the only row that does not act on the pane
                 behind this sheet: it reaches past it to the machine that pane
                 runs on, and leaves the app for the browser. */}
+            {available.canPreviewSimulator ? (
+              <ActionRow
+                accessibilityLabel={
+                  isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
+                }
+                name={
+                  isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
+                }
+                detail={
+                  isPadLayout
+                    ? simfarmSplitOpen
+                      ? t`Give the whole width back to the terminal.`
+                      : t`Show it beside the terminal, and watch it redraw.`
+                    : t`Watch this machine's iOS, Android or WeChat simulator.`
+                }
+                detailColor={theme.colors.textMuted}
+                onPress={openSimulatorPreview}
+              />
+            ) : null}
             {available.canOpenWebService ? (
               <ActionRow
-                accessibilityLabel={t`Open a web service`}
-                name={t`Open a web service`}
-                detail={t`Open a port on this machine in your browser.`}
+                accessibilityLabel={t`Open in your browser`}
+                name={t`Open in your browser`}
+                detail={t`A dev server or preview running on this machine.`}
                 detailColor={theme.colors.textMuted}
                 onPress={openWebService}
               />
@@ -555,7 +609,7 @@ export default function QuickCommandsScreen() {
 
         <View style={styles.section}>
           <SectionHeading
-            title={t`SHORTCUTS`}
+            title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`}
             // Settings' entry is the editor, so it has no state to toggle and
             // offers no way to leave a mode that is the whole screen.
             action={
@@ -663,7 +717,7 @@ export default function QuickCommandsScreen() {
 
         {!manageOnly && !loadingAgentCommands && agentCommands.length > 0 ? (
           <Animated.View entering={fadeIn('short')} style={styles.section}>
-            <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`PANEL COMMANDS`} />
+            <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`TERMINAL COMMANDS`} />
             <SettingsCard>
               {agentCommands.map((entry, index) => (
                 <Animated.View

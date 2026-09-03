@@ -72,17 +72,17 @@ tags:
 # panels of every tab are on screen at once, and the assertion below can name
 # one without first tapping a tab chip to reveal it.
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Open panels"
+- tapOn: "Show what is running"
 - extendedWaitUntil:
-    visible: "Close panels"
+    visible: "Close"
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible: "WORKSPACE"
+- assertVisible: "What is running"
 # The workspace chip's count, which is the whole of card #830. It is counted
 # from the panes the sheet loaded, not read off the workspace record: the demo
 # fixture deliberately no longer sends `pane_count`, exactly as a tmux gateway
-# does not, so a chip that has gone back to trusting the record reads `0 panels`
+# does not, so a chip that has gone back to trusting the record reads `0 running`
 # here and fails this line. Five panes in three tabs is the demo session.
 #
 # Read off the chip's accessibility label rather than the caption drawn inside
@@ -91,9 +91,9 @@ tags:
 # line asserted a bare "5 panels" for as long as it only ever ran on Android,
 # and could never have passed on a phone. Matched as a whole-string regex,
 # which is how Maestro matches text.
-- assertVisible: "Open workspace .*, 5 panels\\. Long press to close\\."
+- assertVisible: "Open workspace .*, 5 running\\. Long press to close\\."
 - takeScreenshot: shots/03-panels
-# "New panel" lives under the last group, and the demo session grew a second and
+# "New terminal" lives under the last group, and the demo session grew a second and
 # third tab with a panel each when the two-finger tab swipe landed (commit
 # 746fe8c). Five panels in three groups is taller than the sheet, so on a
 # 1080x2400 screen the button is below the fold -- which is the sheet working,
@@ -101,14 +101,14 @@ tags:
 # `assertVisible`, which only passed while the list was short enough to fit.
 - scrollUntilVisible:
     element:
-      text: "New panel"
+      text: "New terminal"
     direction: DOWN
     timeout: 15000
 - scrollUntilVisible:
     element:
-      text: "Close panels"
+      text: "Close"
     direction: UP
-- tapOn: "Close panels"
+- tapOn: "Close"
 - waitForAnimationToEnd:
     timeout: 2000
 

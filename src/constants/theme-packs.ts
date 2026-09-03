@@ -51,7 +51,6 @@ export type ThemeVariant = {
 export const THEME_PACK_IDS = [
   'osuki',
   'ayu',
-  'bamboo',
   'bluloco',
   'catppuccin',
   'cyberdream',
@@ -63,9 +62,7 @@ export const THEME_PACK_IDS = [
   'gruvbox',
   'iceberg',
   'kanagawa',
-  'kanso',
   'material',
-  'melange',
   'monokai-pro',
   'modus',
   'neovim',
@@ -73,14 +70,9 @@ export const THEME_PACK_IDS = [
   'night-owl',
   'oxocarbon',
   'osaka-jade',
-  'papercolor',
   'rose-pine',
-  'selenized',
   'solarized',
   'tokyo-night',
-  'tomorrow',
-  'vs-code-2026',
-  'zenwritten',
 ] as const;
 
 export type ThemePackId = (typeof THEME_PACK_IDS)[number];
@@ -607,7 +599,6 @@ const tokyoNight: ThemePack = {
 export const THEME_PACKS: readonly ThemePack[] = [
   osuki,
   DEVELOPER_THEME_PACKS_BY_ID.ayu,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.bamboo,
   DEVELOPER_THEME_PACKS_2026_BY_ID.bluloco,
   catppuccin,
   DEVELOPER_THEME_PACKS_2026_BY_ID.cyberdream,
@@ -619,9 +610,7 @@ export const THEME_PACKS: readonly ThemePack[] = [
   DEVELOPER_THEME_PACKS_BY_ID.gruvbox,
   DEVELOPER_THEME_PACKS_2026_BY_ID.iceberg,
   DEVELOPER_THEME_PACKS_BY_ID.kanagawa,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.kanso,
   DEVELOPER_THEME_PACKS_2026_BY_ID.material,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.melange,
   DEVELOPER_THEME_PACKS_2026_BY_ID.monokaiPro,
   DEVELOPER_THEME_PACKS_2026_BY_ID.modus,
   DEVELOPER_THEME_PACKS_2026_BY_ID.neovim,
@@ -629,14 +618,9 @@ export const THEME_PACKS: readonly ThemePack[] = [
   DEVELOPER_THEME_PACKS_BY_ID.nightOwl,
   DEVELOPER_THEME_PACKS_2026_BY_ID.oxocarbon,
   DEVELOPER_THEME_PACKS_2026_BY_ID.osakaJade,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.paperColor,
   rosePine,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.selenized,
   DEVELOPER_THEME_PACKS_BY_ID.solarized,
   tokyoNight,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.tomorrow,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.vsCode2026,
-  DEVELOPER_THEME_PACKS_2026_BY_ID.zenwritten,
 ];
 
 export const DEFAULT_THEME_PACK_ID: ThemePackId = 'osuki';

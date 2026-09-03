@@ -120,6 +120,39 @@ describe('a backend the gateway refuses', () => {
 describe('a backend that is not there', () => {
   test('asks for Herdr to be started', () => {
     const expected = `Start Herdr ${MINIMUM_HERDR_VERSION} or newer, then try again.`;
+    expect(() => assertSupportedHerdr({
+      herdr: { connected: false },
+      backend: { kind: 'herdr' },
+    })).toThrow(expected);
+  });
+
+  test('names tmux when tmux is the backend that is down', () => {
+    // The `herdr` key is a legacy envelope carrying the primary backend's
+    // verdict whatever that backend is. Reading it as a statement about Herdr
+    // is how a server whose tmux was unreachable told its owner to go and
+    // start a program they were not running and did not need.
+    expect(() => assertSupportedHerdr({
+      herdr: { connected: false },
+      backend: { kind: 'tmux' },
+    })).toThrow(
+      'Muqun Gateway cannot reach tmux on this server. Check that a tmux server is '
+      + 'running and that the gateway can find the tmux program, then try again.'
+    );
+  });
+
+  test('names a backend this build has never heard of', () => {
+    expect(() => assertSupportedHerdr({
+      herdr: { connected: false },
+      backend: { kind: 'screen' },
+    })).toThrow(
+      'Muqun Gateway cannot reach the screen backend on this server. Start it, then try again.'
+    );
+  });
+
+  test('still asks for Herdr when the gateway names no backend', () => {
+    // A gateway old enough to omit `backend` predates tmux being one, so Herdr
+    // is the only thing it can have meant.
+    const expected = `Start Herdr ${MINIMUM_HERDR_VERSION} or newer, then try again.`;
     expect(() => assertSupportedHerdr({ herdr: { connected: false } })).toThrow(expected);
     expect(() => assertSupportedHerdr({})).toThrow(expected);
   });

@@ -153,15 +153,15 @@ export function OpenWebServiceSheet({
         <View style={styles.header}>
           <View style={styles.headerCopy}>
             <Text variant="bodySmall" style={styles.title}>
-              <Trans>Open a web service</Trans>
+              <Trans>Open in your browser</Trans>
             </Text>
             <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>Reach a server running on {label} from this phone.</Trans>
+              <Trans>Anything {label} is serving on a port — a dev server, a preview, a dashboard.</Trans>
             </Text>
           </View>
           <GlassChrome face="sheet" style={styles.closeButton}>
             <PressableScale
-              accessibilityLabel={t`Close open a web service`}
+              accessibilityLabel={t`Close`}
               onPress={onClose}
               style={styles.closeHit}>
               <X size={18} color={theme.colors.text} />

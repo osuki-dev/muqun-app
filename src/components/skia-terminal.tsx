@@ -2128,7 +2128,7 @@ export function SkiaTerminal({
           pointerEvents="none"
           exiting={fadeOut('short')}
           style={[styles.loading, { backgroundColor: paneTheme.background }]}>
-          <LogoLoader accessibilityLabel={t`Loading panel`} size={64} />
+          <LogoLoader accessibilityLabel={t`Loading terminal`} size={64} />
         </Animated.View>
       ) : null}
     </View>

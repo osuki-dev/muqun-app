@@ -453,6 +453,19 @@ export interface HealthResponse {
     error?: string;
     response?: unknown;
   };
+  /**
+   * The session `GET /api/sessions` leads with, and the one the `herdr` key
+   * above is actually about -- that key is a legacy envelope and carries the
+   * primary backend's verdict whatever kind it is. `kind` is the only field
+   * that says which; without it a failure reads as a Herdr failure even when
+   * the backend that is down is tmux.
+   */
+  backend?: {
+    kind?: string;
+    connected?: boolean;
+    version?: string | null;
+    protocol?: number | null;
+  };
 }
 
 export interface SessionsResponse {
