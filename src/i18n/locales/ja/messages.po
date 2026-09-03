@@ -2425,6 +2425,10 @@ msgstr "この回答はエージェントに届きませんでした。"
 msgid "That code was refused. Hold still for a new one."
 msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください。"
 
+#: src/components/ssh-host-list.tsx
+msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
+msgstr "これは同梱のデモシェルで、ここにある唯一のホストです。自分のホストを追加すると、届く範囲のどのマシンでもシェルを開けます。"
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "そのシェルは見慣れたターミナルそのもの。同じキーボード、同じキー列、同じ配色。入力したいときはスマホ自身のキーボードも使えます。"

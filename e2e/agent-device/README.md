@@ -68,6 +68,48 @@ agent-device test e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ho
   --artifacts-dir dist/e2e-reports/agent-device --reporter junit:dist/e2e-reports/agent-device/junit.xml
 ```
 
+## Running it somewhere else
+
+The two lines above are the flow's own defaults, spelled out: Metro on 8098,
+a simulator called `muqun-home`. Nobody else's machine has both. Use the
+runner, which takes those from the environment and defaults to exactly the
+committed values:
+
+```sh
+bash scripts/e2e-agent-device.sh                                  # the defaults, unchanged
+E2E_AD_METRO_PORT=8112 E2E_AD_DEVICE=my-sim \
+  bash scripts/e2e-agent-device.sh                                # your Metro, your simulator
+bash scripts/e2e-agent-device.sh --test                           # ... with the JUnit report
+bash scripts/e2e-agent-device.sh e2e/agent-device/ssh-demo.android.ad
+```
+
+Which knob needs which mechanism is not obvious, and all three were checked
+against agent-device 0.20.10 rather than assumed:
+
+- **Device and platform are already overridable.** `--device` / `--platform`
+  on `replay` and `test` win over the script's `context` line, which is
+  recorded metadata rather than a binding. A script whose `context` reads
+  `device="muqun-home"` replays on `muqun-polish` when `--device` says so.
+- **The Metro port is not.** `--metro-host` / `--metro-port` are session
+  hints and do not reach a scripted `open`; the port that gets written into
+  the simulator's React Native debug-server prefs is the one on the `open`
+  line _inside_ the script. Passing `--metro-port 8112` to `replay` while the
+  script's `open` line carries no port at all launches the app onto "No
+  script URL provided".
+- **`${NAME}` interpolation does not help here.** agent-device's `--env
+NAME=value` substitution is for `fill`/`type` values -- the secret-safe
+  `--record-as` mechanism -- and is not applied to command flags.
+  `--metro-port "${METRO_PORT}"` with `--env METRO_PORT=8112` reaches the
+  daemon unresolved and lands on the same "No script URL provided" screen.
+
+So `E2E_AD_METRO_PORT` is applied by rendering the flow: the runner copies the
+script to a temp file with the port substituted on the `open` line and replays
+that (`replay` reads its script on the caller's machine, so a temp copy is a
+first-class input). With no `E2E_AD_METRO_*` set it replays the committed file
+untouched. That is why `ssh-demo.ad` still carries a literal `8098` -- the raw
+`agent-device replay` invocations above keep working, and a re-recording does
+not have to remember a placeholder.
+
 `--device` takes the simulator's _name_ as `agent-device devices --platform ios`
 prints it, not its UDID.
 

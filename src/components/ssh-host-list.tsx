@@ -3,7 +3,8 @@ import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { Plus, SquareTerminal } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -13,8 +14,15 @@ import { SshHostRow } from '@/components/ssh-host-row';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { demoSshHost } from '@/lib/demo-ssh';
-import type { SshHostRecord } from '@/lib/ssh-hosts';
+import { sshHostListView, type SshHostRecord } from '@/lib/ssh-hosts';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
+
+/**
+ * How much of the form to keep above the keyboard. The same 88 the task and
+ * web-service sheets use: a focused field plus the row of buttons under it,
+ * rather than the field alone flush against the keypad.
+ */
+const KEYBOARD_BOTTOM_OFFSET = 88;
 
 /**
  * Every SSH host this device knows, and the way to add one.
@@ -51,6 +59,7 @@ export function SshHostList() {
   const [editing, setEditing] = useState<SshHostRecord | 'new' | null>(null);
 
   const demoHost = isDemoRecord(gateway) || (!loading && hosts.length === 0) ? demoSshHost() : null;
+  const { rows, prompt } = sshHostListView(hosts, demoHost);
 
   // Read at render because the rows' "last connected" is relative to *now*,
   // not to whenever the store last changed -- see `ServerCard` for the same
@@ -75,7 +84,15 @@ export function SshHostList() {
           )
         }
       />
-      <ScrollView
+      {/* The form lives inside this scroller, and its port field raises the
+          numeric keypad -- which has no "done" key to dismiss itself with. A
+          plain ScrollView left Save, Cancel and Remove underneath the keypad,
+          reachable only by the field's own `Next` accessory. This is the same
+          scroller every other form in the app uses (`commands.tsx`,
+          `explore.tsx`, the sheets), for the same reason. */}
+      <KeyboardAwareScrollView
+        bottomOffset={KEYBOARD_BOTTOM_OFFSET}
+        keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
         {editing ? (
@@ -89,29 +106,31 @@ export function SshHostList() {
           </View>
         ) : (
           <View style={styles.list}>
-            {demoHost ? (
-              <SshHostRow
-                record={demoHost}
-                nowMs={nowMs}
-                onOpen={() => router.push(`/ssh/${demoHost.id}`)}
-              />
-            ) : null}
-            {hosts.map((record) => (
+            {rows.map((record) => (
               <SshHostRow
                 key={record.id}
                 record={record}
                 nowMs={nowMs}
                 onOpen={() => router.push(`/ssh/${record.id}`)}
-                onEdit={() => setEditing(record)}
+                // The bundled demo host is not editable: it is not saved
+                // anywhere, so there is nothing to change or remove.
+                onEdit={record === demoHost ? undefined : () => setEditing(record)}
               />
             ))}
-            {hosts.length === 0 ? (
+            {prompt === 'none' ? null : (
               <View style={styles.empty}>
                 <SquareTerminal size={40} color={theme.colors.textMuted} strokeWidth={1.5} />
                 <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-                  <Trans>
-                    No SSH hosts yet. Add one to open a shell on any machine you can reach.
-                  </Trans>
+                  {prompt === 'demoOnly' ? (
+                    <Trans>
+                      That is the bundled demo shell, and the only host here. Add one of your own to
+                      open a shell on any machine you can reach.
+                    </Trans>
+                  ) : (
+                    <Trans>
+                      No SSH hosts yet. Add one to open a shell on any machine you can reach.
+                    </Trans>
+                  )}
                 </Text>
                 <PressableScale
                   accessibilityRole="button"
@@ -123,10 +142,10 @@ export function SshHostList() {
                   </Text>
                 </PressableScale>
               </View>
-            ) : null}
+            )}
           </View>
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 }

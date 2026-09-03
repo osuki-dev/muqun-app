@@ -2425,6 +2425,10 @@ msgstr "응답이 에이전트에 전달되지 않았습니다."
 msgid "That code was refused. Hold still for a new one."
 msgstr "해당 코드가 거부되었습니다. 그대로 두면 새 코드를 읽습니다."
 
+#: src/components/ssh-host-list.tsx
+msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
+msgstr "이것은 함께 제공되는 데모 셸이며, 여기 있는 유일한 호스트입니다. 직접 하나 추가하면 닿을 수 있는 어떤 컴퓨터에서든 셸을 열 수 있습니다."
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "그 셸은 이미 익숙한 그 터미널입니다. 같은 키보드, 같은 키 열, 같은 색, 그리고 입력하고 싶을 땐 휴대폰 자체 키보드도."
