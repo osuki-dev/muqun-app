@@ -17,6 +17,13 @@ mockModule('expo-secure-store', () => ({
   setItemAsync: async (key: string, value: string) => {
     vault[key] = value;
   },
+  // `mock.module` is process-wide, so whichever of these fakes is registered
+  // when a module first imports `expo-secure-store` is the one it keeps. A fake
+  // missing a method another suite's code path calls therefore fails that suite
+  // and not this one; they all carry the full surface for that reason.
+  deleteItemAsync: async (key: string) => {
+    delete vault[key];
+  },
 }));
 
 // The storage layer only uses the subset of QuickCrypto that mirrors Node's
