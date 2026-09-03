@@ -38,17 +38,31 @@
  * domain from 2.0.0. The old addresses stay alive as redirects for the 1.3.0
  * binaries already installed, which is step 4 and has no end date.
  *
- * ## What is not in this file
+ * ## What is not in this file, and is not in this repository either
  *
- * `store.config.json` carries the same site under `marketingUrl`,
- * `supportUrl` and `privacyPolicyUrl`, once per locale, plus the review notes.
- * Those are read by the submission tooling, not by the app, and they are
- * governed by the opposite clock: they must be correct for as long as the
- * listing is *live*, and they can be corrected the same day. They are
- * deliberately not imported from here -- JSON cannot import, and pretending the
- * two sets move together is how one of them ends up pointing somewhere real
- * while the other does not. When the site moves, change both, in this order:
- * this file first (it needs a build), the store config when that build ships.
+ * The store listing carries the same site three more times -- `marketingUrl`,
+ * `supportUrl` and `privacyPolicyUrl`, once per locale -- plus the review
+ * notes. None of it is here. It is typed into App Store Connect and the Play
+ * Console by hand, so nothing in this tree can move it, and no check in this
+ * tree can notice that it is stale.
+ *
+ * That is the trap, and it has already sprung once: 1.3.0 came back from review
+ * over a link, and a reviewer opens the listing's URLs before the app's. The
+ * two sets are also governed by opposite clocks. These values need a build and
+ * then live in installed binaries for years; the listing can be corrected the
+ * same day and only has to be right while the listing is live.
+ *
+ * So when the site moves, it is two jobs and this file is only the first:
+ *
+ *   1. Change the values here; ship a build carrying them.
+ *   2. Change `marketingUrl`, `supportUrl` and `privacyPolicyUrl` in App Store
+ *      Connect and the Play Console, in every locale, before submitting for
+ *      review.
+ *
+ * An earlier version of this comment described step 2 as editing a
+ * `store.config.json` in this repository. There has never been such a file in
+ * this repository's history. Anyone who followed that instruction would have
+ * gone looking for it, not found it, and concluded step 2 was already handled.
  */
 
 /**
