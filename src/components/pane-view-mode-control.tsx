@@ -47,11 +47,13 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
   // Lingui context, which the compiler can see change.
   const { _ } = useLingui();
   if (!canCycle) return null;
-  const ModeIcon = iconForMode(mode);
+  const ModeIcon = MODE_ICONS[mode];
 
   return (
     <PressableScale
-      accessibilityLabel={_(switchToViewLabel[paneViewModeFallback(nextPaneViewMode(mode, available))])}
+      accessibilityLabel={_(
+        switchToViewLabel[paneViewModeFallback(nextPaneViewMode(mode, available))]
+      )}
       onPress={onCycle}
       style={styles.button}>
       <ModeIcon size={18} color={color} strokeWidth={2} />
@@ -59,18 +61,21 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
         // The view the user asked for could not be read, and something else is
         // showing instead. Small, because nothing is broken.
         <View
-          style={[styles.warning, { backgroundColor: warningColor, borderColor: warningBorderColor }]}
+          style={[
+            styles.warning,
+            { backgroundColor: warningColor, borderColor: warningBorderColor },
+          ]}
         />
       ) : null}
     </PressableScale>
   );
 });
 
-function iconForMode(mode: PaneViewMode) {
-  if (mode === 'chat') return MessagesSquare;
-  if (mode === 'text') return TextAlignStart;
-  return SquareTerminal;
-}
+const MODE_ICONS: Record<PaneViewMode, typeof SquareTerminal> = {
+  chat: MessagesSquare,
+  text: TextAlignStart,
+  terminal: SquareTerminal,
+};
 
 const styles = StyleSheet.create({
   // Fills the header's glass circle, which is what sizes it.

@@ -43,14 +43,8 @@ function expectSamePath(input: string): void {
 const SYNTHETIC_PANES: readonly (readonly [string, string])[] = [
   ['plain ascii lines', 'alpha\nbeta\ngamma\n'],
   ['crlf line ends', `${CSI}32mok${CSI}0m\r\nsecond line\r\n`],
-  [
-    'sgr continues across lines',
-    `${CSI}1;38;5;33mheader\nstill styled\n${CSI}0mplain\n`,
-  ],
-  [
-    'reset at both ends of a line',
-    `${CSI}0m${CSI}31mred line${CSI}0m\n${CSI}0mnext${CSI}0m\n`,
-  ],
+  ['sgr continues across lines', `${CSI}1;38;5;33mheader\nstill styled\n${CSI}0mplain\n`],
+  ['reset at both ends of a line', `${CSI}0m${CSI}31mred line${CSI}0m\n${CSI}0mnext${CSI}0m\n`],
   [
     '256-colour and truecolor mixed',
     `${CSI}38;5;196mA${CSI}48;2;12;34;56mB${CSI}38:2::21:42:63mC${CSI}0m\n${CSI}48;5;21mD${CSI}0m\n`,
@@ -67,10 +61,7 @@ const SYNTHETIC_PANES: readonly (readonly [string, string])[] = [
   ],
   ['empty input', ''],
   ['blank lines and trailing blanks', '\n\nvalue\n\n\n'],
-  [
-    'combining marks and emoji clusters',
-    `café ${CSI}33m👨‍💻${CSI}0m 🇨🇳 ℹ️ done\nplain\n`,
-  ],
+  ['combining marks and emoji clusters', `café ${CSI}33m👨‍💻${CSI}0m 🇨🇳 ℹ️ done\nplain\n`],
 ];
 
 describe('flat fast path equivalence', () => {
@@ -114,7 +105,9 @@ describe('flat fast path fallback', () => {
   });
 
   test.each([2000, 2001])('a pane of %s lines matches either way', (lines) => {
-    const input = Array.from({ length: lines }, (_, row) => `${CSI}36mrow ${row}${CSI}0m`).join('\n');
+    const input = Array.from({ length: lines }, (_, row) => `${CSI}36mrow ${row}${CSI}0m`).join(
+      '\n'
+    );
     expectSamePath(input);
   });
 });

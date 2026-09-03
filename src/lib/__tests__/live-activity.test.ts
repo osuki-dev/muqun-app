@@ -104,7 +104,11 @@ describe('syncAgentActivity', () => {
   test('a working agent takes the Lock Screen slot', async () => {
     await syncAgentActivity(agent('a', 'working'));
     expect(started).toHaveLength(1);
-    expect(started[0]).toMatchObject({ agentName: 'a name', status: 'working', detail: 'a detail' });
+    expect(started[0]).toMatchObject({
+      agentName: 'a name',
+      status: 'working',
+      detail: 'a detail',
+    });
   });
 
   test('the same agent staying live is an update, not a second card', async () => {

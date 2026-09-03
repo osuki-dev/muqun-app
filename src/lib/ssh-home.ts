@@ -61,9 +61,9 @@ export function sshHomeSubtitle(record: Pick<SshHostRecord, 'host' | 'port' | 'u
 export function sortSshHomeHosts(hosts: readonly SshHostRecord[]): SshHostRecord[] {
   return [...hosts].sort(
     (a, b) =>
-      (b.lastConnectedAt ?? 0) - (a.lastConnectedAt ?? 0)
-      || a.label.localeCompare(b.label)
-      || b.createdAt - a.createdAt
+      (b.lastConnectedAt ?? 0) - (a.lastConnectedAt ?? 0) ||
+      a.label.localeCompare(b.label) ||
+      b.createdAt - a.createdAt
   );
 }
 

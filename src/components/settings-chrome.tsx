@@ -74,13 +74,7 @@ const CHIP_SIZE = 36;
  * scripts does something wrong. `textTransform` is a rendering instruction the
  * platform applies per script, and it costs no catalog churn.
  */
-export function SettingsSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   useRenderTally('SettingsSection');
   return (
     <View style={styles.section}>
@@ -105,11 +99,7 @@ export function SettingsCard({ children }: { children: ReactNode }) {
   const theme = useThemeTokens();
   const rows = Children.toArray(children);
   return (
-    <View
-      style={[
-        styles.sectionBody,
-        { backgroundColor: theme.colors.surface },
-      ]}>
+    <View style={[styles.sectionBody, { backgroundColor: theme.colors.surface }]}>
       {rows.map((row, index) => (
         <Fragment key={index}>
           {index > 0 ? <SettingsSeparator /> : null}

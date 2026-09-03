@@ -36,9 +36,7 @@
         "NSPhotoLibraryUsageDescription": "Muqun sends photos you pick to the paired Gateway so an agent can read them.",
         "NSFaceIDUsageDescription": "Muqun uses Face ID to protect paired servers and terminal sessions.",
         "NSLocalNetworkUsageDescription": "Muqun connects to the Gateway running on your own computer, which may be on your local network.",
-        "UISupportedInterfaceOrientations": [
-          "UIInterfaceOrientationPortrait"
-        ],
+        "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
         "UISupportedInterfaceOrientations~ipad": [
           "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight"
@@ -68,10 +66,7 @@
     "android": {
       "package": "dev.osuki.muqun",
       "googleServicesFile": "./google-services.json",
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.POST_NOTIFICATIONS"
-      ],
+      "permissions": ["android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS"],
       "blockedPermissions": [
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
@@ -135,21 +130,13 @@
         "expo-build-properties",
         {
           "android": {
-            "buildArchs": [
-              "arm64-v8a"
-            ],
+            "buildArchs": ["arm64-v8a"],
             "useLegacyPackaging": true,
             "usesCleartextTraffic": true,
             "enableBundleCompression": true,
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true
           }
-        }
-      ],
-      [
-        "react-native-enriched-markdown",
-        {
-          "enableMath": false
         }
       ],
       [

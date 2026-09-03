@@ -102,9 +102,7 @@ export function normalizePairingCode(value: string): string {
     .filter((character) => PAIRING_CODE_ALPHABET.includes(character))
     .join('')
     .slice(0, PAIRING_CODE_CHARACTER_COUNT);
-  return characters.length > 4
-    ? `${characters.slice(0, 4)}-${characters.slice(4)}`
-    : characters;
+  return characters.length > 4 ? `${characters.slice(0, 4)}-${characters.slice(4)}` : characters;
 }
 
 export function parsePairingOffer(value: string): PairingOffer {
@@ -140,9 +138,7 @@ export function normalizeGatewayUrl(value: string): string {
   // scheme such as ftp:// must reach validateGatewayUrl unchanged; prefixing
   // it produced a syntactically valid but unintended http://ftp://... target.
   const hasExplicitScheme = /^[A-Za-z][A-Za-z0-9+.-]*:/.test(trimmed);
-  return validateGatewayUrl(
-    hasExplicitScheme ? trimmed : `http://${trimmed}`
-  );
+  return validateGatewayUrl(hasExplicitScheme ? trimmed : `http://${trimmed}`);
 }
 
 /**
@@ -174,9 +170,9 @@ export function validateClaimedPairing(
     throw new Error('Pairing response contains an invalid access token.');
   }
   if (
-    offer.transportRequired
-    || payload.transport !== undefined
-    || payload.transport_key !== undefined
+    offer.transportRequired ||
+    payload.transport !== undefined ||
+    payload.transport_key !== undefined
   ) {
     if (payload.transport !== 'muqun-aes-256-gcm-v1') {
       throw new Error('Gateway did not enable encrypted transport.');
@@ -189,9 +185,9 @@ export function validateClaimedPairing(
     }
   }
   if (
-    !payload.label.trim()
-    || payload.label.length > 80
-    || /[\u0000-\u001F\u007F]/.test(payload.label)
+    !payload.label.trim() ||
+    payload.label.length > 80 ||
+    /[\u0000-\u001F\u007F]/.test(payload.label)
   ) {
     throw new Error('Pairing response contains an invalid server name.');
   }

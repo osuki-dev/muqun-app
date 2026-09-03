@@ -99,7 +99,10 @@ export function sshCredentialFor(record: SshHostRecord, secrets: SshSecrets): Ss
  * The secrets blob with one record's secrets removed -- both maps, so a
  * record that changed its mind about how to log in leaves nothing behind.
  */
-export function withoutSshSecrets(secrets: SshSecrets, record: Pick<SshHostRecord, 'id' | 'auth'>): SshSecrets {
+export function withoutSshSecrets(
+  secrets: SshSecrets,
+  record: Pick<SshHostRecord, 'id' | 'auth'>
+): SshSecrets {
   const { [record.id]: _password, ...passwords } = secrets.passwords;
   const keys = { ...secrets.keys };
   if (record.auth.type === 'privateKey') delete keys[record.auth.keyId];
@@ -241,7 +244,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function normalizeTrustedHostKey(value: unknown): SshTrustedHostKey | undefined {
   if (!isRecord(value)) return undefined;
   const { algorithm, fingerprint, publicKey } = value;
-  if (typeof algorithm !== 'string' || typeof fingerprint !== 'string' || typeof publicKey !== 'string') {
+  if (
+    typeof algorithm !== 'string' ||
+    typeof fingerprint !== 'string' ||
+    typeof publicKey !== 'string'
+  ) {
     return undefined;
   }
   if (!algorithm || !fingerprint) return undefined;
@@ -265,7 +272,12 @@ export function normalizeSshHostRecord(value: unknown): SshHostRecord | null {
   const normalizedPort = typeof port === 'number' && isValidPort(port) ? port : SSH_DEFAULT_PORT;
 
   let normalizedAuth: SshHostAuth;
-  if (isRecord(auth) && auth.type === 'privateKey' && typeof auth.keyId === 'string' && auth.keyId) {
+  if (
+    isRecord(auth) &&
+    auth.type === 'privateKey' &&
+    typeof auth.keyId === 'string' &&
+    auth.keyId
+  ) {
     normalizedAuth = { type: 'privateKey', keyId: auth.keyId };
   } else if (isRecord(auth) && auth.type === 'password') {
     normalizedAuth = { type: 'password' };
@@ -277,7 +289,10 @@ export function normalizeSshHostRecord(value: unknown): SshHostRecord | null {
 
   const record: SshHostRecord = {
     id,
-    label: typeof label === 'string' && label.trim() ? label.trim().slice(0, SSH_LABEL_MAX_LENGTH) : host.trim(),
+    label:
+      typeof label === 'string' && label.trim()
+        ? label.trim().slice(0, SSH_LABEL_MAX_LENGTH)
+        : host.trim(),
     host: host.trim(),
     port: normalizedPort,
     username: username.trim(),
@@ -334,8 +349,7 @@ export function normalizeSshSecrets(value: unknown): SshSecrets {
  */
 export function sortSshHosts(records: readonly SshHostRecord[]): SshHostRecord[] {
   return [...records].sort(
-    (a, b) =>
-      (b.lastConnectedAt ?? 0) - (a.lastConnectedAt ?? 0) || b.createdAt - a.createdAt
+    (a, b) => (b.lastConnectedAt ?? 0) - (a.lastConnectedAt ?? 0) || b.createdAt - a.createdAt
   );
 }
 
@@ -374,7 +388,11 @@ export function compareSshHostKey(
   // same key, not merely one with the same digest. A record saved before the
   // key was stored has an empty `publicKey` and is judged on the fingerprint
   // alone, as it always was.
-  if (trusted.publicKey !== '' && presented.publicKey !== '' && trusted.publicKey !== presented.publicKey) {
+  if (
+    trusted.publicKey !== '' &&
+    presented.publicKey !== '' &&
+    trusted.publicKey !== presented.publicKey
+  ) {
     return 'mismatch';
   }
   return 'match';

@@ -79,7 +79,10 @@ describe('the demo host identity', () => {
 
 describe('describeSshFailure', () => {
   test('reads the code off a library error without loading the library', () => {
-    const error = Object.assign(new Error('auth failed'), { name: 'SshError', code: 'AUTH_FAILED' });
+    const error = Object.assign(new Error('auth failed'), {
+      name: 'SshError',
+      code: 'AUTH_FAILED',
+    });
     expect(describeSshFailure(error)).toEqual({ code: 'AUTH_FAILED', message: 'auth failed' });
     expect(isSshFailure(error, 'AUTH_FAILED')).toBe(true);
     expect(isSshFailure(error, 'TIMEOUT')).toBe(false);

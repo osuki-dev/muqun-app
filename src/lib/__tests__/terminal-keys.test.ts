@@ -171,9 +171,7 @@ describe('withEditorActions', () => {
     const keys = merged.map((item) => item.key);
     expect(keys[keys.indexOf(EDITOR_ACTIONS[0].key) - 1]).toBe('esc');
     // Nothing the row already carried is lost or reordered around them.
-    expect(keys.filter((key) => !key.startsWith('nvim:'))).toEqual(
-      base.map((item) => item.key)
-    );
+    expect(keys.filter((key) => !key.startsWith('nvim:'))).toEqual(base.map((item) => item.key));
   });
 
   test('goes to the front when there is no esc to follow', () => {
@@ -182,15 +180,10 @@ describe('withEditorActions', () => {
   });
 
   test('a gateway that grew its own :w does not produce two', () => {
-    const gateway = [
-      { label: ':w', key: 'nvim:w', accessibilityLabel: 'Write' },
-      ...base,
-    ];
+    const gateway = [{ label: ':w', key: 'nvim:w', accessibilityLabel: 'Write' }, ...base];
     const keys = withEditorActions(gateway).map((item) => item.key);
     expect(keys.filter((key) => key === 'nvim:w')).toHaveLength(1);
-    expect(keys.filter((key) => key.startsWith('nvim:'))).toHaveLength(
-      EDITOR_ACTIONS.length
-    );
+    expect(keys.filter((key) => key.startsWith('nvim:'))).toHaveLength(EDITOR_ACTIONS.length);
   });
 
   test('returns the row untouched when it already holds every action', () => {
@@ -228,7 +221,7 @@ describe('parseNvimMode', () => {
     expect(parseNvimMode(insert)).toBe('insert');
   });
 
-  test('reads stock nvim\'s ruler line, captured live with `nvim -u NONE`', () => {
+  test("reads stock nvim's ruler line, captured live with `nvim -u NONE`", () => {
     expect(parseNvimMode('-- INSERT --')).toBe('insert');
     expect(parseNvimMode('-- VISUAL BLOCK --')).toBe('normal');
     // Stock nvim's Normal mode leaves the ruler line blank -- there is nothing
@@ -247,7 +240,10 @@ describe('parseNvimMode', () => {
   test('only looks near the bottom of the screen', () => {
     // The word "NORMAL" sitting in a file's own prose, far from the
     // statusline rows, must not decide the mode.
-    const lines = [' NORMAL   this is actually the statusline', ...Array(20).fill('some file content')];
+    const lines = [
+      ' NORMAL   this is actually the statusline',
+      ...Array(20).fill('some file content'),
+    ];
     const farFromBottom = ['NORMAL is a word this file discusses.', ...Array(20).fill('x')];
     expect(parseNvimMode(lines.join('\n'))).toBeNull();
     expect(parseNvimMode(farFromBottom.join('\n'))).toBeNull();

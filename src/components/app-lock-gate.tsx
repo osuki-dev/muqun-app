@@ -35,7 +35,6 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
 
-
   const theme = useThemeTokens();
   const hydrated = useAppSettings((state) => state.hydrated);
   const appLockEnabled = useAppSettings((state) => state.appLockEnabled);
@@ -212,7 +211,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
               </Text>
               {error ? (
                 <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
-                  <Text selectable variant="caption" color={theme.colors.danger} style={styles.detail}>
+                  <Text
+                    selectable
+                    variant="caption"
+                    color={theme.colors.danger}
+                    style={styles.detail}>
                     {error}
                   </Text>
                 </Animated.View>

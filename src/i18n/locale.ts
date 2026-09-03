@@ -163,7 +163,7 @@ export function negotiateLocale(preferredTags: readonly (string | null | undefin
  */
 export function resolveLocale(
   preference: LocalePreference,
-  preferredTags: readonly (string | null | undefined)[],
+  preferredTags: readonly (string | null | undefined)[]
 ): AppLocale {
   if (preference && isAppLocale(preference)) return preference;
   return negotiateLocale(preferredTags);

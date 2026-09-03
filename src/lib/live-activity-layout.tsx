@@ -87,8 +87,7 @@ function AgentStatusActivity(props: AgentActivityProps): LiveActivityLayout {
     banner: (
       <HStack
         spacing={12}
-        modifiers={[padding({ horizontal: 16, vertical: 12 }), activityBackgroundTint('#050B12')]}
-      >
+        modifiers={[padding({ horizontal: 16, vertical: 12 }), activityBackgroundTint('#050B12')]}>
         <Image systemName="terminal.fill" size={22} color="#FF5A4A" />
         <VStack alignment="leading" spacing={2}>
           <Text
@@ -96,8 +95,7 @@ function AgentStatusActivity(props: AgentActivityProps): LiveActivityLayout {
               font({ size: 15, weight: 'semibold' }),
               foregroundStyle('#FCFBFA'),
               lineLimit(1),
-            ]}
-          >
+            ]}>
             {props.agentName}
           </Text>
           <Text modifiers={[font({ size: 12 }), foregroundStyle('#A6AFBE'), lineLimit(1)]}>
@@ -123,8 +121,7 @@ function AgentStatusActivity(props: AgentActivityProps): LiveActivityLayout {
             font({ size: 14, weight: 'semibold' }),
             foregroundStyle('#FCFBFA'),
             lineLimit(1),
-          ]}
-        >
+          ]}>
           {props.agentName}
         </Text>
         <Text modifiers={[font({ size: 11, weight: 'medium' }), foregroundStyle(accent)]}>

@@ -31,10 +31,7 @@ export function notificationRoute(
   return isInternalRoute(url) ? url : null;
 }
 
-function stringField(
-  data: Record<string, unknown> | undefined,
-  ...keys: string[]
-): string | null {
+function stringField(data: Record<string, unknown> | undefined, ...keys: string[]): string | null {
   for (const key of keys) {
     const value = data?.[key];
     if (typeof value === 'string' && value.trim()) return value.trim();
@@ -43,8 +40,10 @@ function stringField(
 }
 
 function isInternalRoute(value: unknown): value is string {
-  return typeof value === 'string'
-    && value.startsWith('/')
-    && !value.startsWith('//')
-    && !value.includes('://');
+  return (
+    typeof value === 'string' &&
+    value.startsWith('/') &&
+    !value.startsWith('//') &&
+    !value.includes('://')
+  );
 }

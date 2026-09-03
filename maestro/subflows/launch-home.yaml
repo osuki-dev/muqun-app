@@ -19,21 +19,21 @@ name: launch-home
     commands:
       - extendedWaitUntil:
           visible:
-            text: "(?i).*(Try the demo|Unable to load script|Got it|don.?t allow).*"
+            text: '(?i).*(Try the demo|Unable to load script|Got it|don.?t allow).*'
           timeout: 60000
       - tapOn:
-          text: "Got it"
+          text: 'Got it'
           optional: true
       - runFlow:
           when:
             visible:
-              text: "(?i).*don.?t allow.*"
+              text: '(?i).*don.?t allow.*'
           commands:
             - tapOn:
-                text: "(?i).*don.?t allow.*"
+                text: '(?i).*don.?t allow.*'
       - extendedWaitUntil:
           visible:
-            text: "(?i).*(Try the demo|Unable to load script).*"
+            text: '(?i).*(Try the demo|Unable to load script).*'
           timeout: 60000
       - openLink: ${E2E_DEV_CLIENT_URL}
       # iOS asks before handing a custom scheme to an app -- "Open in
@@ -45,7 +45,7 @@ name: launch-home
       # Optional and matched loosely, for the same reason as the permission
       # and immersive-mode taps below: wording is the system's, not ours.
       - tapOn:
-          text: "(?i)^(open|打开)$"
+          text: '(?i)^(open|打开)$'
           optional: true
 - waitForAnimationToEnd:
     timeout: 3000
@@ -53,7 +53,7 @@ name: launch-home
 # exactly once per app state with a full-width "Viewing full screen" sheet.
 # Every flow here clears state, so every flow meets it.
 - tapOn:
-    text: "Got it"
+    text: 'Got it'
     optional: true
 
 # A fresh install asks for notification permission (iOS, and Android 13+). The
@@ -64,10 +64,10 @@ name: launch-home
 - runFlow:
     when:
       visible:
-        text: "(?i).*don.?t allow.*"
+        text: '(?i).*don.?t allow.*'
     commands:
       - tapOn:
-          text: "(?i).*don.?t allow.*"
+          text: '(?i).*don.?t allow.*'
 
 # The release-notes card is shown once per version and covers the server list.
 - runFlow:
@@ -78,5 +78,5 @@ name: launch-home
 
 - runFlow: dismiss-logbox.yaml
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 60000

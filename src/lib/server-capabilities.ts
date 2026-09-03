@@ -55,10 +55,7 @@ export function normalizeCapabilities(value: unknown): string[] {
 }
 
 /** Whether a fresh list says anything the stored one did not, or vice versa. */
-export function sameCapabilities(
-  previous: string[] | undefined,
-  next: readonly string[]
-): boolean {
+export function sameCapabilities(previous: string[] | undefined, next: readonly string[]): boolean {
   if (!previous || previous.length !== next.length) return false;
   return previous.every((name, index) => name === next[index]);
 }

@@ -42,7 +42,7 @@ function row(text: string): SelectableLine {
   const cells: { text: string; width: number }[] = [];
   for (const character of text) {
     const code = character.codePointAt(0) ?? 0;
-    const wide = code >= 0x1100 && code <= 0xd7a3 && code >= 0x2e80;
+    const wide = code >= 0x2e80 && code <= 0xd7a3;
     cells.push({ text: character, width: wide ? 2 : 1 });
     if (wide) cells.push({ text: '', width: 0 });
   }
@@ -346,9 +346,7 @@ describe('wordSelectionAt', () => {
   const lines = rows('git commit --amend');
 
   test('a press in the middle of a word takes the whole word', () => {
-    expect(wordSelectionAt(lines, { row: 0, column: 5 })).toEqual(
-      span([0, 4], [0, 9])
-    );
+    expect(wordSelectionAt(lines, { row: 0, column: 5 })).toEqual(span([0, 4], [0, 9]));
   });
 
   test('keeps a path or a flag whole rather than splitting on punctuation', () => {

@@ -27,7 +27,7 @@ describe('sshNvimMode', () => {
     expect(sshNvimMode(undefined, true)).toBeNull();
   });
 
-  test('a mode word in a file\'s own prose, above the bottom rows, does not count', () => {
+  test("a mode word in a file's own prose, above the bottom rows, does not count", () => {
     const frame = frameOf(`-- INSERT --\r\n\r\n\r\n\r\n\r\n$ `);
     expect(sshNvimMode(frame, true)).toBeNull();
   });
@@ -35,28 +35,44 @@ describe('sshNvimMode', () => {
 
 describe('sshEditorPane', () => {
   test('nothing off the alternate screen is an editor, whatever it says', () => {
-    expect(sshEditorPane(true, { alternateScreen: false, title: 'nvim', nvimMode: 'insert' })).toBe(false);
+    expect(sshEditorPane(true, { alternateScreen: false, title: 'nvim', nvimMode: 'insert' })).toBe(
+      false
+    );
   });
 
   test('a parsed nvim mode makes an editor', () => {
-    expect(sshEditorPane(false, { alternateScreen: true, title: null, nvimMode: 'insert' })).toBe(true);
-    expect(sshEditorPane(false, { alternateScreen: true, title: null, nvimMode: 'normal' })).toBe(true);
+    expect(sshEditorPane(false, { alternateScreen: true, title: null, nvimMode: 'insert' })).toBe(
+      true
+    );
+    expect(sshEditorPane(false, { alternateScreen: true, title: null, nvimMode: 'normal' })).toBe(
+      true
+    );
   });
 
-  test('an editor title makes an editor, by the gateway\'s own list', () => {
-    expect(sshEditorPane(false, { alternateScreen: true, title: 'nvim notes.md', nvimMode: null })).toBe(true);
-    expect(sshEditorPane(false, { alternateScreen: true, title: 'helix', nvimMode: null })).toBe(true);
-    expect(sshEditorPane(false, { alternateScreen: true, title: 'htop', nvimMode: null })).toBe(false);
+  test("an editor title makes an editor, by the gateway's own list", () => {
+    expect(
+      sshEditorPane(false, { alternateScreen: true, title: 'nvim notes.md', nvimMode: null })
+    ).toBe(true);
+    expect(sshEditorPane(false, { alternateScreen: true, title: 'helix', nvimMode: null })).toBe(
+      true
+    );
+    expect(sshEditorPane(false, { alternateScreen: true, title: 'htop', nvimMode: null })).toBe(
+      false
+    );
   });
 
   test('a full-screen program that says nothing is not an editor', () => {
-    expect(sshEditorPane(false, { alternateScreen: true, title: null, nvimMode: null })).toBe(false);
+    expect(sshEditorPane(false, { alternateScreen: true, title: null, nvimMode: null })).toBe(
+      false
+    );
   });
 
   test('the verdict latches for as long as the alternate screen is held', () => {
     // Insert mode seen, then Esc: stock nvim shows nothing in Normal mode.
     expect(sshEditorPane(true, { alternateScreen: true, title: null, nvimMode: null })).toBe(true);
     // `:q`: the alternate screen goes, and so does the verdict.
-    expect(sshEditorPane(true, { alternateScreen: false, title: null, nvimMode: null })).toBe(false);
+    expect(sshEditorPane(true, { alternateScreen: false, title: null, nvimMode: null })).toBe(
+      false
+    );
   });
 });

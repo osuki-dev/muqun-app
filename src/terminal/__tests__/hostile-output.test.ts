@@ -149,9 +149,13 @@ describe('sequences that ask for a reply get none', () => {
     // the far side could be reached through. Adding one is a policy change,
     // and it has to change this test too.
     const names = Object.getOwnPropertyNames(TerminalEmulator.prototype);
-    expect(names.filter((name) => /reply|respond|answer|send|output|shell|writer/iu.test(name))).toEqual([]);
+    expect(
+      names.filter((name) => /reply|respond|answer|send|output|shell|writer/iu.test(name))
+    ).toEqual([]);
     const term = emulator(20, 3);
-    expect(Object.keys(term).filter((key) => /reply|respond|answer|send|output|shell|writer/iu.test(key))).toEqual([]);
+    expect(
+      Object.keys(term).filter((key) => /reply|respond|answer|send|output|shell|writer/iu.test(key))
+    ).toEqual([]);
   });
 });
 
@@ -170,7 +174,8 @@ describe('resource limits', () => {
     const single = emulator(20, 4);
     single.write(whole);
     const chunked = emulator(20, 4);
-    for (let index = 0; index < whole.length; index += 1000) chunked.write(whole.slice(index, index + 1000));
+    for (let index = 0; index < whole.length; index += 1000)
+      chunked.write(whole.slice(index, index + 1000));
     expect(chunked.frame()).toEqual(single.frame());
     expect(terminalFrameLinks(single.frame())).toEqual([]);
   });

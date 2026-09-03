@@ -39,10 +39,9 @@ declare module 'bun:test' {
   export function expect<T>(actual: T): Matchers<T>;
 
   interface EachFn {
-    <Row extends readonly unknown[]>(cases: readonly Row[]): (
-      name: string,
-      fn: (...args: [...Row]) => void | Promise<void>
-    ) => void;
+    <Row extends readonly unknown[]>(
+      cases: readonly Row[]
+    ): (name: string, fn: (...args: [...Row]) => void | Promise<void>) => void;
     <Row>(cases: readonly Row[]): (name: string, fn: (arg: Row) => void | Promise<void>) => void;
   }
 

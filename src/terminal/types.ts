@@ -94,7 +94,7 @@ export function sameTerminalStyle(left: TerminalStyle, right: TerminalStyle): bo
     left.underline === right.underline &&
     left.strikethrough === right.strikethrough &&
     left.inverse === right.inverse &&
-    left.hidden === right.hidden
-    && left.link === right.link
+    left.hidden === right.hidden &&
+    left.link === right.link
   );
 }

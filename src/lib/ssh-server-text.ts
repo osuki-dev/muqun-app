@@ -40,7 +40,10 @@ export function sanitizeServerText(value: unknown, limit: number = SERVER_TEXT_L
   if (plain.length <= limit) return plain;
   const characters = Array.from(plain);
   if (characters.length <= limit) return plain;
-  return `${characters.slice(0, Math.max(0, limit - 1)).join('').trimEnd()}…`;
+  return `${characters
+    .slice(0, Math.max(0, limit - 1))
+    .join('')
+    .trimEnd()}…`;
 }
 
 /** Ceiling for one line of chrome: a status line, a toast, a dialog title. */

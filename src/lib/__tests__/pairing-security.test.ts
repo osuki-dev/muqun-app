@@ -36,25 +36,31 @@ describe('manual pairing encryption policy', () => {
   });
 
   test('accepts encrypted transport fields and preserves the address that was reached', () => {
-    const result = validateClaimedPairing(manualOffer, payload({
-      label: ' Gateway ',
-      url: 'http://gateway-advertised.invalid:7347',
-      device_id: 'device-1',
-      transport_key: transportKey,
-      transport: 'muqun-aes-256-gcm-v1',
-    }));
+    const result = validateClaimedPairing(
+      manualOffer,
+      payload({
+        label: ' Gateway ',
+        url: 'http://gateway-advertised.invalid:7347',
+        device_id: 'device-1',
+        transport_key: transportKey,
+        transport: 'muqun-aes-256-gcm-v1',
+      })
+    );
 
     expect(result.url).toBe(manualOffer.url);
     expect(result.label).toBe('Gateway');
   });
 
   test('keeps keyless QR pairing as the explicit legacy compatibility path', () => {
-    const result = validateClaimedPairing({
-      url: 'http://100.64.0.1:7347',
-      serverId: 'server-1',
-      verifyAdvertisedUrl: true,
-      transportRequired: false,
-    }, payload());
+    const result = validateClaimedPairing(
+      {
+        url: 'http://100.64.0.1:7347',
+        serverId: 'server-1',
+        verifyAdvertisedUrl: true,
+        transportRequired: false,
+      },
+      payload()
+    );
 
     expect(result.token).toBe(token);
   });
@@ -68,9 +74,7 @@ test('an explicit unsupported URL scheme is not rewritten as an HTTP hostname', 
 
 describe('pasted manual pairing input', () => {
   test('trims surrounding URL whitespace before validation', () => {
-    expect(normalizeGatewayUrl(' \n100.64.0.1:7347\t ')).toBe(
-      'http://100.64.0.1:7347'
-    );
+    expect(normalizeGatewayUrl(' \n100.64.0.1:7347\t ')).toBe('http://100.64.0.1:7347');
   });
 
   test('filters before limiting the pairing code so whitespace cannot consume a slot', () => {

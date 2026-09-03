@@ -22,7 +22,8 @@ import {
 /** The rows that fit once the padding and the canvas's bottom clearance are taken off. */
 function rowsFor(height: number, lineHeight: number): number {
   return Math.floor(
-    (height - TERMINAL_GRID_VERTICAL_PADDING * 2 - terminalViewportClearance(lineHeight)) / lineHeight
+    (height - TERMINAL_GRID_VERTICAL_PADDING * 2 - terminalViewportClearance(lineHeight)) /
+      lineHeight
   );
 }
 
@@ -64,7 +65,13 @@ describe('terminalGridFor', () => {
   });
 
   test('an explicit line height overrides the scale rounding', () => {
-    const grid = terminalGridFor({ width: 402, height: 400, fontSize: 13, cellWidth: 8, lineHeight: 20 });
+    const grid = terminalGridFor({
+      width: 402,
+      height: 400,
+      fontSize: 13,
+      cellWidth: 8,
+      lineHeight: 20,
+    });
     expect(grid.rows).toBe(rowsFor(400, 20));
   });
 
@@ -80,9 +87,9 @@ describe('the canvas clearance', () => {
     // 13pt text: 18.8pt rows, 19.84pt of clearance -- about one row.
     expect(terminalViewportClearance(terminalLineHeight(13))).toBeCloseTo(19.84, 2);
     const grid = terminalGridFor({ width: 402, height: 600, fontSize: 13, cellWidth: 7.8 });
-    expect(grid.rows * terminalLineHeight(13) + TERMINAL_GRID_VERTICAL_PADDING * 2).toBeLessThanOrEqual(
-      600 - terminalViewportClearance(terminalLineHeight(13))
-    );
+    expect(
+      grid.rows * terminalLineHeight(13) + TERMINAL_GRID_VERTICAL_PADDING * 2
+    ).toBeLessThanOrEqual(600 - terminalViewportClearance(terminalLineHeight(13)));
   });
 });
 

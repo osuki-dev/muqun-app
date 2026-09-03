@@ -105,7 +105,7 @@ export function resolvePaneViewMode(
   available: readonly PaneViewMode[]
 ): PaneViewMode {
   if (available.includes(preferred)) return preferred;
-  return available.includes('terminal') ? 'terminal' : available[0] ?? 'terminal';
+  return available.includes('terminal') ? 'terminal' : (available[0] ?? 'terminal');
 }
 
 /**

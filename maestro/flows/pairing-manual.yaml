@@ -8,7 +8,7 @@ tags:
 # Scanning is the default path. The alternate manual form must replace the
 # camera rather than mounting underneath it, especially on Pad where that
 # became a full-width preview strip.
-- tapOn: "Pair a server"
+- tapOn: 'Pair a server'
 # The two modes are asserted by id rather than by their copy. The copy inside
 # the aperture is a reading of the lens -- aiming, warming up, not allowed, not
 # there -- so a device without a rear camera legitimately never prints "align
@@ -16,45 +16,45 @@ tags:
 # ids say the only thing this flow actually cares about: which mode is mounted.
 - extendedWaitUntil:
     visible:
-      id: "pairing-scanner"
+      id: 'pairing-scanner'
     timeout: 8000
-- assertVisible: "ENTER URL MANUALLY"
+- assertVisible: 'ENTER URL MANUALLY'
 - assertNotVisible:
-    id: "pairing-manual"
+    id: 'pairing-manual'
 
 # The alternate manual mode replaces the scanner rather than stacking with it,
 # and returning restores the scanner.
-- tapOn: "ENTER URL MANUALLY"
+- tapOn: 'ENTER URL MANUALLY'
 - assertVisible:
-    id: "pairing-manual"
-- assertVisible: "GATEWAY URL"
+    id: 'pairing-manual'
+- assertVisible: 'GATEWAY URL'
 - assertNotVisible:
-    id: "pairing-scanner"
-- tapOn: "SCAN A GATEWAY QR"
+    id: 'pairing-scanner'
+- tapOn: 'SCAN A GATEWAY QR'
 - assertVisible:
-    id: "pairing-scanner"
+    id: 'pairing-scanner'
 - assertNotVisible:
-    id: "pairing-manual"
-- tapOn: "ENTER URL MANUALLY"
-- assertVisible: "GATEWAY URL"
+    id: 'pairing-manual'
+- tapOn: 'ENTER URL MANUALLY'
+- assertVisible: 'GATEWAY URL'
 
 # The install command belongs to the screen, not to either mode: the reader who
 # needs it has neither a QR to scan nor an address to type, so it must survive
 # the toggle rather than living inside one half of it.
-- tapOn: "SCAN A GATEWAY QR"
+- tapOn: 'SCAN A GATEWAY QR'
 - assertVisible:
-    id: "pairing-install-command"
+    id: 'pairing-install-command'
 # By id and not by the command text. The command is the one string on this
 # screen that is deliberately not translated, but it wraps to two lines at phone
 # widths, and a matcher on the literal would then be asserting where the wrap
 # happens rather than that the row is there.
 - tapOn:
-    id: "pairing-install-command"
+    id: 'pairing-install-command'
 # The copy has no other acknowledgement -- a clipboard write is invisible -- so
 # the label flipping is the whole of the feedback and is what this asserts. It
 # reverts on a timer (`COPIED_HOLD_MS`), which is why the assertion is here and
 # not after anything slower.
-- assertVisible: "Install command copied"
+- assertVisible: 'Install command copied'
 
 # URL normalization and unsupported schemes are covered at the pure boundary
 # in pairing-security.test.ts. Keeping that assertion here made the full gate

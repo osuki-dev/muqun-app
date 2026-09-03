@@ -100,9 +100,7 @@ describe('pairingScanReading', () => {
     expect(pairingScanReading({ ...aiming, lens: 'pending', previewTimedOut: true })).not.toBe(
       'unavailable'
     );
-    expect(
-      pairingScanFault({ ...aiming, lens: 'pending', previewTimedOut: true })
-    ).toBeNull();
+    expect(pairingScanFault({ ...aiming, lens: 'pending', previewTimedOut: true })).toBeNull();
   });
 
   test('a mounted preview that never starts is unavailable', () => {
@@ -250,9 +248,7 @@ describe('pairingScanFault', () => {
     expect(pairingScanFault({ ...aiming, isWeb: true })).toBe('web');
     expect(pairingScanFault({ ...aiming, cameraError: true })).toBe('camera-error');
     expect(pairingScanFault({ ...aiming, lens: 'none' })).toBe('no-lens');
-    expect(pairingScanFault({ ...aiming, previewTimedOut: true })).toBe(
-      'preview-never-started'
-    );
+    expect(pairingScanFault({ ...aiming, previewTimedOut: true })).toBe('preview-never-started');
   });
 
   test('a camera error is reported as the error, not as a missing lens', () => {
@@ -264,7 +260,13 @@ describe('pairingScanReadingWithRequest', () => {
   const idle = { cameraError: false, detected: false, busy: false, rejected: false };
 
   test('passes the lens reading through when nothing is in flight', () => {
-    for (const reading of ['aiming', 'aiming-front', 'warming', 'permission', 'unavailable'] as const) {
+    for (const reading of [
+      'aiming',
+      'aiming-front',
+      'warming',
+      'permission',
+      'unavailable',
+    ] as const) {
       expect(pairingScanReadingWithRequest(reading, idle)).toBe(reading);
     }
   });
@@ -272,9 +274,9 @@ describe('pairingScanReadingWithRequest', () => {
   test('a request in flight outranks the lens, then a code in frame', () => {
     expect(pairingScanReadingWithRequest('unavailable', { ...idle, busy: true })).toBe('claiming');
     expect(pairingScanReadingWithRequest('aiming', { ...idle, detected: true })).toBe('found');
-    expect(
-      pairingScanReadingWithRequest('aiming', { ...idle, detected: true, busy: true })
-    ).toBe('claiming');
+    expect(pairingScanReadingWithRequest('aiming', { ...idle, detected: true, busy: true })).toBe(
+      'claiming'
+    );
   });
 
   test('a refused code only holds while there are pixels to hold', () => {

@@ -294,13 +294,9 @@ export function WorkspaceTitleSwitcher({
         // Gesture.Pan only ever calls this from the native gesture, never while
         // rendering. Reading the ref is the whole point: it is what keeps the
         // gesture built once instead of re-registered on every state change.
-        // eslint-disable-next-line react-hooks/refs -- deliberate: see above.
+        // oxlint-disable-next-line react/refs -- deliberate: see above.
         .onEnd((event) => {
-          const direction = swipeDirection(
-            event.translationX,
-            event.translationY,
-            event.velocityX
-          );
+          const direction = swipeDirection(event.translationX, event.translationY, event.velocityX);
           if (direction) {
             scheduleOnRN(cycleFromGesture, direction);
             return;

@@ -30,39 +30,39 @@ tags:
 
 # The demo's Claude pane is the one with a composer descriptor; the other two
 # panes are a shell and an editor with no agent behind them.
-- assertVisible: "Send to agent"
-- tapOn: "Switch to Claude Code"
+- assertVisible: 'Send to agent'
+- tapOn: 'Switch to Claude Code'
 - waitForAnimationToEnd:
     timeout: 2000
 - tapOn:
-    id: "terminal-composer-input"
+    id: 'terminal-composer-input'
 
 # ── "/" at position 0 opens the panel ─────────────────────────────────────
 # The panel is bounded to about five rows and scrolls past that, so only the top
 # of the catalog is asserted on here. The sixth entry is reached by filtering
 # further down.
-- inputText: "/"
+- inputText: '/'
 - extendedWaitUntil:
-    visible: "Insert /clear.*"
+    visible: 'Insert /clear.*'
     timeout: 8000
-- assertVisible: "Insert /compact.*"
-- assertVisible: "Insert /context.*"
+- assertVisible: 'Insert /compact.*'
+- assertVisible: 'Insert /context.*'
 # The composer is still there and still usable: the panel floats over the
 # terminal, it does not replace the field being typed into.
-- assertVisible: "Send to agent"
+- assertVisible: 'Send to agent'
 
 # ── The filter tracks the input ───────────────────────────────────────────
 # Typing narrows rather than closing: "/co" leaves the two commands whose names
 # start that way and drops the rest. A short term is matched against names only,
 # which is what keeps "/co" from matching every description with "context" or
 # "Claude Code" in it.
-- inputText: "co"
+- inputText: 'co'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Insert /compact.*"
-- assertVisible: "Insert /context.*"
-- assertNotVisible: "Insert /clear.*"
-- assertNotVisible: "Insert /model.*"
+- assertVisible: 'Insert /compact.*'
+- assertVisible: 'Insert /context.*'
+- assertNotVisible: 'Insert /clear.*'
+- assertNotVisible: 'Insert /model.*'
 
 # Deleting characters widens it again -- the filter is a function of the draft,
 # not a one-way narrowing.
@@ -73,29 +73,29 @@ tags:
 - waitForAnimationToEnd:
     timeout: 2000
 - extendedWaitUntil:
-    visible: "Insert /clear.*"
+    visible: 'Insert /clear.*'
     timeout: 6000
 
 # ── A workspace command is marked as one ──────────────────────────────────
 # `/release-notes` comes from the repository rather than from the agent, which
 # is the one thing its name cannot say.
-- inputText: "rel"
+- inputText: 'rel'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Insert /release-notes.*"
+- assertVisible: 'Insert /release-notes.*'
 # The tag is drawn in caps by the design system's own text transform, which the
 # accessibility tree may or may not have applied by the time it is read.
-- assertVisible: "(?i)workspace"
-- assertNotVisible: "Insert /clear.*"
+- assertVisible: '(?i)workspace'
+- assertNotVisible: 'Insert /clear.*'
 
 # ── Tap-outside dismisses ─────────────────────────────────────────────────
 # The backdrop covers the pane above the composer. Dismissal is scoped to this
 # trigger: the draft is untouched, which is why the send button is still live.
-- tapOn: "Close the command list"
+- tapOn: 'Close the command list'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Insert /release-notes.*"
-- assertVisible: "Send to agent"
+- assertNotVisible: 'Insert /release-notes.*'
+- assertVisible: 'Send to agent'
 
 # Deleting the trigger and typing a new one reopens it: a dismissal is
 # remembered for the "/" it was made at, not for the composer.
@@ -103,16 +103,16 @@ tags:
 # stable id, then delete the four-character draft with individual hardware keys;
 # this deliberately avoids Maestro's unstable Android eraseText helper.
 - tapOn:
-    id: "terminal-composer-input"
+    id: 'terminal-composer-input'
 - repeat:
     times: 4
     commands:
       - pressKey: backspace
 - waitForAnimationToEnd:
     timeout: 1500
-- inputText: "/mod"
+- inputText: '/mod'
 - extendedWaitUntil:
-    visible: "Insert /model.*"
+    visible: 'Insert /model.*'
     timeout: 8000
 # The hint is drawn as a placeholder next to the name -- what the user still has
 # to type, never what gets inserted. Asserted through the row's accessible name
@@ -125,20 +125,20 @@ tags:
 # ── A pick inserts "/name " and closes the panel ──────────────────────────
 # The inserted text ends in a space, so the draft is no longer a bare command
 # and the panel closes by itself; the argument can be typed straight away.
-- tapOn: "Insert /model.*"
+- tapOn: 'Insert /model.*'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Insert /model.*"
-- assertNotVisible: "Insert /clear.*"
-- assertVisible: "Send to agent"
+- assertNotVisible: 'Insert /model.*'
+- assertNotVisible: 'Insert /clear.*'
+- assertVisible: 'Send to agent'
 
 # The hint was a placeholder, not text: typing continues from the space the pick
 # left, and the panel stays shut because the draft now carries an argument.
-- inputText: "opus"
+- inputText: 'opus'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Insert /model.*"
-- assertVisible: "Send to agent"
+- assertNotVisible: 'Insert /model.*'
+- assertVisible: 'Send to agent'
 
 # ── A slash that is not at position 0 is an ordinary character ────────────
 # A path typed into the composer must not raise the panel; a command only makes
@@ -146,35 +146,35 @@ tags:
 # Relaunch instead of clearing the multiline input: eraseText stalls the Android
 # helper and native Select-all poisons its next inputText call.
 - runFlow: ../subflows/open-demo.yaml
-- tapOn: "Switch to Claude Code"
+- tapOn: 'Switch to Claude Code'
 - tapOn:
-    id: "terminal-composer-input"
+    id: 'terminal-composer-input'
 # Keep each Android Maestro payload below its 120-second bridge deadline. The
 # resulting draft is still byte-for-byte "look at src/lib".
-- inputText: "look at "
-- inputText: "src/lib"
+- inputText: 'look at '
+- inputText: 'src/lib'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Insert /clear.*"
-- assertNotVisible: "Insert /model.*"
-- assertVisible: "Send to agent"
+- assertNotVisible: 'Insert /clear.*'
+- assertNotVisible: 'Insert /model.*'
+- assertVisible: 'Send to agent'
 
 # ── A pane with no catalog ────────────────────────────────────────────────
 # The demo's shell pane has no agent and therefore no composer descriptor, so
 # "/" there is plain text and nothing is rendered.
 - runFlow: ../subflows/open-demo.yaml
-- tapOn: "Switch to zsh"
+- tapOn: 'Switch to zsh'
 - waitForAnimationToEnd:
     timeout: 4000
-- tapOn: "Run a terminal command"
+- tapOn: 'Run a terminal command'
 - waitForAnimationToEnd:
     timeout: 2000
-- inputText: "/"
+- inputText: '/'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Insert /clear.*"
-- assertNotVisible: "Insert /compact.*"
-- assertVisible: "Run command"
+- assertNotVisible: 'Insert /clear.*'
+- assertNotVisible: 'Insert /compact.*'
+- assertVisible: 'Run command'
 
 # ── Not reachable offline ─────────────────────────────────────────────────
 # Against a gateway that predates the composer descriptor and has no shortcuts

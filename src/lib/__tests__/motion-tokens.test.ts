@@ -25,8 +25,7 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
  * list should only ever get shorter.
  */
 const ALLOWED: Record<string, string> = {
-  'lib/motion.ts':
-    'the module that defines them; PRESS lives below the smallest token on purpose',
+  'lib/motion.ts': 'the module that defines them; PRESS lives below the smallest token on purpose',
   'components/logo-loader.tsx':
     'BREATH_MS is the period of a loop, not a transition between two states',
   'components/update-status-banner.tsx':
@@ -112,7 +111,8 @@ describe('motion tokens', () => {
       const relative = file.slice(SRC.length + 1);
       const source = readFileSync(file, 'utf8');
       source.split('\n').forEach((line, index) => {
-        if (/transition=\{\s*\d/.test(line)) offenders.push(`${relative}:${index + 1} ${line.trim()}`);
+        if (/transition=\{\s*\d/.test(line))
+          offenders.push(`${relative}:${index + 1} ${line.trim()}`);
       });
     }
     expect(offenders).toEqual([]);

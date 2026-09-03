@@ -93,9 +93,7 @@ describe('file path links', () => {
   });
 
   test('a file link survives colour styling around it', () => {
-    expect(urisOf('[32m✓[0m built /tmp/bundle.js', 'file')).toEqual([
-      '/tmp/bundle.js',
-    ]);
+    expect(urisOf('[32m✓[0m built /tmp/bundle.js', 'file')).toEqual(['/tmp/bundle.js']);
   });
 });
 

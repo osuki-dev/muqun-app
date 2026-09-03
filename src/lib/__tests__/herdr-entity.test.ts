@@ -10,15 +10,13 @@ function entity(overrides: Partial<GatewayEntity>): GatewayEntity {
 
 describe('panelTitle', () => {
   test('a name the reader set on the pane wins over everything', () => {
-    expect(
-      panelTitle(entity({ label: 'Deploy', title: 'zsh' }), entity({ title: 'claude' }))
-    ).toBe('Deploy');
+    expect(panelTitle(entity({ label: 'Deploy', title: 'zsh' }), entity({ title: 'claude' }))).toBe(
+      'Deploy'
+    );
   });
 
   test('joins two different names with a separator', () => {
-    expect(panelTitle(entity({ title: 'zsh' }), entity({ title: 'claude' }))).toBe(
-      'claude · zsh'
-    );
+    expect(panelTitle(entity({ title: 'zsh' }), entity({ title: 'claude' }))).toBe('claude · zsh');
   });
 
   test('says one name once when both agree', () => {

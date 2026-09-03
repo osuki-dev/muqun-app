@@ -13,11 +13,7 @@ import {
 } from '@osuki-dev/ui';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { fadeIn, fadeInDown, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
 import type { ApprovalDecision, ApprovalOption, PaneApproval } from '@/lib/pane-approval';
@@ -94,8 +90,7 @@ export function ApprovalBanner({
           accessibilityRole="button"
           accessibilityLabel={t`Dismiss the approval error`}
           onPress={onDismissError}
-          testID="approval-banner-error"
-        >
+          testID="approval-banner-error">
           <Alert variant="warning" message={error} />
         </Pressable>
       </Animated.View>
@@ -121,8 +116,7 @@ export function ApprovalBanner({
       // inside the composer dock, so that resize pushed the whole dock and the
       // terminal's inset with it.
       layout={listLayout('short')}
-      testID="approval-banner"
-    >
+      testID="approval-banner">
       <Card variant="raised" radius="md" padding="sm">
         <Stack gap="sm">
           <Stack direction="horizontal" gap="sm" align="flex-start">
@@ -147,8 +141,7 @@ export function ApprovalBanner({
               accessibilityRole="button"
               accessibilityLabel={t`Dismiss the approval error`}
               onPress={onDismissError}
-              testID="approval-banner-error"
-            >
+              testID="approval-banner-error">
               <Alert variant="warning" message={error} />
             </Pressable>
           ) : null}
@@ -269,8 +262,7 @@ function ApprovalOptionRow({
       onPress={() => onAnswer(option)}
       accessibilityRole="button"
       accessibilityLabel={t`Answer: ${option.label}`}
-      testID={`approval-option-${option.index}`}
-    >
+      testID={`approval-option-${option.index}`}>
       <Stack direction="horizontal" gap="sm" align="center">
         <View style={styles.decision}>
           <Animated.View style={[StyleSheet.absoluteFill, styles.centred, glyphStyle]}>

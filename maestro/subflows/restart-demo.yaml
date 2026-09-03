@@ -10,12 +10,12 @@ name: restart-demo
     clearState: false
     stopApp: true
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 60000
 - runFlow: dismiss-logbox.yaml
-- tapOn: "Try the demo"
+- tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000

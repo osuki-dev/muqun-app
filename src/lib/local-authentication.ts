@@ -52,9 +52,10 @@ export function wasRecentlyAuthenticated(maxAgeMs = 5_000): boolean {
   return Date.now() - lastSuccessfulAuthenticationAt <= maxAgeMs;
 }
 
-function authenticationDescriptor(
-  types: LocalAuthentication.AuthenticationType[]
-): { label: string; kind: LocalAuthKind } {
+function authenticationDescriptor(types: LocalAuthentication.AuthenticationType[]): {
+  label: string;
+  kind: LocalAuthKind;
+} {
   const hasFace = types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
   const hasFingerprint = types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT);
   const hasIris = types.includes(LocalAuthentication.AuthenticationType.IRIS);

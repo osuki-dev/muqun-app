@@ -17,7 +17,9 @@ type ApkArtifact = {
   modifiedAt: Date;
 };
 
-const projectDirectory = decodeURIComponent(new URL('../', import.meta.url).pathname.replace(/\/$/, ''));
+const projectDirectory = decodeURIComponent(
+  new URL('../', import.meta.url).pathname.replace(/\/$/, '')
+);
 const artifactDirectories = [
   `${projectDirectory}/dist/eas-builds`,
   `${projectDirectory}/android/app/build/outputs/apk/release`,
@@ -40,9 +42,10 @@ async function latestApk(): Promise<ApkArtifact | null> {
     }
   }
 
-  return candidates.sort(
-    (left, right) => right.modifiedAt.getTime() - left.modifiedAt.getTime()
-  )[0] ?? null;
+  return (
+    candidates.sort((left, right) => right.modifiedAt.getTime() - left.modifiedAt.getTime())[0] ??
+    null
+  );
 }
 
 function apkHeaders(apk: NonNullable<Awaited<ReturnType<typeof latestApk>>>) {
@@ -63,12 +66,15 @@ const server = Bun.serve({
     const url = new URL(request.url);
     if (url.pathname === '/health') {
       const apk = await latestApk();
-      return Response.json({
-        ok: Boolean(apk),
-        artifact: apk?.name ?? null,
-        bytes: apk?.size ?? 0,
-        modifiedAt: apk?.modifiedAt.toISOString() ?? null,
-      }, { headers: { 'Cache-Control': 'no-store' } });
+      return Response.json(
+        {
+          ok: Boolean(apk),
+          artifact: apk?.name ?? null,
+          bytes: apk?.size ?? 0,
+          modifiedAt: apk?.modifiedAt.toISOString() ?? null,
+        },
+        { headers: { 'Cache-Control': 'no-store' } }
+      );
     }
 
     if (url.pathname === '/muqun-latest.apk') {

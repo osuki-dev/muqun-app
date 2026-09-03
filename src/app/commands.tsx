@@ -32,16 +32,7 @@
  * is the one row here that throws work away, and `primary` on the mark that says
  * a row is in flight. At rest the sheet has no tinted chrome at all.
  */
-import {
-  Button,
-  Card,
-  Input,
-  Skeleton,
-  Spinner,
-  Tabs,
-  Text,
-  useThemeTokens,
-} from '@osuki-dev/ui';
+import { Button, Card, Input, Skeleton, Spinner, Tabs, Text, useThemeTokens } from '@osuki-dev/ui';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
@@ -707,7 +698,12 @@ export default function QuickCommandsScreen() {
                 <View key={row} style={styles.row}>
                   <View style={styles.rowCopy}>
                     <Skeleton variant="text" width="42%" height={14} />
-                    <Skeleton variant="text" width="68%" height={12} style={styles.skeletonDetail} />
+                    <Skeleton
+                      variant="text"
+                      width="68%"
+                      height={12}
+                      style={styles.skeletonDetail}
+                    />
                   </View>
                 </View>
               ))}

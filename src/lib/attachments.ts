@@ -24,11 +24,7 @@ export {
   type PendingAttachment,
   type PickedFile,
 } from './attachment-queue';
-export {
-  COMPRESSED_IMAGE_MIME,
-  MAX_IMAGE_EDGE,
-  planImageCompression,
-} from './image-compression';
+export { COMPRESSED_IMAGE_MIME, MAX_IMAGE_EDGE, planImageCompression } from './image-compression';
 
 /** Where a file the user wants to send came from. */
 export type AttachmentSource = 'camera' | 'library' | 'file';
@@ -83,7 +79,8 @@ function resolveMime(reported: string | null | undefined, name: string, uri: str
 
 function toPickedFiles(assets: ImagePicker.ImagePickerAsset[]): PickedFile[] {
   return assets.map((asset) => {
-    const name = asset.fileName ?? fileNameFromUri(asset.uri, asset.type === 'video' ? 'mp4' : 'jpg');
+    const name =
+      asset.fileName ?? fileNameFromUri(asset.uri, asset.type === 'video' ? 'mp4' : 'jpg');
     return {
       uri: asset.uri,
       name,
@@ -151,7 +148,9 @@ export async function compressPickedImage(file: PickedFile): Promise<PickedFile>
 export async function pickCameraPhoto(): Promise<PickedFile[]> {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   if (!permission.granted) {
-    throw new AttachmentPickerError(i18n._(msg`Camera access is off. Turn it on in Settings to take a photo.`));
+    throw new AttachmentPickerError(
+      i18n._(msg`Camera access is off. Turn it on in Settings to take a photo.`)
+    );
   }
   const result = await ImagePicker.launchCameraAsync({
     mediaTypes: ['images'],

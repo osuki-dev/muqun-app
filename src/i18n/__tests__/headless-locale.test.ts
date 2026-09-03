@@ -85,13 +85,16 @@ describe('the persisted override', () => {
     ['ja', ['de-DE', 'en-US']],
     ['pt', ['ko-KR']],
   ];
-  test.each(overrides)('a stored %s wins over a device asking for something else', async (language, tags) => {
-    coldStart({ language });
-    deviceTags = tags;
+  test.each(overrides)(
+    'a stored %s wins over a device asking for something else',
+    async (language, tags) => {
+      coldStart({ language });
+      deviceTags = tags;
 
-    expect(await activateWidgetLocale()).toBe(language);
-    expect(activated).toEqual([language]);
-  });
+      expect(await activateWidgetLocale()).toBe(language);
+      expect(activated).toEqual([language]);
+    }
+  );
 
   test('it wins even when it agrees with the device, which is the point of it', async () => {
     // The distinction that matters later: a user who pinned German and then

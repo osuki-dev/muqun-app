@@ -47,7 +47,10 @@ export interface SshShellEventsHandle {
 export interface SshSessionHandle {
   readonly hostKey: SshTrustedHostKey;
   readonly isConnected: boolean;
-  openShell(options: { cols: number; rows: number; term?: string }, events: SshShellEventsHandle): Promise<SshShellHandle>;
+  openShell(
+    options: { cols: number; rows: number; term?: string },
+    events: SshShellEventsHandle
+  ): Promise<SshShellHandle>;
   disconnect(): Promise<void>;
 }
 
@@ -109,7 +112,7 @@ let nativeModule: NativeSsh | null | undefined;
 function native(): NativeSsh {
   if (nativeModule === undefined) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // oxlint-disable-next-line typescript/no-require-imports
       nativeModule = require('@osuki-dev/react-native-ssh') as NativeSsh;
     } catch {
       nativeModule = null;

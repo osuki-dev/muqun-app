@@ -24,9 +24,9 @@ tags:
   - full
 ---
 - runFlow: ../subflows/launch-home.yaml
-- tapOn: "Try the demo"
+- tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000
@@ -34,27 +34,27 @@ tags:
 
 # ── The card ──────────────────────────────────────────────────────────────
 - extendedWaitUntil:
-    visible: "While you were away"
+    visible: 'While you were away'
     timeout: 8000
 # The demo's window holds three agents: Claude finished after stopping twice,
 # the editor pane settled, and one is still running. Names rather than statuses,
 # for the reason in the header.
-- assertVisible: "claude"
-- assertVisible: "nvim"
-- assertVisible: "codex"
+- assertVisible: 'claude'
+- assertVisible: 'nvim'
+- assertVisible: 'codex'
 - takeScreenshot: shots/away-digest
 
 # ── It never blocks the pane ──────────────────────────────────────────────
 # The dock is fully reachable while the card is standing: it floats in the
 # notice column over the top of the terminal, not over the controls.
-- assertVisible: "Open quick actions"
+- assertVisible: 'Open quick actions'
 
 # ── Reading it dismisses it ───────────────────────────────────────────────
 - tapOn:
-    id: "away-digest-dismiss"
+    id: 'away-digest-dismiss'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "While you were away"
+- assertNotVisible: 'While you were away'
 
 # ── And it does not come back ─────────────────────────────────────────────
 # Leaving and re-entering the server is not being away: the visit mark was
@@ -63,24 +63,24 @@ tags:
 # button; Pad already exposes Settings in the persistent rail.
 - runFlow: ../subflows/dismiss-logbox.yaml
 - tapOn:
-    text: "Back to servers"
+    text: 'Back to servers'
     optional: true
 - extendedWaitUntil:
-    visible: "Settings"
+    visible: 'Settings'
     timeout: 8000
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "APPEARANCE"
+    visible: 'APPEARANCE'
     timeout: 8000
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - runFlow:
     when:
-      visible: "Try the demo"
+      visible: 'Try the demo'
     commands:
-      - tapOn: "Try the demo"
+      - tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000
-- assertNotVisible: "While you were away"
+- assertNotVisible: 'While you were away'

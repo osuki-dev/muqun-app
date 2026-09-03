@@ -215,10 +215,7 @@ export function selectionAutoScrollVelocity(
  */
 export type TerminalDragIntent = 'pan' | 'extend-selection' | 'ignore';
 
-export function terminalDragIntent(
-  selecting: boolean,
-  pointerCount: number
-): TerminalDragIntent {
+export function terminalDragIntent(selecting: boolean, pointerCount: number): TerminalDragIntent {
   'worklet';
   if (!selecting) return 'pan';
   return pointerCount <= 1 ? 'extend-selection' : 'ignore';
@@ -353,10 +350,10 @@ export function selectionRects(
   };
   for (const span of spans) {
     if (
-      run
-      && span.row === run.row + run.rows
-      && span.startColumn === run.startColumn
-      && span.endColumn === run.endColumn
+      run &&
+      span.row === run.row + run.rows &&
+      span.startColumn === run.startColumn &&
+      span.endColumn === run.endColumn
     ) {
       run.rows += 1;
       continue;

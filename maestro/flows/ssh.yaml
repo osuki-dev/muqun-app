@@ -36,71 +36,71 @@ tags:
 # The home header's control on a phone; the rail's action on a Pad. Both
 # carry the same label, so the tap below finds whichever is on screen.
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "SSH"
+- tapOn: 'SSH'
 - extendedWaitUntil:
-    visible: "Open Demo shell"
+    visible: 'Open Demo shell'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Add an SSH host"
+- assertVisible: 'Add an SSH host'
 - takeScreenshot: shots/ssh-01-hosts
 
 # ── The shell ─────────────────────────────────────────────────────────────
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Open Demo shell"
+- tapOn: 'Open Demo shell'
 # Connected: the header's control flips from reconnect to disconnect, and the
 # status line says so in its own words. The demo takes about half a second to
 # "connect", which is why this is a wait and not an assert.
 - extendedWaitUntil:
-    visible: "Disconnect from Demo shell"
+    visible: 'Disconnect from Demo shell'
     timeout: 10000
-- assertVisible: "Connected to demo@demo.invalid"
+- assertVisible: 'Connected to demo@demo.invalid'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Retry drawing the terminal"
+- assertNotVisible: 'Retry drawing the terminal'
 - takeScreenshot: shots/ssh-02-shell
 
 # ── Keys from the row ─────────────────────────────────────────────────────
 # Enter answers the prompt with an empty line, Control C prints ^C and a new
 # prompt. Neither can be read off the canvas; what is asserted is that the
 # canvas survived both and the session is still up.
-- tapOn: "Send Enter"
-- tapOn: "Send Control C"
+- tapOn: 'Send Enter'
+- tapOn: 'Send Control C'
 - waitForAnimationToEnd:
     timeout: 1500
-- assertNotVisible: "Retry drawing the terminal"
-- assertVisible: "Disconnect from Demo shell"
+- assertNotVisible: 'Retry drawing the terminal'
+- assertVisible: 'Disconnect from Demo shell'
 
 # ── The on-screen keyboard rises and goes ─────────────────────────────────
-- tapOn: "Open on-screen keyboard"
+- tapOn: 'Open on-screen keyboard'
 - extendedWaitUntil:
-    visible: "Hide keyboard"
+    visible: 'Hide keyboard'
     timeout: 4000
 - takeScreenshot: shots/ssh-03-keyboard
-- tapOn: "Return"
-- tapOn: "Hide keyboard"
+- tapOn: 'Return'
+- tapOn: 'Hide keyboard'
 - extendedWaitUntil:
-    visible: "Open on-screen keyboard"
+    visible: 'Open on-screen keyboard'
     timeout: 4000
-- assertNotVisible: "Retry drawing the terminal"
+- assertNotVisible: 'Retry drawing the terminal'
 
 # ── Disconnect, reconnect ─────────────────────────────────────────────────
-- tapOn: "Disconnect from Demo shell"
+- tapOn: 'Disconnect from Demo shell'
 - extendedWaitUntil:
-    visible: "Reconnect to Demo shell"
+    visible: 'Reconnect to Demo shell'
     timeout: 4000
-- assertVisible: "Reconnect"
-- tapOn: "Reconnect"
+- assertVisible: 'Reconnect'
+- tapOn: 'Reconnect'
 - extendedWaitUntil:
-    visible: "Disconnect from Demo shell"
+    visible: 'Disconnect from Demo shell'
     timeout: 10000
 
 # ── Back out ──────────────────────────────────────────────────────────────
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - extendedWaitUntil:
-    visible: "Open Demo shell"
+    visible: 'Open Demo shell'
     timeout: 8000
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - extendedWaitUntil:
-    visible: "SSH"
+    visible: 'SSH'
     timeout: 8000

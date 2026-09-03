@@ -2,11 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { useLatestRef } from '@/hooks/use-render-refs';
-import {
-  answerPaneApproval,
-  ApprovalConflictError,
-  readPaneApproval,
-} from '@/lib/gateway-client';
+import { answerPaneApproval, ApprovalConflictError, readPaneApproval } from '@/lib/gateway-client';
 import {
   approvalBannerReducer,
   IDLE_APPROVAL_BANNER,
@@ -97,36 +93,42 @@ export function usePaneApproval({
     refresh();
   }, [refresh, state.needsRefresh]);
 
-  const handleEvent = useCallback((_event: string, payload: unknown) => {
-    if (!targetRef.current) return;
-    const next = paneApprovalFromResponse(payload);
-    // Both events carry the same envelope: `pending` names the new menu,
-    // `resolved` reports the pane as idle. The reducer only needs the state,
-    // and drops anything about a pane the screen is not showing.
-    if (next) dispatch({ type: 'observed', state: next });
-  }, [targetRef]);
+  const handleEvent = useCallback(
+    (_event: string, payload: unknown) => {
+      if (!targetRef.current) return;
+      const next = paneApprovalFromResponse(payload);
+      // Both events carry the same envelope: `pending` names the new menu,
+      // `resolved` reports the pane as idle. The reducer only needs the state,
+      // and drops anything about a pane the screen is not showing.
+      if (next) dispatch({ type: 'observed', state: next });
+    },
+    [targetRef]
+  );
 
-  const answer = useCallback((option: ApprovalOption) => {
-    const current = targetRef.current;
-    const fingerprint = stateRef.current.approval?.fingerprint;
-    if (!current || !fingerprint || stateRef.current.answeringIndex !== null) return;
+  const answer = useCallback(
+    (option: ApprovalOption) => {
+      const current = targetRef.current;
+      const fingerprint = stateRef.current.approval?.fingerprint;
+      if (!current || !fingerprint || stateRef.current.answeringIndex !== null) return;
 
-    dispatch({ type: 'answer-started', fingerprint, optionIndex: option.index });
-    void answerPaneApproval(current.sessionId, current.paneId, {
-      option: option.index,
-      fingerprint,
-    })
-      .then((result) => {
-        dispatch({ type: 'answer-succeeded', answer: result });
+      dispatch({ type: 'answer-started', fingerprint, optionIndex: option.index });
+      void answerPaneApproval(current.sessionId, current.paneId, {
+        option: option.index,
+        fingerprint,
       })
-      .catch((error: unknown) => {
-        if (error instanceof ApprovalConflictError) {
-          dispatch({ type: 'answer-conflicted', code: error.code });
-          return;
-        }
-        dispatch({ type: 'answer-failed', message: t`That answer did not reach the agent.` });
-      });
-  }, [stateRef, t, targetRef]);
+        .then((result) => {
+          dispatch({ type: 'answer-succeeded', answer: result });
+        })
+        .catch((error: unknown) => {
+          if (error instanceof ApprovalConflictError) {
+            dispatch({ type: 'answer-conflicted', code: error.code });
+            return;
+          }
+          dispatch({ type: 'answer-failed', message: t`That answer did not reach the agent.` });
+        });
+    },
+    [stateRef, t, targetRef]
+  );
 
   const dismissError = useCallback(() => {
     dispatch({ type: 'error-dismissed' });

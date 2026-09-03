@@ -95,7 +95,11 @@ function normalizeRecord(record: GatewayRecord): GatewayRecord {
 }
 
 async function saveRecords(records: GatewayRecord[]): Promise<void> {
-  await SecureStore.setItemAsync(RECORDS_ID, await encryptValue(records.map(normalizeRecord)), STORAGE_OPTIONS);
+  await SecureStore.setItemAsync(
+    RECORDS_ID,
+    await encryptValue(records.map(normalizeRecord)),
+    STORAGE_OPTIONS
+  );
 }
 
 async function loadLegacyRecord(): Promise<GatewayRecord | null> {
@@ -145,10 +149,7 @@ export async function saveGateway(
     pairedAt: Date.now(),
   });
   const records = await loadGateways();
-  const nextRecords = [
-    record,
-    ...records.filter((item) => item.serverId !== record.serverId),
-  ];
+  const nextRecords = [record, ...records.filter((item) => item.serverId !== record.serverId)];
   await saveRecords(nextRecords);
   await SecureStore.setItemAsync(SELECTED_RECORD_ID, record.serverId, STORAGE_OPTIONS);
   return record;
@@ -172,7 +173,9 @@ export async function selectGateway(serverId: string): Promise<GatewayRecord | n
 export async function renameGateway(serverId: string, label: string): Promise<GatewayRecord[]> {
   const trimmed = label.trim();
   const records = (await loadGateways()).map((record) =>
-    record.serverId === serverId ? normalizeRecord({ ...record, label: trimmed || record.label }) : record
+    record.serverId === serverId
+      ? normalizeRecord({ ...record, label: trimmed || record.label })
+      : record
   );
   await saveRecords(records);
   return records;
@@ -196,8 +199,7 @@ export async function updateGateway(
 ): Promise<GatewayRecord[]> {
   const records = (await loadGateways()).map((record) => {
     if (record.serverId !== serverId) return record;
-    const label =
-      changes.label !== undefined ? changes.label.trim() || record.label : record.label;
+    const label = changes.label !== undefined ? changes.label.trim() || record.label : record.label;
     const url = changes.url !== undefined ? changes.url : record.url;
     return normalizeRecord({ ...record, label, url });
   });

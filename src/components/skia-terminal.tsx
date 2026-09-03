@@ -127,7 +127,13 @@ import {
   terminalTopStop,
 } from '@/terminal/scroll-anchor';
 import { parseTerminalSnapshot, terminalFrameLinks } from '@/terminal/terminal-core';
-import type { TerminalFrame, TerminalLine, TerminalLink, TerminalRun, TerminalStyle } from '@/terminal/types';
+import type {
+  TerminalFrame,
+  TerminalLine,
+  TerminalLink,
+  TerminalRun,
+  TerminalStyle,
+} from '@/terminal/types';
 import {
   TERMINAL_ADVANCE_RATIO,
   TERMINAL_GRID_HORIZONTAL_PADDING,
@@ -806,7 +812,15 @@ export function SkiaTerminal({
       setSelectionDragging(true);
       void feedback('selection');
     },
-    [anchorColumn, anchorRow, focusColumn, focusRow, frame.lines, setSelection, setSelectionDragging]
+    [
+      anchorColumn,
+      anchorRow,
+      focusColumn,
+      focusRow,
+      frame.lines,
+      setSelection,
+      setSelectionDragging,
+    ]
   );
 
   const selectLine = useCallback(
@@ -899,9 +913,7 @@ export function SkiaTerminal({
   const animatedVisibleHeight = useDerivedValue(() =>
     Math.max(
       1,
-      unobstructedHeight
-        - animatedBottomInset.value
-        - Math.max(0, -activeKeyboardOffset.value)
+      unobstructedHeight - animatedBottomInset.value - Math.max(0, -activeKeyboardOffset.value)
     )
   );
   // The pill sits against the dock, so it travels with it.
@@ -991,14 +1003,14 @@ export function SkiaTerminal({
   const unmountViewportWidthRef = useLatestRef(viewport.width);
   useEffect(() => {
     return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: `useLatestRef` (see its own doc comment) exists exactly so a callback outside render can read the current value; this is that read, at the one moment -- unmount -- render can no longer reach.
+      // oxlint-disable-next-line react/exhaustive-deps -- deliberate: `useLatestRef` (see its own doc comment) exists exactly so a callback outside render can read the current value; this is that read, at the one moment -- unmount -- render can no longer reach.
       if (unmountViewportWidthRef.current <= 0) return;
       savePaneScales(
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: same as above.
+        // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
         terminalScaleOnScreenLeave(unmountTerminalIdRef.current, scale.value, loadPaneScales())
       );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: unmount only, see comment above. `scale` and the two refs are stable identities, so listing them would not change when this runs.
+    // oxlint-disable-next-line react/exhaustive-deps -- deliberate: unmount only, see comment above. `scale` and the two refs are stable identities, so listing them would not change when this runs.
   }, []);
 
   // Output arriving in a wider column must not undo a pinch or scroll the
@@ -1154,7 +1166,21 @@ export function SkiaTerminal({
     translateY.value = withTiming(bottom, { duration }, () => {
       catchingUp.value = false;
     });
-  }, [animatedTopInset, animatedVisibleHeight, catchingUp, contentHeight, followOutput, gate.frozen, historyHeight, appliedContent, lineHeight, scale, snapToBottomNext, translateY, viewport.height]);
+  }, [
+    animatedTopInset,
+    animatedVisibleHeight,
+    catchingUp,
+    contentHeight,
+    followOutput,
+    gate.frozen,
+    historyHeight,
+    appliedContent,
+    lineHeight,
+    scale,
+    snapToBottomNext,
+    translateY,
+    viewport.height,
+  ]);
 
   useAnimatedReaction(
     () => animatedVisibleHeight.value - contentHeight * scale.value,
@@ -1163,14 +1189,8 @@ export function SkiaTerminal({
       const topInsetValue = animatedTopInset.value;
       translateY.value = followOutput.value
         ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.value)
-        : clampScrollOffset(
-            translateY.value,
-            minimumY,
-            topInsetValue,
-            historyHeight * scale.value
-          );
-    },
-    [contentHeight, historyHeight]
+        : clampScrollOffset(translateY.value, minimumY, topInsetValue, historyHeight * scale.value);
+    }
   );
 
   // The same correction, for the other input the resting position is made of.
@@ -1194,22 +1214,15 @@ export function SkiaTerminal({
       const minimumY = animatedVisibleHeight.value - contentHeight * scale.value;
       translateY.value = followOutput.value
         ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.value)
-        : clampScrollOffset(
-            translateY.value,
-            minimumY,
-            topInsetValue,
-            historyHeight * scale.value
-          );
-    },
-    [contentHeight, historyHeight]
+        : clampScrollOffset(translateY.value, minimumY, topInsetValue, historyHeight * scale.value);
+    }
   );
 
   useAnimatedReaction(
     () => followOutput.value,
     (current, previous) => {
       if (current !== previous) scheduleOnRN(setFollowing, current);
-    },
-    [followOutput]
+    }
   );
 
   // The freeze covers the fling as well as the finger. A frame swap mid-decay is
@@ -1220,8 +1233,7 @@ export function SkiaTerminal({
     () => gesturing.value || coasting.value > 0,
     (current, previous) => {
       if (current !== previous) scheduleOnRN(gate.setActive, current);
-    },
-    [coasting, gesturing]
+    }
   );
 
   // Read out of the frame once, so the worklets below close over two numbers
@@ -1384,9 +1396,9 @@ export function SkiaTerminal({
       const topStop = terminalTopStop(minY, animatedTopInset.value);
       const overshoot = terminalPullOvershoot(gestureStartY.value, event.translationY, topStop);
       if (
-        canLoadEarlier
-        && overshoot > 0
-        && Math.abs(event.translationY) > Math.abs(event.translationX)
+        canLoadEarlier &&
+        overshoot > 0 &&
+        Math.abs(event.translationY) > Math.abs(event.translationX)
       ) {
         pullDistance.value = Math.min(68, overshoot * 0.44);
         return;
@@ -1765,8 +1777,7 @@ export function SkiaTerminal({
   // Scale is deliberately not snapped: quantizing a pinch reads as stutter.
   const devicePixelRatio = PixelRatio.get();
   const contentTransform = useDerivedValue(() => {
-    const snap = (value: number) =>
-      Math.round(value * devicePixelRatio) / devicePixelRatio;
+    const snap = (value: number) => Math.round(value * devicePixelRatio) / devicePixelRatio;
     return [
       { translateX: snap(translateX.value) },
       { translateY: snap(translateY.value + pullDistance.value) },
@@ -1825,16 +1836,11 @@ export function SkiaTerminal({
         TERMINAL_HISTORY_HINT_INTRO_MS,
         withTiming(0, timing('medium'))
       );
-    },
-    [animatedTopInset, canLoadEarlier, contentHeight, scale]
+    }
   );
 
   const pullIndicatorStyle = useAnimatedStyle(() => ({
-    opacity: historyHintOpacity(
-      pullDistance.value,
-      loadingEarlier,
-      historyHintIntro.value
-    ),
+    opacity: historyHintOpacity(pullDistance.value, loadingEarlier, historyHintIntro.value),
     transform: [{ translateY: Math.min(8, pullDistance.value * 0.16) }],
   }));
   // The tab swipe joins the pan, the pinch, and the long press in one flat
@@ -1918,7 +1924,16 @@ export function SkiaTerminal({
       ),
       timing('short')
     );
-  }, [animatedTopInset, animatedVisibleHeight, contentHeight, followOutput, historyHeight, scale, stickBottomNonce, translateY]);
+  }, [
+    animatedTopInset,
+    animatedVisibleHeight,
+    contentHeight,
+    followOutput,
+    historyHeight,
+    scale,
+    stickBottomNonce,
+    translateY,
+  ]);
 
   /**
    * The highlight, in the content's own coordinates.
@@ -2002,9 +2017,7 @@ export function SkiaTerminal({
   }
 
   return (
-    <View
-      onLayout={handleLayout}
-      style={[styles.shell, { backgroundColor: paneTheme.background }]}>
+    <View onLayout={handleLayout} style={[styles.shell, { backgroundColor: paneTheme.background }]}>
       <GestureDetector gesture={gesture}>
         <Canvas opaque style={styles.canvas}>
           <Fill color={paneTheme.background} />
@@ -2076,9 +2089,7 @@ export function SkiaTerminal({
             },
             pullIndicatorStyle,
           ]}>
-          {loadingEarlier ? (
-            <ActivityIndicator size={12} color={theme.colors.primary} />
-          ) : null}
+          {loadingEarlier ? <ActivityIndicator size={12} color={theme.colors.primary} /> : null}
           <Text style={[styles.historyIndicatorText, { color: theme.colors.textMuted }]}>
             {loadingEarlier ? t`Loading earlier output…` : t`Pull for earlier output`}
           </Text>
@@ -2144,7 +2155,9 @@ export function SkiaTerminal({
                 borderColor: theme.colors.border,
               },
             ]}>
-            <Text style={[styles.latestButtonText, { color: theme.colors.text }]}>↓ <Trans>Latest</Trans></Text>
+            <Text style={[styles.latestButtonText, { color: theme.colors.text }]}>
+              ↓ <Trans>Latest</Trans>
+            </Text>
           </PressableScale>
         </Animated.View>
       ) : null}
@@ -2161,13 +2174,8 @@ export function SkiaTerminal({
       {!nerdFont && fontError ? (
         <View
           pointerEvents="none"
-          style={[
-            styles.empty,
-            { backgroundColor: paneTheme.background },
-          ]}>
-          <Text style={[styles.emptyText, { color: theme.colors.textSubtle }]}>
-            {fontError}
-          </Text>
+          style={[styles.empty, { backgroundColor: paneTheme.background }]}>
+          <Text style={[styles.emptyText, { color: theme.colors.textSubtle }]}>{fontError}</Text>
         </View>
       ) : !nerdFont || !hasOutput ? (
         <Animated.View
@@ -2327,8 +2335,7 @@ function recordTerminalChunk({
   const canvas = recorder.beginRecording(rect(0, -bleed, width, height + bleed * 2));
   const nerdFontMetrics = nerdFont?.getMetrics();
   const nerdBaseline = nerdFontMetrics
-    ? (lineHeight - (nerdFontMetrics.descent - nerdFontMetrics.ascent)) / 2 -
-      nerdFontMetrics.ascent
+    ? (lineHeight - (nerdFontMetrics.descent - nerdFontMetrics.ascent)) / 2 - nerdFontMetrics.ascent
     : 0;
 
   for (let row = startRow; row < endRow; row += 1) {
@@ -2390,18 +2397,20 @@ function linkAtViewportPoint(
 ): TerminalLink | null {
   const horizontalHitSlop = Math.max(3, cellWidth * scale * 0.5);
   const verticalHitSlop = Math.max(4, lineHeight * scale * 0.3);
-  return links.find((link) => {
-    const left = translateX + (horizontalPadding + link.startColumn * cellWidth) * scale;
-    const right = translateX + (horizontalPadding + link.endColumn * cellWidth) * scale;
-    const top = translateY + (verticalPadding + link.row * lineHeight) * scale;
-    const bottom = top + lineHeight * scale;
-    return (
-      x >= left - horizontalHitSlop &&
-      x <= right + horizontalHitSlop &&
-      y >= top - verticalHitSlop &&
-      y <= bottom + verticalHitSlop
-    );
-  }) ?? null;
+  return (
+    links.find((link) => {
+      const left = translateX + (horizontalPadding + link.startColumn * cellWidth) * scale;
+      const right = translateX + (horizontalPadding + link.endColumn * cellWidth) * scale;
+      const top = translateY + (verticalPadding + link.row * lineHeight) * scale;
+      const bottom = top + lineHeight * scale;
+      return (
+        x >= left - horizontalHitSlop &&
+        x <= right + horizontalHitSlop &&
+        y >= top - verticalHitSlop &&
+        y <= bottom + verticalHitSlop
+      );
+    }) ?? null
+  );
 }
 
 async function openTerminalLink(uri: string): Promise<void> {
@@ -2504,7 +2513,10 @@ function drawRunCells({
         // Centre within the span so double-width glyphs sit in their two cells.
         const advance = metrics.advance;
         const span = width * cellWidth;
-        batched.push({ id: glyphId, offset: (column - run.startColumn) * cellWidth + (span - advance) / 2 });
+        batched.push({
+          id: glyphId,
+          offset: (column - run.startColumn) * cellWidth + (span - advance) / 2,
+        });
       } else {
         fallbacks.push({ text: drawn, column, width });
       }
@@ -2536,7 +2548,16 @@ function drawRunCells({
     // typeface. Those shapes are wrong the moment the provider loads, so they
     // are painted for this frame only and never cached.
     if (!fontManager) {
-      const shaped = buildFallbackParagraph(item.text, item.width, color, run.style, fontSize, lineHeight, cellWidth, null);
+      const shaped = buildFallbackParagraph(
+        item.text,
+        item.width,
+        color,
+        run.style,
+        fontSize,
+        lineHeight,
+        cellWidth,
+        null
+      );
       paintFallback(canvas, shaped, x, y, item.width * cellWidth);
       shaped.paragraph.dispose();
       continue;
@@ -2544,7 +2565,16 @@ function drawRunCells({
     const key = `${item.text}|${color}|${run.style.bold ? 'b' : ''}${run.style.italic ? 'i' : ''}|${fontSize}|${lineHeight}`;
     let shaped = fallbackParagraphCache.get(key);
     if (!shaped) {
-      shaped = buildFallbackParagraph(item.text, item.width, color, run.style, fontSize, lineHeight, cellWidth, fontManager);
+      shaped = buildFallbackParagraph(
+        item.text,
+        item.width,
+        color,
+        run.style,
+        fontSize,
+        lineHeight,
+        cellWidth,
+        fontManager
+      );
       cacheFallbackParagraph(key, shaped);
     }
     paintFallback(canvas, shaped, x, y, item.width * cellWidth);
@@ -2783,7 +2813,7 @@ function glyphMetrics(
   const cached = glyphCache.get(key);
   if (cached) return cached;
   const id = font?.getGlyphIDs(grapheme)[0] ?? 0;
-  const advance = id === 0 ? cellWidth : font?.getGlyphWidths([id])[0] ?? cellWidth;
+  const advance = id === 0 ? cellWidth : (font?.getGlyphWidths([id])[0] ?? cellWidth);
   const metrics = { id, advance };
   glyphCache.set(key, metrics);
   return metrics;

@@ -5,11 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { Check, ChevronDown, Pencil, Trash2 } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import {
@@ -24,11 +20,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
-import {
-  loadPairedDevices,
-  revokePairedDevice,
-  type PairedDevice,
-} from '@/lib/gateway-client';
+import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
@@ -311,7 +303,7 @@ function ServerRow({
   // Read at render, like `PairedDevices`' own `nowMs` below: "last connected"
   // is relative to *now*, and a value captured once in state would go stale
   // the moment the row sat open for a minute.
-  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  // oxlint-disable-next-line react/purity -- deliberate: see above.
   const nowMs = Date.now();
 
   return (
@@ -545,7 +537,10 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
         size="compact"
       />
       <Text variant="caption" color={theme.colors.textMuted}>
-        <Trans>The address is where this paired server is reached. Changing it does not unpair the device.</Trans>
+        <Trans>
+          The address is where this paired server is reached. Changing it does not unpair the
+          device.
+        </Trans>
       </Text>
       <View style={styles.editButtons}>
         <PressableScale
@@ -553,7 +548,11 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
           accessibilityLabel={t`Cancel editing ${server.label}`}
           disabled={saving}
           onPress={onDone}
-          style={[styles.action, styles.editButton, { backgroundColor: theme.colors.surfaceRaised }]}>
+          style={[
+            styles.action,
+            styles.editButton,
+            { backgroundColor: theme.colors.surfaceRaised },
+          ]}>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Cancel</Trans>
           </Text>
@@ -605,7 +604,11 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => void
         accessibilityRole="button"
         accessibilityLabel={t`Keep ${label}`}
         onPress={() => setArmed(false)}
-        style={[styles.action, styles.armedButton, { backgroundColor: theme.colors.surfaceRaised }]}>
+        style={[
+          styles.action,
+          styles.armedButton,
+          { backgroundColor: theme.colors.surfaceRaised },
+        ]}>
         <Text variant="caption" color={theme.colors.textMuted}>
           <Trans>Cancel</Trans>
         </Text>
@@ -720,7 +723,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
   // timestamp ageing under it. The alternative is a ticking clock in state,
   // which re-renders the list to change one caption. Same call and same reason
   // as the home card's freshness read.
-  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  // oxlint-disable-next-line react/purity -- deliberate: see above.
   const nowMs = Date.now();
 
   return (

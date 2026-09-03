@@ -18,7 +18,10 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 function equal<T>(actual: T, expected: T, label: string): void {
-  assert(Object.is(actual, expected), `${label}: expected ${String(expected)}, received ${String(actual)}`);
+  assert(
+    Object.is(actual, expected),
+    `${label}: expected ${String(expected)}, received ${String(actual)}`
+  );
 }
 
 equal(displayWidth('hello'), 5, 'ASCII width');
@@ -34,9 +37,7 @@ equal(colored.lines[0].runs[0].style.background, 'rgb(255, 0, 0)', 'SGR indexed 
 
 const themedAnsi = parseTerminalSnapshot('\u001b[31merror', {
   ...DEFAULT_TERMINAL_THEME,
-  ansi: DEFAULT_TERMINAL_THEME.ansi.map((color, index) =>
-    index === 1 ? '#AABBCC' : color
-  ),
+  ansi: DEFAULT_TERMINAL_THEME.ansi.map((color, index) => (index === 1 ? '#AABBCC' : color)),
 });
 equal(themedAnsi.lines[0].runs[0].style.foreground, '#AABBCC', 'theme ANSI red');
 
@@ -157,10 +158,16 @@ console.log('terminal core: all checks passed');
 // Agent TUIs frame their input box with chrome sized to the desktop pane. On a
 // phone that wraps into rows of stray horizontal lines.
 {
-  const { isFullWidthRule, titledRuleText, stripAgentChrome } = await import('../src/lib/agent-chrome');
+  const { isFullWidthRule, titledRuleText, stripAgentChrome } =
+    await import('../src/lib/agent-chrome');
 
   // Pane-width frames are chrome.
-  for (const rule of ['─'.repeat(240), '━'.repeat(98), '╭' + '─'.repeat(96) + '╮', '│' + ' '.repeat(96) + '│']) {
+  for (const rule of [
+    '─'.repeat(240),
+    '━'.repeat(98),
+    '╭' + '─'.repeat(96) + '╮',
+    '│' + ' '.repeat(96) + '│',
+  ]) {
     if (!isFullWidthRule(rule)) throw new Error(`Expected chrome: ${rule.slice(0, 12)}…`);
   }
 
@@ -178,7 +185,8 @@ console.log('terminal core: all checks passed');
   // A padded heading keeps its title and loses the padding.
   const titled = '─ Worked for 6m 26s ' + '─'.repeat(220);
   if (titledRuleText(titled) !== 'Worked for 6m 26s') throw new Error('Titled rule not unpacked.');
-  if (titledRuleText('─ short ───') !== null) throw new Error('Narrow rule should not be unpacked.');
+  if (titledRuleText('─ short ───') !== null)
+    throw new Error('Narrow rule should not be unpacked.');
 
   const framed = ['prose', '', '─'.repeat(240), '❯ input', '─'.repeat(240)].join('\n');
   const stripped = stripAgentChrome(framed).split('\n');

@@ -70,10 +70,7 @@ export function WhatsNewCard() {
         // this slot under the status bar.
         entering={fadeInDown('medium')}
         exiting={fadeOutUp('short')}
-        style={[
-          styles.card,
-          { backgroundColor: theme.colors.surface },
-        ]}>
+        style={[styles.card, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.header}>
           <View style={[styles.icon, { backgroundColor: theme.colors.primarySubtle }]}>
             <Sparkles size={15} color={theme.colors.primary} strokeWidth={2.2} />
@@ -97,7 +94,12 @@ export function WhatsNewCard() {
         <View style={styles.items}>
           {RELEASE_NOTES.items.map((item) => (
             <View key={item.id ?? item.message} style={styles.itemRow}>
-              <Check size={14} color={theme.colors.primary} strokeWidth={2.4} style={styles.itemTick} />
+              <Check
+                size={14}
+                color={theme.colors.primary}
+                strokeWidth={2.4}
+                style={styles.itemTick}
+              />
               <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.itemText}>
                 {_(item)}
               </Text>

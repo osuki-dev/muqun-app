@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "bracketSameLine": true,
+  "ignorePatterns": [
+    "dist/**",
+    "ios/**",
+    "android/**",
+    ".expo/**",
+    "src/i18n/locales/**",
+    "src/api/api.ts",
+    "src/api/types.ts",
+    "patches/**"
+  ]
+}

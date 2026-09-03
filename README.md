@@ -15,8 +15,8 @@ on your own machine. There is no Muqun account, no hosted relay, no analytics
 and no advertising, and nothing of yours passes through a server of ours —
 because there isn't one.
 
-| Approve from wherever you are | The real terminal, not a log view |
-| --- | --- |
+| Approve from wherever you are                                                                                                                                    | The real terminal, not a log view                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <img src="assets/readme/approve.png" alt="An agent's permission prompt on an iPhone: 'Do you want to make this edit?', with Yes / Yes and don't ask again / No"> | <img src="assets/readme/terminal.png" alt="A terminal grid on an iPhone showing a coloured diff, a box-drawn table and a running agent, with the on-screen key row below it"> |
 
 <img src="assets/readme/ipad-workspace.png" alt="Muqun on iPad in landscape: the servers rail on the left, a live agent session filling the rest of the screen">
@@ -91,7 +91,7 @@ Other ways in:
   (`.github/workflows/android-apk.yml`). It is the same app as the Play build —
   same `dev.osuki.muqun` applicationId, same everything, just packaged as an APK
   instead of an App Bundle. Because Android identifies an install by
-  applicationId *and* signature, and Play re-signs its own artifact, the two
+  applicationId _and_ signature, and Play re-signs its own artifact, the two
   cannot sit on one phone: moving between them means uninstalling first, which
   takes the paired Gateways with it. Pick one and stay on it.
 - **Or build it yourself** — see [below](#build-it-from-source).

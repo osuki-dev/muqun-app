@@ -119,6 +119,6 @@ export function orderByUsage<T>(
   if (!counts) return items;
   return items
     .map((item, index) => ({ item, index, uses: counts[identify(item)] ?? 0 }))
-    .sort((a, b) => (b.uses - a.uses) || (a.index - b.index))
+    .sort((a, b) => b.uses - a.uses || a.index - b.index)
     .map((entry) => entry.item);
 }

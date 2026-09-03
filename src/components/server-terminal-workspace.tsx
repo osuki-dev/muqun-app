@@ -10,14 +10,7 @@ import {
   X,
   Zap,
 } from 'lucide-react-native';
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   Keyboard,
@@ -461,7 +454,7 @@ export function ServerTerminalWorkspace({
   // platform caret wherever the text change put it. Kept rather than deleted
   // because the state is half of a feature the file-mention work still owes;
   // wiring it is a behavioural change and belongs to that card, not to lint.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- see above.
+  // oxlint-disable-next-line no-unused-vars -- see above.
   const [pendingCaret, setPendingCaret] = useState<number | null>(null);
   const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -554,7 +547,10 @@ export function ServerTerminalWorkspace({
   // The revision last read for the selected pane. An event repeating a revision
   // we already have is ignored, which is what turns "poll every 1.2s" into
   // "read only when something changed".
-  const readRevisionRef = useRef<{ paneId: string; revision: number }>({ paneId: '', revision: -1 });
+  const readRevisionRef = useRef<{ paneId: string; revision: number }>({
+    paneId: '',
+    revision: -1,
+  });
   // The same idea for the structured view: the content key last read as parts.
   const readPartsKeyRef = useRef<{ paneId: string; contentKey: string }>({
     paneId: '',
@@ -718,47 +714,51 @@ export function ServerTerminalWorkspace({
     setSendingKey(null);
   }, [ready]);
 
-  const refreshData = useCallback(async (showLoading = false): Promise<RefreshResult> => {
-    if (!ready) return null;
-    const requestId = ++dataRequestIdRef.current;
-    const requestServerId = serverId;
-    const isCurrentRequest = () =>
-      activeServerRef.current === requestServerId && dataRequestIdRef.current === requestId;
-    if (showLoading) setLoadingData(true);
-    try {
-      // Health costs a herdr round-trip and is only read as a "have we loaded
-      // anything yet" flag, so it is fetched once rather than every poll.
-      const [health, sessions] = await Promise.all([
-        healthRef.current ? Promise.resolve(healthRef.current) : gatewayTransport.loadHealth(),
-        gatewayTransport.loadSessions(),
-      ]);
-      if (!isCurrentRequest()) return null;
-      const sessionId = sessions.sessions?.find((item) => item.id === requestedSessionId)?.id
-        ?? sessions.sessions?.[0]?.id
-        ?? 'default';
-      const [workspaces, tabs, panes, agents] = await Promise.all([
-        gatewayTransport.loadWorkspaces(sessionId),
-        gatewayTransport.loadTabs(sessionId),
-        gatewayTransport.loadPanes(sessionId),
-        gatewayTransport.loadAgents(sessionId),
-      ]);
-      if (!isCurrentRequest()) return null;
-      healthRef.current = health;
-      const next = { health, sessionId, workspaces, tabs, panes, agents };
-      setData((current) => (sameServerData(current, next) ? current : next));
-      setSelection((current) => {
-        const reconciled = reconcileSelection(next, current);
-        return sameSelection(current, reconciled) ? current : reconciled;
-      });
-      setError(null);
-      return { ok: true };
-    } catch (failure) {
-      if (!isCurrentRequest()) return null;
-      return { ok: false, failure: describeGatewayFailure(failure, t`Server unavailable.`) };
-    } finally {
-      if (isCurrentRequest()) setLoadingData(false);
-    }
-  }, [ready, requestedSessionId, serverId, t]);
+  const refreshData = useCallback(
+    async (showLoading = false): Promise<RefreshResult> => {
+      if (!ready) return null;
+      const requestId = ++dataRequestIdRef.current;
+      const requestServerId = serverId;
+      const isCurrentRequest = () =>
+        activeServerRef.current === requestServerId && dataRequestIdRef.current === requestId;
+      if (showLoading) setLoadingData(true);
+      try {
+        // Health costs a herdr round-trip and is only read as a "have we loaded
+        // anything yet" flag, so it is fetched once rather than every poll.
+        const [health, sessions] = await Promise.all([
+          healthRef.current ? Promise.resolve(healthRef.current) : gatewayTransport.loadHealth(),
+          gatewayTransport.loadSessions(),
+        ]);
+        if (!isCurrentRequest()) return null;
+        const sessionId =
+          sessions.sessions?.find((item) => item.id === requestedSessionId)?.id ??
+          sessions.sessions?.[0]?.id ??
+          'default';
+        const [workspaces, tabs, panes, agents] = await Promise.all([
+          gatewayTransport.loadWorkspaces(sessionId),
+          gatewayTransport.loadTabs(sessionId),
+          gatewayTransport.loadPanes(sessionId),
+          gatewayTransport.loadAgents(sessionId),
+        ]);
+        if (!isCurrentRequest()) return null;
+        healthRef.current = health;
+        const next = { health, sessionId, workspaces, tabs, panes, agents };
+        setData((current) => (sameServerData(current, next) ? current : next));
+        setSelection((current) => {
+          const reconciled = reconcileSelection(next, current);
+          return sameSelection(current, reconciled) ? current : reconciled;
+        });
+        setError(null);
+        return { ok: true };
+      } catch (failure) {
+        if (!isCurrentRequest()) return null;
+        return { ok: false, failure: describeGatewayFailure(failure, t`Server unavailable.`) };
+      } finally {
+        if (isCurrentRequest()) setLoadingData(false);
+      }
+    },
+    [ready, requestedSessionId, serverId, t]
+  );
 
   useEffect(() => {
     if (!ready) return;
@@ -790,10 +790,7 @@ export function ServerTerminalWorkspace({
         needsPairing: result.failure.needsPairing,
       });
       if (result.failure.retryable) {
-        const retryDelay = Math.min(
-          1000 * 2 ** Math.min(attempt - 1, 3),
-          MAX_RECONNECT_DELAY_MS
-        );
+        const retryDelay = Math.min(1000 * 2 ** Math.min(attempt - 1, 3), MAX_RECONNECT_DELAY_MS);
         timer = setTimeout(() => void poll(false), retryDelay);
       }
     }
@@ -900,9 +897,9 @@ export function ServerTerminalWorkspace({
       const requestId = ++partsRequestIdRef.current;
       const requestServerId = serverId;
       const isCurrentRequest = () =>
-        activeServerRef.current === requestServerId
-        && activePaneRef.current === requestPaneId
-        && partsRequestIdRef.current === requestId;
+        activeServerRef.current === requestServerId &&
+        activePaneRef.current === requestPaneId &&
+        partsRequestIdRef.current === requestId;
       // Read at whatever window the reader has paged back to: a transcript is
       // re-read whole, so a refresh at the initial limit would silently throw
       // away every page they pulled in.
@@ -950,20 +947,21 @@ export function ServerTerminalWorkspace({
     const requestPaneId = selection.paneId;
     const currentLimit = partsLineLimitRef.current;
     if (
-      !ready
-      || connection.phase !== 'connected'
-      || !requestPaneId
-      || loadingEarlierPartsRef.current
-      || currentLimit >= MAX_PANE_OUTPUT_LINES
-    ) return;
+      !ready ||
+      connection.phase !== 'connected' ||
+      !requestPaneId ||
+      loadingEarlierPartsRef.current ||
+      currentLimit >= MAX_PANE_OUTPUT_LINES
+    )
+      return;
 
     const requestId = ++partsRequestIdRef.current;
     const requestServerId = serverId;
     const nextLimit = Math.min(MAX_PANE_OUTPUT_LINES, currentLimit + PANE_OUTPUT_PAGE_LINES);
     const isCurrentRequest = () =>
-      activeServerRef.current === requestServerId
-      && activePaneRef.current === requestPaneId
-      && partsRequestIdRef.current === requestId;
+      activeServerRef.current === requestServerId &&
+      activePaneRef.current === requestPaneId &&
+      partsRequestIdRef.current === requestId;
 
     loadingEarlierPartsRef.current = true;
     setLoadingEarlierParts(true);
@@ -989,7 +987,11 @@ export function ServerTerminalWorkspace({
       earlierPartsRowsRef.current = paneTranscriptRows(result.parts);
       setCanLoadEarlierParts(
         hasEarlierPartsAfterPage(
-          result.parts, nextLimit, MAX_PANE_OUTPUT_LINES, scroll, reachedRows
+          result.parts,
+          nextLimit,
+          MAX_PANE_OUTPUT_LINES,
+          scroll,
+          reachedRows
         )
       );
     } catch {
@@ -1022,7 +1024,6 @@ export function ServerTerminalWorkspace({
     partsForPane.failures,
     refreshParts,
   ]);
-
 
   // The Lock Screen follows the panel the user is watching, so the card is
   // read off the same selection the screen already draws. Broken out into
@@ -1201,8 +1202,7 @@ export function ServerTerminalWorkspace({
   // the live screen at its tail: a full-screen program repaints exactly its
   // viewport, so the last `viewport_rows` rows are the screen. 0 (unknown)
   // keeps the terminal on its old arithmetic.
-  const selectedPaneScreenRows =
-    terminalViewportRows(selectedPane?.raw.scroll) ?? 0;
+  const selectedPaneScreenRows = terminalViewportRows(selectedPane?.raw.scroll) ?? 0;
   // Whether the pane's program has taken the whole screen, which is a different
   // question from whether it is an editor and has to be asked separately.
   // `alternate_on` is 1 for an agent as well as for nvim, so this is true of
@@ -1222,7 +1222,9 @@ export function ServerTerminalWorkspace({
   // size, not the widest-line guess `parseTerminalSnapshot` falls back to when
   // this is absent. `undefined` (rather than 0) for a pane the gateway did not
   // report a width for, so the parser's own inference stays untouched.
-  const selectedPaneColumns = selectedPane ? numberField(selectedPane, 'width') || undefined : undefined;
+  const selectedPaneColumns = selectedPane
+    ? numberField(selectedPane, 'width') || undefined
+    : undefined;
 
   // nvim's own mode, read off the screen it just painted rather than asked
   // for -- tmux's formats carry nothing about it (`#{pane_mode}` is empty for
@@ -1234,7 +1236,9 @@ export function ServerTerminalWorkspace({
   // a frame the app already has.
   const nvimMode = useMemo(() => {
     if (!fullScreenPane || !output) return null;
-    return parseNvimMode(terminalFrameText(parseTerminalSnapshot(output, undefined, selectedPaneColumns)));
+    return parseNvimMode(
+      terminalFrameText(parseTerminalSnapshot(output, undefined, selectedPaneColumns))
+    );
   }, [fullScreenPane, output, selectedPaneColumns]);
 
   // The row follows what the pane is actually running: an agent's own actions,
@@ -1523,12 +1527,7 @@ export function ServerTerminalWorkspace({
   // from a read or was pushed inline over the event stream. Kept in one place so
   // both paths update the window, revision and load-earlier flag identically.
   const applyPaneOutput = useCallback(
-    (
-      requestPaneId: string,
-      value: string,
-      revision?: number,
-      origin: PaneReadOrigin = 'frame'
-    ) => {
+    (requestPaneId: string, value: string, revision?: number, origin: PaneReadOrigin = 'frame') => {
       if (activePaneRef.current !== requestPaneId || loadingEarlierOutputRef.current) return;
       readRevisionRef.current = {
         paneId: requestPaneId,
@@ -1567,18 +1566,19 @@ export function ServerTerminalWorkspace({
 
   const refreshOutput = useCallback(async () => {
     if (
-      !ready
-      || connection.phase !== 'connected'
-      || !selection.paneId
-      || loadingEarlierOutputRef.current
-    ) return;
+      !ready ||
+      connection.phase !== 'connected' ||
+      !selection.paneId ||
+      loadingEarlierOutputRef.current
+    )
+      return;
     const requestId = ++outputRequestIdRef.current;
     const requestServerId = serverId;
     const requestPaneId = selection.paneId;
     const isCurrentRequest = () =>
-      activeServerRef.current === requestServerId
-      && activePaneRef.current === requestPaneId
-      && outputRequestIdRef.current === requestId;
+      activeServerRef.current === requestServerId &&
+      activePaneRef.current === requestPaneId &&
+      outputRequestIdRef.current === requestId;
     try {
       // As deep as the reader has already paged, not the first page again. A
       // refresh that asks for one page and then replaces the window with the
@@ -1621,23 +1621,21 @@ export function ServerTerminalWorkspace({
     const requestPaneId = selection.paneId;
     const currentLimit = outputLineLimitRef.current;
     if (
-      !ready
-      || connection.phase !== 'connected'
-      || !requestPaneId
-      || loadingEarlierOutputRef.current
-      || currentLimit >= MAX_PANE_OUTPUT_LINES
-    ) return;
+      !ready ||
+      connection.phase !== 'connected' ||
+      !requestPaneId ||
+      loadingEarlierOutputRef.current ||
+      currentLimit >= MAX_PANE_OUTPUT_LINES
+    )
+      return;
 
     const requestId = ++outputRequestIdRef.current;
     const requestServerId = serverId;
-    const nextLimit = Math.min(
-      MAX_PANE_OUTPUT_LINES,
-      currentLimit + PANE_OUTPUT_PAGE_LINES
-    );
+    const nextLimit = Math.min(MAX_PANE_OUTPUT_LINES, currentLimit + PANE_OUTPUT_PAGE_LINES);
     const isCurrentRequest = () =>
-      activeServerRef.current === requestServerId
-      && activePaneRef.current === requestPaneId
-      && outputRequestIdRef.current === requestId;
+      activeServerRef.current === requestServerId &&
+      activePaneRef.current === requestPaneId &&
+      outputRequestIdRef.current === requestId;
 
     loadingEarlierOutputRef.current = true;
     setLoadingEarlierOutput(true);
@@ -1681,13 +1679,7 @@ export function ServerTerminalWorkspace({
             outputFormat,
             outputSource
           )
-        : await readPaneTail(
-            data.sessionId,
-            requestPaneId,
-            outputFormat,
-            nextLimit,
-            outputSource
-          );
+        : await readPaneTail(data.sessionId, requestPaneId, outputFormat, nextLimit, outputSource);
       // A backend can accept `start`/`end` without complaint and still ignore
       // them, always answering with its own tail (herdr's does) -- there is no
       // capability flag that says so up front, so the only honest check is
@@ -1733,7 +1725,9 @@ export function ServerTerminalWorkspace({
       // its own `'rangePage'` origin rather than `'page'`: the two may look
       // alike at this call site, but only a genuine range read may be believed
       // with zero overlap. See the origin's own doc in `history.ts`.
-      setOutput((current) => foldPaneRead(current, value, origin, nextLimit, fullScreenPaneRef.current));
+      setOutput((current) =>
+        foldPaneRead(current, value, origin, nextLimit, fullScreenPaneRef.current)
+      );
       const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
       const reachedRows = earlierOutputRowsRef.current;
       earlierOutputRowsRef.current = terminalOutputLineCount(value);
@@ -1751,13 +1745,16 @@ export function ServerTerminalWorkspace({
         setLoadingEarlierOutput(false);
       }
     }
-  }, [connection.phase,
+  }, [
+    connection.phase,
     data.sessionId,
     outputFormat,
     outputSource,
     ready,
     selection.paneId,
-    serverId, t]);
+    serverId,
+    t,
+  ]);
 
   useEffect(() => {
     panesRef.current = data.panes;
@@ -1905,8 +1902,8 @@ export function ServerTerminalWorkspace({
   // full read, because the stream has no replay and anything during the gap is
   // lost.
   usePaneEvents(
-    selectedServer ? record?.url ?? null : null,
-    selectedServer ? record?.token ?? null : null,
+    selectedServer ? (record?.url ?? null) : null,
+    selectedServer ? (record?.token ?? null) : null,
     data.sessionId,
     selectedServer ? selection.paneId || null : null,
     ready && connection.phase === 'connected',
@@ -2112,7 +2109,9 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     if (sshHostsLoading) void hydrateSshHosts();
   }, [hydrateSshHosts, sshHostsLoading]);
-  const railSshHosts = sshHostsLoading ? [] : sshHomeRows(sshHosts, demoMode ? demoSshHost() : null);
+  const railSshHosts = sshHostsLoading
+    ? []
+    : sshHomeRows(sshHosts, demoMode ? demoSshHost() : null);
 
   const railServers = useMemo<GatewayRecord[]>(() => {
     if (!routeRecord || records.some((server) => server.serverId === routeRecord.serverId)) {
@@ -2217,18 +2216,20 @@ export function ServerTerminalWorkspace({
       // an Enter, so line-separated paths would each execute as a command.
       // Upload names are uuid-based and never contain spaces, so no quoting is
       // needed.
-      const value = attachmentPaths.length > 0
-        ? [draft.trim(), ...attachmentPaths]
-            .filter((part) => part.length > 0)
-            .join(' ')
-        : draft;
+      const value =
+        attachmentPaths.length > 0
+          ? [draft.trim(), ...attachmentPaths].filter((part) => part.length > 0).join(' ')
+          : draft;
       if (!value.trim()) return;
 
       if (selectedAgent) {
         await sendAgentText(data.sessionId, requestPaneId, value);
       } else {
         await sendPaneText(data.sessionId, requestPaneId, value);
-        if (activeServerRef.current !== requestServerId || activePaneRef.current !== requestPaneId) {
+        if (
+          activeServerRef.current !== requestServerId ||
+          activePaneRef.current !== requestPaneId
+        ) {
           return;
         }
         // A shell needs Enter to run what was typed. An editor does not: Enter
@@ -2307,42 +2308,38 @@ export function ServerTerminalWorkspace({
   function openQuickActions() {
     if (!selection.paneId) return;
     Keyboard.dismiss();
-    router.push(
-      {
-        pathname: '/commands',
-        params: {
-          sessionId: data.sessionId,
-          paneId: selection.paneId,
-          // The sheet can make a new panel and send this screen to it, which
-          // needs the workspace the current pane lives in to make it beside,
-          // and this server's id to hand the pick back through.
-          serverId,
-          workspaceId: selection.workspaceId,
-          // A new task starts beside the pane it was asked for, so the sheet
-          // needs the tab it is in and the directory it is sitting in.
-          tabId: selection.tabId,
-          cwd: field(selectedPane, 'cwd'),
-          mode: selectedAgent ? 'agent' : 'terminal',
-          // The health answer this screen is already holding. A gateway that
-          // cannot spawn gets a sheet with neither New task nor Stop in it.
-          canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
-          // Whether opening a plain URL on this machine is honest. The demo is
-          // excluded before the transport is even consulted: its record points
-          // at an address that does not exist, so every port on it is a page
-          // that will never load.
-          canOpenWeb:
-            !demoMode && allowsWebServiceOpen(data.health?.transportSecurity?.protection)
-              ? '1'
-              : '',
-          // What Stop is offered for, and what it would be sent to. Passed
-          // rather than looked up there: this screen already polls both, and a
-          // sheet that re-read them could offer Stop for an agent that stopped
-          // while it was opening.
-          agentTarget: selectedAgent ? field(selectedAgent, 'target') || selectedAgent.id : '',
-          agentStatus: selectedAgent?.status ?? '',
-        },
-      } as Href
-    );
+    router.push({
+      pathname: '/commands',
+      params: {
+        sessionId: data.sessionId,
+        paneId: selection.paneId,
+        // The sheet can make a new panel and send this screen to it, which
+        // needs the workspace the current pane lives in to make it beside,
+        // and this server's id to hand the pick back through.
+        serverId,
+        workspaceId: selection.workspaceId,
+        // A new task starts beside the pane it was asked for, so the sheet
+        // needs the tab it is in and the directory it is sitting in.
+        tabId: selection.tabId,
+        cwd: field(selectedPane, 'cwd'),
+        mode: selectedAgent ? 'agent' : 'terminal',
+        // The health answer this screen is already holding. A gateway that
+        // cannot spawn gets a sheet with neither New task nor Stop in it.
+        canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
+        // Whether opening a plain URL on this machine is honest. The demo is
+        // excluded before the transport is even consulted: its record points
+        // at an address that does not exist, so every port on it is a page
+        // that will never load.
+        canOpenWeb:
+          !demoMode && allowsWebServiceOpen(data.health?.transportSecurity?.protection) ? '1' : '',
+        // What Stop is offered for, and what it would be sent to. Passed
+        // rather than looked up there: this screen already polls both, and a
+        // sheet that re-read them could offer Stop for an agent that stopped
+        // while it was opening.
+        agentTarget: selectedAgent ? field(selectedAgent, 'target') || selectedAgent.id : '',
+        agentStatus: selectedAgent?.status ?? '',
+      },
+    } as Href);
   }
 
   // Cancelling a picker is not a failure, and both pickers report it as an
@@ -2414,17 +2411,15 @@ export function ServerTerminalWorkspace({
 
   function openPanelPicker() {
     Keyboard.dismiss();
-    router.push(
-      {
-        pathname: '/panels',
-        params: {
-          serverId,
-          sessionId: data.sessionId,
-          paneId: selection.paneId,
-          label: routeRecord?.label ?? record?.label ?? t`Server`,
-        },
-      } as Href
-    );
+    router.push({
+      pathname: '/panels',
+      params: {
+        serverId,
+        sessionId: data.sessionId,
+        paneId: selection.paneId,
+        label: routeRecord?.label ?? record?.label ?? t`Server`,
+      },
+    } as Href);
   }
 
   if (!loading && !routeRecord) {
@@ -2448,7 +2443,7 @@ export function ServerTerminalWorkspace({
   // naming it twice spent the width the pane name needs.
   const detailTitle = selectedPane
     ? panelTitle(selectedPane, selectedAgent)
-    : routeRecord?.label ?? record?.label ?? t`Server`;
+    : (routeRecord?.label ?? record?.label ?? t`Server`);
 
   // The pane's two entries: what goes into the session, and what came out of
   // it. Written once because they are the same two buttons whether they sit in
@@ -2638,9 +2633,9 @@ export function ServerTerminalWorkspace({
           or the window is too narrow to keep both halves usable, so this is a
           row of one for the whole of the compact layout and most of the Pad. */}
       <View style={styles.workspaceSplit}>
-      <View style={[styles.page, { backgroundColor: terminalBackground }]}>
-        <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
-        {/*
+        <View style={[styles.page, { backgroundColor: terminalBackground }]}>
+          <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
+          {/*
           One column for every notice that floats over the terminal.
 
           They used to be three independently absolute views pinned to the same
@@ -2651,184 +2646,184 @@ export function ServerTerminalWorkspace({
           `box-none` so the terminal underneath still takes taps everywhere the
           notices are not.
         */}
-        <View pointerEvents="box-none" style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
-          {/* A dead pairing outranks whatever action happened to fail first.
+          <View
+            pointerEvents="box-none"
+            style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
+            {/* A dead pairing outranks whatever action happened to fail first.
               Every request fails once this server has no record of this device,
               so the pane read that lost the race writes its own sentence into
               the error bar -- and the bar has no button on it, which used to
               hide the one control that can end the situation. The notice wins
               here, because it is the thing carrying the way out. */}
-          {error && !connection.needsPairing ? (
-            <Animated.View
-              entering={fadeIn('micro')}
-              exiting={fadeOut('micro')}
-              layout={listLayout('short')}
-              style={[styles.errorBar, { backgroundColor: theme.colors.dangerSubtle }]}>
-              <Text selectable variant="caption" color={theme.colors.danger}>
-                {error}
-              </Text>
-            </Animated.View>
-          ) : null}
-          {!error || connection.needsPairing ? (
-            <ConnectionNotice
-              status={connection}
-              onRetry={() => setRetryNonce((value) => value + 1)}
-              onPairAgain={() => router.push('/explore')}
-            />
-          ) : null}
+            {error && !connection.needsPairing ? (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOut('micro')}
+                layout={listLayout('short')}
+                style={[styles.errorBar, { backgroundColor: theme.colors.dangerSubtle }]}>
+                <Text selectable variant="caption" color={theme.colors.danger}>
+                  {error}
+                </Text>
+              </Animated.View>
+            ) : null}
+            {!error || connection.needsPairing ? (
+              <ConnectionNotice
+                status={connection}
+                onRetry={() => setRetryNonce((value) => value + 1)}
+                onPairAgain={() => router.push('/explore')}
+              />
+            ) : null}
 
-          {/* What happened while nobody was looking. Above the switch pill and
+            {/* What happened while nobody was looking. Above the switch pill and
               below the standing conditions: it is news rather than a state, but
               it is news the user came back for, so a transient answer to a
               gesture queues underneath it rather than the other way round. */}
-          {away.digest ? (
-            <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
-          ) : null}
+            {away.digest ? <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} /> : null}
 
-          {/* Last in the stack on purpose. An error bar and a connection notice
+            {/* Last in the stack on purpose. An error bar and a connection notice
               are standing conditions and keep the top of the column; this is a
               transient answer to a gesture and clears itself, so it queues
               underneath rather than pushing a condition out of the way. */}
-          {switchPill ? (
-            <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
-          ) : null}
-        </View>
+            {switchPill ? (
+              <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
+            ) : null}
+          </View>
 
-        <View style={styles.terminalArea}>
-          {/* The two-finger tab swipe is recognised by the canvas itself, as one
+          <View style={styles.terminalArea}>
+            {/* The two-finger tab swipe is recognised by the canvas itself, as one
               more gesture simultaneous with its pan and pinch -- React Native's
               touches never see it. See `useTabSwipe` for the measurements. */}
-          <View style={styles.terminalSwipeArea}>
-            {/* The pane carousel, which a tab switch drives too: landing on a
+            <View style={styles.terminalSwipeArea}>
+              {/* The pane carousel, which a tab switch drives too: landing on a
                 tab lands on one of its panes. See `paneTransitionStyle` for why
                 the canvas underneath is never remounted. */}
-            <Animated.View style={[styles.terminalSwipeArea, paneTransitionStyle]}>
-              {chatViewShown ? (
-                <PaneChatView
-                  // Remounted per pane: the follow-the-latest position and which
-                  // tool runs are open belong to the transcript being read.
-                  key={selection.paneId}
-                  parts={partsForPane.parts}
-                  detail={paneView.detail}
-                  // `answered` is the gateway having said *something* about
-                  // this pane. Until it has, an empty transcript is a question
-                  // in flight rather than an empty pane.
-                  awaitingFirstParts={!partsForPane.answered}
-                  topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-                  bottomInset={composerVisible ? composerHeight : 0}
-                  canLoadEarlier={canLoadEarlierParts}
-                  loadingEarlier={loadingEarlierParts}
-                  onLoadEarlier={loadEarlierParts}
-                  onOpenAsset={openAssetById}
-                  onToggleDetail={paneView.toggleDetail}
-                />
-              ) : (
-                <TerminalBoundary
-                  resetKey={`${selection.paneId}:${agentOutput ? 'agent' : 'terminal'}`}
-                  background={terminalBackground}
-                  textColor={chromeText}>
-                  <TerminalPanel
-                    sessionId={data.sessionId}
-                    paneId={selection.paneId}
-                    output={output}
-                    mode={agentOutput ? 'agent' : 'terminal'}
-                    edgeToEdge
-                    // The whole composer reserves space, key row included: anything
-                    // it covers is unreachable, and the "jump to latest" pill sits
-                    // against this inset too.
+              <Animated.View style={[styles.terminalSwipeArea, paneTransitionStyle]}>
+                {chatViewShown ? (
+                  <PaneChatView
+                    // Remounted per pane: the follow-the-latest position and which
+                    // tool runs are open belong to the transcript being read.
+                    key={selection.paneId}
+                    parts={partsForPane.parts}
+                    detail={paneView.detail}
+                    // `answered` is the gateway having said *something* about
+                    // this pane. Until it has, an empty transcript is a question
+                    // in flight rather than an empty pane.
+                    awaitingFirstParts={!partsForPane.answered}
+                    topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
                     bottomInset={composerVisible ? composerHeight : 0}
-                    // Only a program that owns the screen gets one, and it is
-                    // the same clearance the reading view above uses, so the two
-                    // surfaces clear the same chrome by the same amount. Keyed
-                    // on the surface rather than on "is an editor": an agent
-                    // paints the whole screen too, and keying this on the editor
-                    // predicate is what slid an agent's output under the pill.
-                    topInset={paneOwnsScreen ? insets.top + NAV_HEADER_TOP_GAP + 54 : 0}
-                    // How many rows of the window are the live screen, so the
-                    // grid can rest an editor on the screen rather than on the
-                    // oldest frame of the ring-buffer history above it.
-                    screenRows={selectedPaneScreenRows}
-                    // Deliberately the *editor* predicate, not `paneOwnsScreen`,
-                    // even though the two describe the same alternate screen.
-                    //
-                    // This one decides whether the grid stops resolving a
-                    // truecolour scheme's defaults against the app theme (see
-                    // `terminalPaneTheme`). An editor owns its whole surface and
-                    // is unreadable resolved against the wrong side, which is
-                    // what card #685 measured. An agent is different in practice:
-                    // it paints some of its own colours and leaves the rest at
-                    // the default, and the owner reads it beside light app
-                    // chrome. Giving it its own surface turned the pane fully
-                    // dark inside a light app -- correct by the rule, wrong on
-                    // the screen, and reverted here on that evidence.
-                    //
-                    // The cost is stated rather than hidden: an agent that paints
-                    // a dark box of its own (codex's composer) still shows that
-                    // box against the app's paper. That is a narrower defect than
-                    // a whole pane in the wrong mode, and it wants its own fix.
-                    //
-                    // The tablet branch reached this same line independently, from
-                    // the other end of the same problem: forcing the terminal
-                    // theme turned a light Pad workspace into one large dark
-                    // rectangle. Two surfaces, two readers, one answer.
-                    ownsScreen={fullScreenPane}
-                    keyboardOffset={keyboardOffset}
-                    // The setting, not a point size: how big that is belongs to
-                    // `@/lib/terminal-text-size`, which is also where the rule
-                    // that the pinch never outlives this screen is written.
-                    textSize={terminalTextSize}
-                    // An editor pane's own read is always `history_size: 0`
-                    // (measured live, card #795) -- there is nothing earlier
-                    // for a pull to reach, so the affordance is refused
-                    // outright rather than trusted to the scroll-metric
-                    // fallback `hasEarlierTerminalOutput` already computes
-                    // (belt and suspenders: that fallback already lands on
-                    // `false` here, but a screen-owning pane must never be
-                    // able to arm this gesture on the strength of a metric
-                    // alone).
-                    canLoadEarlier={fullScreenPane ? false : canLoadEarlierOutput}
-                    historyRevision={historyRevision}
-                    loadingEarlier={loadingEarlierOutput}
-                    onLoadEarlier={loadEarlierOutput}
-                    onViewportReady={refreshOutput}
-                    historyIndicatorTopInset={insets.top + NAV_HEADER_TOP_GAP + 62}
-                    stickBottomNonce={stickBottomNonce}
-                    onFileLink={openFileLink}
-                    onTwoFingerSwipe={tabSwipe.onSwipe}
-                    screenFocused={isFocused}
-                    paneColumns={selectedPaneColumns}
+                    canLoadEarlier={canLoadEarlierParts}
+                    loadingEarlier={loadingEarlierParts}
+                    onLoadEarlier={loadEarlierParts}
+                    onOpenAsset={openAssetById}
+                    onToggleDetail={paneView.toggleDetail}
                   />
-                </TerminalBoundary>
-              )}
-            </Animated.View>
+                ) : (
+                  <TerminalBoundary
+                    resetKey={`${selection.paneId}:${agentOutput ? 'agent' : 'terminal'}`}
+                    background={terminalBackground}
+                    textColor={chromeText}>
+                    <TerminalPanel
+                      sessionId={data.sessionId}
+                      paneId={selection.paneId}
+                      output={output}
+                      mode={agentOutput ? 'agent' : 'terminal'}
+                      edgeToEdge
+                      // The whole composer reserves space, key row included: anything
+                      // it covers is unreachable, and the "jump to latest" pill sits
+                      // against this inset too.
+                      bottomInset={composerVisible ? composerHeight : 0}
+                      // Only a program that owns the screen gets one, and it is
+                      // the same clearance the reading view above uses, so the two
+                      // surfaces clear the same chrome by the same amount. Keyed
+                      // on the surface rather than on "is an editor": an agent
+                      // paints the whole screen too, and keying this on the editor
+                      // predicate is what slid an agent's output under the pill.
+                      topInset={paneOwnsScreen ? insets.top + NAV_HEADER_TOP_GAP + 54 : 0}
+                      // How many rows of the window are the live screen, so the
+                      // grid can rest an editor on the screen rather than on the
+                      // oldest frame of the ring-buffer history above it.
+                      screenRows={selectedPaneScreenRows}
+                      // Deliberately the *editor* predicate, not `paneOwnsScreen`,
+                      // even though the two describe the same alternate screen.
+                      //
+                      // This one decides whether the grid stops resolving a
+                      // truecolour scheme's defaults against the app theme (see
+                      // `terminalPaneTheme`). An editor owns its whole surface and
+                      // is unreadable resolved against the wrong side, which is
+                      // what card #685 measured. An agent is different in practice:
+                      // it paints some of its own colours and leaves the rest at
+                      // the default, and the owner reads it beside light app
+                      // chrome. Giving it its own surface turned the pane fully
+                      // dark inside a light app -- correct by the rule, wrong on
+                      // the screen, and reverted here on that evidence.
+                      //
+                      // The cost is stated rather than hidden: an agent that paints
+                      // a dark box of its own (codex's composer) still shows that
+                      // box against the app's paper. That is a narrower defect than
+                      // a whole pane in the wrong mode, and it wants its own fix.
+                      //
+                      // The tablet branch reached this same line independently, from
+                      // the other end of the same problem: forcing the terminal
+                      // theme turned a light Pad workspace into one large dark
+                      // rectangle. Two surfaces, two readers, one answer.
+                      ownsScreen={fullScreenPane}
+                      keyboardOffset={keyboardOffset}
+                      // The setting, not a point size: how big that is belongs to
+                      // `@/lib/terminal-text-size`, which is also where the rule
+                      // that the pinch never outlives this screen is written.
+                      textSize={terminalTextSize}
+                      // An editor pane's own read is always `history_size: 0`
+                      // (measured live, card #795) -- there is nothing earlier
+                      // for a pull to reach, so the affordance is refused
+                      // outright rather than trusted to the scroll-metric
+                      // fallback `hasEarlierTerminalOutput` already computes
+                      // (belt and suspenders: that fallback already lands on
+                      // `false` here, but a screen-owning pane must never be
+                      // able to arm this gesture on the strength of a metric
+                      // alone).
+                      canLoadEarlier={fullScreenPane ? false : canLoadEarlierOutput}
+                      historyRevision={historyRevision}
+                      loadingEarlier={loadingEarlierOutput}
+                      onLoadEarlier={loadEarlierOutput}
+                      onViewportReady={refreshOutput}
+                      historyIndicatorTopInset={insets.top + NAV_HEADER_TOP_GAP + 62}
+                      stickBottomNonce={stickBottomNonce}
+                      onFileLink={openFileLink}
+                      onTwoFingerSwipe={tabSwipe.onSwipe}
+                      screenFocused={isFocused}
+                      paneColumns={selectedPaneColumns}
+                    />
+                  </TerminalBoundary>
+                )}
+              </Animated.View>
+            </View>
           </View>
-        </View>
 
-        {attachmentMenuOpen && dock.attachEntry ? (
-          <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
-            <Pressable
-              accessibilityLabel={t`Close the attachment menu`}
-              onPress={() => setAttachmentMenuOpen(false)}
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
-        ) : null}
+          {attachmentMenuOpen && dock.attachEntry ? (
+            <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
+              <Pressable
+                accessibilityLabel={t`Close the attachment menu`}
+                onPress={() => setAttachmentMenuOpen(false)}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+          ) : null}
 
-        {/* Tap-outside, the half of dismissal a key press cannot cover on a
+          {/* Tap-outside, the half of dismissal a key press cannot cover on a
             phone. Under the composer overlay in the stack, so the panel's own
             rows still take their taps -- and bounded to the pane above it, so
             that the element a tap is aimed at is the one that gets it. */}
-        {slashPopup.open ? (
-          <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
-            <Pressable
-              accessibilityLabel={t`Close the command list`}
-              onPress={slashPopup.dismiss}
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
-        ) : null}
+          {slashPopup.open ? (
+            <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
+              <Pressable
+                accessibilityLabel={t`Close the command list`}
+                onPress={slashPopup.dismiss}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+          ) : null}
 
-        {/*
+          {/*
           The key row switched off, so its two entries come out here: bottom
           left, on the line the "jump to latest" pill keeps on the right, both
           of them 14 above the dock. The pane gets back the line the row was
@@ -2847,88 +2842,83 @@ export function ServerTerminalWorkspace({
           here should close the menu, the way a tap anywhere else on the pane
           does.
         */}
-        {composerVisible && dock.floatingActions && !isPadLayout ? (
-          <Animated.View
-            // The band across from it belongs to the pill, and a full-width
-            // invisible parent lying over it would have taken the pill's taps.
-            pointerEvents="box-none"
-            entering={fadeIn('micro')}
-            exiting={fadeOutDown('short')}
-            style={[
-              styles.floatingEntries,
-              { bottom: composerHeight + 14 },
-              composerKeyboardStyle,
-            ]}>
-            <View
+          {composerVisible && dock.floatingActions && !isPadLayout ? (
+            <Animated.View
+              // The band across from it belongs to the pill, and a full-width
+              // invisible parent lying over it would have taken the pill's taps.
+              pointerEvents="box-none"
+              entering={fadeIn('micro')}
+              exiting={fadeOutDown('short')}
               style={[
-                styles.floatingEntriesTray,
-                {
-                  backgroundColor: theme.colors.surfaceRaised,
-                },
+                styles.floatingEntries,
+                { bottom: composerHeight + 14 },
+                composerKeyboardStyle,
               ]}>
-              {paneEntries('transparent')}
-            </View>
-          </Animated.View>
-        ) : null}
-
-        {composerVisible ? (
-          <Animated.View
-            style={[
-              styles.composerOverlay,
-              isPadLayout && styles.padComposerOverlay,
-              composerKeyboardStyle,
-            ]}>
-            <EdgeFade edge="bottom" color={terminalBackground} style={styles.composerFade} />
-          {/* Both of these hang off the caret in an input that is not on screen
-              while a question is standing, so both go with it. */}
-          {mentionTrigger && dock.composer ? (
-            <View
-              style={[
-                styles.composerFloatingContent,
-                isPadLayout && styles.padComposerFloatingContent,
-              ]}>
-              <FileMentionPanel
-                hits={mentionHits}
-                query={mentionTrigger.query}
-                visibleRows={isPadLayout ? 3 : undefined}
-                onSelect={chooseMention}
-              />
-            </View>
+              <View
+                style={[
+                  styles.floatingEntriesTray,
+                  {
+                    backgroundColor: theme.colors.surfaceRaised,
+                  },
+                ]}>
+                {paneEntries('transparent')}
+              </View>
+            </Animated.View>
           ) : null}
-            {/* The pane's own command surface, above the dock so the keyboard
+
+          {composerVisible ? (
+            <Animated.View
+              style={[
+                styles.composerOverlay,
+                isPadLayout && styles.padComposerOverlay,
+                composerKeyboardStyle,
+              ]}>
+              <EdgeFade edge="bottom" color={terminalBackground} style={styles.composerFade} />
+              {/* Both of these hang off the caret in an input that is not on screen
+              while a question is standing, so both go with it. */}
+              {mentionTrigger && dock.composer ? (
+                <View
+                  style={[
+                    styles.composerFloatingContent,
+                    isPadLayout && styles.padComposerFloatingContent,
+                  ]}>
+                  <FileMentionPanel
+                    hits={mentionHits}
+                    query={mentionTrigger.query}
+                    visibleRows={isPadLayout ? 3 : undefined}
+                    onSelect={chooseMention}
+                  />
+                </View>
+              ) : null}
+              {/* The pane's own command surface, above the dock so the keyboard
                 never has to come down to read it. Everything about when it
                 opens, what it shows and what a tap inserts lives in
                 `composer-popup.ts`; this is only where it is hung. */}
-            {dock.composer ? (
-              <View
-                style={[
-                  styles.composerPopup,
-                  isPadLayout && styles.padComposerPopup,
-                ]}>
-                <ComposerPopup
-                  rows={slashPopup.rows}
-                  onPick={slashPopup.pick}
-                  testIDPrefix="slash-command"
-                />
-              </View>
-            ) : null}
-            {attachmentMenuOpen && dock.attachEntry && !keyboardMode ? (
-              <View
-                style={[
-                  styles.composerFloatingContent,
-                  isPadLayout && styles.padComposerFloatingContent,
-                ]}>
-                <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
-              </View>
-            ) : null}
-            {/*
+              {dock.composer ? (
+                <View style={[styles.composerPopup, isPadLayout && styles.padComposerPopup]}>
+                  <ComposerPopup
+                    rows={slashPopup.rows}
+                    onPick={slashPopup.pick}
+                    testIDPrefix="slash-command"
+                  />
+                </View>
+              ) : null}
+              {attachmentMenuOpen && dock.attachEntry && !keyboardMode ? (
+                <View
+                  style={[
+                    styles.composerFloatingContent,
+                    isPadLayout && styles.padComposerFloatingContent,
+                  ]}>
+                  <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
+                </View>
+              ) : null}
+              {/*
               The key row and the input share one blurred dock, so output fades
               out under a single surface instead of passing behind two floating
               pieces with a gap between them.
             */}
-            <GlassChrome
-              style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
-            {/*
+              <GlassChrome style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
+                {/*
               The dock's own height is a moving thing: an approval banner, the
               pane strip, the upload-wait row and a growing multiline input all
               live in here, and each of them used to change the dock's height
@@ -2938,107 +2928,107 @@ export function ServerTerminalWorkspace({
               surface covering it move together instead of the terminal snapping
               a beat after the dock.
             */}
-            <AnimatedSafeAreaView
-              edges={['bottom']}
-              layout={dockRowLayout}
-              onLayout={(event: LayoutChangeEvent) => {
-                const nextHeight = Math.ceil(event.nativeEvent.layout.height);
-                setComposerHeight((current) => (current === nextHeight ? current : nextHeight));
-              }}
-              style={[styles.composerSafeArea, isPadLayout && styles.padComposerSafeArea]}>
-            {/* Inside the dock rather than floating over the pane: the dock is
+                <AnimatedSafeAreaView
+                  edges={['bottom']}
+                  layout={dockRowLayout}
+                  onLayout={(event: LayoutChangeEvent) => {
+                    const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+                    setComposerHeight((current) => (current === nextHeight ? current : nextHeight));
+                  }}
+                  style={[styles.composerSafeArea, isPadLayout && styles.padComposerSafeArea]}>
+                  {/* Inside the dock rather than floating over the pane: the dock is
                 measured into `composerHeight`, so the terminal reserves room
                 for the banner instead of having its last lines covered by it --
                 the same lesson the quick-actions pill taught. */}
-            <ApprovalBanner
-              approval={approval.state.approval}
-              answeringIndex={approval.state.answeringIndex}
-              error={approval.state.error}
-              onAnswer={approval.answer}
-              onDismissError={approval.dismissError}
-              // The way out of the question, for exactly as long as the key row
-              // that normally carries it is standing down for the banner.
-              onEscape={dock.bannerEscape ? () => void sendTerminalKey(escapeKey) : undefined}
-              escapeDisabled={
-                connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)
-              }
-              escapeSending={sendingKey === escapeKey.key}
-            />
-            {dock.paneChips && !isPadLayout ? (
-              <Animated.ScrollView
-                ref={paneStripRef}
-                horizontal
-                keyboardShouldPersistTaps="always"
-                showsHorizontalScrollIndicator={false}
-                scrollEventThrottle={32}
-                onScroll={(event) => {
-                  paneStripOffsetRef.current = event.nativeEvent.contentOffset.x;
-                }}
-                onLayout={(event: LayoutChangeEvent) => {
-                  paneStripViewportRef.current = event.nativeEvent.layout.width;
-                  revealActivePaneChip();
-                }}
-                // The strip appears when a tab grows a second pane and leaves
-                // when the on-screen keyboard takes the dock, or when an
-                // approval clears the dock down to its own question. All three
-                // used to be hard cuts, and the exit matters more than the
-                // entrance: it is what the dock's height travels behind.
-                entering={fadeIn('micro')}
-                exiting={fadeOutDown('short')}
-                style={styles.phonePaneStripViewport}
-                contentContainerStyle={styles.paneStrip}>
-                {paneChips}
-              </Animated.ScrollView>
-            ) : null}
-            {dock.virtualKeyboard ? (
-              // Rises out of the dock the way a keyboard does, and leaves the
-              // same way: this swap replaces the whole key row, and a control
-              // this large appearing between two frames read as a glitch.
-              <Animated.View entering={riseIn()} exiting={fadeOutDown('short')}>
-                <VirtualKeyboard
-                  disabled={connection.phase !== 'connected' || !selectedPane}
-                  onText={typeText}
-                  onKey={typeKey}
-                  onClose={() => setKeyboardMode(false)}
-                  shortcuts={dock.keysInKeyboard ? terminalKeyStrip : undefined}
-                />
-              </Animated.View>
-            ) : null}
-            {/* The way back to the composer without putting the keyboard away.
+                  <ApprovalBanner
+                    approval={approval.state.approval}
+                    answeringIndex={approval.state.answeringIndex}
+                    error={approval.state.error}
+                    onAnswer={approval.answer}
+                    onDismissError={approval.dismissError}
+                    // The way out of the question, for exactly as long as the key row
+                    // that normally carries it is standing down for the banner.
+                    onEscape={dock.bannerEscape ? () => void sendTerminalKey(escapeKey) : undefined}
+                    escapeDisabled={
+                      connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)
+                    }
+                    escapeSending={sendingKey === escapeKey.key}
+                  />
+                  {dock.paneChips && !isPadLayout ? (
+                    <Animated.ScrollView
+                      ref={paneStripRef}
+                      horizontal
+                      keyboardShouldPersistTaps="always"
+                      showsHorizontalScrollIndicator={false}
+                      scrollEventThrottle={32}
+                      onScroll={(event) => {
+                        paneStripOffsetRef.current = event.nativeEvent.contentOffset.x;
+                      }}
+                      onLayout={(event: LayoutChangeEvent) => {
+                        paneStripViewportRef.current = event.nativeEvent.layout.width;
+                        revealActivePaneChip();
+                      }}
+                      // The strip appears when a tab grows a second pane and leaves
+                      // when the on-screen keyboard takes the dock, or when an
+                      // approval clears the dock down to its own question. All three
+                      // used to be hard cuts, and the exit matters more than the
+                      // entrance: it is what the dock's height travels behind.
+                      entering={fadeIn('micro')}
+                      exiting={fadeOutDown('short')}
+                      style={styles.phonePaneStripViewport}
+                      contentContainerStyle={styles.paneStrip}>
+                      {paneChips}
+                    </Animated.ScrollView>
+                  ) : null}
+                  {dock.virtualKeyboard ? (
+                    // Rises out of the dock the way a keyboard does, and leaves the
+                    // same way: this swap replaces the whole key row, and a control
+                    // this large appearing between two frames read as a glitch.
+                    <Animated.View entering={riseIn()} exiting={fadeOutDown('short')}>
+                      <VirtualKeyboard
+                        disabled={connection.phase !== 'connected' || !selectedPane}
+                        onText={typeText}
+                        onKey={typeKey}
+                        onClose={() => setKeyboardMode(false)}
+                        shortcuts={dock.keysInKeyboard ? terminalKeyStrip : undefined}
+                      />
+                    </Animated.View>
+                  ) : null}
+                  {/* The way back to the composer without putting the keyboard away.
                 Closing the keyboard was the only route to it, which on an
                 editor meant giving up `esc`, `:w` and the Ctrl chords for as
                 long as it took to paste a line. A single control, so it floats
                 in the dock's corner rather than taking a row -- the same rent
                 argument as `floatingActions`. */}
-            {dock.composerEntry ? (
-              <Animated.View
-                entering={fadeIn('micro')}
-                exiting={fadeOutDown('short')}
-                layout={dockRowLayout}
-                style={styles.composerEntryRow}>
-                <PressableScale
-                  accessibilityLabel={t`Write a line`}
-                  feedback="selection"
-                  pressedScale={0.9}
-                  onPress={() => setComposerRevealed(true)}
-                  style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
-                  <PenLine size={16} color={chromeText} />
-                </PressableScale>
-              </Animated.View>
-            ) : null}
-            {!dock.virtualKeyboard ? (
-              <>
-            {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
-              <Animated.View
-                entering={fadeInDown('short')}
-                exiting={fadeOutDown('short')}
-                layout={dockRowLayout}
-                style={styles.keyRowWrap}>
-                {padPaneSwitcher}
-                {paneEntries(chromeGlass)}
-              </Animated.View>
-            ) : null}
-            {/* The row exists to carry the terminal keys, so switching them off
+                  {dock.composerEntry ? (
+                    <Animated.View
+                      entering={fadeIn('micro')}
+                      exiting={fadeOutDown('short')}
+                      layout={dockRowLayout}
+                      style={styles.composerEntryRow}>
+                      <PressableScale
+                        accessibilityLabel={t`Write a line`}
+                        feedback="selection"
+                        pressedScale={0.9}
+                        onPress={() => setComposerRevealed(true)}
+                        style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+                        <PenLine size={16} color={chromeText} />
+                      </PressableScale>
+                    </Animated.View>
+                  ) : null}
+                  {!dock.virtualKeyboard ? (
+                    <>
+                      {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
+                        <Animated.View
+                          entering={fadeInDown('short')}
+                          exiting={fadeOutDown('short')}
+                          layout={dockRowLayout}
+                          style={styles.keyRowWrap}>
+                          {padPaneSwitcher}
+                          {paneEntries(chromeGlass)}
+                        </Animated.View>
+                      ) : null}
+                      {/* The row exists to carry the terminal keys, so switching them off
                 takes the row with them and its two entries go and float in the
                 corner instead (see `floatingActions` below) -- a full-width
                 line of the pane is too much rent for two circles.
@@ -3050,67 +3040,67 @@ export function ServerTerminalWorkspace({
                 than vanishing, and the dock's own `listLayout` above carries
                 the height change into the terminal's bottom inset, so the
                 output falls in behind them instead of jumping a beat later. */}
-            {composerVisible && dock.keyRow ? (
-              <Animated.View
-                entering={fadeInDown('short')}
-                exiting={fadeOutDown('short')}
-                layout={dockRowLayout}
-                style={styles.keyRowWrap}>
-                {isPadLayout ? padPaneSwitcher : null}
-                {paneEntries(chromeGlass)}
-                <PressableScale
-                  accessibilityLabel={t`Open on-screen keyboard`}
-                  feedback="selection"
-                  pressedScale={0.9}
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setKeyboardMode(true);
-                  }}
-                  style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
-                  <KeyboardIcon size={16} color={chromeText} />
-                </PressableScale>
-                {terminalKeyStrip}
-              </Animated.View>
-            ) : null}
-            {/* The files staged for the next message. They are not lost while
+                      {composerVisible && dock.keyRow ? (
+                        <Animated.View
+                          entering={fadeInDown('short')}
+                          exiting={fadeOutDown('short')}
+                          layout={dockRowLayout}
+                          style={styles.keyRowWrap}>
+                          {isPadLayout ? padPaneSwitcher : null}
+                          {paneEntries(chromeGlass)}
+                          <PressableScale
+                            accessibilityLabel={t`Open on-screen keyboard`}
+                            feedback="selection"
+                            pressedScale={0.9}
+                            onPress={() => {
+                              Keyboard.dismiss();
+                              setKeyboardMode(true);
+                            }}
+                            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+                            <KeyboardIcon size={16} color={chromeText} />
+                          </PressableScale>
+                          {terminalKeyStrip}
+                        </Animated.View>
+                      ) : null}
+                      {/* The files staged for the next message. They are not lost while
                 the dock is cleared -- nothing is unstaged, no upload is
                 cancelled -- they are simply not on screen for as long as the
                 pane is asking about something else. */}
-            {dock.attachmentStrip ? (
-              <Animated.View
-                entering={fadeIn('micro')}
-                exiting={fadeOutDown('short')}
-                layout={dockRowLayout}>
-                <AttachmentStrip
-                  attachments={attachments}
-                  onRemove={removeAttachment}
-                  onRetry={retryUpload}
-                  onPreview={setPreviewAttachmentId}
-                  textColor={chromeText}
-                />
-              </Animated.View>
-            ) : null}
-            {/* Send tapped while a photo is still going up. Without this the
+                      {dock.attachmentStrip ? (
+                        <Animated.View
+                          entering={fadeIn('micro')}
+                          exiting={fadeOutDown('short')}
+                          layout={dockRowLayout}>
+                          <AttachmentStrip
+                            attachments={attachments}
+                            onRemove={removeAttachment}
+                            onRetry={retryUpload}
+                            onPreview={setPreviewAttachmentId}
+                            textColor={chromeText}
+                          />
+                        </Animated.View>
+                      ) : null}
+                      {/* Send tapped while a photo is still going up. Without this the
                 spinner on the button is indistinguishable from a slow gateway,
                 and the wait looks like a hang rather than a queue. */}
-            {dock.composer && sending && attachmentsUploading ? (
-              <Animated.View
-                // It used to appear between two frames and shove the composer
-                // down with it. The dock's own `listLayout` below takes the
-                // height change; this takes the row.
-                entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}
-                layout={dockRowLayout}
-                style={styles.uploadWait}>
-                <Spinner size="sm" color={theme.colors.textMuted} />
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Waiting for uploads to finish…</Trans>
-                </Text>
-              </Animated.View>
-            ) : null}
-              </>
-            ) : null}
-            {/* The input goes for an approval. It is the strongest of the "send
+                      {dock.composer && sending && attachmentsUploading ? (
+                        <Animated.View
+                          // It used to appear between two frames and shove the composer
+                          // down with it. The dock's own `listLayout` below takes the
+                          // height change; this takes the row.
+                          entering={fadeIn('micro')}
+                          exiting={fadeOut('micro')}
+                          layout={dockRowLayout}
+                          style={styles.uploadWait}>
+                          <Spinner size="sm" color={theme.colors.textMuted} />
+                          <Text variant="caption" color={theme.colors.textMuted}>
+                            <Trans>Waiting for uploads to finish…</Trans>
+                          </Text>
+                        </Animated.View>
+                      ) : null}
+                    </>
+                  ) : null}
+                  {/* The input goes for an approval. It is the strongest of the "send
                 the pane something else" surfaces, and a text field left under a
                 standing permission menu invites typing into a program that is
                 not reading typing. Nothing already drafted is lost -- `draft` is
@@ -3122,90 +3112,93 @@ export function ServerTerminalWorkspace({
                 can summon this back over the keys to paste a line without
                 giving up `esc` and the chords to do it. `dock.composer` is what
                 decides now, and it accounts for both. */}
-            {dock.composer ? (
-              <TerminalComposer
-                entering={fadeInDown('short')}
-                exiting={fadeOutDown('short')}
-                layout={dockRowLayout}
-                leading={
-                  dock.attachEntry ? (
-                    <PressableScale
-                      accessibilityLabel={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
-                      // A file picked now would join a message that is already on
-                      // its way out, so the menu closes for the length of the send.
-                      disabled={!selectedPane || sending}
-                      onPress={() => setAttachmentMenuOpen((open) => !open)}
-                      style={[
-                        composerStyles.button,
-                        { backgroundColor: chromeGlass },
-                        attachmentMenuOpen ? { backgroundColor: theme.colors.primarySubtle } : null,
-                      ]}>
-                      <Paperclip size={17} color={theme.colors.primary} />
-                    </PressableScale>
-                  ) : null
-                }
-                inputProps={{
-                  testID: 'terminal-composer-input',
-                  value: draft,
-                  onChangeText: setDraft,
-                  // The picker follows the caret, and takes Esc from a hardware
-                  // keyboard. Both are inert when no catalog is in hand.
-                  ...slashPopup.inputProps,
-                  // Both popups read the caret: the slash picker through its own
-                  // inputProps handler, the @ mention trigger through `caret`.
-                  // The spread must not eat the second one.
-                  onSelectionChange: (event) => {
-                    slashPopup.inputProps.onSelectionChange(event);
-                    setCaret(event.nativeEvent.selection.start);
-                  },
-                  editable: connection.phase === 'connected' && Boolean(selectedPane) && !sending,
-                  maxLength: 64 * 1024,
-                  autoCapitalize: 'sentences',
-                  // Names the surface, never the pane. The agent's name is already
-                  // in the header a few points above this field, and repeating it
-                  // here cost more than it said: a real agent title -- "分析
-                  // dots-hyprland 配置兼容性", or "check dots-hyprland config
-                  // compatibility", whose CJK half is double-width -- wrapped the
-                  // placeholder onto a second line and grew the composer to match,
-                  // on the one screen where
-                  // vertical space is worth most -- and on the Pad's compact
-                  // composer, which the tablet branch hit independently.
-                  placeholder: selectedAgent
-                    ? t`Send a message`
-                    : fullScreenPane
-                      ? t`Type into this editor`
-                      : t`Run a terminal command`,
-                }}
-                send={{
-                  accessibilityLabel: selectedAgent ? t`Send to agent` : t`Run command`,
-                  armed: Boolean(hasSendableContent && selectedPane),
-                  sending,
-                  disabled:
-                    connection.phase !== 'connected'
-                    || !hasSendableContent
-                    || !selectedPane
-                    || sending,
-                  onPress: () => void sendInput(),
-                }}
-              />
-            ) : null}
-            </AnimatedSafeAreaView>
-            </GlassChrome>
-          </Animated.View>
-        ) : null}
+                  {dock.composer ? (
+                    <TerminalComposer
+                      entering={fadeInDown('short')}
+                      exiting={fadeOutDown('short')}
+                      layout={dockRowLayout}
+                      leading={
+                        dock.attachEntry ? (
+                          <PressableScale
+                            accessibilityLabel={
+                              attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
+                            }
+                            // A file picked now would join a message that is already on
+                            // its way out, so the menu closes for the length of the send.
+                            disabled={!selectedPane || sending}
+                            onPress={() => setAttachmentMenuOpen((open) => !open)}
+                            style={[
+                              composerStyles.button,
+                              { backgroundColor: chromeGlass },
+                              attachmentMenuOpen
+                                ? { backgroundColor: theme.colors.primarySubtle }
+                                : null,
+                            ]}>
+                            <Paperclip size={17} color={theme.colors.primary} />
+                          </PressableScale>
+                        ) : null
+                      }
+                      inputProps={{
+                        testID: 'terminal-composer-input',
+                        value: draft,
+                        onChangeText: setDraft,
+                        // The picker follows the caret, and takes Esc from a hardware
+                        // keyboard. Both are inert when no catalog is in hand.
+                        ...slashPopup.inputProps,
+                        // Both popups read the caret: the slash picker through its own
+                        // inputProps handler, the @ mention trigger through `caret`.
+                        // The spread must not eat the second one.
+                        onSelectionChange: (event) => {
+                          slashPopup.inputProps.onSelectionChange(event);
+                          setCaret(event.nativeEvent.selection.start);
+                        },
+                        editable:
+                          connection.phase === 'connected' && Boolean(selectedPane) && !sending,
+                        maxLength: 64 * 1024,
+                        autoCapitalize: 'sentences',
+                        // Names the surface, never the pane. The agent's name is already
+                        // in the header a few points above this field, and repeating it
+                        // here cost more than it said: a real agent title -- "分析
+                        // dots-hyprland 配置兼容性", or "check dots-hyprland config
+                        // compatibility", whose CJK half is double-width -- wrapped the
+                        // placeholder onto a second line and grew the composer to match,
+                        // on the one screen where
+                        // vertical space is worth most -- and on the Pad's compact
+                        // composer, which the tablet branch hit independently.
+                        placeholder: selectedAgent
+                          ? t`Send a message`
+                          : fullScreenPane
+                            ? t`Type into this editor`
+                            : t`Run a terminal command`,
+                      }}
+                      send={{
+                        accessibilityLabel: selectedAgent ? t`Send to agent` : t`Run command`,
+                        armed: Boolean(hasSendableContent && selectedPane),
+                        sending,
+                        disabled:
+                          connection.phase !== 'connected' ||
+                          !hasSendableContent ||
+                          !selectedPane ||
+                          sending,
+                        onPress: () => void sendInput(),
+                      }}
+                    />
+                  ) : null}
+                </AnimatedSafeAreaView>
+              </GlassChrome>
+            </Animated.View>
+          ) : null}
 
-        {previewIndex >= 0 ? (
-          <ImagePreviewModal
-            images={previewImages}
-            initialIndex={previewIndex}
-            onClose={() => setPreviewAttachmentId(null)}
-          />
-        ) : null}
+          {previewIndex >= 0 ? (
+            <ImagePreviewModal
+              images={previewImages}
+              initialIndex={previewIndex}
+              onClose={() => setPreviewAttachmentId(null)}
+            />
+          ) : null}
 
-        {openAsset ? (
-          <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} />
-        ) : null}
-      </View>
+          {openAsset ? <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} /> : null}
+        </View>
         {simfarmSplit.previewWidth > 0 ? (
           <View
             style={[
@@ -3321,7 +3314,6 @@ function PaneChip({
 }
 
 function TerminalKeyButton({
-
   item,
   sending,
   disabled,
@@ -3447,7 +3439,6 @@ function TerminalKeyButton({
 }
 
 function ConnectionNotice({
-
   status,
   onRetry,
   onPairAgain,
@@ -3584,11 +3575,11 @@ function ConnectionNotice({
  */
 function sameServerData(current: ServerData, next: ServerData): boolean {
   return (
-    current.sessionId === next.sessionId
-    && entitySignature(current.workspaces) === entitySignature(next.workspaces)
-    && entitySignature(current.tabs) === entitySignature(next.tabs)
-    && entitySignature(current.panes) === entitySignature(next.panes)
-    && entitySignature(current.agents) === entitySignature(next.agents)
+    current.sessionId === next.sessionId &&
+    entitySignature(current.workspaces) === entitySignature(next.workspaces) &&
+    entitySignature(current.tabs) === entitySignature(next.tabs) &&
+    entitySignature(current.panes) === entitySignature(next.panes) &&
+    entitySignature(current.agents) === entitySignature(next.agents)
   );
 }
 
@@ -3631,9 +3622,9 @@ function entitySignature(entities: HerdrEntity[]): string {
 
 function sameSelection(current: Selection, next: Selection): boolean {
   return (
-    current.workspaceId === next.workspaceId
-    && current.tabId === next.tabId
-    && current.paneId === next.paneId
+    current.workspaceId === next.workspaceId &&
+    current.tabId === next.tabId &&
+    current.paneId === next.paneId
   );
 }
 

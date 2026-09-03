@@ -242,7 +242,12 @@ describe('normalizeSshHostRecord', () => {
   });
 
   test('a list drops what it cannot read and de-duplicates ids', () => {
-    const records = normalizeSshHostRecords([RECORD, { junk: true }, { ...RECORD, label: 'dup' }, null]);
+    const records = normalizeSshHostRecords([
+      RECORD,
+      { junk: true },
+      { ...RECORD, label: 'dup' },
+      null,
+    ]);
     expect(records.map((record) => record.label)).toEqual(['Build box']);
     expect(normalizeSshHostRecords('nope')).toEqual([]);
   });
@@ -306,7 +311,9 @@ describe('compareSshHostKey', () => {
     // And the other way round, should a presenter ever omit it.
     expect(compareSshHostKey(KEY, { ...KEY, publicKey: '' })).toBe('match');
     // The fingerprint still decides.
-    expect(compareSshHostKey({ ...KEY, publicKey: '' }, { ...KEY, fingerprint: 'SHA256:zzz' })).toBe('mismatch');
+    expect(
+      compareSshHostKey({ ...KEY, publicKey: '' }, { ...KEY, fingerprint: 'SHA256:zzz' })
+    ).toBe('mismatch');
   });
 });
 

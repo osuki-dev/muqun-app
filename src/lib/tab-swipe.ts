@@ -170,7 +170,10 @@ export function classifyTwoFingerGesture(
   // Opposition first. A gesture that changed the gap more than it moved the
   // pair is a pinch however far sideways it also drifted, and the canvas has
   // already zoomed for it.
-  if (Math.abs(separation) >= TAB_SWIPE_PINCH_SEPARATION && Math.abs(separation) > Math.abs(shiftX)) {
+  if (
+    Math.abs(separation) >= TAB_SWIPE_PINCH_SEPARATION &&
+    Math.abs(separation) > Math.abs(shiftX)
+  ) {
     return 'pinch';
   }
 
@@ -182,7 +185,10 @@ export function classifyTwoFingerGesture(
   // already been called a pinch, but not always -- fingers stacked vertically
   // can shear past each other with the gap barely changing.
   if (Math.sign(deltaAX) !== Math.sign(deltaBX)) return 'none';
-  if (Math.min(Math.abs(deltaAX), Math.abs(deltaBX)) < Math.abs(shiftX) * TAB_SWIPE_TOGETHER_SHARE) {
+  if (
+    Math.min(Math.abs(deltaAX), Math.abs(deltaBX)) <
+    Math.abs(shiftX) * TAB_SWIPE_TOGETHER_SHARE
+  ) {
     return 'none';
   }
 

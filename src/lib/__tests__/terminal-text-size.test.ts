@@ -103,7 +103,7 @@ function terminal(
   };
 }
 
-describe('the setting is every pane\'s starting point', () => {
+describe("the setting is every pane's starting point", () => {
   test('each size names its own point size', () => {
     expect(terminalFontSize('compact')).toBe(TERMINAL_TEXT_SIZE_POINTS.compact);
     expect(terminalFontSize('default')).toBe(TERMINAL_TEXT_SIZE_POINTS.default);
@@ -123,7 +123,7 @@ describe('the setting is every pane\'s starting point', () => {
     expect(after.fontSize).toBe(TERMINAL_TEXT_SIZE_POINTS.large);
   });
 
-  test('the pane\'s own width does not get a say (#643)', () => {
+  test("the pane's own width does not get a say (#643)", () => {
     // The whole of card #643. Panes used to open fitted to their column count,
     // so on a ~400pt phone a 65-column pane opened near 0.69, an 80-column pane
     // clamped to 0.62 and a 242-column one clamped there too: three glyph sizes

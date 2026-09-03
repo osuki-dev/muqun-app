@@ -34,14 +34,13 @@ tags:
 ---
 - runFlow: ../subflows/launch-home.yaml
 
-
 # Settings is a control in the home header now, not a drawer row (card #664).
 # The drawer is switched off entirely, so there is no hamburger and no edge
 # gesture -- which also retires the Android problem card #564 worked around:
 # a swipe from the left edge is the system Back gesture and backgrounded the app.
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "SERVERS"
+    visible: 'SERVERS'
     timeout: 8000
 - runFlow: ../subflows/dismiss-logbox.yaml
 
@@ -51,9 +50,9 @@ tags:
 # rather than showing a bare heading over nothing. The home-screen preference
 # that used to be a one-row `HOME SCREEN` section of its own now sits in this
 # card, under the list it describes.
-- assertVisible: "No servers paired yet"
-- assertVisible: "Use the scan button on the home screen to add one."
-- assertVisible: "Panes on server cards"
+- assertVisible: 'No servers paired yet'
+- assertVisible: 'Use the scan button on the home screen to add one.'
+- assertVisible: 'Panes on server cards'
 
 # ── Appearance: the theme pack, in its own sheet ──────────────────────────
 # Card #683 moved the preview cards off the page. What is on the page is a
@@ -79,30 +78,30 @@ tags:
 # the suite launches with `clearState`, so the detour stays inside this file.
 - scrollUntilVisible:
     element:
-      text: "APPEARANCE"
+      text: 'APPEARANCE'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Theme, Osuki"
+      text: 'Theme, Osuki'
     direction: DOWN
-- tapOn: "Theme, Osuki"
+- tapOn: 'Theme, Osuki'
 # The sheet is full height. The first alternatives stay above the fold; the
 # complete thirty-two-pack registry is checked by the theme registry unit test.
 - extendedWaitUntil:
-    visible: "Ayu"
+    visible: 'Ayu'
     timeout: 8000
-- assertVisible: "Catppuccin"
-- assertVisible: "Dracula"
+- assertVisible: 'Catppuccin'
+- assertVisible: 'Dracula'
 - assertVisible:
-    text: "Osuki"
+    text: 'Osuki'
     selected: true
-- tapOn: "Catppuccin"
+- tapOn: 'Catppuccin'
 - waitForAnimationToEnd:
     timeout: 1500
 # Applied immediately and the sheet leaves on the choice, so the proof it landed
 # is the row on the page behind it naming the new pack.
 - extendedWaitUntil:
-    visible: "Theme, Catppuccin"
+    visible: 'Theme, Catppuccin'
     timeout: 8000
 
 # ── Appearance: colour mode round trip ────────────────────────────────────
@@ -111,28 +110,28 @@ tags:
 # the animation before reading the state back.
 - scrollUntilVisible:
     element:
-      text: "Color mode"
+      text: 'Color mode'
     direction: DOWN
 - assertVisible:
-    text: "SYSTEM"
+    text: 'SYSTEM'
     selected: true
-- tapOn: "DARK"
+- tapOn: 'DARK'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    text: "DARK"
+    text: 'DARK'
     selected: true
 - assertVisible:
-    text: "SYSTEM"
+    text: 'SYSTEM'
     selected: false
-- tapOn: "SYSTEM"
+- tapOn: 'SYSTEM'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    text: "SYSTEM"
+    text: 'SYSTEM'
     selected: true
 - assertVisible:
-    text: "DARK"
+    text: 'DARK'
     selected: false
 
 # ── Appearance: the language sheet, round tripped ─────────────────────────
@@ -150,68 +149,68 @@ tags:
 # the picker really offers the other eight is asserted on the list itself.
 - scrollUntilVisible:
     element:
-      text: "Language, (System|English)"
+      text: 'Language, (System|English)'
     direction: DOWN
-- tapOn: "Language, (System|English)"
+- tapOn: 'Language, (System|English)'
 - extendedWaitUntil:
-    visible: "繁體中文"
+    visible: '繁體中文'
     timeout: 8000
-- assertVisible: "日本語"
-- assertVisible: "한국어"
+- assertVisible: '日本語'
+- assertVisible: '한국어'
 - tapOn:
-    id: "language-option-en"
+    id: 'language-option-en'
 - waitForAnimationToEnd:
     timeout: 1500
 - extendedWaitUntil:
-    visible: "Language, English"
+    visible: 'Language, English'
     timeout: 8000
 
 # And back, through the same sheet, which now opens on the pinned language.
-- tapOn: "Language, English"
+- tapOn: 'Language, English'
 - extendedWaitUntil:
-    visible: "繁體中文"
+    visible: '繁體中文'
     timeout: 8000
 - assertVisible:
-    text: "English"
+    text: 'English'
     selected: true
 - assertVisible:
-    text: "System"
+    text: 'System'
     selected: false
 - tapOn:
-    id: "language-option-system"
+    id: 'language-option-system'
 - waitForAnimationToEnd:
     timeout: 1500
 - extendedWaitUntil:
     visible:
-      id: "settings-language-row"
+      id: 'settings-language-row'
     timeout: 8000
 
 # System can immediately switch the whole app away from English. Reopen and
 # prove the stored mode through locale-neutral ids, then pin English again so
 # the remaining cross-platform settings assertions keep one language.
 - tapOn:
-    id: "settings-language-row"
+    id: 'settings-language-row'
 - extendedWaitUntil:
     visible:
-      id: "language-option-system-selected"
+      id: 'language-option-system-selected'
     timeout: 8000
 - assertVisible:
-    id: "language-option-system-selected"
+    id: 'language-option-system-selected'
 - tapOn:
-    id: "language-option-en"
+    id: 'language-option-en'
 - extendedWaitUntil:
     visible:
-      id: "settings-language-row"
+      id: 'settings-language-row'
     timeout: 8000
 
 # ── Terminal ──────────────────────────────────────────────────────────────
 - scrollUntilVisible:
     element:
-      text: "TERMINAL"
+      text: 'TERMINAL'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Terminal key row"
+      text: 'Terminal key row'
     direction: DOWN
 
 # The agent view default is behind `AGENT_DEFAULT_VIEW_SETTING_ENABLED` (#659):
@@ -225,54 +224,54 @@ tags:
 # the wrong end. Android never showed it: there SecureStore lives in the app
 # data dir. Put it back first -- a no-op when it is already DEFAULT.
 - tapOn:
-    text: "DEFAULT"
+    text: 'DEFAULT'
 - waitForAnimationToEnd:
     timeout: 1200
 
 # ── Terminal: text size round trip ────────────────────────────────────────
 - scrollUntilVisible:
     element:
-      text: "COMPACT"
+      text: 'COMPACT'
     direction: DOWN
 - assertVisible:
-    text: "DEFAULT"
+    text: 'DEFAULT'
     selected: true
-- tapOn: "COMPACT"
+- tapOn: 'COMPACT'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    text: "COMPACT"
+    text: 'COMPACT'
     selected: true
 - assertVisible:
-    text: "DEFAULT"
+    text: 'DEFAULT'
     selected: false
 
 # ── Alerts, and one switch driven end to end ──────────────────────────────
 - scrollUntilVisible:
     element:
-      text: "ALERTS"
+      text: 'ALERTS'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Haptic feedback"
+      text: 'Haptic feedback'
     direction: DOWN
-- assertVisible: "Gateway notifications"
+- assertVisible: 'Gateway notifications'
 - assertVisible:
-    id: "toggle-Haptic feedback"
+    id: 'toggle-Haptic feedback'
     checked: true
 - tapOn:
-    id: "toggle-Haptic feedback"
+    id: 'toggle-Haptic feedback'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    id: "toggle-Haptic feedback"
+    id: 'toggle-Haptic feedback'
     checked: false
 - tapOn:
-    id: "toggle-Haptic feedback"
+    id: 'toggle-Haptic feedback'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    id: "toggle-Haptic feedback"
+    id: 'toggle-Haptic feedback'
     checked: true
 
 # One row is deliberately absent from this file. "Live Activity" is an iOS Lock
@@ -283,13 +282,13 @@ tags:
 # ── Security ──────────────────────────────────────────────────────────────
 - scrollUntilVisible:
     element:
-      text: "SECURITY"
+      text: 'SECURITY'
     direction: DOWN
 # The label names whatever the device offers (Face ID, biometrics, a passcode),
 # so only the stable half of it is matched.
 - scrollUntilVisible:
     element:
-      text: "(?i)unlock with .*"
+      text: '(?i)unlock with .*'
     direction: DOWN
 
 # ── About: the support rows and the two feedback rows are one section now ─
@@ -300,23 +299,23 @@ tags:
 # row's name.
 - scrollUntilVisible:
     element:
-      text: "ABOUT"
+      text: 'ABOUT'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Report a bug or request a feature.*"
+      text: 'Report a bug or request a feature.*'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Contact us.*"
+      text: 'Contact us.*'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Privacy policy"
+      text: 'Privacy policy'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Muqun settings stay on this device."
+      text: 'Muqun settings stay on this device.'
     direction: DOWN
 
 # ── The settings survive a relaunch ───────────────────────────────────────
@@ -328,9 +327,9 @@ tags:
 - waitForAnimationToEnd:
     timeout: 3000
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "SERVERS"
+    visible: 'SERVERS'
     timeout: 8000
 
 # The theme survives, and then goes back to Osuki so the app is left as the rest
@@ -340,36 +339,36 @@ tags:
 # sheet opens.
 - scrollUntilVisible:
     element:
-      text: "Theme, Catppuccin"
+      text: 'Theme, Catppuccin'
     direction: DOWN
-- tapOn: "Theme, Catppuccin"
+- tapOn: 'Theme, Catppuccin'
 - extendedWaitUntil:
-    visible: "Ayu"
+    visible: 'Ayu'
     timeout: 8000
 - assertVisible:
-    text: "Catppuccin"
+    text: 'Catppuccin'
     selected: true
-- tapOn: "Osuki"
+- tapOn: 'Osuki'
 - waitForAnimationToEnd:
     timeout: 1500
 - extendedWaitUntil:
-    visible: "Theme, Osuki"
+    visible: 'Theme, Osuki'
     timeout: 8000
 
 - scrollUntilVisible:
     element:
-      text: "COMPACT"
+      text: 'COMPACT'
     direction: DOWN
 - assertVisible:
-    text: "COMPACT"
+    text: 'COMPACT'
     selected: true
 
 # ── And back to the default ───────────────────────────────────────────────
-- tapOn: "DEFAULT"
+- tapOn: 'DEFAULT'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    text: "DEFAULT"
+    text: 'DEFAULT'
     selected: true
 
 # ── Quick actions management, reached from Settings ───────────────────────
@@ -377,22 +376,22 @@ tags:
 # few pixels between runs, and this row sits right at that boundary.
 - scrollUntilVisible:
     element:
-      text: "Quick actions, Add commands and custom key combinations."
+      text: 'Quick actions, Add commands and custom key combinations.'
     direction: DOWN
-- tapOn: "Quick actions, Add commands and custom key combinations."
+- tapOn: 'Quick actions, Add commands and custom key combinations.'
 - extendedWaitUntil:
-    visible: "Quick action settings"
+    visible: 'Quick action settings'
     timeout: 8000
-- assertVisible: "Close quick actions"
-- tapOn: "Close quick actions"
+- assertVisible: 'Close quick actions'
+- tapOn: 'Close quick actions'
 # The list keeps its mid-page scroll position on return, so wait on the header
 # rather than a row that may be above the fold.
 - extendedWaitUntil:
-    visible: "Settings"
+    visible: 'Settings'
     timeout: 8000
 
 # ── Back out to home ──────────────────────────────────────────────────────
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 8000

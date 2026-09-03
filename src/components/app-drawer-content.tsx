@@ -30,7 +30,6 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
 
-
   const router = useRouter();
   const theme = useThemeTokens();
   const pathname = usePathname();
@@ -46,7 +45,14 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
     router.push(href);
   }
 
-  const items: { key: string; label: string; detail: string; icon: typeof LayoutGrid; href: Href; active: boolean }[] = [
+  const items: {
+    key: string;
+    label: string;
+    detail: string;
+    icon: typeof LayoutGrid;
+    href: Href;
+    active: boolean;
+  }[] = [
     {
       key: 'servers',
       label: t`Servers`,

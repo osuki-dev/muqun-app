@@ -168,7 +168,9 @@ describe('reading the gateway answer', () => {
 
   test('hits come through with path, name and kind', () => {
     expect(
-      fileMentionHitsFromResponse(envelope([{ path: 'src/theme.ts', name: 'theme.ts', kind: 'text' }]))
+      fileMentionHitsFromResponse(
+        envelope([{ path: 'src/theme.ts', name: 'theme.ts', kind: 'text' }])
+      )
     ).toEqual([{ path: 'src/theme.ts', name: 'theme.ts', kind: 'text' }]);
   });
 
@@ -177,7 +179,9 @@ describe('reading the gateway answer', () => {
   });
 
   test('an entry with no path is not a file and is dropped', () => {
-    expect(fileMentionHitsFromResponse(envelope([{ name: 'x', kind: 'text' }, 7, null]))).toEqual([]);
+    expect(fileMentionHitsFromResponse(envelope([{ name: 'x', kind: 'text' }, 7, null]))).toEqual(
+      []
+    );
   });
 
   test('a missing name is derived from the path, and a missing kind reads as text', () => {

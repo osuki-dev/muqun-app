@@ -203,7 +203,9 @@ describe('(a) the window is a supersequence of what arrived, in arrival order', 
       const before = rows(window);
       const after = rows(foldPaneRead(window, pane.screen(), 'frame', MAXIMUM));
       // Everything the window kept from before sits at its head, in order.
-      const kept = before.filter((_, index) => index < after.length && before[index] === after[index]);
+      const kept = before.filter(
+        (_, index) => index < after.length && before[index] === after[index]
+      );
       expect(kept.length).toBe(Math.min(before.length, kept.length));
       window = after.join('\n');
     }
@@ -358,7 +360,12 @@ describe('(c) pinned furniture is never written into history', () => {
 
 describe('(d) identical adjacent blocks never accumulate', () => {
   test('a block folded on top of itself is written down once', () => {
-    const block = ['⏺ Bash(git status)', '  ⎿ === branch ===', '     ## main', '     ?? worktrees/'];
+    const block = [
+      '⏺ Bash(git status)',
+      '  ⎿ === branch ===',
+      '     ## main',
+      '     ?? worktrees/',
+    ];
     const held = ['before', ...block].join('\n');
     const folded = rows(foldPaneRead(held, block.join('\n'), 'frame', MAXIMUM));
     expect(adjacentRepeat(folded)).toBeNull();
@@ -448,7 +455,11 @@ describe("herdr's own duplication, which is not ours to fix", () => {
   }
 
   test('a head that repeats verbatim further down the same read is dropped', () => {
-    for (const [block, distance] of [[22, 43], [26, 104], [5, 100]] as const) {
+    for (const [block, distance] of [
+      [22, 43],
+      [26, 104],
+      [5, 100],
+    ] as const) {
       const read = stitched(block, distance, 200);
       const clean = rows(sanitizePaneRead(read.join('\n')));
       expect({ block, distance, rows: clean.length }).toEqual({ block, distance, rows: 200 });
@@ -474,8 +485,10 @@ describe("herdr's own duplication, which is not ours to fix", () => {
     const read = stitched(22, 43, 200).join('\n');
     for (const origin of ['refresh', 'page', 'frame'] as const) {
       const held = rows(foldPaneRead('transcript row 0', read, origin, MAXIMUM));
-      expect({ origin, duplicated: held.filter((r) => r === 'transcript row 43').length })
-        .toEqual({ origin, duplicated: 1 });
+      expect({ origin, duplicated: held.filter((r) => r === 'transcript row 43').length }).toEqual({
+        origin,
+        duplicated: 1,
+      });
     }
   });
 });
