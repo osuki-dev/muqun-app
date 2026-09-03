@@ -1,19 +1,18 @@
-import { Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { StatusBar } from 'expo-status-bar';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
 import {
-  ChevronRight,
+  Code,
   ExternalLink,
   Info,
-  Mail,
   MessageSquare,
   Settings2,
   ShieldCheck,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -31,7 +30,7 @@ import {
 import { SettingsSecurity } from '@/components/settings-security';
 import { SettingsServers } from '@/components/settings-servers';
 import { SettingsTerminal } from '@/components/settings-terminal';
-import { FEEDBACK_URL, PRIVACY_POLICY_URL, SUPPORT_EMAIL } from '@/constants/links';
+import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL } from '@/constants/links';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { feedback } from '@/lib/feedback';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
@@ -90,7 +89,6 @@ export default function SettingsScreen() {
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const { showToast } = useToast();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -142,21 +140,11 @@ export default function SettingsScreen() {
     });
   }
 
-  async function openSupportEmail() {
+  async function openSource() {
     await feedback('selection');
-    const subject = encodeURIComponent(`Muqun ${version} feedback`);
-    // A mail client is the only sensible handler, so fall back to showing the
-    // address if the device has none configured.
-    const opened = await Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${subject}`)
-      .then(() => true)
-      .catch(() => false);
-    if (!opened) {
-      showToast({
-        variant: 'info',
-        title: t`No mail app configured`,
-        message: t`Reach us at ${SUPPORT_EMAIL}.`,
-      });
-    }
+    await openBrowserAsync(SOURCE_URL, {
+      presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
+    });
   }
 
   return (
@@ -211,11 +199,11 @@ export default function SettingsScreen() {
                       onPress={() => void openFeedback()}
                     />
                     <SettingsNavRow
-                      icon={Mail}
-                      trailing={ChevronRight}
-                      label={t`Contact us`}
-                      detail={SUPPORT_EMAIL}
-                      onPress={() => void openSupportEmail()}
+                      icon={Code}
+                      trailing={ExternalLink}
+                      label={t`Source code`}
+                      detail={t`Muqun is open source. Read it, or build it yourself.`}
+                      onPress={() => void openSource()}
                     />
                     <SettingsNavRow
                       icon={ShieldCheck}

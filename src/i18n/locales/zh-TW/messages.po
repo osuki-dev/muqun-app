@@ -529,10 +529,6 @@ msgstr "正在透過 SSH 連線…"
 msgid "Connecting to {address}"
 msgstr "正在連線至 {address}"
 
-#: src/app/settings.tsx
-msgid "Contact us"
-msgstr "聯絡我們"
-
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1436,6 +1432,10 @@ msgstr "牧群會跟隨手機設定的語言。"
 msgid "Muqun is locked"
 msgstr "牧群已鎖定"
 
+#: src/app/settings.tsx
+msgid "Muqun is open source. Read it, or build it yourself."
+msgstr "Muqun 是開源的。你可以閱讀原始碼，或自行建置。"
+
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun 透過相機讀取 Gateway 的 QR 碼，不會錄下任何內容。"
@@ -1533,10 +1533,6 @@ msgstr "沒有符合的檔案。"
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "還沒有 Gateway？"
-
-#: src/app/settings.tsx
-msgid "No mail app configured"
-msgstr "尚未設定郵件 App"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1884,10 +1880,6 @@ msgstr "快速動作"
 #: src/lib/demo-gateway.ts
 msgid "Quit"
 msgstr "離開"
-
-#: src/app/settings.tsx
-msgid "Reach us at {SUPPORT_EMAIL}."
-msgstr "請寫信到 {SUPPORT_EMAIL} 與我們聯絡。"
 
 #: src/app/commands.tsx
 msgid "Reached the same way as a browser, so the same tunnel limit applies."
@@ -2384,6 +2376,10 @@ msgstr "有些檔案沒有上傳成功"
 #: src/components/app-error-boundary.tsx
 msgid "Something went wrong"
 msgstr "發生錯誤"
+
+#: src/app/settings.tsx
+msgid "Source code"
+msgstr "原始碼"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Space"

@@ -529,10 +529,6 @@ msgstr "Conectando por SSH…"
 msgid "Connecting to {address}"
 msgstr "Conectando a {address}"
 
-#: src/app/settings.tsx
-msgid "Contact us"
-msgstr "Contacte-nos"
-
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1436,6 +1432,10 @@ msgstr "O Muqun segue o idioma definido no telemóvel."
 msgid "Muqun is locked"
 msgstr "O Muqun está bloqueado"
 
+#: src/app/settings.tsx
+msgid "Muqun is open source. Read it, or build it yourself."
+msgstr "O Muqun é de código aberto. Leia-o ou compile-o você mesmo."
+
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "O Muqun lê o código QR do Gateway pela câmara. Nada é gravado."
@@ -1533,10 +1533,6 @@ msgstr "Nenhum ficheiro corresponde."
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "Ainda não tem um Gateway?"
-
-#: src/app/settings.tsx
-msgid "No mail app configured"
-msgstr "Nenhuma app de e-mail configurada"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1884,10 +1880,6 @@ msgstr "Ações rápidas"
 #: src/lib/demo-gateway.ts
 msgid "Quit"
 msgstr "Sair"
-
-#: src/app/settings.tsx
-msgid "Reach us at {SUPPORT_EMAIL}."
-msgstr "Contacte-nos através de {SUPPORT_EMAIL}."
 
 #: src/app/commands.tsx
 msgid "Reached the same way as a browser, so the same tunnel limit applies."
@@ -2384,6 +2376,10 @@ msgstr "Alguns ficheiros não foram carregados"
 #: src/components/app-error-boundary.tsx
 msgid "Something went wrong"
 msgstr "Algo correu mal"
+
+#: src/app/settings.tsx
+msgid "Source code"
+msgstr "Código-fonte"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Space"

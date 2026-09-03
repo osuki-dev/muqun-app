@@ -51,6 +51,10 @@ any right in them.
 
 ## Asking
 
-Write to muqun@osuki.dev. Permission for a specific, described use is usually
-easy to give, and we would rather say yes to something we understand than find
-out about it from a store listing.
+Open an issue at https://github.com/osuki-dev/muqun-app/issues. Permission for a
+specific, described use is usually easy to give, and we would rather say yes to
+something we understand than find out about it from a store listing.
+
+The `muqun@osuki.dev` mailbox this used to name went with the domain; Muqun has
+its own home at muqun.dev from 2.0.0, and its own tracker, which is a better
+place for a question whose answer other people will want too.
