@@ -8,6 +8,51 @@ import { sanitizeServerText, SERVER_LINE_LIMIT } from '@/lib/ssh-server-text';
 import type { SshTrustedHostKey } from '@/lib/ssh-hosts';
 
 /**
+ * How long a connect dialog waits for the one before it to be gone.
+ *
+ * iOS presents one modal at a time and it is unforgiving about the handover: a
+ * modal asked to appear while the previous one is still going away never
+ * appears at all, and nothing says so. Trusting a host key and then being asked
+ * for a one-time code is exactly that sequence -- and against a server on the
+ * same machine both happen inside a single frame -- so the sign-in dialog was
+ * mounted, rendered, and invisible, and the connection waited forever on a
+ * question nobody could see.
+ *
+ * So the two dialogs hand over through one beat: each records when it left the
+ * screen, and the next waits out whatever is left of the beat before it asks to
+ * be presented. It is only ever spent between two dialogs of one connection --
+ * the reader has just tapped Trust and the handshake is still in flight -- so
+ * it costs nothing anyone can perceive. Android stacks dialogs happily and
+ * never waits.
+ */
+const MODAL_HANDOFF_MS = Platform.OS === 'ios' ? 350 : 0;
+
+/** When the last connect dialog left the screen, module-wide. */
+let lastDialogClosedAt = 0;
+
+function handoffRemainingMs(): number {
+  if (MODAL_HANDOFF_MS === 0 || lastDialogClosedAt === 0) return 0;
+  return Math.max(0, MODAL_HANDOFF_MS - (Date.now() - lastDialogClosedAt));
+}
+
+/**
+ * `false` until the previous connect dialog has had its beat. Render nothing
+ * while it is false; see {@link MODAL_HANDOFF_MS}.
+ */
+function useModalHandoff(): boolean {
+  const [ready, setReady] = useState(() => handoffRemainingMs() === 0);
+  useEffect(() => {
+    const remaining = handoffRemainingMs();
+    const timer = remaining > 0 ? setTimeout(() => setReady(true), remaining) : undefined;
+    return () => {
+      if (timer !== undefined) clearTimeout(timer);
+      lastDialogClosedAt = Date.now();
+    };
+  }, []);
+  return ready;
+}
+
+/**
  * Trust-on-first-use and its refusal, in one dialog, shared by every screen
  * that opens an SSH connection -- the terminal and the gateway tunnel both.
  *
@@ -33,7 +78,9 @@ export function SshHostKeyDialog({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const ready = useModalHandoff();
   const mismatch = verdict === 'mismatch';
+  if (!ready) return null;
   return (
     <Dialog
       visible
@@ -96,6 +143,7 @@ export function SshKeyboardInteractiveDialog({
   const { t } = useLingui();
   const [answers, setAnswers] = useState<string[]>([]);
   const [keyboardUp, setKeyboardUp] = useState(false);
+  const ready = useModalHandoff();
   useEffect(() => {
     const shown = Keyboard.addListener('keyboardDidShow', () => setKeyboardUp(true));
     const hidden = Keyboard.addListener('keyboardDidHide', () => setKeyboardUp(false));
@@ -117,6 +165,7 @@ export function SshKeyboardInteractiveDialog({
   // request while the keyboard is up puts the keyboard away rather than
   // abandoning the connection.
   const submit = () => onResolve(prompts.map((_item, index) => answers[index] ?? ''));
+  if (!ready) return null;
   return (
     <Dialog
       visible

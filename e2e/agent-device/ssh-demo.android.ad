@@ -1,6 +1,8 @@
 context platform=android device="muqun_main_android" kind=emulator theme=unknown
 open "dev.osuki.muqun" --relaunch --platform android --metro-host 127.0.0.1 --metro-port 8102
 wait "text" "Try the demo" 120000
+press "role=\"button\" label=\"Dismiss what's new\" || label=\"Your agents, anywhere.\""
+wait "stable" 800 10000
 press "role=\"button\" label=\"SSH\" || label=\"SSH\""
 wait "stable" 800 10000
 wait "role=button label=\"Open SSH host Demo shell\""
