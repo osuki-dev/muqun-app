@@ -48,7 +48,7 @@
         "expo-web-browser": "~57.0.2",
         "expo-widgets": "~57.0.16",
         "highlight.js": "^11.12.0",
-        "lucide-react-native": "^1.39.0",
+        "lucide-react-native": "1.40.0",
         "react": "19.2.8",
         "react-dom": "19.2.8",
         "react-native": "0.86.3",
@@ -81,7 +81,7 @@
         "@types/react": "~19.2.18",
         "oxfmt": "^0.66.0",
         "oxlint": "^1.81.0",
-        "typescript": "~6.0.3",
+        "typescript": "6.0.3",
       },
     },
   },
@@ -1022,7 +1022,7 @@
 
     "lru-cache": ["lru-cache@5.1.1", "", { "dependencies": { "yallist": "^3.0.2" } }, "sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w=="],
 
-    "lucide-react-native": ["lucide-react-native@1.39.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-native": "*", "react-native-svg": "^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0" } }, "sha512-CX40tmym+KIpf7IMAAwxIrFUzRo60bMThZCYm76fk3quWJ+C75+PeKK2wNK4xohwUL07YI2IoxLA2nO7M+x6lA=="],
+    "lucide-react-native": ["lucide-react-native@1.40.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-native": "*", "react-native-svg": "^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0" } }, "sha512-cTqUrmMgwAX0P1pd3EGiIXboPAjMgh539/93g1AGsZ3s3+vrID3M6eIPBL2CF9YYtxInQssxOwOUJCKxtfJWNw=="],
 
     "makeerror": ["makeerror@1.0.12", "", { "dependencies": { "tmpl": "1.0.5" } }, "sha512-JmqCvUhmt43madlpFzG4BQzG2Z3m6tvQDNKdClZnO3VbIudJYmxsT0FNJMeiB2+JTSlTQTSbU8QdesVmwJcmLg=="],
 
