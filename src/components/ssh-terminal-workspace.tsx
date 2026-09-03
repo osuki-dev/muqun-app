@@ -251,10 +251,11 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   // safe-area inset, which the keyboard covers, so that much is not doubled.
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
   const bottomInset = insets.bottom;
-  const keyboardSpacerStyle = useAnimatedStyle(
-    () => ({ height: Math.max(0, -keyboardHeight.value - bottomInset) }),
-    [bottomInset]
-  );
+  // No dependency list: reanimated 4.6 ignores one and warns per render that it
+  // did, and the inset is read straight out of the worklet's closure anyway.
+  const keyboardSpacerStyle = useAnimatedStyle(() => ({
+    height: Math.max(0, -keyboardHeight.value - bottomInset),
+  }));
 
   useEffect(
     () => () => {
