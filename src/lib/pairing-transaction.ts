@@ -105,5 +105,8 @@ export async function claimPairingTransaction(
     codeMaterial,
     request.offer.transportRequired
   );
-  return saveGateway(validateClaimedPairing(request.offer, payload), displayName);
+  // A pairing that ran through an SSH tunnel records which host it rode on, so
+  // the workspace can open the same forward next time. The tunnel URL itself
+  // is not stored (see `validateClaimedPairing`).
+  return saveGateway(validateClaimedPairing(request.offer, payload), displayName, request.offer.sshTunnel);
 }

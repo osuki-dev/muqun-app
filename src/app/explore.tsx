@@ -8,6 +8,7 @@ import {
   Copy as CopyIcon,
   Keyboard as KeyboardIcon,
   ScanLine,
+  Waypoints,
   X,
 } from 'lucide-react-native';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
@@ -36,6 +37,10 @@ import { PressableScale } from '@/components/pressable-scale';
 import { GATEWAY_INSTALL_COMMAND, GATEWAY_SETUP_URL } from '@/constants/links';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { GATEWAY_DEFAULT_PORT } from '@/lib/ssh-tunnel';
+import { sortSshHosts, sshHostAddress } from '@/lib/ssh-hosts';
+import { useSshHostsStore } from '@/stores/ssh-hosts';
+import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 import { beginPairingTransaction, claimPairingTransaction } from '@/lib/pairing-transaction';
 import {
   normalizeGatewayUrl,
@@ -184,6 +189,36 @@ export default function PairModal() {
   // instead of stacking a form below it.
   const [manualOpen, setManualOpen] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
+  // The third way in: a gateway that only listens on its own machine, reached
+  // through an SSH host the reader has already saved. The pairing itself is
+  // the existing manual flow, pointed at the loopback forward the tunnel
+  // opens; only the record remembers the host it rode on.
+  const [sshOpen, setSshOpen] = useState(false);
+  const [sshHostId, setSshHostId] = useState<string | null>(null);
+  const [sshPort, setSshPort] = useState(String(GATEWAY_DEFAULT_PORT));
+  const sshHosts = useSshHostsStore((state) => state.hosts);
+  const sshHostsLoading = useSshHostsStore((state) => state.loading);
+  const hydrateSshHosts = useSshHostsStore((state) => state.hydrate);
+  const holdTunnel = useSshTunnelsStore((state) => state.hold);
+  const releaseTunnel = useSshTunnelsStore((state) => state.release);
+  const waitForTunnel = useSshTunnelsStore((state) => state.waitForOpen);
+  /**
+   * The transient record whose forward the pairing is riding. Held until this
+   * screen goes away rather than until the claim lands, so the workspace the
+   * success step opens finds the SSH connection still up and reuses it.
+   */
+  const pairingTunnelRef = useRef<GatewayRecord | null>(null);
+  useEffect(() => {
+    if (sshHostsLoading) void hydrateSshHosts();
+  }, [hydrateSshHosts, sshHostsLoading]);
+  useEffect(
+    () => () => {
+      const held = pairingTunnelRef.current;
+      pairingTunnelRef.current = null;
+      if (held) releaseTunnel(held);
+    },
+    [releaseTunnel]
+  );
   const [offer, setOffer] = useState<ResolvedPairingOffer | null>(null);
   const [requestId, setRequestId] = useState('');
   const [expiresAt, setExpiresAt] = useState<number | undefined>();
@@ -292,9 +327,11 @@ export default function PairModal() {
       // telling a reader who typed it to go scan something is no help.
       setMessage(
         unreachable
-          ? nextOffer.serverId
-            ? t`Could not reach the gateway. Make sure it is running, then refresh the QR and scan again.`
-            : t`Could not reach that address. Check it and make sure the Gateway is running.`
+          ? nextOffer.sshTunnel
+            ? t`Nothing answered on port ${nextOffer.sshTunnel.remotePort} through the SSH host. Check the gateway's port on that machine.`
+            : nextOffer.serverId
+              ? t`Could not reach the gateway. Make sure it is running, then refresh the QR and scan again.`
+              : t`Could not reach that address. Check it and make sure the Gateway is running.`
           : failure.message
       );
     } finally {
@@ -362,6 +399,55 @@ export default function PairModal() {
     await beginPairing({ url }, false);
   }
 
+  /**
+   * Open the forward, then run the ordinary typed-address pairing against it.
+   * The forward is held on this screen (see `pairingTunnelRef`); a host-key
+   * question or a keyboard-interactive challenge from the SSH host surfaces
+   * through the app-wide prompt gate, exactly as the terminal screen asks it.
+   */
+  async function handleSshPair() {
+    const host = sshHosts.find((item) => item.id === sshHostId);
+    if (!host) {
+      setMessage(t`Choose an SSH host.`);
+      return;
+    }
+    const port = Number(sshPort.trim());
+    if (!/^\d+$/.test(sshPort.trim()) || !Number.isInteger(port) || port < 1 || port > 65535) {
+      setMessage(t`Enter the gateway's port on that host.`);
+      return;
+    }
+    Keyboard.dismiss();
+    setBusy(true);
+    setMessage(null);
+    const previous = pairingTunnelRef.current;
+    if (previous) releaseTunnel(previous);
+    const transient: GatewayRecord = {
+      serverId: `pairing:${host.id}:${port}`,
+      label: host.label,
+      url: '',
+      token: '',
+      pairedAt: 0,
+      sshTunnel: { hostId: host.id, remoteHost: '127.0.0.1', remotePort: port },
+    };
+    pairingTunnelRef.current = transient;
+    holdTunnel(transient);
+    let url: string;
+    try {
+      url = await waitForTunnel(transient.serverId);
+    } catch (error) {
+      // The reason is already sanitised and credential-free (`sshFailureLine`).
+      const reason = error instanceof Error ? error.message : '';
+      setMessage(
+        reason ? t`Could not open the SSH tunnel: ${reason}` : t`Could not open the SSH tunnel.`
+      );
+      setBusy(false);
+      return;
+    }
+    setBusy(false);
+    handledScan.current = true;
+    await beginPairing({ url, sshTunnel: transient.sshTunnel }, false);
+  }
+
   async function copyInstallCommand() {
     await Clipboard.setStringAsync(GATEWAY_INSTALL_COMMAND);
     void feedback('success');
@@ -418,7 +504,7 @@ export default function PairModal() {
     setMessage(null);
   }
 
-  const cameraActive = step === 'scan' && !manualOpen && !busy && appState === 'active';
+  const cameraActive = step === 'scan' && !manualOpen && !sshOpen && !busy && appState === 'active';
 
   /**
    * The aperture's one reading, folded together from what the camera chunk knows
@@ -431,7 +517,7 @@ export default function PairModal() {
     pairingScanReadingWithRequest(cameraReading, {
       cameraError: Boolean(cameraError),
       detected,
-      busy: busy && !manualOpen,
+      busy: busy && !manualOpen && !sshOpen,
       rejected,
     })
   );
@@ -486,15 +572,17 @@ export default function PairModal() {
               was doing on every device without a rear lens. */}
             <Text variant="bodySmall" color={theme.colors.textMuted}>
               {step === 'scan'
-                ? manualOpen
-                  ? t`The address the Gateway prints when it starts.`
-                  : scan.reading === 'unavailable'
-                    ? t`Enter the Gateway's address instead.`
-                    : scan.reading === 'permission'
-                      ? t`Allow the camera, or enter the address instead.`
-                      : scan.reading === 'claiming'
-                        ? t`Asking the Gateway about that code.`
-                        : t`Scan the Gateway QR.`
+                ? sshOpen
+                  ? t`A Gateway on a machine you can SSH into, even one that only listens on its own loopback.`
+                  : manualOpen
+                    ? t`The address the Gateway prints when it starts.`
+                    : scan.reading === 'unavailable'
+                      ? t`Enter the Gateway's address instead.`
+                      : scan.reading === 'permission'
+                        ? t`Allow the camera, or enter the address instead.`
+                        : scan.reading === 'claiming'
+                          ? t`Asking the Gateway about that code.`
+                          : t`Scan the Gateway QR.`
                 : step === 'confirm'
                   ? t`Name it, then enter the code shown by the Gateway.`
                   : t`Opening the server.`}
@@ -549,7 +637,87 @@ export default function PairModal() {
                     borderColor: theme.colors.border,
                   },
                 ]}>
-                {manualOpen ? (
+                {sshOpen ? (
+                  <Animated.View
+                    key="ssh"
+                    testID="pairing-ssh"
+                    entering={fadeIn('short')}
+                    exiting={fadeOut('micro')}
+                    style={styles.manualPanel}>
+                    <Text variant="label" color={theme.colors.textMuted}>
+                      {t`SSH host`}
+                    </Text>
+                    {sshHosts.length === 0 ? (
+                      <PressableScale
+                        accessibilityRole="link"
+                        accessibilityLabel={t`Add an SSH host`}
+                        onPress={() => router.push('/ssh')}
+                        style={styles.sshEmpty}>
+                        <Text variant="caption" color={theme.colors.textMuted}>
+                          {t`No SSH hosts saved yet.`}
+                        </Text>
+                        <Text variant="caption" color={theme.colors.primary}>
+                          {t`Add one first`}
+                        </Text>
+                      </PressableScale>
+                    ) : (
+                      <View style={styles.sshHostList}>
+                        {sortSshHosts(sshHosts).map((host) => {
+                          const selected = host.id === sshHostId;
+                          return (
+                            <PressableScale
+                              key={host.id}
+                              accessibilityRole="radio"
+                              accessibilityState={{ selected }}
+                              accessibilityLabel={t`Pair through ${host.label}`}
+                              testID={`pairing-ssh-host-${host.id}`}
+                              onPress={() => setSshHostId(host.id)}
+                              style={[
+                                styles.sshHostRow,
+                                {
+                                  backgroundColor: selected
+                                    ? theme.colors.primarySubtle
+                                    : theme.colors.surface,
+                                  borderColor: selected
+                                    ? theme.colors.primary
+                                    : theme.colors.border,
+                                },
+                              ]}>
+                              <Text
+                                variant="bodySmall"
+                                numberOfLines={1}
+                                style={styles.sshHostLabel}>
+                                {host.label}
+                              </Text>
+                              <Text
+                                variant="caption"
+                                color={theme.colors.textMuted}
+                                numberOfLines={1}>
+                                {sshHostAddress(host)}
+                              </Text>
+                            </PressableScale>
+                          );
+                        })}
+                      </View>
+                    )}
+                    <Input
+                      label={t`Gateway port on that host`}
+                      value={sshPort}
+                      onChangeText={setSshPort}
+                      keyboardType="number-pad"
+                      placeholder={String(GATEWAY_DEFAULT_PORT)}
+                      variant="underline"
+                      testID="pairing-ssh-port"
+                    />
+                    <Button
+                      onPress={() => void handleSshPair()}
+                      loading={busy}
+                      loadingLabel={t`Opening tunnel`}
+                      testID="pairing-ssh-continue">
+                      {t`Continue`}
+                    </Button>
+                  </Animated.View>
+                ) : manualOpen ? (
                   <Animated.View
                     key="manual"
                     testID="pairing-manual"
@@ -665,7 +833,10 @@ export default function PairModal() {
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
-                onPress={() => setManualOpen((value) => !value)}
+                onPress={() => {
+                  setSshOpen(false);
+                  setManualOpen((value) => !value);
+                }}
                 style={[
                   styles.manualToggle,
                   {
@@ -695,6 +866,28 @@ export default function PairModal() {
                       : theme.colors.textMuted
                   }>
                   {manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
+                </Text>
+              </PressableScale>
+
+              {/* The gateway that cannot be reached at all from here -- loopback
+              only, or firewalled -- but whose machine the reader can already
+              SSH into. Same weight as the manual toggle; it is a peer mode. */}
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={sshOpen ? t`Scan a gateway QR` : t`Pair through an SSH host`}
+                testID="pairing-ssh-toggle"
+                onPress={() => {
+                  setManualOpen(false);
+                  setSshOpen((value) => !value);
+                }}
+                style={[styles.manualToggle, { backgroundColor: theme.colors.surfaceRaised }]}>
+                {sshOpen ? (
+                  <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                ) : (
+                  <Waypoints size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                )}
+                <Text variant="label" color={theme.colors.textMuted}>
+                  {sshOpen ? t`Scan a gateway QR` : t`Pair through an SSH host`}
                 </Text>
               </PressableScale>
 
@@ -1127,6 +1320,25 @@ const styles = StyleSheet.create({
   // The form, on the aperture's own ground, centred in the square rather than
   // sizing it. It was a Card inside the step and the step was already a
   // surface, so the address field sat two fills deep.
+  sshHostList: {
+    gap: 8,
+    width: '100%',
+  },
+  sshHostRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 2,
+  },
+  sshHostLabel: {
+    flexShrink: 1,
+  },
+  sshEmpty: {
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 8,
+  },
   manualPanel: {
     ...StyleSheet.absoluteFill,
     justifyContent: 'center',
