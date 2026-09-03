@@ -34,6 +34,27 @@ export type SshConnectPrompt =
 
 interface SshConnectPromptState {
   prompt: SshConnectPrompt | null;
+  /**
+   * Mounted gates, innermost last. See {@link registerPromptGate}.
+   */
+  gates: number[];
+  /**
+   * Mount a gate and get back its id and the matching unmount. Only the
+   * last-registered gate draws the prompt.
+   *
+   * This exists because of an iOS presentation rule rather than a preference.
+   * The gate near the navigation root cannot draw over an Expo Router screen
+   * presented as a native `modal` -- the dialog is a React Native `<Modal>`,
+   * which presents a view controller from the root, and UIKit will not present
+   * from a controller that is already presenting one. The prompt was set, the
+   * gate rendered, and nothing appeared: pairing through an SSH host sat on
+   * "Opening tunnel" forever, because the host-key question it was waiting on
+   * had been asked into a window nobody could see. A screen presented as a
+   * modal therefore mounts its own gate, and being mounted later, it wins.
+   */
+  registerPromptGate: () => { id: number; unregister: () => void };
+  /** Whether this gate is the one that should draw. */
+  isActiveGate: (id: number) => boolean;
   askHostKey: (
     host: string,
     verdict: 'unknown' | 'mismatch',
@@ -47,8 +68,25 @@ interface SshConnectPromptState {
   dismiss: () => void;
 }
 
+let nextGateId = 1;
+
 export const useSshConnectPromptStore = create<SshConnectPromptState>((set, get) => ({
   prompt: null,
+  gates: [],
+
+  registerPromptGate() {
+    const id = nextGateId++;
+    set((state) => ({ gates: [...state.gates, id] }));
+    return {
+      id,
+      unregister: () => set((state) => ({ gates: state.gates.filter((item) => item !== id) })),
+    };
+  },
+
+  isActiveGate(id) {
+    const { gates } = get();
+    return gates.length > 0 && gates[gates.length - 1] === id;
+  },
 
   askHostKey(host, verdict, presented, trusted) {
     // A second connect while a prompt is up declines the earlier one rather

@@ -33,6 +33,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LogoLoader } from '@/components/logo-loader';
+import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { PressableScale } from '@/components/pressable-scale';
 import { GATEWAY_INSTALL_COMMAND, GATEWAY_SETUP_URL } from '@/constants/links';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -1061,6 +1062,12 @@ export default function PairModal() {
 
         <View style={styles.slackBelow} />
       </KeyboardAwareScrollView>
+
+      {/* This screen is presented as a native modal, and the gate near the
+          navigation root cannot draw a dialog over one on iOS. Pairing through
+          an SSH host asks about the host key from right here, so it mounts its
+          own gate; being the innermost one, it is the one that draws. */}
+      <SshConnectPromptGate />
     </SafeAreaView>
   );
 }
