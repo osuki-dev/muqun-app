@@ -16,6 +16,16 @@ import { foldPaneRead, mergeTerminalWindow, sanitizePaneRead } from '../history'
 
 const MAXIMUM = 2_000;
 
+/**
+ * The budget for the one test here that does seconds of real work.
+ *
+ * Bun's default is 5s and that test lands a few hundred milliseconds under it,
+ * so a build sharing the machine tips it over and the suite reports the
+ * terminal contract as broken when nothing about it is. Well clear of the work,
+ * well short of a hang.
+ */
+const HEAVY_INVARIANT_TIMEOUT_MS = 30_000;
+
 function rows(output: string): string[] {
   return output ? output.split('\n') : [];
 }
@@ -377,23 +387,33 @@ describe('(d) identical adjacent blocks never accumulate', () => {
   // milliseconds. It blew bun's 5s default once, on a machine sharing the box
   // with a release build, which reads as the terminal contract failing when it
   // is only the laptop being busy -- hence the cheap assertion below.
-  test('no run of the simulated session ever accumulates one', () => {
-    for (const seed of [3, 13, 97, 2_026]) {
-      const random = randomizer(seed);
-      const pane = new Pane();
-      let window = '';
-      for (let poll = 0; poll < 150; poll += 1) {
-        pane.emit(Math.floor(random() * 90));
-        window = foldPaneRead(window, pane.screen(), 'frame', MAXIMUM);
-        // Asserted only when there is something to say. Six hundred passing
-        // deep-equality checks were most of this test's runtime, and the run
-        // that mattered -- the one where a repeat appears -- still reports the
-        // seed and the poll it appeared on.
-        const repeat = adjacentRepeat(rows(window));
-        if (repeat) expect({ seed, poll, repeat }).toEqual({ seed, poll, repeat: null as never });
+  //
+  // The cheap assertion was not enough: it still lands within a few hundred
+  // milliseconds of the 5s default, so any machine running a build alongside
+  // the suite fails it. A budget of its own is the honest fix. Thirty seconds
+  // is far above what the work costs even on a loaded laptop and far below a
+  // hang, so a failure here still means the fold is stuck rather than slow.
+  test(
+    'no run of the simulated session ever accumulates one',
+    () => {
+      for (const seed of [3, 13, 97, 2_026]) {
+        const random = randomizer(seed);
+        const pane = new Pane();
+        let window = '';
+        for (let poll = 0; poll < 150; poll += 1) {
+          pane.emit(Math.floor(random() * 90));
+          window = foldPaneRead(window, pane.screen(), 'frame', MAXIMUM);
+          // Asserted only when there is something to say. Six hundred passing
+          // deep-equality checks were most of this test's runtime, and the run
+          // that mattered -- the one where a repeat appears -- still reports the
+          // seed and the poll it appeared on.
+          const repeat = adjacentRepeat(rows(window));
+          if (repeat) expect({ seed, poll, repeat }).toEqual({ seed, poll, repeat: null as never });
+        }
       }
-    }
-  });
+    },
+    HEAVY_INVARIANT_TIMEOUT_MS
+  );
 
   test('a seam hidden under the composer is found, not appended over', () => {
     // Caught by `scripts/terminal-soak.ts` against a live pane, eleven folds

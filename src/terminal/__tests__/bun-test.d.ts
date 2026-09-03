@@ -46,7 +46,12 @@ declare module 'bun:test' {
   }
 
   interface TestFn {
-    (name: string, fn: () => void | Promise<void>): void;
+    /**
+     * `timeoutMs` overrides bun's 5s default for one test. Declared because a
+     * couple of the invariant suites do seconds of real work and would
+     * otherwise fail on a machine that is merely busy.
+     */
+    (name: string, fn: () => void | Promise<void>, timeoutMs?: number): void;
     each: EachFn;
     skip(name: string, fn: () => void | Promise<void>): void;
     only(name: string, fn: () => void | Promise<void>): void;
