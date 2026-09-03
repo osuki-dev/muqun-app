@@ -1,6 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { Input, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Input, Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useFocusEffect } from 'expo-router';
 import { Check, ChevronDown, Pencil, Trash2 } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useState } from 'react';
@@ -122,9 +122,9 @@ export function SettingsServers({ title }: { title: string }) {
   }
 
   async function unpair(server: GatewayRecord) {
-    setOpenId(null);
     try {
       await removeRecord(server.serverId);
+      setOpenId(null);
       await feedback('success');
     } catch (error) {
       showToast({
@@ -179,7 +179,7 @@ export function SettingsServers({ title }: { title: string }) {
                     setOpenId((id) => (id === server.serverId ? null : server.serverId))
                   }
                   onUse={() => void use(server)}
-                  onUnpair={() => void unpair(server)}
+                  onUnpair={() => unpair(server)}
                 />
               </Fragment>
             );
@@ -257,7 +257,7 @@ function ServerRow({
   open: boolean;
   onToggle: () => void;
   onUse: () => void;
-  onUnpair: () => void;
+  onUnpair: () => Promise<void>;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -413,7 +413,13 @@ function ServerRow({
  * `editing` back at `false` -- the same trick `UnpairAction`'s `armed` uses,
  * stated once instead of twice.
  */
-function ServerRowEditor({ server, onUnpair }: { server: GatewayRecord; onUnpair: () => void }) {
+function ServerRowEditor({
+  server,
+  onUnpair,
+}: {
+  server: GatewayRecord;
+  onUnpair: () => Promise<void>;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const [editing, setEditing] = useState(false);
@@ -578,36 +584,65 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
  * back without the machine in front of it, so the destructive tap arms first
  * rather than firing on the first press.
  */
-function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => void }) {
+function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Promise<void> }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const [armed, setArmed] = useState(false);
+  const [pending, setPending] = useState(false);
 
   // Collapsing the row and coming back must not leave a primed destructive
   // button waiting.
   useEffect(() => () => setArmed(false), []);
 
+  // Unpairing asks the gateway to drop this device's token first, and a
+  // gateway that is gone takes seconds to say nothing at all. Without this the
+  // tap looks ignored -- the row sits there, unchanged, until the record
+  // vanishes on its own. Say what is happening instead.
+  async function confirm() {
+    if (pending) return;
+    setPending(true);
+    try {
+      await onUnpair();
+    } finally {
+      setPending(false);
+    }
+  }
+
   return armed ? (
     <View style={styles.armedRow}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel={t`Confirm unpair ${label}`}
+        accessibilityLabel={pending ? t`Unpairing ${label}` : t`Confirm unpair ${label}`}
+        accessibilityState={{ disabled: pending, busy: pending }}
+        disabled={pending}
         feedback="selection"
-        onPress={onUnpair}
-        style={[styles.action, styles.armedButton, { backgroundColor: theme.colors.danger }]}>
-        <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+        onPress={() => void confirm()}
+        style={[
+          styles.action,
+          styles.armedButton,
+          { backgroundColor: theme.colors.danger },
+          pending && styles.pendingAction,
+        ]}>
+        {pending ? (
+          <Spinner size="sm" color={theme.colors.onPrimary} />
+        ) : (
+          <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+        )}
         <Text variant="caption" color={theme.colors.onPrimary} style={styles.armedText}>
-          <Trans>Unpair</Trans>
+          {pending ? <Trans>Unpairing…</Trans> : <Trans>Unpair</Trans>}
         </Text>
       </PressableScale>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={t`Keep ${label}`}
+        accessibilityState={{ disabled: pending }}
+        disabled={pending}
         onPress={() => setArmed(false)}
         style={[
           styles.action,
           styles.armedButton,
           { backgroundColor: theme.colors.surfaceRaised },
+          pending && styles.pendingAction,
         ]}>
         <Text variant="caption" color={theme.colors.textMuted}>
           <Trans>Cancel</Trans>
@@ -818,6 +853,7 @@ const styles = StyleSheet.create({
     gap: LADDER.gap,
   },
   armedRow: { flexDirection: 'row', gap: LADDER.gap },
+  pendingAction: { opacity: 0.7 },
   armedButton: { flex: 1 },
   armedText: { fontWeight: '700' },
   devices: { gap: LADDER.gap },

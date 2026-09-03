@@ -2714,6 +2714,14 @@ msgstr "Desvincular {label}"
 msgid "Unpair this server"
 msgstr "Desvincular este servidor"
 
+#: src/components/settings-servers.tsx
+msgid "Unpairing {label}"
+msgstr "Desvinculando {label}"
+
+#: src/components/settings-servers.tsx
+msgid "Unpairing…"
+msgstr "Desvinculando…"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Up arrow"
