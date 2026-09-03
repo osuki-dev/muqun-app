@@ -82,7 +82,7 @@
     "expo-web-browser": "~57.0.2",
     "expo-widgets": "~57.0.16",
     "highlight.js": "^11.12.0",
-    "lucide-react-native": "^1.39.0",
+    "lucide-react-native": "1.40.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-native": "0.86.3",
@@ -115,7 +115,7 @@
     "@types/react": "~19.2.18",
     "oxfmt": "^0.66.0",
     "oxlint": "^1.81.0",
-    "typescript": "~6.0.3"
+    "typescript": "6.0.3"
   },
   "overrides": {
     "react-native-screens": "4.27.0"
