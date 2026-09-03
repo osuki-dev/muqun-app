@@ -1,5 +1,4 @@
 diff --git a/src/components/toast.tsx b/src/components/toast.tsx
-index 8f16a99ba238ac3fc19430459f869322810562d6..6b1be4b2a3fcfc5978990c0b57380479e8408ce1 100644
 --- a/src/components/toast.tsx
 +++ b/src/components/toast.tsx
 @@ -46,6 +46,7 @@ export interface ToastProviderProps {
@@ -82,3 +81,14 @@ index 8f16a99ba238ac3fc19430459f869322810562d6..6b1be4b2a3fcfc5978990c0b57380479
  				flexDirection: "row",
  				alignItems: "flex-start",
  				gap: theme.spacing.sm,
+diff --git a/lib/components/toast.d.ts b/lib/components/toast.d.ts
+--- a/lib/components/toast.d.ts
++++ b/lib/components/toast.d.ts
+@@ -27,6 +27,7 @@ export interface ToastProviderProps {
+     placement?: ToastPlacement;
+     maxToasts?: number;
+     defaultDurationMs?: number;
++    maxWidth?: number;
+ }
+ export declare const ToastProvider: React.FC<ToastProviderProps>;
+ export declare function useToast(): ToastController;

@@ -43,11 +43,11 @@
     "@formatjs/intl-getcanonicallocales": "^3.2.11",
     "@formatjs/intl-locale": "^5.3.10",
     "@formatjs/intl-pluralrules": "^6.3.13",
-    "@legendapp/list": "^3.3.3",
+    "@legendapp/list": "^3.3.10",
     "@lingui/core": "^6.6.0",
     "@lingui/react": "^6.6.0",
     "@osuki-dev/react-native-ssh": "0.2.0",
-    "@osuki-dev/ui": "^0.0.1",
+    "@osuki-dev/ui": "^1.0.0",
     "@shopify/react-native-skia": "2.11.2",
     "expo": "~57.0.19",
     "expo-application": "~57.0.2",
@@ -81,13 +81,13 @@
     "expo-updates": "~57.0.21",
     "expo-web-browser": "~57.0.2",
     "expo-widgets": "~57.0.16",
-    "highlight.js": "^11.11.1",
-    "lucide-react-native": "^1.28.0",
+    "highlight.js": "^11.12.0",
+    "lucide-react-native": "^1.39.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-native": "0.86.3",
-    "react-native-android-widget": "^0.21.0",
-    "react-native-enriched-markdown": "^0.7.4",
+    "react-native-android-widget": "^0.22.1",
+    "react-native-enriched-markdown": "^1.0.2",
     "react-native-gesture-handler": "~3.2.1",
     "react-native-keyboard-controller": "1.22.4",
     "react-native-mmkv": "^4.3.2",
@@ -101,12 +101,12 @@
     "react-native-safe-area-context": "~5.9.1",
     "react-native-screens": "4.27.0",
     "react-native-svg": "15.15.5",
-    "react-native-vision-camera": "^5.2.1",
-    "react-native-vision-camera-barcode-scanner": "^5.2.2",
+    "react-native-vision-camera": "^5.2.3",
+    "react-native-vision-camera-barcode-scanner": "^5.2.3",
     "react-native-web": "~0.21.2",
     "react-native-webview": "14.0.1",
     "react-native-worklets": "0.12.1",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@lingui/babel-plugin-lingui-macro": "^6.6.0",
@@ -119,6 +119,9 @@
   },
   "overrides": {
     "react-native-screens": "4.27.0"
+  },
+  "enriched-markdown": {
+    "enableMath": false
   },
   "expo": {
     "autolinking": {
@@ -139,9 +142,10 @@
     }
   },
   "patchedDependencies": {
-    "@osuki-dev/ui@0.0.1": "patches/@osuki-dev%2Fui@0.0.1.patch"
+    "@osuki-dev/ui@1.0.0": "patches/@osuki-dev%2Fui@1.0.0.patch"
   },
   "trustedDependencies": [
-    "@shopify/react-native-skia"
+    "@shopify/react-native-skia",
+    "react-native-enriched-markdown"
   ]
 }

@@ -140,12 +140,6 @@
         }
       ],
       [
-        "react-native-enriched-markdown",
-        {
-          "enableMath": false
-        }
-      ],
-      [
         "expo-widgets",
         {
           "bundleIdentifier": "dev.osuki.muqun.ExpoWidgetsTarget",
