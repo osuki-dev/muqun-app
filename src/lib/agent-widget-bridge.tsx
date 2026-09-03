@@ -47,7 +47,7 @@ import { renderAgentWidget } from '@/lib/agent-widget-layout';
  * import` is a type position only and is erased.
  */
 function headlessI18n(): typeof import('@/i18n/headless') {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  // oxlint-disable-next-line typescript/no-require-imports
   return require('@/i18n/headless') as typeof import('@/i18n/headless');
 }
 

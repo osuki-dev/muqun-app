@@ -461,7 +461,7 @@ export function ServerTerminalWorkspace({
   // platform caret wherever the text change put it. Kept rather than deleted
   // because the state is half of a feature the file-mention work still owes;
   // wiring it is a behavioural change and belongs to that card, not to lint.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- see above.
+  // oxlint-disable-next-line no-unused-vars -- see above.
   const [pendingCaret, setPendingCaret] = useState<number | null>(null);
   const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
   const [loadingData, setLoadingData] = useState(true);

@@ -29,18 +29,22 @@ Finishing a feature means the whole app still works, not just the screen that wa
 
 ## The checks
 
-These four are the gate, in this order. The first three are fast enough to run on every change;
-the fourth is the feature gate above.
+These five are the gate, in this order. The first four are fast enough to run on every change;
+the fifth is the feature gate above.
 
 ```sh
 npx tsc --noEmit
-bun run lint          # expo lint --max-warnings 0: a warning fails the run
+bun run lint          # oxlint --deny-warnings: a warning fails the run
+bun run format:check  # oxfmt --check; `bun run format` rewrites
 bun test src
 bash scripts/e2e.sh
 ```
 
-`bun run lint` fails on warnings deliberately, so the gate cannot quietly grow a new baseline the
-way it did before card #611.
+Linting is `oxlint` and formatting is `oxfmt` (the same pair as the org's `kit` repo), configured in
+`.oxlintrc.json` and `.oxfmtrc.json`. There is no ESLint in this tree any more: a suppression is
+`// oxlint-disable-next-line <rule> -- <reason>`, and the rule names are oxlint's (`react/refs`,
+`typescript/no-require-imports`, ...). `bun run lint` fails on warnings deliberately, so the gate
+cannot quietly grow a new baseline the way it did before card #611.
 
 ## agent-device
 

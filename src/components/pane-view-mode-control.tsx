@@ -47,7 +47,7 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
   // Lingui context, which the compiler can see change.
   const { _ } = useLingui();
   if (!canCycle) return null;
-  const ModeIcon = iconForMode(mode);
+  const ModeIcon = MODE_ICONS[mode];
 
   return (
     <PressableScale
@@ -66,11 +66,11 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
   );
 });
 
-function iconForMode(mode: PaneViewMode) {
-  if (mode === 'chat') return MessagesSquare;
-  if (mode === 'text') return TextAlignStart;
-  return SquareTerminal;
-}
+const MODE_ICONS: Record<PaneViewMode, typeof SquareTerminal> = {
+  chat: MessagesSquare,
+  text: TextAlignStart,
+  terminal: SquareTerminal,
+};
 
 const styles = StyleSheet.create({
   // Fills the header's glass circle, which is what sizes it.

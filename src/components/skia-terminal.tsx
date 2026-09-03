@@ -991,14 +991,14 @@ export function SkiaTerminal({
   const unmountViewportWidthRef = useLatestRef(viewport.width);
   useEffect(() => {
     return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: `useLatestRef` (see its own doc comment) exists exactly so a callback outside render can read the current value; this is that read, at the one moment -- unmount -- render can no longer reach.
+      // oxlint-disable-next-line react/exhaustive-deps -- deliberate: `useLatestRef` (see its own doc comment) exists exactly so a callback outside render can read the current value; this is that read, at the one moment -- unmount -- render can no longer reach.
       if (unmountViewportWidthRef.current <= 0) return;
       savePaneScales(
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: same as above.
+        // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
         terminalScaleOnScreenLeave(unmountTerminalIdRef.current, scale.value, loadPaneScales())
       );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberate: unmount only, see comment above. `scale` and the two refs are stable identities, so listing them would not change when this runs.
+    // oxlint-disable-next-line react/exhaustive-deps -- deliberate: unmount only, see comment above. `scale` and the two refs are stable identities, so listing them would not change when this runs.
   }, []);
 
   // Output arriving in a wider column must not undo a pinch or scroll the

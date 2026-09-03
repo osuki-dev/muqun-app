@@ -597,7 +597,7 @@ function ServerCard({
   // last state change happened: a card sitting untouched has to keep telling the
   // truth about a snapshot ageing under it. The alternative is a ticking clock
   // in state, which re-renders the whole list to change one label.
-  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  // oxlint-disable-next-line react/purity -- deliberate: see above.
   const nowMs = Date.now();
   const statusColor =
     reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;

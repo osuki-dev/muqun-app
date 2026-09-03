@@ -269,7 +269,7 @@ function parseSnapshot(value: string): AgentWidgetSnapshot | null {
  */
 async function drawAgentWidgets(snapshot: AgentWidgetSnapshot | null): Promise<void> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // oxlint-disable-next-line typescript/no-require-imports
     const bridge = require('./agent-widget-bridge') as {
       pushAgentWidgets: (value: AgentWidgetSnapshot | null) => Promise<void>;
     };

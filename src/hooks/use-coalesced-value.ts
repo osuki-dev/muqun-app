@@ -35,7 +35,7 @@ export function useCoalescedValue<T>(value: T, resetKey: unknown, intervalMs = 1
   // is why the clock is read and the window stamped here and not in an effect,
   // where the first burst frame would already have slipped through unthrottled.
   if (flush) {
-    // eslint-disable-next-line react-hooks/refs, react-hooks/purity -- deliberate: stamping the window during the flush render is the throttle. See above.
+    // oxlint-disable-next-line react/refs, react/purity -- deliberate: stamping the window during the flush render is the throttle. See above.
     lastEmitRef.current = Date.now();
     setDisplayed(value);
   }

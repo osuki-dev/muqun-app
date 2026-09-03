@@ -36,7 +36,7 @@ import { useRef, type RefObject } from 'react';
  */
 export function useLatestRef<T>(value: T): RefObject<T> {
   const ref = useRef(value);
-  // eslint-disable-next-line react-hooks/refs -- deliberate: nothing renders from this ref, and an effect-written one is a commit stale. See the note above.
+  // oxlint-disable-next-line react/refs -- deliberate: nothing renders from this ref, and an effect-written one is a commit stale. See the note above.
   ref.current = value;
   return ref;
 }
@@ -74,9 +74,9 @@ export function useLazyRef<T>(create: () => T): RefObject<T> {
  */
 export function useResetSignal(key: unknown): boolean {
   const previous = useRef(key);
-  // eslint-disable-next-line react-hooks/refs -- deliberate: this is the change detector itself, not a value being rendered. See the note above.
+  // oxlint-disable-next-line react/refs -- deliberate: this is the change detector itself, not a value being rendered. See the note above.
   const changed = previous.current !== key;
-  // eslint-disable-next-line react-hooks/refs -- deliberate: same write, one render later.
+  // oxlint-disable-next-line react/refs -- deliberate: same write, one render later.
   previous.current = key;
   return changed;
 }

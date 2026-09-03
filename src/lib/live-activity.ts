@@ -212,7 +212,7 @@ function resolveFactory(): LiveActivityFactory<AgentActivityProps> | null {
     // Deliberately `require`: a static import would register the layout with
     // the native module at startup on every platform, which is exactly what
     // the guards above exist to avoid.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // oxlint-disable-next-line typescript/no-require-imports
     const module = require('./live-activity-layout') as {
       default: LiveActivityFactory<AgentActivityProps>;
     };

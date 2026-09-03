@@ -311,7 +311,7 @@ function ServerRow({
   // Read at render, like `PairedDevices`' own `nowMs` below: "last connected"
   // is relative to *now*, and a value captured once in state would go stale
   // the moment the row sat open for a minute.
-  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  // oxlint-disable-next-line react/purity -- deliberate: see above.
   const nowMs = Date.now();
 
   return (
@@ -720,7 +720,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
   // timestamp ageing under it. The alternative is a ticking clock in state,
   // which re-renders the list to change one caption. Same call and same reason
   // as the home card's freshness read.
-  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  // oxlint-disable-next-line react/purity -- deliberate: see above.
   const nowMs = Date.now();
 
   return (

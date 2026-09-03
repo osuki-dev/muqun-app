@@ -54,12 +54,13 @@ Theme selection flows from the persisted `themePack` setting through `useThemePa
 ## Testing and Quality Gates
 
 - Type checking: `npx tsc --noEmit`
-- Linting: `bun run lint`
+- Linting: `bun run lint` (oxlint)
+- Formatting: `bun run format:check` (oxfmt; `bun run format` rewrites)
 - Unit tests: `bun test src`
 - Full offline end-to-end gate: `bash scripts/e2e.sh`
 - Smoke iteration only: `bash scripts/e2e.sh --smoke`
 
-Maestro reports and evidence are written under `dist/e2e-reports/` and are not committed. The checks are `npx tsc --noEmit`, `bun run lint` and `bun test src`; a change that touches app code also runs the end-to-end suite.
+Maestro reports and evidence are written under `dist/e2e-reports/` and are not committed. The checks are `npx tsc --noEmit`, `bun run lint`, `bun run format:check` and `bun test src`; a change that touches app code also runs the end-to-end suite.
 
 ## Errors and Logging
 

@@ -1,0 +1,162 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "unicorn", "oxc", "react", "import"],
+	"categories": {
+		"correctness": "error"
+	},
+	"env": {
+		"builtin": true,
+		"browser": true,
+		"shared-node-browser": true,
+		"es2022": true
+	},
+	"globals": {
+		"__DEV__": "readonly",
+		"ErrorUtils": "readonly",
+		"global": "readonly",
+		"module": "readonly",
+		"require": "readonly",
+		"exports": "readonly",
+		"process": "readonly",
+		"setImmediate": "readonly",
+		"clearImmediate": "readonly",
+		"requestIdleCallback": "readonly",
+		"cancelIdleCallback": "readonly"
+	},
+	"ignorePatterns": ["dist/**", "ios/**", "android/**", ".expo/**", "src/i18n/locales/**"],
+	"rules": {
+		"eqeqeq": ["error", "smart"],
+		"no-dupe-class-members": "error",
+		"no-dupe-keys": "error",
+		"no-duplicate-case": "error",
+		"no-empty-character-class": "error",
+		"no-empty-pattern": "error",
+		"no-extend-native": "error",
+		"no-extra-bind": "error",
+		"no-redeclare": "error",
+		"no-undef": "error",
+		"no-unreachable": "error",
+		"no-unsafe-negation": "error",
+		"no-unused-expressions": ["error", { "allowShortCircuit": true, "enforceForJSX": true }],
+		"no-unused-labels": "error",
+		"no-unused-vars": [
+			"error",
+			{
+				"vars": "all",
+				"args": "none",
+				"ignoreRestSiblings": true,
+				"caughtErrors": "all",
+				"caughtErrorsIgnorePattern": "^_"
+			}
+		],
+		"no-with": "error",
+		"unicode-bom": ["error", "never"],
+		"use-isnan": "error",
+		"valid-typeof": "error",
+		"no-var": "error",
+		// Terminal parsers and the pairing/QR scanners match control characters on purpose.
+		"no-control-regex": "off",
+
+		"import/first": "error",
+		"import/default": "off",
+		"import/named": "error",
+		"import/namespace": "error",
+		"import/export": "error",
+		"import/no-duplicates": "error",
+		"import/no-named-as-default": "error",
+		// `QuickCrypto.Buffer` and `Animated.createAnimatedComponent` are the documented shapes of
+		// those packages; the ESLint config hid them through `import/ignore` on react-native packages.
+		"import/no-named-as-default-member": "off",
+
+		"typescript/array-type": ["error", { "default": "array" }],
+		"typescript/no-empty-object-type": "error",
+		"typescript/no-wrapper-object-types": "error",
+		"typescript/consistent-type-assertions": [
+			"error",
+			{ "assertionStyle": "as", "objectLiteralTypeAssertions": "allow" }
+		],
+		"typescript/no-extra-non-null-assertion": "error",
+		"typescript/no-useless-constructor": "error",
+		"typescript/no-require-imports": [
+			"error",
+			{
+				"allow": [
+					"\\.(aac|aiff|avif|bmp|caf|db|gif|heic|html|jpeg|jpg|json|m4a|m4v|mov|mp3|mp4|mpeg|mpg|otf|pdf|png|psd|svg|ttf|wav|webm|webp|xml|yaml|yml|zip)$"
+				]
+			}
+		],
+
+		"react/display-name": "error",
+		"react/jsx-key": "error",
+		"react/jsx-no-comment-textnodes": "error",
+		"react/jsx-no-duplicate-props": "error",
+		"react/jsx-no-target-blank": "off",
+		"react/jsx-no-undef": "error",
+		"react/no-children-prop": "error",
+		"react/no-danger-with-children": "error",
+		"react/no-direct-mutation-state": "error",
+		"react/no-find-dom-node": "error",
+		"react/no-is-mounted": "error",
+		"react/no-render-return-value": "error",
+		"react/no-string-refs": "error",
+		"react/no-unescaped-entities": "error",
+		"react/no-unknown-property": "error",
+		"react/no-this-in-sfc": "error",
+		"react/require-render-return": "error",
+		"react/react-in-jsx-scope": "off",
+		// The error boundary resets itself in componentDidUpdate when its pane changes; that is the
+		// documented reset pattern, and eslint-plugin-react's recommended set did not flag it either.
+		"react/no-did-update-set-state": "off",
+
+		"react/rules-of-hooks": "error",
+		"react/exhaustive-deps": "error",
+		"react/error-boundaries": "error",
+		"react/globals": "error",
+		"react/immutability": "off",
+		"react/incompatible-library": "error",
+		"react/preserve-manual-memoization": "error",
+		"react/purity": "error",
+		"react/refs": "error",
+		"react/set-state-in-effect": "off",
+		"react/set-state-in-render": "error",
+		"react/static-components": "error",
+		"react/unsupported-syntax": "error",
+		"react/use-memo": "error",
+
+		// `new Array(n).fill(x)` is the grid's preallocation idiom, and the two `[...set]` spreads
+		// copy a collection that the loop body mutates. Both are deliberate.
+		"unicorn/no-new-array": "off",
+		"unicorn/no-useless-spread": "off"
+	},
+	"overrides": [
+		{
+			// TypeScript already reports unresolved names, and it knows the ambient globals (Buffer,
+			// NodeJS, the RN globals) far better than a hand-kept list; the Expo ESLint config made the
+			// same call.
+			"files": ["**/*.ts", "**/*.tsx"],
+			"rules": {
+				"no-undef": "off"
+			}
+		},
+		{
+			// CommonJS config plugins and Node scripts.
+			"files": ["plugins/**/*.js", "scripts/**/*.js", "*.config.js"],
+			"env": { "node": true },
+			"rules": {
+				"typescript/no-require-imports": "off"
+			}
+		},
+		{
+			"files": ["src/api/**"],
+			"rules": {
+				"import/first": "off"
+			}
+		},
+		{
+			"files": ["src/hooks/use-frozen-value.ts"],
+			"rules": {
+				"react/refs": "off"
+			}
+		}
+	]
+}

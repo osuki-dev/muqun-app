@@ -347,9 +347,9 @@ export function SessionArtifacts({
           || asset.name.toLowerCase().includes(needle)
           || asset.path.toLowerCase().includes(needle))
     );
-    // eslint-disable-next-line react-hooks/refs -- deliberate: the ref carries last render's rows in so unchanged ones keep their objects. Nothing is rendered *from* it -- the rows returned are, and they are recomputed from the props and state in the dependency list.
+    // oxlint-disable-next-line react/refs -- deliberate: the ref carries last render's rows in so unchanged ones keep their objects. Nothing is rendered *from* it -- the rows returned are, and they are recomputed from the props and state in the dependency list.
     const next = groupByDay(matching, loadedAt, previousRowsRef.current);
-    // eslint-disable-next-line react-hooks/refs -- deliberate: the same idempotent derivation, written back. Building twice from the same assets returns the same objects.
+    // oxlint-disable-next-line react/refs -- deliberate: the same idempotent derivation, written back. Building twice from the same assets returns the same objects.
     previousRowsRef.current = next;
     return next;
   }, [assets, filter, loadedAt, query]);

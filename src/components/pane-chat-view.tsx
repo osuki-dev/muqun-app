@@ -124,7 +124,9 @@ export const PaneChatView = memo(function PaneChatView({
   // building twice from the same parts returns the same objects.
   const previousItemsRef = useRef<PaneChatItem[]>([]);
   const items = useMemo(() => {
+    // oxlint-disable-next-line react/refs -- deliberate: the ref carries last render's rows in so unchanged ones keep their objects. Nothing is rendered from the ref itself.
     const next = buildPaneChatItems(parts, { detail }, previousItemsRef.current);
+    // oxlint-disable-next-line react/refs -- deliberate: the same idempotent derivation, written back.
     previousItemsRef.current = next;
     return next;
   }, [detail, parts]);

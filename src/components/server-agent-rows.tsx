@@ -90,7 +90,7 @@ export function ServerAgentRows({
   // Only a fallback: the list passes one clock down so every card ages against
   // the same instant. Nothing is rendered from the value read here -- it only
   // decides whether a snapshot reads as stale.
-  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  // oxlint-disable-next-line react/purity -- deliberate: see above.
   nowMs = Date.now(),
 }: {
   snapshot: ServerAgentsSnapshot | undefined;

@@ -419,7 +419,7 @@ function scanFile(path: string, findings: Finding[]): void {
     readFileSync(path, 'utf8'),
     ts.ScriptTarget.Latest,
     /* setParentNodes */ true,
-    /\.tsx$/.test(path) ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+    path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   );
   const file = relative(join(SRC, '..'), path);
 

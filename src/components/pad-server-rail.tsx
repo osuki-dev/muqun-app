@@ -85,7 +85,7 @@ export function PadServerRail({
   onOpenSsh,
   sshHosts,
   onSelectSshHost,
-  // eslint-disable-next-line react-hooks/purity -- a shared render-time freshness boundary.
+  // oxlint-disable-next-line react/purity -- a shared render-time freshness boundary.
   nowMs = Date.now(),
   style,
   testID = 'pad-server-rail',
