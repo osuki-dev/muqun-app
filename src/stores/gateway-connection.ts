@@ -53,6 +53,13 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
+/**
+ * How long the pre-removal revoke may take before the record is forgotten
+ * anyway. Long enough for a gateway on the far side of a slow link, short
+ * enough that "nothing happened" is never what unpairing looks like.
+ */
+const REVOKE_BUDGET_MS = 4_000;
+
 export const useGatewayConnectionStore = create<GatewayConnectionState>((set, get) => ({
   record: null,
   records: [],
@@ -174,7 +181,21 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     // there and says no -- bad auth, a real server error -- still blocks the
     // removal below exactly as before.
     try {
-      await revokeOwnGatewayPairing(recordToRemove);
+      // The revoke is two requests, each with the standard 8 s budget. A
+      // gateway that is simply gone burns all sixteen seconds before we
+      // forgive it below -- sixteen seconds in which the reader has tapped
+      // Unpair and nothing at all has happened. Since an unreachable gateway
+      // is forgiven either way, stop waiting much sooner: a gateway that is
+      // actually there answers this in well under a second.
+      await Promise.race([
+        revokeOwnGatewayPairing(recordToRemove),
+        new Promise((_resolve, reject) => {
+          setTimeout(
+            () => reject(new Error('Timed out waiting for the server.')),
+            REVOKE_BUDGET_MS
+          );
+        }),
+      ]);
     } catch (error) {
       const { kind } = describeGatewayFailure(error);
       if (kind !== 'timeout' && kind !== 'network') throw error;
