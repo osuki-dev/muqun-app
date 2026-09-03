@@ -2714,6 +2714,14 @@ msgstr "Desemparelhar {label}"
 msgid "Unpair this server"
 msgstr "Desemparelhar este servidor"
 
+#: src/components/settings-servers.tsx
+msgid "Unpairing {label}"
+msgstr "A desemparelhar {label}"
+
+#: src/components/settings-servers.tsx
+msgid "Unpairing…"
+msgstr "A desemparelhar…"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Up arrow"

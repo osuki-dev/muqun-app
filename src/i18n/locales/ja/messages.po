@@ -2714,6 +2714,14 @@ msgstr "{label} のペアリングを解除"
 msgid "Unpair this server"
 msgstr "このサーバーのペアリングを解除"
 
+#: src/components/settings-servers.tsx
+msgid "Unpairing {label}"
+msgstr "{label} のペアリングを解除しています"
+
+#: src/components/settings-servers.tsx
+msgid "Unpairing…"
+msgstr "解除しています…"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Up arrow"
