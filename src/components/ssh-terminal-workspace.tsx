@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Dialog, Input, Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { Keyboard as KeyboardIcon, PenLine, RefreshCw, Unplug, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
+import { SshHostKeyDialog, SshKeyboardInteractiveDialog } from '@/components/ssh-host-key-dialog';
 import { SkiaTerminal, type TerminalCellMetrics } from '@/components/skia-terminal';
 import { TerminalBoundary } from '@/components/terminal-boundary';
 import { TerminalComposer } from '@/components/terminal-composer';
@@ -899,12 +900,20 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       </GlassChrome>
       <Animated.View style={keyboardSpacerStyle} />
 
-      <HostKeyDialog prompt={prompt} host={record.host} />
+      {prompt && (prompt.kind === 'trust' || prompt.kind === 'mismatch') ? (
+        <SshHostKeyDialog
+          verdict={prompt.kind === 'mismatch' ? 'mismatch' : 'unknown'}
+          presented={prompt.key}
+          trusted={prompt.kind === 'mismatch' ? prompt.trusted : undefined}
+          host={record.host}
+          onResolve={prompt.resolve}
+        />
+      ) : null}
       {/* Mounted only while the server is asking, so the answers -- a
           password, a one-time code -- live in React state no longer than the
           dialog does. */}
       {prompt?.kind === 'keyboardInteractive' ? (
-        <KeyboardInteractiveDialog prompt={prompt} />
+        <SshKeyboardInteractiveDialog challenge={prompt.challenge} onResolve={prompt.resolve} />
       ) : null}
     </View>
   );
@@ -971,144 +980,6 @@ function StatusLine({
         </PressableScale>
       ) : null}
     </View>
-  );
-}
-
-function HostKeyDialog({ prompt, host }: { prompt: Prompt | null; host: string }) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  if (!prompt || (prompt.kind !== 'trust' && prompt.kind !== 'mismatch')) return null;
-  const mismatch = prompt.kind === 'mismatch';
-  return (
-    <Dialog
-      visible
-      onClose={() => prompt.resolve(false)}
-      tone={mismatch ? 'danger' : 'warning'}
-      title={mismatch ? t`Host key changed` : t`New host key`}
-      message={
-        mismatch
-          ? t`${host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed.`
-          : t`${host} presented a key this app has not seen before. Compare the fingerprint with the server before trusting it.`
-      }
-      actionLayout="row"
-      actions={[
-        { id: 'cancel', label: t`Cancel`, onPress: () => prompt.resolve(false) },
-        mismatch
-          ? {
-              id: 'replace',
-              label: t`Replace key`,
-              tone: 'destructive',
-              onPress: () => prompt.resolve(true),
-            }
-          : { id: 'trust', label: t`Trust`, tone: 'primary', onPress: () => prompt.resolve(true) },
-      ]}>
-      <View style={styles.fingerprints}>
-        {mismatch ? (
-          <View style={styles.fingerprint}>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>Saved</Trans>
-            </Text>
-            <Text selectable variant="caption" style={styles.mono}>
-              {`${sanitizeServerText(prompt.trusted.algorithm, 64)}\n${prompt.trusted.fingerprint}`}
-            </Text>
-          </View>
-        ) : null}
-        <View style={styles.fingerprint}>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {mismatch ? t`Presented now` : t`Fingerprint`}
-          </Text>
-          <Text selectable variant="caption" style={styles.mono}>
-            {`${sanitizeServerText(prompt.key.algorithm, 64)}\n${prompt.key.fingerprint}`}
-          </Text>
-        </View>
-      </View>
-    </Dialog>
-  );
-}
-
-/**
- * The server's own questions: a name, an instruction, one or more prompts.
- * All three are the server's words, shown as plain text and cut short (see
- * `sanitizeServerText`); a prompt with nothing left after that is labelled
- * by the app instead, so a field is never unlabelled.
- */
-function KeyboardInteractiveDialog({
-  prompt,
-}: {
-  prompt: Extract<Prompt, { kind: 'keyboardInteractive' }>;
-}) {
-  const { t } = useLingui();
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [keyboardUp, setKeyboardUp] = useState(false);
-  useEffect(() => {
-    const shown = Keyboard.addListener('keyboardDidShow', () => setKeyboardUp(true));
-    const hidden = Keyboard.addListener('keyboardDidHide', () => setKeyboardUp(false));
-    return () => {
-      shown.remove();
-      hidden.remove();
-    };
-  }, []);
-  const { challenge } = prompt;
-  const name = sanitizeServerText(challenge.name, 80);
-  const instruction = sanitizeServerText(challenge.instruction);
-  const prompts = challenge.prompts.map((item) => ({
-    label: sanitizeServerText(item.prompt, SERVER_LINE_LIMIT),
-    echo: item.echo === true,
-  }));
-  // Android draws this dialog behind the soft keyboard, so Continue can end up
-  // out of reach, and the system back gesture -- the obvious way to get the
-  // keyboard out of the way -- closes the dialog instead, which cancels the
-  // sign-in. Two answers: the keyboard's own return key submits, and a close
-  // request while the keyboard is up puts the keyboard away rather than
-  // abandoning the connection.
-  const submit = () => prompt.resolve(prompts.map((_item, index) => answers[index] ?? ''));
-
-  return (
-    <Dialog
-      visible
-      onClose={() => {
-        if (keyboardUp) {
-          Keyboard.dismiss();
-          return;
-        }
-        prompt.resolve(undefined);
-      }}
-      title={name || t`Sign in`}
-      message={instruction || t`The server is asking for more before it lets you in.`}
-      actionLayout="row"
-      actions={[
-        { id: 'cancel', label: t`Cancel`, onPress: () => prompt.resolve(undefined) },
-        {
-          id: 'submit',
-          label: t`Continue`,
-          tone: 'primary',
-          onPress: submit,
-        },
-      ]}>
-      <View style={styles.prompts}>
-        {prompts.map((item, index) => (
-          <Input
-            key={index}
-            label={item.label || t`Answer`}
-            value={answers[index] ?? ''}
-            onChangeText={(value) =>
-              setAnswers((previous) => {
-                const next = [...previous];
-                next[index] = value;
-                return next;
-              })
-            }
-            secureTextEntry={!item.echo}
-            autoCapitalize="none"
-            autoCorrect={false}
-            variant="outline"
-            size="compact"
-            returnKeyType={index === prompts.length - 1 ? 'go' : 'next'}
-            onSubmitEditing={index === prompts.length - 1 ? submit : undefined}
-          />
-        ))}
-      </View>
-    </Dialog>
   );
 }
 

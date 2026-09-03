@@ -30,6 +30,7 @@ import { PadServerRail } from '@/components/pad-server-rail';
 import { PressableScale } from '@/components/pressable-scale';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
 import { ServerAgentRows } from '@/components/server-agent-rows';
+import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -167,7 +168,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   // list does not fan out.
   useFocusEffect(
     useCallback(() => {
-      if (!record || record.serverId === DEMO_SERVER_ID) return;
+      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) return;
       void refreshReachability({
         serverId: record.serverId,
         url: record.url,
@@ -186,7 +187,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      if (record && record.serverId !== DEMO_SERVER_ID) {
+      if (record && record.serverId !== DEMO_SERVER_ID && !record.sshTunnel) {
         await refreshReachability(
           {
             serverId: record.serverId,
@@ -707,6 +708,10 @@ function ServerCard({
                   {server.url}
                 </Text>
               ) : null}
+
+              {/* When this gateway rides an SSH host, say so under its status.
+                  Renders nothing for a direct gateway. */}
+              <GatewayTunnelBadge record={server} />
             </View>
           </PressableScale>
 

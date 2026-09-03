@@ -97,6 +97,13 @@ export function connectDemoSsh(options: {
           shell.start();
           return shell;
         },
+        async forwardLocal() {
+          // Demo mode is offline: it plays a canned shell and never opens a
+          // socket. A tunnel is never asked of the demo host (a tunnelled
+          // gateway record is never a demo record), so this only exists to
+          // satisfy the handle's shape.
+          throw demoSshError('UNAVAILABLE', 'The demo host does not open tunnels.');
+        },
         async disconnect() {
           connected = false;
           for (const shell of [...shells]) await shell.close();

@@ -144,6 +144,7 @@ export default function QuickCommandsScreen() {
      * this is the demo.
      */
     canOpenWeb?: string;
+    webBlockedBy?: string;
     /** This pane's agent, and what it is doing, for the Stop row. */
     agentTarget?: string;
     agentStatus?: string;
@@ -187,6 +188,7 @@ export default function QuickCommandsScreen() {
     serverId: params.serverId,
     spawnSupported: params.canSpawn === '1',
     webServiceSupported: params.canOpenWeb === '1',
+    webServiceBlockedByTunnel: params.webBlockedBy === 'tunnel',
     agentTarget: params.agentTarget,
     agentStatus: params.agentStatus,
     manageOnly,
@@ -585,6 +587,15 @@ export default function QuickCommandsScreen() {
                 detailColor={theme.colors.textMuted}
                 onPress={openSimulatorPreview}
               />
+            ) : available.webServiceBlockedByTunnel ? (
+              <ActionRow
+                accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
+                name={t`Preview a simulator`}
+                nameColor={theme.colors.textSubtle}
+                detail={t`Reached the same way as a browser, so the same tunnel limit applies.`}
+                detailColor={theme.colors.textSubtle}
+                disabled
+              />
             ) : null}
             {available.canOpenWebService ? (
               <ActionRow
@@ -593,6 +604,15 @@ export default function QuickCommandsScreen() {
                 detail={t`A dev server or preview running on this machine.`}
                 detailColor={theme.colors.textMuted}
                 onPress={openWebService}
+              />
+            ) : available.webServiceBlockedByTunnel ? (
+              <ActionRow
+                accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
+                name={t`Open in your browser`}
+                nameColor={theme.colors.textSubtle}
+                detail={t`The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one.`}
+                detailColor={theme.colors.textSubtle}
+                disabled
               />
             ) : null}
           </SettingsCard>

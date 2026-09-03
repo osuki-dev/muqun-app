@@ -19,6 +19,7 @@ import {
   type SshHostDraftField,
   type SshHostRecord,
 } from '@/lib/ssh-hosts';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 
 /**
@@ -54,6 +55,13 @@ export function SshHostForm({
   const [generating, setGenerating] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [removeArmed, setRemoveArmed] = useState(false);
+
+  // The gateways that ride on this host, so the reader can see what a change or
+  // a removal here affects. Read from the record list, not the network.
+  const gatewayRecords = useGatewayConnectionStore((state) => state.records);
+  const ridingGateways = record
+    ? gatewayRecords.filter((gateway) => gateway.sshTunnel?.hostId === record.id)
+    : [];
 
   function patch(changes: Partial<SshHostDraft>) {
     setDraft((previous) => ({ ...previous, ...changes }));
@@ -353,6 +361,19 @@ export function SshHostForm({
         </Trans>
       </Text>
 
+      {record && ridingGateways.length > 0 ? (
+        <View style={[styles.ridingCard, { backgroundColor: theme.colors.surfaceRaised }]}>
+          <Text variant="caption" color={theme.colors.textMuted}>
+            <Trans>Gateways reached through this host</Trans>
+          </Text>
+          {ridingGateways.map((gateway) => (
+            <Text key={gateway.serverId} variant="bodySmall" numberOfLines={1}>
+              {gateway.label}
+            </Text>
+          ))}
+        </View>
+      ) : null}
+
       <View style={styles.buttons}>
         <PressableScale
           accessibilityRole="button"
@@ -425,6 +446,12 @@ const styles = StyleSheet.create({
   },
   publicKey: {
     gap: 8,
+    padding: 12,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+  },
+  ridingCard: {
+    gap: 6,
     padding: 12,
     borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',

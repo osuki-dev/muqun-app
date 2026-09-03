@@ -12,13 +12,14 @@ import {
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect, useMemo } from 'react';
-import { LogBox, Platform } from 'react-native';
+import { AppState, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { AppLockGate } from '@/components/app-lock-gate';
+import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { buildTheme } from '@/constants/theme';
@@ -27,6 +28,7 @@ import { useThemePack } from '@/hooks/use-theme-pack';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
 import { useAppSettings } from '@/stores/app-settings';
+import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 
 /**
  * One library warning, silenced, because LogBox answers it by covering the
@@ -138,6 +140,16 @@ function RootContent() {
   const { record } = useGatewayRecord();
   useNotificationObserver();
   useGatewayPushRegistration(record);
+
+  // A backgrounded app with an idle gateway session has its SSH tunnel
+  // forwards closed, shrinking the window the loopback port exists in; coming
+  // back reopens whatever a screen still holds. See `stores/ssh-tunnels.ts`.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      useSshTunnelsStore.getState().setBackgroundedIdle(state !== 'active');
+    });
+    return () => subscription.remove();
+  }, []);
 
   // Paints every screen and the transition container with the theme background
   // up front, so switching mode -- or sliding into a server -- never flashes the
@@ -319,6 +331,7 @@ function RootContent() {
             />
           </Stack>
         </AppLockGate>
+        <SshConnectPromptGate />
         <UpdateStatusBanner />
         <WhatsNewCard />
       </ToastProvider>

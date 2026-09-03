@@ -16,6 +16,22 @@ const STORAGE_OPTIONS: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
 };
 
+/**
+ * The SSH host a tunnelled gateway rides on.
+ *
+ * `hostId` names a saved `SshHostRecord`; `remoteHost`/`remotePort` are where
+ * the gateway listens *as seen from that SSH server* (usually `127.0.0.1` and
+ * the gateway's default port). The record's `url` stays the gateway's real,
+ * paired URL -- the tunnel URL (`http://127.0.0.1:<localPort>`) is derived at
+ * runtime and never stored, because the local port is ephemeral. See
+ * `docs/ssh-gateway-tunnel.md`.
+ */
+export interface GatewaySshTunnel {
+  hostId: string;
+  remoteHost: string;
+  remotePort: number;
+}
+
 export interface GatewayRecord {
   serverId: string;
   label: string;
@@ -24,7 +40,29 @@ export interface GatewayRecord {
   deviceId?: string;
   transportKey?: string;
   transport?: 'muqun-aes-256-gcm-v1';
+  /** Present only for a gateway reached through an SSH host. Additive; old records omit it. */
+  sshTunnel?: GatewaySshTunnel;
   pairedAt: number;
+}
+
+function isPortNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 65535;
+}
+
+/**
+ * A stored `sshTunnel`, checked field by field, or `undefined` if it cannot be
+ * trusted. A record whose tunnel spec is malformed degrades to a plain,
+ * direct gateway rather than being dropped -- the credentials are still good,
+ * only the "reach it through SSH" hint is lost. Pure and exported so the
+ * back-compat normaliser has a unit test.
+ */
+export function normalizeGatewaySshTunnel(value: unknown): GatewaySshTunnel | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined;
+  const { hostId, remoteHost, remotePort } = value as Record<string, unknown>;
+  if (typeof hostId !== 'string' || !hostId) return undefined;
+  if (typeof remoteHost !== 'string' || !remoteHost.trim()) return undefined;
+  if (!isPortNumber(remotePort)) return undefined;
+  return { hostId, remoteHost: remoteHost.trim(), remotePort };
 }
 
 interface EncryptedBlob {
@@ -88,10 +126,17 @@ async function decryptValue<T>(value: string): Promise<T> {
 }
 
 function normalizeRecord(record: GatewayRecord): GatewayRecord {
-  return {
+  const tunnel = normalizeGatewaySshTunnel(record.sshTunnel);
+  const normalized: GatewayRecord = {
     ...record,
     url: record.url.replace(/\/$/, ''),
   };
+  // Additive and self-healing: a good tunnel spec is kept, a malformed one is
+  // dropped so the record still loads as a plain direct gateway, and a record
+  // that never had the field round-trips untouched.
+  if (tunnel) normalized.sshTunnel = tunnel;
+  else delete normalized.sshTunnel;
+  return normalized;
 }
 
 async function saveRecords(records: GatewayRecord[]): Promise<void> {
@@ -135,7 +180,8 @@ export async function loadGateways(): Promise<GatewayRecord[]> {
 
 export async function saveGateway(
   payload: PairingPayload,
-  displayName?: string
+  displayName?: string,
+  sshTunnel?: GatewaySshTunnel
 ): Promise<GatewayRecord> {
   const preferredLabel = displayName?.trim();
   const record = normalizeRecord({
@@ -146,6 +192,7 @@ export async function saveGateway(
     deviceId: payload.device_id,
     transportKey: payload.transport_key,
     transport: payload.transport,
+    ...(sshTunnel ? { sshTunnel } : {}),
     pairedAt: Date.now(),
   });
   const records = await loadGateways();
