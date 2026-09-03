@@ -42,9 +42,7 @@ describe('serverIdsNeedingAddress', () => {
   });
 
   test('three of a name is still a collision', () => {
-    const needed = serverIdsNeedingAddress(
-      servers(['a', 'box'], ['b', 'box'], ['c', 'box'])
-    );
+    const needed = serverIdsNeedingAddress(servers(['a', 'box'], ['b', 'box'], ['c', 'box']));
     expect([...needed].sort()).toEqual(['a', 'b', 'c']);
   });
 

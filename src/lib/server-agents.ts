@@ -258,19 +258,19 @@ export function sameServerAgents(
   return previous.agents.every((agent, index) => {
     const other = next.agents[index];
     return (
-      agent.id === other.id
-      && agent.name === other.name
-      && agent.status === other.status
+      agent.id === other.id &&
+      agent.name === other.name &&
+      agent.status === other.status &&
       // A pane starting or losing its agent changes which mode's filter it
       // passes, so it is a change worth writing even though nothing else about
       // the row moved.
-      && agent.hasAgent === other.hasAgent
+      agent.hasAgent === other.hasAgent &&
       // An agent that moved to another pane is a change worth writing: the row
       // is a deep link, and a stale pane id sends the tap to the wrong panel.
-      && agent.paneId === other.paneId
+      agent.paneId === other.paneId &&
       // A plain pane's cwd is the only thing that ever changes about it -- `cd`
       // elsewhere in that shell -- and it is the fact the row exists to show.
-      && agent.cwd === other.cwd
+      agent.cwd === other.cwd
     );
   });
 }
@@ -418,17 +418,19 @@ function parseSnapshot(value: unknown): ServerAgentsSnapshot | null {
       if (typeof item !== 'object' || item === null) return [];
       const agent = item as Record<string, unknown>;
       if (typeof agent.id !== 'string' || typeof agent.name !== 'string') return [];
-      return [{
-        id: agent.id,
-        name: agent.name,
-        status: asAgentStatus(typeof agent.status === 'string' ? agent.status : undefined),
-        // Missing on a snapshot written before this field existed -- see the
-        // field's own doc comment on `ServerAgent` for why `true` is the
-        // correct default rather than a guess.
-        hasAgent: typeof agent.hasAgent === 'boolean' ? agent.hasAgent : true,
-        ...(typeof agent.paneId === 'string' && agent.paneId ? { paneId: agent.paneId } : {}),
-        ...(typeof agent.cwd === 'string' && agent.cwd ? { cwd: agent.cwd } : {}),
-      }];
+      return [
+        {
+          id: agent.id,
+          name: agent.name,
+          status: asAgentStatus(typeof agent.status === 'string' ? agent.status : undefined),
+          // Missing on a snapshot written before this field existed -- see the
+          // field's own doc comment on `ServerAgent` for why `true` is the
+          // correct default rather than a guess.
+          hasAgent: typeof agent.hasAgent === 'boolean' ? agent.hasAgent : true,
+          ...(typeof agent.paneId === 'string' && agent.paneId ? { paneId: agent.paneId } : {}),
+          ...(typeof agent.cwd === 'string' && agent.cwd ? { cwd: agent.cwd } : {}),
+        },
+      ];
     }),
   });
 }

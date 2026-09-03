@@ -68,7 +68,9 @@ const LOG_SAMPLE = '2026-07-27T04:44:01.221Z  info  gateway: pane pane-1 wrote 1
 /** Repeat a sample until it is at least `bytes` long, keeping it valid-ish. */
 function grow(sample: string, bytes: number): string {
   const times = Math.max(1, Math.ceil(bytes / (sample.length + 1)));
-  return Array.from({ length: times }, () => sample).join('\n').slice(0, bytes);
+  return Array.from({ length: times }, () => sample)
+    .join('\n')
+    .slice(0, bytes);
 }
 
 function measure(label: string, name: string, text: string, runs: number) {
@@ -89,18 +91,30 @@ function measure(label: string, name: string, text: string, runs: number) {
       `${perRun.toFixed(2)} ms`.padStart(10),
       String(spans).padStart(8),
       String(result.lines.length).padStart(7),
-      result.skipped ? `skipped:${result.skipped}` : result.language ?? 'plain',
+      result.skipped ? `skipped:${result.skipped}` : (result.language ?? 'plain'),
     ].join('  ')
   );
 }
 
 console.log(
-  ['input'.padEnd(26), 'chars'.padStart(8), 'time'.padStart(10), 'spans'.padStart(8), 'lines'.padStart(7), 'result'].join('  ')
+  [
+    'input'.padEnd(26),
+    'chars'.padStart(8),
+    'time'.padStart(10),
+    'spans'.padStart(8),
+    'lines'.padStart(7),
+    'result',
+  ].join('  ')
 );
 console.log('-'.repeat(88));
 
 measure('diff (small)', 'theme.diff', DIFF_SAMPLE, 200);
-measure('json (small)', 'coverage.json', '{"total": 91.4, "files": [{"path": "a.ts", "pct": 88}]}', 200);
+measure(
+  'json (small)',
+  'coverage.json',
+  '{"total": 91.4, "files": [{"path": "a.ts", "pct": 88}]}',
+  200
+);
 
 for (const kib of [16, 64, 128, 256, 512]) {
   measure(`typescript ${kib} KiB`, 'sample.ts', grow(TS_SAMPLE, kib * 1024), kib > 128 ? 5 : 20);

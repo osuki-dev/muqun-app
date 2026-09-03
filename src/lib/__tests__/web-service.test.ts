@@ -124,7 +124,9 @@ describe('building the URL to open', () => {
     expect(webServiceUrl('http://osk.ts.net:23847/api/v1?token=secret#frag', 3000)).toBe(
       'http://osk.ts.net:3000/'
     );
-    expect(webServiceUrl('http://user:pass@osk.ts.net:23847', 3000)).toBe('http://osk.ts.net:3000/');
+    expect(webServiceUrl('http://user:pass@osk.ts.net:23847', 3000)).toBe(
+      'http://osk.ts.net:3000/'
+    );
   });
 
   test('a missing gateway URL has nothing honest to open', () => {

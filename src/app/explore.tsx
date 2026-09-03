@@ -3,7 +3,13 @@ import { Button, Card, Input, Text, useThemeTokens } from '@osuki-dev/ui';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
 import { type Href, useRouter } from 'expo-router';
-import { Check, Copy as CopyIcon, Keyboard as KeyboardIcon, ScanLine, X } from 'lucide-react-native';
+import {
+  Check,
+  Copy as CopyIcon,
+  Keyboard as KeyboardIcon,
+  ScanLine,
+  X,
+} from 'lucide-react-native';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
   AppState,
@@ -222,9 +228,10 @@ export default function PairModal() {
   useEffect(() => {
     if (!pairedServer) return;
     const timeout = setTimeout(() => {
-      router.replace(
-        { pathname: '/servers/[serverId]', params: { serverId: pairedServer.serverId } } as Href
-      );
+      router.replace({
+        pathname: '/servers/[serverId]',
+        params: { serverId: pairedServer.serverId },
+      } as Href);
     }, 850);
     return () => clearTimeout(timeout);
   }, [pairedServer, router]);
@@ -236,9 +243,7 @@ export default function PairModal() {
     return () => clearInterval(timer);
   }, [expiresAt, step]);
 
-  const secondsRemaining = expiresAt
-    ? Math.max(0, Math.ceil((expiresAt - clock) / 1000))
-    : null;
+  const secondsRemaining = expiresAt ? Math.max(0, Math.ceil((expiresAt - clock) / 1000)) : null;
   const codeExpired = secondsRemaining === 0;
 
   function close() {
@@ -433,9 +438,7 @@ export default function PairModal() {
   const onCameraReading = useCallback((next: ScanReading) => setCameraReading(next), []);
   // The route's own gutters, taken off before the frame is squared, so the
   // aperture is square against the column it actually occupies.
-  const apertureSize = pairingApertureSize(
-    Math.min(windowWidth, ROUTE_MEASURE) - ROUTE_GUTTER * 2
-  );
+  const apertureSize = pairingApertureSize(Math.min(windowWidth, ROUTE_MEASURE) - ROUTE_GUTTER * 2);
 
   /**
    * The step transition, which is the most-hit one in the whole flow and used
@@ -458,7 +461,9 @@ export default function PairModal() {
   const stepExiting = fadeOut('short');
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView
+      edges={['top']}
+      style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
       <KeyboardAwareScrollView
         bottomOffset={24}
         contentContainerStyle={styles.content}
@@ -466,57 +471,61 @@ export default function PairModal() {
         keyboardShouldPersistTaps="handled"
         mode="insets"
         showsVerticalScrollIndicator={false}>
-      <View style={styles.modalHeader}>
-        <View style={styles.headerCopy}>
-          <Text variant="heading" style={styles.title}>
-            {step === 'scan' ? t`Pair server` : step === 'confirm' ? t`Confirm pairing` : t`Connected`}
-          </Text>
-          {/* The header says what to do; the aperture says why. They never
+        <View style={styles.modalHeader}>
+          <View style={styles.headerCopy}>
+            <Text variant="heading" style={styles.title}>
+              {step === 'scan'
+                ? t`Pair server`
+                : step === 'confirm'
+                  ? t`Confirm pairing`
+                  : t`Connected`}
+            </Text>
+            {/* The header says what to do; the aperture says why. They never
               repeat each other, and they never disagree -- which is what
               "Scan the Gateway QR." printed above "no camera to scan with"
               was doing on every device without a rear lens. */}
-          <Text variant="bodySmall" color={theme.colors.textMuted}>
-            {step === 'scan'
-              ? manualOpen
-                ? t`The address the Gateway prints when it starts.`
-                : scan.reading === 'unavailable'
-                  ? t`Enter the Gateway's address instead.`
-                  : scan.reading === 'permission'
-                    ? t`Allow the camera, or enter the address instead.`
-                    : scan.reading === 'claiming'
-                      ? t`Asking the Gateway about that code.`
-                      : t`Scan the Gateway QR.`
-              : step === 'confirm'
-                ? t`Name it, then enter the code shown by the Gateway.`
-                : t`Opening the server.`}
-          </Text>
+            <Text variant="bodySmall" color={theme.colors.textMuted}>
+              {step === 'scan'
+                ? manualOpen
+                  ? t`The address the Gateway prints when it starts.`
+                  : scan.reading === 'unavailable'
+                    ? t`Enter the Gateway's address instead.`
+                    : scan.reading === 'permission'
+                      ? t`Allow the camera, or enter the address instead.`
+                      : scan.reading === 'claiming'
+                        ? t`Asking the Gateway about that code.`
+                        : t`Scan the Gateway QR.`
+                : step === 'confirm'
+                  ? t`Name it, then enter the code shown by the Gateway.`
+                  : t`Opening the server.`}
+            </Text>
+          </View>
+          <PressableScale
+            accessibilityLabel={t`Close pairing`}
+            onPress={close}
+            style={[styles.closeButton, { backgroundColor: theme.colors.surfaceRaised }]}>
+            <X size={20} color={theme.colors.text} />
+          </PressableScale>
         </View>
-        <PressableScale
-          accessibilityLabel={t`Close pairing`}
-          onPress={close}
-          style={[styles.closeButton, { backgroundColor: theme.colors.surfaceRaised }]}>
-          <X size={20} color={theme.colors.text} />
-        </PressableScale>
-      </View>
 
-      {/* Slack, split unevenly, so the instrument settles a little above the
+        {/* Slack, split unevenly, so the instrument settles a little above the
           middle of the space it has instead of hanging off the header with a
           screen of nothing under it. Both collapse the moment a keyboard or a
           long error makes the content taller than the window. */}
-      <View style={styles.slackAbove} />
+        <View style={styles.slackAbove} />
 
-      {/* One slot for all three steps, carrying the height difference between a
+        {/* One slot for all three steps, carrying the height difference between a
           360pt viewfinder and a form card. The outgoing step is detached from
           layout for the length of its fade, so this travels to the incoming
           step's height rather than to the sum of the two. */}
-      <Animated.View style={styles.stepArea} layout={listLayout('short')}>
-      {step === 'scan' ? (
-        <Animated.View
-          key="scan"
-          entering={stepEntering}
-          exiting={stepExiting}
-          style={styles.step}>
-          {/* One aperture, one place, one size, for both modes.
+        <Animated.View style={styles.stepArea} layout={listLayout('short')}>
+          {step === 'scan' ? (
+            <Animated.View
+              key="scan"
+              entering={stepEntering}
+              exiting={stepExiting}
+              style={styles.step}>
+              {/* One aperture, one place, one size, for both modes.
  
               It does not resize between them, and that is the design rather
               than a shortcut: the frame is a slot that accepts either light or
@@ -526,192 +535,190 @@ export default function PairModal() {
               the fill visibly dimmed for about eight frames while a layout
               animation grew it back, which on a cream page is a grey slab. With
               nothing to grow, there is nothing to dim. */}
-          <Animated.View
-            style={[
-              styles.aperture,
-              {
-                width: apertureSize,
-                height: apertureSize,
-                backgroundColor: theme.colors.surfaceRaised,
-                // A hairline, because `surfaceRaised` and `background` are the
-                // same colour to within a percent in several packs -- an
-                // aperture defined only by its fill simply vanished in those,
-                // and a 460pt invisible rectangle is worse than no frame.
-                borderColor: theme.colors.border,
-              },
-            ]}>
-            {manualOpen ? (
               <Animated.View
-                key="manual"
-                testID="pairing-manual"
-                entering={fadeIn('short')}
-                exiting={fadeOut('micro')}
-                style={styles.manualPanel}>
-                <Input
-                  label={t`Gateway URL`}
-                  value={manualUrl}
-                  onChangeText={setManualUrl}
-                  onBlur={() => setManualUrl((value) => value.trim())}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="url"
-                  placeholder="http://100.x.x.x:23847"
-                  // Underline, not outline: the design system's `outline`
-                  // variant fills with `surfaceRaised` and draws no border
-                  // width at all, which on the aperture's own `surfaceRaised`
-                  // ground left the field with no edge anywhere -- a label and
-                  // a placeholder floating in a box with nothing to tap at.
-                  variant="underline"
-                />
-                <Button onPress={handleManualPair} loading={busy} loadingLabel={t`Connecting`}>
-                  {t`Continue`}
-                </Button>
-              </Animated.View>
-            ) : (
-              <Animated.View
-                key="scanner"
-                testID="pairing-scanner"
-                entering={fadeIn('short')}
-                exiting={fadeOut('micro')}
-                style={styles.scanner}>
-                {/* The chunk itself takes a beat to arrive on a cold start.
+                style={[
+                  styles.aperture,
+                  {
+                    width: apertureSize,
+                    height: apertureSize,
+                    backgroundColor: theme.colors.surfaceRaised,
+                    // A hairline, because `surfaceRaised` and `background` are the
+                    // same colour to within a percent in several packs -- an
+                    // aperture defined only by its fill simply vanished in those,
+                    // and a 460pt invisible rectangle is worse than no frame.
+                    borderColor: theme.colors.border,
+                  },
+                ]}>
+                {manualOpen ? (
+                  <Animated.View
+                    key="manual"
+                    testID="pairing-manual"
+                    entering={fadeIn('short')}
+                    exiting={fadeOut('micro')}
+                    style={styles.manualPanel}>
+                    <Input
+                      label={t`Gateway URL`}
+                      value={manualUrl}
+                      onChangeText={setManualUrl}
+                      onBlur={() => setManualUrl((value) => value.trim())}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="url"
+                      placeholder="http://100.x.x.x:23847"
+                      // Underline, not outline: the design system's `outline`
+                      // variant fills with `surfaceRaised` and draws no border
+                      // width at all, which on the aperture's own `surfaceRaised`
+                      // ground left the field with no edge anywhere -- a label and
+                      // a placeholder floating in a box with nothing to tap at.
+                      variant="underline"
+                    />
+                    <Button onPress={handleManualPair} loading={busy} loadingLabel={t`Connecting`}>
+                      {t`Continue`}
+                    </Button>
+                  </Animated.View>
+                ) : (
+                  <Animated.View
+                    key="scanner"
+                    testID="pairing-scanner"
+                    entering={fadeIn('short')}
+                    exiting={fadeOut('micro')}
+                    style={styles.scanner}>
+                    {/* The chunk itself takes a beat to arrive on a cold start.
                     A blank frame for that beat is the same non-answer the
                     camera's own warm-up used to give. */}
-                <Suspense
-                  fallback={
-                    <View style={styles.waiting}>
-                      <LogoLoader accessibilityLabel={t`Starting the camera`} size={44} />
-                    </View>
-                  }>
-                  <PairingCamera
-                    active={cameraActive}
-                    error={cameraError}
-                    knownUnavailable={cameraReading === 'unavailable'}
-                    onError={(value) => {
-                      setCameraError(value);
-                    }}
-                    onReading={onCameraReading}
-                    onScanned={handleScanned}
-                  />
-                </Suspense>
-                {/* Only over camera pixels. With no preview the aperture's own
+                    <Suspense
+                      fallback={
+                        <View style={styles.waiting}>
+                          <LogoLoader accessibilityLabel={t`Starting the camera`} size={44} />
+                        </View>
+                      }>
+                      <PairingCamera
+                        active={cameraActive}
+                        error={cameraError}
+                        knownUnavailable={cameraReading === 'unavailable'}
+                        onError={(value) => {
+                          setCameraError(value);
+                        }}
+                        onReading={onCameraReading}
+                        onScanned={handleScanned}
+                      />
+                    </Suspense>
+                    {/* Only over camera pixels. With no preview the aperture's own
                     corners are the mark, and a second frame floating inside the
                     first was the old scanner's black-box-in-a-black-box. */}
-                {scan.showsPreview ? (
-                  <Animated.View
-                    entering={fadeIn('short')}
-                    exiting={fadeOut('micro')}
-                    pointerEvents="none"
-                    style={styles.scanOverlay}>
-                    <ScanReticle active={cameraActive} detected={scan.reticleClosed} />
-                    <Text variant="caption" color={OVER_PREVIEW_INK}>
-                      {scan.reading === 'rejected' ? (
-                        <Trans>That code was refused. Hold still for a new one.</Trans>
-                      ) : scan.reticleClosed ? (
-                        <Trans>Code found. Reaching the Gateway.</Trans>
-                      ) : scan.reading === 'aiming-front' ? (
-                        // Saying which lens is doing the looking, because the
-                        // reader is about to see themselves and needs to know
-                        // that is the scanner working rather than the wrong one
-                        // opening.
-                        <Trans>Front camera. Hold the QR up to the screen</Trans>
-                      ) : (
-                        <Trans>Align the QR inside the frame</Trans>
-                      )}
-                    </Text>
-                  </Animated.View>
-                ) : null}
-                {scan.isWaiting ? (
-                  <Animated.View
-                    entering={fadeIn('short')}
-                    exiting={fadeOut('micro')}
-                    style={styles.waiting}>
-                    <LogoLoader accessibilityLabel={t`Reaching the Gateway`} size={44} />
-                    <Text variant="label" color={theme.colors.textMuted}>
-                      {t`Reaching the Gateway`}
-                    </Text>
-                  </Animated.View>
-                ) : null}
-                {/* The aperture's own corners: the same mark as the home card's
+                    {scan.showsPreview ? (
+                      <Animated.View
+                        entering={fadeIn('short')}
+                        exiting={fadeOut('micro')}
+                        pointerEvents="none"
+                        style={styles.scanOverlay}>
+                        <ScanReticle active={cameraActive} detected={scan.reticleClosed} />
+                        <Text variant="caption" color={OVER_PREVIEW_INK}>
+                          {scan.reading === 'rejected' ? (
+                            <Trans>That code was refused. Hold still for a new one.</Trans>
+                          ) : scan.reticleClosed ? (
+                            <Trans>Code found. Reaching the Gateway.</Trans>
+                          ) : scan.reading === 'aiming-front' ? (
+                            // Saying which lens is doing the looking, because the
+                            // reader is about to see themselves and needs to know
+                            // that is the scanner working rather than the wrong one
+                            // opening.
+                            <Trans>Front camera. Hold the QR up to the screen</Trans>
+                          ) : (
+                            <Trans>Align the QR inside the frame</Trans>
+                          )}
+                        </Text>
+                      </Animated.View>
+                    ) : null}
+                    {scan.isWaiting ? (
+                      <Animated.View
+                        entering={fadeIn('short')}
+                        exiting={fadeOut('micro')}
+                        style={styles.waiting}>
+                        <LogoLoader accessibilityLabel={t`Reaching the Gateway`} size={44} />
+                        <Text variant="label" color={theme.colors.textMuted}>
+                          {t`Reaching the Gateway`}
+                        </Text>
+                      </Animated.View>
+                    ) : null}
+                    {/* The aperture's own corners: the same mark as the home card's
                     empty state at 64pt and the home header's glyph at 20pt,
                     here at the size the phone is held at. Themed while the
                     aperture is empty; white over pixels this app does not
                     control, because no token can promise contrast against an
                     arbitrary camera image. */}
-                {scan.showsPreview ? null : (
-                  <View pointerEvents="none" style={styles.apertureFrame}>
-                    <ReticleCorners color={theme.colors.borderStrong} />
-                  </View>
+                    {scan.showsPreview ? null : (
+                      <View pointerEvents="none" style={styles.apertureFrame}>
+                        <ReticleCorners color={theme.colors.borderStrong} />
+                      </View>
+                    )}
+                  </Animated.View>
                 )}
               </Animated.View>
-            )}
-          </Animated.View>
 
-          {/* The alternative route, below the instrument rather than above it:
+              {/* The alternative route, below the instrument rather than above it:
               scanning is what this screen is for, and typing an address is the
               way out of it. It stops being quiet exactly when scanning cannot
               work -- same control, same words, more weight -- so a reader on a
               device with no lens is not left choosing between a dead frame and
               a caption. */}
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
-            onPress={() => setManualOpen((value) => !value)}
-            style={[
-              styles.manualToggle,
-              {
-                // The quiet state is the aperture's own surface, not `surface`:
-                // in several packs `surface` is brighter than the page, so a
-                // 42pt pill outshone the 460pt frame it is subordinate to.
-                backgroundColor:
-                  scan.promotesManualEntry && !manualOpen
-                    ? theme.colors.primarySubtle
-                    : theme.colors.surfaceRaised,
-              },
-            ]}>
-            {manualOpen ? (
-              <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
-            ) : (
-              <KeyboardIcon
-                size={17}
-                color={
-                  scan.promotesManualEntry ? theme.colors.primary : theme.colors.textMuted
-                }
-                strokeWidth={2}
-              />
-            )}
-            <Text
-              variant="label"
-              color={
-                !manualOpen && scan.promotesManualEntry
-                  ? theme.colors.primary
-                  : theme.colors.textMuted
-              }>
-              {manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
-            </Text>
-          </PressableScale>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
+                onPress={() => setManualOpen((value) => !value)}
+                style={[
+                  styles.manualToggle,
+                  {
+                    // The quiet state is the aperture's own surface, not `surface`:
+                    // in several packs `surface` is brighter than the page, so a
+                    // 42pt pill outshone the 460pt frame it is subordinate to.
+                    backgroundColor:
+                      scan.promotesManualEntry && !manualOpen
+                        ? theme.colors.primarySubtle
+                        : theme.colors.surfaceRaised,
+                  },
+                ]}>
+                {manualOpen ? (
+                  <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                ) : (
+                  <KeyboardIcon
+                    size={17}
+                    color={scan.promotesManualEntry ? theme.colors.primary : theme.colors.textMuted}
+                    strokeWidth={2}
+                  />
+                )}
+                <Text
+                  variant="label"
+                  color={
+                    !manualOpen && scan.promotesManualEntry
+                      ? theme.colors.primary
+                      : theme.colors.textMuted
+                  }>
+                  {manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
+                </Text>
+              </PressableScale>
 
-          {/* The way out for the reader who has neither a QR nor an address,
+              {/* The way out for the reader who has neither a QR nor an address,
               which is everyone opening this screen for the first time. Quiet,
               and below the toggle: it is the answer to "I do not have one of
               those yet", not a third way to pair. */}
-          <PressableScale
-            accessibilityRole="link"
-            accessibilityLabel={t`Set up a Gateway on your computer`}
-            onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
-            style={styles.setupLink}>
-            {/* The gap is laid out, not typed. A literal space inside the Text
+              <PressableScale
+                accessibilityRole="link"
+                accessibilityLabel={t`Set up a Gateway on your computer`}
+                onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
+                style={styles.setupLink}>
+                {/* The gap is laid out, not typed. A literal space inside the Text
                 becomes part of the node's own text, so every matcher -- and the
                 screen reader -- sees "No Gateway yet? " with a tail on it. */}
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {t`No Gateway yet?`}
-            </Text>
-            <Text variant="caption" color={theme.colors.primary}>
-              {t`Set one up on your computer`}
-            </Text>
-          </PressableScale>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {t`No Gateway yet?`}
+                </Text>
+                <Text variant="caption" color={theme.colors.primary}>
+                  {t`Set one up on your computer`}
+                </Text>
+              </PressableScale>
 
-          {/* The command itself, under the link that would otherwise be the
+              {/* The command itself, under the link that would otherwise be the
               only answer.
 
               The link sends a reader with a phone in one hand and a laptop in
@@ -725,133 +732,141 @@ export default function PairModal() {
               retyped from a phone screen is a command retyped wrong. It stays
               legible either way: the text is selectable, so the reader who has
               no shared clipboard can still read it off and type it. */}
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityHint={t`Copies it, ready to paste into a terminal`}
-            accessibilityLabel={
-              copiedInstall ? t`Install command copied` : t`Copy the install command`
-            }
-            testID="pairing-install-command"
-            onPress={() => void copyInstallCommand()}
-            style={[styles.installRow, { backgroundColor: theme.colors.surfaceRaised }]}>
-            {/* Two lines, not one shrunk to fit: the command wraps at the phone
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityHint={t`Copies it, ready to paste into a terminal`}
+                accessibilityLabel={
+                  copiedInstall ? t`Install command copied` : t`Copy the install command`
+                }
+                testID="pairing-install-command"
+                onPress={() => void copyInstallCommand()}
+                style={[styles.installRow, { backgroundColor: theme.colors.surfaceRaised }]}>
+                {/* Two lines, not one shrunk to fit: the command wraps at the phone
                 widths this screen is read on, and a command scaled down until it
                 fits is a command nobody can read off the screen. */}
-            <Text
-              numberOfLines={2}
-              style={[styles.installCommand, { color: theme.colors.textMuted }]}>
-              {GATEWAY_INSTALL_COMMAND}
-            </Text>
-            {copiedInstall ? (
-              <Check size={16} color={theme.colors.primary} strokeWidth={2} />
-            ) : (
-              <CopyIcon size={16} color={theme.colors.textMuted} strokeWidth={2} />
-            )}
-          </PressableScale>
-        </Animated.View>
-      ) : step === 'confirm' ? (
-        <Animated.View key="confirm" entering={stepEntering} exiting={stepExiting}>
-        <Card variant="raised" padding="lg" style={styles.confirmCard}>
-          <View style={styles.confirmCopy}>
-            <Text variant="label">
-              {/* The product's name for the daemon, kept as a name in every
+                <Text
+                  numberOfLines={2}
+                  style={[styles.installCommand, { color: theme.colors.textMuted }]}>
+                  {GATEWAY_INSTALL_COMMAND}
+                </Text>
+                {copiedInstall ? (
+                  <Check size={16} color={theme.colors.primary} strokeWidth={2} />
+                ) : (
+                  <CopyIcon size={16} color={theme.colors.textMuted} strokeWidth={2} />
+                )}
+              </PressableScale>
+            </Animated.View>
+          ) : step === 'confirm' ? (
+            <Animated.View key="confirm" entering={stepEntering} exiting={stepExiting}>
+              <Card variant="raised" padding="lg" style={styles.confirmCard}>
+                <View style={styles.confirmCopy}>
+                  <Text variant="label">
+                    {/* The product's name for the daemon, kept as a name in every
                   locale -- but routed through the catalog so a language that
                   wants an article or a particle around it can have one. */}
-              <Trans>Gateway</Trans>
-            </Text>
-            <Text selectable variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-              {offer?.url}
-            </Text>
-          </View>
-          <Input
-            label={t`Server name`}
-            value={serverName}
-            onChangeText={(value) => setServerName(value.slice(0, 48))}
-            autoCapitalize="words"
-            autoCorrect={false}
-            returnKeyType="next"
-            placeholder={t`Mac mini · Office`}
-            variant="outline"
-          />
-          {/* Do not set native maxLength here. Android truncates pasted text
+                    <Trans>Gateway</Trans>
+                  </Text>
+                  <Text
+                    selectable
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    numberOfLines={2}>
+                    {offer?.url}
+                  </Text>
+                </View>
+                <Input
+                  label={t`Server name`}
+                  value={serverName}
+                  onChangeText={(value) => setServerName(value.slice(0, 48))}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  placeholder={t`Mac mini · Office`}
+                  variant="outline"
+                />
+                {/* Do not set native maxLength here. Android truncates pasted text
               before onChangeText, so a leading space would consume one slot
               and discard the final real code character before normalization. */}
-          <Input
-            label={t`Pairing code`}
-            value={code}
-            onChangeText={(value) => setCode(normalizePairingCode(value))}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'visible-password'}
-            returnKeyType="done"
-            textContentType="oneTimeCode"
-            onSubmitEditing={() => void handleClaim()}
-            // Shows the shape without looking like a code to copy. Prose does
-            // not fit: this input is 26pt with 6pt letter spacing.
-            placeholder="••••-••••"
-            variant="outline"
-            style={styles.codeInput}
-            testID="pairing-code-input"
-          />
-          {secondsRemaining !== null ? (
-            <Text
-              variant="caption"
-              color={secondsRemaining <= 15 ? theme.colors.danger : theme.colors.textMuted}>
-              {codeExpired
-                ? t`Code expired`
-                : t`Expires in ${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`}
-            </Text>
+                <Input
+                  label={t`Pairing code`}
+                  value={code}
+                  onChangeText={(value) => setCode(normalizePairingCode(value))}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'visible-password'}
+                  returnKeyType="done"
+                  textContentType="oneTimeCode"
+                  onSubmitEditing={() => void handleClaim()}
+                  // Shows the shape without looking like a code to copy. Prose does
+                  // not fit: this input is 26pt with 6pt letter spacing.
+                  placeholder="••••-••••"
+                  variant="outline"
+                  style={styles.codeInput}
+                  testID="pairing-code-input"
+                />
+                {secondsRemaining !== null ? (
+                  <Text
+                    variant="caption"
+                    color={secondsRemaining <= 15 ? theme.colors.danger : theme.colors.textMuted}>
+                    {codeExpired
+                      ? t`Code expired`
+                      : t`Expires in ${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`}
+                  </Text>
+                ) : null}
+                <Button
+                  disabled={codeExpired}
+                  onPress={handleClaim}
+                  loading={busy}
+                  loadingLabel={t`Pairing`}>
+                  {t`Pair server`}
+                </Button>
+                <Button onPress={reset} variant="ghost">
+                  {t`Scan again`}
+                </Button>
+              </Card>
+            </Animated.View>
+          ) : pairedServer ? (
+            <Animated.View
+              key="success"
+              entering={stepEntering ?? fadeIn('short')}
+              exiting={stepExiting}
+              style={[styles.successCard, { backgroundColor: theme.colors.primarySubtle }]}>
+              <Animated.View
+                // Timed, not sprung: the design system rules out bounce, and the
+                // tick landing cleanly reads as confirmation rather than as a toy.
+                entering={zoomIn('short')}
+                style={[styles.successIcon, { backgroundColor: theme.colors.primary }]}>
+                <Check size={30} strokeWidth={2.5} color={theme.colors.onPrimary} />
+              </Animated.View>
+              <View style={styles.successCopy}>
+                <Text variant="heading" style={styles.successTitle} numberOfLines={1}>
+                  {pairedServer.label}
+                </Text>
+                <Text selectable variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+                  {pairedServer.url}
+                </Text>
+              </View>
+            </Animated.View>
           ) : null}
-          <Button disabled={codeExpired} onPress={handleClaim} loading={busy} loadingLabel={t`Pairing`}>
-            {t`Pair server`}
-          </Button>
-          <Button onPress={reset} variant="ghost">
-            {t`Scan again`}
-          </Button>
-        </Card>
         </Animated.View>
-      ) : pairedServer ? (
-        <Animated.View
-          key="success"
-          entering={stepEntering ?? fadeIn('short')}
-          exiting={stepExiting}
-          style={[styles.successCard, { backgroundColor: theme.colors.primarySubtle }]}>
-          <Animated.View
-            // Timed, not sprung: the design system rules out bounce, and the
-            // tick landing cleanly reads as confirmation rather than as a toy.
-            entering={zoomIn('short')}
-            style={[styles.successIcon, { backgroundColor: theme.colors.primary }]}>
-            <Check size={30} strokeWidth={2.5} color={theme.colors.onPrimary} />
-          </Animated.View>
-          <View style={styles.successCopy}>
-            <Text variant="heading" style={styles.successTitle} numberOfLines={1}>
-              {pairedServer.label}
-            </Text>
-            <Text selectable variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-              {pairedServer.url}
-            </Text>
-          </View>
-        </Animated.View>
-      ) : null}
-      </Animated.View>
 
-      {/* A bad QR, an expired code and an unreachable gateway all arrive here,
+        {/* A bad QR, an expired code and an unreachable gateway all arrive here,
           and all three used to appear and vanish on one frame -- a paragraph of
           red simply existing under the form, with the scroll content jumping by
           its height as it did. */}
-      {message ? (
-        <Animated.View
-          entering={fadeIn('short')}
-          exiting={fadeOut('micro')}
-          layout={listLayout('short')}
-          style={[styles.message, { backgroundColor: theme.colors.dangerSubtle }]}>
-          <Text selectable variant="bodySmall" color={theme.colors.danger}>
-            {message}
-          </Text>
-        </Animated.View>
-      ) : null}
+        {message ? (
+          <Animated.View
+            entering={fadeIn('short')}
+            exiting={fadeOut('micro')}
+            layout={listLayout('short')}
+            style={[styles.message, { backgroundColor: theme.colors.dangerSubtle }]}>
+            <Text selectable variant="bodySmall" color={theme.colors.danger}>
+              {message}
+            </Text>
+          </Animated.View>
+        ) : null}
 
-      <View style={styles.slackBelow} />
+        <View style={styles.slackBelow} />
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );

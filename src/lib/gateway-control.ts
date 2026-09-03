@@ -21,7 +21,10 @@ import {
 } from '@/lib/gateway-client';
 import { selectCurrentSessionState, useSessionControlStore } from '@/stores/session-control';
 
-export async function runGatewayAction(action: () => Promise<unknown>, success: string): Promise<void> {
+export async function runGatewayAction(
+  action: () => Promise<unknown>,
+  success: string
+): Promise<void> {
   const store = useSessionControlStore.getState();
   store.setBusy(true);
   store.setStatusMessage(null);
@@ -74,7 +77,11 @@ export function focusAgentCommand(sessionId: string, id: string): Promise<void> 
   return runGatewayAction(() => focusAgent(sessionId, id), `Focused agent ${id}`);
 }
 
-export function createWorkspaceCommand(sessionId: string, label: string, cwd: string): Promise<void> {
+export function createWorkspaceCommand(
+  sessionId: string,
+  label: string,
+  cwd: string
+): Promise<void> {
   return runGatewayAction(
     () => createWorkspace(sessionId, compactPayload({ label, cwd, focus: true })),
     'Workspace created'
@@ -91,7 +98,10 @@ export function renameWorkspaceCommand(sessionId: string, label: string): Promis
 
 export function deleteWorkspaceCommand(sessionId: string): Promise<void> {
   const { selectedWorkspaceId } = selectCurrentSessionState(useSessionControlStore.getState());
-  return runGatewayAction(() => deleteWorkspace(sessionId, selectedWorkspaceId), 'Workspace deleted');
+  return runGatewayAction(
+    () => deleteWorkspace(sessionId, selectedWorkspaceId),
+    'Workspace deleted'
+  );
 }
 
 export function createTabCommand(
@@ -101,7 +111,8 @@ export function createTabCommand(
   cwd: string
 ): Promise<void> {
   return runGatewayAction(
-    () => createTab(sessionId, compactPayload({ workspace_id: workspaceId, label, cwd, focus: true })),
+    () =>
+      createTab(sessionId, compactPayload({ workspace_id: workspaceId, label, cwd, focus: true })),
     'Tab created'
   );
 }
@@ -156,7 +167,11 @@ export function sendPaneKeysCommand(sessionId: string, keys: string[]): Promise<
   return runGatewayAction(() => sendPaneKeys(sessionId, selectedPaneId, keys), 'Keys sent');
 }
 
-export function splitPaneCommand(sessionId: string, direction: string, command: string): Promise<void> {
+export function splitPaneCommand(
+  sessionId: string,
+  direction: string,
+  command: string
+): Promise<void> {
   const { selectedPaneId } = selectCurrentSessionState(useSessionControlStore.getState());
   return runGatewayAction(
     () =>
@@ -175,7 +190,10 @@ export function deletePaneCommand(sessionId: string): Promise<void> {
 
 export function sendAgentTextCommand(sessionId: string, text: string): Promise<void> {
   const { selectedAgentTarget } = selectCurrentSessionState(useSessionControlStore.getState());
-  return runGatewayAction(() => sendAgentText(sessionId, selectedAgentTarget, text), 'Agent message sent');
+  return runGatewayAction(
+    () => sendAgentText(sessionId, selectedAgentTarget, text),
+    'Agent message sent'
+  );
 }
 
 export function loadAgentCommand(sessionId: string): Promise<void> {
@@ -183,7 +201,10 @@ export function loadAgentCommand(sessionId: string): Promise<void> {
   return runGatewayAction(async () => {
     useSessionControlStore
       .getState()
-      .setDetailJson(sessionId, JSON.stringify(await getAgent(sessionId, selectedAgentTarget), null, 2));
+      .setDetailJson(
+        sessionId,
+        JSON.stringify(await getAgent(sessionId, selectedAgentTarget), null, 2)
+      );
   }, 'Agent loaded');
 }
 

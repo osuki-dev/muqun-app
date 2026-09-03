@@ -15,7 +15,11 @@ import { terminalFrameText } from '@/terminal/terminal-core';
 import type { TerminalFrame } from '@/terminal/types';
 
 /** A scheduler that runs nothing until `tick` is called; counts what was asked. */
-function manualScheduler(): FrameScheduler & { tick(): void; scheduled: number; cancelled: number } {
+function manualScheduler(): FrameScheduler & {
+  tick(): void;
+  scheduled: number;
+  cancelled: number;
+} {
   let queued: (() => void) | null = null;
   const schedule = ((run: () => void) => {
     schedule.scheduled += 1;
@@ -300,7 +304,12 @@ describe('SshTerminalSession', () => {
 
   test('the default scrollback is five thousand rows', () => {
     expect(SSH_TERMINAL_SCROLLBACK).toBe(5000);
-    const s = new SshTerminalSession({ decoder: new TextDecoder(), columns: 4, rows: 2, schedule: manualScheduler() });
+    const s = new SshTerminalSession({
+      decoder: new TextDecoder(),
+      columns: 4,
+      rows: 2,
+      schedule: manualScheduler(),
+    });
     // One more row than the window holds: the first one is gone.
     s.pushText(Array.from({ length: 5003 }, (_, index) => `${index}`).join('\r\n'));
     s.publish();

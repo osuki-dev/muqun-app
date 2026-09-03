@@ -25,7 +25,6 @@ import { KEY_ROW_HEIGHT } from '@/constants/key-row';
  * gesture. A hidden gesture in that space is a coin toss.
  */
 export function ArtifactsButton({
-
   sessionId,
   tabId,
   label,
@@ -66,9 +65,10 @@ export function ArtifactsButton({
       onPress={() => {
         // The sheet would otherwise open behind the on-screen keyboard.
         Keyboard.dismiss();
-        router.push(
-          { pathname: '/artifacts', params: { sessionId, tabId, label } } as unknown as Href
-        );
+        router.push({
+          pathname: '/artifacts',
+          params: { sessionId, tabId, label },
+        } as unknown as Href);
       }}
       style={[styles.button, compact && styles.compactButton, { backgroundColor: background }]}>
       <FolderOpen size={compact ? 15 : 16} color={theme.colors.primary} />

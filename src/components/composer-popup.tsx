@@ -43,7 +43,11 @@ export interface ComposerPopupProps {
   testIDPrefix?: string;
 }
 
-export function ComposerPopup({ rows, onPick, testIDPrefix = 'composer-popup' }: ComposerPopupProps) {
+export function ComposerPopup({
+  rows,
+  onPick,
+  testIDPrefix = 'composer-popup',
+}: ComposerPopupProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   if (rows.length === 0) return null;
@@ -54,15 +58,13 @@ export function ComposerPopup({ rows, onPick, testIDPrefix = 'composer-popup' }:
     <Animated.View
       entering={fadeInDown('dropdown')}
       exiting={fadeOutDown('micro')}
-      testID={testIDPrefix}
-    >
+      testID={testIDPrefix}>
       <Card variant="raised" radius="md" padding="xs">
         <ScrollView
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="none"
           showsVerticalScrollIndicator={false}
-          style={{ maxHeight: visibleRows * ROW_HEIGHT }}
-        >
+          style={{ maxHeight: visibleRows * ROW_HEIGHT }}>
           <Stack gap="xs">
             {rows.map((row) => (
               // The panel re-ranks under the caret: every character typed drops
@@ -77,49 +79,49 @@ export function ComposerPopup({ rows, onPick, testIDPrefix = 'composer-popup' }:
                 key={row.id}
                 layout={listLayout('micro')}
                 entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}
-              >
-              <PressableCard
-                variant="flat"
-                radius="sm"
-                padding="xs"
-                onPress={() => onPick(row)}
-                accessibilityRole="button"
-                // The hint rides in the row's own name, not just beside it:
-                // iOS collapses a labelled pressable's subtree into one
-                // element, so the child text is not in the tree a screen
-                // reader -- or a test -- walks. Android exposes both; saying
-                // it once here is what makes the two platforms agree.
-                accessibilityLabel={row.hint ? t`Insert ${row.label} ${row.hint}` : t`Insert ${row.label}`}
-                testID={`${testIDPrefix}-${row.id}`}
-              >
-                <Stack direction="horizontal" gap="sm" align="center">
-                  <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
-                    <Stack direction="horizontal" gap="xs" align="baseline">
-                      <Text variant="bodySmall" weight="bold" colorKey="text" numberOfLines={1}>
-                        {row.label}
-                      </Text>
-                      {/* The hint is what the user still has to type, so it is
+                exiting={fadeOut('micro')}>
+                <PressableCard
+                  variant="flat"
+                  radius="sm"
+                  padding="xs"
+                  onPress={() => onPick(row)}
+                  accessibilityRole="button"
+                  // The hint rides in the row's own name, not just beside it:
+                  // iOS collapses a labelled pressable's subtree into one
+                  // element, so the child text is not in the tree a screen
+                  // reader -- or a test -- walks. Android exposes both; saying
+                  // it once here is what makes the two platforms agree.
+                  accessibilityLabel={
+                    row.hint ? t`Insert ${row.label} ${row.hint}` : t`Insert ${row.label}`
+                  }
+                  testID={`${testIDPrefix}-${row.id}`}>
+                  <Stack direction="horizontal" gap="sm" align="center">
+                    <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+                      <Stack direction="horizontal" gap="xs" align="baseline">
+                        <Text variant="bodySmall" weight="bold" colorKey="text" numberOfLines={1}>
+                          {row.label}
+                        </Text>
+                        {/* The hint is what the user still has to type, so it is
                           drawn the way an empty field's placeholder is: present,
                           clearly not content, and never inserted. */}
-                      {row.hint ? (
-                        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                          {row.hint}
+                        {row.hint ? (
+                          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                            {row.hint}
+                          </Text>
+                        ) : null}
+                      </Stack>
+                      {row.description ? (
+                        <Text variant="caption" colorKey="textMuted" numberOfLines={1}>
+                          {row.description}
                         </Text>
                       ) : null}
-                    </Stack>
-                    {row.description ? (
-                      <Text variant="caption" colorKey="textMuted" numberOfLines={1}>
-                        {row.description}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {/* Where a command came from is the one thing its name cannot
+                    </View>
+                    {/* Where a command came from is the one thing its name cannot
                       say: `/review` shipped with the agent and `/review` written
                       into this repo do different work. */}
-                  {row.badge ? <Tag variant="pill">{row.badge}</Tag> : null}
-                </Stack>
-              </PressableCard>
+                    {row.badge ? <Tag variant="pill">{row.badge}</Tag> : null}
+                  </Stack>
+                </PressableCard>
               </Animated.View>
             ))}
           </Stack>

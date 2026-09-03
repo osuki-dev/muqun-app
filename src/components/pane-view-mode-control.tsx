@@ -51,7 +51,9 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
 
   return (
     <PressableScale
-      accessibilityLabel={_(switchToViewLabel[paneViewModeFallback(nextPaneViewMode(mode, available))])}
+      accessibilityLabel={_(
+        switchToViewLabel[paneViewModeFallback(nextPaneViewMode(mode, available))]
+      )}
       onPress={onCycle}
       style={styles.button}>
       <ModeIcon size={18} color={color} strokeWidth={2} />
@@ -59,7 +61,10 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
         // The view the user asked for could not be read, and something else is
         // showing instead. Small, because nothing is broken.
         <View
-          style={[styles.warning, { backgroundColor: warningColor, borderColor: warningBorderColor }]}
+          style={[
+            styles.warning,
+            { backgroundColor: warningColor, borderColor: warningBorderColor },
+          ]}
         />
       ) : null}
     </PressableScale>

@@ -97,7 +97,6 @@ export interface AgentEvent {
   atMs: number;
 }
 
-
 /** One agent's line in the digest. */
 export interface AwayDigestRow {
   /** Stable across a re-summarise, so the row does not remount under a fade. */
@@ -184,15 +183,17 @@ export function agentEventsFromResponse(value: unknown): AgentEvent[] {
     const agent = typeof record.agent === 'string' ? record.agent.trim() : '';
     if (!paneId && !agent) return [];
 
-    return [{
-      paneId,
-      agent: agent.slice(0, MAX_AGENT_NAME_LENGTH),
-      // A gateway that only reports where a pane arrived leaves `from` out, and
-      // "unknown -> done" is still a transition worth reporting.
-      from: asAgentStatus(typeof record.from === 'string' ? record.from : undefined),
-      to: asAgentStatus(typeof record.to === 'string' ? record.to : undefined),
-      atMs,
-    }];
+    return [
+      {
+        paneId,
+        agent: agent.slice(0, MAX_AGENT_NAME_LENGTH),
+        // A gateway that only reports where a pane arrived leaves `from` out, and
+        // "unknown -> done" is still a transition worth reporting.
+        from: asAgentStatus(typeof record.from === 'string' ? record.from : undefined),
+        to: asAgentStatus(typeof record.to === 'string' ? record.to : undefined),
+        atMs,
+      },
+    ];
   });
 }
 
@@ -275,9 +276,10 @@ export function summariseAwayEvents(
  * Never `now`: nothing shorter than `AWAY_THRESHOLD_MS` reaches a digest, so
  * the smallest honest bucket is minutes.
  */
-export function awayDurationParts(
-  digest: Pick<AwayDigest, 'sinceMs' | 'untilMs'>
-): { unit: 'minute' | 'hour' | 'day'; value: number } {
+export function awayDurationParts(digest: Pick<AwayDigest, 'sinceMs' | 'untilMs'>): {
+  unit: 'minute' | 'hour' | 'day';
+  value: number;
+} {
   const seconds = Math.max(0, Math.round((digest.untilMs - digest.sinceMs) / 1000));
   if (seconds < 3600) return { unit: 'minute', value: Math.max(1, Math.floor(seconds / 60)) };
   if (seconds < 86400) return { unit: 'hour', value: Math.floor(seconds / 3600) };

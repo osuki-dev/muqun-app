@@ -29,7 +29,9 @@ const testCrypto: SseRecordCrypto = {
     const decipher = createDecipheriv('aes-256-gcm', Buffer.from(key), Buffer.from(nonce));
     decipher.setAAD(Buffer.from(aad, 'utf8'));
     decipher.setAuthTag(Buffer.from(tag));
-    return new Uint8Array(Buffer.concat([decipher.update(Buffer.from(ciphertext)), decipher.final()]));
+    return new Uint8Array(
+      Buffer.concat([decipher.update(Buffer.from(ciphertext)), decipher.final()])
+    );
   },
   fromBase64Url: (value) => new Uint8Array(Buffer.from(value, 'base64url')),
 };
@@ -62,7 +64,9 @@ function sealRecord(
   );
   cipher.setAAD(Buffer.from(aad, 'utf8'));
   const sealed = Buffer.concat([
-    cipher.update(Buffer.from(JSON.stringify({ event: options.event, data: options.data }), 'utf8')),
+    cipher.update(
+      Buffer.from(JSON.stringify({ event: options.event, data: options.data }), 'utf8')
+    ),
     cipher.final(),
     cipher.getAuthTag(),
   ]);
@@ -230,7 +234,11 @@ describe('a hostile or torn stream fails closed', () => {
       'muqun-transport-v1',
       `muqun-transport-v1/sse/${sid}/${requestNonce}`
     );
-    const cipher = createCipheriv('aes-256-gcm', Buffer.from(key), Buffer.from(streamRecordNonce(0)));
+    const cipher = createCipheriv(
+      'aes-256-gcm',
+      Buffer.from(key),
+      Buffer.from(streamRecordNonce(0))
+    );
     cipher.setAAD(Buffer.from(`${requestAad}\n${sid}\n0`, 'utf8'));
     const sealed = Buffer.concat([
       cipher.update(Buffer.from('{"not":"an event"}', 'utf8')),
@@ -238,13 +246,11 @@ describe('a hostile or torn stream fails closed', () => {
       cipher.getAuthTag(),
     ]);
     expect(() =>
-      stream.open(
-        JSON.stringify({ v: 1, sid, seq: 0, ciphertext: sealed.toString('base64url') })
-      )
+      stream.open(JSON.stringify({ v: 1, sid, seq: 0, ciphertext: sealed.toString('base64url') }))
     ).toThrow('invalid');
   });
 
-  test('a failed record consumes no sequence slot; tearing down is the caller\'s job', () => {
+  test("a failed record consumes no sequence slot; tearing down is the caller's job", () => {
     const stream = decryptor();
     stream.open(record(0));
     expect(() => stream.open(record(2))).toThrow();

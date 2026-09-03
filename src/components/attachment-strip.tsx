@@ -64,8 +64,8 @@ export function AttachmentStrip({
         const label = failed
           ? t`Retry uploading ${attachment.name}`
           : isImage
-          ? t`Preview ${attachment.name}, ${status}`
-          : `${attachment.name}, ${status}`;
+            ? t`Preview ${attachment.name}, ${status}`
+            : `${attachment.name}, ${status}`;
 
         return (
           // A picked file used to be simply there, and a removed one simply

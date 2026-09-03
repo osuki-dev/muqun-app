@@ -99,21 +99,15 @@ export function PadServerRail({
     <SafeAreaView
       edges={['bottom']}
       testID={testID}
-      style={[
-        styles.shell,
-        { backgroundColor: theme.colors.surface },
-        style,
-      ]}>
+      style={[styles.shell, { backgroundColor: theme.colors.surface }, style]}>
       <View style={styles.brand}>
-        <View
-          style={[
-            styles.brandIconFrame,
-            { backgroundColor: theme.colors.surfaceRaised },
-          ]}>
+        <View style={[styles.brandIconFrame, { backgroundColor: theme.colors.surfaceRaised }]}>
           <Image source={brandMark} contentFit="contain" style={styles.brandIcon} />
         </View>
         <View style={styles.brandCopy}>
-          <Text variant="heading"><Trans>Muqun</Trans></Text>
+          <Text variant="heading">
+            <Trans>Muqun</Trans>
+          </Text>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Your agents, anywhere.</Trans>
           </Text>
@@ -233,8 +227,12 @@ function RailAction({
         <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
       </View>
       <View style={styles.actionCopy}>
-        <Text variant="bodySmall" numberOfLines={1}>{label}</Text>
-        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>{detail}</Text>
+        <Text variant="bodySmall" numberOfLines={1}>
+          {label}
+        </Text>
+        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+          {detail}
+        </Text>
       </View>
       <ChevronRight size={16} color={theme.colors.textMuted} />
     </Pressable>
@@ -276,20 +274,12 @@ function ServerGroup({
           styles.serverPill,
           { backgroundColor: selectedServer ? theme.colors.primarySubtle : 'transparent' },
         ]}>
-        <View
-          style={[
-            styles.serverIcon,
-            { backgroundColor: theme.colors.surfaceRaised },
-          ]}>
+        <View style={[styles.serverIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
           <Server size={17} color={theme.colors.textMuted} strokeWidth={2} />
         </View>
         <View style={styles.serverCopy}>
           <View style={styles.serverHeadline}>
-            <Text
-              variant="bodySmall"
-              weight="semibold"
-              numberOfLines={1}
-              style={styles.serverName}>
+            <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.serverName}>
               {server.label}
             </Text>
             <View style={styles.serverReachability}>

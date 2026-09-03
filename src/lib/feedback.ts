@@ -10,11 +10,12 @@ export async function feedback(kind: FeedbackKind = 'selection'): Promise<void> 
 
   try {
     if (Platform.OS === 'android') {
-      const type = kind === 'success'
-        ? Haptics.AndroidHaptics.Confirm
-        : kind === 'warning' || kind === 'error'
-          ? Haptics.AndroidHaptics.Reject
-          : Haptics.AndroidHaptics.Context_Click;
+      const type =
+        kind === 'success'
+          ? Haptics.AndroidHaptics.Confirm
+          : kind === 'warning' || kind === 'error'
+            ? Haptics.AndroidHaptics.Reject
+            : Haptics.AndroidHaptics.Context_Click;
       await Haptics.performAndroidHapticsAsync(type);
       return;
     }
@@ -24,11 +25,12 @@ export async function feedback(kind: FeedbackKind = 'selection'): Promise<void> 
       return;
     }
 
-    const type = kind === 'success'
-      ? Haptics.NotificationFeedbackType.Success
-      : kind === 'warning'
-        ? Haptics.NotificationFeedbackType.Warning
-        : Haptics.NotificationFeedbackType.Error;
+    const type =
+      kind === 'success'
+        ? Haptics.NotificationFeedbackType.Success
+        : kind === 'warning'
+          ? Haptics.NotificationFeedbackType.Warning
+          : Haptics.NotificationFeedbackType.Error;
     await Haptics.notificationAsync(type);
   } catch {
     // Haptics are best-effort and may be disabled by the OS.

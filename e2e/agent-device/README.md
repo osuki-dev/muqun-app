@@ -43,7 +43,7 @@ is authored and replayed as native `.ad` scripts here.
 ## Preconditions
 
 1. A Debug build of the app installed on the simulator (`bunx expo prebuild
-   --platform ios`, then build the `Muqun` scheme for the simulator). There is
+--platform ios`, then build the `Muqun` scheme for the simulator). There is
    no expo-dev-client in this project, so the app loads its bundle from
    whichever Metro `RCT_jsLocation` points at.
 2. Metro running, e.g. `bunx expo start --port 8098`. The `open` line in the
@@ -68,7 +68,7 @@ agent-device test e2e/agent-device/ssh-demo.ad --platform ios --device "muqun-ho
   --artifacts-dir dist/e2e-reports/agent-device --reporter junit:dist/e2e-reports/agent-device/junit.xml
 ```
 
-`--device` takes the simulator's *name* as `agent-device devices --platform ios`
+`--device` takes the simulator's _name_ as `agent-device devices --platform ios`
 prints it, not its UDID.
 
 The script has no terminal `close` (that is how `session save-script`
@@ -123,6 +123,6 @@ need them again:
   wrap them in `[other]` containers, and agent-device falls back to a second
   snapshot backend on the busier screens. Every replay failed on that
   ancestry check (`identity-mismatch: ancestry[0] recorded=application/Muqun
-  observed=other/SSH`) while the selector itself matched exactly one element.
+observed=other/SSH`) while the selector itself matched exactly one element.
   Without the comments the steps resolve by selector, which is what the labels
   are for.

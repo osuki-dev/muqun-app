@@ -21,11 +21,7 @@ const CODE_KDF_TIME_COST = 2;
 const CODE_KDF_PARALLELISM = 1;
 const CODE_KDF_OUTPUT_LEN = 32;
 
-export type TransportDirection =
-  | 'request'
-  | 'response'
-  | 'pairing-request'
-  | 'pairing-response';
+export type TransportDirection = 'request' | 'response' | 'pairing-request' | 'pairing-response';
 
 export interface EncryptedEnvelope {
   version: 1;
@@ -70,7 +66,11 @@ export function encryptBytes(
   timestampMs = Date.now()
 ): EncryptedEnvelope {
   const nonce = QuickCrypto.randomBytes(12);
-  const cipher = QuickCrypto.createCipheriv('aes-256-gcm', directionKey(material, direction), nonce);
+  const cipher = QuickCrypto.createCipheriv(
+    'aes-256-gcm',
+    directionKey(material, direction),
+    nonce
+  );
   cipher.setAAD(QuickCrypto.Buffer.from(aad, 'utf8'));
   const ciphertext = QuickCrypto.Buffer.concat([
     cipher.update(QuickCrypto.Buffer.from(plaintext)),
@@ -173,7 +173,10 @@ export const streamRecordCrypto: SseRecordCrypto = {
     decipher.setAAD(QuickCrypto.Buffer.from(aad, 'utf8'));
     decipher.setAuthTag(QuickCrypto.Buffer.from(tag));
     return new Uint8Array(
-      QuickCrypto.Buffer.concat([decipher.update(QuickCrypto.Buffer.from(ciphertext)), decipher.final()])
+      QuickCrypto.Buffer.concat([
+        decipher.update(QuickCrypto.Buffer.from(ciphertext)),
+        decipher.final(),
+      ])
     );
   },
   fromBase64Url(value) {

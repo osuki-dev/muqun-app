@@ -26,16 +26,22 @@ export function useGatewayRecord() {
     resetSessionControl();
   }, [disconnectGateway, resetSessionControl]);
 
-  const selectRecord = useCallback(async (serverId: string) => {
-    const selected = await selectGatewayRecord(serverId);
-    if (selected) resetSessionControl();
-    return selected;
-  }, [resetSessionControl, selectGatewayRecord]);
+  const selectRecord = useCallback(
+    async (serverId: string) => {
+      const selected = await selectGatewayRecord(serverId);
+      if (selected) resetSessionControl();
+      return selected;
+    },
+    [resetSessionControl, selectGatewayRecord]
+  );
 
-  const removeRecord = useCallback(async (serverId: string) => {
-    await removeRecordFromStore(serverId);
-    resetSessionControl();
-  }, [removeRecordFromStore, resetSessionControl]);
+  const removeRecord = useCallback(
+    async (serverId: string) => {
+      await removeRecordFromStore(serverId);
+      resetSessionControl();
+    },
+    [removeRecordFromStore, resetSessionControl]
+  );
 
   return {
     record,

@@ -346,9 +346,7 @@ describe('wordSelectionAt', () => {
   const lines = rows('git commit --amend');
 
   test('a press in the middle of a word takes the whole word', () => {
-    expect(wordSelectionAt(lines, { row: 0, column: 5 })).toEqual(
-      span([0, 4], [0, 9])
-    );
+    expect(wordSelectionAt(lines, { row: 0, column: 5 })).toEqual(span([0, 4], [0, 9]));
   });
 
   test('keeps a path or a flag whole rather than splitting on punctuation', () => {

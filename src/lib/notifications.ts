@@ -100,9 +100,11 @@ export function useNotificationObserver() {
       void Notifications.clearLastNotificationResponseAsync();
     }
 
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener((nextResponse) => {
-      void handleResponse(nextResponse);
-    });
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener(
+      (nextResponse) => {
+        void handleResponse(nextResponse);
+      }
+    );
     const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
       if (!useAppSettings.getState().notificationsEnabled) return;
       const data = notification.request.content.data;
@@ -207,11 +209,15 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
   return (await Notifications.getExpoPushTokenAsync({ projectId })).data;
 }
 
-function hasNotificationPermission(permissions: Notifications.NotificationPermissionsStatus): boolean {
+function hasNotificationPermission(
+  permissions: Notifications.NotificationPermissionsStatus
+): boolean {
   if (Platform.OS !== 'ios') return permissions.status === 'granted';
 
   const iosStatus = permissions.ios?.status;
-  return iosStatus === Notifications.IosAuthorizationStatus.AUTHORIZED
-    || iosStatus === Notifications.IosAuthorizationStatus.PROVISIONAL
-    || iosStatus === Notifications.IosAuthorizationStatus.EPHEMERAL;
+  return (
+    iosStatus === Notifications.IosAuthorizationStatus.AUTHORIZED ||
+    iosStatus === Notifications.IosAuthorizationStatus.PROVISIONAL ||
+    iosStatus === Notifications.IosAuthorizationStatus.EPHEMERAL
+  );
 }

@@ -23,322 +23,322 @@ name: theme-shots
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Osuki"
-      MODE_LABEL: "LIGHT"
-      SHOT: "osuki-light"
+      THEME_LABEL: 'Osuki'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'osuki-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Osuki"
-      MODE_LABEL: "DARK"
-      SHOT: "osuki-dark"
+      THEME_LABEL: 'Osuki'
+      MODE_LABEL: 'DARK'
+      SHOT: 'osuki-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Ayu"
-      MODE_LABEL: "LIGHT"
-      SHOT: "ayu-light"
+      THEME_LABEL: 'Ayu'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'ayu-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Ayu"
-      MODE_LABEL: "DARK"
-      SHOT: "ayu-dark"
+      THEME_LABEL: 'Ayu'
+      MODE_LABEL: 'DARK'
+      SHOT: 'ayu-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Catppuccin"
-      MODE_LABEL: "LIGHT"
-      SHOT: "catppuccin-latte"
+      THEME_LABEL: 'Catppuccin'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'catppuccin-latte'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Catppuccin"
-      MODE_LABEL: "DARK"
-      SHOT: "catppuccin-mocha"
+      THEME_LABEL: 'Catppuccin'
+      MODE_LABEL: 'DARK'
+      SHOT: 'catppuccin-mocha'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Dracula"
-      MODE_LABEL: "LIGHT"
-      SHOT: "dracula-alucard"
+      THEME_LABEL: 'Dracula'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'dracula-alucard'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Dracula"
-      MODE_LABEL: "DARK"
-      SHOT: "dracula-dark"
+      THEME_LABEL: 'Dracula'
+      MODE_LABEL: 'DARK'
+      SHOT: 'dracula-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Everforest"
-      MODE_LABEL: "LIGHT"
-      SHOT: "everforest-light"
+      THEME_LABEL: 'Everforest'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'everforest-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Everforest"
-      MODE_LABEL: "DARK"
-      SHOT: "everforest-dark"
+      THEME_LABEL: 'Everforest'
+      MODE_LABEL: 'DARK'
+      SHOT: 'everforest-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Flexoki"
-      MODE_LABEL: "LIGHT"
-      SHOT: "flexoki-light"
+      THEME_LABEL: 'Flexoki'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'flexoki-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Flexoki"
-      MODE_LABEL: "DARK"
-      SHOT: "flexoki-dark"
+      THEME_LABEL: 'Flexoki'
+      MODE_LABEL: 'DARK'
+      SHOT: 'flexoki-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "GitHub"
-      MODE_LABEL: "LIGHT"
-      SHOT: "github-light"
+      THEME_LABEL: 'GitHub'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'github-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "GitHub"
-      MODE_LABEL: "DARK"
-      SHOT: "github-dark"
+      THEME_LABEL: 'GitHub'
+      MODE_LABEL: 'DARK'
+      SHOT: 'github-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Gruvbox"
-      MODE_LABEL: "LIGHT"
-      SHOT: "gruvbox-light-medium"
+      THEME_LABEL: 'Gruvbox'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'gruvbox-light-medium'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Gruvbox"
-      MODE_LABEL: "DARK"
-      SHOT: "gruvbox-dark-medium"
+      THEME_LABEL: 'Gruvbox'
+      MODE_LABEL: 'DARK'
+      SHOT: 'gruvbox-dark-medium'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Kanagawa"
-      MODE_LABEL: "LIGHT"
-      SHOT: "kanagawa-lotus"
+      THEME_LABEL: 'Kanagawa'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'kanagawa-lotus'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Kanagawa"
-      MODE_LABEL: "DARK"
-      SHOT: "kanagawa-wave"
+      THEME_LABEL: 'Kanagawa'
+      MODE_LABEL: 'DARK'
+      SHOT: 'kanagawa-wave'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Night Owl"
-      MODE_LABEL: "LIGHT"
-      SHOT: "night-owl-light"
+      THEME_LABEL: 'Night Owl'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'night-owl-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Night Owl"
-      MODE_LABEL: "DARK"
-      SHOT: "night-owl-dark"
+      THEME_LABEL: 'Night Owl'
+      MODE_LABEL: 'DARK'
+      SHOT: 'night-owl-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Monokai Pro"
-      MODE_LABEL: "LIGHT"
-      SHOT: "monokai-pro-light"
+      THEME_LABEL: 'Monokai Pro'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'monokai-pro-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Monokai Pro"
-      MODE_LABEL: "DARK"
-      SHOT: "monokai-pro-ristretto"
+      THEME_LABEL: 'Monokai Pro'
+      MODE_LABEL: 'DARK'
+      SHOT: 'monokai-pro-ristretto'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Rosé Pine"
-      MODE_LABEL: "LIGHT"
-      SHOT: "rose-pine-dawn"
+      THEME_LABEL: 'Rosé Pine'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'rose-pine-dawn'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Rosé Pine"
-      MODE_LABEL: "DARK"
-      SHOT: "rose-pine-main"
+      THEME_LABEL: 'Rosé Pine'
+      MODE_LABEL: 'DARK'
+      SHOT: 'rose-pine-main'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Solarized"
-      MODE_LABEL: "LIGHT"
-      SHOT: "solarized-light"
+      THEME_LABEL: 'Solarized'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'solarized-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Solarized"
-      MODE_LABEL: "DARK"
-      SHOT: "solarized-dark"
+      THEME_LABEL: 'Solarized'
+      MODE_LABEL: 'DARK'
+      SHOT: 'solarized-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Tokyo Night"
-      MODE_LABEL: "LIGHT"
-      SHOT: "tokyo-night-day"
+      THEME_LABEL: 'Tokyo Night'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'tokyo-night-day'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Tokyo Night"
-      MODE_LABEL: "DARK"
-      SHOT: "tokyo-night-moon"
+      THEME_LABEL: 'Tokyo Night'
+      MODE_LABEL: 'DARK'
+      SHOT: 'tokyo-night-moon'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Osaka Jade"
-      MODE_LABEL: "LIGHT"
-      SHOT: "osaka-jade-light"
+      THEME_LABEL: 'Osaka Jade'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'osaka-jade-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Osaka Jade"
-      MODE_LABEL: "DARK"
-      SHOT: "osaka-jade-dark"
+      THEME_LABEL: 'Osaka Jade'
+      MODE_LABEL: 'DARK'
+      SHOT: 'osaka-jade-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Bamboo", MODE_LABEL: "LIGHT", SHOT: "bamboo-light" }
+    env: { THEME_LABEL: 'Bamboo', MODE_LABEL: 'LIGHT', SHOT: 'bamboo-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Bamboo", MODE_LABEL: "DARK", SHOT: "bamboo-dark" }
+    env: { THEME_LABEL: 'Bamboo', MODE_LABEL: 'DARK', SHOT: 'bamboo-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Bluloco", MODE_LABEL: "LIGHT", SHOT: "bluloco-light" }
+    env: { THEME_LABEL: 'Bluloco', MODE_LABEL: 'LIGHT', SHOT: 'bluloco-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Bluloco", MODE_LABEL: "DARK", SHOT: "bluloco-dark" }
+    env: { THEME_LABEL: 'Bluloco', MODE_LABEL: 'DARK', SHOT: 'bluloco-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Cyberdream", MODE_LABEL: "LIGHT", SHOT: "cyberdream-light" }
+    env: { THEME_LABEL: 'Cyberdream', MODE_LABEL: 'LIGHT', SHOT: 'cyberdream-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Cyberdream", MODE_LABEL: "DARK", SHOT: "cyberdream-dark" }
+    env: { THEME_LABEL: 'Cyberdream', MODE_LABEL: 'DARK', SHOT: 'cyberdream-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Edge", MODE_LABEL: "LIGHT", SHOT: "edge-light" }
+    env: { THEME_LABEL: 'Edge', MODE_LABEL: 'LIGHT', SHOT: 'edge-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Edge", MODE_LABEL: "DARK", SHOT: "edge-dark" }
+    env: { THEME_LABEL: 'Edge', MODE_LABEL: 'DARK', SHOT: 'edge-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Iceberg", MODE_LABEL: "LIGHT", SHOT: "iceberg-light" }
+    env: { THEME_LABEL: 'Iceberg', MODE_LABEL: 'LIGHT', SHOT: 'iceberg-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Iceberg", MODE_LABEL: "DARK", SHOT: "iceberg-dark" }
+    env: { THEME_LABEL: 'Iceberg', MODE_LABEL: 'DARK', SHOT: 'iceberg-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Kanso", MODE_LABEL: "LIGHT", SHOT: "kanso-pearl" }
+    env: { THEME_LABEL: 'Kanso', MODE_LABEL: 'LIGHT', SHOT: 'kanso-pearl' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Kanso", MODE_LABEL: "DARK", SHOT: "kanso-ink" }
+    env: { THEME_LABEL: 'Kanso', MODE_LABEL: 'DARK', SHOT: 'kanso-ink' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Material", MODE_LABEL: "LIGHT", SHOT: "material-light" }
+    env: { THEME_LABEL: 'Material', MODE_LABEL: 'LIGHT', SHOT: 'material-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Material", MODE_LABEL: "DARK", SHOT: "material-dark" }
+    env: { THEME_LABEL: 'Material', MODE_LABEL: 'DARK', SHOT: 'material-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Mélange", MODE_LABEL: "LIGHT", SHOT: "melange-light" }
+    env: { THEME_LABEL: 'Mélange', MODE_LABEL: 'LIGHT', SHOT: 'melange-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Mélange", MODE_LABEL: "DARK", SHOT: "melange-dark" }
+    env: { THEME_LABEL: 'Mélange', MODE_LABEL: 'DARK', SHOT: 'melange-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Modus", MODE_LABEL: "LIGHT", SHOT: "modus-operandi" }
+    env: { THEME_LABEL: 'Modus', MODE_LABEL: 'LIGHT', SHOT: 'modus-operandi' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Modus", MODE_LABEL: "DARK", SHOT: "modus-vivendi" }
+    env: { THEME_LABEL: 'Modus', MODE_LABEL: 'DARK', SHOT: 'modus-vivendi' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Neovim", MODE_LABEL: "LIGHT", SHOT: "neovim-light" }
+    env: { THEME_LABEL: 'Neovim', MODE_LABEL: 'LIGHT', SHOT: 'neovim-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Neovim", MODE_LABEL: "DARK", SHOT: "neovim-dark" }
+    env: { THEME_LABEL: 'Neovim', MODE_LABEL: 'DARK', SHOT: 'neovim-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Nightfox", MODE_LABEL: "LIGHT", SHOT: "nightfox-dayfox" }
+    env: { THEME_LABEL: 'Nightfox', MODE_LABEL: 'LIGHT', SHOT: 'nightfox-dayfox' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Nightfox", MODE_LABEL: "DARK", SHOT: "nightfox-dark" }
+    env: { THEME_LABEL: 'Nightfox', MODE_LABEL: 'DARK', SHOT: 'nightfox-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Oxocarbon", MODE_LABEL: "LIGHT", SHOT: "oxocarbon-light" }
+    env: { THEME_LABEL: 'Oxocarbon', MODE_LABEL: 'LIGHT', SHOT: 'oxocarbon-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Oxocarbon", MODE_LABEL: "DARK", SHOT: "oxocarbon-dark" }
+    env: { THEME_LABEL: 'Oxocarbon', MODE_LABEL: 'DARK', SHOT: 'oxocarbon-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "PaperColor", MODE_LABEL: "LIGHT", SHOT: "papercolor-light" }
+    env: { THEME_LABEL: 'PaperColor', MODE_LABEL: 'LIGHT', SHOT: 'papercolor-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "PaperColor", MODE_LABEL: "DARK", SHOT: "papercolor-dark" }
+    env: { THEME_LABEL: 'PaperColor', MODE_LABEL: 'DARK', SHOT: 'papercolor-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Selenized", MODE_LABEL: "LIGHT", SHOT: "selenized-light" }
+    env: { THEME_LABEL: 'Selenized', MODE_LABEL: 'LIGHT', SHOT: 'selenized-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Selenized", MODE_LABEL: "DARK", SHOT: "selenized-dark" }
+    env: { THEME_LABEL: 'Selenized', MODE_LABEL: 'DARK', SHOT: 'selenized-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Tomorrow", MODE_LABEL: "LIGHT", SHOT: "tomorrow-light" }
+    env: { THEME_LABEL: 'Tomorrow', MODE_LABEL: 'LIGHT', SHOT: 'tomorrow-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Tomorrow", MODE_LABEL: "DARK", SHOT: "tomorrow-night" }
+    env: { THEME_LABEL: 'Tomorrow', MODE_LABEL: 'DARK', SHOT: 'tomorrow-night' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "VS Code 2026", MODE_LABEL: "LIGHT", SHOT: "vscode-2026-light" }
+    env: { THEME_LABEL: 'VS Code 2026', MODE_LABEL: 'LIGHT', SHOT: 'vscode-2026-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "VS Code 2026", MODE_LABEL: "DARK", SHOT: "vscode-2026-dark" }
+    env: { THEME_LABEL: 'VS Code 2026', MODE_LABEL: 'DARK', SHOT: 'vscode-2026-dark' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Zenwritten", MODE_LABEL: "LIGHT", SHOT: "zenwritten-light" }
+    env: { THEME_LABEL: 'Zenwritten', MODE_LABEL: 'LIGHT', SHOT: 'zenwritten-light' }
 - runFlow:
     file: ../subflows/capture-theme.yaml
-    env: { THEME_LABEL: "Zenwritten", MODE_LABEL: "DARK", SHOT: "zenwritten-dark" }
+    env: { THEME_LABEL: 'Zenwritten', MODE_LABEL: 'DARK', SHOT: 'zenwritten-dark' }
 
 # ── Leave the device as it was found ──────────────────────────────────────
 # Settings is a control in the home header now, not a drawer row (card #664).
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "Color mode"
+    visible: 'Color mode'
     timeout: 10000
 - runFlow: ../subflows/dismiss-logbox.yaml
 - tapOn:
-    text: "Theme, .*"
+    text: 'Theme, .*'
 - extendedWaitUntil:
-    visible: "Osuki"
+    visible: 'Osuki'
     timeout: 8000
-- tapOn: "Osuki"
+- tapOn: 'Osuki'
 - waitForAnimationToEnd:
     timeout: 1500
 - extendedWaitUntil:
-    visible: "Theme, Osuki"
+    visible: 'Theme, Osuki'
     timeout: 8000
-- tapOn: "SYSTEM"
+- tapOn: 'SYSTEM'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    text: "SYSTEM"
+    text: 'SYSTEM'
     selected: true

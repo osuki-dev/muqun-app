@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  appAppearanceConfig,
-  appChrome,
-  appThemeAppearanceOverride,
-} from '../appearance';
+import { appAppearanceConfig, appChrome, appThemeAppearanceOverride } from '../appearance';
 
 describe('app appearance contract', () => {
   test('the provider and app chrome share the same radius source', () => {

@@ -106,9 +106,7 @@ function buildSnapshotLines(count: number): string[] {
     const colour = (index % 7) + 31;
     const truecolor = `[38;2;${index % 256};${(index * 3) % 256};${(index * 7) % 256}m`;
     const filler = 'x'.repeat(index % 24);
-    lines.push(
-      `[${colour}m行 ${index} 你好世界 ${truecolor}hello world 日本語 ${filler}[0m`
-    );
+    lines.push(`[${colour}m行 ${index} 你好世界 ${truecolor}hello world 日本語 ${filler}[0m`);
   }
   return lines;
 }
@@ -127,7 +125,9 @@ function measure(iterations: number, run: () => void): number {
 
 function bench(label: string, iterations: number, run: () => void): void {
   const per = measure(iterations, run);
-  console.log(`${label.padEnd(22)} ${per.toFixed(3)} ms/op  (${iterations} ops, ${(per * iterations).toFixed(1)} ms total)`);
+  console.log(
+    `${label.padEnd(22)} ${per.toFixed(3)} ms/op  (${iterations} ops, ${(per * iterations).toFixed(1)} ms total)`
+  );
 }
 
 // 1. Full parse -- cold every time.
@@ -137,7 +137,12 @@ bench('full parse', 20, () => {
 
 // 2. Append one line to a warm, pre-filled emulator.
 {
-  const terminal = new TerminalEmulator({ columns: COLUMNS, rows: ROWS, scrollback: 4000, convertEol: true });
+  const terminal = new TerminalEmulator({
+    columns: COLUMNS,
+    rows: ROWS,
+    scrollback: 4000,
+    convertEol: true,
+  });
   terminal.write(snapshot);
   let counter = 0;
   bench('append one line', 2000, () => {
@@ -149,7 +154,12 @@ bench('full parse', 20, () => {
 
 // 3. Full-screen scroll -- emulator sitting at the bottom, each op scrolls once.
 {
-  const terminal = new TerminalEmulator({ columns: COLUMNS, rows: ROWS, scrollback: 4000, convertEol: true });
+  const terminal = new TerminalEmulator({
+    columns: COLUMNS,
+    rows: ROWS,
+    scrollback: 4000,
+    convertEol: true,
+  });
   terminal.write(snapshot);
   // Park the cursor on the last row so every '\n' scrolls the whole screen.
   terminal.write(`[${ROWS};1H`);
@@ -166,7 +176,9 @@ bench('full parse', 20, () => {
     ? [...new Bun.Glob('pane-*.json').scanSync({ cwd: directory })].sort()
     : [];
   if (names.length === 0) {
-    console.log('\nreal panes             skipped (set MUQUN_TERMINAL_FIXTURES to a pane-*.json directory)');
+    console.log(
+      '\nreal panes             skipped (set MUQUN_TERMINAL_FIXTURES to a pane-*.json directory)'
+    );
   } else {
     console.log('\nreal panes             emulator / fast path');
     let emulatorTotal = 0;
@@ -248,7 +260,9 @@ function createChunkRecorder() {
   // Re-parsed from scratch into a fresh emulator, as a refresh always is: this
   // is the check that row signatures identify content and not writes.
   const unchanged = refresh(parseTerminalSnapshot(belowCap.join('\n')));
-  console.log(`same output again      ${unchanged.recorded}/${unchanged.blocks} blocks re-recorded`);
+  console.log(
+    `same output again      ${unchanged.recorded}/${unchanged.blocks} blocks re-recorded`
+  );
   if (unchanged.recorded !== 0) {
     throw new Error(`unchanged output re-recorded ${unchanged.recorded} blocks, expected 0`);
   }
@@ -261,9 +275,7 @@ function createChunkRecorder() {
 
   // The same content shifted up a row: what a snapshot hands back once output
   // reaches the row cap. Under the old fixed-slice plan this was every block.
-  const scrolled = refresh(
-    parseTerminalSnapshot([...belowCap.slice(1), APPENDED_LINE].join('\n'))
-  );
+  const scrolled = refresh(parseTerminalSnapshot([...belowCap.slice(1), APPENDED_LINE].join('\n')));
   console.log(`scroll by one row      ${scrolled.recorded}/${scrolled.blocks} blocks re-recorded`);
   if (scrolled.recorded > 2) {
     throw new Error(`one scrolled row re-recorded ${scrolled.recorded} blocks, expected <= 2`);
@@ -355,8 +367,14 @@ function createChunkRecorder() {
   const UPDATES = 40;
 
   const composer = (tick: number): string[] => [
-    '─'.repeat(78), '❯ ', '─'.repeat(78), '  ⏵⏵ accept edits on',
-    '  ✻ agent: sonnet', '', `  ${tick}m ${tick % 60}s · ↓ ${tick * 37} tokens`, '',
+    '─'.repeat(78),
+    '❯ ',
+    '─'.repeat(78),
+    '  ⏵⏵ accept edits on',
+    '  ✻ agent: sonnet',
+    '',
+    `  ${tick}m ${tick % 60}s · ↓ ${tick * 37} tokens`,
+    '',
   ];
   const transcript = (index: number): string =>
     `⏺ transcript row ${index} 你好世界 of the agent's answer`;
@@ -367,13 +385,17 @@ function createChunkRecorder() {
   const screens: string[] = [];
   for (let update = 0; update < UPDATES; update += 1) {
     const top = HELD - VIEWPORT + COMPOSER + update * 3;
-    screens.push([
-      ...Array.from({ length: VIEWPORT - COMPOSER }, (_, row) => transcript(top + row)),
-      ...composer(update),
-    ].join('\n'));
+    screens.push(
+      [
+        ...Array.from({ length: VIEWPORT - COMPOSER }, (_, row) => transcript(top + row)),
+        ...composer(update),
+      ].join('\n')
+    );
   }
 
-  const drawn = (policy: 'before' | 'after'): { blocks: number; recorded: number; rows: number } => {
+  const drawn = (
+    policy: 'before' | 'after'
+  ): { blocks: number; recorded: number; rows: number } => {
     const refresh = createChunkRecorder();
     let window = paged;
     refresh(parseTerminalSnapshot(window));
@@ -381,10 +403,11 @@ function createChunkRecorder() {
     let recorded = 0;
     let rows = 0;
     for (const screen of screens) {
-      window = policy === 'before'
-        // release/2.0: the answer *is* the window. This is the whole bug.
-        ? screen
-        : foldPaneRead(window, screen, 'refresh', HELD);
+      window =
+        policy === 'before'
+          ? // release/2.0: the answer *is* the window. This is the whole bug.
+            screen
+          : foldPaneRead(window, screen, 'refresh', HELD);
       const result = refresh(parseTerminalSnapshot(window));
       blocks += result.blocks;
       recorded += result.recorded;
@@ -401,16 +424,20 @@ function createChunkRecorder() {
   // 2000-row one.
   const beforeShare = (before.rows / (UPDATES * VIEWPORT)) * 100;
   const afterShare = (after.rows / (UPDATES * HELD)) * 100;
-  console.log(`\nupdate flicker         ${HELD}-row window, ${UPDATES} refreshes of a 65-row screen`);
   console.log(
-    `  before  ${(before.rows / UPDATES).toFixed(0)} rows re-recorded per update `
-    + `= ${beforeShare.toFixed(1)}% of the window, blocks ${before.recorded}/${before.blocks}`
+    `\nupdate flicker         ${HELD}-row window, ${UPDATES} refreshes of a 65-row screen`
   );
   console.log(
-    `  after   ${(after.rows / UPDATES).toFixed(0)} rows re-recorded per update `
-    + `= ${afterShare.toFixed(1)}% of the window, blocks ${after.recorded}/${after.blocks}`
+    `  before  ${(before.rows / UPDATES).toFixed(0)} rows re-recorded per update ` +
+      `= ${beforeShare.toFixed(1)}% of the window, blocks ${before.recorded}/${before.blocks}`
   );
-  console.log(`  share of the drawn window redrawn per update: ${beforeShare.toFixed(1)}% -> ${afterShare.toFixed(1)}%`);
+  console.log(
+    `  after   ${(after.rows / UPDATES).toFixed(0)} rows re-recorded per update ` +
+      `= ${afterShare.toFixed(1)}% of the window, blocks ${after.recorded}/${after.blocks}`
+  );
+  console.log(
+    `  share of the drawn window redrawn per update: ${beforeShare.toFixed(1)}% -> ${afterShare.toFixed(1)}%`
+  );
 
   // And the depth each policy leaves the reader holding, which is the same
   // number seen from the other side: the flicker *is* the history going away.
@@ -456,7 +483,9 @@ function createChunkRecorder() {
   const cold = refresh(held);
 
   console.log(`\ndepth                  ${HELD} rows held`);
-  console.log(`  blocks               ${cold.blocks} for ${HELD} rows, ${cold.recorded} recorded cold`);
+  console.log(
+    `  blocks               ${cold.blocks} for ${HELD} rows, ${cold.recorded} recorded cold`
+  );
 
   // An update landing while the reader is scrolled up: the window grows by a
   // few rows at the bottom and loses the same few off the top. Only the blocks

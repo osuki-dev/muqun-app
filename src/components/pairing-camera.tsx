@@ -287,75 +287,71 @@ export default function PairingCamera({
     onReading(reportedReading);
   }, [onReading, reportedReading]);
 
-  const content =
-    cameraMounted ? (
-      <>
-        <QrCamera
-          active={active}
-          position={reading === 'aiming-front' ? 'front' : 'back'}
-          onScanned={onScanned}
-          onPreviewStarted={() => setFirstFrame(true)}
-          onError={(cameraFailure) => onError(cameraFailure.message)}
-        />
-        {/* The shutter. It is the aperture's own surface, held over the empty
+  const content = cameraMounted ? (
+    <>
+      <QrCamera
+        active={active}
+        position={reading === 'aiming-front' ? 'front' : 'back'}
+        onScanned={onScanned}
+        onPreviewStarted={() => setFirstFrame(true)}
+        onError={(cameraFailure) => onError(cameraFailure.message)}
+      />
+      {/* The shutter. It is the aperture's own surface, held over the empty
             preview and lifted the moment there is something behind it, so the
             camera opens by revealing an image rather than by cutting a black
             hole in the page and filling it in afterwards. */}
-        {previewStarted ? null : (
-          <Animated.View
-            exiting={fadeOut('short')}
-            style={[
-              styles.state,
-              { backgroundColor: theme.colors.surfaceRaised },
-            ]}>
-            <LogoLoader accessibilityLabel={t`Starting the camera`} size={44} />
-          </Animated.View>
-        )}
-      </>
-    ) : reading === 'warming' ? (
-      // The app's own breath, not a spinner and not nothing. An empty frame was
-      // honest about the lens and useless to the reader: on a device where the
-      // enumeration is slow it is indistinguishable from a screen that has
-      // given up. This says the same thing the live status dot says -- it is on,
-      // and it is working on it.
-      <View style={styles.state}>
-        <LogoLoader accessibilityLabel={t`Starting the camera`} size={44} />
-      </View>
-    ) : reading === 'permission' ? (
-      <ApertureState
-        icon={<ScanLine size={26} color={theme.colors.textMuted} strokeWidth={1.8} />}
-        title={t`Camera access needed`}
-        detail={t`Muqun reads the Gateway's QR code through the camera. Nothing is recorded.`}
-        action={t`Allow camera`}
-        onAction={() => void requestPermission()}
-      />
-    ) : (
-      <ApertureState
-        icon={<CameraOff size={26} color={theme.colors.textMuted} strokeWidth={1.8} />}
-        title={
-          fault === 'preview-never-started' ? t`The camera did not start` : t`No camera to scan with`
-        }
-        // The reason, and only the reason. What to do about it is the header's
-        // line, and printing "type the address instead" in both places put the
-        // same sentence on screen twice, 500pt apart.
-        //
-        // Which reason, though, is the whole point: "this device has no rear
-        // camera" was printed for a lens that was still enumerating, a lens the
-        // app had not been allowed to open and a preview that never woke up, on
-        // hardware nobody here can plug in. A wrong reason is worse than none,
-        // because it sends the reader to check the one thing that is fine.
-        detail={
-          fault === 'camera-error'
-            ? (error ?? t`The camera reported an error.`)
-            : fault === 'preview-never-started'
-              ? t`It was found, but never showed a picture. Another app may be holding it.`
-              : fault === 'web'
-                ? t`Scanning needs a camera, which this browser does not offer.`
-                : t`No camera was found on this device.`
-        }
-        diagnostic={diagnostic}
-      />
-    );
+      {previewStarted ? null : (
+        <Animated.View
+          exiting={fadeOut('short')}
+          style={[styles.state, { backgroundColor: theme.colors.surfaceRaised }]}>
+          <LogoLoader accessibilityLabel={t`Starting the camera`} size={44} />
+        </Animated.View>
+      )}
+    </>
+  ) : reading === 'warming' ? (
+    // The app's own breath, not a spinner and not nothing. An empty frame was
+    // honest about the lens and useless to the reader: on a device where the
+    // enumeration is slow it is indistinguishable from a screen that has
+    // given up. This says the same thing the live status dot says -- it is on,
+    // and it is working on it.
+    <View style={styles.state}>
+      <LogoLoader accessibilityLabel={t`Starting the camera`} size={44} />
+    </View>
+  ) : reading === 'permission' ? (
+    <ApertureState
+      icon={<ScanLine size={26} color={theme.colors.textMuted} strokeWidth={1.8} />}
+      title={t`Camera access needed`}
+      detail={t`Muqun reads the Gateway's QR code through the camera. Nothing is recorded.`}
+      action={t`Allow camera`}
+      onAction={() => void requestPermission()}
+    />
+  ) : (
+    <ApertureState
+      icon={<CameraOff size={26} color={theme.colors.textMuted} strokeWidth={1.8} />}
+      title={
+        fault === 'preview-never-started' ? t`The camera did not start` : t`No camera to scan with`
+      }
+      // The reason, and only the reason. What to do about it is the header's
+      // line, and printing "type the address instead" in both places put the
+      // same sentence on screen twice, 500pt apart.
+      //
+      // Which reason, though, is the whole point: "this device has no rear
+      // camera" was printed for a lens that was still enumerating, a lens the
+      // app had not been allowed to open and a preview that never woke up, on
+      // hardware nobody here can plug in. A wrong reason is worse than none,
+      // because it sends the reader to check the one thing that is fine.
+      detail={
+        fault === 'camera-error'
+          ? (error ?? t`The camera reported an error.`)
+          : fault === 'preview-never-started'
+            ? t`It was found, but never showed a picture. Another app may be holding it.`
+            : fault === 'web'
+              ? t`Scanning needs a camera, which this browser does not offer.`
+              : t`No camera was found on this device.`
+      }
+      diagnostic={diagnostic}
+    />
+  );
 
   return (
     <Animated.View

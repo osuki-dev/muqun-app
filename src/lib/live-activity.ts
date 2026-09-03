@@ -1,10 +1,7 @@
 import type { LiveActivity, LiveActivityFactory } from 'expo-widgets';
 import { Platform } from 'react-native';
 
-import type {
-  AgentActivityProps,
-  AgentActivityStatus,
-} from '@/lib/live-activity-layout';
+import type { AgentActivityProps, AgentActivityStatus } from '@/lib/live-activity-layout';
 
 /** What the caller knows about the agent it wants mirrored on the Lock Screen. */
 export type AgentActivitySnapshot = {
@@ -175,9 +172,7 @@ export async function syncAgentActivity(snapshot: AgentActivitySnapshot | null):
  * started. Deliberately synchronous and fire-and-forget: callers need the list
  * taken before they add to it, not the dismissals confirmed.
  */
-function discardEveryActivity(
-  activityFactory: LiveActivityFactory<AgentActivityProps>
-): void {
+function discardEveryActivity(activityFactory: LiveActivityFactory<AgentActivityProps>): void {
   try {
     for (const activity of activityFactory.getInstances()) {
       void activity.end('immediate').catch(() => {});

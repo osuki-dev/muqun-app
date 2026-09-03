@@ -165,16 +165,16 @@ function reuseAsset(
  */
 function sameAsset(previous: SessionAsset, next: SessionAsset): boolean {
   return (
-    previous.id === next.id
-    && previous.path === next.path
-    && previous.name === next.name
-    && previous.kind === next.kind
-    && previous.mime === next.mime
-    && previous.size === next.size
-    && previous.modified_unix_ms === next.modified_unix_ms
-    && previous.previewable === next.previewable
-    && previous.origin?.session_id === next.origin?.session_id
-    && previous.origin?.pane_id === next.origin?.pane_id
-    && previous.origin?.workspace_id === next.origin?.workspace_id
+    previous.id === next.id &&
+    previous.path === next.path &&
+    previous.name === next.name &&
+    previous.kind === next.kind &&
+    previous.mime === next.mime &&
+    previous.size === next.size &&
+    previous.modified_unix_ms === next.modified_unix_ms &&
+    previous.previewable === next.previewable &&
+    previous.origin?.session_id === next.origin?.session_id &&
+    previous.origin?.pane_id === next.origin?.pane_id &&
+    previous.origin?.workspace_id === next.origin?.workspace_id
   );
 }

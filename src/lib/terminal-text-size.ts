@@ -176,11 +176,14 @@ export function terminalScaleOnScreenLeave(
   remembered: TerminalPaneScales
 ): TerminalPaneScales {
   if (!paneId) return remembered;
-  const clamped = Math.round(Math.max(TERMINAL_MIN_SCALE, Math.min(TERMINAL_MAX_SCALE, scale)) * 100) / 100;
+  const clamped =
+    Math.round(Math.max(TERMINAL_MIN_SCALE, Math.min(TERMINAL_MAX_SCALE, scale)) * 100) / 100;
   const { [paneId]: _dropped, ...rest } = remembered;
   if (Math.abs(clamped - 1) < 0.005) return rest;
   const entries = Object.entries(rest);
-  const kept = entries.slice(Math.max(0, entries.length - (TERMINAL_MAX_REMEMBERED_PANE_SCALES - 1)));
+  const kept = entries.slice(
+    Math.max(0, entries.length - (TERMINAL_MAX_REMEMBERED_PANE_SCALES - 1))
+  );
   return { ...Object.fromEntries(kept), [paneId]: clamped };
 }
 

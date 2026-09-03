@@ -14,11 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { agentStatusWord } from '@/i18n/labels';
 import { GlassChrome } from '@/components/glass-chrome';
@@ -37,11 +33,7 @@ import {
   renameWorkspace,
   type HerdrEntity,
 } from '@/lib/gateway-client';
-import {
-  field,
-  panelTitle,
-  statusColor,
-} from '@/lib/herdr-entity';
+import { field, panelTitle, statusColor } from '@/lib/herdr-entity';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { panelPickerGridLayout } from '@/lib/panel-picker-layout';
 import { EMPTY_WORKSPACE_INVENTORY, workspaceInventories } from '@/lib/workspace-inventory';
@@ -102,7 +94,6 @@ const MONO_FONT = Platform.OS === 'ios' ? 'ui-monospace' : 'monospace';
  * a reader had no way to tell which of the five meant "you are here".
  */
 export function SessionMap({
-
   sessionId,
   label,
   activePaneId,
@@ -212,9 +203,9 @@ export function SessionMap({
       setWorkspaceId(
         current
           ? field(current, 'workspace_id')
-          : nextWorkspaces.find((item) => Boolean(item.raw.focused))?.id
-            ?? nextWorkspaces[0]?.id
-            ?? ''
+          : (nextWorkspaces.find((item) => Boolean(item.raw.focused))?.id ??
+              nextWorkspaces[0]?.id ??
+              '')
       );
     } catch (failure) {
       setError(describeGatewayFailure(failure, t`Could not load what is running.`).message);
@@ -410,41 +401,41 @@ export function SessionMap({
           needs a constant index, which is why the platform-only handle lives
           inside this node rather than beside it. */}
       <View style={[styles.stickyTop, { backgroundColor: theme.colors.surface }]}>
-      {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+        {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
-      <View style={styles.header}>
-        <View style={styles.flexOne}>
-          <Text variant="bodySmall" style={styles.headerTitle}>
-            <Trans>What is running</Trans>
-          </Text>
-          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-            {activeWorkspace ? `${label} · ${activeWorkspace.title}` : label}
-          </Text>
-        </View>
-        {/* The sheet's chrome, in the same material as the server page's --
+        <View style={styles.header}>
+          <View style={styles.flexOne}>
+            <Text variant="bodySmall" style={styles.headerTitle}>
+              <Trans>What is running</Trans>
+            </Text>
+            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+              {activeWorkspace ? `${label} · ${activeWorkspace.title}` : label}
+            </Text>
+          </View>
+          {/* The sheet's chrome, in the same material as the server page's --
             `sheet` rather than `floating` because this sits on an opaque sheet,
             where the thick material would only read as a grey disc. */}
-        <GlassChrome face="sheet" style={styles.iconButton}>
-          <PressableScale
-            accessibilityLabel={t`Refresh`}
-            onPress={() => void load()}
-            style={styles.iconButtonHit}>
-            {loading ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            ) : (
-              <RefreshCw size={17} color={theme.colors.textMuted} />
-            )}
-          </PressableScale>
-        </GlassChrome>
-        <GlassChrome face="sheet" style={styles.iconButton}>
-          <PressableScale
-            accessibilityLabel={t`Close`}
-            onPress={onClose}
-            style={styles.iconButtonHit}>
-            <X size={18} color={theme.colors.text} />
-          </PressableScale>
-        </GlassChrome>
-      </View>
+          <GlassChrome face="sheet" style={styles.iconButton}>
+            <PressableScale
+              accessibilityLabel={t`Refresh`}
+              onPress={() => void load()}
+              style={styles.iconButtonHit}>
+              {loading ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <RefreshCw size={17} color={theme.colors.textMuted} />
+              )}
+            </PressableScale>
+          </GlassChrome>
+          <GlassChrome face="sheet" style={styles.iconButton}>
+            <PressableScale
+              accessibilityLabel={t`Close`}
+              onPress={onClose}
+              style={styles.iconButtonHit}>
+              <X size={18} color={theme.colors.text} />
+            </PressableScale>
+          </GlassChrome>
+        </View>
       </View>
 
       {renaming ? (
@@ -595,11 +586,7 @@ export function SessionMap({
               levels of nesting read as "header plus grouped block", and the group
               boundary becomes something you can actually see.
             */}
-            <View
-              style={[
-                styles.groupCard,
-                { backgroundColor: theme.colors.surfaceRaised },
-              ]}>
+            <View style={[styles.groupCard, { backgroundColor: theme.colors.surfaceRaised }]}>
               {group.panes.map((pane) => {
                 const agent = agents.find((item) => field(item, 'pane_id') === pane.id);
                 const title = panelTitle(pane, agent);
@@ -958,11 +945,7 @@ function SessionMapSkeleton({ width }: { width: number }) {
         <Skeleton variant="text" width={25} height={12} />
         <Skeleton variant="text" width={120} height={12} />
       </View>
-      <View
-        style={[
-          styles.groupCard,
-          { backgroundColor: theme.colors.surfaceRaised },
-        ]}>
+      <View style={[styles.groupCard, { backgroundColor: theme.colors.surfaceRaised }]}>
         {[0, 1, 2].map((row) => (
           <View key={row} style={styles.panelRow}>
             {/* The glyph the address slug used to stand beside. The slug is

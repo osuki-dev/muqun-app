@@ -12,9 +12,9 @@ appId: dev.osuki.muqun
 name: capture-theme
 ---
 # Settings is a control in the home header now, not a drawer row (card #664).
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "Color mode"
+    visible: 'Color mode'
     timeout: 10000
 - runFlow: dismiss-logbox.yaml
 
@@ -24,29 +24,29 @@ name: capture-theme
 # tile's own selected state before the sheet is allowed to leave. A screenshot
 # can still never be written under a name the app is not actually wearing.
 - tapOn:
-    text: "Theme, .*"
+    text: 'Theme, .*'
 - scrollUntilVisible:
     element:
-      text: "${THEME_LABEL}"
+      text: '${THEME_LABEL}'
     direction: DOWN
-- tapOn: "${THEME_LABEL}"
+- tapOn: '${THEME_LABEL}'
 - waitForAnimationToEnd:
     timeout: 1500
 - extendedWaitUntil:
-    visible: "Theme, ${THEME_LABEL}"
+    visible: 'Theme, ${THEME_LABEL}'
     timeout: 8000
-- tapOn: "${MODE_LABEL}"
+- tapOn: '${MODE_LABEL}'
 - waitForAnimationToEnd:
     timeout: 1500
 - assertVisible:
-    text: "${MODE_LABEL}"
+    text: '${MODE_LABEL}'
     selected: true
 - takeScreenshot: shots/themes/${SHOT}-1-settings
 
 - runFlow: dismiss-logbox.yaml
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 10000
 - waitForAnimationToEnd:
     timeout: 1500
@@ -56,7 +56,7 @@ name: capture-theme
 # the bundled agent output -- which is where the ANSI colours are, and so the
 # only screen on which the pack's sixteen terminal colours can be seen at all.
 - runFlow: dismiss-logbox.yaml
-- tapOn: "Try the demo"
+- tapOn: 'Try the demo'
 # The demo used to announce itself with a banner and this waited on that; card
 # #672 took the banner away and nothing here was updated, so every theme
 # capture run since has stalled here and the website's theme rail has been
@@ -64,7 +64,7 @@ name: capture-theme
 # is up" is the session's own content: the pane strip's first chip, which is
 # what open-demo waits on for the same reason.
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 25000
 - waitForAnimationToEnd:
     timeout: 4000
@@ -75,9 +75,9 @@ name: capture-theme
 - runFlow: dismiss-away-digest.yaml
 - takeScreenshot: shots/themes/${SHOT}-3-terminal
 
-- tapOn: "Back to servers"
+- tapOn: 'Back to servers'
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 10000
 - waitForAnimationToEnd:
     timeout: 1500

@@ -296,11 +296,7 @@ export function WorkspaceTitleSwitcher({
         // gesture built once instead of re-registered on every state change.
         // oxlint-disable-next-line react/refs -- deliberate: see above.
         .onEnd((event) => {
-          const direction = swipeDirection(
-            event.translationX,
-            event.translationY,
-            event.velocityX
-          );
+          const direction = swipeDirection(event.translationX, event.translationY, event.velocityX);
           if (direction) {
             scheduleOnRN(cycleFromGesture, direction);
             return;

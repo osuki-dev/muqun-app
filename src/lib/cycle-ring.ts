@@ -47,7 +47,12 @@ export function canCycle(items: RingItem[]): boolean {
 export function ringPosition(items: RingItem[], id: string): CycleTarget | null {
   const index = items.findIndex((item) => item.id === id);
   if (index < 0) return null;
-  return { id: items[index].id, title: items[index].title, position: index + 1, total: items.length };
+  return {
+    id: items[index].id,
+    title: items[index].title,
+    position: index + 1,
+    total: items.length,
+  };
 }
 
 /**

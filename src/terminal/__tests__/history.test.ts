@@ -295,9 +295,7 @@ describe('applying one read of a pane to the window on screen', () => {
     }
     expect(duplicatedRows(window)).toEqual([]);
     // Every row the pane produced, kept once, up to the window's own ceiling.
-    expect(window.split('\n')).toHaveLength(
-      Math.min(MAXIMUM, TRANSCRIPT_ROWS + top + BOX_ROWS)
-    );
+    expect(window.split('\n')).toHaveLength(Math.min(MAXIMUM, TRANSCRIPT_ROWS + top + BOX_ROWS));
   });
 });
 
@@ -316,7 +314,8 @@ describe('applying one read of a pane to the window on screen', () => {
 // the two-nvim-frames screenshot in the card.
 describe('a screen-owning pane replaces rather than accumulates (card #795, defect 2)', () => {
   test('a repaint with nothing in common replaces the old screen instead of stacking under it', () => {
-    const before = 'COMMAND  1  AGENTS.md  84,1  84%\nline 84\nline 85\nline 86\nline 87\nline 88\nline 89';
+    const before =
+      'COMMAND  1  AGENTS.md  84,1  84%\nline 84\nline 85\nline 86\nline 87\nline 88\nline 89';
     const after = '# AGENTS\nline 1\nline 2\n...\nline 15\nCOMMAND  1  AGENTS.md  1,1  1%';
     expect(foldPaneRead(before, after, 'refresh', 240, true)).toBe(after);
     expect(applyTerminalFrame(before, after, 240, true)).toBe(after);
@@ -458,38 +457,44 @@ describe('a page that brought nothing back retires the pull (#646)', () => {
   });
 
   test('a page no longer than the one before it is the end', () => {
-    expect(
-      hasEarlierAfterPage(lines(992), 1_200, MAXIMUM, overstated, 992)
-    ).toBe(false);
+    expect(hasEarlierAfterPage(lines(992), 1_200, MAXIMUM, overstated, 992)).toBe(false);
     // Not merely equal: a window that came back shorter is just as final.
-    expect(
-      hasEarlierAfterPage(lines(960), 1_200, MAXIMUM, overstated, 992)
-    ).toBe(false);
+    expect(hasEarlierAfterPage(lines(960), 1_200, MAXIMUM, overstated, 992)).toBe(false);
   });
 
   test('a page that did reach further back keeps the pull', () => {
-    expect(
-      hasEarlierAfterPage(lines(960), 960, MAXIMUM, overstated, 720)
-    ).toBe(true);
+    expect(hasEarlierAfterPage(lines(960), 960, MAXIMUM, overstated, 720)).toBe(true);
   });
 
   test('reaching further back does not override the metric saying stop', () => {
     // Both conditions have to hold. A pane whose scrollback genuinely ends is
     // still at its end even though this page was longer than the last.
     expect(
-      hasEarlierAfterPage(lines(394), 480, MAXIMUM, {
-        max_offset_from_bottom: 331,
-        viewport_rows: 65,
-      }, 240)
+      hasEarlierAfterPage(
+        lines(394),
+        480,
+        MAXIMUM,
+        {
+          max_offset_from_bottom: 331,
+          viewport_rows: 65,
+        },
+        240
+      )
     ).toBe(false);
   });
 
   test('the first page has nothing to compare against and behaves as before', () => {
     expect(
-      hasEarlierAfterPage(lines(239), 240, MAXIMUM, {
-        max_offset_from_bottom: 908,
-        viewport_rows: 65,
-      }, 0)
+      hasEarlierAfterPage(
+        lines(239),
+        240,
+        MAXIMUM,
+        {
+          max_offset_from_bottom: 908,
+          viewport_rows: 65,
+        },
+        0
+      )
     ).toBe(true);
   });
 });
@@ -582,15 +587,15 @@ describe('only a genuine range page may be believed with zero overlap', () => {
 
 describe('seeding the first page from the pane record when there is no range yet', () => {
   test('the seed is where the held tail began: total minus what it asked for', () => {
-    expect(
-      seedPageRange({ max_offset_from_bottom: 900, viewport_rows: 100 }, 240)
-    ).toEqual({ start: 760 });
+    expect(seedPageRange({ max_offset_from_bottom: 900, viewport_rows: 100 }, 240)).toEqual({
+      start: 760,
+    });
   });
 
   test('the seed does not go negative when the tail already covers everything', () => {
-    expect(
-      seedPageRange({ max_offset_from_bottom: 50, viewport_rows: 10 }, 240)
-    ).toEqual({ start: 0 });
+    expect(seedPageRange({ max_offset_from_bottom: 50, viewport_rows: 10 }, 240)).toEqual({
+      start: 0,
+    });
   });
 
   test('missing either metric seeds nothing', () => {

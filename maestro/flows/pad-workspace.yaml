@@ -22,57 +22,57 @@ tags:
 # dialog too; the app-scoped conditional helper cannot see that late overlay in
 # agent-device's Maestro compatibility runner.
 - tapOn:
-    text: "(?i).*(don.?t allow|不允許|不允许).*"
+    text: '(?i).*(don.?t allow|不允許|不允许).*'
     optional: true
 - waitForAnimationToEnd:
     timeout: 2000
 - tapOn:
-    text: "(?i).*(don.?t allow|不允許|不允许).*"
+    text: '(?i).*(don.?t allow|不允許|不允许).*'
     optional: true
 
 # The default Agent pane and the shared pane switcher are available on both the
 # compact server screen and the Pad detail column.
-- assertVisible: "Send to agent"
-- assertVisible: "Switch to nvim"
-- assertNotVisible: "Retry drawing the panel"
+- assertVisible: 'Send to agent'
+- assertVisible: 'Switch to nvim'
+- assertNotVisible: 'Retry drawing the panel'
 
 # The persistent rail only exists at the Pad breakpoint. Its server summary is
 # read-only; the Agent row is the navigation control that changes the detail
 # pane without leaving the workspace.
 - runFlow:
     when:
-      visible: "Servers"
+      visible: 'Servers'
     commands:
-      - assertVisible: "Demo workspace"
-      - assertVisible: "Pair a server"
-      - assertVisible: "Settings"
+      - assertVisible: 'Demo workspace'
+      - assertVisible: 'Pair a server'
+      - assertVisible: 'Settings'
       - assertVisible:
-          id: "server-agent-pane-1"
+          id: 'server-agent-pane-1'
 
 # Leave the Agent pane through the pane switcher first. Besides covering the
 # switcher on both layouts, this gives the Pad rail branch a real detail change
 # to reverse rather than tapping an already-selected Agent.
-- tapOn: "Switch to nvim"
+- tapOn: 'Switch to nvim'
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible: "Type into this editor"
-- assertNotVisible: "Retry drawing the panel"
+- assertVisible: 'Type into this editor'
+- assertNotVisible: 'Retry drawing the panel'
 
 - runFlow:
     when:
-      visible: "Servers"
+      visible: 'Servers'
     commands:
       - tapOn:
-          id: "server-agent-pane-1"
+          id: 'server-agent-pane-1'
       - extendedWaitUntil:
-          visible: "Send to agent"
+          visible: 'Send to agent'
           timeout: 8000
-      - assertNotVisible: "Retry drawing the panel"
+      - assertNotVisible: 'Retry drawing the panel'
 
 # End in one common state. On Pad this also proves the pane strip remained
 # usable after rail navigation; on phone it is the route back from nvim.
-- tapOn: "Switch to Claude Code"
+- tapOn: 'Switch to Claude Code'
 - extendedWaitUntil:
-    visible: "Send to agent"
+    visible: 'Send to agent'
     timeout: 8000
-- assertNotVisible: "Retry drawing the panel"
+- assertNotVisible: 'Retry drawing the panel'

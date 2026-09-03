@@ -1,11 +1,6 @@
 import { create } from 'zustand';
 
-import {
-  loadSshHosts,
-  loadSshSecrets,
-  saveSshHosts,
-  saveSshSecrets,
-} from '@/lib/ssh-host-storage';
+import { loadSshHosts, loadSshSecrets, saveSshHosts, saveSshSecrets } from '@/lib/ssh-host-storage';
 import {
   newSshId,
   sortSshHosts,
@@ -35,7 +30,10 @@ interface SshHostsState {
    * Edit a record. The credential is optional: the form never echoes a secret
    * back, so a save with the secret fields left blank keeps what was stored.
    */
-  updateHost: (id: string, input: Omit<SshHostInput, 'credential'> & { credential?: SshCredential }) => Promise<void>;
+  updateHost: (
+    id: string,
+    input: Omit<SshHostInput, 'credential'> & { credential?: SshCredential }
+  ) => Promise<void>;
   removeHost: (id: string) => Promise<void>;
   /** Trust-on-first-use, or a deliberate replacement; `null` forgets the key. */
   setTrustedHostKey: (id: string, key: SshTrustedHostKey | null) => Promise<void>;
@@ -146,7 +144,9 @@ export const useSshHostsStore = create<SshHostsState>((set) => ({
           record = {
             ...record,
             auth:
-              current.auth.type === 'privateKey' ? current.auth : { type: 'privateKey', keyId: newSshId('key') },
+              current.auth.type === 'privateKey'
+                ? current.auth
+                : { type: 'privateKey', keyId: newSshId('key') },
           };
         } else if (input.credential.type === 'keyboardInteractive') {
           record = { ...record, auth: { type: 'keyboardInteractive' } };
@@ -154,7 +154,9 @@ export const useSshHostsStore = create<SshHostsState>((set) => ({
           record = { ...record, auth: { type: 'password' } };
         }
         // Clear under the *old* identity, write under the new one.
-        await saveSshSecrets(withCredential(withoutSshSecrets(secrets, current), record, input.credential));
+        await saveSshSecrets(
+          withCredential(withoutSshSecrets(secrets, current), record, input.credential)
+        );
       }
       const next = hosts.map((item) => (item.id === id ? record : item));
       await saveSshHosts(next);
@@ -189,7 +191,9 @@ export const useSshHostsStore = create<SshHostsState>((set) => ({
   async markConnected(id) {
     await enqueue(async () => {
       const hosts = await loadSshHosts();
-      const next = hosts.map((item) => (item.id === id ? { ...item, lastConnectedAt: Date.now() } : item));
+      const next = hosts.map((item) =>
+        item.id === id ? { ...item, lastConnectedAt: Date.now() } : item
+      );
       await saveSshHosts(next);
       set({ hosts: sortSshHosts(next), loading: false });
     });

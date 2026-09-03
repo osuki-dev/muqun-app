@@ -99,9 +99,7 @@ export function responsiveWorkspaceLayout(
   // silently. Without it the floor is 872, so the same window opens the preview
   // with 758pt of terminal instead of 470.
   const previewWidth =
-    showsPreview && safeWidth - PAD_PREVIEW_WIDTH >= PAD_TERMINAL_MIN_WIDTH
-      ? PAD_PREVIEW_WIDTH
-      : 0;
+    showsPreview && safeWidth - PAD_PREVIEW_WIDTH >= PAD_TERMINAL_MIN_WIDTH ? PAD_PREVIEW_WIDTH : 0;
   const railWidth = previewWidth > 0 ? 0 : naturalRail;
 
   return {

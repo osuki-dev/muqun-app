@@ -47,7 +47,10 @@ export interface SshShellEventsHandle {
 export interface SshSessionHandle {
   readonly hostKey: SshTrustedHostKey;
   readonly isConnected: boolean;
-  openShell(options: { cols: number; rows: number; term?: string }, events: SshShellEventsHandle): Promise<SshShellHandle>;
+  openShell(
+    options: { cols: number; rows: number; term?: string },
+    events: SshShellEventsHandle
+  ): Promise<SshShellHandle>;
   disconnect(): Promise<void>;
 }
 

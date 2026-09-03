@@ -25,9 +25,9 @@ name: dismiss-away-digest
 - runFlow:
     when:
       visible:
-        id: "away-digest-dismiss"
+        id: 'away-digest-dismiss'
     commands:
       - tapOn:
-          id: "away-digest-dismiss"
+          id: 'away-digest-dismiss'
       - waitForAnimationToEnd:
           timeout: 1000

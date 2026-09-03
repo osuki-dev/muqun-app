@@ -1,8 +1,5 @@
 import { i18n } from '@lingui/core';
-import {
-  requestWidgetUpdate,
-  type WidgetTaskHandlerProps,
-} from 'react-native-android-widget';
+import { requestWidgetUpdate, type WidgetTaskHandlerProps } from 'react-native-android-widget';
 
 import {
   AGENT_WIDGET_NAMES,

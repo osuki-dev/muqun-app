@@ -4,7 +4,7 @@ import { sshCancelledError, waitUnlessAborted } from '@/lib/ssh-cancel';
 import { describeSshFailure } from '@/lib/ssh-client';
 
 describe('sshCancelledError', () => {
-  test('reads as the library\'s CANCELLED', () => {
+  test("reads as the library's CANCELLED", () => {
     const failure = describeSshFailure(sshCancelledError());
     expect(failure.code).toBe('CANCELLED');
     expect(failure.message).toContain('cancelled');
@@ -21,7 +21,9 @@ describe('waitUnlessAborted', () => {
   test('a signal already aborted rejects at once', async () => {
     const controller = new AbortController();
     controller.abort();
-    const error = await waitUnlessAborted(10_000, controller.signal).catch((reason: unknown) => reason);
+    const error = await waitUnlessAborted(10_000, controller.signal).catch(
+      (reason: unknown) => reason
+    );
     expect(describeSshFailure(error).code).toBe('CANCELLED');
   });
 
@@ -29,7 +31,9 @@ describe('waitUnlessAborted', () => {
     const controller = new AbortController();
     const started = Date.now();
     setTimeout(() => controller.abort(), 20);
-    const error = await waitUnlessAborted(10_000, controller.signal).catch((reason: unknown) => reason);
+    const error = await waitUnlessAborted(10_000, controller.signal).catch(
+      (reason: unknown) => reason
+    );
     expect(error instanceof Error && error.name).toBe('SshError');
     expect(describeSshFailure(error).code).toBe('CANCELLED');
     expect(Date.now() - started).toBeLessThan(1000);

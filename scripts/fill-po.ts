@@ -38,19 +38,16 @@ function main(): void {
   // Only `msgid "..."` immediately followed by an empty `msgstr ""` that ends
   // the entry. A multi-line body is written as `msgstr ""` plus continuation
   // lines, so requiring a blank line or end-of-file after it leaves those alone.
-  const next = po.replace(
-    /^msgid "(.+)"\nmsgstr ""$/gm,
-    (whole, rawId: string) => {
-      // The id as it appears in the file is escaped; the map is written in plain
-      // text, so unescape before looking it up.
-      const id = rawId.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-      const translation = map[id];
-      if (translation === undefined) return whole;
-      used.add(id);
-      filled += 1;
-      return `msgid "${rawId}"\nmsgstr "${escapePo(translation)}"`;
-    }
-  );
+  const next = po.replace(/^msgid "(.+)"\nmsgstr ""$/gm, (whole, rawId: string) => {
+    // The id as it appears in the file is escaped; the map is written in plain
+    // text, so unescape before looking it up.
+    const id = rawId.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    const translation = map[id];
+    if (translation === undefined) return whole;
+    used.add(id);
+    filled += 1;
+    return `msgid "${rawId}"\nmsgstr "${escapePo(translation)}"`;
+  });
 
   writeFileSync(poPath, next);
 

@@ -54,9 +54,11 @@ describe('planImageCompression', () => {
     expect(planImageCompression(pick({ width: MAX_IMAGE_EDGE, height: 1200 }))?.resize).toBe(
       undefined
     );
-    expect(planImageCompression(pick({ width: MAX_IMAGE_EDGE + 1, height: 1200 }))?.resize).toEqual({
-      width: MAX_IMAGE_EDGE,
-    });
+    expect(planImageCompression(pick({ width: MAX_IMAGE_EDGE + 1, height: 1200 }))?.resize).toEqual(
+      {
+        width: MAX_IMAGE_EDGE,
+      }
+    );
   });
 
   test('an image that is already the target format and small enough is left alone', () => {

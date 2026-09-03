@@ -16,9 +16,9 @@ name: dismiss-permission
 - runFlow:
     when:
       visible:
-        text: "(?i).*(don.?t allow|不允許|不允许).*"
+        text: '(?i).*(don.?t allow|不允許|不允许).*'
     commands:
       - tapOn:
-          text: "(?i).*(don.?t allow|不允許|不允许).*"
+          text: '(?i).*(don.?t allow|不允許|不允许).*'
       - waitForAnimationToEnd:
           timeout: 2000

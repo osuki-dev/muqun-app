@@ -189,11 +189,7 @@ describe('groupByDay identity', () => {
 
   it('replaces the row for a file that was rewritten', () => {
     const before = groupByDay([asset('a.ts', at(2026, 7, 27, 9), { size: 10 })], now);
-    const after = groupByDay(
-      [asset('a.ts', at(2026, 7, 27, 9), { size: 4096 })],
-      now,
-      before
-    );
+    const after = groupByDay([asset('a.ts', at(2026, 7, 27, 9), { size: 4096 })], now, before);
     // The row shows the size, so a new size is a new row -- and the day is
     // unchanged, so the heading above it is not.
     expect(after[1]).not.toBe(before[1]);

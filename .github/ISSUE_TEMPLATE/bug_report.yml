@@ -1,6 +1,6 @@
 name: Bug report
 description: Something in the Muqun app is broken or behaves unexpectedly.
-labels: ["bug"]
+labels: ['bug']
 
 # The order of the fields is the order they are useful in.
 #
@@ -59,9 +59,9 @@ body:
         nothing about your machine or your network is involved and you can skip
         every Gateway question below.
       options:
-        - "Yes — it happens in the demo too"
-        - "No — only against a real Gateway"
-        - "Not applicable / cannot tell"
+        - 'Yes — it happens in the demo too'
+        - 'No — only against a real Gateway'
+        - 'Not applicable / cannot tell'
     validations:
       required: true
 
@@ -117,14 +117,14 @@ body:
         - tmux
         - Herdr
         - Not sure
-        - "Not applicable — it happens in the demo"
+        - 'Not applicable — it happens in the demo'
 
   - type: input
     id: gateway-version
     attributes:
       label: Gateway version
-      description: "Output of `muqun-gateway status`, if you can get to it."
-      placeholder: "0.6.1"
+      description: 'Output of `muqun-gateway status`, if you can get to it.'
+      placeholder: '0.6.1'
 
   - type: dropdown
     id: connection
@@ -136,7 +136,7 @@ body:
         - Same Wi-Fi / LAN
         - Other private network
         - Not sure
-        - "Not applicable — it happens in the demo"
+        - 'Not applicable — it happens in the demo'
 
   - type: textarea
     id: extra

@@ -64,36 +64,36 @@ tags:
 # movement rather than a no-op. The pan gesture sets `hitSlop({ left: -32 })` to
 # leave the drawer's edge swipe alone, so the drag starts well inside the pane.
 - swipe:
-    start: "80%,45%"
-    end: "25%,45%"
+    start: '80%,45%'
+    end: '25%,45%'
     duration: 500
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Retry drawing the panel"
+- assertNotVisible: 'Retry drawing the panel'
 - swipe:
-    start: "25%,45%"
-    end: "80%,45%"
+    start: '25%,45%'
+    end: '80%,45%'
     duration: 500
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Retry drawing the panel"
+- assertNotVisible: 'Retry drawing the panel'
 
 # Vertically. The demo has enough real scrollback to move away from the tail;
 # this verifies that the canvas settles in history rather than snapping back.
 - swipe:
-    start: "50%,30%"
-    end: "50%,70%"
+    start: '50%,30%'
+    end: '50%,70%'
     duration: 600
 - waitForAnimationToEnd:
     timeout: 2500
-- assertNotVisible: "Retry drawing the panel"
+- assertNotVisible: 'Retry drawing the panel'
 # The demo is still up: its first pane is still named in the strip.
-- assertVisible: "Claude Code"
+- assertVisible: 'Claude Code'
 
 # ── Scroll chrome ─────────────────────────────────────────────────────────
 # We left follow-output, but have not reached the current page's exact top stop.
-- assertVisible: "Jump to latest output"
-- assertNotVisible: "Pull for earlier output"
+- assertVisible: 'Jump to latest output'
+- assertNotVisible: 'Pull for earlier output'
 
 # ── Selecting text ────────────────────────────────────────────────────────
 # A long press turns the pane into something text can be picked out of. The
@@ -107,43 +107,43 @@ tags:
 # Not `doubleTapOn`: see the header. Maestro cannot deliver a double tap to this
 # screen at all, and asserting on one only ever tested the harness.
 - longPressOn:
-    point: "50%,55%"
+    point: '50%,55%'
 - extendedWaitUntil:
-    visible: "COPY"
+    visible: 'COPY'
     timeout: 3000
-- assertVisible: "SELECT ALL"
-- assertVisible: "CANCEL"
+- assertVisible: 'SELECT ALL'
+- assertVisible: 'CANCEL'
 # Keep the selection finger beyond the visible terminal edge long enough for
 # frame-driven auto-scroll to run. It must leave a live selection and a healthy
 # canvas when the finger lifts.
 - swipe:
-    start: "50%,55%"
-    end: "50%,95%"
+    start: '50%,55%'
+    end: '50%,95%'
     duration: 3000
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "COPY"
-- assertNotVisible: "Retry drawing the panel"
-- tapOn: "CANCEL"
-- assertNotVisible: "COPY"
+- assertVisible: 'COPY'
+- assertNotVisible: 'Retry drawing the panel'
+- tapOn: 'CANCEL'
+- assertNotVisible: 'COPY'
 
 # ── Switching panes on a live canvas ──────────────────────────────────────
 # The canvas is deliberately never remounted on a pane switch -- rebuilding it
 # raced the native side and crashed -- so switching back and forth is the
 # regression test for that.
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Switch to nvim"
+- tapOn: 'Switch to nvim'
 - waitForAnimationToEnd:
     timeout: 3000
-- assertNotVisible: "Retry drawing the panel"
-- tapOn: "Switch to zsh"
+- assertNotVisible: 'Retry drawing the panel'
+- tapOn: 'Switch to zsh'
 - waitForAnimationToEnd:
     timeout: 3000
-- assertNotVisible: "Retry drawing the panel"
-- tapOn: "Switch to Claude Code"
+- assertNotVisible: 'Retry drawing the panel'
+- tapOn: 'Switch to Claude Code'
 - waitForAnimationToEnd:
     timeout: 3000
-- assertNotVisible: "Retry drawing the panel"
+- assertNotVisible: 'Retry drawing the panel'
 
 # ── Re-laying the grid out (the automatable half of pinch-to-zoom) ────────
 # Changing the terminal text size changes cell size, content size and the fit
@@ -151,39 +151,39 @@ tags:
 # Compact leaves the session before opening Settings. Pad keeps Settings in its
 # persistent rail, so the same optional tap becomes a no-op there.
 - tapOn:
-    text: "Back to servers"
+    text: 'Back to servers'
     optional: true
 - extendedWaitUntil:
-    visible: "Settings"
+    visible: 'Settings'
     timeout: 8000
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "APPEARANCE"
+    visible: 'APPEARANCE'
     timeout: 8000
 # "Text size" sits below the fold now that the alerts section grew; scrolling
 # to it is the wait-and-assert in one step.
 - scrollUntilVisible:
     element:
-      text: "Text size"
+      text: 'Text size'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "LARGE"
+      text: 'LARGE'
     direction: DOWN
-- tapOn: "LARGE"
+- tapOn: 'LARGE'
 - waitForAnimationToEnd:
     timeout: 1500
-- tapOn: "Go back"
+- tapOn: 'Go back'
 # Compact returns to home and re-enters the demo. Pad returns directly to the
 # detail column because its rail and detail are one master-detail workspace.
 - runFlow:
     when:
-      visible: "Try the demo"
+      visible: 'Try the demo'
     commands:
       - runFlow: ../subflows/dismiss-logbox.yaml
-      - tapOn: "Try the demo"
+      - tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000
@@ -191,18 +191,18 @@ tags:
 # demo mode fabricates once per launch (card #691). A no-op wherever there is
 # nothing standing.
 - runFlow: ../subflows/dismiss-away-digest.yaml
-- assertNotVisible: "Retry drawing the panel"
+- assertNotVisible: 'Retry drawing the panel'
 # Pan again at the new cell size: the fit scale and the pan bounds were both
 # recomputed, and a stale bound is what strands the output off-screen.
 - swipe:
-    start: "80%,45%"
-    end: "25%,45%"
+    start: '80%,45%'
+    end: '25%,45%'
     duration: 500
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Retry drawing the panel"
+- assertNotVisible: 'Retry drawing the panel'
 # The demo is still up: its first pane is still named in the strip.
-- assertVisible: "Claude Code"
+- assertVisible: 'Claude Code'
 
 # The range protocol itself is deliberately tested below the gesture layer:
 # reaching the exact top stop takes a device-dependent number of flings, while

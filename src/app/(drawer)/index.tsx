@@ -1,7 +1,14 @@
 import { Button, Card, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
-import { ChevronRight, Play, ScanLine, Server, Settings, SquareTerminal } from 'lucide-react-native';
+import {
+  ChevronRight,
+  Play,
+  ScanLine,
+  Server,
+  Settings,
+  SquareTerminal,
+} from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -38,10 +45,7 @@ import {
 } from '@/lib/responsive-layout';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
 import type { ServerAgent, ServerAgentsSnapshot } from '@/lib/server-agents';
-import {
-  reachabilityFromProbe,
-  type ServerReachability,
-} from '@/lib/server-reachability';
+import { reachabilityFromProbe, type ServerReachability } from '@/lib/server-reachability';
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -77,7 +81,6 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   // call keeps the old language. The hook's `t` is bound to the Lingui context,
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
-
 
   const router = useRouter();
   const theme = useThemeTokens();
@@ -130,7 +133,9 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   // never by the time this screen is back (the server header hangs it up on
   // the way out) and on a Pad is exactly while the demo workspace is beside
   // the rail -- see `ssh-home.ts`.
-  const sshRows = sshLoading ? [] : sshHomeRows(sshHosts, isDemoRecord(record) ? demoSshHost() : null);
+  const sshRows = sshLoading
+    ? []
+    : sshHomeRows(sshHosts, isDemoRecord(record) ? demoSshHost() : null);
 
   // Read at render because the SSH rows' "last connected" is relative to
   // *now*; `ServerCard` makes the same call for the same reason.
@@ -206,9 +211,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   });
   const compactTitleStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [82, 112], [0, 1], Extrapolation.CLAMP),
-    transform: [
-      { translateY: interpolate(scrollY.value, [82, 112], [5, 0], Extrapolation.CLAMP) },
-    ],
+    transform: [{ translateY: interpolate(scrollY.value, [82, 112], [5, 0], Extrapolation.CLAMP) }],
   }));
 
   function openServer(serverId: string, paneId?: string) {
@@ -227,7 +230,10 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   function openDemo() {
     enterDemo();
-    router.navigate({ pathname: '/servers/[serverId]', params: { serverId: DEMO_SERVER_ID } } as Href);
+    router.navigate({
+      pathname: '/servers/[serverId]',
+      params: { serverId: DEMO_SERVER_ID },
+    } as Href);
   }
 
   // The shell screen connects on mount, the same way it does from `/ssh`, so
@@ -255,25 +261,26 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           />
         ) : undefined
       }>
-    <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
-      {/* The bar and the brand block below it are one header in two states, not
+      <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
+        {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
           points below *is* the title, and repeating it up here is what made the
           batch4 header read as chrome. Past 82pt of scroll the brand walks up
           into the bar and the bar earns its left half. The controls never move,
           so the only thing that changes is where the brand is. */}
-        {!isPad ? <SafeAreaView edges={['top']} style={styles.topBar}>
-        <Animated.View pointerEvents="none" style={[styles.compactTitle, compactTitleStyle]}>
-          <View style={[styles.compactIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
-            <Image source={brandMark} contentFit="contain" style={styles.compactMark} />
-          </View>
-          <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
-            {t`Muqun`}
-          </Text>
-        </Animated.View>
+        {!isPad ? (
+          <SafeAreaView edges={['top']} style={styles.topBar}>
+            <Animated.View pointerEvents="none" style={[styles.compactTitle, compactTitleStyle]}>
+              <View style={[styles.compactIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
+                <Image source={brandMark} contentFit="contain" style={styles.compactMark} />
+              </View>
+              <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
+                {t`Muqun`}
+              </Text>
+            </Animated.View>
 
-        {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
+            {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
             the app's front door to everything that is not a server -- so it
             takes the corner. Pairing sits beside the list it adds to, and it
             already has a full-width button in the empty state, so the header
@@ -284,136 +291,140 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             selected server's avatar and loom (card #629) and to the empty
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
-        <View style={styles.headerActions}>
-          {/* A plain shell on any machine with sshd, beside the gateway
+            <View style={styles.headerActions}>
+              {/* A plain shell on any machine with sshd, beside the gateway
               entries rather than among them: it pairs nothing and needs no
               herdr, so it is the one door here that is not about a gateway. */}
-          <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
-            <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
-          </HeaderButton>
-          <HeaderButton
-            label={t`Scan a gateway QR`}
-            onPress={() => router.push('/explore')}>
-            {/* The same mark as the empty card's corner brackets, at a fifth of
+              <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
+                <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
+              </HeaderButton>
+              <HeaderButton label={t`Scan a gateway QR`} onPress={() => router.push('/explore')}>
+                {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
                 same whether it is a 64pt viewfinder in the middle of an empty
                 screen or a 20pt glyph in the corner of a full one. */}
-            <ScanLine size={20} color={theme.colors.textMuted} strokeWidth={2} />
-          </HeaderButton>
-          <HeaderButton label={t`Settings`} onPress={() => router.push('/settings')}>
-            <Settings size={20} color={theme.colors.textMuted} strokeWidth={2} />
-          </HeaderButton>
-        </View>
-      </SafeAreaView> : null}
+                <ScanLine size={20} color={theme.colors.textMuted} strokeWidth={2} />
+              </HeaderButton>
+              <HeaderButton label={t`Settings`} onPress={() => router.push('/settings')}>
+                <Settings size={20} color={theme.colors.textMuted} strokeWidth={2} />
+              </HeaderButton>
+            </View>
+          </SafeAreaView>
+        ) : null}
 
-      <KeyboardAwareScrollView
-        bottomOffset={24}
-        extraKeyboardSpace={12}
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={[
-          styles.content,
-          isPad && styles.padContent,
-          {
-            paddingHorizontal: metrics.contentGutter,
-            maxWidth: metrics.contentMaxWidth,
-          },
-        ]}
-        keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
-        keyboardShouldPersistTaps="handled"
-        onScroll={onScroll}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => void onRefresh()}
-            tintColor={theme.colors.textSubtle}
-            colors={[theme.colors.primary]}
-            progressBackgroundColor={theme.colors.surface}
-          />
-        }
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}>
-        {/* The app's name, at the weight the screen's own content leaves for
+        <KeyboardAwareScrollView
+          bottomOffset={24}
+          extraKeyboardSpace={12}
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerStyle={[
+            styles.content,
+            isPad && styles.padContent,
+            {
+              paddingHorizontal: metrics.contentGutter,
+              maxWidth: metrics.contentMaxWidth,
+            },
+          ]}
+          keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
+          keyboardShouldPersistTaps="handled"
+          onScroll={onScroll}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void onRefresh()}
+              tintColor={theme.colors.textSubtle}
+              colors={[theme.colors.primary]}
+              progressBackgroundColor={theme.colors.surface}
+            />
+          }
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}>
+          {/* The app's name, at the weight the screen's own content leaves for
             it. On an empty screen this block *is* the content and is set as
             such; once a machine is paired the card below is what the reader
             came for, and the name steps back to being the top of the page.
             `listLayout` carries the one change between them, so pairing a first
             server folds the poster down rather than cutting to a smaller one. */}
-        {!isPad ? <Animated.View
-          entering={riseIn()}
-          layout={listLayout('medium')}
-          style={[styles.brandBlock, { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap }]}>
-          {/* The mark alone, on the page. The rounded tile it used to sit in
+          {!isPad ? (
+            <Animated.View
+              entering={riseIn()}
+              layout={listLayout('medium')}
+              style={[
+                styles.brandBlock,
+                { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
+              ]}>
+              {/* The mark alone, on the page. The rounded tile it used to sit in
               gave a shape the mark already has, and cost it 30% of its own
               footprint to draw -- so the part meant to be read was the smaller
               half of the thing drawing attention to it. */}
-          <Image
-            source={brandMark}
-            contentFit="contain"
-            style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
-          />
-          <View style={styles.titleCopy}>
-            <Text
-              style={[
-                styles.brandTitle,
-                {
-                  color: theme.colors.text,
-                  fontSize: metrics.brand.titleSize,
-                  lineHeight: metrics.brand.titleLineHeight,
-                  letterSpacing: metrics.brand.titleTracking,
-                },
-              ]}>
-              {t`Muqun`}
-            </Text>
-            {/* Only where it is the whole message. On a screen already showing
+              <Image
+                source={brandMark}
+                contentFit="contain"
+                style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
+              />
+              <View style={styles.titleCopy}>
+                <Text
+                  style={[
+                    styles.brandTitle,
+                    {
+                      color: theme.colors.text,
+                      fontSize: metrics.brand.titleSize,
+                      lineHeight: metrics.brand.titleLineHeight,
+                      letterSpacing: metrics.brand.titleTracking,
+                    },
+                  ]}>
+                  {t`Muqun`}
+                </Text>
+                {/* Only where it is the whole message. On a screen already showing
                 a machine and what is running on it, a line about what the app
                 is for is the product introducing itself to someone who has
                 been using it for months. */}
-            {metrics.brand.showsTagline ? (
-              <Text variant="bodySmall" color={theme.colors.textMuted}>
-                <Trans>Your agents, anywhere.</Trans>
-              </Text>
-            ) : null}
-          </View>
-        </Animated.View> : null}
+                {metrics.brand.showsTagline ? (
+                  <Text variant="bodySmall" color={theme.colors.textMuted}>
+                    <Trans>Your agents, anywhere.</Trans>
+                  </Text>
+                ) : null}
+              </View>
+            </Animated.View>
+          ) : null}
 
-        {loading ? (
-          // The shape of the list that is coming, not a logo in the middle of
-          // an empty screen. Reading the paired servers out of SecureStore is
-          // fast but not free, and what the loader used to do was hold the
-          // screen blank and then hard-cut to a populated list -- so the first
-          // thing the app did on every cold start was flicker. The rows are
-          // built from the same shape the real ones use, and the block fades
-          // out from under them.
-          <Animated.View
-            exiting={fadeOut('short')}
-            style={[styles.serverList, { gap: metrics.cardGap }]}
-            accessibilityLabel={t`Loading servers`}>
-            {/* The same surface, padding and identity block as a real card, so
+          {loading ? (
+            // The shape of the list that is coming, not a logo in the middle of
+            // an empty screen. Reading the paired servers out of SecureStore is
+            // fast but not free, and what the loader used to do was hold the
+            // screen blank and then hard-cut to a populated list -- so the first
+            // thing the app did on every cold start was flicker. The rows are
+            // built from the same shape the real ones use, and the block fades
+            // out from under them.
+            <Animated.View
+              exiting={fadeOut('short')}
+              style={[styles.serverList, { gap: metrics.cardGap }]}
+              accessibilityLabel={t`Loading servers`}>
+              {/* The same surface, padding and identity block as a real card, so
                 the skeleton previews the shape that is actually coming. */}
-            {[0, 1].map((index) => (
-              <View
-                key={index}
-                style={[
-                  styles.serverSection,
-                  {
-                    padding: metrics.cardPadding,
-                    borderRadius: metrics.cardRadius,
-                    backgroundColor: theme.colors.surface,
-                  },
-                ]}>
-                <View style={styles.identityRow}>
-                  <Skeleton variant="rect" width={AVATAR_SIZE} height={AVATAR_SIZE} />
-                  <View style={styles.serverCopy}>
-                    <Skeleton variant="text" width="52%" height={18} />
-                    <Skeleton variant="text" width="34%" height={12} />
+              {[0, 1].map((index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.serverSection,
+                    {
+                      padding: metrics.cardPadding,
+                      borderRadius: metrics.cardRadius,
+                      backgroundColor: theme.colors.surface,
+                    },
+                  ]}>
+                  <View style={styles.identityRow}>
+                    <Skeleton variant="rect" width={AVATAR_SIZE} height={AVATAR_SIZE} />
+                    <View style={styles.serverCopy}>
+                      <Skeleton variant="text" width="52%" height={18} />
+                      <Skeleton variant="text" width="34%" height={12} />
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
-          </Animated.View>
-        ) : null}
+              ))}
+            </Animated.View>
+          ) : null}
 
-        {/* Two spacers with different weights, so a short list settles a little
+          {/* Two spacers with different weights, so a short list settles a little
             below the middle of the space it has rather than either floating in
             the centre or being stranded under the header. They are flex, so a
             list long enough to fill the screen squeezes them to nothing and the
@@ -422,43 +433,43 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             only thing on the screen, so labelling it says nothing, and pairing
             -- which happens once per machine, ever -- belongs in the drawer,
             not in the corner furthest from a thumb. */}
-        {!loading ? (
-          <View
-            style={[
-              styles.spacerAbove,
-              isPad && styles.padSpacer,
-              // An empty screen is one composition -- the mark, then the
-              // invitation -- and a composition sits in the space it has. A
-              // list does not: it starts where the reader is already looking
-              // and lets its slack collect underneath, because a single card
-              // marooned at mid-screen reads as a page still loading.
-              metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
-            ]}
-          />
-        ) : null}
-
-        {!loading && records.length === 0 ? (
-          <EmptyState isPad={isPad} onPair={() => router.push('/explore')} onDemo={openDemo} />
-        ) : null}
-
-        <View style={[styles.serverList, { gap: metrics.cardGap }]}>
-          {records.map((server, index) => (
-            <ServerCard
-              key={server.serverId}
-              server={server}
-              index={index}
-              metrics={metrics}
-              selected={server.serverId === record?.serverId}
-              showAddress={addressNeeded.has(server.serverId)}
-              reachability={reachabilityFromProbe(probes[server.serverId])}
-              agents={agentsByServer[server.serverId]}
-              onOpen={() => openServer(server.serverId)}
-              onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
+          {!loading ? (
+            <View
+              style={[
+                styles.spacerAbove,
+                isPad && styles.padSpacer,
+                // An empty screen is one composition -- the mark, then the
+                // invitation -- and a composition sits in the space it has. A
+                // list does not: it starts where the reader is already looking
+                // and lets its slack collect underneath, because a single card
+                // marooned at mid-screen reads as a page still loading.
+                metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
+              ]}
             />
-          ))}
-        </View>
+          ) : null}
 
-        {/* The saved SSH hosts, under the gateways and apart from them: a
+          {!loading && records.length === 0 ? (
+            <EmptyState isPad={isPad} onPair={() => router.push('/explore')} onDemo={openDemo} />
+          ) : null}
+
+          <View style={[styles.serverList, { gap: metrics.cardGap }]}>
+            {records.map((server, index) => (
+              <ServerCard
+                key={server.serverId}
+                server={server}
+                index={index}
+                metrics={metrics}
+                selected={server.serverId === record?.serverId}
+                showAddress={addressNeeded.has(server.serverId)}
+                reachability={reachabilityFromProbe(probes[server.serverId])}
+                agents={agentsByServer[server.serverId]}
+                onOpen={() => openServer(server.serverId)}
+                onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
+              />
+            ))}
+          </View>
+
+          {/* The saved SSH hosts, under the gateways and apart from them: a
             gateway hands the app a workspace, an SSH host is a machine with
             sshd, and the two are added and trusted in different ways -- see
             `SshHostList` for why they are not one list. Absent entirely until
@@ -466,46 +477,46 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             told about the feature by an empty heading; the header's SSH
             button is the door to that. The eyebrow is the one place this
             screen labels a group, because here there are two. */}
-        {sshRows.length > 0 ? (
-          <Animated.View
-            entering={riseIn(records.length * STAGGER.card)}
-            layout={listLayout()}
-            style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
-            testID="home-ssh-hosts">
-            <View style={styles.sshHeading}>
-              <Text variant="label" color={theme.colors.textMuted}>
-                <Trans>SSH hosts</Trans>
-              </Text>
-              {/* The way to the list this section is a view of: adding,
-                  editing and forgetting a host happen there, not here. */}
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Manage SSH hosts`}
-                hitSlop={8}
-                onPress={() => router.push('/ssh')}
-                style={styles.sshManage}>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Manage</Trans>
+          {sshRows.length > 0 ? (
+            <Animated.View
+              entering={riseIn(records.length * STAGGER.card)}
+              layout={listLayout()}
+              style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
+              testID="home-ssh-hosts">
+              <View style={styles.sshHeading}>
+                <Text variant="label" color={theme.colors.textMuted}>
+                  <Trans>SSH hosts</Trans>
                 </Text>
-                <ChevronRight size={14} color={theme.colors.textMuted} strokeWidth={2} />
-              </PressableScale>
-            </View>
-            <View style={styles.sshList}>
-              {sshRows.map((host) => (
-                <SshHostRow
-                  key={host.id}
-                  record={host}
-                  nowMs={nowMs}
-                  onOpen={() => openSshHost(host)}
-                />
-              ))}
-            </View>
-          </Animated.View>
-        ) : null}
+                {/* The way to the list this section is a view of: adding,
+                  editing and forgetting a host happen there, not here. */}
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Manage SSH hosts`}
+                  hitSlop={8}
+                  onPress={() => router.push('/ssh')}
+                  style={styles.sshManage}>
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    <Trans>Manage</Trans>
+                  </Text>
+                  <ChevronRight size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                </PressableScale>
+              </View>
+              <View style={styles.sshList}>
+                {sshRows.map((host) => (
+                  <SshHostRow
+                    key={host.id}
+                    record={host}
+                    nowMs={nowMs}
+                    onOpen={() => openSshHost(host)}
+                  />
+                ))}
+              </View>
+            </Animated.View>
+          ) : null}
 
-        {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
-      </KeyboardAwareScrollView>
-    </View>
+          {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
+        </KeyboardAwareScrollView>
+      </View>
     </AppDrawer>
   );
 }
@@ -534,10 +545,7 @@ function HeaderButton({
       accessibilityLabel={label}
       hitSlop={8}
       onPress={onPress}
-      style={[
-        styles.headerButton,
-        { backgroundColor: theme.colors.surface },
-      ]}>
+      style={[styles.headerButton, { backgroundColor: theme.colors.surface }]}>
       {children}
     </PressableScale>
   );
@@ -599,8 +607,7 @@ function ServerCard({
   // in state, which re-renders the whole list to change one label.
   // oxlint-disable-next-line react/purity -- deliberate: see above.
   const nowMs = Date.now();
-  const statusColor =
-    reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
+  const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
   // The card arrives, then its panes fill in under it. One sequence per machine,
   // offset so two machines do not narrate at once.
   const cardDelay = index * STAGGER.card;
@@ -692,7 +699,11 @@ function ServerCard({
                   only address there is. It is not lost: Settings > SERVERS
                   lists every server with its address, always. */}
               {showAddress ? (
-                <Text selectable variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
+                <Text
+                  selectable
+                  variant="caption"
+                  color={theme.colors.textSubtle}
+                  numberOfLines={1}>
                   {server.url}
                 </Text>
               ) : null}
@@ -749,7 +760,6 @@ function EmptyState({
 }) {
   const { t } = useLingui();
 
-
   const theme = useThemeTokens();
   const corners = [styles.cornerTL, styles.cornerTR, styles.cornerBL, styles.cornerBR];
 
@@ -758,12 +768,7 @@ function EmptyState({
     // card vanish on one frame while the new one faded in underneath it -- the
     // one moment in the app where two things are meant to hand over cleanly.
     <Animated.View entering={fadeIn('medium')} exiting={fadeOut('short')}>
-      <Card
-        padding="none"
-        style={[
-          styles.emptyCard,
-          isPad && styles.padEmptyCard,
-        ]}>
+      <Card padding="none" style={[styles.emptyCard, isPad && styles.padEmptyCard]}>
         {/* The same mark as the pairing screen's aperture, in the same colour,
             at a sixth of the size: this is the shape the reader is about to
             point at their machine. It is drawn in `borderStrong` rather than

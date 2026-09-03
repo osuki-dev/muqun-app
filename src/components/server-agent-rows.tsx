@@ -7,11 +7,7 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight } from 'lucide-react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { agentStatusWord } from '@/i18n/labels';
 import { feedback } from '@/lib/feedback';
@@ -24,10 +20,7 @@ import {
   type ServerAgent,
   type ServerAgentsSnapshot,
 } from '@/lib/server-agents';
-import {
-  agentStatusesAreCurrent,
-  type ServerReachability,
-} from '@/lib/server-reachability';
+import { agentStatusesAreCurrent, type ServerReachability } from '@/lib/server-reachability';
 import { useAppSettings } from '@/stores/app-settings';
 
 /**
@@ -189,9 +182,7 @@ export function ServerAgentRows({
             // in the accessibility label even where it has no line on screen
             // -- a screen reader still gets the fact a sighted reader now
             // gets from the dot's colour.
-            accessibilityLabel={
-              spokenCaption ? `${agent.name}, ${spokenCaption}` : agent.name
-            }
+            accessibilityLabel={spokenCaption ? `${agent.name}, ${spokenCaption}` : agent.name}
             accessibilityHint={t`Opens this agent's terminal`}
             testID={`server-agent-${agent.paneId ?? agent.id}`}
             delay={entranceDelay + index * STAGGER.row}
@@ -296,11 +287,7 @@ function AgentRow({
         {showsPressBackground ? (
           <Animated.View
             pointerEvents="none"
-            style={[
-              styles.tint,
-              { backgroundColor: theme.colors.surfaceRaised },
-              tintStyle,
-            ]}
+            style={[styles.tint, { backgroundColor: theme.colors.surfaceRaised }, tintStyle]}
           />
         ) : null}
         {children}

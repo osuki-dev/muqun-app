@@ -11,11 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -133,9 +129,7 @@ export function ImagePreviewModal({
       if (panAxis.value === AXIS_HORIZONTAL) {
         const travelled = event.translationX;
         const flicked = Math.abs(event.velocityX) > 500;
-        const step = (flicked || Math.abs(travelled) > width * 0.3)
-          ? (travelled < 0 ? 1 : -1)
-          : 0;
+        const step = flicked || Math.abs(travelled) > width * 0.3 ? (travelled < 0 ? 1 : -1) : 0;
         const next = Math.max(0, Math.min(images.length - 1, pageIndex.value + step));
         pageIndex.value = next;
         pagerX.value = withTiming(-next * width, timing('short'));
@@ -158,10 +152,7 @@ export function ImagePreviewModal({
       gestureStartScale.value = scale.value;
     })
     .onUpdate((event) => {
-      scale.value = Math.max(
-        MIN_SCALE,
-        Math.min(MAX_SCALE, gestureStartScale.value * event.scale)
-      );
+      scale.value = Math.max(MIN_SCALE, Math.min(MAX_SCALE, gestureStartScale.value * event.scale));
     })
     .onEnd(() => {
       // Anything near 1x snaps back cleanly, so a stray pinch cannot leave the
@@ -211,11 +202,7 @@ export function ImagePreviewModal({
     transform: [{ translateX: pagerX.value }, { translateY: dragY.value }],
   }));
   const zoomStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: imageX.value },
-      { translateY: imageY.value },
-      { scale: scale.value },
-    ],
+    transform: [{ translateX: imageX.value }, { translateY: imageY.value }, { scale: scale.value }],
   }));
 
   return (
@@ -249,7 +236,13 @@ export function ImagePreviewModal({
             entering={zoomIn('modal')}
             style={[styles.pager, { width: width * images.length }, pagerStyle]}>
             {images.map((image) => (
-              <PreviewPage key={image.id} image={image} width={width} height={height} zoomStyle={zoomStyle} />
+              <PreviewPage
+                key={image.id}
+                image={image}
+                width={width}
+                height={height}
+                zoomStyle={zoomStyle}
+              />
             ))}
           </Animated.View>
         </GestureDetector>

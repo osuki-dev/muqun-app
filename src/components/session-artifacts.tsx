@@ -182,7 +182,6 @@ function matchesFilter(asset: SessionAsset, filter: KindFilter): boolean {
 }
 
 export function SessionArtifacts({
-
   sessionId,
   tabId,
   label,
@@ -340,12 +339,12 @@ export function SessionArtifacts({
     const needle = query.trim().toLowerCase();
     const matching = assets.filter(
       (asset) =>
-        matchesFilter(asset, filter)
+        matchesFilter(asset, filter) &&
         // Path as well as name: the way to find one of five `index.ts` is to
         // type the directory that tells them apart.
-        && (!needle
-          || asset.name.toLowerCase().includes(needle)
-          || asset.path.toLowerCase().includes(needle))
+        (!needle ||
+          asset.name.toLowerCase().includes(needle) ||
+          asset.path.toLowerCase().includes(needle))
     );
     // oxlint-disable-next-line react/refs -- deliberate: the ref carries last render's rows in so unchanged ones keep their objects. Nothing is rendered *from* it -- the rows returned are, and they are recomputed from the props and state in the dependency list.
     const next = groupByDay(matching, loadedAt, previousRowsRef.current);
@@ -536,9 +535,7 @@ export function SessionArtifacts({
                   style={[
                     styles.filterChip,
                     {
-                      backgroundColor: selected
-                        ? theme.colors.primary
-                        : theme.colors.surfaceRaised,
+                      backgroundColor: selected ? theme.colors.primary : theme.colors.surfaceRaised,
                     },
                   ]}>
                   <Text
@@ -672,7 +669,11 @@ const SILENT_EMPTY: FilesRow = {
  * a screen of empty below reads as a listing that failed to draw rather than
  * as an answer.
  */
-const EmptyState = memo(function EmptyState({ row }: { row: Extract<FilesRow, { type: 'empty' }> }) {
+const EmptyState = memo(function EmptyState({
+  row,
+}: {
+  row: Extract<FilesRow, { type: 'empty' }>;
+}) {
   const theme = useThemeTokens();
   if (!row.unavailable && !row.text) return <View style={{ height: row.height }} />;
   return (
@@ -680,8 +681,8 @@ const EmptyState = memo(function EmptyState({ row }: { row: Extract<FilesRow, { 
       <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
         {row.unavailable ? (
           <Trans>
-            This gateway does not serve files yet. Update the Muqun gateway plugin to browse what
-            a session writes.
+            This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a
+            session writes.
           </Trans>
         ) : (
           row.text
@@ -740,10 +741,7 @@ const AssetRow = memo(function AssetRow({
     <PressableScale
       accessibilityLabel={t`Open ${asset.name}`}
       onPress={() => onOpen(asset)}
-      style={[
-        styles.assetRow,
-        { backgroundColor: theme.colors.surfaceRaised },
-      ]}>
+      style={[styles.assetRow, { backgroundColor: theme.colors.surfaceRaised }]}>
       {/* A picture of the file beats a glyph that says "this is a picture". */}
       <View style={[styles.assetIcon, { backgroundColor: theme.colors.background }]}>
         {thumbnail ? (

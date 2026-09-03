@@ -24,72 +24,72 @@ name: web-theme-shots
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Osuki"
-      MODE_LABEL: "LIGHT"
-      SHOT: "osuki-light"
+      THEME_LABEL: 'Osuki'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'osuki-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Osuki"
-      MODE_LABEL: "DARK"
-      SHOT: "osuki-dark"
+      THEME_LABEL: 'Osuki'
+      MODE_LABEL: 'DARK'
+      SHOT: 'osuki-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Catppuccin"
-      MODE_LABEL: "LIGHT"
-      SHOT: "catppuccin-light"
+      THEME_LABEL: 'Catppuccin'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'catppuccin-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Catppuccin"
-      MODE_LABEL: "DARK"
-      SHOT: "catppuccin-dark"
+      THEME_LABEL: 'Catppuccin'
+      MODE_LABEL: 'DARK'
+      SHOT: 'catppuccin-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Rosé Pine"
-      MODE_LABEL: "LIGHT"
-      SHOT: "rose-pine-light"
+      THEME_LABEL: 'Rosé Pine'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'rose-pine-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Rosé Pine"
-      MODE_LABEL: "DARK"
-      SHOT: "rose-pine-dark"
+      THEME_LABEL: 'Rosé Pine'
+      MODE_LABEL: 'DARK'
+      SHOT: 'rose-pine-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Gruvbox"
-      MODE_LABEL: "LIGHT"
-      SHOT: "gruvbox-light"
+      THEME_LABEL: 'Gruvbox'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'gruvbox-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Gruvbox"
-      MODE_LABEL: "DARK"
-      SHOT: "gruvbox-dark"
+      THEME_LABEL: 'Gruvbox'
+      MODE_LABEL: 'DARK'
+      SHOT: 'gruvbox-dark'
 
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Tokyo Night"
-      MODE_LABEL: "LIGHT"
-      SHOT: "tokyo-night-light"
+      THEME_LABEL: 'Tokyo Night'
+      MODE_LABEL: 'LIGHT'
+      SHOT: 'tokyo-night-light'
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Tokyo Night"
-      MODE_LABEL: "DARK"
-      SHOT: "tokyo-night-dark"
+      THEME_LABEL: 'Tokyo Night'
+      MODE_LABEL: 'DARK'
+      SHOT: 'tokyo-night-dark'
 
 # Back to the pack this ships with, in the mode that follows the phone.
 - runFlow:
     file: ../subflows/capture-theme.yaml
     env:
-      THEME_LABEL: "Osuki"
-      MODE_LABEL: "SYSTEM"
-      SHOT: "reset-osuki-system"
+      THEME_LABEL: 'Osuki'
+      MODE_LABEL: 'SYSTEM'
+      SHOT: 'reset-osuki-system'
