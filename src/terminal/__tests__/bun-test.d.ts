@@ -48,8 +48,10 @@ declare module 'bun:test' {
   interface TestFn {
     /**
      * `timeoutMs` overrides bun's 5s default for one test. Declared because a
-     * couple of the invariant suites do seconds of real work and would
-     * otherwise fail on a machine that is merely busy.
+     * couple of the invariant suites do seconds of real work, and because a
+     * suite that has to let a real timer elapse -- a budget the code under test
+     * owns, rather than one the test can shorten -- needs more than the default
+     * allows either way.
      */
     (name: string, fn: () => void | Promise<void>, timeoutMs?: number): void;
     each: EachFn;
@@ -64,4 +66,16 @@ declare module 'bun:test' {
   export function afterEach(fn: () => void | Promise<void>): void;
   export function beforeAll(fn: () => void | Promise<void>): void;
   export function afterAll(fn: () => void | Promise<void>): void;
+
+  export const mock: {
+    /**
+     * Replace a module's exports for every importer in this test file.
+     *
+     * The project's tests are otherwise pure, and this is deliberately the
+     * narrow exception: a store that reaches SecureStore and the network can
+     * only be exercised as the shipped module if those two edges are stubbed.
+     * It must be called before the module under test is imported.
+     */
+    module(specifier: string, factory: () => unknown): void;
+  };
 }
