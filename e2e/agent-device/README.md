@@ -58,6 +58,11 @@ is authored and replayed as native `.ad` scripts here.
    install. A system alert hides the app's accessibility tree, and the script
    deliberately does not tap system UI.
 
+The first-run what's-new card is _not_ a precondition: the flow dismisses it
+when it is there and steps past it when it is not, so the run is the same from
+a clean install as from a warm one. See the first bullet under
+[Re-recording](#re-recording).
+
 ## Run it
 
 ```sh
@@ -139,9 +144,22 @@ what `session save-script` uses as the destination guard, and a duration wait
 or a `wait @ref` is not accepted as one. Never record a real password without
 `--record-as` (see `agent-device help scripting`).
 
-Four edits were made to the published script by hand, and a re-recording will
+Five edits were made to the published script by hand, and a re-recording will
 need them again:
 
+- A `press` that dismisses the what's-new card, right after the first `wait`.
+  On a genuinely fresh install the card is drawn over the top of the home
+  screen and it swallows the tap meant for the header's `SSH` button: the run
+  then timed out at the host-list guard having never left home, and it only
+  ever passed on a device that had dismissed the card on some earlier run --
+  which made this gate green for the wrong reason. `.ad` has no conditional
+  step and the card shows once per changelog per install, so the step is
+  written to be right in both states: the `||` chain presses
+  `Dismiss what's new` when the card is up, and otherwise falls through to the
+  home screen's own tagline, which is a static text and answers a tap with
+  nothing. `Your agents, anywhere.` is a safe fallback precisely here, because
+  the flow already waits for `Try the demo` and both belong to the same empty
+  home state.
 - A `wait "text" "Try the demo"` right after `open`. Without it the first
   `press` fires while the splash screen is still up (the bundle is still
   loading from Metro), and the recorded selector `wait` that used to sit
@@ -182,10 +200,11 @@ otherwise the same script:
 - the first `wait` is given 120 s, because a cold `--relaunch` on an emulator
   spends most of a minute starting the app and pulling the bundle.
 
-Every other step -- the selectors, `Send Enter`, `id="ssh-composer-input"`,
-`type "hello"`, `Run command` and the destination guard -- runs unchanged on
-Android. When you edit one script, edit both: they are deliberately line-for-line
-the same so a diff shows only those three lines.
+Every other step -- the selectors, the what's-new dismissal, `Send Enter`,
+`id="ssh-composer-input"`, `type "hello"`, `Run command` and the destination
+guard -- runs unchanged on Android. When you edit one script, edit both: they
+are deliberately line-for-line the same so a diff shows only those three
+lines.
 
 Run it with the device name your AVD reports to `agent-device devices`:
 
