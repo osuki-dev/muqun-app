@@ -1190,8 +1190,7 @@ export function SkiaTerminal({
       translateY.value = followOutput.value
         ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.value)
         : clampScrollOffset(translateY.value, minimumY, topInsetValue, historyHeight * scale.value);
-    },
-    [contentHeight, historyHeight]
+    }
   );
 
   // The same correction, for the other input the resting position is made of.
@@ -1216,16 +1215,14 @@ export function SkiaTerminal({
       translateY.value = followOutput.value
         ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.value)
         : clampScrollOffset(translateY.value, minimumY, topInsetValue, historyHeight * scale.value);
-    },
-    [contentHeight, historyHeight]
+    }
   );
 
   useAnimatedReaction(
     () => followOutput.value,
     (current, previous) => {
       if (current !== previous) scheduleOnRN(setFollowing, current);
-    },
-    [followOutput]
+    }
   );
 
   // The freeze covers the fling as well as the finger. A frame swap mid-decay is
@@ -1236,8 +1233,7 @@ export function SkiaTerminal({
     () => gesturing.value || coasting.value > 0,
     (current, previous) => {
       if (current !== previous) scheduleOnRN(gate.setActive, current);
-    },
-    [coasting, gesturing]
+    }
   );
 
   // Read out of the frame once, so the worklets below close over two numbers
@@ -1840,8 +1836,7 @@ export function SkiaTerminal({
         TERMINAL_HISTORY_HINT_INTRO_MS,
         withTiming(0, timing('medium'))
       );
-    },
-    [animatedTopInset, canLoadEarlier, contentHeight, scale]
+    }
   );
 
   const pullIndicatorStyle = useAnimatedStyle(() => ({
