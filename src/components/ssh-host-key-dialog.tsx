@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Dialog, Input, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Keyboard, Platform, StyleSheet, View } from 'react-native';
 
 import type { SshKeyboardInteractiveChallenge } from '@/lib/ssh-client';
 import { sanitizeServerText, SERVER_LINE_LIMIT } from '@/lib/ssh-server-text';
@@ -95,16 +95,38 @@ export function SshKeyboardInteractiveDialog({
 }) {
   const { t } = useLingui();
   const [answers, setAnswers] = useState<string[]>([]);
+  const [keyboardUp, setKeyboardUp] = useState(false);
+  useEffect(() => {
+    const shown = Keyboard.addListener('keyboardDidShow', () => setKeyboardUp(true));
+    const hidden = Keyboard.addListener('keyboardDidHide', () => setKeyboardUp(false));
+    return () => {
+      shown.remove();
+      hidden.remove();
+    };
+  }, []);
   const name = sanitizeServerText(challenge.name, 80);
   const instruction = sanitizeServerText(challenge.instruction);
   const prompts = challenge.prompts.map((item) => ({
     label: sanitizeServerText(item.prompt, SERVER_LINE_LIMIT),
     echo: item.echo === true,
   }));
+  // Android draws this dialog behind the soft keyboard, so Continue can end up
+  // out of reach, and the system back gesture -- the obvious way to get the
+  // keyboard out of the way -- closes the dialog instead, which cancels the
+  // sign-in. Two answers: the keyboard's own return key submits, and a close
+  // request while the keyboard is up puts the keyboard away rather than
+  // abandoning the connection.
+  const submit = () => onResolve(prompts.map((_item, index) => answers[index] ?? ''));
   return (
     <Dialog
       visible
-      onClose={() => onResolve(undefined)}
+      onClose={() => {
+        if (keyboardUp) {
+          Keyboard.dismiss();
+          return;
+        }
+        onResolve(undefined);
+      }}
       title={name || t`Sign in`}
       message={instruction || t`The server is asking for more before it lets you in.`}
       actionLayout="row"
@@ -114,7 +136,7 @@ export function SshKeyboardInteractiveDialog({
           id: 'submit',
           label: t`Continue`,
           tone: 'primary',
-          onPress: () => onResolve(prompts.map((_item, index) => answers[index] ?? '')),
+          onPress: submit,
         },
       ]}>
       <View style={styles.prompts}>
@@ -135,6 +157,8 @@ export function SshKeyboardInteractiveDialog({
             autoCorrect={false}
             variant="outline"
             size="compact"
+            returnKeyType={index === prompts.length - 1 ? 'go' : 'next'}
+            onSubmitEditing={index === prompts.length - 1 ? submit : undefined}
           />
         ))}
       </View>
