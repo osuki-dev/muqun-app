@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
   Keyboard as KeyboardIcon,
+  Layers,
   Paperclip,
   PenLine,
   SquareTerminal,
@@ -169,9 +170,18 @@ import {
 import { useAppSettings } from '@/stores/app-settings';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { usePanelPickerStore } from '@/stores/panel-picker';
+import {
+  encodeSessionChoices,
+  resolveSessionId,
+  sameSessionChoices,
+  type SessionChoice,
+  sessionChoices,
+  shouldShowSessionSwitcher,
+} from '@/lib/session-switcher';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import {
   type TerminalKey,
@@ -432,6 +442,29 @@ export function ServerTerminalWorkspace({
   } = useAttachmentUploads();
   const panelPick = usePanelPickerStore((state) => state.pick);
   const clearPanelPick = usePanelPickerStore((state) => state.clearPick);
+  /**
+   * Which of this gateway's sessions the reader is in, and how they said so.
+   *
+   * Almost every gateway offers one and none of this is visible: the header
+   * draws no control (`shouldShowSessionSwitcher`) and the workspace opens the
+   * gateway's first session exactly as it always did. A gateway with two or
+   * more gets a switcher, and three things can name the session it lands on --
+   * a pick made in this visit, a pane deep link from a push notification, and
+   * what the reader was last reading here. They are ranked in that order below.
+   */
+  const [sessions, setSessions] = useState<SessionChoice[]>([]);
+  const [chosenSessionId, setChosenSessionId] = useState<string | null>(null);
+  const sessionPick = useServerSession((state) => state.pick);
+  const clearSessionPick = useServerSession((state) => state.clearPick);
+  const hydrateServerSession = useServerSession((state) => state.hydrate);
+  const rememberedSessionId = useServerSession((state) => state.byServer[serverId]);
+  /**
+   * What the reader wants, before the gateway is consulted about whether it
+   * still exists. A pick made a moment ago outranks a notification's deep link,
+   * which outranks the memory of the last visit -- and `resolveSessionId` turns
+   * any of them, or none of them, into a session this gateway actually has.
+   */
+  const preferredSessionId = chosenSessionId ?? requestedSessionId ?? rememberedSessionId;
   const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
   const [data, setData] = useState<ServerData>(initialData);
@@ -664,6 +697,13 @@ export function ServerTerminalWorkspace({
     }
   }, [isFocused, loading, record?.serverId, routeRecord, selectRecord]);
 
+  // The remembered session, read once per launch. It lands as a preference
+  // rather than as a navigation: the first refresh has usually not answered yet
+  // when it arrives, and when it has, the switch effect below moves the screen.
+  useEffect(() => {
+    void hydrateServerSession();
+  }, [hydrateServerSession]);
+
   // Regaining focus means a sheet just closed -- most likely the panels sheet,
   // where a rename/create/delete may have happened. Pull fresh data so the pane
   // title and strip reflect it at once, without waiting for the slow poll or a
@@ -672,8 +712,20 @@ export function ServerTerminalWorkspace({
     if (isFocused && hasLoadedData) refreshDataRef.current();
   }, [isFocused, hasLoadedData]);
 
-  useEffect(() => {
-    if (selectedServer) return;
+  /**
+   * Everything on this screen that belongs to the terminal being left.
+   *
+   * Written once because it is needed twice. Leaving the server is the obvious
+   * caller; switching to another of the gateway's sessions is the other, and it
+   * is the same journey -- the pane strip, the output, the scrollback, the
+   * staged attachments and the pane the reader was looking at are all facts
+   * about a session, and carrying any of them across would put the last
+   * session's terminal under the new session's name until the first read
+   * landed. What comes back afterwards is `refreshData` and
+   * `reconcileSelection`, exactly as it is for a server switch; there is no
+   * second path.
+   */
+  const resetSessionState = useCallback(() => {
     dataRequestIdRef.current += 1;
     outputRequestIdRef.current += 1;
     partsRequestIdRef.current += 1;
@@ -712,7 +764,18 @@ export function ServerTerminalWorkspace({
     setAttachmentMenuOpen(false);
     setPreviewAttachmentId(null);
     clearAttachments();
-  }, [clearAttachments, selectedServer, serverId]);
+  }, [clearAttachments]);
+
+  useEffect(() => {
+    if (selectedServer) return;
+    resetSessionState();
+    // The session list and the pick made in it belong to the gateway being
+    // left, and unlike everything above they must not survive a session switch
+    // on the same server -- which is why they are cleared here rather than in
+    // `resetSessionState`.
+    setSessions([]);
+    setChosenSessionId(null);
+  }, [resetSessionState, selectedServer, serverId]);
 
   useEffect(() => {
     if (ready) return;
@@ -738,10 +801,13 @@ export function ServerTerminalWorkspace({
           gatewayTransport.loadSessions(),
         ]);
         if (!isCurrentRequest()) return null;
-        const sessionId =
-          sessions.sessions?.find((item) => item.id === requestedSessionId)?.id ??
-          sessions.sessions?.[0]?.id ??
-          'default';
+        // What this gateway offers, and which of it the reader is owed. The
+        // rule for both is `lib/session-switcher`: the gateway's order is kept
+        // as it arrived, and a preference naming a session that has since gone
+        // falls through to the first rather than failing.
+        const choices = sessionChoices(sessions.sessions);
+        const sessionId = resolveSessionId(choices, preferredSessionId);
+        setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
         const [workspaces, tabs, panes, agents] = await Promise.all([
           gatewayTransport.loadWorkspaces(sessionId),
           gatewayTransport.loadTabs(sessionId),
@@ -765,7 +831,7 @@ export function ServerTerminalWorkspace({
         if (isCurrentRequest()) setLoadingData(false);
       }
     },
-    [ready, requestedSessionId, serverId, t]
+    [preferredSessionId, ready, serverId, t]
   );
 
   useEffect(() => {
@@ -840,6 +906,39 @@ export function ServerTerminalWorkspace({
     });
     return () => subscription.remove();
   }, [selectedServer]);
+
+  // The switcher sheet is a route, so it hands its pick back through the store
+  // rather than through navigation params -- the same channel, and for the same
+  // reason, as the panels sheet next door. Taken as a preference here; the
+  // effect below is what actually moves the screen, so a pick naming the
+  // session already open costs nothing.
+  useEffect(() => {
+    if (!sessionPick || sessionPick.serverId !== serverId) return;
+    clearSessionPick();
+    setChosenSessionId(sessionPick.sessionId);
+  }, [clearSessionPick, serverId, sessionPick]);
+
+  /**
+   * Switching session, as a navigation.
+   *
+   * One rule covers every way the answer can change -- a pick from the sheet, a
+   * remembered choice arriving from the keychain after the first refresh
+   * already landed, a deep link -- because all of them are the same question:
+   * is the session the reader is owed the one on screen? When it is not,
+   * everything belonging to the old session goes (`resetSessionState`) and the
+   * refresh path brings the new one back, with `retryNonce` restarting the poll
+   * and the event stream the way Retry and a return from the background do.
+   *
+   * Nothing happens until the gateway has answered once. Before that there is
+   * no session on screen to be wrong, and `refreshData` will resolve the
+   * preference itself on its first pass.
+   */
+  useEffect(() => {
+    if (!hasLoadedData || sessions.length === 0) return;
+    if (resolveSessionId(sessions, preferredSessionId) === data.sessionId) return;
+    resetSessionState();
+    setRetryNonce((value) => value + 1);
+  }, [data.sessionId, hasLoadedData, preferredSessionId, resetSessionState, sessions]);
 
   const selectedWorkspace = useMemo(
     () => data.workspaces.find((item) => item.id === selection.workspaceId),
@@ -2431,6 +2530,33 @@ export function ServerTerminalWorkspace({
     [openMatchingAsset]
   );
 
+  /**
+   * Whether the header carries a session control at all.
+   *
+   * One session is the ordinary gateway and has nothing to switch between, so
+   * the header must look exactly as it did before this existed -- no icon, no
+   * reserved width, no extra row. The rule is a number, so it lives in
+   * `lib/session-switcher` where it is tested, rather than as an `&&` in the
+   * header's JSX where the next change to this row can quietly make it
+   * "sometimes".
+   */
+  const canSwitchSessions = shouldShowSessionSwitcher(sessions);
+
+  function openSessionSwitcher() {
+    Keyboard.dismiss();
+    router.push({
+      pathname: '/sessions',
+      params: {
+        serverId,
+        sessionId: data.sessionId,
+        // The list the header just decided from, rather than a second read the
+        // sheet makes for itself: a sheet sized to its contents that grows a
+        // row while it opens is a worse answer than one that is right at once.
+        sessions: encodeSessionChoices(sessions),
+      },
+    } as Href);
+  }
+
   function openPanelPicker() {
     Keyboard.dismiss();
     router.push({
@@ -2637,16 +2763,31 @@ export function ServerTerminalWorkspace({
         alone, because it appears exactly when there is a simulator on screen to
         close and nothing else the header could mean by it.
       */
-      detailAccessory={
+      detailAccessory={[
+        /*
+          Which of the gateway's terminal backends is on screen, and only when
+          there is more than one of them. A machine that runs a single session
+          -- which is nearly all of them -- gets the header it has always had.
+        */
+        canSwitchSessions ? (
+          <PressableScale
+            key="session"
+            accessibilityLabel={t`Switch session`}
+            onPress={openSessionSwitcher}
+            style={navHeaderButtonStyle}>
+            <Layers size={18} color={theme.colors.text} strokeWidth={2} />
+          </PressableScale>
+        ) : null,
         simfarmSplit.previewWidth > 0 ? (
           <PressableScale
+            key="simulator"
             accessibilityLabel={t`Hide the simulator`}
             onPress={() => toggleSimfarmSplit(serverId)}
             style={navHeaderButtonStyle}>
             <X size={18} color={theme.colors.text} strokeWidth={2} />
           </PressableScale>
-        ) : undefined
-      }>
+        ) : null,
+      ]}>
       {/* The terminal and, beside it, the simulator it is changing.
 
           A row rather than a third column of the drawer's own: the rail belongs

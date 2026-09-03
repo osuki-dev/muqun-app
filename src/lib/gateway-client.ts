@@ -475,6 +475,13 @@ export interface SessionsResponse {
     id: string;
     label: string;
     socket_path: string;
+    /**
+     * Which terminal system this session runs on -- `tmux`, `herdr`, or
+     * whatever a later gateway grows. Omitted for a Herdr session, which is the
+     * default every pre-tmux config is written as, so absent means `herdr`
+     * rather than unknown.
+     */
+    backend?: string;
   }[];
 }
 

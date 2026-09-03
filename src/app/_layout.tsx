@@ -236,6 +236,23 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            {/*
+              The session switcher. Content-sized like the language
+              picker, and for the same reason: it is a short closed list, one
+              row per backend the gateway runs, and a full-height sheet for two
+              rows would be the app implying the question is bigger than it is.
+              It is also only ever reachable from a gateway that has more than
+              one session to offer.
+            */}
+            <Stack.Screen
+              name="sessions"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: 'fitToContents',
+                sheetGrabberVisible: true,
+                contentStyle: { backgroundColor: 'transparent' },
+              }}
+            />
             <Stack.Screen
               name="artifacts"
               options={{

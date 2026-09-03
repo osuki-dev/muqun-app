@@ -415,6 +415,10 @@ msgstr "Fechar a pré-visualização"
 msgid "Close quick actions"
 msgstr "Fechar as ações rápidas"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Close session picker"
+msgstr "Fechar a lista de sessões"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the attachment menu"
 msgstr "Fechar o menu de anexos"
@@ -2240,6 +2244,20 @@ msgstr "Servidor indisponível."
 msgid "Servers"
 msgstr "Servidores"
 
+#: src/components/session-switcher-sheet.tsx
+msgid "Session"
+msgstr "Sessão"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}"
+msgstr "Sessão {0}"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}, current"
+msgstr "Sessão {0}, atual"
+
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "Defina um código no dispositivo antes de usar o bloqueio da app."
@@ -2450,6 +2468,10 @@ msgstr "Deslize para a esquerda ou direita para mudar de espaço de trabalho"
 msgid "Switch between open files"
 msgstr "Alternar entre ficheiros abertos"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch session"
+msgstr "Mudar de sessão"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -2641,6 +2663,10 @@ msgstr "Este gateway ainda não serve ficheiros. Atualize o plugin de gateway do
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "Este Gateway não listou dispositivos emparelhados."
+
+#: src/components/session-switcher-sheet.tsx
+msgid "This gateway runs more than one terminal backend. Pick the one to read."
+msgstr "Este Gateway executa mais do que um backend de terminal. Escolhe qual queres ler."
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
