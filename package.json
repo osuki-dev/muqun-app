@@ -121,7 +121,7 @@
     "react-native-screens": "4.27.0"
   },
   "enriched-markdown": {
-    "enableMath": false
+    "enableMath": true
   },
   "expo": {
     "autolinking": {

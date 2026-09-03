@@ -231,7 +231,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
             selectionHandleColor={colors.accent}
             streamingAnimation={false}
             textBreakStrategy="simple"
-            md4cFlags={{ latexMath: false }}
+            md4cFlags={{ latexMath: true }}
             onLinkPress={({ url }) => {
               if (isSafeExternalLink(url)) void Linking.openURL(url);
             }}

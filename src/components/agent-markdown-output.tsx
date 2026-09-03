@@ -247,7 +247,7 @@ export function AgentMarkdownOutput({
             selectionHandleColor={theme.colors.primary}
             streamingAnimation={false}
             textBreakStrategy="simple"
-            md4cFlags={{ latexMath: false }}
+            md4cFlags={{ latexMath: true }}
             onLayout={() => {
               if (followOutput.current) scrollRef.current?.scrollToEnd({ animated: false });
             }}

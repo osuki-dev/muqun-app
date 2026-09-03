@@ -541,7 +541,10 @@ const DEMO_ASSET_TEXT: Record<string, string> = {
     '# Dark mode — change summary',
     '',
     'Wired a `ColorMode` union through the theme resolver and added a toggle to',
-    'Settings. The system option follows the device.',
+    'Settings. The system option follows the device. Contrast stays above',
+    '$L = \\frac{Y_1 + 0.05}{Y_2 + 0.05} \\geq 4.5$ in both modes:',
+    '',
+    '$$\\int_0^1 x^2 \\, dx = \\tfrac{1}{3}$$',
     '',
     '## Files touched',
     '',
@@ -695,7 +698,9 @@ export function demoPaneParts(paneId: string): Record<string, unknown> {
           markdown: [
             'I looked at how the theme is resolved and wired a toggle into the settings',
             'store. Two files changed, and `resolveMode` now takes the mode instead of',
-            'assuming `light`.',
+            'assuming `light`. Contrast stays above $L = \\frac{Y_1 + 0.05}{Y_2 + 0.05} \\geq 4.5$:',
+            '',
+            '$$\\int_0^1 x^2 \\, dx = \\tfrac{1}{3}$$',
           ].join('\n'),
           range: { start: 2, end: 5 },
           fallback_text:

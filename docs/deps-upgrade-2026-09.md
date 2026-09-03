@@ -73,7 +73,7 @@ builds for iOS and Android. The before/after column comes from `git diff 99b2bca
 | oxfmt                                      | -        | ^0.66.0  | `bun run format` / `format:check`                                             |
 
 Other package.json changes in the same diff: `overrides["react-native-screens"]` 4.26.2 → 4.27.0;
-new `"enriched-markdown": { "enableMath": false }` block; new `expo.install.exclude` list; `patchedDependencies`
+new `"enriched-markdown": { "enableMath": true }` block; new `expo.install.exclude` list; `patchedDependencies`
 key `@osuki-dev/ui@0.0.1` → `@osuki-dev/ui@1.0.0`; `react-native-enriched-markdown` added to `trustedDependencies`;
 `lint` script `expo lint --max-warnings 0` → `oxlint --deny-warnings`, plus new `format` and `format:check` scripts.
 
@@ -431,6 +431,48 @@ false }]` entry was removed from `app.json` plugins and replaced by the package.
   was already unmet on 0.36.5 and stays unmet on 0.37.1; it is a non-view module generated with nitrogen 0.35 and
   compiles, so the existing peer-range warning persists unchanged.
 
+## Supply chain: postinstall downloads
+
+`trustedDependencies` lets two packages run lifecycle scripts, and both fetch binaries at install time. What
+they download, from where, and how it is verified:
+
+- `react-native-enriched-markdown` 1.0.2 (`postinstall.mjs`, consumer mode `--from-npm`), reading this app's
+  `"enriched-markdown"` block from `package.json`:
+  - tree-sitter runtime `v0.26.3` from
+    `https://github.com/tree-sitter/tree-sitter/archive/refs/tags/v0.26.3.tar.gz`, sha256-pinned in the
+    package's `cpp/highlight/grammar-versions.json`, plus the 19 grammar packages (json, html, css, markdown,
+    yaml, …) as npm registry tarballs, pinned by version in the same manifest. Skipped with
+    `"enableCodeHighlight": false`.
+  - RaTeX `v0.1.14` (iOS math), pinned with sha256 in the package's `ratex-version.json`:
+    `https://github.com/erweixin/RaTeX/releases/download/v0.1.14/RaTeX.xcframework.zip` (13.8 MB prebuilt static
+    XCFramework) and `https://github.com/erweixin/RaTeX/archive/refs/tags/v0.1.14.tar.gz` (four Swift sources +
+    the KaTeX fonts + LICENSE). Vendored into `node_modules/react-native-enriched-markdown/ios/vendor/` (47 MB);
+    the podspec turns it into `ENRICHED_MARKDOWN_MATH=1` when `"enableMath"` is not `false` and the framework is
+    present, and fails loud when math is requested but the download is missing. Skipped with `"enableMath": false`.
+  - A failed download is a warning, not an install failure; re-run with
+    `node node_modules/react-native-enriched-markdown/postinstall.mjs`. Node's `fetch` ignores `HTTPS_PROXY`
+    unless `NODE_USE_ENV_PROXY=1` is set, which this machine needed for the GitHub release assets.
+- `@shopify/react-native-skia` 2.11.2: its scripts pull the prebuilt Skia binaries through the
+  `react-native-skia-android` / `react-native-skia-apple-*` 152.0.0 npm packages (already trusted before this
+  upgrade).
+
+Math is enabled: the pre-1.0.2 app.json plugin had `enableMath: false`; it is now `"enriched-markdown": {
+"enableMath": true }` at the maintainers' request.
+
+`enableMath` is only half of it. It is a build-time switch: it decides whether RaTeX is downloaded, vendored
+and linked (`ENRICHED_MARKDOWN_MATH=1`, `RaTeXCoreFonts.bundle` with the 20 KaTeX faces in the app bundle). The
+renderer still has to be told to _parse_ `$..$` / `$$..$$`, and this app passed `md4cFlags={{ latexMath: false }}`
+at all three `EnrichedMarkdownText` sites (`src/components/asset-viewer.tsx`, `src/components/agent-markdown-output.tsx`,
+`src/components/pane-chat-blocks.tsx`) — pre-existing, from the initial commit, not from this upgrade. With the
+native side on and the flag off, a math span rendered as literal `$...$` text on device and the 47 MB of vendored
+RaTeX shipped for nothing. The three sites are now `latexMath: true` (which is also the package default).
+
+The trade-off that flag carries: with `latexMath` on, a bare `$` pair inside agent output is parsed as math
+rather than shown literally — `$PATH ... $HOME` on one line, a `$5 ... $10` price range. md4c only opens a math
+span on a `$` that is not followed by whitespace and closes on one not preceded by whitespace, so the common
+shell cases survive, but this is the reason to keep an eye on agent transcripts; it is the same trade-off the
+package makes by default.
+
 ## Native verification
 
 Debug builds of the upgraded tree, both from `expo prebuild` (no `--clean`), driven with agent-device 0.20.10
@@ -444,11 +486,20 @@ false`), installed NitroModules 0.37.1 and the `@osuki-dev/react-native-ssh` 0.1
 - Home renders (what's-new sheet, SSH / scan / settings header, "Try the demo").
 - "Try the demo" opens the demo workspace; the Skia terminal draws the transcript (coloured diff, box-drawn table,
   ANSI colours, cursor). Scrolling up draws scrollback with the "Latest" pill; scrolling down returns to the tail.
-- Settings → Text size → Large re-creates the font manager (the `getTypeface()` path #4025 fixed) and the
-  terminal redraws at the larger scale, in both the demo workspace and the SSH demo shell.
+- Settings → Text size re-creates the font manager (the `getTypeface()` path #4025 fixed) and the terminal
+  redraws at the new scale; Compact visibly re-flows the demo transcript to more columns and rows with the
+  view still pinned to the tail.
 - SSH → "Open Demo shell" → "Disconnect from Demo shell" / "Connected to demo@demo.invalid" chrome; the demo
   shell terminal draws and "Send Enter" echoes a new prompt line.
-- `bun test src/terminal` (777 tests, 19 files) and `src/terminal/__tests__/picture-cache.test.ts` (11) pass.
+- Math renders. Demo workspace → Open files → `dark-mode.md` draws the inline
+  `L = \frac{Y_1 + 0.05}{Y_2 + 0.05} \geq 4.5` and the display `\int_0^1 x^2\,dx = \tfrac{1}{3}` as typeset
+  KaTeX, and the math node carries the accessibility label `Math: \int_0^1 x^2 \, dx = \tfrac{1}{3}`. The
+  sample lives in `src/lib/demo-gateway.ts` (`DEMO_ASSET_TEXT['dark-mode.md']` and the chat markdown in
+  `demoPaneParts`); it is kept deliberately, as the only math in the offline demo. The `demoPaneParts` copy is
+  not reachable from the demo workspace (the pane view-mode control does not offer chat there) and is
+  unverified on device; the asset-viewer copy exercises the same `EnrichedMarkdownText`.
+- `bun test src/terminal` (777 tests, 19 files) passes, and the 204 golden frame digests in
+  `src/terminal/__tests__/fixtures/snapshot-goldens.json` are byte-identical to `feature/ssh-client`.
 - `agent-device test e2e/agent-device/ssh-demo.ad --device "muqun-deps" --metro-port 8095`: passes (junit: tests=1 failures=0, 15.9s). Two caveats
   about how it was run: the script's own `open` line carries `--metro-port 8093` and wins over the CLI
   `--metro-port` hint, so the suite ran on a byte-identical copy with `8093` → `8095` and the `context` device
@@ -468,13 +519,24 @@ Android (emulator-5554, "Pixel 10 Pro", arm64-v8a only):
 
 Known dev-only noise after the upgrade:
 
-- reanimated 4.6.0 now warns on native when a dependency array is passed to `useAnimatedStyle`,
-  `useAnimatedReaction`, `useHandler`, `useDerivedValue` (`[Reanimated] dependencies should only be used in web
-implementation.`). It is emitted per render, `__DEV__` only, and the arrays are ignored on native. Sources in
-  this tree: react-native-keyboard-controller 1.22.4 (most of the volume: `useHandler` in its hooks,
-  KeyboardAwareScrollView, KeyboardChatScrollView, ScrollViewWithBottomPadding), react-native-gesture-handler
-  3.2.1 (ReanimatedSwipeable, ReanimatedDrawerLayout), and five `useAnimatedReaction` calls in
-  `src/components/skia-terminal.tsx` (lines ~1185-1235 and ~1830). Left as-is pending an upstream
-  keyboard-controller release; the app's five sites can drop their third argument if the noise matters.
+- reanimated 4.6.0 warns on native, per render and `__DEV__` only, whenever a dependency list is passed to
+  `useAnimatedStyle`, `useAnimatedReaction`, `useHandler` or `useDerivedValue` (`[Reanimated] dependencies should
+only be used in web implementation.`); the list is ignored and the hook re-registers from the closures of both
+  worklets plus their hashes. The five `useAnimatedReaction(prepare, react, deps)` calls in
+  `src/components/skia-terminal.tsx` dropped their third argument (no other terminal hook or `src/` file passed
+  one). The remaining volume comes from libraries: react-native-keyboard-controller 1.22.4 (`useHandler` in its
+  hooks, KeyboardAwareScrollView, KeyboardChatScrollView, ScrollViewWithBottomPadding) and
+  react-native-gesture-handler 3.2.1 (ReanimatedSwipeable, ReanimatedDrawerLayout); pending upstream releases.
+  Re-checked after the change: a launch to the home screen still logs 69 of these, and none of them can come
+  from this repo — a scan of every `useAnimatedStyle` / `useAnimatedReaction` / `useHandler` / `useDerivedValue` /
+  `useAnimatedProps` / `useAnimatedScrollHandler` / `useFrameCallback` call in `src/` finds no dependency list
+  left (the only two-argument call remaining is `useFrameCallback(cb, false)`, whose second argument is
+  `autostart`). Runtime attribution of the library warnings was attempted by patching the reanimated logger in
+  `node_modules` to print a stack; Metro did not pick the patched module up even after `--clear`, so the
+  attribution above rests on the source scan of the two libraries, which do forward a `deps` argument.
+- The reactions the arrays were dropped from still fire: scrolling the demo terminal up shows scrollback and
+  raises the "Latest" pill, pressing it returns to the tail and hides the pill, opening the composer keyboard
+  (workspace and SSH demo shell) lifts the terminal by the keyboard offset, and a text-size change re-lays the
+  grid out with the view still resting at the bottom.
 - Metro warns that `@formatjs/intl-*/polyfill-force` is not in those packages' `exports` (pre-existing; the
   @formatjs packages did not change).

@@ -343,7 +343,7 @@ function AssetBody({
             selectionHandleColor={theme.colors.primary}
             streamingAnimation={false}
             textBreakStrategy="simple"
-            md4cFlags={{ latexMath: false }}
+            md4cFlags={{ latexMath: true }}
             onLinkPress={({ url }) => {
               if (isSafeExternalLink(url)) void Linking.openURL(url);
             }}
