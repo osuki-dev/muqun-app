@@ -386,14 +386,14 @@ export function highlightDiff(text: string): CodeLine[] {
     // Header markers are checked before the single-character ones, because
     // `---` and `+++` also start with `-` and `+`.
     if (
-      line.startsWith('---')
-      || line.startsWith('+++')
-      || line.startsWith('diff ')
-      || line.startsWith('index ')
-      || line.startsWith('new file')
-      || line.startsWith('deleted file')
-      || line.startsWith('similarity index')
-      || line.startsWith('rename ')
+      line.startsWith('---') ||
+      line.startsWith('+++') ||
+      line.startsWith('diff ') ||
+      line.startsWith('index ') ||
+      line.startsWith('new file') ||
+      line.startsWith('deleted file') ||
+      line.startsWith('similarity index') ||
+      line.startsWith('rename ')
     ) {
       return { spans, diff: 'meta' };
     }

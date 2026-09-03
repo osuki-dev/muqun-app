@@ -34,10 +34,7 @@ export const DEFAULT_TERMINAL_THEME: TerminalTheme =
  * carries the sixteen colours its own project publishes, so this only has to
  * pick a side.
  */
-export function createTerminalTheme(
-  pack: ThemePack,
-  mode: ResolvedThemeMode
-): TerminalTheme {
+export function createTerminalTheme(pack: ThemePack, mode: ResolvedThemeMode): TerminalTheme {
   return themeVariant(pack, mode === 'dark' ? 'dark' : 'light').terminal;
 }
 
@@ -95,7 +92,11 @@ export function terminalIndexedColor(
   }
   const value = safeIndex - 16;
   const channel = (part: number) => (part === 0 ? 0 : 55 + part * 40);
-  return rgb(channel(Math.floor(value / 36)), channel(Math.floor((value % 36) / 6)), channel(value % 6));
+  return rgb(
+    channel(Math.floor(value / 36)),
+    channel(Math.floor((value % 36) / 6)),
+    channel(value % 6)
+  );
 }
 
 export function terminalRgbColor(red: number, green: number, blue: number): string {

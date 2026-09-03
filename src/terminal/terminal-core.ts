@@ -259,7 +259,8 @@ export class TerminalEmulator {
       const open = end === length;
       const held = open && isHighSurrogate(text.charCodeAt(end - 1));
       const run = text.slice(index, held ? end - 1 : end);
-      const graphemes = (index === 0 && joinable ? this.joinPrevious(run) : null) ?? splitGraphemes(run);
+      const graphemes =
+        (index === 0 && joinable ? this.joinPrevious(run) : null) ?? splitGraphemes(run);
       for (const grapheme of graphemes) this.putGrapheme(grapheme);
       if (held) {
         this.pending = text.slice(end - 1);
@@ -431,7 +432,10 @@ export class TerminalEmulator {
       this.active.cursorX = Math.max(0, this.active.cursorX - 1);
       this.pendingWrap = false;
     } else if (code === 0x09) {
-      this.active.cursorX = Math.min(this.columns - 1, (Math.floor(this.active.cursorX / 8) + 1) * 8);
+      this.active.cursorX = Math.min(
+        this.columns - 1,
+        (Math.floor(this.active.cursorX / 8) + 1) * 8
+      );
       this.pendingWrap = false;
     } else if (code === 0x0a || code === 0x0b || code === 0x0c) {
       if (this.convertEol) this.active.cursorX = 0;
@@ -485,7 +489,8 @@ export class TerminalEmulator {
 
     if (final === 'A') buffer.cursorY = Math.max(buffer.scrollTop, buffer.cursorY - first);
     else if (final === 'B') buffer.cursorY = Math.min(buffer.scrollBottom, buffer.cursorY + first);
-    else if (final === 'C' || final === 'a') buffer.cursorX = Math.min(this.columns - 1, buffer.cursorX + first);
+    else if (final === 'C' || final === 'a')
+      buffer.cursorX = Math.min(this.columns - 1, buffer.cursorX + first);
     else if (final === 'D') buffer.cursorX = Math.max(0, buffer.cursorX - first);
     else if (final === 'E') {
       buffer.cursorY = Math.min(buffer.scrollBottom, buffer.cursorY + first);
@@ -493,7 +498,8 @@ export class TerminalEmulator {
     } else if (final === 'F') {
       buffer.cursorY = Math.max(buffer.scrollTop, buffer.cursorY - first);
       buffer.cursorX = 0;
-    } else if (final === 'G' || final === '`') buffer.cursorX = clamp(first - 1, 0, this.columns - 1);
+    } else if (final === 'G' || final === '`')
+      buffer.cursorX = clamp(first - 1, 0, this.columns - 1);
     else if (final === 'd') buffer.cursorY = clamp(first - 1, 0, this.rows - 1);
     else if (final === 'H' || final === 'f') {
       buffer.cursorY = clamp((values[0] || 1) - 1, 0, this.rows - 1);
@@ -633,7 +639,8 @@ export class TerminalEmulator {
     }
     if (mode === 0) {
       this.eraseRange(buffer.cursorY, buffer.cursorX, this.columns - 1);
-      for (let row = buffer.cursorY + 1; row < this.rows; row += 1) grid.blankScreenRow(row, this.style);
+      for (let row = buffer.cursorY + 1; row < this.rows; row += 1)
+        grid.blankScreenRow(row, this.style);
     } else if (mode === 1) {
       for (let row = 0; row < buffer.cursorY; row += 1) grid.blankScreenRow(row, this.style);
       this.eraseRange(buffer.cursorY, 0, buffer.cursorX);
@@ -649,7 +656,11 @@ export class TerminalEmulator {
 
   private eraseCells(amount: number): void {
     const buffer = this.active;
-    this.eraseRange(buffer.cursorY, buffer.cursorX, Math.min(this.columns - 1, buffer.cursorX + amount - 1));
+    this.eraseRange(
+      buffer.cursorY,
+      buffer.cursorX,
+      Math.min(this.columns - 1, buffer.cursorX + amount - 1)
+    );
   }
 
   private eraseRange(row: number, start: number, end: number): void {
@@ -1036,7 +1047,13 @@ function skipSgrSequence(input: string, index: number): number {
 
 export function terminalFrameText(frame: TerminalFrame): string {
   return frame.lines
-    .map((line) => line.cells.filter((cell) => cell.width > 0).map((cell) => cell.text).join('').trimEnd())
+    .map((line) =>
+      line.cells
+        .filter((cell) => cell.width > 0)
+        .map((cell) => cell.text)
+        .join('')
+        .trimEnd()
+    )
     .join('\n');
 }
 
@@ -1062,12 +1079,50 @@ const TERMINAL_FILE_PATH_PATTERN = /(^|[\s"'`([{<>|=,:])(~?(?:\/[\w.~@+-]+)+)/gu
  * and archives are left out on purpose.
  */
 const PREVIEWABLE_FILE_EXTENSIONS = new Set([
-  'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'heic', 'svg',
-  'md', 'markdown', 'txt', 'log', 'csv', 'tsv',
-  'json', 'jsonl', 'yaml', 'yml', 'toml', 'xml', 'html', 'css',
-  'diff', 'patch', 'pdf',
-  'ts', 'tsx', 'js', 'jsx', 'mjs', 'cjs', 'py', 'rs', 'go', 'rb', 'java', 'kt',
-  'swift', 'c', 'h', 'cpp', 'hpp', 'sh', 'sql',
+  'png',
+  'jpg',
+  'jpeg',
+  'gif',
+  'webp',
+  'bmp',
+  'heic',
+  'svg',
+  'md',
+  'markdown',
+  'txt',
+  'log',
+  'csv',
+  'tsv',
+  'json',
+  'jsonl',
+  'yaml',
+  'yml',
+  'toml',
+  'xml',
+  'html',
+  'css',
+  'diff',
+  'patch',
+  'pdf',
+  'ts',
+  'tsx',
+  'js',
+  'jsx',
+  'mjs',
+  'cjs',
+  'py',
+  'rs',
+  'go',
+  'rb',
+  'java',
+  'kt',
+  'swift',
+  'c',
+  'h',
+  'cpp',
+  'hpp',
+  'sh',
+  'sql',
 ]);
 
 function isPreviewableFilePath(path: string): boolean {

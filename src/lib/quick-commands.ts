@@ -29,7 +29,13 @@ const defaults: QuickCommand[] = [
   { id: 'terminal-escape', label: 'Escape', value: 'esc', mode: 'terminal', kind: 'keys' },
   // Clears the current input line -- what you just typed into the pane but have
   // not run yet. Ctrl+U is the readline erase-to-start binding.
-  { id: 'terminal-clear-line', label: 'Clear line', value: 'ctrl+u', mode: 'terminal', kind: 'keys' },
+  {
+    id: 'terminal-clear-line',
+    label: 'Clear line',
+    value: 'ctrl+u',
+    mode: 'terminal',
+    kind: 'keys',
+  },
   {
     id: 'agent-summary',
     label: 'Summarize progress',
@@ -104,7 +110,10 @@ export async function addQuickCommand(
   return loadQuickCommands(mode);
 }
 
-export async function removeQuickCommand(id: string, mode: QuickCommandMode): Promise<QuickCommand[]> {
+export async function removeQuickCommand(
+  id: string,
+  mode: QuickCommandMode
+): Promise<QuickCommand[]> {
   const isDefault = defaults.some((command) => command.id === id);
   if (isDefault) {
     // A built-in isn't deleted (it lives in the bundle) -- it's remembered as

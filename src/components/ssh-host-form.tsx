@@ -32,7 +32,13 @@ import { useSshHostsStore } from '@/stores/ssh-hosts';
  * Ed25519 key of its own, showing the public half to paste into the server's
  * `authorized_keys`.
  */
-export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; onDone: () => void }) {
+export function SshHostForm({
+  record,
+  onDone,
+}: {
+  record: SshHostRecord | null;
+  onDone: () => void;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const { showToast } = useToast();
@@ -89,7 +95,9 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
         inspectSshPrivateKey(value.privateKey, value.passphrase || undefined);
       } catch (error) {
         const failure = describeSshFailure(error);
-        setErrors({ privateKey: t`The key could not be read (${failure.code}). Check the key and its passphrase.` });
+        setErrors({
+          privateKey: t`The key could not be read (${failure.code}). Check the key and its passphrase.`,
+        });
         return;
       }
       credential = value.passphrase
@@ -97,7 +105,11 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
         : { type: 'privateKey', privateKey: value.privateKey };
     } else if (editing && record.auth.type !== value.authType) {
       // Switched the method without supplying the new secret.
-      setErrors(value.authType === 'password' ? { password: describe('required') } : { privateKey: describe('required') });
+      setErrors(
+        value.authType === 'password'
+          ? { password: describe('required') }
+          : { privateKey: describe('required') }
+      );
       return;
     }
 
@@ -115,7 +127,10 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
       showToast({
         variant: 'danger',
         title: t`Could not save host`,
-        message: error instanceof Error ? error.message : t`Its details could not be written to secure storage.`,
+        message:
+          error instanceof Error
+            ? error.message
+            : t`Its details could not be written to secure storage.`,
       });
     }
   }
@@ -164,7 +179,10 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
       showToast({
         variant: 'danger',
         title: t`Could not remove host`,
-        message: error instanceof Error ? error.message : t`Its details could not be removed from secure storage.`,
+        message:
+          error instanceof Error
+            ? error.message
+            : t`Its details could not be removed from secure storage.`,
       });
     }
   }
@@ -236,7 +254,11 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
           onChange={(value) =>
             patch({
               authType:
-                value === 'privateKey' ? 'privateKey' : value === 'keyboardInteractive' ? 'keyboardInteractive' : 'password',
+                value === 'privateKey'
+                  ? 'privateKey'
+                  : value === 'keyboardInteractive'
+                    ? 'keyboardInteractive'
+                    : 'password',
             })
           }
           options={[
@@ -304,8 +326,8 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
       ) : draft.authType === 'keyboardInteractive' ? (
         <Text variant="caption" color={theme.colors.textMuted}>
           <Trans>
-            The server asks its own questions when you connect, a password or a one-time code, and nothing is
-            stored on this device.
+            The server asks its own questions when you connect, a password or a one-time code, and
+            nothing is stored on this device.
           </Trans>
         </Text>
       ) : (
@@ -326,7 +348,9 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
       )}
 
       <Text variant="caption" color={theme.colors.textMuted}>
-        <Trans>Passwords and keys are sealed in the keychain on this device and never leave it.</Trans>
+        <Trans>
+          Passwords and keys are sealed in the keychain on this device and never leave it.
+        </Trans>
       </Text>
 
       <View style={styles.buttons}>
@@ -356,14 +380,18 @@ export function SshHostForm({ record, onDone }: { record: SshHostRecord | null; 
       {record ? (
         <PressableScale
           accessibilityRole="button"
-          accessibilityLabel={removeArmed ? t`Confirm removing ${record.label}` : t`Remove ${record.label}`}
+          accessibilityLabel={
+            removeArmed ? t`Confirm removing ${record.label}` : t`Remove ${record.label}`
+          }
           disabled={saving}
           onPress={() => void remove()}
           style={[
             styles.button,
             { backgroundColor: removeArmed ? theme.colors.danger : theme.colors.dangerSubtle },
           ]}>
-          <Text variant="caption" color={removeArmed ? theme.colors.onPrimary : theme.colors.danger}>
+          <Text
+            variant="caption"
+            color={removeArmed ? theme.colors.onPrimary : theme.colors.danger}>
             {removeArmed ? t`Tap again to remove` : t`Remove host`}
           </Text>
         </PressableScale>

@@ -30,13 +30,7 @@ import { paneAddressText, type PaneAddress } from '@/lib/pane-address';
  * address appears and when it goes back to `null` is the hook behind whichever
  * gesture fired.
  */
-export function SwitchIndicator({
-  address,
-  testID,
-}: {
-  address: PaneAddress;
-  testID?: string;
-}) {
+export function SwitchIndicator({ address, testID }: { address: PaneAddress; testID?: string }) {
   const theme = useThemeTokens();
   return (
     <Animated.View

@@ -280,7 +280,12 @@ export class TerminalGrid {
    * the emulator's combining-mark handling. Returns the column after the run,
    * or -1 when it would not fit the row.
    */
-  putGraphemeRun(row: number, col: number, graphemes: readonly string[], style: TerminalStyle): number {
+  putGraphemeRun(
+    row: number,
+    col: number,
+    graphemes: readonly string[],
+    style: TerminalStyle
+  ): number {
     const attrs = this.encodeAttrs(style);
     const fg = this.encodeColor(style.foreground);
     const bg = this.encodeColor(style.background);
@@ -292,13 +297,19 @@ export class TerminalGrid {
       const width = graphemeWidth(grapheme);
       if (width === 0) {
         let probe = column - 1;
-        while (probe >= 0 && ((words[rowBase + probe * WORDS_PER_CELL] & WIDTH_MASK) >>> WIDTH_SHIFT) === 0) {
+        while (
+          probe >= 0 &&
+          (words[rowBase + probe * WORDS_PER_CELL] & WIDTH_MASK) >>> WIDTH_SHIFT === 0
+        ) {
           probe -= 1;
         }
         if (probe < 0) continue;
         const base = rowBase + probe * WORDS_PER_CELL;
         const word0 = words[base];
-        words[base] = this.encodeWord0(this.decodeText(word0) + grapheme, (word0 & WIDTH_MASK) >>> WIDTH_SHIFT);
+        words[base] = this.encodeWord0(
+          this.decodeText(word0) + grapheme,
+          (word0 & WIDTH_MASK) >>> WIDTH_SHIFT
+        );
         continue;
       }
       if (column + width > this.columns) return -1;
@@ -346,7 +357,12 @@ export class TerminalGrid {
 
   blankScreenRow(row: number, style: TerminalStyle): void {
     const slot = this.screenSlot(row);
-    this.fillSlot(slot, this.encodeAttrs(style), this.encodeColor(style.foreground), this.encodeColor(style.background));
+    this.fillSlot(
+      slot,
+      this.encodeAttrs(style),
+      this.encodeColor(style.foreground),
+      this.encodeColor(style.background)
+    );
     this.markDirty(row, slot);
   }
 
@@ -388,7 +404,13 @@ export class TerminalGrid {
    * instead of discarded. The full-screen case is a head rotation; a sub-range
    * shifts slot ids.
    */
-  scrollUp(count: number, top: number, bottom: number, retain: boolean, style: TerminalStyle): void {
+  scrollUp(
+    count: number,
+    top: number,
+    bottom: number,
+    retain: boolean,
+    style: TerminalStyle
+  ): void {
     const times = Math.min(Math.max(1, count), bottom - top + 1);
     const fullScreen = top === 0 && bottom === this.rows - 1;
     for (let index = 0; index < times; index += 1) {
@@ -398,10 +420,16 @@ export class TerminalGrid {
         this.screenHead = (this.screenHead + 1) % this.rows;
         this.screenRing[(this.screenHead + this.rows - 1) % this.rows] = fill;
       } else {
-        for (let row = top; row < bottom; row += 1) this.setScreenSlot(row, this.screenSlot(row + 1));
+        for (let row = top; row < bottom; row += 1)
+          this.setScreenSlot(row, this.screenSlot(row + 1));
         this.setScreenSlot(bottom, fill);
       }
-      this.fillSlot(fill, this.encodeAttrs(style), this.encodeColor(style.foreground), this.encodeColor(style.background));
+      this.fillSlot(
+        fill,
+        this.encodeAttrs(style),
+        this.encodeColor(style.foreground),
+        this.encodeColor(style.background)
+      );
       this.dirtyScreenRange(top, bottom);
     }
   }
@@ -418,10 +446,16 @@ export class TerminalGrid {
         this.screenHead = (this.screenHead - 1 + this.rows) % this.rows;
         this.screenRing[this.screenHead] = removed;
       } else {
-        for (let row = bottom; row > top; row -= 1) this.setScreenSlot(row, this.screenSlot(row - 1));
+        for (let row = bottom; row > top; row -= 1)
+          this.setScreenSlot(row, this.screenSlot(row - 1));
         this.setScreenSlot(top, removed);
       }
-      this.fillSlot(removed, this.encodeAttrs(style), this.encodeColor(style.foreground), this.encodeColor(style.background));
+      this.fillSlot(
+        removed,
+        this.encodeAttrs(style),
+        this.encodeColor(style.foreground),
+        this.encodeColor(style.background)
+      );
       this.dirtyScreenRange(top, bottom);
     }
   }
@@ -499,7 +533,7 @@ export class TerminalGrid {
     if (target.columns < this.columns) {
       // The cut may fall between a wide glyph and its continuation cell.
       const last = to + (target.columns - 1) * WORDS_PER_CELL;
-      if (((target.words[last] & WIDTH_MASK) >>> WIDTH_SHIFT) === 2) target.words[last] = SPACE_WORD0;
+      if ((target.words[last] & WIDTH_MASK) >>> WIDTH_SHIFT === 2) target.words[last] = SPACE_WORD0;
     }
     target.lineCache[targetSlot] = null;
   }
@@ -632,7 +666,11 @@ export class TerminalGrid {
     }
     // Length is mixed in last so a row that only lost trailing content -- same
     // words, fewer of them -- cannot keep its old signature.
-    return { cells, runs, signature: Math.imul(signature ^ (lastColumn + 1), SIGNATURE_PRIME) >>> 0 };
+    return {
+      cells,
+      runs,
+      signature: Math.imul(signature ^ (lastColumn + 1), SIGNATURE_PRIME) >>> 0,
+    };
   }
 
   // --- codecs ------------------------------------------------------------
@@ -692,7 +730,8 @@ export class TerminalGrid {
     const match = RGB_PATTERN.exec(color);
     let code: number;
     if (match) {
-      const rgb = ((Number(match[1]) << 16) | (Number(match[2]) << 8) | Number(match[3])) & RGB_MASK;
+      const rgb =
+        ((Number(match[1]) << 16) | (Number(match[2]) << 8) | Number(match[3])) & RGB_MASK;
       code = (COLOR_TRUECOLOR | rgb) >>> 0;
     } else {
       code = colorTable.length;

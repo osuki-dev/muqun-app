@@ -33,26 +33,26 @@ name: store-shot-actions
     timeout: 3000
 # Immersive mode teaches itself once per app data wipe, and every run wipes.
 - tapOn:
-    text: "Got it"
+    text: 'Got it'
     optional: true
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
 
 # ── Language, set inside the app, in English ──────────────────────────────
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "SERVERS"
+    visible: 'SERVERS'
     timeout: 8000
 - runFlow: ../subflows/dismiss-logbox.yaml
 - scrollUntilVisible:
     element:
-      text: "Language, System"
+      text: 'Language, System'
     direction: DOWN
-- tapOn: "Language, System"
+- tapOn: 'Language, System'
 - extendedWaitUntil:
-    visible: "${LANG_NAME}"
+    visible: '${LANG_NAME}'
     timeout: 8000
-- tapOn: "${LANG_NAME}"
+- tapOn: '${LANG_NAME}'
 - waitForAnimationToEnd:
     timeout: 2500
 - runFlow: ../subflows/dismiss-logbox.yaml
@@ -69,7 +69,7 @@ name: store-shot-actions
     timeout: 2000
 - runFlow:
     when:
-      notVisible: "${DEMO_LABEL}"
+      notVisible: '${DEMO_LABEL}'
     commands:
       - back
       - waitForAnimationToEnd:
@@ -78,7 +78,7 @@ name: store-shot-actions
 # the language is the one thing this run must not lose.
 - runFlow:
     when:
-      notVisible: "${DEMO_LABEL}"
+      notVisible: '${DEMO_LABEL}'
     commands:
       - launchApp
       - waitForAnimationToEnd:
@@ -87,17 +87,17 @@ name: store-shot-actions
 # ── The demo session, and the sheet ───────────────────────────────────────
 - runFlow: ../subflows/dismiss-logbox.yaml
 - extendedWaitUntil:
-    visible: "${DEMO_LABEL}"
+    visible: '${DEMO_LABEL}'
     timeout: 10000
-- tapOn: "${DEMO_LABEL}"
+- tapOn: '${DEMO_LABEL}'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000
 - runFlow: ../subflows/dismiss-logbox.yaml
 - runFlow: ../subflows/dismiss-away-digest.yaml
-- tapOn: "${ACTIONS_LABEL}"
+- tapOn: '${ACTIONS_LABEL}'
 - waitForAnimationToEnd:
     timeout: 3500
 - runFlow: ../subflows/dismiss-logbox.yaml

@@ -209,9 +209,11 @@ export function encodeTerminalKey(
   if (aliased) return aliased;
 
   if (mods.size === 0) {
-    if (base in CURSOR_FINALS) return cursorKey(CURSOR_FINALS[base], encoding.applicationCursorKeys === true);
+    if (base in CURSOR_FINALS)
+      return cursorKey(CURSOR_FINALS[base], encoding.applicationCursorKeys === true);
     if (base in TILDE_CODES) return tildeKey(TILDE_CODES[base]);
-    if (base in SS3_FUNCTION_FINALS) return bytes(ESC, 0x4f, SS3_FUNCTION_FINALS[base].charCodeAt(0));
+    if (base in SS3_FUNCTION_FINALS)
+      return bytes(ESC, 0x4f, SS3_FUNCTION_FINALS[base].charCodeAt(0));
     // A single printable character used as a key name is that character.
     if (base.length === 1 && base.charCodeAt(0) >= 0x20 && base.charCodeAt(0) < 0x7f) {
       return bytes(base.charCodeAt(0));
@@ -223,7 +225,8 @@ export function encodeTerminalKey(
   // every mode: xterm drops application mode for a modified arrow.
   if (base in CURSOR_FINALS) return modifiedCursorKey(CURSOR_FINALS[base], modifierParameter(mods));
   if (base in TILDE_CODES) return tildeKey(TILDE_CODES[base], modifierParameter(mods));
-  if (base in SS3_FUNCTION_FINALS) return modifiedCursorKey(SS3_FUNCTION_FINALS[base], modifierParameter(mods));
+  if (base in SS3_FUNCTION_FINALS)
+    return modifiedCursorKey(SS3_FUNCTION_FINALS[base], modifierParameter(mods));
 
   // Ctrl wins over Shift: `ctrl+shift+w` and `ctrl+w` are the same byte.
   if (mods.has('ctrl')) {

@@ -50,11 +50,11 @@ export class DemoShellTranscript {
       case 0x0c: // ctrl+l
         return { out: `\x1b[2J\x1b[H${DEMO_SSH_PROMPT}${this.line}`, exited: false };
       case 0x15: // ctrl+u
-        {
-          const erase = '\b \b'.repeat(this.line.length);
-          this.line = '';
-          return { out: erase, exited: false };
-        }
+      {
+        const erase = '\b \b'.repeat(this.line.length);
+        this.line = '';
+        return { out: erase, exited: false };
+      }
       default:
         if (byte >= 0x20 && byte !== 0x7f) {
           const char = String.fromCharCode(byte);

@@ -18,7 +18,13 @@ describe('OSC — operating system commands', () => {
   test('OSC 2 sets the window title and is not printed', () => {
     const frame = parseTerminalSnapshot(`${ESC}]2;Session title${'\x07'}body`);
     expect(frame.title).toBe('Session title');
-    expect(frame.lines[0] && frame.lines[0].cells.map((c) => c.text).join('').trimEnd()).toBe('body');
+    expect(
+      frame.lines[0] &&
+        frame.lines[0].cells
+          .map((c) => c.text)
+          .join('')
+          .trimEnd()
+    ).toBe('body');
   });
 
   test('OSC 0 also sets the title', () => {
@@ -29,11 +35,18 @@ describe('OSC — operating system commands', () => {
   test('OSC 2 terminated by ST (ESC \\) instead of BEL', () => {
     const frame = parseTerminalSnapshot(`${ESC}]2;ST title${ESC}\\body`);
     expect(frame.title).toBe('ST title');
-    expect(frame.lines[0].cells.map((c) => c.text).join('').trimEnd()).toBe('body');
+    expect(
+      frame.lines[0].cells
+        .map((c) => c.text)
+        .join('')
+        .trimEnd()
+    ).toBe('body');
   });
 
   test('OSC 8 hyperlink is exposed through terminalFrameLinks', () => {
-    const frame = parseTerminalSnapshot(`${ESC}]8;;https://example.com${'\x07'}link${ESC}]8;;${'\x07'}`);
+    const frame = parseTerminalSnapshot(
+      `${ESC}]8;;https://example.com${'\x07'}link${ESC}]8;;${'\x07'}`
+    );
     const links = terminalFrameLinks(frame);
     expect(links).toHaveLength(1);
     expect(links[0]).toMatchObject({
@@ -79,11 +92,7 @@ describe('OSC — operating system commands', () => {
     });
 
     test('a BEL-terminated screen is measured the same way', () => {
-      const rows = [
-        `${ESC}]8;;./one.md${'\x07'}one${ESC}]8;;${'\x07'}`,
-        'plain',
-        'last',
-      ];
+      const rows = [`${ESC}]8;;./one.md${'\x07'}one${ESC}]8;;${'\x07'}`, 'plain', 'last'];
       expect(parseTerminalSnapshot(rows.join('\n')).lines).toHaveLength(3);
     });
 
@@ -119,7 +128,12 @@ describe('malformed / unsupported sequence recovery', () => {
 
   test('a DCS string and a charset-designation escape are consumed, not printed', () => {
     const frame = parseTerminalSnapshot(`${ESC}Pignored${ESC}\\${ESC}(Bvisible`);
-    expect(frame.lines[0].cells.map((c) => c.text).join('').trimEnd()).toBe('visible');
+    expect(
+      frame.lines[0].cells
+        .map((c) => c.text)
+        .join('')
+        .trimEnd()
+    ).toBe('visible');
   });
 
   // `write` holds an unfinished sequence for the next call (the SSH shell feeds
@@ -158,7 +172,12 @@ describe('MAX_EMULATED_ROWS limit', () => {
     const input = Array.from({ length: 2100 }, (_, index) => `ln${index}`).join('\n');
     const frame = parseTerminalSnapshot(input);
     const text = frame.lines
-      .map((line) => line.cells.map((c) => c.text).join('').trimEnd())
+      .map((line) =>
+        line.cells
+          .map((c) => c.text)
+          .join('')
+          .trimEnd()
+      )
       .join('\n');
     // The emulator itself caps rows at 2000 (see the TerminalEmulator
     // constructor), which sits just under MAX_EMULATED_ROWS.

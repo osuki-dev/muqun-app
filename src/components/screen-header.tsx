@@ -53,8 +53,7 @@ export function ScreenHeader({
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const handleBack =
-    onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')));
+  const handleBack = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')));
 
   return (
     <View style={[navHeaderBarStyle, { paddingTop: insets.top + NAV_HEADER_TOP_GAP }]}>

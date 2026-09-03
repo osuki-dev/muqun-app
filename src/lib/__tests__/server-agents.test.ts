@@ -172,7 +172,11 @@ describe('mirroredServerPanes', () => {
 
   test('every pane gets a row, not only the ones with an agent', () => {
     const agents = [entity('agent-1', 'Claude Code', { raw: { pane_id: 'pane-1' } })];
-    const panes = [entity('pane-1', 'Claude Code'), entity('pane-2', 'nvim'), entity('pane-3', 'bash')];
+    const panes = [
+      entity('pane-1', 'Claude Code'),
+      entity('pane-2', 'nvim'),
+      entity('pane-3', 'bash'),
+    ];
 
     expect(mirroredServerPanes(panes, agents).map((row) => row.id)).toEqual([
       'agent-1',
@@ -229,7 +233,10 @@ describe('sameServerAgents', () => {
 
   test('an agent appearing or leaving is a change', () => {
     const one = snapshot('s1', [{ id: 'a', name: 'claude' }]);
-    const two = snapshot('s1', [{ id: 'a', name: 'claude' }, { id: 'b', name: 'codex' }]);
+    const two = snapshot('s1', [
+      { id: 'a', name: 'claude' },
+      { id: 'b', name: 'codex' },
+    ]);
     expect(sameServerAgents(one, two)).toBe(false);
     expect(sameServerAgents(two, one)).toBe(false);
   });
@@ -272,7 +279,12 @@ describe('freshness', () => {
 // see `mirroredServerPanes`'s module doc for why the write side stopped
 // branching on the setting.
 describe('visibleServerAgents', () => {
-  const withAgent = { id: 'agent-1', name: 'Claude Code', status: 'working', hasAgent: true } as const;
+  const withAgent = {
+    id: 'agent-1',
+    name: 'Claude Code',
+    status: 'working',
+    hasAgent: true,
+  } as const;
   const plainPane = { id: 'pane-2', name: 'zsh', status: 'unknown', hasAgent: false } as const;
 
   test('"all" hands every row back untouched', () => {
@@ -302,7 +314,10 @@ describe('keepMirroredServers', () => {
       s1: snapshot('s1', []),
       s2: snapshot('s2', []),
     };
-    expect(Object.keys(keepMirroredServers(index, ['s1', 's2', 's3'])).sort()).toEqual(['s1', 's2']);
+    expect(Object.keys(keepMirroredServers(index, ['s1', 's2', 's3'])).sort()).toEqual([
+      's1',
+      's2',
+    ]);
   });
 
   test('caps the mirror at the most recently seen servers', () => {
@@ -388,7 +403,11 @@ describe('the pane an agent is running in', () => {
 
   test('a snapshot written before this field existed still reads back', () => {
     const stored = JSON.stringify({
-      s1: { serverId: 's1', checkedAtMs: NOW, agents: [{ id: 'a', name: 'claude', status: 'idle' }] },
+      s1: {
+        serverId: 's1',
+        checkedAtMs: NOW,
+        agents: [{ id: 'a', name: 'claude', status: 'idle' }],
+      },
     });
     expect(parseServerAgentsIndex(stored).s1.agents[0].paneId).toBeUndefined();
   });
@@ -435,7 +454,11 @@ describe("a plain pane's cwd", () => {
 
   test('a snapshot written before this field existed still reads back', () => {
     const stored = JSON.stringify({
-      s1: { serverId: 's1', checkedAtMs: NOW, agents: [{ id: 'p', name: 'zsh', status: 'unknown' }] },
+      s1: {
+        serverId: 's1',
+        checkedAtMs: NOW,
+        agents: [{ id: 'p', name: 'zsh', status: 'unknown' }],
+      },
     });
     expect(parseServerAgentsIndex(stored).s1.agents[0].cwd).toBeUndefined();
   });

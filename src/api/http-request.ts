@@ -3,46 +3,51 @@
 
 export interface ClientConfig {
   /** API base URL (prepended to relative paths). */
-  baseUrl?: string
+  baseUrl?: string;
   /** Default headers sent with every request. */
-  headers?: Record<string, string>
+  headers?: Record<string, string>;
   /**
    * Custom fetch implementation. Defaults to `globalThis.fetch`.
    * Swap for platform-specific fetch (e.g. react-native-nitro-fetch).
    */
-  fetch?: typeof globalThis.fetch
+  fetch?: typeof globalThis.fetch;
   /**
    * Transform the raw response body before returning.
    * Default unwraps `{ code, data }` envelope → `data`.
    * Set to `(raw) => raw` to disable unwrapping.
    */
-  responseExtractor?: (raw: unknown) => unknown
+  responseExtractor?: (raw: unknown) => unknown;
 }
 
-let _config: ClientConfig = {}
-let _token: string | null = null
-let _defaultHeaders: Record<string, string> = {}
+let _config: ClientConfig = {};
+let _token: string | null = null;
+let _defaultHeaders: Record<string, string> = {};
 
 /** Configure the client. Call once at app startup. */
 export function configure(config: ClientConfig): void {
-  _config = { ..._config, ...config }
+  _config = { ..._config, ...config };
 }
 
 /** Set auth token. Pass `null` to clear. */
 export function setToken(token: string | null): void {
-  _token = token
+  _token = token;
 }
 
 /** Set default headers sent with every request. Merge with existing defaults. */
 export function setHeaders(headers: Record<string, string>): void {
-  _defaultHeaders = { ..._defaultHeaders, ...headers }
+  _defaultHeaders = { ..._defaultHeaders, ...headers };
 }
 
 function defaultExtractor(raw: unknown): unknown {
-  if (raw !== null && typeof raw === "object" && "code" in (raw as Record<string, unknown>) && "data" in (raw as Record<string, unknown>)) {
-    return (raw as Record<string, unknown>).data
+  if (
+    raw !== null &&
+    typeof raw === 'object' &&
+    'code' in (raw as Record<string, unknown>) &&
+    'data' in (raw as Record<string, unknown>)
+  ) {
+    return (raw as Record<string, unknown>).data;
   }
-  return raw
+  return raw;
 }
 
 /**
@@ -56,19 +61,19 @@ export async function request<T, B = unknown>(
   url: string,
   options?: { query?: Record<string, unknown>; body?: B; headers?: Record<string, string> }
 ): Promise<T> {
-  const f = _config.fetch ?? globalThis.fetch
-  const baseUrl = _config.baseUrl ?? ""
-  let finalUrl = baseUrl + url
+  const f = _config.fetch ?? globalThis.fetch;
+  const baseUrl = _config.baseUrl ?? '';
+  let finalUrl = baseUrl + url;
 
   // Query params
   if (options?.query) {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
     for (const [key, val] of Object.entries(options.query)) {
-      if (val !== undefined) params.set(key, String(val))
+      if (val !== undefined) params.set(key, String(val));
     }
-    const qs = params.toString()
+    const qs = params.toString();
     if (qs) {
-      finalUrl += (finalUrl.includes("?") ? "&" : "?") + qs
+      finalUrl += (finalUrl.includes('?') ? '&' : '?') + qs;
     }
   }
 
@@ -77,33 +82,33 @@ export async function request<T, B = unknown>(
     ..._config.headers,
     ..._defaultHeaders,
     ...options?.headers,
-  }
-  if (_token) headers["Authorization"] = `Bearer ${_token}`
+  };
+  if (_token) headers['Authorization'] = `Bearer ${_token}`;
 
   // Request init
-  if (options?.body !== undefined && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json"
+  if (options?.body !== undefined && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
   }
-  const init: RequestInit = { method, headers }
+  const init: RequestInit = { method, headers };
   if (options?.body !== undefined) {
-    init.body = JSON.stringify(options.body)
+    init.body = JSON.stringify(options.body);
   }
 
-  const response = await f(finalUrl, init)
+  const response = await f(finalUrl, init);
 
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`HTTP ${response.status}: ${text}`)
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
   }
 
-  let raw: unknown
-  const ct = response.headers.get("content-type") || ""
-  if (ct.includes("application/json")) {
-    raw = await response.json()
+  let raw: unknown;
+  const ct = response.headers.get('content-type') || '';
+  if (ct.includes('application/json')) {
+    raw = await response.json();
   } else {
-    raw = await response.text()
+    raw = await response.text();
   }
 
-  const extractor = _config.responseExtractor || defaultExtractor
-  return extractor(raw) as T
+  const extractor = _config.responseExtractor || defaultExtractor;
+  return extractor(raw) as T;
 }

@@ -42,16 +42,16 @@ describe('what a probe entitles the card to say', () => {
     // evidence expires the app stops claiming rather than starts guessing --
     // note this lands on `unknown`, never on `offline`.
     expect(reachabilityFromProbe(probe(true, NOW), NOW + REACHABILITY_FRESH_MS)).toBe('live');
-    expect(reachabilityFromProbe(probe(true, NOW), NOW + REACHABILITY_FRESH_MS + 1)).toBe('unknown');
+    expect(reachabilityFromProbe(probe(true, NOW), NOW + REACHABILITY_FRESH_MS + 1)).toBe(
+      'unknown'
+    );
     expect(reachabilityFromProbe(probe(false, NOW), NOW + REACHABILITY_FRESH_MS + 1)).toBe(
       'unknown'
     );
   });
 
   test('green is unreachable without a successful probe', () => {
-    const everyState = [probe(false), undefined].map((value) =>
-      reachabilityFromProbe(value, NOW)
-    );
+    const everyState = [probe(false), undefined].map((value) => reachabilityFromProbe(value, NOW));
     expect(everyState).not.toContain('live');
   });
 });

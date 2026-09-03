@@ -81,10 +81,7 @@ export function AwayDigestCard({
       <Pressable
         accessible={false}
         onPress={dismiss}
-        style={[
-          styles.card,
-          { backgroundColor: theme.colors.surface },
-        ]}
+        style={[styles.card, { backgroundColor: theme.colors.surface }]}
         testID="away-digest">
         <View style={styles.header}>
           <History size={14} color={theme.colors.textMuted} strokeWidth={2.2} />

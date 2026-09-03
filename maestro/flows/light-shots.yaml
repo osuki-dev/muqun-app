@@ -43,13 +43,13 @@ name: light-shots
 # chosen explicitly rather than inherited. Everything below this line is a
 # light-mode screenshot by construction.
 # Settings is a control in the home header now, not a drawer row (card #664).
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "Color mode"
+    visible: 'Color mode'
     timeout: 10000
 - runFlow: ../subflows/dismiss-logbox.yaml
 - tapOn:
-    text: "(?i)^light$"
+    text: '(?i)^light$'
 - waitForAnimationToEnd:
     timeout: 2000
 
@@ -79,9 +79,9 @@ name: light-shots
 
 # ── Home ───────────────────────────────────────────────────────────────────
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 10000
 - waitForAnimationToEnd:
     timeout: 2000
@@ -92,9 +92,9 @@ name: light-shots
 # fallback: on Android a near-opaque fill, on iOS 25 a blur, on iOS 26 real
 # glass. Which one this frame shows depends on the device it ran on.
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Try the demo"
+- tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Demo · sample data"
+    visible: 'Demo · sample data'
     timeout: 25000
 - waitForAnimationToEnd:
     timeout: 4000
@@ -106,20 +106,20 @@ name: light-shots
 - takeScreenshot: shots/light/07-server
 
 # ── Panels sheet ───────────────────────────────────────────────────────────
-- tapOn: "Show what is running"
+- tapOn: 'Show what is running'
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: shots/light/08-panels
-- tapOn: "Close"
+- tapOn: 'Close'
 - waitForAnimationToEnd:
     timeout: 2000
 
 # ── Files sheet ────────────────────────────────────────────────────────────
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Open files"
+- tapOn: 'Open files'
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: shots/light/09-files
-- tapOn: "Close files"
+- tapOn: 'Close files'
 - waitForAnimationToEnd:
     timeout: 2000

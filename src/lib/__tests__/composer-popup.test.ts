@@ -210,9 +210,7 @@ describe('the filter', () => {
 
   test('a prefix outranks a mid-word hit, and among equals the shorter wins', () => {
     expect(fuzzyScore('re', '/review')).toBeGreaterThan(fuzzyScore('re', '/clear') ?? -1);
-    expect(fuzzyScore('re', '/review')).toBeGreaterThan(
-      fuzzyScore('re', '/release-notes') ?? -1
-    );
+    expect(fuzzyScore('re', '/review')).toBeGreaterThan(fuzzyScore('re', '/release-notes') ?? -1);
     expect(fuzzyScore('qq', '/review')).toBeNull();
   });
 

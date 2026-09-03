@@ -219,16 +219,18 @@ export function AgentMarkdownOutput({
         }}
         onScroll={handleScroll}
         scrollEventThrottle={80}
-        refreshControl={pullEnabled ? (
-          <RefreshControl
-            refreshing={loadingEarlier}
-            onRefresh={requestEarlierOutput}
-            progressViewOffset={8}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.textMuted}
-            progressBackgroundColor={theme.colors.surfaceRaised}
-          />
-        ) : undefined}
+        refreshControl={
+          pullEnabled ? (
+            <RefreshControl
+              refreshing={loadingEarlier}
+              onRefresh={requestEarlierOutput}
+              progressViewOffset={8}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.textMuted}
+              progressBackgroundColor={theme.colors.surfaceRaised}
+            />
+          ) : undefined
+        }
         onContentSizeChange={(_width, height) => {
           contentHeight.current = height;
           if (restoreEarlierAnchor(height)) return;
@@ -245,7 +247,7 @@ export function AgentMarkdownOutput({
             selectionHandleColor={theme.colors.primary}
             streamingAnimation={false}
             textBreakStrategy="simple"
-            md4cFlags={{ latexMath: false }}
+            md4cFlags={{ latexMath: true }}
             onLayout={() => {
               if (followOutput.current) scrollRef.current?.scrollToEnd({ animated: false });
             }}
@@ -271,7 +273,9 @@ export function AgentMarkdownOutput({
               borderColor: theme.colors.border,
             },
           ]}>
-          <Text style={[styles.latestButtonText, { color: theme.colors.text }]}>↓ <Trans>Latest</Trans></Text>
+          <Text style={[styles.latestButtonText, { color: theme.colors.text }]}>
+            ↓ <Trans>Latest</Trans>
+          </Text>
         </PressableScale>
       ) : null}
     </View>
@@ -413,11 +417,12 @@ function normalizeAgentTranscript(input: string): string {
 function displayWidth(value: string): number {
   let width = 0;
   for (const character of value) {
-    width += /[\u1100-\u115F\u2329\u232A\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF00-\uFF60\uFFE0-\uFFE6]/u.test(
-      character
-    )
-      ? 2
-      : 1;
+    width +=
+      /[\u1100-\u115F\u2329\u232A\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF00-\uFF60\uFFE0-\uFFE6]/u.test(
+        character
+      )
+        ? 2
+        : 1;
   }
   return width;
 }

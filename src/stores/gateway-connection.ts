@@ -1,10 +1,6 @@
 import { create } from 'zustand';
 
-import {
-  configureGateway,
-  revokeOwnGatewayPairing,
-  setGatewayLabel,
-} from '@/lib/gateway-client';
+import { configureGateway, revokeOwnGatewayPairing, setGatewayLabel } from '@/lib/gateway-client';
 import { demoRecord, DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { describeGatewayFailure } from '@/lib/network-error';
 import {
@@ -118,7 +114,7 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
         records,
         record:
           state.record?.serverId === serverId
-            ? records.find((item) => item.serverId === serverId) ?? state.record
+            ? (records.find((item) => item.serverId === serverId) ?? state.record)
             : state.record,
       }));
     });
@@ -141,7 +137,7 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
         records,
         record:
           state.record?.serverId === serverId
-            ? records.find((item) => item.serverId === serverId) ?? state.record
+            ? (records.find((item) => item.serverId === serverId) ?? state.record)
             : state.record,
       }));
       // The address may have just changed under a connection that is already

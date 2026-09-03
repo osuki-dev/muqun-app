@@ -127,9 +127,7 @@ describe('measureRowsDropped', () => {
     // to drift with the stream.
     const palette = [31, 32, 33, 34, 35, 36, 91, 92, 93, 96];
     const line = (index: number) =>
-      `[1;${palette[index % palette.length]}mrow ${index}[0m ${'#'.repeat(
-        8 + (index % 7)
-      )}`;
+      `[1;${palette[index % palette.length]}mrow ${index}[0m ${'#'.repeat(8 + (index % 7))}`;
     const lines = Array.from({ length: 60 }, (_, index) => line(index));
     const before = parseTerminalSnapshot(lines.join('\n'));
     const after = parseTerminalSnapshot(
@@ -190,9 +188,7 @@ describe('measureRowsPrepended', () => {
 
   test('answers -1 for a frame too short to hold the probe', () => {
     const before = captureScrollAnchor(window(0, 300));
-    expect(
-      measureRowsPrepended(before, window(0, TERMINAL_ANCHOR_PROBE_ROWS - 1))
-    ).toBe(-1);
+    expect(measureRowsPrepended(before, window(0, TERMINAL_ANCHOR_PROBE_ROWS - 1))).toBe(-1);
   });
 });
 
@@ -200,9 +196,7 @@ describe('captureScrollAnchor', () => {
   test('keeps only as many leading rows as the search can use', () => {
     const anchor = captureScrollAnchor(window(0, 5_000));
     expect(anchor.rows).toBe(5_000);
-    expect(anchor.leading.length).toBe(
-      TERMINAL_ANCHOR_SEARCH_ROWS + TERMINAL_ANCHOR_PROBE_ROWS
-    );
+    expect(anchor.leading.length).toBe(TERMINAL_ANCHOR_SEARCH_ROWS + TERMINAL_ANCHOR_PROBE_ROWS);
   });
 
   test('keeps a short frame whole', () => {
@@ -648,9 +642,7 @@ describe('historyHintOpacity', () => {
 
     test('it fades to nothing once it has been seen', () => {
       expect(historyHintOpacity(0, false, 0)).toBe(0);
-      expect(historyHintOpacity(0, false, 0.5)).toBeCloseTo(
-        TERMINAL_HISTORY_HINT_REST_OPACITY / 2
-      );
+      expect(historyHintOpacity(0, false, 0.5)).toBeCloseTo(TERMINAL_HISTORY_HINT_REST_OPACITY / 2);
     });
 
     test('pulling brings it back whether or not the intro is over', () => {

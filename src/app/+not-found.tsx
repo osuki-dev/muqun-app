@@ -34,9 +34,7 @@ export default function NotFoundScreen() {
           <Trans>This link goes nowhere</Trans>
         </Text>
         <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centered}>
-          <Trans>
-            It may be out of date, or meant for a different app. Nothing was opened.
-          </Trans>
+          <Trans>It may be out of date, or meant for a different app. Nothing was opened.</Trans>
         </Text>
         {/* `dismissTo` rather than `back`: arriving from a cold start through a
             link leaves nothing behind to go back to, and a dead button on the

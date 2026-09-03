@@ -30,10 +30,10 @@ LogBox handling the flows include.
 
 ## Tags
 
-| tag | what it covers |
-| --- | --- |
+| tag     | what it covers                                                                      |
+| ------- | ----------------------------------------------------------------------------------- |
 | `smoke` | `demo-tour` only — the app boots, enters demo mode, reaches every top-level screen. |
-| `full` | every flow. This is the promote-time gate (see AGENTS.md). |
+| `full`  | every flow. This is the promote-time gate (see AGENTS.md).                          |
 
 A flow that is not tagged `full` is a flow the gate does not enforce.
 

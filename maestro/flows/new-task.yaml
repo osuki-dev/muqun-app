@@ -35,15 +35,15 @@ tags: []
 
 # The demo opens on the Claude pane, which is the agent pane and is working --
 # both facts matter below.
-- assertVisible: "Claude Code"
+- assertVisible: 'Claude Code'
 
 # ── Both rows are in quick actions ────────────────────────────────────────
 # New task sits above New panel and New tab: those two make an empty place to
 # work, this one makes a place with the work already started in it. Stop is
 # above all three and is only there because this pane's agent is working.
-- tapOn: "Open quick actions"
+- tapOn: 'Open quick actions'
 - extendedWaitUntil:
-    visible: "Close quick actions"
+    visible: 'Close quick actions'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 3000
@@ -52,68 +52,68 @@ tags: []
 # so the label is the whole of what a row exposes and its caption is not
 # separately assertable. Matched in full, which is how Maestro matches: "Stop"
 # alone would not match "Stop this agent".
-- assertVisible: "New task"
-- assertVisible: "Stop this agent"
+- assertVisible: 'New task'
+- assertVisible: 'Stop this agent'
 - takeScreenshot: shots/70-quick-actions
 
 # ── Stop sends one interrupt and leaves ───────────────────────────────────
 # The sheet closes on success because the answer is behind it: the pane's own
 # status is what says it worked. Driven first so the rest of the flow starts
 # from the terminal again.
-- tapOn: "Stop this agent"
+- tapOn: 'Stop this agent'
 - waitForAnimationToEnd:
     timeout: 3000
-- assertNotVisible: "Close quick actions"
-- assertVisible: "Claude Code"
+- assertNotVisible: 'Close quick actions'
+- assertVisible: 'Claude Code'
 
 # ── New task replaces the sheet rather than stacking on it ────────────────
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Open quick actions"
+- tapOn: 'Open quick actions'
 - extendedWaitUntil:
-    visible: "Close quick actions"
+    visible: 'Close quick actions'
     timeout: 8000
-- tapOn: "New task"
+- tapOn: 'New task'
 - extendedWaitUntil:
-    visible: "Close new task"
+    visible: 'Close new task'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 3000
 - runFlow: ../subflows/dismiss-logbox.yaml
 # Quick actions is gone, not underneath: the two sheets are two answers to one
 # tap, and stacking them would leave Back pointing at a list nobody returns to.
-- assertNotVisible: "Close quick actions"
+- assertNotVisible: 'Close quick actions'
 
 # ── The three questions ───────────────────────────────────────────────────
-- assertVisible: "AGENT"
-- assertVisible: "DIRECTORY"
-- assertVisible: "FIRST PROMPT"
+- assertVisible: 'AGENT'
+- assertVisible: 'DIRECTORY'
+- assertVisible: 'FIRST PROMPT'
 # The catalog, including the kind this host has no executable for. It is dimmed
 # and still tappable: Herdr resolves a kind to its own canonical executable, so
 # "not on PATH" is a hint from the gateway and not a veto.
 - extendedWaitUntil:
-    visible: "claude"
+    visible: 'claude'
     timeout: 8000
-- assertVisible: "codex"
-- assertVisible: "opencode"
+- assertVisible: 'codex'
+- assertVisible: 'opencode'
 - assertVisible: "gemini, not found on this server's PATH"
 - takeScreenshot: shots/71-new-task
 
 # The recent directories are a shortcut, and the field under them is always
 # there -- a shortcut that hides the long way round is a trap the first time it
 # does not have the place you meant.
-- assertVisible: "~/code/herdr-gateway"
-- assertVisible: "Leave it empty to start where the session already is."
+- assertVisible: '~/code/herdr-gateway'
+- assertVisible: 'Leave it empty to start where the session already is.'
 - assertVisible: "Type it, or use your keyboard's dictation key."
 
 # ── Answering them ────────────────────────────────────────────────────────
-- tapOn: "codex"
+- tapOn: 'codex'
 - waitForAnimationToEnd:
     timeout: 1500
-- tapOn: "~/code/herdr-gateway"
+- tapOn: '~/code/herdr-gateway'
 - waitForAnimationToEnd:
     timeout: 1500
-- tapOn: "Review the failing test and fix it."
-- inputText: "look at the failing scrollback test"
+- tapOn: 'Review the failing test and fix it.'
+- inputText: 'look at the failing scrollback test'
 - waitForAnimationToEnd:
     timeout: 2000
 - runFlow: ../subflows/dismiss-logbox.yaml
@@ -122,41 +122,41 @@ tags: []
 # with the keyboard up there is no room left to scroll Go clear of it -- which
 # is exactly why the toolbar is there, and why this is the tap a reader makes
 # rather than a convenience for the test.
-- tapOn: "Done"
+- tapOn: 'Done'
 - waitForAnimationToEnd:
     timeout: 2000
 
 # ── Go, and the phone lands in the pane ───────────────────────────────────
 # The whole promise of the flow: the sheet leaves and what is behind it is the
 # pane the spawn named, not the pane the sheet was opened from.
-- tapOn: "Start task"
+- tapOn: 'Start task'
 - extendedWaitUntil:
-    notVisible: "Close new task"
+    notVisible: 'Close new task'
     timeout: 12000
 - waitForAnimationToEnd:
     timeout: 4000
 - runFlow: ../subflows/dismiss-logbox.yaml
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 10000
 - takeScreenshot: shots/73-new-task-landed
 
 # ── Closing without starting anything ─────────────────────────────────────
 # The sheet's own close button, not a swipe: swiping a form sheet down races the
 # sheet's gesture handler against the scroll view inside it.
-- tapOn: "Open quick actions"
+- tapOn: 'Open quick actions'
 - extendedWaitUntil:
-    visible: "Close quick actions"
+    visible: 'Close quick actions'
     timeout: 8000
-- tapOn: "New task"
+- tapOn: 'New task'
 - extendedWaitUntil:
-    visible: "Close new task"
+    visible: 'Close new task'
     timeout: 8000
-- tapOn: "Close new task"
+- tapOn: 'Close new task'
 - waitForAnimationToEnd:
     timeout: 3000
-- assertNotVisible: "Close new task"
-- assertVisible: "Claude Code"
+- assertNotVisible: 'Close new task'
+- assertVisible: 'Claude Code'
 
 # ── Not reachable offline ─────────────────────────────────────────────────
 # Against a gateway that predates `agent_spawn`, the gate is that there is

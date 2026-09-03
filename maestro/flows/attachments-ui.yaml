@@ -27,31 +27,31 @@ tags:
 # ── Demo mode hides the paperclip ─────────────────────────────────────────
 # Asserted against a composer that is demonstrably rendered: without the send
 # button check, the absence below would also hold on a blank screen.
-- assertVisible: "Send to agent"
-- assertVisible: "Open quick actions"
-- assertNotVisible: "Attach a file"
-- assertNotVisible: "Close the attachment menu"
-- assertNotVisible: "Take photo"
-- assertNotVisible: "Photo library"
+- assertVisible: 'Send to agent'
+- assertVisible: 'Open quick actions'
+- assertNotVisible: 'Attach a file'
+- assertNotVisible: 'Close the attachment menu'
+- assertNotVisible: 'Take photo'
+- assertNotVisible: 'Photo library'
 
 # ── Popup over the composer: open, choose, close ──────────────────────────
 # One round trip through the picker: it opens over the composer without
 # displacing it, and choosing a row closes it and leaves the composer where it
 # was. Anchoring is what this asserts; filtering, dismissal and the source tag
 # belong to `slash-commands.yaml`.
-- tapOn: "Switch to Claude Code"
+- tapOn: 'Switch to Claude Code'
 - tapOn:
-    id: "terminal-composer-input"
-- inputText: "/comp"
+    id: 'terminal-composer-input'
+- inputText: '/comp'
 - extendedWaitUntil:
-    visible: "Insert /compact.*"
+    visible: 'Insert /compact.*'
     timeout: 8000
-- assertVisible: "Send to agent"
-- tapOn: "Insert /compact.*"
+- assertVisible: 'Send to agent'
+- tapOn: 'Insert /compact.*'
 - waitForAnimationToEnd:
     timeout: 1500
-- assertNotVisible: "Insert /compact.*"
-- assertVisible: "Send to agent"
+- assertNotVisible: 'Insert /compact.*'
+- assertVisible: 'Send to agent'
 
 # ── Not reachable offline ─────────────────────────────────────────────────
 # Against a paired gateway, the menu's own open/close is:

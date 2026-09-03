@@ -83,7 +83,6 @@ export interface GatewayCapabilities {
   composer: boolean;
 }
 
-
 /**
  * How this particular pane was read, as the gateway reports it under
  * `data.pane.parts`.
@@ -158,9 +157,7 @@ export function panePartsFromResponse(value: unknown): PaneParts {
     // panes worth reading, so its envelope-level flag is still honoured -- but
     // a gateway that *does* declare one is taken at its word, `text` included.
     structured:
-      source === 'native'
-      || source === 'dictionary'
-      || (source === 'none' && capabilities.parts),
+      source === 'native' || source === 'dictionary' || (source === 'none' && capabilities.parts),
     parts,
     composer: paneComposerFromResponse(envelope, understood),
   };

@@ -40,10 +40,19 @@ import {
   type SshSessionHandle,
   type SshShellHandle,
 } from '@/lib/ssh-client';
-import { TERMINAL_GRID_DEFAULT, terminalGridChanged, terminalGridFor } from '@/lib/ssh-grid-metrics';
+import {
+  TERMINAL_GRID_DEFAULT,
+  terminalGridChanged,
+  terminalGridFor,
+} from '@/lib/ssh-grid-metrics';
 import { composerSubmitBytes } from '@/lib/ssh-composer';
 import { sshEditorPane, sshNvimMode } from '@/lib/ssh-editor';
-import { compareSshHostKey, sshHostAddress, type SshHostRecord, type SshTrustedHostKey } from '@/lib/ssh-hosts';
+import {
+  compareSshHostKey,
+  sshHostAddress,
+  type SshHostRecord,
+  type SshTrustedHostKey,
+} from '@/lib/ssh-hosts';
 import { encodeTerminalKey, encodeTerminalText } from '@/lib/ssh-key-bytes';
 import { sanitizeServerText, SERVER_LINE_LIMIT, sshFailureLine } from '@/lib/ssh-server-text';
 import { SshTerminalSession } from '@/lib/ssh-terminal-session';
@@ -264,9 +273,14 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   // anything on the alternate screen. The verdict latches while that screen
   // is held, because stock nvim in Normal mode shows nothing to read.
   const frameTitle = terminalFrame?.title ?? null;
-  const nvimMode = useMemo(() => sshNvimMode(terminalFrame, alternateScreen), [alternateScreen, terminalFrame]);
+  const nvimMode = useMemo(
+    () => sshNvimMode(terminalFrame, alternateScreen),
+    [alternateScreen, terminalFrame]
+  );
   useEffect(() => {
-    setEditorPane((previous) => sshEditorPane(previous, { alternateScreen, title: frameTitle, nvimMode }));
+    setEditorPane((previous) =>
+      sshEditorPane(previous, { alternateScreen, title: frameTitle, nvimMode })
+    );
   }, [alternateScreen, frameTitle, nvimMode]);
 
   // An editor opens straight into the keyboard, as it does on the gateway: it
@@ -351,7 +365,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
 
   function reportCellMetrics(metrics: TerminalCellMetrics) {
     setCellMetrics((previous) =>
-      previous && previous.cellWidth === metrics.cellWidth && previous.lineHeight === metrics.lineHeight
+      previous &&
+      previous.cellWidth === metrics.cellWidth &&
+      previous.lineHeight === metrics.lineHeight
         ? previous
         : metrics
     );
@@ -407,7 +423,11 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     setAlternateScreen(false);
     setStatus({ phase: 'connecting' });
 
-    const askHostKey = (verdict: 'unknown' | 'mismatch', key: SshTrustedHostKey, trusted?: SshTrustedHostKey) =>
+    const askHostKey = (
+      verdict: 'unknown' | 'mismatch',
+      key: SshTrustedHostKey,
+      trusted?: SshTrustedHostKey
+    ) =>
       new Promise<boolean>((resolve) => {
         if (cancelled || controller.signal.aborted) {
           resolve(false);
@@ -473,7 +493,11 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       if (!current) return;
       let session: SshSessionHandle;
       if (isDemoSshHost(current)) {
-        session = await connectDemoSsh({ verifyHostKey, onDisconnected, signal: controller.signal });
+        session = await connectDemoSsh({
+          verifyHostKey,
+          onDisconnected,
+          signal: controller.signal,
+        });
       } else {
         const credential = await credentialFor(current);
         if (!credential) {
@@ -494,7 +518,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           // A pinned key names its type, and asking for that type first is
           // what keeps a multi-key server from presenting a different valid
           // key that this screen would then have to call a mismatch.
-          hostKeyAlgorithms: current.trustedHostKey ? [current.trustedHostKey.algorithm] : undefined,
+          hostKeyAlgorithms: current.trustedHostKey
+            ? [current.trustedHostKey.algorithm]
+            : undefined,
         });
       }
       if (cancelled || controller.signal.aborted) {
@@ -545,7 +571,11 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
         setStatus({ phase: 'cancelled' });
         return;
       }
-      setStatus({ phase: 'failed', code: sanitizeServerText(failure.code, 32), message: sshFailureLine(failure) });
+      setStatus({
+        phase: 'failed',
+        code: sanitizeServerText(failure.code, 32),
+        message: sshFailureLine(failure),
+      });
       const { showToast: toast, couldNotConnect } = notifyRef.current;
       toast({
         variant: 'danger',
@@ -609,7 +639,11 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       shell.write(bytes);
       setStickBottomNonce((value) => value + 1);
     } catch (error) {
-      showToast({ variant: 'danger', title: t`Could not send`, message: sshFailureLine(describeSshFailure(error)) });
+      showToast({
+        variant: 'danger',
+        title: t`Could not send`,
+        message: sshFailureLine(describeSshFailure(error)),
+      });
     }
   }
 
@@ -807,7 +841,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             onText={typeText}
             onKey={typeKey}
             onClose={() => setKeyboardMode(false)}
-            shortcuts={dock.keysInKeyboard ? <View style={styles.keyRow}>{keyStrip}</View> : undefined}
+            shortcuts={
+              dock.keysInKeyboard ? <View style={styles.keyRow}>{keyStrip}</View> : undefined
+            }
           />
         ) : null}
         {/* The way back to the composer without putting the keyboard away:
@@ -866,7 +902,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       {/* Mounted only while the server is asking, so the answers -- a
           password, a one-time code -- live in React state no longer than the
           dialog does. */}
-      {prompt?.kind === 'keyboardInteractive' ? <KeyboardInteractiveDialog prompt={prompt} /> : null}
+      {prompt?.kind === 'keyboardInteractive' ? (
+        <KeyboardInteractiveDialog prompt={prompt} />
+      ) : null}
     </View>
   );
 }
@@ -907,15 +945,25 @@ function StatusLine({
   return (
     <View style={styles.statusLine} accessibilityRole="text" accessibilityLabel={text}>
       <View style={[styles.statusDot, { backgroundColor: light }]} />
-      <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1} style={styles.statusText}>
+      <Text
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={1}
+        style={styles.statusText}>
         {text}
       </Text>
-      {status.phase === 'disconnected' || status.phase === 'failed' || status.phase === 'cancelled' ? (
+      {status.phase === 'disconnected' ||
+      status.phase === 'failed' ||
+      status.phase === 'cancelled' ? (
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t`Reconnect`}
           onPress={onReconnect}
-          style={[styles.pillButton, styles.statusAction, { backgroundColor: theme.colors.primary }]}>
+          style={[
+            styles.pillButton,
+            styles.statusAction,
+            { backgroundColor: theme.colors.primary },
+          ]}>
           <Text variant="caption" color={theme.colors.onPrimary}>
             <Trans>Reconnect</Trans>
           </Text>
@@ -945,7 +993,12 @@ function HostKeyDialog({ prompt, host }: { prompt: Prompt | null; host: string }
       actions={[
         { id: 'cancel', label: t`Cancel`, onPress: () => prompt.resolve(false) },
         mismatch
-          ? { id: 'replace', label: t`Replace key`, tone: 'destructive', onPress: () => prompt.resolve(true) }
+          ? {
+              id: 'replace',
+              label: t`Replace key`,
+              tone: 'destructive',
+              onPress: () => prompt.resolve(true),
+            }
           : { id: 'trust', label: t`Trust`, tone: 'primary', onPress: () => prompt.resolve(true) },
       ]}>
       <View style={styles.fingerprints}>
@@ -978,7 +1031,11 @@ function HostKeyDialog({ prompt, host }: { prompt: Prompt | null; host: string }
  * `sanitizeServerText`); a prompt with nothing left after that is labelled
  * by the app instead, so a field is never unlabelled.
  */
-function KeyboardInteractiveDialog({ prompt }: { prompt: Extract<Prompt, { kind: 'keyboardInteractive' }> }) {
+function KeyboardInteractiveDialog({
+  prompt,
+}: {
+  prompt: Extract<Prompt, { kind: 'keyboardInteractive' }>;
+}) {
   const { t } = useLingui();
   const [answers, setAnswers] = useState<string[]>([]);
   const { challenge } = prompt;
@@ -1050,7 +1107,8 @@ function TerminalKeyChip({
   // The editor actions have a sentence behind their identity (`nvim:w`);
   // everything else is keyed by its English label. Same two tables, same
   // order, as the gateway's row.
-  const described = editorActionDescription[item.key] ?? terminalKeyDescription[item.accessibilityLabel];
+  const described =
+    editorActionDescription[item.key] ?? terminalKeyDescription[item.accessibilityLabel];
   const spoken = described ? _(described) : item.accessibilityLabel;
   return (
     <PressableScale
@@ -1068,7 +1126,11 @@ function TerminalKeyChip({
       <Text
         variant="caption"
         color={textColor}
-        style={item.emphasis ? [styles.terminalKeyText, styles.terminalKeyEmphasisText] : styles.terminalKeyText}>
+        style={
+          item.emphasis
+            ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
+            : styles.terminalKeyText
+        }>
         {keyCap(item.key, item.cap)}
       </Text>
     </PressableScale>

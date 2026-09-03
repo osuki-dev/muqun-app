@@ -36,8 +36,7 @@ import { Profiler, useEffect, type ReactNode } from 'react';
  * Whether any of this does anything. `__DEV__` as well as the flag, so a
  * mistyped environment in a release build still cannot ship the timers.
  */
-export const RENDER_TALLY_ENABLED =
-  __DEV__ && process.env.EXPO_PUBLIC_RENDER_TALLY === '1';
+export const RENDER_TALLY_ENABLED = __DEV__ && process.env.EXPO_PUBLIC_RENDER_TALLY === '1';
 
 /**
  * How long after the last render the report is printed.

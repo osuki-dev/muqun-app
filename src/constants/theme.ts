@@ -16,15 +16,8 @@ import '@/global.css';
 
 import { createThemePreset, type ThemeOverride } from '@osuki-dev/ui';
 
-import {
-  appAppearanceConfig,
-  appThemeAppearanceOverride,
-} from '@/constants/appearance';
-import {
-  DEFAULT_THEME_PACK_ID,
-  resolveThemePack,
-  type ThemePack,
-} from '@/constants/theme-packs';
+import { appAppearanceConfig, appThemeAppearanceOverride } from '@/constants/appearance';
+import { DEFAULT_THEME_PACK_ID, resolveThemePack, type ThemePack } from '@/constants/theme-packs';
 
 /**
  * The shape of the app, independent of its colours: density, corner radius and

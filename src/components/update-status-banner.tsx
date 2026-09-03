@@ -4,11 +4,7 @@ import * as Updates from 'expo-updates';
 import { Check, Download } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { appChrome } from '@/constants/appearance';
@@ -27,7 +23,6 @@ export function UpdateStatusBanner() {
   // call keeps the old language. The hook's `t` is bound to the Lingui context,
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
-
 
   const theme = useThemeTokens();
   const { isDownloading, isUpdatePending } = Updates.useUpdates();
@@ -106,11 +101,7 @@ export function UpdateStatusBanner() {
           </Text>
           <View style={[styles.track, { backgroundColor: theme.colors.primarySubtle }]}>
             <Animated.View
-              style={[
-                styles.progress,
-                { backgroundColor: theme.colors.primary },
-                progressStyle,
-              ]}
+              style={[styles.progress, { backgroundColor: theme.colors.primary }, progressStyle]}
             />
           </View>
         </View>

@@ -109,7 +109,9 @@ export function SshHostList() {
               <View style={styles.empty}>
                 <SquareTerminal size={40} color={theme.colors.textMuted} strokeWidth={1.5} />
                 <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-                  <Trans>No SSH hosts yet. Add one to open a shell on any machine you can reach.</Trans>
+                  <Trans>
+                    No SSH hosts yet. Add one to open a shell on any machine you can reach.
+                  </Trans>
                 </Text>
                 <PressableScale
                   accessibilityRole="button"

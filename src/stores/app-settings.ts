@@ -1,11 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 
-import {
-  DEFAULT_THEME_PACK_ID,
-  isThemePackId,
-  type ThemePackId,
-} from '@/constants/theme-packs';
+import { DEFAULT_THEME_PACK_ID, isThemePackId, type ThemePackId } from '@/constants/theme-packs';
 import { isLocalePreference, type LocalePreference } from '@/i18n/locale';
 import {
   storedAgentDefaultView,
@@ -157,9 +153,9 @@ function parseSettings(value: string): Partial<PersistedSettings> {
       ...(typeof parsed.showTerminalKeyRow === 'boolean'
         ? { showTerminalKeyRow: parsed.showTerminalKeyRow }
         : {}),
-      ...(parsed.terminalTextSize === 'compact'
-        || parsed.terminalTextSize === 'default'
-        || parsed.terminalTextSize === 'large'
+      ...(parsed.terminalTextSize === 'compact' ||
+      parsed.terminalTextSize === 'default' ||
+      parsed.terminalTextSize === 'large'
         ? { terminalTextSize: parsed.terminalTextSize }
         : {}),
       // A pack we have since dropped, or a build that shipped before this one

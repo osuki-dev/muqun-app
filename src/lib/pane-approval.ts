@@ -277,9 +277,7 @@ export const APPROVAL_NOTIFICATION_ACTIONS: readonly {
 ];
 
 /** The decision an action identifier names, or null when it is not one of ours. */
-export function approvalActionDecision(
-  actionIdentifier: string
-): NamedApprovalDecision | null {
+export function approvalActionDecision(actionIdentifier: string): NamedApprovalDecision | null {
   if (!actionIdentifier.startsWith(APPROVAL_ACTION_PREFIX)) return null;
   const name = actionIdentifier.slice(APPROVAL_ACTION_PREFIX.length);
   return APPROVAL_NOTIFICATION_ACTIONS.find((action) => action.decision === name)?.decision ?? null;

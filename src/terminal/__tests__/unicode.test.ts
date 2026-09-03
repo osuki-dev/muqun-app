@@ -151,17 +151,12 @@ describe('dingbats are one column, emoji are two', () => {
 });
 
 describe('CJK stays two columns', () => {
-  test.each(['中', '、', '「', '！', 'あ', '가'])(
-    '%s takes two columns',
-    (character) => {
-      expect(graphemeWidth(character)).toBe(2);
-    }
-  );
+  test.each(['中', '、', '「', '！', 'あ', '가'])('%s takes two columns', (character) => {
+    expect(graphemeWidth(character)).toBe(2);
+  });
 
   test('a CJK and Latin row measures the same width the gateway laid out', () => {
     // "条治理、Files 三合一" -- 4 wide + 6 narrow + 1 space + 3 wide.
-    expect(displayWidth('条治理、Files 三合一')).toBe(
-      4 * 2 + 5 + 1 + 3 * 2
-    );
+    expect(displayWidth('条治理、Files 三合一')).toBe(4 * 2 + 5 + 1 + 3 * 2);
   });
 });

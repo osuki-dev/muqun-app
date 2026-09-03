@@ -146,10 +146,7 @@ export function NewTaskSheet({
     setStarting(true);
     setError(null);
     try {
-      const spawned = await spawnAgent(
-        sessionId,
-        agentSpawnRequest({ agent, cwd, tabId, prompt })
-      );
+      const spawned = await spawnAgent(sessionId, agentSpawnRequest({ agent, cwd, tabId, prompt }));
       onStarted(spawned);
     } catch (failure) {
       // Reported in the sheet rather than by closing it. An unknown agent kind
@@ -170,141 +167,141 @@ export function NewTaskSheet({
     // it is already in the design system, and it costs nothing when the
     // keyboard is down because it is not drawn at all.
     <>
-    <KeyboardAwareScrollView
-      // Clearance for the focused field above the keyboard and the toolbar
-      // sitting on top of it, so the line being typed is never the line under
-      // the Done button.
-      bottomOffset={KEYBOARD_BOTTOM_OFFSET}
-      keyboardShouldPersistTaps="handled"
-      style={[styles.sheet, { backgroundColor: theme.colors.surface }]}
-      contentContainerStyle={styles.content}>
-      {/* iOS draws the grabber itself; Android's form sheet does not, and a
+      <KeyboardAwareScrollView
+        // Clearance for the focused field above the keyboard and the toolbar
+        // sitting on top of it, so the line being typed is never the line under
+        // the Done button.
+        bottomOffset={KEYBOARD_BOTTOM_OFFSET}
+        keyboardShouldPersistTaps="handled"
+        style={[styles.sheet, { backgroundColor: theme.colors.surface }]}
+        contentContainerStyle={styles.content}>
+        {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. Every sheet in this app carries the same two lines. */}
-      {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+        {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
 
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <Text variant="bodySmall" style={styles.title}>
-            <Trans>New task</Trans>
-          </Text>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            <Trans>Start an agent and send it the first thing to do.</Trans>
-          </Text>
-        </View>
-        <GlassChrome face="sheet" style={styles.closeButton}>
-          <PressableScale
-            accessibilityLabel={t`Close new task`}
-            onPress={onClose}
-            style={styles.closeHit}>
-            <X size={18} color={theme.colors.text} />
-          </PressableScale>
-        </GlassChrome>
-      </View>
-
-      <View style={styles.section}>
-        <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
-          <Trans>AGENT</Trans>
-        </Text>
-        {loadingProfiles ? (
-          <View style={styles.loadingRow}>
-            <Spinner size="sm" color={theme.colors.primary} />
+        <View style={styles.header}>
+          <View style={styles.headerCopy}>
+            <Text variant="bodySmall" style={styles.title}>
+              <Trans>New task</Trans>
+            </Text>
             <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>Asking the server what it can run…</Trans>
+              <Trans>Start an agent and send it the first thing to do.</Trans>
             </Text>
           </View>
-        ) : profiles.length === 0 ? (
-          <Text variant="caption" color={theme.colors.textMuted}>
-            <Trans>This server did not name any agents it can start.</Trans>
-          </Text>
-        ) : (
-          <View style={styles.pills}>
-            {profiles.map((profile, index) => (
-              <Animated.View key={profile.kind} entering={riseIn(index * STAGGER.row)}>
-                <AgentPill
-                  profile={profile}
-                  selected={profile.kind === agent}
-                  onSelect={() => setAgent(profile.kind)}
-                />
-              </Animated.View>
-            ))}
-          </View>
-        )}
-      </View>
+          <GlassChrome face="sheet" style={styles.closeButton}>
+            <PressableScale
+              accessibilityLabel={t`Close new task`}
+              onPress={onClose}
+              style={styles.closeHit}>
+              <X size={18} color={theme.colors.text} />
+            </PressableScale>
+          </GlassChrome>
+        </View>
 
-      <View style={styles.section}>
-        <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
-          <Trans>DIRECTORY</Trans>
-        </Text>
-        {recentCwds.length > 0 ? (
-          <View style={styles.recentList}>
-            {recentCwds.map((path, index) => (
-              <Animated.View
-                key={path}
-                entering={riseIn(index * STAGGER.row)}
-                layout={listLayout('short')}>
-                <RecentCwdRow
-                  path={path}
-                  selected={path === cwd.trim()}
-                  onSelect={() => setCwd(path)}
-                />
-              </Animated.View>
-            ))}
-          </View>
-        ) : null}
-        {/* Under the list, not instead of it, and always present: the recent
+        <View style={styles.section}>
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
+            <Trans>AGENT</Trans>
+          </Text>
+          {loadingProfiles ? (
+            <View style={styles.loadingRow}>
+              <Spinner size="sm" color={theme.colors.primary} />
+              <Text variant="caption" color={theme.colors.textMuted}>
+                <Trans>Asking the server what it can run…</Trans>
+              </Text>
+            </View>
+          ) : profiles.length === 0 ? (
+            <Text variant="caption" color={theme.colors.textMuted}>
+              <Trans>This server did not name any agents it can start.</Trans>
+            </Text>
+          ) : (
+            <View style={styles.pills}>
+              {profiles.map((profile, index) => (
+                <Animated.View key={profile.kind} entering={riseIn(index * STAGGER.row)}>
+                  <AgentPill
+                    profile={profile}
+                    selected={profile.kind === agent}
+                    onSelect={() => setAgent(profile.kind)}
+                  />
+                </Animated.View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
+            <Trans>DIRECTORY</Trans>
+          </Text>
+          {recentCwds.length > 0 ? (
+            <View style={styles.recentList}>
+              {recentCwds.map((path, index) => (
+                <Animated.View
+                  key={path}
+                  entering={riseIn(index * STAGGER.row)}
+                  layout={listLayout('short')}>
+                  <RecentCwdRow
+                    path={path}
+                    selected={path === cwd.trim()}
+                    onSelect={() => setCwd(path)}
+                  />
+                </Animated.View>
+              ))}
+            </View>
+          ) : null}
+          {/* Under the list, not instead of it, and always present: the recent
             answers are a shortcut, and a shortcut that hides the long way round
             is a trap the first time it does not have the place you meant. */}
-        <Input
-          label={t`Path`}
-          value={cwd}
-          onChangeText={setCwd}
-          autoCapitalize="none"
-          autoCorrect={false}
-          // Not translated: a path is typed as it exists on the machine, and a
-          // localized example would teach the wrong thing.
-          placeholder="~/code/muqun"
-          variant="outline"
-          helper={t`Leave it empty to start where the session already is.`}
-        />
-      </View>
+          <Input
+            label={t`Path`}
+            value={cwd}
+            onChangeText={setCwd}
+            autoCapitalize="none"
+            autoCorrect={false}
+            // Not translated: a path is typed as it exists on the machine, and a
+            // localized example would teach the wrong thing.
+            placeholder="~/code/muqun"
+            variant="outline"
+            helper={t`Leave it empty to start where the session already is.`}
+          />
+        </View>
 
-      <View style={styles.section}>
-        <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
-          <Trans>FIRST PROMPT</Trans>
-        </Text>
-        <Input
-          value={prompt}
-          onChangeText={setPrompt}
-          multiline
-          numberOfLines={3}
-          placeholder={t`Review the failing test and fix it.`}
-          variant="outline"
-          // The keyboard's own dictation is the answer to "I do not want to
-          // type this on a phone", on both platforms. Said once, here, instead
-          // of drawn as a button this app would have to own.
-          helper={t`Type it, or use your keyboard's dictation key.`}
-        />
-      </View>
-
-      <Button onPress={() => void start()} disabled={starting || !canSpawnAgent({ agent })}>
-        {starting ? t`Starting…` : t`Start task`}
-      </Button>
-
-      {error ? (
-        <Animated.View
-          entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
-          layout={listLayout('short')}>
-          <Text selectable variant="caption" color={theme.colors.danger}>
-            {error}
+        <View style={styles.section}>
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
+            <Trans>FIRST PROMPT</Trans>
           </Text>
-        </Animated.View>
-      ) : null}
-    </KeyboardAwareScrollView>
-    {/* One field at a time here, so the arrows would only ever point at
+          <Input
+            value={prompt}
+            onChangeText={setPrompt}
+            multiline
+            numberOfLines={3}
+            placeholder={t`Review the failing test and fix it.`}
+            variant="outline"
+            // The keyboard's own dictation is the answer to "I do not want to
+            // type this on a phone", on both platforms. Said once, here, instead
+            // of drawn as a button this app would have to own.
+            helper={t`Type it, or use your keyboard's dictation key.`}
+          />
+        </View>
+
+        <Button onPress={() => void start()} disabled={starting || !canSpawnAgent({ agent })}>
+          {starting ? t`Starting…` : t`Start task`}
+        </Button>
+
+        {error ? (
+          <Animated.View
+            entering={fadeIn('micro')}
+            exiting={fadeOut('micro')}
+            layout={listLayout('short')}>
+            <Text selectable variant="caption" color={theme.colors.danger}>
+              {error}
+            </Text>
+          </Animated.View>
+        ) : null}
+      </KeyboardAwareScrollView>
+      {/* One field at a time here, so the arrows would only ever point at
         themselves. */}
-    <KeyboardToolbar showArrows={false} doneText={t`Done`} />
+      <KeyboardToolbar showArrows={false} doneText={t`Done`} />
     </>
   );
 }
@@ -334,9 +331,7 @@ function AgentPill({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={
-        profile.available
-          ? profile.kind
-          : t`${profile.kind}, not found on this server's PATH`
+        profile.available ? profile.kind : t`${profile.kind}, not found on this server's PATH`
       }
       onPress={onSelect}
       style={[

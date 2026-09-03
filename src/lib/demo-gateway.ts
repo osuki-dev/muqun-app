@@ -3,10 +3,7 @@ import { msg } from '@lingui/core/macro';
 import { Asset } from 'expo-asset';
 
 import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
-import {
-  normalizeGatewayEntities,
-  type GatewayEntity,
-} from '@/lib/gateway-entities';
+import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
 import type { SessionAsset } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
@@ -125,7 +122,13 @@ const workspacesRaw: RawEntity[] = [
  */
 function tabsRaw(): RawEntity[] {
   return [
-    { id: 'tab-1', tab_id: 'tab-1', workspace_id: 'ws-1', label: i18n._(msg`Development`), focused: true },
+    {
+      id: 'tab-1',
+      tab_id: 'tab-1',
+      workspace_id: 'ws-1',
+      label: i18n._(msg`Development`),
+      focused: true,
+    },
     { id: 'tab-2', tab_id: 'tab-2', workspace_id: 'ws-1', label: i18n._(msg`Review`) },
     { id: 'tab-3', tab_id: 'tab-3', workspace_id: 'ws-1', label: i18n._(msg`Logs`) },
   ];
@@ -190,7 +193,14 @@ const panesRaw: RawEntity[] = [
 ];
 
 const agentsRaw: RawEntity[] = [
-  { id: 'pane-1', pane_id: 'pane-1', target: 'pane-1', agent: 'claude', label: 'Claude Code', status: 'working' },
+  {
+    id: 'pane-1',
+    pane_id: 'pane-1',
+    target: 'pane-1',
+    agent: 'claude',
+    label: 'Claude Code',
+    status: 'working',
+  },
 ];
 
 /** A fictional agent transcript that exercises tables, diffs, colour and chrome. */
@@ -531,7 +541,10 @@ const DEMO_ASSET_TEXT: Record<string, string> = {
     '# Dark mode — change summary',
     '',
     'Wired a `ColorMode` union through the theme resolver and added a toggle to',
-    'Settings. The system option follows the device.',
+    'Settings. The system option follows the device. Contrast stays above',
+    '$L = \\frac{Y_1 + 0.05}{Y_2 + 0.05} \\geq 4.5$ in both modes:',
+    '',
+    '$$\\int_0^1 x^2 \\, dx = \\tfrac{1}{3}$$',
     '',
     '## Files touched',
     '',
@@ -662,7 +675,11 @@ export function demoPaneParts(paneId: string): Record<string, unknown> {
     // No composer descriptor at all, the way the gateway answers for a pane it
     // has no command table for -- which is what makes `@` an ordinary character
     // in the editor pane, and gives the demo both sides of the capability gate.
-    return { schema_version: '1.3.0', capabilities, data: { parts: [], pane: { pane_id: paneId } } };
+    return {
+      schema_version: '1.3.0',
+      capabilities,
+      data: { parts: [], pane: { pane_id: paneId } },
+    };
   }
   return {
     schema_version: '1.3.0',
@@ -679,9 +696,11 @@ export function demoPaneParts(paneId: string): Record<string, unknown> {
         {
           type: 'text',
           markdown: [
-            "I looked at how the theme is resolved and wired a toggle into the settings",
+            'I looked at how the theme is resolved and wired a toggle into the settings',
             'store. Two files changed, and `resolveMode` now takes the mode instead of',
-            'assuming `light`.',
+            'assuming `light`. Contrast stays above $L = \\frac{Y_1 + 0.05}{Y_2 + 0.05} \\geq 4.5$:',
+            '',
+            '$$\\int_0^1 x^2 \\, dx = \\tfrac{1}{3}$$',
           ].join('\n'),
           range: { start: 2, end: 5 },
           fallback_text:
@@ -961,8 +980,9 @@ export function demoPaneFiles(
         if (inName < 0 && inPath < 0) return null;
         return { file, name, score: (inName >= 0 ? 100 - inName : 0) + (inPath >= 0 ? 10 : 0) };
       })
-        .filter((entry): entry is { file: (typeof DEMO_FILES)[number]; name: string; score: number } =>
-          entry !== null
+        .filter(
+          (entry): entry is { file: (typeof DEMO_FILES)[number]; name: string; score: number } =>
+            entry !== null
         )
         .sort((a, b) => b.score - a.score || a.file.path.length - b.file.path.length)
         .slice(0, capped);

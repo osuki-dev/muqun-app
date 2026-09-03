@@ -268,7 +268,9 @@ describe('a rule is judged by its characters, not by its agent', () => {
 
   test('a heading at the end of its rule keeps the heading', () => {
     // Claude's form: the words sit after a very long run.
-    const { markdown, label } = clean(`${'─'.repeat(199)} 分析 react-native-runtimes 项目的适用性 ──`);
+    const { markdown, label } = clean(
+      `${'─'.repeat(199)} 分析 react-native-runtimes 项目的适用性 ──`
+    );
     expect(markdown).toBe('分析 react-native-runtimes 项目的适用性');
     expect(label).toBe('分析 react-native-runtimes 项目的适用性');
   });
@@ -587,13 +589,7 @@ describe('a conversation, not a terminal with bubbles', () => {
       simplified
     );
     // Prompt, prose, one chip for all four pieces of work, prose, one banner.
-    expect(items.map((item) => item.kind)).toEqual([
-      'prompt',
-      'part',
-      'activity',
-      'part',
-      'part',
-    ]);
+    expect(items.map((item) => item.kind)).toEqual(['prompt', 'part', 'activity', 'part', 'part']);
     expect(items[2]?.kind === 'activity' ? items[2].steps.length : 0).toBe(4);
     expect(items[4]?.kind === 'part' ? items[4].part.type : '').toBe('status');
   });

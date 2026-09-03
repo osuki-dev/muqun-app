@@ -1,6 +1,6 @@
 name: Question
 description: Ask how something works, or get help with pairing and connections.
-labels: ["question"]
+labels: ['question']
 body:
   - type: markdown
     attributes:

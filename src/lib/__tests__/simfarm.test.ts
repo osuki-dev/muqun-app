@@ -185,7 +185,9 @@ describe('simfarmThemedClientUrl', () => {
     // simfarm drops unknown keys silently, so a rename upstream would show up
     // as a panel that quietly stopped following the app rather than an error.
     const THEME_KEYS = ['bg', 'bgAlt', 'fg', 'fgDim', 'line', 'accent', 'ok', 'warn', 'bad'];
-    const param = new URL(simfarmThemedClientUrl(GATEWAY, 8801, COLORS)!).searchParams.get('theme')!;
+    const param = new URL(simfarmThemedClientUrl(GATEWAY, 8801, COLORS)!).searchParams.get(
+      'theme'
+    )!;
     const b64 = param.replace(/-/g, '+').replace(/_/g, '/');
     const decoded = JSON.parse(
       Buffer.from(b64.padEnd(Math.ceil(b64.length / 4) * 4, '='), 'base64').toString('utf8')

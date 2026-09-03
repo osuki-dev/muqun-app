@@ -31,8 +31,7 @@ export function buildDemoTerminalRows(liveRows: readonly string[]): string[] {
 
 export function demoTerminalScroll(): Record<string, number> {
   return {
-    max_offset_from_bottom:
-      DEMO_TERMINAL_TOTAL_ROWS - DEMO_TERMINAL_VIEWPORT_ROWS,
+    max_offset_from_bottom: DEMO_TERMINAL_TOTAL_ROWS - DEMO_TERMINAL_VIEWPORT_ROWS,
     viewport_rows: DEMO_TERMINAL_VIEWPORT_ROWS,
   };
 }

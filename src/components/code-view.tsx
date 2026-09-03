@@ -4,11 +4,7 @@ import type { Colors } from '@osuki-dev/ui';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  highlightFile,
-  type CodeLine,
-  type TokenRole,
-} from '@/lib/code-highlight';
+import { highlightFile, type CodeLine, type TokenRole } from '@/lib/code-highlight';
 
 /**
  * A source file or a diff, coloured, read-only.
@@ -54,10 +50,7 @@ export function CodeView({ name, content }: { name: string; content: string }) {
               <View
                 // Lines have no identity of their own; position is what they are.
                 key={index}
-                style={[
-                  styles.diffRow,
-                  { backgroundColor: diffBackground(line, theme.colors) },
-                ]}>
+                style={[styles.diffRow, { backgroundColor: diffBackground(line, theme.colors) }]}>
                 <Text
                   selectable
                   style={[styles.code, { color: diffColor(line, theme.colors, roleColors) }]}>
@@ -126,11 +119,7 @@ function diffBackground(line: CodeLine, colors: Colors): string | undefined {
   return undefined;
 }
 
-function diffColor(
-  line: CodeLine,
-  colors: Colors,
-  roleColors: Record<TokenRole, string>
-): string {
+function diffColor(line: CodeLine, colors: Colors, roleColors: Record<TokenRole, string>): string {
   if (line.diff === 'added') return colors.success;
   if (line.diff === 'removed') return colors.danger;
   if (line.diff === 'hunk') return colors.primary;
@@ -148,7 +137,13 @@ function diffColor(
 export function withAlpha(color: string, alpha: number): string {
   const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color)?.[1];
   if (!hex) return color;
-  const full = hex.length === 3 ? hex.split('').map((part) => part + part).join('') : hex;
+  const full =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map((part) => part + part)
+          .join('')
+      : hex;
   const red = Number.parseInt(full.slice(0, 2), 16);
   const green = Number.parseInt(full.slice(2, 4), 16);
   const blue = Number.parseInt(full.slice(4, 6), 16);

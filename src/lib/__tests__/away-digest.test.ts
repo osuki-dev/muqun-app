@@ -81,9 +81,7 @@ describe('parsing the ring', () => {
           { seq: 4, pane_id: 'w1:p1', agent: 'claude', from: 'working', to: 'done', unix_ms: NOW },
         ],
       })
-    ).toEqual([
-      { paneId: 'w1:p1', agent: 'claude', from: 'working', to: 'done', atMs: NOW },
-    ]);
+    ).toEqual([{ paneId: 'w1:p1', agent: 'claude', from: 'working', to: 'done', atMs: NOW }]);
   });
 
   // The endpoint was specified with `at` and shipped with `unix_ms`. A client
@@ -98,9 +96,7 @@ describe('parsing the ring', () => {
 
   test('`unix_ms` wins where both are present', () => {
     const [parsed] = agentEventsFromResponse({
-      events: [
-        { pane_id: 'pane-1', agent: 'claude', to: 'done', unix_ms: NOW, at: NOW - 5_000 },
-      ],
+      events: [{ pane_id: 'pane-1', agent: 'claude', to: 'done', unix_ms: NOW, at: NOW - 5_000 }],
     });
     expect(parsed.atMs).toBe(NOW);
   });
@@ -255,7 +251,13 @@ describe('summarising the window', () => {
       [
         event({ paneId: 'pane-2', agent: 'nvim', to: 'idle', atMs: SINCE + 9_000 }),
         event({ paneId: 'pane-1', agent: 'claude', to: 'done', atMs: SINCE + 30_000 }),
-        event({ paneId: 'pane-3', agent: 'codex', from: 'idle', to: 'working', atMs: SINCE + 20_000 }),
+        event({
+          paneId: 'pane-3',
+          agent: 'codex',
+          from: 'idle',
+          to: 'working',
+          atMs: SINCE + 20_000,
+        }),
       ],
       { sinceMs: SINCE, nowMs: NOW }
     );
@@ -331,9 +333,9 @@ describe('the stored visit marks', () => {
   });
 
   test('anything that is not a timestamp is dropped rather than defaulted', () => {
-    expect(
-      parseServerLastViewedIndex('{"a":"soon","b":0,"c":-1,"d":null,"e":789,"":1}')
-    ).toEqual({ e: 789 });
+    expect(parseServerLastViewedIndex('{"a":"soon","b":0,"c":-1,"d":null,"e":789,"":1}')).toEqual({
+      e: 789,
+    });
   });
 
   test('a file that is not an index at all is no marks', () => {
@@ -347,9 +349,7 @@ describe('the stored visit marks', () => {
   });
 
   test('a long-lived install keeps only the most recently viewed', () => {
-    const index = Object.fromEntries(
-      Array.from({ length: 30 }, (_, i) => [`server-${i}`, i + 1])
-    );
+    const index = Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`server-${i}`, i + 1]));
     const kept = keepRecentlyViewedServers(index, Object.keys(index));
 
     expect(Object.keys(kept)).toHaveLength(24);

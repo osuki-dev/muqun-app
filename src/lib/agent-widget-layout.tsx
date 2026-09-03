@@ -7,11 +7,7 @@
 
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import {
-  FlexWidget,
-  TextWidget,
-  type WidgetRepresentation,
-} from 'react-native-android-widget';
+import { FlexWidget, TextWidget, type WidgetRepresentation } from 'react-native-android-widget';
 
 import { agentStatusWord } from '@/i18n/labels';
 import {
@@ -110,11 +106,7 @@ function AgentWidget({ name, palette, snapshot, nowMs }: WidgetProps) {
   return <AgentSquareWidget palette={palette} snapshot={snapshot} nowMs={nowMs} />;
 }
 
-function AgentSquareWidget({
-  palette,
-  snapshot,
-  nowMs,
-}: Omit<WidgetProps, 'name'>) {
+function AgentSquareWidget({ palette, snapshot, nowMs }: Omit<WidgetProps, 'name'>) {
   const shown = snapshot?.agents.slice(0, SQUARE_ROWS) ?? [];
   const overflow = (snapshot?.agents.length ?? 0) - shown.length;
 
@@ -132,7 +124,8 @@ function AgentSquareWidget({
       }}>
       <Header palette={palette} snapshot={snapshot} nowMs={nowMs} />
       {snapshot && shown.length > 0 ? (
-        <FlexWidget style={{ width: 'match_parent', flexDirection: 'column', flexGap: 6, marginTop: 8 }}>
+        <FlexWidget
+          style={{ width: 'match_parent', flexDirection: 'column', flexGap: 6, marginTop: 8 }}>
           {shown.map((agent) => (
             <AgentRow key={agent.id} agent={agent} palette={palette} snapshot={snapshot} />
           ))}
@@ -320,8 +313,7 @@ function StatusDot({ status }: { status: AgentWidgetEntry['status'] }) {
 
 function EmptyState({ palette, connected }: { palette: Palette; connected: boolean }) {
   return (
-    <FlexWidget
-      style={{ flex: 1, width: 'match_parent', justifyContent: 'center' }}>
+    <FlexWidget style={{ flex: 1, width: 'match_parent', justifyContent: 'center' }}>
       <TextWidget
         text={emptyLine(connected)}
         style={{ fontSize: 12, color: palette.muted }}

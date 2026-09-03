@@ -157,8 +157,7 @@ export function assetFromContentHeaders(
   const mime = (header('content-type') ?? '').split(';')[0].trim();
   const name = fileNameFromContentDisposition(header('content-disposition')) || assetId;
   const declaredKind = header('x-asset-kind');
-  const kind =
-    ASSET_KINDS.find((entry) => entry === declaredKind) ?? assetKindFromMime(mime);
+  const kind = ASSET_KINDS.find((entry) => entry === declaredKind) ?? assetKindFromMime(mime);
   const size = Number(header('content-length') ?? '');
   return {
     id: assetId,

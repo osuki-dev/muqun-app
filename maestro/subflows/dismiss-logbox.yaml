@@ -15,10 +15,10 @@ name: dismiss-logbox
 - runFlow:
     when:
       visible:
-        text: "^Dismiss$"
+        text: '^Dismiss$'
     commands:
       - tapOn:
-          text: "^Dismiss$"
+          text: '^Dismiss$'
       - waitForAnimationToEnd:
           timeout: 1000
 
@@ -26,9 +26,9 @@ name: dismiss-logbox
 # has no label of its own, so it is tapped by point.
 - runFlow:
     when:
-      visible: "Open debugger to view warnings."
+      visible: 'Open debugger to view warnings.'
     commands:
       - tapOn:
-          point: "92%,95%"
+          point: '92%,95%'
       - waitForAnimationToEnd:
           timeout: 1000

@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  THEME_PICKER_GRID_GAP,
-  themePickerGridLayout,
-} from '@/lib/theme-picker-layout';
+import { THEME_PICKER_GRID_GAP, themePickerGridLayout } from '@/lib/theme-picker-layout';
 
 describe('theme picker grid layout', () => {
   test('keeps very narrow split views in one column', () => {

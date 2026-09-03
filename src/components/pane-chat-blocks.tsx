@@ -231,7 +231,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
             selectionHandleColor={colors.accent}
             streamingAnimation={false}
             textBreakStrategy="simple"
-            md4cFlags={{ latexMath: false }}
+            md4cFlags={{ latexMath: true }}
             onLinkPress={({ url }) => {
               if (isSafeExternalLink(url)) void Linking.openURL(url);
             }}
@@ -242,12 +242,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
     case 'tool-block':
       return (
         <View style={styles.agentAlign}>
-          <PaneChatToolCard
-            block={part}
-            colors={colors}
-            open={expanded}
-            onToggle={onToggle}
-          />
+          <PaneChatToolCard block={part} colors={colors} open={expanded} onToggle={onToggle} />
         </View>
       );
 
@@ -361,7 +356,11 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
             </ScrollView>
           ) : (
             <Text variant="caption" color={colors.subtle}>
-              {block.status === 'running' ? <Trans>Still running…</Trans> : <Trans>No output.</Trans>}
+              {block.status === 'running' ? (
+                <Trans>Still running…</Trans>
+              ) : (
+                <Trans>No output.</Trans>
+              )}
             </Text>
           )}
           {block.truncated ? (
@@ -457,8 +456,8 @@ const DiffRow = memo(function DiffRow({
                     backgroundColor: added
                       ? colors.addedBackground
                       : removed
-                      ? colors.removedBackground
-                      : 'transparent',
+                        ? colors.removedBackground
+                        : 'transparent',
                   },
                 ]}>
                 {line || ' '}
@@ -517,7 +516,13 @@ const TableRow = memo(function TableRow({
 function withAlpha(color: string, alpha: number): string {
   const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color)?.[1];
   if (!hex) return 'transparent';
-  const full = hex.length === 3 ? hex.split('').map((part) => part + part).join('') : hex;
+  const full =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map((part) => part + part)
+          .join('')
+      : hex;
   const value = Number.parseInt(full, 16);
   return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
 }

@@ -104,9 +104,9 @@ describe('reading the setting an upgrade inherits', () => {
   });
 
   test('the old terminal default is not kept, so chat is not hidden from upgrades', () => {
-    expect(
-      storedAgentDefaultView({ agentStructuredView: false, agentTerminalMode: true })
-    ).toBe(undefined);
+    expect(storedAgentDefaultView({ agentStructuredView: false, agentTerminalMode: true })).toBe(
+      undefined
+    );
   });
 
   test('nothing stored is nothing to migrate', () => {

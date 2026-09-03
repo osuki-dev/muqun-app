@@ -11,10 +11,7 @@
 // still land somewhere honest.
 import { describe, expect, test } from 'bun:test';
 
-import {
-  classifyTransportRefusal,
-  GatewayTransportRefusalError,
-} from '../gateway-refusal';
+import { classifyTransportRefusal, GatewayTransportRefusalError } from '../gateway-refusal';
 
 /** The shape the gateway's `api_error` writes, verbatim. */
 function apiError(code: string, message = 'refused'): string {

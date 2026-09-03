@@ -35,13 +35,7 @@ import { isSafeExternalLink } from '@/lib/safe-link';
  * holds a whole file in the JS heap except text, which is size-capped by
  * `readAssetText`.
  */
-export function AssetViewer({
-  asset,
-  onClose,
-}: {
-  asset: SessionAsset;
-  onClose: () => void;
-}) {
+export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   if (asset.kind === 'image' && asset.previewable) {
     const source = assetImageSource(asset);
     if (!source) return <EncryptedImageViewer asset={asset} onClose={onClose} />;
@@ -134,7 +128,6 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
   const relativeTime = useRelativeTime();
-
 
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
@@ -237,7 +230,6 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 }
 
 function AssetBody({
-
   asset,
   readable,
   content,
@@ -351,7 +343,7 @@ function AssetBody({
             selectionHandleColor={theme.colors.primary}
             streamingAnimation={false}
             textBreakStrategy="simple"
-            md4cFlags={{ latexMath: false }}
+            md4cFlags={{ latexMath: true }}
             onLinkPress={({ url }) => {
               if (isSafeExternalLink(url)) void Linking.openURL(url);
             }}
@@ -394,7 +386,6 @@ function AssetBodyLayer({ id, children }: { id: string; children: React.ReactNod
 function AssetDetails({ asset }: { asset: SessionAsset }) {
   const { t } = useLingui();
   const relativeTime = useRelativeTime();
-
 
   const theme = useThemeTokens();
   const rows: { label: string; value: string }[] = [

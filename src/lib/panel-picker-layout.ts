@@ -23,10 +23,7 @@ export function panelPickerGridLayout(availableWidth: number): PanelPickerGridLa
       : safeWidth >= PANEL_PICKER_GRID_MIN_WIDTH
         ? 2
         : 1;
-  const itemWidth = Math.max(
-    0,
-    (contentWidth - PANEL_PICKER_GRID_GAP * (columns - 1)) / columns
-  );
+  const itemWidth = Math.max(0, (contentWidth - PANEL_PICKER_GRID_GAP * (columns - 1)) / columns);
 
   return { columns, contentWidth, itemWidth };
 }

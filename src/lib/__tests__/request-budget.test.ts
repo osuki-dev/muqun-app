@@ -106,7 +106,10 @@ describe('the body is inside the budget, not outside it', () => {
     // This is the whole point. Before the fix the deadline was cleared the
     // moment the headers landed, and this promise never settled.
     const budget = startRequestBudget(BUDGET_MS, 'The server stopped responding.');
-    const response = withBodyDeadline(fake(() => never), budget);
+    const response = withBodyDeadline(
+      fake(() => never),
+      budget
+    );
 
     await expect(response.text()).rejects.toThrow('The server stopped responding.');
     expect(budget.signal.aborted).toBe(true);
@@ -114,13 +117,19 @@ describe('the body is inside the budget, not outside it', () => {
 
   test('a body that stalls after the headers is still caught by json()', async () => {
     const budget = startRequestBudget(BUDGET_MS, 'The server stopped responding.');
-    const response = withBodyDeadline(fake(() => never), budget);
+    const response = withBodyDeadline(
+      fake(() => never),
+      budget
+    );
     await expect(response.json()).rejects.toThrow('The server stopped responding.');
   });
 
   test('a body that does arrive is returned, and stops the clock', async () => {
     const budget = startRequestBudget(BUDGET_MS, 'gone');
-    const response = withBodyDeadline(fake(async () => '{"ok":true}'), budget);
+    const response = withBodyDeadline(
+      fake(async () => '{"ok":true}'),
+      budget
+    );
 
     expect(await response.json()).toEqual({ ok: true });
     // Disarmed by the read, so the timer cannot come back and abort a request
@@ -140,7 +149,10 @@ describe('the body is inside the budget, not outside it', () => {
 
   test('everything that is not a body reader is the response it always was', () => {
     const budget = startRequestBudget(BUDGET_MS, 'gone');
-    const response = withBodyDeadline(fake(async () => 'x', 404), budget);
+    const response = withBodyDeadline(
+      fake(async () => 'x', 404),
+      budget
+    );
 
     expect(response.status).toBe(404);
     expect(response.ok).toBe(true);
@@ -211,9 +223,9 @@ describe('the words a budget runs out with', () => {
 
   test('every deadline in the gateway client says it timed out', () => {
     const source = readFileSync(CLIENT, 'utf8');
-    const messages = [...source.matchAll(/fetchWithin\(\s*[\w.]+,\s*(?:\/\/[^\n]*\n\s*)*'([^']+)'/g)].map(
-      (match) => match[1]
-    );
+    const messages = [
+      ...source.matchAll(/fetchWithin\(\s*[\w.]+,\s*(?:\/\/[^\n]*\n\s*)*'([^']+)'/g),
+    ].map((match) => match[1]);
 
     // If this is empty the regex has drifted, and an empty list would pass the
     // assertion below while checking nothing at all.

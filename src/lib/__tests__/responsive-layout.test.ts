@@ -279,9 +279,7 @@ describe('the widths the preview actually meets', () => {
   });
 
   test('opens on a 13-inch iPad in landscape', () => {
-    expect(responsiveWorkspaceLayout(IPAD_13_LANDSCAPE, true).previewWidth).toBe(
-      PAD_PREVIEW_WIDTH
-    );
+    expect(responsiveWorkspaceLayout(IPAD_13_LANDSCAPE, true).previewWidth).toBe(PAD_PREVIEW_WIDTH);
   });
 
   test('declines in portrait, where neither half would survive', () => {

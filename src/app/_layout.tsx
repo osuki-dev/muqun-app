@@ -53,9 +53,10 @@ export default function RootLayout() {
     void Device.getDeviceTypeAsync()
       .then((deviceType) => {
         if (!mounted) return;
-        const lock = deviceType === Device.DeviceType.TABLET
-          ? ScreenOrientation.OrientationLock.LANDSCAPE
-          : ScreenOrientation.OrientationLock.PORTRAIT;
+        const lock =
+          deviceType === Device.DeviceType.TABLET
+            ? ScreenOrientation.OrientationLock.LANDSCAPE
+            : ScreenOrientation.OrientationLock.PORTRAIT;
         return ScreenOrientation.lockAsync(lock);
       })
       .catch(() => {
@@ -143,10 +144,7 @@ function RootContent() {
               drawer screens swap without a transition, and its edge-swipe
               gesture fights the terminal's own horizontal panning.
             */}
-            <Stack.Screen
-              name="servers/[serverId]"
-              options={{ animation: 'slide_from_bottom' }}
-            />
+            <Stack.Screen name="servers/[serverId]" options={{ animation: 'slide_from_bottom' }} />
             {/*
               SSH: the host list and one host's shell, both on the root stack
               and both rising from the bottom for the same reasons as the

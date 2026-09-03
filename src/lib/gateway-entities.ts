@@ -11,15 +11,18 @@ export interface GatewayEntity {
 export type GatewayEntityKind = 'workspace' | 'tab' | 'pane' | 'agent';
 
 export function normalizeGatewayEntities(value: unknown, keys: string[]): GatewayEntity[] {
-  return entityArray(value, keys).map(normalizeGatewayEntity).filter((item) => item.id.length > 0);
+  return entityArray(value, keys)
+    .map(normalizeGatewayEntity)
+    .filter((item) => item.id.length > 0);
 }
 
 export function normalizeGatewayEntity(value: unknown): GatewayEntity {
   const raw = unwrapGatewayEntity(value, 0);
   const id = stringValue(raw.id ?? raw.pane_id ?? raw.tab_id ?? raw.workspace_id ?? raw.target);
-  const title = stringValue(
-    raw.label ?? raw.title ?? raw.name ?? raw.terminal_title_stripped ?? raw.agent
-  ) || id || 'Untitled';
+  const title =
+    stringValue(raw.label ?? raw.title ?? raw.name ?? raw.terminal_title_stripped ?? raw.agent) ||
+    id ||
+    'Untitled';
   const cwd = stringValue(raw.cwd ?? raw.foreground_cwd) || undefined;
   const status = stringValue(raw.status ?? raw.agent_status) || undefined;
   const subtitle = [id, cwd, status].filter(Boolean).join(' · ');

@@ -1,9 +1,5 @@
 import { type PressableProps, Pressable, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { feedback, type FeedbackKind } from '@/lib/feedback';
 import { PRESS, timing } from '@/lib/motion';

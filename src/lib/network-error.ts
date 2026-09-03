@@ -118,7 +118,7 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
  */
 export function describeGatewayFailure(
   error: unknown,
-  fallback = t`Request failed.`,
+  fallback = t`Request failed.`
 ): GatewayFailure {
   // First, because it is the one case where the HTTP status is not enough to go
   // on. A pre-sealing refusal answers 403 for both `invalid_token` (pair again)
@@ -168,7 +168,11 @@ export function describeGatewayFailure(
       needsPairing: false,
     };
   }
-  if (normalized.includes('abort') || normalized.includes('timeout') || normalized.includes('timed out')) {
+  if (
+    normalized.includes('abort') ||
+    normalized.includes('timeout') ||
+    normalized.includes('timed out')
+  ) {
     return {
       kind: 'timeout',
       message: t`Gateway did not respond in time.`,
@@ -177,12 +181,12 @@ export function describeGatewayFailure(
     };
   }
   if (
-    normalized.includes('network')
-    || normalized.includes('fetch')
-    || normalized.includes('connect')
-    || normalized.includes('socket')
-    || normalized.includes('host')
-    || normalized.includes('internet')
+    normalized.includes('network') ||
+    normalized.includes('fetch') ||
+    normalized.includes('connect') ||
+    normalized.includes('socket') ||
+    normalized.includes('host') ||
+    normalized.includes('internet')
   ) {
     return {
       kind: 'network',

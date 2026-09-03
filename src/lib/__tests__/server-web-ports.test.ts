@@ -23,9 +23,9 @@ describe('reading a stored list', () => {
   });
 
   test('drops anything that could not open what a chip would print', () => {
-    expect(normalizePorts([0, 65536, -1, 3000.5, '3000', null, undefined, Number.NaN, 3000])).toEqual([
-      3000,
-    ]);
+    expect(
+      normalizePorts([0, 65536, -1, 3000.5, '3000', null, undefined, Number.NaN, 3000])
+    ).toEqual([3000]);
   });
 
   test('a mirror that never had a list reads as none', () => {

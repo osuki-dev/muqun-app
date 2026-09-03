@@ -215,7 +215,9 @@ export const fadeInDown = (duration: DurationToken | PresetToken | number = 'dro
   FadeInDown.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
 
 export const fadeOutDown = (duration: DurationToken | PresetToken | number = 'dropdown') =>
-  FadeOutDown.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
+  FadeOutDown.duration(resolveDuration(duration))
+    .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System);
 
 export const fadeOutUp = (duration: DurationToken | PresetToken | number = 'micro') =>
   FadeOutUp.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
@@ -224,13 +226,19 @@ export const fadeInLeft = (duration: DurationToken | PresetToken | number = 'sho
   FadeInLeft.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
 
 export const fadeInRight = (duration: DurationToken | PresetToken | number = 'short') =>
-  FadeInRight.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
+  FadeInRight.duration(resolveDuration(duration))
+    .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System);
 
 export const fadeOutLeft = (duration: DurationToken | PresetToken | number = 'short') =>
-  FadeOutLeft.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
+  FadeOutLeft.duration(resolveDuration(duration))
+    .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System);
 
 export const fadeOutRight = (duration: DurationToken | PresetToken | number = 'short') =>
-  FadeOutRight.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);
+  FadeOutRight.duration(resolveDuration(duration))
+    .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System);
 
 export const zoomIn = (duration: DurationToken | PresetToken | number = 'micro') =>
   ZoomIn.duration(resolveDuration(duration)).easing(EASE_OUT).reduceMotion(ReduceMotion.System);

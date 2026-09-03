@@ -68,18 +68,15 @@ export function applySgrCodes(
     else if (code === 29) current.strikethrough = false;
     else if (code >= 30 && code <= 37) {
       current.foreground = terminalIndexedColor(code - 30, theme);
-    }
-    else if (code === 39) current.foreground = null;
+    } else if (code === 39) current.foreground = null;
     else if (code >= 40 && code <= 47) {
       current.background = terminalIndexedColor(code - 40, theme);
-    }
-    else if (code === 49) current.background = null;
+    } else if (code === 49) current.background = null;
     else if (code >= 90 && code <= 97) {
       current.foreground = terminalIndexedColor(code - 90 + 8, theme);
     } else if (code >= 100 && code <= 107) {
       current.background = terminalIndexedColor(code - 100 + 8, theme);
-    }
-    else if ((code === 38 || code === 48) && codes[index + 1] === 5) {
+    } else if ((code === 38 || code === 48) && codes[index + 1] === 5) {
       const color = terminalIndexedColor(codes[index + 2] ?? 7, theme);
       if (code === 38) current.foreground = color;
       else current.background = color;

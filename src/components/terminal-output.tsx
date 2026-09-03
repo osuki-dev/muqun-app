@@ -133,8 +133,7 @@ export function TerminalPanel({
           key="agent"
           style={StyleSheet.absoluteFill}
           entering={fadeIn('medium')}
-          exiting={fadeOut('medium')}
-        >
+          exiting={fadeOut('medium')}>
           {/* The reading view pages through history on the same callback the
               grid does; only the gesture that asks for it differs. */}
           <AgentMarkdownOutput
@@ -152,8 +151,7 @@ export function TerminalPanel({
           key="terminal"
           style={StyleSheet.absoluteFill}
           entering={fadeIn('medium')}
-          exiting={fadeOut('medium')}
-        >
+          exiting={fadeOut('medium')}>
           <SkiaTerminal
             output={output}
             terminalId={paneId}

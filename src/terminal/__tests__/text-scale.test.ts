@@ -112,7 +112,7 @@ describe('cell advance rounding', () => {
     }
   });
 
-  it('stays within half a device pixel of the font\'s true advance', () => {
+  it("stays within half a device pixel of the font's true advance", () => {
     for (const ratio of RATIOS) {
       for (const size of SIZES) {
         const truth = size * TERMINAL_ADVANCE_RATIO;

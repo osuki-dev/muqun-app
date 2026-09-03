@@ -95,11 +95,7 @@ export interface ComposerPopupQuery {
  * remembered dismissal has to be forgotten -- the trigger it belonged to is
  * gone from the draft, so the next one the user types deserves a fresh popup.
  */
-export type ComposerPopupClosedReason =
-  | 'no-catalog'
-  | 'no-query'
-  | 'dismissed'
-  | 'no-match';
+export type ComposerPopupClosedReason = 'no-catalog' | 'no-query' | 'dismissed' | 'no-match';
 
 export type ComposerPopupState<T = unknown> =
   | {

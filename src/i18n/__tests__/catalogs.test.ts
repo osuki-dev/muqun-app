@@ -51,7 +51,8 @@ const TRANSLATED_LOCALES = APP_LOCALES.filter((locale) => locale !== 'en');
 // (端, 面, 会) are deliberately absent -- one of them in the list makes the
 // whole assertion cry wolf. Module-level because two suites hold zh-TW text to
 // it: the compiled catalog, and the native locale files prebuild reads.
-const SIMPLIFIED_ONLY = /[设备终码复关闭连线务应确认输报书间华语开个门问题这们时网络显项启动组统释译验]/u;
+const SIMPLIFIED_ONLY =
+  /[设备终码复关闭连线务应确认输报书间华语开个门问题这们时网络显项启动组统释译验]/u;
 
 function blankEntries(catalog: Catalog): string[] {
   return Object.entries(catalog)
@@ -196,9 +197,7 @@ describe('the editor key-row descriptions', () => {
   test('every action on the row says what it does', () => {
     // Including the leader combos, where the cap is `␣sg` and nothing about it
     // suggests "search the project".
-    const undescribed = EDITOR_ACTIONS.map((item) => item.key).filter(
-      (key) => !described.has(key)
-    );
+    const undescribed = EDITOR_ACTIONS.map((item) => item.key).filter((key) => !described.has(key));
     expect(undescribed).toEqual([]);
     expect(described.size).toBe(EDITOR_ACTIONS.length);
   });
@@ -322,9 +321,7 @@ describe('the home-screen widget copy', () => {
   // `'Muqun'` is a single word and stays English on purpose; `'use no memo'` is
   // the compiler directive at the top of the file.
   test('no phrase is written into the tile as a literal', () => {
-    const stripped = layoutSource
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/\/\/[^\n]*/g, '');
+    const stripped = layoutSource.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
     const phrases = [...stripped.matchAll(/'([^'\\\n]*)'|"([^"\\\n]*)"/g)]
       .map((match) => match[1] ?? match[2])
       .filter((literal) => literal.includes(' ') && literal !== 'use no memo');
@@ -335,9 +332,7 @@ describe('the home-screen widget copy', () => {
   // `agentStatusWord`, which is what stops the home screen and the server card
   // calling the same state different things. Held to the same bar all the same,
   // because the tile is now a place it renders.
-  const statusWordBlock = labelsSource.match(
-    /export const agentStatusWord[^{]*\{([\s\S]*?)\n\};/
-  );
+  const statusWordBlock = labelsSource.match(/export const agentStatusWord[^{]*\{([\s\S]*?)\n\};/);
   const statusWords = [...(statusWordBlock?.[1] ?? '').matchAll(/msg`([^`]+)`/g)].map(
     (match) => match[1]
   );
@@ -456,7 +451,7 @@ describe('the native locale files', () => {
     // These keys are spelled by the platforms, not by us, and a typo in one is
     // a file `expo prebuild` writes out and no phone reads.
     expect(Object.keys(file.ios ?? {}).sort()).toEqual(
-      ['CFBundleDisplayName', ...USAGE_KEYS].sort(),
+      ['CFBundleDisplayName', ...USAGE_KEYS].sort()
     );
     expect(Object.keys(file.android ?? {})).toEqual(['app_name']);
 

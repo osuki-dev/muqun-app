@@ -195,14 +195,46 @@ const ALLOWED: { file: string; text: string; why: string }[] = [
   { file: 'src/constants/theme-packs.ts', text: 'Rosé Pine', why: 'palette name, a proper noun' },
   { file: 'src/constants/theme-packs.ts', text: 'Everforest', why: 'palette name, a proper noun' },
   { file: 'src/constants/theme-packs.ts', text: 'Tokyo Night', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'Ayu', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'Dracula', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'Flexoki', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'GitHub', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'Gruvbox', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'Kanagawa', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'Night Owl', why: 'palette name, a proper noun' },
-  { file: 'src/constants/developer-theme-packs.ts', text: 'Solarized', why: 'palette name, a proper noun' },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'Ayu',
+    why: 'palette name, a proper noun',
+  },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'Dracula',
+    why: 'palette name, a proper noun',
+  },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'Flexoki',
+    why: 'palette name, a proper noun',
+  },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'GitHub',
+    why: 'palette name, a proper noun',
+  },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'Gruvbox',
+    why: 'palette name, a proper noun',
+  },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'Kanagawa',
+    why: 'palette name, a proper noun',
+  },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'Night Owl',
+    why: 'palette name, a proper noun',
+  },
+  {
+    file: 'src/constants/developer-theme-packs.ts',
+    text: 'Solarized',
+    why: 'palette name, a proper noun',
+  },
   ...[
     'Bamboo',
     'Bluloco',
@@ -379,9 +411,7 @@ function isAllowed(file: string, text: string): boolean {
 }
 
 function isDescriptorBacked(file: string, sink: string): boolean {
-  return DESCRIPTOR_BACKED.some(
-    (entry) => entry.file === file && entry.sinks.includes(sink)
-  );
+  return DESCRIPTOR_BACKED.some((entry) => entry.file === file && entry.sinks.includes(sink));
 }
 
 /**
@@ -419,7 +449,7 @@ function scanFile(path: string, findings: Finding[]): void {
     readFileSync(path, 'utf8'),
     ts.ScriptTarget.Latest,
     /* setParentNodes */ true,
-    /\.tsx$/.test(path) ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+    path.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
   );
   const file = relative(join(SRC, '..'), path);
 
@@ -492,9 +522,7 @@ function scanFile(path: string, findings: Finding[]): void {
 export function auditUserFacingStrings(): Finding[] {
   const findings: Finding[] = [];
   for (const path of sourceFiles()) scanFile(path, findings);
-  return findings.sort(
-    (a, b) => a.file.localeCompare(b.file) || a.line - b.line
-  );
+  return findings.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line);
 }
 
 /** The files the audit walks, exported so a test can assert it found them. */
@@ -525,10 +553,14 @@ function main(): void {
   for (const [kind, list] of [...byKind].sort((a, b) => b[1].length - a[1].length)) {
     console.log(`\n${kind} (${list.length})`);
     for (const finding of list) {
-      console.log(`  ${finding.file}:${finding.line}  ${finding.sink} = ${JSON.stringify(finding.text)}`);
+      console.log(
+        `  ${finding.file}:${finding.line}  ${finding.sink} = ${JSON.stringify(finding.text)}`
+      );
     }
   }
-  console.log(`\n${findings.length} findings across ${new Set(findings.map((f) => f.file)).size} files.`);
+  console.log(
+    `\n${findings.length} findings across ${new Set(findings.map((f) => f.file)).size} files.`
+  );
   process.exit(1);
 }
 

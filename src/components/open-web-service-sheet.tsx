@@ -156,14 +156,13 @@ export function OpenWebServiceSheet({
               <Trans>Open in your browser</Trans>
             </Text>
             <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>Anything {label} is serving on a port — a dev server, a preview, a dashboard.</Trans>
+              <Trans>
+                Anything {label} is serving on a port — a dev server, a preview, a dashboard.
+              </Trans>
             </Text>
           </View>
           <GlassChrome face="sheet" style={styles.closeButton}>
-            <PressableScale
-              accessibilityLabel={t`Close`}
-              onPress={onClose}
-              style={styles.closeHit}>
+            <PressableScale accessibilityLabel={t`Close`} onPress={onClose} style={styles.closeHit}>
               <X size={18} color={theme.colors.text} />
             </PressableScale>
           </GlassChrome>
@@ -193,7 +192,10 @@ export function OpenWebServiceSheet({
                     }}
                     style={[
                       styles.chip,
-                      { borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceRaised },
+                      {
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.surfaceRaised,
+                      },
                     ]}>
                     <Text variant="data">{String(recent)}</Text>
                   </PressableScale>

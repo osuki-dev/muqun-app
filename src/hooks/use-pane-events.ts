@@ -6,10 +6,7 @@ import { activeLocaleHeaders } from '@/i18n/active-locale';
 import { ServerSentEventParser } from '@/lib/sse-stream';
 import { ENCRYPTED_SSE_EVENT, EncryptedEventStreamDecryptor } from '@/lib/sse-record';
 import { streamRecordCrypto } from '@/lib/gateway-transport';
-import {
-  encryptedEventStreamRequest,
-  gatewayUsesEncryptedTransport,
-} from '@/lib/gateway-client';
+import { encryptedEventStreamRequest, gatewayUsesEncryptedTransport } from '@/lib/gateway-client';
 
 /**
  * A live event feed for one session, replacing the output poll.
@@ -186,9 +183,7 @@ export function usePaneEvents(
       // Sealed fresh for every attempt: the gateway replay-caches the request
       // envelope's nonce, and the per-stream key is bound to it, so a
       // reconnect can never be answered by a recording of the last stream.
-      const sealed = gatewayUsesEncryptedTransport(token)
-        ? encryptedEventStreamRequest(url)
-        : null;
+      const sealed = gatewayUsesEncryptedTransport(token) ? encryptedEventStreamRequest(url) : null;
       const decryptor = sealed
         ? new EncryptedEventStreamDecryptor({
             crypto: streamRecordCrypto,

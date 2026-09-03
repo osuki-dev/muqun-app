@@ -25,7 +25,10 @@ for (const value of [
 equal(validateGatewayUrl('http://100.64.0.1:7347/'), 'http://100.64.0.1:7347');
 equal(normalizeGatewayUrl('100.64.0.1:7347'), 'http://100.64.0.1:7347');
 throws(() => normalizeGatewayUrl('ftp://example.com'));
-equal(validateServerId('8ab68d3f-8b1f-4c36-91a3-206a4ba1bd88'), '8ab68d3f-8b1f-4c36-91a3-206a4ba1bd88');
+equal(
+  validateServerId('8ab68d3f-8b1f-4c36-91a3-206a4ba1bd88'),
+  '8ab68d3f-8b1f-4c36-91a3-206a4ba1bd88'
+);
 equal(
   JSON.stringify(parsePairingOffer('muqun://pair?u=http%3A%2F%2F100.64.0.1%3A7347&s=server-1')),
   JSON.stringify({ url: 'http://100.64.0.1:7347', serverId: 'server-1' })
@@ -53,13 +56,15 @@ const manualOffer = {
   transportRequired: true,
 };
 
-throws(() => validateClaimedPairing(manualOffer, {
-  kind: 'muqun-gateway',
-  server_id: 'server-1',
-  label: 'Gateway',
-  url: 'http://100.64.0.1:7347',
-  token,
-}));
+throws(() =>
+  validateClaimedPairing(manualOffer, {
+    kind: 'muqun-gateway',
+    server_id: 'server-1',
+    label: 'Gateway',
+    url: 'http://100.64.0.1:7347',
+    token,
+  })
+);
 
 equal(
   validateClaimedPairing(manualOffer, {
@@ -78,25 +83,29 @@ equal(
 // A keyless QR is the explicit compatibility path for owner-selected Disabled
 // mode. Manual entry above is intentionally stricter and cannot use this path.
 equal(
-  validateClaimedPairing({
-    url: 'http://100.64.0.1:7347',
-    serverId: 'server-1',
-    verifyAdvertisedUrl: true,
-    transportRequired: false,
-  }, {
-    kind: 'muqun-gateway',
-    server_id: 'server-1',
-    label: 'Gateway',
-    url: 'http://100.64.0.1:7347',
-    token,
-  }).token,
+  validateClaimedPairing(
+    {
+      url: 'http://100.64.0.1:7347',
+      serverId: 'server-1',
+      verifyAdvertisedUrl: true,
+      transportRequired: false,
+    },
+    {
+      kind: 'muqun-gateway',
+      server_id: 'server-1',
+      label: 'Gateway',
+      url: 'http://100.64.0.1:7347',
+      token,
+    }
+  ).token,
   token
 );
 
 console.log('pairing security: all checks passed');
 
 function equal(actual: unknown, expected: unknown): void {
-  if (actual !== expected) throw new Error(`Expected ${String(expected)}, received ${String(actual)}`);
+  if (actual !== expected)
+    throw new Error(`Expected ${String(expected)}, received ${String(actual)}`);
 }
 
 function throws(callback: () => unknown): void {

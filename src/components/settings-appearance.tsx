@@ -25,11 +25,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeMode } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 
-import {
-  SettingsBlock,
-  SettingsChoiceRow,
-  SettingsSection,
-} from '@/components/settings-chrome';
+import { SettingsBlock, SettingsChoiceRow, SettingsSection } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { resolveThemePack } from '@/constants/theme-packs';
 import { LOCALE_LABELS } from '@/i18n/locale';

@@ -236,11 +236,7 @@ export function terminalTopStop(minimumY: number, topInset: number): number {
  * fill the phone. The blank can never run away either -- the two differ by
  * `visibleHeight - topInset - screenHeight`, which is bounded by the viewport.
  */
-export function terminalBottomStop(
-  minimumY: number,
-  topInset: number,
-  historyHeight = 0
-): number {
+export function terminalBottomStop(minimumY: number, topInset: number, historyHeight = 0): number {
   'worklet';
   if (topInset <= 0) return minimumY;
   return Math.min(minimumY, topInset - Math.max(0, historyHeight));
@@ -271,11 +267,7 @@ export function terminalBottomStop(
  * #832. See that function for why below the bottom edge is a real position for
  * a pane whose program draws a rectangle rather than a stream.
  */
-export function terminalRestOffset(
-  minimumY: number,
-  topInset: number,
-  historyHeight = 0
-): number {
+export function terminalRestOffset(minimumY: number, topInset: number, historyHeight = 0): number {
   'worklet';
   if (topInset <= 0) return minimumY;
   return Math.max(
@@ -496,11 +488,7 @@ export const TERMINAL_HISTORY_HINT_INTRO_MS = 2500;
  * over, so what the gesture answers with never changes. At `intro = 1` nothing
  * changes at all, which is what the arithmetic below is arranged to show.
  */
-export function historyHintOpacity(
-  pullDistance: number,
-  loading: boolean,
-  intro = 1
-): number {
+export function historyHintOpacity(pullDistance: number, loading: boolean, intro = 1): number {
   'worklet';
   if (loading) return 1;
   const pulled = Math.max(0, pullDistance) / HISTORY_HINT_REVEAL_DISTANCE;

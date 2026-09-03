@@ -16,11 +16,7 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
@@ -181,8 +177,20 @@ export function VirtualKeyboard({
           esc at this width is the difference between leaving insert mode and
           missing. */}
       <View style={styles.functionRow}>
-        <FunctionKey label="esc" color={keyText} fill={fnFill} disabled={disabled} onPress={() => onKey('esc')} />
-        <FunctionKey label="tab" color={keyText} fill={fnFill} disabled={disabled} onPress={() => onKey('tab')} />
+        <FunctionKey
+          label="esc"
+          color={keyText}
+          fill={fnFill}
+          disabled={disabled}
+          onPress={() => onKey('esc')}
+        />
+        <FunctionKey
+          label="tab"
+          color={keyText}
+          fill={fnFill}
+          disabled={disabled}
+          onPress={() => onKey('tab')}
+        />
         {/* Spelled, not `⌃`. Its two neighbours are words, and the glyph is a
             thin chevron that reads as the `^` character sitting one page away
             on the symbol layout -- a modifier and a character that look alike

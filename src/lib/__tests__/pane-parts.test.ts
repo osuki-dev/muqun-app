@@ -185,7 +185,9 @@ describe('payloads', () => {
 
   test('table cells are coerced to strings, and non-row entries dropped', () => {
     const { parts } = panePartsFromResponse(
-      envelope([{ type: 'table', rows: [['mode', 'result'], ['dark', 7], 'nope'], fallback_text: 't' }])
+      envelope([
+        { type: 'table', rows: [['mode', 'result'], ['dark', 7], 'nope'], fallback_text: 't' },
+      ])
     );
 
     expect(parts[0]).toMatchObject({

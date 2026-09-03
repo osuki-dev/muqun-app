@@ -35,11 +35,7 @@ export function isPadServerRailAgentSelected({
   selectedServerId: string | null;
   selectedPaneId: string | null | undefined;
 }): boolean {
-  return (
-    serverId === selectedServerId
-    && Boolean(agent.paneId)
-    && agent.paneId === selectedPaneId
-  );
+  return serverId === selectedServerId && Boolean(agent.paneId) && agent.paneId === selectedPaneId;
 }
 
 /** Only duplicate labels need their address shown to remain distinguishable. */

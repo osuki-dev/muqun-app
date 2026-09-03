@@ -1,6 +1,6 @@
 name: Feature request
 description: Suggest something Muqun should be able to do.
-labels: ["enhancement"]
+labels: ['enhancement']
 
 # Deliberately shorter than the bug form.
 #

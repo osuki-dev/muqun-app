@@ -21,7 +21,13 @@ function host(overrides: Partial<SshHostRecord> & { id: string }): SshHostRecord
   };
 }
 
-const demo = host({ id: 'demo', label: 'Demo shell', host: 'demo.invalid', username: 'demo', createdAt: 0 });
+const demo = host({
+  id: 'demo',
+  label: 'Demo shell',
+  host: 'demo.invalid',
+  username: 'demo',
+  createdAt: 0,
+});
 
 describe('sshHomeRows', () => {
   test('is empty with no hosts and no demo, so the section stays hidden', () => {
@@ -79,8 +85,12 @@ describe('sortSshHomeHosts', () => {
 
 describe('sshHomeSubtitle', () => {
   test('is user@host, with the port only when it is not the default', () => {
-    expect(sshHomeSubtitle({ username: 'test', host: '127.0.0.1', port: 22 })).toBe('test@127.0.0.1');
-    expect(sshHomeSubtitle({ username: 'test', host: '127.0.0.1', port: 2232 })).toBe('test@127.0.0.1:2232');
+    expect(sshHomeSubtitle({ username: 'test', host: '127.0.0.1', port: 22 })).toBe(
+      'test@127.0.0.1'
+    );
+    expect(sshHomeSubtitle({ username: 'test', host: '127.0.0.1', port: 2232 })).toBe(
+      'test@127.0.0.1:2232'
+    );
   });
 });
 
@@ -93,9 +103,18 @@ describe('sshHomeAge', () => {
 
   test('buckets the age into now, minutes, hours and days', () => {
     expect(sshHomeAge({ lastConnectedAt: NOW - 30_000 }, NOW)).toEqual({ unit: 'now' });
-    expect(sshHomeAge({ lastConnectedAt: NOW - 5 * 60_000 }, NOW)).toEqual({ unit: 'minute', value: 5 });
-    expect(sshHomeAge({ lastConnectedAt: NOW - 3 * 3_600_000 }, NOW)).toEqual({ unit: 'hour', value: 3 });
-    expect(sshHomeAge({ lastConnectedAt: NOW - 2 * 86_400_000 }, NOW)).toEqual({ unit: 'day', value: 2 });
+    expect(sshHomeAge({ lastConnectedAt: NOW - 5 * 60_000 }, NOW)).toEqual({
+      unit: 'minute',
+      value: 5,
+    });
+    expect(sshHomeAge({ lastConnectedAt: NOW - 3 * 3_600_000 }, NOW)).toEqual({
+      unit: 'hour',
+      value: 3,
+    });
+    expect(sshHomeAge({ lastConnectedAt: NOW - 2 * 86_400_000 }, NOW)).toEqual({
+      unit: 'day',
+      value: 2,
+    });
   });
 
   test('treats a timestamp from the future as just now', () => {

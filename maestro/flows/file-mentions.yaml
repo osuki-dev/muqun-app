@@ -33,35 +33,35 @@ tags:
 # ── "@" opens the picker on the workspace's shallowest files ──────────────
 # The demo session opens on the Claude Code pane, whose descriptor turns file
 # mentions on. A bare "@" skips the debounce, so the first screen is immediate.
-- tapOn: "Switch to Claude Code"
+- tapOn: 'Switch to Claude Code'
 - tapOn:
-    id: "terminal-composer-input"
-- inputText: "@"
+    id: 'terminal-composer-input'
+- inputText: '@'
 - extendedWaitUntil:
-    visible: "Files in this workspace"
+    visible: 'Files in this workspace'
     timeout: 6000
 # The first two rows of the catalog, which are the two that cannot be pushed
 # under the five-row cap however the panel is sized.
-- assertVisible: "Mention app.json"
-- assertVisible: "Mention package.json"
+- assertVisible: 'Mention app.json'
+- assertVisible: 'Mention package.json'
 
 # ── Typing narrows it ─────────────────────────────────────────────────────
 # "the" hits src/theme.ts and docs/theming.md and nothing else in the catalog.
 # The heading belongs to the opening screen, so it goes away here.
-- inputText: "the"
+- inputText: 'the'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Mention src/theme.ts"
-- assertVisible: "Mention docs/theming.md"
-- assertNotVisible: "Files in this workspace"
-- assertNotVisible: "Mention package.json"
+- assertVisible: 'Mention src/theme.ts'
+- assertVisible: 'Mention docs/theming.md'
+- assertNotVisible: 'Files in this workspace'
+- assertNotVisible: 'Mention package.json'
 
 # ── Picking one inserts the path and closes the panel ─────────────────────
-- tapOn: "Mention src/theme.ts"
+- tapOn: 'Mention src/theme.ts'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Mention src/theme.ts"
-- assertNotVisible: "Mention docs/theming.md"
+- assertNotVisible: 'Mention src/theme.ts'
+- assertNotVisible: 'Mention docs/theming.md'
 # The draft, asserted as the insert contract writes it: the path byte for byte
 # plus one separating space. The space is not incidental -- it is what the
 # contract promises, and it is also what makes this assertion name the composer
@@ -70,7 +70,7 @@ tags:
 # "src/theme.ts" passes whether or not the pick ever reached the draft. It did
 # exactly that until the chat view started folding tool steps away by default.
 - assertVisible: 'src/theme\.ts '
-- assertVisible: "Send to agent"
+- assertVisible: 'Send to agent'
 
 # ── An "@" inside a word is just an "@" ───────────────────────────────────
 # Start from a fresh draft. Maestro's Android eraseText RPC stalls on this
@@ -79,34 +79,34 @@ tags:
 # rebuilds the transient demo and its draft without repeatedly clearing Android
 # app data and racing a fresh Fabric surface inside one flow.
 - runFlow: ../subflows/restart-demo.yaml
-- tapOn: "Switch to Claude Code"
+- tapOn: 'Switch to Claude Code'
 - tapOn:
-    id: "terminal-composer-input"
+    id: 'terminal-composer-input'
 # Inject the address incrementally. Maestro's Android text bridge deadlocks when
 # an at-sign is embedded in a larger inputText payload, while the same key sent
 # on its own follows the real incremental onChangeText path correctly.
-- inputText: "mail ellen"
-- inputText: "@"
-- inputText: "exa"
+- inputText: 'mail ellen'
+- inputText: '@'
+- inputText: 'exa'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Files in this workspace"
-- assertNotVisible: "Mention app.json"
+- assertNotVisible: 'Files in this workspace'
+- assertNotVisible: 'Mention app.json'
 
 # ── The capability gate, in the off position ──────────────────────────────
 # The editor pane has no composer descriptor at all, which is how the gateway
 # answers for an agent it has no command table for.
 - runFlow: ../subflows/restart-demo.yaml
-- tapOn: "Switch to nvim"
+- tapOn: 'Switch to nvim'
 - waitForAnimationToEnd:
     timeout: 3000
-- tapOn: "Type into this editor"
-- inputText: "@"
+- tapOn: 'Type into this editor'
+- inputText: '@'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertNotVisible: "Files in this workspace"
-- assertNotVisible: "Mention app.json"
-- assertNotVisible: "Mention src/theme.ts"
+- assertNotVisible: 'Files in this workspace'
+- assertNotVisible: 'Mention app.json'
+- assertNotVisible: 'Mention src/theme.ts'
 
 # ── Not reachable offline ─────────────────────────────────────────────────
 # Two behaviours the demo cannot express, because its search answers instantly

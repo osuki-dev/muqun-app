@@ -111,7 +111,10 @@ function adjacentRepeat(rows: readonly string[]): { at: number; size: number } |
       let same = true;
       let carried = 0;
       for (let step = 0; step < size; step += 1) {
-        if (rows[at + step] !== rows[at + size + step]) { same = false; break; }
+        if (rows[at + step] !== rows[at + size + step]) {
+          same = false;
+          break;
+        }
         if (rows[at + step].trim() !== '') carried += 1;
       }
       if (same && carried >= 4) return { at, size };
@@ -138,7 +141,7 @@ async function main(): Promise<void> {
     // of the two things to do about it.
     throw new Error(
       `cannot read a device token from ${TOKEN_PATH}. Pair a device with the ` +
-        `gateway at ${GATEWAY}, write its token there, or set MUQUN_SOAK_TOKEN_FILE.`,
+        `gateway at ${GATEWAY}, write its token there, or set MUQUN_SOAK_TOKEN_FILE.`
     );
   }
   const auth = { Authorization: `Bearer ${token}` };
@@ -177,7 +180,10 @@ async function main(): Promise<void> {
       violations.push({
         at: new Date().toISOString(),
         elapsedSeconds: Math.round((Date.now() - started) / 1000),
-        invariant, detail, origin, fold: folds,
+        invariant,
+        detail,
+        origin,
+        fold: folds,
         incoming: incoming.split('\n'),
         windowBefore: beforeRows,
         windowAfter: afterRows,
@@ -206,16 +212,24 @@ async function main(): Promise<void> {
     const oldest = order.length > 0 ? order[0] : null;
     if (oldest !== null) {
       if (depthFloor > 0 && oldest > depthFloor && afterRows.length < lineLimit) {
-        record('b', `oldest row went from «${depthFloor}» to «${oldest}» with the window ${afterRows.length}/${lineLimit} rows -- not full, so nothing licensed the loss`);
+        record(
+          'b',
+          `oldest row went from «${depthFloor}» to «${oldest}» with the window ${afterRows.length}/${lineLimit} rows -- not full, so nothing licensed the loss`
+        );
       }
       depthFloor = oldest;
     }
 
     // (c) furniture is never history: the pinned box exists once, at the tail.
     for (const row of FURNITURE) {
-      const at = afterRows.map((value, index) => (value.trim() === row ? index : -1)).filter((i) => i >= 0);
+      const at = afterRows
+        .map((value, index) => (value.trim() === row ? index : -1))
+        .filter((i) => i >= 0);
       if (at.length > 1) {
-        record('c', `pinned row ${JSON.stringify(row)} appears ${at.length} times, at ${at.join(',')}`);
+        record(
+          'c',
+          `pinned row ${JSON.stringify(row)} appears ${at.length} times, at ${at.join(',')}`
+        );
         break;
       }
     }
@@ -228,11 +242,12 @@ async function main(): Promise<void> {
   };
 
   const readPane = async (lines: number): Promise<string> => {
-    const url = `${GATEWAY}/api/sessions/${SESSION}/panes/${encodeURIComponent(args.pane)}`
-      + `/output?source=recent-unwrapped&lines=${lines}&format=text`;
+    const url =
+      `${GATEWAY}/api/sessions/${SESSION}/panes/${encodeURIComponent(args.pane)}` +
+      `/output?source=recent-unwrapped&lines=${lines}&format=text`;
     const response = await fetch(url, { headers: auth });
     if (!response.ok) throw new Error(`read ${response.status}`);
-    const body = await response.json() as { result?: { read?: { text?: string } } };
+    const body = (await response.json()) as { result?: { read?: { text?: string } } };
     return body.result?.read?.text ?? '';
   };
 
@@ -250,10 +265,10 @@ async function main(): Promise<void> {
   const streamed = (async () => {
     while (Date.now() < deadline) {
       try {
-        const response = await fetch(
-          `${GATEWAY}/api/sessions/${SESSION}/events?${streamParams}`,
-          { headers: auth, signal: aborter.signal }
-        );
+        const response = await fetch(`${GATEWAY}/api/sessions/${SESSION}/events?${streamParams}`, {
+          headers: auth,
+          signal: aborter.signal,
+        });
         if (!response.body) throw new Error('no stream body');
         const decoder = new TextDecoder();
         let buffer = '';
@@ -266,11 +281,14 @@ async function main(): Promise<void> {
             for (const line of block.split('\n')) {
               if (!line.startsWith('data:')) continue;
               try {
-                const payload = JSON.parse(line.slice(5).trim()) as
-                  { data?: { output?: string; pane?: { pane_id?: string } } };
+                const payload = JSON.parse(line.slice(5).trim()) as {
+                  data?: { output?: string; pane?: { pane_id?: string } };
+                };
                 if (payload.data?.pane?.pane_id !== args.pane) continue;
                 if (typeof payload.data?.output === 'string') fold(payload.data.output, 'frame');
-              } catch { /* a partial line is not an event */ }
+              } catch {
+                /* a partial line is not an event */
+              }
             }
             cut = buffer.indexOf('\n\n');
           }
@@ -315,10 +333,10 @@ async function main(): Promise<void> {
     }
     const minutes = ((Date.now() - started) / 60_000).toFixed(1);
     process.stdout.write(
-      `\r${minutes} min  folds ${folds} `
-      + `(refresh ${counts.refresh} page ${counts.page} frame ${counts.frame})  `
-      + `window ${window ? window.split('\n').length : 0} rows  `
-      + `violations ${violations.length}   `
+      `\r${minutes} min  folds ${folds} ` +
+        `(refresh ${counts.refresh} page ${counts.page} frame ${counts.frame})  ` +
+        `window ${window ? window.split('\n').length : 0} rows  ` +
+        `violations ${violations.length}   `
     );
   }
   aborter.abort();
@@ -336,7 +354,9 @@ async function main(): Promise<void> {
   console.log(`\n\n${folds} folds (${JSON.stringify(counts)})`);
   console.log(`${violations.length} distinct violations -> ${args.report}`);
   for (const violation of violations) {
-    console.log(`  (${violation.invariant}) ${violation.detail}  [${violation.origin}, fold ${violation.fold}]`);
+    console.log(
+      `  (${violation.invariant}) ${violation.detail}  [${violation.origin}, fold ${violation.fold}]`
+    );
   }
   process.exit(violations.length === 0 ? 0 : 1);
 }

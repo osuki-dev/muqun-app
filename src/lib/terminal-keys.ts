@@ -151,11 +151,41 @@ const LEADER = '␣';
  * opened.
  */
 const LEADER_ACTIONS: TerminalKey[] = [
-  { label: `${LEADER}e`, key: 'nvim:leader:e', accessibilityLabel: 'Explorer', cap: `${LEADER}e`, text: ' e' },
-  { label: `${LEADER}ff`, key: 'nvim:leader:ff', accessibilityLabel: 'Find files', cap: `${LEADER}ff`, text: ' ff' },
-  { label: `${LEADER}gg`, key: 'nvim:leader:gg', accessibilityLabel: 'Lazygit', cap: `${LEADER}gg`, text: ' gg' },
-  { label: `${LEADER}sg`, key: 'nvim:leader:sg', accessibilityLabel: 'Grep', cap: `${LEADER}sg`, text: ' sg' },
-  { label: `${LEADER},`, key: 'nvim:leader:,', accessibilityLabel: 'Buffers', cap: `${LEADER},`, text: ' ,' },
+  {
+    label: `${LEADER}e`,
+    key: 'nvim:leader:e',
+    accessibilityLabel: 'Explorer',
+    cap: `${LEADER}e`,
+    text: ' e',
+  },
+  {
+    label: `${LEADER}ff`,
+    key: 'nvim:leader:ff',
+    accessibilityLabel: 'Find files',
+    cap: `${LEADER}ff`,
+    text: ' ff',
+  },
+  {
+    label: `${LEADER}gg`,
+    key: 'nvim:leader:gg',
+    accessibilityLabel: 'Lazygit',
+    cap: `${LEADER}gg`,
+    text: ' gg',
+  },
+  {
+    label: `${LEADER}sg`,
+    key: 'nvim:leader:sg',
+    accessibilityLabel: 'Grep',
+    cap: `${LEADER}sg`,
+    text: ' sg',
+  },
+  {
+    label: `${LEADER},`,
+    key: 'nvim:leader:,',
+    accessibilityLabel: 'Buffers',
+    cap: `${LEADER},`,
+    text: ' ,',
+  },
 ];
 
 /**
@@ -186,7 +216,14 @@ export const EDITOR_ACTIONS: TerminalKey[] = [
   { label: '/', key: 'nvim:search', accessibilityLabel: 'Search', cap: '/', text: '/' },
   { label: ':', key: 'nvim:cmd', accessibilityLabel: 'Command mode', cap: ':', text: ':' },
   { label: ':w', key: 'nvim:w', accessibilityLabel: 'Write', cap: ':w', text: ':w', submit: true },
-  { label: ':wq', key: 'nvim:wq', accessibilityLabel: 'Write and quit', cap: ':wq', text: ':wq', submit: true },
+  {
+    label: ':wq',
+    key: 'nvim:wq',
+    accessibilityLabel: 'Write and quit',
+    cap: ':wq',
+    text: ':wq',
+    submit: true,
+  },
   { label: ':q', key: 'nvim:q', accessibilityLabel: 'Quit', cap: ':q', text: ':q', submit: true },
   { label: 'i', key: 'nvim:i', accessibilityLabel: 'Insert mode', cap: 'i', text: 'i' },
   { label: 'v', key: 'nvim:v', accessibilityLabel: 'Visual mode', cap: 'v', text: 'v' },

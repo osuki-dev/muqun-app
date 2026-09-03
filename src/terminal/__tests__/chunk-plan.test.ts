@@ -237,7 +237,9 @@ describe('nextHeadRecording', () => {
     const head = nextHeadRecording(plans, lines, undefined);
     expect(head?.key).toBe(plans[0].key);
     expect(head?.rows.length).toBe(plans[0].endRow);
-    expect([...(head?.rows ?? [])]).toEqual(lines.slice(0, plans[0].endRow).map((l) => l.signature));
+    expect([...(head?.rows ?? [])]).toEqual(
+      lines.slice(0, plans[0].endRow).map((l) => l.signature)
+    );
   });
 
   test('an empty frame leaves no head behind', () => {

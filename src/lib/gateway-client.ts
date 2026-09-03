@@ -46,7 +46,11 @@ import {
   startRequestBudget,
   withBodyDeadline,
 } from './request-budget';
-import { normalizeGatewayEntities, normalizeGatewayEntity, type GatewayEntity } from './gateway-entities';
+import {
+  normalizeGatewayEntities,
+  normalizeGatewayEntity,
+  type GatewayEntity,
+} from './gateway-entities';
 import { GatewayTransportRefusalError } from './gateway-refusal';
 import {
   encodeMultipart,
@@ -66,11 +70,7 @@ import {
   type AssetKind,
   type SessionAsset,
 } from './session-assets';
-import {
-  NO_GATEWAY_CAPABILITIES,
-  panePartsFromResponse,
-  type PaneParts,
-} from './pane-parts';
+import { NO_GATEWAY_CAPABILITIES, panePartsFromResponse, type PaneParts } from './pane-parts';
 import {
   FILE_MENTION_LIMIT,
   fileMentionHitsFromResponse,
@@ -224,7 +224,8 @@ function shouldEncryptGatewayRequest(input: RequestInfo | URL): boolean {
     !currentDeviceId ||
     !currentTransportKey ||
     currentTransport !== GATEWAY_TRANSPORT
-  ) return false;
+  )
+    return false;
   try {
     const url = new URL(requestUrl(input));
     const gateway = new URL(currentBaseUrl);
@@ -639,21 +640,22 @@ export async function uploadAttachment(
 
   const uploadUrl = `${baseUrl}/api/uploads`;
   const uploadInit: RequestInit = {
-      method: 'POST',
-      // Content-Type is deliberately unset: the multipart boundary belongs to
-      // whichever layer writes the body, and setting it here would not match.
-      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${currentToken}` },
-      body: form,
+    method: 'POST',
+    // Content-Type is deliberately unset: the multipart boundary belongs to
+    // whichever layer writes the body, and setting it here would not match.
+    headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${currentToken}` },
+    body: form,
   };
-  const response = currentTransport === GATEWAY_TRANSPORT
-    ? await encryptedGatewayFetch(uploadUrl, uploadInit, UPLOAD_TIMEOUT_MS)
-    : await fetchWithin(
-        UPLOAD_TIMEOUT_MS,
-        // "Timed out" so `describeGatewayFailure` files this as one; see `gatewayFetch`.
-        'Timed out waiting for the upload.',
-        uploadUrl,
-        uploadInit
-      );
+  const response =
+    currentTransport === GATEWAY_TRANSPORT
+      ? await encryptedGatewayFetch(uploadUrl, uploadInit, UPLOAD_TIMEOUT_MS)
+      : await fetchWithin(
+          UPLOAD_TIMEOUT_MS,
+          // "Timed out" so `describeGatewayFailure` files this as one; see `gatewayFetch`.
+          'Timed out waiting for the upload.',
+          uploadUrl,
+          uploadInit
+        );
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -954,9 +956,10 @@ export async function readAssetText(
   // to completion into a component that is gone.
   const url = assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
-  const response = currentTransport === GATEWAY_TRANSPORT
-    ? await encryptedGatewayFetch(url, init, ASSET_CONTENT_TIMEOUT_MS)
-    : await fetchWithin(ASSET_CONTENT_TIMEOUT_MS, 'Timed out reading the file.', url, init);
+  const response =
+    currentTransport === GATEWAY_TRANSPORT
+      ? await encryptedGatewayFetch(url, init, ASSET_CONTENT_TIMEOUT_MS)
+      : await fetchWithin(ASSET_CONTENT_TIMEOUT_MS, 'Timed out reading the file.', url, init);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
@@ -1233,9 +1236,7 @@ function approvalPath(sessionId: string, paneId: string): string {
 }
 
 async function approvalConflict(response: Response): Promise<never> {
-  const body = (await response.json().catch(() => null)) as
-    | { error?: { code?: unknown } }
-    | null;
+  const body = (await response.json().catch(() => null)) as { error?: { code?: unknown } } | null;
   const code = body?.error?.code;
   if (isApprovalConflictCode(code)) throw new ApprovalConflictError(code);
   // A 409 the app has no name for is still a conflict: the safe reading is
@@ -1327,10 +1328,10 @@ export function configureGateway(record: GatewayRecord | null): void {
 export function gatewayUsesEncryptedTransport(token: string | null): boolean {
   return Boolean(
     token &&
-      token === currentToken &&
-      currentDeviceId &&
-      currentTransportKey &&
-      currentTransport === GATEWAY_TRANSPORT
+    token === currentToken &&
+    currentDeviceId &&
+    currentTransportKey &&
+    currentTransport === GATEWAY_TRANSPORT
   );
 }
 
@@ -1376,9 +1377,7 @@ export function encryptedEventStreamRequest(url: string): EncryptedStreamRequest
     headers: {
       'X-Muqun-Transport': '1',
       'X-Muqun-Device': currentDeviceId,
-      'X-Muqun-Envelope': base64Url(
-        QuickCrypto.Buffer.from(JSON.stringify(envelope), 'utf8')
-      ),
+      'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(JSON.stringify(envelope), 'utf8')),
     },
     requestAad: aad,
     requestNonce: envelope.nonce,
@@ -1398,10 +1397,10 @@ function looksLikeEncryptedEnvelope(value: unknown): value is EncryptedEnvelope 
   if (typeof value !== 'object' || value === null) return false;
   const record = value as Record<string, unknown>;
   return (
-    typeof record.version === 'number'
-    && typeof record.timestamp_ms === 'number'
-    && typeof record.nonce === 'string'
-    && typeof record.ciphertext === 'string'
+    typeof record.version === 'number' &&
+    typeof record.timestamp_ms === 'number' &&
+    typeof record.nonce === 'string' &&
+    typeof record.ciphertext === 'string'
   );
 }
 
@@ -1429,15 +1428,11 @@ async function pairingRequest<T>(
 ): Promise<T> {
   const aad = `POST ${path}`;
   const material = transportKey ? pairingKeyMaterial(transportKey) : null;
-  const requestEnvelope = material
-    ? encryptJson(material, 'pairing-request', aad, body)
-    : null;
+  const requestEnvelope = material ? encryptJson(material, 'pairing-request', aad, body) : null;
   const response = await gatewayFetch(`${gatewayUrl}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(
-      requestEnvelope ?? body
-    ),
+    body: JSON.stringify(requestEnvelope ?? body),
   });
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -1467,11 +1462,16 @@ export async function requestPairing(
   installId?: string,
   transportKey?: string
 ): Promise<PairingRequestResponse> {
-  return pairingRequest(gatewayUrl, '/api/pair/request', {
-    request_id: requestId,
-    device_name: deviceName,
-    ...(installId ? { install_id: installId } : {}),
-  }, transportKey);
+  return pairingRequest(
+    gatewayUrl,
+    '/api/pair/request',
+    {
+      request_id: requestId,
+      device_name: deviceName,
+      ...(installId ? { install_id: installId } : {}),
+    },
+    transportKey
+  );
 }
 
 export async function claimPairing(
@@ -1482,10 +1482,17 @@ export async function claimPairing(
   codeMaterial?: Uint8Array,
   requireCodeEncryption = false
 ): Promise<PairingPayload> {
-  return pairingRequest(gatewayUrl, '/api/pair/claim', {
-    request_id: requestId,
-    code,
-  }, transportKey, codeMaterial, requireCodeEncryption);
+  return pairingRequest(
+    gatewayUrl,
+    '/api/pair/claim',
+    {
+      request_id: requestId,
+      code,
+    },
+    transportKey,
+    codeMaterial,
+    requireCodeEncryption
+  );
 }
 
 /**
@@ -1546,7 +1553,7 @@ export async function probeGatewayReachable(
 export async function loadHealth(): Promise<HealthResponse> {
   const health = isDemoActive()
     ? (demoHealth() as HealthResponse)
-    : (await getHealth() as HealthResponse);
+    : ((await getHealth()) as HealthResponse);
   assertSupportedHerdr(health);
   return health;
 }
@@ -1558,22 +1565,34 @@ export async function loadSessions(): Promise<SessionsResponse> {
 
 export async function loadWorkspaces(sessionId: string): Promise<HerdrEntity[]> {
   if (isDemoActive()) return demoWorkspaces();
-  return normalizeGatewayEntities(await getApiSessionsBySessionIdWorkspaces({ sessionId }), ['workspaces', 'items']);
+  return normalizeGatewayEntities(await getApiSessionsBySessionIdWorkspaces({ sessionId }), [
+    'workspaces',
+    'items',
+  ]);
 }
 
 export async function loadTabs(sessionId: string): Promise<HerdrEntity[]> {
   if (isDemoActive()) return demoTabs();
-  return normalizeGatewayEntities(await getApiSessionsBySessionIdTabs({ sessionId }), ['tabs', 'items']);
+  return normalizeGatewayEntities(await getApiSessionsBySessionIdTabs({ sessionId }), [
+    'tabs',
+    'items',
+  ]);
 }
 
 export async function loadPanes(sessionId: string): Promise<HerdrEntity[]> {
   if (isDemoActive()) return demoPanes();
-  return normalizeGatewayEntities(await getApiSessionsBySessionIdPanes({ sessionId }), ['panes', 'items']);
+  return normalizeGatewayEntities(await getApiSessionsBySessionIdPanes({ sessionId }), [
+    'panes',
+    'items',
+  ]);
 }
 
 export async function loadAgents(sessionId: string): Promise<HerdrEntity[]> {
   if (isDemoActive()) return demoAgents();
-  return normalizeGatewayEntities(await getApiSessionsBySessionIdAgents({ sessionId }), ['agents', 'items']);
+  return normalizeGatewayEntities(await getApiSessionsBySessionIdAgents({ sessionId }), [
+    'agents',
+    'items',
+  ]);
 }
 
 /**
@@ -1718,7 +1737,8 @@ export async function createTab(
 function createdPaneTarget(value: unknown): { workspaceId: string; paneId: string } {
   const result = (value as { result?: Record<string, unknown> })?.result ?? value;
   const pane =
-    (result as { root_pane?: Record<string, unknown>; pane?: Record<string, unknown> })?.root_pane ??
+    (result as { root_pane?: Record<string, unknown>; pane?: Record<string, unknown> })
+      ?.root_pane ??
     (result as { pane?: Record<string, unknown> })?.pane ??
     {};
   const paneId = typeof pane.pane_id === 'string' ? pane.pane_id : '';
@@ -1741,7 +1761,9 @@ export async function focusTab(sessionId: string, tabId: string): Promise<void> 
 }
 
 export async function getPane(sessionId: string, paneId: string): Promise<HerdrEntity> {
-  return normalizeGatewayEntity(await getApiSessionsBySessionIdPanesByPaneId({ sessionId, paneId }));
+  return normalizeGatewayEntity(
+    await getApiSessionsBySessionIdPanesByPaneId({ sessionId, paneId })
+  );
 }
 
 export async function renamePane(sessionId: string, paneId: string, label: string): Promise<void> {
@@ -1783,7 +1805,9 @@ export async function zoomPane(
 }
 
 export async function getAgent(sessionId: string, target: string): Promise<HerdrEntity> {
-  return normalizeGatewayEntity(await getApiSessionsBySessionIdAgentsByTarget({ sessionId, target }));
+  return normalizeGatewayEntity(
+    await getApiSessionsBySessionIdAgentsByTarget({ sessionId, target })
+  );
 }
 
 export async function focusAgent(sessionId: string, target: string): Promise<void> {
@@ -1844,10 +1868,10 @@ function extractPaneReadEnvelope(value: unknown, depth = 0): unknown {
   if (!value || typeof value !== 'object' || depth > 4) return undefined;
   const response = value as PaneOutputResponse & Record<string, unknown>;
   if (
-    typeof response.text === 'string'
-    || typeof response.output === 'string'
-    || typeof response.content === 'string'
-    || Array.isArray(response.lines)
+    typeof response.text === 'string' ||
+    typeof response.output === 'string' ||
+    typeof response.content === 'string' ||
+    Array.isArray(response.lines)
   ) {
     return response;
   }
@@ -1925,10 +1949,7 @@ export async function readPaneRange(
  * the gateway. Keeping the table on the gateway means a newly supported agent
  * arrives with a gateway update rather than an app release.
  */
-export async function loadPaneShortcuts(
-  sessionId: string,
-  paneId: string
-): Promise<PaneShortcuts> {
+export async function loadPaneShortcuts(sessionId: string, paneId: string): Promise<PaneShortcuts> {
   if (isDemoActive()) return demoShortcuts(paneId) as PaneShortcuts;
   const value = (await getApiSessionsBySessionIdPanesByPaneIdShortcuts({
     sessionId,
@@ -1957,12 +1978,20 @@ export async function sendPaneText(sessionId: string, paneId: string, text: stri
   await postApiSessionsBySessionIdPanesByPaneIdSendText({ sessionId, paneId }, { text });
 }
 
-export async function sendPaneKeys(sessionId: string, paneId: string, keys: string[]): Promise<void> {
+export async function sendPaneKeys(
+  sessionId: string,
+  paneId: string,
+  keys: string[]
+): Promise<void> {
   if (isDemoActive()) return;
   await postApiSessionsBySessionIdPanesByPaneIdSendKeys({ sessionId, paneId }, { keys });
 }
 
-export async function sendAgentText(sessionId: string, target: string, text: string): Promise<void> {
+export async function sendAgentText(
+  sessionId: string,
+  target: string,
+  text: string
+): Promise<void> {
   if (isDemoActive()) return;
   await postApiSessionsBySessionIdAgentsByTargetSend({ sessionId, target }, { text });
 }

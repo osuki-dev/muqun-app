@@ -1,6 +1,13 @@
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight, Fingerprint, KeyRound, Lock, Pencil, ShieldCheck } from 'lucide-react-native';
+import {
+  ChevronRight,
+  Fingerprint,
+  KeyRound,
+  Lock,
+  Pencil,
+  ShieldCheck,
+} from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -75,7 +82,9 @@ export function SshHostRow({
 
   // The hint carries what the glyphs say, so a screen reader hears the
   // address, the age and the trust in one breath after the name.
-  const hint = trusted ? `${address} · ${lastConnected} · ${t`Host key trusted`}` : `${address} · ${lastConnected}`;
+  const hint = trusted
+    ? `${address} · ${lastConnected} · ${t`Host key trusted`}`
+    : `${address} · ${lastConnected}`;
 
   return (
     <View testID={testID} style={[styles.row, { backgroundColor: theme.colors.surface }]}>

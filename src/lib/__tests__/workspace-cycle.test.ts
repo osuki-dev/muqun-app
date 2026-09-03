@@ -213,11 +213,14 @@ describe('per-workspace memory', () => {
   });
 
   test('a half-loaded selection does not overwrite what is remembered', () => {
-    const memory = rememberWorkspaceSelection({}, {
-      workspaceId: 'wM',
-      tabId: 't1',
-      paneId: 'p1',
-    });
+    const memory = rememberWorkspaceSelection(
+      {},
+      {
+        workspaceId: 'wM',
+        tabId: 't1',
+        paneId: 'p1',
+      }
+    );
     const after = rememberWorkspaceSelection(memory, {
       workspaceId: 'wM',
       tabId: '',
@@ -228,11 +231,14 @@ describe('per-workspace memory', () => {
   });
 
   test('an unchanged selection keeps the same object, so no render is caused', () => {
-    const memory = rememberWorkspaceSelection({}, {
-      workspaceId: 'wM',
-      tabId: 't1',
-      paneId: 'p1',
-    });
+    const memory = rememberWorkspaceSelection(
+      {},
+      {
+        workspaceId: 'wM',
+        tabId: 't1',
+        paneId: 'p1',
+      }
+    );
     expect(
       rememberWorkspaceSelection(memory, { workspaceId: 'wM', tabId: 't1', paneId: 'p1' })
     ).toBe(memory);

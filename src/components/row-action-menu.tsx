@@ -3,11 +3,7 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Pencil, Trash2, X } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';

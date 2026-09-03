@@ -24,16 +24,16 @@ name: motion-p2-capture
 
 - runFlow:
     when:
-      visible: "Try the demo"
+      visible: 'Try the demo'
     commands:
-      - tapOn: "Try the demo"
+      - tapOn: 'Try the demo'
 - runFlow:
     when:
-      notVisible: "Try the demo"
+      notVisible: 'Try the demo'
     commands:
-      - tapOn: "Open Local Herdr"
+      - tapOn: 'Open Local Herdr'
 - extendedWaitUntil:
-    visible: "Show what is running"
+    visible: 'Show what is running'
     timeout: 20000
 # The digest raised on returning to a server after a long absence, which
 # demo mode fabricates once per launch (card #691). A no-op wherever there is
@@ -48,13 +48,13 @@ name: motion-p2-capture
 # colours changing on the frame the selection did.
 - takeScreenshot: dist/motion-618-p2/11-pane-strip-before
 - tapOn:
-    text: "Switch to nvim"
+    text: 'Switch to nvim'
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: dist/motion-618-p2/12-pane-strip-after
 - tapOn:
-    text: "Switch to Claude Code"
+    text: 'Switch to Claude Code'
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000
@@ -65,8 +65,8 @@ name: motion-p2-capture
 # The composer has no test id and its placeholder is the pane's own name, so it
 # is reached by position: the full-width field along the bottom of the dock.
 - tapOn:
-    point: "45%,94%"
-- inputText: "echo hello"
+    point: '45%,94%'
+- inputText: 'echo hello'
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: dist/motion-618-p2/14-send-armed
@@ -78,19 +78,19 @@ name: motion-p2-capture
 # The on-screen keyboard, and Shift -- the one key on it that holds a state, and
 # therefore the only one this batch was allowed to animate.
 - tapOn:
-    text: "Open on-screen keyboard"
+    text: 'Open on-screen keyboard'
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: dist/motion-618-p2/15-virtual-keyboard
 - tapOn:
-    text: "Shift"
+    text: 'Shift'
     optional: true
 - waitForAnimationToEnd:
     timeout: 2000
 - takeScreenshot: dist/motion-618-p2/16-virtual-keyboard-shift
 - tapOn:
-    text: "Hide keyboard"
+    text: 'Hide keyboard'
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000
@@ -98,13 +98,13 @@ name: motion-p2-capture
 # Quick actions: saved rows that arrive as a list, a tapped row that says so,
 # and a section that states its own shape while the gateway is asked for it.
 - tapOn:
-    text: "Open quick actions"
+    text: 'Open quick actions'
     optional: true
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: dist/motion-618-p2/17-quick-actions
 - tapOn:
-    text: "Close quick actions"
+    text: 'Close quick actions'
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000
@@ -112,13 +112,13 @@ name: motion-p2-capture
 # The session map -- the panels sheet in the audit's words: rows that arrive and
 # leave, a selection that travels, and a skeleton in place of a blank sheet.
 - tapOn:
-    text: "Show what is running"
+    text: 'Show what is running'
     optional: true
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: dist/motion-618-p2/18-session-map
 - tapOn:
-    text: "Close"
+    text: 'Close'
     optional: true
 - waitForAnimationToEnd:
     timeout: 3000
@@ -126,12 +126,12 @@ name: motion-p2-capture
 # Settings, for the paired-device block: a skeleton while the gateway is asked,
 # and rows that leave rather than disappearing when one is revoked.
 - tapOn:
-    text: "Back to servers"
+    text: 'Back to servers'
     optional: true
 - waitForAnimationToEnd:
     timeout: 4000
 - tapOn:
-    text: "Settings"
+    text: 'Settings'
     optional: true
 - waitForAnimationToEnd:
     timeout: 5000

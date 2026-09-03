@@ -199,10 +199,12 @@ function sameContent(a: AgentWidgetSnapshot, b: AgentWidgetSnapshot): boolean {
   if (a.agents.length !== b.agents.length) return false;
   return a.agents.every((agent, index) => {
     const other = b.agents[index];
-    return agent.id === other.id
-      && agent.name === other.name
-      && agent.status === other.status
-      && agent.paneId === other.paneId;
+    return (
+      agent.id === other.id &&
+      agent.name === other.name &&
+      agent.status === other.status &&
+      agent.paneId === other.paneId
+    );
   });
 }
 
@@ -244,14 +246,16 @@ function parseSnapshot(value: string): AgentWidgetSnapshot | null {
         if (typeof item !== 'object' || item === null) return [];
         const agent = item as Record<string, unknown>;
         if (typeof agent.id !== 'string' || typeof agent.name !== 'string') return [];
-        return [{
-          id: agent.id,
-          name: agent.name,
-          status: asAgentWidgetStatus(
-            typeof agent.status === 'string' ? agent.status : undefined
-          ),
-          paneId: typeof agent.paneId === 'string' ? agent.paneId : '',
-        }];
+        return [
+          {
+            id: agent.id,
+            name: agent.name,
+            status: asAgentWidgetStatus(
+              typeof agent.status === 'string' ? agent.status : undefined
+            ),
+            paneId: typeof agent.paneId === 'string' ? agent.paneId : '',
+          },
+        ];
       }),
     };
   } catch {
@@ -269,7 +273,7 @@ function parseSnapshot(value: string): AgentWidgetSnapshot | null {
  */
 async function drawAgentWidgets(snapshot: AgentWidgetSnapshot | null): Promise<void> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // oxlint-disable-next-line typescript/no-require-imports
     const bridge = require('./agent-widget-bridge') as {
       pushAgentWidgets: (value: AgentWidgetSnapshot | null) => Promise<void>;
     };

@@ -55,20 +55,20 @@ name: i18n-shots
 # screen it opens is titled with. The drawer is switched off (card #664).
 - extendedWaitUntil:
     visible:
-      text: "^(Settings|設定)$"
+      text: '^(Settings|設定)$'
     timeout: 10000
 - tapOn:
-    text: "^(Settings|設定)$"
+    text: '^(Settings|設定)$'
 - extendedWaitUntil:
     visible:
-      text: "^(Color mode|色彩模式)$"
+      text: '^(Color mode|色彩模式)$'
     timeout: 10000
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
 - tapOn:
-    text: "(?i)^english$"
+    text: '(?i)^english$'
 - extendedWaitUntil:
-    visible: "Color mode"
+    visible: 'Color mode'
     timeout: 10000
 - waitForAnimationToEnd:
     timeout: 2000
@@ -78,9 +78,9 @@ name: i18n-shots
 
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 10000
 - waitForAnimationToEnd:
     timeout: 2000
@@ -88,9 +88,9 @@ name: i18n-shots
 
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Try the demo"
+- tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 25000
 - waitForAnimationToEnd:
     timeout: 4000
@@ -103,29 +103,29 @@ name: i18n-shots
 - takeScreenshot: shots/en-3-server
 
 - runFlow: ../subflows/dismiss-permission.yaml
-- tapOn: "Show what is running"
+- tapOn: 'Show what is running'
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: shots/en-4-panels
-- tapOn: "Close"
+- tapOn: 'Close'
 - waitForAnimationToEnd:
     timeout: 2000
 
 # ── Switch to Traditional Chinese, from inside the app ─────────────────────
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Back to servers"
+- tapOn: 'Back to servers'
 - extendedWaitUntil:
-    visible: "Try the demo"
+    visible: 'Try the demo'
     timeout: 10000
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
 - extendedWaitUntil:
-    visible: "Settings"
+    visible: 'Settings'
     timeout: 10000
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "Color mode"
+    visible: 'Color mode'
     timeout: 10000
 # The picker is a form sheet since card #683, behind a row that names the
 # language in force. The option inside is still written in its own language, so
@@ -133,17 +133,17 @@ name: i18n-shots
 # would look for it.
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Language, System"
+- tapOn: 'Language, System'
 - extendedWaitUntil:
-    visible: "繁體中文"
+    visible: '繁體中文'
     timeout: 8000
-- tapOn: "繁體中文"
+- tapOn: '繁體中文'
 
 # ── Traditional Chinese ───────────────────────────────────────────────────
 # 色彩模式 rather than "Color mode": had the switch not taken effect this fails
 # here, instead of quietly writing an English screenshot under a zh name.
 - extendedWaitUntil:
-    visible: "色彩模式"
+    visible: '色彩模式'
     timeout: 10000
 - waitForAnimationToEnd:
     timeout: 2000
@@ -151,9 +151,9 @@ name: i18n-shots
 
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "返回"
+- tapOn: '返回'
 - extendedWaitUntil:
-    visible: "試用示範"
+    visible: '試用示範'
     timeout: 10000
 - waitForAnimationToEnd:
     timeout: 2000
@@ -161,9 +161,9 @@ name: i18n-shots
 
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "試用示範"
+- tapOn: '試用示範'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 25000
 - waitForAnimationToEnd:
     timeout: 4000
@@ -172,11 +172,11 @@ name: i18n-shots
 - takeScreenshot: shots/zh-3-server
 
 - runFlow: ../subflows/dismiss-permission.yaml
-- tapOn: "開啟面板清單"
+- tapOn: '開啟面板清單'
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: shots/zh-4-panels
-- tapOn: "關閉面板清單"
+- tapOn: '關閉面板清單'
 - waitForAnimationToEnd:
     timeout: 2000
 
@@ -185,19 +185,19 @@ name: i18n-shots
 # next one a starting state it did not choose.
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "回到伺服器列表"
+- tapOn: '回到伺服器列表'
 - extendedWaitUntil:
-    visible: "試用示範"
+    visible: '試用示範'
     timeout: 10000
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "開啟導覽"
+- tapOn: '開啟導覽'
 - extendedWaitUntil:
-    visible: "設定"
+    visible: '設定'
     timeout: 10000
-- tapOn: "設定"
+- tapOn: '設定'
 - extendedWaitUntil:
-    visible: "色彩模式"
+    visible: '色彩模式'
     timeout: 10000
 - runFlow: ../subflows/dismiss-permission.yaml
 - runFlow: ../subflows/dismiss-logbox.yaml
@@ -205,10 +205,10 @@ name: i18n-shots
 # what makes this unambiguous: 系統 is both the language option and the colour
 # mode segment, and only one of the two is on screen at a time now.
 - tapOn:
-    text: "語言.*"
+    text: '語言.*'
 - extendedWaitUntil:
-    visible: "繁體中文"
+    visible: '繁體中文'
     timeout: 8000
-- tapOn: "系統"
+- tapOn: '系統'
 - waitForAnimationToEnd:
     timeout: 2000

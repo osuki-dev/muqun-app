@@ -84,8 +84,8 @@ function appendStreamedRows(): void {
   for (let index = 0; index < streamRowsPerTick; index += 1) {
     streamedRows += 1;
     syntheticHistory.push(
-      `stream ${String(streamedRows).padStart(5, '0')} · the agent is still printing · `
-        + 'a line long enough to be worth reading and to wrap on a phone'
+      `stream ${String(streamedRows).padStart(5, '0')} · the agent is still printing · ` +
+        'a line long enough to be worth reading and to wrap on a phone'
     );
     syntheticHistory.shift();
   }
@@ -171,10 +171,38 @@ const panes: Entity[] = [
 // each one leaves is different in ways the chat view has to survive -- see
 // `DIVIDERS` below.
 const agents: Entity[] = [
-  { id: 'agent-1', label: 'Claude Code', target: 'pane-1', pane_id: 'pane-1', agent: 'claude', status: 'working' },
-  { id: 'agent-2', label: 'Codex', target: 'pane-5', pane_id: 'pane-5', agent: 'codex', status: 'blocked' },
-  { id: 'agent-3', label: 'opencode', target: 'pane-6', pane_id: 'pane-6', agent: 'opencode', status: 'idle' },
-  { id: 'agent-4', label: 'Qoder', target: 'pane-7', pane_id: 'pane-7', agent: 'qoder', status: 'idle' },
+  {
+    id: 'agent-1',
+    label: 'Claude Code',
+    target: 'pane-1',
+    pane_id: 'pane-1',
+    agent: 'claude',
+    status: 'working',
+  },
+  {
+    id: 'agent-2',
+    label: 'Codex',
+    target: 'pane-5',
+    pane_id: 'pane-5',
+    agent: 'codex',
+    status: 'blocked',
+  },
+  {
+    id: 'agent-3',
+    label: 'opencode',
+    target: 'pane-6',
+    pane_id: 'pane-6',
+    agent: 'opencode',
+    status: 'idle',
+  },
+  {
+    id: 'agent-4',
+    label: 'Qoder',
+    target: 'pane-7',
+    pane_id: 'pane-7',
+    agent: 'qoder',
+    status: 'idle',
+  },
 ];
 let outputReadCount = 0;
 let partsReadCount = 0;
@@ -347,7 +375,7 @@ const terminalOutput = [
   'Docs: \u001b]8;;https://docs.expo.dev/versions/v57.0.0/\u0007Expo 57\u001b]8;;\u0007  http://10.0.2.2:7348/health',
   ...Array.from(
     { length: 64 },
-    (_, index) => `${String(index + 1).padStart(2, '0')}  dev server log · panel output`,
+    (_, index) => `${String(index + 1).padStart(2, '0')}  dev server log · panel output`
   ),
   '\u001b[38;2;255;90;74m\uf013\u001b[0m \uf07c src  \ue718 app.tsx  \ue7a8 React  \ue0b0  中文显示正常',
   'Docs: \u001b]8;;https://docs.expo.dev/versions/v57.0.0/\u0007Expo 57\u001b]8;;\u0007  http://10.0.2.2:7348/health',
@@ -405,7 +433,18 @@ function sniffUploadKind(bytes: Uint8Array): { extension: string; mime: string }
   if (bytes.byteLength >= 12 && ascii(0, 'RIFF') && ascii(8, 'WEBP')) {
     return { extension: 'webp', mime: 'image/webp' };
   }
-  const heicBrands = ['heic', 'heix', 'heim', 'heis', 'hevc', 'hevx', 'hevm', 'hevs', 'mif1', 'msf1'];
+  const heicBrands = [
+    'heic',
+    'heix',
+    'heim',
+    'heis',
+    'hevc',
+    'hevx',
+    'hevm',
+    'hevs',
+    'mif1',
+    'msf1',
+  ];
   if (bytes.byteLength >= 12 && ascii(4, 'ftyp') && heicBrands.some((brand) => ascii(8, brand))) {
     return { extension: 'heic', mime: 'image/heic' };
   }
@@ -586,7 +625,9 @@ const server = Bun.serve({
       const data = await body(request);
       const requestId = String(data.request_id ?? '');
       const code = String(data.code ?? '').toUpperCase();
-      console.log(`[mock] pairing claim fields=${Object.keys(data).join(',')} id=${requestId || '-'} code=${code || '-'}`);
+      console.log(
+        `[mock] pairing claim fields=${Object.keys(data).join(',')} id=${requestId || '-'} code=${code || '-'}`
+      );
       if (!pendingRequests.has(requestId)) return json({ error: 'pairing request not found' }, 404);
       if (code !== pairingCode) return json({ error: 'incorrect pairing code' }, 401);
       pendingRequests.delete(requestId);
@@ -625,7 +666,9 @@ const server = Bun.serve({
       uploadCount += 1;
       const path = `${uploadsDir}/upload-${Date.now().toString(36)}-${uploadCount}.${kind.extension}`;
       await Bun.write(path, bytes);
-      console.log(`[mock] upload ${clientName} -> ${path} (${bytes.byteLength} bytes, ${kind.mime})`);
+      console.log(
+        `[mock] upload ${clientName} -> ${path} (${bytes.byteLength} bytes, ${kind.mime})`
+      );
       return json({ path, name: clientName, size: bytes.byteLength, mime: kind.mime });
     }
 
@@ -649,7 +692,9 @@ const server = Bun.serve({
     }
 
     if (request.method === 'GET' && pathname === '/api/sessions') {
-      return json({ sessions: [{ id: 'default', label: serverLabel, socket_path: '/tmp/herdr.sock' }] });
+      return json({
+        sessions: [{ id: 'default', label: serverLabel, socket_path: '/tmp/herdr.sock' }],
+      });
     }
 
     const assetListMatch = pathname.match(/^\/api\/sessions\/[^/]+\/assets$/);
@@ -709,7 +754,9 @@ const server = Bun.serve({
       return json(created, 201);
     }
 
-    const entityMatch = pathname.match(/^\/api\/sessions\/[^/]+\/(workspaces|tabs|panes)\/([^/]+)$/);
+    const entityMatch = pathname.match(
+      /^\/api\/sessions\/[^/]+\/(workspaces|tabs|panes)\/([^/]+)$/
+    );
     if (entityMatch) {
       const [, kind, id] = entityMatch;
       const items = kind === 'workspaces' ? workspaces : kind === 'tabs' ? tabs : panes;
@@ -723,7 +770,8 @@ const server = Bun.serve({
         Object.assign(items[index], await body(request));
         return json(items[index]);
       }
-      if (request.method === 'GET') return index >= 0 ? json(items[index]) : json({ error: 'not found' }, 404);
+      if (request.method === 'GET')
+        return index >= 0 ? json(items[index]) : json({ error: 'not found' }, 404);
     }
 
     const shortcutMatch = pathname.match(/^\/api\/sessions\/[^/]+\/panes\/([^/]+)\/shortcuts$/);
@@ -836,14 +884,25 @@ const server = Bun.serve({
           // it. The rows are appended here rather than on a timer of their own
           // because a pane nobody is subscribed to has no reason to grow -- and
           // it keeps the two intervals from being two things to keep in sync.
-          const timer = setInterval(() => {
-            if (streamIntervalMs > 0) appendStreamedRows();
-            revision += 1;
-            send('herdr', {
-              event: 'pane_updated',
-              data: { type: 'pane_updated', pane: { pane_id: 'pane-1', revision, tab_id: 'tab-1', workspace_id: 'workspace-1' } },
-            });
-          }, streamIntervalMs > 0 ? streamIntervalMs : eventIntervalMs);
+          const timer = setInterval(
+            () => {
+              if (streamIntervalMs > 0) appendStreamedRows();
+              revision += 1;
+              send('herdr', {
+                event: 'pane_updated',
+                data: {
+                  type: 'pane_updated',
+                  pane: {
+                    pane_id: 'pane-1',
+                    revision,
+                    tab_id: 'tab-1',
+                    workspace_id: 'workspace-1',
+                  },
+                },
+              });
+            },
+            streamIntervalMs > 0 ? streamIntervalMs : eventIntervalMs
+          );
           request.signal.addEventListener('abort', () => {
             clearInterval(timer);
             controller.close();
@@ -871,7 +930,9 @@ const server = Bun.serve({
       // at pagination. Off by default so the numbered scrollback below is what
       // a page read returns.
       if (process.env.MOCK_GATEWAY_FIXTURE === '1') {
-        return json({ text: `$ bun run dev\nserver: ${serverLabel}\n${terminalOutput}\nMuqun mock gateway is ready.\n` });
+        return json({
+          text: `$ bun run dev\nserver: ${serverLabel}\n${terminalOutput}\nMuqun mock gateway is ready.\n`,
+        });
       }
       // Honour `lines` the way the real gateway does: a row limit counted from
       // the bottom. Without this every page read returns the same window and
@@ -889,9 +950,9 @@ const server = Bun.serve({
         await new Promise((resolve) => setTimeout(resolve, pageDelayMs));
       }
       console.log(
-        `[mock] output lines=${lineLimit} (asked ${url.searchParams.get('lines') ?? '-'}) `
-          + `source=${url.searchParams.get('source') ?? '-'} format=${url.searchParams.get('format') ?? '-'} `
-          + `first=${window[0]?.slice(0, 12)} read#${outputReadCount} ${new Date().toISOString()}`
+        `[mock] output lines=${lineLimit} (asked ${url.searchParams.get('lines') ?? '-'}) ` +
+          `source=${url.searchParams.get('source') ?? '-'} format=${url.searchParams.get('format') ?? '-'} ` +
+          `first=${window[0]?.slice(0, 12)} read#${outputReadCount} ${new Date().toISOString()}`
       );
       return json({ text: `${window.join('\n')}\n` });
     }
@@ -926,9 +987,9 @@ const server = Bun.serve({
       }
       const parts = syntheticParts(TRANSCRIPT_ROWS - lineLimit, paneAgent);
       console.log(
-        `[mock] parts lines=${lineLimit} (asked ${url.searchParams.get('lines') ?? '-'}) `
-          + `agent=${paneAgent} parts=${parts.length} firstRow=${TRANSCRIPT_ROWS - lineLimit} `
-          + `read#${partsReadCount} ${new Date().toISOString()}`
+        `[mock] parts lines=${lineLimit} (asked ${url.searchParams.get('lines') ?? '-'}) ` +
+          `agent=${paneAgent} parts=${parts.length} firstRow=${TRANSCRIPT_ROWS - lineLimit} ` +
+          `read#${partsReadCount} ${new Date().toISOString()}`
       );
       return json({
         schema_version: '1.4.0',

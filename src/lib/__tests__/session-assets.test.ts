@@ -43,7 +43,9 @@ describe('sessionAssetsFromResponse', () => {
 
   test('accepts a bare array and a result envelope alike', () => {
     const bare = sessionAssetsFromResponse([{ id: 'as_1', path: '/ws/a.md' }]);
-    const wrapped = sessionAssetsFromResponse({ result: { assets: [{ id: 'as_1', path: '/ws/a.md' }] } });
+    const wrapped = sessionAssetsFromResponse({
+      result: { assets: [{ id: 'as_1', path: '/ws/a.md' }] },
+    });
 
     expect(bare).toEqual(wrapped);
     expect(bare).toHaveLength(1);
@@ -64,7 +66,9 @@ describe('sessionAssetsFromResponse', () => {
   });
 
   test('fills in what an older gateway leaves out', () => {
-    const [entry] = sessionAssetsFromResponse([{ id: 'as_1', path: '/ws/notes/report.md', kind: 'markdown' }]);
+    const [entry] = sessionAssetsFromResponse([
+      { id: 'as_1', path: '/ws/notes/report.md', kind: 'markdown' },
+    ]);
 
     expect(entry.name).toBe('report.md');
     expect(entry.mime).toBe('application/octet-stream');
@@ -74,7 +78,9 @@ describe('sessionAssetsFromResponse', () => {
   });
 
   test('an unknown kind is treated as an opaque binary, not rendered', () => {
-    const [entry] = sessionAssetsFromResponse([{ id: 'as_1', path: '/ws/thing.xyz', kind: 'hologram' }]);
+    const [entry] = sessionAssetsFromResponse([
+      { id: 'as_1', path: '/ws/thing.xyz', kind: 'hologram' },
+    ]);
 
     expect(entry.kind).toBe('binary');
     expect(entry.previewable).toBe(false);
@@ -139,14 +145,22 @@ describe('assetFromContentHeaders', () => {
   });
 
   test('falls back to the media type when the gateway names no kind', () => {
-    expect(assetFromContentHeaders('as_1', headersFrom({ 'content-type': 'text/markdown; charset=utf-8' })).kind).toBe(
-      'markdown'
-    );
-    expect(assetFromContentHeaders('as_2', headersFrom({ 'content-type': 'application/pdf' })).kind).toBe('pdf');
-    expect(assetFromContentHeaders('as_3', headersFrom({ 'content-type': 'text/plain; charset=utf-8' })).kind).toBe(
-      'text'
-    );
-    expect(assetFromContentHeaders('as_4', headersFrom({ 'content-type': 'application/zip' })).kind).toBe('binary');
+    expect(
+      assetFromContentHeaders(
+        'as_1',
+        headersFrom({ 'content-type': 'text/markdown; charset=utf-8' })
+      ).kind
+    ).toBe('markdown');
+    expect(
+      assetFromContentHeaders('as_2', headersFrom({ 'content-type': 'application/pdf' })).kind
+    ).toBe('pdf');
+    expect(
+      assetFromContentHeaders('as_3', headersFrom({ 'content-type': 'text/plain; charset=utf-8' }))
+        .kind
+    ).toBe('text');
+    expect(
+      assetFromContentHeaders('as_4', headersFrom({ 'content-type': 'application/zip' })).kind
+    ).toBe('binary');
   });
 
   test('a header carrying a path can only ever name a file', () => {

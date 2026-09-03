@@ -190,12 +190,10 @@ export function mergeTerminalWindow(
     const latest = terminalLines(incoming);
     const overlap = longestPrefixThatIsSuffix(latest, current);
 
-    const merged = overlap > 0
-      ? [...current, ...latest.slice(overlap)]
-      : [
-          ...current.slice(0, Math.max(0, current.length - latest.length)),
-          ...latest,
-        ];
+    const merged =
+      overlap > 0
+        ? [...current, ...latest.slice(overlap)]
+        : [...current.slice(0, Math.max(0, current.length - latest.length)), ...latest];
     return trimTerminalWindow(collapseRepeat(merged).join('\n'), maximumLines);
   } catch {
     return trimTerminalWindow(incoming, maximumLines);
@@ -626,10 +624,11 @@ export function sanitizePaneRead(output: string): string {
       if (run <= cut) continue;
       const substantial = rows.slice(0, run).filter((row) => row.trim() !== '').length;
       if (
-        run >= REPEAT_BLOCK_ROWS
-        && substantial >= REPEAT_BLOCK_ROWS
-        && carried.size >= SANITIZE_MIN_DISTINCT
-      ) cut = run;
+        run >= REPEAT_BLOCK_ROWS &&
+        substantial >= REPEAT_BLOCK_ROWS &&
+        carried.size >= SANITIZE_MIN_DISTINCT
+      )
+        cut = run;
     }
     return cut > 0 ? rows.slice(cut).join('\n') : output;
   } catch {
@@ -779,17 +778,18 @@ export function hasEarlierTerminalOutput(
  * "no range" rather than throwing or handing a broken fact on to a caller
  * that trusts this completely.
  */
-export function paneReadRange(
-  read: unknown
-): { start: number; end: number; total: number } | null {
+export function paneReadRange(read: unknown): { start: number; end: number; total: number } | null {
   if (typeof read !== 'object' || read === null) return null;
   const range = (read as { range?: unknown }).range;
   if (typeof range !== 'object' || range === null) return null;
   const { start, end, total } = range as Record<string, unknown>;
   if (
-    typeof start !== 'number' || !Number.isFinite(start)
-    || typeof end !== 'number' || !Number.isFinite(end)
-    || typeof total !== 'number' || !Number.isFinite(total)
+    typeof start !== 'number' ||
+    !Number.isFinite(start) ||
+    typeof end !== 'number' ||
+    !Number.isFinite(end) ||
+    typeof total !== 'number' ||
+    !Number.isFinite(total)
   ) {
     return null;
   }
@@ -957,13 +957,14 @@ export function terminalScrollbackRows(scroll: unknown): number | null {
   const maximumOffset = value.max_offset_from_bottom;
   const viewportRows = value.viewport_rows;
   if (
-    typeof maximumOffset !== 'number'
-    || !Number.isFinite(maximumOffset)
-    || maximumOffset < 0
-    || typeof viewportRows !== 'number'
-    || !Number.isFinite(viewportRows)
-    || viewportRows < 0
-  ) return null;
+    typeof maximumOffset !== 'number' ||
+    !Number.isFinite(maximumOffset) ||
+    maximumOffset < 0 ||
+    typeof viewportRows !== 'number' ||
+    !Number.isFinite(viewportRows) ||
+    viewportRows < 0
+  )
+    return null;
   return Math.floor(maximumOffset) + Math.floor(viewportRows);
 }
 

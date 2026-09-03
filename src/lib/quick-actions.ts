@@ -70,10 +70,10 @@ export function quickActionAvailability(params: QuickActionParams): QuickActionA
   // something. Four facts, all of which have to hold -- there is a pane, the
   // gateway can interrupt, the agent is working, and we know what to interrupt.
   const canStopAgent =
-    canCreate
-    && params.spawnSupported
-    && agentIsInterruptible(params.agentStatus)
-    && Boolean(params.agentTarget);
+    canCreate &&
+    params.spawnSupported &&
+    agentIsInterruptible(params.agentStatus) &&
+    Boolean(params.agentTarget);
 
   // Opening a web service is about the machine, not about this pane -- so it
   // needs a server to be about, but not a pane or a session the way the rows

@@ -74,7 +74,8 @@ export function workspaceInventories(
   // be recognised as empty by the caller.
   const inventories = new Map<string, WorkspaceInventory>();
   for (const workspaceId of workspaceOfTab.values()) {
-    if (!inventories.has(workspaceId)) inventories.set(workspaceId, { ...EMPTY_WORKSPACE_INVENTORY });
+    if (!inventories.has(workspaceId))
+      inventories.set(workspaceId, { ...EMPTY_WORKSPACE_INVENTORY });
   }
 
   for (const pane of panes) {
@@ -86,7 +87,10 @@ export function workspaceInventories(
     // An agent's own status wins over the pane's, the same precedence the panel
     // rows use: a pane keeps reporting the status it was last seen with, and
     // the agent record is the live one.
-    inventory.status = moreUrgent(inventory.status, asAgentStatus(statusOfPane.get(pane.id) ?? pane.status));
+    inventory.status = moreUrgent(
+      inventory.status,
+      asAgentStatus(statusOfPane.get(pane.id) ?? pane.status)
+    );
   }
 
   return inventories;

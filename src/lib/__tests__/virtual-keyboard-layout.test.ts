@@ -26,9 +26,7 @@ const source = readFileSync(
 
 /** The `flex` weight of a named style, in key widths. */
 function weight(style: string): number {
-  const match = source.match(
-    new RegExp(`\\b${style}:\\s*\\{[^}]*?\\bflex:\\s*([A-Z_0-9.]+)`, 's')
-  );
+  const match = source.match(new RegExp(`\\b${style}:\\s*\\{[^}]*?\\bflex:\\s*([A-Z_0-9.]+)`, 's'));
   if (!match) throw new Error(`No flex weight found for style "${style}"`);
   // A weight may be written as the named constant it is -- `flex: SHIFT_UNITS`
   // -- which is the point of naming it, so the name resolves here too.
@@ -39,23 +37,20 @@ function weight(style: string): number {
 function rows(table: string): string[][] {
   const match = source.match(new RegExp(`const ${table} = \\[(.*?)\\n\\];`, 's'));
   if (!match) throw new Error(`No layout table found for "${table}"`);
-  return match[1]
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith('['))
-    // Both quote styles: a row holding an apostrophe writes it "'", and a row
-    // holding a backslash writes it '\\'.
-    .map(
-      (line) =>
-        line.match(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g) ?? []
-    );
+  return (
+    match[1]
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith('['))
+      // Both quote styles: a row holding an apostrophe writes it "'", and a row
+      // holding a backslash writes it '\\'.
+      .map((line) => line.match(/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"/g) ?? [])
+  );
 }
 
 const ROW_UNITS = Number(source.match(/const ROW_UNITS = (\d+)/)?.[1]);
 const SHIFT_UNITS = Number(source.match(/const SHIFT_UNITS = ([0-9.]+)/)?.[1]);
-const MINIMUM_KEY_HEIGHT = Number(
-  source.match(/const MINIMUM_KEY_HEIGHT = ([0-9.]+)/)?.[1]
-);
+const MINIMUM_KEY_HEIGHT = Number(source.match(/const MINIMUM_KEY_HEIGHT = ([0-9.]+)/)?.[1]);
 const VIRTUAL_KEYBOARD_MAX_WIDTH = Number(
   source.match(/const VIRTUAL_KEYBOARD_MAX_WIDTH = ([0-9.]+)/)?.[1]
 );
@@ -110,10 +105,7 @@ describe('the bottom row is a row like the others', () => {
   test('switch, type, move and send add up to one row', () => {
     const arrows = 4;
     const total =
-      weight('pageKey')
-      + weight('spaceKey')
-      + weight('arrowCluster')
-      + weight('returnKey');
+      weight('pageKey') + weight('spaceKey') + weight('arrowCluster') + weight('returnKey');
     expect(total).toBeCloseTo(ROW_UNITS, 5);
     // The cluster is four keys wide and they are all the same, so an arrow is
     // within a hair of a letter rather than a sliver between two big keys.

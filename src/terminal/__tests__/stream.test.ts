@@ -4,7 +4,11 @@
 // frame it always was.
 import { describe, expect, test } from 'bun:test';
 
-import { parseTerminalSnapshot, setTerminalFullEmulation, TerminalEmulator } from '@/terminal/terminal-core';
+import {
+  parseTerminalSnapshot,
+  setTerminalFullEmulation,
+  TerminalEmulator,
+} from '@/terminal/terminal-core';
 import type { TerminalFrame } from '@/terminal/types';
 
 import goldens from './fixtures/snapshot-goldens.json';
@@ -134,7 +138,9 @@ describe('parseTerminalSnapshot is unchanged', () => {
   test.each(STREAM_CORPUS)('%s', (name, input) => {
     const recorded = goldens as Record<string, string>;
     expect(frameDigest(parseTerminalSnapshot(input))).toBe(recorded[`snapshot:${name}`]);
-    expect(frameDigest(parseTerminalSnapshot(input, undefined, 60))).toBe(recorded[`snapshot@60:${name}`]);
+    expect(frameDigest(parseTerminalSnapshot(input, undefined, 60))).toBe(
+      recorded[`snapshot@60:${name}`]
+    );
     setTerminalFullEmulation(true);
     try {
       expect(frameDigest(parseTerminalSnapshot(input))).toBe(recorded[`snapshot-full:${name}`]);

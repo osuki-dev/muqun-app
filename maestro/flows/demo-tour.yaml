@@ -33,9 +33,9 @@ tags:
 - takeScreenshot: shots/00-home
 
 # ── Terminal ──────────────────────────────────────────────────────────────
-- tapOn: "Try the demo"
+- tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000
@@ -51,9 +51,9 @@ tags:
 # that row switched off it floats bottom-left over the pane instead, level with
 # "↓ Latest", which the last section of this flow checks. Matched by label
 # rather than by point either way: its offset follows the composer's height.
-- tapOn: "Open quick actions"
+- tapOn: 'Open quick actions'
 - extendedWaitUntil:
-    visible: "Close quick actions"
+    visible: 'Close quick actions'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 3000
@@ -61,7 +61,7 @@ tags:
 - takeScreenshot: shots/02-actions
 # Closed by its own button: swiping a bottom sheet down is a race between the
 # sheet's own gesture handler and the list inside it.
-- tapOn: "Close quick actions"
+- tapOn: 'Close quick actions'
 - waitForAnimationToEnd:
     timeout: 2000
 
@@ -72,13 +72,13 @@ tags:
 # panels of every tab are on screen at once, and the assertion below can name
 # one without first tapping a tab chip to reveal it.
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Show what is running"
+- tapOn: 'Show what is running'
 - extendedWaitUntil:
-    visible: "Close"
+    visible: 'Close'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible: "What is running"
+- assertVisible: 'What is running'
 # The workspace chip's count, which is the whole of card #830. It is counted
 # from the panes the sheet loaded, not read off the workspace record: the demo
 # fixture deliberately no longer sends `pane_count`, exactly as a tmux gateway
@@ -101,14 +101,14 @@ tags:
 # `assertVisible`, which only passed while the list was short enough to fit.
 - scrollUntilVisible:
     element:
-      text: "New terminal"
+      text: 'New terminal'
     direction: DOWN
     timeout: 15000
 - scrollUntilVisible:
     element:
-      text: "Close"
+      text: 'Close'
     direction: UP
-- tapOn: "Close"
+- tapOn: 'Close'
 - waitForAnimationToEnd:
     timeout: 2000
 
@@ -118,21 +118,21 @@ tags:
 # The `artifacts` flow covers the search, the filters and the viewer; this is
 # the tour, so it opens it, shows it, and leaves.
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Open files"
+- tapOn: 'Open files'
 - extendedWaitUntil:
-    visible: "Close files"
+    visible: 'Close files'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 3000
-- assertVisible: "Open dark-mode.md"
+- assertVisible: 'Open dark-mode.md'
 - takeScreenshot: shots/03b-files
-- tapOn: "Close files"
+- tapOn: 'Close files'
 - waitForAnimationToEnd:
     timeout: 2000
 
 # ── nvim pane (second chip in the pane strip) for a full-terminal view ────
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Switch to nvim"
+- tapOn: 'Switch to nvim'
 - waitForAnimationToEnd:
     timeout: 3000
 - runFlow: ../subflows/dismiss-logbox.yaml
@@ -140,20 +140,20 @@ tags:
 
 # ── Settings (privacy / controls) via the drawer ──────────────────────────
 - tapOn:
-    text: "Back to servers"
+    text: 'Back to servers'
     # Phone dismisses the server screen to reach Settings. Pad keeps the
     # server rail visible beside the workspace, so there is nothing to dismiss.
     optional: true
 - extendedWaitUntil:
-    visible: "Settings"
+    visible: 'Settings'
     timeout: 8000
 # The gear in the home header. The drawer it used to open is switched off
 # (card #664), which also retires the Android edge-swipe problem card #564
 # worked around.
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Settings"
+- tapOn: 'Settings'
 - extendedWaitUntil:
-    visible: "Color mode"
+    visible: 'Color mode'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 2000
@@ -172,36 +172,36 @@ tags:
 # nothing else on the screen leads to either.
 - scrollUntilVisible:
     element:
-      text: "Terminal key row"
+      text: 'Terminal key row'
     direction: DOWN
 - tapOn:
-    id: "toggle-Terminal key row"
+    id: 'toggle-Terminal key row'
 - waitForAnimationToEnd:
     timeout: 1500
-- tapOn: "Go back"
+- tapOn: 'Go back'
 - runFlow:
     # Phone returns to its home list and must reopen the demo. Pad returns to
     # the workspace that remained visible beside Settings.
     when:
-      visible: "Try the demo"
+      visible: 'Try the demo'
     commands:
-      - tapOn: "Try the demo"
+      - tapOn: 'Try the demo'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 15000
 - waitForAnimationToEnd:
     timeout: 4000
 - runFlow: ../subflows/dismiss-logbox.yaml
 - runFlow: ../subflows/dismiss-away-digest.yaml
-- assertVisible: "Open quick actions"
-- assertVisible: "Open files"
+- assertVisible: 'Open quick actions'
+- assertVisible: 'Open files'
 - takeScreenshot: shots/06-floating-entries
 # Openable, not merely drawn: a tray behind the dock or outside its parent's
 # bounds would assert visible and take no taps at all.
-- tapOn: "Open quick actions"
+- tapOn: 'Open quick actions'
 - extendedWaitUntil:
-    visible: "Close quick actions"
+    visible: 'Close quick actions'
     timeout: 8000
-- tapOn: "Close quick actions"
+- tapOn: 'Close quick actions'
 - waitForAnimationToEnd:
     timeout: 2000

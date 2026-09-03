@@ -35,84 +35,84 @@ tags:
 
 # ── The list ──────────────────────────────────────────────────────────────
 - runFlow: ../subflows/dismiss-logbox.yaml
-- tapOn: "Open files"
+- tapOn: 'Open files'
 - extendedWaitUntil:
-    visible: "Close files"
+    visible: 'Close files'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 3000
 # Newest first, and no longer behind a fold: the two most recent are on screen
 # as soon as the sheet is.
-- assertVisible: "Open dark-mode.md"
-- assertVisible: "Open settings-dark.png"
+- assertVisible: 'Open dark-mode.md'
+- assertVisible: 'Open settings-dark.png'
 - takeScreenshot: shots/06-files
 - scrollUntilVisible:
     element:
-      text: "Open theme.diff"
+      text: 'Open theme.diff'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Open coverage.json"
+      text: 'Open coverage.json'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Open design-spec.pdf"
+      text: 'Open design-spec.pdf'
     direction: DOWN
 - scrollUntilVisible:
     element:
-      text: "Open dark-mode.md"
+      text: 'Open dark-mode.md'
     direction: UP
 
 # ── Search narrows the list, and clearing restores it ─────────────────────
 - runFlow: ../subflows/dismiss-logbox.yaml
 - scrollUntilVisible:
     element:
-      text: "Search files"
+      text: 'Search files'
     direction: UP
-- tapOn: "Search files"
-- inputText: "diff"
+- tapOn: 'Search files'
+- inputText: 'diff'
 # Android emulators with hardware-keyboard input accept `inputText` without
 # opening the software keyboard. `hideKeyboard` is a back press in that state,
 # so it closes the whole sheet. The filtered row sits directly below the search
 # field and remains tappable whether the software keyboard is present or not.
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Open theme.diff"
-- assertNotVisible: "Open coverage.json"
-- tapOn: "Clear search"
+- assertVisible: 'Open theme.diff'
+- assertNotVisible: 'Open coverage.json'
+- tapOn: 'Clear search'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Open dark-mode.md"
+- assertVisible: 'Open dark-mode.md'
 
 # ── The kind filter ───────────────────────────────────────────────────────
-- tapOn: "Show images"
+- tapOn: 'Show images'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Open settings-dark.png"
-- assertNotVisible: "Open dark-mode.md"
-- tapOn: "Show all files"
+- assertVisible: 'Open settings-dark.png'
+- assertNotVisible: 'Open dark-mode.md'
+- tapOn: 'Show all files'
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "Open dark-mode.md"
+- assertVisible: 'Open dark-mode.md'
 
 # ── Markdown: opened, rendered, closed ────────────────────────────────────
-- tapOn: "Open dark-mode.md"
+- tapOn: 'Open dark-mode.md'
 - extendedWaitUntil:
-    visible: "Close file"
+    visible: 'Close file'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "dark-mode.md"
+- assertVisible: 'dark-mode.md'
 # Rendered markdown, not the raw source: the heading is shown without its "#".
 - assertVisible:
-    text: "Dark mode — change summary"
-- assertVisible: "Files touched"
+    text: 'Dark mode — change summary'
+- assertVisible: 'Files touched'
 - assertNotVisible:
-    text: "# Dark mode — change summary"
+    text: '# Dark mode — change summary'
 - takeScreenshot: shots/07-artifact-markdown
-- tapOn: "Close file"
+- tapOn: 'Close file'
 - extendedWaitUntil:
-    visible: "Close files"
+    visible: 'Close files'
     timeout: 8000
 
 # ── Diff: line-level colour (card #634) ───────────────────────────────────
@@ -121,67 +121,67 @@ tags:
 # diff survived the render with its markers intact.
 - scrollUntilVisible:
     element:
-      text: "Open theme.diff"
+      text: 'Open theme.diff'
     direction: DOWN
-- tapOn: "Open theme.diff"
+- tapOn: 'Open theme.diff'
 - extendedWaitUntil:
-    visible: "Close file"
+    visible: 'Close file'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "theme.diff"
+- assertVisible: 'theme.diff'
 - takeScreenshot: shots/08-artifact-diff
-- tapOn: "Close file"
+- tapOn: 'Close file'
 - extendedWaitUntil:
-    visible: "Close files"
+    visible: 'Close files'
     timeout: 8000
 
 # ── Source: highlighted through the JSON grammar ──────────────────────────
 - scrollUntilVisible:
     element:
-      text: "Open coverage.json"
+      text: 'Open coverage.json'
     direction: DOWN
-- tapOn: "Open coverage.json"
+- tapOn: 'Open coverage.json'
 - extendedWaitUntil:
-    visible: "Close file"
+    visible: 'Close file'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "coverage.json"
+- assertVisible: 'coverage.json'
 - takeScreenshot: shots/09-artifact-source
-- tapOn: "Close file"
+- tapOn: 'Close file'
 - extendedWaitUntil:
-    visible: "Close files"
+    visible: 'Close files'
     timeout: 8000
 
 # ── No preview: described rather than displayed ───────────────────────────
 - scrollUntilVisible:
     element:
-      text: "Open design-spec.pdf"
+      text: 'Open design-spec.pdf'
     direction: DOWN
-- tapOn: "Open design-spec.pdf"
+- tapOn: 'Open design-spec.pdf'
 - extendedWaitUntil:
-    visible: "Close file"
+    visible: 'Close file'
     timeout: 8000
 - waitForAnimationToEnd:
     timeout: 2000
-- assertVisible: "No preview for this kind of file. It stays on the server."
-- assertVisible: "Type"
-- assertVisible: "Size"
-- assertVisible: "Modified"
-- assertVisible: "Path"
-- assertVisible: "~/code/muqun/docs/design-spec.pdf"
-- tapOn: "Close file"
+- assertVisible: 'No preview for this kind of file. It stays on the server.'
+- assertVisible: 'Type'
+- assertVisible: 'Size'
+- assertVisible: 'Modified'
+- assertVisible: 'Path'
+- assertVisible: '~/code/muqun/docs/design-spec.pdf'
+- tapOn: 'Close file'
 - extendedWaitUntil:
-    visible: "Close files"
+    visible: 'Close files'
     timeout: 8000
 
 # ── Back out of the sheet ─────────────────────────────────────────────────
 - scrollUntilVisible:
     element:
-      text: "Close files"
+      text: 'Close files'
     direction: UP
-- tapOn: "Close files"
+- tapOn: 'Close files'
 - extendedWaitUntil:
-    visible: "Claude Code"
+    visible: 'Claude Code'
     timeout: 8000

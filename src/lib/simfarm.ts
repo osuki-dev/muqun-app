@@ -96,7 +96,12 @@ export type SimfarmDeviceKind = 'ios' | 'android' | 'wechat' | 'mock' | 'other';
 
 export function simfarmDeviceKind(id: string): SimfarmDeviceKind {
   const provider = id.split(':', 1)[0];
-  if (provider === 'ios' || provider === 'android' || provider === 'wechat' || provider === 'mock') {
+  if (
+    provider === 'ios' ||
+    provider === 'android' ||
+    provider === 'wechat' ||
+    provider === 'mock'
+  ) {
     return provider;
   }
   return 'other';

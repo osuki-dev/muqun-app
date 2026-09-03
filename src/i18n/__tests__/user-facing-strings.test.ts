@@ -53,9 +53,7 @@ const labelsSource = readFileSync(join(I18N, '..', 'labels.ts'), 'utf8');
 
 /** The keys of one exported `Record<string, MessageDescriptor>` in `labels.ts`. */
 function descriptorKeys(table: string): Set<string> {
-  const block = labelsSource.match(
-    new RegExp(`export const ${table}[^{]*\\{([\\s\\S]*?)\\n\\};`)
-  );
+  const block = labelsSource.match(new RegExp(`export const ${table}[^{]*\\{([\\s\\S]*?)\\n\\};`));
   if (!block) throw new Error(`no table called ${table} in labels.ts`);
   const keys = [...block[1].matchAll(/^\s*(?:'([^']+)'|([A-Za-z_$][\w$]*)):\s*msg`/gm)].map(
     (match) => match[1] ?? match[2]
@@ -75,7 +73,8 @@ describe('no user-facing string is written as a raw literal', () => {
     // Reported as `file:line  prop = "text"` so a failure names the screen
     // rather than handing back an object graph to squint at.
     const readable = findings.map(
-      (finding) => `${finding.file}:${finding.line}  ${finding.sink} = ${JSON.stringify(finding.text)}`
+      (finding) =>
+        `${finding.file}:${finding.line}  ${finding.sink} = ${JSON.stringify(finding.text)}`
     );
     // A hit is a string that will render in English on all eight languages.
     // Fix it with a hook-bound `t`/`<Trans>`, or -- if the module is pure and
@@ -125,9 +124,7 @@ describe('every key the terminal row can show says what it does', () => {
     // because `nvim:w` has a real sentence behind it, then the English label,
     // which is the only thing telling the three different `ctrl+r` rows apart.
     const undescribed = everyKey
-      .filter(
-        (key) => !editorActions.has(key.key) && !keyDescriptions.has(key.accessibilityLabel)
-      )
+      .filter((key) => !editorActions.has(key.key) && !keyDescriptions.has(key.accessibilityLabel))
       .map((key) => `${key.key}: ${key.accessibilityLabel}`);
     expect([...new Set(undescribed)]).toEqual([]);
   });

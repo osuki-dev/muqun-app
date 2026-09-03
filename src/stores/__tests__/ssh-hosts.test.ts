@@ -165,7 +165,9 @@ describe('setTrustedHostKey and markConnected', () => {
       publicKey: 'AAAA',
     });
     await store.getState().setTrustedHostKey(first.id, null);
-    expect(store.getState().hosts.find((host) => host.id === first.id)?.trustedHostKey).toBeUndefined();
+    expect(
+      store.getState().hosts.find((host) => host.id === first.id)?.trustedHostKey
+    ).toBeUndefined();
 
     await store.getState().markConnected(first.id);
     expect(store.getState().hosts.map((host) => host.label)).toEqual(['first', 'second']);

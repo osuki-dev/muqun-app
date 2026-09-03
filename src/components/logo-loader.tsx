@@ -61,9 +61,7 @@ export function LogoLoader({
   }));
   const haloStyle = useAnimatedStyle(() => ({
     opacity: reduceMotion ? 0.14 : interpolate(progress.value, [0, 1], [0.08, 0.24]),
-    transform: [
-      { scale: reduceMotion ? 1 : interpolate(progress.value, [0, 1], [0.82, 1.12]) },
-    ],
+    transform: [{ scale: reduceMotion ? 1 : interpolate(progress.value, [0, 1], [0.82, 1.12]) }],
   }));
   const logoSize = size * (compact ? 1.18 : 1.45);
 
@@ -74,11 +72,7 @@ export function LogoLoader({
       style={[styles.root, { width: size, height: size }]}>
       {!compact ? (
         <Animated.View
-          style={[
-            styles.halo,
-            { borderRadius: size / 2, backgroundColor: '#FF705E' },
-            haloStyle,
-          ]}
+          style={[styles.halo, { borderRadius: size / 2, backgroundColor: '#FF705E' }, haloStyle]}
         />
       ) : null}
       <Animated.View

@@ -226,7 +226,12 @@ export default function SettingsScreen() {
                     <SettingsInfoRow
                       icon={Info}
                       label={t`Muqun`}
-                      detail={<Trans>Version {version}{build ? ` (${build})` : ''}</Trans>}
+                      detail={
+                        <Trans>
+                          Version {version}
+                          {build ? ` (${build})` : ''}
+                        </Trans>
+                      }
                     />
                   </SettingsSection>
                 </View>

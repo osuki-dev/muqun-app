@@ -18,17 +18,13 @@ describe('panel picker grid layout', () => {
   test('uses two columns from the Pad breakpoint', () => {
     const layout = panelPickerGridLayout(720);
     expect(layout.columns).toBe(2);
-    expect(layout.itemWidth).toBe(
-      (layout.contentWidth - PANEL_PICKER_GRID_GAP) / 2
-    );
+    expect(layout.itemWidth).toBe((layout.contentWidth - PANEL_PICKER_GRID_GAP) / 2);
   });
 
   test('uses three columns when each card remains phone-width', () => {
     const layout = panelPickerGridLayout(1080);
     expect(layout.columns).toBe(3);
-    expect(layout.itemWidth).toBe(
-      (layout.contentWidth - PANEL_PICKER_GRID_GAP * 2) / 3
-    );
+    expect(layout.itemWidth).toBe((layout.contentWidth - PANEL_PICKER_GRID_GAP * 2) / 3);
     expect(layout.itemWidth).toBeGreaterThanOrEqual(340);
   });
 

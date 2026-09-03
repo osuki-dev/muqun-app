@@ -75,9 +75,7 @@ describe('the offline demo pages terminal history like a real gateway', () => {
 
     expect(rows).toHaveLength(DEMO_TERMINAL_TOTAL_ROWS);
     expect(rows[0]).toBe('live 101');
-    expect(terminalOutputLineCount(demoTerminalTail(rows, 999))).toBe(
-      DEMO_TERMINAL_TOTAL_ROWS
-    );
+    expect(terminalOutputLineCount(demoTerminalTail(rows, 999))).toBe(DEMO_TERMINAL_TOTAL_ROWS);
 
     const read = demoTerminalRange(rows, -40, 999);
     expect(paneReadRange(read.read)).toEqual({

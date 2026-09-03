@@ -6,14 +6,14 @@ The code in this repository is licensed under the Apache License 2.0 (see
 This is deliberate, and it is the only thing standing between an open licence
 and a paid copy of this app on a store under our name. The licence lets you
 read the source, build it, change it and ship what you build. It says nothing
-about calling your build *Muqun*, and this file says you may not.
+about calling your build _Muqun_, and this file says you may not.
 
 ## What is reserved
 
 - The word marks **Muqun** and **牧群**
 - The Muqun logo and app icon, in every form, including the adaptive and
   monochrome variants under `assets/`
-- Confusingly similar names and marks — *Muqun Pro*, *MuQun*, *牧羣*, and
+- Confusingly similar names and marks — _Muqun Pro_, _MuQun_, _牧羣_, and
   anything a reasonable person would read as this app
 
 Nothing in the Apache License grants a licence to any of these. Section 6 of

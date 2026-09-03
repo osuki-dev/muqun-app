@@ -8,11 +8,7 @@
 // screen is where the answer is used, not where it is decided.
 import { describe, expect, test } from 'bun:test';
 
-import {
-  DEMO_PAIRING_SERVER_ID,
-  isDemoPairingOffer,
-  parsePairingOffer,
-} from '@/lib/pairing';
+import { DEMO_PAIRING_SERVER_ID, isDemoPairingOffer, parsePairingOffer } from '@/lib/pairing';
 
 const DEMO_QR = `muqun://pair?u=https://demo.invalid&s=${DEMO_PAIRING_SERVER_ID}`;
 

@@ -25,9 +25,7 @@ type HerdrCompatibilityHealth = {
 
 function describeHerdr(herdr: HerdrCompatibility): string {
   const version = herdr.version ? `Herdr ${herdr.version}` : 'the Herdr on this server';
-  return typeof herdr.protocol === 'number'
-    ? `${version} (protocol ${herdr.protocol})`
-    : version;
+  return typeof herdr.protocol === 'number' ? `${version} (protocol ${herdr.protocol})` : version;
 }
 
 /**
@@ -44,15 +42,21 @@ function explainIncompatibility(herdr: HerdrCompatibility): string {
   const { protocol, supportedProtocolMin: min, supportedProtocolMax: max } = herdr;
 
   if (typeof protocol === 'number' && typeof min === 'number' && protocol < min) {
-    return `${running} is older than Muqun Gateway supports (protocol ${min} or newer). `
-      + 'Update Herdr and restart the session.';
+    return (
+      `${running} is older than Muqun Gateway supports (protocol ${min} or newer). ` +
+      'Update Herdr and restart the session.'
+    );
   }
   if (typeof protocol === 'number' && typeof max === 'number' && protocol > max) {
-    return `${running} is newer than Muqun Gateway supports (up to protocol ${max}). `
-      + 'Herdr is fine -- update Muqun Gateway on the server and restart it.';
+    return (
+      `${running} is newer than Muqun Gateway supports (up to protocol ${max}). ` +
+      'Herdr is fine -- update Muqun Gateway on the server and restart it.'
+    );
   }
-  return `Muqun Gateway reports it cannot speak to ${running}. `
-    + 'Update Muqun Gateway on the server and restart it.';
+  return (
+    `Muqun Gateway reports it cannot speak to ${running}. ` +
+    'Update Muqun Gateway on the server and restart it.'
+  );
 }
 
 /**
@@ -70,12 +74,16 @@ function explainIncompatibility(herdr: HerdrCompatibility): string {
  */
 function explainDisconnected(kind: string | undefined): string {
   if (kind === 'tmux') {
-    return 'Muqun Gateway cannot reach tmux on this server. Check that a tmux server is '
-      + 'running and that the gateway can find the tmux program, then try again.';
+    return (
+      'Muqun Gateway cannot reach tmux on this server. Check that a tmux server is ' +
+      'running and that the gateway can find the tmux program, then try again.'
+    );
   }
   if (kind !== undefined && kind !== 'herdr') {
-    return `Muqun Gateway cannot reach the ${kind} backend on this server. `
-      + 'Start it, then try again.';
+    return (
+      `Muqun Gateway cannot reach the ${kind} backend on this server. ` +
+      'Start it, then try again.'
+    );
   }
   return `Start Herdr ${MINIMUM_HERDR_VERSION} or newer, then try again.`;
 }

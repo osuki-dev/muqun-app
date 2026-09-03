@@ -161,7 +161,11 @@ export function NavHeaderTitlePill({
   const theme = useThemeTokens();
   return (
     <GlassChrome style={[styles.titlePill, style]}>
-      <Text variant="bodySmall" numberOfLines={1} color={theme.colors.text} style={styles.titleText}>
+      <Text
+        variant="bodySmall"
+        numberOfLines={1}
+        color={theme.colors.text}
+        style={styles.titleText}>
         {title}
       </Text>
     </GlassChrome>

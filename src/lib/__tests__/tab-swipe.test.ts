@@ -156,10 +156,12 @@ describe('telling a swipe from a pinch', () => {
 // only the position is read here.
 describe('reading a touch list', () => {
   test('exactly two fingers make a frame', () => {
-    expect(twoFingerFrame([
-      { x: 10, y: 20 },
-      { x: 30, y: 40 },
-    ])).toEqual({ a: { x: 10, y: 20 }, b: { x: 30, y: 40 } });
+    expect(
+      twoFingerFrame([
+        { x: 10, y: 20 },
+        { x: 30, y: 40 },
+      ])
+    ).toEqual({ a: { x: 10, y: 20 }, b: { x: 30, y: 40 } });
   });
 
   test('one finger is not a two-finger gesture', () => {
@@ -168,11 +170,13 @@ describe('reading a touch list', () => {
   });
 
   test('three fingers are ignored rather than guessed at', () => {
-    expect(twoFingerFrame([
-      { x: 10, y: 20 },
-      { x: 30, y: 40 },
-      { x: 50, y: 60 },
-    ])).toBeNull();
+    expect(
+      twoFingerFrame([
+        { x: 10, y: 20 },
+        { x: 30, y: 40 },
+        { x: 50, y: 60 },
+      ])
+    ).toBeNull();
   });
 });
 

@@ -37,7 +37,10 @@ export interface ComposerSubmitOptions {
 }
 
 /** The text a submitted draft becomes, before UTF-8 encoding. */
-export function composerSubmitText(draft: string, { bracketedPaste, enter = true }: ComposerSubmitOptions): string {
+export function composerSubmitText(
+  draft: string,
+  { bracketedPaste, enter = true }: ComposerSubmitOptions
+): string {
   // A field on either platform can hand over `\r\n` from a paste; one spelling
   // of a line end before the rule is applied to it.
   const text = draft.replace(/\r\n?/g, '\n');

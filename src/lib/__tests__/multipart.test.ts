@@ -1,11 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  encodeMultipart,
-  multipartBoundary,
-  multipartContentType,
-  utf8Bytes,
-} from '../multipart';
+import { encodeMultipart, multipartBoundary, multipartContentType, utf8Bytes } from '../multipart';
 
 const decode = (bytes: Uint8Array) => Buffer.from(bytes).toString('binary');
 
