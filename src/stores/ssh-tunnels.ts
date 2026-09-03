@@ -1,11 +1,16 @@
 import { create } from 'zustand';
 
-import { refreshGatewayBaseUrl, setGatewayTunnelResolver } from '@/lib/gateway-client';
+import {
+  refreshGatewayBaseUrl,
+  setGatewayTunnelResolver,
+  setGatewayTunnelSessionOpener,
+} from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { connectSsh, describeSshFailure } from '@/lib/ssh-client';
 import { compareSshHostKey } from '@/lib/ssh-hosts';
 import { sshFailureLine } from '@/lib/ssh-server-text';
 import {
+  GatewayTunnelUnavailableError,
   MAX_TUNNEL_CONNECTIONS,
   SshTunnelManager,
   type TunnelConnectionHandle,
@@ -84,6 +89,30 @@ const manager = new SshTunnelManager({
 // The one seam: the gateway client resolves a tunnelled record's base URL
 // through the live forward. A direct record ignores this.
 setGatewayTunnelResolver((record) => manager.baseUrl(record.serverId));
+
+/**
+ * The other half of the seam, for a request against a record no screen is
+ * holding -- unpairing a server from Home. Brings the forward up, hands back
+ * its loopback base URL, and gives the caller the matching release. It never
+ * resolves with the record's stored `url`: a tunnelled gateway that cannot be
+ * reached through its host is unreachable, full stop.
+ */
+setGatewayTunnelSessionOpener(async (record) => {
+  const input = toInput(record);
+  if (!input) throw new GatewayTunnelUnavailableError('This gateway is not tunnelled.');
+  manager.hold(input);
+  try {
+    const baseUrl = await useSshTunnelsStore.getState().waitForOpen(record.serverId);
+    return { baseUrl, release: () => manager.release(record.serverId) };
+  } catch (error) {
+    manager.release(record.serverId);
+    // Already sanitised and credential-free -- `waitForOpen` rejects with the
+    // status line's own reason.
+    throw new GatewayTunnelUnavailableError(
+      error instanceof Error ? error.message : 'The SSH tunnel could not be opened.'
+    );
+  }
+});
 
 function toInput(record: GatewayRecord): TunnelRecordInput | null {
   if (!record.sshTunnel) return null;

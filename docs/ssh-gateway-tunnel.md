@@ -43,8 +43,10 @@ an AES-256-GCM envelope:
   (`transport.rs::derive_key`, same salt/info strings) — the two sides must
   match byte for byte.
 - **AAD** is `"<METHOD> <path><search>"` (`requestAad`), i.e. the request line
-  only — *not* the origin/host. This is why swapping the host to a loopback
-  tunnel address changes nothing the gateway checks.
+  only — *not* the origin/host. Confirmed against the gateway: `main.rs`
+  builds `format!("{} {}", parts.method, parts.uri.path_and_query()…)`. This is
+  why swapping the host to a loopback tunnel address changes nothing the AEAD
+  checks.
 - The envelope carries `version`, `timestamp_ms`, `nonce`, `ciphertext`. The
   gateway rejects a skew over `MAX_CLOCK_SKEW_MS = 5 min` and caches nonces per
   device to refuse replays (`remember_transport_nonce`).
@@ -60,6 +62,19 @@ an AES-256-GCM envelope:
 
 `disabled` mode is an explicit token-only compatibility path; the QR then omits
 the key and pairing is not sealed.
+
+### The `Host` header is checked, and this is why the forward uses an IP literal
+The AAD is not the only thing that could have objected to a swapped origin. The
+gateway runs a `known_host` middleware (`main.rs`) *before* auth: a request
+whose `Host` header is not a name the gateway answers to is refused with
+`403 unknown_host`. `host_is_known` accepts any **IP literal**, `localhost` and
+`*.localhost`, and `*.ts.net`.
+
+The tunnel base URL is `http://127.0.0.1:<localPort>`, so the `Host` header is
+an IP literal and passes unconditionally. **This is a load-bearing detail:** if
+`tunnelBaseUrl` ever grew a synthetic hostname, every tunnelled request would
+start failing `unknown_host` — with an error that says nothing about the real
+cause. It is pinned by `tunnelBaseUrl`'s test.
 
 ### Pairing (QR / code)
 - The manager (`muqun-gateway manage`) prints a QR whose payload is
@@ -265,6 +280,65 @@ Two `GatewayRecord`s with `sshTunnel.hostId` equal but different
 forward reaches only its own gateway, and each gateway authenticates its own
 device key. The manager keys forwards by `serverId`, connections by `hostId`,
 and reference-counts each independently.
+
+### T7 — A tunnelled record has no address this phone may use
+Found while auditing this branch, and fixed in it. A `GatewayRecord`'s stored
+`url` is the gateway's address **as seen from the SSH host** — for the
+loopback-only gateway this feature exists for, `http://127.0.0.1:23847`. Sent
+*from the phone*, that names **the phone's own loopback** — the very place T1
+says a hostile local app may be listening. Three code paths addressed a stored
+record by its `url` with `Authorization: Bearer <token>` attached:
+
+- `revokeOwnGatewayPairing` (unpairing a server from Home, which can unpair a
+  record no screen has open),
+- `endpointForServer` in `notifications.ts` (answering an approval straight from
+  a push notification),
+- the reachability probe in `stores/server-reachability.ts`.
+
+Each would have handed the gateway token to whatever was listening on the
+phone's port 23847. The rule now lives in one named, tested function —
+`directGatewayBaseUrl(record)` in `ssh-tunnel.ts` — which returns `null` for a
+tunnelled record, and all three go through it:
+
+- **Unpair** brings the record's own forward up for the call
+  (`setGatewayTunnelSessionOpener`, the hold released in a `finally`) and treats
+  a forward that will not open as unreachable — the same pass an unreachable
+  gateway already got, so a dead record can still be forgotten. It **never**
+  falls back to the stored URL; that is what `GatewayTunnelUnavailableError`
+  exists to make impossible to do by accident.
+- **The notification action** returns no endpoint, which the caller already
+  resolves to `open-pane`: the workspace holds the tunnel up and asks the
+  question properly. Dialling SSH from a backgrounded app, possibly behind a
+  host-key prompt nobody can see, is not something a notification tap should do.
+- **The probe** returns early. A tunnelled server reports through its tunnel
+  badge instead.
+
+### Confirmed against the gateway source
+Read directly from `/Users/okk/.repos/muqun-gateway` while writing this:
+
+- **No loopback shortcut exists.** `require_device` is unconditional on every
+  authenticated route; the gateway never obtains the peer socket address at all.
+  Missing/!Bearer → `401`, unknown token → `403 invalid_token`, and a device
+  holding a `transport_key` additionally needs the proof or gets
+  `403 device_proof_required`. `/health` and `/api/meta` are gated too — which
+  is why probing a tunnelled record was a token-bearing request, not a ping.
+- **T5 holds for this client.** The sealing material is the per-device
+  `transport_key`, HKDF-SHA256 with salt `muqun-transport-v1` and info
+  `muqun-transport-v1/<direction>`, and this app only ever puts
+  `X-Muqun-Device` + `X-Muqun-Envelope` on the wire. It never sends the
+  device-proof header itself, so the transport key does not transit the SSH
+  session and a malicious host sees only sealed bodies.
+- **An upstream note, not an app issue:** the gateway *accepts* a client-supplied
+  `x-muqun-internal-device-proof` on the unencrypted path and nothing strips it,
+  so some *other* client could authenticate by sending the transport key in
+  cleartext. Muqun does not, and a tunnel does not make it easier — but the
+  "the key never transits the network" property is the client's discipline
+  rather than something the gateway enforces. Worth raising on the gateway.
+- **`transport_protection` is a config readout, not a per-request one.** It is
+  computed from the gateway's own `listen`/`public_url`, so a Tailscale-bound
+  gateway keeps reporting `tailscale-wireguard` even when it is being reached
+  through this tunnel. The web-service and Simfarm entries gate on that value;
+  see the open question in the pull request.
 
 ### Residual risks (stated, not mitigated away)
 - Token-only (`disabled`) gateways expose the token to the SSH host and to a

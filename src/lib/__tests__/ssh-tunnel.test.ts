@@ -4,6 +4,7 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import {
+  directGatewayBaseUrl,
   MAX_TUNNEL_CONNECTIONS,
   SshTunnelManager,
   tunnelBaseUrl,
@@ -88,6 +89,15 @@ beforeEach(() => {
 describe('URL derivation', () => {
   test('the tunnel base URL is loopback with the ephemeral port', () => {
     expect(tunnelBaseUrl(40123)).toBe('http://127.0.0.1:40123');
+  });
+
+  test('the host is an IP literal, which is what gets it past the gateway', () => {
+    // Load-bearing, and not obvious: the gateway runs a `known_host` middleware
+    // *before* auth and answers `403 unknown_host` to a Host header it does not
+    // recognise. It accepts any IP literal unconditionally. A synthetic
+    // hostname here would break every tunnelled request with an error that
+    // names nothing about the cause.
+    expect(new URL(tunnelBaseUrl(40123)).hostname).toBe('127.0.0.1');
   });
 });
 
@@ -216,5 +226,49 @@ describe('idle background', () => {
 describe('constants', () => {
   test('the connection cap stays small', () => {
     expect(MAX_TUNNEL_CONNECTIONS).toBe(8);
+  });
+});
+
+// The rule that keeps a tunnelled record's bearer token off this phone's own
+// loopback. `record.url` for the gateway this feature exists for is
+// `http://127.0.0.1:23847` -- the gateway's address *on the SSH host*. Sent
+// from the phone it names the phone, where T1 says a hostile local app may be
+// listening. Every caller that addresses a stored record goes through here.
+describe('a stored record has no direct address while it is tunnelled', () => {
+  test('a direct record is addressed at its own url', () => {
+    expect(directGatewayBaseUrl({ url: 'http://100.64.0.9:23847' })).toBe(
+      'http://100.64.0.9:23847'
+    );
+  });
+
+  test('a trailing slash is trimmed, so callers can concatenate a path', () => {
+    expect(directGatewayBaseUrl({ url: 'http://100.64.0.9:23847/' })).toBe(
+      'http://100.64.0.9:23847'
+    );
+  });
+
+  test('a tunnelled record has none, even though it has a url', () => {
+    expect(
+      directGatewayBaseUrl({
+        url: 'http://127.0.0.1:23847',
+        sshTunnel: { hostId: 'host-a', remoteHost: '127.0.0.1', remotePort: 23847 },
+      })
+    ).toBeNull();
+  });
+
+  test('a tunnelled record whose url is not loopback still has none', () => {
+    // The rule is the tunnel, not the shape of the address: an address that is
+    // only meaningful from the SSH host is not ours to use either way.
+    expect(
+      directGatewayBaseUrl({
+        url: 'http://192.168.1.40:23847',
+        sshTunnel: { hostId: 'host-a', remoteHost: '192.168.1.40', remotePort: 23847 },
+      })
+    ).toBeNull();
+  });
+
+  test('no record at all has no address', () => {
+    expect(directGatewayBaseUrl(null)).toBeNull();
+    expect(directGatewayBaseUrl(undefined)).toBeNull();
   });
 });

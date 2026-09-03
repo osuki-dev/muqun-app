@@ -129,6 +129,7 @@ import {
   type EncryptedEnvelope,
 } from './gateway-transport';
 import { assertSupportedHerdr } from './herdr-compatibility';
+import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
 
 const REQUEST_TIMEOUT_MS = 8_000;
 // An attachment is orders of magnitude larger than a control call, and the
@@ -568,6 +569,59 @@ export function setGatewayTunnelResolver(
   resolver: ((record: GatewayRecord) => string | null) | null
 ): void {
   tunnelBaseUrlResolver = resolver;
+}
+
+/**
+ * A held-open tunnel for one request against a record that is *not* the
+ * selected one.
+ *
+ * {@link setGatewayTunnelResolver} answers "where is this record's forward
+ * right now", which is all the selected server needs: a screen is already
+ * holding its tunnel up. Unpairing is the other shape -- Home can unpair any
+ * saved server, including one no screen has open -- so it needs the forward
+ * brought up for the duration of the call and dropped afterwards. The opener is
+ * installed by `stores/ssh-tunnels.ts`; `release()` is the matching hold
+ * release and must run whether the request succeeded or threw.
+ */
+export interface GatewayTunnelSession {
+  baseUrl: string;
+  release: () => void;
+}
+
+let tunnelSessionOpener:
+  | ((record: GatewayRecord) => Promise<GatewayTunnelSession>)
+  | null = null;
+
+export function setGatewayTunnelSessionOpener(
+  opener: ((record: GatewayRecord) => Promise<GatewayTunnelSession>) | null
+): void {
+  tunnelSessionOpener = opener;
+}
+
+/**
+ * Run `body` against the address a *stored* record is actually reachable at,
+ * holding its SSH forward open for the duration when it is tunnelled.
+ *
+ * There is deliberately no fallback to `record.url` for a tunnelled record: see
+ * {@link GatewayTunnelUnavailableError}. Sending a bearer token to the phone's
+ * own loopback because a forward would not open is exactly the leak this
+ * feature's threat model is written against.
+ */
+async function withRecordBaseUrl<T>(
+  record: GatewayRecord,
+  body: (baseUrl: string) => Promise<T>
+): Promise<T> {
+  const direct = directGatewayBaseUrl(record);
+  if (direct) return body(direct);
+  if (!tunnelSessionOpener) {
+    throw new GatewayTunnelUnavailableError('No SSH tunnel manager is installed.');
+  }
+  const session = await tunnelSessionOpener(record);
+  try {
+    return await body(session.baseUrl.replace(/\/$/, ''));
+  } finally {
+    session.release();
+  }
 }
 
 /**
@@ -2077,34 +2131,37 @@ export async function revokePairedDevice(deviceId: string): Promise<void> {
  * globally selected gateway, so Home can unpair any saved server safely.
  */
 export async function revokeOwnGatewayPairing(record: GatewayRecord): Promise<void> {
-  const baseUrl = record.url.replace(/\/$/, '');
-  const headers = { Authorization: `Bearer ${record.token}` };
-  const endpoint: GatewayEndpoint = {
-    url: record.url,
-    token: record.token,
-    deviceId: record.deviceId,
-    transportKey: record.transportKey,
-    transport: record.transport,
-  };
-  const listResponse = await endpointFetch(endpoint, `${baseUrl}/api/pairings`, { headers });
-  if (!listResponse.ok) {
-    throw new Error(`HTTP ${listResponse.status}: ${await listResponse.text()}`);
-  }
+  // Through the record's own forward when it is tunnelled -- never its stored
+  // `url`, which for a loopback-only gateway names *this phone's* loopback.
+  await withRecordBaseUrl(record, async (baseUrl) => {
+    const headers = { Authorization: `Bearer ${record.token}` };
+    const endpoint: GatewayEndpoint = {
+      url: baseUrl,
+      token: record.token,
+      deviceId: record.deviceId,
+      transportKey: record.transportKey,
+      transport: record.transport,
+    };
+    const listResponse = await endpointFetch(endpoint, `${baseUrl}/api/pairings`, { headers });
+    if (!listResponse.ok) {
+      throw new Error(`HTTP ${listResponse.status}: ${await listResponse.text()}`);
+    }
 
-  const value = (await listResponse.json()) as { devices?: PairedDevice[] };
-  const currentDevice = value.devices?.find((device) => device.current);
-  if (!currentDevice) {
-    throw new Error('Gateway did not identify this paired device.');
-  }
+    const value = (await listResponse.json()) as { devices?: PairedDevice[] };
+    const currentDevice = value.devices?.find((device) => device.current);
+    if (!currentDevice) {
+      throw new Error('Gateway did not identify this paired device.');
+    }
 
-  const revokeResponse = await endpointFetch(
-    endpoint,
-    `${baseUrl}/api/pairings/${encodeURIComponent(currentDevice.id)}`,
-    { method: 'DELETE', headers }
-  );
-  if (!revokeResponse.ok) {
-    throw new Error(`HTTP ${revokeResponse.status}: ${await revokeResponse.text()}`);
-  }
+    const revokeResponse = await endpointFetch(
+      endpoint,
+      `${baseUrl}/api/pairings/${encodeURIComponent(currentDevice.id)}`,
+      { method: 'DELETE', headers }
+    );
+    if (!revokeResponse.ok) {
+      throw new Error(`HTTP ${revokeResponse.status}: ${await revokeResponse.text()}`);
+    }
+  });
 }
 
 export async function registerDevicePushToken(data: DevicePushTokenRegistration): Promise<void> {

@@ -33,6 +33,49 @@ export function tunnelBaseUrl(localPort: number): string {
  */
 export const MAX_TUNNEL_CONNECTIONS = 8;
 
+/**
+ * The address a *stored* record may be reached at directly, or null when it may
+ * not be reached directly at all.
+ *
+ * One rule, in one place, because getting it wrong leaks the bearer token. A
+ * tunnelled record's `url` is the gateway's address **as seen from the SSH
+ * host**, and for the loopback-only gateway this feature exists for, that is
+ * `http://127.0.0.1:23847`. Sent from the phone, that resolves to *the phone's
+ * own* loopback -- where, as T1 of `docs/ssh-gateway-tunnel.md` says plainly,
+ * any other app on the device may be listening. So a tunnelled record has no
+ * direct address: callers either go through its live forward or treat it as
+ * unreachable. Never the stored URL.
+ *
+ * Deliberately shaped to take anything with the two fields, so a caller holding
+ * a `Pick<GatewayRecord, …>` (the reachability probe) is held to the same rule
+ * as one holding the whole record.
+ */
+export function directGatewayBaseUrl(
+  record: { url: string; sshTunnel?: unknown } | null | undefined
+): string | null {
+  if (!record || record.sshTunnel) return null;
+  return record.url.replace(/\/$/, '');
+}
+
+/**
+ * A request was made against a tunnelled record whose forward could not be
+ * opened -- or was made in a context that has no tunnel manager at all.
+ *
+ * It is a distinct type because the caller must never quietly fall back to the
+ * record's stored `url`. That URL is the gateway's address *on the SSH host*,
+ * and for the common loopback-only gateway it is `http://127.0.0.1:23847` --
+ * which, sent from the phone, resolves to *the phone's own* loopback, where the
+ * threat model says a hostile local app may be listening. A fallback would hand
+ * that app the bearer token. Callers treat this the same way they treat an
+ * unreachable gateway.
+ */
+export class GatewayTunnelUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'GatewayTunnelUnavailableError';
+  }
+}
+
 /** What a screen sees about a record's tunnel. */
 export type TunnelPhase =
   /** No holder wants it; nothing is open. */

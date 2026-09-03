@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { configureGateway, revokeOwnGatewayPairing, setGatewayLabel } from '@/lib/gateway-client';
 import { demoRecord, DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { describeGatewayFailure } from '@/lib/network-error';
+import { GatewayTunnelUnavailableError } from '@/lib/ssh-tunnel';
 import {
   clearGateway,
   loadGateway,
@@ -197,8 +198,14 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
         }),
       ]);
     } catch (error) {
-      const { kind } = describeGatewayFailure(error);
-      if (kind !== 'timeout' && kind !== 'network') throw error;
+      // A tunnelled record whose SSH host will not come up is unreachable in
+      // exactly the sense the paragraph above describes, and it is never
+      // retried against the record's stored `url` -- see
+      // `GatewayTunnelUnavailableError`.
+      if (!(error instanceof GatewayTunnelUnavailableError)) {
+        const { kind } = describeGatewayFailure(error);
+        if (kind !== 'timeout' && kind !== 'network') throw error;
+      }
     }
 
     // Always applies: the write is queued, not gated on a request id, so a
