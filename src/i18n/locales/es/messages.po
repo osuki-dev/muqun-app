@@ -1608,6 +1608,7 @@ msgid "Open Muqun to connect"
 msgstr "Abre Muqun para conectar"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "Abrir el teclado en pantalla"
 
@@ -1975,10 +1976,12 @@ msgid "Right arrow"
 msgstr "Flecha derecha"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "Ejecutar un comando de terminal"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
 msgstr "Ejecutar el comando"
 
@@ -2235,10 +2238,6 @@ msgstr "Mostrar imágenes"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "Mostrarlo junto al terminal y verlo redibujarse."
-
-#: src/components/ssh-terminal-workspace.tsx
-msgid "Show keyboard"
-msgstr "Mostrar teclado"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -2637,6 +2636,7 @@ msgid "Type a line and press Enter; it is echoed back."
 msgstr "Escribe una línea y pulsa Intro; se devuelve como eco."
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Type into this editor"
 msgstr "Escribe en este editor"
 
@@ -2790,6 +2790,7 @@ msgid "Workspace"
 msgstr "Espacio de trabajo"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Write a line"
 msgstr "Escribir una línea"
 

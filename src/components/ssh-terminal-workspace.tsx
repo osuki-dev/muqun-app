@@ -2,10 +2,20 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Dialog, Input, Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { Keyboard as KeyboardIcon, RefreshCw, Unplug, X } from 'lucide-react-native';
+import { Keyboard as KeyboardIcon, PenLine, RefreshCw, Unplug, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PixelRatio, Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  Keyboard,
+  PixelRatio,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
@@ -13,13 +23,15 @@ import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { SkiaTerminal, type TerminalCellMetrics } from '@/components/skia-terminal';
 import { TerminalBoundary } from '@/components/terminal-boundary';
+import { TerminalComposer } from '@/components/terminal-composer';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { appChrome } from '@/constants/appearance';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
-import { terminalKeyDescription } from '@/i18n/labels';
+import { editorActionDescription, terminalKeyDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
 import { connectDemoSsh, demoSshHost, isDemoSshHost } from '@/lib/demo-ssh';
+import { dockPresentation } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
 import {
   connectSsh,
@@ -29,11 +41,19 @@ import {
   type SshShellHandle,
 } from '@/lib/ssh-client';
 import { TERMINAL_GRID_DEFAULT, terminalGridChanged, terminalGridFor } from '@/lib/ssh-grid-metrics';
+import { composerSubmitBytes } from '@/lib/ssh-composer';
+import { sshEditorPane, sshNvimMode } from '@/lib/ssh-editor';
 import { compareSshHostKey, sshHostAddress, type SshHostRecord, type SshTrustedHostKey } from '@/lib/ssh-hosts';
 import { encodeTerminalKey, encodeTerminalText } from '@/lib/ssh-key-bytes';
 import { sanitizeServerText, SERVER_LINE_LIMIT, sshFailureLine } from '@/lib/ssh-server-text';
 import { SshTerminalSession } from '@/lib/ssh-terminal-session';
-import { keyCap, terminalKeysForPane, type TerminalKey } from '@/lib/terminal-keys';
+import {
+  INSERT_MODE_KEYS,
+  keyCap,
+  terminalKeysForPane,
+  withEditorActions,
+  type TerminalKey,
+} from '@/lib/terminal-keys';
 import { terminalFontSize } from '@/lib/terminal-text-size';
 import { useAppSettings } from '@/stores/app-settings';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -44,19 +64,40 @@ import type { TerminalFrame } from '@/terminal/types';
  *
  * The gateway screen is a workspace: tabs, panes, agents, approvals, files.
  * This is one shell on one machine, and it reuses exactly the pieces that
- * survive that reduction -- `SkiaTerminal` for the grid, `VirtualKeyboard`
- * and the terminal key row for input, the nav header and glass for chrome --
- * and adds the two things a gateway used to do for the app: turning key
- * names into bytes (`ssh-key-bytes`) and turning a byte stream into the
- * frames the canvas draws (`ssh-terminal-session`, a terminal emulator that
- * lives as long as the connection and hands `SkiaTerminal` a frame at most
- * once per animation frame).
+ * survive that reduction -- `SkiaTerminal` for the grid, the composer,
+ * `VirtualKeyboard` and the terminal key row for input, the nav header and
+ * glass for chrome -- and adds the two things a gateway used to do for the
+ * app: turning key names and lines into bytes (`ssh-key-bytes`,
+ * `ssh-composer`) and turning a byte stream into the frames the canvas draws
+ * (`ssh-terminal-session`, a terminal emulator that lives as long as the
+ * connection and hands `SkiaTerminal` a frame at most once per animation
+ * frame).
+ *
+ * The dock is the gateway's, cut down: the same `dockPresentation` rule
+ * decides what it shows, with no approval, one pane and no attachments. The
+ * composer -- the phone's own keyboard, with its languages, swipe typing and
+ * paste -- is what the screen opens with, and it sends a line at a time; the
+ * on-screen keyboard behind the key row's toggle sends every key as it is
+ * pressed, which is what a full-screen program wants. The key row stays
+ * through both: on its own row beside the composer, inside the keyboard's
+ * panel when that is up.
+ *
+ * An editor is treated as the gateway treats one -- the keyboard opens on
+ * arrival, the row grows nvim's actions and collapses to Esc while nvim is
+ * in Insert mode, a composer send carries no Enter -- but the facts come
+ * from the emulator rather than from tmux: the alternate screen, the title
+ * the program set, and the mode line on the screen (`ssh-editor`).
  *
  * The grid is sized twice over, on purpose: the PTY is told the columns and
  * rows that fit the viewport at the canvas's measured cell size, and the
  * emulator is resized to the same numbers, so what the program paints and
  * what the canvas draws are one grid. A rotation, a text-size change, the
- * keyboard rising -- anything that re-measures -- re-sizes both.
+ * keyboard rising -- anything that re-measures -- re-sizes both. The system
+ * keyboard is the one that re-measures continuously: a spacer under the dock
+ * follows its animated height, so the terminal shrinks with it, and the
+ * viewport is committed once the layout has been still for a moment rather
+ * than on each of the animation's frames, so the far side gets one window
+ * change and not fifteen.
  *
  * Trust-on-first-use lives here rather than in the facade because it is a
  * conversation with the reader: an unknown key is shown and asked about, a
@@ -100,10 +141,15 @@ type Prompt =
       resolve: (answers: string[] | undefined) => void;
     };
 
-/** The shell row: prompt keys, line editing, arrows. No agent, no editor. */
-const SHELL_KEYS = terminalKeysForPane(null);
-
 const KEY_ROW_HEIGHT = 36;
+
+/**
+ * How long the terminal's layout must hold still before the grid follows it.
+ * The system keyboard animates over about a quarter of a second and the
+ * viewport is re-measured on every frame of it; this is what turns those
+ * frames into one resize, at the size the keyboard settled at.
+ */
+const VIEWPORT_SETTLE_MS = 100;
 
 export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const { t } = useLingui();
@@ -112,6 +158,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
+  const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTheme = useTerminalTheme();
 
   const hosts = useSshHostsStore((state) => state.hosts);
@@ -150,7 +197,20 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   /** The last frame the emulator published; undefined until the first output. */
   const [terminalFrame, setTerminalFrame] = useState<TerminalFrame | undefined>(undefined);
   const [cellMetrics, setCellMetrics] = useState<TerminalCellMetrics | null>(null);
+  /** The emulator's alternate-screen flag, as of the last published frame. */
+  const [alternateScreen, setAlternateScreen] = useState(false);
+  /** The editor verdict, latched per alternate screen -- see `sshEditorPane`. */
+  const [editorPane, setEditorPane] = useState(false);
+  // The key row's toggle swaps the composer for the app's own keyboard, the
+  // way the gateway screen's does. Off by default: a shell prompt is a line
+  // at a time, and the composer is the phone's own keyboard with its
+  // languages and its paste. Remembered for as long as the screen is up.
   const [keyboardMode, setKeyboardMode] = useState(false);
+  // Asked for, per visit to the keyboard: the composer stands down while the
+  // keyboard is up, and this is the reader summoning it back for one line.
+  // Cleared when the keyboard closes, which ends the visit it belongs to.
+  const [composerRevealed, setComposerRevealed] = useState(false);
+  const [draft, setDraft] = useState('');
   const [stickBottomNonce, setStickBottomNonce] = useState(0);
   /** Bumped to reconnect; `wanted` false is a deliberate disconnect. */
   const [attempt, setAttempt] = useState(0);
@@ -171,6 +231,66 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   );
   /** The attempt in flight, so the header and the dialogs can call it off. */
   const attemptRef = useRef<AbortController | null>(null);
+  /** The settle timer behind `reportViewport`, and whether a first layout has landed. */
+  const viewportSettleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewportMeasuredRef = useRef(false);
+
+  // The system keyboard's height, as the keyboard controller animates it. A
+  // spacer under the dock takes it, so the dock rides up with the keyboard
+  // and the terminal above shrinks by the same amount -- and re-measures,
+  // which is what re-sizes the grid. The dock's own bottom padding is the
+  // safe-area inset, which the keyboard covers, so that much is not doubled.
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+  const bottomInset = insets.bottom;
+  const keyboardSpacerStyle = useAnimatedStyle(
+    () => ({ height: Math.max(0, -keyboardHeight.value - bottomInset) }),
+    [bottomInset]
+  );
+
+  useEffect(
+    () => () => {
+      if (viewportSettleRef.current) clearTimeout(viewportSettleRef.current);
+    },
+    []
+  );
+
+  // Leaving the keyboard ends the visit a revealed composer belonged to.
+  useEffect(() => {
+    if (!keyboardMode) setComposerRevealed(false);
+  }, [keyboardMode]);
+
+  // What the far side is running, as far as the emulator can tell. The title
+  // rides the frame; the mode is read off its last rows; both only mean
+  // anything on the alternate screen. The verdict latches while that screen
+  // is held, because stock nvim in Normal mode shows nothing to read.
+  const frameTitle = terminalFrame?.title ?? null;
+  const nvimMode = useMemo(() => sshNvimMode(terminalFrame, alternateScreen), [alternateScreen, terminalFrame]);
+  useEffect(() => {
+    setEditorPane((previous) => sshEditorPane(previous, { alternateScreen, title: frameTitle, nvimMode }));
+  }, [alternateScreen, frameTitle, nvimMode]);
+
+  // An editor opens straight into the keyboard, as it does on the gateway: it
+  // is driven a keystroke at a time, and the composer is the wrong instrument.
+  // Only on the way *in*, so closing the keyboard on an editor keeps it closed.
+  const editorSeenRef = useRef(false);
+  useEffect(() => {
+    if (editorPane && !editorSeenRef.current) {
+      Keyboard.dismiss();
+      setKeyboardMode(true);
+    }
+    editorSeenRef.current = editorPane;
+  }, [editorPane]);
+
+  // The row follows what the shell is running: nvim's own actions on top of
+  // the shell set while an editor is up, and only Esc and the basics while
+  // nvim is typing every keystroke into the buffer -- where `dd` or `:w`
+  // would be typed as letters. The same rule as the gateway's, minus the
+  // usage ordering, which is keyed on a gateway profile this screen lacks.
+  const terminalKeys = useMemo(() => {
+    if (editorPane && nvimMode === 'insert') return INSERT_MODE_KEYS;
+    const resolved = terminalKeysForPane(null, editorPane ? frameTitle : null);
+    return editorPane ? withEditorActions(resolved) : resolved;
+  }, [editorPane, frameTitle, nvimMode]);
 
   const fontSize = terminalFontSize(terminalTextSize);
   // The canvas's own cell size, once it has measured its font. Until then the
@@ -196,7 +316,12 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   // object, which is what `SkiaTerminal` keys its picture on.
   useEffect(() => {
     const terminal = terminalRef.current;
-    const unsubscribe = terminal.subscribe((frame) => setTerminalFrame(frame));
+    const unsubscribe = terminal.subscribe((frame) => {
+      setTerminalFrame(frame);
+      // The mode is read beside the frame it belongs to, so a render never
+      // pairs a new screen with an old answer to "whose screen is it".
+      setAlternateScreen(terminal.modes.alternateScreen);
+    });
     return () => {
       unsubscribe();
       terminal.dispose();
@@ -232,6 +357,31 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     );
   }
 
+  /**
+   * The terminal's measured size, committed once it has held still.
+   *
+   * The first measurement lands at once, so the PTY can open at the right
+   * size; every later one waits out `VIEWPORT_SETTLE_MS`, because the system
+   * keyboard re-measures on every frame of its animation and the far side
+   * should hear about the size it ends at, not the fourteen on the way.
+   */
+  function reportViewport(width: number, height: number) {
+    const commit = () =>
+      setViewport((previous) =>
+        previous.width === width && previous.height === height ? previous : { width, height }
+      );
+    if (viewportSettleRef.current) clearTimeout(viewportSettleRef.current);
+    if (!viewportMeasuredRef.current) {
+      viewportMeasuredRef.current = true;
+      commit();
+      return;
+    }
+    viewportSettleRef.current = setTimeout(() => {
+      viewportSettleRef.current = null;
+      commit();
+    }, VIEWPORT_SETTLE_MS);
+  }
+
   // Everything that identifies *which* connection to make, as one string, so a
   // rename or an accepted host key does not tear the session down.
   const connectKey = record
@@ -254,6 +404,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     controller.signal.addEventListener('abort', () => dismissPrompt?.(), { once: true });
     terminal.reset();
     setTerminalFrame(undefined);
+    setAlternateScreen(false);
     setStatus({ phase: 'connecting' });
 
     const askHostKey = (verdict: 'unknown' | 'mismatch', key: SshTrustedHostKey, trusted?: SshTrustedHostKey) =>
@@ -486,8 +637,53 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     typeKey(item.key);
   }
 
+  /**
+   * The composer's line, run. The draft goes over exactly as typed with the
+   * Enter that runs it -- and a pasted block goes between paste markers when
+   * the program asked for them (`ssh-composer`). The field is cleared and
+   * keeps its focus, so the next line can be typed straight away.
+   */
+  function submitDraft() {
+    if (status.phase !== 'connected' || !draft.trim()) return;
+    send(
+      composerSubmitBytes(draft, {
+        bracketedPaste: terminalRef.current.modes.bracketedPaste,
+        // A shell needs Enter to run what was typed; an editor takes the text
+        // into the buffer and leaves Enter on the key row.
+        enter: !editorPane,
+      })
+    );
+    setDraft('');
+  }
+
+  /** The key row's toggle: the app's own keyboard in place of the phone's. */
+  function openVirtualKeyboard() {
+    Keyboard.dismiss();
+    setKeyboardMode(true);
+  }
+
   const connected = status.phase === 'connected';
   const connecting = status.phase === 'connecting';
+  const hasDraft = draft.trim().length > 0;
+  // What the dock shows: the gateway's rule with the gateway's concerns
+  // absent -- no approval can stand here, there is one pane, and a shell has
+  // nothing to attach. The setting that hides the key row is honoured the same
+  // way; with the row gone, its keyboard toggle moves in beside the composer.
+  const dock = useMemo(
+    () =>
+      dockPresentation({
+        approval: null,
+        keyboardMode,
+        paneCount: 1,
+        showTerminalKeyRow,
+        attachmentsAvailable: false,
+        stagedAttachments: 0,
+        screenOnTop: true,
+        editorPane,
+        composerRevealed,
+      }),
+    [composerRevealed, editorPane, keyboardMode, showTerminalKeyRow]
+  );
   const chromeText = theme.colors.text;
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
 
@@ -519,13 +715,25 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     );
   }
 
+  const keyboardToggle = (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={t`Open on-screen keyboard`}
+      feedback="selection"
+      pressedScale={0.9}
+      onPress={openVirtualKeyboard}
+      style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+      <KeyboardIcon size={16} color={theme.colors.primary} />
+    </PressableScale>
+  );
+
   const keyStrip = (
     <ScrollView
       horizontal
       keyboardShouldPersistTaps="always"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.keyList}>
-      {SHELL_KEYS.map((item) => (
+      {terminalKeys.map((item) => (
         <TerminalKeyChip
           key={item.key}
           item={item}
@@ -533,6 +741,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           onPress={() => sendTerminalKey(item)}
           textColor={chromeText}
           background={chromeGlass}
+          emphasisBorder={theme.colors.primary}
         />
       ))}
     </ScrollView>
@@ -571,9 +780,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
         style={styles.terminal}
         onLayout={(event: LayoutChangeEvent) => {
           const { width, height } = event.nativeEvent.layout;
-          setViewport((previous) =>
-            previous.width === width && previous.height === height ? previous : { width, height }
-          );
+          reportViewport(width, height);
         }}>
         <TerminalBoundary
           resetKey={`${record.id}:${attempt}`}
@@ -585,34 +792,75 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             terminalId={`ssh:${record.id}:${attempt}`}
             textSize={terminalTextSize}
             stickBottomNonce={stickBottomNonce}
+            // An editor's own colour scheme is drawn as it is rather than
+            // resolved against the app theme -- the gateway's rule, on the
+            // same predicate.
+            ownsScreen={editorPane}
           />
         </TerminalBoundary>
       </View>
 
       <GlassChrome style={[styles.dock, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-        {keyboardMode ? (
+        {dock.virtualKeyboard ? (
           <VirtualKeyboard
             disabled={!connected}
             onText={typeText}
             onKey={typeKey}
             onClose={() => setKeyboardMode(false)}
-            shortcuts={<View style={styles.keyRow}>{keyStrip}</View>}
+            shortcuts={dock.keysInKeyboard ? <View style={styles.keyRow}>{keyStrip}</View> : undefined}
           />
-        ) : (
-          <View style={styles.keyRow}>
+        ) : null}
+        {/* The way back to the composer without putting the keyboard away:
+            one control in the corner where Send would be, as on the gateway. */}
+        {dock.composerEntry ? (
+          <View style={styles.composerEntryRow}>
             <PressableScale
               accessibilityRole="button"
-              accessibilityLabel={t`Show keyboard`}
+              accessibilityLabel={t`Write a line`}
               feedback="selection"
               pressedScale={0.9}
-              onPress={() => setKeyboardMode(true)}
+              onPress={() => setComposerRevealed(true)}
               style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
-              <KeyboardIcon size={16} color={theme.colors.primary} />
+              <PenLine size={16} color={chromeText} />
             </PressableScale>
+          </View>
+        ) : null}
+        {dock.keyRow ? (
+          <View style={styles.keyRow}>
+            {keyboardToggle}
             {keyStrip}
           </View>
-        )}
+        ) : null}
+        {dock.composer ? (
+          <TerminalComposer
+            // With the key row switched off there is no row to carry the
+            // keyboard toggle, so it rides in front of the field instead --
+            // the seat the gateway's paperclip has. Never over the keyboard
+            // itself, which has its own way down.
+            leading={dock.floatingActions ? keyboardToggle : null}
+            inputProps={{
+              testID: 'ssh-composer-input',
+              accessibilityLabel: editorPane ? t`Type into this editor` : t`Run a terminal command`,
+              value: draft,
+              onChangeText: setDraft,
+              editable: connected,
+              maxLength: 64 * 1024,
+              // A shell is case-sensitive and its commands are lower-case;
+              // the phone's habit of capitalising a sentence is wrong here.
+              autoCapitalize: 'none',
+              placeholder: editorPane ? t`Type into this editor` : t`Run a terminal command`,
+            }}
+            send={{
+              accessibilityLabel: t`Run command`,
+              armed: connected && hasDraft,
+              sending: false,
+              disabled: !connected || !hasDraft,
+              onPress: submitDraft,
+            }}
+          />
+        ) : null}
       </GlassChrome>
+      <Animated.View style={keyboardSpacerStyle} />
 
       <HostKeyDialog prompt={prompt} host={record.host} />
       {/* Mounted only while the server is asking, so the answers -- a
@@ -787,16 +1035,22 @@ function TerminalKeyChip({
   onPress,
   textColor,
   background,
+  emphasisBorder,
 }: {
   item: TerminalKey;
   disabled: boolean;
   onPress: () => void;
   textColor: string;
   background: string;
+  /** The border on Insert mode's Esc, the row's one deliberate action. */
+  emphasisBorder: string;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
-  const described = terminalKeyDescription[item.accessibilityLabel];
+  // The editor actions have a sentence behind their identity (`nvim:w`);
+  // everything else is keyed by its English label. Same two tables, same
+  // order, as the gateway's row.
+  const described = editorActionDescription[item.key] ?? terminalKeyDescription[item.accessibilityLabel];
   const spoken = described ? _(described) : item.accessibilityLabel;
   return (
     <PressableScale
@@ -806,8 +1060,15 @@ function TerminalKeyChip({
       pressedScale={0.94}
       hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
       onPress={onPress}
-      style={[styles.terminalKey, { backgroundColor: background, opacity: disabled ? appChrome.opacity.disabled : 1 }]}>
-      <Text variant="caption" color={textColor} style={styles.terminalKeyText}>
+      style={[
+        styles.terminalKey,
+        { backgroundColor: background, opacity: disabled ? appChrome.opacity.disabled : 1 },
+        item.emphasis ? [styles.terminalKeyEmphasis, { borderColor: emphasisBorder }] : null,
+      ]}>
+      <Text
+        variant="caption"
+        color={textColor}
+        style={item.emphasis ? [styles.terminalKeyText, styles.terminalKeyEmphasisText] : styles.terminalKeyText}>
         {keyCap(item.key, item.cap)}
       </Text>
     </PressableScale>
@@ -868,6 +1129,7 @@ const styles = StyleSheet.create({
   dock: {
     paddingTop: 8,
     paddingHorizontal: 10,
+    gap: 8,
     borderTopLeftRadius: appChrome.radius.composerDock,
     borderTopRightRadius: appChrome.radius.composerDock,
     borderCurve: 'continuous',
@@ -892,6 +1154,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 1,
     alignItems: 'center',
   },
+  /** Right-aligned, where the send button it stands in for would be. */
+  composerEntryRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
   terminalKey: {
     height: KEY_ROW_HEIGHT,
     minWidth: 40,
@@ -904,6 +1171,14 @@ const styles = StyleSheet.create({
   terminalKeyText: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontVariant: ['tabular-nums'],
+  },
+  terminalKeyEmphasis: {
+    minWidth: 64,
+    paddingHorizontal: 18,
+    borderWidth: 2,
+  },
+  terminalKeyEmphasisText: {
+    fontWeight: '700',
   },
   fingerprints: {
     gap: 12,

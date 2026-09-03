@@ -72,7 +72,7 @@ tags:
 - assertVisible: "Disconnect from Demo shell"
 
 # ── The on-screen keyboard rises and goes ─────────────────────────────────
-- tapOn: "Show keyboard"
+- tapOn: "Open on-screen keyboard"
 - extendedWaitUntil:
     visible: "Hide keyboard"
     timeout: 4000
@@ -80,7 +80,7 @@ tags:
 - tapOn: "Return"
 - tapOn: "Hide keyboard"
 - extendedWaitUntil:
-    visible: "Show keyboard"
+    visible: "Open on-screen keyboard"
     timeout: 4000
 - assertNotVisible: "Retry drawing the terminal"
 

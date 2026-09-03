@@ -1608,6 +1608,7 @@ msgid "Open Muqun to connect"
 msgstr "牧群を開いて接続"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "ソフトウェアキーボードを開く"
 
@@ -1975,10 +1976,12 @@ msgid "Right arrow"
 msgstr "右矢印"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "ターミナルコマンドを実行"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
 msgstr "コマンドを実行"
 
@@ -2235,10 +2238,6 @@ msgstr "画像を表示"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "ターミナルの横に表示して、描き直される様子を見ます。"
-
-#: src/components/ssh-terminal-workspace.tsx
-msgid "Show keyboard"
-msgstr "キーボードを表示"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -2637,6 +2636,7 @@ msgid "Type a line and press Enter; it is echoed back."
 msgstr "一行入力して Enter を押すと、そのまま返ってきます。"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Type into this editor"
 msgstr "このエディタに入力"
 
@@ -2790,6 +2790,7 @@ msgid "Workspace"
 msgstr "ワークスペース"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Write a line"
 msgstr "一行入力"
 

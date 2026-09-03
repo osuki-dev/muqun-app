@@ -1608,6 +1608,7 @@ msgid "Open Muqun to connect"
 msgstr "開啟牧群以連線"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "開啟螢幕鍵盤"
 
@@ -1975,10 +1976,12 @@ msgid "Right arrow"
 msgstr "向右鍵"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "執行終端機指令"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
 msgstr "執行指令"
 
@@ -2235,10 +2238,6 @@ msgstr "顯示圖片"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "顯示在終端機旁邊，看著它重繪。"
-
-#: src/components/ssh-terminal-workspace.tsx
-msgid "Show keyboard"
-msgstr "顯示鍵盤"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -2637,6 +2636,7 @@ msgid "Type a line and press Enter; it is echoed back."
 msgstr "輸入一行並按 Enter，它會被原樣回傳。"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Type into this editor"
 msgstr "在這個編輯器裡輸入"
 
@@ -2790,6 +2790,7 @@ msgid "Workspace"
 msgstr "工作區"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Write a line"
 msgstr "輸入一行"
 

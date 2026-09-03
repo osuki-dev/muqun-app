@@ -1608,6 +1608,7 @@ msgid "Open Muqun to connect"
 msgstr "Muqun을 열어 연결하세요"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "화면 키보드 열기"
 
@@ -1975,10 +1976,12 @@ msgid "Right arrow"
 msgstr "오른쪽 화살표"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
 msgstr "터미널 명령 실행"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
 msgstr "명령 실행"
 
@@ -2235,10 +2238,6 @@ msgstr "이미지 표시"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "터미널 옆에 표시하고, 다시 그려지는 것을 봅니다."
-
-#: src/components/ssh-terminal-workspace.tsx
-msgid "Show keyboard"
-msgstr "키보드 표시"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -2637,6 +2636,7 @@ msgid "Type a line and press Enter; it is echoed back."
 msgstr "한 줄을 입력하고 Enter를 누르면 그대로 돌려줍니다."
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Type into this editor"
 msgstr "이 편집기에 입력"
 
@@ -2790,6 +2790,7 @@ msgid "Workspace"
 msgstr "워크스페이스"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Write a line"
 msgstr "한 줄 입력"
 

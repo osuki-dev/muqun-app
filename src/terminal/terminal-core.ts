@@ -83,6 +83,13 @@ export type TerminalModes = {
   applicationCursorKeys: boolean;
   /** `CSI ?2004 h/l`: pasted text is to be wrapped in `CSI 200~` … `CSI 201~`. */
   bracketedPaste: boolean;
+  /**
+   * `CSI ?47 / ?1047 / ?1049 h/l`: the program has taken the alternate screen.
+   * Not an input mode, but the same kind of fact -- what the far side is,
+   * rather than how it is drawn -- and the one true answer to "does this
+   * program own the screen", which a gateway pane can only guess from names.
+   */
+  alternateScreen: boolean;
 };
 
 const CSI_FINAL = /[@-~]/;
@@ -140,7 +147,11 @@ export class TerminalEmulator {
   private autoWrap = true;
   private pendingWrap = false;
   private title: string | null = null;
-  private readonly modeState: TerminalModes = { applicationCursorKeys: false, bracketedPaste: false };
+  private readonly modeState: TerminalModes = {
+    applicationCursorKeys: false,
+    bracketedPaste: false,
+    alternateScreen: false,
+  };
   /**
    * The tail of the last `write` that could not be acted on yet: an escape
    * sequence whose final byte, or string terminator, is in the next chunk, or
@@ -202,6 +213,7 @@ export class TerminalEmulator {
     this.title = null;
     this.modeState.applicationCursorKeys = false;
     this.modeState.bracketedPaste = false;
+    this.modeState.alternateScreen = false;
     this.pending = '';
     this.openRun = false;
   }
@@ -698,6 +710,7 @@ export class TerminalEmulator {
           this.active = this.main;
           if (mode === 1049) this.restoreCursor();
         }
+        this.modeState.alternateScreen = enabled;
       } else if (privateMode && mode === 1048) {
         if (enabled) this.saveCursor();
         else this.restoreCursor();
