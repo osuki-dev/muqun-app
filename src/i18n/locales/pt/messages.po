@@ -81,11 +81,11 @@ msgstr "há {0} min"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· perguntou uma vez} other {· perguntou # vezes}}"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
 msgstr "{host} apresentou uma chave diferente da guardada. Isso acontece após uma reinstalação, e também quando algo intercepta a conexão. Não a substitua a menos que saiba por que mudou."
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a key this app has not seen before. Compare the fingerprint with the server before trusting it."
 msgstr "{host} apresentou uma chave que este app nunca viu. Compare a impressão digital com o servidor antes de confiar nela."
 
@@ -108,6 +108,10 @@ msgstr "+{overflow} mais"
 #: src/app/commands.tsx
 msgid "A dev server or preview running on this machine."
 msgstr "Um servidor de desenvolvimento ou pré-visualização nesta máquina."
+
+#: src/app/explore.tsx
+msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
+msgstr "Um Gateway numa máquina em que você entra por SSH, mesmo um que só escuta no próprio loopback."
 
 #: src/components/simfarm-preview.tsx
 msgid "A preview is only offered over Tailscale or HTTPS."
@@ -141,6 +145,7 @@ msgstr "Adicionar um host"
 msgid "Add a terminal beside this one, and go to it."
 msgstr "Adicione um terminal ao lado deste e vá para lá."
 
+#: src/app/explore.tsx
 #: src/components/ssh-host-list.tsx
 msgid "Add an SSH host"
 msgstr "Adicionar um host SSH"
@@ -148,6 +153,10 @@ msgstr "Adicionar um host SSH"
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Adicione comandos e combinações de teclas personalizadas."
+
+#: src/app/explore.tsx
+msgid "Add one first"
+msgstr "Adicione um primeiro"
 
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
@@ -201,7 +210,7 @@ msgstr "Permitir câmara"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Permita a câmara ou introduza o endereço."
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Resposta"
 
@@ -321,7 +330,7 @@ msgstr "É preciso acesso à câmara"
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Cancelar"
@@ -355,6 +364,10 @@ msgstr "A verificar a autenticação do sistema…"
 #: src/components/open-web-service-sheet.tsx
 msgid "Checking…"
 msgstr "A verificar…"
+
+#: src/app/explore.tsx
+msgid "Choose an SSH host."
+msgstr "Escolha um host SSH."
 
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
@@ -486,6 +499,10 @@ msgstr "Confirmar: {removeLabel} {label}"
 msgid "Connected"
 msgstr "Ligado"
 
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Connected through SSH host {host}"
+msgstr "Conectado pelo host SSH {host}"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connected to {address}"
 msgstr "Conectado a {address}"
@@ -496,6 +513,14 @@ msgstr "Conectado a {address}"
 msgid "Connecting"
 msgstr "A ligar"
 
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Connecting through SSH host {host}"
+msgstr "Conectando pelo host SSH {host}"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Connecting through SSH…"
+msgstr "Conectando por SSH…"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "Conectando a {address}"
@@ -505,7 +530,7 @@ msgid "Contact us"
 msgstr "Contacte-nos"
 
 #: src/app/explore.tsx
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continuar"
 
@@ -688,6 +713,14 @@ msgstr "Não foi possível abrir o ficheiro"
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "Não foi possível abrir o seletor."
+
+#: src/app/explore.tsx
+msgid "Could not open the SSH tunnel: {reason}"
+msgstr "Não foi possível abrir o túnel SSH: {reason}"
+
+#: src/app/explore.tsx
+msgid "Could not open the SSH tunnel."
+msgstr "Não foi possível abrir o túnel SSH."
 
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
@@ -934,6 +967,10 @@ msgid "Enter the Gateway's address instead."
 msgstr "Introduza antes o endereço do Gateway."
 
 #: src/app/explore.tsx
+msgid "Enter the gateway's port on that host."
+msgstr "Informe a porta do gateway nesse host."
+
+#: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "Introduzir URL manualmente"
 
@@ -982,7 +1019,7 @@ msgstr "Ficheiros deste espaço de trabalho"
 msgid "Find a file by name"
 msgstr "Procurar um ficheiro pelo nome"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
 msgstr "Impressão digital"
 
@@ -1022,6 +1059,10 @@ msgstr "O Gateway está temporariamente indisponível."
 msgid "Gateway notifications"
 msgstr "Notificações do Gateway"
 
+#: src/app/explore.tsx
+msgid "Gateway port on that host"
+msgstr "Porta do gateway nesse host"
+
 #: src/lib/notifications.ts
 msgid "Gateway updates"
 msgstr "Atualizações do Gateway"
@@ -1035,6 +1076,10 @@ msgstr "URL do Gateway"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "O URL do Gateway não é válido."
+
+#: src/components/ssh-host-form.tsx
+msgid "Gateways reached through this host"
+msgstr "Gateways alcançados por este host"
 
 #: src/components/ssh-host-form.tsx
 msgid "Generate an Ed25519 key"
@@ -1103,7 +1148,7 @@ msgstr "Widget no ecrã principal"
 msgid "Host"
 msgstr "Host"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Host key changed"
 msgstr "A chave do host mudou"
 
@@ -1431,7 +1476,7 @@ msgstr "Nunca visto"
 msgid "New group"
 msgstr "Novo grupo"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "Nova chave de host"
 
@@ -1514,6 +1559,10 @@ msgstr "Ainda não há servidores emparelhados"
 msgid "No simulator on port {port}"
 msgstr "Nenhum simulador na porta {port}"
 
+#: src/app/explore.tsx
+msgid "No SSH hosts saved yet."
+msgstr "Nenhum host SSH salvo ainda."
+
 #: src/components/ssh-host-list.tsx
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "Ainda não há hosts SSH. Adicione um para abrir um shell em qualquer máquina ao seu alcance."
@@ -1541,6 +1590,11 @@ msgstr "Não encontrado"
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Inválido."
+
+#. placeholder {0}: nextOffer.sshTunnel.remotePort
+#: src/app/explore.tsx
+msgid "Nothing answered on port {0} through the SSH host. Check the gateway's port on that machine."
+msgstr "Nada respondeu na porta {0} pelo host SSH. Verifique a porta do gateway nessa máquina."
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
@@ -1642,6 +1696,10 @@ msgstr "Abrir o espaço de trabalho {0}, {1, plural, one {# ativo} other {# ativ
 msgid "Opening the server."
 msgstr "A abrir o servidor."
 
+#: src/app/explore.tsx
+msgid "Opening tunnel"
+msgstr "Abrindo o túnel"
+
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "Abre o rastreador de problemas do Muqun no GitHub."
@@ -1676,6 +1734,15 @@ msgstr "Emparelhar novamente este servidor"
 #: src/lib/network-error.ts
 msgid "Pair this server again."
 msgstr "Emparelhe novamente este servidor."
+
+#. placeholder {0}: host.label
+#: src/app/explore.tsx
+msgid "Pair through {0}"
+msgstr "Parear por {0}"
+
+#: src/app/explore.tsx
+msgid "Pair through an SSH host"
+msgstr "Parear por um host SSH"
 
 #: src/app/(drawer)/index.tsx
 msgid "Pair your first server"
@@ -1739,7 +1806,7 @@ msgstr "Porta"
 msgid "PORT"
 msgstr "PORTA"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "Apresentada agora"
 
@@ -1810,6 +1877,10 @@ msgstr "Sair"
 msgid "Reach us at {SUPPORT_EMAIL}."
 msgstr "Contacte-nos através de {SUPPORT_EMAIL}."
 
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Reached through SSH host {host}"
+msgstr "Alcançado pelo host SSH {host}"
+
 #: src/app/explore.tsx
 msgid "Reaching the Gateway"
 msgstr "A contactar o Gateway"
@@ -1822,9 +1893,14 @@ msgstr "Recebe os bloqueios de agentes e as atualizações do Gateway."
 msgid "Recent commits"
 msgstr "Commits recentes"
 
+#: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
 msgstr "Reconectar"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Reconnect the SSH tunnel"
+msgstr "Reconectar o túnel SSH"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1879,7 +1955,7 @@ msgstr "Mostrar como terminal"
 msgid "Render as text"
 msgstr "Mostrar como texto"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
 msgstr "Substituir chave"
 
@@ -2034,7 +2110,7 @@ msgstr "Guardar host"
 msgid "Save shortcut"
 msgstr "Guardar atalho"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "Guardada"
 
@@ -2255,7 +2331,7 @@ msgstr "Mostrar a lista de servidores"
 msgid "Show what is running"
 msgstr "Ver o que está a correr"
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Sign in"
 msgstr "Entrar"
 
@@ -2290,10 +2366,19 @@ msgstr "Espaço"
 msgid "SSH"
 msgstr "SSH"
 
+#: src/app/explore.tsx
+#: src/components/gateway-tunnel-badge.tsx
+msgid "SSH host"
+msgstr "Host SSH"
+
 #: src/app/(drawer)/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
 msgstr "Hosts SSH"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "SSH tunnel through {host} is down"
+msgstr "O túnel SSH por {host} caiu"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
@@ -2487,7 +2572,7 @@ msgstr "O servidor não o devolveu."
 msgid "The server did not say which terminal it made."
 msgstr "O servidor não disse que terminal criou."
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "The server is asking for more before it lets you in."
 msgstr "O servidor pede mais alguma coisa antes de deixar você entrar."
 
@@ -2615,6 +2700,10 @@ msgstr "Este terminal já não está disponível."
 msgid "This workspace has no groups yet."
 msgstr "Este espaço de trabalho ainda não tem grupos."
 
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Through {host}"
+msgstr "Por {host}"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Hoje"
@@ -2627,7 +2716,7 @@ msgstr "Demasiado grande para colorir. Mostrado como texto simples."
 msgid "Too many lines to colour. Shown as plain text."
 msgstr "Demasiadas linhas para colorir. Mostrado como texto simples."
 
-#: src/components/ssh-terminal-workspace.tsx
+#: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
 msgstr "Confiar"
 
@@ -2643,6 +2732,10 @@ msgstr "Tente novamente quando o Gateway responder."
 #: src/app/(drawer)/index.tsx
 msgid "Try the demo"
 msgstr "Experimentar a demo"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Tunnel down"
+msgstr "Túnel caído"
 
 #: src/components/asset-viewer.tsx
 msgid "Type"
