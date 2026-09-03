@@ -896,7 +896,7 @@ msgstr "Bearbeiten"
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
-#: src/components/ssh-host-list.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Edit {0}"
 msgstr "{0} bearbeiten"
 
@@ -1119,6 +1119,11 @@ msgstr "Host"
 msgid "Host key changed"
 msgstr "Host-Schlüssel hat sich geändert"
 
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Host key trusted"
+msgstr "Host-Schlüssel vertraut"
+
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inaktiv"
@@ -1222,18 +1227,22 @@ msgid "Large"
 msgstr "Groß"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {days}d ago"
 msgstr "Zuletzt verbunden vor {days} T."
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {hours}h ago"
 msgstr "Zuletzt verbunden vor {hours} Std."
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {minutes}m ago"
 msgstr "Zuletzt verbunden vor {minutes} Min."
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected just now"
 msgstr "Zuletzt verbunden: gerade eben"
 
@@ -1344,6 +1353,14 @@ msgstr "Simulator wird gesucht"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Büro"
 
+#: src/app/(drawer)/index.tsx
+msgid "Manage"
+msgstr "Verwalten"
+
+#: src/app/(drawer)/index.tsx
+msgid "Manage SSH hosts"
+msgstr "SSH-Hosts verwalten"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
@@ -1414,6 +1431,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Gib ihm einen Namen und dann den Code ein, den das Gateway anzeigt."
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Never connected"
 msgstr "Nie verbunden"
 
@@ -1574,11 +1592,10 @@ msgstr "Öffnen"
 
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: record.label
+#. placeholder {0}: server.label
 #: src/app/(drawer)/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/ssh-host-list.tsx
 msgid "Open {0}"
 msgstr "{0} öffnen"
 
@@ -1619,6 +1636,13 @@ msgstr "Port {recent} öffnen"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "Schnellaktionen öffnen"
+
+#. placeholder {0}: host.label
+#. placeholder {0}: record.label
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Open SSH host {0}"
+msgstr "SSH-Host {0} öffnen"
 
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
@@ -2281,6 +2305,11 @@ msgstr "Leertaste"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "SSH"
 msgstr "SSH"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+msgid "SSH hosts"
+msgstr "SSH-Hosts"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"

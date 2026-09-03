@@ -1,7 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Fingerprint, KeyRound, Pencil, Plus, SquareTerminal } from 'lucide-react-native';
+import { Plus, SquareTerminal } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,11 +9,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { SshHostForm } from '@/components/ssh-host-form';
-import { appChrome } from '@/constants/appearance';
+import { SshHostRow } from '@/components/ssh-host-row';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { demoSshHost } from '@/lib/demo-ssh';
-import { sshHostAddress, type SshHostRecord } from '@/lib/ssh-hosts';
+import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 
 /**
@@ -52,6 +52,12 @@ export function SshHostList() {
 
   const demoHost = isDemoRecord(gateway) || (!loading && hosts.length === 0) ? demoSshHost() : null;
 
+  // Read at render because the rows' "last connected" is relative to *now*,
+  // not to whenever the store last changed -- see `ServerCard` for the same
+  // call and the same reason.
+  // eslint-disable-next-line react-hooks/purity -- deliberate: see above.
+  const nowMs = Date.now();
+
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader
@@ -84,15 +90,17 @@ export function SshHostList() {
         ) : (
           <View style={styles.list}>
             {demoHost ? (
-              <HostRow
+              <SshHostRow
                 record={demoHost}
+                nowMs={nowMs}
                 onOpen={() => router.push(`/ssh/${demoHost.id}`)}
               />
             ) : null}
             {hosts.map((record) => (
-              <HostRow
+              <SshHostRow
                 key={record.id}
                 record={record}
+                nowMs={nowMs}
                 onOpen={() => router.push(`/ssh/${record.id}`)}
                 onEdit={() => setEditing(record)}
               />
@@ -121,60 +129,6 @@ export function SshHostList() {
   );
 }
 
-function HostRow({
-  record,
-  onOpen,
-  onEdit,
-}: {
-  record: SshHostRecord;
-  onOpen: () => void;
-  /** Absent for the demo host, which is not saved and cannot be changed. */
-  onEdit?: () => void;
-}) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const address = sshHostAddress(record);
-  return (
-    <View style={[styles.row, { backgroundColor: theme.colors.surface }]}>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={t`Open ${record.label}`}
-        accessibilityHint={address}
-        onPress={onOpen}
-        style={styles.rowMain}>
-        <View style={[styles.rowIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
-          {record.auth.type === 'privateKey' ? (
-            <KeyRound size={18} color={theme.colors.primary} strokeWidth={2} />
-          ) : record.auth.type === 'keyboardInteractive' ? (
-            <Fingerprint size={18} color={theme.colors.primary} strokeWidth={2} />
-          ) : (
-            <SquareTerminal size={18} color={theme.colors.primary} strokeWidth={2} />
-          )}
-        </View>
-        <View style={styles.rowCopy}>
-          <Text variant="bodySmall" numberOfLines={1}>
-            {record.label}
-          </Text>
-          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-            {address}
-          </Text>
-        </View>
-        {onEdit ? null : <ChevronRight size={18} color={theme.colors.textSubtle} />}
-      </PressableScale>
-      {onEdit ? (
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t`Edit ${record.label}`}
-          onPress={onEdit}
-          hitSlop={6}
-          style={[styles.rowAction, { backgroundColor: theme.colors.surfaceRaised }]}>
-          <Pencil size={16} color={theme.colors.text} strokeWidth={2} />
-        </PressableScale>
-      ) : null}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -195,39 +149,6 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 8,
-    borderRadius: appChrome.radius.noticeCard,
-    borderCurve: 'continuous',
-  },
-  rowMain: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 48,
-  },
-  rowIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowCopy: {
-    flex: 1,
-    gap: 2,
-  },
-  rowAction: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   empty: {
     alignItems: 'center',

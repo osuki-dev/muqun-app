@@ -896,7 +896,7 @@ msgstr "편집"
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
-#: src/components/ssh-host-list.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Edit {0}"
 msgstr "{0} 편집"
 
@@ -1119,6 +1119,11 @@ msgstr "호스트"
 msgid "Host key changed"
 msgstr "호스트 키가 바뀌었습니다"
 
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Host key trusted"
+msgstr "호스트 키 신뢰됨"
+
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "대기"
@@ -1222,18 +1227,22 @@ msgid "Large"
 msgstr "크게"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {days}d ago"
 msgstr "마지막 연결: {days}일 전"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {hours}h ago"
 msgstr "마지막 연결: {hours}시간 전"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {minutes}m ago"
 msgstr "마지막 연결: {minutes}분 전"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected just now"
 msgstr "마지막 연결: 방금"
 
@@ -1344,6 +1353,14 @@ msgstr "시뮬레이터를 찾는 중"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 사무실"
 
+#: src/app/(drawer)/index.tsx
+msgid "Manage"
+msgstr "관리"
+
+#: src/app/(drawer)/index.tsx
+msgid "Manage SSH hosts"
+msgstr "SSH 호스트 관리"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
@@ -1414,6 +1431,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "이름을 지정한 뒤 Gateway에 표시된 코드를 입력하세요."
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Never connected"
 msgstr "연결된 적 없음"
 
@@ -1574,11 +1592,10 @@ msgstr "열기"
 
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: record.label
+#. placeholder {0}: server.label
 #: src/app/(drawer)/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/ssh-host-list.tsx
 msgid "Open {0}"
 msgstr "{0} 열기"
 
@@ -1619,6 +1636,13 @@ msgstr "포트 {recent} 열기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "빠른 동작 열기"
+
+#. placeholder {0}: host.label
+#. placeholder {0}: record.label
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Open SSH host {0}"
+msgstr "SSH 호스트 {0} 열기"
 
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
@@ -2281,6 +2305,11 @@ msgstr "스페이스"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "SSH"
 msgstr "SSH"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+msgid "SSH hosts"
+msgstr "SSH 호스트"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"

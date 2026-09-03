@@ -896,7 +896,7 @@ msgstr "編輯"
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
-#: src/components/ssh-host-list.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Edit {0}"
 msgstr "編輯 {0}"
 
@@ -1119,6 +1119,11 @@ msgstr "主機"
 msgid "Host key changed"
 msgstr "主機金鑰已改變"
 
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Host key trusted"
+msgstr "主機金鑰已信任"
+
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "閒置"
@@ -1222,18 +1227,22 @@ msgid "Large"
 msgstr "大"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {days}d ago"
 msgstr "上次連接於 {days} 天前"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {hours}h ago"
 msgstr "上次連接於 {hours} 小時前"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected {minutes}m ago"
 msgstr "上次連接於 {minutes} 分鐘前"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Last connected just now"
 msgstr "剛剛連接過"
 
@@ -1344,6 +1353,14 @@ msgstr "正在尋找模擬器"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 辦公室"
 
+#: src/app/(drawer)/index.tsx
+msgid "Manage"
+msgstr "管理"
+
+#: src/app/(drawer)/index.tsx
+msgid "Manage SSH hosts"
+msgstr "管理 SSH 主機"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
@@ -1414,6 +1431,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "為它命名，然後輸入 Gateway 顯示的代碼。"
 
 #: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
 msgid "Never connected"
 msgstr "從未連接過"
 
@@ -1574,11 +1592,10 @@ msgstr "開啟"
 
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: record.label
+#. placeholder {0}: server.label
 #: src/app/(drawer)/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
-#: src/components/ssh-host-list.tsx
 msgid "Open {0}"
 msgstr "開啟 {0}"
 
@@ -1619,6 +1636,13 @@ msgstr "開啟連接埠 {recent}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "開啟快速動作"
+
+#. placeholder {0}: host.label
+#. placeholder {0}: record.label
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Open SSH host {0}"
+msgstr "開啟 SSH 主機 {0}"
 
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
@@ -2281,6 +2305,11 @@ msgstr "空白鍵"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "SSH"
 msgstr "SSH"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+msgid "SSH hosts"
+msgstr "SSH 主機"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"

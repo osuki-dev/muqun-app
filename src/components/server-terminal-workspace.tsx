@@ -126,8 +126,10 @@ import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer'
 import { asAgentWidgetStatus, syncAgentWidget } from '@/lib/agent-widget';
 import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
+import { demoSshHost } from '@/lib/demo-ssh';
 import { field, numberField, panelTitle, statusColor } from '@/lib/herdr-entity';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { sshHomeRows } from '@/lib/ssh-home';
 import type { PaneAddress } from '@/lib/pane-address';
 import {
   hasEarlierPaneParts,
@@ -175,6 +177,7 @@ import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useSshHostsStore } from '@/stores/ssh-hosts';
 import {
   type TerminalKey,
   INSERT_MODE_KEYS,
@@ -2100,6 +2103,17 @@ export function ServerTerminalWorkspace({
     });
   }
 
+  // The saved SSH hosts, for the rail's own group under the servers. Hydrated
+  // here as well as on the home list, since on a Pad this screen *is* the
+  // home; the demo host rides along while the demo is on, as it does there.
+  const sshHosts = useSshHostsStore((state) => state.hosts);
+  const sshHostsLoading = useSshHostsStore((state) => state.loading);
+  const hydrateSshHosts = useSshHostsStore((state) => state.hydrate);
+  useEffect(() => {
+    if (sshHostsLoading) void hydrateSshHosts();
+  }, [hydrateSshHosts, sshHostsLoading]);
+  const railSshHosts = sshHostsLoading ? [] : sshHomeRows(sshHosts, demoMode ? demoSshHost() : null);
+
   const railServers = useMemo<GatewayRecord[]>(() => {
     if (!routeRecord || records.some((server) => server.serverId === routeRecord.serverId)) {
       return records;
@@ -2573,6 +2587,11 @@ export function ServerTerminalWorkspace({
           onSelectAgent={selectPadAgent}
           onPairServer={() => router.push('/explore')}
           onOpenSettings={() => router.push('/settings')}
+          onOpenSsh={() => router.push('/ssh')}
+          sshHosts={railSshHosts}
+          // The shell cannot open in this column: the workspace is keyed by
+          // the selected gateway record, so a host leaves for its own screen.
+          onSelectSshHost={(host) => router.navigate(`/ssh/${host.id}`)}
         />
       }
       detailTitle={detailTitle}
