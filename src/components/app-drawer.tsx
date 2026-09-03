@@ -55,11 +55,17 @@ type AppDrawerProps = {
   onDetailBack?: () => void;
   detailFadeColor?: string;
   /**
-   * An extra control beside the panels button, in the same glass circle so it
-   * reads as part of the header rather than as something floating over the
-   * pane. The screen owns what goes in it.
+   * Extra controls beside the panels button, each in its own glass circle so
+   * they read as part of the header rather than as something floating over the
+   * pane. The screen owns what goes in them.
+   *
+   * A list rather than a single node because two of them can be earned at once
+   * -- the way out of the simulator split, and the gateway's session switcher
+   * -- and putting both inside one circle would draw them as one control.
+   * Entries that are `null` are not slots held open: a header only spends width
+   * on a circle it has something to put in.
    */
-  detailAccessory?: ReactNode;
+  detailAccessory?: ReactNode | ReactNode[];
   /**
    * Replaces the title pill outright, for a screen that needs the title to do
    * something -- carry a gesture, or show something beside itself that the
@@ -89,6 +95,10 @@ export default function AppDrawer({
   // call keeps the old language. The hook's `t` is bound to the Lingui context,
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
+
+  const detailAccessories = (
+    Array.isArray(detailAccessory) ? detailAccessory : [detailAccessory]
+  ).filter(Boolean);
 
   const router = useRouter();
   const theme = useThemeTokens();
@@ -244,7 +254,11 @@ export default function AppDrawer({
                   style={styles.detailHeaderTitleMeasure}
                 />
               )}
-              {detailAccessory ? <NavHeaderCircle>{detailAccessory}</NavHeaderCircle> : null}
+              {detailAccessories.map((accessory, index) => (
+                // Positional, because that is what the circle is: a slot in a
+                // fixed order, not one of a collection of identified things.
+                <NavHeaderCircle key={index}>{accessory}</NavHeaderCircle>
+              ))}
               {onDetailAction ? (
                 <NavHeaderCircle>
                   <PressableScale
