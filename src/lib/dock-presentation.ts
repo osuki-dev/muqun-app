@@ -24,6 +24,13 @@
  *   case keeps the whole ordinary dock with the banner sitting on top of it,
  *   which is what the screen did before any of this existed.
  *
+ * The other surface that takes the dock away is an editor, and it takes it
+ * away for the opposite reason: not because the dock offers too much, but
+ * because the program underneath owns every row of the screen and the dock is
+ * standing on the last two of them. `editorMode` below is that rule; what is
+ * left of the dock floats over the grid instead of reserving height from it,
+ * and none of it may change the terminal's layout.
+ *
  * Kept pure and free of React so the rule is one table in one test rather than
  * a conclusion drawn from six `&&`s spread through a 3000-line screen.
  */
@@ -32,7 +39,14 @@ import type { PaneApproval } from '@/lib/pane-approval';
 export interface DockPresentationInput {
   /** The menu the selected pane is blocked on, if it is blocked on one. */
   approval: PaneApproval | null;
-  /** The app's own on-screen keyboard has taken the dock. */
+  /**
+   * The app's own on-screen keyboard has taken the dock.
+   *
+   * On an editor pane there is no dock left for it to take, so the same flag
+   * means the floating cluster is open rather than collapsed to its handle --
+   * one state, because "the app's keyboard is up" is the same fact either way
+   * and a second flag would be a second thing to keep in step.
+   */
   keyboardMode: boolean;
   /** How many panes the current tab holds. One pane needs no chips. */
   paneCount: number;
@@ -46,10 +60,11 @@ export interface DockPresentationInput {
    * The selected pane is a modal editor -- nvim, helix, emacs, nano.
    *
    * Such a pane is driven a keystroke at a time, which is what the keyboard
-   * sends and what the composer, a line buffer needing Enter, does not. The
-   * screen opens the keyboard on arrival for these; the dock records the fact
-   * so the rule stays in one table rather than being re-derived at the call
-   * site.
+   * sends and what the composer, a line buffer needing Enter, does not.
+   *
+   * It is also the one pane whose program has an opinion about every row of
+   * the screen, which is why this flag no longer merely *rearranges* the dock:
+   * it takes the dock off the screen. See `editorMode`.
    */
   editorPane: boolean;
   /**
@@ -72,6 +87,40 @@ export interface DockPresentationInput {
 export interface DockPresentation {
   /** The dock is down to the banner: a question is standing and can be answered. */
   approvalOnly: boolean;
+  /**
+   * The pane is an editor and the dock has left the screen for it.
+   *
+   * The maintainer's rule for these panes: if nvim is open then this is a whole
+   * nvim, and a whole nvim is the whole pane. Every row of the
+   * grid belongs to the program: nvim's status line and its command line are
+   * the *last two*, which is exactly where a dock sits, so a dock on an editor
+   * covers the two rows the reader is typing into.
+   *
+   * So on these panes the dock does not shrink or rearrange -- it goes, and
+   * what is left floats over the grid: `editorHandle` when it is out of the
+   * way, `editorPanel` when it has been asked for. Nothing that floats is
+   * allowed to change the terminal's layout, which is the other half of the
+   * same sentence: a dock that reserved height would resize the grid, and a
+   * grid resize is a SIGWINCH and a full repaint every time a reader reaches
+   * for `esc`.
+   *
+   * A standing question outranks it. An approval clears the dock down to
+   * itself on every pane, editor included, and an answerable question with the
+   * answers floating in a corner is worse than one in a banner.
+   */
+  editorMode: boolean;
+  /**
+   * The one small control left over the editor: the way back to the keyboard.
+   *
+   * Collapsed state of the cluster. Mutually exclusive with `editorPanel`,
+   * because they are the same object in its two sizes.
+   */
+  editorHandle: boolean;
+  /**
+   * The cluster opened: the app's keyboard, the editor keys, and the way to
+   * the composer -- all of it floating over an unchanged grid.
+   */
+  editorPanel: boolean;
   /** The pane strip. */
   paneChips: boolean;
   /** The app's on-screen keyboard, which replaces the key row when it is up. */
@@ -79,6 +128,10 @@ export interface DockPresentation {
   /**
    * The in-dock row: quick actions, files, the keyboard toggle, and the
    * scrolling terminal keys it exists to carry.
+   *
+   * On an editor there is no dock, and this means the same row standing on its
+   * own inside the floating panel -- which happens for exactly one reason: the
+   * composer took the app's keyboard away, and the keys were riding in it.
    */
   keyRow: boolean;
   /**
@@ -148,11 +201,31 @@ export function dockPresentation({
   // when the options did not survive the parse -- it just draws over an
   // otherwise ordinary dock.
   const answerable = approval !== null && approval.options.length > 0;
-  const virtualKeyboard = keyboardMode && !answerable;
+  // The editor takes the pane. A question outranks it -- see `editorMode`.
+  const editorMode = editorPane && !answerable;
+  // The cluster's two sizes, which are the same control and never both.
+  const editorPanel = editorMode && keyboardMode;
+  const editorHandle = editorMode && !keyboardMode;
+  // Two keyboards on one screen is not a design, it is an accident.
+  //
+  // Summoning the composer raises the phone's own keyboard for it, and inside
+  // the floating panel the app's QWERTY would then be stacked on top of that:
+  // a grip, thirty keys, a text field and the system keyboard under all of it,
+  // which on a small phone is taller than the phone. The dock could survive
+  // that arrangement because a dock reserves its height and simply pushes the
+  // terminal up; a panel that reserves nothing runs off the top of the screen
+  // instead. So the app's keyboard stands down here -- and the terminal keys,
+  // which are the reason the panel exists at all, come back onto a row of
+  // their own rather than leaving with the QWERTY that was carrying them.
+  const editorComposing = editorPanel && composerRevealed;
+  const virtualKeyboard = keyboardMode && !answerable && !editorComposing;
+  // Whether an ordinary dock row may be on screen at all. Two things take the
+  // dock away wholesale: a question that can be answered, and an editor.
+  const dockRows = !answerable && !editorMode;
   // The two entries are offered whenever the dock is ordinary; the setting
   // decides only *where*, so exactly one of these is ever true.
-  const entriesShown = !answerable && !virtualKeyboard;
-  const keyRow = entriesShown && showTerminalKeyRow;
+  const entriesShown = dockRows && !virtualKeyboard;
+  const keyRow = showTerminalKeyRow && (entriesShown || editorComposing);
   // The keys do not leave when the keyboard arrives -- they move into it. The
   // setting still governs whether they exist at all, so a reader who switched
   // the row off does not get it back by opening the keyboard.
@@ -163,18 +236,29 @@ export function dockPresentation({
   // editor is the difference between pasting a line and losing your keys to do
   // it. So this is not a new hiding rule; it is the old one, named, with a door
   // in it.
-  const composerStandsDown = virtualKeyboard && !composerRevealed;
+  //
+  // An editor adds the second reason for the composer to stand down, and it is
+  // the stronger one: on a collapsed cluster there is nothing on screen but the
+  // handle, so a text field cannot be among what is left whether or not the
+  // reader asked for one earlier.
+  const composerStandsDown = editorHandle || ((virtualKeyboard || editorMode) && !composerRevealed);
 
   return {
     approvalOnly: answerable,
-    paneChips: !answerable && !virtualKeyboard && paneCount > 1,
+    editorMode,
+    editorHandle,
+    editorPanel,
+    paneChips: dockRows && !virtualKeyboard && paneCount > 1,
     virtualKeyboard,
     keyRow,
     floatingActions: entriesShown && !showTerminalKeyRow,
-    attachEntry: !answerable && attachmentsAvailable,
-    attachmentStrip: !answerable && stagedAttachments > 0,
+    attachEntry: dockRows && attachmentsAvailable,
+    attachmentStrip: dockRows && stagedAttachments > 0,
     composer: !answerable && !composerStandsDown,
-    composerEntry: composerStandsDown,
+    // The handle is the only thing over a collapsed editor, and it is already
+    // the way to the composer -- a second floating button beside it would be
+    // two controls for one door.
+    composerEntry: composerStandsDown && !editorHandle,
     keysInKeyboard,
     // Derived from the two surfaces that carry a real `esc` rather than from
     // the flag alone, so that a rule which one day keeps the row up through

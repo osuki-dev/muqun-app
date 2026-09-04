@@ -304,6 +304,11 @@ msgstr "서버 목록으로"
 msgid "Back to SSH hosts"
 msgstr "SSH 호스트 목록으로"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "화면 키보드로 돌아가기"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
@@ -1131,6 +1136,10 @@ msgstr "{name} 숨기기"
 msgid "Hide keyboard"
 msgstr "키보드 숨기기"
 
+#: src/components/editor-controls.tsx
+msgid "Hide the editor controls"
+msgstr "편집기 컨트롤 숨기기"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "서버 목록 숨기기"
@@ -1406,6 +1415,18 @@ msgstr "수정일"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "기호 더 보기"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls down"
+msgstr "컨트롤을 아래로 이동"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls up"
+msgstr "컨트롤을 위로 이동"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "편집기 컨트롤 이동"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1703,6 +1724,10 @@ msgstr "서버를 여는 중입니다."
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "터널 여는 중"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "이 편집기 위에 키보드, 편집기 키, 입력란을 엽니다. 끌어서 옮길 수 있습니다."
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
@@ -2344,6 +2369,10 @@ msgstr "이미지 표시"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "터미널 옆에 표시하고, 다시 그려지는 것을 봅니다."
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "편집기 키보드 표시"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"

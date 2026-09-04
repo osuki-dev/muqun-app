@@ -15,9 +15,10 @@ import {
 } from 'react-native';
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { EditorControls } from '@/components/editor-controls';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
@@ -28,12 +29,14 @@ import { TerminalComposer } from '@/components/terminal-composer';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { appChrome } from '@/constants/appearance';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
+import { useSettledHeight } from '@/hooks/use-settled-height';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import { editorActionDescription, terminalKeyDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
 import { connectDemoSsh, demoSshHost, isDemoSshHost } from '@/lib/demo-ssh';
 import { dockPresentation } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
+import { fadeIn, fadeOutDown } from '@/lib/motion';
 import {
   connectSsh,
   describeSshFailure,
@@ -245,18 +248,50 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const viewportSettleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const viewportMeasuredRef = useRef(false);
 
-  // The system keyboard's height, as the keyboard controller animates it. A
-  // spacer under the dock takes it, so the dock rides up with the keyboard
-  // and the terminal above shrinks by the same amount -- and re-measures,
-  // which is what re-sizes the grid. The dock's own bottom padding is the
-  // safe-area inset, which the keyboard covers, so that much is not doubled.
+  /*
+    The system keyboard's height, as the keyboard controller animates it.
+
+    This used to be a spacer *under* the dock: a view in normal flow whose
+    height followed this value frame by frame, so the dock rode up with the
+    keyboard and the terminal above it shrank by the same amount. That worked,
+    and it cost more than it was worth. Every frame of the keyboard's animation
+    changed the terminal's box, every change reached `onLayout`, and everything
+    downstream of `viewport` -- the grid arithmetic, the emulator resize, the
+    PTY's window size -- was re-derived from it. Measured on the emulator, eight
+    raise/dismiss cycles of the demo shell: 73.89% janky frames, a 90th
+    percentile of 150ms, and 65 missed vsyncs.
+
+    The gateway screen never had that problem, because its dock is an
+    absolutely positioned overlay that *translates* with the keyboard while the
+    terminal's box holds still. This screen is now the same shape, and the
+    translation below is exactly the spacer's old height expressed as a
+    transform: the keyboard's height, less the safe-area inset the dock already
+    pads itself by and the keyboard covers. Same geometry on the screen, no
+    layout at all.
+  */
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
   const bottomInset = insets.bottom;
   // No dependency list: reanimated 4.6 ignores one and warns per render that it
   // did, and the inset is read straight out of the worklet's closure anyway.
-  const keyboardSpacerStyle = useAnimatedStyle(() => ({
-    height: Math.max(0, -keyboardHeight.value - bottomInset),
+  const dockKeyboardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -Math.max(0, -keyboardHeight.value - bottomInset) }],
   }));
+  /*
+    What the dock takes off the bottom of the terminal, throttled.
+
+    The dock is over the grid now rather than beside it, so the rows it covers
+    have to be accounted for by hand -- and there are two answers depending on
+    what is on screen. An ordinary dock is permanent chrome: a program painting
+    into the rows behind it would never have them read, so those rows come out
+    of the PTY's size outright. An editor has no dock at all, and what is left
+    of the bottom is the system's own safe area.
+
+    Why it is throttled rather than written straight through is the whole of
+    `useSettledHeight`; the short version is that a measurement written from
+    `onLayout` is a nested update, and the dock's padding can alternate while
+    the keyboard animates.
+  */
+  const [dockHeight, measureDockHeight] = useSettledHeight(96);
 
   useEffect(
     () => () => {
@@ -285,17 +320,34 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     );
   }, [alternateScreen, frameTitle, nvimMode]);
 
-  // An editor opens straight into the keyboard, as it does on the gateway: it
-  // is driven a keystroke at a time, and the composer is the wrong instrument.
-  // Only on the way *in*, so closing the keyboard on an editor keeps it closed.
+  /*
+    An editor arrives bare, and every control on the screen gets out of its way.
+
+    This used to open the keyboard on arrival, on the argument that an editor is
+    driven a keystroke at a time and the reader would want one. Both halves of
+    that were true and the conclusion was still wrong: what it produced was nvim
+    in the top third of the phone with the app's QWERTY under it, on a screen
+    the reader had opened *to read a file*. The keys are still one tap away --
+    they are behind the floating handle now (`EditorControls`) -- and the file
+    has the screen until they are asked for.
+
+    Only on the way *in*, so a reader who opened the panel keeps it open while
+    they work.
+  */
   const editorSeenRef = useRef(false);
   useEffect(() => {
     if (editorPane && !editorSeenRef.current) {
       Keyboard.dismiss();
-      setKeyboardMode(true);
+      setKeyboardMode(false);
     }
     editorSeenRef.current = editorPane;
   }, [editorPane]);
+
+  /**
+   * Where the reader dragged the floating cluster, kept here rather than in the
+   * component so it outlives a trip out of nvim and back into it.
+   */
+  const editorControlsOffset = useSharedValue(0);
 
   // The row follows what the shell is running: nvim's own actions on top of
   // the shell set while an editor is up, and only Esc and the basics while
@@ -309,6 +361,25 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   }, [editorPane, frameTitle, nvimMode]);
 
   const fontSize = terminalFontSize(terminalTextSize);
+  /*
+    What permanently covers the bottom of the terminal, and therefore comes out
+    of the PTY's size.
+
+    The dock when there is one, the safe area when there is not -- and never the
+    keyboard. That last word is the deliberate part. The keyboard is up for as
+    long as it takes to type one line, and sizing the PTY to it means a
+    `SIGWINCH` and a full repaint on the way up and another on the way down,
+    every line. The canvas absorbs it instead, by scrolling the tail clear of it
+    (`keyboardOffset` on `SkiaTerminal`, which is how the gateway screen has
+    always handled the same question). The dock and the safe area are different
+    in kind: they are there for as long as the screen is, so a program painting
+    behind them is painting where nobody will ever read.
+
+    Read off `editorPane` rather than `dock.editorMode` because the grid is
+    needed long before the dock's rule is evaluated -- and on this screen the
+    two are the same answer, since no approval can stand on an SSH shell.
+  */
+  const bottomChrome = editorPane ? insets.bottom : dockHeight;
   // The canvas's own cell size, once it has measured its font. Until then the
   // advance ratio stands in; the first report re-sizes the grid once.
   const grid = useMemo(
@@ -316,14 +387,14 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       viewport.width > 0 && viewport.height > 0
         ? terminalGridFor({
             width: viewport.width,
-            height: viewport.height,
+            height: Math.max(1, viewport.height - bottomChrome),
             fontSize,
             cellWidth: cellMetrics?.cellWidth,
             lineHeight: cellMetrics?.lineHeight,
             pixelRatio: PixelRatio.get(),
           })
         : TERMINAL_GRID_DEFAULT,
-    [cellMetrics, fontSize, viewport.height, viewport.width]
+    [bottomChrome, cellMetrics, fontSize, viewport.height, viewport.width]
   );
   const gridRef = useLatestRef(grid);
 
@@ -783,6 +854,103 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     </ScrollView>
   );
 
+  /** The app's own keyboard, wherever it is standing: in the dock, or floating. */
+  const virtualKeyboard = (
+    <VirtualKeyboard
+      disabled={!connected}
+      onText={typeText}
+      onKey={typeKey}
+      onClose={() => setKeyboardMode(false)}
+      shortcuts={dock.keysInKeyboard ? <View style={styles.keyRow}>{keyStrip}</View> : undefined}
+    />
+  );
+
+  /** The way to the composer from a surface that has stood it down. */
+  const composerEntry = (
+    <View style={styles.composerEntryRow}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={t`Write a line`}
+        feedback="selection"
+        pressedScale={0.9}
+        onPress={() => setComposerRevealed(true)}
+        style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+        <PenLine size={16} color={chromeText} />
+      </PressableScale>
+    </View>
+  );
+
+  const composer = (
+    <TerminalComposer
+      // With the key row switched off there is no row to carry the
+      // keyboard toggle, so it rides in front of the field instead --
+      // the seat the gateway's paperclip has. Never over the keyboard
+      // itself, which has its own way down.
+      leading={dock.floatingActions ? keyboardToggle : null}
+      inputProps={{
+        testID: 'ssh-composer-input',
+        accessibilityLabel: editorPane ? t`Type into this editor` : t`Run a terminal command`,
+        value: draft,
+        onChangeText: setDraft,
+        editable: connected,
+        maxLength: 64 * 1024,
+        // Summoned into the editor panel, the field arrives *instead of* the
+        // app's keyboard rather than on top of it, so a reader who had to tap
+        // it before typing would have gained nothing by asking for it.
+        autoFocus: dock.editorMode && composerRevealed,
+        // A shell is case-sensitive and its commands are lower-case;
+        // the phone's habit of capitalising a sentence is wrong here.
+        autoCapitalize: 'none',
+        placeholder: editorPane ? t`Type into this editor` : t`Run a terminal command`,
+      }}
+      send={{
+        accessibilityLabel: t`Run command`,
+        armed: connected && hasDraft,
+        sending: false,
+        disabled: !connected || !hasDraft,
+        onPress: submitDraft,
+      }}
+    />
+  );
+
+  /*
+    What floats over an editor, in the order it is read from the top: the way to
+    move it (the panel's own grip), the keys, and the input.
+
+    The key row appears here only when the composer has taken the app's keyboard
+    away -- the keys were riding inside it, and they are the reason the panel
+    exists. Its toggle is the inverse of the pen: it puts the field away and
+    brings the keyboard back, which on the dock is what closing the composer
+    would do and here has to be a control of its own.
+  */
+  const editorPanelBody = (
+    <>
+      {dock.virtualKeyboard ? virtualKeyboard : null}
+      {dock.keyRow ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOutDown('short')}
+          style={styles.keyRow}>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t`Back to the on-screen keyboard`}
+            feedback="selection"
+            pressedScale={0.9}
+            onPress={() => {
+              Keyboard.dismiss();
+              setComposerRevealed(false);
+            }}
+            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+            <KeyboardIcon size={16} color={theme.colors.primary} />
+          </PressableScale>
+          {keyStrip}
+        </Animated.View>
+      ) : null}
+      {dock.composerEntry ? composerEntry : null}
+      {dock.composer ? composer : null}
+    </>
+  );
+
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
       <ScreenHeader
@@ -828,77 +996,84 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             terminalId={`ssh:${record.id}:${attempt}`}
             textSize={terminalTextSize}
             stickBottomNonce={stickBottomNonce}
+            // What the dock covers, so the canvas rests the live rows above it
+            // rather than behind it. The box no longer shrinks for the dock, so
+            // this is what replaces the height the dock used to take.
+            bottomInset={bottomChrome}
+            // And what the keyboard covers, on the UI thread, without anything
+            // being re-laid-out for it. This is the gateway's answer to the
+            // same question and it is the reason the PTY is never resized for
+            // the phone's keyboard.
+            keyboardOffset={keyboardHeight}
             // An editor's own colour scheme is drawn as it is rather than
             // resolved against the app theme -- the gateway's rule, on the
             // same predicate.
             ownsScreen={editorPane}
           />
         </TerminalBoundary>
+        {/*
+          Inside the terminal's box and absolutely positioned within it, which
+          is the whole of how this avoids resizing the grid: the box does not
+          change, so `onLayout` above does not fire, so `reportViewport` is
+          never called and the PTY is never told a new size. A dock could not
+          be written this way -- a dock is height taken out of the terminal --
+          which is why an editor gets this instead of a smaller dock.
+        */}
+        {dock.editorMode ? (
+          <EditorControls
+            expanded={dock.editorPanel}
+            onExpand={openVirtualKeyboard}
+            onCollapse={() => setKeyboardMode(false)}
+            offset={editorControlsOffset}
+            keyboardOffset={keyboardHeight}
+            // The terminal's box runs to the bottom of the screen now that the
+            // dock is out of its flow, so the safe area is the cluster's to
+            // clear -- the same inset the grid already leaves nvim.
+            bottomInset={insets.bottom}
+            disabled={!connected}>
+            {editorPanelBody}
+          </EditorControls>
+        ) : null}
       </View>
 
-      <GlassChrome style={[styles.dock, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-        {dock.virtualKeyboard ? (
-          <VirtualKeyboard
-            disabled={!connected}
-            onText={typeText}
-            onKey={typeKey}
-            onClose={() => setKeyboardMode(false)}
-            shortcuts={
-              dock.keysInKeyboard ? <View style={styles.keyRow}>{keyStrip}</View> : undefined
-            }
-          />
-        ) : null}
-        {/* The way back to the composer without putting the keyboard away:
-            one control in the corner where Send would be, as on the gateway. */}
-        {dock.composerEntry ? (
-          <View style={styles.composerEntryRow}>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t`Write a line`}
-              feedback="selection"
-              pressedScale={0.9}
-              onPress={() => setComposerRevealed(true)}
-              style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
-              <PenLine size={16} color={chromeText} />
-            </PressableScale>
-          </View>
-        ) : null}
-        {dock.keyRow ? (
-          <View style={styles.keyRow}>
-            {keyboardToggle}
-            {keyStrip}
-          </View>
-        ) : null}
-        {dock.composer ? (
-          <TerminalComposer
-            // With the key row switched off there is no row to carry the
-            // keyboard toggle, so it rides in front of the field instead --
-            // the seat the gateway's paperclip has. Never over the keyboard
-            // itself, which has its own way down.
-            leading={dock.floatingActions ? keyboardToggle : null}
-            inputProps={{
-              testID: 'ssh-composer-input',
-              accessibilityLabel: editorPane ? t`Type into this editor` : t`Run a terminal command`,
-              value: draft,
-              onChangeText: setDraft,
-              editable: connected,
-              maxLength: 64 * 1024,
-              // A shell is case-sensitive and its commands are lower-case;
-              // the phone's habit of capitalising a sentence is wrong here.
-              autoCapitalize: 'none',
-              placeholder: editorPane ? t`Type into this editor` : t`Run a terminal command`,
-            }}
-            send={{
-              accessibilityLabel: t`Run command`,
-              armed: connected && hasDraft,
-              sending: false,
-              disabled: !connected || !hasDraft,
-              onPress: submitDraft,
-            }}
-          />
-        ) : null}
-      </GlassChrome>
-      <Animated.View style={keyboardSpacerStyle} />
+      {/*
+        The dock, over the terminal rather than beside it.
+
+        Absolutely positioned and translated by the keyboard, which is the
+        gateway's shape and the whole of why this screen stopped re-laying the
+        terminal out fifteen times per keyboard animation. Nothing here is in
+        the terminal's flow; what it covers is accounted for by `bottomChrome`
+        and `keyboardOffset` above.
+
+        An editor has no dock at all -- what floats over one is `EditorControls`
+        inside the terminal's own box, so that even the dock's absence costs the
+        grid nothing beyond the single resize that giving nvim the screen is.
+      */}
+      {dock.editorMode ? null : (
+        <Animated.View
+          // Measured out here rather than on the glass: `GlassChrome` renders a
+          // `GlassView`, a `BlurView` or a plain view depending on the platform
+          // and only some of those pass `onLayout` through -- and this is the
+          // box the terminal actually has to account for, padding included.
+          onLayout={(event: LayoutChangeEvent) =>
+            measureDockHeight(Math.ceil(event.nativeEvent.layout.height))
+          }
+          style={[styles.dockOverlay, dockKeyboardStyle]}>
+          <GlassChrome style={[styles.dock, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+            {dock.virtualKeyboard ? virtualKeyboard : null}
+            {/* The way back to the composer without putting the keyboard away:
+                one control in the corner where Send would be, as on the gateway. */}
+            {dock.composerEntry ? composerEntry : null}
+            {dock.keyRow ? (
+              <View style={styles.keyRow}>
+                {keyboardToggle}
+                {keyStrip}
+              </View>
+            ) : null}
+            {dock.composer ? composer : null}
+          </GlassChrome>
+        </Animated.View>
+      )}
 
       {prompt && (prompt.kind === 'trust' || prompt.kind === 'mismatch') ? (
         <SshHostKeyDialog
@@ -1084,6 +1259,13 @@ const styles = StyleSheet.create({
   terminal: {
     flex: 1,
     overflow: 'hidden',
+  },
+  /** The dock's layer: over the terminal, pinned to the bottom of the screen. */
+  dockOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   dock: {
     paddingTop: 8,
