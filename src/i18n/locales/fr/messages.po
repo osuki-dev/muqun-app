@@ -304,6 +304,11 @@ msgstr "Retour aux serveurs"
 msgid "Back to SSH hosts"
 msgstr "Retour aux hôtes SSH"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "Revenir au clavier à l’écran"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
@@ -1131,6 +1136,10 @@ msgstr "Masquer {name}"
 msgid "Hide keyboard"
 msgstr "Masquer le clavier"
 
+#: src/components/editor-controls.tsx
+msgid "Hide the editor controls"
+msgstr "Masquer les commandes de l’éditeur"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "Masquer la liste des serveurs"
@@ -1406,6 +1415,18 @@ msgstr "Modifié le"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Plus de symboles"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls down"
+msgstr "Déplacer les commandes vers le bas"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls up"
+msgstr "Déplacer les commandes vers le haut"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "Déplacer les commandes de l’éditeur"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1703,6 +1724,10 @@ msgstr "Ouverture du serveur."
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "Ouverture du tunnel"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "Ouvre le clavier, les touches de l’éditeur et le champ de saisie par-dessus cet éditeur. Faites glisser pour le déplacer."
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
@@ -2344,6 +2369,10 @@ msgstr "Afficher les images"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "L'afficher à côté du terminal et le voir se redessiner."
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "Afficher le clavier de l’éditeur"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"

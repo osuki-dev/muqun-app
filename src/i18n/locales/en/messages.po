@@ -304,6 +304,11 @@ msgstr "Back to servers"
 msgid "Back to SSH hosts"
 msgstr "Back to SSH hosts"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "Back to the on-screen keyboard"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
@@ -1131,6 +1136,10 @@ msgstr "Hide {name}"
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
 
+#: src/components/editor-controls.tsx
+msgid "Hide the editor controls"
+msgstr "Hide the editor controls"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "Hide the server list"
@@ -1406,6 +1415,18 @@ msgstr "Modified"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "More symbols"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls down"
+msgstr "Move the controls down"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls up"
+msgstr "Move the controls up"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "Move the editor controls"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1703,6 +1724,10 @@ msgstr "Opening the server."
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "Opening tunnel"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
@@ -2344,6 +2369,10 @@ msgstr "Show images"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "Show it beside the terminal, and watch it redraw."
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "Show the editor keyboard"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"

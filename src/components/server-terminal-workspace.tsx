@@ -57,6 +57,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SwitchIndicator } from '@/components/switch-indicator';
 import { TerminalBoundary } from '@/components/terminal-boundary';
+import { EditorControls } from '@/components/editor-controls';
 import { composerStyles, TerminalComposer } from '@/components/terminal-composer';
 import { TerminalPanel } from '@/components/terminal-output';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
@@ -71,6 +72,7 @@ import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
+import { useSettledHeight } from '@/hooks/use-settled-height';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
 import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
 import {
@@ -339,16 +341,6 @@ const PAD_PANE_STRIP_MAX_WIDTH = 614;
 const CONNECTION_RECOVERED_MS = 1_400;
 
 /**
- * How long the dock's measurement is given to settle before it becomes state.
- *
- * Long enough to swallow a run of alternating measurements -- see
- * `measureComposerHeight` -- and short enough to land well inside the dock's
- * own reflow, so a height that really did change still moves the terminal's
- * inset within the same animation.
- */
-const COMPOSER_MEASURE_WINDOW_MS = 50;
-
-/**
  * The composer dock, as something whose height can be animated.
  *
  * `SafeAreaView` is an ordinary view under the inset provider, so wrapping it
@@ -505,55 +497,10 @@ export function ServerTerminalWorkspace({
   const [loadingData, setLoadingData] = useState(true);
   const [sending, setSending] = useState(false);
   const [sendingKey, setSendingKey] = useState<string | null>(null);
-  const [composerHeight, setComposerHeight] = useState(96);
   const [shortcuts, setShortcuts] = useState<PaneShortcuts | null>(null);
-  /*
-    The dock's measured height, handed to React on the leading and trailing
-    edge of a window rather than on every measurement.
-
-    `onLayout` is a native callback delivered inside the commit that laid the
-    dock out, so the state it writes is a nested update in React's accounting.
-    One nested update is nothing. A run of them is the defect this exists for:
-    the bottom inset the dock is padded by can flip between its keyboard-up and
-    its keyboard-down value repeatedly while the keyboard animates, and each
-    flip re-measures the dock at the other of two heights. Written straight
-    through, that alternation is a chain of nested updates, and a gateway
-    streaming pane output commits the screen on top of it until the chain
-    passes React's limit of fifty: "Maximum update depth exceeded", thrown from
-    whichever setter the frame lands on, which drops the terminal to its
-    boundary and back -- the flicker. It needs both halves, which is why only a
-    live server ever showed it and the demo workspace never could.
-
-    The throttle is the whole of the fix. The first measurement still lands at
-    once, so nothing waits on a height that really did change; an alternation
-    collapses to a single write on the trailing edge; and a write made from a
-    timer is not nested at all, so the chain cannot form.
-  */
-  const measuredComposerHeightRef = useRef(96);
-  const composerMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const composerMeasuredAtRef = useRef(0);
-  const measureComposerHeight = useCallback((height: number) => {
-    measuredComposerHeightRef.current = height;
-    if (composerMeasureTimerRef.current) return;
-    const elapsed = Date.now() - composerMeasuredAtRef.current;
-    if (elapsed >= COMPOSER_MEASURE_WINDOW_MS) {
-      composerMeasuredAtRef.current = Date.now();
-      setComposerHeight((current) => (current === height ? current : height));
-      return;
-    }
-    composerMeasureTimerRef.current = setTimeout(() => {
-      composerMeasureTimerRef.current = undefined;
-      composerMeasuredAtRef.current = Date.now();
-      const settled = measuredComposerHeightRef.current;
-      setComposerHeight((current) => (current === settled ? current : settled));
-    }, COMPOSER_MEASURE_WINDOW_MS - elapsed);
-  }, []);
-  useEffect(
-    () => () => {
-      if (composerMeasureTimerRef.current) clearTimeout(composerMeasureTimerRef.current);
-    },
-    []
-  );
+  // The dock's measured height, throttled: the reason it cannot be written
+  // straight out of `onLayout` is the whole of `useSettledHeight`.
+  const [composerHeight, measureComposerHeight] = useSettledHeight(96);
   // The keyboard button swaps the compact key row for a full on-screen QWERTY
   // that types straight into the pane -- the way to drive a TUI like nvim from
   // a phone. Off by default so the output stays visible.
@@ -1317,17 +1264,20 @@ export function ServerTerminalWorkspace({
     selectedPane ? field(selectedPane, 'foreground_command') : null
   );
   /*
-    An editor opens straight into the keyboard.
+    An editor arrives bare.
 
-    The pane is driven a keystroke at a time, so the composer -- a line buffer
-    that needs Enter to send -- is the wrong instrument for it, and reaching the
-    right one was a tap the reader had to know about. Arriving on nvim with the
-    keyboard already up is the difference between a viewer and an editor.
+    This opened the keyboard on arrival, and the argument for it was sound as
+    far as it went: an editor is driven a keystroke at a time, and the composer
+    -- a line buffer that needs Enter -- is the wrong instrument. What it
+    produced was not an editor, though. It was nvim in the top third of a phone
+    with the app's QWERTY under it, on a screen the reader most often opened to
+    *read* a file. The maintainer's rule for these panes: if nvim is open then
+    this is a whole nvim, and a whole nvim is the whole pane.
 
-    Only on the way *in* to an editor pane. Keyed on the pane rather than run
-    whenever `fullScreenPane` is true, so closing the keyboard on an editor
-    keeps it closed -- otherwise the toggle would fight the effect and the
-    keyboard would spring back on the next render.
+    So the arrival is now the opposite: the dock leaves (`dock.editorMode`) and
+    the keyboard stays down behind a floating handle, one tap away. Keyed on the
+    pane, exactly as before, so a reader who opened the panel keeps it open for
+    as long as they are on this pane.
   */
   const autoKeyboardPaneRef = useRef<string | null>(null);
   useEffect(() => {
@@ -1335,8 +1285,18 @@ export function ServerTerminalWorkspace({
     if (!paneId || !fullScreenPane) return;
     if (autoKeyboardPaneRef.current === paneId) return;
     autoKeyboardPaneRef.current = paneId;
-    setKeyboardMode(true);
+    setKeyboardMode(false);
   }, [fullScreenPane, selection.paneId]);
+
+  /**
+   * Where the reader dragged the editor's floating cluster.
+   *
+   * Held by the screen rather than by the component so it survives leaving nvim
+   * and coming back, and switching to another pane and back: a reader who moved
+   * the controls off the line they were editing has said something, and saying
+   * it again on every arrival is the defect the drag exists to fix.
+   */
+  const editorControlsOffset = useSharedValue(0);
 
   // Leaving the pane, or the keyboard, ends the visit a revealed composer
   // belonged to: the next arrival starts with the file having the height again.
@@ -2684,6 +2644,156 @@ export function ServerTerminalWorkspace({
     </ScrollView>
   );
 
+  /*
+    The input, written once because it is the same field in two places now: in
+    the dock on an ordinary pane, and floating in the editor panel on an editor.
+
+    It goes for an approval. It is the strongest of the "send the pane something
+    else" surfaces, and a text field left under a standing permission menu
+    invites typing into a program that is not reading typing. Nothing already
+    drafted is lost -- `draft` is the screen's state, not the field's, so the
+    words come back with the dock.
+
+    It sits outside the keyboard's branch rather than inside its else, because
+    the keyboard is no longer the end of it: an editor can summon this back over
+    the keys to paste a line without giving up `esc` and the chords to do it.
+    `dock.composer` is what decides now, and it accounts for both.
+  */
+  const composerField = (
+    <TerminalComposer
+      entering={fadeInDown('short')}
+      exiting={fadeOutDown('short')}
+      layout={dockRowLayout}
+      leading={
+        dock.attachEntry ? (
+          <PressableScale
+            accessibilityLabel={
+              attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
+            }
+            // A file picked now would join a message that is already on
+            // its way out, so the menu closes for the length of the send.
+            disabled={!selectedPane || sending}
+            onPress={() => setAttachmentMenuOpen((open) => !open)}
+            style={[
+              composerStyles.button,
+              { backgroundColor: chromeGlass },
+              attachmentMenuOpen ? { backgroundColor: theme.colors.primarySubtle } : null,
+            ]}>
+            <Paperclip size={17} color={theme.colors.primary} />
+          </PressableScale>
+        ) : null
+      }
+      inputProps={{
+        testID: 'terminal-composer-input',
+        value: draft,
+        onChangeText: setDraft,
+        // The picker follows the caret, and takes Esc from a hardware
+        // keyboard. Both are inert when no catalog is in hand.
+        ...slashPopup.inputProps,
+        // Both popups read the caret: the slash picker through its own
+        // inputProps handler, the @ mention trigger through `caret`.
+        // The spread must not eat the second one.
+        onSelectionChange: (event) => {
+          slashPopup.inputProps.onSelectionChange(event);
+          setCaret(event.nativeEvent.selection.start);
+        },
+        editable: connection.phase === 'connected' && Boolean(selectedPane) && !sending,
+        maxLength: 64 * 1024,
+        // Summoned into the editor panel, the field arrives *instead of* the
+        // app's keyboard rather than on top of it, so a reader who still had
+        // to tap it before typing would have gained nothing by asking for it.
+        autoFocus: dock.editorMode && composerRevealed,
+        autoCapitalize: 'sentences',
+        // Names the surface, never the pane. The agent's name is already
+        // in the header a few points above this field, and repeating it
+        // here cost more than it said: a real agent title -- one reading
+        // "check dots-hyprland config compatibility", written half in a
+        // double-width script -- wrapped the placeholder onto a second line
+        // and grew the composer to match, on the one screen where vertical
+        // space is worth most -- and on the Pad's compact composer, which
+        // the tablet branch hit independently.
+        placeholder: selectedAgent
+          ? t`Send a message`
+          : fullScreenPane
+            ? t`Type into this editor`
+            : t`Run a terminal command`,
+      }}
+      send={{
+        accessibilityLabel: selectedAgent ? t`Send to agent` : t`Run command`,
+        armed: Boolean(hasSendableContent && selectedPane),
+        sending,
+        disabled:
+          connection.phase !== 'connected' || !hasSendableContent || !selectedPane || sending,
+        onPress: () => void sendInput(),
+      }}
+    />
+  );
+
+  /*
+    What floats over an editor, and what does not.
+
+    The keyboard, the keys and the input -- and nothing else. No pane strip, no
+    paperclip, no quick actions: every one of those is a row, a row is height,
+    and the height would come out of the file. Panes are still reachable, from
+    the panel picker in the header, which is where a reader looking for a
+    different pane goes anyway.
+
+    The key row appears here only when the composer has taken the app's keyboard
+    away: the keys were riding inside it, and they are the reason the panel
+    exists at all. Its toggle is the inverse of the pen -- it puts the field away
+    and brings the keyboard back.
+  */
+  const editorPanelBody = (
+    <>
+      {dock.virtualKeyboard ? (
+        <VirtualKeyboard
+          disabled={connection.phase !== 'connected' || !selectedPane}
+          onText={typeText}
+          onKey={typeKey}
+          onClose={() => setKeyboardMode(false)}
+          shortcuts={dock.keysInKeyboard ? terminalKeyStrip : undefined}
+        />
+      ) : null}
+      {dock.keyRow ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOutDown('short')}
+          style={styles.keyRowWrap}>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t`Back to the on-screen keyboard`}
+            feedback="selection"
+            pressedScale={0.9}
+            onPress={() => {
+              Keyboard.dismiss();
+              setComposerRevealed(false);
+            }}
+            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+            <KeyboardIcon size={16} color={theme.colors.primary} />
+          </PressableScale>
+          {terminalKeyStrip}
+        </Animated.View>
+      ) : null}
+      {dock.composerEntry ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOutDown('short')}
+          style={styles.composerEntryRow}>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t`Write a line`}
+            feedback="selection"
+            pressedScale={0.9}
+            onPress={() => setComposerRevealed(true)}
+            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+            <PenLine size={16} color={chromeText} />
+          </PressableScale>
+        </Animated.View>
+      ) : null}
+      {dock.composer ? composerField : null}
+    </>
+  );
+
   const paneEntries = (fill: string) => (
     <>
       <PressableScale
@@ -2963,7 +3073,14 @@ export function ServerTerminalWorkspace({
                       // The whole composer reserves space, key row included: anything
                       // it covers is unreachable, and the "jump to latest" pill sits
                       // against this inset too.
-                      bottomInset={composerVisible ? composerHeight : 0}
+                      //
+                      // Zero on an editor, because there is no composer there to
+                      // reserve for. What floats over an editor is deliberately
+                      // *not* measured into this: reserving height for it would
+                      // hand the pane back the problem the dock was taken away to
+                      // solve, and would move the terminal every time the panel
+                      // opened.
+                      bottomInset={composerVisible && !dock.editorMode ? composerHeight : 0}
                       // Only a program that owns the screen gets one, and it is
                       // the same clearance the reading view above uses, so the two
                       // surfaces clear the same chrome by the same amount. Keyed
@@ -3098,7 +3215,32 @@ export function ServerTerminalWorkspace({
             </Animated.View>
           ) : null}
 
-          {composerVisible ? (
+          {/*
+            The editor's own controls, which are the dock's replacement and not
+            a smaller dock. Absolutely positioned over the pane and measured into
+            nothing, so opening and closing the panel cannot move the terminal --
+            see `EditorControls` for why that constraint is the whole design.
+          */}
+          {dock.editorMode ? (
+            <EditorControls
+              expanded={dock.editorPanel}
+              onExpand={() => {
+                Keyboard.dismiss();
+                setKeyboardMode(true);
+              }}
+              onCollapse={() => setKeyboardMode(false)}
+              offset={editorControlsOffset}
+              keyboardOffset={keyboardOffset}
+              // The floating header is chrome the cluster must not disappear
+              // behind: the same clearance the grid itself takes above.
+              topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+              bottomInset={insets.bottom}
+              disabled={connection.phase !== 'connected' || !selectedPane}>
+              {editorPanelBody}
+            </EditorControls>
+          ) : null}
+
+          {composerVisible && !dock.editorMode ? (
             <Animated.View
               style={[
                 styles.composerOverlay,
@@ -3238,6 +3380,7 @@ export function ServerTerminalWorkspace({
                       layout={dockRowLayout}
                       style={styles.composerEntryRow}>
                       <PressableScale
+                        accessibilityRole="button"
                         accessibilityLabel={t`Write a line`}
                         feedback="selection"
                         pressedScale={0.9}
@@ -3331,90 +3474,11 @@ export function ServerTerminalWorkspace({
                       ) : null}
                     </>
                   ) : null}
-                  {/* The input goes for an approval. It is the strongest of the "send
-                the pane something else" surfaces, and a text field left under a
-                standing permission menu invites typing into a program that is
-                not reading typing. Nothing already drafted is lost -- `draft` is
-                the screen's state, not the field's, so the words come back with
-                the dock.
-
-                It sits outside the keyboard's branch rather than inside its
-                else, because the keyboard is no longer the end of it: an editor
-                can summon this back over the keys to paste a line without
-                giving up `esc` and the chords to do it. `dock.composer` is what
-                decides now, and it accounts for both. */}
-                  {dock.composer ? (
-                    <TerminalComposer
-                      entering={fadeInDown('short')}
-                      exiting={fadeOutDown('short')}
-                      layout={dockRowLayout}
-                      leading={
-                        dock.attachEntry ? (
-                          <PressableScale
-                            accessibilityLabel={
-                              attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
-                            }
-                            // A file picked now would join a message that is already on
-                            // its way out, so the menu closes for the length of the send.
-                            disabled={!selectedPane || sending}
-                            onPress={() => setAttachmentMenuOpen((open) => !open)}
-                            style={[
-                              composerStyles.button,
-                              { backgroundColor: chromeGlass },
-                              attachmentMenuOpen
-                                ? { backgroundColor: theme.colors.primarySubtle }
-                                : null,
-                            ]}>
-                            <Paperclip size={17} color={theme.colors.primary} />
-                          </PressableScale>
-                        ) : null
-                      }
-                      inputProps={{
-                        testID: 'terminal-composer-input',
-                        value: draft,
-                        onChangeText: setDraft,
-                        // The picker follows the caret, and takes Esc from a hardware
-                        // keyboard. Both are inert when no catalog is in hand.
-                        ...slashPopup.inputProps,
-                        // Both popups read the caret: the slash picker through its own
-                        // inputProps handler, the @ mention trigger through `caret`.
-                        // The spread must not eat the second one.
-                        onSelectionChange: (event) => {
-                          slashPopup.inputProps.onSelectionChange(event);
-                          setCaret(event.nativeEvent.selection.start);
-                        },
-                        editable:
-                          connection.phase === 'connected' && Boolean(selectedPane) && !sending,
-                        maxLength: 64 * 1024,
-                        autoCapitalize: 'sentences',
-                        // Names the surface, never the pane. The agent's name is already
-                        // in the header a few points above this field, and repeating it
-                        // here cost more than it said: a real agent title -- "分析
-                        // dots-hyprland 配置兼容性", or "check dots-hyprland config
-                        // compatibility", whose CJK half is double-width -- wrapped the
-                        // placeholder onto a second line and grew the composer to match,
-                        // on the one screen where
-                        // vertical space is worth most -- and on the Pad's compact
-                        // composer, which the tablet branch hit independently.
-                        placeholder: selectedAgent
-                          ? t`Send a message`
-                          : fullScreenPane
-                            ? t`Type into this editor`
-                            : t`Run a terminal command`,
-                      }}
-                      send={{
-                        accessibilityLabel: selectedAgent ? t`Send to agent` : t`Run command`,
-                        armed: Boolean(hasSendableContent && selectedPane),
-                        sending,
-                        disabled:
-                          connection.phase !== 'connected' ||
-                          !hasSendableContent ||
-                          !selectedPane ||
-                          sending,
-                        onPress: () => void sendInput(),
-                      }}
-                    />
-                  ) : null}
+                  {/* Written once, above: on an editor the same field floats in
+                the panel instead. `dock.composer` is what decides in both
+                places, and it accounts for the approval, the keyboard and the
+                editor alike. */}
+                  {dock.composer ? composerField : null}
                 </AnimatedSafeAreaView>
               </GlassChrome>
             </Animated.View>

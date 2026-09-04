@@ -304,6 +304,11 @@ msgstr "Volver a los servidores"
 msgid "Back to SSH hosts"
 msgstr "Volver a los hosts SSH"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "Volver al teclado en pantalla"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
@@ -1131,6 +1136,10 @@ msgstr "Ocultar {name}"
 msgid "Hide keyboard"
 msgstr "Ocultar el teclado"
 
+#: src/components/editor-controls.tsx
+msgid "Hide the editor controls"
+msgstr "Ocultar los controles del editor"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "Ocultar la lista de servidores"
@@ -1406,6 +1415,18 @@ msgstr "Modificado"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Más símbolos"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls down"
+msgstr "Mover los controles hacia abajo"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls up"
+msgstr "Mover los controles hacia arriba"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "Mover los controles del editor"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1703,6 +1724,10 @@ msgstr "Abriendo el servidor."
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "Abriendo el túnel"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "Abre el teclado, las teclas del editor y el campo de texto sobre este editor. Arrástralo para moverlo."
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
@@ -2344,6 +2369,10 @@ msgstr "Mostrar imágenes"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "Mostrarlo junto al terminal y verlo redibujarse."
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "Mostrar el teclado del editor"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"

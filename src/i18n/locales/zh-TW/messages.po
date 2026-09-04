@@ -304,6 +304,11 @@ msgstr "回到伺服器列表"
 msgid "Back to SSH hosts"
 msgstr "返回 SSH 主機"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "回到螢幕鍵盤"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
@@ -1131,6 +1136,10 @@ msgstr "隱藏 {name}"
 msgid "Hide keyboard"
 msgstr "隱藏鍵盤"
 
+#: src/components/editor-controls.tsx
+msgid "Hide the editor controls"
+msgstr "隱藏編輯器控制項"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "隱藏伺服器清單"
@@ -1406,6 +1415,18 @@ msgstr "修改時間"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "更多符號"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls down"
+msgstr "將控制項往下移"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls up"
+msgstr "將控制項往上移"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "移動編輯器控制項"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1703,6 +1724,10 @@ msgstr "正在開啟伺服器。"
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "正在開啟通道"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "在這個編輯器上方開啟鍵盤、編輯器按鍵與輸入欄。拖曳即可移動。"
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
@@ -2344,6 +2369,10 @@ msgstr "顯示圖片"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "顯示在終端機旁邊，看著它重繪。"
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "顯示編輯器鍵盤"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"

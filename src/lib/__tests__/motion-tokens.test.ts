@@ -121,9 +121,17 @@ describe('motion tokens', () => {
   test('nothing springs, because the design system says nothing springs', () => {
     // "@osuki-dev/ui/src/theme/motion.ts: percussive, mechanical precision --
     // no spring, no bounce."
+    //
+    // `lib/motion.ts` is the one file allowed to name the primitive, and only
+    // because it is where the exemption can be read and argued with: `settleTo`
+    // exists so a *dragged* control can carry the reader's own velocity into
+    // its rest, and the test below is what stops it carrying an overshoot with
+    // it. Every other file in `src/**` still may not spring at all, which is
+    // what this scan is for.
     const offenders: string[] = [];
     for (const file of sourceFiles(SRC)) {
       const relative = file.slice(SRC.length + 1);
+      if (relative === 'lib/motion.ts') continue;
       const source = readFileSync(file, 'utf8');
       source.split('\n').forEach((line, index) => {
         if (/\bwithSpring\(|\.springify\(/.test(line)) {
@@ -132,5 +140,21 @@ describe('motion tokens', () => {
       });
     }
     expect(offenders).toEqual([]);
+  });
+
+  test('the one spring that is allowed cannot bounce', () => {
+    // Critical damping is the entire argument for `settleTo` being allowed to
+    // exist, so it is asserted rather than trusted to a comment: `dampingRatio`
+    // below 1 is underdamped, which overshoots, which is the bounce the design
+    // system forbids. Read out of the source for the same reason the scans
+    // above are -- `motion.ts` imports Reanimated and will not load here.
+    const source = readFileSync(join(SRC, 'lib', 'motion.ts'), 'utf8');
+    const ratio = source.match(/dampingRatio:\s*([\d.]+)/);
+    expect(ratio).not.toBeNull();
+    expect(Number(ratio?.[1])).toBeGreaterThanOrEqual(1);
+    // And exactly one spring configuration, so a second one cannot be added
+    // here without this line being changed on purpose.
+    expect(source.match(/dampingRatio:/g)?.length).toBe(1);
+    expect(source.match(/withSpring\(/g)?.length).toBe(1);
   });
 });

@@ -216,12 +216,10 @@ describe('dock presentation', () => {
       expect(shell.composerEntry).toBe(true);
     });
 
-    test('a pane with the keyboard closed keeps its composer and grows no button', () => {
-      for (const editorPane of [true, false]) {
-        const dock = dockPresentation(input({ editorPane }));
-        expect(dock.composer).toBe(true);
-        expect(dock.composerEntry).toBe(false);
-      }
+    test('a shell with the keyboard closed keeps its composer and grows no button', () => {
+      const dock = dockPresentation(input({ editorPane: false }));
+      expect(dock.composer).toBe(true);
+      expect(dock.composerEntry).toBe(false);
     });
 
     test('an approval still clears the dock, editor or not', () => {
@@ -230,6 +228,167 @@ describe('dock presentation', () => {
       expect(dock.composer).toBe(false);
       expect(dock.composerEntry).toBe(false);
       expect(dock.keysInKeyboard).toBe(false);
+    });
+  });
+
+  // The 2.0 rule. An editor is not a pane with a different dock on it -- it is
+  // a pane with no dock at all, and a cluster floating over the grid in the
+  // dock's place. Everything here is about what leaves and what is allowed to
+  // come back.
+  describe('an editor takes the whole pane', () => {
+    /** Arriving on nvim: the cluster is collapsed, so `keyboardMode` is off. */
+    const arrived = { editorPane: true, keyboardMode: false };
+    /** The handle tapped: the cluster is open. */
+    const opened = { editorPane: true, keyboardMode: true };
+
+    test('arriving leaves the handle and nothing else', () => {
+      const dock = dockPresentation(input(arrived));
+      expect(dock.editorMode).toBe(true);
+      expect(dock.editorHandle).toBe(true);
+      expect(dock.editorPanel).toBe(false);
+      // Every row the dock would otherwise have. A pane strip, a key row, a
+      // paperclip or a staged-file tile on screen is a dock, whatever it is
+      // called, and the height it takes is the height nvim wanted.
+      expect(dock.keyRow).toBe(false);
+      expect(dock.floatingActions).toBe(false);
+      expect(dock.paneChips).toBe(false);
+      expect(dock.attachEntry).toBe(false);
+      expect(dock.attachmentStrip).toBe(false);
+      expect(dock.composer).toBe(false);
+      expect(dock.virtualKeyboard).toBe(false);
+      // Not even the "write a line" button: the handle is already that door,
+      // and two floating circles for one destination is one too many.
+      expect(dock.composerEntry).toBe(false);
+    });
+
+    test('the setting that hides the key row cannot put a row back', () => {
+      // `floatingActions` is the key row's understudy, and an editor has no
+      // stage for either of them.
+      for (const showTerminalKeyRow of [true, false]) {
+        const dock = dockPresentation(input({ ...arrived, showTerminalKeyRow }));
+        expect(dock.keyRow).toBe(false);
+        expect(dock.floatingActions).toBe(false);
+      }
+    });
+
+    test('a second pane does not bring the strip back either', () => {
+      expect(dockPresentation(input({ ...arrived, paneCount: 4 })).paneChips).toBe(false);
+    });
+
+    test('opening the cluster is the keyboard, and the keys ride in it', () => {
+      const dock = dockPresentation(input(opened));
+      expect(dock.editorPanel).toBe(true);
+      expect(dock.editorHandle).toBe(false);
+      expect(dock.virtualKeyboard).toBe(true);
+      expect(dock.keysInKeyboard).toBe(true);
+      // Still no dock underneath it -- the panel floats, it does not restore.
+      expect(dock.keyRow).toBe(false);
+      expect(dock.paneChips).toBe(false);
+    });
+
+    test('the composer is reachable from the open cluster and only from there', () => {
+      const shut = dockPresentation(input(arrived));
+      expect(shut.composerEntry).toBe(false);
+      const open = dockPresentation(input(opened));
+      expect(open.composerEntry).toBe(true);
+      expect(open.composer).toBe(false);
+      const asked = dockPresentation(input({ ...opened, composerRevealed: true }));
+      expect(asked.composer).toBe(true);
+      expect(asked.composerEntry).toBe(false);
+      // The panel is still the panel with a text field in it, and the keys are
+      // still on it -- which is the whole point. They move out of the QWERTY
+      // and onto a row of their own, because the QWERTY leaves: the phone's own
+      // keyboard is now up for the field.
+      expect(asked.editorPanel).toBe(true);
+      expect(asked.virtualKeyboard).toBe(false);
+      expect(asked.keysInKeyboard).toBe(false);
+      expect(asked.keyRow).toBe(true);
+    });
+
+    test('the keys never leave the panel, whichever surface is carrying them', () => {
+      // The defect the key row inside the keyboard was added for, restated for
+      // the panel: whatever the reader is doing on an editor, `esc`, `:w` and
+      // the Ctrl chords are one tap away. Exactly one surface carries them, so
+      // there is never a second row of the same keys either.
+      for (const composerRevealed of [true, false]) {
+        const dock = dockPresentation(input({ ...opened, composerRevealed }));
+        expect(dock.keysInKeyboard || dock.keyRow).toBe(true);
+        expect(dock.keysInKeyboard && dock.keyRow).toBe(false);
+      }
+      // ...unless the reader switched the key row off, in which case they are
+      // nowhere, on this pane as on every other.
+      for (const composerRevealed of [true, false]) {
+        const dock = dockPresentation(
+          input({ ...opened, composerRevealed, showTerminalKeyRow: false })
+        );
+        expect(dock.keysInKeyboard).toBe(false);
+        expect(dock.keyRow).toBe(false);
+      }
+    });
+
+    test('the app never shows two keyboards at once inside the panel', () => {
+      const dock = dockPresentation(input({ ...opened, composerRevealed: true }));
+      expect(dock.composer).toBe(true);
+      expect(dock.virtualKeyboard).toBe(false);
+    });
+
+    test('the handle and the panel are one control and never two', () => {
+      for (const keyboardMode of [true, false]) {
+        for (const composerRevealed of [true, false]) {
+          const dock = dockPresentation(
+            input({ editorPane: true, keyboardMode, composerRevealed })
+          );
+          expect(dock.editorHandle && dock.editorPanel).toBe(false);
+          expect(dock.editorHandle || dock.editorPanel).toBe(true);
+        }
+      }
+    });
+
+    test('a standing question outranks the editor and takes the pane back', () => {
+      const dock = dockPresentation(input({ ...opened, approval: APPROVAL }));
+      expect(dock.editorMode).toBe(false);
+      expect(dock.editorHandle).toBe(false);
+      expect(dock.editorPanel).toBe(false);
+      expect(dock.approvalOnly).toBe(true);
+      // And the way out of the question is still on the banner, because
+      // neither the row nor the keyboard is there to carry it.
+      expect(dock.bannerEscape).toBe(true);
+    });
+
+    test('a question with no answers leaves the editor whole', () => {
+      // The degenerate parse never clears anything, and it must not clear the
+      // editor into a dock either.
+      const dock = dockPresentation(input({ ...arrived, approval: OPTIONLESS }));
+      expect(dock.editorMode).toBe(true);
+      expect(dock.editorHandle).toBe(true);
+      expect(dock.keyRow).toBe(false);
+    });
+
+    test('leaving the editor gives the ordinary dock back exactly', () => {
+      // nvim exits: `editorPane` goes false and nothing else about the screen
+      // changed. The dock that comes back is the dock that would have been
+      // there all along.
+      const editing = dockPresentation(input({ editorPane: true, keyboardMode: false }));
+      expect(editing.editorMode).toBe(true);
+      const after = dockPresentation(input({ editorPane: false, keyboardMode: false }));
+      expect(after).toEqual(dockPresentation(input()));
+      expect(after.editorMode).toBe(false);
+      expect(after.keyRow).toBe(true);
+      expect(after.composer).toBe(true);
+      expect(after.paneChips).toBe(true);
+    });
+
+    test('a shell pane is never in editor mode, whatever else is true', () => {
+      for (const keyboardMode of [true, false]) {
+        for (const composerRevealed of [true, false]) {
+          const dock = dockPresentation(
+            input({ editorPane: false, keyboardMode, composerRevealed })
+          );
+          expect(dock.editorMode).toBe(false);
+          expect(dock.editorHandle).toBe(false);
+          expect(dock.editorPanel).toBe(false);
+        }
+      }
     });
   });
 });
