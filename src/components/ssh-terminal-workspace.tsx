@@ -358,10 +358,12 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   }, [editorPane]);
 
   /**
-   * Where the reader dragged the floating cluster, kept here rather than in the
-   * component so it outlives a trip out of nvim and back into it.
+   * Where the reader parked the editor's floating button, kept here rather
+   * than in the component so it outlives a trip out of nvim and back into it.
+   * Two axes, because the button is dragged in two.
    */
-  const editorControlsOffset = useSharedValue(0);
+  const editorHandleX = useSharedValue(0);
+  const editorHandleY = useSharedValue(0);
 
   // The row follows what the shell is running: nvim's own actions on top of
   // the shell set while an editor is up, and only Esc and the basics while
@@ -905,6 +907,26 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     </ScrollView>
   );
 
+  /**
+   * The way to the composer from a surface that has stood it down.
+   *
+   * A circle, and it rides in the trailing seat of the terminal keys' row --
+   * opposite the leading seat that row keeps for the keyboard toggle. It used
+   * to have a row of its own, which cost the pane a full line for one control
+   * and took it out of the height the keyboard had just been opened to get.
+   */
+  const composerEntry = (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={t`Write a line`}
+      feedback="selection"
+      pressedScale={0.9}
+      onPress={() => setComposerRevealed(true)}
+      style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+      <PenLine size={16} color={chromeText} />
+    </PressableScale>
+  );
+
   /** The app's own keyboard, wherever it is standing: in the dock, or floating. */
   const virtualKeyboard = (
     <VirtualKeyboard
@@ -912,23 +934,15 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       onText={typeText}
       onKey={typeKey}
       onClose={() => setKeyboardMode(false)}
-      shortcuts={dock.keysInKeyboard ? <View style={styles.keyRow}>{keyStrip}</View> : undefined}
+      shortcuts={
+        dock.keysInKeyboard ? (
+          <View style={styles.keyRow}>
+            {keyStrip}
+            {dock.composerEntry ? composerEntry : null}
+          </View>
+        ) : undefined
+      }
     />
-  );
-
-  /** The way to the composer from a surface that has stood it down. */
-  const composerEntry = (
-    <View style={styles.composerEntryRow}>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={t`Write a line`}
-        feedback="selection"
-        pressedScale={0.9}
-        onPress={() => setComposerRevealed(true)}
-        style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
-        <PenLine size={16} color={chromeText} />
-      </PressableScale>
-    </View>
   );
 
   const composer = (
@@ -997,7 +1011,6 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           {keyStrip}
         </Animated.View>
       ) : null}
-      {dock.composerEntry ? composerEntry : null}
       {dock.composer ? composer : null}
     </>
   );
@@ -1080,12 +1093,13 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           <EditorControls
             expanded={dock.editorPanel}
             onExpand={openVirtualKeyboard}
-            onCollapse={() => setKeyboardMode(false)}
-            offset={editorControlsOffset}
+            offsetX={editorHandleX}
+            offsetY={editorHandleY}
             keyboardOffset={keyboardHeight}
             // The terminal's box runs to the bottom of the screen now that the
-            // dock is out of its flow, so the safe area is the cluster's to
-            // clear -- the same inset the grid already leaves nvim.
+            // dock is out of its flow, so the safe area is the panel's to pad
+            // for and the button's to clear -- the same inset the grid already
+            // leaves nvim.
             bottomInset={insets.bottom}
             disabled={!connected}>
             {editorPanelBody}
@@ -1118,9 +1132,6 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           style={[styles.dockOverlay, dockKeyboardStyle]}>
           <GlassChrome style={[styles.dock, { paddingBottom: Math.max(insets.bottom, 10) }]}>
             {dock.virtualKeyboard ? virtualKeyboard : null}
-            {/* The way back to the composer without putting the keyboard away:
-                one control in the corner where Send would be, as on the gateway. */}
-            {dock.composerEntry ? composerEntry : null}
             {dock.keyRow ? (
               <View style={styles.keyRow}>
                 {keyboardToggle}
@@ -1351,11 +1362,6 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 1,
     alignItems: 'center',
-  },
-  /** Right-aligned, where the send button it stands in for would be. */
-  composerEntryRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
   },
   terminalKey: {
     height: KEY_ROW_HEIGHT,

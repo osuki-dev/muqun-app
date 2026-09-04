@@ -56,6 +56,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useCoalescedValue } from '@/hooks/use-coalesced-value';
 import { useFreezeGate, useFrozenValue } from '@/hooks/use-frozen-value';
 import { useLatestRef } from '@/hooks/use-render-refs';
+import { latestPillVisible } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
 import { fadeOut, timing, zoomIn, zoomOut } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -2727,12 +2728,18 @@ export function SkiaTerminal({
           </Button>
         </View>
       ) : null}
-      {!following && !selection ? (
+      {latestPillVisible({ following, selecting: selection !== null, ownsScreen }) ? (
         // One of the most frequently seen controls in the app, and until now the
         // only one that appeared and vanished between two frames. It comes up
         // when the reader leaves the tail of a live stream, which is a moment
         // they are already reading through, so it arrives rather than being
         // suddenly there.
+        //
+        // Whether it may be here at all is `latestPillVisible`, and it is a
+        // function in `dock-presentation` rather than the three `&&`s that used
+        // to be on this line: the third of them -- that an editor has no
+        // "latest" to jump to -- is a rule about the app, not about this view,
+        // and a rule about the app belongs somewhere a test can read it.
         <Animated.View
           entering={zoomIn('micro')}
           exiting={zoomOut('micro')}
