@@ -304,6 +304,11 @@ msgstr "サーバー一覧に戻る"
 msgid "Back to SSH hosts"
 msgstr "SSH ホスト一覧に戻る"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "ソフトウェアキーボードに戻る"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
@@ -1131,6 +1136,10 @@ msgstr "{name} を隠す"
 msgid "Hide keyboard"
 msgstr "キーボードを隠す"
 
+#: src/components/editor-controls.tsx
+msgid "Hide the editor controls"
+msgstr "エディタの操作パネルを隠す"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "サーバー一覧を隠す"
@@ -1406,6 +1415,18 @@ msgstr "更新日時"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "その他の記号"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls down"
+msgstr "操作パネルを下に移動"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls up"
+msgstr "操作パネルを上に移動"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "エディタの操作パネルを移動"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1703,6 +1724,10 @@ msgstr "サーバーを開いています。"
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "トンネルを開いています"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "このエディタの上にキーボード、エディタキー、入力欄を開きます。ドラッグで移動できます。"
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
@@ -2344,6 +2369,10 @@ msgstr "画像を表示"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "ターミナルの横に表示して、描き直される様子を見ます。"
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "エディタ用キーボードを表示"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"

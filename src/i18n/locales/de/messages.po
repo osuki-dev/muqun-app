@@ -304,6 +304,11 @@ msgstr "Zurück zu den Servern"
 msgid "Back to SSH hosts"
 msgstr "Zurück zu den SSH-Hosts"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "Zurück zur Bildschirmtastatur"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
@@ -1131,6 +1136,10 @@ msgstr "{name} ausblenden"
 msgid "Hide keyboard"
 msgstr "Tastatur ausblenden"
 
+#: src/components/editor-controls.tsx
+msgid "Hide the editor controls"
+msgstr "Editor-Bedienelemente ausblenden"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "Serverliste ausblenden"
@@ -1406,6 +1415,18 @@ msgstr "Geändert"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Weitere Symbole"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls down"
+msgstr "Bedienelemente nach unten verschieben"
+
+#: src/components/editor-controls.tsx
+msgid "Move the controls up"
+msgstr "Bedienelemente nach oben verschieben"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "Editor-Bedienelemente verschieben"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1703,6 +1724,10 @@ msgstr "Der Server wird geöffnet."
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "Tunnel wird geöffnet"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "Öffnet Tastatur, Editor-Tasten und Eingabefeld über diesem Editor. Zum Verschieben ziehen."
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
@@ -2344,6 +2369,10 @@ msgstr "Bilder anzeigen"
 #: src/app/commands.tsx
 msgid "Show it beside the terminal, and watch it redraw."
 msgstr "Neben dem Terminal anzeigen und beim Neuzeichnen zusehen."
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "Editor-Tastatur einblenden"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"

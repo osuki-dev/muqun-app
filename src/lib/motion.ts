@@ -10,7 +10,8 @@
  *
  * The design system's own rule applies throughout -- "percussive, mechanical
  * precision -- no spring, no bounce" -- so everything here is `withTiming` on
- * the system ease-out. There is deliberately no spring helper.
+ * the system ease-out, with exactly one exception (`settleTo`, below) which is
+ * critically damped and therefore does not bounce either.
  */
 import { motion as tokens } from '@osuki-dev/ui';
 import {
@@ -26,8 +27,11 @@ import {
   FadeOutUp,
   LinearTransition,
   ReduceMotion,
+  withSpring,
   ZoomIn,
   ZoomOut,
+  type SharedValue,
+  type WithSpringConfig,
   type WithTimingConfig,
 } from 'react-native-reanimated';
 
@@ -196,6 +200,52 @@ export const INSTANT: WithTimingConfig = {
   duration: 0,
   reduceMotion: ReduceMotion.Never,
 };
+
+/**
+ * The one spring in the app, and the reason it is allowed to exist.
+ *
+ * "no spring, no bounce" is a rule about *transitions*: a toggle, a modal, a
+ * dropdown -- things the app decides to do, where an overshoot is the surface
+ * editorialising. A drag release is not one of those. The reader threw the
+ * thing, and the only question the animation answers is where the throw ends.
+ * `withTiming` cannot answer it: it discards the finger's velocity, so a flick
+ * and a slow drag settle identically and the flick reads as the app having
+ * taken the object away and put it down itself.
+ *
+ * A damping ratio of exactly 1 is critical damping, and that is the whole of
+ * what makes this legal. A critically damped spring reaches its target in the shortest time
+ * that involves *no overshoot at all* -- there is no bounce to see, only the
+ * velocity being absorbed. The design system's sentence is honoured on the
+ * screen, which is where it is about.
+ *
+ * It lives here, as a function that applies the spring itself, so that no
+ * screen ever writes one: `motion-tokens.test.ts` scans every other file in
+ * `src/**` for the primitive and exempts this one alone -- then reads the
+ * damping ratio back out of the source below to check the exemption is still
+ * the bounce-free thing it was granted for.
+ */
+export const SETTLE: WithSpringConfig = {
+  // Critically damped: fastest approach with zero overshoot. Not negotiable --
+  // see the note above and the test that reads this value.
+  dampingRatio: 1,
+  // Reanimated's spring takes a duration when it is given a damping ratio, and
+  // its default (2000) is five times the longest thing in the app. A page
+  // transition is the right order of magnitude for a panel crossing a screen.
+  duration: DURATION.long,
+  reduceMotion: ReduceMotion.System,
+};
+
+/**
+ * Settle a dragged value where the throw was going, carrying its velocity.
+ *
+ * A worklet, because the only place it is ever called from is a pan gesture's
+ * `onEnd` -- see the note on `timing` for what happens to a plain function
+ * captured by one.
+ */
+export function settleTo(value: SharedValue<number>, to: number, velocity = 0) {
+  'worklet';
+  value.value = withSpring(to, { ...SETTLE, velocity });
+}
 
 /**
  * Layout-animation builders.
