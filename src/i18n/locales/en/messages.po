@@ -113,10 +113,6 @@ msgstr "A dev server or preview running on this machine."
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 
-#: src/components/simfarm-preview.tsx
-msgid "A preview is only offered over Tailscale or HTTPS."
-msgstr "A preview is only offered over Tailscale or HTTPS."
-
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
 msgstr "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
@@ -124,6 +120,10 @@ msgstr "A server's key is remembered the first time and checked every time after
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "A shell on any machine with sshd"
+
+#: src/components/simfarm-preview.tsx
+msgid "A simulator can be driven and not only watched, so a preview is offered only over Tailscale or HTTPS. Pair this machine at its tailnet address, or serve its gateway over HTTPS, and the preview appears on its own."
+msgstr "A simulator can be driven and not only watched, so a preview is offered only over Tailscale or HTTPS. Pair this machine at its tailnet address, or serve its gateway over HTTPS, and the preview appears on its own."
 
 #: src/app/settings.tsx
 msgid "About"
@@ -432,6 +432,10 @@ msgstr "Close the attachment menu"
 msgid "Close the command list"
 msgstr "Close the command list"
 
+#: src/components/simfarm-preview.tsx
+msgid "Close the simulator"
+msgstr "Close the simulator"
+
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
 msgstr "Close theme picker"
@@ -460,6 +464,10 @@ msgstr "Color mode"
 #: src/app/commands.tsx
 msgid "Command"
 msgstr "Command"
+
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "Command copied"
 
 #: src/i18n/labels.ts
 msgid "Command mode"
@@ -656,6 +664,7 @@ msgid "Copied to clipboard"
 msgstr "Copied to clipboard"
 
 #: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Copies it, ready to paste into a terminal"
 
@@ -666,6 +675,10 @@ msgstr "Copy"
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "Copy public key"
+
+#: src/components/simfarm-preview.tsx
+msgid "Copy the command that starts simfarm"
+msgstr "Copy the command that starts simfarm"
 
 #: src/app/explore.tsx
 msgid "Copy the install command"
@@ -1136,10 +1149,6 @@ msgstr "Hide {name}"
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
 
-#: src/components/editor-controls.tsx
-msgid "Hide the editor controls"
-msgstr "Hide the editor controls"
-
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "Hide the server list"
@@ -1388,6 +1397,10 @@ msgid "Look again"
 msgstr "Look again"
 
 #: src/components/simfarm-preview.tsx
+msgid "Looking"
+msgstr "Looking"
+
+#: src/components/simfarm-preview.tsx
 msgid "Looking for a simulator"
 msgstr "Looking for a simulator"
 
@@ -1415,14 +1428,6 @@ msgstr "Modified"
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "More symbols"
-
-#: src/components/editor-controls.tsx
-msgid "Move the controls down"
-msgstr "Move the controls down"
-
-#: src/components/editor-controls.tsx
-msgid "Move the controls up"
-msgstr "Move the controls up"
 
 #: src/components/editor-controls.tsx
 msgid "Move the editor controls"
@@ -1566,6 +1571,10 @@ msgstr "No password or key is saved for this host."
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "No preview for this kind of file. It stays on the server."
+
+#: src/components/simfarm-preview.tsx
+msgid "No preview on this connection"
+msgstr "No preview on this connection"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -1827,6 +1836,7 @@ msgid "Photo library"
 msgstr "Photo library"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Port"
 msgstr "Port"
@@ -2105,10 +2115,6 @@ msgstr "Run command"
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "Run relevant tests"
-
-#: src/components/simfarm-preview.tsx
-msgid "Run simfarm on that machine, or say which port it is on."
-msgstr "Run simfarm on that machine, or say which port it is on."
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
@@ -2391,8 +2397,16 @@ msgid "Sign in with"
 msgstr "Sign in with"
 
 #: src/components/simfarm-preview.tsx
+msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
+msgstr "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
+
+#: src/components/simfarm-preview.tsx
 msgid "simfarm port"
 msgstr "simfarm port"
+
+#: src/components/simfarm-preview.tsx
+msgid "Simulator"
+msgstr "Simulator"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"

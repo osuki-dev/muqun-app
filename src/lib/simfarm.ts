@@ -46,6 +46,43 @@ import { allowsWebServiceOpen, webServiceUrl } from '@/lib/web-service';
 export const SIMFARM_DEFAULT_PORT = 8801;
 
 /**
+ * The one command that starts a simfarm the phone can actually reach.
+ *
+ * Printed in the preview's empty state, for the same reason the pairing screen
+ * prints the Gateway's install line: the reader is holding a phone in front of
+ * the machine that is missing the thing, and sending them to a web page on the
+ * phone to be told what to type on the laptop is the detour that makes a screen
+ * read as a dead end.
+ *
+ * ── WHY IT IS A COMMAND AND NOT A LINK ──────────────────────────────────────
+ * There is no simfarm install URL to print. It is a separate project published
+ * to npm, `muqun.dev` says nothing about it, and `muqun.dev/simfarm.sh` is a
+ * 404 -- checked on 2026-09-05, unauthenticated, along with the site root,
+ * which contains the word nowhere. `links.ts` explains at length what a URL
+ * that does not answer costs this app in review, so this file prints the
+ * command npm already resolves and invents no address at all.
+ *
+ * ── WHY THESE FLAGS AND NOT `simfarm` ON ITS OWN ────────────────────────────
+ * Both defaults are wrong for a reader who is looking at this string. simfarm
+ * binds `127.0.0.1` and enables only its mock device, so the bare command
+ * starts a server this phone cannot reach, holding nothing worth reaching --
+ * and the reader would be back on this screen with the number they already
+ * typed. `--host 0.0.0.0` and a real provider list are simfarm's own documented
+ * shape for reaching it from another machine.
+ *
+ * WeChat is left off deliberately. It is the one backend that needs launch
+ * flags on another application before it can be probed at all, so putting it in
+ * the line everybody copies would hand most readers a start-up error for a
+ * device that was never going to appear. It is `--providers ios,android,wechat`
+ * for anyone who has done that setup.
+ *
+ * The port is not in it. 8801 is simfarm's default and this app's, so a command
+ * carrying it would be a flag that changes nothing in the case it is printed
+ * for -- and the port field below the command is where a different number goes.
+ */
+export const SIMFARM_RUN_COMMAND = 'npx simfarm --host 0.0.0.0 --providers ios,android';
+
+/**
  * Whether this connection is one where offering the preview is honest.
  *
  * See the note above: the same two yeses as the web-service entry, and the
