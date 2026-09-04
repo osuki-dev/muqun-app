@@ -8,8 +8,8 @@
  *
  * In the sheet it is what a language picker should be: one option per line,
  * scanned rather than compared, in the same card-with-hairlines the rest of the
- * page is built from. Each language is written in itself -- English, 繁體中文,
- * 日本語 -- because a reader looking for Chinese is not scanning for the English
+ * page is built from. Each language is written in itself -- English, Traditional
+ * Chinese, Japanese -- because a reader looking for Chinese is not scanning for the English
  * word for it. Only "System" is translated, since it is a description rather
  * than a name.
  *
