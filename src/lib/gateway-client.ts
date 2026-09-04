@@ -877,7 +877,18 @@ function gatewayAuthHeaders(): Record<string, string> {
 export async function listSessionAssets(
   sessionId: string,
   tabId: string,
-  options: { since?: number; limit?: number; kind?: readonly AssetKind[] } = {}
+  options: {
+    since?: number;
+    limit?: number;
+    kind?: readonly AssetKind[];
+    /**
+     * The caller's own cancellation. A files sheet that closes, or a chip that
+     * changes the question, abandons the listing it no longer wants: without
+     * this the request ran to completion into a screen that had gone, holding a
+     * socket for nobody, and its answer could still land after a newer one.
+     */
+    signal?: AbortSignal;
+  } = {}
 ): Promise<SessionAsset[]> {
   if (isDemoActive()) {
     const assets = demoSessionAssets();
@@ -902,19 +913,20 @@ export async function listSessionAssets(
   const kind = assetKindQuery(options.kind);
   if (kind) query.push(`kind=${kind}`);
 
-  return requestSessionAssets(sessionId, tabId, query);
+  return requestSessionAssets(sessionId, tabId, query, options.signal);
 }
 
 async function requestSessionAssets(
   sessionId: string,
   tabId: string,
-  query: string[]
+  query: string[],
+  signal?: AbortSignal
 ): Promise<SessionAsset[]> {
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/tabs/${encodeURIComponent(tabId)}/assets?${query.join('&')}`
     ),
-    { headers: gatewayAuthHeaders() }
+    { headers: gatewayAuthHeaders(), signal }
   );
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -1028,12 +1040,15 @@ export function assetImageSource(asset: SessionAsset): AssetImageSource | null {
 }
 
 /** Download and authenticate image bytes before handing a data URI to the decoder. */
-export async function readAssetImageSource(asset: SessionAsset): Promise<AssetImageSource> {
+export async function readAssetImageSource(
+  asset: SessionAsset,
+  options: { signal?: AbortSignal } = {}
+): Promise<AssetImageSource> {
   const direct = assetImageSource(asset);
   if (direct) return direct;
   const response = await encryptedGatewayFetch(
     assetContentUrl(asset.id),
-    { headers: gatewayAuthHeaders() },
+    { headers: gatewayAuthHeaders(), signal: options.signal },
     ASSET_CONTENT_TIMEOUT_MS
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);

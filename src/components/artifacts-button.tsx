@@ -65,7 +65,24 @@ export function ArtifactsButton({
       onPress={() => {
         // The sheet would otherwise open behind the on-screen keyboard.
         Keyboard.dismiss();
-        router.push({
+        // `navigate`, not `push`, and the difference is the whole of this bug.
+        //
+        // A push always adds a route. The sheet takes a moment to arrive -- the
+        // route mounts, the form sheet animates up, and against a real gateway
+        // it then sits on a header with nothing under it while the listing is
+        // asked for -- and for that whole moment this button is still the thing
+        // under the reader's thumb. A second tap in there pushed a second files
+        // sheet, identical to the first and equally empty, so the two were
+        // indistinguishable: the close button dismissed the top one and the
+        // reader was left looking at the same loading sheet they had just
+        // closed. The sheet was never stuck. There were two of them.
+        //
+        // `navigate` goes to the `/artifacts` route already on the stack and
+        // updates its params instead of stacking a twin, so the second tap is
+        // the no-op the reader meant it to be. Nothing here debounces or
+        // disables the button: a control that stops answering is its own bug,
+        // and the rule this needs is about the stack, not about time.
+        router.navigate({
           pathname: '/artifacts',
           params: { sessionId, tabId, label },
         } as unknown as Href);

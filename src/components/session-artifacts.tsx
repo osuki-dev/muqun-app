@@ -268,11 +268,36 @@ export function SessionArtifacts({
   const [atEnd, setAtEnd] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  /**
+   * The listing in flight, and the only one whose answer is wanted.
+   *
+   * Exactly one question is on the table at a time: the chip that is lit, the
+   * window that has been asked for, the tab that is selected. Asking a new one
+   * -- or leaving the sheet entirely -- makes the old answer worthless, and an
+   * answer that is worthless must not be allowed to land. Two things follow
+   * from that, and this ref is how both are said:
+   *
+   * The request is *cancelled*, not merely ignored. A gateway that has gone
+   * quiet is answered for by a fifteen-second budget, and until that budget
+   * runs out an abandoned listing holds a socket open for a screen that is no
+   * longer there.
+   *
+   * And its `setState` calls are dropped. Nothing about a request guarantees
+   * the order its answer arrives in, so the slower of two overlapping loads
+   * could land last and repaint the sheet with the question before the one the
+   * reader is looking at -- files for the chip they just left, and `loading`
+   * cleared while the listing they actually asked for is still on the wire.
+   */
+  const inFlightRef = useRef<AbortController | null>(null);
+
   // Keyed on the chip and on the window as well as the session: the filter is
   // the gateway's job now, so changing it is a new question to ask rather than
   // a narrower way of reading the answer already in hand, and so is asking for
   // more of the listing.
   const load = useCallback(async () => {
+    inFlightRef.current?.abort();
+    const controller = new AbortController();
+    inFlightRef.current = controller;
     // No tab to scope to yet -- the first render or two, before the server
     // screen's selection has settled -- so there is no request worth making.
     // An empty id would only ever hit a URL with an empty segment. Showing
@@ -293,7 +318,9 @@ export function SessionArtifacts({
       const page = await listSessionAssets(sessionId, tabId, {
         kind: FILTER_KINDS[filter],
         limit: windowSize,
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
       setAssets(page);
       // A window that came back with room to spare is the whole listing, and a
       // window at the endpoint's ceiling is as much of it as can be asked for.
@@ -306,6 +333,11 @@ export function SessionArtifacts({
       setAvailable(true);
       setError(null);
     } catch (failure) {
+      // A listing this sheet itself gave up on is not a failure to report. It
+      // usually surfaces as the abort, but a request cancelled between the
+      // headers and the body can also come back as the budget's own timeout,
+      // so the controller is what decides -- not the shape of the error.
+      if (controller.signal.aborted) return;
       setAssets([]);
       // A window that failed says nothing about whether a wider one would, but
       // it must not leave the list asking for one on every scroll.
@@ -317,13 +349,23 @@ export function SessionArtifacts({
       }
       setError(describeGatewayFailure(failure, t`Could not load files.`).message);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      // Not the abandoned load's business either. Clearing these would hand the
+      // spinner belonging to the request still on the wire to the one that has
+      // already been given up on.
+      if (!controller.signal.aborted) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   }, [filter, sessionId, t, windowSize, tabId]);
 
   useEffect(() => {
     void load();
+    // Leaving is a cancellation like any other. The sheet is a route, so the
+    // reader closing it -- by the button, by the swipe, or by the Android back
+    // gesture -- unmounts this component while the listing may still be in
+    // flight, and the request has no reason to finish.
+    return () => inFlightRef.current?.abort();
   }, [load, t]);
 
   /**
