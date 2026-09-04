@@ -42,7 +42,7 @@
           "UIInterfaceOrientationLandscapeRight"
         ],
         "CFBundleAllowMixedLocalizations": true,
-        "ITSAppUsesNonExemptEncryption": true,
+        "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         }
@@ -61,7 +61,8 @@
             "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
           }
         ]
-      }
+      },
+      "//ios.infoPlist.ITSAppUsesNonExemptEncryption": "false, restored in 2.0.0 after App Store Connect's own encryption questionnaire settled it. The SSH client links its own standard-algorithm cryptography (russh on aws-lc), and 2.0.0 first shipped this key as true on the reading that Apple would want documentation and issue an export compliance code. Apple does not: its App Encryption Documentation flow, answered as 'standard algorithms, not distributed in France', ends with 'you don't need to upload any documents' and advises declaring in this plist that the app does not use non-exempt encryption. With true and no code, every upload fails validation with 'Invalid Export Compliance Code' (409). Two things still hold outside Apple: the annual self-classification report to BIS is the exporter's own duty under EAR 740.17(b)(1), and distributing in France would require a French encryption declaration and this key would need revisiting together with ITSEncryptionExportComplianceCode."
     },
     "android": {
       "package": "dev.osuki.muqun",
@@ -190,7 +191,6 @@
     },
     "extra": {
       "//ios.infoPlist.NSAppTransportSecurity": "NSAllowsArbitraryLoads stays true on purpose, and this is the App Review answer. Muqun is a developer tool that only ever talks to a Gateway the user runs on their own computer; the user types or scans that address, and a bare host is normalised to http:// (src/lib/pairing.ts). Those hosts are LAN or Tailscale tailnet addresses with no public DNS name and no CA-issued certificate, so TLS is not available to pin against. NSAllowsLocalNetworking is also set, but it only exempts unqualified names, .local and the reserved local ranges -- it does not cover the 100.64.0.0/10 CGNAT space Tailscale hands out, so it cannot replace arbitrary loads here. No traffic goes to an Osuki server; there is no relay, no analytics and no ad network. HTTPS is used whenever the user's Gateway offers it (Tailscale Serve).",
-      "//ios.infoPlist.ITSAppUsesNonExemptEncryption": "true since 2.0.0, when the SSH client shipped. @osuki-dev/react-native-ssh links its own SSH implementation (russh on aws-lc), which App Store Connect counts as encryption the app provides rather than a use of the OS's TLS -- the exemption the previous `false` relied on. SSH is a standard, published protocol used to secure the user's own connection to their own machine, so the mass-market route applies: ECCN 5D992.c under EAR 740.17(b)(1), no CCATS licence needed, and the annual self-classification report to BIS and the NSA is the app owner's to file each January for the previous year. The gateway transport's AES-GCM sits on the same footing it always did; nothing here changes what the app does with data, only what is declared.",
       "//ios.privacyManifests": "Audited against the prebuilt Pods, not guessed. Declared: UserDefaults CA92.1 (expo-updates UpdatesConfigOverride.swift and react-native-nitro-fetch read/write app-private defaults) and 1C8F.1 (expo-widgets WidgetsStorage.swift writes the group.dev.osuki.muqun suite the widget extension reads); FileTimestamp C617.1 (MMKVCore MemoryFile.cpp calls stat/fstat on its own container files and ships no PrivacyInfo.xcprivacy). NOT declared: SystemBootTime 35F9.1 and DiskSpace E174.1/85F4.1 -- the only callers are expo-device and expo-file-system, which ship their own privacy manifests as pod resource bundles; FileTimestamp DDA9.1 -- the file times shown in the files sheet arrive from the Gateway over HTTP, no iOS file API is called to read them.",
       "router": {},
       "eas": {
