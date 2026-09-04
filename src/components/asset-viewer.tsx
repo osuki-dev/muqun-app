@@ -71,7 +71,12 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
   const onCloseRef = useLatestRef(onClose);
   useEffect(() => {
     let active = true;
-    readAssetImageSource(asset)
+    // The same bargain the text read below makes, and for the same reason: a
+    // picture is downloaded whole before the lightbox has anything to show, so
+    // closing the viewer while it is coming has to stop the download rather
+    // than let it finish into a screen that has gone.
+    const controller = new AbortController();
+    readAssetImageSource(asset, { signal: controller.signal })
       .then((next) => {
         if (active) setSource(next);
       })
@@ -80,6 +85,7 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [asset, onCloseRef]);
   if (!source) {

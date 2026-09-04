@@ -115,6 +115,33 @@ describe('the body is inside the budget, not outside it', () => {
     expect(budget.signal.aborted).toBe(true);
   });
 
+  // The files sheet, the document viewer and the image viewer all hand their
+  // own signal down and then close on the reader. Closing has to reach the
+  // request even once the headers have landed and the body is on the wire --
+  // which is the half of the request the budget exists to cover, and the half
+  // a caller's cancellation is easiest to lose in.
+  test('a caller that gives up while the body is arriving aborts the request', async () => {
+    const caller = new AbortController();
+    // A budget far longer than this test waits, so what settles the body can
+    // only be the cancellation and never the clock.
+    const budget = startRequestBudget(BUDGET_MS * 40, 'gone', caller.signal);
+    const response = withBodyDeadline(
+      fake(
+        () =>
+          new Promise<string>((_, reject) => {
+            budget.signal.addEventListener('abort', () => reject(new Error('Aborted')));
+          })
+      ),
+      budget
+    );
+
+    const body = response.text();
+    caller.abort();
+
+    await expect(body).rejects.toThrow('Aborted');
+    expect(budget.signal.aborted).toBe(true);
+  });
+
   test('a body that stalls after the headers is still caught by json()', async () => {
     const budget = startRequestBudget(BUDGET_MS, 'The server stopped responding.');
     const response = withBodyDeadline(
