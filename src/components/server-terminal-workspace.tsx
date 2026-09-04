@@ -71,7 +71,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
-import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
+import { useLatestRef, useLazyRef, useResetSignal } from '@/hooks/use-render-refs';
 import { useSettledHeight } from '@/hooks/use-settled-height';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
 import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
@@ -129,6 +129,19 @@ import { field, numberField, panelTitle, statusColor } from '@/lib/herdr-entity'
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { PaneAddress } from '@/lib/pane-address';
+import {
+  emptyPaneCache,
+  foldPaneFrame,
+  notePaneRevision,
+  panePrefetchAccepted,
+  panePrefetchTargets,
+  paneReadIsCurrent,
+  recallPaneWindow,
+  rememberPaneWindow,
+  retainPanes,
+  type PaneCache,
+  type PaneWindow,
+} from '@/lib/pane-cache';
 import {
   hasEarlierPaneParts,
   hasEarlierPartsAfterPage,
@@ -316,6 +329,50 @@ const PANEL_PICK_RETRY_MS = 200;
  * position does not feel thrown away.
  */
 const PANE_SLIDE_DISTANCE = 36;
+
+/**
+ * How long a selection has to stand still before its neighbours are warmed.
+ *
+ * Long enough that a burst of swipes rearms the timer instead of firing per
+ * pane passed through, and long enough that the selected pane's own first read
+ * -- the one the reader is actually waiting on -- has the transport to itself.
+ * Short enough to have landed well inside the second the reader spends looking
+ * at the pane before deciding to move again.
+ */
+const PANE_PREFETCH_DELAY_MS = 400;
+
+/**
+ * How long a selection has to stand still before the event stream is re-opened
+ * against it.
+ *
+ * The pane whose output the gateway inlines is a query parameter on the SSE
+ * URL (`stream_pane`), so changing which pane that is means a new stream: a
+ * sealed request envelope, a fresh connection, and a full `refreshData` on the
+ * `onConnected` that follows. Paid on every pane switch that is a stop on the
+ * way somewhere else, that is the most expensive thing a swipe does and the
+ * least useful -- the stream is re-pointed at a pane the reader has already
+ * left by the time it opens.
+ *
+ * So the stream follows the selection at walking pace. Nothing is lost while
+ * it waits: the one-second refresh is already the safety net for exactly this
+ * (a missed event, a change that did not bump the revision), and the cache has
+ * meanwhile painted the pane the reader asked for. What is gained is that
+ * A -> B -> A, and a swipe through six panes, cost one re-open instead of one
+ * per pane.
+ */
+const PANE_STREAM_SETTLE_MS = 350;
+
+/**
+ * The shape every inlined frame arrives in, whatever pane it is for.
+ *
+ * `usePaneEvents` opens the stream with `stream_format=ansi` and
+ * `stream_source=recent-unwrapped` fixed, so a frame is always a window of
+ * that shape -- it does not follow the format the screen happens to be reading
+ * the selected pane under. Written down here because the cache has to match a
+ * frame against the shape of the window it would fold into, and guessing that
+ * from the selected pane's format would be right only by coincidence.
+ */
+const PANE_FRAME_SHAPE = 'ansi:recent-unwrapped';
 
 /**
  * Slack left around the active pane chip when scrolling it into view, so it
@@ -596,6 +653,32 @@ export function ServerTerminalWorkspace({
     contentKey: '',
   });
   const partsRequestIdRef = useRef(0);
+  /**
+   * The windows of the panes recently left, so coming back to one paints in
+   * the frame the tap happened in rather than after a round trip.
+   *
+   * A ref, not state: nothing renders from the cache itself -- what renders is
+   * the `output` the recall seeds -- and a cache that re-rendered the screen
+   * every time a neighbour's revision ticked would undo the very cost it is
+   * here to remove. The rules it obeys (the bounds, the revision ordering, the
+   * refusal of a reply overtaken in flight) are `lib/pane-cache`, tested
+   * without a screen.
+   */
+  const paneCacheRef = useRef<PaneCache>(emptyPaneCache);
+  /**
+   * Which pane the `output` on screen belongs to.
+   *
+   * Not the same question as `selection.paneId`: on the render that changes
+   * the selection, the window is still the outgoing pane's, and this is what
+   * says whose it is so it can be filed under the right name.
+   */
+  const paneWindowOwnerRef = useRef('');
+  /**
+   * Bumped on every selection change, and carried by each warming request, so
+   * a burst of swipes leaves exactly one useful warm-up behind it instead of
+   * one per pane passed through. See `panePrefetchAccepted`.
+   */
+  const prefetchGenerationRef = useRef(0);
   const refreshOutputRef = useRef<() => void>(() => {});
   const applyPaneOutputRef = useRef<
     (paneId: string, value: string, revision?: number, origin?: PaneReadOrigin) => void
@@ -732,6 +815,11 @@ export function ServerTerminalWorkspace({
   const resetSessionState = useCallback(() => {
     dataRequestIdRef.current += 1;
     outputRequestIdRef.current += 1;
+    // Every remembered window is a fact about the session being left, and pane
+    // ids are only unique within one -- so the cache goes with the output, for
+    // the same reason and in the same breath.
+    paneCacheRef.current = emptyPaneCache;
+    prefetchGenerationRef.current += 1;
     partsRequestIdRef.current += 1;
     readPartsKeyRef.current = { paneId: '', contentKey: '' };
     setPartsState(initialPartsState);
@@ -1525,6 +1613,11 @@ export function ServerTerminalWorkspace({
     : -1;
   const outputFormat = agentOutput ? 'text' : 'ansi';
   const outputSource: PaneOutputSource = fullScreenPane ? 'visible' : 'recent-unwrapped';
+  // The pair that says what a window is a window *of*. A pane can change shape
+  // while nobody is looking -- a shell hands its tty to nvim and the source it
+  // has to be read from turns with it -- so a remembered window is only handed
+  // back to a pane still being read the same way. See `PaneWindow.shape`.
+  const outputShape = `${outputFormat}:${outputSource}`;
   // Matches the terminal surface exactly, whichever pack is showing -- read
   // from the same palette the renderer draws with rather than restated, so the
   // chrome behind the grid can never be a shade off it.
@@ -1535,20 +1628,155 @@ export function ServerTerminalWorkspace({
   const chromeText = theme.colors.text;
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
 
+  // The live values of everything the window is made of, so the pane being
+  // left can be remembered from a cleanup that closed over its id and nothing
+  // else. Refs rather than a dependency list on purpose: adding `output` to
+  // the switch effect's deps would re-run the switch on every fold.
+  const canLoadEarlierOutputRef = useLatestRef(canLoadEarlierOutput);
+  const paneRevisionRef = useLatestRef(paneRevision);
+  const outputShapeRef = useLatestRef(outputShape);
+  /**
+   * The shape the window *currently on screen* is made of -- which is not
+   * `outputShapeRef` at the moment a pane is left.
+   *
+   * `useLatestRef` is written during render, so on the render that changes the
+   * selection it already holds the incoming pane's shape, and the cleanup that
+   * remembers the outgoing pane's window runs after that render. Reading it
+   * there would file a shell's scrollback under an editor's screen.
+   *
+   * So this follows the reads instead of the render: it is set wherever a read
+   * is folded in, and wherever a window is restored, which by construction is
+   * every way the window can come to be. A shape that turns mid-pane -- a
+   * shell handing its tty to nvim -- is picked up on the first read after the
+   * turn, with no special case.
+   */
+  const heldShapeRef = useRef(outputShape);
+
+  /**
+   * The window exactly as it stands, in the one shape the cache stores.
+   *
+   * A callback rather than eight reads written out in the cleanup below, and
+   * not only for tidiness: the usual advice about refs in a cleanup -- copy
+   * `.current` into a variable on the way in -- is exactly wrong here. These
+   * are not nodes whose identity may have gone stale; they *are* the window's
+   * depth, and a copy taken when the effect ran would have missed every fold
+   * since. What is wanted is the value as of the last render of the pane being
+   * left, which is what these hold at the moment the cleanup runs.
+   */
+  /**
+   * Hand the pane being left over to the cache, and hand the pane arriving its
+   * window back -- both during the render that changes the selection.
+   *
+   * During render, and not from an effect, for exactly the reason
+   * `useCoalescedValue` adjusts its own state during render: the frame that
+   * carries the new pane's terminal id is the frame that must carry the new
+   * pane's window. The canvas throttles the snapshots it parses and records,
+   * and it flushes that throttle on the render the terminal id changes in --
+   * stamping a fresh window as it goes. A restore arriving one render later
+   * therefore lands *inside* a window it has to wait out, and the switch pays
+   * a full coalescing interval it was supposed to avoid. Measured on the
+   * loopback lab it was the difference between a first frame at 33 ms and one
+   * at 254 ms, on a switch that had the answer in hand the whole time.
+   *
+   * Both halves belong here, in this order, and not one here and one in an
+   * effect. The outgoing window has to be read while `output` and the depth
+   * refs still describe it, which is true on this render and false on the next
+   * one; and the recall has to see the cache the remember has already written
+   * to, or a switch straight back would miss what it had just put down.
+   *
+   * `useResetSignal` is what makes this run once per switch rather than every
+   * render -- see its docblock, which describes this case by name.
+   */
+  const paneSwitched = useResetSignal(selection.paneId);
+  /* oxlint-disable react/refs, react/purity -- deliberate, for this block only:
+     every ref touched here is the window's own bookkeeping, none of it is read
+     into what this render draws, and nothing but a switch writes any of it --
+     which is the render this is. The alternative is an effect, and an effect
+     is a coalescing interval late. See the docblock above and
+     `useCoalescedValue`, which adjusts its own state during render for the
+     same reason and with the same suppression. */
+  if (paneSwitched) {
+    const cache = paneCacheRef.current;
+    const leaving = paneWindowOwnerRef.current;
+    // A pane that never painted has nothing to hand back, and caching the
+    // blank would let the recall claim a hit that shows the reader nothing --
+    // worse than a miss, because a miss at least knows it is one.
+    //
+    // `output` is the render's own value, which on this render is still the
+    // outgoing pane's window; the depth beside it is read from the refs, which
+    // no post-commit write has reached yet either.
+    const held: PaneWindow | null =
+      leaving && output
+        ? {
+            shape: heldShapeRef.current,
+            output,
+            lineLimit: outputLineLimitRef.current,
+            revision: paneRevisionRef.current,
+            canLoadEarlier: canLoadEarlierOutputRef.current,
+            earlierRows: earlierOutputRowsRef.current,
+            rangeUnsupported: rangeUnsupportedRef.current,
+            lastRead: lastReadRef.current,
+          }
+        : null;
+    const remembered = held ? rememberPaneWindow(cache, leaving, held) : cache;
+    // What the window would have been if the pane had never been left: the
+    // folded string, and the four facts that say how deep it is. Restoring the
+    // depth alongside the text is not optional -- a window put back at the
+    // initial limit would have the next refresh ask for one page of a pane the
+    // reader had paged five back, and `foldPaneRead` would honour that answer.
+    const restored = recallPaneWindow(remembered, selection.paneId, outputShape);
+    paneCacheRef.current = remembered;
+    paneWindowOwnerRef.current = selection.paneId;
+    setOutput(restored?.output ?? '');
+    setCanLoadEarlierOutput(restored?.canLoadEarlier ?? false);
+    setPaneRevision(restored?.revision ?? -1);
+  }
+  /* oxlint-enable react/refs, react/purity */
+
   // Clearing belongs here rather than in the poller: opening a sheet over the
   // terminal unfocuses this screen, and blanking on every refocus made the
   // output flash even though the pane never changed.
-  useEffect(() => {
-    setOutput('');
+  //
+  // The window itself is no longer set here -- it is adjusted during the
+  // switch render above, where the canvas can see it on the same frame. What
+  // is left is everything that is only ever read after the commit: the request
+  // generations, the depth the next read asks at, and the transcript's own
+  // state. Restoring those here rather than during render keeps the render
+  // free of writes that a discarded render would have to undo.
+  //
+  // A *layout* effect rather than an ordinary one so the depth refs agree with
+  // the window before anything can read them -- the 1 s refresh and the event
+  // stream both fire after the commit, and an effect that ran after paint
+  // would leave a restored window paired with the previous pane's depth for
+  // one frame's worth of requests.
+  useLayoutEffect(() => {
+    const paneId = selection.paneId;
+    // The same recall the switch render made, against a cache nothing can have
+    // changed in between: no request can land between a render and its own
+    // layout effect. Asked again rather than carried across in a ref, which
+    // would be a render-time write for the sake of skipping a find over at
+    // most four entries.
+    const restored = recallPaneWindow(paneCacheRef.current, paneId, outputShapeRef.current);
+    heldShapeRef.current = outputShapeRef.current;
     outputRequestIdRef.current += 1;
-    outputLineLimitRef.current = INITIAL_PANE_OUTPUT_LINES;
-    earlierOutputRowsRef.current = 0;
-    lastReadRef.current = null;
-    rangeUnsupportedRef.current = false;
+    outputLineLimitRef.current = restored?.lineLimit ?? INITIAL_PANE_OUTPUT_LINES;
+    earlierOutputRowsRef.current = restored?.earlierRows ?? 0;
+    lastReadRef.current = restored?.lastRead ?? null;
+    rangeUnsupportedRef.current = restored?.rangeUnsupported ?? false;
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
-    setCanLoadEarlierOutput(false);
     setHistoryRevision(0);
+    // The revision the restored window was folded to, so the refresh that
+    // follows is a reconciliation rather than a repeat, and an event merely
+    // restating what is already on screen is ignored exactly as it would have
+    // been had the pane never been left.
+    readRevisionRef.current = { paneId, revision: restored?.revision ?? -1 };
+    // The transcript is deliberately not cached. A part is a claim about a
+    // span of source rows rather than a rectangle of them, so two reads of
+    // different windows cannot be stitched together (see `loadEarlierParts`),
+    // and a transcript restored under a window it was not read at would be a
+    // quiet lie about what the pane said. The chat view keeps the behaviour it
+    // has always had, whole.
     partsLineLimitRef.current = INITIAL_PANE_OUTPUT_LINES;
     earlierPartsRowsRef.current = 0;
     loadingEarlierPartsRef.current = false;
@@ -1556,9 +1784,8 @@ export function ServerTerminalWorkspace({
     setCanLoadEarlierParts(false);
     partsRequestIdRef.current += 1;
     readPartsKeyRef.current = { paneId: '', contentKey: '' };
-    setPaneRevision(-1);
     setPartsState(initialPartsState);
-  }, [selection.paneId]);
+  }, [outputShapeRef, selection.paneId]);
 
   useEffect(() => {
     if (!requestedPaneId || !data.health) return;
@@ -1662,6 +1889,9 @@ export function ServerTerminalWorkspace({
       };
       if (typeof revision === 'number') setPaneRevision(revision);
       const lineLimit = outputLineLimitRef.current;
+      // What this read was made under, so the window can only ever be handed
+      // back to a pane still being read the same way. See `heldShapeRef`.
+      heldShapeRef.current = outputShapeRef.current;
       // One door for every source, and the source says which it is rather than
       // the code guessing from a length. `foldPaneRead` places the read at the
       // seam its own head anchors and keeps whatever sits above it, so no
@@ -1688,7 +1918,7 @@ export function ServerTerminalWorkspace({
       }
       setError(null);
     },
-    [agentOutput]
+    [agentOutput, outputShapeRef]
   );
 
   const refreshOutput = useCallback(async () => {
@@ -1885,6 +2115,15 @@ export function ServerTerminalWorkspace({
 
   useEffect(() => {
     panesRef.current = data.panes;
+    // A closed pane's id can be reused by the next one Herdr opens, so a
+    // window is dropped when the session stops listing it rather than left to
+    // age out of the cache under a name that has since changed hands. The
+    // refreshed list is the reliable answer: the structural events say
+    // something closed, not always which.
+    paneCacheRef.current = retainPanes(
+      paneCacheRef.current,
+      data.panes.map((pane) => pane.id)
+    );
   }, [data.panes, t]);
 
   useEffect(() => {
@@ -1953,6 +2192,102 @@ export function ServerTerminalWorkspace({
     const timer = setInterval(() => void refreshOutput(), 1000);
     return () => clearInterval(timer);
   }, [connection.phase, ready, refreshOutput, selection.paneId]);
+
+  /**
+   * Warm the two panes a swipe can reach, so the switch onto them is a paint
+   * rather than a round trip.
+   *
+   * Deliberately late and deliberately quiet. It waits out
+   * `PANE_PREFETCH_DELAY_MS` so it never competes with the selected pane's own
+   * first read for the one transport the screen has -- the reader is looking
+   * at that pane, not at its neighbours -- and a burst of swipes rearms the
+   * timer rather than firing per pane passed through, so cycling a tab of six
+   * costs two reads at the end instead of twelve on the way.
+   *
+   * A neighbour whose cached window the stream has not overtaken is skipped
+   * entirely: there is no blank to remove there, and asking again would spend
+   * a round trip to be told what is already held.
+   *
+   * Everything it fetches goes into the cache and nothing else. It never
+   * touches `output`, `setPaneRevision` or any of the depth refs, so a warm-up
+   * landing at any moment cannot move what is on screen -- which is what makes
+   * it safe to run beside the reads that can. The only shape it fetches is the
+   * shape the *selected* pane is read under; a neighbour that turns out to be
+   * read another way (an agent as prose, an editor's screen) is refused by
+   * `recallPaneWindow` on arrival and costs nothing but the read.
+   */
+  useEffect(() => {
+    if (!ready || connection.phase !== 'connected' || !selection.paneId) return;
+    const generation = ++prefetchGenerationRef.current;
+    const requestServerId = serverId;
+    const targets = panePrefetchTargets(
+      tabPanes.map((pane) => pane.id),
+      selection.paneId,
+      paneCacheRef.current,
+      (paneId) => {
+        const revision = panesRef.current.find((pane) => pane.id === paneId)?.raw.revision;
+        return typeof revision === 'number' ? revision : -1;
+      }
+    );
+    if (targets.length === 0) return;
+
+    const timer = setTimeout(() => {
+      for (const paneId of targets) {
+        void readPaneTail(
+          data.sessionId,
+          paneId,
+          outputFormat,
+          INITIAL_PANE_OUTPUT_LINES,
+          outputSource
+        )
+          .then(({ output: value, read }) => {
+            // Three ways this answer can have been overtaken while it was on
+            // the wire, and all three end the same way -- drop it. The
+            // selection moved on (a stale generation); the server did; or the
+            // stream reported this pane past the revision the read was made
+            // at, which `paneReadIsCurrent` is exactly the check for.
+            if (!panePrefetchAccepted(generation, prefetchGenerationRef.current)) return;
+            if (activeServerRef.current !== requestServerId) return;
+            const paneRaw = panesRef.current.find((pane) => pane.id === paneId)?.raw.revision;
+            const revision = typeof paneRaw === 'number' ? paneRaw : -1;
+            if (!paneReadIsCurrent(paneCacheRef.current, paneId, revision)) return;
+            if (!value) return;
+            paneCacheRef.current = rememberPaneWindow(paneCacheRef.current, paneId, {
+              shape: `${outputFormat}:${outputSource}`,
+              output: value,
+              // A warm-up is always the first page. It is a seed for the
+              // switch, not a claim about depth -- the reader has never paged
+              // this pane in this visit, so there is nothing deeper to lose.
+              lineLimit: INITIAL_PANE_OUTPUT_LINES,
+              revision,
+              canLoadEarlier: hasEarlierTerminalOutput(
+                value,
+                INITIAL_PANE_OUTPUT_LINES,
+                MAX_PANE_OUTPUT_LINES,
+                panesRef.current.find((pane) => pane.id === paneId)?.raw.scroll
+              ),
+              earlierRows: terminalOutputLineCount(value),
+              rangeUnsupported: false,
+              lastRead: read,
+            });
+          })
+          // A warm-up nobody asked for is not news. The pane it failed for
+          // simply stays a miss, which is the behaviour every pane had before
+          // this existed.
+          .catch(() => {});
+      }
+    }, PANE_PREFETCH_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [
+    connection.phase,
+    data.sessionId,
+    outputFormat,
+    outputSource,
+    ready,
+    selection.paneId,
+    serverId,
+    tabPanes,
+  ]);
 
   // The permission menu this pane may be blocked on. Everything about it --
   // the read, the answer, the 409 retry rule -- lives in the hook; the screen
@@ -2024,6 +2359,26 @@ export function ServerTerminalWorkspace({
     if (dock.approvalOnly) Keyboard.dismiss();
   }, [dock.approvalOnly]);
 
+  // Which pane the stream is opened against, which trails the selection by
+  // `PANE_STREAM_SETTLE_MS`. See that constant for why it trails at all; the
+  // short version is that re-pointing the stream is a reconnect, and a pane
+  // passed through on the way somewhere else is not worth one.
+  //
+  const [streamPaneId, setStreamPaneId] = useState(selection.paneId);
+  useEffect(() => {
+    if (streamPaneId === selection.paneId) return;
+    // The first pane of a visit does not wait. There is no reconnect to avoid
+    // when there is no stream yet -- the selection arrives empty and is filled
+    // in once the gateway answers -- and making that one wait would delay the
+    // inline frames for the pane the reader actually arrived on.
+    if (!streamPaneId) {
+      setStreamPaneId(selection.paneId);
+      return;
+    }
+    const timer = setTimeout(() => setStreamPaneId(selection.paneId), PANE_STREAM_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [selection.paneId, streamPaneId]);
+
   // The live event stream. `pane_updated` for the selected pane reads its
   // output; structural events refresh the navigator. A (re)connect forces a
   // full read, because the stream has no replay and anything during the gap is
@@ -2034,19 +2389,50 @@ export function ServerTerminalWorkspace({
     selectedServer ? tunnel.baseUrl : null,
     selectedServer ? (record?.token ?? null) : null,
     data.sessionId,
-    selectedServer ? selection.paneId || null : null,
+    // The settled pane, not the selected one -- see `streamPaneId` above. The
+    // structural and approval events this stream also carries are session-wide
+    // and unaffected by which pane it inlines.
+    selectedServer ? streamPaneId || null : null,
     ready && connection.phase === 'connected',
     retryNonce,
     useMemo(
       () => ({
         onPaneRevision: (paneId: string, revision: number) => {
-          if (paneId !== activePaneRef.current) return;
+          if (paneId !== activePaneRef.current) {
+            // The stream is session-wide, so this is how a pane nobody is
+            // looking at says it has moved on. Only its revision arrives --
+            // the gateway inlines the *text* for the one pane the stream was
+            // opened against (`stream_pane`) and no other -- and a revision is
+            // all that is needed here: it is what marks a remembered window as
+            // overtaken, so the switch back paints it at once and then
+            // reconciles, instead of trusting it forever. A pane the cache
+            // does not hold is not created by this.
+            paneCacheRef.current = notePaneRevision(paneCacheRef.current, paneId, revision);
+            return;
+          }
           const last = readRevisionRef.current;
           if (last.paneId === paneId && last.revision === revision) return;
           refreshOutputRef.current();
         },
         onPaneOutput: (paneId: string, revision: number, text: string) => {
-          if (paneId !== activePaneRef.current) return;
+          if (paneId !== activePaneRef.current) {
+            // For the short interval after a switch the stream is still
+            // inlining the pane just left -- the one pane other than the
+            // selected one whose text is ever on the wire (see
+            // `PANE_STREAM_SETTLE_MS`). Folded into that pane's remembered
+            // window through the same door its own frames went through, so
+            // switching straight back stays free even while it is printing.
+            // Everything else -- an uncached pane, a shape that has turned, a
+            // frame already overtaken -- leaves the cache exactly as it was.
+            paneCacheRef.current = foldPaneFrame(
+              notePaneRevision(paneCacheRef.current, paneId, revision),
+              paneId,
+              PANE_FRAME_SHAPE,
+              revision,
+              (held, lineLimit) => foldPaneRead(held, text, 'frame', lineLimit, false)
+            );
+            return;
+          }
           // Painted straight from the event -- no read round-trip.
           // Herdr can expose new text before its coalesced revision advances,
           // so inline output must not be discarded solely on revision equality.
