@@ -156,14 +156,21 @@ describe('resize', () => {
   });
 });
 
+/** Every mode off, which is what a fresh emulator and a reset one both report. */
+const ALL_OFF = {
+  applicationCursorKeys: false,
+  bracketedPaste: false,
+  alternateScreen: false,
+  mouseButtons: false,
+  mouseButtonMotion: false,
+  mouseAnyMotion: false,
+  mouseSgrEncoding: false,
+};
+
 describe('input modes', () => {
   test('start off and reset off', () => {
     const term = emulator(10, 2);
-    expect(term.modes).toEqual({
-      applicationCursorKeys: false,
-      bracketedPaste: false,
-      alternateScreen: false,
-    });
+    expect(term.modes).toEqual(ALL_OFF);
   });
 
   test('DECCKM follows CSI ?1 h and l', () => {
@@ -192,6 +199,62 @@ describe('input modes', () => {
     }
   });
 
+  test('each mouse mode follows its own private mode', () => {
+    const cases = [
+      [1000, 'mouseButtons'],
+      [1002, 'mouseButtonMotion'],
+      [1003, 'mouseAnyMotion'],
+      [1006, 'mouseSgrEncoding'],
+    ] as const;
+    for (const [mode, flag] of cases) {
+      const term = emulator(10, 2);
+      term.write(`${CSI}?${mode}h`);
+      expect(term.modes).toEqual({ ...ALL_OFF, [flag]: true });
+      term.write(`${CSI}?${mode}l`);
+      expect(term.modes).toEqual(ALL_OFF);
+    }
+  });
+
+  test('the set every full-screen program sends arrives in one sequence', () => {
+    // What vim writes for `set mouse=a`, and tmux for `set -g mouse on`.
+    const term = emulator(10, 2);
+    term.write(`${CSI}?1000;1002;1006h`);
+    expect(term.modes).toEqual({
+      ...ALL_OFF,
+      mouseButtons: true,
+      mouseButtonMotion: true,
+      mouseSgrEncoding: true,
+    });
+    term.write(`${CSI}?1000;1002;1006l`);
+    expect(term.modes).toEqual(ALL_OFF);
+  });
+
+  test('a non-private 1000 is not a mouse mode', () => {
+    const term = emulator(10, 2);
+    term.write(`${CSI}1000h${CSI}1006h`);
+    expect(term.modes).toEqual(ALL_OFF);
+  });
+
+  test('leaving the alternate screen does not turn the mouse off by itself', () => {
+    // It is the program's job to send `?1000l`, and a program killed before it
+    // could is why the shell underneath sometimes still reports. Guessing here
+    // would silently drop reports a program that stays on the main screen and
+    // sets 1000 -- which is legal, and what a mouse-aware pager does -- asked
+    // for.
+    const term = emulator(10, 2);
+    term.write(`${CSI}?1049h${CSI}?1000h${CSI}?1049l`);
+    expect(term.modes.alternateScreen).toBe(false);
+    expect(term.modes.mouseButtons).toBe(true);
+  });
+
+  test('flipping a mouse mode does not touch the screen', () => {
+    const term = emulator(10, 2);
+    term.write('abc');
+    const before = term.frame();
+    term.write(`${CSI}?1000;1002;1003;1006h`);
+    expect(term.frame()).toEqual(before);
+  });
+
   test('reset leaves the alternate screen', () => {
     const term = emulator(10, 2);
     term.write(`${CSI}?1049h`);
@@ -202,31 +265,19 @@ describe('input modes', () => {
   test('several modes in one sequence', () => {
     const term = emulator(10, 2);
     term.write(`${CSI}?1;25;2004h`);
-    expect(term.modes).toEqual({
-      applicationCursorKeys: true,
-      bracketedPaste: true,
-      alternateScreen: false,
-    });
+    expect(term.modes).toEqual({ ...ALL_OFF, applicationCursorKeys: true, bracketedPaste: true });
   });
 
   test('a non-private mode 1 or 2004 is not DECCKM or bracketed paste', () => {
     const term = emulator(10, 2);
     term.write(`${CSI}1h${CSI}2004h`);
-    expect(term.modes).toEqual({
-      applicationCursorKeys: false,
-      bracketedPaste: false,
-      alternateScreen: false,
-    });
+    expect(term.modes).toEqual(ALL_OFF);
   });
 
   test('RIS clears them', () => {
     const term = emulator(10, 2);
-    term.write(`${CSI}?1h${CSI}?2004h\x1bc`);
-    expect(term.modes).toEqual({
-      applicationCursorKeys: false,
-      bracketedPaste: false,
-      alternateScreen: false,
-    });
+    term.write(`${CSI}?1h${CSI}?2004h${CSI}?1002h${CSI}?1006h\x1bc`);
+    expect(term.modes).toEqual(ALL_OFF);
   });
 
   test('the modes object is live, not a snapshot', () => {

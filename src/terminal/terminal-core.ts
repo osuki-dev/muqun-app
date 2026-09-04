@@ -76,7 +76,9 @@ type TerminalOptions = {
 /**
  * The terminal modes a program flips that change what the *input* side has to
  * send, rather than how the screen is drawn. Read by whoever encodes keys for
- * a PTY (`@/lib/ssh-key-bytes`); nothing in the renderer looks at them.
+ * a PTY (`@/lib/ssh-key-bytes`) and by the touch translation that turns a
+ * finger into the same kind of input (`@/terminal/touch-input`); nothing in
+ * the renderer looks at them.
  */
 export type TerminalModes = {
   /** DECCKM (`CSI ?1 h/l`): arrows and Home/End go out as `ESC O x`, not `ESC [ x`. */
@@ -90,6 +92,25 @@ export type TerminalModes = {
    * program own the screen", which a gateway pane can only guess from names.
    */
   alternateScreen: boolean;
+  /**
+   * `CSI ?1000 h/l`: the program wants to be told about button presses and
+   * releases. The weakest of the three mouse modes and the one every other
+   * implies -- a program that asks for motion is also asking for buttons --
+   * so "is the mouse on at all" is the OR of this, `mouseButtonMotion` and
+   * `mouseAnyMotion`, never this one alone.
+   */
+  mouseButtons: boolean;
+  /** `CSI ?1002 h/l`: buttons, plus motion for as long as one is held. */
+  mouseButtonMotion: boolean;
+  /** `CSI ?1003 h/l`: buttons, plus motion whether or not one is held. */
+  mouseAnyMotion: boolean;
+  /**
+   * `CSI ?1006 h/l`: the reports above are to be written in SGR form
+   * (`CSI < b ; x ; y M`) rather than in the X10 byte form. Not a mode that
+   * turns reporting on -- it only decides how a report that is already being
+   * sent is spelled -- which is why it is tracked apart from the three above.
+   */
+  mouseSgrEncoding: boolean;
 };
 
 const CSI_FINAL = /[@-~]/;
@@ -151,6 +172,10 @@ export class TerminalEmulator {
     applicationCursorKeys: false,
     bracketedPaste: false,
     alternateScreen: false,
+    mouseButtons: false,
+    mouseButtonMotion: false,
+    mouseAnyMotion: false,
+    mouseSgrEncoding: false,
   };
   /**
    * The tail of the last `write` that could not be acted on yet: an escape
@@ -214,6 +239,10 @@ export class TerminalEmulator {
     this.modeState.applicationCursorKeys = false;
     this.modeState.bracketedPaste = false;
     this.modeState.alternateScreen = false;
+    this.modeState.mouseButtons = false;
+    this.modeState.mouseButtonMotion = false;
+    this.modeState.mouseAnyMotion = false;
+    this.modeState.mouseSgrEncoding = false;
     this.pending = '';
     this.openRun = false;
   }
@@ -712,6 +741,14 @@ export class TerminalEmulator {
       else if (privateMode && mode === 7) this.autoWrap = enabled;
       else if (privateMode && mode === 25) this.cursorVisible = enabled;
       else if (privateMode && mode === 2004) this.modeState.bracketedPaste = enabled;
+      // The mouse modes. Tracked but never acted on here: nothing in the
+      // emulator or the renderer cares, and the one reader is the touch
+      // translation that turns a finger into the reports these ask for
+      // (`@/terminal/touch-input`).
+      else if (privateMode && mode === 1000) this.modeState.mouseButtons = enabled;
+      else if (privateMode && mode === 1002) this.modeState.mouseButtonMotion = enabled;
+      else if (privateMode && mode === 1003) this.modeState.mouseAnyMotion = enabled;
+      else if (privateMode && mode === 1006) this.modeState.mouseSgrEncoding = enabled;
       else if (privateMode && (mode === 47 || mode === 1047 || mode === 1049)) {
         if (enabled) {
           if (mode === 1049) this.saveCursor();
