@@ -213,6 +213,27 @@ function openPaneScaleStore(): PaneScaleStore {
 
 const PANE_SCALE_STORAGE_KEY = 'muqun.terminal-pane-scale.v1';
 
+/**
+ * How long the terminal's measured box must hold still before the grid follows
+ * it.
+ *
+ * Everything downstream of `viewport` is expensive: the content width, the
+ * unobstructed height, the clamps that re-run on it, and -- through them -- the
+ * recorded picture the canvas draws. That is the right price to pay once, for
+ * a size the reader is going to keep. It is the wrong price to pay fifteen
+ * times for the fifteen sizes a keyboard passes through on its way up, and a
+ * caller that resizes this terminal to animate is not doing anything unusual:
+ * an animated height reaches the layout system frame by frame by design.
+ *
+ * So a resize is committed at the size it settles on rather than at each size
+ * on the way there. A quarter-second keyboard becomes one resize, and the grid
+ * still ends up exactly where the layout put it. `ssh-terminal-workspace.tsx`
+ * settles its own viewport for the same reason and by the same clock -- there
+ * it is the PTY on the far side that must not hear about fifteen sizes; here
+ * it is the picture.
+ */
+const VIEWPORT_SETTLE_MS = 100;
+
 let paneScaleStoreInstance: PaneScaleStore | null = null;
 function paneScaleStore(): PaneScaleStore {
   if (!paneScaleStoreInstance) paneScaleStoreInstance = openPaneScaleStore();
@@ -434,6 +455,15 @@ export function SkiaTerminal({
   }, [nerdFont]);
   const lineHeight = terminalLineHeight(fontSize);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  /** The settle timer behind `handleLayout`, and whether a first size has landed. */
+  const viewportSettleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const viewportMeasuredRef = useRef(false);
+  useEffect(
+    () => () => {
+      if (viewportSettleRef.current) clearTimeout(viewportSettleRef.current);
+    },
+    []
+  );
   // Parsing + re-recording the picture is the expensive part of an output
   // burst, so it runs off a coalesced snapshot (leading + trailing, ~100ms) --
   // keyed on terminalId so a pane switch flushes at once. The raw `output` prop
@@ -1895,12 +1925,31 @@ export function SkiaTerminal({
     longPressGesture
   );
 
+  /**
+   * The measured box, committed once it has held still -- see
+   * `VIEWPORT_SETTLE_MS` for why it is not committed as it moves.
+   *
+   * The first measurement is the exception and lands at once: there is nothing
+   * for it to be in flight from, and the grid has to have a size before it can
+   * draw anything at all.
+   */
   function handleLayout(event: LayoutChangeEvent) {
     const { width, height } = event.nativeEvent.layout;
-    setViewport((current) => {
-      const next = { width: Math.round(width), height: Math.round(height) };
-      return current.width === next.width && current.height === next.height ? current : next;
-    });
+    const next = { width: Math.round(width), height: Math.round(height) };
+    const commit = () =>
+      setViewport((current) =>
+        current.width === next.width && current.height === next.height ? current : next
+      );
+    if (viewportSettleRef.current) clearTimeout(viewportSettleRef.current);
+    if (!viewportMeasuredRef.current) {
+      viewportMeasuredRef.current = true;
+      commit();
+      return;
+    }
+    viewportSettleRef.current = setTimeout(() => {
+      viewportSettleRef.current = null;
+      commit();
+    }, VIEWPORT_SETTLE_MS);
   }
 
   // One snap per send, not one per frame. The layout values in the dependency

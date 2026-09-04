@@ -339,6 +339,16 @@ const PAD_PANE_STRIP_MAX_WIDTH = 614;
 const CONNECTION_RECOVERED_MS = 1_400;
 
 /**
+ * How long the dock's measurement is given to settle before it becomes state.
+ *
+ * Long enough to swallow a run of alternating measurements -- see
+ * `measureComposerHeight` -- and short enough to land well inside the dock's
+ * own reflow, so a height that really did change still moves the terminal's
+ * inset within the same animation.
+ */
+const COMPOSER_MEASURE_WINDOW_MS = 50;
+
+/**
  * The composer dock, as something whose height can be animated.
  *
  * `SafeAreaView` is an ordinary view under the inset provider, so wrapping it
@@ -497,6 +507,53 @@ export function ServerTerminalWorkspace({
   const [sendingKey, setSendingKey] = useState<string | null>(null);
   const [composerHeight, setComposerHeight] = useState(96);
   const [shortcuts, setShortcuts] = useState<PaneShortcuts | null>(null);
+  /*
+    The dock's measured height, handed to React on the leading and trailing
+    edge of a window rather than on every measurement.
+
+    `onLayout` is a native callback delivered inside the commit that laid the
+    dock out, so the state it writes is a nested update in React's accounting.
+    One nested update is nothing. A run of them is the defect this exists for:
+    the bottom inset the dock is padded by can flip between its keyboard-up and
+    its keyboard-down value repeatedly while the keyboard animates, and each
+    flip re-measures the dock at the other of two heights. Written straight
+    through, that alternation is a chain of nested updates, and a gateway
+    streaming pane output commits the screen on top of it until the chain
+    passes React's limit of fifty: "Maximum update depth exceeded", thrown from
+    whichever setter the frame lands on, which drops the terminal to its
+    boundary and back -- the flicker. It needs both halves, which is why only a
+    live server ever showed it and the demo workspace never could.
+
+    The throttle is the whole of the fix. The first measurement still lands at
+    once, so nothing waits on a height that really did change; an alternation
+    collapses to a single write on the trailing edge; and a write made from a
+    timer is not nested at all, so the chain cannot form.
+  */
+  const measuredComposerHeightRef = useRef(96);
+  const composerMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const composerMeasuredAtRef = useRef(0);
+  const measureComposerHeight = useCallback((height: number) => {
+    measuredComposerHeightRef.current = height;
+    if (composerMeasureTimerRef.current) return;
+    const elapsed = Date.now() - composerMeasuredAtRef.current;
+    if (elapsed >= COMPOSER_MEASURE_WINDOW_MS) {
+      composerMeasuredAtRef.current = Date.now();
+      setComposerHeight((current) => (current === height ? current : height));
+      return;
+    }
+    composerMeasureTimerRef.current = setTimeout(() => {
+      composerMeasureTimerRef.current = undefined;
+      composerMeasuredAtRef.current = Date.now();
+      const settled = measuredComposerHeightRef.current;
+      setComposerHeight((current) => (current === settled ? current : settled));
+    }, COMPOSER_MEASURE_WINDOW_MS - elapsed);
+  }, []);
+  useEffect(
+    () => () => {
+      if (composerMeasureTimerRef.current) clearTimeout(composerMeasureTimerRef.current);
+    },
+    []
+  );
   // The keyboard button swaps the compact key row for a full on-screen QWERTY
   // that types straight into the pane -- the way to drive a TUI like nvim from
   // a phone. Off by default so the output stays visible.
@@ -3107,8 +3164,7 @@ export function ServerTerminalWorkspace({
                   edges={['bottom']}
                   layout={dockRowLayout}
                   onLayout={(event: LayoutChangeEvent) => {
-                    const nextHeight = Math.ceil(event.nativeEvent.layout.height);
-                    setComposerHeight((current) => (current === nextHeight ? current : nextHeight));
+                    measureComposerHeight(Math.ceil(event.nativeEvent.layout.height));
                   }}
                   style={[styles.composerSafeArea, isPadLayout && styles.padComposerSafeArea]}>
                   {/* Inside the dock rather than floating over the pane: the dock is
