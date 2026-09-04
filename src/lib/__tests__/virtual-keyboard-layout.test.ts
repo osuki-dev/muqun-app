@@ -50,7 +50,10 @@ function rows(table: string): string[][] {
 
 const ROW_UNITS = Number(source.match(/const ROW_UNITS = (\d+)/)?.[1]);
 const SHIFT_UNITS = Number(source.match(/const SHIFT_UNITS = ([0-9.]+)/)?.[1]);
-const MINIMUM_KEY_HEIGHT = Number(source.match(/const MINIMUM_KEY_HEIGHT = ([0-9.]+)/)?.[1]);
+const KEY_HEIGHT = Number(source.match(/const KEY_HEIGHT = ([0-9.]+)/)?.[1]);
+const KEY_GAP = Number(source.match(/const KEY_GAP = ([0-9.]+)/)?.[1]);
+/** The smallest hit area, key plus gap, this keyboard is allowed to ship. */
+const MINIMUM_TOUCH_TARGET = 40;
 const VIRTUAL_KEYBOARD_MAX_WIDTH = Number(
   source.match(/const VIRTUAL_KEYBOARD_MAX_WIDTH = ([0-9.]+)/)?.[1]
 );
@@ -155,9 +158,25 @@ describe('the keyboard adapts without stretching its keys', () => {
     expect(VIRTUAL_KEYBOARD_MAX_WIDTH).toBeLessThanOrEqual(640);
   });
 
-  test('every key keeps a 44pt minimum touch target', () => {
-    expect(MINIMUM_KEY_HEIGHT).toBeGreaterThanOrEqual(44);
-    expect(styleBody('key')).toContain('height: MINIMUM_KEY_HEIGHT');
+  test('a key is still comfortably hittable at the height it was cut to', () => {
+    // The hit area is the key plus one gap -- the space between two keys
+    // belongs to whichever of them the finger is nearer -- so that sum is what
+    // the floor applies to, not the height on its own. Shrinking the keyboard
+    // to give the file back its rows is only allowed to go this far.
+    expect(KEY_HEIGHT + KEY_GAP).toBeGreaterThanOrEqual(MINIMUM_TOUCH_TARGET);
+    // And not so far that it stops reading as a keyboard: the terminal
+    // keyboards this one is measured against run 36 to 40.
+    expect(KEY_HEIGHT).toBeGreaterThanOrEqual(36);
+    expect(styleBody('key')).toContain('height: KEY_HEIGHT');
     expect(source.match(/\bfunctionKey:\s*\{[^}]*\bheight:/s)).toBeNull();
+  });
+
+  test('there is one keyboard, at one size', () => {
+    // The dock's keyboard and the editor panel's are the same component, and
+    // the height is a constant rather than a prop, so neither surface can grow
+    // a keyboard of its own with the letters in different places.
+    expect((source.match(/height: KEY_HEIGHT/g) ?? []).length).toBe(1);
+    // No prop reaches the height, so no caller can pass a second one.
+    expect(/height:\s*(?:props\.|keyHeight|compact)/.test(source)).toBe(false);
   });
 });

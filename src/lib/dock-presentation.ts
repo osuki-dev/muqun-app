@@ -97,12 +97,11 @@ export interface DockPresentation {
    * covers the two rows the reader is typing into.
    *
    * So on these panes the dock does not shrink or rearrange -- it goes, and
-   * what is left floats over the grid: `editorHandle` when it is out of the
-   * way, `editorPanel` when it has been asked for. Nothing that floats is
-   * allowed to change the terminal's layout, which is the other half of the
-   * same sentence: a dock that reserved height would resize the grid, and a
-   * grid resize is a SIGWINCH and a full repaint every time a reader reaches
-   * for `esc`.
+   * what is left lies over the grid: `editorHandle` when it is out of the way,
+   * `editorPanel` when it has been asked for. Neither is allowed to change the
+   * terminal's layout, which is the other half of the same sentence: a dock
+   * that reserved height would resize the grid, and a grid resize is a
+   * SIGWINCH and a full repaint every time a reader reaches for `esc`.
    *
    * A standing question outranks it. An approval clears the dock down to
    * itself on every pane, editor included, and an answerable question with the
@@ -112,13 +111,24 @@ export interface DockPresentation {
   /**
    * The one small control left over the editor: the way back to the keyboard.
    *
-   * Collapsed state of the cluster. Mutually exclusive with `editorPanel`,
-   * because they are the same object in its two sizes.
+   * This is the half that floats. It is dragged in both axes and parks on the
+   * left or the right rail, because it is the only chrome over the file and
+   * the reader moves it for one reason -- it is standing on the line they are
+   * reading. Mutually exclusive with `editorPanel`: they are the same control
+   * in its two states, and tapping one is what produces the other.
    */
   editorHandle: boolean;
   /**
-   * The cluster opened: the app's keyboard, the editor keys, and the way to
-   * the composer -- all of it floating over an unchanged grid.
+   * The keyboard opened: the app's QWERTY, the editor keys, and the way to the
+   * composer, over an unchanged grid.
+   *
+   * This half does *not* float. It is a keyboard, so it sits where a keyboard
+   * sits -- across the bottom of the pane, over the last rows, with nothing
+   * above it to grab. It carries no grip, no chevrons and no second dismissal:
+   * the keyboard's own toggle closes it, and the handle comes back where the
+   * reader left it. What makes it an overlay rather than a dock is unchanged
+   * and is the whole point -- it reserves no height, so opening it cannot
+   * re-derive the grid.
    */
   editorPanel: boolean;
   /** The pane strip. */
@@ -151,11 +161,18 @@ export interface DockPresentation {
   /** The input, its send button, and the popups that hang off the caret. */
   composer: boolean;
   /**
-   * The way back to a composer that stood down for an editor's keyboard.
+   * The way back to a composer that stood down for the app's keyboard.
    *
-   * A floating button rather than a row, for the same reason `floatingActions`
-   * is one: a line of the pane is too much rent for a single control, and the
-   * height it would take is the height the keyboard was opened to get.
+   * It rides in the terminal keys' own row -- which, while the keyboard is up,
+   * is the row inside the keyboard -- and never anywhere else. It had a row of
+   * its own, and a full-width line of the pane holding one circle is the same
+   * rent `floatingActions` exists to refuse: the height it took was the height
+   * the keyboard had been opened to get.
+   *
+   * There is no state where this is true and no row is up to carry it. When
+   * the reader has switched the key row off there is nothing to ride in, and
+   * the answer then is not a row with a button on it but the thing the button
+   * summons: `composer` is true instead, and the field itself is what shows.
    */
   composerEntry: boolean;
   /**
@@ -242,6 +259,19 @@ export function dockPresentation({
   // handle, so a text field cannot be among what is left whether or not the
   // reader asked for one earlier.
   const composerStandsDown = editorHandle || ((virtualKeyboard || editorMode) && !composerRevealed);
+  // Where the way back to it sits, and what happens when there is nowhere.
+  //
+  // The entry is one circle. A circle does not get a row -- it rides in the
+  // trailing seat of the terminal keys' row, opposite the leading seat that
+  // row already keeps for the keyboard toggle. While the app's keyboard is up
+  // that row is inside the keyboard, which is what `keysInKeyboard` names, and
+  // that is the only state a standing-down composer is ever in.
+  //
+  // With the key row switched off there is no seat, and a row grown to hold
+  // the entry would cost exactly what taking the entry's row away just saved.
+  // So that state shows the field rather than the button for it: one row
+  // either way, and the one that is already the destination.
+  const composerEntrySeat = keysInKeyboard;
 
   return {
     approvalOnly: answerable,
@@ -254,11 +284,11 @@ export function dockPresentation({
     floatingActions: entriesShown && !showTerminalKeyRow,
     attachEntry: dockRows && attachmentsAvailable,
     attachmentStrip: dockRows && stagedAttachments > 0,
-    composer: !answerable && !composerStandsDown,
+    composer: !answerable && !editorHandle && (!composerStandsDown || !composerEntrySeat),
     // The handle is the only thing over a collapsed editor, and it is already
-    // the way to the composer -- a second floating button beside it would be
-    // two controls for one door.
-    composerEntry: composerStandsDown && !editorHandle,
+    // the way to the keyboard the composer lives in -- a second control beside
+    // it would be two doors to one room.
+    composerEntry: composerStandsDown && !editorHandle && composerEntrySeat,
     keysInKeyboard,
     // Derived from the two surfaces that carry a real `esc` rather than from
     // the flag alone, so that a rule which one day keeps the row up through
@@ -267,4 +297,38 @@ export function dockPresentation({
     bannerEscape: answerable && !keyRow && !virtualKeyboard,
     animateReflow: screenOnTop,
   };
+}
+
+/** What the "jump to latest output" pill is decided from. */
+export interface LatestPillInput {
+  /** The canvas is pinned to the tail of the stream. */
+  following: boolean;
+  /** A selection is up, and its own controls have the seat the pill sits in. */
+  selecting: boolean;
+  /**
+   * A full-screen program owns the pane: nvim, an editor, a pager, an agent
+   * painting its own screen.
+   */
+  ownsScreen: boolean;
+}
+
+/**
+ * Whether the "jump to latest output" pill may be on the pane at all.
+ *
+ * Two of these are the affordance's own business and have always been: it is
+ * for getting back to a tail the reader has left, so it is not offered while
+ * they are already on it, and it stands down for a selection because the
+ * selection's controls take the seat it sits in.
+ *
+ * The third is why this is a function rather than three `&&`s in a render.
+ * "Latest" is a statement about a scrollback: somewhere below the reader there
+ * is newer output, and this is the way down to it. A program that owns the
+ * screen has no such place. nvim paints the whole viewport every frame and
+ * keeps no history behind it, so the pill offers a journey to where the reader
+ * already is -- and it offers it over the file, in the corner, on a surface
+ * whose author has an opinion about every cell. It was the one piece of the
+ * app's chrome that stayed on an editor after the dock left for it.
+ */
+export function latestPillVisible({ following, selecting, ownsScreen }: LatestPillInput): boolean {
+  return !following && !selecting && !ownsScreen;
 }
