@@ -50,7 +50,7 @@
     "@lingui/core": "^6.6.0",
     "@lingui/react": "^6.6.0",
     "@osuki-dev/react-native-ssh": "0.2.0",
-    "@osuki-dev/ui": "^1.0.0",
+    "@osuki-dev/ui": "^1.0.1",
     "@shopify/react-native-skia": "2.11.2",
     "expo": "~57.0.19",
     "expo-application": "~57.0.2",
@@ -158,9 +158,6 @@
         "react-native-screens"
       ]
     }
-  },
-  "patchedDependencies": {
-    "@osuki-dev/ui@1.0.0": "patches/@osuki-dev%2Fui@1.0.0.patch"
   },
   "trustedDependencies": [
     "@shopify/react-native-skia",
