@@ -12,7 +12,7 @@
  */
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -66,6 +66,11 @@ export default function SimfarmScreen() {
       allowed={params.allowed === '1'}
       initialPort={ports[record.serverId]}
       onPortFound={onPortFound}
+      // The sheet is the only host with something to dismiss, so it is the only
+      // one that gets a header with a close button in it. The Pad column is
+      // part of the workspace and is closed from the quick actions that opened
+      // it.
+      onClose={() => router.back()}
     />
   );
 }
