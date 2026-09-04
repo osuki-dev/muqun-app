@@ -28,7 +28,7 @@ import type { ServerReachability } from '@/lib/server-reachability';
  * What the card says out loud next to the dot.
  *
  * Upper case is baked into the English rather than applied with a transform,
- * because case is a language's business: `text-transform: uppercase` on 繁體中文
+ * because case is a language's business: `text-transform: uppercase` on Traditional Chinese
  * does nothing, and on some scripts it does something wrong.
  */
 export const reachabilityLabel: Record<ServerReachability, MessageDescriptor> = {
@@ -61,7 +61,7 @@ export const paneViewModeDetail: Record<PaneViewMode, MessageDescriptor> = {
  *
  * It used to be `Switch to the ${label.toLowerCase()} view`, which quietly
  * assumed two things English happens to allow: that a word has a lower-case
- * form, and that a sentence can be built by dropping a noun into a slot. 繁體中文
+ * form, and that a sentence can be built by dropping a noun into a slot. Traditional Chinese
  * has no case at all, so `toLowerCase()` is a no-op there -- and the sentence a
  * translator wants to write is not a template with a hole in it.
  */
@@ -179,7 +179,7 @@ export const editorActionDescription: Record<string, MessageDescriptor> = {
  * agent advertises -- fell through to the English `accessibilityLabel` baked
  * into `@/lib/terminal-keys`. That module is pure and under test, so it cannot
  * hold a macro; the strings had nowhere to be translated and were spoken in
- * English on a 繁體中文 phone.
+ * English on a Traditional Chinese phone.
  *
  * **Keyed by the English label, not by the key name.** The same key means
  * different things in different rows -- `ctrl+r` is reverse search at a shell,
