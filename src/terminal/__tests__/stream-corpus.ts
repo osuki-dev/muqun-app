@@ -70,6 +70,30 @@ export const STREAM_CORPUS: readonly (readonly [string, string])[] = [
   ['crlf split point', 'line\r\nnext\r'],
   ['empty', ''],
   [
+    // zsh's line editor redrawing a two-line prompt, byte for byte off a real
+    // PTY: the prompt is reprinted from the top on every window change, and it
+    // gets back to the top with CR, CR, CUU, then erases what was there with
+    // ED. Nothing else in this corpus moves the cursor *up* and then writes
+    // over what it passed, and the whole of the multi-line-prompt regression
+    // lived in whether that lands on the old prompt or below it.
+    'multi-line prompt redraw',
+    `\r\n${CSI}36mosuki${CSI}39m ${CSI}35mmain${CSI}39m \u276f ${CSI}K` +
+      ['n', 'nv', 'nvi', 'nvim']
+        .map(
+          (buffer) =>
+            `\r\r${CSI}A${CSI}0m${CSI}27m${CSI}24m${CSI}J\r` +
+            `\n${CSI}36mosuki${CSI}39m ${CSI}35mmain${CSI}39m \u276f ${buffer}`
+        )
+        .join(''),
+  ],
+  [
+    // The same idiom in the form a single-line prompt uses it: erase the line,
+    // step up, erase again, reprint. Kept separate because it never leaves the
+    // top row and so exercises the CUU clamp rather than the fold.
+    'line editor redraw at the top row',
+    `${CSI}1;1Hfirst\r${CSI}K${CSI}1Asecond\r${CSI}2Kthird`,
+  ],
+  [
     'shell session',
     `${CSI}1;32muser@host${CSI}0m:${CSI}1;34m~${CSI}0m$ ls\r\nREADME.md  src/\r\n${CSI}1;32muser@host${CSI}0m:${CSI}1;34m~${CSI}0m$ ${CSI}?2004h`,
   ],

@@ -34,7 +34,7 @@ import { TerminalComposer } from '@/components/terminal-composer';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { appChrome } from '@/constants/appearance';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
-import { useSettledHeight } from '@/hooks/use-settled-height';
+import { useDockMeasurement } from '@/hooks/use-settled-height';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import { editorActionDescription, terminalKeyDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
@@ -305,7 +305,54 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     `onLayout` is a nested update, and the dock's padding can alternate while
     the keyboard animates.
   */
-  const [dockHeight, measureDockHeight] = useSettledHeight(96);
+  // What the dock shows: the gateway's rule with the gateway's concerns
+  // absent -- no approval can stand here, there is one pane, and a shell has
+  // nothing to attach. The setting that hides the key row is honoured the same
+  // way; with the row gone, its keyboard toggle moves in beside the composer.
+  const dock = useMemo(
+    () =>
+      dockPresentation({
+        approval: null,
+        keyboardMode,
+        paneCount: 1,
+        showTerminalKeyRow,
+        attachmentsAvailable: false,
+        stagedAttachments: 0,
+        screenOnTop: true,
+        editorPane,
+        composerRevealed,
+      }),
+    [composerRevealed, editorPane, keyboardMode, showTerminalKeyRow]
+  );
+  /*
+    What the dock is showing, as one string.
+
+    The grid is sized by the dock's height, and that height may only reach the
+    grid when the dock has genuinely become a different dock -- see
+    `useDockMeasurement`. This is that "different dock", spelled out.
+
+    Read off the dock's own rule rather than off the facts behind it, which is
+    the difference between one window change per keyboard and two: opening the
+    app's keyboard stands the composer down, so `composerRevealed` falls in a
+    render of its own a beat after `keyboardMode` rises. Both are inputs, only
+    one of them is a dock, and `dockPresentation` is what already knows the
+    composer was gone the moment the keyboard arrived.
+
+    The safe area is deliberately *not* part of it, though the dock pads itself
+    by it. Android hands back the navigation bar's inset while the system
+    keyboard is up, so the dock's padding -- and its measured height -- moves by
+    a row every time the phone's own keyboard opens and closes. Reading that as
+    a new dock would resize the PTY on the way up and again on the way down,
+    which is the one thing `bottomChrome` above promises never to do. A rotation
+    changes the inset too, and re-measures the viewport while it is at it, so
+    the grid still follows that through `viewport`.
+  */
+  const dockShape = `${dock.approvalOnly}:${dock.editorMode}:${dock.virtualKeyboard}:${dock.keyRow}:${dock.composer}`;
+  const {
+    live: dockHeight,
+    steady: steadyDockHeight,
+    measure: measureDockHeight,
+  } = useDockMeasurement(96, dockShape);
 
   useEffect(
     () => () => {
@@ -396,6 +443,21 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     two are the same answer, since no approval can stand on an SSH shell.
   */
   const bottomChrome = editorPane ? insets.bottom : dockHeight;
+  /*
+    The same measurement, held still while the dock keeps its shape, and the
+    one the grid is allowed to read.
+
+    `bottomChrome` above is what covers the terminal *now*, which is what the
+    canvas insets by: it costs a redraw and nothing else, so it may follow the
+    composer wrapping onto a second line frame by frame. The PTY may not. Every
+    number it is given is a `SIGWINCH`, and a shell with a two-line prompt
+    answers each one by reprinting the whole prompt -- one prompt per keystroke
+    down the screen, which is the bug this split exists for. So the far side
+    hears about the keyboard opening, the key row being switched off and an
+    editor taking the screen, and hears nothing at all about a composer growing
+    a line while a command is typed into it.
+  */
+  const permanentChrome = editorPane ? insets.bottom : steadyDockHeight;
   // The canvas's own cell size, once it has measured its font. Until then the
   // advance ratio stands in; the first report re-sizes the grid once.
   const grid = useMemo(
@@ -403,14 +465,14 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       viewport.width > 0 && viewport.height > 0
         ? terminalGridFor({
             width: viewport.width,
-            height: Math.max(1, viewport.height - bottomChrome),
+            height: Math.max(1, viewport.height - permanentChrome),
             fontSize,
             cellWidth: cellMetrics?.cellWidth,
             lineHeight: cellMetrics?.lineHeight,
             pixelRatio: PixelRatio.get(),
           })
         : TERMINAL_GRID_DEFAULT,
-    [bottomChrome, cellMetrics, fontSize, viewport.height, viewport.width]
+    [permanentChrome, cellMetrics, fontSize, viewport.height, viewport.width]
   );
   const gridRef = useLatestRef(grid);
 
@@ -825,25 +887,6 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const connected = status.phase === 'connected';
   const connecting = status.phase === 'connecting';
   const hasDraft = draft.trim().length > 0;
-  // What the dock shows: the gateway's rule with the gateway's concerns
-  // absent -- no approval can stand here, there is one pane, and a shell has
-  // nothing to attach. The setting that hides the key row is honoured the same
-  // way; with the row gone, its keyboard toggle moves in beside the composer.
-  const dock = useMemo(
-    () =>
-      dockPresentation({
-        approval: null,
-        keyboardMode,
-        paneCount: 1,
-        showTerminalKeyRow,
-        attachmentsAvailable: false,
-        stagedAttachments: 0,
-        screenOnTop: true,
-        editorPane,
-        composerRevealed,
-      }),
-    [composerRevealed, editorPane, keyboardMode, showTerminalKeyRow]
-  );
   const chromeText = theme.colors.text;
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
 

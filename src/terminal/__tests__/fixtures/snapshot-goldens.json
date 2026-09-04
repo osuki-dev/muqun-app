@@ -202,5 +202,13 @@
   "snapshot:full screen program": "c7c9bc9243c12a65:7493",
   "snapshot@60:full screen program": "3013d0e83218edaf:7493",
   "snapshot-full:full screen program": "c7c9bc9243c12a65:7493",
-  "emulator:full screen program": "37dae42a478437e9:6695"
+  "emulator:full screen program": "37dae42a478437e9:6695",
+  "snapshot:multi-line prompt redraw": "6767dfd70a740898:4319",
+  "snapshot@60:multi-line prompt redraw": "ba45c92147521cae:4319",
+  "snapshot-full:multi-line prompt redraw": "6767dfd70a740898:4319",
+  "emulator:multi-line prompt redraw": "807e64ed9b5f9aca:4319",
+  "snapshot:line editor redraw at the top row": "8d89c251aa000930:1288",
+  "snapshot@60:line editor redraw at the top row": "72534b93d8336896:1288",
+  "snapshot-full:line editor redraw at the top row": "8d89c251aa000930:1288",
+  "emulator:line editor redraw at the top row": "6f7a63ff6f7cf532:1288"
 }
