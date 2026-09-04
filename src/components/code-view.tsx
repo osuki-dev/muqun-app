@@ -1,26 +1,62 @@
+import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Text as UIText, useThemeTokens } from '@osuki-dev/ui';
 import type { Colors } from '@osuki-dev/ui';
-import { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  InteractionManager,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 
-import { highlightFile, type CodeLine, type TokenRole } from '@/lib/code-highlight';
+import {
+  highlightFile,
+  plainFile,
+  type CodeLine,
+  type HighlightResult,
+  type TokenRole,
+} from '@/lib/code-highlight';
 
 /**
  * A source file or a diff, coloured, read-only.
  *
- * Two render paths, because the two have different units of meaning.
+ * This used to render the whole file in one go: a `<Text>` per line, with the
+ * coloured runs nested inside it, all under a single `<Text selectable>` in a
+ * plain `ScrollView`. The reasoning was that nested `<Text>` folds into ranges
+ * on one native attributed string rather than into views, so the spans are
+ * cheap -- which is true, and beside the point. The *lines* are not cheap. A
+ * 200 KB file is eight to ten thousand of them, and every one was an element to
+ * create, a shadow node to lay out and a range to measure, synchronously, on
+ * the frame the sheet opened. Card #661: opening a 200 KB artifact on a phone
+ * locked the whole app up for seconds -- not the download, not the decryption,
+ * not the tokenizer. The tree.
  *
- * **Syntax** is a property of runs of characters, so the whole file goes into
- * one `<Text>` with the coloured runs nested inside it. Nested `<Text>` does not
- * create views -- React Native folds it into ranges on a single native
- * attributed string -- which is why a file with nine thousand spans is
- * affordable at all.
+ * So the file is virtualized by line. Only the rows in the viewport exist, the
+ * work per frame is bounded by the screen rather than by the file, and the
+ * sheet can be scrolled and closed from the first frame at any size the reader
+ * is allowed to open.
  *
- * **A diff** is a property of whole lines, so each line needs its own `<View>`:
- * a background set on a text span paints only behind the glyphs, and a diff
- * whose tint stops at the end of the text does not read as a diff. That is the
- * expensive path, and it is what `HIGHLIGHT_MAX_LINES` protects.
+ * Three things follow from that, and each costs something here:
+ *
+ * **Colour arrives a frame late.** Splitting on newlines is a couple of
+ * milliseconds at 200 KB; tokenizing is hundreds, uninterruptible, on the JS
+ * thread (see `HIGHLIGHT_MAX_BYTES` for what that measured out to). So the
+ * first paint is plain and `highlightFile` runs after the interaction settles,
+ * then swaps in.
+ *
+ * **The scrollable width has to be decided up front.** A virtualized list only
+ * knows the rows it has mounted, so letting the content size itself would make
+ * the horizontal extent jump as the reader scrolled. The longest line is
+ * measured once, off screen, and every row is cut to that width.
+ *
+ * **Selection is per line.** One `<Text>` spanning the document is exactly the
+ * thing that cannot be virtualized, so a drag no longer runs past the end of a
+ * line. The viewer's header carries a copy action for the whole file instead,
+ * which is what a selection across ten thousand lines was being used for
+ * anyway.
  *
  * Neither path wraps, and both scroll horizontally. A re-wrapped line loses the
  * column alignment that is the entire reason for reading a log or a diff in a
@@ -29,13 +65,56 @@ import { highlightFile, type CodeLine, type TokenRole } from '@/lib/code-highlig
 export function CodeView({ name, content }: { name: string; content: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const result = useMemo(() => highlightFile(name, content), [content, name]);
-  const roleColors = useMemo(() => roleColorMap(theme.colors), [theme.colors]);
 
+  // What the first frame draws. `plainFile` is one `split('\n')`.
+  const plain = useMemo(() => plainFile(content), [content]);
+  const [coloured, setColoured] = useState<HighlightResult | null>(null);
+
+  useEffect(() => {
+    setColoured(null);
+    // `runAfterInteractions`, not a bare timeout: the sheet is opening with a
+    // fade as this mounts, and the tokenizer is the one thing here long enough
+    // to be seen dropping frames out of it.
+    const task = InteractionManager.runAfterInteractions(() => {
+      setColoured(highlightFile(name, content));
+    });
+    return () => task.cancel();
+  }, [content, name]);
+
+  const result = coloured ?? plain;
+  const roleColors = useMemo(() => roleColorMap(theme.colors), [theme.colors]);
   const isDiff = result.language === 'diff';
 
+  // Measured from the plain split rather than from `result`, so the scrollable
+  // width is settled before colour lands and does not move when it does.
+  const longestLine = useMemo(() => longestLineOf(plain.lines), [plain]);
+  const [longestWidth, setLongestWidth] = useState(0);
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+
+  const contentWidth = Math.max(viewport.width, longestWidth + CONTENT_PADDING * 2);
+
+  const renderItem = useCallback(
+    ({ item }: LegendListRenderItemProps<CodeLine>) => (
+      <CodeRow
+        line={item}
+        isDiff={isDiff}
+        colors={theme.colors}
+        roleColors={roleColors}
+        width={contentWidth}
+      />
+    ),
+    [contentWidth, isDiff, roleColors, theme.colors]
+  );
+
+  const onArea = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setViewport((previous) =>
+      previous.width === width && previous.height === height ? previous : { width, height }
+    );
+  }, []);
+
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+    <View style={styles.body}>
       {result.skipped ? (
         <UIText variant="caption" color={theme.colors.textMuted} style={styles.notice}>
           {result.skipped === 'size'
@@ -43,44 +122,127 @@ export function CodeView({ name, content }: { name: string; content: string }) {
             : t`Too many lines to colour. Shown as plain text.`}
         </UIText>
       ) : null}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {isDiff ? (
-          <View>
-            {result.lines.map((line, index) => (
-              <View
-                // Lines have no identity of their own; position is what they are.
-                key={index}
-                style={[styles.diffRow, { backgroundColor: diffBackground(line, theme.colors) }]}>
-                <Text
-                  selectable
-                  style={[styles.code, { color: diffColor(line, theme.colors, roleColors) }]}>
-                  {line.spans.length > 0 ? line.spans.map((span) => span.text).join('') : ' '}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Text selectable style={[styles.code, { color: theme.colors.text }]}>
-            {result.lines.map((line, lineIndex) => (
-              <Text key={lineIndex}>
-                {line.spans.map((span, spanIndex) => (
-                  <Text
-                    key={spanIndex}
-                    style={[
-                      { color: roleColors[span.role] },
-                      span.role === 'comment' ? styles.comment : null,
-                    ]}>
-                    {span.text}
-                  </Text>
-                ))}
-                {lineIndex < result.lines.length - 1 ? '\n' : ''}
-              </Text>
-            ))}
-          </Text>
-        )}
-      </ScrollView>
-    </ScrollView>
+
+      {/* The width probe. It sits in a container far wider than any screen so
+          the text lays out at its natural width instead of being wrapped or
+          clipped to the viewport, which is the only way to learn how wide the
+          file actually is without mounting all of it. One text node, one
+          layout pass, and it never draws. */}
+      <View style={styles.probe} pointerEvents="none">
+        <Text
+          style={[styles.code, styles.probeLine]}
+          numberOfLines={1}
+          onLayout={(event) => setLongestWidth(event.nativeEvent.layout.width)}>
+          {longestLine}
+        </Text>
+      </View>
+
+      <View style={styles.area} onLayout={onArea}>
+        {viewport.height > 0 ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {/* A vertical list inside a horizontal scroller: different axes, so
+                this is not the nesting React Native warns about. The height is
+                the measured one rather than `flex: 1` -- a child of a
+                horizontal `ScrollView` is sized by its content on the cross
+                axis too, and a list that sizes itself to its content is a list
+                that is not virtualizing. */}
+            <LegendList
+              data={result.lines}
+              renderItem={renderItem}
+              keyExtractor={keyOfLine}
+              estimatedItemSize={LINE_HEIGHT}
+              recycleItems
+              showsVerticalScrollIndicator={false}
+              style={{ width: contentWidth, height: viewport.height }}
+              contentContainerStyle={styles.listContent}
+            />
+          </ScrollView>
+        ) : null}
+      </View>
+    </View>
   );
+}
+
+/**
+ * One line.
+ *
+ * Fixed height, and `numberOfLines={1}` under it: a row that can grow to two
+ * lines makes every offset the list has already computed wrong, and the whole
+ * point of not wrapping is that it never should.
+ */
+const CodeRow = memo(function CodeRow({
+  line,
+  isDiff,
+  colors,
+  roleColors,
+  width,
+}: {
+  line: CodeLine;
+  isDiff: boolean;
+  colors: Colors;
+  roleColors: Record<TokenRole, string>;
+  width: number;
+}) {
+  if (isDiff) {
+    // The tint is the line's verdict, so it runs the whole row rather than
+    // stopping where the text does -- which is why a diff is a `View` per line
+    // and not a background on a text span.
+    return (
+      <View style={[styles.row, { width, backgroundColor: diffBackground(line, colors) }]}>
+        <Text
+          selectable
+          numberOfLines={1}
+          style={[styles.code, { color: diffColor(line, colors, roleColors) }]}>
+          {textOf(line)}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.row, { width }]}>
+      <Text selectable numberOfLines={1} style={[styles.code, { color: colors.text }]}>
+        {line.spans.map((span, index) => (
+          <Text
+            key={index}
+            style={[
+              { color: roleColors[span.role] },
+              span.role === 'comment' ? styles.comment : null,
+            ]}>
+            {span.text}
+          </Text>
+        ))}
+      </Text>
+    </View>
+  );
+});
+
+/** Lines have no identity of their own; position is what they are. */
+function keyOfLine(_line: CodeLine, index: number): string {
+  return String(index);
+}
+
+function textOf(line: CodeLine): string {
+  return line.spans.map((span) => span.text).join('');
+}
+
+/**
+ * The line the scrollable width is measured from.
+ *
+ * By character count, which is not the same as by rendered width for a face
+ * that has any double-width glyph in it -- but the result is only ever used as
+ * `Math.max` against the viewport, and being a few points short on a file of
+ * CJK is a line that ends at the edge rather than a broken viewer. Counting
+ * columns properly means walking every character of the file, which is the kind
+ * of whole-input pass this change exists to remove.
+ */
+function longestLineOf(lines: CodeLine[]): string {
+  let longest = '';
+  for (const line of lines) {
+    const text = line.spans.length > 0 ? line.spans[0].text : '';
+    if (text.length > longest.length) longest = text;
+  }
+  return longest;
 }
 
 /**
@@ -150,29 +312,58 @@ export function withAlpha(color: string, alpha: number): string {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
+/** One row, exactly. The list's item size is this and never has to be measured. */
+const LINE_HEIGHT = 18;
+const CONTENT_PADDING = 16;
+
+/**
+ * The width the off-screen probe lays out on. Wide enough that no real line of
+ * code reaches the end of it, so the measurement is the line's own width and
+ * not this number.
+ */
+const PROBE_CANVAS_WIDTH = 100_000;
+
 const styles = StyleSheet.create({
-  scroll: {
+  body: {
     flex: 1,
   },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
+  area: {
+    flex: 1,
   },
   notice: {
-    marginBottom: 10,
+    paddingHorizontal: CONTENT_PADDING,
+    paddingTop: 12,
+    paddingBottom: 6,
+  },
+  // Off screen and unclipped: `left` puts it beyond any viewport and the width
+  // is a canvas the longest line can lay out on without being wrapped.
+  probe: {
+    position: 'absolute',
+    left: -PROBE_CANVAS_WIDTH,
+    top: 0,
+    width: PROBE_CANVAS_WIDTH,
+    opacity: 0,
+  },
+  // Without this the probe stretches to its container the way a `Text` in a
+  // `View` always does, and the measurement comes back as the canvas width
+  // rather than the line's.
+  probeLine: {
+    alignSelf: 'flex-start',
+  },
+  listContent: {
+    paddingVertical: CONTENT_PADDING,
+  },
+  row: {
+    height: LINE_HEIGHT,
+    justifyContent: 'center',
+    paddingHorizontal: CONTENT_PADDING,
   },
   code: {
     fontFamily: 'monospace',
     fontSize: 12.5,
-    lineHeight: 18,
+    lineHeight: LINE_HEIGHT,
   },
   comment: {
     fontStyle: 'italic',
-  },
-  diffRow: {
-    // The tint is the line's verdict, so it runs the whole row rather than
-    // stopping where the text does.
-    minWidth: '100%',
-    paddingHorizontal: 4,
   },
 });

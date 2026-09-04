@@ -1,8 +1,9 @@
+import * as Clipboard from 'expo-clipboard';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
-import { X } from 'lucide-react-native';
+import { Check, Copy, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -122,6 +123,37 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
   );
 }
 
+/** How long the header's copy button stays a tick before it is a copy icon again. */
+const COPIED_FEEDBACK_MS = 1_600;
+
+/**
+ * Where a document stops being rendered as a document.
+ *
+ * `react-native-enriched-markdown` parses and lays out natively, which is why
+ * this sits far above the tokenizer's gate -- but the work still lands in one
+ * uninterruptible pass on the frame the text arrives, and past a point it stops
+ * being linear. Measured through the app, from the string being in hand to the
+ * renderer's first paint, warm (the very first markdown mount of a session
+ * costs an extra second on Android whatever the size, so only warm numbers say
+ * anything about size):
+ *
+ *   size        iOS simulator    Android emulator
+ *   20 KiB              18 ms              857 ms
+ *   60 KiB              18 ms            1_749 ms
+ *   200 KiB          5_023 ms            5_999 ms
+ *
+ * iOS is flat to 60 KiB and then falls off a cliff; Android is expensive
+ * throughout and ends in the same place. Five to six seconds is not a slow
+ * render, it is the phone not answering, and it is exactly what the report in
+ * card #661 described. 64 KiB is the last size measured on the flat part of the
+ * curve, and it is comfortably above every document an agent actually writes.
+ *
+ * Above it the file is shown as its own source through `CodeView`, which
+ * virtualizes its lines -- and, since anything over this is also over
+ * `HIGHLIGHT_MAX_BYTES`, says in its own caption that this is plain text.
+ */
+const MARKDOWN_MAX_BYTES = 64 * 1024;
+
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
@@ -174,6 +206,26 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
     .filter(Boolean)
     .join(' · ');
 
+  /**
+   * The whole file, to the clipboard.
+   *
+   * The code viewer virtualizes its lines, so a drag selects within one line
+   * and not across the document -- which is the correct trade for a file that
+   * can be ten thousand lines long, but it does take away the only way there
+   * was to get the text out. This is that way, and it is a better one: nobody
+   * was dragging a selection over 200 KB.
+   */
+  const [copied, setCopied] = useState(false);
+  const copy = useCallback(() => {
+    if (content === null) return;
+    void Clipboard.setStringAsync(content).then(() => setCopied(true));
+  }, [content]);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   return (
     // `fade`, not `slide`: a document is opened, not pulled up. The slide read
     // as a half sheet that had stopped short even though the window was always
@@ -213,6 +265,18 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                 {subtitle}
               </Text>
             </View>
+            {content ? (
+              <PressableScale
+                accessibilityLabel={t`Copy`}
+                onPress={copy}
+                style={[styles.close, { backgroundColor: theme.colors.surfaceRaised }]}>
+                {copied ? (
+                  <Check size={18} color={theme.colors.success} />
+                ) : (
+                  <Copy size={18} color={theme.colors.text} />
+                )}
+              </PressableScale>
+            ) : null}
             <PressableScale
               accessibilityLabel={t`Close file`}
               onPress={onClose}
@@ -329,7 +393,7 @@ function AssetBody({
     );
   }
 
-  if (asset.kind === 'markdown') {
+  if (asset.kind === 'markdown' && content.length <= MARKDOWN_MAX_BYTES) {
     return (
       <AssetBodyLayer id="markdown">
         <ScrollView
