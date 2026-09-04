@@ -1289,14 +1289,17 @@ export function ServerTerminalWorkspace({
   }, [fullScreenPane, selection.paneId]);
 
   /**
-   * Where the reader dragged the editor's floating cluster.
+   * Where the reader parked the editor's floating button. Two axes, because
+   * the button is dragged in two and rests against a rail rather than on a
+   * track.
    *
    * Held by the screen rather than by the component so it survives leaving nvim
    * and coming back, and switching to another pane and back: a reader who moved
-   * the controls off the line they were editing has said something, and saying
+   * the button off the line they were editing has said something, and saying
    * it again on every arrival is the defect the drag exists to fix.
    */
-  const editorControlsOffset = useSharedValue(0);
+  const editorHandleX = useSharedValue(0);
+  const editorHandleY = useSharedValue(0);
 
   // Leaving the pane, or the keyboard, ends the visit a revealed composer
   // belonged to: the next arrival starts with the file having the height again.
@@ -2644,6 +2647,41 @@ export function ServerTerminalWorkspace({
     </ScrollView>
   );
 
+  /**
+   * The way back to a composer the app's keyboard stood down.
+   *
+   * A circle, and it rides in the trailing seat of the terminal keys' row --
+   * opposite the leading seat the ordinary key row keeps for the keyboard
+   * toggle. It used to have a row of its own, which cost the pane a full line
+   * for one control, out of the height the keyboard had just been opened to
+   * get.
+   */
+  const composerEntry = (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={t`Write a line`}
+      feedback="selection"
+      pressedScale={0.9}
+      onPress={() => setComposerRevealed(true)}
+      style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+      <PenLine size={16} color={chromeText} />
+    </PressableScale>
+  );
+
+  /**
+   * The row the keyboard carries on its own behalf: the terminal keys, and the
+   * one control that is not a key.
+   *
+   * The same element in the dock and in the editor panel, because it is the
+   * same keyboard in both.
+   */
+  const keyboardShortcuts = dock.keysInKeyboard ? (
+    <View style={styles.keyRowWrap}>
+      {terminalKeyStrip}
+      {dock.composerEntry ? composerEntry : null}
+    </View>
+  ) : undefined;
+
   /*
     The input, written once because it is the same field in two places now: in
     the dock on an ordinary pane, and floating in the editor panel on an editor.
@@ -2751,7 +2789,7 @@ export function ServerTerminalWorkspace({
           onText={typeText}
           onKey={typeKey}
           onClose={() => setKeyboardMode(false)}
-          shortcuts={dock.keysInKeyboard ? terminalKeyStrip : undefined}
+          shortcuts={keyboardShortcuts}
         />
       ) : null}
       {dock.keyRow ? (
@@ -2772,22 +2810,6 @@ export function ServerTerminalWorkspace({
             <KeyboardIcon size={16} color={theme.colors.primary} />
           </PressableScale>
           {terminalKeyStrip}
-        </Animated.View>
-      ) : null}
-      {dock.composerEntry ? (
-        <Animated.View
-          entering={fadeIn('micro')}
-          exiting={fadeOutDown('short')}
-          style={styles.composerEntryRow}>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t`Write a line`}
-            feedback="selection"
-            pressedScale={0.9}
-            onPress={() => setComposerRevealed(true)}
-            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
-            <PenLine size={16} color={chromeText} />
-          </PressableScale>
         </Animated.View>
       ) : null}
       {dock.composer ? composerField : null}
@@ -3228,8 +3250,8 @@ export function ServerTerminalWorkspace({
                 Keyboard.dismiss();
                 setKeyboardMode(true);
               }}
-              onCollapse={() => setKeyboardMode(false)}
-              offset={editorControlsOffset}
+              offsetX={editorHandleX}
+              offsetY={editorHandleY}
               keyboardOffset={keyboardOffset}
               // The floating header is chrome the cluster must not disappear
               // behind: the same clearance the grid itself takes above.
@@ -3363,31 +3385,8 @@ export function ServerTerminalWorkspace({
                         onText={typeText}
                         onKey={typeKey}
                         onClose={() => setKeyboardMode(false)}
-                        shortcuts={dock.keysInKeyboard ? terminalKeyStrip : undefined}
+                        shortcuts={keyboardShortcuts}
                       />
-                    </Animated.View>
-                  ) : null}
-                  {/* The way back to the composer without putting the keyboard away.
-                Closing the keyboard was the only route to it, which on an
-                editor meant giving up `esc`, `:w` and the Ctrl chords for as
-                long as it took to paste a line. A single control, so it floats
-                in the dock's corner rather than taking a row -- the same rent
-                argument as `floatingActions`. */}
-                  {dock.composerEntry ? (
-                    <Animated.View
-                      entering={fadeIn('micro')}
-                      exiting={fadeOutDown('short')}
-                      layout={dockRowLayout}
-                      style={styles.composerEntryRow}>
-                      <PressableScale
-                        accessibilityRole="button"
-                        accessibilityLabel={t`Write a line`}
-                        feedback="selection"
-                        pressedScale={0.9}
-                        onPress={() => setComposerRevealed(true)}
-                        style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
-                        <PenLine size={16} color={chromeText} />
-                      </PressableScale>
                     </Animated.View>
                   ) : null}
                   {!dock.virtualKeyboard ? (
@@ -4198,15 +4197,6 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  /**
-   * The lone control that summons the composer back over the keyboard. Right-
-   * aligned, where the send button it stands in for would be, so the thumb that
-   * reaches for one reaches for the other.
-   */
-  composerEntryRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
   },
   padKeyRowEntry: {
     width: 34,

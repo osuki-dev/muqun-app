@@ -5,7 +5,11 @@
  */
 import { describe, expect, test } from 'bun:test';
 
-import { dockPresentation, type DockPresentationInput } from '@/lib/dock-presentation';
+import {
+  dockPresentation,
+  latestPillVisible,
+  type DockPresentationInput,
+} from '@/lib/dock-presentation';
 import type { PaneApproval } from '@/lib/pane-approval';
 
 const APPROVAL: PaneApproval = {
@@ -390,5 +394,95 @@ describe('dock presentation', () => {
         }
       }
     });
+  });
+  // One circle does not get a line of the pane. The entry had a row to itself,
+  // which is the same rent `floatingActions` refuses -- and it was charging it
+  // out of the height the keyboard had just been opened to get.
+  describe('the way back to the composer rides in a row that already exists', () => {
+    test('with the keys up, the entry rides in their row', () => {
+      const dock = dockPresentation(input({ keyboardMode: true }));
+      expect(dock.keysInKeyboard).toBe(true);
+      expect(dock.composerEntry).toBe(true);
+      expect(dock.composer).toBe(false);
+    });
+
+    test('with the key row switched off there is no seat, so the field shows instead', () => {
+      // The alternative is a row grown to hold one button, which costs exactly
+      // what taking the button's row away just saved. So this state shows the
+      // destination rather than the door to it.
+      const dock = dockPresentation(input({ keyboardMode: true, showTerminalKeyRow: false }));
+      expect(dock.keysInKeyboard).toBe(false);
+      expect(dock.composerEntry).toBe(false);
+      expect(dock.composer).toBe(true);
+    });
+
+    test('the entry is never on screen without a row under it', () => {
+      // The whole rule, over every combination the screen can be in: if the
+      // button is showing, the keys' row is showing, because that is where it
+      // sits.
+      for (const keyboardMode of [true, false]) {
+        for (const editorPane of [true, false]) {
+          for (const composerRevealed of [true, false]) {
+            for (const showTerminalKeyRow of [true, false]) {
+              const dock = dockPresentation(
+                input({ keyboardMode, editorPane, composerRevealed, showTerminalKeyRow })
+              );
+              if (dock.composerEntry) expect(dock.keysInKeyboard).toBe(true);
+              // And there is always exactly one of the two: a way to the
+              // composer, or the composer -- never neither, unless the pane has
+              // nothing on it at all.
+              if (!dock.approvalOnly && !dock.editorHandle) {
+                expect(dock.composer || dock.composerEntry).toBe(true);
+              }
+              expect(dock.composer && dock.composerEntry).toBe(false);
+            }
+          }
+        }
+      }
+    });
+
+    test('the same rule on an editor, where there is no dock to fall back on', () => {
+      const open = { editorPane: true, keyboardMode: true };
+      expect(dockPresentation(input(open)).composerEntry).toBe(true);
+      const noKeys = dockPresentation(input({ ...open, showTerminalKeyRow: false }));
+      expect(noKeys.composerEntry).toBe(false);
+      expect(noKeys.composer).toBe(true);
+    });
+  });
+});
+
+// The pill is a way back to the bottom of a scrollback. It is a function
+// rather than a condition in a render because the third of its three clauses
+// is a statement about the app -- what "latest" means on a pane whose program
+// paints the whole viewport -- and a statement about the app should be
+// somewhere a test can read it.
+describe('the jump-to-latest pill', () => {
+  const scrolled = { following: false, selecting: false, ownsScreen: false };
+
+  test('offered to a reader who has left the tail', () => {
+    expect(latestPillVisible(scrolled)).toBe(true);
+  });
+
+  test('not offered to one who is already on it', () => {
+    expect(latestPillVisible({ ...scrolled, following: true })).toBe(false);
+  });
+
+  test('not offered under a selection, which has the seat', () => {
+    expect(latestPillVisible({ ...scrolled, selecting: true })).toBe(false);
+  });
+
+  test('never on a pane whose program owns the screen', () => {
+    // nvim repaints its own viewport and keeps nothing behind it, so there is
+    // no "latest" to jump to -- and the offer was being made in the corner of
+    // a file, over a surface whose author has an opinion about every cell.
+    expect(latestPillVisible({ ...scrolled, ownsScreen: true })).toBe(false);
+  });
+
+  test('and not even when every other reason to show it holds', () => {
+    for (const following of [true, false]) {
+      for (const selecting of [true, false]) {
+        expect(latestPillVisible({ following, selecting, ownsScreen: true })).toBe(false);
+      }
+    }
   });
 });

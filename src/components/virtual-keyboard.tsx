@@ -488,8 +488,32 @@ const KEY_GAP = 5;
 const ARROW_GAP = 3;
 /** Keeps ten-unit rows comfortably key-sized instead of stretching across a Pad pane. */
 const VIRTUAL_KEYBOARD_MAX_WIDTH = 640;
-/** The platform-neutral minimum touch target shared by letter and function keys. */
-const MINIMUM_KEY_HEIGHT = 44;
+/**
+ * The height of every key, letter and function alike.
+ *
+ * Measured against what the reader has just had under their thumb rather than
+ * against a guideline. An iPhone's own letter keys are about 42 points tall on
+ * a 390-wide phone and Gboard is within a point of that; the terminal keyboards
+ * this one is judged beside -- Blink, Termius -- run 36 to 40. This sits inside
+ * that band.
+ *
+ * What it is *not* allowed below is the touch target, and the target is this
+ * plus `KEY_GAP`: the gap between two keys is dead space that belongs to
+ * whichever of them the finger is nearer, so the reachable area of a key is its
+ * height plus one gap. 38 + 5 is 43, which clears the 44-point guideline within
+ * a point and clears the 40 this app holds itself to outright. The test below
+ * asserts the sum rather than the height, because the height on its own is not
+ * the number that decides whether a key can be hit.
+ *
+ * It was 44, which put the pitch at 49 and cost five rows 30 points of the
+ * file -- close to two terminal rows on a phone, taken from the one surface
+ * where the whole argument was that the program owns every row.
+ *
+ * One value, and deliberately not a density prop: the dock's keyboard and the
+ * editor panel's are the same keyboard, and a reader who learns where `g` is
+ * with the dock up must find it in the same place when nvim opens.
+ */
+const KEY_HEIGHT = 38;
 
 // Every weight below is in key widths, and every row adds up to ROW_UNITS
 // exactly -- 1.5 + 3.2 + 3.8 + 1.5 on the bottom row, 4.25 + 4.25 + 1.5 on the
@@ -515,7 +539,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   key: {
-    height: MINIMUM_KEY_HEIGHT,
+    height: KEY_HEIGHT,
     borderRadius: 8,
     borderCurve: 'continuous',
     alignItems: 'center',
