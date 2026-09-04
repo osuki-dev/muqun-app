@@ -113,3 +113,7 @@ example
 # Scratch renders the maintainers look at while designing. They were committed
 # by accident; they are working files, not source.
 /design-preview/
+
+# EAS Metadata: pulled from App Store Connect by `eas metadata:pull`, edited
+# locally, pushed with `eas metadata:push`. Store data, not source.
+/store.config.json
