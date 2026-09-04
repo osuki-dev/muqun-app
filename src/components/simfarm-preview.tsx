@@ -168,7 +168,12 @@ export function SimfarmPreview({
           placeholder={String(SIMFARM_DEFAULT_PORT)}
           accessibilityLabel={t`simfarm port`}
           testID="simfarm-port"
-          style={styles.port}
+          // `containerStyle`, not `style`: this Input hands `style` to the
+          // TextInput inside its own full-width wrapper, so a width there sized
+          // the text box and left the wrapper as wide as the screen. The row
+          // then overflowed both edges -- the port lost its first digit on the
+          // left and Look again was cut off on the right.
+          containerStyle={styles.port}
           onSubmitEditing={() => {
             const parsed = parsePort(portText);
             if (parsed !== null) setPort(parsed);
@@ -193,6 +198,6 @@ const styles = StyleSheet.create({
   middle: { textAlign: 'center' },
   sheetPad: { paddingHorizontal: 24 },
   embeddedPad: { paddingHorizontal: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, maxWidth: '100%' },
   port: { width: 104 },
 });
