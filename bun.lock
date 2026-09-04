@@ -13,7 +13,7 @@
         "@lingui/core": "^6.6.0",
         "@lingui/react": "^6.6.0",
         "@osuki-dev/react-native-ssh": "0.2.0",
-        "@osuki-dev/ui": "^1.0.0",
+        "@osuki-dev/ui": "^1.0.1",
         "@shopify/react-native-skia": "2.11.2",
         "expo": "~57.0.19",
         "expo-application": "~57.0.2",
@@ -89,9 +89,6 @@
     "@shopify/react-native-skia",
     "react-native-enriched-markdown",
   ],
-  "patchedDependencies": {
-    "@osuki-dev/ui@1.0.0": "patches/@osuki-dev%2Fui@1.0.0.patch",
-  },
   "overrides": {
     "react-native-screens": "4.27.0",
   },
@@ -368,7 +365,7 @@
 
     "@osuki-dev/react-native-ssh": ["@osuki-dev/react-native-ssh@0.2.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-5eiz/OGQ+jTD8EXb1n3pxK3B7ttnTeOqYCvboOXLc2E4asfTlGW3yAJ5gcQYwZsmGKltW2MtmODNdm7MvW7+4A=="],
 
-    "@osuki-dev/ui": ["@osuki-dev/ui@1.0.0", "", { "peerDependencies": { "@expo/ui": ">=57.0.4", "expo-font": ">=57.0.0", "expo-image": ">=56.0.0", "expo-router": ">=57.0.4", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.2.3", "react-native": ">=0.85.0", "react-native-keyboard-controller": ">=1.21.6", "react-native-reanimated": ">=4.3.1", "react-native-safe-area-context": ">=5.7.0", "react-native-svg": ">=15.15.4" } }, "sha512-vNNzHELqGgkcXj5YHFquQPxa59g80namE0dOmql9kEZNpyHYHILEMKQBfFwCsIaFZycKOKqhPzo11MtBtIDJaw=="],
+    "@osuki-dev/ui": ["@osuki-dev/ui@1.0.1", "", { "peerDependencies": { "@expo/ui": ">=57.0.4", "expo-font": ">=57.0.0", "expo-image": ">=56.0.0", "expo-router": ">=57.0.4", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.2.3", "react-native": ">=0.85.0", "react-native-keyboard-controller": ">=1.21.6", "react-native-reanimated": ">=4.3.1", "react-native-safe-area-context": ">=5.7.0", "react-native-svg": ">=15.15.4" } }, "sha512-6Nm9ToAkBPqNThK7PwSJxsl1aoODH18xjb1BpxTrj2u8lP9kNymKNtivY7clzreXmB3hLICuStyIQyO26Ez2/g=="],
 
     "@oxfmt/binding-android-arm-eabi": ["@oxfmt/binding-android-arm-eabi@0.66.0", "", { "os": "android", "cpu": "arm" }, "sha512-2Me9eoptv6ERdEuI2P8AOlYdHHraXebJaM6SC0kc2Dfb+mLrep2db+fedBPKaYn673h/vBgvP4tkOdAbaudX6w=="],
 
