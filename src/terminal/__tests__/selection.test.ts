@@ -272,11 +272,11 @@ describe('selectionSpans', () => {
 });
 
 describe('selectionSpans with wide glyphs', () => {
-  // 你好 occupies columns 0..3; 'ok' follows at 4 and 5.
+  // The two-character CJK greeting occupies columns 0..3; 'ok' follows at 4 and 5.
   const lines = rows('你好ok');
 
   test('an end landing on a continuation column takes the whole glyph', () => {
-    // Focus on column 1, the second half of 你.
+    // Focus on column 1, the second half of the first wide character.
     expect(selectionSpans(lines, span([0, 0], [0, 1]), 80)).toEqual([
       { row: 0, startColumn: 0, endColumn: 2 },
     ]);

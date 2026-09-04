@@ -60,9 +60,9 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
  * Muqun is a brand name, and most of these files say "Muqun" for exactly that
  * reason -- the same reason the gateway's tables leave "Gateway" in Latin
  * script. `zh-TW` and `ja` are the deliberate exceptions: the site at
- * osuki.dev already gives the product a native name there, 牧群, and
+ * osuki.dev already gives the product a native name there (the CJK form of Muqun), and
  * `native-locales/zh-TW.json` and `native-locales/ja.json` carry it too, so a
- * reader who knows the app as 牧群 does not meet "Muqun" in a permission
+ * reader who knows the app by that native name does not meet "Muqun" in a permission
  * prompt or the App Store's own listing of the app's name. The pipeline is
  * wired up for every locale regardless, because the alternative is
  * discovering it does not work on the day another market needs a local name,

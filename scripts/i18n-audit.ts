@@ -1,7 +1,7 @@
 /**
  * The sweep that finds copy the macros never saw.
  *
- * Three separate mistakes put English on a 繁體中文 screen, and only the first
+ * Three separate mistakes put English on a Traditional Chinese screen, and only the first
  * of them is visible when you read a diff:
  *
  *  1. A literal written straight into a user-facing prop -- `title="Retry"`,

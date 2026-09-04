@@ -70,7 +70,7 @@ const CHIP_SIZE = 36;
  * instrument style, the same one the segmented controls' own labels use. It
  * used to be a `caption` with `title.toUpperCase()` applied in JavaScript,
  * which is the mistake `i18n/labels.ts` is written to prevent: case is a
- * language's business, `toUpperCase()` on 日本語 does nothing and on some
+ * language's business, `toUpperCase()` on Japanese does nothing and on some
  * scripts does something wrong. `textTransform` is a rendering instruction the
  * platform applies per script, and it costs no catalog churn.
  */

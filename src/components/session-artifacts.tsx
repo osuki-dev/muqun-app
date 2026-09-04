@@ -227,7 +227,7 @@ export function SessionArtifacts({
   // Each chip carries its spoken label as its own message rather than as
   // ``Show ${label.toLowerCase()}``. Concatenation looks like it translates --
   // the noun is a message, after all -- but the verb around it never was, so
-  // VoiceOver in zh-TW read "Show 圖片": an English sentence with a Chinese word
+  // VoiceOver in zh-TW read "Show <image>" with the noun in Chinese: an English sentence with a Chinese word
   // dropped into it. Half a sentence per language is worse than none, because
   // the reader cannot tell whether they misheard. Nor does `toLowerCase()` mean
   // anything outside a cased script; it is a no-op on Chinese and wrong in the

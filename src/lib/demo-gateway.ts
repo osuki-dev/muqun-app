@@ -34,7 +34,7 @@ import {
  * and no gateway, so this file *is* the gateway, and its prose is the only copy
  * in the app that would otherwise be hard-coded English. That is not a small
  * corner: this is what an App Store or Play reviewer sees, and it is where the
- * store screenshots come from, so a 繁體中文 phone showing an English demo is a
+ * store screenshots come from, so a Traditional Chinese phone showing an English demo is a
  * screenshot in the wrong language on every localized store listing.
  *
  * **Why every one of these is `i18n._(msg`...`)` inside a function.** These are

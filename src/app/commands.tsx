@@ -863,7 +863,7 @@ export default function QuickCommandsScreen() {
  * A group's instrument label, and whatever control belongs to the group itself.
  *
  * `variant="label"` rather than a caption with `toUpperCase()` applied in
- * JavaScript: case is a language's business, and `toUpperCase()` on 日本語 does
+ * JavaScript: case is a language's business, and `toUpperCase()` on Japanese does
  * nothing while on some scripts it does the wrong thing. `textTransform` is a
  * rendering instruction the platform applies per script.
  */

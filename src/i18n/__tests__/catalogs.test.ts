@@ -48,7 +48,7 @@ const catalogs: Record<AppLocale, Catalog> = {
 const TRANSLATED_LOCALES = APP_LOCALES.filter((locale) => locale !== 'en');
 
 // Every character here exists only in the Simplified set. Shared characters
-// (端, 面, 会) are deliberately absent -- one of them in the list makes the
+// (three common CJK characters) are deliberately absent -- one of them in the list makes the
 // whole assertion cry wolf. Module-level because two suites hold zh-TW text to
 // it: the compiled catalog, and the native locale files prebuild reads.
 const SIMPLIFIED_ONLY =
@@ -457,7 +457,7 @@ describe('the native locale files', () => {
 
     // Muqun is a brand name, so it is the same word in most locales. That is a
     // decision rather than an oversight, and asserting it is what makes it one.
-    // zh-TW and ja are the exception: the app is called 牧群 there, matching the
+    // zh-TW and ja are the exception: the app carries its native CJK name there, matching the
     // localisation already published on osuki.dev -- the app must not invent
     // its own convention for its own name where one already exists.
     const localName: Partial<Record<AppLocale, string>> = { 'zh-TW': '牧群', ja: '牧群' };
