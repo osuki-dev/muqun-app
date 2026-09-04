@@ -95,43 +95,57 @@ export interface HighlightResult {
 /**
  * Where highlighting gives up.
  *
- * Two gates because bytes alone are the wrong measure. Tokenizing is linear in
- * characters; *rendering* is linear in spans, and React Native's cost per
- * nested `<Text>` dwarfs highlight.js's cost per character. A minified bundle
- * is 500 long lines -- slow to tokenize, cheap to render. A build log is 20,000
- * short ones -- the reverse. Either gate trips the fallback.
+ * Two gates, and card #661 changed what both of them are protecting and what
+ * one of them is worth.
  *
- * Measured with `bun run scripts/bench-highlight.ts` on this machine (bun 1.4,
- * Apple Silicon):
+ * The viewer used to mount the whole file at once, so the count that hurt was
+ * the *span* count -- every coloured run was a node in one enormous tree, built
+ * and laid out synchronously on the frame the sheet opened. `CodeView`
+ * virtualizes lines now, so render cost is bounded by the viewport rather than
+ * by the file, and what is left is the work that is still linear in the whole
+ * input:
  *
- *   input                      chars     time    spans    lines
- *   demo theme.diff              368  0.02 ms        9        9   (diff path)
- *   demo coverage.json            55  0.07 ms       22        1
- *   16 KiB TypeScript         16_384  5.90 ms    2_324      472
- *   64 KiB TypeScript         65_536 27.61 ms    9_303    1_874
- *   128 KiB TypeScript       131_072 43.89 ms   18_608    3_749
- *   64 KiB diff               65_536  0.16 ms    1_599    1_599
- *   40_000-line log        2_759_999  2.12 ms   40_000   40_000   (unmapped ext)
+ *   * the byte gate is tokenizing time. highlight.js is a regex machine, it
+ *     runs on the JS thread, and it cannot be interrupted part way.
+ *   * the line gate is the arrays. Every line is a `CodeLine` in the JS heap
+ *     whether or not it is on screen.
  *
- * Tokenizing is linear at roughly 0.35 ms/KiB here. Bun's JSC is well ahead of
- * Hermes, so 64 KiB -- 27.6 ms on this machine -- is about as much as a phone
- * can absorb in one shot without the sheet visibly stalling as it opens, and it
- * covers essentially every artifact an agent actually writes. 128 KiB was
- * measured and rejected: 43.9 ms here extrapolates past 150 ms on device.
+ * The byte gate was 64 KiB, set from `scripts/bench-highlight.ts`: 27.6 ms for
+ * 64 KiB of TypeScript, on bun's JSC, on an Apple Silicon desktop. The note
+ * said Hermes would be slower. It is not slower, it is a different order --
+ * measured through the app on an Android emulator, one file at a time, warm:
  *
- * The line gate protects a different thing. Syntax spans cost little to render
- * -- nested `<Text>` inside one parent `<Text>` collapses to ranges on a single
- * native attributed string, not to views. Diff lines cannot: a full-width row
- * tint needs a real `<View>` per line, because a background on a text span only
- * paints behind the glyphs. 2_000 rows is already more than a mounted
- * `ScrollView` should carry, and it is far more diff than anyone reads on a
- * phone.
+ *   input                    bun/JSC     Hermes    ratio
+ *   20 KiB TypeScript        14.1 ms     447 ms      32x
+ *   60 KiB TypeScript        24.9 ms   1_906 ms      77x   (includes grammar
+ *                                                           registration)
+ *   20 KiB Rust               6.9 ms     142 ms      21x
+ *   60 KiB Rust              11.8 ms     147 ms      12x
+ *   60 KiB plain log          0.0 ms      10 ms       --   (no grammar)
  *
- * `readAssetText` refuses anything over 512 KiB outright, so both sit under a
- * ceiling that already exists.
+ * Hermes has its own regex engine and it is where the whole difference lives.
+ * So the desktop benchmark was reading a machine nobody runs the app on, and
+ * 64 KiB of TypeScript is not "about as much as a phone can absorb" -- it is
+ * close to two seconds of a thread that cannot answer a touch.
+ *
+ * 16 KiB is what the same measurement supports: roughly 350 ms for the most
+ * expensive grammar registered here, and well under a tenth of that for the
+ * cheap ones, on a file bigger than almost everything an agent writes. It is
+ * spent after the first paint rather than before it (see `CodeView`), so it is
+ * colour arriving late on a page already being read -- but it is still a block,
+ * and the number is chosen so it is a short one. Anything above the gate is
+ * plain text with a caption saying so, which is what shipped before colour
+ * existed at all.
+ *
+ * The line gate rose from 2_000 to 20_000 with the same change. 2_000 was the
+ * point past which a mounted `View` per diff row stopped being affordable, and
+ * there is no longer a `View` per row -- only the rows on screen exist. 20_000
+ * is where the `CodeLine` array itself starts to be the expensive part, and
+ * `readAssetText` refuses anything over 512 KiB outright, so both gates sit
+ * under a ceiling that already exists.
  */
-export const HIGHLIGHT_MAX_BYTES = 64 * 1024;
-export const HIGHLIGHT_MAX_LINES = 2_000;
+export const HIGHLIGHT_MAX_BYTES = 16 * 1024;
+export const HIGHLIGHT_MAX_LINES = 20_000;
 
 /**
  * Extension to language. Explicit, and no auto-detection: `highlightAuto` runs
@@ -442,6 +456,18 @@ export function highlightFile(name: string, text: string): HighlightResult {
     return { lines: plainLines(text), language: null, skipped: 'lines' };
   }
   return { lines, language, skipped: null };
+}
+
+/**
+ * The same result the fallbacks produce, with nothing coloured.
+ *
+ * Exported because `CodeView` paints this on the frame the sheet opens and
+ * swaps the coloured result in afterwards: splitting on newlines is a fraction
+ * of a millisecond even at 200 KB, where tokenizing is tens of milliseconds and
+ * the reader is looking at an empty screen for every one of them.
+ */
+export function plainFile(text: string): HighlightResult {
+  return { lines: plainLines(text), language: null, skipped: null };
 }
 
 function plainLines(text: string): CodeLine[] {

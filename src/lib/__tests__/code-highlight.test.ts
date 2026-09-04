@@ -7,6 +7,7 @@ import {
   highlightFile,
   isDiffFile,
   languageForFile,
+  plainFile,
   spansFromHighlightHtml,
   type CodeLine,
 } from '@/lib/code-highlight';
@@ -252,5 +253,42 @@ describe('highlightDiff', () => {
     const { language, skipped } = highlightFile('big.diff', big);
     expect(skipped).toBeNull();
     expect(language).toBe('diff');
+  });
+});
+
+describe('plainFile', () => {
+  // What the viewer paints on the frame the sheet opens, before the tokenizer
+  // has run. It has to agree with the fallback `highlightFile` produces, or the
+  // swap to colour would move every line.
+  it('is line for line what the size fallback produces', () => {
+    const big = `const x = ${'1 + '.repeat(HIGHLIGHT_MAX_BYTES / 4)}0;`;
+    expect(plainFile(big).lines.map(textOf)).toEqual(
+      highlightFile('big.ts', big).lines.map(textOf)
+    );
+  });
+
+  it('claims no language and reports no fallback of its own', () => {
+    const { language, skipped } = plainFile('a\nb');
+    expect(language).toBeNull();
+    expect(skipped).toBeNull();
+  });
+
+  it('gives an empty file one empty line, the way every other path does', () => {
+    expect(plainFile('').lines).toEqual([{ spans: [] }]);
+  });
+
+  it('costs one split, whatever the file is', () => {
+    // The whole reason this exists: it runs on the frame the sheet opens, at
+    // sizes where `highlightFile` is tens of milliseconds. 200 KB is the size
+    // from the report in card #661.
+    const text = Array.from(
+      { length: 8_000 },
+      (_, index) => `line ${index} of a file the size of the one in the report`
+    ).join('\n');
+    expect(text.length).toBeGreaterThan(200 * 1024);
+    const started = performance.now();
+    const { lines } = plainFile(text);
+    expect(performance.now() - started).toBeLessThan(50);
+    expect(lines).toHaveLength(8_000);
   });
 });
