@@ -24,6 +24,11 @@ import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { SshHostKeyDialog, SshKeyboardInteractiveDialog } from '@/components/ssh-host-key-dialog';
 import { SkiaTerminal, type TerminalCellMetrics } from '@/components/skia-terminal';
+import {
+  TERMINAL_TOUCH_MODES_OFF,
+  terminalTouchModesOf,
+  type TerminalTouchModes,
+} from '@/terminal/touch-input';
 import { TerminalBoundary } from '@/components/terminal-boundary';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
@@ -212,6 +217,15 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const [cellMetrics, setCellMetrics] = useState<TerminalCellMetrics | null>(null);
   /** The emulator's alternate-screen flag, as of the last published frame. */
   const [alternateScreen, setAlternateScreen] = useState(false);
+  /**
+   * The modes the terminal's touch translation reads, as of the last published
+   * frame. A separate piece of state from `alternateScreen` above, and a
+   * separate one from the emulator's own live `modes` object, because this one
+   * has to be a NEW object whenever it differs: the terminal takes it as a prop
+   * and mirrors it onto the UI thread, and a live object mutated in place would
+   * never tell React there was anything to mirror.
+   */
+  const [touchModes, setTouchModes] = useState<TerminalTouchModes>(TERMINAL_TOUCH_MODES_OFF);
   /** The editor verdict, latched per alternate screen -- see `sshEditorPane`. */
   const [editorPane, setEditorPane] = useState(false);
   // The key row's toggle swaps the composer for the app's own keyboard, the
@@ -398,6 +412,27 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   );
   const gridRef = useLatestRef(grid);
 
+  /**
+   * The terminal's way to reach the shell with a finger.
+   *
+   * Held stable across renders, because the component mirrors it onto the UI
+   * thread and a new object every render would mean a new mirror every render.
+   * `send` is reached through a ref for the same reason -- it closes over the
+   * connection status and is therefore a different function on each pass --
+   * and it goes out with `stickBottom: false`, which is the whole reason
+   * `send` grew an option: a wheel event is not a keystroke and must not haul
+   * the reader to the bottom sixty times a second.
+   */
+  const sendRef = useLatestRef(send);
+  const touchInputChannel = useMemo(
+    () => ({
+      modes: touchModes,
+      rows: grid.rows,
+      send: (bytes: Uint8Array) => sendRef.current(bytes, { stickBottom: false }),
+    }),
+    [grid.rows, sendRef, touchModes]
+  );
+
   // Frames come off the emulator on its own schedule -- at most one per
   // animation frame, however many chunks landed in it -- and each is a new
   // object, which is what `SkiaTerminal` keys its picture on.
@@ -408,6 +443,11 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       // The mode is read beside the frame it belongs to, so a render never
       // pairs a new screen with an old answer to "whose screen is it".
       setAlternateScreen(terminal.modes.alternateScreen);
+      // Same reading, for the finger rather than for the chrome. Compared
+      // before it is stored: these change a handful of times in a session --
+      // once when vim starts, once when it exits -- and a fresh object on every
+      // frame would re-render the whole screen at output rate.
+      setTouchModes((previous) => terminalTouchModesOf(previous, terminal.modes));
     });
     return () => {
       unsubscribe();
@@ -705,12 +745,23 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     attemptRef.current?.abort();
   }
 
-  function send(bytes: Uint8Array) {
+  /**
+   * Bytes to the shell.
+   *
+   * `stickBottom` is what a typed key wants and what a touch does not. Every
+   * send used to snap the view to the newest line, which is right for a reader
+   * who just pressed Enter and wrong sixty times a second: a drag translated
+   * into wheel events would bump that counter on every frame of the drag, and
+   * each bump is a state change through the whole screen. The program's own
+   * repaint is what the reader is watching in that case, and it needs no help
+   * from us to arrive.
+   */
+  function send(bytes: Uint8Array, options?: { stickBottom?: boolean }) {
     const shell = sessionRef.current.shell;
     if (!shell || status.phase !== 'connected') return;
     try {
       shell.write(bytes);
-      setStickBottomNonce((value) => value + 1);
+      if (options?.stickBottom !== false) setStickBottomNonce((value) => value + 1);
     } catch (error) {
       showToast({
         variant: 'danger',
@@ -1009,6 +1060,12 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             // resolved against the app theme -- the gateway's rule, on the
             // same predicate.
             ownsScreen={editorPane}
+            // What turns a finger into the program's own input. The three-layer
+            // rule and its argument are in `@/terminal/touch-input`; what this
+            // screen contributes is the channel and the two facts the rule
+            // needs -- what the program has asked for, and how many rows of the
+            // frame are its live screen rather than the scrollback above it.
+            touchInput={touchInputChannel}
           />
         </TerminalBoundary>
         {/*

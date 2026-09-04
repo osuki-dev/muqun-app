@@ -83,6 +83,18 @@ import {
   type TerminalHeadRecording,
 } from '@/terminal/chunk-plan';
 import { terminalPaneTheme, type TerminalTheme } from '@/terminal/palette';
+import {
+  packTerminalTouchModes,
+  terminalTouchCellAt,
+  terminalTouchDragBytes,
+  terminalTouchDragTarget,
+  terminalTouchLayer,
+  terminalTouchPressBytes,
+  terminalTouchPressDrags,
+  terminalTouchReleaseBytes,
+  terminalTouchTapBytes,
+  type TerminalTouchModes,
+} from '@/terminal/touch-input';
 import { readTerminalSurface } from '@/terminal/surface';
 import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
 import {
@@ -305,6 +317,7 @@ export function SkiaTerminal({
   onTwoFingerSwipe,
   screenFocused = true,
   paneColumns,
+  touchInput,
 }: {
   /**
    * The pane's rendered text, parsed here on every change. What the gateway
@@ -409,6 +422,22 @@ export function SkiaTerminal({
    * leaves the parser on that inference exactly as before.
    */
   paneColumns?: number;
+  /**
+   * The far side's input channel, for a pane whose program has asked to hear
+   * about the pointer. Left out by a caller that has no such channel -- the
+   * gateway path, where the output arrives already rendered and the modes a
+   * program set are not in it -- and leaving it out is exactly the behaviour
+   * this component had before: every touch is muqun's own.
+   *
+   * `modes` is the emulator's live answer, re-read on every frame it publishes;
+   * `rows` is the PTY's row count, which is what turns a row of the drawn
+   * frame into a row of the live screen (see `terminalTouchCellAt`).
+   */
+  touchInput?: {
+    modes: TerminalTouchModes;
+    rows: number;
+    send: (bytes: Uint8Array) => void;
+  };
 }) {
   const fontSize = terminalFontSize(textSize);
   const theme = useThemeTokens();
@@ -1333,6 +1362,322 @@ export function SkiaTerminal({
     return () => selectionAutoScrollFrame.setActive(false);
   }, [selectionAutoScrollFrame, selectionDragging]);
 
+  /*
+    Touch as the program's input, when the program has said it wants it.
+
+    Three layers, and `@/terminal/touch-input` has the argument for them: a
+    program reporting the mouse gets clicks and the wheel, a program on the
+    alternate screen that is not gets arrow keys, and everything else keeps the
+    scrollback pan this pane has always had. Two fingers are always the
+    scrollback, in every layer.
+
+    The modes cross to the UI thread as one packed integer rather than as an
+    object, because the pan reads them on every touch sample to decide whether
+    it may move the transform at all -- a decision that cannot wait for a hop
+    to JS without the first frames of every drag scrolling the wrong thing.
+    Zero is "no channel and no modes", which is the gateway path and which
+    resolves to the scrollback layer, so a caller that passes no `touchInput`
+    gets exactly the component that existed before this.
+  */
+  const touchModeBits = useSharedValue(0);
+  const touchScreenRows = useSharedValue(0);
+  const touchInputRef = useLatestRef(touchInput);
+  const touchModes = touchInput?.modes;
+  const touchRows = touchInput?.rows ?? 0;
+  useEffect(() => {
+    touchModeBits.value = touchModes ? packTerminalTouchModes(touchModes) : 0;
+    touchScreenRows.value = touchRows;
+  }, [touchModeBits, touchModes, touchRows, touchScreenRows]);
+
+  /**
+   * The finger's own accumulator, in cells rather than in points.
+   *
+   * `travel` is how far the drag has come from where the program took it over,
+   * truncated to whole cells; `emitted` is how much of that has already gone
+   * out. The frame callback below sends the difference and moves `emitted` up
+   * to `travel`, which is the whole of the coalescing: a flick that crosses
+   * forty rows in one frame is one write of forty wheel events, not forty
+   * writes, and a thumb that wanders inside one cell writes nothing at all.
+   *
+   * The divisor is `lineHeight * scale`, not `lineHeight`: a cell on the glass
+   * is as tall as the current zoom makes it, and a drag over a pinched-in pane
+   * must cross the rows the reader can see crossing.
+   */
+  const programDragActive = useSharedValue(false);
+  const programDragHeld = useSharedValue(false);
+  const programBaseX = useSharedValue(0);
+  const programBaseY = useSharedValue(0);
+  const programTravelRows = useSharedValue(0);
+  const programTravelColumns = useSharedValue(0);
+  const programEmittedRows = useSharedValue(0);
+  const programEmittedColumns = useSharedValue(0);
+  const programCellRow = useSharedValue(1);
+  const programCellColumn = useSharedValue(1);
+  /**
+   * Set when a drag is live but its origin is not, which is the one case a long
+   * press makes: the press arms the button from a recogniser that knows where
+   * the finger is but not how far the pan thinks it has come, and only the pan
+   * can supply that. The next update takes its own translation as the origin.
+   */
+  const programRebase = useSharedValue(false);
+
+  const sendTouchBytes = useCallback(
+    (bytes: Uint8Array | null) => {
+      if (bytes) touchInputRef.current?.send(bytes);
+    },
+    [touchInputRef]
+  );
+
+  const emitProgramDrag = useCallback(
+    (drag: { row: number; column: number; rows: number; columns: number; held: boolean }) => {
+      const input = touchInputRef.current;
+      if (!input) return;
+      sendTouchBytes(
+        terminalTouchDragBytes(
+          {
+            cell: { row: drag.row, column: drag.column },
+            rows: drag.rows,
+            columns: drag.columns,
+            held: drag.held,
+          },
+          packTerminalTouchModes(input.modes)
+        )
+      );
+    },
+    [sendTouchBytes, touchInputRef]
+  );
+
+  const emitProgramPress = useCallback(
+    (cell: { row: number; column: number }) => {
+      const input = touchInputRef.current;
+      if (!input) return;
+      sendTouchBytes(terminalTouchPressBytes(cell, packTerminalTouchModes(input.modes)));
+      void feedback('selection');
+    },
+    [sendTouchBytes, touchInputRef]
+  );
+
+  const emitProgramRelease = useCallback(
+    (cell: { row: number; column: number }) => {
+      const input = touchInputRef.current;
+      if (!input) return;
+      sendTouchBytes(terminalTouchReleaseBytes(cell, packTerminalTouchModes(input.modes)));
+    },
+    [sendTouchBytes, touchInputRef]
+  );
+
+  const emitProgramTap = useCallback(
+    (cell: { row: number; column: number }) => {
+      const input = touchInputRef.current;
+      if (!input) return;
+      sendTouchBytes(terminalTouchTapBytes(cell, packTerminalTouchModes(input.modes)));
+      void feedback('selection');
+    },
+    [sendTouchBytes, touchInputRef]
+  );
+
+  /**
+   * The cell under a viewport point, as the program spells one.
+   *
+   * Two steps: the same hit test the selection uses, which answers in rows of
+   * the *drawing*, and then the conversion to rows of the live screen. On the
+   * main screen those differ by the whole scrollback above, which is why a
+   * click in a mouse-aware pager was landing hundreds of rows off before this
+   * existed.
+   */
+  const programCellAt = useCallback(
+    (x: number, y: number) => {
+      'worklet';
+      const hit = cellAtViewportPoint(
+        x,
+        y,
+        {
+          cellWidth,
+          lineHeight,
+          scale: scale.value,
+          translateX: translateX.value,
+          translateY: translateY.value + pullDistance.value,
+          horizontalPadding,
+          verticalPadding,
+        },
+        gridRows,
+        gridColumns
+      );
+      return terminalTouchCellAt({
+        row: hit.row,
+        column: hit.column,
+        lineCount: gridRows,
+        screenRows: touchScreenRows.value,
+        columns: gridColumns,
+      });
+    },
+    [
+      cellWidth,
+      gridColumns,
+      gridRows,
+      lineHeight,
+      pullDistance,
+      scale,
+      touchScreenRows,
+      translateX,
+      translateY,
+    ]
+  );
+
+  const beginProgramDrag = useCallback(
+    (event: { x: number; y: number; translationX: number; translationY: number }) => {
+      'worklet';
+      const cell = programCellAt(event.x, event.y);
+      programCellRow.value = cell.row;
+      programCellColumn.value = cell.column;
+      programBaseX.value = event.translationX;
+      programBaseY.value = event.translationY;
+      programTravelRows.value = 0;
+      programTravelColumns.value = 0;
+      programEmittedRows.value = 0;
+      programEmittedColumns.value = 0;
+      programRebase.value = false;
+      programDragActive.value = true;
+    },
+    [
+      programBaseX,
+      programBaseY,
+      programCellAt,
+      programCellColumn,
+      programCellRow,
+      programDragActive,
+      programEmittedColumns,
+      programEmittedRows,
+      programRebase,
+      programTravelColumns,
+      programTravelRows,
+    ]
+  );
+
+  const trackProgramDrag = useCallback(
+    (event: { x: number; y: number; translationX: number; translationY: number }) => {
+      'worklet';
+      if (programRebase.value) {
+        programRebase.value = false;
+        programBaseX.value = event.translationX;
+        programBaseY.value = event.translationY;
+        programTravelRows.value = 0;
+        programTravelColumns.value = 0;
+        programEmittedRows.value = 0;
+        programEmittedColumns.value = 0;
+      }
+      const zoom = scale.value > 0 ? scale.value : 1;
+      const rowPitch = lineHeight * zoom;
+      const columnPitch = cellWidth * zoom;
+      programTravelRows.value =
+        rowPitch > 0 ? Math.trunc((event.translationY - programBaseY.value) / rowPitch) : 0;
+      programTravelColumns.value =
+        columnPitch > 0 ? Math.trunc((event.translationX - programBaseX.value) / columnPitch) : 0;
+      const cell = programCellAt(event.x, event.y);
+      programCellRow.value = cell.row;
+      programCellColumn.value = cell.column;
+    },
+    [
+      cellWidth,
+      lineHeight,
+      programBaseX,
+      programBaseY,
+      programCellAt,
+      programCellColumn,
+      programCellRow,
+      programEmittedColumns,
+      programEmittedRows,
+      programRebase,
+      programTravelColumns,
+      programTravelRows,
+      scale,
+    ]
+  );
+
+  /**
+   * Everything the finger has crossed since the last frame, in one write.
+   *
+   * A frame callback rather than the gesture callback itself, for the reason
+   * the transform commit above is one: touch arrives faster than the display,
+   * and a PTY handed a wheel event per touch sample is a program redrawing
+   * long after the finger has stopped. Registered and unregistered from the JS
+   * thread only -- `setActive` from a worklet corrupts reanimated's registry;
+   * the note on `gestureCommitFrame` has the measurement.
+   */
+  const touchInputFrame = useFrameCallback(() => {
+    'worklet';
+    if (!programDragActive.value) return;
+    const rows = programTravelRows.value - programEmittedRows.value;
+    const columns = programTravelColumns.value - programEmittedColumns.value;
+    if (rows === 0 && columns === 0) return;
+    programEmittedRows.value = programTravelRows.value;
+    programEmittedColumns.value = programTravelColumns.value;
+    scheduleOnRN(emitProgramDrag, {
+      row: programCellRow.value,
+      column: programCellColumn.value,
+      rows,
+      columns,
+      held: programDragHeld.value,
+    });
+  }, false);
+  const [programDragging, setProgramDragging] = useState(false);
+  useAnimatedReaction(
+    () => programDragActive.value,
+    (active, wasActive) => {
+      if (active !== wasActive) scheduleOnRN(setProgramDragging, active);
+    }
+  );
+  useEffect(() => {
+    touchInputFrame.setActive(programDragging);
+    return () => touchInputFrame.setActive(false);
+  }, [programDragging, touchInputFrame]);
+
+  /**
+   * The end of a drag the program owned.
+   *
+   * The tail matters: the callback above stops on the frame the finger leaves,
+   * and whatever cells were crossed after its last run would otherwise be
+   * dropped -- which on a short flick is the whole gesture. A held drag also
+   * owes the far side its release, and owes it exactly once however many
+   * recognisers finalize.
+   */
+  const endProgramDrag = useCallback(() => {
+    'worklet';
+    if (!programDragActive.value) return;
+    const rows = programTravelRows.value - programEmittedRows.value;
+    const columns = programTravelColumns.value - programEmittedColumns.value;
+    programEmittedRows.value = programTravelRows.value;
+    programEmittedColumns.value = programTravelColumns.value;
+    if (rows !== 0 || columns !== 0) {
+      scheduleOnRN(emitProgramDrag, {
+        row: programCellRow.value,
+        column: programCellColumn.value,
+        rows,
+        columns,
+        held: programDragHeld.value,
+      });
+    }
+    if (programDragHeld.value) {
+      scheduleOnRN(emitProgramRelease, {
+        row: programCellRow.value,
+        column: programCellColumn.value,
+      });
+    }
+    programDragHeld.value = false;
+    programDragActive.value = false;
+  }, [
+    emitProgramDrag,
+    emitProgramRelease,
+    programCellColumn,
+    programCellRow,
+    programDragActive,
+    programDragHeld,
+    programEmittedColumns,
+    programEmittedRows,
+    programTravelColumns,
+    programTravelRows,
+  ]);
+
   const panGesture = Gesture.Pan()
     .hitSlop({ left: -32 })
     .minDistance(2)
@@ -1343,7 +1688,14 @@ export function SkiaTerminal({
       // head start the JS thread needs to have held the frame before the first
       // pixel of movement. Nothing else happens here: a touch that turns out to
       // be a tap costs the pane one held refresh, released by onFinalize.
-      gesturing.value = true;
+      //
+      // Not in the two program layers. The freeze exists so a frame swap cannot
+      // land under a moving finger, and it is exactly wrong here: in those
+      // layers the drag IS what is changing the frame, and holding the picture
+      // would mean the reader drags through vim and sees nothing move until
+      // they lift. A two-finger drag in those layers is the scrollback again
+      // and takes the freeze back below.
+      if (terminalTouchLayer(touchModeBits.value) === 'scrollback') gesturing.value = true;
     })
     .onStart((event) => {
       // Selecting owns the finger. The transform is not touched at all -- not
@@ -1355,6 +1707,18 @@ export function SkiaTerminal({
         selectionDragActive.value = true;
         scheduleOnRN(startSelectionDrag);
         gesturing.value = true;
+        return;
+      }
+      // The program's finger. Nothing about the transform is touched -- not
+      // the running decay, which a reader who flicked and then dragged still
+      // wants to watch coast out, and not the follow ease. `gestureStartX/Y`
+      // are still recorded, because a second finger landing mid-drag hands the
+      // gesture back to the pan and it has to have somewhere to start from.
+      if (terminalTouchDragTarget(touchModeBits.value, event.numberOfPointers) === 'program') {
+        gestureStartX.value = translateX.value;
+        gestureStartY.value = translateY.value;
+        panAxis.value = AXIS_UNDECIDED;
+        beginProgramDrag(event);
         return;
       }
       cancelAnimation(translateX);
@@ -1420,6 +1784,25 @@ export function SkiaTerminal({
         });
         return;
       }
+      if (terminalTouchDragTarget(touchModeBits.value, event.numberOfPointers) === 'program') {
+        // A drag that began as a pan and is only now the program's -- the mode
+        // flipped under the finger, which `vim` does the instant it starts.
+        if (!programDragActive.value) beginProgramDrag(event);
+        else trackProgramDrag(event);
+        return;
+      }
+      if (programDragActive.value) {
+        // A second finger landed. The scrollback takes the gesture back, and
+        // has to take it back from where the content actually is: the pan is
+        // driven by `event.translationX/Y`, which has been accumulating for the
+        // whole of the program's part of this drag and would otherwise jump the
+        // content by all of it on the very next frame.
+        endProgramDrag();
+        gestureStartX.value = translateX.value - event.translationX;
+        gestureStartY.value = translateY.value - event.translationY;
+        panAxis.value = AXIS_UNDECIDED;
+        gesturing.value = true;
+      }
       // See `terminalPullOvershoot`: how far past the top stop this drag is
       // asking to go, independent of where the gesture itself started.
       const minY = animatedVisibleHeight.value - contentHeight * scale.value;
@@ -1483,6 +1866,15 @@ export function SkiaTerminal({
       }
     })
     .onEnd((event) => {
+      // No momentum for a program drag either, and for a sharper reason than
+      // the selection's: a decay would keep posting wheel events into a PTY
+      // for half a second after the finger left, and the program on the far
+      // side would still be redrawing when the reader reached for the next
+      // thing. The tail the frame callback had not yet sent goes out here.
+      if (programDragActive.value) {
+        endProgramDrag();
+        return;
+      }
       // No momentum for a selection: the far end is where the finger left it,
       // and a highlight that coasted on past would be a copy the reader did not
       // ask for.
@@ -1551,6 +1943,10 @@ export function SkiaTerminal({
       }
     })
     .onFinalize(() => {
+      // Idempotent, and reached from here as well as from `onEnd` because a
+      // cancelled drag -- a call arriving, the app going to the background --
+      // still owes the far side the release of a button it was told was down.
+      endProgramDrag();
       pullDistance.value = withTiming(0, timing('short'));
       panAxis.value = AXIS_UNDECIDED;
       gesturing.value = false;
@@ -1578,9 +1974,14 @@ export function SkiaTerminal({
       gestureStartY.value = translateY.value;
       focalX.value = event.focalX;
       focalY.value = event.focalY;
-      gesturing.value = true;
       // Watching, not zooming. Android begins this recogniser on the first
-      // pointer of any drag, so `began` is where a plain scroll lives too.
+      // pointer of any drag, so `began` is where a plain scroll lives too --
+      // and that is why the freeze is not taken here in the two program layers.
+      // One finger on Android reaches this line, and freezing the picture for
+      // it would hold vim's own redraw off the screen for the whole of a drag
+      // that is meant to be driving it. A real pinch takes the freeze in
+      // `onStart` below, which is the edge that only a zoom crosses.
+      if (terminalTouchLayer(touchModeBits.value) === 'scrollback') gesturing.value = true;
       pinchPhase.value = 'began';
     })
     // The recogniser has decided the two fingers really are changing the span:
@@ -1588,6 +1989,7 @@ export function SkiaTerminal({
     // `longPressArms` below, which must not let a long press win a race a
     // pinch already started.
     .onStart(() => {
+      gesturing.value = true;
       pinchPhase.value = 'active';
     })
     .onUpdate((event) => {
@@ -1686,6 +2088,16 @@ export function SkiaTerminal({
         clearSelection();
         return;
       }
+      // A program reporting the mouse gets the tap, and gets it before the link
+      // test rather than after. The links this pane draws are found by pattern
+      // in whatever text is on screen, and inside a full-screen program that
+      // text is a file being edited: a tap on a path in a vim buffer means
+      // "put the cursor here", never "open this". Nor does the keyboard fall,
+      // for the same reason -- the program asked for the click.
+      if (terminalTouchLayer(touchModeBits.value) === 'mouse') {
+        emitProgramTap(programCellAt(event.x, event.y));
+        return;
+      }
       const link = linkAtViewportPoint(
         links,
         event.x,
@@ -1768,6 +2180,27 @@ export function SkiaTerminal({
       ) {
         return;
       }
+      // Under `?1002` this press is the program's, not a selection: see
+      // `terminalTouchPressDrags`. The button goes down here and the pan, which
+      // is simultaneous with this and has not committed to an axis while the
+      // finger was still, carries the motion from wherever it goes next.
+      if (terminalTouchPressDrags(touchModeBits.value)) {
+        const target = programCellAt(event.x, event.y);
+        programCellRow.value = target.row;
+        programCellColumn.value = target.column;
+        programDragHeld.value = true;
+        programTravelRows.value = 0;
+        programTravelColumns.value = 0;
+        programEmittedRows.value = 0;
+        programEmittedColumns.value = 0;
+        // Active straight away, so a press that is lifted without ever moving
+        // still owes -- and sends -- its release. The origin arrives with the
+        // pan's next update; see `programRebase`.
+        programRebase.value = true;
+        programDragActive.value = true;
+        scheduleOnRN(emitProgramPress, { row: target.row, column: target.column });
+        return;
+      }
       const cell = cellAtViewportPoint(
         event.x,
         event.y,
@@ -1792,6 +2225,15 @@ export function SkiaTerminal({
       // side. The cell above is a usable selection on its own, so the highlight
       // is up on this frame and the widening lands a tick later.
       scheduleOnRN(beginSelection, cell);
+    })
+    // A press that armed the program's button and was then lifted without ever
+    // travelling far enough to activate the pan never reaches the pan's own
+    // finalizer, and the button would stay down. Only what this press armed,
+    // though: the recogniser also finalizes by FAILING, which is what an
+    // ordinary wheel drag does to it a few pixels in, and ending that drag from
+    // here would cut it in half.
+    .onFinalize(() => {
+      if (programDragHeld.value) endProgramDrag();
     });
 
   // One combined transform on a single group rather than a translate group
