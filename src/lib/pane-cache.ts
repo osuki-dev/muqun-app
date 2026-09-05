@@ -189,6 +189,33 @@ export function rememberPaneWindow(
 }
 
 /**
+ * Whether the window a switch leaves behind is worth filing at all.
+ *
+ * A pane is left in two ways, and the cache holds one window per pane. Moving
+ * to another pane is the plain case: whatever was on screen is worth having
+ * back, an editor's frame included -- the reader may return to it still
+ * running, and that is the hit the cache was built for.
+ *
+ * The other way is the pane staying selected while its shape turns. A program
+ * takes the alternate screen and the shell's scrollback is filed on the way
+ * in, exactly as a switch would file it. On the way out the program's last
+ * frame is not worth filing, and filing it is harmful: one window per pane
+ * means it replaces the scrollback filed on the way in, so the recall that
+ * follows, asked for the main screen, misses on shape and the reader sees a
+ * blank until the next poll -- for a window that was in the cache a moment
+ * ago. The frame belongs to a program that has exited and nothing will ask
+ * for it again, so it is left unfiled and the scrollback survives to be
+ * handed back whole.
+ */
+export function paneWindowWorthFiling(
+  leavingPaneId: string,
+  arrivingPaneId: string,
+  heldOwnsScreen: boolean
+): boolean {
+  return leavingPaneId !== arrivingPaneId || !heldOwnsScreen;
+}
+
+/**
  * Store a window fetched to warm a pane nobody has asked for yet.
  *
  * {@link rememberPaneWindow} with the one rule a warm-up has and a real read

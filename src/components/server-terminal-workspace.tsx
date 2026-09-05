@@ -148,6 +148,7 @@ import {
   panePrefetchAccepted,
   panePrefetchTargets,
   paneReadIsCurrent,
+  paneWindowWorthFiling,
   recallPaneWindow,
   rememberPaneWindow,
   retainPanes,
@@ -1777,8 +1778,17 @@ export function ServerTerminalWorkspace({
     // `output` is the render's own value, which on this render is still the
     // outgoing pane's window; the depth beside it is read from the refs, which
     // no post-commit write has reached yet either.
+    //
+    // A program leaving the alternate screen is a switch with the same pane on
+    // both sides, and its last frame is not filed: the cache holds one window
+    // per pane, and that slot is holding the scrollback filed on the way in,
+    // which the recall below is about to ask for. See `paneWindowWorthFiling`.
+    // The shape is read from `heldShapeRef`, not `outputShape` -- on this
+    // render the latter already says `main`.
     const held: PaneWindow | null =
-      leaving && output
+      leaving &&
+      output &&
+      paneWindowWorthFiling(leaving, selection.paneId, heldShapeRef.current.endsWith(':alt'))
         ? {
             shape: heldShapeRef.current,
             output,
