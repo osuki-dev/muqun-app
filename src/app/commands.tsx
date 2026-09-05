@@ -99,8 +99,12 @@ import {
 import { describeGatewayFailure } from '@/lib/network-error';
 import { quickActionAvailability } from '@/lib/quick-actions';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { SIMFARM_DEFAULT_PORT, simfarmSocketUrl } from '@/lib/simfarm';
+import { warmSimfarm } from '@/lib/simfarm-stream';
 import { useComposerDraftStore } from '@/stores/composer-draft';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
+import { useServerSimfarm } from '@/stores/server-simfarm';
 import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   addQuickCommand,
@@ -397,6 +401,25 @@ export default function QuickCommandsScreen() {
    */
   function openSimulatorPreview() {
     if (!available.canPreviewSimulator) return;
+    // The socket first, the screen second. Opening the preview was measured
+    // as a chain of round trips walked only after the route had mounted; the
+    // socket's part of the chain starts here, under the navigation, on the
+    // port the probe last found (or simfarm's default, which is what the
+    // probe tries first). The probe still runs and still decides -- a socket
+    // to a port with nothing on it dies on its own, and the gate the probe
+    // applies is applied here too.
+    const allowed = params.canOpenWeb === '1';
+    const opening = !(isPadLayout && simfarmSplitOpen);
+    if (opening) {
+      const gateway = useGatewayConnectionStore.getState();
+      const record =
+        gateway.records.find((entry) => entry.serverId === params.serverId) ??
+        (gateway.record?.serverId === params.serverId ? gateway.record : undefined);
+      const port = params.serverId
+        ? (useServerSimfarm.getState().byServer[params.serverId] ?? SIMFARM_DEFAULT_PORT)
+        : SIMFARM_DEFAULT_PORT;
+      warmSimfarm(simfarmSocketUrl(record?.url, port), allowed);
+    }
     // On a Pad the preview belongs beside the terminal, not over it: the whole
     // reason to want it there is watching the simulator redraw *while* the
     // agent works, and a sheet covering the terminal gives back exactly the

@@ -40,6 +40,22 @@
  */
 import { type SimfarmEdge } from '@/lib/simfarm-protocol';
 
+/**
+ * The two clamps, ahead of everything that uses them: they run on the UI
+ * runtime too, and a worklet captures what it calls when it is made, which
+ * for a module-level function is module evaluation -- a helper declared
+ * further down the file is `undefined` at that moment.
+ */
+function clamp(value: number, low: number, high: number): number {
+  'worklet';
+  if (!Number.isFinite(value)) return low;
+  return Math.min(high, Math.max(low, value));
+}
+
+function clamp01(value: number): number {
+  return clamp(value, 0, 1);
+}
+
 export interface SimfarmSize {
   width: number;
   height: number;
@@ -127,6 +143,7 @@ export function simfarmEdgeBands(
  * in landscape. See the note above for why it is not `min` of the two.
  */
 export function simfarmFitScale(frame: SimfarmSize, viewport: SimfarmSize): number {
+  'worklet';
   if (frame.width <= 0 || frame.height <= 0) return 1;
   if (viewport.width <= 0 || viewport.height <= 0) return 1;
   return viewport.height >= viewport.width
@@ -147,6 +164,7 @@ export function clampSimfarmOffset(
   viewport: SimfarmSize,
   offset: SimfarmPoint
 ): SimfarmPoint {
+  'worklet';
   const limitX = Math.max(0, (content.width - viewport.width) / 2);
   const limitY = Math.max(0, (content.height - viewport.height) / 2);
   return {
@@ -170,6 +188,7 @@ export function placeSimfarmFrame(
   zoom = 1,
   offset: SimfarmPoint = { x: 0, y: 0 }
 ): SimfarmPlacement {
+  'worklet';
   const scale = simfarmFitScale(frame, viewport) * clamp(zoom, SIMFARM_MIN_ZOOM, SIMFARM_MAX_ZOOM);
   const width = frame.width * scale;
   const height = frame.height * scale;
@@ -214,6 +233,7 @@ export function simfarmRestingOffset(
   viewport: SimfarmSize,
   zoom = 1
 ): SimfarmPoint {
+  'worklet';
   const scale = simfarmFitScale(frame, viewport) * clamp(zoom, SIMFARM_MIN_ZOOM, SIMFARM_MAX_ZOOM);
   return { x: 0, y: Math.max(0, (frame.height * scale - viewport.height) / 2) };
 }
@@ -260,13 +280,4 @@ export function simfarmEdgeAt(
     }
   }
   return nearest;
-}
-
-function clamp(value: number, low: number, high: number): number {
-  if (!Number.isFinite(value)) return low;
-  return Math.min(high, Math.max(low, value));
-}
-
-function clamp01(value: number): number {
-  return clamp(value, 0, 1);
 }

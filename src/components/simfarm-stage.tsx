@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { Input, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, Fill, Group, Image as SkiaImage, vec } from '@shopify/react-native-skia';
+import { Canvas, Fill, Group, Image as SkiaImage } from '@shopify/react-native-skia';
 import {
   ArrowLeft,
   ChevronDown,
@@ -21,6 +21,7 @@ import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import Animated, {
   ReduceMotion,
   useAnimatedStyle,
+  useDerivedValue,
   useReducedMotion,
   useSharedValue,
   withTiming,
@@ -46,6 +47,7 @@ import {
   simfarmRestingOffset,
   SIMFARM_MAX_ZOOM,
   SIMFARM_MIN_ZOOM,
+  type SimfarmPlacement,
   type SimfarmPoint,
 } from '@/lib/simfarm-frame';
 import {
@@ -85,6 +87,17 @@ import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream'
  * strip with a camera. On a screen with no cutout the band is `HANDLE_BAND`
  * tall, which is the least the handle needs; `simfarmRestingOffset` is what
  * hangs the overflow off the bottom rather than half of it back into the band.
+ *
+ * ## What React draws, and what it does not
+ *
+ * Not the frames. A frame arriving is a change to one Skia node's image and
+ * nothing else, and putting it through a render of this component cost more
+ * JS thread than everything else on the screen together -- `useSimfarmStream`
+ * has the numbers. So the image is a shared value Skia reads on the UI
+ * runtime, and so are the zoom and the pan, because a two-finger drag is the
+ * same shape of change: sixty small updates a second to where one node is
+ * drawn. What React renders here is the chrome, the picker, the composer and
+ * the states with no picture, on the events those actually change on.
  */
 export function SimfarmStage({
   url,
@@ -112,9 +125,10 @@ export function SimfarmStage({
   const stream = useSimfarmStream(url, devices);
 
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
-  const [zoom, setZoom] = useState(1);
+  /** How far past the fit the reader has pinched; on the UI runtime, see `placement`. */
+  const zoom = useSharedValue(SIMFARM_MIN_ZOOM);
   /** Where the reader dragged the picture to; `null` until they have. */
-  const [offset, setOffset] = useState<SimfarmPoint | null>(null);
+  const offset = useSharedValue<SimfarmPoint | null>(null);
   const [picking, setPicking] = useState(false);
   const [typing, setTyping] = useState(false);
   const [draft, setDraft] = useState('');
@@ -200,17 +214,50 @@ export function SimfarmStage({
    * the fit is worked out against `inner` and then moved down by the band, so
    * the rectangle drawn into and the rectangle a finger is resolved against
    * are the same rectangle by construction.
+   *
+   * Worked out on the UI runtime, where the zoom and the pan live, so a pinch
+   * or a drag moves the picture without a render; a touch reads the same
+   * value back from the JS side, which is one synchronous hop and still the
+   * one rectangle.
    */
-  const placement = useMemo(() => {
+  const placement = useDerivedValue<SimfarmPlacement | null>(() => {
     if (frame === null || inner.height <= 0) return null;
     const placed = placeSimfarmFrame(
       frame,
       inner,
-      zoom,
-      offset ?? simfarmRestingOffset(frame, inner, zoom)
+      zoom.value,
+      offset.value ?? simfarmRestingOffset(frame, inner, zoom.value)
     );
     return { ...placed, y: placed.y + topBand };
-  }, [frame, inner, offset, topBand, zoom]);
+  });
+
+  /**
+   * The rectangle the frame is drawn into, which is the placement turned the
+   * way the frames arrive. A quarter turn swaps what the decoded frame
+   * measures against what the reader sees: `screen.width/height` are already
+   * the upright picture, the frames are not, so the rectangle is the
+   * placement with its sides exchanged about the same centre.
+   */
+  const rotation = screen?.rotation ?? 0;
+  const quarterTurned = rotation % 180 !== 0;
+  const picture = useDerivedValue(() => {
+    const placed = placement.value;
+    if (placed === null) return { x: 0, y: 0, width: 0, height: 0 };
+    if (!quarterTurned) {
+      return { x: placed.x, y: placed.y, width: placed.width, height: placed.height };
+    }
+    return {
+      x: placed.x + (placed.width - placed.height) / 2,
+      y: placed.y + (placed.height - placed.width) / 2,
+      width: placed.height,
+      height: placed.width,
+    };
+  });
+  const centre = useDerivedValue(() => {
+    const placed = placement.value;
+    if (placed === null) return { x: 0, y: 0 };
+    return { x: placed.x + placed.width / 2, y: placed.y + placed.height / 2 };
+  });
 
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -218,22 +265,24 @@ export function SimfarmStage({
   }, []);
 
   /**
-   * How far in from the sides a touch may begin and still be an edge gesture
-   * on the device. Android keeps the outermost strip of the screen for its
-   * own back gesture, so there the device's edge starts past it -- the
-   * reasoning is with `simfarmEdgeBands`.
+   * A touch, resolved against the rectangle that was drawn.
+   *
+   * The bands are how far in from the sides a touch may begin and still be
+   * an edge gesture on the device. Android keeps the outermost strip of the
+   * screen for its own back gesture, so there the device's edge starts past
+   * it -- the reasoning is with `simfarmEdgeBands`.
    */
-  const bands = useMemo(
-    () => (placement === null ? undefined : simfarmEdgeBands(Platform.OS, placement.width)),
-    [placement]
-  );
-
   const forward = useCallback(
     (phase: SimfarmTouchPhase, x: number, y: number) => {
-      if (placement === null) return;
-      stream.touch({ phase, ...simfarmNormalizedPoint({ x, y }, placement), bands });
+      const placed = placement.value;
+      if (placed === null) return;
+      stream.touch({
+        phase,
+        ...simfarmNormalizedPoint({ x, y }, placed),
+        bands: simfarmEdgeBands(Platform.OS, placed.width),
+      });
     },
-    [bands, placement, stream]
+    [placement, stream]
   );
 
   /**
@@ -265,11 +314,11 @@ export function SimfarmStage({
     (deviceId: string) => {
       chrome.touched();
       setPicking(false);
-      setZoom(1);
-      setOffset(null);
+      zoom.value = SIMFARM_MIN_ZOOM;
+      offset.value = null;
       stream.select(deviceId);
     },
-    [chrome, stream]
+    [chrome, offset, stream, zoom]
   );
 
   /**
@@ -342,35 +391,37 @@ export function SimfarmStage({
    * The split is the whole reason a drag can be forwarded at all. If panning
    * were one finger there would be no way to scroll the app under test, and if
    * it were a mode there would be a mode to be in the wrong one of.
+   *
+   * Both stay on the UI runtime: they write the shared values the placement
+   * is derived from, and nothing else needs to hear about a drag in flight.
    */
   const shift = useMemo(
     () =>
       Gesture.Pan()
         .minPointers(2)
-        .runOnJS(true)
         .onChange((event) => {
-          if (placement === null || frame === null) return;
-          setOffset((current) => {
-            const from = current ?? simfarmRestingOffset(frame, inner, zoom);
-            return clampSimfarmOffset(placement, inner, {
-              x: from.x + event.changeX,
-              y: from.y + event.changeY,
-            });
+          'worklet';
+          const placed = placement.value;
+          if (placed === null || frame === null) return;
+          const from = offset.value ?? simfarmRestingOffset(frame, inner, zoom.value);
+          offset.value = clampSimfarmOffset(placed, inner, {
+            x: from.x + event.changeX,
+            y: from.y + event.changeY,
           });
         }),
-    [frame, inner, placement, zoom]
+    [frame, inner, offset, placement, zoom]
   );
 
   const magnify = useMemo(
     () =>
-      Gesture.Pinch()
-        .runOnJS(true)
-        .onChange((event) => {
-          setZoom((current) =>
-            Math.min(SIMFARM_MAX_ZOOM, Math.max(SIMFARM_MIN_ZOOM, current * event.scaleChange))
-          );
-        }),
-    []
+      Gesture.Pinch().onChange((event) => {
+        'worklet';
+        zoom.value = Math.min(
+          SIMFARM_MAX_ZOOM,
+          Math.max(SIMFARM_MIN_ZOOM, zoom.value * event.scaleChange)
+        );
+      }),
+    [zoom]
   );
 
   const gesture = useMemo(
@@ -492,34 +543,18 @@ export function SimfarmStage({
             landscape picture's side bands are that ground rather than a hole. */}
         <Canvas style={styles.fill} opaque>
           <Fill color={theme.colors.background} />
-          {stream.image !== null && placement !== null && screen !== null ? (
-            <Group
-              transform={[{ rotate: (screen.rotation * Math.PI) / 180 }]}
-              origin={vec(placement.x + placement.width / 2, placement.y + placement.height / 2)}>
-              <SkiaImage
-                image={stream.image}
-                // A quarter turn swaps what the decoded frame measures against
-                // what the reader sees, so the rectangle drawn into is the
-                // placement turned the same way. `screen.width/height` are
-                // already the upright picture; the frames are not.
-                x={
-                  placement.x +
-                  (screen.rotation % 180 === 0 ? 0 : (placement.width - placement.height) / 2)
-                }
-                y={
-                  placement.y +
-                  (screen.rotation % 180 === 0 ? 0 : (placement.height - placement.width) / 2)
-                }
-                width={screen.rotation % 180 === 0 ? placement.width : placement.height}
-                height={screen.rotation % 180 === 0 ? placement.height : placement.width}
-                fit="fill"
-              />
+          {/* The image, its rectangle and the turn's centre are all shared
+              values: a frame, a pinch or a drag reaches this node on the UI
+              runtime and this tree is not visited again for any of them. */}
+          {stream.hasImage && screen !== null ? (
+            <Group transform={[{ rotate: (rotation * Math.PI) / 180 }]} origin={centre}>
+              <SkiaImage image={stream.image} rect={picture} fit="fill" />
             </Group>
           ) : null}
         </Canvas>
       </GestureDetector>
 
-      {stream.image === null ? (
+      {!stream.hasImage ? (
         <View style={styles.waiting} pointerEvents="none">
           {stream.error !== null ? (
             <>
@@ -684,7 +719,7 @@ export function SimfarmStage({
             {/* A shutdown that failed while a picture is on screen has no
                 other place to say so: the waiting area above draws the error
                 only when there is nothing else to draw. */}
-            {stream.error !== null && stream.image !== null ? (
+            {stream.error !== null && stream.hasImage ? (
               <View style={[styles.pickerFoot, { borderTopColor: theme.colors.border }]}>
                 <Text
                   variant="label"
