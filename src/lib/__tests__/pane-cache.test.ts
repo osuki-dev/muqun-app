@@ -15,6 +15,7 @@ import {
   type PaneWindow,
   emptyPaneCache,
   foldPaneFrame,
+  warmPaneWindow,
   forgetPaneWindow,
   notePaneRevision,
   panePrefetchAccepted,
@@ -283,6 +284,42 @@ describe('frames for a pane nobody is looking at', () => {
     cache = rememberPaneWindow(cache, 'p2', windowOf('b', 1));
     const next = foldPaneFrame(cache, 'p1', ANSI, 2, append('more'));
     expect(paneIdsOf(next)).toEqual(['p1', 'p2']);
+  });
+});
+
+describe('warming a pane the reader has already paged', () => {
+  // The defect: the warm-up wrote its first page over whatever was remembered,
+  // so a pane the reader had paged five pages back and then left came back at
+  // one page and their paging was silently undone. A warm-up exists to remove a
+  // blank, and there is no blank behind a window that is already deeper.
+  test('a warm-up does not shallow out a deeper window', () => {
+    const deep = windowOf('paged', 4, { lineLimit: 1200, canLoadEarlier: true });
+    const cache = rememberPaneWindow(emptyPaneCache, 'p1', deep);
+    const warmed = warmPaneWindow(cache, 'p1', windowOf('one page', 9, { lineLimit: 240 }));
+    expect(recallPaneWindow(warmed, 'p1', ANSI)).toMatchObject({
+      output: 'paged',
+      lineLimit: 1200,
+    });
+  });
+
+  test('a warm-up still fills a pane nothing is held for', () => {
+    const warmed = warmPaneWindow(emptyPaneCache, 'p1', windowOf('one page', 2));
+    expect(recallPaneWindow(warmed, 'p1', ANSI)?.output).toBe('one page');
+  });
+
+  test('a warm-up refreshes a window no deeper than itself', () => {
+    const cache = rememberPaneWindow(emptyPaneCache, 'p1', windowOf('stale', 2));
+    const warmed = warmPaneWindow(cache, 'p1', windowOf('fresh', 5));
+    expect(recallPaneWindow(warmed, 'p1', ANSI)).toMatchObject({ output: 'fresh', revision: 5 });
+  });
+
+  // A window of another shape is not a deeper reading of this one, so it is no
+  // reason to refuse the warm-up.
+  test('depth held under another shape does not block a warm-up', () => {
+    const other = windowOf('screen', 4, { lineLimit: 1200, shape: 'text:visible' });
+    const cache = rememberPaneWindow(emptyPaneCache, 'p1', other);
+    const warmed = warmPaneWindow(cache, 'p1', windowOf('one page', 5, { lineLimit: 240 }));
+    expect(recallPaneWindow(warmed, 'p1', ANSI)?.output).toBe('one page');
   });
 });
 

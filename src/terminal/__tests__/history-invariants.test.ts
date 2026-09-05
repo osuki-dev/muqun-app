@@ -87,6 +87,47 @@ class Pane {
 }
 
 /**
+ * The same pane, with the pinned box the real Claude Code TUI actually draws.
+ *
+ * Two differences from {@link Pane}, and both of them are the defect: the box
+ * carries a status row that changes on every frame, and it **changes height**
+ * as background agents come and go. `Pane` pins a box of a fixed height whose
+ * every row but the timer is constant, which is a composer standing still --
+ * and standing still is exactly the case a page read could already handle.
+ *
+ * A read of this pane is the tail of the transcript that fits above the box,
+ * then the box, which is what both a tail read and a deeper page return.
+ */
+class AgentPane {
+  readonly transcript: string[] = [];
+  private tick = 0;
+  agents = 2;
+
+  emit(count: number): void {
+    for (let step = 0; step < count; step += 1) {
+      this.transcript.push(`row ${this.transcript.length} of the session`);
+    }
+  }
+
+  private box(): string[] {
+    this.tick += 1;
+    const agents = Array.from({ length: this.agents }, (_, index) => `  L Agent ${index} running`);
+    return [
+      '-'.repeat(20),
+      '> ',
+      ...agents,
+      `  bypass permissions on - ${this.agents} shell - ${this.tick}m ${this.tick % 60}s`,
+    ];
+  }
+
+  /** A read of `lines` rows: the transcript tail that fits, then the box. */
+  read(lines: number): string {
+    const box = this.box();
+    return [...this.transcript.slice(-Math.max(0, lines - box.length)), ...box].join('\n');
+  }
+}
+
+/**
  * Whether `part` appears inside `whole` in order, allowing gaps.
  *
  * The machine form of invariant (a): a window that is a subsequence of the true
@@ -202,6 +243,88 @@ describe('(a) the window is a supersequence of what arrived, in arrival order', 
     expect(adjacentRepeat(rewrapped)).toBeNull();
   });
 
+  test('paging a pane with a pinned box that changes height keeps the order', () => {
+    // The defect from the maintainer's phone: the live bottom of the screen --
+    // the prompt, the status row, the agents list -- sat in the MIDDLE of the
+    // window, with older transcript below it. An earlier page had been appended
+    // under the live screen instead of being recognised as the deeper read it
+    // was.
+    //
+    // Why it survived every test here until now: the paging tests above use a
+    // fixture with no pinned box at all, and the composer tests never page. The
+    // deepening check demands the window agree with the deeper read EXACTLY,
+    // row for row -- so one ticking status row, or one agent appearing, is
+    // enough to refuse it, and the read then falls through to the
+    // newest-thing-on-top fallback and lands under the transcript it contains.
+    //
+    // The sequence is the one a reader actually performs: read, page, let the
+    // poll land, leave the pane and come back to the cached window, page again.
+    const pane = new AgentPane();
+    pane.emit(900);
+
+    let window = foldPaneRead('', pane.read(240), 'refresh', MAXIMUM);
+    pane.agents = 3;
+    window = foldPaneRead(window, pane.read(480), 'page', MAXIMUM);
+    window = foldPaneRead(window, pane.read(480), 'refresh', MAXIMUM);
+    // Leaving the pane and coming back: the cache hands the window straight
+    // back (#33) and the reconcile read folds against it at the paged depth.
+    const restored = window;
+    window = foldPaneRead(restored, pane.read(480), 'refresh', MAXIMUM);
+    pane.agents = 1;
+    window = foldPaneRead(window, pane.read(720), 'page', MAXIMUM);
+
+    const held = rows(window);
+    // (a) itself: every transcript row the window holds, in the session's order.
+    const body = held.filter((row) => row.startsWith('row '));
+    expect(isSubsequenceOf(body, pane.transcript)).toBe(-1);
+    // And the reading of it the screenshot showed: the live box is the bottom
+    // of the pane, so nothing may sit under it.
+    const status = held.findIndex((row) => row.includes('bypass permissions on'));
+    expect(status).toBeGreaterThanOrEqual(0);
+    expect(held.slice(status + 1).filter((row) => row.startsWith('row '))).toEqual([]);
+    // One live box, not one per read folded in.
+    expect(held.filter((row) => row.includes('bypass permissions on'))).toHaveLength(1);
+    expect(adjacentRepeat(held)).toBeNull();
+  });
+
+  test('one ticking row in the pinned box does not cost a page its depth', () => {
+    // The minimal form of the same fault, isolated: the box stands still except
+    // for its status row. Every other comparison in `history.ts` scores its
+    // agreement for exactly this reason -- "a composer is not a still image" --
+    // and the deepening check was the one that still demanded a photograph.
+    const older = Array.from({ length: 477 }, (_, index) => `row ${index + 423}`);
+    const newer = older.slice(-237);
+    const held = [...newer, '-'.repeat(20), '> ', 'status 1m 1s'].join('\n');
+    const page = [...older, '-'.repeat(20), '> ', 'status 2m 2s'].join('\n');
+    const folded = rows(foldPaneRead(held, page, 'page', MAXIMUM));
+    expect(folded[0]).toBe('row 423');
+    expect(folded.at(-1)).toBe('status 2m 2s');
+    expect(folded.filter((row) => row === '> ')).toHaveLength(1);
+  });
+
+  test('a pinned box taller than the deepening slack costs depth, never order', () => {
+    // The structural half of the same rule, and the reason it is not left to a
+    // constant being big enough. A box deeper than the slack defeats the
+    // deepening check whatever its value -- so the question is what the fold
+    // does *then*. Appending was a scrambled transcript; declining is a pull
+    // that brought nothing back, which the next pull retries.
+    const older = Array.from({ length: 400 }, (_, index) => `row ${index}`);
+    const box = (n: number) => Array.from({ length: n }, (_, index) => `box row ${index} at ${n}`);
+    const held = [...older.slice(-120), ...box(40)].join('\n');
+    const page = [...older, ...box(64)].join('\n');
+    const folded = rows(foldPaneRead(held, page, 'page', MAXIMUM));
+    // Nothing older was written underneath the box the window already ends on.
+    const body = folded.filter((row) => row.startsWith('row '));
+    expect(isSubsequenceOf(body, older)).toBe(-1);
+    const lastBody = folded
+      .map((row, at) => (row.startsWith('row ') ? at : -1))
+      .filter((at) => at >= 0)
+      .pop();
+    const firstBox = folded.findIndex((row) => row.startsWith('box row '));
+    expect(lastBody).toBeLessThan(firstBox);
+    expect(adjacentRepeat(folded)).toBeNull();
+  });
+
   test('a fold only ever drops from the tail and appends', () => {
     // Structural restatement of the same thing: whatever the placement decides,
     // the rows the window keeps are a prefix of the rows it had.
@@ -219,6 +342,60 @@ describe('(a) the window is a supersequence of what arrived, in arrival order', 
       expect(kept.length).toBe(Math.min(before.length, kept.length));
       window = after.join('\n');
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// (e) a pane that owns the screen draws its screen and nothing else
+// ---------------------------------------------------------------------------
+
+describe('(e) an alternate-screen pane draws its own frame and nothing above it', () => {
+  // Measured through the gateway against a real nvim pane on 2026-09-05:
+  // `viewport_rows: 24`, `alternate_on: true`, and a `recent-unwrapped` read
+  // that comes back **26** rows -- the 24 the program drew, with two rows of
+  // the shell it was launched from still sitting on top (a blank and the
+  // prompt). The app drew all 26 and let the reader scroll those two above
+  // nvim's own first line.
+  //
+  // The rule: while a pane owns the screen, the frame is the screen. Its height
+  // is a fact about the pane, not about how many rows a read happened to carry,
+  // so the fold takes the screen's own rows off the end of the read rather than
+  // believing its length.
+  const frame = (rows: number, mark: string) =>
+    Array.from({ length: rows }, (_, index) => `${mark} nvim row ${index}`);
+  const shellAbove = ['', '> muqun-gateway'];
+
+  test('a read carrying main-screen rows above the frame draws only the frame', () => {
+    const read = [...shellAbove, ...frame(24, 'a')].join('\n');
+    const held = ['history one', 'history two'].join('\n');
+    const drawn = rows(foldPaneRead(held, read, 'refresh', MAXIMUM, true, 24));
+    expect(drawn).toHaveLength(24);
+    expect(drawn[0]).toBe('a nvim row 0');
+    expect(drawn.at(-1)).toBe('a nvim row 23');
+    expect(drawn.some((row) => row.includes('muqun-gateway'))).toBe(false);
+  });
+
+  test('a redraw replaces the frame rather than stacking under it', () => {
+    const first = [...shellAbove, ...frame(24, 'a')].join('\n');
+    const second = [...shellAbove, ...frame(24, 'b')].join('\n');
+    let window = foldPaneRead('', first, 'refresh', MAXIMUM, true, 24);
+    window = foldPaneRead(window, second, 'frame', MAXIMUM, true, 24);
+    const drawn = rows(window);
+    expect(drawn).toHaveLength(24);
+    expect(drawn.every((row) => row.startsWith('b '))).toBe(true);
+  });
+
+  test('a read shorter than the screen is drawn whole rather than padded away', () => {
+    // A frame caught mid-redraw is short. Taking "the last 24" of 10 rows must
+    // not invent rows or drop the ones there are.
+    const read = frame(10, 'a').join('\n');
+    expect(rows(foldPaneRead('', read, 'refresh', MAXIMUM, true, 24))).toHaveLength(10);
+  });
+
+  test('a pane whose height the gateway did not report keeps the old behaviour', () => {
+    // `screenRows` of 0 is "not reported", not "draw nothing".
+    const read = [...shellAbove, ...frame(24, 'a')].join('\n');
+    expect(rows(foldPaneRead('', read, 'refresh', MAXIMUM, true, 0))).toHaveLength(26);
   });
 });
 
