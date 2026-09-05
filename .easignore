@@ -66,3 +66,9 @@ README.md
 # `eas metadata:pull` writes App Store Connect's own copy of the screenshots
 # here -- 47MB the build has no use for.
 /store/
+
+# The README's screenshots, 1.8MB of them. README.md itself is already excluded
+# above, so nothing in the upload can reference these; Metro only bundles assets
+# a `require` reaches, so they were never in a binary either. This keeps them out
+# of the tarball that gets uploaded on every cloud build.
+/assets/readme/
