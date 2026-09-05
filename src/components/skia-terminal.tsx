@@ -56,7 +56,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useCoalescedValue } from '@/hooks/use-coalesced-value';
 import { useFreezeGate, useFrozenValue } from '@/hooks/use-frozen-value';
 import { useLatestRef, useResetSignal } from '@/hooks/use-render-refs';
-import { latestPillVisible } from '@/lib/dock-presentation';
+import { followsOutputOnScreenRelease, latestPillVisible } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
 import { fadeOut, timing, zoomIn, zoomOut } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -1090,6 +1090,29 @@ export function SkiaTerminal({
     // copy that pane's text.
     clearSelection();
   }, [clearSelection, followOutput, pullDistance, snapToBottomNext, terminalId, translateY]);
+
+  // The reset above, for the one switch that keeps the terminal id: a program
+  // handing the screen back. The placement on the way into an editor releases
+  // `followOutput` to hold its position (see the applied-frame effect below),
+  // and nothing on the way out took it back, so `:q!` handed the shell's
+  // scrollback to a canvas still parked where the editor had been placed --
+  // at the top of the window, under a Latest pill. `followsOutputOnScreenRelease`
+  // is the whole rule: the same pane, owning the screen last render and not
+  // this one. The way in, a real switch and a reader scrolled up in a shell
+  // all answer false there and are left exactly as they were.
+  //
+  // `snapToBottomNext` rather than an ease, as on a switch: the window under
+  // the canvas is changing from the editor's frame to the scrollback, and the
+  // prompt should simply be there rather than scroll into place.
+  const screenTenancyRef = useRef({ terminalId, ownsScreen });
+  useEffect(() => {
+    const previous = screenTenancyRef.current;
+    const next = { terminalId, ownsScreen };
+    screenTenancyRef.current = next;
+    if (!followsOutputOnScreenRelease(previous, next)) return;
+    followOutput.value = true;
+    snapToBottomNext.value = true;
+  }, [followOutput, ownsScreen, snapToBottomNext, terminalId]);
 
   // How many columns this phone would draw into this viewport at this font --
   // the same function, on the same constants, that sizes an SSH PTY to this

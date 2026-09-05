@@ -7,6 +7,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   dockPresentation,
+  followsOutputOnScreenRelease,
   latestPillVisible,
   type DockPresentationInput,
 } from '@/lib/dock-presentation';
@@ -484,5 +485,31 @@ describe('the jump-to-latest pill', () => {
         expect(latestPillVisible({ following, selecting, ownsScreen: true })).toBe(false);
       }
     }
+  });
+});
+
+describe('followsOutputOnScreenRelease', () => {
+  const editor = { terminalId: '%1', ownsScreen: true };
+  const shell = { terminalId: '%1', ownsScreen: false };
+
+  test('the pane that gave the screen back follows its output again', () => {
+    // nvim's `:q!` puts the shell's scrollback back on a canvas the editor's
+    // placement had left unfollowed, and the prompt belongs at the bottom.
+    expect(followsOutputOnScreenRelease(editor, shell)).toBe(true);
+  });
+
+  test("not on the way in, which is the placement's business", () => {
+    expect(followsOutputOnScreenRelease(shell, editor)).toBe(false);
+  });
+
+  test('not across a pane switch, which resets the canvas on its own', () => {
+    expect(followsOutputOnScreenRelease(editor, { ...shell, terminalId: '%2' })).toBe(false);
+    expect(followsOutputOnScreenRelease({ ...editor, terminalId: '%2' }, shell)).toBe(false);
+  });
+
+  test('never while nothing about the screen changed', () => {
+    // A reader scrolled up in a shell is never hauled back by a re-render.
+    expect(followsOutputOnScreenRelease(shell, shell)).toBe(false);
+    expect(followsOutputOnScreenRelease(editor, editor)).toBe(false);
   });
 });
