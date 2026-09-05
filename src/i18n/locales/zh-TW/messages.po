@@ -1107,6 +1107,10 @@ msgstr "跳到檔案開頭"
 msgid "Go to your servers"
 msgstr "前往你的伺服器"
 
+#: src/app/commands.tsx
+msgid "Group"
+msgstr "群組"
+
 #. placeholder {0}: group.tab.title
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
@@ -2504,6 +2508,7 @@ msgstr "拍照"
 msgid "Tap again to remove"
 msgstr "再點一次以移除"
 
+#: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"

@@ -542,7 +542,7 @@ export default function QuickCommandsScreen() {
               {available.canCreate ? (
                 <ActionTile
                   icon={SquareTerminal}
-                  label={t`New terminal`}
+                  label={t`Terminal`}
                   accessibilityLabel={t`New terminal`}
                   busy={creating === 'panel'}
                   disabled={creating !== null}
@@ -552,7 +552,7 @@ export default function QuickCommandsScreen() {
               {available.canCreate ? (
                 <ActionTile
                   icon={PanelsTopLeft}
-                  label={t`New group`}
+                  label={t`Group`}
                   accessibilityLabel={t`New group`}
                   busy={creating === 'tab'}
                   disabled={creating !== null}
@@ -968,7 +968,11 @@ function ActionTile({
       ? theme.colors.primary
       : theme.colors.text;
   return (
-    <GlassChrome face="sheet" style={styles.tile}>
+    <View
+      style={[
+        styles.tile,
+        { backgroundColor: withAlpha(theme.colors.text, appChrome.opacity.chromeControl) },
+      ]}>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
@@ -981,16 +985,15 @@ function ActionTile({
         ) : (
           <Icon size={20} color={ink} strokeWidth={2} />
         )}
-        {/* Two lines is the budget, and the strings are chosen to fit it: at a
-            quarter of a 390-point phone a tile is 83 points wide, which holds
-            "Nouveau"/"terminal" and "Navigateur" but not "Ouvrir dans le
-            navigateur". Centred, because a one-word label under a centred icon
+        {/* One word, one line: at a quarter of a 390-point phone a tile is 83
+            points wide, which holds a single word in every locale and nothing
+            longer. Centred, because a one-word label under a centred icon
             reading off the left edge is a label that has lost its icon. */}
-        <Text variant="caption" color={ink} numberOfLines={2} style={styles.tileLabel}>
+        <Text variant="caption" color={ink} numberOfLines={1} style={styles.tileLabel}>
           {label}
         </Text>
       </PressableScale>
-    </GlassChrome>
+    </View>
   );
 }
 
@@ -1216,7 +1219,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tiles: { flexDirection: 'row', gap: LADDER.gap },
+  // A clear line under the subtitle: the row is a set of controls, not a
+  // continuation of the header's text.
+  tiles: { flexDirection: 'row', gap: LADDER.gap, marginTop: LADDER.gap },
   tile: {
     flex: 1,
     minWidth: 0,
@@ -1224,26 +1229,21 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  // 12 above and below a 20-point glyph, a 4-point lead, and room for two lines
-  // of 15: 82 points when both lines are used and the same 82 when only one is,
-  // so four tiles whose labels wrap differently still make one straight row.
+  // A 20-point glyph, a 4-point lead and one 15-point line, with 10 above and
+  // below: 64 points, the height of a key-row control stacked on its label,
+  // so the row reads as controls rather than as a second card.
   tileHit: {
-    minHeight: 82,
-    paddingHorizontal: LADDER.gap,
-    paddingVertical: LADDER.snug,
+    minHeight: 64,
+    paddingHorizontal: LADDER.tight,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: LADDER.tight,
+    gap: 4,
   },
   tileDisabled: { opacity: appChrome.opacity.disabled },
-  // Two lines' worth of height whether the label uses one or two, so the four
-  // icons sit on one line across the row. Without it a tile whose label wraps
-  // ("New terminal", and most of the other seven languages) centres a taller
-  // stack and lifts its own glyph above its neighbours' by half a line.
   tileLabel: {
     textAlign: 'center',
     lineHeight: 15,
-    minHeight: 30,
     includeFontPadding: false,
   },
   tilesNote: { paddingHorizontal: LADDER.tight, lineHeight: 16 },
