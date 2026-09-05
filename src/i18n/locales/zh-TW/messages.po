@@ -668,6 +668,7 @@ msgstr "已複製到剪貼簿"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "複製指令，可直接貼到終端機"
 
+#: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "複製"
@@ -2691,6 +2692,10 @@ msgstr "這個檔案是空的。"
 msgid "This file is not among the session artifacts."
 msgstr "這個檔案不在工作階段的產出裡。"
 
+#: src/components/asset-viewer.tsx
+msgid "This file is too large to display. Copy it to read it elsewhere."
+msgstr "這個檔案太大，無法顯示。請複製後在其他地方閱讀。"
+
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "這個 Gateway 不接受這個位址。"
@@ -2788,14 +2793,6 @@ msgstr "透過 {host}"
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "今天"
-
-#: src/components/code-view.tsx
-msgid "Too large to colour. Shown as plain text."
-msgstr "檔案太大，無法上色。以純文字顯示。"
-
-#: src/components/code-view.tsx
-msgid "Too many lines to colour. Shown as plain text."
-msgstr "行數太多，無法上色。以純文字顯示。"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"

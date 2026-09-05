@@ -428,6 +428,39 @@ function displayWidth(value: string): number {
 }
 
 /**
+ * The code palette, from the app's palette.
+ *
+ * `react-native-enriched-markdown` highlights a fenced code block natively, via
+ * tree-sitter, and takes its colours as fourteen token types. The theme has six
+ * things it can say about a colour -- `primary`, `success`, `warning`, `info`,
+ * and two grades of muted text -- so several token types share one token. That
+ * is the same six-way split the old JavaScript highlighter's roles used, for the
+ * same reason: a finer palette would be a precision the theme cannot express,
+ * and it would drift the moment a theme pack changed.
+ *
+ * `variable` and `embedded` are the ordinary code colour on purpose. tree-sitter
+ * captures every identifier as a variable, so tinting it tints most of the file.
+ */
+function syntaxColors(colors: Colors): NonNullable<MarkdownStyle['codeBlock']>['syntaxColors'] {
+  return {
+    keyword: colors.primary,
+    operator: colors.textMuted,
+    punctuation: colors.textMuted,
+    string: colors.success,
+    number: colors.warning,
+    constant: colors.warning,
+    comment: colors.textSubtle,
+    function: colors.info,
+    type: colors.info,
+    variable: colors.text,
+    property: colors.info,
+    tag: colors.primary,
+    attribute: colors.info,
+    embedded: colors.text,
+  };
+}
+
+/**
  * The app's one markdown theme. Shared with the asset viewer so a document read
  * from a file looks the same as the transcript it was mentioned in.
  */
@@ -492,6 +525,7 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
       padding: 12,
       marginTop: 2,
       marginBottom: 12,
+      syntaxColors: syntaxColors(colors),
     },
     thematicBreak: { color: border, height: StyleSheet.hairlineWidth, marginBottom: 12 },
     table: {

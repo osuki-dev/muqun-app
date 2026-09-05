@@ -668,6 +668,7 @@ msgstr "クリップボードにコピーしました"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "コピーします。ターミナルにそのまま貼り付けられます"
 
+#: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "コピー"
@@ -2691,6 +2692,10 @@ msgstr "このファイルは空です。"
 msgid "This file is not among the session artifacts."
 msgstr "このファイルはセッションの成果物に含まれていません。"
 
+#: src/components/asset-viewer.tsx
+msgid "This file is too large to display. Copy it to read it elsewhere."
+msgstr "このファイルは大きすぎて表示できません。コピーして別の場所で読んでください。"
+
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "この Gateway はそのアドレスに応答しません。"
@@ -2788,14 +2793,6 @@ msgstr "{host} 経由"
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "今日"
-
-#: src/components/code-view.tsx
-msgid "Too large to colour. Shown as plain text."
-msgstr "大きすぎて色付けできません。プレーンテキストで表示します。"
-
-#: src/components/code-view.tsx
-msgid "Too many lines to colour. Shown as plain text."
-msgstr "行数が多すぎて色付けできません。プレーンテキストで表示します。"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
