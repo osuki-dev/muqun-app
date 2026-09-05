@@ -23,15 +23,15 @@ describe('remembering a pane', () => {
   test('the fold and the mode are remembered independently', () => {
     const key = paneViewKey('srv-a', 'wM:p1');
     store.getState().choose(key, { detail: 'detailed' });
-    store.getState().choose(key, { mode: 'text' });
-    expect(store.getState().choices[key]).toEqual({ mode: 'text', detail: 'detailed' });
+    store.getState().choose(key, { mode: 'chat' });
+    expect(store.getState().choices[key]).toEqual({ mode: 'chat', detail: 'detailed' });
   });
 
   test('choosing what is already chosen leaves the store alone', () => {
     const key = paneViewKey('srv-a', 'wM:p1');
-    store.getState().choose(key, { mode: 'text' });
+    store.getState().choose(key, { mode: 'chat' });
     const before = store.getState().choices;
-    store.getState().choose(key, { mode: 'text' });
+    store.getState().choose(key, { mode: 'chat' });
     expect(store.getState().choices).toBe(before);
   });
 
@@ -51,10 +51,10 @@ describe('remembering a pane', () => {
     for (let index = 1; index < 60; index += 1) {
       store.getState().choose(paneViewKey('srv', `p${index}`), { mode: 'terminal' });
     }
-    store.getState().choose(first, { mode: 'text' });
+    store.getState().choose(first, { mode: 'chat' });
     for (let index = 60; index < 80; index += 1) {
       store.getState().choose(paneViewKey('srv', `p${index}`), { mode: 'terminal' });
     }
-    expect(store.getState().choices[first]?.mode).toBe('text');
+    expect(store.getState().choices[first]?.mode).toBe('chat');
   });
 });

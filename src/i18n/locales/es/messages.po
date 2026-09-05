@@ -105,10 +105,6 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "+{overflow} más"
 
-#: src/app/commands.tsx
-msgid "A dev server or preview running on this machine."
-msgstr "Un servidor de desarrollo o una vista previa en esta máquina."
-
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "Un Gateway en una máquina a la que puedes entrar por SSH, incluso uno que solo escucha en su propio loopback."
@@ -141,10 +137,6 @@ msgstr "Actúa sobre este terminal, o envía un prompt a su agente."
 msgid "Add a host"
 msgstr "Añadir un host"
 
-#: src/app/commands.tsx
-msgid "Add a terminal beside this one, and go to it."
-msgstr "Añade un terminal junto a este y ve a él."
-
 #: src/app/explore.tsx
 #: src/components/ssh-host-list.tsx
 msgid "Add an SSH host"
@@ -169,14 +161,6 @@ msgstr "AGENTE"
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
 msgstr "COMANDOS DEL AGENTE"
-
-#: src/app/commands.tsx
-msgid "Agent output as plain text. Easier to read, no colour."
-msgstr "Salida del agente como texto plano. Más fácil de leer, sin color."
-
-#: src/i18n/labels.ts
-msgid "Agent output reflowed for reading. Colour is lost."
-msgstr "La salida del agente se reajusta para facilitar la lectura. Se pierde el color."
 
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
@@ -321,6 +305,10 @@ msgstr "biometría"
 #: src/i18n/labels.ts
 msgid "Blocked"
 msgstr "Bloqueado"
+
+#: src/app/commands.tsx
+msgid "Browser"
+msgstr "Navegador"
 
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
@@ -916,7 +904,6 @@ msgstr "Descartar las novedades"
 msgid "Docs"
 msgstr "Docs"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -940,10 +927,6 @@ msgstr "Redacta las notas de la próxima versión"
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
 msgstr "Cada dispositivo guarda su propio token para {0}."
-
-#: src/app/commands.tsx
-msgid "Edit"
-msgstr "Editar"
 
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
@@ -1112,10 +1095,6 @@ msgstr "Generando…"
 msgid "Git status"
 msgstr "Estado de Git"
 
-#: src/app/commands.tsx
-msgid "Give the whole width back to the terminal."
-msgstr "Devolver todo el ancho al terminal."
-
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "Volver"
@@ -1243,7 +1222,6 @@ msgstr "No se pudieron escribir sus datos en el almacenamiento seguro."
 msgid "Its paired devices are listed once it is the server in use."
 msgstr "Sus dispositivos vinculados se listan cuando es el servidor en uso."
 
-#: src/components/agent-markdown-output.tsx
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "Ir a la última salida"
@@ -1318,7 +1296,6 @@ msgstr "Visto hace {minutes} min"
 msgid "Last seen just now"
 msgstr "Visto justo ahora"
 
-#: src/components/agent-markdown-output.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Última"
@@ -1917,10 +1894,6 @@ msgstr "Acciones rápidas"
 msgid "Quit"
 msgstr "Salir"
 
-#: src/app/commands.tsx
-msgid "Reached the same way as a browser, so the same tunnel limit applies."
-msgstr "Se llega igual que al navegador, así que se aplica el mismo límite del túnel."
-
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
 msgstr "Alcanzado a través del host SSH {host}"
@@ -1990,14 +1963,6 @@ msgstr "Renombrar terminal"
 #: src/components/session-map.tsx
 msgid "Rename workspace"
 msgstr "Cambiar el nombre del espacio de trabajo"
-
-#: src/app/commands.tsx
-msgid "Render as terminal"
-msgstr "Mostrar como terminal"
-
-#: src/app/commands.tsx
-msgid "Render as text"
-msgstr "Mostrar como texto"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
@@ -2373,10 +2338,6 @@ msgstr "Mostrar todos los pasos de herramientas"
 msgid "Show images"
 msgstr "Mostrar imágenes"
 
-#: src/app/commands.tsx
-msgid "Show it beside the terminal, and watch it redraw."
-msgstr "Mostrarlo junto al terminal y verlo redibujarse."
-
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Mostrar el teclado del editor"
@@ -2405,6 +2366,7 @@ msgstr "simfarm es el pequeño programa de esa máquina que sirve esta vista pre
 msgid "simfarm port"
 msgstr "Puerto de simfarm"
 
+#: src/app/commands.tsx
 #: src/components/simfarm-preview.tsx
 msgid "Simulator"
 msgstr "Simulador"
@@ -2453,10 +2415,6 @@ msgstr "El túnel SSH a través de {host} está caído"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "desactualizado · {age}"
-
-#: src/app/commands.tsx
-msgid "Start a group of its own, and go to it."
-msgstr "Crea un grupo propio y ve a él."
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
@@ -2525,10 +2483,6 @@ msgstr "Cambiar a la vista de chat"
 msgid "Switch to the terminal view"
 msgstr "Cambiar a la vista de terminal"
 
-#: src/i18n/labels.ts
-msgid "Switch to the text view"
-msgstr "Cambiar a la vista de texto"
-
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
 msgstr "Símbolos"
@@ -2567,10 +2521,6 @@ msgstr "COMANDOS DEL TERMINAL"
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
 msgstr "Fila de teclas del terminal"
-
-#: src/i18n/labels.ts
-msgid "Text"
-msgstr "Texto"
 
 #: src/components/settings-terminal.tsx
 msgid "Text size"
@@ -2625,7 +2575,6 @@ msgstr "La conexión se cortó."
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "No se pudo leer la clave ({0}). Revisa la clave y su frase de contraseña."
 
-#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "El panel tal cual, con su cuadrícula y sus colores."
@@ -2659,8 +2608,8 @@ msgid "The shell exited."
 msgstr "La shell terminó."
 
 #: src/app/commands.tsx
-msgid "The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one."
-msgstr "El túnel SSH lleva el puerto de la Gateway y ningún otro, así que desde aquí un navegador no alcanza el resto de la máquina. Conéctate por la red local o Tailscale para abrir uno."
+msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
+msgstr "El túnel SSH lleva el puerto de la Gateway y ningún otro, así que desde aquí no se alcanzan el simulador ni el navegador. Conéctate por la red local o Tailscale."
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
@@ -2944,7 +2893,6 @@ msgstr "Modo visual"
 msgid "Visualize current context usage as a colored grid"
 msgstr "Visualiza el uso actual del contexto como una cuadrícula de colores"
 
-#: src/components/agent-markdown-output.tsx
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "Esperando salida…"
@@ -2956,10 +2904,6 @@ msgstr "Esperando la red."
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Esperando a que terminen las subidas…"
-
-#: src/app/commands.tsx
-msgid "Watch this machine's iOS, Android or WeChat simulator."
-msgstr "Mira el simulador de iOS, Android o WeChat de esta máquina."
 
 #: src/components/session-map.tsx
 msgid "What is running"

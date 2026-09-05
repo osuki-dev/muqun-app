@@ -226,7 +226,6 @@ import {
   foldPaneRead,
   hasEarlierAfterPage,
   hasEarlierTerminalOutput,
-  mergeTerminalWindow,
   nextPageRange,
   paneReadRange,
   type PaneReadOrigin,
@@ -353,6 +352,21 @@ const PANE_SLIDE_DISTANCE = 36;
  * at the pane before deciding to move again.
  */
 const PANE_PREFETCH_DELAY_MS = 400;
+
+/**
+ * Cells, always.
+ *
+ * Colour has to be asked for at the gateway, so this used to follow the reading
+ * the pane was in: `text` for the reflowed view, `ansi` for the grid. Card #841
+ * removed the reflowed view -- the quick-actions row was its only switch -- and
+ * with one reading left there is nothing for the format to follow.
+ *
+ * Kept as a name rather than inlined at the six call sites because it is also
+ * the head of `outputShape`, which is the key a remembered window is filed
+ * under. A window filed by an install that still had two formats is still filed
+ * under `ansi:`, so nobody's scrollback is orphaned by this.
+ */
+const PANE_OUTPUT_FORMAT = 'ansi' as const;
 
 /**
  * How long a selection has to stand still before the event stream is re-opened
@@ -1071,10 +1085,10 @@ export function ServerTerminalWorkspace({
     () => data.agents.find((item) => field(item, 'pane_id') === selection.paneId),
     [data.agents, selection.paneId]
   );
-  // Which of the three readings of this pane is on screen: the conversation,
-  // the reflowed text, or the raw grid. The hook owns the whole decision --
-  // the setting, this pane's own last choice, and what the pane can actually
-  // show -- so the screen only has to say what each mode draws.
+  // Which of the two readings of this pane is on screen: the conversation or
+  // the raw grid. The hook owns the whole decision -- the setting, this pane's
+  // own last choice, and what the pane can actually show -- so the screen only
+  // has to say what each mode draws.
   const agentPane = Boolean(selectedAgent);
   const partsForPane = partsState.paneId === selection.paneId ? partsState : initialPartsState;
   const paneView = usePaneViewMode({
@@ -1083,9 +1097,6 @@ export function ServerTerminalWorkspace({
     agent: agentPane,
     parts: partsForPane.supported,
   });
-  // Colour has to be asked for at the gateway, so the output format follows the
-  // mode: reflowed text for reading, cells for the grid.
-  const agentOutput = agentPane && paneView.mode === 'text';
   const chatViewChosen = paneView.mode === 'chat';
   // What the user asked for and what can actually be drawn are two different
   // things: a failed read falls back to the terminal without forgetting the
@@ -1665,7 +1676,6 @@ export function ServerTerminalWorkspace({
     paneScreenRowsRef.current = selectedPaneScreenRows;
   }, [paneOwnsScreen, selectedPaneScreenRows]);
 
-  const outputFormat = agentOutput ? 'text' : 'ansi';
   const outputSource: PaneOutputSource = fullScreenPane ? 'visible' : 'recent-unwrapped';
   // The pair that says what a window is a window *of*. A pane can change shape
   // while nobody is looking -- a shell hands its tty to nvim and the source it
@@ -1679,7 +1689,7 @@ export function ServerTerminalWorkspace({
   // boundary is crossed the way a pane switch is -- the main-screen window is
   // filed on the way in and handed back whole on the way out, which is the
   // reader's history surviving the editor.
-  const outputShape = `${outputFormat}:${outputSource}:${paneOwnsScreen ? 'alt' : 'main'}`;
+  const outputShape = `${PANE_OUTPUT_FORMAT}:${outputSource}:${paneOwnsScreen ? 'alt' : 'main'}`;
   // Matches the terminal surface exactly, whichever pack is showing -- read
   // from the same palette the renderer draws with rather than restated, so the
   // chrome behind the grid can never be a shade off it.
@@ -1962,7 +1972,6 @@ export function ServerTerminalWorkspace({
       // window), #712 (a length taken for authority) and #721 (a refresh
       // replacing a window it is not as deep as) all died here.
       setOutput((current) => {
-        if (agentOutput) return mergeTerminalWindow(current, value, MAX_PANE_OUTPUT_LINES);
         // A screen-owning pane's read is the whole of its current screen, not
         // a tail of a growing log, so it replaces rather than folds against
         // the placement heuristics built for the latter (card #795, defect 2
@@ -1994,7 +2003,7 @@ export function ServerTerminalWorkspace({
       }
       setError(null);
     },
-    [agentOutput, outputShapeRef]
+    [outputShapeRef]
   );
 
   const refreshOutput = useCallback(async () => {
@@ -2020,7 +2029,7 @@ export function ServerTerminalWorkspace({
       const value = await readPaneOutput(
         data.sessionId,
         requestPaneId,
-        outputFormat,
+        PANE_OUTPUT_FORMAT,
         outputLineLimitRef.current,
         outputSource
       );
@@ -2042,7 +2051,6 @@ export function ServerTerminalWorkspace({
     applyPaneOutput,
     connection.phase,
     data.sessionId,
-    outputFormat,
     outputSource,
     ready,
     selection.paneId,
@@ -2109,10 +2117,16 @@ export function ServerTerminalWorkspace({
             requestPaneId,
             page.start,
             page.end,
-            outputFormat,
+            PANE_OUTPUT_FORMAT,
             outputSource
           )
-        : await readPaneTail(data.sessionId, requestPaneId, outputFormat, nextLimit, outputSource);
+        : await readPaneTail(
+            data.sessionId,
+            requestPaneId,
+            PANE_OUTPUT_FORMAT,
+            nextLimit,
+            outputSource
+          );
       // A backend can accept `start`/`end` without complaint and still ignore
       // them, always answering with its own tail (herdr's does) -- there is no
       // capability flag that says so up front, so the only honest check is
@@ -2136,7 +2150,7 @@ export function ServerTerminalWorkspace({
           fetched = await readPaneTail(
             data.sessionId,
             requestPaneId,
-            outputFormat,
+            PANE_OUTPUT_FORMAT,
             nextLimit,
             outputSource
           );
@@ -2186,16 +2200,7 @@ export function ServerTerminalWorkspace({
         setLoadingEarlierOutput(false);
       }
     }
-  }, [
-    connection.phase,
-    data.sessionId,
-    outputFormat,
-    outputSource,
-    ready,
-    selection.paneId,
-    serverId,
-    t,
-  ]);
+  }, [connection.phase, data.sessionId, outputSource, ready, selection.paneId, serverId, t]);
 
   useEffect(() => {
     panesRef.current = data.panes;
@@ -2320,7 +2325,7 @@ export function ServerTerminalWorkspace({
         void readPaneTail(
           data.sessionId,
           paneId,
-          outputFormat,
+          PANE_OUTPUT_FORMAT,
           INITIAL_PANE_OUTPUT_LINES,
           outputSource
         )
@@ -2337,7 +2342,7 @@ export function ServerTerminalWorkspace({
             if (!paneReadIsCurrent(paneCacheRef.current, paneId, revision)) return;
             if (!value) return;
             paneCacheRef.current = warmPaneWindow(paneCacheRef.current, paneId, {
-              shape: `${outputFormat}:${outputSource}`,
+              shape: `${PANE_OUTPUT_FORMAT}:${outputSource}`,
               output: value,
               // A warm-up is always the first page -- a seed for the switch,
               // never a claim about depth. `warmPaneWindow`, not
@@ -2363,16 +2368,7 @@ export function ServerTerminalWorkspace({
       }
     }, PANE_PREFETCH_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [
-    connection.phase,
-    data.sessionId,
-    outputFormat,
-    outputSource,
-    ready,
-    selection.paneId,
-    serverId,
-    tabPanes,
-  ]);
+  }, [connection.phase, data.sessionId, outputSource, ready, selection.paneId, serverId, tabPanes]);
 
   // The permission menu this pane may be blocked on. Everything about it --
   // the read, the answer, the 409 retry rule -- lives in the hook; the screen
@@ -3579,15 +3575,13 @@ export function ServerTerminalWorkspace({
                   />
                 ) : (
                   <TerminalBoundary
-                    resetKey={`${selection.paneId}:${agentOutput ? 'agent' : 'terminal'}`}
+                    resetKey={selection.paneId}
                     background={terminalBackground}
                     textColor={chromeText}>
                     <TerminalPanel
                       sessionId={data.sessionId}
                       paneId={selection.paneId}
                       output={output}
-                      mode={agentOutput ? 'agent' : 'terminal'}
-                      edgeToEdge
                       // The whole composer reserves space, key row included: anything
                       // it covers is unreachable, and the "jump to latest" pill sits
                       // against this inset too.

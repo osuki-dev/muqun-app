@@ -46,13 +46,11 @@ export const reachabilityDescription: Record<ServerReachability, MessageDescript
 
 export const paneViewModeLabel: Record<PaneViewMode, MessageDescriptor> = {
   chat: msg`Chat`,
-  text: msg`Text`,
   terminal: msg`Terminal`,
 };
 
 export const paneViewModeDetail: Record<PaneViewMode, MessageDescriptor> = {
   chat: msg`The transcript as a conversation, with tool steps folded away.`,
-  text: msg`Agent output reflowed for reading. Colour is lost.`,
   terminal: msg`The raw pane, on its grid and in its own colours.`,
 };
 
@@ -67,7 +65,6 @@ export const paneViewModeDetail: Record<PaneViewMode, MessageDescriptor> = {
  */
 export const switchToViewLabel: Record<PaneViewMode, MessageDescriptor> = {
   chat: msg`Switch to the chat view`,
-  text: msg`Switch to the text view`,
   terminal: msg`Switch to the terminal view`,
 };
 
