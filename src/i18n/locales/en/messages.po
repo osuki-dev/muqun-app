@@ -1152,6 +1152,10 @@ msgstr "Hide {name}"
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
 
+#: src/components/simfarm-stage.tsx
+msgid "Hide the controls"
+msgstr "Hide the controls"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "Hide the server list"
@@ -2386,6 +2390,10 @@ msgstr "Show every tool step"
 msgid "Show images"
 msgstr "Show images"
 
+#: src/components/simfarm-stage.tsx
+msgid "Show the controls"
+msgstr "Show the controls"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Show the editor keyboard"
@@ -2397,6 +2405,15 @@ msgstr "Show the server list"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Show what is running"
+
+#. placeholder {0}: entry.name
+#: src/components/simfarm-stage.tsx
+msgid "Shut down {0}"
+msgstr "Shut down {0}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Shutting down…"
+msgstr "Shutting down…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Sign in"
@@ -2682,12 +2699,20 @@ msgid "The simulator could not be shown."
 msgstr "The simulator could not be shown."
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shut down."
+msgstr "The simulator could not be shut down."
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be started."
 msgstr "The simulator could not be started."
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator did not come up in time."
 msgstr "The simulator did not come up in time."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not shut down in time."
+msgstr "The simulator did not shut down in time."
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."

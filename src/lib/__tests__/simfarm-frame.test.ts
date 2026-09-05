@@ -16,8 +16,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   clampSimfarmOffset,
   placeSimfarmFrame,
+  SIMFARM_ANDROID_EDGE_REACH,
   simfarmEdgeAt,
+  simfarmEdgeBands,
   simfarmFitScale,
+  simfarmRestingOffset,
   simfarmNormalizedPoint,
   SIMFARM_MAX_ZOOM,
 } from '@/lib/simfarm-frame';
@@ -169,5 +172,69 @@ describe('simfarmEdgeAt', () => {
     // "both" is not an answer that can be sent.
     expect(simfarmEdgeAt({ x: 0.04, y: 0.01 })).toBe('top');
     expect(simfarmEdgeAt({ x: 0.01, y: 0.04 })).toBe('left');
+  });
+});
+
+describe('simfarmRestingOffset', () => {
+  // Full screen, the surface begins under the camera cutout: the iPhone from
+  // the report on a viewport 62pt shorter than itself.
+  const frame = { width: 402, height: 874 };
+  const viewport = { width: 402, height: 812 };
+
+  test('a device taller than the surface rests with its top at the top', () => {
+    const rest = simfarmRestingOffset(frame, viewport);
+    expect(rest).toEqual({ x: 0, y: 31 });
+    // Which is the same thing as "drawn from y = 0": the overflow hangs off
+    // the bottom, not half of it off each end.
+    expect(placeSimfarmFrame(frame, viewport, 1, rest).y).toBe(0);
+  });
+
+  test('a device that fits rests centred', () => {
+    expect(simfarmRestingOffset({ width: 402, height: 700 }, viewport)).toEqual({ x: 0, y: 0 });
+  });
+
+  test('is a pan the clamp agrees with', () => {
+    const rest = simfarmRestingOffset(frame, viewport);
+    const placed = placeSimfarmFrame(frame, viewport);
+    expect(clampSimfarmOffset(placed, viewport, rest)).toEqual(rest);
+  });
+
+  test('follows the zoom, clamped the way the placement clamps it', () => {
+    const zoomed = simfarmRestingOffset(frame, viewport, 2);
+    expect(zoomed.y).toBe((874 * 2 - 812) / 2);
+    expect(simfarmRestingOffset(frame, viewport, 10)).toEqual(
+      simfarmRestingOffset(frame, viewport, 4)
+    );
+  });
+});
+
+describe('simfarmEdgeBands', () => {
+  test('an iOS viewer keeps the one fraction on both axes', () => {
+    expect(simfarmEdgeBands('ios', 402)).toEqual({ x: 0.05, y: 0.05 });
+  });
+
+  test('an Android viewer widens the sides past the system back strip', () => {
+    // A 402pt iPhone drawn 411dp wide on the emulator: the system takes the
+    // first ~24dp of the screen, so the device's edge reaches 40dp in.
+    const bands = simfarmEdgeBands('android', 411);
+    expect(bands.x).toBeCloseTo(SIMFARM_ANDROID_EDGE_REACH / 411, 10);
+    expect(bands.y).toBe(0.05);
+    // A swipe that begins at 30dp -- past the system's strip, inside the
+    // reach -- is the device's left edge.
+    expect(simfarmEdgeAt({ x: 30 / 411, y: 0.5 }, bands)).toBe('left');
+    expect(simfarmEdgeAt({ x: 60 / 411, y: 0.5 }, bands)).toBe('none');
+  });
+
+  test('never narrower than the fraction, and harmless without a width', () => {
+    expect(simfarmEdgeBands('android', 4000).x).toBe(0.05);
+    expect(simfarmEdgeBands('android', 0)).toEqual({ x: 0.05, y: 0.05 });
+  });
+
+  test('a corner goes to the edge it is deeper into, by band', () => {
+    // 5pt from the top and 30dp from the left on Android: the top band is
+    // the thinner one, and the point is a fifth of the way into it versus
+    // three quarters of the way into the side band.
+    const bands = simfarmEdgeBands('android', 411);
+    expect(simfarmEdgeAt({ x: 30 / 411, y: 5 / 874 }, bands)).toBe('top');
   });
 });

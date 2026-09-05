@@ -5,6 +5,7 @@ import { Check, Copy as CopyIcon, Lock, MonitorSmartphone, X } from 'lucide-reac
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
@@ -18,10 +19,10 @@ import { parsePort } from '@/lib/web-service';
 /**
  * The simulator on the paired machine, drawn where the reader is standing.
  *
- * One component with two hosts: a sheet on a phone, and the right-hand column
- * beside the terminal on a Pad. They are the same thing in different amounts of
- * space, and splitting them into two components would be two places to fix the
- * next thing simfarm changes.
+ * One component with two hosts: a full-screen modal on a phone, and the
+ * right-hand column beside the terminal on a Pad. They are the same thing in
+ * different amounts of space, and splitting them into two components would be
+ * two places to fix the next thing simfarm changes.
  *
  * ## Why it draws the picture itself now
  *
@@ -70,7 +71,7 @@ export function SimfarmPreview({
   initialPort,
   onPortFound,
   onClose,
-  /** Beside the terminal rather than in a sheet: no padding, no heading. */
+  /** Beside the terminal rather than over the screen: no insets, no heading. */
   embedded = false,
 }: {
   gatewayUrl: string | undefined;
@@ -80,7 +81,7 @@ export function SimfarmPreview({
   /** Called with a port that answered, so the caller can remember it. */
   onPortFound?: (port: number) => void;
   /**
-   * Dismiss, for the host that is a sheet. Absent when there is nothing to
+   * Dismiss, for the host that is a modal. Absent when there is nothing to
    * dismiss -- the Pad column is part of the workspace, not over it -- and the
    * header is drawn only when it is present, so no host grows a close button
    * that closes nothing.
@@ -258,7 +259,7 @@ export function SimfarmPreview({
 /**
  * The shape every state that is not a simulator is drawn in.
  *
- * A header when this is a sheet, and under it one bounded column centred in
+ * A header when this is a modal, and under it one bounded column centred in
  * whatever is left. The column is capped rather than stretched because these
  * are two sentences and a field: on a Pad's full width an uncapped paragraph
  * runs to a line nobody tracks back from, and the field and its button drift to
@@ -279,26 +280,26 @@ function PreviewNotice({
 }) {
   const theme = useThemeTokens();
   const { t } = useLingui();
+  // The modal reaches the top of the screen with the status bar hidden, so
+  // the header pays the inset itself: what is left up there is the camera
+  // cutout, and a title under a Dynamic Island is a title with a hole in it.
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.fill, { backgroundColor: theme.colors.background }]}>
-      {/* Only in a sheet, and only on the states that are not the simulator.
+      {/* Only in the modal, and only on the states that are not the simulator.
           The preview itself stays headerless on purpose -- what is inside it is
           a device drawn at 1:1, and a bar over it would crop the thing the
           screen exists to show. These states have room, and a full screen with
           no name on it is the part of this that read as broken. */}
       {onClose && !embedded ? (
-        <View style={styles.header}>
-          {/* The panels and Files sheets draw this and this one did not, which
-              is the sort of difference that reads as two different apps.
-              Android only: iOS has the system grabber. */}
-          {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <View style={styles.headerRow}>
             <Text variant="bodySmall" style={styles.headerTitle}>
               <Trans>Simulator</Trans>
             </Text>
             {/* The same chrome as the Files sheet, from the same component:
-                two sheets whose close buttons were different materials would
+                two screens whose close buttons were different materials would
                 read as two apps. `sheet`, not `floating` -- see `GlassChrome`. */}
             <GlassChrome face="sheet" style={styles.iconButton}>
               <PressableScale
@@ -321,7 +322,11 @@ function PreviewNotice({
       <KeyboardAwareScrollView
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.body, embedded ? styles.embeddedPad : styles.sheetPad]}>
+        contentContainerStyle={[
+          styles.body,
+          embedded ? styles.embeddedPad : styles.modalPad,
+          embedded ? null : { paddingBottom: insets.bottom + 24 },
+        ]}>
         <View style={styles.column}>
           {icon ? (
             <View style={[styles.glyph, { backgroundColor: theme.colors.surfaceRaised }]}>
@@ -356,7 +361,7 @@ function RunCommand() {
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // The hold is a timer on a component that can leave with the sheet before it
+  // The hold is a timer on a component that can leave with the screen before it
   // fires, and a `setCopied` after that is a warning in the log at best.
   useEffect(() => {
     return () => {
@@ -381,7 +386,7 @@ function RunCommand() {
       }}
       style={[styles.commandRow, { backgroundColor: theme.colors.surfaceRaised }]}>
       {/* Two lines, not one shrunk to fit: the command wraps at the widths this
-          is read at -- a phone sheet and a Pad's narrower column -- and a
+          is read at -- a phone and a Pad's narrower column -- and a
           command scaled down until it fits is a command nobody can read off the
           screen. */}
       <Text
@@ -410,16 +415,8 @@ const styles = StyleSheet.create({
   middle: { textAlign: 'center' },
   header: {
     paddingHorizontal: 16,
-    paddingTop: 10,
     paddingBottom: 4,
     gap: 12,
-  },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
   },
   headerRow: {
     flexDirection: 'row',
@@ -461,7 +458,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
-  sheetPad: { paddingHorizontal: 24, paddingBottom: 24 },
+  modalPad: { paddingHorizontal: 24 },
   embeddedPad: { paddingHorizontal: 12, paddingBottom: 12 },
   commandRow: {
     alignSelf: 'stretch',

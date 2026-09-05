@@ -30,6 +30,13 @@ const COLD = {
   state: 'shutdown',
   capabilities: { video: ['h264', 'jpeg'], text: true, buttons: ['home'], boot: true },
 };
+const OTHER = {
+  id: 'ios:other',
+  name: 'iPhone Air (iOS 26.5)',
+  state: 'booted',
+  screen: { width: 1260, height: 2736, scale: 3 },
+  capabilities: { video: ['h264', 'jpeg'], text: true, buttons: ['home'], boot: true },
+};
 const AVD = {
   id: 'android:emulator-5554',
   name: 'Pixel 9',
@@ -90,7 +97,9 @@ const reply = (body: Record<string, unknown>) => json(SIMFARM_CHANNEL.CONTROL, b
 const frame = (streamId: number, tag: number) =>
   Uint8Array.from([SIMFARM_CHANNEL.VIDEO, streamId, tag, 0xff, 0xd8, 0xff]).buffer;
 
-function open(options: { seed?: unknown[]; bootTimeoutMs?: number } = {}) {
+function open(
+  options: { seed?: unknown[]; bootTimeoutMs?: number; shutdownTimeoutMs?: number } = {}
+) {
   const socket = new FakeSocket();
   const clock = new FakeClock();
   const frames: (Uint8Array | null)[] = [];
@@ -101,6 +110,7 @@ function open(options: { seed?: unknown[]; bootTimeoutMs?: number } = {}) {
     onFrame: (payload) => frames.push(payload),
     schedule: clock.schedule,
     bootTimeoutMs: options.bootTimeoutMs ?? 1000,
+    shutdownTimeoutMs: options.shutdownTimeoutMs ?? 1000,
   });
   session.subscribe((state) => states.push(state));
   session.connect(socket);
@@ -369,5 +379,187 @@ describe('the transport', () => {
     session.received(frame(0, SIMFARM_VIDEO_TAG.KEY));
     // One notification for `live`; the two frames after it change nothing.
     expect(states.length).toBe(before + 1);
+  });
+});
+
+describe('shutdown', () => {
+  test('the device on screen is let go of first, and the stage goes back to the list', () => {
+    const { session, socket, frames } = open({ seed: [RUNNING, COLD] });
+    session.select('ios:running');
+    session.received(reply({ id: 1, ok: true, streamId: 0, device: RUNNING }));
+    session.received(frame(0, SIMFARM_VIDEO_TAG.KEY));
+    expect(session.getState().status).toBe('live');
+
+    session.shutdown('ios:running');
+    expect(socket.requests().map((r) => r.op)).toEqual(['attach', 'detach', 'shutdown']);
+    expect(socket.last()).toEqual({ id: 3, op: 'shutdown', deviceId: 'ios:running' });
+    expect(frames[frames.length - 1]).toBeNull();
+    expect(session.getState()).toMatchObject({
+      status: 'picking',
+      wanted: null,
+      device: null,
+      screen: null,
+      stopping: 'ios:running',
+      error: null,
+    });
+  });
+
+  test('the ok answer alone is not the moment; the list saying shutdown is', () => {
+    const { session, clock } = open({ seed: [RUNNING] });
+    session.shutdown('ios:running');
+    expect(clock.armed()).toBe(1);
+    session.received(reply({ id: 1, ok: true, result: { ok: true } }));
+    expect(session.getState().stopping).toBe('ios:running');
+    session.received(devicesEvent([{ ...RUNNING, state: 'shutdown' }]));
+    expect(session.getState().stopping).toBeNull();
+    expect(session.getState().error).toBeNull();
+    expect(clock.armed()).toBe(0);
+  });
+
+  test('the list can say so first, and the late answer is ignored', () => {
+    const { session, clock } = open({ seed: [RUNNING] });
+    session.shutdown('ios:running');
+    session.received(devicesEvent([{ ...RUNNING, state: 'shutdown' }]));
+    expect(session.getState().stopping).toBeNull();
+    expect(clock.armed()).toBe(0);
+    session.received(reply({ id: 1, ok: false, error: 'too late to matter' }));
+    expect(session.getState().error).toBeNull();
+  });
+
+  test('a device that has left the list altogether counts as off', () => {
+    const { session } = open({ seed: [RUNNING] });
+    session.shutdown('ios:running');
+    session.received(devicesEvent([]));
+    expect(session.getState().stopping).toBeNull();
+  });
+
+  test('the next running device is not attached in its place', () => {
+    // The first list attaches to the one running device on the reader's
+    // behalf. After a Shut down press that courtesy would be the app
+    // choosing the next simulator for them.
+    const { session, socket } = open();
+    session.received(devicesEvent([RUNNING, OTHER]));
+    expect(session.getState().wanted).toBe('ios:running');
+    session.shutdown('ios:running');
+    session.received(devicesEvent([{ ...RUNNING, state: 'shutdown' }, OTHER]));
+    expect(session.getState()).toMatchObject({ status: 'picking', wanted: null, stopping: null });
+    expect(socket.requests().map((r) => r.op)).toEqual(['attach', 'shutdown']);
+  });
+
+  test('a device that is not on screen is shut down without touching the picture', () => {
+    const { session, socket, frames } = open({ seed: [RUNNING, OTHER] });
+    session.select('ios:running');
+    session.received(reply({ id: 1, ok: true, streamId: 0, device: RUNNING }));
+    session.received(frame(0, SIMFARM_VIDEO_TAG.KEY));
+    const drawn = frames.length;
+
+    session.shutdown('ios:other');
+    expect(socket.requests().map((r) => r.op)).toEqual(['attach', 'shutdown']);
+    expect(session.getState()).toMatchObject({
+      status: 'live',
+      wanted: 'ios:running',
+      stopping: 'ios:other',
+    });
+    expect(frames.length).toBe(drawn);
+    session.received(devicesEvent([RUNNING, { ...OTHER, state: 'shutdown' }]));
+    expect(session.getState().stopping).toBeNull();
+    expect(session.getState().status).toBe('live');
+  });
+
+  test("the server's refusal ends with its words kept", () => {
+    const { session, clock } = open({ seed: [RUNNING] });
+    session.shutdown('ios:running');
+    session.received(reply({ id: 1, ok: false, error: 'provider "mock" cannot shutdown devices' }));
+    expect(session.getState()).toMatchObject({
+      stopping: null,
+      error: { kind: 'shutdown-failed', detail: 'provider "mock" cannot shutdown devices' },
+    });
+    expect(clock.armed()).toBe(0);
+  });
+
+  test('a device that never goes off is given up on at the deadline', () => {
+    const { session, clock } = open({ seed: [RUNNING] });
+    session.shutdown('ios:running');
+    session.received(reply({ id: 1, ok: true }));
+    clock.elapse();
+    expect(session.getState()).toMatchObject({
+      stopping: null,
+      error: { kind: 'shutdown-timeout', detail: null },
+    });
+    // A list that says off after the deadline belongs to nobody.
+    session.received(devicesEvent([{ ...RUNNING, state: 'shutdown' }]));
+    expect(session.getState().error?.kind).toBe('shutdown-timeout');
+  });
+
+  test('choosing the device again is a change of mind', () => {
+    const { session, socket, clock } = open({ seed: [RUNNING] });
+    session.shutdown('ios:running');
+    session.select('ios:running');
+    expect(session.getState().stopping).toBeNull();
+    expect(socket.last()).toMatchObject({ op: 'attach', deviceId: 'ios:running' });
+    // Only the attach is pending: the shutdown's deadline was disarmed.
+    expect(clock.armed()).toBe(0);
+    session.received(reply({ id: 1, ok: false, error: 'no' }));
+    expect(session.getState().error).toBeNull();
+  });
+
+  test('shutting down the device that is still booting cancels the wait for it', () => {
+    const { session, socket, clock } = open({ seed: [COLD] });
+    session.select('ios:cold');
+    expect(clock.armed()).toBe(1);
+    session.shutdown('ios:cold');
+    expect(socket.requests().map((r) => r.op)).toEqual(['boot', 'shutdown']);
+    expect(session.getState()).toMatchObject({
+      status: 'picking',
+      wanted: null,
+      stopping: 'ios:cold',
+    });
+    // One deadline: the shutdown's, not the boot's.
+    expect(clock.armed()).toBe(1);
+    clock.elapse();
+    expect(session.getState().error?.kind).toBe('shutdown-timeout');
+  });
+
+  test('a second shutdown replaces the first', () => {
+    const { session, clock } = open({ seed: [RUNNING, OTHER] });
+    session.shutdown('ios:running');
+    session.shutdown('ios:other');
+    expect(clock.armed()).toBe(1);
+    expect(session.getState().stopping).toBe('ios:other');
+    session.received(reply({ id: 1, ok: false, error: 'the first one' }));
+    expect(session.getState().error).toBeNull();
+  });
+
+  test('release and dropping disarm it', () => {
+    const first = open({ seed: [RUNNING] });
+    first.session.shutdown('ios:running');
+    first.session.release();
+    expect(first.clock.armed()).toBe(0);
+
+    const second = open({ seed: [RUNNING] });
+    second.session.shutdown('ios:running');
+    second.session.dropped();
+    expect(second.clock.armed()).toBe(0);
+    expect(second.session.getState()).toMatchObject({ status: 'lost', stopping: null });
+  });
+});
+
+describe('the edge byte', () => {
+  test("is decided at begin by the viewer's bands and repeated until end", () => {
+    const { session, socket } = open({ seed: [RUNNING] });
+    session.select('ios:running');
+    session.received(reply({ id: 1, ok: true, streamId: 0, device: RUNNING }));
+    const touches = () => socket.sent.filter((b) => b[0] === SIMFARM_CHANNEL.INPUT);
+    // 30dp into a 411dp-wide picture: past Android's own strip, inside the
+    // widened band -- the device's left edge.
+    const bands = { x: 40 / 411, y: 0.05 };
+    session.touch({ phase: 0, x: 30 / 411, y: 0.5, bands });
+    session.touch({ phase: 1, x: 0.5, y: 0.5, bands });
+    session.touch({ phase: 2, x: 0.6, y: 0.5, bands });
+    // The same begin without bands is the protocol's 5%, where 30/411 is not
+    // an edge.
+    session.touch({ phase: 0, x: 30 / 411, y: 0.5 });
+    const edges = touches().map((b) => b[b.length - 1]);
+    expect(edges).toEqual([3, 3, 3, 0]);
   });
 });
