@@ -332,3 +332,36 @@ export interface LatestPillInput {
 export function latestPillVisible({ following, selecting, ownsScreen }: LatestPillInput): boolean {
   return !following && !selecting && !ownsScreen;
 }
+
+/** What the canvas knows about the pane it is resting on, on one render. */
+export interface PaneScreenTenancy {
+  /** The pane the canvas is showing. */
+  terminalId: string;
+  /** A full-screen program owns it, in the sense of {@link LatestPillInput}. */
+  ownsScreen: boolean;
+}
+
+/**
+ * Whether the canvas goes back to following the output between two renders.
+ *
+ * A pane bigger than the phone is placed on the way into an editor -- put in
+ * front of the cursor rather than at its resting anchor -- and to hold that
+ * placement the canvas stops following, exactly as it would for a reader who
+ * had scrolled up. That is the right state for the editor and the wrong one
+ * for what comes after it: `:q!` hands the shell's scrollback back to a canvas
+ * that is still unfollowed, so the prompt the reader just came back to sits
+ * off the bottom of a window parked at its top, under a "Latest" pill that
+ * offers the way down. Measured on device, before and after #46.
+ *
+ * So the one transition that undoes the release is the reverse of the one
+ * that made it: the same pane, owning the screen on the last render and not on
+ * this one. Nothing else qualifies. The way in stays the placement's business;
+ * a pane switch already resets the canvas on the terminal id and is left to it;
+ * and a shell that stays a shell never has its reader's scroll argued with.
+ */
+export function followsOutputOnScreenRelease(
+  previous: PaneScreenTenancy,
+  next: PaneScreenTenancy
+): boolean {
+  return previous.terminalId === next.terminalId && previous.ownsScreen && !next.ownsScreen;
+}
