@@ -1,4 +1,10 @@
 import type { TerminalFrame } from '@/terminal/types';
+import {
+  isLightTerminalSurface,
+  terminalChromeBackground,
+  terminalChromeForeground,
+  type TerminalTheme,
+} from '@/terminal/palette';
 
 /**
  * Which surface a pane's own program has claimed, read off the frame.
@@ -121,4 +127,44 @@ function parseColor(color: string): [number, number, number] | null {
     return [expand(color[1]), expand(color[2]), expand(color[3])];
   }
   return null;
+}
+
+/**
+ * Re-express every background in a frame that a program painted against an
+ * assumed dark terminal, so a light pack shows chrome rather than black bars.
+ *
+ * Applied to the frame rather than inside the parse, and *after* the surface
+ * decision, because those two need opposite things from the same bytes.
+ * {@link readTerminalSurface} has to see exactly what the program sent -- it is
+ * how a full-screen program's own scheme is recognised and adopted (card #685)
+ * -- while what gets drawn has to suit the surface it lands on. Parsing
+ * faithfully and adapting afterwards gives each of them the frame it needs and
+ * costs no second parse.
+ *
+ * Returns the frame it was given, by identity, when nothing changed: the common
+ * case is a dark pack, where the rule declines everything, and every memo
+ * downstream is keyed on this object.
+ */
+export function adaptFrameChrome(frame: TerminalFrame, theme: TerminalTheme): TerminalFrame {
+  if (!isLightTerminalSurface(theme)) return frame;
+  let changed = false;
+  const lines = frame.lines.map((line) => {
+    let lineChanged = false;
+    const runs = line.runs.map((run) => {
+      const background = run.style.background;
+      if (!background) return run;
+      const mapped = terminalChromeBackground(background, theme);
+      if (mapped === background) return run;
+      lineChanged = true;
+      // The pair moves together, or the text that was legible on a dark bar is
+      // left white on a light one. See `terminalChromeForeground`.
+      const foreground = run.style.foreground;
+      const ink = foreground ? terminalChromeForeground(foreground, theme) : foreground;
+      return { ...run, style: { ...run.style, background: mapped, foreground: ink } };
+    });
+    if (!lineChanged) return line;
+    changed = true;
+    return { ...line, runs };
+  });
+  return changed ? { ...frame, lines } : frame;
 }
