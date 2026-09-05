@@ -294,6 +294,25 @@ const FURNITURE_MIN_ROWS = 2;
 const FURNITURE_VOLATILE_ROWS = 1;
 
 /**
+ * How much of the window's own tail a deeper read is allowed to disagree with
+ * and still be recognised as reaching further back.
+ *
+ * The window ends with the pinned box as the last frame drew it; a read taken
+ * later ends with the box as it is now. Those are the same pane, not two
+ * different transcripts -- but they are not the same rows. Claude Code's box is
+ * the case that broke: a prompt, a status row whose timer ticks every frame,
+ * and a list of background agents that appears, grows and empties, so the box
+ * changes *height* as well as content. The transcript above it is identical
+ * either way, which is the part that decides whether one read contains the
+ * other.
+ *
+ * Generous enough for a composer, a status row and a handful of agents; far
+ * short of anything that could pass an unrelated read off as a superset, since
+ * every row above the slack must still agree verbatim, in order, contiguously.
+ */
+const DEEPENING_FURNITURE_ROWS = 24;
+
+/**
  * Fold one read of a pane into the window the reader already has.
  *
  * The one door. See the contract at the top of this file for which source may
@@ -309,7 +328,8 @@ export function foldPaneRead(
   latestOutput: string,
   origin: PaneReadOrigin,
   maximumLines: number,
-  ownsScreen = false
+  ownsScreen = false,
+  screenRows = 0
 ): string {
   const incoming = sanitizePaneRead(latestOutput);
   if (!currentOutput) return trimTerminalWindow(incoming, maximumLines);
@@ -328,7 +348,14 @@ export function foldPaneRead(
   // exactly the two-stacked-frames bug the card reported. A screen-owning read
   // replaces outright -- there is nothing above it this pane is responsible
   // for keeping.
-  if (ownsScreen) return trimTerminalWindow(incoming, maximumLines);
+  //
+  // And it replaces with the SCREEN, not with the read. Measured through the
+  // gateway against a real nvim pane: `viewport_rows: 24`, `alternate_on:
+  // true`, and a `recent-unwrapped` read 26 rows long -- the 24 the program
+  // drew, with two rows of the shell it was launched from still on top. A read
+  // is not authoritative about how tall the screen is; the pane is. See
+  // {@link altScreenFrame}.
+  if (ownsScreen) return altScreenFrame(incoming, screenRows);
 
   // A fold failure must degrade to showing the fresh read, never to killing the
   // app: in a release build an exception escaping a state updater is fatal, and
@@ -406,6 +433,26 @@ export function foldPaneRead(
     if (overlap === 0 && origin === 'rangePage') {
       return trimTerminalWindow(collapseRepeat([...latest, ...held]).join('\n'), maximumLines);
     }
+    // A widening tail that could not be placed, but which demonstrably re-sends
+    // history the window is already holding, is refused rather than appended.
+    //
+    // The distinction this draws is the one the origin alone cannot. A `'page'`
+    // that shares nothing with the window is the case the branch below is
+    // written for and keeps: a burst outran what one read can follow, the read
+    // is the newest thing there is, and it goes on top. But a `'page'` is the
+    // same tail asked for again at a greater depth, so when it still carries
+    // rows the window holds, it is a superset that failed to place -- and there
+    // is no arrangement in which putting a superset *under* the window is
+    // right. Everything it adds is older than everything the window has.
+    //
+    // This is what makes invariant (a) hold across paging by construction
+    // rather than because {@link DEEPENING_FURNITURE_ROWS} happens to be large
+    // enough for the pinned box in front of us. A box taller than that slack
+    // costs a page its depth -- the reader pulls and gets nothing new, and the
+    // next pull tries again -- where appending was a scrambled transcript.
+    if (overlap === 0 && origin === 'page' && sharesHistory(placed, latest)) {
+      return trimTerminalWindow(currentOutput, maximumLines);
+    }
     // Whatever the placement decided, rows the window verbatim already ends
     // with are not written down a second time. This is the last guard and it is
     // unconditional: appending rows that are already there, already in this
@@ -419,6 +466,31 @@ export function foldPaneRead(
 }
 
 /**
+ * The rows an alternate-screen pane actually drew, taken off the end of a read
+ * that may carry more than them.
+ *
+ * A program that owns the screen draws exactly the pane's height, every frame.
+ * A read of it can still be longer: asked for scrollback rather than the
+ * visible screen, the gateway answers with the rows above the alternate buffer
+ * too -- the shell the program was launched from, still sitting where it was.
+ * Those rows are not this pane's history and not part of its frame; drawn, they
+ * appear above the program's own first line and scroll with it, which is the
+ * defect this exists for.
+ *
+ * The screen's height is the authority, so the frame is its last `screenRows`
+ * rows. Two deliberate non-cases: a read SHORTER than the screen is a frame
+ * caught mid-redraw and is drawn whole rather than padded, and a pane whose
+ * height the gateway never reported (`0`) keeps the read intact, which is
+ * exactly what every such pane did before this existed.
+ */
+export function altScreenFrame(output: string, screenRows: number): string {
+  if (screenRows <= 0) return output;
+  const rows = terminalLines(output);
+  if (rows.length <= screenRows) return output;
+  return rows.slice(rows.length - screenRows).join('\n');
+}
+
+/**
  * Fold an SSE inline frame. {@link foldPaneRead} with the source it can only
  * ever have; kept as its own name because that is what the stream handler has.
  */
@@ -426,9 +498,10 @@ export function applyTerminalFrame(
   currentOutput: string,
   latestOutput: string,
   maximumLines: number,
-  ownsScreen = false
+  ownsScreen = false,
+  screenRows = 0
 ): string {
-  return foldPaneRead(currentOutput, latestOutput, 'frame', maximumLines, ownsScreen);
+  return foldPaneRead(currentOutput, latestOutput, 'frame', maximumLines, ownsScreen, screenRows);
 }
 
 /**
@@ -491,18 +564,20 @@ function staleRead(held: string[], incoming: string[]): boolean {
  */
 function deepeningSeam(held: string[], incoming: string[]): boolean {
   if (incoming.length <= held.length) return false;
-  const probe = held.slice(0, Math.min(held.length, incoming.length));
-  for (let offset = 1; offset + held.length <= incoming.length; offset += 1) {
+  // The window's tail is furniture, not transcript, and the deeper read redrew
+  // it. Everything above that has to agree verbatim; the box at the bottom is
+  // allowed to have moved on -- see {@link DEEPENING_FURNITURE_ROWS}, and the
+  // defect it exists for.
+  const slack = Math.min(DEEPENING_FURNITURE_ROWS, Math.max(0, held.length - SCREEN_ANCHOR_ROWS));
+  const needed = held.length - slack;
+  for (let offset = 1; offset + needed <= incoming.length; offset += 1) {
     let carried = 0;
-    let agreed = true;
-    for (let row = 0; row < probe.length; row += 1) {
-      if (incoming[offset + row] !== probe[row]) {
-        agreed = false;
-        break;
-      }
-      if (probe[row].trim() !== '') carried += 1;
+    let row = 0;
+    for (; row < held.length && offset + row < incoming.length; row += 1) {
+      if (incoming[offset + row] !== held[row]) break;
+      if (held[row].trim() !== '') carried += 1;
     }
-    if (agreed && carried >= SCREEN_ANCHOR_ROWS) return true;
+    if (row >= needed && carried >= SCREEN_ANCHOR_ROWS) return true;
   }
   return false;
 }
@@ -699,6 +774,35 @@ function anchoredPlacement(held: string[], incoming: string[]): number {
 }
 
 /** How much of the read the window already ends with, exactly. */
+/**
+ * Whether the incoming read still carries history the window is holding.
+ *
+ * A foothold, not a placement: {@link SCREEN_ANCHOR_ROWS} rows of the window
+ * carrying text, consecutive in the window, all present somewhere in the read.
+ * That is enough to say the read is a re-send of ground the window already
+ * covers rather than the next thing the pane printed, which is the only
+ * question its caller asks.
+ *
+ * Deliberately weaker than {@link deepeningSeam}, which has to prove the read
+ * is a superset before it may drop rows. Nothing is dropped on the strength of
+ * this one -- it only ever declines to append -- so a foothold is the right
+ * price.
+ */
+function sharesHistory(held: string[], incoming: string[]): boolean {
+  const present = new Set(incoming);
+  let run = 0;
+  for (const row of held) {
+    if (row.trim() === '') continue;
+    if (!present.has(row)) {
+      run = 0;
+      continue;
+    }
+    run += 1;
+    if (run >= SCREEN_ANCHOR_ROWS) return true;
+  }
+  return false;
+}
+
 function alreadyHeld(held: string[], incoming: string[]): number {
   const widest = Math.min(held.length, incoming.length);
   for (let count = widest; count >= 1; count -= 1) {

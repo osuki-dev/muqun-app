@@ -189,6 +189,32 @@ export function rememberPaneWindow(
 }
 
 /**
+ * Store a window fetched to warm a pane nobody has asked for yet.
+ *
+ * {@link rememberPaneWindow} with the one rule a warm-up has and a real read
+ * does not: it may not make what is held shallower. A warm-up is always the
+ * first page, and it exists to remove a blank -- so behind a window the reader
+ * has already paged deeper there is no blank to remove, and writing over it
+ * would undo their paging in a way nothing on screen explains. That was the
+ * defect: page a pane five pages back, leave it, come back, and it was at one
+ * page again.
+ *
+ * The depth held is only a reason to refuse when it is depth in *this* reading
+ * of the pane; a window of another shape is a different picture, not a deeper
+ * one, and does not stand in the way.
+ */
+export function warmPaneWindow(
+  cache: PaneCache,
+  paneId: string,
+  window: PaneWindow,
+  bounds: PaneCacheBounds = PANE_CACHE_BOUNDS
+): PaneCache {
+  const held = cache.entries.find((entry) => entry.paneId === paneId);
+  if (held && held.shape === window.shape && held.lineLimit > window.lineLimit) return cache;
+  return rememberPaneWindow(cache, paneId, window, bounds);
+}
+
+/**
  * What is remembered of this pane, or `null`.
  *
  * Deliberately does not reorder: recall happens during the render that paints
