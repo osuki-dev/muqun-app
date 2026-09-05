@@ -22,10 +22,12 @@ import {
   panePrefetchTargets,
   paneReadIsCurrent,
   paneWindowIsCurrent,
+  paneWindowWorthFiling,
   recallPaneWindow,
   rememberPaneWindow,
   retainPanes,
 } from '../pane-cache';
+import { foldPaneRead } from '../../terminal/history';
 
 /** The shape every window in these tests is of, unless one is being contrasted with another. */
 const ANSI = 'ansi:recent-unwrapped';
@@ -94,6 +96,91 @@ describe('remembering and recalling', () => {
     cache = rememberPaneWindow(cache, 'p2', windowOf('b'));
     recallPaneWindow(cache, 'p1', ANSI);
     expect(paneIdsOf(cache)).toEqual(['p2', 'p1']);
+  });
+});
+
+// A pane is left twice when a program takes the screen: once on the way into
+// the alternate screen and once on the way out, with the same pane id on both
+// sides. The cache holds one window per pane, so what is filed on the way out
+// decides whether the scrollback filed on the way in is still there to hand
+// back. Filing the program's last frame was the blank after `less` quit.
+describe('leaving the alternate screen', () => {
+  const MAIN = `${ANSI}:main`;
+  const ALT = `${ANSI}:alt`;
+  const rows = (from: number, to: number) =>
+    Array.from({ length: to - from }, (_, index) => String(from + index)).join('\n');
+
+  /** The switch block's rule, driven the way the workspace drives it. */
+  function turn(
+    cache: ReturnType<typeof rememberPaneWindow>,
+    leaving: string,
+    arriving: string,
+    held: PaneWindow
+  ) {
+    return paneWindowWorthFiling(leaving, arriving, held.shape.endsWith(':alt'))
+      ? rememberPaneWindow(cache, leaving, held)
+      : cache;
+  }
+
+  test('the scrollback filed on the way in comes back whole on the way out', () => {
+    const scrollback = windowOf(rows(0, 480), 3, {
+      shape: MAIN,
+      lineLimit: 480,
+      canLoadEarlier: true,
+      earlierRows: 480,
+      lastRead: { start: 100, end: 580 },
+    });
+    // In: the shell's window is filed under the same pane id.
+    let cache = turn(emptyPaneCache, 'p1', 'p1', scrollback);
+    expect(recallPaneWindow(cache, 'p1', ALT)).toBeNull();
+    // Out: the program's last frame is not, so the scrollback is still there.
+    const frame = windowOf('~\n~\n:q', 9, { shape: ALT, lineLimit: 240, earlierRows: 3 });
+    cache = turn(cache, 'p1', 'p1', frame);
+    expect(cache.entries).toHaveLength(1);
+    expect(recallPaneWindow(cache, 'p1', MAIN)).toEqual(scrollback);
+  });
+
+  test('the way in still files the scrollback, whatever the pane held before', () => {
+    const cache = turn(emptyPaneCache, 'p1', 'p1', windowOf('$ less notes', 1, { shape: MAIN }));
+    expect(recallPaneWindow(cache, 'p1', MAIN)?.output).toBe('$ less notes');
+  });
+
+  // The #33 hit: leave an editor pane for another pane and come back to it
+  // still running, and its frame is painted from the cache.
+  test('a real switch away from an editor pane still files its frame', () => {
+    let cache = turn(emptyPaneCache, 'p1', 'p1', windowOf('$ nvim', 1, { shape: MAIN }));
+    const frame = windowOf('~\n~\n-- INSERT --', 4, { shape: ALT });
+    cache = turn(cache, 'p1', 'p2', frame);
+    expect(recallPaneWindow(cache, 'p1', ALT)).toEqual(frame);
+    expect(recallPaneWindow(cache, 'p1', MAIN)).toBeNull();
+  });
+
+  // What the refresh that follows the restore does with rows the shell printed
+  // while the program had the screen. The window comes back exactly as it was
+  // filed, and the fold is the same one door -- so the tail is stitched when
+  // the read reaches back into the window, and goes on top when it does not.
+  test('rows printed behind the program are folded on top of the restored window, once', () => {
+    const scrollback = windowOf(rows(0, 480), 3, { shape: MAIN, lineLimit: 480 });
+    let cache = turn(emptyPaneCache, 'p1', 'p1', scrollback);
+    cache = turn(cache, 'p1', 'p1', windowOf('~\n:q', 5, { shape: ALT }));
+    const restored = recallPaneWindow(cache, 'p1', MAIN);
+    expect(restored).not.toBeNull();
+
+    // More than a page (240) printed, and the refresh at the restored depth
+    // still reaches back into what the window holds.
+    const stitched = foldPaneRead(restored!.output, rows(300, 780), 'refresh', restored!.lineLimit);
+    expect(stitched).toBe(rows(300, 780));
+
+    // So much printed that the refresh shares nothing with the window: it is
+    // the newest thing there is and goes on top, bounded to the depth held.
+    const outran = foldPaneRead(restored!.output, rows(600, 1080), 'refresh', restored!.lineLimit);
+    expect(outran).toBe(rows(600, 1080));
+
+    for (const window of [stitched, outran]) {
+      const numbers = window.split('\n').map(Number);
+      expect(new Set(numbers).size).toBe(numbers.length);
+      expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
+    }
   });
 });
 
