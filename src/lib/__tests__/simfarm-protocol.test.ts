@@ -13,10 +13,13 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   decodeSimfarmFrame,
+  encodeSimfarmBoot,
   encodeSimfarmButton,
   encodeSimfarmControl,
   encodeSimfarmText,
   encodeSimfarmTouch,
+  readSimfarmControlReply,
+  SIMFARM_BOOT_TIMEOUT_MS,
   SIMFARM_CHANNEL,
   SIMFARM_TOUCH_PHASE,
   SIMFARM_VIDEO_TAG,
@@ -108,6 +111,57 @@ describe('encodeSimfarmControl', () => {
       deviceId: 'ios:x',
       codec: 'jpeg',
     });
+  });
+});
+
+describe('encodeSimfarmBoot', () => {
+  test('is the provider-level op from PROTOCOL.md: a device, not a stream', () => {
+    const frame = encodeSimfarmBoot({ id: 9, deviceId: 'ios:abc' });
+    expect(frame[0]).toBe(SIMFARM_CHANNEL.CONTROL);
+    expect(JSON.parse(Buffer.from(frame.subarray(1)).toString('utf8'))).toEqual({
+      id: 9,
+      op: 'boot',
+      deviceId: 'ios:abc',
+    });
+  });
+
+  test('waits as long as the server does', () => {
+    // simfarm's iOS provider gives `simctl bootstatus` 180s before it answers
+    // `ok:false`. A shorter client deadline abandons a boot the server is
+    // about to finish; a longer one outlives a server that stopped answering.
+    expect(SIMFARM_BOOT_TIMEOUT_MS).toBe(180_000);
+  });
+});
+
+describe('readSimfarmControlReply', () => {
+  test('sorts an answer into ok and not, keeping the id and the body', () => {
+    expect(readSimfarmControlReply({ id: 3, ok: true, result: { ok: true } })).toEqual({
+      id: 3,
+      ok: true,
+      body: { id: 3, ok: true, result: { ok: true } },
+    });
+    expect(readSimfarmControlReply({ id: 3, ok: false, error: 'no such device' })).toEqual({
+      id: 3,
+      ok: false,
+      error: 'no such device',
+    });
+  });
+
+  test('a failure with no words still has a sentence, and a missing ok is not a success', () => {
+    expect(readSimfarmControlReply({ id: 1, ok: false })).toEqual({
+      id: 1,
+      ok: false,
+      error: 'failed',
+    });
+    expect(readSimfarmControlReply({ id: 1, ok: false, error: '' })).toMatchObject({
+      error: 'failed',
+    });
+    expect(readSimfarmControlReply({ id: 1, result: {} })).toMatchObject({ ok: false });
+  });
+
+  test('an answer with no id answers nothing', () => {
+    expect(readSimfarmControlReply({ ok: true })).toBeNull();
+    expect(readSimfarmControlReply({ id: '4', ok: true })).toBeNull();
   });
 });
 

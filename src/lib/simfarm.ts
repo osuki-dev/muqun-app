@@ -172,6 +172,15 @@ export interface SimfarmCapabilities {
   video: string[];
   text: boolean;
   buttons: string[];
+  /**
+   * Whether the provider can start this device when it is not running.
+   *
+   * `simctl` can boot an iOS simulator and WeChat's IDE can reopen a project,
+   * but `adb` cannot start an AVD, so this is declared per device and the
+   * picker offers to start only what says it can be started -- the reference
+   * client draws no start button otherwise, and the same rule holds here.
+   */
+  boot: boolean;
 }
 
 /** The size of the picture, already rotated upright. Pixels, not points. */
@@ -277,6 +286,7 @@ function parseCapabilities(value: unknown): SimfarmCapabilities {
     video: stringList(record.video),
     text: record.text === true,
     buttons: stringList(record.buttons),
+    boot: record.boot === true,
   };
 }
 

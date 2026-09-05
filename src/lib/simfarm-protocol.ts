@@ -132,6 +132,48 @@ export function encodeSimfarmControl(request: SimfarmControlRequest): Uint8Array
 }
 
 /**
+ * `{"id", "op":"boot", "deviceId"}` -- start a device that is not running.
+ *
+ * A provider-level op, so it names a device and not a stream: there is nothing
+ * to attach to until it has come up. The answer is `{ok:true, result}` once the
+ * device is booted -- on iOS the server waits on `simctl bootstatus` for it,
+ * which on a cold simulator is tens of seconds -- or `{ok:false, error}` when
+ * the provider cannot start devices at all (`adb` cannot start an AVD) or the
+ * boot itself failed. The refreshed device list follows as a `devices` event.
+ */
+export function encodeSimfarmBoot(input: { id: number; deviceId: string }): Uint8Array {
+  return encodeSimfarmControl({ id: input.id, op: 'boot', deviceId: input.deviceId });
+}
+
+/** How long a boot may take before the client stops waiting; see `encodeSimfarmBoot`. */
+export const SIMFARM_BOOT_TIMEOUT_MS = 180_000;
+
+/**
+ * A CONTROL answer, sorted into the two shapes PROTOCOL.md promises.
+ *
+ * Every answer carries the request's `id` and an `ok`; on failure `error` is a
+ * sentence for a person. `ok` is read strictly -- an answer that merely lacks a
+ * `false` is not a success, because a body with no `ok` at all is one this
+ * client cannot vouch for -- and a missing `error` still becomes a string, so
+ * nothing downstream has to defend against showing `undefined` on a screen.
+ */
+export type SimfarmControlReply =
+  | { id: number; ok: true; body: Record<string, unknown> }
+  | { id: number; ok: false; error: string };
+
+export function readSimfarmControlReply(body: Record<string, unknown>): SimfarmControlReply | null {
+  const id = body.id;
+  if (typeof id !== 'number') return null;
+  if (body.ok === true) return { id, ok: true, body };
+  const error = body.error;
+  return {
+    id,
+    ok: false,
+    error: typeof error === 'string' && error !== '' ? error : 'failed',
+  };
+}
+
+/**
  * `[0x02][streamId][0x10][phase][f32 x][f32 y][u16 seq][edge]`.
  *
  * `seq` only has to increase within one gesture and may wrap; the server uses
