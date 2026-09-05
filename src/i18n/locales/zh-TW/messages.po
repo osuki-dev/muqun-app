@@ -121,6 +121,10 @@ msgstr "任何裝有 sshd 的機器上的 shell"
 msgid "A simulator can be driven and not only watched, so a preview is offered only over Tailscale or HTTPS. Pair this machine at its tailnet address, or serve its gateway over HTTPS, and the preview appears on its own."
 msgstr "模擬器不只是看，還能操作，因此預覽只在 Tailscale 或 HTTPS 連線上提供。用這台機器的 tailnet 位址配對，或讓它的 Gateway 走 HTTPS，預覽就會自己出現。"
 
+#: src/components/simfarm-stage.tsx
+msgid "A simulator that was shut down can take a minute to come up."
+msgstr "已關機的模擬器可能需要一分鐘才能啟動。"
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "關於"
@@ -529,6 +533,7 @@ msgstr "已連線至 {address}"
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "連線中"
 
@@ -1594,6 +1599,10 @@ msgstr "尚未配對任何伺服器"
 msgid "No simulator on port {port}"
 msgstr "連接埠 {port} 上沒有模擬器"
 
+#: src/components/simfarm-stage.tsx
+msgid "No simulators on that machine."
+msgstr "那台電腦上沒有模擬器。"
+
 #: src/app/explore.tsx
 msgid "No SSH hosts saved yet."
 msgstr "尚未儲存任何 SSH 主機。"
@@ -1646,10 +1655,6 @@ msgstr "連接埠 {port} 沒有回應。可能沒有服務在監聽，或它只�
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "這裡還是空的。工作階段寫出的檔案會自動出現。"
-
-#: src/components/simfarm-stage.tsx
-msgid "Nothing is booted on that machine."
-msgstr "那台機器上沒有執行中的模擬器。"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2472,12 +2477,17 @@ msgstr "啟動一個代理程式，並交代它第一件要做的事。"
 msgid "Start task"
 msgstr "開始任務"
 
+#: src/components/simfarm-stage.tsx
+msgid "Starting {name}"
+msgstr "正在啟動 {name}"
+
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
 msgid "Starting the camera"
 msgstr "正在啟動相機"
 
 #: src/components/new-task-sheet.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Starting…"
 msgstr "開始中…"
 
@@ -2594,6 +2604,10 @@ msgstr "這是內建的示範 Shell，也是這裡唯一的主機。新增你自
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "那個 shell 就是你熟悉的終端機：同樣的鍵盤、同樣的按鍵列、同樣的配色，想打字時也能用手機自己的輸入法。"
 
+#: src/components/simfarm-stage.tsx
+msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."
+msgstr "無法從這裡啟動該模擬器。請在那台電腦上啟動它，它就會出現在清單中。"
+
 #: src/components/settings-servers.tsx
 msgid "The address is where this paired server is reached. Changing it does not unpair the device."
 msgstr "位址是連上這台已配對伺服器的地方。變更位址不會解除裝置的配對。"
@@ -2662,6 +2676,18 @@ msgstr "這台伺服器仍保留在裝置上。請確認它的 Gateway 正在執
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
 msgstr "Shell 已結束。"
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shown."
+msgstr "無法顯示模擬器。"
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator could not be started."
+msgstr "無法啟動模擬器。"
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not come up in time."
+msgstr "模擬器未能及時啟動。"
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."

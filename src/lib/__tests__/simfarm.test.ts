@@ -100,7 +100,7 @@ describe('simfarmDeviceKind', () => {
  * become "cannot", or an older or newer simfarm gets a text field and a row of
  * hardware keys that silently do nothing.
  */
-const EMPTY_CAPABILITIES = { video: [], text: false, buttons: [] };
+const EMPTY_CAPABILITIES = { video: [], text: false, buttons: [], boot: false };
 
 describe('parseSimfarmDevices', () => {
   test('reads the shape the server actually sends', () => {
@@ -118,7 +118,12 @@ describe('parseSimfarmDevices', () => {
           screen: { width: 750, height: 1334, scale: 2 },
           capabilities: { video: ['jpeg'], text: true, buttons: ['home', 'lock'] },
         },
-        { id: 'ios:00000000-0000-4000-8000-000000000000', name: 'iPhone 17 Pro (iOS 26.5)' },
+        {
+          id: 'ios:00000000-0000-4000-8000-000000000000',
+          name: 'iPhone 17 Pro (iOS 26.5)',
+          state: 'shutdown',
+          capabilities: { boot: true },
+        },
         { id: 'wechat:wx0000000000000000', name: 'Example mini program (WeChat)' },
       ],
     };
@@ -129,7 +134,7 @@ describe('parseSimfarmDevices', () => {
         kind: 'mock',
         booted: true,
         screen: { width: 750, height: 1334, scale: 2 },
-        capabilities: { video: ['jpeg'], text: true, buttons: ['home', 'lock'] },
+        capabilities: { video: ['jpeg'], text: true, buttons: ['home', 'lock'], boot: false },
       },
       {
         id: 'ios:00000000-0000-4000-8000-000000000000',
@@ -137,7 +142,9 @@ describe('parseSimfarmDevices', () => {
         kind: 'ios',
         booted: false,
         screen: undefined,
-        capabilities: EMPTY_CAPABILITIES,
+        // A device that is shut down still says whether it can be started,
+        // and that is the one capability the picker reads before it is booted.
+        capabilities: { ...EMPTY_CAPABILITIES, boot: true },
       },
       {
         id: 'wechat:wx0000000000000000',
