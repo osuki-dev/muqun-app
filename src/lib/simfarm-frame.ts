@@ -77,6 +77,51 @@ export const SIMFARM_MAX_ZOOM = 4;
  */
 export const SIMFARM_EDGE_BAND = 0.05;
 
+/** The band on each axis, as fractions of the picture's width and height. */
+export interface SimfarmEdgeBands {
+  x: number;
+  y: number;
+}
+
+/**
+ * How far in from the sides a gesture may start and still be the device's
+ * edge gesture, in the viewer's own points, on a viewer that has edge
+ * gestures of its own.
+ *
+ * Android takes the outermost strip of the screen for its back gesture --
+ * 24dp by default, more when the reader has widened it in Settings -- and a
+ * touch that starts there never reaches the app. Measured on the emulator:
+ * with the system bars hidden, the strip's swipe reveals them instead of
+ * going back, and either way the picture sees nothing. So on Android the
+ * device's left and right edge bands begin where the system's strip ends
+ * and reach this far in, so that a swipe "a little inside the edge" is still
+ * sent with the edge byte and the simulator still treats it as one -- iOS's
+ * HID edge hint is what makes that work, not the exact x. The top and bottom
+ * keep the 5% band: the system owns nothing there once the bars are hidden.
+ */
+export const SIMFARM_ANDROID_EDGE_REACH = 40;
+
+/**
+ * The bands for a viewer, given what it is and how wide the picture is drawn.
+ *
+ * iOS viewers keep the one fraction on both axes. Android viewers get a
+ * horizontal band wide enough to clear the system's back-gesture strip; it is
+ * never narrower than the fraction, so a wide picture on a Pad-sized screen
+ * does not end up with an edge thinner than a finger.
+ */
+export function simfarmEdgeBands(
+  platform: 'android' | 'ios' | (string & {}),
+  pictureWidth: number
+): SimfarmEdgeBands {
+  if (platform !== 'android' || !(pictureWidth > 0)) {
+    return { x: SIMFARM_EDGE_BAND, y: SIMFARM_EDGE_BAND };
+  }
+  return {
+    x: Math.max(SIMFARM_EDGE_BAND, SIMFARM_ANDROID_EDGE_REACH / pictureWidth),
+    y: SIMFARM_EDGE_BAND,
+  };
+}
+
 /**
  * The scale at which the picture fills the surface: width in portrait, height
  * in landscape. See the note above for why it is not `min` of the two.
@@ -148,6 +193,31 @@ export function placeSimfarmFrame(
  * ending it at the edge keeps it a gesture instead of dropping the finish and
  * leaving the device holding a touch that never lifted.
  */
+/**
+ * Where an untouched picture rests: centred, unless it is taller than the
+ * viewport, in which case it starts at the top of it.
+ *
+ * `placeSimfarmFrame` centres, and centring a phone that hangs over both ends
+ * puts its top half-an-overflow above the viewport. On a sheet that was fine.
+ * Full screen, the viewport starts under the camera cutout, and a picture
+ * that began above it had its status bar behind the Dynamic Island -- so the
+ * overflow is hung off the bottom instead, where the key row is anyway, and
+ * the two-finger drag reveals it. The horizontal is always centred: the fit
+ * rule fills the width, so there is nothing to hang until the reader zooms.
+ *
+ * The answer is an offset in `clampSimfarmOffset`'s terms, so it is exactly
+ * the value the pan would have reached by dragging to the top, and the clamp
+ * can never disagree with it.
+ */
+export function simfarmRestingOffset(
+  frame: SimfarmSize,
+  viewport: SimfarmSize,
+  zoom = 1
+): SimfarmPoint {
+  const scale = simfarmFitScale(frame, viewport) * clamp(zoom, SIMFARM_MIN_ZOOM, SIMFARM_MAX_ZOOM);
+  return { x: 0, y: Math.max(0, (frame.height * scale - viewport.height) / 2) };
+}
+
 export function simfarmNormalizedPoint(
   point: SimfarmPoint,
   placement: SimfarmPlacement
@@ -167,18 +237,25 @@ export function simfarmNormalizedPoint(
  * later. Corners resolve to the nearer edge rather than to two, because the
  * wire has one byte for it and a device has one gesture for it.
  */
-export function simfarmEdgeAt(point: SimfarmPoint, band = SIMFARM_EDGE_BAND): SimfarmEdge {
-  const distances: [SimfarmEdge, number][] = [
-    ['top', point.y],
-    ['bottom', 1 - point.y],
-    ['left', point.x],
-    ['right', 1 - point.x],
+export function simfarmEdgeAt(
+  point: SimfarmPoint,
+  band: number | SimfarmEdgeBands = SIMFARM_EDGE_BAND
+): SimfarmEdge {
+  const bands = typeof band === 'number' ? { x: band, y: band } : band;
+  // Each distance measured against its own band, so the nearer edge wins by
+  // how deep into its band the point is rather than by raw distance -- a
+  // wide side band must not steal a corner from a thin top one.
+  const depths: [SimfarmEdge, number][] = [
+    ['top', point.y / bands.y],
+    ['bottom', (1 - point.y) / bands.y],
+    ['left', point.x / bands.x],
+    ['right', (1 - point.x) / bands.x],
   ];
   let nearest: SimfarmEdge = 'none';
-  let best = band;
-  for (const [edge, distance] of distances) {
-    if (distance <= best) {
-      best = distance;
+  let best = 1;
+  for (const [edge, depth] of depths) {
+    if (depth <= best) {
+      best = depth;
       nearest = edge;
     }
   }

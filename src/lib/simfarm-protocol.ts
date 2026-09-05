@@ -149,6 +149,31 @@ export function encodeSimfarmBoot(input: { id: number; deviceId: string }): Uint
 export const SIMFARM_BOOT_TIMEOUT_MS = 180_000;
 
 /**
+ * `{"id", "op":"shutdown", "deviceId"}` -- the other half of `boot`.
+ *
+ * The same provider-level shape: a device, not a stream, because the stream
+ * is exactly what stops existing. The server answers `{ok:true, result}` once
+ * the provider has done its part -- `simctl shutdown` on iOS, `reboot -p` over
+ * adb, the IDE closing the project for WeChat -- and `{ok:false, error}` when
+ * the provider has no control op at all (the mock) or the shutdown failed.
+ * As with `boot`, the answer is not the moment the device is off: the list
+ * saying so is, and it follows as a `devices` event.
+ */
+export function encodeSimfarmShutdown(input: { id: number; deviceId: string }): Uint8Array {
+  return encodeSimfarmControl({ id: input.id, op: 'shutdown', deviceId: input.deviceId });
+}
+
+/**
+ * How long a shutdown may take before the client stops waiting.
+ *
+ * A third of the boot deadline: a simulator that is being shut down has
+ * nothing to load, and `simctl shutdown` on a healthy one is seconds, not a
+ * minute. Long enough for an Android emulator's `reboot -p` and the poll that
+ * notices it has gone.
+ */
+export const SIMFARM_SHUTDOWN_TIMEOUT_MS = 60_000;
+
+/**
  * A CONTROL answer, sorted into the two shapes PROTOCOL.md promises.
  *
  * Every answer carries the request's `id` and an `ok`; on failure `error` is a

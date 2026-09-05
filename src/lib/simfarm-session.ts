@@ -20,6 +20,10 @@
  * attaches when the list shows the device booted rather than trusting the reply
  * on its own. This does the same, and takes whichever of the two arrives first.
  *
+ * `shutdown` is the same op the other way round and is treated the same way:
+ * answered when the provider has done its part, over when the list no longer
+ * shows the device running, and a row in the picker says so in between.
+ *
  * ## The deadline
  *
  * A cold simulator takes tens of seconds, and the server's own patience is 180s
@@ -41,16 +45,18 @@ import {
   simfarmCanStream,
   type SimfarmDevice,
 } from '@/lib/simfarm';
-import { simfarmEdgeAt } from '@/lib/simfarm-frame';
+import { simfarmEdgeAt, type SimfarmEdgeBands } from '@/lib/simfarm-frame';
 import {
   decodeSimfarmFrame,
   encodeSimfarmBoot,
   encodeSimfarmButton,
   encodeSimfarmControl,
+  encodeSimfarmShutdown,
   encodeSimfarmText,
   encodeSimfarmTouch,
   readSimfarmControlReply,
   SIMFARM_BOOT_TIMEOUT_MS,
+  SIMFARM_SHUTDOWN_TIMEOUT_MS,
   SIMFARM_TOUCH_PHASE,
   SIMFARM_VIDEO_TAG,
   type SimfarmButton,
@@ -96,7 +102,13 @@ export interface SimfarmStreamScreen {
  * generic "could not start" would throw away the only useful part.
  */
 export interface SimfarmStreamError {
-  kind: 'boot-unsupported' | 'boot-failed' | 'boot-timeout' | 'attach-failed';
+  kind:
+    | 'boot-unsupported'
+    | 'boot-failed'
+    | 'boot-timeout'
+    | 'attach-failed'
+    | 'shutdown-failed'
+    | 'shutdown-timeout';
   detail: string | null;
 }
 
@@ -109,6 +121,15 @@ export interface SimfarmSessionState {
   device: SimfarmDevice | null;
   screen: SimfarmStreamScreen | null;
   error: SimfarmStreamError | null;
+  /**
+   * The device a shutdown is in flight for, until the list says it is off.
+   *
+   * Beside `status` rather than a value of it, because it is not about the
+   * stream: the device being shut down is usually not the one on screen, and a
+   * picture that stays live while a row in the picker says "Shutting down"
+   * is the common case, not an edge.
+   */
+  stopping: string | null;
 }
 
 /** The half of a WebSocket this needs: whether it is open, and a way to send. */
@@ -135,6 +156,7 @@ export function initialSimfarmSessionState(seed: SimfarmDevice[]): SimfarmSessio
     device: null,
     screen: null,
     error: null,
+    stopping: null,
   };
 }
 
@@ -158,6 +180,18 @@ export class SimfarmSession {
    * is not the moment the device is usable; the list saying `booted` is.
    */
   private booting: { deviceId: string; requestId: number | null; cancel: () => void } | null = null;
+  /** The shutdown in flight, kept for the reason `booting` outlives its reply. */
+  private stopping: { deviceId: string; requestId: number | null; cancel: () => void } | null =
+    null;
+  /**
+   * Whether the first list may pick a device on the reader's behalf.
+   *
+   * True until the reader has said anything. Attaching to the one running
+   * device on arrival is a courtesy for the common case; doing it again after
+   * the reader has just shut a device down would be the app choosing the next
+   * one for them, which is the opposite of what a Shut down press meant.
+   */
+  private autoAttach = true;
   private seq = 0;
   /**
    * The edge the gesture in flight began at, decided at `begin` and repeated
@@ -169,6 +203,7 @@ export class SimfarmSession {
   private readonly onFrame: (payload: Uint8Array | null) => void;
   private readonly schedule: SimfarmSchedule;
   private readonly bootTimeoutMs: number;
+  private readonly shutdownTimeoutMs: number;
 
   constructor(options: {
     /** What the probe already found, so the picker has a list before the socket has said anything. */
@@ -177,11 +212,13 @@ export class SimfarmSession {
     onFrame: (payload: Uint8Array | null) => void;
     schedule?: SimfarmSchedule;
     bootTimeoutMs?: number;
+    shutdownTimeoutMs?: number;
   }) {
     this.state = initialSimfarmSessionState(options.seed);
     this.onFrame = options.onFrame;
     this.schedule = options.schedule ?? scheduleWithTimers;
     this.bootTimeoutMs = options.bootTimeoutMs ?? SIMFARM_BOOT_TIMEOUT_MS;
+    this.shutdownTimeoutMs = options.shutdownTimeoutMs ?? SIMFARM_SHUTDOWN_TIMEOUT_MS;
   }
 
   getState(): SimfarmSessionState {
@@ -213,7 +250,8 @@ export class SimfarmSession {
   /** The transport closed or failed underneath the session. */
   dropped(): void {
     this.cancelBoot();
-    this.update({ status: 'lost' });
+    this.cancelStop();
+    this.update({ status: 'lost', stopping: null });
   }
 
   /** One binary message off the transport. */
@@ -241,7 +279,9 @@ export class SimfarmSession {
     const reply = readSimfarmControlReply(frame.body);
     if (reply === null) return;
     if (this.booting !== null && this.booting.requestId === reply.id) this.onBootReply(reply);
-    else if (this.pendingAttach !== null && this.pendingAttach.id === reply.id) {
+    else if (this.stopping !== null && this.stopping.requestId === reply.id) {
+      this.onShutdownReply(reply);
+    } else if (this.pendingAttach !== null && this.pendingAttach.id === reply.id) {
       this.onAttachReply(reply);
     }
   }
@@ -254,6 +294,7 @@ export class SimfarmSession {
    */
   release(): void {
     this.cancelBoot();
+    this.cancelStop();
     const live = this.transport;
     if (live !== null) {
       const held = this.streamId;
@@ -279,9 +320,52 @@ export class SimfarmSession {
    * attached directly and the server says if it cannot be.
    */
   select(deviceId: string): void {
+    this.autoAttach = false;
+    // Asking for the device that is being shut down is a change of mind, and
+    // the shutdown that is answered afterwards belongs to nobody.
+    if (this.stopping?.deviceId === deviceId) {
+      this.cancelStop();
+      this.update({ stopping: null });
+    }
     const listed = this.state.devices.find((entry) => entry.id === deviceId);
     if (listed !== undefined && !listed.booted) this.boot(deviceId);
     else this.attach(deviceId);
+  }
+
+  /**
+   * Turn a device off, detaching from it first if it is the one on screen.
+   *
+   * The mirror of `boot`, and treated the same way: the request is answered
+   * when the provider has done its part, but the device is off when the list
+   * says so, and the row in the picker says "shutting down" until then. A
+   * shutdown of the attached device leaves the stage in the picker rather
+   * than on the next running device -- see `autoAttach`.
+   *
+   * There is no capability to check first, because simfarm declares none for
+   * this: `boot` is per device because adb cannot start an AVD, but every
+   * provider with a control op can stop one, so the refusal that is left --
+   * the mock provider, which has no control op at all -- is the server's to
+   * give, and it is kept in `detail`.
+   */
+  shutdown(deviceId: string): void {
+    this.autoAttach = false;
+    this.cancelStop();
+    const patch: Partial<SimfarmSessionState> = { stopping: deviceId, error: null };
+    if (this.state.wanted === deviceId) {
+      // Whether it is attached, attaching or still booting, the reader no
+      // longer wants it: let go of the stream, and of the wait for one.
+      this.cancelBoot();
+      this.dropStream();
+      Object.assign(patch, { wanted: null, device: null, screen: null, status: 'picking' });
+    }
+    this.update(patch);
+    const id = this.nextId++;
+    this.stopping = {
+      deviceId,
+      requestId: id,
+      cancel: this.schedule(() => this.stopTimedOut(deviceId), this.shutdownTimeoutMs),
+    };
+    this.send(encodeSimfarmShutdown({ id, deviceId }));
   }
 
   /** Attach to a device, replacing whatever is attached now. */
@@ -332,11 +416,15 @@ export class SimfarmSession {
     this.send(encodeSimfarmBoot({ id, deviceId }));
   }
 
-  touch(input: { phase: SimfarmTouchPhase; x: number; y: number }): void {
+  /**
+   * `bands` is the viewer's idea of how far in an edge reaches, from
+   * `simfarmEdgeBands`; absent, the protocol's own fraction is used.
+   */
+  touch(input: { phase: SimfarmTouchPhase; x: number; y: number; bands?: SimfarmEdgeBands }): void {
     const id = this.streamId;
     if (id === null) return;
     if (input.phase === SIMFARM_TOUCH_PHASE.BEGIN) {
-      this.edge = simfarmEdgeAt({ x: input.x, y: input.y });
+      this.edge = simfarmEdgeAt({ x: input.x, y: input.y }, input.bands);
     }
     this.send(
       encodeSimfarmTouch({
@@ -370,11 +458,12 @@ export class SimfarmSession {
 
   private onDevices(listed: SimfarmDevice[]): void {
     this.update({ devices: listed });
+    this.settleIfStopped();
     if (this.booting !== null) {
       this.attachIfBooted();
       return;
     }
-    if (this.state.wanted !== null) return;
+    if (!this.autoAttach || this.state.wanted !== null) return;
     const first = listed.find((entry) => entry.booted && simfarmCanStream(entry));
     if (first !== undefined) this.attach(first.id);
     else this.update({ status: 'picking' });
@@ -411,6 +500,40 @@ export class SimfarmSession {
     if (this.booting === null) return;
     this.booting.cancel();
     this.booting = null;
+  }
+
+  private onShutdownReply(reply: SimfarmControlReply): void {
+    if (this.stopping === null) return;
+    if (!reply.ok) {
+      this.cancelStop();
+      this.update({ stopping: null, error: { kind: 'shutdown-failed', detail: reply.error } });
+      return;
+    }
+    // Answered, not finished: as with a boot, the list is what says so.
+    this.stopping.requestId = null;
+    this.settleIfStopped();
+  }
+
+  /** The shutdown is over once the list no longer shows the device running. */
+  private settleIfStopped(): void {
+    const stopping = this.stopping;
+    if (stopping === null) return;
+    const listed = this.state.devices.find((entry) => entry.id === stopping.deviceId);
+    if (listed !== undefined && listed.booted) return;
+    this.cancelStop();
+    this.update({ stopping: null });
+  }
+
+  private stopTimedOut(deviceId: string): void {
+    if (this.stopping === null || this.stopping.deviceId !== deviceId) return;
+    this.stopping = null;
+    this.update({ stopping: null, error: { kind: 'shutdown-timeout', detail: null } });
+  }
+
+  private cancelStop(): void {
+    if (this.stopping === null) return;
+    this.stopping.cancel();
+    this.stopping = null;
   }
 
   private onAttachReply(reply: SimfarmControlReply): void {

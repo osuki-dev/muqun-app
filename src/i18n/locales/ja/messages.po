@@ -1152,6 +1152,10 @@ msgstr "{name} を隠す"
 msgid "Hide keyboard"
 msgstr "キーボードを隠す"
 
+#: src/components/simfarm-stage.tsx
+msgid "Hide the controls"
+msgstr "コントロールを隠す"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "サーバー一覧を隠す"
@@ -2386,6 +2390,10 @@ msgstr "ツールの手順をすべて表示"
 msgid "Show images"
 msgstr "画像を表示"
 
+#: src/components/simfarm-stage.tsx
+msgid "Show the controls"
+msgstr "コントロールを表示"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "エディタ用キーボードを表示"
@@ -2397,6 +2405,15 @@ msgstr "サーバー一覧を表示"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "実行中のものを表示"
+
+#. placeholder {0}: entry.name
+#: src/components/simfarm-stage.tsx
+msgid "Shut down {0}"
+msgstr "{0}をシャットダウン"
+
+#: src/components/simfarm-stage.tsx
+msgid "Shutting down…"
+msgstr "シャットダウン中…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Sign in"
@@ -2682,12 +2699,20 @@ msgid "The simulator could not be shown."
 msgstr "シミュレータを表示できませんでした。"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shut down."
+msgstr "シミュレータをシャットダウンできませんでした。"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be started."
 msgstr "シミュレータを起動できませんでした。"
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator did not come up in time."
 msgstr "シミュレータが時間内に起動しませんでした。"
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not shut down in time."
+msgstr "シミュレータが時間内にシャットダウンしませんでした。"
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."

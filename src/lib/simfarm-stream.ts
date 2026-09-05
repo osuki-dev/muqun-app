@@ -36,6 +36,7 @@ import { Skia, type SkImage } from '@shopify/react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type SimfarmDevice } from '@/lib/simfarm';
+import { type SimfarmEdgeBands } from '@/lib/simfarm-frame';
 import { type SimfarmButton, type SimfarmTouchPhase } from '@/lib/simfarm-protocol';
 import {
   initialSimfarmSessionState,
@@ -49,11 +50,21 @@ export type {
   SimfarmStreamStatus,
 } from '@/lib/simfarm-session';
 
+/** How many decoded frames are kept alive behind the one on screen; see `shown`. */
+const SIMFARM_FRAME_RING = 3;
+
 export interface SimfarmStream extends SimfarmSessionState {
   image: SkImage | null;
   /** Show a device: attach if it is running, start it first if it is not. */
   select: (deviceId: string) => void;
-  touch: (input: { phase: SimfarmTouchPhase; x: number; y: number }) => void;
+  /** Turn a device off, letting go of it first if it is the one on screen. */
+  shutdown: (deviceId: string) => void;
+  touch: (input: {
+    phase: SimfarmTouchPhase;
+    x: number;
+    y: number;
+    bands?: SimfarmEdgeBands;
+  }) => void;
   type: (text: string) => void;
   press: (button: SimfarmButton) => void;
 }
@@ -75,13 +86,26 @@ export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): Sim
    * created in, and it is replaced whenever the socket is.
    */
   const session = useRef<SimfarmSession | null>(null);
-  // Skia images are native memory with a JS handle. Dropping one without
-  // disposing it leaks a whole frame, and at six frames a second that is
-  // visible in minutes rather than hours.
-  const shown = useRef<SkImage | null>(null);
+  /**
+   * The last few frames, newest last, so the one on screen is never freed
+   * from under the renderer.
+   *
+   * Skia images are native memory with a JS handle. Dropping one without
+   * disposing it leaks a whole frame, and at six frames a second that is
+   * visible in minutes rather than hours -- so they are disposed by hand. But
+   * not the moment the next one arrives: the render thread draws what React
+   * last committed, a little after the commit, and on a loaded phone that is
+   * after the frame behind it has already been handed over. Disposing the
+   * previous frame at that point frees the very image being drawn, and the
+   * picture goes blank while the state says `live` -- measured on the
+   * emulator, which is slow enough to show it every time. A ring of
+   * `SIMFARM_FRAME_RING` frames costs a few megabytes and puts the dispose two
+   * frames behind the draw.
+   */
+  const shown = useRef<SkImage[]>([]);
 
   /**
-   * Let go of the frame on screen.
+   * Let go of every frame held.
    *
    * A named callback rather than the body of an unmount effect, because the
    * effect's cleanup may not reach into a ref: by the time a cleanup runs the
@@ -89,15 +113,16 @@ export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): Sim
    * this is meant to free, and going through a stable callback says so.
    */
   const dropImage = useCallback(() => {
-    shown.current?.dispose();
-    shown.current = null;
+    for (const held of shown.current) held.dispose();
+    shown.current = [];
   }, []);
 
   const showImage = useCallback((next: SkImage | null) => {
-    const previous = shown.current;
-    shown.current = next;
     setImage(next);
-    previous?.dispose();
+    if (next === null) return;
+    const ring = shown.current;
+    ring.push(next);
+    while (ring.length > SIMFARM_FRAME_RING) ring.shift()?.dispose();
   }, []);
 
   useEffect(() => {
@@ -159,12 +184,13 @@ export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): Sim
   useEffect(() => dropImage, [dropImage]);
 
   const select = useCallback((deviceId: string) => session.current?.select(deviceId), []);
+  const shutdown = useCallback((deviceId: string) => session.current?.shutdown(deviceId), []);
   const touch = useCallback<SimfarmStream['touch']>((input) => session.current?.touch(input), []);
   const type = useCallback((text: string) => session.current?.type(text), []);
   const press = useCallback((button: SimfarmButton) => session.current?.press(button), []);
 
   return useMemo(
-    () => ({ ...state, image, select, touch, type, press }),
-    [image, press, select, state, touch, type]
+    () => ({ ...state, image, select, shutdown, touch, type, press }),
+    [image, press, select, shutdown, state, touch, type]
   );
 }
