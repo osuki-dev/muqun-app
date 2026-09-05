@@ -113,6 +113,17 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
       marginBottom: 12,
       syntaxColors: syntaxColors(colors),
     },
+    // A formula is the one other block the renderer paints a fill behind, and
+    // without these two it paints its own: a light grey slab under the display
+    // block and a light-page grey for the inline span, in both themes. It sits
+    // on the code-block fill and is inked with the body colour for the same
+    // reason a code block is. Size, padding and alignment stay the renderer's
+    // defaults, which is what the light theme has always shown.
+    math: {
+      color: text,
+      backgroundColor: codeBackground,
+    },
+    inlineMath: { color: text },
     thematicBreak: { color: border, height: StyleSheet.hairlineWidth, marginBottom: 12 },
     table: {
       ...base,
