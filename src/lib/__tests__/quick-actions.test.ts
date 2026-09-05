@@ -23,7 +23,7 @@ describe('quickActionAvailability', () => {
       canStopAgent: true,
       canOpenWebService: true,
       canPreviewSimulator: true,
-      hasActions: true,
+      hasTiles: true,
     });
   });
 
@@ -33,7 +33,7 @@ describe('quickActionAvailability', () => {
     expect(availability.canStartTask).toBe(false);
     expect(availability.canStopAgent).toBe(false);
     expect(availability.canOpenWebService).toBe(false);
-    expect(availability.hasActions).toBe(false);
+    expect(availability.hasTiles).toBe(false);
   });
 
   test('a gateway that cannot spawn keeps New task and Stop off the sheet', () => {
@@ -41,6 +41,8 @@ describe('quickActionAvailability', () => {
     expect(availability.canCreate).toBe(true);
     expect(availability.canStartTask).toBe(false);
     expect(availability.canStopAgent).toBe(false);
+    // Neither of those two is a tile, so the row is unaffected either way.
+    expect(availability.hasTiles).toBe(true);
   });
 
   test('an idle agent is not offered Stop', () => {
@@ -70,7 +72,7 @@ describe('quickActionAvailability', () => {
     });
     expect(availability.canOpenWebService).toBe(false);
     expect(availability.canCreate).toBe(true);
-    expect(availability.hasActions).toBe(true);
+    expect(availability.hasTiles).toBe(true);
   });
 
   test('the web service row survives without a pane, because it is about the machine', () => {
@@ -81,10 +83,10 @@ describe('quickActionAvailability', () => {
     });
     expect(availability.canCreate).toBe(false);
     expect(availability.canOpenWebService).toBe(true);
-    expect(availability.hasActions).toBe(true);
+    expect(availability.hasTiles).toBe(true);
   });
 
-  test('nothing to act on leaves no action block to separate from the list', () => {
+  test('nothing to act on leaves no tile row to separate from the list', () => {
     const availability = quickActionAvailability({
       sessionId: 'session-1',
       paneId: '%3',
@@ -93,7 +95,7 @@ describe('quickActionAvailability', () => {
       webServiceSupported: true,
       manageOnly: false,
     });
-    expect(availability.hasActions).toBe(false);
+    expect(availability.hasTiles).toBe(false);
   });
 });
 
@@ -134,7 +136,7 @@ describe('the simulator preview row', () => {
       manageOnly: true,
     });
     expect(availability.canPreviewSimulator).toBe(false);
-    expect(availability.hasActions).toBe(false);
+    expect(availability.hasTiles).toBe(false);
   });
 });
 
@@ -149,7 +151,7 @@ describe('a gateway reached through an SSH tunnel', () => {
     expect(availability.canPreviewSimulator).toBe(false);
     expect(availability.webServiceBlockedByTunnel).toBe(true);
     // A sheet that would otherwise be empty still opens, to carry the reason.
-    expect(availability.hasActions).toBe(true);
+    expect(availability.hasTiles).toBe(true);
   });
 
   test('an unencrypted gateway is refused without an explanation to give', () => {

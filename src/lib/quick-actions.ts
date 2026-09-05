@@ -6,7 +6,7 @@
  * offer every row. From Settings it arrives holding none of them, because there
  * is no pane to act on -- so it is the shortcut list and nothing else.
  *
- * These five answers used to be five expressions inside the component, each
+ * These answers used to be expressions inside the component, each
  * repeating a piece of the one before it, and the interesting part -- that Stop
  * needs four separate facts to be true at once -- was spread across a boolean
  * chain nothing could test. They are here so that "which rows exist" is a
@@ -62,11 +62,19 @@ export interface QuickActionAvailability {
    */
   canPreviewSimulator: boolean;
   /**
-   * Whether any row above the shortcut list is drawn at all. When nothing is,
-   * the list is the whole sheet and must not be pushed down by the gap that
-   * would have separated it from the rows above.
+   * Whether the tile row is drawn at all.
+   *
+   * Four tiles as of card #841, where there were five full-width rows: New
+   * terminal, New group, Preview a simulator, Open in your browser. New task is
+   * not one of them -- it is the only entry here that asks a question rather
+   * than doing a thing, so it keeps a row of its own under them -- and neither
+   * is Stop, which is a condition of the pane rather than one of the sheet's
+   * standing verbs.
+   *
+   * When nothing is drawn the shortcut list is the whole sheet and must not be
+   * pushed down by the gap that would have separated it from the tiles.
    */
-  hasActions: boolean;
+  hasTiles: boolean;
 }
 
 export function quickActionAvailability(params: QuickActionParams): QuickActionAvailability {
@@ -116,16 +124,13 @@ export function quickActionAvailability(params: QuickActionParams): QuickActionA
     canStopAgent,
     canOpenWebService,
     canPreviewSimulator,
-    // Both machine-scoped rows are counted even though they currently answer
+    // Both machine-scoped tiles are counted even though they currently answer
     // together. This decides whether the shortcut list is pushed down by a gap,
     // so on the day the two gates diverge it has to already know about both --
     // the failure is silent spacing, which nothing would report.
-    hasActions:
-      canCreate ||
-      canStartTask ||
-      canStopAgent ||
-      canOpenWebService ||
-      canPreviewSimulator ||
-      webServiceBlockedByTunnel,
+    //
+    // `canStartTask` and `canStopAgent` are deliberately not counted: neither
+    // draws a tile, and each already carries its own surface below the row.
+    hasTiles: canCreate || canOpenWebService || canPreviewSimulator || webServiceBlockedByTunnel,
   };
 }

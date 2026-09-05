@@ -105,10 +105,6 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
-#: src/app/commands.tsx
-msgid "A dev server or preview running on this machine."
-msgstr "このマシンで動いている開発サーバーやプレビュー。"
-
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "SSH で入れるマシン上の Gateway。自身のループバックだけで待ち受けているものでも構いません。"
@@ -141,10 +137,6 @@ msgstr "このターミナルを操作するか、エージェントにプロン
 msgid "Add a host"
 msgstr "ホストを追加"
 
-#: src/app/commands.tsx
-msgid "Add a terminal beside this one, and go to it."
-msgstr "隣にターミナルを追加して、そこへ移動します。"
-
 #: src/app/explore.tsx
 #: src/components/ssh-host-list.tsx
 msgid "Add an SSH host"
@@ -169,14 +161,6 @@ msgstr "エージェント"
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
 msgstr "エージェントコマンド"
-
-#: src/app/commands.tsx
-msgid "Agent output as plain text. Easier to read, no colour."
-msgstr "エージェントの出力をプレーンテキストで表示します。読みやすくなりますが、色は失われます。"
-
-#: src/i18n/labels.ts
-msgid "Agent output reflowed for reading. Colour is lost."
-msgstr "エージェントの出力を読みやすく折り返します。色は失われます。"
 
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
@@ -321,6 +305,10 @@ msgstr "生体認証"
 #: src/i18n/labels.ts
 msgid "Blocked"
 msgstr "応答待ち"
+
+#: src/app/commands.tsx
+msgid "Browser"
+msgstr "ブラウザー"
 
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
@@ -916,7 +904,6 @@ msgstr "新着情報を閉じる"
 msgid "Docs"
 msgstr "ドキュメント"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -940,10 +927,6 @@ msgstr "次のビルドのリリースノートを下書きします"
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
 msgstr "各デバイスは {0} 用のトークンをそれぞれ保持します。"
-
-#: src/app/commands.tsx
-msgid "Edit"
-msgstr "編集"
 
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
@@ -1112,10 +1095,6 @@ msgstr "生成中…"
 msgid "Git status"
 msgstr "Git ステータス"
 
-#: src/app/commands.tsx
-msgid "Give the whole width back to the terminal."
-msgstr "幅をすべてターミナルに戻します。"
-
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "戻る"
@@ -1243,7 +1222,6 @@ msgstr "その情報を安全なストレージに書き込めませんでした
 msgid "Its paired devices are listed once it is the server in use."
 msgstr "使用中のサーバーになると、ペアリング済みのデバイスが一覧に表示されます。"
 
-#: src/components/agent-markdown-output.tsx
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "最新の出力へ移動"
@@ -1318,7 +1296,6 @@ msgstr "最終確認: {minutes}分前"
 msgid "Last seen just now"
 msgstr "最終確認: たった今"
 
-#: src/components/agent-markdown-output.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
@@ -1917,10 +1894,6 @@ msgstr "クイックアクション"
 msgid "Quit"
 msgstr "終了"
 
-#: src/app/commands.tsx
-msgid "Reached the same way as a browser, so the same tunnel limit applies."
-msgstr "ブラウザーと同じ経路なので、同じトンネルの制約を受けます。"
-
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
 msgstr "SSH ホスト {host} 経由で到達"
@@ -1990,14 +1963,6 @@ msgstr "ターミナルの名前を変更"
 #: src/components/session-map.tsx
 msgid "Rename workspace"
 msgstr "ワークスペース名を変更"
-
-#: src/app/commands.tsx
-msgid "Render as terminal"
-msgstr "ターミナルとして表示"
-
-#: src/app/commands.tsx
-msgid "Render as text"
-msgstr "テキストとして表示"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
@@ -2373,10 +2338,6 @@ msgstr "ツールの手順をすべて表示"
 msgid "Show images"
 msgstr "画像を表示"
 
-#: src/app/commands.tsx
-msgid "Show it beside the terminal, and watch it redraw."
-msgstr "ターミナルの横に表示して、描き直される様子を見ます。"
-
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "エディタ用キーボードを表示"
@@ -2405,6 +2366,7 @@ msgstr "simfarm は、このプレビューを配信するマシン側の小さ�
 msgid "simfarm port"
 msgstr "simfarm のポート"
 
+#: src/app/commands.tsx
 #: src/components/simfarm-preview.tsx
 msgid "Simulator"
 msgstr "シミュレータ"
@@ -2453,10 +2415,6 @@ msgstr "{host} 経由の SSH トンネルが切断されています"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "古い情報 · {age}"
-
-#: src/app/commands.tsx
-msgid "Start a group of its own, and go to it."
-msgstr "専用のグループを作って、そこへ移動します。"
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
@@ -2525,10 +2483,6 @@ msgstr "チャット表示に切り替える"
 msgid "Switch to the terminal view"
 msgstr "ターミナル表示に切り替える"
 
-#: src/i18n/labels.ts
-msgid "Switch to the text view"
-msgstr "テキスト表示に切り替える"
-
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
 msgstr "記号"
@@ -2567,10 +2521,6 @@ msgstr "ターミナルコマンド"
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
 msgstr "ターミナルキー行"
-
-#: src/i18n/labels.ts
-msgid "Text"
-msgstr "テキスト"
 
 #: src/components/settings-terminal.tsx
 msgid "Text size"
@@ -2625,7 +2575,6 @@ msgstr "接続が切れました。"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズを確認してください。"
 
-#: src/app/commands.tsx
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "素のパネルを、文字グリッドと本来の色のまま表示します。"
@@ -2659,8 +2608,8 @@ msgid "The shell exited."
 msgstr "シェルが終了しました。"
 
 #: src/app/commands.tsx
-msgid "The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one."
-msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからブラウザーでマシンの他の部分には届きません。ローカルネットワークか Tailscale で接続すれば開けます。"
+msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
+msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください。"
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
@@ -2944,7 +2893,6 @@ msgstr "ビジュアルモード"
 msgid "Visualize current context usage as a colored grid"
 msgstr "現在のコンテキスト使用量を色分けしたグリッドで表示します"
 
-#: src/components/agent-markdown-output.tsx
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
 msgstr "出力を待っています…"
@@ -2956,10 +2904,6 @@ msgstr "ネットワークを待っています。"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "アップロードの完了を待っています…"
-
-#: src/app/commands.tsx
-msgid "Watch this machine's iOS, Android or WeChat simulator."
-msgstr "このマシンの iOS・Android・WeChat シミュレータを見ます。"
 
 #: src/components/session-map.tsx
 msgid "What is running"
