@@ -55,7 +55,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { PressableScale } from '@/components/pressable-scale';
 import { useCoalescedValue } from '@/hooks/use-coalesced-value';
 import { useFreezeGate, useFrozenValue } from '@/hooks/use-frozen-value';
-import { useLatestRef } from '@/hooks/use-render-refs';
+import { useLatestRef, useResetSignal } from '@/hooks/use-render-refs';
 import { latestPillVisible } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
 import { fadeOut, timing, zoomIn, zoomOut } from '@/lib/motion';
@@ -67,10 +67,14 @@ import {
   type TwoFingerFrame,
 } from '@/lib/tab-swipe';
 import { createMMKV } from 'react-native-mmkv';
+import { terminalGridFor } from '@/lib/ssh-grid-metrics';
 import {
   pinchedTerminalScale,
+  terminalFitToWidthScale,
   terminalFontSize,
-  terminalScaleOnPaneOpen,
+  terminalOpenScale,
+  terminalOpenView,
+  terminalPanMinX,
   terminalScaleOnScreenLeave,
   type TerminalPaneScales,
   type TerminalPinchPhase,
@@ -318,6 +322,9 @@ export function SkiaTerminal({
   onTwoFingerSwipe,
   screenFocused = true,
   paneColumns,
+  paneRows,
+  paneCursorColumn,
+  paneCursorRow,
   touchInput,
 }: {
   /**
@@ -423,6 +430,17 @@ export function SkiaTerminal({
    * leaves the parser on that inference exactly as before.
    */
   paneColumns?: number;
+  /**
+   * The pane's own height, as the gateway reports it. Used for two things and
+   * only for a pane that owns the screen: it floors the parsed frame so an
+   * editor's grid is the pane's rather than the read's line count, and it is
+   * one input to where the pane opens (`terminalOpenView`). Absent on a gateway
+   * that does not report it, which is every herdr pane today.
+   */
+  paneRows?: number;
+  /** The program's cursor, when the gateway reports one. Both or neither. */
+  paneCursorColumn?: number;
+  paneCursorRow?: number;
   /**
    * The far side's input channel, for a pane whose program has asked to hear
    * about the pointer. Left out by a caller that has no such channel -- the
@@ -552,8 +570,22 @@ export function SkiaTerminal({
   // rather than here, so the cells hold the text the agent printed -- which is
   // what the clipboard has to be given.
   const frame = useMemo(
-    () => appliedFrame ?? parseTerminalSnapshot(coalescedOutput, terminalTheme, paneColumns),
-    [appliedFrame, coalescedOutput, terminalTheme, paneColumns]
+    () =>
+      appliedFrame ??
+      // The pane's rows are handed to the parse only for a program that owns
+      // the screen. An editor's frame IS its grid, so a read one line short of
+      // the pane would otherwise put the pane's last row somewhere it is not.
+      // A shell's frame is a tail of a stream and has no height to be wrong
+      // about, so it keeps the arithmetic it has always had. Rows are a floor
+      // rather than a size (see `parseTerminalSnapshot`), so the scrollback a
+      // read carries above the screen still arrives whole.
+      parseTerminalSnapshot(
+        coalescedOutput,
+        terminalTheme,
+        paneColumns,
+        ownsScreen ? paneRows : undefined
+      ),
+    [appliedFrame, coalescedOutput, terminalTheme, paneColumns, paneRows, ownsScreen]
   );
   // The pane's own colours, which are the app's unless the frame says the
   // program owns the screen and is painting in colours we never named. The
@@ -588,7 +620,17 @@ export function SkiaTerminal({
   useEffect(() => {
     onCellMetrics?.({ cellWidth, lineHeight });
   }, [cellWidth, lineHeight, onCellMetrics]);
-  const contentWidth = Math.max(viewport.width, frame.columns * cellWidth + horizontalPadding * 2);
+  // The pane's own drawn width: its columns, plus the padding the grid keeps at
+  // each edge. Kept beside `contentWidth` rather than folded into it, because
+  // the two are wanted for different things. `contentWidth` is this floored at
+  // the viewport, so a pane narrower than the screen still records and draws
+  // onto a full-width surface; the pan wants the unfloored number, or a pane
+  // scaled up to fit could be dragged sideways past the end of its own text
+  // (see `terminalPanMinX`). For every pane at least as wide as the viewport --
+  // which is every pane the fit does not touch -- they are the same number and
+  // nothing downstream can tell them apart.
+  const textWidth = frame.columns * cellWidth + horizontalPadding * 2;
+  const contentWidth = Math.max(viewport.width, textWidth);
   const contentWidthRef = useRef(contentWidth);
   // `terminalContentRows`, not `frame.lines.length`: a freshly opened pane's
   // frame is one prompt line and the rest of the pane's rows blank beneath it
@@ -806,6 +848,39 @@ export function SkiaTerminal({
   // bottom instantly instead of animating up from the top, which read as the
   // terminal "filling in from the top" on every switch.
   const snapToBottomNext = useSharedValue(false);
+  // How many rows below the pane's resting anchor the first frame after a
+  // switch should be placed at, from `terminalOpenView`. A one-shot for the
+  // same reason `snapToBottomNext` is one: the placement is an opening
+  // position, not a rule the pane is held to, so it is spent on the frame it
+  // applies to and never argues with a reader who has since panned. 0 -- every
+  // pane that is not a full-screen program bigger than this phone -- leaves
+  // that frame exactly where it lands today.
+  /**
+   * Whether this opening of the pane still owes a placement.
+   *
+   * Not a shared-value one-shot, which is what this was first: armed in the
+   * switch render and cleared by whichever applied frame got there first, it
+   * lost races that only a device showed. Measured on a 359-column pane armed
+   * at column 158 -- the arm ran, the frame that consumed it read 0, and the
+   * pane opened at column 1 anyway.
+   *
+   * `null` means armed. The switch render arms it -- that render happens
+   * exactly once per opening, which is exactly how often a pane should be
+   * placed -- and the first frame that belongs to this pane spends it and
+   * writes the key back. Every frame after that leaves the transform alone, so
+   * a reader who pans is never argued with.
+   *
+   * Keying it on the pane alone was not enough: a reader who leaves a pane and
+   * comes back gets the same key, and the placement would be skipped for a
+   * pane whose pan the switch render had just reset to the left edge. Measured:
+   * the 359-column pane placed correctly on first open and at column 1 on every
+   * return to it.
+   *
+   * Written during render, like the reset signal it follows and for the same
+   * reason: an effect would arm it a commit late, after the frame that should
+   * have spent it.
+   */
+  const placedOpenKeyRef = useRef<string | null>(null);
   const pullDistance = useSharedValue(0);
   const fallbackKeyboardOffset = useSharedValue(0);
   const activeKeyboardOffset = keyboardOffset ?? fallbackKeyboardOffset;
@@ -1016,17 +1091,111 @@ export function SkiaTerminal({
     clearSelection();
   }, [clearSelection, followOutput, pullDistance, snapToBottomNext, terminalId, translateY]);
 
-  // Opening a pane starts at the size the Text size setting names, unless this
-  // exact pane has a remembered pinch (see `terminalScaleOnPaneOpen`), in which
-  // case that is what it opens at instead. No fit to the pane's own width --
-  // lines are never wrapped, and a table wider than the phone is read by
-  // panning across it rather than by shrinking every other pane's text to
-  // match.
-  useEffect(() => {
-    if (viewport.width <= 0 || viewport.height <= 0) return;
-    scale.value = terminalScaleOnPaneOpen(terminalId, loadPaneScales());
+  // How many columns this phone would draw into this viewport at this font --
+  // the same function, on the same constants, that sizes an SSH PTY to this
+  // canvas, so the two cannot drift. The measured cell advance is passed in, so
+  // the answer is the grid actually being drawn rather than an estimate of it.
+  const phoneGrid = terminalGridFor({
+    width: viewport.width,
+    height: viewport.height,
+    fontSize,
+    cellWidth,
+    lineHeight,
+  });
+  const phoneColumns = phoneGrid.cols;
+  // The size this pane rests at with nothing remembered for it: 1 for every
+  // pane as wide as the phone or wider, and for every pane whose width the
+  // gateway did not report -- which is every SSH shell, whose grid *is* the
+  // PTY and can never differ from this one. Only a pane narrower than the grid
+  // above gets anything else. See `terminalFitToWidthScale`.
+  const paneRestingScale = terminalFitToWidthScale(phoneColumns, paneColumns);
+  // The size this pane is about to open at -- the remembered pinch if it has
+  // one, the fit otherwise. Computed here rather than inside the switch render
+  // below because the placement needs it too: how many of the pane's cells are
+  // on the glass is `phoneColumns / scale`, and a remembered 1.44 turns 52
+  // columns into 36. Getting that wrong does not nudge the placement, it moves
+  // it by a third of a screen -- measured on Android, where a stale entry for a
+  // reused pane id had this pane at 1.44 while the placement still counted at
+  // 1:1. `loadPaneScales` is a plain object after its first read (see it), so
+  // asking every render costs a lookup.
+  const paneOpenScale = terminalOpenScale({
+    paneId: terminalId,
+    remembered: loadPaneScales(),
+    phoneColumns,
+    paneColumns,
+  });
+  // Which cell of the pane the reader is put in front of. `{ 0, 0 }` for every
+  // pane that is not a full-screen program bigger than this phone's grid, which
+  // is every pane that opens correctly today. See `terminalOpenView`.
+  const openView = terminalOpenView({
+    paneColumns,
+    paneRows,
+    phoneColumns,
+    phoneRows: phoneGrid.rows,
+    // The scale it is about to be drawn at, so the placement counts the cells
+    // that will actually be on the glass rather than the ones that would be at
+    // 1:1 -- the remembered pinch included, not just the fit.
+    scale: paneOpenScale,
+    cursorColumn: paneCursorColumn,
+    cursorRow: paneCursorRow,
+    ownsScreen,
+  });
+
+  /*
+   * Opening a pane starts at the size the Text size setting names, unless this
+   * exact pane has a remembered pinch -- or unless it is narrower than the grid
+   * this phone would otherwise draw, in which case it opens scaled up until its
+   * columns reach the edge. `terminalOpenScale` is the whole rule and this is
+   * its only call site.
+   *
+   * During the render the pane changes on, not in an effect after it. The scale
+   * is a transform on the recorded picture rather than an input to it -- nothing
+   * here re-parses, re-records or re-measures -- so the cost is a shared-value
+   * write, and the reason it is here is timing rather than cost: an effect runs
+   * after the commit it belongs to has been painted, so a fitted pane would
+   * show one frame of its text at 1:1 hugging the left of the screen and then
+   * jump. #33 measured that shape of mistake from the other end and moved its
+   * own restore into the switch render for the same reason; `useResetSignal`'s
+   * docblock describes this case by name.
+   *
+   * The key is the pane *and* the geometry, which is exactly the set of
+   * dependencies the effect this replaces re-ran on, plus the pane's own column
+   * count -- so a viewport that changes still re-applies, and a pane tmux
+   * re-splits under the reader is re-fitted to the width it has now. The
+   * remembered table is read here rather than in an effect for the same timing
+   * reason; after the first read it is a plain object held for the process
+   * (see `loadPaneScales`).
+   *
+   * A reset signal is false on the render it is first called on, which would
+   * matter if a mount could arrive with a viewport already measured. It cannot:
+   * `viewport` is this component's own state, seeded `{ width: 0, height: 0 }`
+   * on every mount, so the first geometry worth acting on is always a later
+   * render and always a change from the zero this saw first.
+   */
+  const paneOpenKey = `${terminalId}:${viewport.width}x${viewport.height}:${paneColumns ?? 0}x${paneRows ?? 0}:${ownsScreen ? 1 : 0}`;
+  const paneOpened = useResetSignal(paneOpenKey);
+  if (paneOpened && viewport.width > 0 && viewport.height > 0) {
+    // A shared value, not React state: nothing in this render reads it back, so
+    // there is no torn render to have. This is the adjust-during-render pattern
+    // `useResetSignal` exists for, and an effect here is a painted frame late.
+    scale.value = paneOpenScale;
+    // The pan goes back to the left edge, as it always has on open.
     translateX.value = 0;
-  }, [scale, terminalId, translateX, viewport.height, viewport.width]);
+    // The placement itself is applied on the first frame of the new pane rather
+    // than here. This render still describes the outgoing pane -- its content
+    // height, which the resting anchor is made of, and its text width, which
+    // both pan clamps are made of -- so a position applied here is clamped
+    // against the wrong pane and lost. All this render does is say one is owed.
+    // oxlint-disable-next-line react/refs -- deliberate: nothing renders from this ref; it is the arm half of the adjust-during-render pattern above, and an effect would set it a commit too late. See its doc comment.
+    placedOpenKeyRef.current = null;
+  }
+
+  // What the placement needs, read from the one frame that can honour it. Both
+  // are mailboxes rather than dependencies so the applied-frame effect below is
+  // not restarted by a cursor that moved; the key beside them is what decides
+  // whether it is time to act at all.
+  const openViewRef = useLatestRef(openView);
+  const paneOpenKeyRef = useLatestRef(paneOpenKey);
 
   // Leaving the service screen remembers the pinch this pane is showing, keyed
   // on its id (see `terminalScaleOnScreenLeave`), rather than resetting it.
@@ -1038,9 +1207,11 @@ export function SkiaTerminal({
   useEffect(() => {
     if (screenFocused) return;
     if (viewport.width <= 0) return;
-    savePaneScales(terminalScaleOnScreenLeave(terminalId, scale.value, loadPaneScales()));
+    savePaneScales(
+      terminalScaleOnScreenLeave(terminalId, scale.value, loadPaneScales(), paneRestingScale)
+    );
     translateX.value = 0;
-  }, [scale, screenFocused, terminalId, translateX, viewport.width]);
+  }, [paneRestingScale, scale, screenFocused, terminalId, translateX, viewport.width]);
 
   // The other half of the write above, for the one path that never renders
   // `screenFocused: false` at all.
@@ -1061,13 +1232,24 @@ export function SkiaTerminal({
   // are read only from this cleanup, never from render.
   const unmountTerminalIdRef = useLatestRef(terminalId);
   const unmountViewportWidthRef = useLatestRef(viewport.width);
+  // The size this pane would have opened at anyway, so the write below can tell
+  // a scale the reader chose from one the fit handed them (see
+  // `terminalScaleOnScreenLeave`). Same mailbox pattern as the two above, and
+  // read from the same one place.
+  const unmountRestingScaleRef = useLatestRef(paneRestingScale);
   useEffect(() => {
     return () => {
       // oxlint-disable-next-line react/exhaustive-deps -- deliberate: `useLatestRef` (see its own doc comment) exists exactly so a callback outside render can read the current value; this is that read, at the one moment -- unmount -- render can no longer reach.
       if (unmountViewportWidthRef.current <= 0) return;
       savePaneScales(
-        // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
-        terminalScaleOnScreenLeave(unmountTerminalIdRef.current, scale.value, loadPaneScales())
+        terminalScaleOnScreenLeave(
+          // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
+          unmountTerminalIdRef.current,
+          scale.value,
+          loadPaneScales(),
+          // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
+          unmountRestingScaleRef.current
+        )
       );
     };
     // oxlint-disable-next-line react/exhaustive-deps -- deliberate: unmount only, see comment above. `scale` and the two refs are stable identities, so listing them would not change when this runs.
@@ -1078,9 +1260,9 @@ export function SkiaTerminal({
   useEffect(() => {
     contentWidthRef.current = contentWidth;
     if (viewport.width <= 0) return;
-    const minX = Math.min(0, viewport.width - contentWidth * scale.value);
+    const minX = terminalPanMinX(viewport.width, textWidth, scale.value);
     translateX.value = Math.max(minX, Math.min(0, translateX.value));
-  }, [contentWidth, scale, translateX, viewport.width]);
+  }, [contentWidth, scale, textWidth, translateX, viewport.width]);
 
   // Everything that has to happen when a frame is *applied* -- which, with the
   // freeze above, is no longer once per snapshot but once per gesture-free
@@ -1188,6 +1370,69 @@ export function SkiaTerminal({
     );
     const debt = owesFreezeDebt.current;
     owesFreezeDebt.current = false;
+    const frameRows = frame.lines.length;
+
+    // The placement, applied on the first frame that can actually carry it.
+    //
+    // Kept ahead of the snap below and armed independently of it, because the
+    // two do not always get the same frame. A switch into a pane the cache
+    // already had lands its window on the switch render itself (#33), so both
+    // fire together; a switch into a pane the cache missed renders once with no
+    // output at all, and a placement spent on that empty frame would put the
+    // pane 55 rows down a one-line canvas, clamp it straight back to the
+    // anchor, and be gone before the real frame arrived. So the placement waits
+    // for a frame with the rows to hold it, and `snapToBottomNext` keeps its
+    // own behaviour exactly.
+    // Read from mailboxes, not from dependencies: `useLatestRef` is what lets
+    // this see the current placement without the effect restarting every time
+    // a cursor moves, which is the one thing it must not chase. The refs
+    // themselves are stable identities, so listing them below changes nothing
+    // about when this runs.
+    const placement = openViewRef.current;
+    const placedRows = placement.row;
+    const placedColumns = placement.column;
+    if (
+      placedOpenKeyRef.current === null &&
+      (placedRows > 0 || placedColumns > 0) &&
+      // The frame has to be this pane's, not the one being left. A switch into
+      // a pane the cache missed renders once with the outgoing pane's window
+      // still in hand, and a placement spent on it would be spent on the wrong
+      // grid. A placement only exists when the gateway reported a height, so
+      // that height is always available to check against -- and since #39 an
+      // alternate-screen frame is exactly the pane's rows, never fewer.
+      frameRows >= (paneRows ?? 0) &&
+      frameRows > placedRows
+    ) {
+      placedOpenKeyRef.current = paneOpenKeyRef.current;
+      cancelAnimation(translateY);
+      catchingUp.value = false;
+      // `bottom` is the pane's resting offset, which for a full-screen program
+      // is its FIRST row under the header rather than its last (see
+      // `terminalRestOffset`), so a placement is always a move downward into
+      // the pane and the clamp is what stops it at the real end of the content.
+      translateY.value = clampScrollOffset(
+        bottom - placedRows * lineHeight * scale.value,
+        animatedVisibleHeight.value - contentHeight * scale.value,
+        animatedTopInset.value,
+        historyHeight * scale.value
+      );
+      // The horizontal half, measured against this frame's own width so the
+      // clamp is the one the finger would meet rather than the outgoing pane's.
+      translateX.value = Math.max(
+        terminalPanMinX(viewport.width, textWidth, scale.value),
+        Math.min(0, -placedColumns * cellWidth * scale.value)
+      );
+      // A pane placed downward is deliberately not at its anchor, so follow is
+      // released -- otherwise the next frame's reaction would rest it straight
+      // back to the top and the placement would last exactly one frame. This is
+      // the same state a reader who scrolls up puts the pane in, so the Latest
+      // pill, the clamps and the re-engagement on scrolling back all behave as
+      // they already do. A pane placed only sideways keeps following, because
+      // sideways is not what follow is about.
+      if (placedRows > 0) followOutput.value = false;
+      snapToBottomNext.value = false;
+      return;
+    }
 
     if (snapToBottomNext.value) {
       // First output after a pane switch: jump to the bottom with no animation,
@@ -1232,8 +1477,16 @@ export function SkiaTerminal({
     catchingUp,
     contentHeight,
     followOutput,
+    cellWidth,
+    frame.lines.length,
+    openViewRef,
+    paneOpenKeyRef,
+    paneRows,
     gate.frozen,
     historyHeight,
+    textWidth,
+    translateX,
+    viewport.width,
     appliedContent,
     lineHeight,
     scale,
@@ -1832,7 +2085,7 @@ export function SkiaTerminal({
         }
       }
 
-      const minX = Math.min(0, viewport.width - contentWidth * scale.value);
+      const minX = terminalPanMinX(viewport.width, textWidth, scale.value);
       if (panAxis.value !== AXIS_VERTICAL) {
         translateX.value = Math.max(minX, Math.min(0, gestureStartX.value + event.translationX));
       }
@@ -1890,7 +2143,7 @@ export function SkiaTerminal({
         }
         return;
       }
-      const minX = Math.min(0, viewport.width - contentWidth * scale.value);
+      const minX = terminalPanMinX(viewport.width, textWidth, scale.value);
       const minY = animatedVisibleHeight.value - contentHeight * scale.value;
       // Momentum follows the axis the drag committed to, so a flick up cannot
       // coast sideways after the finger has left the screen.
@@ -1998,7 +2251,7 @@ export function SkiaTerminal({
       const ratio = nextScale / gestureStartScale.value;
       const nextX = focalX.value - (focalX.value - gestureStartX.value) * ratio;
       const nextY = focalY.value - (focalY.value - gestureStartY.value) * ratio;
-      const minX = Math.min(0, viewport.width - contentWidth * nextScale);
+      const minX = terminalPanMinX(viewport.width, textWidth, nextScale);
       const minY = animatedVisibleHeight.value - contentHeight * nextScale;
       scale.value = nextScale;
       translateX.value = Math.max(minX, Math.min(0, nextX));

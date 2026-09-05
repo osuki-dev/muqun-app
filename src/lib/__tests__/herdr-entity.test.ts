@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { GatewayEntity } from '@/lib/gateway-entities';
 
-import { panelTitle } from '../herdr-entity';
+import { numberField, optionalNumberField, panelTitle } from '../herdr-entity';
 
 function entity(overrides: Partial<GatewayEntity>): GatewayEntity {
   return { id: 'pane-1', title: '', subtitle: '', raw: {}, ...overrides };
@@ -39,5 +39,29 @@ describe('panelTitle', () => {
     // Whitespace is not a name, so it does not beat the id either.
     expect(panelTitle(entity({ id: 'pane-9', title: '   ' }))).toBe('pane-9');
     expect(panelTitle()).toBe('Panel');
+  });
+});
+
+describe('optionalNumberField', () => {
+  test('an absent field is undefined, not the corner of the grid', () => {
+    // The whole reason this exists beside `numberField`. A pane on a gateway
+    // that reports no cursor must not read as a pane whose cursor is at 0,0 --
+    // that is a real cell, and something placed against it lands in the corner.
+    expect(numberField(entity({ raw: {} }), 'cursor_x')).toBe(0);
+    expect(optionalNumberField(entity({ raw: {} }), 'cursor_x')).toBeUndefined();
+    expect(optionalNumberField(undefined, 'cursor_x')).toBeUndefined();
+  });
+
+  test('a reported zero survives as zero', () => {
+    expect(optionalNumberField(entity({ raw: { cursor_x: 0 } }), 'cursor_x')).toBe(0);
+    expect(optionalNumberField(entity({ raw: { cursor_y: 41 } }), 'cursor_y')).toBe(41);
+  });
+
+  test('anything that is not a finite number is absent', () => {
+    expect(optionalNumberField(entity({ raw: { cursor_x: '3' } }), 'cursor_x')).toBeUndefined();
+    expect(
+      optionalNumberField(entity({ raw: { cursor_x: Number.NaN } }), 'cursor_x')
+    ).toBeUndefined();
+    expect(optionalNumberField(entity({ raw: { cursor_x: null } }), 'cursor_x')).toBeUndefined();
   });
 });

@@ -32,6 +32,9 @@ export function TerminalPanel({
   onTwoFingerSwipe,
   screenFocused,
   paneColumns,
+  paneRows,
+  paneCursorColumn,
+  paneCursorRow,
 }: {
   sessionId: string;
   paneId: string;
@@ -77,6 +80,11 @@ export function TerminalPanel({
   screenFocused?: boolean;
   /** The pane's own width, off the gateway record; see `SkiaTerminal`. */
   paneColumns?: number;
+  /** The pane's own height, off the same record. Absent on an older gateway. */
+  paneRows?: number;
+  /** The program's cursor, when the gateway reports one. See `terminalOpenView`. */
+  paneCursorColumn?: number;
+  paneCursorRow?: number;
 }) {
   // Kept in a ref so a new callback identity (it changes whenever the parent's
   // connection/output deps do) does not re-run the effect and re-POST zoom on
@@ -171,6 +179,9 @@ export function TerminalPanel({
             onTwoFingerSwipe={onTwoFingerSwipe}
             screenFocused={screenFocused}
             paneColumns={paneColumns}
+            paneRows={paneRows}
+            paneCursorColumn={paneCursorColumn}
+            paneCursorRow={paneCursorRow}
           />
         </Animated.View>
       )}
