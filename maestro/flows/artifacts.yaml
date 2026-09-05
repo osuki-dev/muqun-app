@@ -1,6 +1,6 @@
 # Session artifacts: the Files sheet, its search and kind filters, and the asset
-# viewer's branches -- rendered markdown, a colour-coded diff, highlighted
-# source, and the "no preview" description for a file the app will not display.
+# viewer's branches -- rendered markdown, a diff, highlighted source, and the
+# "no preview" description for a file the app will not display.
 #
 # The demo session bundles one artifact of each kind the viewer knows, so every
 # branch is reachable offline; opening the image goes through the same bundled
@@ -115,10 +115,11 @@ tags:
     visible: 'Close files'
     timeout: 8000
 
-# ── Diff: line-level colour (card #634) ───────────────────────────────────
-# Colour is not in the accessibility tree, so the screenshot is what actually
-# checks this; the text assertions only prove the right file opened and that the
-# diff survived the render with its markers intact.
+# ── Diff: shown as its own source ─────────────────────────────────────────
+# A diff is a fenced block with `diff` on the info string. No grammar covers it,
+# so it is plain code under a header that says "Diff" -- the markers are the
+# meaning and they are text, which is what the assertions below check. The
+# screenshot carries the rest.
 - scrollUntilVisible:
     element:
       text: 'Open theme.diff'
@@ -136,7 +137,9 @@ tags:
     visible: 'Close files'
     timeout: 8000
 
-# ── Source: highlighted through the JSON grammar ──────────────────────────
+# ── Source: highlighted natively, through the JSON grammar ────────────────
+# Colour is not in the accessibility tree, so the screenshot is what checks the
+# highlighting; the assertion only proves the right file opened.
 - scrollUntilVisible:
     element:
       text: 'Open coverage.json'

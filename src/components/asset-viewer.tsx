@@ -9,10 +9,10 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createMarkdownStyle } from '@/components/agent-markdown-output';
-import { CodeView } from '@/components/code-view';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
+import { fenceLanguageForFile, fencedFile } from '@/lib/code-language';
 import { useLatestRef } from '@/hooks/use-render-refs';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { fadeIn, fadeOut } from '@/lib/motion';
@@ -127,32 +127,45 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
 const COPIED_FEEDBACK_MS = 1_600;
 
 /**
- * Where a document stops being rendered as a document.
+ * Where a file stops being drawn and starts being described.
  *
- * `react-native-enriched-markdown` parses and lays out natively, which is why
- * this sits far above the tokenizer's gate -- but the work still lands in one
- * uninterruptible pass on the frame the text arrives, and past a point it stops
- * being linear. Measured through the app, from the string being in hand to the
- * renderer's first paint, warm (the very first markdown mount of a session
- * costs an extra second on Android whatever the size, so only warm numbers say
- * anything about size):
+ * There is one renderer now, so there is one gate, and it is iOS that sets it.
+ *
+ * `react-native-enriched-markdown` parses and lays out natively -- the
+ * tree-sitter highlighter never touches the JS thread -- but the layout still
+ * lands in one uninterruptible pass before anything is on screen, and past a
+ * point it stops being linear. Measured through this component on a warm app,
+ * from the string being in hand to the renderer's first layout, one fenced
+ * TypeScript block per file, each size a file the app had not opened before:
  *
  *   size        iOS simulator    Android emulator
- *   20 KiB              18 ms              857 ms
- *   60 KiB              18 ms            1_749 ms
- *   200 KiB          5_023 ms            5_999 ms
+ *    20 KiB            101 ms              185 ms
+ *    60 KiB            806 ms              127 ms
+ *    96 KiB          1_869 ms              249 ms
+ *   128 KiB          3_746 ms              209 ms
+ *   160 KiB          5_847 ms              390 ms
+ *   200 KiB          7_920 ms              141 ms
  *
- * iOS is flat to 60 KiB and then falls off a cliff; Android is expensive
- * throughout and ends in the same place. Five to six seconds is not a slow
- * render, it is the phone not answering, and it is exactly what the report in
- * card #661 described. 64 KiB is the last size measured on the flat part of the
- * curve, and it is comfortably above every document an agent actually writes.
+ * Android is flat and cheap at every size -- a 200 KiB block is on screen in
+ * under half a second, confirmed end to end with a stopwatch around the tap and
+ * not only from `onLayout`. iOS is quadratic, and at 200 KiB the sheet shows its
+ * loading skeleton for eight seconds and then a screenful of code. That is not a
+ * slow render, it is the reader waiting at a placeholder, and it is the same
+ * shape card #661 reported.
  *
- * Above it the file is shown as its own source through `CodeView`, which
- * virtualizes its lines -- and, since anything over this is also over
- * `HIGHLIGHT_MAX_BYTES`, says in its own caption that this is plain text.
+ * 64 KiB is the last size on the flat part of the iOS curve -- under a second --
+ * and it is the number the markdown gate this replaces already used, arrived at
+ * from the same cliff on the same simulator. It is comfortably above every file
+ * an agent actually writes.
+ *
+ * Above it the file is not drawn at all. That is a real loss against the
+ * virtualized viewer card #661 built, which would show a 200 KiB file a
+ * screenful at a time -- and it is the trade: one renderer with a gate, rather
+ * than two renderers and a tokenizer to keep in step with each other. The file
+ * is loaded by then, so the header's copy action still works, which is what the
+ * message points at.
  */
-const MARKDOWN_MAX_BYTES = 64 * 1024;
+const RENDER_MAX_BYTES = 64 * 1024;
 
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
@@ -318,9 +331,23 @@ function AssetBody({
 
   const theme = useThemeTokens();
 
-  // Four states of one viewer, and they used to be four bare returns: the
-  // spinner ceased to exist and a full page of markdown existed, on the same
-  // frame. Each branch is now a layer of its own, keyed so React tears the old
+  /**
+   * What the renderer is handed.
+   *
+   * A markdown file is its own source and goes through as it is. Everything
+   * else -- source, config, a log, a diff, a `.txt` -- is wrapped in one fenced
+   * block named after its extension, and the renderer highlights it natively.
+   * That is the whole of the second path: there is no JavaScript tokenizer here
+   * any more, and no second viewer to keep in step with this one.
+   */
+  const source = useMemo(() => {
+    if (content === null) return '';
+    if (asset.kind === 'markdown') return content;
+    return fencedFile(content, fenceLanguageForFile(asset.name));
+  }, [asset.kind, asset.name, content]);
+
+  // The states of one viewer, and they used to be bare returns: the spinner
+  // ceased to exist and a full page of markdown existed, on the same frame. Each branch is now a layer of its own, keyed so React tears the old
   // one down rather than reusing it, and the two overlap for the length of a
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
@@ -393,52 +420,58 @@ function AssetBody({
     );
   }
 
-  if (asset.kind === 'markdown' && content.length <= MARKDOWN_MAX_BYTES) {
+  if (content.length > RENDER_MAX_BYTES) {
     return (
-      <AssetBodyLayer id="markdown">
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.documentContent}
-          showsVerticalScrollIndicator={false}>
-          {/* github flavor: tables are a GFM extension and the commonmark
-              renderer runs their cells together as inline text. Static content,
-              so the streaming guidance for commonmark does not apply here. */}
-          <EnrichedMarkdownText
-            flavor="github"
-            markdown={content}
-            markdownStyle={markdownStyle}
-            containerStyle={styles.markdown}
-            selectable
-            selectionColor={theme.colors.primarySubtle}
-            selectionHandleColor={theme.colors.primary}
-            streamingAnimation={false}
-            textBreakStrategy="simple"
-            md4cFlags={{ latexMath: true }}
-            onLinkPress={({ url }) => {
-              if (isSafeExternalLink(url)) void Linking.openURL(url);
-            }}
-          />
-        </ScrollView>
+      <AssetBodyLayer id="too-large">
+        <View style={styles.centerState}>
+          <Text variant="bodySmall" color={theme.colors.textMuted}>
+            <Trans>This file is too large to display. Copy it to read it elsewhere.</Trans>
+          </Text>
+        </View>
       </AssetBodyLayer>
     );
   }
 
-  // Text and code: monospace, coloured by extension, and never wrapped -- a
-  // re-wrapped line breaks the column alignment that is the whole point of
-  // reading a log or a diff.
   return (
-    <AssetBodyLayer id="code">
-      <CodeView name={asset.name} content={content} />
+    <AssetBodyLayer id="document">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.documentContent}
+        showsVerticalScrollIndicator={false}>
+        {/* github flavor, and it is doing two jobs here. Tables are a GFM
+            extension and the commonmark renderer runs their cells together as
+            inline text -- and a fenced block is a component of its own under
+            this flavor, with a header naming the language, a copy button, and a
+            code pane that scrolls sideways instead of wrapping. Wrapping is
+            what breaks the column alignment a log or a diff is read for, so
+            that last part is not a detail. Static content, so the streaming
+            guidance for commonmark does not apply here. */}
+        <EnrichedMarkdownText
+          flavor="github"
+          markdown={source}
+          markdownStyle={markdownStyle}
+          containerStyle={styles.markdown}
+          selectable
+          selectionColor={theme.colors.primarySubtle}
+          selectionHandleColor={theme.colors.primary}
+          streamingAnimation={false}
+          textBreakStrategy="simple"
+          md4cFlags={{ latexMath: true }}
+          onLinkPress={({ url }) => {
+            if (isSafeExternalLink(url)) void Linking.openURL(url);
+          }}
+        />
+      </ScrollView>
     </AssetBodyLayer>
   );
 }
 
 /**
- * The wrapper every one of the viewer's four states shares.
+ * The wrapper every one of the viewer's states shares.
  *
  * The `key` is what does the work: without it React keeps one host view across
  * the change and neither the exit nor the entrance ever runs, which is exactly
- * how four different bodies came to hand over in a single frame.
+ * how different bodies came to hand over in a single frame.
  */
 function AssetBodyLayer({ id, children }: { id: string; children: React.ReactNode }) {
   return (
@@ -526,15 +559,6 @@ const styles = StyleSheet.create({
   },
   markdown: {
     width: '100%',
-  },
-  codeContent: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  code: {
-    fontFamily: 'monospace',
-    fontSize: 12.5,
-    lineHeight: 18,
   },
   detailsContent: {
     padding: 16,

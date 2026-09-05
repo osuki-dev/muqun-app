@@ -668,6 +668,7 @@ msgstr "In die Zwischenablage kopiert"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Kopiert ihn, bereit zum Einfügen in ein Terminal"
 
+#: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Kopieren"
@@ -2691,6 +2692,10 @@ msgstr "Diese Datei ist leer."
 msgid "This file is not among the session artifacts."
 msgstr "Diese Datei gehört nicht zu den Artefakten der Session."
 
+#: src/components/asset-viewer.tsx
+msgid "This file is too large to display. Copy it to read it elsewhere."
+msgstr "Diese Datei ist zu groß, um sie anzuzeigen. Kopiere sie, um sie woanders zu lesen."
+
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Dieses Gateway antwortet nicht auf diese Adresse."
@@ -2788,14 +2793,6 @@ msgstr "Über {host}"
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Heute"
-
-#: src/components/code-view.tsx
-msgid "Too large to colour. Shown as plain text."
-msgstr "Zu groß zum Einfärben. Wird als reiner Text gezeigt."
-
-#: src/components/code-view.tsx
-msgid "Too many lines to colour. Shown as plain text."
-msgstr "Zu viele Zeilen zum Einfärben. Wird als reiner Text gezeigt."
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"

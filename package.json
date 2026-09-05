@@ -84,7 +84,6 @@
     "expo-updates": "~57.0.21",
     "expo-web-browser": "~57.0.2",
     "expo-widgets": "~57.0.16",
-    "highlight.js": "^11.12.0",
     "lucide-react-native": "1.40.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
