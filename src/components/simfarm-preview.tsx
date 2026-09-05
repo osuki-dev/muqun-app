@@ -14,6 +14,7 @@ import { feedback } from '@/lib/feedback';
 import { COPIED_HOLD_MS } from '@/lib/pairing-scan';
 import { SIMFARM_DEFAULT_PORT, SIMFARM_RUN_COMMAND, simfarmSocketUrl } from '@/lib/simfarm';
 import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';
+import { warmSimfarm } from '@/lib/simfarm-stream';
 import { parsePort } from '@/lib/web-service';
 
 /**
@@ -122,6 +123,11 @@ export function SimfarmPreview({
     async (candidate: number) => {
       const mine = (attempt.current += 1);
       setLooking(true);
+      // The socket beside the probe rather than after it: the two are
+      // independent round trips to the same port, and a look that finds a
+      // simfarm finds the socket already open. One that finds nothing finds
+      // the socket already dead, which costs nothing.
+      warmSimfarm(simfarmSocketUrl(gatewayUrl, candidate), allowed);
       const result = await probeSimfarm(gatewayUrl, candidate, allowed);
       if (attempt.current !== mine) return;
       setAnswer({ port: candidate, probe: result });

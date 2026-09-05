@@ -232,6 +232,20 @@ export class SimfarmSession {
     };
   }
 
+  /**
+   * What a probe found, offered after the fact.
+   *
+   * A session opened ahead of the probe starts with no list; the probe's
+   * answer fills it so the picker has rows before the socket has said
+   * anything. Only while the list is empty: once the server has spoken, its
+   * list is the newer one, and this must not attach to anything -- that is
+   * `onDevices`'s decision, made on the server's word.
+   */
+  seed(devices: SimfarmDevice[]): void {
+    if (devices.length === 0 || this.state.devices.length > 0) return;
+    this.update({ devices });
+  }
+
   // ---------------------------------------------------------------------------
   // the transport's side
   // ---------------------------------------------------------------------------
