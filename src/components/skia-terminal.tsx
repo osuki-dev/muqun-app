@@ -100,7 +100,7 @@ import {
   terminalTouchTapBytes,
   type TerminalTouchModes,
 } from '@/terminal/touch-input';
-import { readTerminalSurface } from '@/terminal/surface';
+import { adaptFrameChrome, readTerminalSurface } from '@/terminal/surface';
 import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
 import {
   TERMINAL_LONG_PRESS_MS,
@@ -569,7 +569,7 @@ export function SkiaTerminal({
   // swapped at the moment they are drawn (see `substituteRenderedGrapheme`)
   // rather than here, so the cells hold the text the agent printed -- which is
   // what the clipboard has to be given.
-  const frame = useMemo(
+  const parsedFrame = useMemo(
     () =>
       appliedFrame ??
       // The pane's rows are handed to the parse only for a program that owns
@@ -608,10 +608,32 @@ export function SkiaTerminal({
     return terminalPaneTheme(
       themePack,
       terminalTheme,
-      readTerminalSurface(frame, screenRows),
+      readTerminalSurface(parsedFrame, screenRows),
       true
     );
-  }, [frame, ownsScreen, screenRows, terminalTheme, themePack]);
+  }, [parsedFrame, ownsScreen, screenRows, terminalTheme, themePack]);
+  /**
+   * The frame as drawn, which is the parsed frame with one thing changed: a
+   * background the program named against an assumed dark terminal is
+   * re-expressed against the surface it actually lands on.
+   *
+   * Gated on the surface decision above rather than on `ownsScreen`, and that
+   * distinction is the whole of it. A pane whose own scheme was adopted is
+   * drawing on *its* background, so its colours already mean what it intended
+   * and are left exactly as sent. A pane drawing on ours -- a shell, an agent,
+   * and Claude Code, which holds the alternate screen but paints no surface of
+   * its own -- is the case where an absolute dark grey becomes a black bar on a
+   * cream page. Keying this on `ownsScreen` would have skipped the one pane
+   * that reported the bug.
+   *
+   * `adaptFrameChrome` hands back the same object when it changes nothing, so
+   * on a dark pack -- where the rule declines everything -- nothing below here
+   * re-renders, re-records or re-measures.
+   */
+  const frame = useMemo(
+    () => (paneTheme === terminalTheme ? adaptFrameChrome(parsedFrame, paneTheme) : parsedFrame),
+    [paneTheme, parsedFrame, terminalTheme]
+  );
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
     () => measureCellWidth(fontSize, fontManager, nerdFont),
