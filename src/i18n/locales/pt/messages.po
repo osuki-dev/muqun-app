@@ -272,6 +272,7 @@ msgstr "A autenticação falhou. Tente novamente."
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "A autenticação está indisponível. Tente novamente ou verifique as definições do sistema."
 
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
 msgstr "Voltar"
@@ -358,6 +359,14 @@ msgstr "A verificar a autenticação do sistema…"
 msgid "Checking…"
 msgstr "A verificar…"
 
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator"
+msgstr "Escolher um simulador"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator above."
+msgstr "Escolhe um simulador acima."
+
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
 msgstr "Escolha um host SSH."
@@ -365,6 +374,10 @@ msgstr "Escolha um host SSH."
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "Escolher ficheiros"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose which simulator to show"
+msgstr "Escolher que simulador mostrar"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -421,6 +434,7 @@ msgid "Close the command list"
 msgstr "Fechar a lista de comandos"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Fechar o simulador"
 
@@ -1142,6 +1156,10 @@ msgstr "Ocultar a lista de servidores"
 msgid "Hide the simulator"
 msgstr "Ocultar o simulador"
 
+#: src/components/simfarm-stage.tsx
+msgid "Home"
+msgstr "Início"
+
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Widget no ecrã principal"
@@ -1370,11 +1388,16 @@ msgstr "A carregar o terminal"
 msgid "Loading the transcript"
 msgstr "A carregar a transcrição"
 
+#: src/components/simfarm-stage.tsx
+msgid "Lock"
+msgstr "Bloquear"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Logs"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "Procurar de novo"
 
@@ -1579,6 +1602,10 @@ msgstr "Nenhum host SSH salvo ainda."
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "Ainda não há hosts SSH. Adicione um para abrir um shell em qualquer máquina ao seu alcance."
 
+#: src/components/simfarm-stage.tsx
+msgid "No still frames"
+msgstr "Sem imagens fixas"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Indisponível"
@@ -1599,6 +1626,10 @@ msgstr "SEM LIGAÇÃO"
 msgid "Not found"
 msgstr "Não encontrado"
 
+#: src/components/simfarm-stage.tsx
+msgid "Not running"
+msgstr "Não está a correr"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Inválido."
@@ -1615,6 +1646,10 @@ msgstr "Nada respondeu na porta {port}. Ou não está nada à escuta, ou está l
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "Ainda não há nada aqui. Os ficheiros que a sessão escrever aparecem sozinhos."
+
+#: src/components/simfarm-stage.tsx
+msgid "Nothing is booted on that machine."
+msgstr "Não há nada a correr nessa máquina."
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2203,6 +2238,10 @@ msgstr "Enviar {spoken}"
 msgid "Send a message"
 msgstr "Enviar uma mensagem"
 
+#: src/components/simfarm-stage.tsx
+msgid "Send the text"
+msgstr "Enviar o texto"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Enviar ao agente"
@@ -2466,6 +2505,10 @@ msgstr "Suspender"
 msgid "Swipe left or right to switch workspace"
 msgstr "Deslize para a esquerda ou direita para mudar de espaço de trabalho"
 
+#: src/components/simfarm-stage.tsx
+msgid "Switch apps"
+msgstr "Mudar de app"
+
 #: src/i18n/labels.ts
 msgid "Switch between open files"
 msgstr "Alternar entre ficheiros abertos"
@@ -2531,6 +2574,10 @@ msgstr "Linha de teclas do terminal"
 msgid "Text size"
 msgstr "Tamanho do texto"
 
+#: src/components/simfarm-stage.tsx
+msgid "Text to type on the simulator"
+msgstr "Texto para escrever no simulador"
+
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
 msgstr "Essa resposta não chegou ao agente."
@@ -2574,6 +2621,10 @@ msgstr "A câmara comunicou um erro."
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
 msgstr "A ligação caiu."
+
+#: src/components/simfarm-stage.tsx
+msgid "The connection to the simulator stopped."
+msgstr "A ligação ao simulador foi abaixo."
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
@@ -2785,6 +2836,10 @@ msgstr "Escrever neste editor"
 #: src/components/new-task-sheet.tsx
 msgid "Type it, or use your keyboard's dictation key."
 msgstr "Escreva-o ou use a tecla de ditado do teclado."
+
+#: src/components/simfarm-stage.tsx
+msgid "Type on the simulator"
+msgstr "Escrever no simulador"
 
 #: src/i18n/labels.ts
 msgid "Undo"

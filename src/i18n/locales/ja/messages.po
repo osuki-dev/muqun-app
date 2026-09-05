@@ -272,6 +272,7 @@ msgstr "認証に失敗しました。もう一度お試しください。"
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "認証を利用できません。もう一度試すか、システム設定を確認してください。"
 
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
 msgstr "戻る"
@@ -358,6 +359,14 @@ msgstr "システム認証を確認中…"
 msgid "Checking…"
 msgstr "確認中…"
 
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator"
+msgstr "シミュレータを選ぶ"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator above."
+msgstr "上でシミュレータを選んでください。"
+
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
 msgstr "SSH ホストを選んでください。"
@@ -365,6 +374,10 @@ msgstr "SSH ホストを選んでください。"
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "ファイルを選択"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose which simulator to show"
+msgstr "表示するシミュレータを選ぶ"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -421,6 +434,7 @@ msgid "Close the command list"
 msgstr "コマンド一覧を閉じる"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "シミュレータを閉じる"
 
@@ -1142,6 +1156,10 @@ msgstr "サーバー一覧を隠す"
 msgid "Hide the simulator"
 msgstr "シミュレータを隠す"
 
+#: src/components/simfarm-stage.tsx
+msgid "Home"
+msgstr "ホーム"
+
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "ホーム画面ウィジェット"
@@ -1370,11 +1388,16 @@ msgstr "ターミナルを読み込み中"
 msgid "Loading the transcript"
 msgstr "トランスクリプトを読み込み中"
 
+#: src/components/simfarm-stage.tsx
+msgid "Lock"
+msgstr "ロック"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "ログ"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "もう一度探す"
 
@@ -1579,6 +1602,10 @@ msgstr "保存された SSH ホストはまだありません。"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "SSH ホストはまだありません。追加すると、届く範囲のどのマシンでもシェルを開けます。"
 
+#: src/components/simfarm-stage.tsx
+msgid "No still frames"
+msgstr "静止画に非対応"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "利用できません"
@@ -1599,6 +1626,10 @@ msgstr "未接続"
 msgid "Not found"
 msgstr "見つかりません"
 
+#: src/components/simfarm-stage.tsx
+msgid "Not running"
+msgstr "起動していません"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "無効です。"
@@ -1615,6 +1646,10 @@ msgstr "ポート {port} から応答がありませんでした。何も待ち�
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "まだ何もありません。セッションが書き出したファイルは自動的に表示されます。"
+
+#: src/components/simfarm-stage.tsx
+msgid "Nothing is booted on that machine."
+msgstr "そのマシンでは何も起動していません。"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2203,6 +2238,10 @@ msgstr "{spoken} を送信"
 msgid "Send a message"
 msgstr "メッセージを送信"
 
+#: src/components/simfarm-stage.tsx
+msgid "Send the text"
+msgstr "文字を送る"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "エージェントに送信"
@@ -2466,6 +2505,10 @@ msgstr "一時停止"
 msgid "Swipe left or right to switch workspace"
 msgstr "左右にスワイプしてワークスペースを切り替えます"
 
+#: src/components/simfarm-stage.tsx
+msgid "Switch apps"
+msgstr "アプリを切り替える"
+
 #: src/i18n/labels.ts
 msgid "Switch between open files"
 msgstr "開いているファイルを切り替え"
@@ -2531,6 +2574,10 @@ msgstr "ターミナルキー行"
 msgid "Text size"
 msgstr "文字サイズ"
 
+#: src/components/simfarm-stage.tsx
+msgid "Text to type on the simulator"
+msgstr "シミュレータに入力する文字"
+
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
 msgstr "この回答はエージェントに届きませんでした。"
@@ -2574,6 +2621,10 @@ msgstr "カメラがエラーを報告しました。"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
 msgstr "接続が切れました。"
+
+#: src/components/simfarm-stage.tsx
+msgid "The connection to the simulator stopped."
+msgstr "シミュレータとの接続が切れました。"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
@@ -2785,6 +2836,10 @@ msgstr "このエディタに入力"
 #: src/components/new-task-sheet.tsx
 msgid "Type it, or use your keyboard's dictation key."
 msgstr "入力するか、キーボードの音声入力キーを使ってください。"
+
+#: src/components/simfarm-stage.tsx
+msgid "Type on the simulator"
+msgstr "シミュレータに入力する"
 
 #: src/i18n/labels.ts
 msgid "Undo"

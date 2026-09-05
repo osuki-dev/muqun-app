@@ -272,6 +272,7 @@ msgstr "驗證失敗。請再試一次。"
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "目前無法驗證。請再試一次，或檢查系統設定。"
 
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
 msgstr "返回"
@@ -358,6 +359,14 @@ msgstr "正在檢查系統驗證…"
 msgid "Checking…"
 msgstr "檢查中…"
 
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator"
+msgstr "選擇模擬器"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator above."
+msgstr "請在上方選擇模擬器。"
+
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
 msgstr "請選擇 SSH 主機。"
@@ -365,6 +374,10 @@ msgstr "請選擇 SSH 主機。"
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "選擇檔案"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose which simulator to show"
+msgstr "選擇要顯示的模擬器"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -421,6 +434,7 @@ msgid "Close the command list"
 msgstr "關閉指令清單"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "關閉模擬器"
 
@@ -1142,6 +1156,10 @@ msgstr "隱藏伺服器清單"
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
 
+#: src/components/simfarm-stage.tsx
+msgid "Home"
+msgstr "主畫面"
+
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "主畫面小工具"
@@ -1370,11 +1388,16 @@ msgstr "正在載入終端機"
 msgid "Loading the transcript"
 msgstr "正在載入對話記錄"
 
+#: src/components/simfarm-stage.tsx
+msgid "Lock"
+msgstr "鎖定"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "紀錄"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "重新尋找"
 
@@ -1579,6 +1602,10 @@ msgstr "尚未儲存任何 SSH 主機。"
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "尚無 SSH 主機。新增一個，即可在任何連得到的機器上開啟 Shell。"
 
+#: src/components/simfarm-stage.tsx
+msgid "No still frames"
+msgstr "不支援靜態畫面"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "無法使用"
@@ -1599,6 +1626,10 @@ msgstr "未連線"
 msgid "Not found"
 msgstr "找不到"
 
+#: src/components/simfarm-stage.tsx
+msgid "Not running"
+msgstr "未執行"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "無效。"
@@ -1615,6 +1646,10 @@ msgstr "連接埠 {port} 沒有回應。可能沒有服務在監聽，或它只�
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "這裡還是空的。工作階段寫出的檔案會自動出現。"
+
+#: src/components/simfarm-stage.tsx
+msgid "Nothing is booted on that machine."
+msgstr "那台機器上沒有執行中的模擬器。"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2203,6 +2238,10 @@ msgstr "送出 {spoken}"
 msgid "Send a message"
 msgstr "傳送訊息"
 
+#: src/components/simfarm-stage.tsx
+msgid "Send the text"
+msgstr "送出文字"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "傳送給代理程式"
@@ -2466,6 +2505,10 @@ msgstr "暫停"
 msgid "Swipe left or right to switch workspace"
 msgstr "左右滑動以切換工作區"
 
+#: src/components/simfarm-stage.tsx
+msgid "Switch apps"
+msgstr "切換 App"
+
 #: src/i18n/labels.ts
 msgid "Switch between open files"
 msgstr "切換開啟中的檔案"
@@ -2531,6 +2574,10 @@ msgstr "終端機按鍵列"
 msgid "Text size"
 msgstr "文字大小"
 
+#: src/components/simfarm-stage.tsx
+msgid "Text to type on the simulator"
+msgstr "要輸入到模擬器的文字"
+
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
 msgstr "這個回答沒有送達代理程式。"
@@ -2574,6 +2621,10 @@ msgstr "相機回報了錯誤。"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
 msgstr "連線已中斷。"
+
+#: src/components/simfarm-stage.tsx
+msgid "The connection to the simulator stopped."
+msgstr "與模擬器的連線中斷了。"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
@@ -2785,6 +2836,10 @@ msgstr "在這個編輯器裡輸入"
 #: src/components/new-task-sheet.tsx
 msgid "Type it, or use your keyboard's dictation key."
 msgstr "可以直接打字，或用鍵盤上的語音輸入鍵。"
+
+#: src/components/simfarm-stage.tsx
+msgid "Type on the simulator"
+msgstr "在模擬器上輸入"
 
 #: src/i18n/labels.ts
 msgid "Undo"

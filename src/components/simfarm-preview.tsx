@@ -5,20 +5,15 @@ import { Check, Copy as CopyIcon, Lock, MonitorSmartphone, X } from 'lucide-reac
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { WebView } from 'react-native-webview';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { SimfarmStage } from '@/components/simfarm-stage';
 import { feedback } from '@/lib/feedback';
 import { COPIED_HOLD_MS } from '@/lib/pairing-scan';
-import { parsePort } from '@/lib/web-service';
-import {
-  SIMFARM_DEFAULT_PORT,
-  SIMFARM_RUN_COMMAND,
-  simfarmThemedClientUrl,
-  type SimfarmThemeColors,
-} from '@/lib/simfarm';
+import { SIMFARM_DEFAULT_PORT, SIMFARM_RUN_COMMAND, simfarmSocketUrl } from '@/lib/simfarm';
 import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';
+import { parsePort } from '@/lib/web-service';
 
 /**
  * The simulator on the paired machine, drawn where the reader is standing.
@@ -28,15 +23,25 @@ import { probeSimfarm, type SimfarmProbe } from '@/lib/simfarm-client';
  * space, and splitting them into two components would be two places to fix the
  * next thing simfarm changes.
  *
- * ## Why a web view rather than a client of our own
+ * ## Why it draws the picture itself now
  *
- * simfarm's protocol is public and this app already draws a terminal grid from
- * scratch, so writing a native client is not unthinkable -- but it would mean
- * binary frame handling and a video decode path, and the reference client that
- * ships with the server already does all of it and is the thing the protocol is
- * tested against. A web view gets 1:1 drawing, touch forwarding and every
- * provider for the cost of a dependency, and leaves the option of a native
- * client open for the day the seam actually hurts.
+ * It used to be simfarm's own browser client in a web view, on the reasoning
+ * that the reference client already did the drawing and the touch forwarding
+ * and was the thing the protocol is tested against -- with the option of a
+ * native client left open for the day the seam actually hurt. This is that day,
+ * and the seam is that simfarm's client is an instrument for a window on a
+ * desk. Measured on the phone this was reported from, in the client's own
+ * numbers: a 402x812pt sheet, out of which it reserves a 72pt rail column, 24pt
+ * of margin and a 56pt pill row, then snaps the remaining 69% down to the
+ * largest of 50/75/100% that fits -- so it drew a 201pt-wide picture, half the
+ * width of the screen, with 375pt of empty background above and below it. Its
+ * device picker sits in the top 14pt of the window, which on a sheet is
+ * underneath the grabber, so the one control needed to get a picture at all
+ * could not be pressed.
+ *
+ * None of that is reachable from outside a page. The fit rule and the touch
+ * mapping now live in `simfarm-frame.ts` where they can be tested, the wire
+ * format in `simfarm-protocol.ts`, and the socket in `simfarm-stream.ts`.
  *
  * ## What is on screen and when
  *
@@ -103,6 +108,14 @@ export function SimfarmPreview({
   // Guards a probe that returns after the reader has already asked for another
   // one; without it a slow answer for the old port can overwrite a fresh miss.
   const attempt = useRef(0);
+  /**
+   * How many streams this port has had.
+   *
+   * The stage's key: a socket that dropped cannot be revived from inside, and
+   * the honest way back is a new one -- so Look again there re-probes *and*
+   * remounts, and the two outcomes are the two this screen already draws.
+   */
+  const [session, setSession] = useState(0);
 
   const look = useCallback(
     async (candidate: number) => {
@@ -126,18 +139,7 @@ export function SimfarmPreview({
     if (parsed !== null) setAskedPort(parsed);
   }, [portText]);
 
-  const colors: SimfarmThemeColors = {
-    background: theme.colors.background,
-    surface: theme.colors.surface,
-    text: theme.colors.text,
-    textMuted: theme.colors.textMuted,
-    border: theme.colors.border,
-    primary: theme.colors.primary,
-    success: theme.colors.success,
-    warning: theme.colors.warning,
-    danger: theme.colors.danger,
-  };
-  const url = answer === null ? null : simfarmThemedClientUrl(gatewayUrl, answer.port, colors);
+  const url = answer === null ? null : simfarmSocketUrl(gatewayUrl, answer.port);
 
   // The first look, before there is anything to report. A second and subsequent
   // look does *not* land here: it keeps the miss on screen and spins inside the
@@ -156,31 +158,19 @@ export function SimfarmPreview({
 
   if (answer.probe.found && url !== null) {
     return (
-      <View style={[styles.fill, { backgroundColor: theme.colors.background }]}>
-        <WebView
-          source={{ uri: url }}
-          style={styles.fill}
-          // The gateway is reached over http on a tailnet, so the preview is
-          // too. Both platforms already permit it -- `NSAllowsArbitraryLoads`
-          // on iOS and `usesCleartextTraffic` through expo-build-properties on
-          // Android -- because the app has always had to talk to http gateways.
-          originWhitelist={['http://*', 'https://*']}
-          // The client draws devices at 1:1 and forwards touches; a web view
-          // that rubber-bands under them would fight the device being driven.
-          bounces={false}
-          overScrollMode="never"
-          // Nothing here is a document to read, so the usual text controls are
-          // only ways to end up somewhere unexpected.
-          allowsLinkPreview={false}
-          // A blank flash between the app's background and the client's is the
-          // one thing `?theme=` was passed to prevent; keep it out of the gap
-          // before the first paint too.
-          containerStyle={{ backgroundColor: theme.colors.background }}
-          onError={() =>
-            setAnswer({ port: answer.port, probe: { found: false, reason: 'unreachable' } })
-          }
-        />
-      </View>
+      <SimfarmStage
+        // Bumped when the stream drops, so pressing Look again there gets a
+        // new socket rather than the dead one it was just told about.
+        key={session}
+        url={url}
+        devices={answer.probe.devices}
+        embedded={embedded}
+        onClose={onClose}
+        onLost={() => {
+          setSession((count) => count + 1);
+          void look(answer.port);
+        }}
+      />
     );
   }
 

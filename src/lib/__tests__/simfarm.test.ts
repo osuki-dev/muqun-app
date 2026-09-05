@@ -21,7 +21,7 @@ import {
   simfarmDevicesUrl,
   simfarmHealthUrl,
   simfarmClientUrl,
-  simfarmThemedClientUrl,
+  simfarmSocketUrl,
   SIMFARM_DEFAULT_PORT,
   SIMFARM_RUN_COMMAND,
 } from '@/lib/simfarm';
@@ -93,6 +93,15 @@ describe('simfarmDeviceKind', () => {
   });
 });
 
+/**
+ * What a device with nothing declared comes back as.
+ *
+ * The direction is the point: a capability this app could not read has to
+ * become "cannot", or an older or newer simfarm gets a text field and a row of
+ * hardware keys that silently do nothing.
+ */
+const EMPTY_CAPABILITIES = { video: [], text: false, buttons: [] };
+
 describe('parseSimfarmDevices', () => {
   test('reads the shape the server actually sends', () => {
     // The shape of a live `/devices?booted=1`, with invented ids. Deliberately
@@ -102,25 +111,55 @@ describe('parseSimfarmDevices', () => {
     // committed here once already.
     const body = {
       devices: [
-        { id: 'mock:phone', name: 'Mock Phone', state: 'booted' },
+        {
+          id: 'mock:phone',
+          name: 'Mock Phone',
+          state: 'booted',
+          screen: { width: 750, height: 1334, scale: 2 },
+          capabilities: { video: ['jpeg'], text: true, buttons: ['home', 'lock'] },
+        },
         { id: 'ios:00000000-0000-4000-8000-000000000000', name: 'iPhone 17 Pro (iOS 26.5)' },
         { id: 'wechat:wx0000000000000000', name: 'Example mini program (WeChat)' },
       ],
     };
     expect(parseSimfarmDevices(body)).toEqual([
-      { id: 'mock:phone', name: 'Mock Phone', kind: 'mock' },
+      {
+        id: 'mock:phone',
+        name: 'Mock Phone',
+        kind: 'mock',
+        booted: true,
+        screen: { width: 750, height: 1334, scale: 2 },
+        capabilities: { video: ['jpeg'], text: true, buttons: ['home', 'lock'] },
+      },
       {
         id: 'ios:00000000-0000-4000-8000-000000000000',
         name: 'iPhone 17 Pro (iOS 26.5)',
         kind: 'ios',
+        booted: false,
+        screen: undefined,
+        capabilities: EMPTY_CAPABILITIES,
       },
-      { id: 'wechat:wx0000000000000000', name: 'Example mini program (WeChat)', kind: 'wechat' },
+      {
+        id: 'wechat:wx0000000000000000',
+        name: 'Example mini program (WeChat)',
+        kind: 'wechat',
+        booted: false,
+        screen: undefined,
+        capabilities: EMPTY_CAPABILITIES,
+      },
     ]);
   });
 
   test('an entry with no name is still a device, under its id', () => {
     expect(parseSimfarmDevices({ devices: [{ id: 'ios:abc' }] })).toEqual([
-      { id: 'ios:abc', name: 'ios:abc', kind: 'ios' },
+      {
+        id: 'ios:abc',
+        name: 'ios:abc',
+        kind: 'ios',
+        booted: false,
+        screen: undefined,
+        capabilities: EMPTY_CAPABILITIES,
+      },
     ]);
   });
 
@@ -128,7 +167,16 @@ describe('parseSimfarmDevices', () => {
     const body = {
       devices: [{ id: '' }, null, 'a string', { name: 'no id' }, { id: 'mock:pad', name: 'Pad' }],
     };
-    expect(parseSimfarmDevices(body)).toEqual([{ id: 'mock:pad', name: 'Pad', kind: 'mock' }]);
+    expect(parseSimfarmDevices(body)).toEqual([
+      {
+        id: 'mock:pad',
+        name: 'Pad',
+        kind: 'mock',
+        booted: false,
+        screen: undefined,
+        capabilities: EMPTY_CAPABILITIES,
+      },
+    ]);
   });
 
   test('a body that is not the envelope is an empty list, never a throw', () => {
@@ -138,66 +186,25 @@ describe('parseSimfarmDevices', () => {
   });
 });
 
-describe('simfarmThemedClientUrl', () => {
-  const COLORS = {
-    background: '#0B0F14',
-    surface: '#141A21',
-    text: '#E6EDF3',
-    textMuted: '#8B98A5',
-    border: '#232B33',
-    primary: '#FF6B53',
-    success: '#3FB950',
-    warning: '#D29922',
-    danger: '#F85149',
-  };
-
-  test('hands simfarm a palette it can read before its first paint', () => {
-    const url = simfarmThemedClientUrl(GATEWAY, 8801, COLORS);
-    expect(url).not.toBeNull();
-    const param = new URL(url!).searchParams.get('theme');
-    expect(param).not.toBeNull();
-
-    // base64url: no padding, and none of the two characters standard base64
-    // would have used. A `+` here becomes a space when the URL is parsed, which
-    // is exactly the corruption this encoding exists to avoid.
-    expect(param).not.toContain('=');
-    expect(param).not.toContain('+');
-    expect(param).not.toContain('/');
-
-    // Round trip, through simfarm's own decoding steps.
-    const b64 = param!.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = JSON.parse(
-      Buffer.from(b64.padEnd(Math.ceil(b64.length / 4) * 4, '='), 'base64').toString('utf8')
+describe('simfarmSocketUrl', () => {
+  test('is the client URL with the scheme and the path the protocol names', () => {
+    expect(simfarmSocketUrl('http://mac-mini.example.ts.net:23847', 8801)).toBe(
+      'ws://mac-mini.example.ts.net:8801/v1'
     );
-    expect(decoded).toEqual({
-      bg: '#0B0F14',
-      bgAlt: '#141A21',
-      fg: '#E6EDF3',
-      fgDim: '#8B98A5',
-      line: '#232B33',
-      accent: '#FF6B53',
-      ok: '#3FB950',
-      warn: '#D29922',
-      bad: '#F85149',
-    });
   });
 
-  test('every key it sends is one simfarm actually applies', () => {
-    // simfarm drops unknown keys silently, so a rename upstream would show up
-    // as a panel that quietly stopped following the app rather than an error.
-    const THEME_KEYS = ['bg', 'bgAlt', 'fg', 'fgDim', 'line', 'accent', 'ok', 'warn', 'bad'];
-    const param = new URL(simfarmThemedClientUrl(GATEWAY, 8801, COLORS)!).searchParams.get(
-      'theme'
-    )!;
-    const b64 = param.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = JSON.parse(
-      Buffer.from(b64.padEnd(Math.ceil(b64.length / 4) * 4, '='), 'base64').toString('utf8')
-    );
-    expect(Object.keys(decoded).sort()).toEqual([...THEME_KEYS].sort());
+  test('keeps a protected gateway protected', () => {
+    // The one that would be silent: a `wss` downgraded to `ws` still connects,
+    // still streams, and hands an unauthenticated remote-control channel to
+    // anything on the path. `webServiceUrl` refuses to invent a downgrade for
+    // the browser and this must not invent one either.
+    expect(simfarmSocketUrl(GATEWAY, 8801)).toBe('wss://mac-mini.example.ts.net:8801/v1');
   });
 
-  test('no gateway is still no URL', () => {
-    expect(simfarmThemedClientUrl(undefined, 8801, COLORS)).toBeNull();
+  test('carries an IPv6 literal in its brackets, and no gateway means no socket', () => {
+    expect(simfarmSocketUrl('http://[::1]:23847', 8801)).toBe('ws://[::1]:8801/v1');
+    expect(simfarmSocketUrl(undefined, 8801)).toBeNull();
+    expect(simfarmSocketUrl(GATEWAY, 70000)).toBeNull();
   });
 });
 
