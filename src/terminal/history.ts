@@ -328,7 +328,8 @@ export function foldPaneRead(
   latestOutput: string,
   origin: PaneReadOrigin,
   maximumLines: number,
-  ownsScreen = false
+  ownsScreen = false,
+  screenRows = 0
 ): string {
   const incoming = sanitizePaneRead(latestOutput);
   if (!currentOutput) return trimTerminalWindow(incoming, maximumLines);
@@ -347,7 +348,14 @@ export function foldPaneRead(
   // exactly the two-stacked-frames bug the card reported. A screen-owning read
   // replaces outright -- there is nothing above it this pane is responsible
   // for keeping.
-  if (ownsScreen) return trimTerminalWindow(incoming, maximumLines);
+  //
+  // And it replaces with the SCREEN, not with the read. Measured through the
+  // gateway against a real nvim pane: `viewport_rows: 24`, `alternate_on:
+  // true`, and a `recent-unwrapped` read 26 rows long -- the 24 the program
+  // drew, with two rows of the shell it was launched from still on top. A read
+  // is not authoritative about how tall the screen is; the pane is. See
+  // {@link altScreenFrame}.
+  if (ownsScreen) return altScreenFrame(incoming, screenRows);
 
   // A fold failure must degrade to showing the fresh read, never to killing the
   // app: in a release build an exception escaping a state updater is fatal, and
@@ -458,6 +466,31 @@ export function foldPaneRead(
 }
 
 /**
+ * The rows an alternate-screen pane actually drew, taken off the end of a read
+ * that may carry more than them.
+ *
+ * A program that owns the screen draws exactly the pane's height, every frame.
+ * A read of it can still be longer: asked for scrollback rather than the
+ * visible screen, the gateway answers with the rows above the alternate buffer
+ * too -- the shell the program was launched from, still sitting where it was.
+ * Those rows are not this pane's history and not part of its frame; drawn, they
+ * appear above the program's own first line and scroll with it, which is the
+ * defect this exists for.
+ *
+ * The screen's height is the authority, so the frame is its last `screenRows`
+ * rows. Two deliberate non-cases: a read SHORTER than the screen is a frame
+ * caught mid-redraw and is drawn whole rather than padded, and a pane whose
+ * height the gateway never reported (`0`) keeps the read intact, which is
+ * exactly what every such pane did before this existed.
+ */
+export function altScreenFrame(output: string, screenRows: number): string {
+  if (screenRows <= 0) return output;
+  const rows = terminalLines(output);
+  if (rows.length <= screenRows) return output;
+  return rows.slice(rows.length - screenRows).join('\n');
+}
+
+/**
  * Fold an SSE inline frame. {@link foldPaneRead} with the source it can only
  * ever have; kept as its own name because that is what the stream handler has.
  */
@@ -465,9 +498,10 @@ export function applyTerminalFrame(
   currentOutput: string,
   latestOutput: string,
   maximumLines: number,
-  ownsScreen = false
+  ownsScreen = false,
+  screenRows = 0
 ): string {
-  return foldPaneRead(currentOutput, latestOutput, 'frame', maximumLines, ownsScreen);
+  return foldPaneRead(currentOutput, latestOutput, 'frame', maximumLines, ownsScreen, screenRows);
 }
 
 /**

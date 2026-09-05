@@ -346,6 +346,60 @@ describe('(a) the window is a supersequence of what arrived, in arrival order', 
 });
 
 // ---------------------------------------------------------------------------
+// (e) a pane that owns the screen draws its screen and nothing else
+// ---------------------------------------------------------------------------
+
+describe('(e) an alternate-screen pane draws its own frame and nothing above it', () => {
+  // Measured through the gateway against a real nvim pane on 2026-09-05:
+  // `viewport_rows: 24`, `alternate_on: true`, and a `recent-unwrapped` read
+  // that comes back **26** rows -- the 24 the program drew, with two rows of
+  // the shell it was launched from still sitting on top (a blank and the
+  // prompt). The app drew all 26 and let the reader scroll those two above
+  // nvim's own first line.
+  //
+  // The rule: while a pane owns the screen, the frame is the screen. Its height
+  // is a fact about the pane, not about how many rows a read happened to carry,
+  // so the fold takes the screen's own rows off the end of the read rather than
+  // believing its length.
+  const frame = (rows: number, mark: string) =>
+    Array.from({ length: rows }, (_, index) => `${mark} nvim row ${index}`);
+  const shellAbove = ['', '> muqun-gateway'];
+
+  test('a read carrying main-screen rows above the frame draws only the frame', () => {
+    const read = [...shellAbove, ...frame(24, 'a')].join('\n');
+    const held = ['history one', 'history two'].join('\n');
+    const drawn = rows(foldPaneRead(held, read, 'refresh', MAXIMUM, true, 24));
+    expect(drawn).toHaveLength(24);
+    expect(drawn[0]).toBe('a nvim row 0');
+    expect(drawn.at(-1)).toBe('a nvim row 23');
+    expect(drawn.some((row) => row.includes('muqun-gateway'))).toBe(false);
+  });
+
+  test('a redraw replaces the frame rather than stacking under it', () => {
+    const first = [...shellAbove, ...frame(24, 'a')].join('\n');
+    const second = [...shellAbove, ...frame(24, 'b')].join('\n');
+    let window = foldPaneRead('', first, 'refresh', MAXIMUM, true, 24);
+    window = foldPaneRead(window, second, 'frame', MAXIMUM, true, 24);
+    const drawn = rows(window);
+    expect(drawn).toHaveLength(24);
+    expect(drawn.every((row) => row.startsWith('b '))).toBe(true);
+  });
+
+  test('a read shorter than the screen is drawn whole rather than padded away', () => {
+    // A frame caught mid-redraw is short. Taking "the last 24" of 10 rows must
+    // not invent rows or drop the ones there are.
+    const read = frame(10, 'a').join('\n');
+    expect(rows(foldPaneRead('', read, 'refresh', MAXIMUM, true, 24))).toHaveLength(10);
+  });
+
+  test('a pane whose height the gateway did not report keeps the old behaviour', () => {
+    // `screenRows` of 0 is "not reported", not "draw nothing".
+    const read = [...shellAbove, ...frame(24, 'a')].join('\n');
+    expect(rows(foldPaneRead('', read, 'refresh', MAXIMUM, true, 0))).toHaveLength(26);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // (b) a refresh never shrinks what the reader paged to
 // ---------------------------------------------------------------------------
 

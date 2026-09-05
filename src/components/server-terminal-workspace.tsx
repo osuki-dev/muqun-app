@@ -643,6 +643,9 @@ export function ServerTerminalWorkspace({
   // honour it rather than on every pull, and `loadEarlierOutput` falls back to
   // widening the tail -- exactly what every pane did before this feature
   // existed -- for the rest of the session.
+  // TEMPORARY measurement scaffold, not for merge: forces the widening-tail
+  // paging path that herdr panes always take (herdr ignores start/end), which
+  // the tmux backend would otherwise avoid by serving a real range page.
   const rangeUnsupportedRef = useRef(false);
   const earlierPartsRowsRef = useRef(0);
   const loadingEarlierPartsRef = useRef(false);
@@ -1419,6 +1422,20 @@ export function ServerTerminalWorkspace({
   useLayoutEffect(() => {
     fullScreenPaneRef.current = fullScreenPane;
   }, [fullScreenPane]);
+  /**
+   * What the fold is told about the pane, as opposed to about the program.
+   *
+   * `alternate_on` and the command heuristic disagree, and the disagreement is
+   * the defect: a real nvim pane reported `alternate_on: true` while
+   * `isFullScreenTuiPane` did not recognise it, so its read was folded into
+   * scrollback as if the pane were printing -- putting the shell prompt it was
+   * launched from above nvim's own first line. What is *drawn* is a fact about
+   * the pane, so the fold reads these; the chrome (the key row, the editor
+   * controls, the surface) keeps following the editor predicate, because that
+   * is a question about what the reader is driving.
+   */
+  const paneOwnsScreenRef = useRef(false);
+  const paneScreenRowsRef = useRef(0);
   // The pane's own viewport, off the scroll metric every pane entity carries.
   // This is what separates the ring-buffer history in the served window from
   // the live screen at its tail: a full-screen program repaints exactly its
@@ -1618,13 +1635,26 @@ export function ServerTerminalWorkspace({
   const previewIndex = previewAttachmentId
     ? previewImages.findIndex((item) => item.id === previewAttachmentId)
     : -1;
+  useLayoutEffect(() => {
+    paneOwnsScreenRef.current = paneOwnsScreen;
+    paneScreenRowsRef.current = selectedPaneScreenRows;
+  }, [paneOwnsScreen, selectedPaneScreenRows]);
+
   const outputFormat = agentOutput ? 'text' : 'ansi';
   const outputSource: PaneOutputSource = fullScreenPane ? 'visible' : 'recent-unwrapped';
   // The pair that says what a window is a window *of*. A pane can change shape
   // while nobody is looking -- a shell hands its tty to nvim and the source it
   // has to be read from turns with it -- so a remembered window is only handed
   // back to a pane still being read the same way. See `PaneWindow.shape`.
-  const outputShape = `${outputFormat}:${outputSource}`;
+  //
+  // It also records whether the pane owns the screen. Entering and leaving an
+  // alternate screen is a change of picture, not of depth: nvim's frame and the
+  // shell's scrollback are two windows of one pane, and folding either into the
+  // other is what put a prompt above nvim's first line. Carried here, the
+  // boundary is crossed the way a pane switch is -- the main-screen window is
+  // filed on the way in and handed back whole on the way out, which is the
+  // reader's history surviving the editor.
+  const outputShape = `${outputFormat}:${outputSource}:${paneOwnsScreen ? 'alt' : 'main'}`;
   // Matches the terminal surface exactly, whichever pack is showing -- read
   // from the same palette the renderer draws with rather than restated, so the
   // chrome behind the grid can never be a shade off it.
@@ -1694,7 +1724,7 @@ export function ServerTerminalWorkspace({
    * `useResetSignal` is what makes this run once per switch rather than every
    * render -- see its docblock, which describes this case by name.
    */
-  const paneSwitched = useResetSignal(selection.paneId);
+  const paneSwitched = useResetSignal(`${selection.paneId}|${outputShape}`);
   /* oxlint-disable react/refs, react/purity -- deliberate, for this block only:
      every ref touched here is the window's own bookkeeping, none of it is read
      into what this render draws, and nothing but a switch writes any of it --
@@ -1792,7 +1822,7 @@ export function ServerTerminalWorkspace({
     partsRequestIdRef.current += 1;
     readPartsKeyRef.current = { paneId: '', contentKey: '' };
     setPartsState(initialPartsState);
-  }, [outputShapeRef, selection.paneId]);
+  }, [outputShape, outputShapeRef, selection.paneId]);
 
   useEffect(() => {
     if (!requestedPaneId || !data.health) return;
@@ -1908,19 +1938,33 @@ export function ServerTerminalWorkspace({
       // replacing a window it is not as deep as) all died here.
       setOutput((current) => {
         if (agentOutput) return mergeTerminalWindow(current, value, MAX_PANE_OUTPUT_LINES);
-        // `fullScreenPaneRef.current`, not the closed-over `fullScreenPane`:
-        // an editor's read is the whole of its current screen, not a tail of
-        // a growing log, so it replaces rather than folds against the
-        // placement heuristics built for the latter (card #795, defect 2 --
-        // see `foldPaneRead`'s own doc on `ownsScreen`, and the ref's own doc
-        // above for why this reads a ref instead of the render-time value).
-        return foldPaneRead(current, value, origin, lineLimit, fullScreenPaneRef.current);
+        // A screen-owning pane's read is the whole of its current screen, not
+        // a tail of a growing log, so it replaces rather than folds against
+        // the placement heuristics built for the latter (card #795, defect 2
+        // -- see `foldPaneRead`'s own doc on `ownsScreen`). Read off the
+        // pane's own `alternate_on` rather than the command heuristic, and
+        // paired with the pane's height so only the rows the program drew are
+        // drawn; see `paneOwnsScreenRef`. Refs rather than the render-time
+        // values because this updater is built once.
+        return foldPaneRead(
+          current,
+          value,
+          origin,
+          lineLimit,
+          paneOwnsScreenRef.current,
+          paneScreenRowsRef.current
+        );
       });
       if (lineLimit === INITIAL_PANE_OUTPUT_LINES) {
         const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
         earlierOutputRowsRef.current = terminalOutputLineCount(value);
+        // Nothing to page while the program owns the screen: its frame has no
+        // history beneath it, and the scrollback the pane had before it started
+        // is not this window's to widen into. It comes back whole when the
+        // program exits -- see `outputShape`.
         setCanLoadEarlierOutput(
-          hasEarlierTerminalOutput(value, lineLimit, MAX_PANE_OUTPUT_LINES, scroll)
+          !paneOwnsScreenRef.current &&
+            hasEarlierTerminalOutput(value, lineLimit, MAX_PANE_OUTPUT_LINES, scroll)
         );
       }
       setError(null);
@@ -2089,9 +2133,17 @@ export function ServerTerminalWorkspace({
       // its own `'rangePage'` origin rather than `'page'`: the two may look
       // alike at this call site, but only a genuine range read may be believed
       // with zero overlap. See the origin's own doc in `history.ts`.
-      setOutput((current) =>
-        foldPaneRead(current, value, origin, nextLimit, fullScreenPaneRef.current)
-      );
+      setOutput((current) => {
+        const next = foldPaneRead(
+          current,
+          value,
+          origin,
+          nextLimit,
+          paneOwnsScreenRef.current,
+          paneScreenRowsRef.current
+        );
+        return next;
+      });
       const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
       const reachedRows = earlierOutputRowsRef.current;
       earlierOutputRowsRef.current = terminalOutputLineCount(value);
