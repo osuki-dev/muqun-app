@@ -11,6 +11,23 @@ export function numberField(entity: HerdrEntity, key: string): number {
   return typeof value === 'number' ? value : 0;
 }
 
+/**
+ * The same read, for a field whose 0 is a real value rather than a miss.
+ *
+ * `numberField` answers 0 for "absent", which is exactly right for a width or a
+ * height -- neither can legitimately be zero, so callers map 0 back to
+ * "unknown" with `|| undefined`. It is exactly wrong for a coordinate: column 0
+ * row 0 is the top-left cell, and a pane whose cursor the gateway never
+ * reported would otherwise read as a pane whose cursor is in the corner.
+ */
+export function optionalNumberField(
+  entity: HerdrEntity | undefined,
+  key: string
+): number | undefined {
+  const value = entity?.raw[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
 export function panelTitle(pane?: HerdrEntity, agent?: HerdrEntity): string {
   // A name the user set on the pane wins over everything, so a rename always
   // shows even when an agent is attached.

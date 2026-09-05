@@ -131,7 +131,13 @@ import { asAgentWidgetStatus, syncAgentWidget } from '@/lib/agent-widget';
 import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
 import { demoSshHost } from '@/lib/demo-ssh';
-import { field, numberField, panelTitle, statusColor } from '@/lib/herdr-entity';
+import {
+  field,
+  numberField,
+  optionalNumberField,
+  panelTitle,
+  statusColor,
+} from '@/lib/herdr-entity';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { PaneAddress } from '@/lib/pane-address';
@@ -1464,6 +1470,25 @@ export function ServerTerminalWorkspace({
   const selectedPaneColumns = selectedPane
     ? numberField(selectedPane, 'width') || undefined
     : undefined;
+  // The other axis of the same report, and read for the same reason: the pane's
+  // own grid is what the snapshot should be laid out on, rather than however
+  // many lines the read happened to return. `undefined` for a gateway that did
+  // not say -- every herdr pane today reports neither -- which leaves the
+  // parser's own measurement in charge exactly as it is now.
+  const selectedPaneRows = selectedPane
+    ? numberField(selectedPane, 'height') || undefined
+    : undefined;
+  // Where the program is actually working, when the gateway knows. Nothing
+  // sends these yet; they are read as optional so a gateway that starts sending
+  // them needs no app change, and their absence is a documented case of
+  // `terminalOpenView` rather than a hole in it.
+  // `optionalNumberField`, not `numberField`: a cursor's 0 is the first column,
+  // so the "absent" answer has to be distinguishable from it. Read through
+  // `numberField` instead, every pane on today's gateway -- which sends neither
+  // field -- would claim a cursor in its top-left corner and be placed there,
+  // which is the exact position this change exists to stop.
+  const selectedPaneCursorColumn = optionalNumberField(selectedPane, 'cursor_x');
+  const selectedPaneCursorRow = optionalNumberField(selectedPane, 'cursor_y');
 
   // nvim's own mode, read off the screen it just painted rather than asked
   // for -- tmux's formats carry nothing about it (`#{pane_mode}` is empty for
@@ -3634,6 +3659,9 @@ export function ServerTerminalWorkspace({
                       onTwoFingerSwipe={tabSwipe.onSwipe}
                       screenFocused={isFocused}
                       paneColumns={selectedPaneColumns}
+                      paneRows={selectedPaneRows}
+                      paneCursorColumn={selectedPaneCursorColumn}
+                      paneCursorRow={selectedPaneCursorRow}
                     />
                   </TerminalBoundary>
                 )}

@@ -342,7 +342,7 @@ export class TerminalEmulator {
     this.openRun = false;
   }
 
-  frame(): TerminalFrame {
+  frame(minRows = 0): TerminalFrame {
     const buffer = this.active;
     return buildTerminalFrame(
       buffer.grid,
@@ -350,7 +350,8 @@ export class TerminalEmulator {
       buffer.cursorX,
       buffer.cursorY,
       this.cursorVisible,
-      this.title
+      this.title,
+      minRows
     );
   }
 
@@ -784,11 +785,23 @@ export class TerminalEmulator {
 
 /**
  * Materialises a frame from a grid: trailing blank rows are trimmed, but never
- * below the cursor row. `rowHasContent` reads the packed cells directly, so the
- * scan allocates nothing -- only the (changed) lines kept below are built.
+ * below the cursor row -- nor below `minRows`, when a caller knows the grid's
+ * real height and the trim would otherwise shorten it. `rowHasContent` reads
+ * the packed cells directly, so the scan allocates nothing -- only the
+ * (changed) lines kept below are built.
  *
  * Shared by `TerminalEmulator.frame()` and the snapshot fast path so both
  * produce byte-identical frames from identical cells.
+ *
+ * `minRows` is a floor on the frame's total rows and never a truncation: a
+ * frame already taller than it -- an alt-screen pane whose read carried a few
+ * rows of main-screen scrollback above it, say -- keeps every row it has. It is
+ * a floor rather than an exact height because this function cannot tell a
+ * pane's screen from the history above it; what it guarantees is that a pane
+ * reporting an 82-row screen never produces a frame shorter than 82, which is
+ * what stops anything positioned against the frame's last row from landing
+ * above the pane's real bottom. 0 -- the default, and what every caller that
+ * does not know a height passes -- is exactly the old behaviour.
  */
 function buildTerminalFrame(
   grid: TerminalGrid,
@@ -796,7 +809,8 @@ function buildTerminalFrame(
   cursorX: number,
   cursorY: number,
   cursorVisible: boolean,
-  title: string | null
+  title: string | null,
+  minRows = 0
 ): TerminalFrame {
   const total = grid.totalRows();
   const cursorRow = grid.scrollbackCount() + cursorY;
@@ -807,6 +821,7 @@ function buildTerminalFrame(
       break;
     }
   }
+  if (minRows > 0) lastLine = Math.max(lastLine, Math.min(total, minRows) - 1);
   const lines: TerminalLine[] = [];
   for (let row = 0; row <= lastLine; row += 1) lines.push(grid.lineAt(row));
   return {
@@ -828,19 +843,27 @@ let forceFullEmulation = false;
 export function parseTerminalSnapshot(
   input: string,
   theme: TerminalTheme = DEFAULT_TERMINAL_THEME,
-  columns?: number
+  columns?: number,
+  rows?: number
 ): TerminalFrame {
+  const reportedRows = rows && rows > 0 ? rows : 0;
   if (!forceFullEmulation) {
-    const flat = parseFlatSnapshot(input, theme, columns);
+    const flat = parseFlatSnapshot(input, theme, columns, reportedRows);
     if (flat) return flat;
   }
   const measured = measureSnapshot(input);
   // A reported width is the pane's own; the measurement is what to do when
   // nobody said. Clamping a reported width against MAX_SNAPSHOT_COLUMNS would
   // reintroduce exactly the overflow this parameter exists to remove.
+  //
+  // A reported height is the same promise about the other axis, and it is a
+  // floor on both the grid and the frame rather than a size: the read is a tail
+  // that may carry scrollback above the screen, so it can legitimately be
+  // taller than the pane, and it must never be cut down to fit. What it may not
+  // be is *shorter* than the pane the gateway described.
   const dimensions = {
     columns: columns && columns > 0 ? columns : measured.columns,
-    rows: measured.rows,
+    rows: Math.max(measured.rows, reportedRows),
   };
   const terminal = new TerminalEmulator({
     columns: dimensions.columns,
@@ -854,7 +877,7 @@ export function parseTerminalSnapshot(
   // going to be finished by a next chunk, and `flush` handles it exactly as
   // the single write did before `write` learned to wait for one.
   terminal.flush();
-  return terminal.frame();
+  return terminal.frame(reportedRows);
 }
 
 /**
@@ -901,7 +924,8 @@ export function snapshotQualifiesForFlatPath(input: string): boolean {
 function parseFlatSnapshot(
   input: string,
   theme: TerminalTheme,
-  columns?: number
+  columns?: number,
+  minRows = 0
 ): TerminalFrame | null {
   const scan = scanFlatSnapshot(input);
   if (!scan) return null;
@@ -930,7 +954,10 @@ function parseFlatSnapshot(
   if (scan.widest > widthCeiling || lineCount > EMULATED_ROW_CAP) return null;
   const gridColumns =
     suppliedColumns ?? clamp(Math.max(MIN_SNAPSHOT_COLUMNS, scan.widest), 2, MAX_SNAPSHOT_COLUMNS);
-  const rows = clamp(Math.max(2, lineCount + 1), 2, EMULATED_ROW_CAP);
+  // The grid is allocated to whichever is taller: the lines this snapshot
+  // actually has, or the screen the gateway says the pane has. Allocating to
+  // the smaller of the two would leave `buildTerminalFrame` nothing to floor.
+  const rows = clamp(Math.max(2, lineCount + 1, minRows), 2, EMULATED_ROW_CAP);
   const grid = new TerminalGrid(gridColumns, rows, 0);
   // One mutable style carried across lines, exactly as the emulator carries it:
   // an unterminated SGR keeps applying to the rows below.
@@ -968,7 +995,7 @@ function parseFlatSnapshot(
     cursorX = column >= gridColumns ? gridColumns - 1 : column;
   }
 
-  return buildTerminalFrame(grid, gridColumns, cursorX, lineCount - 1, true, null);
+  return buildTerminalFrame(grid, gridColumns, cursorX, lineCount - 1, true, null, minRows);
 }
 
 /** Lines made only of ASCII printables; laid out without any width lookup. */
