@@ -2,10 +2,11 @@
  * The socket behind the preview: one WebSocket, one attached device, one
  * picture, and the four kinds of input that go back the other way.
  *
- * `simfarm-protocol.ts` is the bytes and `simfarm-frame.ts` is the arithmetic;
- * this is the part that has to hold a connection open, and it is separated from
- * both for the reason the rest of this feature is: the two pure files are worth
- * pinning exactly, and pinning them must not need a socket.
+ * `simfarm-protocol.ts` is the bytes, `simfarm-frame.ts` is the arithmetic and
+ * `simfarm-session.ts` is the state machine; this is the part that has to hold
+ * a connection open and a native image alive, and it is separated from all
+ * three for the reason the rest of this feature is: the pure files are worth
+ * pinning exactly, and pinning them must not need a socket or Skia.
  *
  * ## Why the frames are jpeg and drawn with Skia
  *
@@ -34,53 +35,24 @@
 import { Skia, type SkImage } from '@shopify/react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { type SimfarmDevice } from '@/lib/simfarm';
+import { type SimfarmButton, type SimfarmTouchPhase } from '@/lib/simfarm-protocol';
 import {
-  parseSimfarmDevices,
-  SIMFARM_CODEC,
-  simfarmCanStream,
-  type SimfarmDevice,
-} from '@/lib/simfarm';
-import {
-  decodeSimfarmFrame,
-  encodeSimfarmButton,
-  encodeSimfarmControl,
-  encodeSimfarmText,
-  encodeSimfarmTouch,
-  SIMFARM_TOUCH_PHASE,
-  SIMFARM_VIDEO_TAG,
-  type SimfarmButton,
-  type SimfarmEdge,
-  type SimfarmTouchPhase,
-} from '@/lib/simfarm-protocol';
-import { simfarmEdgeAt } from '@/lib/simfarm-frame';
+  initialSimfarmSessionState,
+  SimfarmSession,
+  type SimfarmSessionState,
+} from '@/lib/simfarm-session';
 
-/**
- * Where the stream is, in the four states a reader can be told apart.
- *
- * `picking` is not an error and is why the list is a state rather than a
- * failure: a machine with two simulators booted has to be asked which one, and
- * a machine with none has a simfarm running with nothing on it -- both of them
- * are "no picture yet" for reasons no reconnection would fix.
- */
-export type SimfarmStreamStatus = 'connecting' | 'picking' | 'attaching' | 'live' | 'lost';
+export type {
+  SimfarmStreamError,
+  SimfarmStreamScreen,
+  SimfarmStreamStatus,
+} from '@/lib/simfarm-session';
 
-/** The picture's size and which way up the frames arrive; see PROTOCOL §6. */
-export interface SimfarmStreamScreen {
-  width: number;
-  height: number;
-  scale: number;
-  /** Degrees clockwise the decoded frame needs before it is upright. */
-  rotation: 0 | 90 | 180 | 270;
-}
-
-export interface SimfarmStream {
-  status: SimfarmStreamStatus;
-  devices: SimfarmDevice[];
-  device: SimfarmDevice | null;
-  screen: SimfarmStreamScreen | null;
+export interface SimfarmStream extends SimfarmSessionState {
   image: SkImage | null;
-  /** Attach to a device, replacing whatever is attached now. */
-  attach: (deviceId: string) => void;
+  /** Show a device: attach if it is running, start it first if it is not. */
+  select: (deviceId: string) => void;
   touch: (input: { phase: SimfarmTouchPhase; x: number; y: number }) => void;
   type: (text: string) => void;
   press: (button: SimfarmButton) => void;
@@ -94,39 +66,15 @@ export interface SimfarmStream {
  * about to be a list of two, which reads as slower than it is.
  */
 export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): SimfarmStream {
-  const [status, setStatus] = useState<SimfarmStreamStatus>('connecting');
-  const [devices, setDevices] = useState<SimfarmDevice[]>(seed);
-  const [device, setDevice] = useState<SimfarmDevice | null>(null);
-  const [screen, setScreen] = useState<SimfarmStreamScreen | null>(null);
+  const [state, setState] = useState<SimfarmSessionState>(() => initialSimfarmSessionState(seed));
   const [image, setImage] = useState<SkImage | null>(null);
 
-  const socket = useRef<WebSocket | null>(null);
-  const streamId = useRef<number | null>(null);
-  const nextId = useRef(1);
-  const seq = useRef(0);
   /**
-   * The edge the gesture in flight began at.
-   *
-   * Here rather than in the component for the same reason `seq` is: both live
-   * for exactly one gesture and neither means anything between them. It is
-   * decided at `begin` and repeated unchanged afterwards, because iOS only
-   * recognises a system gesture that *started* at an edge and by the second
-   * move that fact is no longer in the coordinates.
+   * The session behind the socket in flight, kept out of React state on
+   * purpose: it is reached from callbacks that close over the render they were
+   * created in, and it is replaced whenever the socket is.
    */
-  const edge = useRef<SimfarmEdge>('none');
-  /**
-   * Which request the attach answer belongs to, so a reply for a device the
-   * reader has already moved on from cannot claim the stream. Reusing a
-   * `streamId` after a detach is legal in the protocol, so "an attach answer
-   * arrived" is not on its own enough to act on.
-   */
-  const pendingAttach = useRef<{ id: number; deviceId: string } | null>(null);
-  /**
-   * The device the reader asked for, kept out of React state on purpose: it is
-   * read inside the socket's own callbacks, which close over the render they
-   * were created in.
-   */
-  const wanted = useRef<string | null>(null);
+  const session = useRef<SimfarmSession | null>(null);
   // Skia images are native memory with a JS handle. Dropping one without
   // disposing it leaks a whole frame, and at six frames a second that is
   // visible in minutes rather than hours.
@@ -152,213 +100,71 @@ export function useSimfarmStream(url: string | null, seed: SimfarmDevice[]): Sim
     previous?.dispose();
   }, []);
 
-  /**
-   * Let go of a socket, detaching first if there is still a stream on it.
-   *
-   * A callback rather than the body of the effect's cleanup, for the reason
-   * `dropImage` is one: a cleanup may not reach into a ref, because by the time
-   * it runs the ref can already be pointing at the next connection.
-   */
-  const releaseStream = useCallback((live: WebSocket) => {
-    const held = streamId.current;
-    // Best effort: a detach on a socket already on its way down is a no-op,
-    // and the server drops the stream when the connection goes anyway.
-    if (held !== null && live.readyState === 1) {
-      live.send(encodeSimfarmControl({ id: nextId.current++, op: 'detach', streamId: held }));
-    }
-    streamId.current = null;
-    pendingAttach.current = null;
-    live.close();
-    socket.current = null;
-  }, []);
-
-  const send = useCallback((bytes: Uint8Array) => {
-    const live = socket.current;
-    if (!live || live.readyState !== 1) return;
-    live.send(bytes);
-  }, []);
-
-  const request = useCallback(
-    (op: string, extra: Record<string, unknown> = {}): number => {
-      const id = nextId.current++;
-      send(encodeSimfarmControl({ id, op, ...extra }));
-      return id;
-    },
-    [send]
-  );
-
-  const attach = useCallback(
-    (deviceId: string) => {
-      wanted.current = deviceId;
-      const held = streamId.current;
-      streamId.current = null;
-      showImage(null);
-      setScreen(null);
-      setStatus('attaching');
-      // Detach first, so a machine driving two simulators is not left encoding
-      // a picture nobody is looking at.
-      if (held !== null) request('detach', { streamId: held });
-      pendingAttach.current = {
-        id: request('attach', { deviceId, codec: SIMFARM_CODEC }),
-        deviceId,
-      };
-    },
-    [request, showImage]
-  );
-
   useEffect(() => {
     if (url === null) {
-      setStatus('lost');
+      setState((current) => ({ ...current, status: 'lost' }));
       return;
     }
 
-    let closed = false;
-    setStatus('connecting');
-    const live = new WebSocket(url);
-    live.binaryType = 'arraybuffer';
-    socket.current = live;
-
-    live.onopen = () => {
-      // The server pushes `devices` on its own, so there is nothing to ask for
-      // here; what the probe found already stands in until it arrives.
-      if (wanted.current !== null) attach(wanted.current);
-    };
-
-    live.onmessage = (event: { data: unknown }) => {
-      const data = event.data;
-      if (typeof data === 'string' || !(data instanceof ArrayBuffer)) return;
-      const frame = decodeSimfarmFrame(data);
-      if (frame === null) return;
-
-      if (frame.channel === 'video') {
-        if (frame.streamId !== streamId.current) return;
-        if (frame.tag !== SIMFARM_VIDEO_TAG.SEED && frame.tag !== SIMFARM_VIDEO_TAG.KEY) return;
-        // `slice`, not the view: the payload borrows the socket message's
-        // buffer, and Skia holds the bytes for as long as the image lives.
-        const decoded = Skia.Image.MakeImageFromEncoded(Skia.Data.fromBytes(frame.payload.slice()));
-        if (decoded === null) return;
-        showImage(decoded);
-        setStatus('live');
-        return;
-      }
-
-      if (frame.channel === 'event') {
-        const kind = frame.body.ev;
-        if (kind === 'devices') {
-          const listed = parseSimfarmDevices(frame.body);
-          setDevices(listed);
-          if (wanted.current === null) {
-            const first = listed.find((entry) => entry.booted && simfarmCanStream(entry));
-            if (first) attach(first.id);
-            else setStatus('picking');
-          }
+    const live = new SimfarmSession({
+      seed,
+      onFrame: (payload) => {
+        if (payload === null) {
+          showImage(null);
           return;
         }
-        if (kind === 'screen' && frame.body.streamId === streamId.current) {
-          setScreen(readScreen(frame.body));
-        }
-        return;
-      }
+        // `slice`, not the view: the payload borrows the socket message's
+        // buffer, and Skia holds the bytes for as long as the image lives.
+        const decoded = Skia.Image.MakeImageFromEncoded(Skia.Data.fromBytes(payload.slice()));
+        if (decoded !== null) showImage(decoded);
+      },
+    });
+    session.current = live;
+    setState(live.getState());
+    const unsubscribe = live.subscribe(setState);
 
-      const pending = pendingAttach.current;
-      if (pending === null || frame.body.id !== pending.id) return;
-      pendingAttach.current = null;
-      if (frame.body.ok !== true || typeof frame.body.streamId !== 'number') {
-        setStatus('picking');
-        return;
-      }
-      streamId.current = frame.body.streamId;
-      const attached = parseSimfarmDevices({ devices: [frame.body.device] })[0];
-      if (attached) setDevice(attached);
-      const reported = readScreen(frame.body.device);
-      if (reported) setScreen(reported);
+    let closed = false;
+    const socket = new WebSocket(url);
+    socket.binaryType = 'arraybuffer';
+    live.connect({
+      get readyState() {
+        return socket.readyState;
+      },
+      send: (bytes) => socket.send(bytes),
+      close: () => socket.close(),
+    });
+    socket.onopen = () => live.opened();
+    socket.onmessage = (event: { data: unknown }) => {
+      const data = event.data;
+      if (typeof data === 'string' || !(data instanceof ArrayBuffer)) return;
+      live.received(data);
     };
-
-    live.onerror = () => {
-      if (!closed) setStatus('lost');
+    socket.onerror = () => {
+      if (!closed) live.dropped();
     };
-    live.onclose = () => {
-      if (!closed) setStatus('lost');
+    socket.onclose = () => {
+      if (!closed) live.dropped();
     };
 
     return () => {
       closed = true;
-      releaseStream(live);
+      unsubscribe();
+      live.release();
+      if (session.current === live) session.current = null;
     };
-  }, [attach, releaseStream, showImage, url]);
+  }, [seed, showImage, url]);
 
   // The last frame outlives the socket by one render otherwise, and a native
   // buffer nobody can reach is the definition of a leak.
   useEffect(() => dropImage, [dropImage]);
 
-  const touch = useCallback<SimfarmStream['touch']>(
-    (input) => {
-      const id = streamId.current;
-      if (id === null) return;
-      if (input.phase === SIMFARM_TOUCH_PHASE.BEGIN) {
-        edge.current = simfarmEdgeAt({ x: input.x, y: input.y });
-      }
-      send(
-        encodeSimfarmTouch({
-          streamId: id,
-          phase: input.phase,
-          x: input.x,
-          y: input.y,
-          seq: seq.current++ & 0xffff,
-          edge: edge.current,
-        })
-      );
-      if (input.phase === SIMFARM_TOUCH_PHASE.END) edge.current = 'none';
-    },
-    [send]
-  );
-
-  const type = useCallback(
-    (text: string) => {
-      const id = streamId.current;
-      if (id === null || text === '') return;
-      send(encodeSimfarmText({ streamId: id, text }));
-    },
-    [send]
-  );
-
-  const press = useCallback(
-    (button: SimfarmButton) => {
-      const id = streamId.current;
-      if (id === null) return;
-      send(encodeSimfarmButton({ streamId: id, button, down: true }));
-      send(encodeSimfarmButton({ streamId: id, button, down: false }));
-    },
-    [send]
-  );
+  const select = useCallback((deviceId: string) => session.current?.select(deviceId), []);
+  const touch = useCallback<SimfarmStream['touch']>((input) => session.current?.touch(input), []);
+  const type = useCallback((text: string) => session.current?.type(text), []);
+  const press = useCallback((button: SimfarmButton) => session.current?.press(button), []);
 
   return useMemo(
-    () => ({ status, devices, device, screen, image, attach, touch, type, press }),
-    [attach, device, devices, image, press, screen, status, touch, type]
+    () => ({ ...state, image, select, touch, type, press }),
+    [image, press, select, state, touch, type]
   );
-}
-
-/**
- * The `screen` block off an event or an attach answer.
- *
- * `width`/`height` are the picture a person sees -- already swapped for a
- * rotated device -- while `rotation` says how far the frames themselves still
- * have to be turned. The two are independent, and treating them as one is how a
- * client ends up with a sideways iPhone or a correctly-turned Android drawn on
- * its side.
- */
-function readScreen(value: unknown): SimfarmStreamScreen | null {
-  if (typeof value !== 'object' || value === null) return null;
-  const source = 'screen' in value ? (value as { screen?: unknown }).screen : value;
-  if (typeof source !== 'object' || source === null) return null;
-  const { width, height, scale, frameRotation } = source as Record<string, unknown>;
-  if (typeof width !== 'number' || typeof height !== 'number') return null;
-  if (!(width > 0) || !(height > 0)) return null;
-  return {
-    width,
-    height,
-    scale: typeof scale === 'number' && scale > 0 ? scale : 1,
-    rotation:
-      frameRotation === 90 || frameRotation === 180 || frameRotation === 270 ? frameRotation : 0,
-  };
 }

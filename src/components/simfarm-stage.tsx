@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { Input, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, Group, Image as SkiaImage, vec } from '@shopify/react-native-skia';
+import { Canvas, Fill, Group, Image as SkiaImage, vec } from '@shopify/react-native-skia';
 import {
   ArrowLeft,
   ChevronDown,
@@ -35,7 +35,7 @@ import {
   type SimfarmButton,
   type SimfarmTouchPhase,
 } from '@/lib/simfarm-protocol';
-import { useSimfarmStream } from '@/lib/simfarm-stream';
+import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream';
 
 /**
  * The picture, and everything a finger can do to it.
@@ -143,12 +143,21 @@ export function SimfarmStage({
     void feedback('success');
   }, [draft, stream]);
 
-  const attach = useCallback(
+  /**
+   * Show the row that was pressed: attach if it is running, start it if not.
+   *
+   * The second half is the defect this screen shipped with. Every row for a
+   * device that was not running was disabled, and nothing here ever sent
+   * simfarm's `boot` -- so a machine whose simulators were all shut down, which
+   * is most machines most of the time, was a list nothing could be pressed on.
+   * `select` decides which of the two it is; the stage only clears the view.
+   */
+  const select = useCallback(
     (deviceId: string) => {
       setPicking(false);
       setZoom(1);
       setOffset({ x: 0, y: 0 });
-      stream.attach(deviceId);
+      stream.select(deviceId);
     },
     [stream]
   );
@@ -259,7 +268,41 @@ export function SimfarmStage({
     },
     [t]
   );
-  const name = stream.device?.name ?? t`Choose a simulator`;
+  /**
+   * What the pill says, which is the device the reader asked for and not only
+   * the one a stream is open on.
+   *
+   * The two differ for as long as a boot or an attach takes, and for good once
+   * either fails -- and a pill that named the wanted device with nothing after
+   * it read as "attached" on a screen where nothing was drawn, which is the
+   * report this came from. So the name is the wanted device's whenever there is
+   * one, and next to it goes the one word that says why there is no picture.
+   */
+  const wantedDevice = useMemo(
+    () => stream.devices.find((entry) => entry.id === stream.wanted) ?? null,
+    [stream.devices, stream.wanted]
+  );
+  const name = stream.device?.name ?? wantedDevice?.name ?? t`Choose a simulator`;
+  const hint =
+    stream.status === 'booting'
+      ? t`Starting…`
+      : stream.status === 'attaching'
+        ? t`Connecting`
+        : stream.status !== 'live' && wantedDevice !== null && !wantedDevice.booted
+          ? t`Not running`
+          : null;
+  /** The sentence for a failure; inline for the reason `buttonName` is. */
+  const explain = useCallback(
+    (error: SimfarmStreamError): string => {
+      if (error.kind === 'boot-unsupported') {
+        return t`That simulator cannot be started from here. Start it on the machine and it appears in the list.`;
+      }
+      if (error.kind === 'boot-timeout') return t`The simulator did not come up in time.`;
+      if (error.kind === 'attach-failed') return t`The simulator could not be shown.`;
+      return t`The simulator could not be started.`;
+    },
+    [t]
+  );
 
   if (stream.status === 'lost') {
     return (
@@ -286,8 +329,16 @@ export function SimfarmStage({
       testID="simfarm-stage">
       <GestureDetector gesture={gesture}>
         {/* `opaque` because the frame covers the surface and a transparent
-            canvas would composite it against the sheet on every frame. */}
+            canvas would composite it against the sheet on every frame. What an
+            opaque canvas does not do is paint: the pixels nothing draws into
+            are whatever the layer held, which on the simulator is black and on
+            a phone was the terminal underneath the sheet -- the see-through
+            stage in the report. So the surface is painted here, in the
+            theme's colour, before anything else is: the empty and booting
+            states then sit on the same ground as every other sheet, and a
+            landscape picture's side bands are that ground rather than a hole. */}
         <Canvas style={styles.fill} opaque>
+          <Fill color={theme.colors.background} />
           {stream.image !== null && placement !== null && screen !== null ? (
             <Group
               transform={[{ rotate: (screen.rotation * Math.PI) / 180 }]}
@@ -317,10 +368,42 @@ export function SimfarmStage({
 
       {stream.image === null ? (
         <View style={styles.waiting} pointerEvents="none">
-          {stream.status === 'picking' ? (
+          {stream.error !== null ? (
+            <>
+              <Text
+                variant="bodySmall"
+                color={theme.colors.danger}
+                style={styles.centred}
+                testID="simfarm-error">
+                {explain(stream.error)}
+              </Text>
+              {/* The server's own words, untranslated: `boot` reaches very
+                  different machinery per backend, and the sentence above is the
+                  same for all of them. */}
+              {stream.error.detail !== null ? (
+                <Text variant="label" color={theme.colors.textMuted} style={styles.centred}>
+                  {stream.error.detail}
+                </Text>
+              ) : null}
+            </>
+          ) : stream.status === 'picking' ? (
             <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centred}>
               {t`Choose a simulator above.`}
             </Text>
+          ) : stream.status === 'booting' ? (
+            <>
+              <Spinner size="sm" />
+              <Text
+                variant="bodySmall"
+                color={theme.colors.textMuted}
+                style={styles.centred}
+                testID="simfarm-booting">
+                {t`Starting ${name}`}
+              </Text>
+              <Text variant="label" color={theme.colors.textMuted} style={styles.centred}>
+                {t`A simulator that was shut down can take a minute to come up.`}
+              </Text>
+            </>
           ) : (
             <Spinner size="sm" />
           )}
@@ -342,6 +425,11 @@ export function SimfarmStage({
             <Text variant="bodySmall" numberOfLines={1} style={styles.pillLabel}>
               {name}
             </Text>
+            {hint !== null ? (
+              <Text variant="label" color={theme.colors.textMuted} testID="simfarm-device-state">
+                {hint}
+              </Text>
+            ) : null}
             <ChevronDown size={14} color={theme.colors.textMuted} strokeWidth={2} />
           </PressableScale>
         </GlassChrome>
@@ -360,11 +448,23 @@ export function SimfarmStage({
 
       {picking ? (
         <View style={[styles.picker, { top: CHROME_INSET + 46 }]}>
-          <GlassChrome style={styles.pickerCard}>
+          {/* A solid card, not glass. This is a list of names to read and
+              press, and what is under it is either a live picture or the
+              empty ground; glass here is a material that has to sample the
+              picture on every frame to draw a list that reads better without
+              it -- and on the phone this was reported from, what it sampled
+              was the terminal under the sheet, so the rows floated over
+              Claude Code's output. The controls stay glass because they are
+              small and the picture behind them is the point of them. */}
+          <View
+            style={[
+              styles.pickerCard,
+              { backgroundColor: theme.colors.surfaceRaised, borderColor: theme.colors.border },
+            ]}>
             <ScrollView keyboardShouldPersistTaps="handled" style={styles.pickerScroll}>
               {stream.devices.length === 0 ? (
                 <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.pickerEmpty}>
-                  {t`Nothing is booted on that machine.`}
+                  {t`No simulators on that machine.`}
                 </Text>
               ) : (
                 stream.devices.map((entry) => (
@@ -375,31 +475,36 @@ export function SimfarmStage({
                     // A device that cannot be drawn is listed and refused
                     // rather than hidden: "my simulator is missing" is a worse
                     // screen than one that says which of them can be shown.
-                    disabled={!entry.booted || !simfarmCanStream(entry)}
-                    onPress={() => attach(entry.id)}
+                    // One that is not running is neither: it is the row that
+                    // starts it, and whether it can be started is the
+                    // provider's answer, given after the press.
+                    disabled={entry.booted && !simfarmCanStream(entry)}
+                    onPress={() => select(entry.id)}
                     style={styles.pickerRow}>
                     <Text
                       variant="bodySmall"
                       numberOfLines={1}
                       color={
-                        entry.booted && simfarmCanStream(entry)
+                        !entry.booted || simfarmCanStream(entry)
                           ? theme.colors.text
                           : theme.colors.textMuted
                       }>
                       {entry.name}
                     </Text>
                     <Text variant="label" color={theme.colors.textMuted}>
-                      {!entry.booted
-                        ? t`Not running`
-                        : simfarmCanStream(entry)
-                          ? entry.kind
-                          : t`No still frames`}
+                      {stream.status === 'booting' && stream.wanted === entry.id
+                        ? t`Starting…`
+                        : !entry.booted
+                          ? t`Not running`
+                          : simfarmCanStream(entry)
+                            ? entry.kind
+                            : t`No still frames`}
                     </Text>
                   </PressableScale>
                 ))
               )}
             </ScrollView>
-          </GlassChrome>
+          </View>
         </View>
       ) : null}
 
@@ -521,6 +626,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 32,
   },
   reconnect: {
     flexDirection: 'row',
@@ -582,6 +689,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     borderRadius: 14,
     borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
   pickerScroll: { maxHeight: 260 },

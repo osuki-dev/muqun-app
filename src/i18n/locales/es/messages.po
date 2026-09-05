@@ -121,6 +121,10 @@ msgstr "Una shell en cualquier máquina con sshd"
 msgid "A simulator can be driven and not only watched, so a preview is offered only over Tailscale or HTTPS. Pair this machine at its tailnet address, or serve its gateway over HTTPS, and the preview appears on its own."
 msgstr "Un simulador se maneja, no solo se mira, así que la vista previa solo se ofrece por Tailscale o HTTPS. Empareja esta máquina en su dirección de tailnet, o sirve su Gateway por HTTPS, y la vista previa aparecerá sola."
 
+#: src/components/simfarm-stage.tsx
+msgid "A simulator that was shut down can take a minute to come up."
+msgstr "Un simulador apagado puede tardar un minuto en arrancar."
+
 #: src/app/settings.tsx
 msgid "About"
 msgstr "Acerca de"
@@ -529,6 +533,7 @@ msgstr "Conectado a {address}"
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "Conectando"
 
@@ -1594,6 +1599,10 @@ msgstr "Aún no hay servidores vinculados"
 msgid "No simulator on port {port}"
 msgstr "No hay simulador en el puerto {port}"
 
+#: src/components/simfarm-stage.tsx
+msgid "No simulators on that machine."
+msgstr "No hay simuladores en ese equipo."
+
 #: src/app/explore.tsx
 msgid "No SSH hosts saved yet."
 msgstr "Aún no hay hosts SSH guardados."
@@ -1646,10 +1655,6 @@ msgstr "Nada respondió en el puerto {port}. O no hay nada escuchando, o está e
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "Aquí todavía no hay nada. Los archivos que escriba la sesión aparecen solos."
-
-#: src/components/simfarm-stage.tsx
-msgid "Nothing is booted on that machine."
-msgstr "No hay nada en marcha en esa máquina."
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2472,12 +2477,17 @@ msgstr "Inicia un agente y dile lo primero que debe hacer."
 msgid "Start task"
 msgstr "Iniciar tarea"
 
+#: src/components/simfarm-stage.tsx
+msgid "Starting {name}"
+msgstr "Iniciando {name}"
+
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
 msgid "Starting the camera"
 msgstr "Iniciando la cámara"
 
 #: src/components/new-task-sheet.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Starting…"
 msgstr "Iniciando…"
 
@@ -2594,6 +2604,10 @@ msgstr "Esa es la shell de demostración incluida, y el único host aquí. Añad
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "Ese shell es la terminal que ya conoces: el mismo teclado, la misma fila de teclas, los mismos colores y el teclado del propio teléfono cuando prefieras escribir."
 
+#: src/components/simfarm-stage.tsx
+msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."
+msgstr "Ese simulador no se puede iniciar desde aquí. Inícialo en el equipo y aparecerá en la lista."
+
 #: src/components/settings-servers.tsx
 msgid "The address is where this paired server is reached. Changing it does not unpair the device."
 msgstr "La dirección es el lugar donde se accede a este servidor vinculado. Cambiarla no desvincula el dispositivo."
@@ -2662,6 +2676,18 @@ msgstr "El servidor sigue guardado en este dispositivo. Asegúrate de que su Gat
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
 msgstr "La shell terminó."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shown."
+msgstr "No se pudo mostrar el simulador."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator could not be started."
+msgstr "No se pudo iniciar el simulador."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not come up in time."
+msgstr "El simulador no arrancó a tiempo."
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
