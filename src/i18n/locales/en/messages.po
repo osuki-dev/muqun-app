@@ -1107,6 +1107,10 @@ msgstr "Go to the top of the file"
 msgid "Go to your servers"
 msgstr "Go to your servers"
 
+#: src/app/commands.tsx
+msgid "Group"
+msgstr "Group"
+
 #. placeholder {0}: group.tab.title
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
@@ -2504,6 +2508,7 @@ msgstr "Take photo"
 msgid "Tap again to remove"
 msgstr "Tap again to remove"
 
+#: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"

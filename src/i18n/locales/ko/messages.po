@@ -1107,6 +1107,10 @@ msgstr "파일 맨 위로 이동"
 msgid "Go to your servers"
 msgstr "서버 목록으로"
 
+#: src/app/commands.tsx
+msgid "Group"
+msgstr "그룹"
+
 #. placeholder {0}: group.tab.title
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
@@ -2504,6 +2508,7 @@ msgstr "사진 찍기"
 msgid "Tap again to remove"
 msgstr "한 번 더 탭하면 제거"
 
+#: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
