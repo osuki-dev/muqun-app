@@ -272,6 +272,7 @@ msgstr "인증에 실패했습니다. 다시 시도하세요."
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 시스템 설정을 확인하세요."
 
+#: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
 msgstr "뒤로"
@@ -358,6 +359,14 @@ msgstr "시스템 인증 확인 중…"
 msgid "Checking…"
 msgstr "확인 중…"
 
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator"
+msgstr "시뮬레이터 선택"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator above."
+msgstr "위에서 시뮬레이터를 고르세요."
+
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
 msgstr "SSH 호스트를 선택하세요."
@@ -365,6 +374,10 @@ msgstr "SSH 호스트를 선택하세요."
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "파일 선택"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose which simulator to show"
+msgstr "표시할 시뮬레이터 선택"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -421,6 +434,7 @@ msgid "Close the command list"
 msgstr "명령 목록 닫기"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "시뮬레이터 닫기"
 
@@ -1142,6 +1156,10 @@ msgstr "서버 목록 숨기기"
 msgid "Hide the simulator"
 msgstr "시뮬레이터 숨기기"
 
+#: src/components/simfarm-stage.tsx
+msgid "Home"
+msgstr "홈"
+
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "홈 화면 위젯"
@@ -1370,11 +1388,16 @@ msgstr "터미널 불러오는 중"
 msgid "Loading the transcript"
 msgstr "대화 기록 불러오는 중"
 
+#: src/components/simfarm-stage.tsx
+msgid "Lock"
+msgstr "잠금"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "로그"
 
 #: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
 msgid "Look again"
 msgstr "다시 찾기"
 
@@ -1579,6 +1602,10 @@ msgstr "저장된 SSH 호스트가 아직 없습니다."
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgstr "아직 SSH 호스트가 없습니다. 하나 추가하면 닿을 수 있는 어떤 컴퓨터에서든 셸을 열 수 있습니다."
 
+#: src/components/simfarm-stage.tsx
+msgid "No still frames"
+msgstr "정지 화면 없음"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "사용 불가"
@@ -1599,6 +1626,10 @@ msgstr "연결 안 됨"
 msgid "Not found"
 msgstr "찾을 수 없음"
 
+#: src/components/simfarm-stage.tsx
+msgid "Not running"
+msgstr "실행 중이 아님"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "올바르지 않습니다."
@@ -1615,6 +1646,10 @@ msgstr "포트 {port}에서 응답이 없습니다. 아무것도 수신 대기�
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "아직 아무것도 없습니다. 세션이 쓴 파일은 저절로 나타납니다."
+
+#: src/components/simfarm-stage.tsx
+msgid "Nothing is booted on that machine."
+msgstr "그 컴퓨터에서 실행 중인 것이 없습니다."
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2203,6 +2238,10 @@ msgstr "{spoken} 보내기"
 msgid "Send a message"
 msgstr "메시지 보내기"
 
+#: src/components/simfarm-stage.tsx
+msgid "Send the text"
+msgstr "텍스트 보내기"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "에이전트에게 보내기"
@@ -2466,6 +2505,10 @@ msgstr "일시 중단"
 msgid "Swipe left or right to switch workspace"
 msgstr "좌우로 쓸어넘겨 워크스페이스를 전환합니다"
 
+#: src/components/simfarm-stage.tsx
+msgid "Switch apps"
+msgstr "앱 전환"
+
 #: src/i18n/labels.ts
 msgid "Switch between open files"
 msgstr "열려 있는 파일 전환"
@@ -2531,6 +2574,10 @@ msgstr "터미널 키 막대"
 msgid "Text size"
 msgstr "텍스트 크기"
 
+#: src/components/simfarm-stage.tsx
+msgid "Text to type on the simulator"
+msgstr "시뮬레이터에 입력할 텍스트"
+
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
 msgstr "응답이 에이전트에 전달되지 않았습니다."
@@ -2574,6 +2621,10 @@ msgstr "카메라에서 오류가 보고되었습니다."
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
 msgstr "연결이 끊어졌습니다."
+
+#: src/components/simfarm-stage.tsx
+msgid "The connection to the simulator stopped."
+msgstr "시뮬레이터 연결이 끊겼습니다."
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
@@ -2785,6 +2836,10 @@ msgstr "이 편집기에 입력"
 #: src/components/new-task-sheet.tsx
 msgid "Type it, or use your keyboard's dictation key."
 msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요."
+
+#: src/components/simfarm-stage.tsx
+msgid "Type on the simulator"
+msgstr "시뮬레이터에 입력"
 
 #: src/i18n/labels.ts
 msgid "Undo"
