@@ -145,6 +145,7 @@ import {
   recallPaneWindow,
   rememberPaneWindow,
   retainPanes,
+  warmPaneWindow,
   type PaneCache,
   type PaneWindow,
 } from '@/lib/pane-cache';
@@ -2258,12 +2259,13 @@ export function ServerTerminalWorkspace({
             const revision = typeof paneRaw === 'number' ? paneRaw : -1;
             if (!paneReadIsCurrent(paneCacheRef.current, paneId, revision)) return;
             if (!value) return;
-            paneCacheRef.current = rememberPaneWindow(paneCacheRef.current, paneId, {
+            paneCacheRef.current = warmPaneWindow(paneCacheRef.current, paneId, {
               shape: `${outputFormat}:${outputSource}`,
               output: value,
-              // A warm-up is always the first page. It is a seed for the
-              // switch, not a claim about depth -- the reader has never paged
-              // this pane in this visit, so there is nothing deeper to lose.
+              // A warm-up is always the first page -- a seed for the switch,
+              // never a claim about depth. `warmPaneWindow`, not
+              // `rememberPaneWindow`, is what stops that seed being written
+              // over a window the reader had already paged deeper and left.
               lineLimit: INITIAL_PANE_OUTPUT_LINES,
               revision,
               canLoadEarlier: hasEarlierTerminalOutput(
