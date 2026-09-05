@@ -1152,6 +1152,10 @@ msgstr "隱藏 {name}"
 msgid "Hide keyboard"
 msgstr "隱藏鍵盤"
 
+#: src/components/simfarm-stage.tsx
+msgid "Hide the controls"
+msgstr "隱藏控制項"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "隱藏伺服器清單"
@@ -2386,6 +2390,10 @@ msgstr "顯示每個工具步驟"
 msgid "Show images"
 msgstr "顯示圖片"
 
+#: src/components/simfarm-stage.tsx
+msgid "Show the controls"
+msgstr "顯示控制項"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "顯示編輯器鍵盤"
@@ -2397,6 +2405,15 @@ msgstr "顯示伺服器清單"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "查看正在執行的項目"
+
+#. placeholder {0}: entry.name
+#: src/components/simfarm-stage.tsx
+msgid "Shut down {0}"
+msgstr "關閉 {0}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Shutting down…"
+msgstr "關閉中…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Sign in"
@@ -2682,12 +2699,20 @@ msgid "The simulator could not be shown."
 msgstr "無法顯示模擬器。"
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shut down."
+msgstr "無法關閉模擬器。"
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be started."
 msgstr "無法啟動模擬器。"
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator did not come up in time."
 msgstr "模擬器未能及時啟動。"
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not shut down in time."
+msgstr "模擬器未在時間內關閉。"
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."

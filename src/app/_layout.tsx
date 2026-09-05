@@ -324,18 +324,22 @@ function RootContent() {
               }}
             />
             {/*
-              Full height, and for a plainer reason than the artifacts sheet's:
-              what is inside is a simulator drawn at 1:1. A partial detent would
-              crop the device it exists to show, and a phone is already the
-              smaller screen of the two.
+              A full-screen modal, not a sheet, and the route file says why at
+              length: a sheet's one-finger dismiss fought the device's
+              one-finger drags, and its transparent content let the terminal
+              show through on Android. `fullScreenModal` is edge to edge with
+              no grabber on both platforms and cannot be swiped away on iOS;
+              the ground is the theme background from the options above. On
+              Android the hardware back is the way off and the route handles
+              it; `gestureEnabled: false` is for iOS, where the close button is
+              the only way and a swipe is the device's.
             */}
             <Stack.Screen
               name="simfarm"
               options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
+                presentation: 'fullScreenModal',
+                animation: 'slide_from_bottom',
+                gestureEnabled: false,
               }}
             />
             <Stack.Screen

@@ -1152,6 +1152,10 @@ msgstr "{name} 숨기기"
 msgid "Hide keyboard"
 msgstr "키보드 숨기기"
 
+#: src/components/simfarm-stage.tsx
+msgid "Hide the controls"
+msgstr "컨트롤 숨기기"
+
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "서버 목록 숨기기"
@@ -2386,6 +2390,10 @@ msgstr "모든 도구 단계 표시"
 msgid "Show images"
 msgstr "이미지 표시"
 
+#: src/components/simfarm-stage.tsx
+msgid "Show the controls"
+msgstr "컨트롤 표시"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "편집기 키보드 표시"
@@ -2397,6 +2405,15 @@ msgstr "서버 목록 표시"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "실행 중인 것 보기"
+
+#. placeholder {0}: entry.name
+#: src/components/simfarm-stage.tsx
+msgid "Shut down {0}"
+msgstr "{0} 종료"
+
+#: src/components/simfarm-stage.tsx
+msgid "Shutting down…"
+msgstr "종료하는 중…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Sign in"
@@ -2682,12 +2699,20 @@ msgid "The simulator could not be shown."
 msgstr "시뮬레이터를 표시할 수 없습니다."
 
 #: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shut down."
+msgstr "시뮬레이터를 종료할 수 없습니다."
+
+#: src/components/simfarm-stage.tsx
 msgid "The simulator could not be started."
 msgstr "시뮬레이터를 시작할 수 없습니다."
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator did not come up in time."
 msgstr "시뮬레이터가 제시간에 시작되지 않았습니다."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not shut down in time."
+msgstr "시뮬레이터가 제때 종료되지 않았습니다."
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
