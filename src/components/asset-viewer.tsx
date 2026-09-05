@@ -8,7 +8,7 @@ import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, View } from 
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { createMarkdownStyle } from '@/components/agent-markdown-output';
+import { createMarkdownStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';

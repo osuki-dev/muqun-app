@@ -5,16 +5,21 @@
  * - `terminal` is the pane as it actually is -- a grid of cells with its ANSI
  *   colour intact. Every pane has one, so this mode is always available and is
  *   the answer of last resort whenever a richer view cannot be drawn.
- * - `text` is that same output reflowed for reading. It only makes sense where
- *   an agent is attached, because reflowing loses the grid, and a grid is the
- *   whole point of a plain shell pane.
  * - `chat` is the gateway's normalized transcript laid out as a conversation.
  *   It exists only where the gateway says it can normalize this pane.
+ *
+ * There was a third, `text`: the same output reflowed for reading, drawn as
+ * markdown instead of as a grid. It is gone as of card #841. The quick-actions
+ * row was the only switch that ever reached it -- the pane header's control was
+ * written but never mounted, and the Settings default has been behind
+ * `AGENT_DEFAULT_VIEW_SETTING_ENABLED` since 2026-07-27 -- so taking that row
+ * off the sheet would have left a reading nobody could enter and, for an install
+ * upgraded from the old `agentTerminalMode` switch, one nobody could leave.
  *
  * Kept free of React so the cycle, the capability gate and the fallback can be
  * tested as plain functions.
  */
-export type PaneViewMode = 'chat' | 'text' | 'terminal';
+export type PaneViewMode = 'chat' | 'terminal';
 
 /** What the pane itself can offer, as opposed to what the user asked for. */
 export interface PaneViewCapabilities {
@@ -29,7 +34,7 @@ export interface PaneViewCapabilities {
  * deliberate: a single button that reverses direction is a button whose next
  * press cannot be predicted.
  */
-export const PANE_VIEW_MODE_ORDER: readonly PaneViewMode[] = ['chat', 'text', 'terminal'];
+export const PANE_VIEW_MODE_ORDER: readonly PaneViewMode[] = ['chat', 'terminal'];
 
 /**
  * Basics first (Ellen, 2026-07-27): the chat view is finished but not yet
@@ -55,7 +60,7 @@ export const CHAT_VIEW_ENABLED = false;
 export const AGENT_DEFAULT_VIEW_SETTING_ENABLED = false;
 
 export function isPaneViewMode(value: unknown): value is PaneViewMode {
-  return value === 'chat' || value === 'text' || value === 'terminal';
+  return value === 'chat' || value === 'terminal';
 }
 
 /**
@@ -66,7 +71,6 @@ export function availablePaneViewModes(capabilities: PaneViewCapabilities): Pane
   return PANE_VIEW_MODE_ORDER.filter((mode) => {
     if (mode === 'chat' && !CHAT_VIEW_ENABLED) return false;
     if (mode === 'terminal') return true;
-    if (mode === 'text') return capabilities.agent;
     return capabilities.agent && capabilities.parts;
   });
 }
@@ -115,26 +119,26 @@ export function resolvePaneViewMode(
 export interface StoredAgentViewSettings {
   agentDefaultView?: unknown;
   agentStructuredView?: unknown;
-  agentTerminalMode?: unknown;
 }
 
 /**
  * The default view an upgraded install should start from, or `undefined` for
  * "nothing was stored, use the current default".
  *
- * A stored value wins outright. Failing that the old pair is translated: asking
- * for the structured view meant asking for the transcript, which is now chat,
- * and switching the terminal off meant asking for reflowed text.
+ * A stored value wins outright. Failing that the old switch is translated:
+ * asking for the structured view meant asking for the transcript, which is now
+ * chat.
  *
- * The one deliberate loss is the old terminal preference. It was the shipped
- * default rather than a choice anyone made, so honouring it would hide the
- * conversation view from every existing install -- and unlike a setting, the
- * terminal is one tap away on the pane itself.
+ * Two readings are deliberately not honoured. The old terminal preference was
+ * the shipped default rather than a choice anyone made, so obeying it would
+ * hide the conversation view from every existing install. And an install that
+ * had turned the terminal *off* used to land on `text`, which no longer exists
+ * (card #841) -- an unreadable stored value is the same thing as none, and
+ * `resolvePaneViewMode` would have fallen it back to the terminal anyway.
  */
 export function storedAgentDefaultView(stored: StoredAgentViewSettings): PaneViewMode | undefined {
   if (isPaneViewMode(stored.agentDefaultView)) return stored.agentDefaultView;
   if (stored.agentStructuredView === true) return 'chat';
-  if (stored.agentTerminalMode === false) return 'text';
   return undefined;
 }
 

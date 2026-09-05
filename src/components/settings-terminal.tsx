@@ -73,7 +73,6 @@ export function SettingsTerminal({ title }: { title: string }) {
             // hiding the view hides it everywhere at once.
             options={[
               ...(CHAT_VIEW_ENABLED ? [{ label: _(paneViewModeLabel.chat), value: 'chat' }] : []),
-              { label: _(paneViewModeLabel.text), value: 'text' },
               { label: _(paneViewModeLabel.terminal), value: 'terminal' },
             ]}
             value={agentDefaultView}

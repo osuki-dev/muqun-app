@@ -116,9 +116,11 @@ export const useAppSettings = create<AppSettingsState>((set, get) => ({
 function parseSettings(value: string): Partial<PersistedSettings> {
   try {
     const parsed = JSON.parse(value) as Partial<PersistedSettings> & StoredAgentViewSettings;
-    // Reads the two switches this setting replaced where it is absent, which is
-    // the whole of the upgrade: nothing rewrites the old keys, they simply stop
-    // being persisted the next time anything is saved.
+    // Reads the switch this setting replaced where it is absent, which is the
+    // whole of the upgrade: nothing rewrites the old keys, they simply stop
+    // being persisted the next time anything is saved. A stored `text` -- the
+    // reading removed by card #841 -- reads as nothing stored, so such an
+    // install opens its agent panes on the terminal like every other.
     const agentDefaultView = storedAgentDefaultView(parsed);
     return {
       ...(agentDefaultView ? { agentDefaultView } : {}),

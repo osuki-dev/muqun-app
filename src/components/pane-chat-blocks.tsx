@@ -5,7 +5,7 @@ import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-
 import { memo, useMemo } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
-import { createMarkdownStyle } from '@/components/agent-markdown-output';
+import { createMarkdownStyle } from '@/lib/markdown-style';
 import { PressableScale } from '@/components/pressable-scale';
 import { firstLine, type PaneChatItem, type PaneChatToolBlock } from '@/lib/pane-chat';
 import type { PanePart, PanePartStatus } from '@/lib/pane-parts';

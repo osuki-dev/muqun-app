@@ -6,31 +6,56 @@
  * around that: the rows are short, the sheet closes as soon as one is taken,
  * and nothing on it asks to be read twice.
  *
- * Three decisions carry the design, and each replaces something that was here:
+ * Four decisions carry the design, and each replaces something that was here:
  *
- * 1. The typeface is the taxonomy. A row whose second line is set in the
+ * 1. The verbs are a row of tiles, not a list. Five full-width rows with a
+ *    sentence apiece ("Add a terminal beside this one, and go to it.") were
+ *    most of a phone screen before the shortcut list had started, and the
+ *    sentences were describing verbs the labels had already named. Four tiles
+ *    across one row say the same four things in 84 points -- an icon, a word,
+ *    and the shape of a button that is obviously pressable. See `ActionTile`.
+ *
+ * 2. The typeface is the taxonomy. A row whose second line is set in the
  *    terminal's monospace is a row that types that text into the pane; a row
  *    whose second line is prose does something else. That is what the forty
  *    leading icon chips were failing to say -- several of them restated their
  *    own row (a slash beside `/model`, a terminal beside `git status`), and all
  *    forty spent the accent on a screen the rest of the app spends it on once.
  *
- * 2. A key combo is drawn as keys, not as text. `ctrl+c` and `git status` leave
+ *    It is also why a saved *prompt* now shows no second line at all. A prompt
+ *    is prose the reader wrote and then named, so the value line was the title
+ *    again at greater length; a saved *command* is `git branch --show-current`
+ *    under "List branches", which the title cannot say. Prose is dropped, the
+ *    terminal's own vocabulary is kept, and Edit brings the prompt back for the
+ *    one moment its exact wording matters.
+ *
+ * 3. A key combo is drawn as keys, not as text. `ctrl+c` and `git status` leave
  *    by different gateway calls -- `sendPaneKeys` against `sendPaneText` plus
  *    Return -- and a shell handed "ctrl+c" as characters does nothing with it.
  *    The distinction is real, so it is drawn, and drawn in the same key face
  *    the on-screen keyboard already uses rather than as another icon.
  *
- * 3. Authoring is a mode, not a permanent fixture. The two-field editor used to
+ * 4. Authoring is a mode, not a permanent fixture. The two-field editor used to
  *    sit under every row on the sheet, so reaching it meant scrolling the whole
  *    catalogue, and six danger-coloured delete buttons stood in the tap column
  *    of a surface whose rows fire the moment they are touched. Both now appear
- *    only under Edit. The Settings entry (`manage=1`) is that mode and nothing
- *    else, because it has no pane to act on.
+ *    only under Edit, which is a header button beside Close because that is
+ *    where this app puts a sheet's own actions -- the panels, Files and simfarm
+ *    sheets all keep theirs there -- and because the mode reaches further than
+ *    the one section its affordance used to sit over. The Settings entry
+ *    (`manage=1`) is that mode and nothing else, because it has no pane to act
+ *    on.
  *
- * Colour is spent twice and only ever to mean something: `danger` on Stop, which
- * is the one row here that throws work away, and `primary` on the mark that says
- * a row is in flight. At rest the sheet has no tinted chrome at all.
+ * Colour is spent three times and only ever to mean something: `danger` on
+ * Stop, which is the one row here that throws work away; `primary` on the mark
+ * that says a row is in flight; and `primary` on the simulator tile while a Pad
+ * is actually showing a simulator beside the terminal, which is the one tile
+ * whose press has a state to report back. At rest the sheet has no tinted
+ * chrome at all.
+ *
+ * "Render as text" was the fifth row, and it is gone (card #841) -- with the
+ * whole reading it switched to, because this sheet was the only way in. See
+ * `src/lib/pane-view-mode.ts`.
  */
 import { Button, Card, Input, Skeleton, Spinner, Tabs, Text, useThemeTokens } from '@osuki-dev/ui';
 // Two hooks of the same name and they are not interchangeable: the macro one
@@ -39,17 +64,26 @@ import { Button, Card, Input, Skeleton, Spinner, Tabs, Text, useThemeTokens } fr
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Trash2, X } from 'lucide-react-native';
+import {
+  Check,
+  Globe,
+  MonitorSmartphone,
+  PanelsTopLeft,
+  Pencil,
+  SquareTerminal,
+  Trash2,
+  X,
+} from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { appChrome } from '@/constants/appearance';
-import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import {
@@ -193,20 +227,6 @@ export default function QuickCommandsScreen() {
     agentStatus: params.agentStatus,
     manageOnly,
   });
-
-  // The same per-pane view memory the pane header's own control writes to, so
-  // the two cannot disagree about what this pane is being read as. `parts` is
-  // not asked for here: with the chat view behind its flag an agent pane has
-  // exactly two readings, and the toggle is the cycle between them.
-  const paneView = usePaneViewMode({
-    serverId: params.serverId ?? '',
-    paneId: params.paneId ?? '',
-    agent: mode === 'agent',
-    parts: false,
-  });
-  // Only agent panes have a second reading -- reflowing a plain shell loses the
-  // grid that is the entire point of it -- so only they are offered the switch.
-  const canSwitchView = available.canCreate && mode === 'agent' && paneView.canCycle;
 
   useEffect(() => {
     void loadQuickCommands(mode).then(setCommands);
@@ -415,16 +435,6 @@ export default function QuickCommandsScreen() {
     }
   }
 
-  /**
-   * Flip this pane between its terminal and its reflowed text, then get out of
-   * the way -- the point of the row is the pane behind the sheet, so staying
-   * open would hide the only thing that changed.
-   */
-  function switchView() {
-    paneView.cycle();
-    router.back();
-  }
-
   async function add() {
     if (!label.trim() || !value.trim()) return;
     setCommands(await addQuickCommand(mode, label, value, kind));
@@ -450,44 +460,168 @@ export default function QuickCommandsScreen() {
       <KeyboardAwareScrollView
         bottomOffset={24}
         keyboardShouldPersistTaps="handled"
+        // The tiles are the sheet's own verbs, and a sheet whose verbs scroll
+        // away is a sheet you have to scroll back up to use. Against a real
+        // gateway the two lists below run to thirty-odd rows, so that is the
+        // ordinary case rather than the edge one. The panels sheet solved the
+        // same problem the same way in card #633, so this is the app's existing
+        // idiom rather than a new one -- a constant index, with the
+        // platform-only grabber inside the node for exactly that reason.
+        stickyHeaderIndices={[0]}
         contentContainerStyle={[
           styles.content,
           isPadLayout && styles.padContent,
           { paddingBottom: LADDER.section + bottomInset },
         ]}>
-        {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+        <View
+          style={[
+            styles.stickyTop,
+            isPadLayout && styles.padStickyTop,
+            { backgroundColor: theme.colors.background },
+          ]}>
+          {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
-        {/* No glyph beside the title. The reader arrived here by pressing the
-            lightning button, so a lightning chip repeats the gesture back at
-            them -- and it was the first of the forty places this screen spent
-            the accent. */}
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text variant="subheading" style={styles.headerTitle}>
-              {manageOnly ? t`Quick action settings` : t`Quick actions`}
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {manageOnly
-                ? t`Customize terminal commands and key combinations.`
-                : mode === 'agent'
-                  ? t`Act on this terminal, or send its agent a prompt.`
-                  : t`Act on this terminal, or send it a command.`}
-            </Text>
+          {/* No glyph beside the title. The reader arrived here by pressing the
+              lightning button, so a lightning chip repeats the gesture back at
+              them -- and it was the first of the forty places this screen spent
+              the accent. */}
+          <View style={styles.header}>
+            <View style={styles.headerCopy}>
+              <Text variant="subheading" style={styles.headerTitle}>
+                {manageOnly ? t`Quick action settings` : t`Quick actions`}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {manageOnly
+                  ? t`Customize terminal commands and key combinations.`
+                  : mode === 'agent'
+                    ? t`Act on this terminal, or send its agent a prompt.`
+                    : t`Act on this terminal, or send it a command.`}
+              </Text>
+            </View>
+            {/* Settings' entry is the editor, so it has no state to toggle and
+                offers no way to leave a mode that is the whole screen. */}
+            {manageOnly ? null : (
+              <GlassChrome face="sheet" style={styles.headerButton}>
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={editing ? t`Done editing shortcuts` : t`Edit shortcuts`}
+                  accessibilityState={{ selected: editing }}
+                  onPress={() => setEditRequested((was) => !was)}
+                  style={styles.headerButtonHit}>
+                  {editing ? (
+                    <Check size={19} color={theme.colors.text} strokeWidth={2} />
+                  ) : (
+                    <Pencil size={18} color={theme.colors.text} strokeWidth={2} />
+                  )}
+                </PressableScale>
+              </GlassChrome>
+            )}
+            <GlassChrome face="sheet" style={styles.headerButton}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Close quick actions`}
+                onPress={() => router.back()}
+                style={styles.headerButtonHit}>
+                <X size={19} color={theme.colors.text} strokeWidth={2} />
+              </PressableScale>
+            </GlassChrome>
           </View>
-          <PressableScale
-            accessibilityLabel={t`Close quick actions`}
-            onPress={() => router.back()}
-            style={[styles.closeButton, { backgroundColor: theme.colors.surface }]}>
-            <X size={19} color={theme.colors.text} />
-          </PressableScale>
+
+          {/* The sheet's own verbs. Ordered by how far each one takes you from
+              the pane you are looking at: two that make somewhere to work, then
+              the machine underneath it. Nothing here is titled -- the sheet's
+              own name is already the heading for its own verbs.
+
+              `flex: 1` on each tile rather than a measured width, which is what
+              the on-screen keyboard's key row does and what a pad's 560-point
+              measure needs anyway. A connection that offers neither
+              machine-scoped tile draws the two it has at half width apiece,
+              which reads as the row it is rather than as a row with holes. */}
+          {available.hasTiles ? (
+            <View style={styles.tiles}>
+              {available.canCreate ? (
+                <ActionTile
+                  icon={SquareTerminal}
+                  label={t`New terminal`}
+                  accessibilityLabel={t`New terminal`}
+                  busy={creating === 'panel'}
+                  disabled={creating !== null}
+                  onPress={() => void create(false)}
+                />
+              ) : null}
+              {available.canCreate ? (
+                <ActionTile
+                  icon={PanelsTopLeft}
+                  label={t`New group`}
+                  accessibilityLabel={t`New group`}
+                  busy={creating === 'tab'}
+                  disabled={creating !== null}
+                  onPress={() => void create(true)}
+                />
+              ) : null}
+              {available.canPreviewSimulator ? (
+                <ActionTile
+                  icon={MonitorSmartphone}
+                  // One word on the tile and the whole verb in the label the
+                  // screen reader hears. "Ouvrir dans le navigateur" is three
+                  // lines in a quarter of a 390-point phone; "Navigateur" is
+                  // one, and the tile is a button whose icon has already said
+                  // what kind of thing it opens.
+                  label={t`Simulator`}
+                  accessibilityLabel={
+                    isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
+                  }
+                  selected={isPadLayout && simfarmSplitOpen}
+                  onPress={openSimulatorPreview}
+                />
+              ) : available.webServiceBlockedByTunnel ? (
+                <ActionTile
+                  icon={MonitorSmartphone}
+                  label={t`Simulator`}
+                  accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
+                  disabled
+                />
+              ) : null}
+              {available.canOpenWebService ? (
+                <ActionTile
+                  icon={Globe}
+                  label={t`Browser`}
+                  accessibilityLabel={t`Open in your browser`}
+                  onPress={openWebService}
+                />
+              ) : available.webServiceBlockedByTunnel ? (
+                <ActionTile
+                  icon={Globe}
+                  label={t`Browser`}
+                  accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
+                  disabled
+                />
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* Why the two dimmed tiles are dimmed, said once under the row
+              rather than twice inside it. A tile is a word wide, so the reason
+              cannot live on it -- and a dimmed control with no reason anywhere
+              is the state this sheet has always refused to draw (see
+              `webServiceBlockedByTunnel` in `quick-actions.ts`). Each tile also
+              carries the short form in its own accessibility label, because a
+              screen reader arrives at the tile and not at the caption. */}
+          {available.webServiceBlockedByTunnel ? (
+            <Text variant="caption" color={theme.colors.textSubtle} style={styles.tilesNote}>
+              {t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`}
+            </Text>
+          ) : null}
         </View>
 
         {/* Alone on its own surface rather than first in the list below, which
             is the point: while an agent is working this row exists, and while
             it does not, it does not. A row that came and went inside the list
             would slide New task under whatever the thumb had learned, on the
-            one sheet where a mistap sends something to a live agent. Here the
-            list beneath it never reorders. */}
+            one sheet where a mistap sends something to a live agent. Under the
+            tiles rather than over them for the same reason, now that the tiles
+            do not move: a surface that comes and goes must not be above the
+            things that stay. */}
         {available.canStopAgent ? (
           <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
             <View style={[styles.group, { backgroundColor: theme.colors.dangerSubtle }]}>
@@ -506,136 +640,25 @@ export default function QuickCommandsScreen() {
           </Animated.View>
         ) : null}
 
-        {/* The sheet's own verbs, in one surface with a hairline between them.
-            Ordered by how far each one takes you from the pane you are looking
-            at: three that make somewhere to work, then how this pane is drawn,
-            then the machine underneath it. Nothing here is titled -- the
-            sheet's own name is already the heading for its own verbs. */}
-        {available.hasActions ? (
+        {/* Not a tile, and the only one of the sheet's verbs that is not. Every
+            tile does its thing and closes; this one hands over to a form with
+            three questions on it, and a label that has to say so is a sentence
+            rather than a word. */}
+        {available.canStartTask ? (
           <SettingsCard>
-            {available.canStartTask ? (
-              <ActionRow
-                accessibilityLabel={t`New task`}
-                name={t`New task`}
-                detail={t`Start an agent and send it the first thing to do.`}
-                detailColor={theme.colors.textMuted}
-                disabled={creating !== null}
-                onPress={startTask}
-              />
-            ) : null}
-            {available.canCreate ? (
-              <ActionRow
-                accessibilityLabel={t`New terminal`}
-                name={t`New terminal`}
-                detail={t`Add a terminal beside this one, and go to it.`}
-                detailColor={theme.colors.textMuted}
-                busy={creating === 'panel'}
-                busyColor={theme.colors.primary}
-                disabled={creating !== null}
-                onPress={() => void create(false)}
-              />
-            ) : null}
-            {available.canCreate ? (
-              <ActionRow
-                accessibilityLabel={t`New group`}
-                name={t`New group`}
-                detail={t`Start a group of its own, and go to it.`}
-                detailColor={theme.colors.textMuted}
-                busy={creating === 'tab'}
-                busyColor={theme.colors.primary}
-                disabled={creating !== null}
-                onPress={() => void create(true)}
-              />
-            ) : null}
-            {/* Named for where it goes, not for where it is: a row that read
-                "Terminal" while the pane was already a terminal is a label, and
-                this is a button. */}
-            {canSwitchView ? (
-              <ActionRow
-                accessibilityLabel={
-                  paneView.mode === 'terminal' ? t`Render as text` : t`Render as terminal`
-                }
-                name={paneView.mode === 'terminal' ? t`Render as text` : t`Render as terminal`}
-                detail={
-                  paneView.mode === 'terminal'
-                    ? t`Agent output as plain text. Easier to read, no colour.`
-                    : t`The raw pane, on its grid and in its own colours.`
-                }
-                detailColor={theme.colors.textMuted}
-                disabled={creating !== null}
-                onPress={switchView}
-              />
-            ) : null}
-            {/* Last, because it is the only row that does not act on the pane
-                behind this sheet: it reaches past it to the machine that pane
-                runs on, and leaves the app for the browser. */}
-            {available.canPreviewSimulator ? (
-              <ActionRow
-                accessibilityLabel={
-                  isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
-                }
-                name={
-                  isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
-                }
-                detail={
-                  isPadLayout
-                    ? simfarmSplitOpen
-                      ? t`Give the whole width back to the terminal.`
-                      : t`Show it beside the terminal, and watch it redraw.`
-                    : t`Watch this machine's iOS, Android or WeChat simulator.`
-                }
-                detailColor={theme.colors.textMuted}
-                onPress={openSimulatorPreview}
-              />
-            ) : available.webServiceBlockedByTunnel ? (
-              <ActionRow
-                accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
-                name={t`Preview a simulator`}
-                nameColor={theme.colors.textSubtle}
-                detail={t`Reached the same way as a browser, so the same tunnel limit applies.`}
-                detailColor={theme.colors.textSubtle}
-                disabled
-              />
-            ) : null}
-            {available.canOpenWebService ? (
-              <ActionRow
-                accessibilityLabel={t`Open in your browser`}
-                name={t`Open in your browser`}
-                detail={t`A dev server or preview running on this machine.`}
-                detailColor={theme.colors.textMuted}
-                onPress={openWebService}
-              />
-            ) : available.webServiceBlockedByTunnel ? (
-              <ActionRow
-                accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
-                name={t`Open in your browser`}
-                nameColor={theme.colors.textSubtle}
-                detail={t`The SSH tunnel carries the Gateway's port and no other, so a browser here cannot reach the rest of the machine. Connect over the local network or Tailscale to open one.`}
-                detailColor={theme.colors.textSubtle}
-                disabled
-              />
-            ) : null}
+            <ActionRow
+              accessibilityLabel={t`New task`}
+              name={t`New task`}
+              detail={t`Start an agent and send it the first thing to do.`}
+              detailColor={theme.colors.textMuted}
+              disabled={creating !== null}
+              onPress={startTask}
+            />
           </SettingsCard>
         ) : null}
 
         <View style={styles.section}>
-          <SectionHeading
-            title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`}
-            // Settings' entry is the editor, so it has no state to toggle and
-            // offers no way to leave a mode that is the whole screen.
-            action={
-              manageOnly ? null : (
-                <PressableScale
-                  accessibilityLabel={editing ? t`Done editing shortcuts` : t`Edit shortcuts`}
-                  onPress={() => setEditRequested((was) => !was)}
-                  style={styles.headingAction}>
-                  <Text variant="label" color={theme.colors.text}>
-                    {editing ? t`Done` : t`Edit`}
-                  </Text>
-                </PressableScale>
-              )
-            }
-          />
+          <SectionHeading title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`} />
           <SettingsCard>
             {commands.map((command, index) => {
               // A default's name is ours to translate; a custom one is the
@@ -658,7 +681,17 @@ export default function QuickCommandsScreen() {
                     name={name}
                     // A key combo is keys and a command is characters; they
                     // leave by different calls, so they are drawn differently.
-                    value={command.kind === 'keys' ? undefined : command.value}
+                    //
+                    // An agent prompt is neither: it is prose the reader wrote
+                    // and then named, so its second line was the title again at
+                    // greater length. It is shown only under Edit, which is the
+                    // one moment its exact wording is what is being decided
+                    // about -- see decision 2 at the top of this file.
+                    value={
+                      command.kind === 'keys' || (mode === 'agent' && !editing)
+                        ? undefined
+                        : command.value
+                    }
                     keys={command.kind === 'keys' ? quickCommandKeys(command) : undefined}
                     detailColor={theme.colors.textMuted}
                     busy={sendingId === command.id}
@@ -753,6 +786,11 @@ export default function QuickCommandsScreen() {
                     // so it is drawn as the placeholder it is, beside the name.
                     nameSuffix={entry.argument_hint ?? undefined}
                     detail={entry.description}
+                    // One line, never two. A real agent answers with thirty-odd
+                    // of these, and a description that wrapped bought a second
+                    // 17-point line on every one of them for the tail of a
+                    // sentence whose first half had already said it.
+                    detailLines={1}
                     detailColor={theme.colors.textMuted}
                     busy={sendingId === entry.command}
                     busyColor={theme.colors.primary}
@@ -860,22 +898,99 @@ export default function QuickCommandsScreen() {
 }
 
 /**
- * A group's instrument label, and whatever control belongs to the group itself.
+ * A group's instrument label.
  *
  * `variant="label"` rather than a caption with `toUpperCase()` applied in
  * JavaScript: case is a language's business, and `toUpperCase()` on Japanese does
  * nothing while on some scripts it does the wrong thing. `textTransform` is a
  * rendering instruction the platform applies per script.
+ *
+ * It used to carry an `action` slot as well, which held exactly one thing --
+ * Edit, over the saved shortcuts. That moved to the sheet's header, where this
+ * app keeps a sheet's own actions and where the mode it opens (a second field
+ * under every row, a delete beside each one, and a form at the foot of the
+ * sheet) is honestly scoped. A heading with a button in it was claiming the
+ * mode belonged to one section.
  */
-function SectionHeading({ title, action }: { title: string; action?: ReactNode }) {
+function SectionHeading({ title }: { title: string }) {
   const theme = useThemeTokens();
   return (
     <View style={styles.heading}>
       <Text variant="label" color={theme.colors.textSubtle} style={styles.headingTitle}>
         {title}
       </Text>
-      {action}
     </View>
+  );
+}
+
+/**
+ * One of the sheet's four verbs: an icon over a word, a quarter of the row wide.
+ *
+ * The glass is `face="sheet"`, which is what every control on an opaque sheet in
+ * this app wears -- the panels sheet's refresh, Files' close, simfarm's own
+ * chrome. `GlassChrome` owns the material and nothing else, so the tile's shape
+ * is stated here and the pressable fills it: a `PressableScale` that did not
+ * fill its glass would leave a ring of tile that looks pressable and is not.
+ *
+ * Three states, and each is drawn rather than implied:
+ *
+ *  * busy -- the create is in flight. The spinner stands exactly where the icon
+ *    was, so the row does not change height under the thumb.
+ *  * disabled -- the transport cannot honour it. Dimmed to the app's own
+ *    disabled opacity, with the reason in the accessibility label and again in
+ *    the caption under the row. Never simply absent: a tile that vanishes
+ *    teaches nobody why.
+ *  * selected -- a Pad is showing the simulator beside the terminal right now.
+ *    The only tile whose press leaves something on screen to report, and the
+ *    third and last thing on this sheet that spends the accent.
+ */
+function ActionTile({
+  icon: Icon,
+  label,
+  accessibilityLabel,
+  busy = false,
+  disabled = false,
+  selected = false,
+  onPress,
+}: {
+  icon: typeof SquareTerminal;
+  label: string;
+  accessibilityLabel: string;
+  busy?: boolean;
+  disabled?: boolean;
+  selected?: boolean;
+  onPress?: () => void;
+}) {
+  const theme = useThemeTokens();
+  const ink = disabled
+    ? theme.colors.textSubtle
+    : selected
+      ? theme.colors.primary
+      : theme.colors.text;
+  return (
+    <GlassChrome face="sheet" style={styles.tile}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ disabled: disabled || busy, busy, selected }}
+        disabled={disabled || busy || !onPress}
+        onPress={onPress}
+        style={[styles.tileHit, disabled ? styles.tileDisabled : undefined]}>
+        {busy ? (
+          <Spinner size="sm" color={theme.colors.primary} />
+        ) : (
+          <Icon size={20} color={ink} strokeWidth={2} />
+        )}
+        {/* Two lines is the budget, and the strings are chosen to fit it: at a
+            quarter of a 390-point phone a tile is 83 points wide, which holds
+            "Nouveau"/"terminal" and "Navigateur" but not "Ouvrir dans le
+            navigateur". Centred, because a one-word label under a centred icon
+            reading off the left edge is a label that has lost its icon. */}
+        <Text variant="caption" color={ink} numberOfLines={2} style={styles.tileLabel}>
+          {label}
+        </Text>
+      </PressableScale>
+    </GlassChrome>
   );
 }
 
@@ -893,6 +1008,13 @@ function SectionHeading({ title, action }: { title: string; action?: ReactNode }
  * the inverse of what this sheet used to do: it set every row's identity in the
  * 11pt all-caps instrument style and its content one point larger, so a row's
  * own name was the smallest thing in it.
+ *
+ * One height for every row, one line or two: 48 points, which is what the four
+ * points of padding above and below a 20/17 stack come to. It used to be 56 for
+ * a single second line and 73 for a wrapped one, so a list of thirty agent
+ * commands had two rhythms in it depending on how long each description
+ * happened to be. 48 still clears the 44-point minimum comfortably, and a
+ * mistap here sends something to a live pane, so it does not go lower.
  */
 function ActionRow({
   accessibilityLabel,
@@ -901,6 +1023,7 @@ function ActionRow({
   nameMono = false,
   nameSuffix,
   detail,
+  detailLines = 2,
   detailColor,
   value,
   keys,
@@ -916,6 +1039,8 @@ function ActionRow({
   nameMono?: boolean;
   nameSuffix?: string;
   detail?: string;
+  /** How much prose the row is allowed. One, wherever the list can be long. */
+  detailLines?: number;
   detailColor?: string;
   value?: string;
   keys?: string[];
@@ -953,13 +1078,17 @@ function ActionRow({
             selectable
             variant="caption"
             color={detailColor}
-            numberOfLines={2}
+            numberOfLines={1}
             style={styles.rowValue}>
             {value}
           </Text>
         ) : null}
         {detail ? (
-          <Text variant="caption" color={detailColor} numberOfLines={2} style={styles.rowDetail}>
+          <Text
+            variant="caption"
+            color={detailColor}
+            numberOfLines={detailLines}
+            style={styles.rowDetail}>
             {detail}
           </Text>
         ) : null}
@@ -1040,30 +1169,84 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: LADDER.section,
   },
+  // The sheet's paddings live on the content container, so the sticky node
+  // reclaims them for its own edges -- otherwise rows slide through the gap
+  // beside it and under its corners on their way up. Same negative-margin trick
+  // the panels sheet uses, and it has to track `content` (and `padContent`) if
+  // either of those paddings ever moves.
+  stickyTop: {
+    marginHorizontal: -LADDER.gutter,
+    paddingHorizontal: LADDER.gutter,
+    marginTop: -LADDER.gap,
+    paddingTop: LADDER.gap,
+    paddingBottom: LADDER.gap,
+    gap: LADDER.snug,
+  },
+  padStickyTop: {
+    marginHorizontal: -LADDER.section,
+    paddingHorizontal: LADDER.section,
+  },
   sheetHandle: {
     width: 38,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
     backgroundColor: 'rgba(127, 127, 127, 0.36)',
-    marginBottom: 2,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LADDER.snug,
-    paddingBottom: LADDER.tight,
+    gap: LADDER.gap,
   },
   headerCopy: { flex: 1, minWidth: 0, gap: 2 },
   headerTitle: { includeFontPadding: false },
-  closeButton: {
+  // 38 and half of it, which is the disc every other sheet in this app gives a
+  // header button. `GlassChrome` draws the material and nothing else, so the
+  // shape is stated here and the pressable inside fills it.
+  headerButton: {
     width: 38,
     height: 38,
-    borderRadius: appChrome.radius.roundControl,
+    borderRadius: 19,
     borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  headerButtonHit: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  tiles: { flexDirection: 'row', gap: LADDER.gap },
+  tile: {
+    flex: 1,
+    minWidth: 0,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  // 12 above and below a 20-point glyph, a 4-point lead, and room for two lines
+  // of 15: 82 points when both lines are used and the same 82 when only one is,
+  // so four tiles whose labels wrap differently still make one straight row.
+  tileHit: {
+    minHeight: 82,
+    paddingHorizontal: LADDER.gap,
+    paddingVertical: LADDER.snug,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: LADDER.tight,
+  },
+  tileDisabled: { opacity: appChrome.opacity.disabled },
+  // Two lines' worth of height whether the label uses one or two, so the four
+  // icons sit on one line across the row. Without it a tile whose label wraps
+  // ("New terminal", and most of the other seven languages) centres a taller
+  // stack and lifts its own glyph above its neighbours' by half a line.
+  tileLabel: {
+    textAlign: 'center',
+    lineHeight: 15,
+    minHeight: 30,
+    includeFontPadding: false,
+  },
+  tilesNote: { paddingHorizontal: LADDER.tight, lineHeight: 16 },
   section: { gap: LADDER.gap },
   heading: {
     flexDirection: 'row',
@@ -1073,13 +1256,6 @@ const styles = StyleSheet.create({
   },
   headingTitle: { paddingHorizontal: LADDER.tight, letterSpacing: 0.8 },
   headingSkeleton: { marginHorizontal: LADDER.tight },
-  // Reaches past the label's own line so the tap target clears 44pt without the
-  // heading itself growing a band of empty space above the card.
-  headingAction: {
-    minHeight: 32,
-    paddingHorizontal: LADDER.gap,
-    justifyContent: 'center',
-  },
   // The surface Stop sits on. `SettingsCard` draws its own, and this one has to
   // be tinted, so it repeats that card's geometry rather than taking it.
   group: {
@@ -1087,19 +1263,21 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  // 56 rather than the 60 Settings gives a row: this sheet can hold forty of
-  // them behind one tap, and four points a row is most of a row back over a
-  // screenful. Still well clear of the 44pt minimum -- a mistap here sends
-  // something to a live pane.
+  // 48 rather than the 60 Settings gives a row: this sheet can hold forty of
+  // them behind one tap, and twelve points a row is a fifth of a screenful back
+  // over a real agent's catalogue. Still clear of the 44pt minimum -- a mistap
+  // here sends something to a live pane -- and it is the same 48 whether the row
+  // carries one line or two, which is what makes a long list read as a rhythm
+  // instead of as a stack of differently sized cards.
   row: {
-    minHeight: 56,
+    minHeight: 48,
     paddingHorizontal: LADDER.gutter,
-    paddingVertical: LADDER.gap,
+    paddingVertical: LADDER.tight,
     flexDirection: 'row',
     alignItems: 'center',
     gap: LADDER.snug,
   },
-  rowCopy: { flex: 1, minWidth: 0, gap: 3 },
+  rowCopy: { flex: 1, minWidth: 0, gap: 2 },
   rowDisabled: { opacity: appChrome.opacity.disabled },
   nameLine: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   rowName: { flexShrink: 1, lineHeight: 20, includeFontPadding: false },
