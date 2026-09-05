@@ -114,6 +114,22 @@ export function simfarmDevicesUrl(gatewayUrl: string | undefined, port: number):
   return base === null ? null : `${base}devices?booted=1`;
 }
 
+/**
+ * `ws://host:port/v1` -- the one data channel, and the only thing the preview
+ * opens now that it draws the picture itself.
+ *
+ * Built from the same base as every other URL here rather than assembled from
+ * parts, so an IPv6 literal keeps its brackets in the one place it is easiest
+ * to get wrong. `https` becomes `wss` for the same reason `webServiceUrl` keeps
+ * the scheme: a gateway the operator put behind TLS must not have its simulator
+ * stream quietly dropped onto a plain socket beside it.
+ */
+export function simfarmSocketUrl(gatewayUrl: string | undefined, port: number): string | null {
+  const base = simfarmClientUrl(gatewayUrl, port);
+  if (base === null) return null;
+  return `${base.replace(/^http/, 'ws')}v1`;
+}
+
 /** `/healthz`, used only to tell "nothing is listening" from "it is there". */
 export function simfarmHealthUrl(gatewayUrl: string | undefined, port: number): string | null {
   const base = simfarmClientUrl(gatewayUrl, port);
@@ -145,85 +161,51 @@ export function simfarmDeviceKind(id: string): SimfarmDeviceKind {
 }
 
 /**
- * The nine colours simfarm's client will adopt, in its own vocabulary.
+ * What a device can be asked to do, in the subset the preview acts on.
  *
- * Its `?theme=` is base64url JSON, read before the first paint precisely so the
- * panel does not flash the wrong colour -- which is the same problem this app
- * solves with its splash overlay. The keys are simfarm's; the values are this
- * app's semantic tokens, and the mapping is one-to-one because both palettes are
- * built on the same idea of what a colour is *for* rather than what it is.
- *
- * `accent` is deliberately the app's primary. simfarm reserves it for the status
- * dot and says so: it is the one saturated colour with no semantic meaning
- * there, and letting it onto borders is how an instrument stops being neutral.
- * That is the same rule this app applies to its own accent, so handing it over
- * is safe.
+ * Declarative on simfarm's side and treated that way here: the three backends
+ * differ a great deal, so the preview offers a control only when the device it
+ * is attached to says the control exists. `video` is the one that decides
+ * whether there is a picture at all -- see `SIMFARM_CODEC`.
  */
-export interface SimfarmThemeColors {
-  background: string;
-  surface: string;
-  text: string;
-  textMuted: string;
-  border: string;
-  primary: string;
-  success: string;
-  warning: string;
-  danger: string;
+export interface SimfarmCapabilities {
+  video: string[];
+  text: boolean;
+  buttons: string[];
 }
 
-/** base64url: standard base64 with `-_` for `+/`, and no padding. */
-function base64Url(value: string): string {
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-  // The JSON is hex colours and ASCII keys, so UTF-8 is one byte per character
-  // and a full encoder would be weight with nothing to carry. Anything outside
-  // ASCII would be a bug in the caller, not a colour.
-  const bytes: number[] = [];
-  for (let i = 0; i < value.length; i += 1) bytes.push(value.charCodeAt(i) & 0x7f);
-
-  let out = '';
-  for (let i = 0; i < bytes.length; i += 3) {
-    const chunk = (bytes[i] << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0);
-    const left = bytes.length - i;
-    out += alphabet[(chunk >> 18) & 63] + alphabet[(chunk >> 12) & 63];
-    if (left > 1) out += alphabet[(chunk >> 6) & 63];
-    if (left > 2) out += alphabet[chunk & 63];
-  }
-  return out;
-}
-
-/**
- * The client URL with this app's palette on it.
- *
- * Falls back to the bare URL when there is no gateway or no port, so a caller
- * never has to guard two things. A malformed parameter is simfarm's problem to
- * ignore -- its own comment says a bad `?theme=` keeps the defaults rather than
- * taking the page down -- but there is no reason to hand it one.
- */
-export function simfarmThemedClientUrl(
-  gatewayUrl: string | undefined,
-  port: number,
-  colors: SimfarmThemeColors
-): string | null {
-  const base = simfarmClientUrl(gatewayUrl, port);
-  if (base === null) return null;
-  const theme = {
-    bg: colors.background,
-    bgAlt: colors.surface,
-    fg: colors.text,
-    fgDim: colors.textMuted,
-    line: colors.border,
-    accent: colors.primary,
-    ok: colors.success,
-    warn: colors.warning,
-    bad: colors.danger,
-  };
-  return `${base}?theme=${base64Url(JSON.stringify(theme))}`;
+/** The size of the picture, already rotated upright. Pixels, not points. */
+export interface SimfarmScreen {
+  width: number;
+  height: number;
+  scale: number;
 }
 
 export interface SimfarmDevice {
   id: string;
   name: string;
   kind: SimfarmDeviceKind;
+  /** `booted` is the only state that can be attached to without booting first. */
+  booted: boolean;
+  screen?: SimfarmScreen;
+  capabilities: SimfarmCapabilities;
+}
+
+/**
+ * The codec the preview asks for, and the only one it can draw.
+ *
+ * Not a preference. simfarm's own client reaches for h264 and falls back to
+ * jpeg when `VideoDecoder` is missing, which over a plain-http tailnet is
+ * always -- so the fallback was the real path even before this app drew
+ * anything itself. Hermes has no video decoder at all, so jpeg is not a
+ * fallback here, it is the requirement, and a device that cannot offer it says
+ * so in `capabilities.video` and gets a sentence instead of a black rectangle.
+ */
+export const SIMFARM_CODEC = 'jpeg';
+
+/** Whether this device can be drawn at all; see `SIMFARM_CODEC`. */
+export function simfarmCanStream(device: SimfarmDevice): boolean {
+  return device.capabilities.video.includes(SIMFARM_CODEC);
 }
 
 /**
@@ -251,7 +233,55 @@ export function parseSimfarmDevices(body: unknown): SimfarmDevice[] {
       id,
       name: typeof name === 'string' && name !== '' ? name : id,
       kind: simfarmDeviceKind(id),
+      booted: (entry as { state?: unknown }).state === 'booted',
+      screen: parseScreen((entry as { screen?: unknown }).screen),
+      capabilities: parseCapabilities((entry as { capabilities?: unknown }).capabilities),
     });
   }
   return parsed;
+}
+
+/**
+ * The screen block, or nothing.
+ *
+ * A device that is shut down has no screen and says so by omitting it, so the
+ * absence is ordinary rather than a defect -- and a partial one is treated as
+ * absent, because half a size is not a size the picture can be laid out with.
+ * The `screen` event that arrives after attach is authoritative anyway; this is
+ * only what the picker has to go on beforehand.
+ */
+function parseScreen(value: unknown): SimfarmScreen | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const { width, height, scale } = value as Record<string, unknown>;
+  if (typeof width !== 'number' || typeof height !== 'number') return undefined;
+  if (!(width > 0) || !(height > 0)) return undefined;
+  return {
+    width,
+    height,
+    scale: typeof scale === 'number' && scale > 0 ? scale : 1,
+  };
+}
+
+/**
+ * Capabilities, defaulting to "cannot".
+ *
+ * The direction matters. A capability this app failed to read is one it must
+ * not offer a control for: the wrong way round, an older or newer simfarm gets
+ * a text field that silently does nothing, and the reader is back to pressing
+ * things that have no effect.
+ */
+function parseCapabilities(value: unknown): SimfarmCapabilities {
+  const record =
+    typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+  return {
+    video: stringList(record.video),
+    text: record.text === true,
+    buttons: stringList(record.buttons),
+  };
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string')
+    : [];
 }
