@@ -64,6 +64,12 @@ import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { WorkspaceTitleSwitcher } from '@/components/workspace-title-switcher';
 import { appChrome } from '@/constants/appearance';
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
+import {
+  isSendableAsKeystrokes,
+  paneInputDelivery,
+  paneKeystrokes,
+  type PaneInputSource,
+} from '@/lib/pane-input';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useAwayDigest } from '@/hooks/use-away-digest';
@@ -2740,19 +2746,15 @@ export function ServerTerminalWorkspace({
       if (selectedAgent) {
         await sendAgentText(data.sessionId, requestPaneId, value);
       } else {
-        await sendPaneText(data.sessionId, requestPaneId, value);
-        if (
-          activeServerRef.current !== requestServerId ||
-          activePaneRef.current !== requestPaneId
-        ) {
-          return;
-        }
         // A shell needs Enter to run what was typed. An editor does not: Enter
         // there is a newline in the buffer, so it belongs on the key row where
         // it can be pressed deliberately.
-        if (!fullScreenPane) {
-          await sendPaneKeys(data.sessionId, requestPaneId, ['enter']);
-        }
+        //
+        // A composed line stays a paste, and that is not an oversight: it is
+        // what keeps a two-line message one message instead of two Enters, and
+        // the only channel by which an agent recognises an attachment path as
+        // an image.
+        await sendPaneCharacters(requestPaneId, value, 'composer', !fullScreenPane);
       }
       if (activeServerRef.current !== requestServerId || activePaneRef.current !== requestPaneId) {
         return;
@@ -2772,6 +2774,33 @@ export function ServerTerminalWorkspace({
     }
   }
 
+  /**
+   * Characters into a pane, by the one rule that decides how they travel.
+   *
+   * `send-text` is a *paste* -- the gateway loads a tmux buffer and pastes it
+   * bracketed -- and a full-screen program reads a bracketed paste as content
+   * rather than as keys. So a keypress that went out this way did not press
+   * anything: `i` typed the letter into the file instead of entering insert
+   * mode, and on nvim's dashboard or a file tree, where the buffer cannot be
+   * written, it did nothing at all. `lib/pane-input` is the rule and the
+   * reason; this is the only place on this screen that acts on it.
+   */
+  function sendPaneCharacters(
+    paneId: string,
+    text: string,
+    source: PaneInputSource,
+    submit = false
+  ): Promise<unknown> {
+    if (paneInputDelivery(source) === 'keystrokes' && isSendableAsKeystrokes(text)) {
+      // The submit rides in the same request, so an Enter cannot land between
+      // two halves of a command line.
+      return sendPaneKeys(data.sessionId, paneId, paneKeystrokes(text, { submit }));
+    }
+    return sendPaneText(data.sessionId, paneId, text).then(() =>
+      submit ? sendPaneKeys(data.sessionId, paneId, ['enter']) : undefined
+    );
+  }
+
   // The virtual keyboard fires a key per tap, so it skips the spinner state the
   // row uses and just sends. An immediate read keeps the caret responsive
   // without waiting on the event stream.
@@ -2786,7 +2815,7 @@ export function ServerTerminalWorkspace({
   function typeText(text: string) {
     const requestPaneId = selection.paneId;
     if (connection.phase !== 'connected' || !ready || !requestPaneId) return;
-    void sendPaneText(data.sessionId, requestPaneId, text)
+    void sendPaneCharacters(requestPaneId, text, 'virtual-key')
       .then(() => refreshOutputRef.current())
       .catch(() => {});
   }
@@ -2802,13 +2831,15 @@ export function ServerTerminalWorkspace({
       if (item.text === undefined) {
         await sendPaneKeys(data.sessionId, requestPaneId, [item.key]);
       } else {
-        // An editor command is characters, not a key name -- the gateway
-        // validates key names and `:` is not one -- so it goes out the way the
-        // composer sends a line, and a `:` command line is run the same way too.
-        await sendPaneText(data.sessionId, requestPaneId, item.text);
-        if (item.submit) {
-          await sendPaneKeys(data.sessionId, requestPaneId, ['enter']);
-        }
+        // A cap made of characters is still a key the reader pressed, so it
+        // goes as keys: `:` has to open nvim's command line rather than arrive
+        // in the buffer, and `dd` has to delete a line rather than type two.
+        //
+        // The note that used to be here said the gateway rejects `:` as a key
+        // name. It does not -- `tmux_key` takes any single non-control
+        // character verbatim -- and sending these as text is what made every
+        // editor key on this screen do nothing.
+        await sendPaneCharacters(requestPaneId, item.text, 'terminal-key', item.submit);
       }
       setTimeout(() => void refreshOutput(), 80);
     } catch (failure) {
