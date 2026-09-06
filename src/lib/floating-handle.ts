@@ -51,6 +51,45 @@ function clamp(value: number, low: number, high: number): number {
   return Math.min(high, Math.max(low, value));
 }
 
+/** What shapes the rectangle: the button, its gaps, and the layer's insets. */
+export interface HandleLayout {
+  /** The button's diameter. */
+  size: number;
+  /** Inset from the rail it parks against. */
+  gap: number;
+  /** How far above the bottom inset the anchor sits. */
+  restingGap: number;
+  /** The anchor's distance from the bottom of the layer: the inset plus `restingGap`. */
+  resting: number;
+  /** Clearance kept at the top of the layer. */
+  topInset: number;
+}
+
+/**
+ * The rectangle of offsets the button may rest at, for a layer of this size.
+ *
+ * Anchored bottom right, so the left rail and the top are negative. The
+ * bottom allows the button down to `gap` above the inset -- the difference
+ * between the resting gap and the rail gap -- and never below it. A layer
+ * that has not been measured (0x0) yields a rectangle of nothing, which the
+ * caller must treat as "not yet", not as "the corner".
+ */
+export function floatingHandleBounds(
+  track: { width: number; height: number },
+  layout: HandleLayout
+): HandleBounds {
+  'worklet';
+  // `Math.min` against zero rather than a negated `Math.max`: the latter is
+  // negative zero on an unmeasured layer, which is not the zero a test
+  // compares with.
+  return {
+    minX: Math.min(0, layout.size + layout.gap * 2 - track.width),
+    maxX: 0,
+    minY: Math.min(0, layout.size + layout.resting + layout.topInset - track.height),
+    maxY: Math.max(0, layout.restingGap - layout.gap),
+  };
+}
+
 /**
  * The rest point for a release: the nearer rail, or the one the throw was
  * heading for.

@@ -154,10 +154,10 @@ export function simfarmFitScale(frame: SimfarmSize, viewport: SimfarmSize): numb
 /**
  * The offset a pan may actually hold.
  *
- * An axis with room to spare is pinned to nothing -- the picture is centred on
- * it and a drag there would only slide it into a margin it does not have. An
- * axis that overflows may move by exactly the overflow, half of it either way
- * from centre, so both ends stay reachable and neither can be dragged past.
+ * An axis with room to spare is pinned to nothing -- a drag there would only
+ * slide the picture into a margin it does not have. An axis that overflows
+ * may move by exactly the overflow, half of it either way from centre, so
+ * both ends stay reachable and neither can be dragged past.
  */
 export function clampSimfarmOffset(
   content: SimfarmSize,
@@ -181,6 +181,18 @@ export function clampSimfarmOffset(
  * caller that computed either of them separately would be one refactor away
  * from a preview whose taps land somewhere else, which is the defect this
  * whole change is about.
+ *
+ * ## The top edge
+ *
+ * Horizontally the picture is centred, which on a portrait surface is the
+ * whole width and on a landscape one is the picture between two bands of
+ * ground. Vertically it is never centred: its top is the surface's top. This
+ * is a picture of a phone on a phone, and the way to hold one is with the
+ * status bars lined up -- so a picture taller than the surface starts at the
+ * top and hangs its overflow off the bottom, where the pan can reach it, and
+ * a picture shorter than the surface starts at the top with the theme's
+ * ground below it. The surface itself runs from the very top of the screen,
+ * under the hidden status bar and the camera cutout; the stage says why.
  */
 export function placeSimfarmFrame(
   frame: SimfarmSize,
@@ -193,11 +205,15 @@ export function placeSimfarmFrame(
   const width = frame.width * scale;
   const height = frame.height * scale;
   const panned = clampSimfarmOffset({ width, height }, viewport, offset);
+  // The centred position, and then never below the top edge: a shorter
+  // picture's spare room is all ground under it, and a taller one's pan has
+  // already been clamped to the overflow, so it is at or above zero anyway.
+  const centred = (viewport.height - height) / 2 + panned.y;
   return {
     width,
     height,
     x: (viewport.width - width) / 2 + panned.x,
-    y: (viewport.height - height) / 2 + panned.y,
+    y: Math.min(0, centred),
     scale,
   };
 }
@@ -213,20 +229,19 @@ export function placeSimfarmFrame(
  * leaving the device holding a touch that never lifted.
  */
 /**
- * Where an untouched picture rests: centred, unless it is taller than the
- * viewport, in which case it starts at the top of it.
+ * Where an untouched picture rests: with its top at the top of the viewport.
  *
- * `placeSimfarmFrame` centres, and centring a phone that hangs over both ends
- * puts its top half-an-overflow above the viewport. On a sheet that was fine.
- * Full screen, the viewport starts under the camera cutout, and a picture
- * that began above it had its status bar behind the Dynamic Island -- so the
- * overflow is hung off the bottom instead, where the key row is anyway, and
- * the two-finger drag reveals it. The horizontal is always centred: the fit
- * rule fills the width, so there is nothing to hang until the reader zooms.
+ * `placeSimfarmFrame` centres the overflow of a picture taller than the
+ * viewport, which puts its top half-an-overflow above the screen -- the
+ * simulated status bar cut off. So the overflow is hung off the bottom
+ * instead, where the two-finger drag reveals it. The horizontal is always
+ * centred: the fit rule fills the width, so there is nothing to hang until
+ * the reader zooms.
  *
  * The answer is an offset in `clampSimfarmOffset`'s terms, so it is exactly
  * the value the pan would have reached by dragging to the top, and the clamp
- * can never disagree with it.
+ * can never disagree with it. A picture that fits needs no offset at all: the
+ * placement already puts it at the top.
  */
 export function simfarmRestingOffset(
   frame: SimfarmSize,

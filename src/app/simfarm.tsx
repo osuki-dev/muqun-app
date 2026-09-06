@@ -40,8 +40,11 @@
  * ## Back on Android
  *
  * The hardware back closes the preview and is never sent to the emulator;
- * the emulator's own Back is the key in the bottom row. Predictive back is
- * off for the app. What the left edge does was measured on the emulator with
+ * the emulator's own Back is an item in the floating button's menu. While
+ * that menu is open the stage answers the key first and closes the menu
+ * instead -- it subscribes when the menu opens, which makes it the newer
+ * subscriber and the one React Native asks first (`simfarmBackPress` is the
+ * rule). Predictive back is off for the app. What the left edge does was measured on the emulator with
  * gesture navigation and this screen's bars hidden: a swipe from the
  * system's own strip (the outermost ~24dp) never reaches the app -- Android
  * uses it to show the bars for a moment, and while they are showing a second
@@ -92,6 +95,7 @@ export default function SimfarmScreen() {
 
   // The hardware back is this screen's, so it is answered here and stops:
   // `true` keeps the navigator from also popping, and nothing forwards it.
+  // The stage answers first while its menu is open; see the note above.
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       close();

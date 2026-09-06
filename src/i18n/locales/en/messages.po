@@ -368,8 +368,8 @@ msgid "Choose a simulator"
 msgstr "Choose a simulator"
 
 #: src/components/simfarm-stage.tsx
-msgid "Choose a simulator above."
-msgstr "Choose a simulator above."
+msgid "Choose a simulator from the menu."
+msgstr "Choose a simulator from the menu."
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -436,6 +436,14 @@ msgstr "Close the attachment menu"
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the command list"
 msgstr "Close the command list"
+
+#: src/components/simfarm-stage.tsx
+msgid "Close the composer"
+msgstr "Close the composer"
+
+#: src/components/simfarm-stage.tsx
+msgid "Close the menu"
+msgstr "Close the menu"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
@@ -1152,10 +1160,6 @@ msgstr "Hide {name}"
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
 
-#: src/components/simfarm-stage.tsx
-msgid "Hide the controls"
-msgstr "Hide the controls"
-
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "Hide the server list"
@@ -1397,10 +1401,6 @@ msgstr "Loading terminal"
 msgid "Loading the transcript"
 msgstr "Loading the transcript"
 
-#: src/components/simfarm-stage.tsx
-msgid "Lock"
-msgstr "Lock"
-
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Logs"
@@ -1446,6 +1446,10 @@ msgstr "More symbols"
 #: src/components/editor-controls.tsx
 msgid "Move the editor controls"
 msgstr "Move the editor controls"
+
+#: src/components/simfarm-stage.tsx
+msgid "Move the simulator controls"
+msgstr "Move the simulator controls"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1767,6 +1771,10 @@ msgstr "Opens the keyboard, the editor keys and the composer over this editor. D
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "Opens the Muqun issue tracker on GitHub."
+
+#: src/components/simfarm-stage.tsx
+msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
+msgstr "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
@@ -2390,10 +2398,6 @@ msgstr "Show every tool step"
 msgid "Show images"
 msgstr "Show images"
 
-#: src/components/simfarm-stage.tsx
-msgid "Show the controls"
-msgstr "Show the controls"
-
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Show the editor keyboard"
@@ -2435,6 +2439,10 @@ msgstr "simfarm port"
 #: src/components/simfarm-preview.tsx
 msgid "Simulator"
 msgstr "Simulator"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator controls"
+msgstr "Simulator controls"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"

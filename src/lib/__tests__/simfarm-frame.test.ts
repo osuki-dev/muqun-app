@@ -69,9 +69,23 @@ describe('placeSimfarmFrame', () => {
     expect(placed.y).toBe(-31);
   });
 
-  test('a device shorter than the surface sits centred with no offset', () => {
+  test('a device shorter than the surface sits at the top, ground below it', () => {
     const placed = placeSimfarmFrame({ width: 402, height: 600 }, PHONE_SHEET);
-    expect(placed.y).toBe((812 - 600) / 2);
+    expect(placed.y).toBe(0);
+    expect(placed.x).toBe(0);
+    // And no pan can pull it down into the ground: the axis has room to
+    // spare, so the offset is pinned to nothing.
+    expect(placeSimfarmFrame({ width: 402, height: 600 }, PHONE_SHEET, 1, { x: 0, y: 300 }).y).toBe(
+      0
+    );
+  });
+
+  test('a landscape picture on a portrait phone starts at the top edge too', () => {
+    // A device turned sideways: the width fills, the picture is squat, and
+    // the spare height is all below it.
+    const placed = placeSimfarmFrame({ width: 874, height: 402 }, PHONE_SHEET);
+    expect(placed.width).toBe(402);
+    expect(placed.y).toBe(0);
   });
 
   test('zoom multiplies the fit and is clamped at both ends', () => {
@@ -176,8 +190,8 @@ describe('simfarmEdgeAt', () => {
 });
 
 describe('simfarmRestingOffset', () => {
-  // Full screen, the surface begins under the camera cutout: the iPhone from
-  // the report on a viewport 62pt shorter than itself.
+  // Full screen from the very top edge, no band for the status bar or the
+  // cutout: the iPhone from the report on a viewport 62pt shorter than itself.
   const frame = { width: 402, height: 874 };
   const viewport = { width: 402, height: 812 };
 
@@ -189,8 +203,10 @@ describe('simfarmRestingOffset', () => {
     expect(placeSimfarmFrame(frame, viewport, 1, rest).y).toBe(0);
   });
 
-  test('a device that fits rests centred', () => {
-    expect(simfarmRestingOffset({ width: 402, height: 700 }, viewport)).toEqual({ x: 0, y: 0 });
+  test('a device that fits needs no offset: the placement already has it at the top', () => {
+    const short = { width: 402, height: 700 };
+    expect(simfarmRestingOffset(short, viewport)).toEqual({ x: 0, y: 0 });
+    expect(placeSimfarmFrame(short, viewport, 1, simfarmRestingOffset(short, viewport)).y).toBe(0);
   });
 
   test('is a pan the clamp agrees with', () => {
