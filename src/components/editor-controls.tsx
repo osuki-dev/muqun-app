@@ -1,30 +1,14 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Keyboard as KeyboardIcon } from 'lucide-react-native';
-import { useCallback, type ReactNode } from 'react';
-import {
-  StyleSheet,
-  View,
-  type AccessibilityActionEvent,
-  type LayoutChangeEvent,
-} from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  type SharedValue,
-} from 'react-native-reanimated';
+import { type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
+import { FloatingHandle } from '@/components/floating-handle';
 import { GlassChrome } from '@/components/glass-chrome';
-import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
-import {
-  nextHandleCorner,
-  reseatFloatingHandle,
-  snapFloatingHandle,
-  type HandleBounds,
-} from '@/lib/floating-handle';
-import { fadeIn, fadeOutDown, riseIn, settleTo, zoomIn, zoomOut } from '@/lib/motion';
+import { fadeIn, fadeOutDown, riseIn } from '@/lib/motion';
 
 /**
  * The controls an editor pane is left with, over the grid.
@@ -51,16 +35,12 @@ import { fadeIn, fadeOutDown, riseIn, settleTo, zoomIn, zoomOut } from '@/lib/mo
  *
  * ## The two states are one control, and only one of them floats
  *
- * Collapsed it is a small round button. That button is the only chrome over
- * the file, so it is the thing the reader moves out of the way of the line
- * they are reading -- and it moves the way every floating control on a phone
- * moves: it follows the finger in both axes and parks against the left or the
- * right rail when the finger lifts (AssistiveTouch, a chat head, a
- * picture-in-picture window). Where it goes is `lib/floating-handle`; how it
- * gets there is `settleTo`, the app's one spring, critically damped so it
- * absorbs the throw without bouncing. A drag is not the only way: the button
- * carries a move action that walks the four corners, for a reader who cannot
- * make the gesture.
+ * Collapsed it is the app's floating button (`FloatingHandle`): the only
+ * chrome over the file, so the thing the reader moves out of the way of the
+ * line they are reading, and it moves the way every floating control on a
+ * phone moves -- it follows the finger in both axes and parks against the
+ * left or the right rail when the finger lifts. That component owns the
+ * physics; this one owns what the button opens.
  *
  * Tapped, it becomes the keyboard -- and the keyboard does not float. It is a
  * keyboard, so it sits where a keyboard sits: across the bottom of the pane,
@@ -71,22 +51,6 @@ import { fadeIn, fadeOutDown, riseIn, settleTo, zoomIn, zoomOut } from '@/lib/mo
  * keyboard's own toggle, which is where the reader has just been looking, and
  * the button comes back exactly where they left it.
  */
-
-/**
- * How far above the bottom of the pane the button rests before it is moved.
- *
- * Two rows of a terminal at the default text size, not a decorative margin.
- * nvim's status line and its command line are the bottom two rows of the
- * screen, and they are what a reader is looking at while they type `:w` -- so
- * the one place the button must not start is on top of them.
- */
-const RESTING_GAP = 40;
-/** Inset of the button from the rail it is parked against. */
-const HANDLE_GAP = 14;
-const HANDLE_SIZE = 46;
-/** Movement before the drag takes the touch off the button underneath it. */
-const DRAG_SLOP = 6;
-
 export interface EditorControlsProps {
   /** The keyboard is out, rather than the button that opens it. */
   expanded: boolean;
@@ -136,44 +100,6 @@ export function EditorControls({
 }: EditorControlsProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const chromeText = theme.colors.text;
-
-  /** The pane's own size: the two numbers every bound below is derived from. */
-  const trackWidth = useSharedValue(0);
-  const trackHeight = useSharedValue(0);
-  const resting = bottomInset + RESTING_GAP;
-
-  /**
-   * The rectangle of offsets the button may rest at.
-   *
-   * Recomputed inside the worklets rather than stored, so a rotation between
-   * two frames can never be dragged against a limit measured for the old
-   * screen.
-   */
-  const bounds = useCallback((): HandleBounds => {
-    'worklet';
-    return {
-      minX: -Math.max(0, trackWidth.value - HANDLE_SIZE - HANDLE_GAP * 2),
-      maxX: 0,
-      minY: -Math.max(0, trackHeight.value - HANDLE_SIZE - resting - topInset),
-      maxY: Math.max(0, RESTING_GAP - HANDLE_GAP),
-    };
-  }, [resting, topInset, trackHeight, trackWidth]);
-
-  /**
-   * The bounds the button was last settled against.
-   *
-   * Kept so that a pane which changes size knows which rail the remembered
-   * offset *meant*, rather than re-deriving it from the new rectangle: on a
-   * screen that got wider, an offset that was the left rail is nearer the
-   * right one, and reseating by nearest alone walks the button across the pane
-   * on every rotation.
-   */
-  const settledBounds = useSharedValue<HandleBounds | null>(null);
-
-  const handleStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: offsetX.value }, { translateY: offsetY.value }],
-  }));
 
   /**
    * The keyboard's own travel, and the only thing that moves the panel.
@@ -188,135 +114,39 @@ export function EditorControls({
     transform: [{ translateY: -Math.max(0, -(keyboardOffset?.value ?? 0) - bottomInset) }],
   }));
 
-  /**
-   * Keeps a remembered position inside a pane that has changed size under it.
-   *
-   * Measured or nothing: React Native reports a zero-height box before it
-   * reports a real one, and a reseat run against a zero-height pane says "no
-   * travel", which would throw away a remembered position on the first frame
-   * of every arrival.
-   */
-  function measureTrack(event: LayoutChangeEvent) {
-    const { width, height } = event.nativeEvent.layout;
-    trackWidth.value = width;
-    trackHeight.value = height;
-    if (width <= 0 || height <= 0) return;
-    const next = bounds();
-    const previous = settledBounds.value;
-    const rest = previous
-      ? reseatFloatingHandle({ x: offsetX.value, y: offsetY.value }, previous, next)
-      : snapFloatingHandle({ x: offsetX.value, y: offsetY.value }, next);
-    settledBounds.value = next;
-    if (rest.x !== offsetX.value) settleTo(offsetX, rest.x);
-    if (rest.y !== offsetY.value) settleTo(offsetY, rest.y);
-  }
-
-  /**
-   * The move action: one corner on, clockwise from the top left.
-   *
-   * A custom action hung off the button rather than increment/decrement,
-   * because activating the button opens the keyboard -- it is a button first,
-   * and a thing that can be relocated second.
-   */
-  const moveLabel = t`Move the editor controls`;
-  const handleActions = [{ name: 'move', label: moveLabel }];
-  const moveToNextCorner = useCallback(() => {
-    const next = bounds();
-    const corner = nextHandleCorner({ x: offsetX.value, y: offsetY.value }, next);
-    settledBounds.value = next;
-    settleTo(offsetX, corner.x);
-    settleTo(offsetY, corner.y);
-  }, [bounds, offsetX, offsetY, settledBounds]);
-  function onAccessibilityAction(event: AccessibilityActionEvent) {
-    if (event.nativeEvent.actionName === 'move') moveToNextCorner();
-  }
-
-  // The drag itself. `minDistance` is what lets the button stay a button: the
-  // pan does not claim the touch until the finger has actually travelled, so a
-  // tap reaches the `Pressable` underneath and only a drag takes it away.
-  const startX = useSharedValue(0);
-  const startY = useSharedValue(0);
-  const drag = Gesture.Pan()
-    .minDistance(DRAG_SLOP)
-    .onStart(() => {
-      startX.value = offsetX.value;
-      startY.value = offsetY.value;
-    })
-    .onUpdate((event) => {
-      // Free in both axes while the finger is down: the button is under the
-      // touch, not on a track beside it. Bounded by the pane and nothing else
-      // -- a control dragged past the edge of the screen is a control the
-      // reader cannot get back.
-      const edge = bounds();
-      offsetX.value = Math.min(edge.maxX, Math.max(edge.minX, startX.value + event.translationX));
-      offsetY.value = Math.min(edge.maxY, Math.max(edge.minY, startY.value + event.translationY));
-    })
-    .onEnd((event) => {
-      const next = bounds();
-      const rest = snapFloatingHandle(
-        { x: offsetX.value, y: offsetY.value, velocityX: event.velocityX },
-        next
-      );
-      settledBounds.value = next;
-      // The spring carries the throw's own velocity into the rail it was
-      // heading for, so a flick lands rather than being taken away and put
-      // down by the app.
-      settleTo(offsetX, rest.x, event.velocityX);
-      settleTo(offsetY, rest.y, event.velocityY);
-    });
-
-  // The gesture wraps a plain `View` rather than the animated or glass one it
-  // contains: `GestureDetector` attaches to its child by ref, and `GlassChrome`
-  // renders three different surfaces depending on the platform, none of which
-  // forwards one.
-  const handle = (
-    <Animated.View
-      pointerEvents="box-none"
-      style={[styles.handleAnchor, { bottom: resting, right: HANDLE_GAP }, handleStyle]}>
-      <GestureDetector gesture={drag}>
-        <View>
-          <Animated.View entering={zoomIn('short')} exiting={zoomOut('micro')}>
-            <GlassChrome style={styles.handle}>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Show the editor keyboard`}
-                accessibilityHint={t`Opens the keyboard, the editor keys and the composer over this editor. Drag to move.`}
-                accessibilityActions={handleActions}
-                onAccessibilityAction={onAccessibilityAction}
-                feedback="selection"
-                pressedScale={0.9}
-                onPress={onExpand}
-                style={styles.handleFace}>
-                <KeyboardIcon size={20} color={chromeText} />
-              </PressableScale>
-            </GlassChrome>
-          </Animated.View>
-        </View>
-      </GestureDetector>
-    </Animated.View>
-  );
-
-  const panel = (
-    <Animated.View pointerEvents="box-none" style={[styles.panelAnchor, panelStyle]}>
-      <GlassChrome
-        face="floating"
-        entering={riseIn()}
-        exiting={fadeOutDown('short')}
-        style={[styles.panel, { paddingBottom: Math.max(bottomInset, 10) }]}>
-        <View
-          // The body is inert while the pane cannot take input -- a reconnecting
-          // SSH shell, a pane the gateway has not answered for.
-          pointerEvents={disabled ? 'none' : 'auto'}
-          style={[styles.panelBody, disabled ? styles.panelBodyDisabled : null]}>
-          {children}
-        </View>
-      </GlassChrome>
-    </Animated.View>
-  );
-
   return (
-    <View pointerEvents="box-none" style={StyleSheet.absoluteFill} onLayout={measureTrack}>
-      {expanded ? panel : handle}
+    <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+      {/* Hidden rather than unmounted while the keyboard is out, so the layer
+          keeps the pane's measurement and the rail the button was parked on. */}
+      <FloatingHandle
+        offsetX={offsetX}
+        offsetY={offsetY}
+        topInset={topInset}
+        bottomInset={bottomInset}
+        hidden={expanded}
+        onPress={onExpand}
+        accessibilityLabel={t`Show the editor keyboard`}
+        accessibilityHint={t`Opens the keyboard, the editor keys and the composer over this editor. Drag to move.`}
+        moveLabel={t`Move the editor controls`}>
+        <KeyboardIcon size={20} color={theme.colors.text} />
+      </FloatingHandle>
+      {expanded ? (
+        <Animated.View pointerEvents="box-none" style={[styles.panelAnchor, panelStyle]}>
+          <GlassChrome
+            face="floating"
+            entering={riseIn()}
+            exiting={fadeOutDown('short')}
+            style={[styles.panel, { paddingBottom: Math.max(bottomInset, 10) }]}>
+            <View
+              // The body is inert while the pane cannot take input -- a
+              // reconnecting SSH shell, a pane the gateway has not answered for.
+              pointerEvents={disabled ? 'none' : 'auto'}
+              style={[styles.panelBody, disabled ? styles.panelBodyDisabled : null]}>
+              {children}
+            </View>
+          </GlassChrome>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }
@@ -333,38 +163,6 @@ export const editorPanelRow = {
 };
 
 const styles = StyleSheet.create({
-  /**
-   * The button's resting corner. Everything the drag does is a translation off
-   * this, so the remembered offset means the same thing on every screen size.
-   */
-  handleAnchor: {
-    position: 'absolute',
-    // Above the pane's own floating chrome -- the history spinner, the
-    // quick-action pair -- which are the only other things over the grid.
-    zIndex: 12,
-    elevation: 12,
-  },
-  /**
-   * Unchanged from the dock-era handle, and deliberately: measured against the
-   * app's other floating chrome -- `GlassChrome`, `PressableScale`, the dock's
-   * key-row toggles -- the size, the radius, the fill, the shadow and the
-   * centred icon already agree with them. What was wrong with this control was
-   * where it went, not what it looked like.
-   */
-  handle: {
-    width: HANDLE_SIZE,
-    height: HANDLE_SIZE,
-    borderRadius: HANDLE_SIZE / 2,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    boxShadow: appChrome.shadow.floatingPill,
-  },
-  handleFace: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   /** Where a keyboard goes: the full width of the pane, along the bottom of it. */
   panelAnchor: {
     position: 'absolute',
