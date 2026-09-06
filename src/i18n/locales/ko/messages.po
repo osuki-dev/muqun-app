@@ -368,8 +368,8 @@ msgid "Choose a simulator"
 msgstr "시뮬레이터 선택"
 
 #: src/components/simfarm-stage.tsx
-msgid "Choose a simulator above."
-msgstr "위에서 시뮬레이터를 고르세요."
+msgid "Choose a simulator from the menu."
+msgstr "메뉴에서 시뮬레이터를 선택하세요."
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -436,6 +436,14 @@ msgstr "첨부 메뉴 닫기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the command list"
 msgstr "명령 목록 닫기"
+
+#: src/components/simfarm-stage.tsx
+msgid "Close the composer"
+msgstr "입력란 닫기"
+
+#: src/components/simfarm-stage.tsx
+msgid "Close the menu"
+msgstr "메뉴 닫기"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
@@ -1152,10 +1160,6 @@ msgstr "{name} 숨기기"
 msgid "Hide keyboard"
 msgstr "키보드 숨기기"
 
-#: src/components/simfarm-stage.tsx
-msgid "Hide the controls"
-msgstr "컨트롤 숨기기"
-
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
 msgstr "서버 목록 숨기기"
@@ -1397,10 +1401,6 @@ msgstr "터미널 불러오는 중"
 msgid "Loading the transcript"
 msgstr "대화 기록 불러오는 중"
 
-#: src/components/simfarm-stage.tsx
-msgid "Lock"
-msgstr "잠금"
-
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "로그"
@@ -1446,6 +1446,10 @@ msgstr "기호 더 보기"
 #: src/components/editor-controls.tsx
 msgid "Move the editor controls"
 msgstr "편집기 컨트롤 이동"
+
+#: src/components/simfarm-stage.tsx
+msgid "Move the simulator controls"
+msgstr "시뮬레이터 컨트롤 이동"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/app/(drawer)/index.tsx
@@ -1767,6 +1771,10 @@ msgstr "이 편집기 위에 키보드, 편집기 키, 입력란을 엽니다. �
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "GitHub의 Muqun 이슈 트래커를 엽니다."
+
+#: src/components/simfarm-stage.tsx
+msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
+msgstr "시뮬레이터 메뉴(기기, 버튼, 키보드, 닫기)를 엽니다. 끌어서 옮길 수 있습니다."
 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
@@ -2390,10 +2398,6 @@ msgstr "모든 도구 단계 표시"
 msgid "Show images"
 msgstr "이미지 표시"
 
-#: src/components/simfarm-stage.tsx
-msgid "Show the controls"
-msgstr "컨트롤 표시"
-
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "편집기 키보드 표시"
@@ -2435,6 +2439,10 @@ msgstr "simfarm 포트"
 #: src/components/simfarm-preview.tsx
 msgid "Simulator"
 msgstr "시뮬레이터"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator controls"
+msgstr "시뮬레이터 컨트롤"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"

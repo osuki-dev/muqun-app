@@ -4,9 +4,10 @@ import { Canvas, Fill, Group, Image as SkiaImage } from '@shopify/react-native-s
 import {
   ArrowLeft,
   ChevronDown,
+  ChevronUp,
   House,
   Keyboard as KeyboardIcon,
-  Lock,
+  MonitorSmartphone,
   Power,
   RefreshCw,
   SendHorizontal,
@@ -15,29 +16,43 @@ import {
   X,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  BackHandler,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import Animated, {
-  ReduceMotion,
-  useAnimatedStyle,
   useDerivedValue,
   useReducedMotion,
   useSharedValue,
-  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { FloatingHandle, floatingHandleFrame } from '@/components/floating-handle';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
-import { timing } from '@/lib/motion';
+import { fadeIn, fadeInDown, fadeOut } from '@/lib/motion';
 import { simfarmCanStream, type SimfarmDevice } from '@/lib/simfarm';
 import {
-  recallSimfarmChrome,
-  rememberSimfarmChrome,
-  SimfarmChrome,
+  recallSimfarmHandle,
+  rememberSimfarmHandle,
+  SIMFARM_CHROME_CLOSED,
+  simfarmBackPress,
+  simfarmChromeNext,
   simfarmChromeTransition,
+  simfarmMenuItems,
+  simfarmMenuPlacement,
+  type SimfarmChromeEvent,
+  type SimfarmMenuItem,
+  type SimfarmMenuPlacement,
 } from '@/lib/simfarm-chrome';
 import {
   clampSimfarmOffset,
@@ -66,27 +81,31 @@ import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream'
  * them together meant a component where the empty states and a live video
  * stream shared a render.
  *
- * ## The picture fills the phone, and nothing sits in a bar
+ * ## The picture fills the phone, from the top edge
  *
- * The fit rule is in `simfarm-frame.ts` with the reasoning; what belongs here is
- * the consequence. There is no header, no footer and no reserved column: the
- * controls float over the picture in two rows, so a device drawn at the full
- * width of the screen loses nothing to chrome, and the rows can be put away --
- * `simfarm-chrome.ts` has the rule for when and by what. What that costs is
- * that a phone taller than the surface hangs over the bottom, which is what the
- * two-finger drag is for.
+ * The fit rule is in `simfarm-frame.ts` with the reasoning; what belongs here
+ * is the consequence. There is no header, no footer, no reserved column and no
+ * band: the surface is the whole screen, the host is a full-screen modal with
+ * its status bar hidden (the route says why), and the picture starts at
+ * y = 0 -- under the hidden status bar, under the camera cutout -- exactly the
+ * way the phone in the picture would if it were the phone in the hand. It used
+ * to start below the top inset, which left a strip of ground with a handle in
+ * it above the picture, and on the phone this was reported from that strip
+ * was the first thing on the screen. What the top edge costs is that the
+ * simulated status bar sits behind the real cutout; what it buys is that
+ * nothing is above the app under test. A phone taller than the surface hangs
+ * over the bottom, which is what the two-finger drag is for.
  *
- * ## The top band
+ * ## One button, one menu
  *
- * The surface reaches the top of the screen: the host is a full-screen modal
- * with its status bar hidden (the route says why). The picture does not. It
- * starts at the top safe-area inset, because that inset is the camera cutout
- * -- a Dynamic Island, a punch hole -- and a picture drawn under it had the
- * simulated status bar behind the real one's hardware. What is in the band is
- * the collapsed handle, which is the one thing here small enough to share a
- * strip with a camera. On a screen with no cutout the band is `HANDLE_BAND`
- * tall, which is the least the handle needs; `simfarmRestingOffset` is what
- * hangs the overflow off the bottom rather than half of it back into the band.
+ * The only chrome is the app's floating button (`FloatingHandle`) with the
+ * simulator glyph on it, and the menu a tap on it opens: the device, the
+ * keys, the composer and the way out. `simfarm-chrome.ts` is the table of
+ * what each tap does and where the menu goes. The button floats above the
+ * picture and never forwards a touch to it -- it is drawn over the canvas and
+ * takes the press -- and while the menu is open a backdrop under it takes
+ * every other touch, so the app under test is not being driven by taps meant
+ * to put the menu away.
  *
  * ## What React draws, and what it does not
  *
@@ -96,8 +115,8 @@ import { useSimfarmStream, type SimfarmStreamError } from '@/lib/simfarm-stream'
  * has the numbers. So the image is a shared value Skia reads on the UI
  * runtime, and so are the zoom and the pan, because a two-finger drag is the
  * same shape of change: sixty small updates a second to where one node is
- * drawn. What React renders here is the chrome, the picker, the composer and
- * the states with no picture, on the events those actually change on.
+ * drawn. What React renders here is the menu, the composer and the states
+ * with no picture, on the events those actually change on.
  */
 export function SimfarmStage({
   url,
@@ -129,60 +148,94 @@ export function SimfarmStage({
   const zoom = useSharedValue(SIMFARM_MIN_ZOOM);
   /** Where the reader dragged the picture to; `null` until they have. */
   const offset = useSharedValue<SimfarmPoint | null>(null);
-  const [picking, setPicking] = useState(false);
-  const [typing, setTyping] = useState(false);
   const [draft, setDraft] = useState('');
 
   /**
-   * The two bands the picture keeps clear of the screen's ends. The Pad
-   * column is inside the workspace, which has already paid its insets, so
-   * there it is only the handle's own room.
+   * The insets the *button* and the *menu* keep clear -- not the picture. The
+   * Pad column is inside the workspace, which has already paid them.
    */
-  const topBand = embedded ? HANDLE_BAND : Math.max(insets.top, HANDLE_BAND);
-  const bottomBand = embedded ? HANDLE_BAND : Math.max(insets.bottom, HANDLE_BAND);
+  const topInset = embedded ? 0 : insets.top;
+  const bottomInset = embedded ? 0 : insets.bottom;
+  const closable = onClose !== undefined && !embedded;
 
   // ---------------------------------------------------------------------------
   // the chrome
   // ---------------------------------------------------------------------------
 
-  // The clock behind the rows, in state rather than a ref so it is made once
-  // and can be reached from render; it is never replaced.
-  const [chrome] = useState(() => new SimfarmChrome({ shown: recallSimfarmChrome() }));
-  const [shown, setShown] = useState(chrome.isShown);
+  const [chrome, setChrome] = useState(SIMFARM_CHROME_CLOSED);
+  const dispatch = useCallback((event: SimfarmChromeEvent) => {
+    setChrome((state) => simfarmChromeNext(state, event));
+  }, []);
+
+  /**
+   * Where the reader left the button, in the offsets `FloatingHandle` works
+   * in, remembered for the process: the preview is a modal, and a button that
+   * went back to its corner on every open would be one the reader moved off
+   * the app's tab bar every time.
+   */
+  const remembered = recallSimfarmHandle();
+  const handleX = useSharedValue(remembered?.x ?? 0);
+  const handleY = useSharedValue(remembered?.y ?? 0);
   useEffect(() => {
-    const unsubscribe = chrome.subscribe((next) => {
-      setShown(next);
-      rememberSimfarmChrome(next);
+    return () => rememberSimfarmHandle({ x: handleX.value, y: handleY.value });
+  }, [handleX, handleY]);
+
+  /**
+   * Where the menu is anchored, fixed at the moment it opens. The button's
+   * rectangle is read off the same corner and gaps it is drawn with
+   * (`floatingHandleFrame`), so the menu hangs off the button and not off
+   * where the button was designed to be.
+   */
+  const [menuAt, setMenuAt] = useState<SimfarmMenuPlacement | null>(null);
+  const openMenu = useCallback(
+    (event: 'button' | 'offer') => {
+      const button = floatingHandleFrame(
+        viewport,
+        { x: handleX.value, y: handleY.value },
+        bottomInset
+      );
+      setMenuAt(simfarmMenuPlacement(button, viewport, { top: topInset, bottom: bottomInset }));
+      dispatch(event);
+    },
+    [bottomInset, dispatch, handleX, handleY, topInset, viewport]
+  );
+
+  /**
+   * Nothing attached and nothing wanted: the device list is the only useful
+   * thing on the screen, so the menu opens onto it rather than waiting to be
+   * found. Once, per arrival at that state -- the event is idempotent, and
+   * the reader closing the menu is not a reason to open it again.
+   */
+  const measured = viewport.height > 0;
+  useEffect(() => {
+    if (measured && stream.status === 'picking' && stream.wanted === null) openMenu('offer');
+    // `openMenu` changes with the viewport, and a rotation is not an arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [measured, stream.status, stream.wanted]);
+
+  /**
+   * Android's hardware back closes the menu while there is one.
+   *
+   * Subscribed only while the menu is open, and that is load-bearing: React
+   * Native asks the newest subscriber first, and the route's own handler --
+   * the one that closes the preview -- was subscribed when the route mounted.
+   * A subscription made when the menu opens is newer than that, answers first,
+   * and stops the chain; one made when the stage mounted would be older, since
+   * a child's effects run before its parent's, and the preview would close
+   * with the menu still on it.
+   */
+  useEffect(() => {
+    if (!chrome.menu) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      const answer = simfarmBackPress(chrome);
+      if (answer.closesPreview) return false;
+      setChrome(answer.state);
+      return true;
     });
-    return () => {
-      unsubscribe();
-      chrome.dispose();
-    };
+    return () => subscription.remove();
   }, [chrome]);
-  // A list being read or a field being typed into holds the rows out.
-  useEffect(() => chrome.hold(picking || typing), [chrome, picking, typing]);
 
   const transition = simfarmChromeTransition(reduceMotion);
-  const presence = useSharedValue(shown ? 1 : 0);
-  useEffect(() => {
-    // `Never`, not `System`: the reduced-motion answer is the fade chosen
-    // above, and the system setting must not turn that into a jump.
-    presence.value = withTiming(
-      shown ? 1 : 0,
-      timing(transition.duration, { reduceMotion: ReduceMotion.Never })
-    );
-  }, [presence, shown, transition.duration]);
-  const slide = transition.slide;
-  const topReach = topBand + ROW_HEIGHT + ROW_GAP;
-  const bottomReach = bottomBand + HANDLE_HIT_HEIGHT + ROW_HEIGHT + ROW_GAP;
-  const topRowStyle = useAnimatedStyle(() => ({
-    opacity: presence.value,
-    transform: [{ translateY: slide ? (presence.value - 1) * topReach : 0 }],
-  }));
-  const bottomRowStyle = useAnimatedStyle(() => ({
-    opacity: presence.value,
-    transform: [{ translateY: slide ? (1 - presence.value) * bottomReach : 0 }],
-  }));
 
   // ---------------------------------------------------------------------------
   // the picture
@@ -203,17 +256,11 @@ export function SimfarmStage({
     [screen]
   );
 
-  /** The surface the picture is fitted to: everything under the top band. */
-  const inner = useMemo(
-    () => ({ width: viewport.width, height: Math.max(0, viewport.height - topBand) }),
-    [topBand, viewport.height, viewport.width]
-  );
-
   /**
    * In the stage's own coordinates, which are the ones a touch arrives in --
-   * the fit is worked out against `inner` and then moved down by the band, so
-   * the rectangle drawn into and the rectangle a finger is resolved against
-   * are the same rectangle by construction.
+   * the surface the fit is worked out against is the whole stage, so the
+   * rectangle drawn into and the rectangle a finger is resolved against are
+   * the same rectangle by construction.
    *
    * Worked out on the UI runtime, where the zoom and the pan live, so a pinch
    * or a drag moves the picture without a render; a touch reads the same
@@ -221,14 +268,13 @@ export function SimfarmStage({
    * one rectangle.
    */
   const placement = useDerivedValue<SimfarmPlacement | null>(() => {
-    if (frame === null || inner.height <= 0) return null;
-    const placed = placeSimfarmFrame(
+    if (frame === null || viewport.height <= 0) return null;
+    return placeSimfarmFrame(
       frame,
-      inner,
+      viewport,
       zoom.value,
-      offset.value ?? simfarmRestingOffset(frame, inner, zoom.value)
+      offset.value ?? simfarmRestingOffset(frame, viewport, zoom.value)
     );
-    return { ...placed, y: placed.y + topBand };
   });
 
   /**
@@ -295,11 +341,10 @@ export function SimfarmStage({
    */
   const sendDraft = useCallback(() => {
     if (draft === '') return;
-    chrome.touched();
     stream.type(draft);
     setDraft('');
     void feedback('success');
-  }, [chrome, draft, stream]);
+  }, [draft, stream]);
 
   /**
    * Show the row that was pressed: attach if it is running, start it if not.
@@ -312,26 +357,34 @@ export function SimfarmStage({
    */
   const select = useCallback(
     (deviceId: string) => {
-      chrome.touched();
-      setPicking(false);
+      dispatch('chose');
       zoom.value = SIMFARM_MIN_ZOOM;
       offset.value = null;
       stream.select(deviceId);
     },
-    [chrome, offset, stream, zoom]
+    [dispatch, offset, stream, zoom]
   );
 
   /**
-   * Turn a row's device off. The picker stays open: the row is about to say
+   * Turn a row's device off. The list stays open: the row is about to say
    * "shutting down" and then "not running", and that is the acknowledgement.
    */
   const shutdown = useCallback(
     (deviceId: string) => {
-      chrome.touched();
       stream.shutdown(deviceId);
       void feedback('selection');
     },
-    [chrome, stream]
+    [stream]
+  );
+
+  /** A key in the menu: sent, felt, and the menu goes so the answer can be seen. */
+  const press = useCallback(
+    (button: SimfarmButton) => {
+      dispatch('acted');
+      stream.press(button);
+      void feedback('selection');
+    },
+    [dispatch, stream]
   );
 
   /**
@@ -403,13 +456,13 @@ export function SimfarmStage({
           'worklet';
           const placed = placement.value;
           if (placed === null || frame === null) return;
-          const from = offset.value ?? simfarmRestingOffset(frame, inner, zoom.value);
-          offset.value = clampSimfarmOffset(placed, inner, {
+          const from = offset.value ?? simfarmRestingOffset(frame, viewport, zoom.value);
+          offset.value = clampSimfarmOffset(placed, viewport, {
             x: from.x + event.changeX,
             y: from.y + event.changeY,
           });
         }),
-    [frame, inner, offset, placement, zoom]
+    [frame, offset, placement, viewport, zoom]
   );
 
   const magnify = useMemo(
@@ -433,7 +486,10 @@ export function SimfarmStage({
   // the words
   // ---------------------------------------------------------------------------
 
-  const buttons = useMemo(() => visibleButtons(stream.device), [stream.device]);
+  const items = useMemo(
+    () => simfarmMenuItems(stream.device, { closable }),
+    [closable, stream.device]
+  );
   /**
    * Inline rather than a helper taking `t`, which is the shape that looks
    * tidier and does not work: Lingui's macro only expands a tagged template
@@ -441,24 +497,26 @@ export function SimfarmStage({
    * alone, never extracted, and answers with an empty string at run time --
    * `i18n-audit.ts` exists because that has reached a screen before.
    */
-  const buttonName = useCallback(
-    (button: SimfarmButton): string => {
-      if (button === 'back') return t`Back`;
-      if (button === 'app_switch') return t`Switch apps`;
-      if (button === 'lock') return t`Lock`;
+  const itemName = useCallback(
+    (item: SimfarmMenuItem): string => {
+      if (item === 'back') return t`Back`;
+      if (item === 'app_switch') return t`Switch apps`;
+      if (item === 'keyboard') return t`Type on the simulator`;
+      if (item === 'close') return t`Close the simulator`;
       return t`Home`;
     },
     [t]
   );
   /**
-   * What the pill says, which is the device the reader asked for and not only
-   * the one a stream is open on.
+   * What the menu's header says, which is the device the reader asked for and
+   * not only the one a stream is open on.
    *
    * The two differ for as long as a boot or an attach takes, and for good once
-   * either fails -- and a pill that named the wanted device with nothing after
-   * it read as "attached" on a screen where nothing was drawn, which is the
-   * report this came from. So the name is the wanted device's whenever there is
-   * one, and next to it goes the one word that says why there is no picture.
+   * either fails -- and a header that named the wanted device with nothing
+   * after it read as "attached" on a screen where nothing was drawn, which is
+   * the report this came from. So the name is the wanted device's whenever
+   * there is one, and next to it goes the one word that says why there is no
+   * picture.
    */
   const wantedDevice = useMemo(
     () => stream.devices.find((entry) => entry.id === stream.wanted) ?? null,
@@ -473,7 +531,7 @@ export function SimfarmStage({
         : stream.status !== 'live' && wantedDevice !== null && !wantedDevice.booted
           ? t`Not running`
           : null;
-  /** The sentence for a failure; inline for the reason `buttonName` is. */
+  /** The sentence for a failure; inline for the reason `itemName` is. */
   const explain = useCallback(
     (error: SimfarmStreamError): string => {
       if (error.kind === 'boot-unsupported') {
@@ -488,29 +546,25 @@ export function SimfarmStage({
     [t]
   );
 
-  const closeButton =
-    onClose && !embedded ? (
-      <GlassChrome style={styles.iconButton}>
-        <PressableScale
-          accessibilityLabel={t`Close the simulator`}
-          testID="simfarm-close"
-          onPress={onClose}
-          style={styles.iconButtonHit}>
-          <X size={18} color={theme.colors.text} />
-        </PressableScale>
-      </GlassChrome>
-    ) : null;
-
   if (stream.status === 'lost') {
     return (
       <View style={[styles.fill, styles.middle, { backgroundColor: theme.colors.background }]}>
-        {/* The one way off this screen on iOS is the close button, so the
-            state with no picture still draws one: the sheet this used to be
-            could be swiped away, and a full-screen modal cannot. */}
-        <View style={[styles.topRow, { top: topBand + ROW_GAP }]} pointerEvents="box-none">
-          <View style={styles.pillSpace} />
-          {closeButton}
-        </View>
+        {/* The one way off this screen on iOS is a close button, so the state
+            with no picture and no button still draws one: the sheet this used
+            to be could be swiped away, and a full-screen modal cannot. */}
+        {closable ? (
+          <View style={[styles.lostClose, { top: topInset + 10 }]}>
+            <GlassChrome style={styles.iconButton}>
+              <PressableScale
+                accessibilityLabel={t`Close the simulator`}
+                testID="simfarm-close"
+                onPress={onClose}
+                style={styles.iconButtonHit}>
+                <X size={18} color={theme.colors.text} />
+              </PressableScale>
+            </GlassChrome>
+          </View>
+        ) : null}
         <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centred}>
           {t`The connection to the simulator stopped.`}
         </Text>
@@ -539,8 +593,8 @@ export function SimfarmStage({
             and on a phone was the terminal underneath the sheet -- the
             see-through stage in the report. So the surface is painted here, in
             the theme's colour, before anything else is: the empty and booting
-            states then sit on the same ground as every other screen, and a
-            landscape picture's side bands are that ground rather than a hole. */}
+            states then sit on the same ground as every other screen, and the
+            ground under a short picture is that ground rather than a hole. */}
         <Canvas style={styles.fill} opaque>
           <Fill color={theme.colors.background} />
           {/* The image, its rectangle and the turn's centre are all shared
@@ -576,7 +630,7 @@ export function SimfarmStage({
             </>
           ) : stream.status === 'picking' ? (
             <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centred}>
-              {t`Choose a simulator above.`}
+              {t`Choose a simulator from the menu.`}
             </Text>
           ) : stream.status === 'booting' ? (
             <>
@@ -598,324 +652,284 @@ export function SimfarmStage({
         </View>
       ) : null}
 
-      {/* `box-none` while out, `none` while away: the rows are over the
-          picture, so only the controls in them may take a touch, and a row
-          that has slid off the screen may take none at all. Anything else here
-          would be a strip of the device that silently ignores presses -- the
-          defect this screen had. */}
-      <Animated.View
-        style={[styles.topRow, { top: topBand + ROW_GAP }, topRowStyle]}
-        pointerEvents={shown ? 'box-none' : 'none'}
-        testID="simfarm-chrome-top">
-        <GlassChrome style={styles.pill}>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t`Choose which simulator to show`}
-            testID="simfarm-device"
-            onPress={() => {
-              chrome.touched();
-              setPicking((open) => !open);
-            }}
-            style={styles.pillHit}>
-            <Smartphone size={14} color={theme.colors.textMuted} strokeWidth={2} />
-            <Text variant="bodySmall" numberOfLines={1} style={styles.pillLabel}>
-              {name}
-            </Text>
-            {hint !== null ? (
-              <Text variant="label" color={theme.colors.textMuted} testID="simfarm-device-state">
-                {hint}
-              </Text>
-            ) : null}
-            <ChevronDown size={14} color={theme.colors.textMuted} strokeWidth={2} />
-          </PressableScale>
-        </GlassChrome>
-        {closeButton}
-      </Animated.View>
-
-      {picking && shown ? (
-        <View style={[styles.picker, { top: topBand + ROW_GAP + ROW_HEIGHT + ROW_GAP }]}>
+      {chrome.menu && menuAt !== null ? (
+        <>
+          {/* The backdrop: every touch that is not on the menu closes it and
+              reaches nothing else, which is how the menu pauses the device.
+              Not faded -- it carries no colour, only the tap. */}
+          <Pressable
+            accessibilityLabel={t`Close the menu`}
+            testID="simfarm-menu-backdrop"
+            onPress={() => dispatch('outside')}
+            style={styles.backdrop}
+          />
           {/* A solid card, not glass. This is a list of names to read and
               press, and what is under it is either a live picture or the
               empty ground; glass here is a material that has to sample the
               picture on every frame to draw a list that reads better without
-              it -- and on the phone this was reported from, what it sampled
-              was the terminal under the sheet, so the rows floated over
-              Claude Code's output. The controls stay glass because they are
-              small and the picture behind them is the point of them. */}
-          <View
+              it. The button stays glass because it is small and the picture
+              behind it is the point of it. */}
+          <Animated.View
+            entering={
+              transition.slide ? fadeInDown(transition.duration) : fadeIn(transition.duration)
+            }
+            exiting={fadeOut('micro')}
+            testID="simfarm-menu"
             style={[
-              styles.pickerCard,
-              { backgroundColor: theme.colors.surfaceRaised, borderColor: theme.colors.border },
+              styles.menu,
+              {
+                left: menuAt.left,
+                right: menuAt.right,
+                top: menuAt.top,
+                bottom: menuAt.bottom,
+                maxHeight: menuAt.maxHeight,
+                maxWidth: Math.max(0, viewport.width - MENU_MARGIN * 2),
+                backgroundColor: theme.colors.surfaceRaised,
+                borderColor: theme.colors.border,
+              },
             ]}>
-            <ScrollView keyboardShouldPersistTaps="handled" style={styles.pickerScroll}>
-              {stream.devices.length === 0 ? (
-                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.pickerEmpty}>
-                  {t`No simulators on that machine.`}
+            {/* The header is the device and the picker: its name, the one
+                word that says why there is no picture, and a chevron for the
+                list it opens under itself. */}
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t`Choose which simulator to show`}
+              accessibilityState={{ expanded: chrome.picking }}
+              testID="simfarm-device"
+              onPress={() => dispatch('header')}
+              style={[styles.menuHeader, { borderBottomColor: theme.colors.border }]}>
+              <Smartphone size={16} color={theme.colors.textMuted} strokeWidth={2} />
+              <Text variant="bodySmall" numberOfLines={1} style={styles.menuTitle}>
+                {name}
+              </Text>
+              {hint !== null ? (
+                <Text variant="label" color={theme.colors.textMuted} testID="simfarm-device-state">
+                  {hint}
                 </Text>
+              ) : null}
+              {chrome.picking ? (
+                <ChevronUp size={14} color={theme.colors.textMuted} strokeWidth={2} />
               ) : (
-                stream.devices.map((entry) => {
-                  const stopping = stream.stopping === entry.id;
-                  return (
-                    <PressableScale
-                      key={entry.id}
-                      accessibilityRole="button"
-                      testID={`simfarm-device-${entry.id}`}
-                      // A device that cannot be drawn is listed and refused
-                      // rather than hidden: "my simulator is missing" is a
-                      // worse screen than one that says which of them can be
-                      // shown. One that is not running is neither: it is the
-                      // row that starts it, and whether it can be started is
-                      // the provider's answer, given after the press.
-                      disabled={stopping || (entry.booted && !simfarmCanStream(entry))}
-                      onPress={() => select(entry.id)}
-                      style={styles.pickerRow}>
-                      <Text
-                        variant="bodySmall"
-                        numberOfLines={1}
-                        style={styles.pickerName}
-                        color={
-                          !entry.booted || simfarmCanStream(entry)
-                            ? theme.colors.text
-                            : theme.colors.textMuted
-                        }>
-                        {entry.name}
-                      </Text>
-                      <Text variant="label" color={theme.colors.textMuted}>
-                        {stopping
-                          ? t`Shutting down…`
-                          : stream.status === 'booting' && stream.wanted === entry.id
-                            ? t`Starting…`
-                            : !entry.booted
-                              ? t`Not running`
-                              : simfarmCanStream(entry)
-                                ? entry.kind
-                                : t`No still frames`}
-                      </Text>
-                      {/* The other half of the row that starts a device: a
-                          running one can be turned off from here, which is
-                          what a machine with two simulators up and one wanted
-                          needs. Trailing and small, so the row is still the
-                          row that shows the device and the power glyph is
-                          the exception to it. */}
-                      {entry.booted && !stopping ? (
-                        <PressableScale
-                          accessibilityRole="button"
-                          accessibilityLabel={t`Shut down ${entry.name}`}
-                          testID={`simfarm-shutdown-${entry.id}`}
-                          onPress={() => shutdown(entry.id)}
-                          style={[styles.power, { backgroundColor: theme.colors.surface }]}>
-                          <Power size={14} color={theme.colors.textMuted} strokeWidth={2} />
-                        </PressableScale>
-                      ) : stopping ? (
-                        <View style={styles.power}>
-                          <Spinner size="sm" />
-                        </View>
-                      ) : null}
-                    </PressableScale>
-                  );
-                })
+                <ChevronDown size={14} color={theme.colors.textMuted} strokeWidth={2} />
               )}
-            </ScrollView>
-            {/* A shutdown that failed while a picture is on screen has no
-                other place to say so: the waiting area above draws the error
-                only when there is nothing else to draw. */}
-            {stream.error !== null && stream.hasImage ? (
-              <View style={[styles.pickerFoot, { borderTopColor: theme.colors.border }]}>
-                <Text
-                  variant="label"
-                  color={theme.colors.danger}
-                  style={styles.centred}
-                  testID="simfarm-picker-error">
-                  {explain(stream.error)}
-                </Text>
-                {stream.error.detail !== null ? (
-                  <Text variant="label" color={theme.colors.textMuted} style={styles.centred}>
-                    {stream.error.detail}
-                  </Text>
+            </PressableScale>
+
+            {chrome.picking ? (
+              <>
+                <ScrollView keyboardShouldPersistTaps="handled" style={styles.pickerScroll}>
+                  {stream.devices.length === 0 ? (
+                    <Text
+                      variant="bodySmall"
+                      color={theme.colors.textMuted}
+                      style={styles.pickerEmpty}>
+                      {t`No simulators on that machine.`}
+                    </Text>
+                  ) : (
+                    stream.devices.map((entry) => {
+                      const stopping = stream.stopping === entry.id;
+                      return (
+                        <PressableScale
+                          key={entry.id}
+                          accessibilityRole="button"
+                          testID={`simfarm-device-${entry.id}`}
+                          // A device that cannot be drawn is listed and refused
+                          // rather than hidden: "my simulator is missing" is a
+                          // worse screen than one that says which of them can
+                          // be shown. One that is not running is neither: it is
+                          // the row that starts it, and whether it can be
+                          // started is the provider's answer, given after the
+                          // press.
+                          disabled={stopping || (entry.booted && !simfarmCanStream(entry))}
+                          onPress={() => select(entry.id)}
+                          style={styles.pickerRow}>
+                          <Text
+                            variant="bodySmall"
+                            numberOfLines={1}
+                            style={styles.pickerName}
+                            color={
+                              !entry.booted || simfarmCanStream(entry)
+                                ? theme.colors.text
+                                : theme.colors.textMuted
+                            }>
+                            {entry.name}
+                          </Text>
+                          <Text variant="label" color={theme.colors.textMuted}>
+                            {stopping
+                              ? t`Shutting down…`
+                              : stream.status === 'booting' && stream.wanted === entry.id
+                                ? t`Starting…`
+                                : !entry.booted
+                                  ? t`Not running`
+                                  : simfarmCanStream(entry)
+                                    ? entry.kind
+                                    : t`No still frames`}
+                          </Text>
+                          {/* The other half of the row that starts a device: a
+                              running one can be turned off from here, which
+                              is what a machine with two simulators up and one
+                              wanted needs. Trailing and small, so the row is
+                              still the row that shows the device and the
+                              power glyph is the exception to it. */}
+                          {entry.booted && !stopping ? (
+                            <PressableScale
+                              accessibilityRole="button"
+                              accessibilityLabel={t`Shut down ${entry.name}`}
+                              testID={`simfarm-shutdown-${entry.id}`}
+                              onPress={() => shutdown(entry.id)}
+                              style={[styles.power, { backgroundColor: theme.colors.surface }]}>
+                              <Power size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                            </PressableScale>
+                          ) : stopping ? (
+                            <View style={styles.power}>
+                              <Spinner size="sm" />
+                            </View>
+                          ) : null}
+                        </PressableScale>
+                      );
+                    })
+                  )}
+                </ScrollView>
+                {/* A shutdown that failed while a picture is on screen has no
+                    other place to say so: the waiting area above draws the
+                    error only when there is nothing else to draw. */}
+                {stream.error !== null && stream.hasImage ? (
+                  <View style={[styles.pickerFoot, { borderTopColor: theme.colors.border }]}>
+                    <Text
+                      variant="label"
+                      color={theme.colors.danger}
+                      style={styles.centred}
+                      testID="simfarm-picker-error">
+                      {explain(stream.error)}
+                    </Text>
+                    {stream.error.detail !== null ? (
+                      <Text variant="label" color={theme.colors.textMuted} style={styles.centred}>
+                        {stream.error.detail}
+                      </Text>
+                    ) : null}
+                  </View>
                 ) : null}
+              </>
+            ) : (
+              <View style={styles.menuBody}>
+                {items.map((item) => (
+                  <PressableScale
+                    key={item}
+                    accessibilityRole="button"
+                    accessibilityLabel={itemName(item)}
+                    testID={
+                      item === 'keyboard'
+                        ? 'simfarm-typing'
+                        : item === 'close'
+                          ? 'simfarm-close'
+                          : `simfarm-button-${item}`
+                    }
+                    onPress={() => {
+                      if (item === 'keyboard') dispatch('keyboard');
+                      else if (item === 'close') onClose?.();
+                      else press(item);
+                    }}
+                    style={styles.menuRow}>
+                    <ItemGlyph
+                      item={item}
+                      color={item === 'close' ? theme.colors.textMuted : theme.colors.primary}
+                    />
+                    <Text variant="bodySmall">{itemName(item)}</Text>
+                  </PressableScale>
+                ))}
               </View>
-            ) : null}
-          </View>
-        </View>
+            )}
+          </Animated.View>
+        </>
       ) : null}
 
-      <KeyboardStickyView
-        style={[styles.bottom, { bottom: bottomBand + HANDLE_HIT_HEIGHT + ROW_GAP }]}
-        offset={{ closed: 0, opened: bottomBand + HANDLE_HIT_HEIGHT }}>
-        <Animated.View
-          style={[styles.bottomRow, bottomRowStyle]}
-          pointerEvents={shown ? 'box-none' : 'none'}
-          testID="simfarm-chrome-bottom">
-          {typing ? (
-            <GlassChrome style={styles.composer}>
-              {/* A field and a button, not a field alone. The return key
-                  sends too, but on a phone that is a key some layouts spend
-                  on a newline -- and a composer whose only way to send is a
-                  key that might not be there is the same defect as a control
-                  nobody can reach. */}
-              <Input
-                value={draft}
-                onChangeText={setDraft}
-                variant="outline"
-                autoFocus
-                returnKeyType="send"
-                placeholder={t`Text to type on the simulator`}
-                accessibilityLabel={t`Text to type on the simulator`}
-                testID="simfarm-text"
-                containerStyle={styles.composerField}
-                onSubmitEditing={sendDraft}
+      {chrome.typing ? (
+        <KeyboardStickyView
+          style={[styles.bottom, { bottom: bottomInset + COMPOSER_GAP }]}
+          offset={{ closed: 0, opened: bottomInset }}>
+          <GlassChrome
+            entering={fadeIn('micro')}
+            exiting={fadeOut('micro')}
+            style={styles.composer}>
+            {/* A field and a button, not a field alone. The return key sends
+                too, but on a phone that is a key some layouts spend on a
+                newline -- and a composer whose only way to send is a key
+                that might not be there is the same defect as a control
+                nobody can reach. The way out is its own button: a tap on the
+                picture is the device's, and cannot also be "done typing". */}
+            <Input
+              value={draft}
+              onChangeText={setDraft}
+              variant="outline"
+              autoFocus
+              returnKeyType="send"
+              placeholder={t`Text to type on the simulator`}
+              accessibilityLabel={t`Text to type on the simulator`}
+              testID="simfarm-text"
+              containerStyle={styles.composerField}
+              onSubmitEditing={sendDraft}
+            />
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t`Send the text`}
+              testID="simfarm-send"
+              disabled={draft === ''}
+              onPress={sendDraft}
+              style={styles.composerButton}>
+              <SendHorizontal
+                size={18}
+                color={draft === '' ? theme.colors.textMuted : theme.colors.primary}
+                strokeWidth={2}
               />
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Send the text`}
-                testID="simfarm-send"
-                disabled={draft === ''}
-                onPress={sendDraft}
-                style={styles.send}>
-                <SendHorizontal
-                  size={18}
-                  color={draft === '' ? theme.colors.textMuted : theme.colors.primary}
-                  strokeWidth={2}
-                />
-              </PressableScale>
-            </GlassChrome>
-          ) : null}
-          <View style={styles.keys} pointerEvents="box-none">
-            {buttons.map((button) => (
-              <GlassChrome key={button} style={styles.iconButton}>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={buttonName(button)}
-                  testID={`simfarm-button-${button}`}
-                  onPress={() => {
-                    chrome.touched();
-                    stream.press(button);
-                    void feedback('selection');
-                  }}
-                  style={styles.iconButtonHit}>
-                  <ButtonGlyph button={button} color={theme.colors.text} />
-                </PressableScale>
-              </GlassChrome>
-            ))}
-            {stream.device?.capabilities.text ? (
-              <GlassChrome style={styles.iconButton}>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Type on the simulator`}
-                  testID="simfarm-typing"
-                  onPress={() => {
-                    chrome.touched();
-                    setTyping((open) => !open);
-                  }}
-                  style={styles.iconButtonHit}>
-                  <KeyboardIcon
-                    size={18}
-                    color={typing ? theme.colors.primary : theme.colors.text}
-                    strokeWidth={2}
-                  />
-                </PressableScale>
-              </GlassChrome>
-            ) : null}
-          </View>
-        </Animated.View>
-      </KeyboardStickyView>
+            </PressableScale>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t`Close the composer`}
+              testID="simfarm-typing-close"
+              onPress={() => dispatch('composed')}
+              style={styles.composerButton}>
+              <X size={18} color={theme.colors.textMuted} strokeWidth={2} />
+            </PressableScale>
+          </GlassChrome>
+        </KeyboardStickyView>
+      ) : null}
 
-      {/* The handles: the only two things on the picture that are not the
-          device. One in each band, both always there, either toggles both
-          rows -- `simfarm-chrome.ts` has the rule. The top one sits at the
-          bottom of its band, clear of the camera cutout the band exists for;
-          the bottom one sits just above the home indicator. */}
-      <Handle
-        edge="top"
-        at={topBand - HANDLE_HIT_HEIGHT}
-        shown={shown}
-        onPress={() => chrome.toggle()}
-      />
-      <Handle edge="bottom" at={bottomBand} shown={shown} onPress={() => chrome.toggle()} />
+      {/* The button: the one thing on the picture that is not the device,
+          and the last child so it is over the menu and the backdrop -- a
+          tap on it while the menu is open closes the menu, as a tap on the
+          button that opened one is expected to. Away while the composer
+          stands where it would be. */}
+      <FloatingHandle
+        offsetX={handleX}
+        offsetY={handleY}
+        topInset={topInset}
+        bottomInset={bottomInset}
+        hidden={chrome.typing}
+        onPress={() => (chrome.menu ? dispatch('button') : openMenu('button'))}
+        accessibilityLabel={t`Simulator controls`}
+        accessibilityHint={t`Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move.`}
+        accessibilityState={{ expanded: chrome.menu }}
+        moveLabel={t`Move the simulator controls`}
+        testID="simfarm-handle">
+        <MonitorSmartphone size={20} color={theme.colors.text} strokeWidth={2} />
+      </FloatingHandle>
     </View>
   );
 }
 
-/**
- * The slim bar that shows or hides the chrome.
- *
- * Drawn as a grabber -- the shape every sheet in the app already teaches means
- * "this moves" -- and pressed rather than dragged, because a drag over the
- * picture would be a drag the device did not get. The hit area is wider and
- * taller than the bar so it can be found without looking; it is still the
- * width of a thumb, not the width of the screen, so a tap at the top of the
- * picture that was meant for the app under test is not caught by it.
- */
-function Handle({
-  edge,
-  at,
-  shown,
-  onPress,
-}: {
-  edge: 'top' | 'bottom';
-  /** Distance from that edge to the hit area's own near side. */
-  at: number;
-  shown: boolean;
-  onPress: () => void;
-}) {
-  const theme = useThemeTokens();
-  const { t } = useLingui();
-  return (
-    <View
-      style={[styles.handleBand, edge === 'top' ? { top: at } : { bottom: at }]}
-      pointerEvents="box-none">
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={shown ? t`Hide the controls` : t`Show the controls`}
-        testID={`simfarm-handle-${edge}`}
-        onPress={onPress}
-        style={[styles.handleHit, edge === 'top' ? styles.handleHitTop : styles.handleHitBottom]}>
-        <GlassChrome style={styles.handleBar}>
-          <View style={[styles.handleInk, { backgroundColor: theme.colors.text }]} />
-        </GlassChrome>
-      </PressableScale>
-    </View>
-  );
-}
-
-/**
- * The keys worth a place on a phone, in the order a hand expects them.
- *
- * Only what the device declared -- the three backends differ a great deal and a
- * key that does nothing is worse than a key that is not there -- and only the
- * navigation ones. Volume and the ringer switch are real capabilities and would
- * be six more circles over the picture for the sake of a case nobody previews.
- */
-const OFFERED_BUTTONS: SimfarmButton[] = ['home', 'back', 'app_switch', 'lock'];
-
-function visibleButtons(device: SimfarmDevice | null): SimfarmButton[] {
-  if (device === null) return [];
-  return OFFERED_BUTTONS.filter((button) => device.capabilities.buttons.includes(button));
-}
-
-function ButtonGlyph({ button, color }: { button: SimfarmButton; color: string }) {
-  const size = 18;
+function ItemGlyph({ item, color }: { item: SimfarmMenuItem; color: string }) {
+  const size = 17;
   const width = 2;
-  if (button === 'back') return <ArrowLeft size={size} color={color} strokeWidth={width} />;
-  if (button === 'app_switch') return <SquareStack size={size} color={color} strokeWidth={width} />;
-  if (button === 'lock') return <Lock size={size} color={color} strokeWidth={width} />;
+  if (item === 'back') return <ArrowLeft size={size} color={color} strokeWidth={width} />;
+  if (item === 'app_switch') return <SquareStack size={size} color={color} strokeWidth={width} />;
+  if (item === 'keyboard') return <KeyboardIcon size={size} color={color} strokeWidth={width} />;
+  if (item === 'close') return <X size={size} color={color} strokeWidth={width} />;
   return <House size={size} color={color} strokeWidth={width} />;
 }
 
-/**
- * The least a band at either end of the picture may be.
- *
- * The handle's hit area, and no more: on a screen with no camera cutout and
- * the status bar hidden, the top inset is zero, and a handle at a zero inset
- * is a handle off the top of the screen.
- */
-const HANDLE_BAND = 22;
-/** The handle's hit area; the bar inside it is `handleBar` below. */
-const HANDLE_HIT_HEIGHT = 22;
-const HANDLE_HIT_WIDTH = 72;
-/** A row of 38pt circles, and the gap between a row and whatever it is next to. */
-const ROW_HEIGHT = 38;
-const ROW_GAP = 8;
+/** The menu's least clearance from the sides of the screen. */
+const MENU_MARGIN = 12;
+/** Between the composer and the bottom inset. */
+const COMPOSER_GAP = 10;
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
@@ -941,63 +955,61 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderCurve: 'continuous',
   },
-  topRow: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: ROW_GAP,
-    paddingHorizontal: 12,
-  },
-  // Where the pill would be, so the close button in the lost state is where
-  // it is everywhere else.
-  pillSpace: { flex: 1 },
-  pill: {
-    flexShrink: 1,
-    borderRadius: ROW_HEIGHT / 2,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  pillHit: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: ROW_HEIGHT,
-    paddingHorizontal: 14,
-  },
-  pillLabel: { flexShrink: 1 },
+  lostClose: { position: 'absolute', right: MENU_MARGIN },
   iconButton: {
-    width: ROW_HEIGHT,
-    height: ROW_HEIGHT,
-    borderRadius: ROW_HEIGHT / 2,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconButtonHit: {
-    width: ROW_HEIGHT,
-    height: ROW_HEIGHT,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  picker: {
+  backdrop: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    alignItems: 'center',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+    elevation: 10,
   },
-  pickerCard: {
-    width: '100%',
-    maxWidth: 420,
-    borderRadius: 14,
+  /** The attachment menu's shape, anchored where the button is instead of a dock. */
+  menu: {
+    position: 'absolute',
+    zIndex: 11,
+    elevation: 11,
+    width: 280,
+    borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+    boxShadow: appChrome.shadow.popover,
   },
-  pickerScroll: { maxHeight: 260 },
+  menuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 46,
+    paddingHorizontal: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  menuTitle: { flexShrink: 1, flexGrow: 1, minWidth: 0 },
+  menuBody: { paddingVertical: 4 },
+  menuRow: {
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+  },
+  pickerScroll: { flexShrink: 1, maxHeight: 260 },
   pickerEmpty: { padding: 14, textAlign: 'center' },
   pickerRow: {
     flexDirection: 'row',
@@ -1027,12 +1039,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+    zIndex: 12,
+    elevation: 12,
   },
-  bottomRow: { alignItems: 'center', gap: 10, alignSelf: 'stretch' },
   composer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     width: '92%',
     maxWidth: 420,
     borderRadius: 14,
@@ -1043,32 +1056,5 @@ const styles = StyleSheet.create({
     paddingRight: 4,
   },
   composerField: { flex: 1, minWidth: 0 },
-  send: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  keys: { flexDirection: 'row', alignItems: 'center', gap: ROW_GAP },
-  handleBand: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: HANDLE_HIT_HEIGHT,
-    alignItems: 'center',
-  },
-  handleHit: {
-    width: HANDLE_HIT_WIDTH,
-    height: HANDLE_HIT_HEIGHT,
-    alignItems: 'center',
-  },
-  // The bar keeps to the lower side of its band: at the top that is the
-  // picture's edge, away from the camera cutout; at the bottom it is just
-  // above the home indicator, where a grabber is expected to be.
-  handleHitTop: { justifyContent: 'flex-end', paddingBottom: 3 },
-  handleHitBottom: { justifyContent: 'flex-end', paddingBottom: 3 },
-  handleBar: {
-    width: 36,
-    height: 6,
-    borderRadius: 3,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  handleInk: { width: 28, height: 2, borderRadius: 1, opacity: 0.55 },
+  composerButton: { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
 });

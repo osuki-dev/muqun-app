@@ -9,6 +9,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   FLING_PROJECTION_S,
+  floatingHandleBounds,
   handleCorners,
   nextHandleCorner,
   reseatFloatingHandle,
@@ -124,5 +125,27 @@ describe('a pane that changed size under a remembered position', () => {
 
   test('a position below the new floor is brought back up to it', () => {
     expect(reseatFloatingHandle({ x: 0, y: 26 }, BOUNDS, { ...LANDSCAPE, maxY: 8 }).y).toBe(8);
+  });
+});
+
+describe('the rectangle for a layer', () => {
+  const layout = { size: 46, gap: 14, restingGap: 40, resting: 74, topInset: 59 };
+
+  test('a phone: the left rail one button-and-two-gaps in, the top under the inset', () => {
+    expect(floatingHandleBounds({ width: 402, height: 874 }, layout)).toEqual({
+      minX: -(402 - 46 - 28),
+      maxX: 0,
+      minY: -(874 - 46 - 74 - 59),
+      maxY: 26,
+    });
+  });
+
+  test('an unmeasured layer is a rectangle of nothing, never a negative one', () => {
+    expect(floatingHandleBounds({ width: 0, height: 0 }, layout)).toEqual({
+      minX: 0,
+      maxX: 0,
+      minY: 0,
+      maxY: 26,
+    });
   });
 });

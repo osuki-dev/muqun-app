@@ -1,194 +1,260 @@
 /**
- * The chrome over the simulator's picture: whether it is out, and when it puts
- * itself away.
+ * The chrome over the simulator's picture: one floating button, and the menu
+ * it opens.
  *
- * "Chrome" is the two rows that are not the device -- the pill naming it at
- * the top with the picker and the close button, and the key row along the
- * bottom with home, back and the rest. Both float over the picture, and on a
- * full-screen preview that is the whole reason they have to be able to go:
- * the picture fills the phone, so anything left on top of it is standing on
- * the app under test.
+ * "Chrome" used to be two rows that were not the device -- a pill naming it
+ * at the top with the picker and the close button, and a key row along the
+ * bottom -- plus a slim handle in each edge band to put them away, and a
+ * clock that put them away on its own. That is gone. The picture fills the
+ * phone from the very top edge, so there is no band for a handle to live in,
+ * and what floats over the app under test is the app's one floating button
+ * (`FloatingHandle`): dragged anywhere, parked on a rail, remembered for the
+ * process. Everything the rows did is behind a tap on it.
  *
- * ## The rule for what toggles it
+ * ## The rule for what touches the device
  *
- * **A touch on the picture is the device's. Only the two handles toggle the
- * chrome.**
+ * **A touch on the picture is the device's. The button and its menu are the
+ * only things that are not.**
  *
- * The obvious alternative -- tap the picture away from any control to toggle
- * -- was tried in thought and rejected, because there is no way to tell that
- * tap from a tap meant for the app under test. Every tap on the picture is
- * forwarded verbatim, and a tap that also toggled the chrome would be a tap
- * the device received *and* the chrome answered; a tap that toggled the
- * chrome *instead* would be one the device silently missed, which on a phone
- * is the worst thing this preview can do. So the picture never toggles
- * anything. Each edge keeps a slim handle -- the top one in the band the
- * camera cutout already takes, above the picture; the bottom one just above
- * the home indicator, over the last few points of it -- and a handle is the
- * one thing that is never a device tap: it is drawn over the picture and
- * takes the press, so nothing under it is asked. Both handles toggle both
- * rows -- the chrome is one thing that is out or away, not two things with
- * two states. Precisely: a touch anywhere on the stage is forwarded to the
- * device unless it lands on a handle (72x22pt, centred on the top or bottom
- * edge band) or, while the rows are out, on a control in them.
+ * The obvious alternative -- tap the picture to bring the controls up -- was
+ * rejected with the rows and stays rejected, because there is no way to tell
+ * that tap from a tap meant for the app under test; a tap the device silently
+ * missed is the worst thing this preview can do. The button is drawn over the
+ * picture and takes the press, so nothing under it is asked. While the menu
+ * is open, so is a backdrop under it: a tap anywhere outside the menu closes
+ * it and reaches nothing else, which is what "the menu pauses the device's
+ * touches" means precisely -- one tap to put the menu away, and the next one
+ * is the device's again.
  *
- * ## When it goes away on its own
+ * ## Why the state is a table
  *
- * The rows come out on every open, so the reader can see what is there, and
- * they put themselves away a few seconds after the chrome was last *used* --
- * not after the device was last touched. Driving the app under test is the
- * reader's business, and a control strip that reappeared every time they
- * stopped scrolling would be one that was never out of the way. Using a
- * control starts the countdown again; opening something inside the chrome
- * (the picker, the text composer) holds it out until that is closed, because
- * a list that slid off the screen while being read is a defect, not a
- * timeout.
- *
- * ## Why it is a class with a clock in it
- *
- * For the same reason `SimfarmSession` is: the interesting part is the
- * timing, and the timing is worth a test that says "the handle, then four
- * seconds, then nothing" without a component, a gesture or a real timer.
+ * Three booleans, five things that change them, and a hardware back key that
+ * means two different things depending on the first boolean. That is the kind
+ * of rule that is one sentence in a test and three `if`s in a component, so
+ * it is here, pure, with the anchoring arithmetic beside it.
  */
-import { type SimfarmSchedule } from '@/lib/simfarm-session';
+import { type HandlePoint } from '@/lib/floating-handle';
+import { type SimfarmDevice } from '@/lib/simfarm';
+import { type SimfarmButton } from '@/lib/simfarm-protocol';
+
+export interface SimfarmChromeState {
+  /** The menu is open under the button, with the backdrop out. */
+  menu: boolean;
+  /** The menu is showing the device list rather than the actions. */
+  picking: boolean;
+  /** The text composer is out along the bottom, in the button's place. */
+  typing: boolean;
+}
+
+/** Nothing but the button. */
+export const SIMFARM_CHROME_CLOSED: SimfarmChromeState = {
+  menu: false,
+  picking: false,
+  typing: false,
+};
 
 /**
- * How long the chrome stays out after it was last used.
+ * What can happen to the chrome.
  *
- * Long enough to read the device's name and reach a key; short enough that a
- * reader who came to look at the app is looking at the app before their next
- * scroll. Video players settle around three; this is a little more because
- * the pill has words in it.
+ * - `button`: the floating button was tapped. Opens the menu on its actions,
+ *   or closes it if it was open.
+ * - `outside`: a tap on the backdrop. Closes the menu.
+ * - `header`: the device name at the top of the menu was tapped. Flips the
+ *   menu between its actions and the device list.
+ * - `offer`: nothing is attached and the list is the only useful thing to
+ *   show; opens the menu straight onto the device list. Idempotent, so a
+ *   stream that reports "picking" twice does not reopen a menu the reader
+ *   closed.
+ * - `chose`: a device row was pressed. The menu closes; the picture is the
+ *   acknowledgement.
+ * - `acted`: a key was pressed -- home, back, the app switcher. The menu
+ *   closes so the device's answer can be seen.
+ * - `keyboard`: the composer was asked for. The menu closes and the composer
+ *   comes out where the button was.
+ * - `composed`: the composer was put away. The button comes back.
  */
-export const SIMFARM_CHROME_TIMEOUT_MS = 4000;
+export type SimfarmChromeEvent =
+  | 'button'
+  | 'outside'
+  | 'header'
+  | 'offer'
+  | 'chose'
+  | 'acted'
+  | 'keyboard'
+  | 'composed';
+
+export function simfarmChromeNext(
+  state: SimfarmChromeState,
+  event: SimfarmChromeEvent
+): SimfarmChromeState {
+  switch (event) {
+    case 'button':
+      return state.menu ? { ...state, menu: false, picking: false } : { ...state, menu: true };
+    case 'outside':
+    case 'chose':
+    case 'acted':
+      return { ...state, menu: false, picking: false };
+    case 'header':
+      return state.menu ? { ...state, picking: !state.picking } : state;
+    case 'offer':
+      return { ...state, menu: true, picking: true };
+    case 'keyboard':
+      return { ...state, menu: false, picking: false, typing: true };
+    case 'composed':
+      return { ...state, typing: false };
+  }
+}
 
 /**
- * How the chrome moves between its two states.
+ * Whether a touch on the picture reaches the device.
  *
- * With motion reduced it does not slide at all: the rows fade where they are,
- * over the shortest token, which is the substitute the platform guidelines
- * ask for -- a crossfade is not a movement -- and is deliberately not the
- * instant jump `ReduceMotion.System` would otherwise make of the timing. A
- * control strip that blinked into existence with no transition reads as a
- * glitch on a screen that is a live picture.
+ * Only the menu stands in the way. The composer does not: it is a strip along
+ * the bottom, and the app under test above it is still the app under test --
+ * a reader typing a search term wants to tap the result.
+ */
+export function simfarmDeviceTouchable(state: SimfarmChromeState): boolean {
+  return !state.menu;
+}
+
+/**
+ * Android's hardware back, which is this screen's and is never sent to the
+ * emulator: it closes the menu if there is one to close, and otherwise
+ * closes the preview. The emulator's own Back is an item in the menu.
+ */
+export function simfarmBackPress(state: SimfarmChromeState): {
+  state: SimfarmChromeState;
+  closesPreview: boolean;
+} {
+  if (state.menu) return { state: simfarmChromeNext(state, 'outside'), closesPreview: false };
+  return { state, closesPreview: true };
+}
+
+/**
+ * What the menu offers, in the order a hand expects it, under the device
+ * name that is its header and the picker.
+ *
+ * Only what the device declared -- the backends differ a great deal and a key
+ * that does nothing is worse than a key that is not there -- and only the
+ * three navigation keys a phone has. The lock key and the volume keys are
+ * real capabilities and would be three more rows for the sake of a case
+ * nobody previews. The composer needs a device that takes text; closing
+ * needs a host with something to close, which the Pad column is not.
+ */
+export type SimfarmMenuItem = 'home' | 'back' | 'app_switch' | 'keyboard' | 'close';
+
+const OFFERED_KEYS: (SimfarmButton & SimfarmMenuItem)[] = ['home', 'back', 'app_switch'];
+
+export function simfarmMenuItems(
+  device: SimfarmDevice | null,
+  options: { closable: boolean }
+): SimfarmMenuItem[] {
+  const items: SimfarmMenuItem[] = [];
+  if (device !== null) {
+    for (const key of OFFERED_KEYS) {
+      if (device.capabilities.buttons.includes(key)) items.push(key);
+    }
+    if (device.capabilities.text) items.push('keyboard');
+  }
+  if (options.closable) items.push('close');
+  return items;
+}
+
+/** A rectangle in the stage's coordinates. */
+export interface SimfarmRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Where the menu card goes, as the absolute-position style the stage applies. */
+export interface SimfarmMenuPlacement {
+  /** Set when the card hangs off the button's left edge; else `right` is. */
+  left?: number;
+  right?: number;
+  /** Set when the card opens below the button; else `bottom` is. */
+  top?: number;
+  bottom?: number;
+  /** The room the card has in the direction it opens. */
+  maxHeight: number;
+}
+
+/** Between the button and the card, and between the card and the screen's ends. */
+export const SIMFARM_MENU_GAP = 8;
+/**
+ * How much room below the button is enough to open downwards regardless of
+ * how much there is above: the header, the three keys and two more rows.
+ */
+export const SIMFARM_MENU_PREFERRED_HEIGHT = 300;
+
+/**
+ * Anchors the menu to the button that opened it.
+ *
+ * Sideways, the card lines up with the button's outer edge -- the rail it is
+ * parked on -- and grows inward, so a button on the left rail has a menu
+ * reading from the left and one on the right has it reading from the right,
+ * and neither can be pushed off the screen by the other side's width.
+ * Vertically it opens downwards when there is room for the whole menu below
+ * the button, which is where a menu under a button is expected, and
+ * otherwise whichever way has more room. The insets are kept clear at both
+ * ends: a menu opening under a camera cutout or over a home indicator is a
+ * menu with a row nobody can read.
+ */
+export function simfarmMenuPlacement(
+  button: SimfarmRect,
+  stage: { width: number; height: number },
+  insets: { top: number; bottom: number } = { top: 0, bottom: 0 }
+): SimfarmMenuPlacement {
+  const centreX = button.x + button.width / 2;
+  const horizontal =
+    centreX < stage.width / 2
+      ? { left: button.x }
+      : { right: Math.max(0, stage.width - button.x - button.width) };
+  const roomBelow = Math.max(
+    0,
+    stage.height - insets.bottom - (button.y + button.height + SIMFARM_MENU_GAP)
+  );
+  const roomAbove = Math.max(0, button.y - SIMFARM_MENU_GAP - insets.top);
+  const below = roomBelow >= SIMFARM_MENU_PREFERRED_HEIGHT || roomBelow >= roomAbove;
+  const vertical = below
+    ? { top: button.y + button.height + SIMFARM_MENU_GAP, maxHeight: roomBelow }
+    : { bottom: stage.height - button.y + SIMFARM_MENU_GAP, maxHeight: roomAbove };
+  return { ...horizontal, ...vertical };
+}
+
+/**
+ * How the menu arrives.
+ *
+ * With motion reduced it does not travel at all: it fades where it is, over
+ * the shortest token, which is the substitute the platform guidelines ask for
+ * -- a crossfade is not a movement -- and is deliberately not the instant
+ * jump `ReduceMotion.System` would otherwise make of the timing. A menu that
+ * blinked into existence with no transition reads as a glitch on a screen
+ * that is a live picture.
  */
 export function simfarmChromeTransition(reduceMotion: boolean): {
-  duration: 'micro' | 'short';
+  duration: 'micro' | 'dropdown';
   slide: boolean;
 } {
-  return reduceMotion ? { duration: 'micro', slide: false } : { duration: 'short', slide: true };
+  return reduceMotion ? { duration: 'micro', slide: false } : { duration: 'dropdown', slide: true };
 }
 
-/** What the reader last left the chrome as, for the life of the app. */
-let remembered = true;
+/** Where the reader last left the button, for the life of the app. */
+let rememberedHandle: HandlePoint | null = null;
 
 /**
- * Whether the chrome should start out.
+ * Where the button should start.
  *
- * Remembered for the process rather than persisted: a reader who put the
- * controls away and reopens the preview a minute later gets the picture, and
- * a reader who opens the app tomorrow gets the controls, because the handle
- * is the one thing on this screen that has to be found once.
+ * Remembered for the process rather than persisted: a reader who dragged the
+ * button off a tab bar and reopens the preview a minute later finds it where
+ * they put it, and a reader who opens the app tomorrow finds it at its
+ * resting corner, which is the one place it is always easy to find. `null`
+ * is that corner -- the offsets are zero and `FloatingHandle` does the rest.
  */
-export function recallSimfarmChrome(): boolean {
-  return remembered;
+export function recallSimfarmHandle(): HandlePoint | null {
+  return rememberedHandle;
 }
 
-export function rememberSimfarmChrome(shown: boolean): void {
-  remembered = shown;
+export function rememberSimfarmHandle(at: HandlePoint | null): void {
+  rememberedHandle = at;
 }
-
-export class SimfarmChrome {
-  private shown: boolean;
-  private held = false;
-  private cancel: (() => void) | null = null;
-  private readonly listeners = new Set<(shown: boolean) => void>();
-  private readonly schedule: SimfarmSchedule;
-  private readonly timeoutMs: number;
-
-  constructor(options: { shown?: boolean; schedule?: SimfarmSchedule; timeoutMs?: number } = {}) {
-    this.shown = options.shown ?? true;
-    this.schedule = options.schedule ?? scheduleWithTimers;
-    this.timeoutMs = options.timeoutMs ?? SIMFARM_CHROME_TIMEOUT_MS;
-    this.arm();
-  }
-
-  get isShown(): boolean {
-    return this.shown;
-  }
-
-  subscribe(listener: (shown: boolean) => void): () => void {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  }
-
-  /** A handle was pressed. */
-  toggle(): void {
-    this.set(!this.shown);
-  }
-
-  show(): void {
-    this.set(true);
-  }
-
-  hide(): void {
-    this.set(false);
-  }
-
-  /** A control in the chrome was used: the countdown starts over. */
-  touched(): void {
-    if (!this.shown) return;
-    this.arm();
-  }
-
-  /**
-   * Something inside the chrome is open -- the picker, the composer -- and
-   * the chrome stays out for as long as it is. Closing it starts the
-   * countdown from the top.
-   */
-  hold(open: boolean): void {
-    if (this.held === open) return;
-    this.held = open;
-    if (open) this.disarm();
-    else this.arm();
-  }
-
-  /** Let go of the timer; the owner is going away. */
-  dispose(): void {
-    this.disarm();
-    this.listeners.clear();
-  }
-
-  private set(shown: boolean): void {
-    if (this.shown === shown) {
-      // Pressing the handle while the chrome is already out is still a use of
-      // it, and a use of it earns the full countdown again.
-      if (shown) this.arm();
-      return;
-    }
-    this.shown = shown;
-    if (shown) this.arm();
-    else this.disarm();
-    for (const listener of this.listeners) listener(shown);
-  }
-
-  private arm(): void {
-    this.disarm();
-    if (!this.shown || this.held) return;
-    this.cancel = this.schedule(() => {
-      this.cancel = null;
-      this.set(false);
-    }, this.timeoutMs);
-  }
-
-  private disarm(): void {
-    this.cancel?.();
-    this.cancel = null;
-  }
-}
-
-const scheduleWithTimers: SimfarmSchedule = (run, ms) => {
-  const timer = setTimeout(run, ms);
-  return () => clearTimeout(timer);
-};
