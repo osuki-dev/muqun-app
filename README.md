@@ -39,8 +39,9 @@ because there isn't one.
 - **Starts the next one.** Pick an agent, pick a directory the session already
   knows, type or dictate the prompt; Muqun opens the terminal it just made.
 - **Looks like your setup.** 32 theme packs, each with a light half and a dark
-  one, repainting the app and the terminal together. Eight languages: English,
-  繁體中文, 日本語, 한국어, Deutsch, Français, Español, Português.
+  one, repainting the app and the terminal together. Eleven languages: English,
+  繁體中文, 简体中文, 日本語, 한국어, Deutsch, Français, Español, Português,
+  Русский, Tiếng Việt.
 
 No Gateway yet? "Try the demo" on the home screen runs the whole app on sample
 data bundled in the binary, offline, with no network request of any kind.
@@ -167,7 +168,7 @@ src/stores/       Zustand state, hydration, persistence boundaries
 src/lib/          pairing, encrypted gateway transport, notifications, widgets, domain helpers
 src/terminal/     the VT parser, the screen model, and the Skia renderer
 src/constants/    design tokens, the 32 theme packs, stable configuration
-src/i18n/         Lingui setup and the eight locale catalogs
+src/i18n/         Lingui setup and the eleven locale catalogs
 plugins/          Expo config plugins for the native projects
 maestro/          end-to-end flows and reusable subflows
 scripts/          mock gateway, benchmarks, soak tests, the e2e runner
@@ -198,7 +199,7 @@ A few things that will save you a round trip:
 - Pure logic goes in a helper that Bun can test without a native module. That is
   why `src/lib` and `src/terminal` are as large as they are.
 - User-facing strings are Lingui macros. Add English, run `bun run i18n`, and
-  leave the other seven catalogs to a translator rather than to a guess.
+  leave the other ten catalogs to a translator rather than to a guess.
 - Accessibility labels and test IDs are automation contracts. Renaming one
   breaks a Maestro flow.
 - The app must keep working against an older Gateway. New endpoints go behind

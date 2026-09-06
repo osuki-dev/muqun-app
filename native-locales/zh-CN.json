@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "牧群",
+    "NSCameraUsageDescription": "牧群会扫描 Gateway 的二维码以安全配对，并拍摄你要附加到终端会话的照片。",
+    "NSPhotoLibraryUsageDescription": "牧群会把你选择的照片发送到已配对的 Gateway，供代理读取。",
+    "NSFaceIDUsageDescription": "牧群使用面容 ID 保护已配对的服务器和终端会话。",
+    "NSLocalNetworkUsageDescription": "牧群会连接到你电脑上运行的 Gateway，它可能位于你的本地网络中。"
+  },
+  "android": {
+    "app_name": "牧群"
+  }
+}

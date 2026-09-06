@@ -23,8 +23,20 @@ describe('the codes themselves', () => {
   // directory, the persisted setting, the request header and the gateway's
   // language table are all this literal string; if this test is ever "fixed" by
   // changing the expectation, every one of them has to move with it.
-  test('the eight codes are the eight the website spells, in its order', () => {
-    expect(APP_LOCALES).toEqual(['en', 'zh-TW', 'ja', 'ko', 'de', 'fr', 'es', 'pt']);
+  test('the eleven codes are the eleven the website spells, in its order', () => {
+    expect(APP_LOCALES).toEqual([
+      'en',
+      'zh-TW',
+      'zh-CN',
+      'ja',
+      'ko',
+      'de',
+      'fr',
+      'es',
+      'pt',
+      'ru',
+      'vi',
+    ]);
   });
 
   test('Traditional Chinese is spelled zh-TW, exactly as the website spells it', () => {
@@ -32,10 +44,19 @@ describe('the codes themselves', () => {
     expect(APP_LOCALES).not.toContain('zh-Hant' as never);
     expect(APP_LOCALES).not.toContain('zh-Hant-TW' as never);
     expect(APP_LOCALES).not.toContain('zh_TW' as never);
-    expect(APP_LOCALES).not.toContain('zh-Hans' as never);
   });
 
-  // The other six carry no region, and it matters as much as `zh-TW` carrying
+  // The same shape for the other script: a region code, not a script code,
+  // because that is the string the other two surfaces will look up.
+  test('Simplified Chinese is spelled zh-CN, by region and not by script', () => {
+    expect(APP_LOCALES).toContain('zh-CN');
+    expect(APP_LOCALES).not.toContain('zh-Hans' as never);
+    expect(APP_LOCALES).not.toContain('zh-Hans-CN' as never);
+    expect(APP_LOCALES).not.toContain('zh_CN' as never);
+    expect(APP_LOCALES).not.toContain('zh' as never);
+  });
+
+  // The other eight carry no region, and it matters as much as `zh-TW` carrying
   // one. `pt-BR` here would be a directory the website has never heard of and a
   // header value the gateway's table cannot look up -- and the symptom of both
   // is not an error, it is English.
@@ -47,6 +68,10 @@ describe('the codes themselves', () => {
     expect(APP_LOCALES).not.toContain('es-ES' as never);
     expect(APP_LOCALES).not.toContain('es-419' as never);
     expect(APP_LOCALES).not.toContain('en-US' as never);
+    expect(APP_LOCALES).toContain('ru');
+    expect(APP_LOCALES).not.toContain('ru-RU' as never);
+    expect(APP_LOCALES).toContain('vi');
+    expect(APP_LOCALES).not.toContain('vi-VN' as never);
   });
 
   test('English is the source locale and the end of every fallback', () => {
@@ -56,12 +81,15 @@ describe('the codes themselves', () => {
   test('every locale is named in its own language', () => {
     expect(LOCALE_LABELS.en).toBe('English');
     expect(LOCALE_LABELS['zh-TW']).toBe('繁體中文');
+    expect(LOCALE_LABELS['zh-CN']).toBe('简体中文');
     expect(LOCALE_LABELS.ja).toBe('日本語');
     expect(LOCALE_LABELS.ko).toBe('한국어');
     expect(LOCALE_LABELS.de).toBe('Deutsch');
     expect(LOCALE_LABELS.fr).toBe('Français');
     expect(LOCALE_LABELS.es).toBe('Español');
     expect(LOCALE_LABELS.pt).toBe('Português');
+    expect(LOCALE_LABELS.ru).toBe('Русский');
+    expect(LOCALE_LABELS.vi).toBe('Tiếng Việt');
   });
 
   test('the guards accept what we ship and nothing else', () => {
@@ -69,7 +97,11 @@ describe('the codes themselves', () => {
     expect(isAppLocale('en')).toBe(true);
     expect(isAppLocale('ja')).toBe(true);
     expect(isAppLocale('pt')).toBe(true);
+    expect(isAppLocale('zh-CN')).toBe(true);
+    expect(isAppLocale('ru')).toBe(true);
+    expect(isAppLocale('vi')).toBe(true);
     expect(isAppLocale('zh-Hant')).toBe(false);
+    expect(isAppLocale('zh-Hans')).toBe(false);
     expect(isAppLocale('pt-BR')).toBe(false);
     expect(isAppLocale('it')).toBe(false);
     expect(isAppLocale('')).toBe(false);
@@ -104,18 +136,27 @@ describe('folding a device tag onto a catalog', () => {
     expect(matchLocale('zh-MO')).toBe('zh-TW');
   });
 
-  // The important negative. Serving Traditional characters to someone who reads
-  // Simplified is a worse answer than English, and it would also be a silent
-  // claim to support a language nobody has translated.
-  test('Simplified Chinese does not fall into the Traditional catalog', () => {
-    expect(matchLocale('zh-Hans')).toBeNull();
-    expect(matchLocale('zh-CN')).toBeNull();
-    expect(matchLocale('zh-SG')).toBeNull();
-    expect(matchLocale('zh')).toBeNull();
+  // The important pair of negatives. Serving Traditional characters to someone
+  // who reads Simplified, or the reverse, is a worse answer than English; each
+  // script has its own catalog and neither stands in for the other.
+  test('Simplified Chinese lands on its own catalog, never the Traditional one', () => {
+    expect(matchLocale('zh-Hans')).toBe('zh-CN');
+    expect(matchLocale('zh-CN')).toBe('zh-CN');
+    expect(matchLocale('zh-cn')).toBe('zh-CN');
+    expect(matchLocale('zh_CN')).toBe('zh-CN');
+    expect(matchLocale('zh-SG')).toBe('zh-CN');
+    expect(matchLocale('zh-Hans-SG')).toBe('zh-CN');
+  });
+
+  // `zh` alone means Simplified: it is what CLDR's likely-subtags rule resolves
+  // it to, and what a phone that reports the bare tag is set to.
+  test('a bare zh is Simplified', () => {
+    expect(matchLocale('zh')).toBe('zh-CN');
   });
 
   test('script beats region when they disagree', () => {
-    expect(matchLocale('zh-Hans-TW')).toBeNull();
+    expect(matchLocale('zh-Hans-TW')).toBe('zh-CN');
+    expect(matchLocale('zh-Hant-CN')).toBe('zh-TW');
   });
 
   test('English matches on the bare language, since we ship no variants of it', () => {
@@ -139,6 +180,9 @@ describe('folding a device tag onto a catalog', () => {
     expect(matchLocale('es-419')).toBe('es');
     expect(matchLocale('pt-BR')).toBe('pt');
     expect(matchLocale('pt-PT')).toBe('pt');
+    expect(matchLocale('ru-RU')).toBe('ru');
+    expect(matchLocale('ru-BY')).toBe('ru');
+    expect(matchLocale('vi-VN')).toBe('vi');
   });
 
   test('the bare language matches too, and case still does not matter', () => {
@@ -154,15 +198,19 @@ describe('folding a device tag onto a catalog', () => {
     expect(matchLocale('it')).toBeNull();
     expect(matchLocale('ar')).toBeNull();
     expect(matchLocale('nl-NL')).toBeNull();
-    expect(matchLocale('ru')).toBeNull();
+    expect(matchLocale('uk')).toBeNull();
+    expect(matchLocale('th-TH')).toBeNull();
   });
 
-  // Portuguese and Spanish are near neighbours and Galician sits between them,
-  // but "close enough to read" is not a thing a locale negotiator gets to
-  // decide. Only an exact language match counts.
+  // Portuguese and Spanish are near neighbours and Galician sits between them;
+  // Ukrainian and Belarusian share an alphabet and much more with Russian. But
+  // "close enough to read" is not a thing a locale negotiator gets to decide.
+  // Only an exact language match counts.
   test('a neighbouring language is not a near-enough match', () => {
     expect(matchLocale('gl')).toBeNull();
     expect(matchLocale('ca')).toBeNull();
+    expect(matchLocale('uk-UA')).toBeNull();
+    expect(matchLocale('be')).toBeNull();
   });
 
   test('junk is a miss rather than a throw', () => {
@@ -184,11 +232,14 @@ describe('negotiating against the device preference list', () => {
     expect(negotiateLocale(['zh-TW', 'en-US'])).toBe('zh-TW');
     expect(negotiateLocale(['pt-BR', 'en-US'])).toBe('pt');
     expect(negotiateLocale(['ko-KR', 'ja-JP'])).toBe('ko');
+    expect(negotiateLocale(['zh-Hans-CN', 'zh-Hant-TW'])).toBe('zh-CN');
+    expect(negotiateLocale(['zh-Hant-TW', 'zh-Hans-CN'])).toBe('zh-TW');
+    expect(negotiateLocale(['vi-VN', 'ru-RU'])).toBe('vi');
   });
 
   test('a device that wants nothing we have gets the source locale', () => {
     expect(negotiateLocale(['it-IT', 'ar-EG'])).toBe('en');
-    expect(negotiateLocale(['zh-Hans-CN'])).toBe('en');
+    expect(negotiateLocale(['uk-UA', 'th-TH'])).toBe('en');
     expect(negotiateLocale([])).toBe('en');
   });
 });
@@ -196,6 +247,7 @@ describe('negotiating against the device preference list', () => {
 describe('resolving what to actually render', () => {
   test('no preference means follow the system', () => {
     expect(resolveLocale(null, ['zh-Hant-TW'])).toBe('zh-TW');
+    expect(resolveLocale(null, ['zh-Hans-CN'])).toBe('zh-CN');
     expect(resolveLocale(null, ['ja-JP'])).toBe('ja');
     expect(resolveLocale(null, ['it-IT'])).toBe('en');
   });
@@ -203,6 +255,8 @@ describe('resolving what to actually render', () => {
   test('an explicit choice overrules the system, which is the point of it', () => {
     expect(resolveLocale('en', ['zh-TW'])).toBe('en');
     expect(resolveLocale('zh-TW', ['en-US'])).toBe('zh-TW');
+    expect(resolveLocale('zh-TW', ['zh-Hans-CN'])).toBe('zh-TW');
+    expect(resolveLocale('ru', ['vi-VN'])).toBe('ru');
   });
 });
 

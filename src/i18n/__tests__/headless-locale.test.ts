@@ -89,8 +89,11 @@ beforeEach(() => coldStart());
 describe('the persisted override', () => {
   const overrides: [AppLocale, string[]][] = [
     ['zh-TW', ['en-US']],
+    ['zh-CN', ['zh-Hant-TW']],
     ['ja', ['de-DE', 'en-US']],
     ['pt', ['ko-KR']],
+    ['ru', ['vi-VN']],
+    ['vi', ['ru-RU']],
   ];
   test.each(overrides)(
     'a stored %s wins over a device asking for something else',
@@ -146,9 +149,9 @@ describe('following the system', () => {
     expect(await activateWidgetLocale()).toBe('zh-TW');
   });
 
-  test('Simplified Chinese deliberately reaches English, not the Traditional catalog', async () => {
+  test('Simplified Chinese reaches its own catalog, not the Traditional one', async () => {
     deviceTags = ['zh-Hans-CN'];
-    expect(await activateWidgetLocale()).toBe('en');
+    expect(await activateWidgetLocale()).toBe('zh-CN');
   });
 });
 
