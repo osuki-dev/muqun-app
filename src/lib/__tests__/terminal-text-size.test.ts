@@ -430,6 +430,21 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     expect(TERMINAL_MAX_FIT_SCALE).toBeGreaterThan(TERMINAL_MIN_SCALE);
   });
 
+  test('a narrow agent pane is fitted exactly as a narrow editor is', () => {
+    // The fit knows nothing about what the pane runs, and that is the rule:
+    // a Claude Code pane and an nvim pane in the same narrow Herdr column
+    // must not open at two sizes. Measured on herdr 0.8.2: three columns
+    // side by side gave grids of 64, 32 and 31; on this phone the 32-column
+    // editor opens at 49/32 and the 31-column agent at 49/31, both under the
+    // cap, and only a pane narrower than 49/1.6 -- thirty columns -- meets
+    // it. At the cap a 30-column pane still reaches 48 of 49 columns, which
+    // is why 1.6 stands for these panes as it did for tmux's 36.
+    expect(terminalFitToWidthScale(PHONE_COLUMNS, 32)).toBeCloseTo(49 / 32);
+    expect(terminalFitToWidthScale(PHONE_COLUMNS, 31)).toBeCloseTo(49 / 31);
+    expect(terminalFitToWidthScale(PHONE_COLUMNS, 30)).toBe(TERMINAL_MAX_FIT_SCALE);
+    expect(30 * TERMINAL_MAX_FIT_SCALE).toBeGreaterThanOrEqual(PHONE_COLUMNS - 1);
+  });
+
   test('a pane the gateway reported no width for is not fitted', () => {
     // An older gateway, and every SSH shell -- whose grid *is* the PTY, so it
     // can never differ from the phone's and there is nothing to fit.

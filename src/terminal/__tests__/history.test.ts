@@ -15,6 +15,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   applyTerminalFrame,
+  collapseScreenGaps,
   foldPaneRead,
   hasEarlierAfterPage,
   hasEarlierTerminalOutput,
@@ -348,6 +349,98 @@ describe('a screen-owning pane replaces rather than accumulates (card #795, defe
   });
 });
 
+// A full-screen program that scrolls -- Claude Code -- on a backend that
+// cannot say it owns the screen. Measured on herdr 0.8.2 against a real
+// 59-row Claude Code pane before its first prompt, through the gateway, on
+// both `visible` and `recent-unwrapped`: one blank row, a four-row header,
+// forty-eight blank rows, a six-row box. tmux would report `alternate_on` and
+// the read would be a picture; herdr has no such flag, so the read is folded
+// as scrollback and the forty-eight rows were drawn as transcript -- a
+// composer with half a screen of nothing above it, bottom-anchored.
+describe('the room a program left on its screen is not transcript', () => {
+  const header = [
+    '',
+    '           Claude Code v2.1.263',
+    ' A  Fable 5.1',
+    ' B  Claude Max',
+    '  C  /tmp/proj',
+  ];
+  const box = ['             * high · /effort', '---', '>', '---', '  manual mode on'];
+  const blanks = (count: number) => Array.from({ length: count }, () => '');
+  const screen = (transcript: string[]) => {
+    const gap = 59 - header.length - transcript.length - box.length;
+    return [...header, ...transcript, ...blanks(gap), ...box].join('\n');
+  };
+  const rows = (text: string) => text.split('\n');
+
+  test('forty-eight unpainted rows between the header and the box become one', () => {
+    const drawn = rows(foldPaneRead('', screen([]), 'refresh', MAXIMUM, false, 59));
+    expect(drawn).toHaveLength(header.length + 1 + box.length);
+    expect(drawn.slice(0, header.length)).toEqual(header);
+    expect(drawn[header.length]).toBe('');
+    expect(drawn.slice(-box.length)).toEqual(box);
+  });
+
+  test('a transcript growing into the gap folds into one window, not a stack of screens', () => {
+    let window = foldPaneRead('', screen([]), 'refresh', MAXIMUM, false, 59);
+    const transcript = ['> hello', '', 'Hello. How can I help?'];
+    window = applyTerminalFrame(window, screen(transcript), MAXIMUM, false, 59);
+    window = applyTerminalFrame(
+      window,
+      screen([...transcript, '', '> thanks']),
+      MAXIMUM,
+      false,
+      59
+    );
+    const drawn = rows(window);
+    expect(drawn.filter((row) => row.includes('Claude Code v2.1.263'))).toHaveLength(1);
+    expect(drawn.filter((row) => row === '>')).toHaveLength(1);
+    expect(drawn.slice(-box.length)).toEqual(box);
+    expect(drawn.join('\n')).toContain('> thanks');
+    expect(drawn.length).toBeLessThan(2 * (header.length + box.length + 5));
+  });
+
+  test('a run shorter than four stays: a shell leaves a couple of blank rows and keeps them', () => {
+    const read = ['$ make', '', '', '', 'ok', '$ '].join('\n');
+    expect(collapseScreenGaps(read, 6)).toBe(read);
+    expect(collapseScreenGaps(read, 59)).toBe(read);
+  });
+
+  test('only the screen is collapsed; the history the gateway kept above it is not', () => {
+    // Eight rows of history the gateway kept, then exactly one 59-row screen.
+    const history = ['printed one', ...blanks(6), 'printed two'];
+    const read = [...history, ...header, ...blanks(49), ...box].join('\n');
+    const drawn = rows(collapseScreenGaps(read, 59));
+    // The six blank rows in history are still six.
+    expect(drawn.slice(0, history.length)).toEqual(history);
+    // The forty-nine in the screen are one.
+    expect(drawn).toHaveLength(history.length + header.length + 1 + box.length);
+  });
+
+  test('a screen-owning pane keeps every row of its picture', () => {
+    const read = screen([]);
+    expect(foldPaneRead('', read, 'refresh', MAXIMUM, true, 59)).toBe(read);
+    expect(applyTerminalFrame('', read, MAXIMUM, true, 59)).toBe(read);
+  });
+
+  test('a pane whose height the gateway did not report keeps the old behaviour', () => {
+    const read = screen([]);
+    expect(collapseScreenGaps(read, 0)).toBe(read);
+    expect(foldPaneRead('', read, 'refresh', MAXIMUM)).toBe(read);
+  });
+
+  test('a read with nothing to collapse comes back byte for byte', () => {
+    const read = 'one\r\ntwo\r\n\r\nthree';
+    expect(collapseScreenGaps(read, 4)).toBe(read);
+    expect(collapseScreenGaps('', 4)).toBe('');
+  });
+
+  test('a trailing run inside the screen is room too', () => {
+    const read = ['prompt', ...blanks(10)].join('\n');
+    expect(rows(collapseScreenGaps(read, 20))).toEqual(['prompt', '']);
+  });
+});
+
 describe("the pane's own viewport rows", () => {
   test('reads the metric', () => {
     expect(terminalViewportRows({ max_offset_from_bottom: 0, viewport_rows: 23 })).toBe(23);
@@ -374,7 +467,12 @@ describe("the pane's own viewport rows", () => {
 
 describe("the gateway's scrollback metric", () => {
   test('is the rows above the viewport plus the viewport itself', () => {
-    expect(terminalScrollbackRows({ max_offset_from_bottom: 908, viewport_rows: 65 })).toBe(973);
+    expect(
+      terminalScrollbackRows({
+        max_offset_from_bottom: 908,
+        viewport_rows: 65,
+      })
+    ).toBe(973);
   });
 
   test('is absent rather than guessed at when the block is not a metric', () => {
@@ -533,7 +631,10 @@ describe('a range decides whether there is more, once there is one', () => {
 
 describe('the next page above the one held', () => {
   test('the next page is the one above the page held, and they do not overlap', () => {
-    expect(nextPageRange({ start: 900 }, 500)).toEqual({ start: 400, end: 900 });
+    expect(nextPageRange({ start: 900 }, 500)).toEqual({
+      start: 400,
+      end: 900,
+    });
   });
 
   test('the next page stops at the top instead of going negative', () => {
