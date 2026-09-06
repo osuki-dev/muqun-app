@@ -10,10 +10,11 @@
 // between the two is exactly the mistake worth catching.
 //
 // Every assertion below is written over `APP_LOCALES` rather than over a list of
-// its own. Eight languages is enough that a hand-maintained second list would
+// its own. Eleven languages is enough that a hand-maintained second list would
 // drift, and a drift test that has drifted is worse than no test: it passes.
 /// <reference types="node" />
 import { describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,12 +23,15 @@ import { setupI18n, type Messages } from '@lingui/core';
 
 import { messages as enMessages } from '../locales/en/messages';
 import { messages as zhTWMessages } from '../locales/zh-TW/messages';
+import { messages as zhCNMessages } from '../locales/zh-CN/messages';
 import { messages as jaMessages } from '../locales/ja/messages';
 import { messages as koMessages } from '../locales/ko/messages';
 import { messages as deMessages } from '../locales/de/messages';
 import { messages as frMessages } from '../locales/fr/messages';
 import { messages as esMessages } from '../locales/es/messages';
 import { messages as ptMessages } from '../locales/pt/messages';
+import { messages as ruMessages } from '../locales/ru/messages';
+import { messages as viMessages } from '../locales/vi/messages';
 import { APP_LOCALES, LOCALE_LABELS, type AppLocale } from '../locale';
 import { EDITOR_ACTIONS } from '@/lib/terminal-keys';
 
@@ -36,12 +40,15 @@ type Catalog = Record<string, unknown>;
 const catalogs: Record<AppLocale, Catalog> = {
   en: enMessages as Catalog,
   'zh-TW': zhTWMessages as Catalog,
+  'zh-CN': zhCNMessages as Catalog,
   ja: jaMessages as Catalog,
   ko: koMessages as Catalog,
   de: deMessages as Catalog,
   fr: frMessages as Catalog,
   es: esMessages as Catalog,
   pt: ptMessages as Catalog,
+  ru: ruMessages as Catalog,
+  vi: viMessages as Catalog,
 };
 
 /** Every locale but the source one -- the ones that have something to translate. */
@@ -53,6 +60,12 @@ const TRANSLATED_LOCALES = APP_LOCALES.filter((locale) => locale !== 'en');
 // it: the compiled catalog, and the native locale files prebuild reads.
 const SIMPLIFIED_ONLY =
   /[设备终码复关闭连线务应确认输报书间华语开个门问题这们时网络显项启动组统释译验]/u;
+
+// The mirror image, for the Simplified catalog: the Traditional form of each of
+// the same characters. A hit here means Traditional copy -- most likely the
+// zh-TW catalog -- was pasted into zh-CN rather than translated into it.
+const TRADITIONAL_ONLY =
+  /[設備終碼複關閉連線務應確認輸報書間華語開個門問題這們時網絡顯項啟動組統釋譯驗]/u;
 
 function blankEntries(catalog: Catalog): string[] {
   return Object.entries(catalog)
@@ -146,6 +159,29 @@ describe('the compiled catalogs', () => {
       .filter(([, value]) => SIMPLIFIED_ONLY.test(JSON.stringify(value)))
       .map(([id, value]) => `${id}: ${JSON.stringify(value)}`);
     expect(offenders).toEqual([]);
+  });
+
+  test('the Simplified catalog contains no Traditional-only characters', () => {
+    const offenders = Object.entries(zhCNMessages)
+      .filter(([, value]) => TRADITIONAL_ONLY.test(JSON.stringify(value)))
+      .map(([id, value]) => `${id}: ${JSON.stringify(value)}`);
+    expect(offenders).toEqual([]);
+  });
+
+  // The two Chinese catalogs must differ, and not only in script: a Simplified
+  // catalog produced by converting the Traditional one character by character
+  // would keep Taiwan's vocabulary (終端機, 伺服器, 檔案) in Simplified clothes.
+  // A handful of everyday words that the two conventions spell differently is
+  // enough to tell the two apart.
+  test('the Simplified catalog uses mainland vocabulary rather than converted Traditional', () => {
+    const text = JSON.stringify(zhCNMessages);
+    expect(text).toContain('终端');
+    expect(text).toContain('服务器');
+    expect(text).toContain('文件');
+    expect(text).toContain('设置');
+    expect(text).not.toContain('终端机');
+    expect(text).not.toContain('档案');
+    expect(text).not.toContain('设定');
   });
 
   // The picker labels each language in its own language, so a locale added
@@ -389,6 +425,61 @@ describe('the plural forms actually render', () => {
     expect(local._(PLURAL_ID, { 0: 1 })).toBe('1 panel');
     expect(local._(PLURAL_ID, { 0: 2 })).toBe('2 panels');
   });
+
+  // The assertions above hand the formatter a message that is not in any
+  // catalog, so what they prove is that each locale's plural *rules* are
+  // wired. The two below go one step further and render a message that is: a
+  // real entry, looked up by the id the compiler wrote for it, so a catalog
+  // whose translator kept the English `one`/`other` shape in a language that
+  // needs `few` and `many` fails here rather than on a phone.
+  //
+  // The id is the one `lingui compile` derives from the source text: the first
+  // six characters of the base64 SHA-256 of the message joined to its (empty)
+  // context by a unit separator. Re-deriving it here rather than importing the
+  // helper keeps the test on the same dependencies as the app; the English
+  // lookup asserts the derivation still matches what the compiler did.
+  const DAYS_SOURCE = '{0, plural, one {# day} other {# days}}';
+  const DAYS_ID = createHash('sha256').update(`${DAYS_SOURCE}\u001f`).digest('base64').slice(0, 6);
+
+  test('the derived id is the one the compiler wrote', () => {
+    expect(DAYS_ID in catalogs.en).toBe(true);
+    const local = setupI18n();
+    local.load('en', catalogs.en as Messages);
+    local.activate('en');
+    expect(local._(DAYS_ID, { 0: 1 })).toBe('1 day');
+    expect(local._(DAYS_ID, { 0: 2 })).toBe('2 days');
+  });
+
+  // Russian is the one language we ship with four categories, and the one
+  // where the English shape -- `one` and `other` -- is silently wrong for most
+  // numbers. 1 is `one`, 2 through 4 are `few`, 5 through 20 are `many`, and
+  // 21 wraps back to `one`. Every one of those has to come out as a different
+  // word, and the fallback branch has to be something other than English.
+  test('Russian renders all four plural categories from the shipped catalog', () => {
+    const local = setupI18n();
+    local.load('ru', catalogs.ru as Messages);
+    local.activate('ru');
+    expect(local._(DAYS_ID, { 0: 1 })).toBe('1 день');
+    expect(local._(DAYS_ID, { 0: 2 })).toBe('2 дня');
+    expect(local._(DAYS_ID, { 0: 5 })).toBe('5 дней');
+    expect(local._(DAYS_ID, { 0: 11 })).toBe('11 дней');
+    expect(local._(DAYS_ID, { 0: 21 })).toBe('21 день');
+  });
+
+  // Vietnamese and Simplified Chinese have a single category, like Japanese
+  // and Korean, so the catalog carries only `other` and the count reaches the
+  // output without a branch to miss.
+  test.each(['vi', 'zh-CN'] as const)('%s renders its single plural form', (locale) => {
+    const local = setupI18n();
+    local.load(locale, catalogs[locale] as Messages);
+    local.activate(locale);
+    const one = local._(DAYS_ID, { 0: 1 });
+    const many = local._(DAYS_ID, { 0: 7 });
+    expect(one).toContain('1');
+    expect(many).toContain('7');
+    expect(one.replace('1', '')).toBe(many.replace('7', ''));
+    expect(one).not.toContain('day');
+  });
 });
 
 // The other half of "what ships": the name under the icon, and the sentences
@@ -460,7 +551,11 @@ describe('the native locale files', () => {
     // zh-TW and ja are the exception: the app carries its native CJK name there, matching the
     // localisation already published on osuki.dev -- the app must not invent
     // its own convention for its own name where one already exists.
-    const localName: Partial<Record<AppLocale, string>> = { 'zh-TW': '牧群', ja: '牧群' };
+    const localName: Partial<Record<AppLocale, string>> = {
+      'zh-TW': '牧群',
+      'zh-CN': '牧群',
+      ja: '牧群',
+    };
     const expectedName = localName[locale] ?? 'Muqun';
     expect(file.ios?.CFBundleDisplayName).toBe(expectedName);
     expect(file.android?.app_name).toBe(expectedName);
@@ -468,7 +563,11 @@ describe('the native locale files', () => {
 
   test.each(APP_LOCALES)('%s explains every permission, in a real sentence', (locale) => {
     const ios = nativeLocale(locale).ios ?? {};
-    const localName: Partial<Record<AppLocale, string>> = { 'zh-TW': '牧群', ja: '牧群' };
+    const localName: Partial<Record<AppLocale, string>> = {
+      'zh-TW': '牧群',
+      'zh-CN': '牧群',
+      ja: '牧群',
+    };
     const brandName = localName[locale] ?? 'Muqun';
     for (const key of USAGE_KEYS) {
       const description = ios[key] ?? '';
@@ -493,5 +592,10 @@ describe('the native locale files', () => {
   test('the Traditional file contains no Simplified-only characters', () => {
     const file = nativeLocale('zh-TW');
     expect(SIMPLIFIED_ONLY.test(JSON.stringify(file))).toBe(false);
+  });
+
+  test('the Simplified file contains no Traditional-only characters', () => {
+    const file = nativeLocale('zh-CN');
+    expect(TRADITIONAL_ONLY.test(JSON.stringify(file))).toBe(false);
   });
 });

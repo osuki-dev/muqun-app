@@ -1,0 +1,3081 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-09-06 17:32+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: vi\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "… truncated"
+msgstr "… đã cắt bớt"
+
+#: src/lib/demo-gateway.ts
+msgid "[instructions]"
+msgstr "[hướng dẫn]"
+
+#: src/lib/demo-gateway.ts
+msgid "[model]"
+msgstr "[mô hình]"
+
+#: src/lib/demo-gateway.ts
+msgid "[pr number]"
+msgstr "[số pr]"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# day} other {# days}}"
+msgstr "{0, plural, other {# ngày}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# hour} other {# hours}}"
+msgstr "{0, plural, other {# giờ}}"
+
+#. placeholder {0}: away.value
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {# minute} other {# minutes}}"
+msgstr "{0, plural, other {# phút}}"
+
+#. placeholder {0}: digest.otherAgents
+#: src/components/away-digest-card.tsx
+msgid "{0, plural, one {and # more agent} other {and # more agents}}"
+msgstr "{0, plural, other {và # tác tử nữa}}"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "{0} (this device)"
+msgstr "{0} (thiết bị này)"
+
+#. placeholder {0}: profile.kind
+#: src/components/new-task-sheet.tsx
+msgid "{0}, not found on this server's PATH"
+msgstr "{0}, không có trong PATH của máy chủ này"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}d ago"
+msgstr "{0} ngày trước"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}h ago"
+msgstr "{0} giờ trước"
+
+#. placeholder {0}: parts.value
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "{0}m ago"
+msgstr "{0} phút trước"
+
+#: src/components/away-digest-card.tsx
+msgid "{asked, plural, one {· asked once} other {· asked # times}}"
+msgstr "{asked, plural, other {· đã hỏi # lần}}"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
+msgstr "{host} đưa ra một khóa khác với khóa đã lưu cho nó. Điều này xảy ra sau khi cài đặt lại, và cũng xảy ra khi có gì đó đang chặn kết nối. Đừng thay khóa trừ khi bạn biết vì sao nó thay đổi."
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "{host} presented a key this app has not seen before. Compare the fingerprint with the server before trusting it."
+msgstr "{host} đưa ra một khóa mà ứng dụng này chưa từng thấy. Hãy so dấu vân tay với máy chủ trước khi tin cậy."
+
+#: src/components/app-lock-gate.tsx
+msgid "{label} is temporarily locked. Use the system fallback or try later."
+msgstr "{label} tạm thời bị khóa. Hãy dùng cách dự phòng của hệ thống hoặc thử lại sau."
+
+#: src/components/session-map.tsx
+msgid "{panelCount, plural, one {# running} other {# running}}"
+msgstr "{panelCount, plural, other {# đang chạy}}"
+
+#: src/components/row-action-menu.tsx
+msgid "{removeLabel}: {label}"
+msgstr "{removeLabel}: {label}"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "+{overflow} more"
+msgstr "+{overflow} nữa"
+
+#: src/app/explore.tsx
+msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
+msgstr "Một Gateway trên máy bạn có thể SSH vào, kể cả máy chỉ lắng nghe trên loopback của chính nó."
+
+#: src/lib/release-notes.ts
+msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
+msgstr "Khóa của máy chủ được ghi nhớ lần đầu và kiểm tra mọi lần sau, và một khóa đã thay đổi sẽ chặn kết nối cho đến khi bạn quyết định khác."
+
+#: src/components/pad-server-rail.tsx
+msgid "A shell on any machine with sshd"
+msgstr "Một shell trên bất kỳ máy nào có sshd"
+
+#: src/components/simfarm-preview.tsx
+msgid "A simulator can be driven and not only watched, so a preview is offered only over Tailscale or HTTPS. Pair this machine at its tailnet address, or serve its gateway over HTTPS, and the preview appears on its own."
+msgstr "Trình giả lập có thể được điều khiển chứ không chỉ để xem, nên bản xem trước chỉ được cung cấp qua Tailscale hoặc HTTPS. Hãy ghép nối máy này bằng địa chỉ tailnet của nó, hoặc chạy gateway của nó qua HTTPS, và bản xem trước sẽ tự xuất hiện."
+
+#: src/components/simfarm-stage.tsx
+msgid "A simulator that was shut down can take a minute to come up."
+msgstr "Trình giả lập đã tắt có thể mất một phút để khởi động."
+
+#: src/app/settings.tsx
+msgid "About"
+msgstr "Giới thiệu"
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send it a command."
+msgstr "Thao tác trên terminal này, hoặc gửi cho nó một lệnh."
+
+#: src/app/commands.tsx
+msgid "Act on this terminal, or send its agent a prompt."
+msgstr "Thao tác trên terminal này, hoặc gửi cho tác tử của nó một prompt."
+
+#: src/components/ssh-host-list.tsx
+msgid "Add a host"
+msgstr "Thêm host"
+
+#: src/app/explore.tsx
+#: src/components/ssh-host-list.tsx
+msgid "Add an SSH host"
+msgstr "Thêm host SSH"
+
+#: src/components/settings-terminal.tsx
+msgid "Add commands and custom key combinations."
+msgstr "Thêm lệnh và tổ hợp phím tùy chỉnh."
+
+#: src/app/explore.tsx
+msgid "Add one first"
+msgstr "Thêm một cái trước đã"
+
+#: src/components/ssh-host-form.tsx
+msgid "Add this line to ~/.ssh/authorized_keys on the server:"
+msgstr "Thêm dòng này vào ~/.ssh/authorized_keys trên máy chủ:"
+
+#: src/components/new-task-sheet.tsx
+msgid "AGENT"
+msgstr "TÁC TỬ"
+
+#: src/app/commands.tsx
+msgid "AGENT COMMANDS"
+msgstr "LỆNH TÁC TỬ"
+
+#: src/components/settings-terminal.tsx
+msgid "Agent panes open in"
+msgstr "Ngăn tác tử mở ở"
+
+#: src/components/settings-servers.tsx
+msgid "Agents"
+msgstr "Tác tử"
+
+#: src/app/settings.tsx
+msgid "Alerts"
+msgstr "Cảnh báo"
+
+#: src/app/explore.tsx
+msgid "Align the QR inside the frame"
+msgstr "Căn mã QR vào trong khung"
+
+#: src/components/session-artifacts.tsx
+msgid "All"
+msgstr "Tất cả"
+
+#: src/components/settings-servers.tsx
+msgid "All panes"
+msgstr "Tất cả các ngăn"
+
+#: src/components/pairing-camera.tsx
+msgid "Allow camera"
+msgstr "Cho phép camera"
+
+#: src/app/explore.tsx
+msgid "Allow the camera, or enter the address instead."
+msgstr "Cho phép camera, hoặc nhập địa chỉ thay thế."
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Answer"
+msgstr "Trả lời"
+
+#. placeholder {0}: option.label
+#: src/components/approval-banner.tsx
+msgid "Answer: {0}"
+msgstr "Trả lời: {0}"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
+msgstr "Bất cứ thứ gì {label} đang phục vụ trên một cổng — máy chủ dev, bản xem trước, bảng điều khiển."
+
+#: src/components/settings-security.tsx
+msgid "App Lock enabled"
+msgstr "Đã bật Khóa ứng dụng"
+
+#: src/components/settings-security.tsx
+msgid "App Lock unavailable"
+msgstr "Khóa ứng dụng không khả dụng"
+
+#: src/app/settings.tsx
+msgid "Appearance"
+msgstr "Giao diện"
+
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Appearance, terminal, security"
+msgstr "Giao diện, terminal, bảo mật"
+
+#: src/i18n/labels.ts
+msgid "Approve"
+msgstr "Chấp thuận"
+
+#: src/i18n/labels.ts
+msgid "Approve and don't ask again"
+msgstr "Chấp thuận và không hỏi lại"
+
+#: src/components/ssh-host-form.tsx
+msgid "Ask each time"
+msgstr "Hỏi mỗi lần"
+
+#: src/app/explore.tsx
+msgid "Asking the Gateway about that code."
+msgstr "Đang hỏi Gateway về mã đó."
+
+#: src/components/new-task-sheet.tsx
+msgid "Asking the server what it can run…"
+msgstr "Đang hỏi máy chủ xem nó có thể chạy gì…"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Attach a file"
+msgstr "Đính kèm tệp"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticate with {authLabel} to continue."
+msgstr "Xác thực bằng {authLabel} để tiếp tục."
+
+#: src/lib/local-authentication.ts
+msgid "Authenticate with {method} to continue"
+msgstr "Xác thực bằng {method} để tiếp tục"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating"
+msgstr "Đang xác thực"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authenticating…"
+msgstr "Đang xác thực…"
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication failed. Try again."
+msgstr "Xác thực thất bại. Hãy thử lại."
+
+#: src/components/app-lock-gate.tsx
+msgid "Authentication is unavailable. Try again or check system settings."
+msgstr "Không thể xác thực. Hãy thử lại hoặc kiểm tra cài đặt hệ thống."
+
+#: src/components/simfarm-stage.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back"
+msgstr "Quay lại"
+
+#: src/i18n/labels.ts
+msgid "Back one word"
+msgstr "Lùi một từ"
+
+#: src/components/app-drawer.tsx
+msgid "Back to servers"
+msgstr "Về danh sách máy chủ"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to SSH hosts"
+msgstr "Về danh sách host SSH"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Back to the on-screen keyboard"
+msgstr "Về bàn phím trên màn hình"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Backspace"
+msgstr "Backspace"
+
+#: src/lib/local-authentication.ts
+msgid "biometrics"
+msgstr "sinh trắc học"
+
+#: src/i18n/labels.ts
+msgid "Blocked"
+msgstr "Đang chờ"
+
+#: src/app/commands.tsx
+msgid "Browser"
+msgstr "Trình duyệt"
+
+#: src/lib/attachments.ts
+msgid "Camera access is off. Turn it on in Settings to take a photo."
+msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt để chụp ảnh."
+
+#: src/components/pairing-camera.tsx
+msgid "Camera access needed"
+msgstr "Cần quyền truy cập camera"
+
+#: src/components/row-action-menu.tsx
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+#: src/components/skia-terminal.tsx
+#: src/components/ssh-host-form.tsx
+#: src/components/ssh-host-key-dialog.tsx
+#: src/lib/local-authentication.ts
+msgid "Cancel"
+msgstr "Hủy"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancel connecting to {0}"
+msgstr "Hủy kết nối đến {0}"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Cancel editing {0}"
+msgstr "Hủy chỉnh sửa {0}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Cancelled"
+msgstr "Đã hủy"
+
+#: src/i18n/labels.ts
+msgid "Chat"
+msgstr "Trò chuyện"
+
+#: src/components/settings-security.tsx
+msgid "Check device authentication settings and try again."
+msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại."
+
+#: src/components/settings-security.tsx
+msgid "Checking system authentication…"
+msgstr "Đang kiểm tra xác thực hệ thống…"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Checking…"
+msgstr "Đang kiểm tra…"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator"
+msgstr "Chọn trình giả lập"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose a simulator from the menu."
+msgstr "Chọn một trình giả lập từ menu."
+
+#: src/app/explore.tsx
+msgid "Choose an SSH host."
+msgstr "Chọn một host SSH."
+
+#: src/components/attachment-menu.tsx
+msgid "Choose files"
+msgstr "Chọn tệp"
+
+#: src/components/simfarm-stage.tsx
+msgid "Choose which simulator to show"
+msgstr "Chọn trình giả lập để hiển thị"
+
+#: src/i18n/labels.ts
+msgid "Clear line"
+msgstr "Xóa dòng"
+
+#: src/i18n/labels.ts
+msgid "Clear terminal"
+msgstr "Xóa màn hình terminal"
+
+#: src/components/open-web-service-sheet.tsx
+#: src/components/session-map.tsx
+msgid "Close"
+msgstr "Đóng"
+
+#: src/components/asset-viewer.tsx
+msgid "Close file"
+msgstr "Đóng tệp"
+
+#: src/components/session-artifacts.tsx
+msgid "Close files"
+msgstr "Đóng danh sách tệp"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Close language picker"
+msgstr "Đóng bộ chọn ngôn ngữ"
+
+#: src/components/new-task-sheet.tsx
+msgid "Close new task"
+msgstr "Đóng tác vụ mới"
+
+#: src/app/explore.tsx
+msgid "Close pairing"
+msgstr "Đóng ghép nối"
+
+#: src/components/asset-viewer.tsx
+#: src/components/image-preview-modal.tsx
+msgid "Close preview"
+msgstr "Đóng bản xem trước"
+
+#: src/app/commands.tsx
+msgid "Close quick actions"
+msgstr "Đóng thao tác nhanh"
+
+#: src/components/session-switcher-sheet.tsx
+msgid "Close session picker"
+msgstr "Đóng bộ chọn phiên"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the attachment menu"
+msgstr "Đóng menu đính kèm"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Close the command list"
+msgstr "Đóng danh sách lệnh"
+
+#: src/components/simfarm-stage.tsx
+msgid "Close the composer"
+msgstr "Đóng ô soạn thảo"
+
+#: src/components/simfarm-stage.tsx
+msgid "Close the menu"
+msgstr "Đóng menu"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Close the simulator"
+msgstr "Đóng trình giả lập"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Close theme picker"
+msgstr "Đóng bộ chọn chủ đề"
+
+#: src/components/session-artifacts.tsx
+msgid "Code"
+msgstr "Mã"
+
+#: src/app/explore.tsx
+msgid "Code expired"
+msgstr "Mã đã hết hạn"
+
+#: src/app/explore.tsx
+msgid "Code found. Reaching the Gateway."
+msgstr "Đã tìm thấy mã. Đang kết nối Gateway."
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Collapse {0}"
+msgstr "Thu gọn {0}"
+
+#: src/components/settings-appearance.tsx
+msgid "Color mode"
+msgstr "Chế độ màu"
+
+#: src/app/commands.tsx
+msgid "Command"
+msgstr "Lệnh"
+
+#: src/components/simfarm-preview.tsx
+msgid "Command copied"
+msgstr "Đã sao chép lệnh"
+
+#: src/i18n/labels.ts
+msgid "Command mode"
+msgstr "Chế độ lệnh"
+
+#: src/i18n/labels.ts
+msgid "Commit"
+msgstr "Commit"
+
+#: src/i18n/labels.ts
+msgid "Commit & push"
+msgstr "Commit và push"
+
+#: src/components/settings-terminal.tsx
+msgid "Compact"
+msgstr "Gọn"
+
+#: src/app/explore.tsx
+msgid "Confirm pairing"
+msgstr "Xác nhận ghép nối"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-host-form.tsx
+msgid "Confirm removing {0}"
+msgstr "Xác nhận gỡ {0}"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Confirm revoke {0}"
+msgstr "Xác nhận thu hồi {0}"
+
+#: src/components/settings-alerts.tsx
+msgid "Confirm taps, pairing, and gateway events."
+msgstr "Phản hồi khi chạm, ghép nối và các sự kiện của gateway."
+
+#: src/components/settings-servers.tsx
+msgid "Confirm unpair {label}"
+msgstr "Xác nhận hủy ghép nối {label}"
+
+#: src/components/row-action-menu.tsx
+msgid "Confirm: {removeLabel} {label}"
+msgstr "Xác nhận: {removeLabel} {label}"
+
+#: src/app/explore.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Connected"
+msgstr "Đã kết nối"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Connected through SSH host {host}"
+msgstr "Đã kết nối qua host SSH {host}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connected to {address}"
+msgstr "Đã kết nối đến {address}"
+
+#: src/app/explore.tsx
+#: src/app/new-task.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Connecting"
+msgstr "Đang kết nối"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Connecting through SSH host {host}"
+msgstr "Đang kết nối qua host SSH {host}"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Connecting through SSH…"
+msgstr "Đang kết nối qua SSH…"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Connecting to {address}"
+msgstr "Đang kết nối đến {address}"
+
+#: src/app/explore.tsx
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Continue"
+msgstr "Tiếp tục"
+
+#: src/i18n/labels.ts
+msgid "Continue task"
+msgstr "Tiếp tục tác vụ"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Control"
+msgstr "Control"
+
+#: src/i18n/labels.ts
+msgid "Control A, start of line"
+msgstr "Ctrl A, về đầu dòng"
+
+#: src/i18n/labels.ts
+msgid "Control B, run in background"
+msgstr "Ctrl B, chạy ở nền"
+
+#: src/i18n/labels.ts
+msgid "Control C"
+msgstr "Ctrl C"
+
+#: src/i18n/labels.ts
+msgid "Control D"
+msgstr "Ctrl D"
+
+#: src/i18n/labels.ts
+msgid "Control D, half page down"
+msgstr "Ctrl D, xuống nửa trang"
+
+#: src/i18n/labels.ts
+msgid "Control E, end of line"
+msgstr "Ctrl E, về cuối dòng"
+
+#: src/i18n/labels.ts
+msgid "Control E, explain"
+msgstr "Ctrl E, giải thích"
+
+#: src/i18n/labels.ts
+msgid "Control K, clear to end of line"
+msgstr "Ctrl K, xóa đến cuối dòng"
+
+#: src/i18n/labels.ts
+msgid "Control L, clear screen"
+msgstr "Ctrl L, xóa màn hình"
+
+#: src/i18n/labels.ts
+msgid "Control N, next"
+msgstr "Ctrl N, tiếp theo"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand"
+msgstr "Ctrl O, mở rộng"
+
+#: src/i18n/labels.ts
+msgid "Control O, expand rows"
+msgstr "Ctrl O, mở rộng các dòng"
+
+#: src/i18n/labels.ts
+msgid "Control O, jump back"
+msgstr "Ctrl O, nhảy về"
+
+#: src/i18n/labels.ts
+msgid "Control P, previous"
+msgstr "Ctrl P, trước đó"
+
+#: src/i18n/labels.ts
+msgid "Control R"
+msgstr "Ctrl R"
+
+#: src/i18n/labels.ts
+msgid "Control R, redo"
+msgstr "Ctrl R, làm lại"
+
+#: src/i18n/labels.ts
+msgid "Control R, reverse search"
+msgstr "Ctrl R, tìm ngược"
+
+#: src/i18n/labels.ts
+msgid "Control R, transcript"
+msgstr "Ctrl R, bản ghi"
+
+#: src/i18n/labels.ts
+msgid "Control T, toggle tasks"
+msgstr "Ctrl T, bật tắt tác vụ"
+
+#: src/i18n/labels.ts
+msgid "Control U, clear line"
+msgstr "Ctrl U, xóa dòng"
+
+#: src/i18n/labels.ts
+msgid "Control U, half page up"
+msgstr "Ctrl U, lên nửa trang"
+
+#: src/i18n/labels.ts
+msgid "Control V, visual block"
+msgstr "Ctrl V, khối visual"
+
+#: src/i18n/labels.ts
+msgid "Control W, delete word"
+msgstr "Ctrl W, xóa từ"
+
+#: src/i18n/labels.ts
+msgid "Control W, window prefix"
+msgstr "Ctrl W, tiền tố cửa sổ"
+
+#: src/i18n/labels.ts
+msgid "Control Y, paste"
+msgstr "Ctrl Y, dán"
+
+#: src/i18n/labels.ts
+msgid "Control Z, suspend"
+msgstr "Ctrl Z, tạm dừng"
+
+#: src/components/skia-terminal.tsx
+msgid "Copied to clipboard"
+msgstr "Đã sao chép vào bảng nhớ tạm"
+
+#: src/app/explore.tsx
+#: src/components/simfarm-preview.tsx
+msgid "Copies it, ready to paste into a terminal"
+msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
+
+#: src/components/asset-viewer.tsx
+#: src/components/skia-terminal.tsx
+msgid "Copy"
+msgstr "Sao chép"
+
+#: src/components/ssh-host-form.tsx
+msgid "Copy public key"
+msgstr "Sao chép khóa công khai"
+
+#: src/components/simfarm-preview.tsx
+msgid "Copy the command that starts simfarm"
+msgstr "Sao chép lệnh khởi động simfarm"
+
+#: src/app/explore.tsx
+msgid "Copy the install command"
+msgstr "Sao chép lệnh cài đặt"
+
+#: src/components/ssh-host-form.tsx
+msgid "Copy the public key"
+msgstr "Sao chép khóa công khai"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not add a file"
+msgstr "Không thể thêm tệp"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not connect"
+msgstr "Không thể kết nối"
+
+#: src/components/skia-terminal.tsx
+msgid "Could not copy that"
+msgstr "Không thể sao chép"
+
+#: src/components/settings-security.tsx
+msgid "Could not enable App Lock"
+msgstr "Không thể bật Khóa ứng dụng"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not generate a key"
+msgstr "Không thể tạo khóa"
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not list this server's agents."
+msgstr "Không thể liệt kê các tác tử của máy chủ này."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not load earlier output."
+msgstr "Không thể tải đầu ra trước đó."
+
+#: src/components/session-artifacts.tsx
+msgid "Could not load files."
+msgstr "Không thể tải tệp."
+
+#: src/components/session-map.tsx
+msgid "Could not load what is running."
+msgstr "Không thể tải những gì đang chạy."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open the file"
+msgstr "Không thể mở tệp"
+
+#: src/lib/attachments.ts
+msgid "Could not open the picker."
+msgstr "Không thể mở bộ chọn."
+
+#: src/app/explore.tsx
+msgid "Could not open the SSH tunnel: {reason}"
+msgstr "Không thể mở đường hầm SSH: {reason}"
+
+#: src/app/explore.tsx
+msgid "Could not open the SSH tunnel."
+msgstr "Không thể mở đường hầm SSH."
+
+#: src/components/asset-viewer.tsx
+msgid "Could not open this file."
+msgstr "Không thể mở tệp này."
+
+#: src/app/explore.tsx
+msgid "Could not reach that address. Check it and make sure the Gateway is running."
+msgstr "Không thể kết nối đến địa chỉ đó. Hãy kiểm tra lại và đảm bảo Gateway đang chạy."
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway."
+msgstr "Không thể kết nối đến gateway."
+
+#: src/app/explore.tsx
+msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
+msgstr "Không thể kết nối đến gateway. Hãy đảm bảo nó đang chạy, rồi làm mới mã QR và quét lại."
+
+#: src/app/new-task.tsx
+msgid "Could not reach this server."
+msgstr "Không thể kết nối đến máy chủ này."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not read the terminal."
+msgstr "Không thể đọc terminal."
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not remove host"
+msgstr "Không thể gỡ host"
+
+#: src/components/settings-servers.tsx
+msgid "Could not revoke device"
+msgstr "Không thể thu hồi thiết bị"
+
+#: src/components/settings-servers.tsx
+msgid "Could not save changes"
+msgstr "Không thể lưu thay đổi"
+
+#: src/components/ssh-host-form.tsx
+msgid "Could not save host"
+msgstr "Không thể lưu host"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Could not send"
+msgstr "Không thể gửi"
+
+#: src/app/commands.tsx
+msgid "Could not send command."
+msgstr "Không thể gửi lệnh."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send input."
+msgstr "Không thể gửi dữ liệu nhập."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not send key."
+msgstr "Không thể gửi phím."
+
+#: src/app/commands.tsx
+msgid "Could not send shortcut."
+msgstr "Không thể gửi lệnh tắt."
+
+#: src/app/commands.tsx
+msgid "Could not start a terminal."
+msgstr "Không thể khởi động terminal."
+
+#: src/components/new-task-sheet.tsx
+msgid "Could not start the task."
+msgstr "Không thể bắt đầu tác vụ."
+
+#: src/app/commands.tsx
+msgid "Could not stop this agent."
+msgstr "Không thể dừng tác tử này."
+
+#: src/components/settings-servers.tsx
+msgid "Could not unpair server"
+msgstr "Không thể hủy ghép nối máy chủ"
+
+#: src/components/session-map.tsx
+msgid "Could not update the session."
+msgstr "Không thể cập nhật phiên."
+
+#: src/lib/attachments.ts
+msgid "Could not upload the file."
+msgstr "Không thể tải tệp lên."
+
+#: src/i18n/labels.ts
+msgid "Current path"
+msgstr "Đường dẫn hiện tại"
+
+#: src/app/commands.tsx
+msgid "Customize terminal commands and key combinations."
+msgstr "Tùy chỉnh lệnh terminal và tổ hợp phím."
+
+#: src/components/settings-appearance.tsx
+msgid "Dark"
+msgstr "Tối"
+
+#: src/components/settings-terminal.tsx
+msgid "Default"
+msgstr "Mặc định"
+
+#: src/components/approval-banner.tsx
+msgid "DEFAULT"
+msgstr "MẶC ĐỊNH"
+
+#: src/components/row-action-menu.tsx
+msgid "Delete"
+msgstr "Xóa"
+
+#: src/app/commands.tsx
+msgid "Delete {name}"
+msgstr "Xóa {name}"
+
+#: src/i18n/labels.ts
+msgid "Delete this line"
+msgstr "Xóa dòng này"
+
+#: src/lib/demo-ssh.ts
+msgid "Demo shell"
+msgstr "Shell demo"
+
+#: src/lib/demo-gateway.ts
+msgid "Demo workspace"
+msgstr "Không gian làm việc demo"
+
+#: src/i18n/labels.ts
+msgid "Deny"
+msgstr "Từ chối"
+
+#: src/lib/demo-gateway.ts
+msgid "Development"
+msgstr "Phát triển"
+
+#: src/components/settings-security.tsx
+#: src/lib/local-authentication.ts
+msgid "device authentication"
+msgstr "xác thực thiết bị"
+
+#: src/i18n/labels.ts
+msgid "Diff summary"
+msgstr "Tóm tắt diff"
+
+#: src/components/new-task-sheet.tsx
+msgid "DIRECTORY"
+msgstr "THƯ MỤC"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnect from {0}"
+msgstr "Ngắt kết nối khỏi {0}"
+
+#. placeholder {0}: status.reason
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected · {0}"
+msgstr "Đã ngắt kết nối · {0}"
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Disconnected."
+msgstr "Đã ngắt kết nối."
+
+#: src/components/approval-banner.tsx
+msgid "Dismiss the approval error"
+msgstr "Bỏ qua lỗi chấp thuận"
+
+#: src/components/away-digest-card.tsx
+msgid "Dismiss what happened while you were away"
+msgstr "Bỏ qua những gì đã xảy ra khi bạn vắng mặt"
+
+#: src/components/whats-new-card.tsx
+msgid "Dismiss what's new"
+msgstr "Bỏ qua có gì mới"
+
+#: src/components/session-artifacts.tsx
+msgid "Docs"
+msgstr "Tài liệu"
+
+#: src/components/new-task-sheet.tsx
+#: src/components/open-web-service-sheet.tsx
+#: src/i18n/labels.ts
+msgid "Done"
+msgstr "Xong"
+
+#: src/app/commands.tsx
+msgid "Done editing shortcuts"
+msgstr "Xong chỉnh sửa lệnh tắt"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Down arrow"
+msgstr "Mũi tên xuống"
+
+#: src/lib/demo-gateway.ts
+msgid "Draft the notes for the next build"
+msgstr "Soạn ghi chú cho bản dựng tiếp theo"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Each device holds its own token for {0}."
+msgstr "Mỗi thiết bị giữ token riêng cho {0}."
+
+#. placeholder {0}: record.label
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Edit {0}"
+msgstr "Sửa {0}"
+
+#: src/app/commands.tsx
+msgid "Edit shortcuts"
+msgstr "Sửa lệnh tắt"
+
+#: src/components/ssh-host-list.tsx
+msgid "Edit SSH host"
+msgstr "Sửa host SSH"
+
+#: src/components/settings-servers.tsx
+msgid "Edit this server"
+msgstr "Sửa máy chủ này"
+
+#: src/i18n/labels.ts
+msgid "Enter"
+msgstr "Enter"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Enter a gateway URL."
+msgstr "Nhập URL gateway."
+
+#: src/components/settings-servers.tsx
+msgid "Enter a name."
+msgstr "Nhập tên."
+
+#: src/app/explore.tsx
+msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
+msgstr "Nhập mã gồm {PAIRING_CODE_CHARACTER_COUNT} ký tự."
+
+#: src/app/explore.tsx
+msgid "Enter the Gateway's address instead."
+msgstr "Nhập địa chỉ của Gateway thay thế."
+
+#: src/app/explore.tsx
+msgid "Enter the gateway's port on that host."
+msgstr "Nhập cổng của gateway trên host đó."
+
+#: src/app/explore.tsx
+msgid "Enter URL manually"
+msgstr "Nhập URL thủ công"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/i18n/labels.ts
+msgid "Escape"
+msgstr "Escape"
+
+#. placeholder {0}: block.tool
+#: src/components/pane-chat-blocks.tsx
+msgid "Expand {0}"
+msgstr "Mở rộng {0}"
+
+#. placeholder {0}: Math.floor(secondsRemaining / 60)
+#. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
+#: src/app/explore.tsx
+msgid "Expires in {0}:{1}"
+msgstr "Hết hạn sau {0}:{1}"
+
+#. placeholder {0}: status.code
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Failed · {0}"
+msgstr "Thất bại · {0}"
+
+#: src/components/file-mention-panel.tsx
+msgid "File mentions"
+msgstr "Nhắc đến tệp"
+
+#: src/lib/attachments.ts
+msgid "File too large (25MB max)"
+msgstr "Tệp quá lớn (tối đa 25MB)"
+
+#: src/lib/attachments.ts
+msgid "File type not allowed"
+msgstr "Loại tệp không được phép"
+
+#: src/components/session-artifacts.tsx
+msgid "Files"
+msgstr "Tệp"
+
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "Tệp trong không gian làm việc này"
+
+#: src/i18n/labels.ts
+msgid "Find a file by name"
+msgstr "Tìm tệp theo tên"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Fingerprint"
+msgstr "Dấu vân tay"
+
+#: src/components/new-task-sheet.tsx
+msgid "FIRST PROMPT"
+msgstr "PROMPT ĐẦU TIÊN"
+
+#: src/components/pane-chat-view.tsx
+msgid "Fold the tool steps away"
+msgstr "Thu gọn các bước công cụ"
+
+#: src/i18n/labels.ts
+msgid "Forward one word"
+msgstr "Tiến một từ"
+
+#: src/lib/demo-gateway.ts
+msgid "Free up context by summarizing the conversation so far"
+msgstr "Giải phóng ngữ cảnh bằng cách tóm tắt cuộc trò chuyện đến giờ"
+
+#: src/app/explore.tsx
+msgid "Front camera. Hold the QR up to the screen"
+msgstr "Camera trước. Giơ mã QR lên trước màn hình"
+
+#: src/app/explore.tsx
+msgid "Gateway"
+msgstr "Gateway"
+
+#: src/lib/network-error.ts
+msgid "Gateway did not respond in time."
+msgstr "Gateway không phản hồi kịp thời."
+
+#: src/lib/network-error.ts
+msgid "Gateway is temporarily unavailable."
+msgstr "Gateway tạm thời không khả dụng."
+
+#: src/components/settings-alerts.tsx
+msgid "Gateway notifications"
+msgstr "Thông báo Gateway"
+
+#: src/app/explore.tsx
+msgid "Gateway port on that host"
+msgstr "Cổng Gateway trên host đó"
+
+#: src/lib/notifications.ts
+msgid "Gateway updates"
+msgstr "Cập nhật Gateway"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL"
+msgstr "URL Gateway"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Gateway URL is not valid."
+msgstr "URL Gateway không hợp lệ."
+
+#: src/components/ssh-host-form.tsx
+msgid "Gateways reached through this host"
+msgstr "Các gateway được kết nối qua host này"
+
+#: src/components/ssh-host-form.tsx
+msgid "Generate an Ed25519 key"
+msgstr "Tạo khóa Ed25519"
+
+#: src/components/ssh-host-form.tsx
+msgid "Generating…"
+msgstr "Đang tạo…"
+
+#: src/i18n/labels.ts
+msgid "Git status"
+msgstr "Trạng thái Git"
+
+#: src/components/screen-header.tsx
+msgid "Go back"
+msgstr "Quay lại"
+
+#: src/i18n/labels.ts
+msgid "Go to the top of the file"
+msgstr "Về đầu tệp"
+
+#: src/app/+not-found.tsx
+msgid "Go to your servers"
+msgstr "Đến các máy chủ của bạn"
+
+#: src/app/commands.tsx
+msgid "Group"
+msgstr "Nhóm"
+
+#. placeholder {0}: group.tab.title
+#: src/components/session-map.tsx
+msgid "Group {0}. Long press for actions."
+msgstr "Nhóm {0}. Nhấn giữ để xem thao tác."
+
+#: src/components/settings-alerts.tsx
+msgid "Haptic feedback"
+msgstr "Phản hồi rung"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Hide {0}"
+msgstr "Ẩn {0}"
+
+#: src/app/commands.tsx
+msgid "Hide {name}"
+msgstr "Ẩn {name}"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Hide keyboard"
+msgstr "Ẩn bàn phím"
+
+#: src/components/app-drawer.tsx
+msgid "Hide the server list"
+msgstr "Ẩn danh sách máy chủ"
+
+#: src/app/commands.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Hide the simulator"
+msgstr "Ẩn trình giả lập"
+
+#: src/components/simfarm-stage.tsx
+msgid "Home"
+msgstr "Trang chủ"
+
+#: src/components/settings-alerts.tsx
+msgid "Home screen widget"
+msgstr "Tiện ích màn hình chính"
+
+#: src/components/ssh-host-form.tsx
+msgid "Host"
+msgstr "Host"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Host key changed"
+msgstr "Khóa host đã thay đổi"
+
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Host key trusted"
+msgstr "Khóa host đã được tin cậy"
+
+#: src/i18n/labels.ts
+msgid "Idle"
+msgstr "Rảnh"
+
+#: src/components/session-artifacts.tsx
+msgid "Images"
+msgstr "Hình ảnh"
+
+#. placeholder {0}: row.label
+#: src/components/composer-popup.tsx
+msgid "Insert {0}"
+msgstr "Chèn {0}"
+
+#. placeholder {0}: row.label
+#. placeholder {1}: row.hint
+#: src/components/composer-popup.tsx
+msgid "Insert {0} {1}"
+msgstr "Chèn {0} {1}"
+
+#: src/i18n/labels.ts
+msgid "Insert mode"
+msgstr "Chế độ chèn"
+
+#: src/app/explore.tsx
+msgid "Install command copied"
+msgstr "Đã sao chép lệnh cài đặt"
+
+#: src/i18n/labels.ts
+msgid "Interrupt"
+msgstr "Ngắt"
+
+#: src/app/commands.tsx
+msgid "Interrupt process"
+msgstr "Ngắt tiến trình"
+
+#: src/app/commands.tsx
+msgid "Interrupt what this agent is doing."
+msgstr "Ngắt việc tác tử này đang làm."
+
+#: src/lib/local-authentication.ts
+msgid "iris recognition"
+msgstr "nhận dạng mống mắt"
+
+#: src/app/+not-found.tsx
+msgid "It may be out of date, or meant for a different app. Nothing was opened."
+msgstr "Nó có thể đã lỗi thời, hoặc dành cho một ứng dụng khác. Không có gì được mở."
+
+#: src/components/pairing-camera.tsx
+msgid "It was found, but never showed a picture. Another app may be holding it."
+msgstr "Đã tìm thấy camera nhưng nó không bao giờ hiện hình. Có thể một ứng dụng khác đang giữ nó."
+
+#: src/components/settings-servers.tsx
+msgid "Its details are stored securely on this device; try again."
+msgstr "Thông tin của nó được lưu an toàn trên thiết bị này; hãy thử lại."
+
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be removed from secure storage."
+msgstr "Không thể xóa thông tin của nó khỏi bộ nhớ an toàn."
+
+#: src/components/ssh-host-form.tsx
+msgid "Its details could not be written to secure storage."
+msgstr "Không thể ghi thông tin của nó vào bộ nhớ an toàn."
+
+#: src/components/settings-servers.tsx
+msgid "Its paired devices are listed once it is the server in use."
+msgstr "Các thiết bị đã ghép nối của nó sẽ được liệt kê khi nó là máy chủ đang dùng."
+
+#: src/components/skia-terminal.tsx
+msgid "Jump to latest output"
+msgstr "Nhảy đến đầu ra mới nhất"
+
+#: src/hooks/use-relative-time.ts
+#: src/lib/agent-widget-layout.tsx
+msgid "just now"
+msgstr "vừa xong"
+
+#: src/components/settings-servers.tsx
+msgid "Keep {label}"
+msgstr "Giữ {label}"
+
+#: src/components/settings-alerts.tsx
+msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
+msgstr "Giữ terminal bạn đang xem trên Màn hình khóa trong khi tác tử của nó làm việc."
+
+#: src/app/commands.tsx
+msgid "Keys"
+msgstr "Phím"
+
+#: src/lib/release-notes.ts
+msgid "Keys are generated on the device and never leave it."
+msgstr "Khóa được tạo trên thiết bị và không bao giờ rời khỏi đó."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Language"
+msgstr "Ngôn ngữ"
+
+#: src/components/settings-appearance.tsx
+msgid "Language, {languageName}"
+msgstr "Ngôn ngữ, {languageName}"
+
+#: src/components/settings-terminal.tsx
+msgid "Large"
+msgstr "Lớn"
+
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Last connected {days}d ago"
+msgstr "Kết nối lần cuối {days} ngày trước"
+
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Last connected {hours}h ago"
+msgstr "Kết nối lần cuối {hours} giờ trước"
+
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Last connected {minutes}m ago"
+msgstr "Kết nối lần cuối {minutes} phút trước"
+
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Last connected just now"
+msgstr "Kết nối lần cuối vừa xong"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {days}d ago"
+msgstr "Thấy lần cuối {days} ngày trước"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {hours}h ago"
+msgstr "Thấy lần cuối {hours} giờ trước"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen {minutes}m ago"
+msgstr "Thấy lần cuối {minutes} phút trước"
+
+#: src/components/settings-servers.tsx
+msgid "Last seen just now"
+msgstr "Thấy lần cuối vừa xong"
+
+#: src/components/skia-terminal.tsx
+msgid "Latest"
+msgstr "Mới nhất"
+
+#: src/components/new-task-sheet.tsx
+msgid "Leave it empty to start where the session already is."
+msgstr "Để trống để bắt đầu từ nơi phiên đang ở."
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Left arrow"
+msgstr "Mũi tên trái"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Letters"
+msgstr "Chữ cái"
+
+#: src/components/settings-appearance.tsx
+msgid "Light"
+msgstr "Sáng"
+
+#: src/app/commands.tsx
+msgid "List branches"
+msgstr "Liệt kê các nhánh"
+
+#: src/components/settings-servers.tsx
+msgid "List every pane, agent or not."
+msgstr "Liệt kê mọi ngăn, có tác tử hay không."
+
+#: src/components/settings-servers.tsx
+msgid "List only the panes running a recognised agent."
+msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận diện."
+
+#: src/components/settings-alerts.tsx
+msgid "Live Activity"
+msgstr "Live Activity"
+
+#: src/components/session-map.tsx
+msgid "Loading"
+msgstr "Đang tải"
+
+#: src/app/commands.tsx
+msgid "Loading commands"
+msgstr "Đang tải lệnh"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading earlier output…"
+msgstr "Đang tải đầu ra trước đó…"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "Đang tải các thiết bị đã ghép nối…"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/settings-servers.tsx
+msgid "Loading servers"
+msgstr "Đang tải máy chủ"
+
+#: src/components/app-lock-gate.tsx
+msgid "Loading settings"
+msgstr "Đang tải cài đặt"
+
+#: src/components/skia-terminal.tsx
+msgid "Loading terminal"
+msgstr "Đang tải terminal"
+
+#: src/components/pane-chat-view.tsx
+msgid "Loading the transcript"
+msgstr "Đang tải bản ghi"
+
+#: src/lib/demo-gateway.ts
+msgid "Logs"
+msgstr "Nhật ký"
+
+#: src/components/simfarm-preview.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Look again"
+msgstr "Tìm lại"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking"
+msgstr "Đang tìm"
+
+#: src/components/simfarm-preview.tsx
+msgid "Looking for a simulator"
+msgstr "Đang tìm trình giả lập"
+
+#: src/app/explore.tsx
+msgid "Mac mini · Office"
+msgstr "Mac mini · Văn phòng"
+
+#: src/app/(drawer)/index.tsx
+msgid "Manage"
+msgstr "Quản lý"
+
+#: src/app/(drawer)/index.tsx
+msgid "Manage SSH hosts"
+msgstr "Quản lý host SSH"
+
+#. placeholder {0}: hit.path
+#: src/components/file-mention-panel.tsx
+msgid "Mention {0}"
+msgstr "Nhắc đến {0}"
+
+#: src/components/asset-viewer.tsx
+msgid "Modified"
+msgstr "Đã sửa đổi"
+
+#: src/components/virtual-keyboard.tsx
+msgid "More symbols"
+msgstr "Thêm ký hiệu"
+
+#: src/components/editor-controls.tsx
+msgid "Move the editor controls"
+msgstr "Di chuyển các nút điều khiển trình soạn thảo"
+
+#: src/components/simfarm-stage.tsx
+msgid "Move the simulator controls"
+msgstr "Di chuyển các nút điều khiển trình giả lập"
+
+#: src/app/(drawer)/_layout.tsx
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Muqun"
+msgstr "Muqun"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Muqun agent status"
+msgstr "Trạng thái tác tử Muqun"
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun could not verify your identity. Try again."
+msgstr "Muqun không thể xác minh danh tính của bạn. Hãy thử lại."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun follows the language your phone is set to."
+msgstr "Muqun theo ngôn ngữ mà điện thoại của bạn đang đặt."
+
+#: src/components/app-lock-gate.tsx
+msgid "Muqun is locked"
+msgstr "Muqun đang khóa"
+
+#: src/app/settings.tsx
+msgid "Muqun is open source. Read it, or build it yourself."
+msgstr "Muqun là mã nguồn mở. Hãy đọc, hoặc tự dựng lấy."
+
+#: src/components/pairing-camera.tsx
+msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
+msgstr "Muqun đọc mã QR của Gateway qua camera. Không có gì được ghi lại."
+
+#: src/app/settings.tsx
+msgid "Muqun settings stay on this device."
+msgstr "Cài đặt của Muqun ở lại trên thiết bị này."
+
+#: src/lib/release-notes.ts
+msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
+msgstr "Muqun nói được SSH. Lưu một host, chạm vào nó trên màn hình chính, và bạn đã ở trong một shell thật — bằng mật khẩu, khóa hoặc mã từ ứng dụng xác thực của bạn."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "Muqun stays in this language whatever the phone is set to."
+msgstr "Muqun giữ nguyên ngôn ngữ này bất kể điện thoại đặt gì."
+
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Muqun will use {0} when the app opens."
+msgstr "Muqun sẽ dùng {0} khi mở ứng dụng."
+
+#: src/app/commands.tsx
+#: src/components/ssh-host-form.tsx
+msgid "Name"
+msgstr "Tên"
+
+#: src/app/explore.tsx
+msgid "Name it, then enter the code shown by the Gateway."
+msgstr "Đặt tên cho nó, rồi nhập mã mà Gateway hiển thị."
+
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Never connected"
+msgstr "Chưa từng kết nối"
+
+#: src/components/settings-servers.tsx
+msgid "Never seen"
+msgstr "Chưa từng thấy"
+
+#: src/app/commands.tsx
+msgid "New group"
+msgstr "Nhóm mới"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "New host key"
+msgstr "Khóa host mới"
+
+#: src/app/commands.tsx
+msgid "NEW SHORTCUT"
+msgstr "LỆNH TẮT MỚI"
+
+#: src/components/ssh-host-list.tsx
+msgid "New SSH host"
+msgstr "Host SSH mới"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "New task"
+msgstr "Tác vụ mới"
+
+#: src/components/new-task-action.tsx
+msgid "New task on {label}"
+msgstr "Tác vụ mới trên {label}"
+
+#: src/app/commands.tsx
+#: src/components/session-map.tsx
+msgid "New terminal"
+msgstr "Terminal mới"
+
+#: src/components/session-map.tsx
+msgid "New workspace"
+msgstr "Không gian làm việc mới"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "No agents running"
+msgstr "Không có tác tử nào đang chạy"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "No app on this phone opens web pages."
+msgstr "Không có ứng dụng nào trên điện thoại này mở được trang web."
+
+#: src/components/pairing-camera.tsx
+msgid "No camera to scan with"
+msgstr "Không có camera để quét"
+
+#: src/components/pairing-camera.tsx
+msgid "No camera was found on this device."
+msgstr "Không tìm thấy camera trên thiết bị này."
+
+#: src/components/session-artifacts.tsx
+msgid "No files match."
+msgstr "Không có tệp nào khớp."
+
+#: src/app/explore.tsx
+msgid "No Gateway yet?"
+msgstr "Chưa có Gateway?"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "No output."
+msgstr "Không có đầu ra."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "No password or key is saved for this host."
+msgstr "Chưa lưu mật khẩu hay khóa nào cho host này."
+
+#: src/components/asset-viewer.tsx
+msgid "No preview for this kind of file. It stays on the server."
+msgstr "Không có bản xem trước cho loại tệp này. Nó vẫn ở trên máy chủ."
+
+#: src/components/simfarm-preview.tsx
+msgid "No preview on this connection"
+msgstr "Không có bản xem trước trên kết nối này"
+
+#: src/app/new-task.tsx
+msgid "No server to start a task on."
+msgstr "Không có máy chủ để bắt đầu tác vụ."
+
+#: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
+msgid "No servers paired yet"
+msgstr "Chưa ghép nối máy chủ nào"
+
+#: src/components/simfarm-preview.tsx
+msgid "No simulator on port {port}"
+msgstr "Không có trình giả lập trên cổng {port}"
+
+#: src/components/simfarm-stage.tsx
+msgid "No simulators on that machine."
+msgstr "Không có trình giả lập nào trên máy đó."
+
+#: src/app/explore.tsx
+msgid "No SSH hosts saved yet."
+msgstr "Chưa lưu host SSH nào."
+
+#: src/components/ssh-host-list.tsx
+msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
+msgstr "Chưa có host SSH nào. Thêm một cái để mở shell trên bất kỳ máy nào bạn kết nối được."
+
+#: src/components/simfarm-stage.tsx
+msgid "No still frames"
+msgstr "Không có khung hình tĩnh"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Not available"
+msgstr "Không khả dụng"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "not connected"
+msgstr "chưa kết nối"
+
+#: src/i18n/labels.ts
+msgid "Not connected"
+msgstr "Chưa kết nối"
+
+#: src/i18n/labels.ts
+msgid "NOT CONNECTED"
+msgstr "CHƯA KẾT NỐI"
+
+#: src/app/+not-found.tsx
+msgid "Not found"
+msgstr "Không tìm thấy"
+
+#: src/components/simfarm-stage.tsx
+msgid "Not running"
+msgstr "Đã tắt"
+
+#: src/components/ssh-host-form.tsx
+msgid "Not valid."
+msgstr "Không hợp lệ."
+
+#. placeholder {0}: nextOffer.sshTunnel.remotePort
+#: src/app/explore.tsx
+msgid "Nothing answered on port {0} through the SSH host. Check the gateway's port on that machine."
+msgstr "Không có gì phản hồi trên cổng {0} qua host SSH. Hãy kiểm tra cổng của gateway trên máy đó."
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
+msgstr "Không có gì phản hồi trên cổng {port}. Hoặc không có gì đang lắng nghe, hoặc nó chỉ gắn với localhost — hãy khởi động lại với --host 0.0.0.0 để kết nối được từ đây."
+
+#: src/components/session-artifacts.tsx
+msgid "Nothing here yet. Files the session writes show up on their own."
+msgstr "Chưa có gì ở đây. Các tệp mà phiên ghi ra sẽ tự xuất hiện."
+
+#: src/components/pane-chat-view.tsx
+msgid "Nothing to show yet."
+msgstr "Chưa có gì để hiển thị."
+
+#: src/i18n/labels.ts
+msgid "OFFLINE"
+msgstr "NGOẠI TUYẾN"
+
+#: src/i18n/labels.ts
+msgid "Offline, not answering"
+msgstr "Ngoại tuyến, không phản hồi"
+
+#: src/i18n/labels.ts
+msgid "Online"
+msgstr "Trực tuyến"
+
+#: src/i18n/labels.ts
+msgid "ONLINE"
+msgstr "TRỰC TUYẾN"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open"
+msgstr "Mở"
+
+#. placeholder {0}: asset.name
+#. placeholder {0}: part.fallback_text || part.asset_id
+#. placeholder {0}: server.label
+#: src/app/(drawer)/index.tsx
+#: src/components/pane-chat-blocks.tsx
+#: src/components/session-artifacts.tsx
+msgid "Open {0}"
+msgstr "Mở {0}"
+
+#: src/components/session-map.tsx
+msgid "Open {title}. Long press to close."
+msgstr "Mở {title}. Nhấn giữ để đóng."
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open anyway"
+msgstr "Vẫn mở"
+
+#: src/components/artifacts-button.tsx
+msgid "Open files"
+msgstr "Mở danh sách tệp"
+
+#: src/app/commands.tsx
+#: src/components/open-web-service-sheet.tsx
+msgid "Open in your browser"
+msgstr "Mở trong trình duyệt của bạn"
+
+#: src/app/commands.tsx
+msgid "Open in your browser, unavailable over the SSH tunnel"
+msgstr "Mở trong trình duyệt của bạn, không khả dụng qua đường hầm SSH"
+
+#: src/i18n/labels.ts
+msgid "Open Lazygit"
+msgstr "Mở Lazygit"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "Open Muqun to connect"
+msgstr "Mở Muqun để kết nối"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Open on-screen keyboard"
+msgstr "Mở bàn phím trên màn hình"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "Open port {recent}"
+msgstr "Mở cổng {recent}"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Open quick actions"
+msgstr "Mở thao tác nhanh"
+
+#. placeholder {0}: host.label
+#. placeholder {0}: record.label
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-row.tsx
+msgid "Open SSH host {0}"
+msgstr "Mở host SSH {0}"
+
+#: src/i18n/labels.ts
+msgid "Open the file explorer"
+msgstr "Mở trình duyệt tệp"
+
+#. placeholder {0}: workspace.title
+#. placeholder {1}: inventory.panels
+#: src/components/session-map.tsx
+msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
+msgstr "Mở không gian làm việc {0}, {1, plural, other {# đang chạy}}. Nhấn giữ để đóng."
+
+#: src/app/explore.tsx
+msgid "Opening the server."
+msgstr "Đang mở máy chủ."
+
+#: src/app/explore.tsx
+msgid "Opening tunnel"
+msgstr "Đang mở đường hầm"
+
+#: src/components/editor-controls.tsx
+msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
+msgstr "Mở bàn phím, các phím soạn thảo và ô soạn thảo phía trên trình soạn thảo này. Kéo để di chuyển."
+
+#: src/app/settings.tsx
+msgid "Opens the Muqun issue tracker on GitHub."
+msgstr "Mở trang theo dõi vấn đề của Muqun trên GitHub."
+
+#: src/components/simfarm-stage.tsx
+msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
+msgstr "Mở menu của trình giả lập: thiết bị, các phím, bàn phím và lối ra. Kéo để di chuyển."
+
+#: src/components/server-agent-rows.tsx
+msgid "Opens this agent's terminal"
+msgstr "Mở terminal của tác tử này"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Options for {0}"
+msgstr "Tùy chọn cho {0}"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Pair a server"
+msgstr "Ghép nối máy chủ"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair again"
+msgstr "Ghép nối lại"
+
+#: src/app/explore.tsx
+msgid "Pair server"
+msgstr "Ghép nối máy chủ"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Pair this server again"
+msgstr "Ghép nối lại máy chủ này"
+
+#: src/lib/network-error.ts
+msgid "Pair this server again."
+msgstr "Hãy ghép nối lại máy chủ này."
+
+#. placeholder {0}: host.label
+#: src/app/explore.tsx
+msgid "Pair through {0}"
+msgstr "Ghép nối qua {0}"
+
+#: src/app/explore.tsx
+msgid "Pair through an SSH host"
+msgstr "Ghép nối qua host SSH"
+
+#: src/app/(drawer)/index.tsx
+msgid "Pair your first server"
+msgstr "Ghép nối máy chủ đầu tiên của bạn"
+
+#: src/app/explore.tsx
+msgid "Pairing"
+msgstr "Đang ghép nối"
+
+#: src/app/explore.tsx
+msgid "Pairing code"
+msgstr "Mã ghép nối"
+
+#: src/app/explore.tsx
+msgid "Pairing code expired. Scan again for a new code."
+msgstr "Mã ghép nối đã hết hạn. Hãy quét lại để lấy mã mới."
+
+#: src/app/explore.tsx
+msgid "Pairing failed."
+msgstr "Ghép nối thất bại."
+
+#: src/components/settings-servers.tsx
+msgid "Panes on server cards"
+msgstr "Ngăn trên thẻ máy chủ"
+
+#: src/components/ssh-host-form.tsx
+msgid "Passphrase (optional)"
+msgstr "Cụm mật khẩu (tùy chọn)"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password"
+msgstr "Mật khẩu"
+
+#: src/components/ssh-host-form.tsx
+msgid "Password (leave blank to keep the saved one)"
+msgstr "Mật khẩu (để trống để giữ mật khẩu đã lưu)"
+
+#: src/components/ssh-host-form.tsx
+msgid "Passwords and keys are sealed in the keychain on this device and never leave it."
+msgstr "Mật khẩu và khóa được niêm phong trong keychain của thiết bị này và không bao giờ rời khỏi đó."
+
+#: src/i18n/labels.ts
+msgid "Paste"
+msgstr "Dán"
+
+#: src/components/asset-viewer.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Path"
+msgstr "Đường dẫn"
+
+#: src/components/attachment-menu.tsx
+msgid "Photo library"
+msgstr "Thư viện ảnh"
+
+#: src/components/open-web-service-sheet.tsx
+#: src/components/simfarm-preview.tsx
+#: src/components/ssh-host-form.tsx
+msgid "Port"
+msgstr "Cổng"
+
+#: src/components/open-web-service-sheet.tsx
+msgid "PORT"
+msgstr "CỔNG"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Presented now"
+msgstr "Đưa ra lần này"
+
+#: src/components/approval-banner.tsx
+msgid "Press Escape to dismiss this request"
+msgstr "Nhấn Escape để bỏ qua yêu cầu này"
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Preview {0}, {status}"
+msgstr "Xem trước {0}, {status}"
+
+#: src/app/commands.tsx
+msgid "Preview a simulator"
+msgstr "Xem trước trình giả lập"
+
+#: src/app/commands.tsx
+msgid "Preview a simulator, unavailable over the SSH tunnel"
+msgstr "Xem trước trình giả lập, không khả dụng qua đường hầm SSH"
+
+#: src/app/settings.tsx
+msgid "Privacy policy"
+msgstr "Chính sách quyền riêng tư"
+
+#: src/components/ssh-host-form.tsx
+msgid "Private key"
+msgstr "Khóa riêng"
+
+#: src/components/ssh-host-form.tsx
+msgid "Private key (leave blank to keep the saved one)"
+msgstr "Khóa riêng (để trống để giữ khóa đã lưu)"
+
+#: src/app/commands.tsx
+msgid "Prompt"
+msgstr "Prompt"
+
+#: src/components/settings-security.tsx
+msgid "Protect paired servers and terminal sessions."
+msgstr "Bảo vệ các máy chủ đã ghép nối và phiên terminal."
+
+#: src/components/ssh-host-form.tsx
+msgid "Public key copied"
+msgstr "Đã sao chép khóa công khai"
+
+#: src/i18n/labels.ts
+msgid "Pull"
+msgstr "Pull"
+
+#: src/components/skia-terminal.tsx
+msgid "Pull for earlier output"
+msgstr "Kéo để tải đầu ra trước đó"
+
+#: src/components/attachment-strip.tsx
+msgid "queued to upload"
+msgstr "đang chờ tải lên"
+
+#: src/app/commands.tsx
+msgid "Quick action settings"
+msgstr "Cài đặt thao tác nhanh"
+
+#: src/app/commands.tsx
+#: src/components/settings-terminal.tsx
+msgid "Quick actions"
+msgstr "Thao tác nhanh"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Quit"
+msgstr "Thoát"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Reached through SSH host {host}"
+msgstr "Kết nối qua host SSH {host}"
+
+#: src/app/explore.tsx
+msgid "Reaching the Gateway"
+msgstr "Đang kết nối Gateway"
+
+#: src/components/settings-alerts.tsx
+msgid "Receive agent blocks and gateway updates."
+msgstr "Nhận thông báo khi tác tử chờ và các cập nhật của gateway."
+
+#: src/i18n/labels.ts
+msgid "Recent commits"
+msgstr "Các commit gần đây"
+
+#: src/components/gateway-tunnel-badge.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect"
+msgstr "Kết nối lại"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Reconnect the SSH tunnel"
+msgstr "Kết nối lại đường hầm SSH"
+
+#. placeholder {0}: record.label
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Reconnect to {0}"
+msgstr "Kết nối lại đến {0}"
+
+#. placeholder {0}: status.attempt
+#: src/components/server-terminal-workspace.tsx
+msgid "Reconnecting · {0}"
+msgstr "Đang kết nối lại · {0}"
+
+#: src/components/session-map.tsx
+msgid "Refresh"
+msgstr "Làm mới"
+
+#: src/components/session-artifacts.tsx
+msgid "Refresh files"
+msgstr "Làm mới tệp"
+
+#. placeholder {0}: attachment.name
+#. placeholder {0}: record.label
+#: src/components/attachment-strip.tsx
+#: src/components/ssh-host-form.tsx
+msgid "Remove {0}"
+msgstr "Gỡ {0}"
+
+#: src/components/ssh-host-form.tsx
+msgid "Remove host"
+msgstr "Gỡ host"
+
+#: src/components/row-action-menu.tsx
+msgid "Rename {label}"
+msgstr "Đổi tên {label}"
+
+#: src/components/session-map.tsx
+msgid "Rename group"
+msgstr "Đổi tên nhóm"
+
+#: src/components/session-map.tsx
+msgid "Rename terminal"
+msgstr "Đổi tên terminal"
+
+#: src/components/session-map.tsx
+msgid "Rename workspace"
+msgstr "Đổi tên không gian làm việc"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Replace key"
+msgstr "Thay khóa"
+
+#: src/app/settings.tsx
+msgid "Report a bug or request a feature"
+msgstr "Báo lỗi hoặc đề xuất tính năng"
+
+#: src/lib/network-error.ts
+msgid "Request failed."
+msgstr "Yêu cầu thất bại."
+
+#: src/components/settings-security.tsx
+msgid "Required on launch and after 30 seconds in the background."
+msgstr "Yêu cầu khi khởi động và sau 30 giây ở nền."
+
+#: src/components/ssh-host-form.tsx
+msgid "Required."
+msgstr "Bắt buộc."
+
+#: src/components/settings-alerts.tsx
+msgid "Requires iOS 16.1 or later."
+msgstr "Yêu cầu iOS 16.1 trở lên."
+
+#: src/components/update-status-banner.tsx
+msgid "Restart Muqun to finish updating"
+msgstr "Khởi động lại Muqun để hoàn tất cập nhật"
+
+#: src/app/commands.tsx
+msgid "Restore hidden default commands"
+msgstr "Khôi phục các lệnh mặc định đã ẩn"
+
+#: src/app/commands.tsx
+msgid "Restore hidden defaults"
+msgstr "Khôi phục mặc định đã ẩn"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/terminal-boundary.tsx
+msgid "Retry"
+msgstr "Thử lại"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry connection"
+msgstr "Thử kết nối lại"
+
+#: src/components/terminal-boundary.tsx
+msgid "Retry drawing the terminal"
+msgstr "Thử vẽ lại terminal"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Retry the ones marked in red, or remove them, then send again."
+msgstr "Thử lại những mục đánh dấu đỏ, hoặc gỡ chúng, rồi gửi lại."
+
+#. placeholder {0}: attachment.name
+#: src/components/attachment-strip.tsx
+msgid "Retry uploading {0}"
+msgstr "Thử tải lên lại {0}"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Return"
+msgstr "Return"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Return to the server list and pair again."
+msgstr "Quay lại danh sách máy chủ và ghép nối lại."
+
+#: src/lib/demo-gateway.ts
+msgid "Review"
+msgstr "Xem xét"
+
+#: src/lib/demo-gateway.ts
+msgid "Review a GitHub pull request"
+msgstr "Xem xét một pull request trên GitHub"
+
+#: src/app/commands.tsx
+msgid "Review changes"
+msgstr "Xem xét thay đổi"
+
+#: src/app/commands.tsx
+msgid "Review the current changes."
+msgstr "Xem xét các thay đổi hiện tại."
+
+#: src/components/new-task-sheet.tsx
+msgid "Review the failing test and fix it."
+msgstr "Xem bài kiểm thử đang lỗi và sửa nó."
+
+#: src/components/settings-servers.tsx
+msgid "Revoke"
+msgstr "Thu hồi"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
+msgid "Revoke {0}"
+msgstr "Thu hồi {0}"
+
+#: src/components/settings-servers.tsx
+msgid "Revoking…"
+msgstr "Đang thu hồi…"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Right arrow"
+msgstr "Mũi tên phải"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Run a terminal command"
+msgstr "Chạy một lệnh terminal"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Run command"
+msgstr "Chạy lệnh"
+
+#: src/i18n/labels.ts
+msgid "Run relevant tests"
+msgstr "Chạy các kiểm thử liên quan"
+
+#: src/app/(drawer)/index.tsx
+msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
+msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này."
+
+#: src/components/session-map.tsx
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
+msgid "Save"
+msgstr "Lưu"
+
+#: src/app/commands.tsx
+msgid "Save a command or key combo you reach for."
+msgstr "Lưu một lệnh hoặc tổ hợp phím bạn hay dùng."
+
+#: src/app/commands.tsx
+msgid "Save a prompt you send this agent often."
+msgstr "Lưu một prompt bạn hay gửi cho tác tử này."
+
+#. placeholder {0}: record.label
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
+msgid "Save changes to {0}"
+msgstr "Lưu thay đổi vào {0}"
+
+#: src/components/ssh-host-form.tsx
+msgid "Save host"
+msgstr "Lưu host"
+
+#: src/app/commands.tsx
+msgid "Save shortcut"
+msgstr "Lưu lệnh tắt"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Saved"
+msgstr "Đã lưu"
+
+#: src/app/commands.tsx
+msgid "SAVED COMMANDS"
+msgstr "LỆNH ĐÃ LƯU"
+
+#: src/app/commands.tsx
+msgid "SAVED PROMPTS"
+msgstr "PROMPT ĐÃ LƯU"
+
+#: src/components/settings-servers.tsx
+#: src/components/ssh-host-form.tsx
+msgid "Saving…"
+msgstr "Đang lưu…"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/explore.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Scan a gateway QR"
+msgstr "Quét mã QR gateway"
+
+#: src/app/explore.tsx
+msgid "Scan again"
+msgstr "Quét lại"
+
+#: src/app/explore.tsx
+msgid "Scan the Gateway QR."
+msgstr "Quét mã QR của Gateway."
+
+#: src/components/pairing-camera.tsx
+msgid "Scanning needs a camera, which this browser does not offer."
+msgstr "Quét cần camera, mà trình duyệt này không cung cấp."
+
+#: src/i18n/labels.ts
+msgid "Search"
+msgstr "Tìm kiếm"
+
+#: src/components/session-artifacts.tsx
+msgid "Search files"
+msgstr "Tìm tệp"
+
+#: src/i18n/labels.ts
+msgid "Search the whole project"
+msgstr "Tìm trong toàn bộ dự án"
+
+#: src/app/settings.tsx
+msgid "Security"
+msgstr "Bảo mật"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}d ago"
+msgstr "Đã thấy {0} ngày trước"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}h ago"
+msgstr "Đã thấy {0} giờ trước"
+
+#. placeholder {0}: age.value
+#: src/components/server-agent-rows.tsx
+msgid "Seen {0}m ago"
+msgstr "Đã thấy {0} phút trước"
+
+#: src/components/server-agent-rows.tsx
+msgid "Seen just now"
+msgstr "Đã thấy vừa xong"
+
+#: src/components/skia-terminal.tsx
+msgid "Select all"
+msgstr "Chọn tất cả"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Send {spoken}"
+msgstr "Gửi {spoken}"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send a message"
+msgstr "Gửi tin nhắn"
+
+#: src/components/simfarm-stage.tsx
+msgid "Send the text"
+msgstr "Gửi văn bản"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send to agent"
+msgstr "Gửi cho tác tử"
+
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Server"
+msgstr "Máy chủ"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Server name"
+msgstr "Tên máy chủ"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server not found"
+msgstr "Không tìm thấy máy chủ"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server offline"
+msgstr "Máy chủ ngoại tuyến"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Server unavailable."
+msgstr "Máy chủ không khả dụng."
+
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Servers"
+msgstr "Máy chủ"
+
+#: src/components/session-switcher-sheet.tsx
+msgid "Session"
+msgstr "Phiên"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}"
+msgstr "Phiên {0}"
+
+#. placeholder {0}: session.label
+#: src/components/session-switcher-sheet.tsx
+msgid "Session {0}, current"
+msgstr "Phiên {0}, hiện tại"
+
+#: src/components/app-lock-gate.tsx
+msgid "Set a device passcode before using App Lock."
+msgstr "Đặt mật mã thiết bị trước khi dùng Khóa ứng dụng."
+
+#: src/app/explore.tsx
+msgid "Set one up on your computer"
+msgstr "Cài một cái trên máy tính của bạn"
+
+#: src/lib/demo-gateway.ts
+msgid "Set the AI model for Claude Code"
+msgstr "Đặt mô hình AI cho Claude Code"
+
+#. placeholder {0}: authAvailability.label
+#. placeholder {0}: availability.label
+#: src/components/settings-security.tsx
+msgid "Set up {0} in system settings first."
+msgstr "Hãy thiết lập {0} trong cài đặt hệ thống trước."
+
+#. placeholder {0}: availability.label
+#: src/components/app-lock-gate.tsx
+msgid "Set up {0} in system settings to unlock Muqun."
+msgstr "Hãy thiết lập {0} trong cài đặt hệ thống để mở khóa Muqun."
+
+#: src/components/app-lock-gate.tsx
+msgid "Set up {label} in system settings first."
+msgstr "Hãy thiết lập {label} trong cài đặt hệ thống trước."
+
+#: src/app/explore.tsx
+msgid "Set up a Gateway on your computer"
+msgstr "Cài Gateway trên máy tính của bạn"
+
+#: src/app/(drawer)/index.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Settings"
+msgstr "Cài đặt"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Shift"
+msgstr "Shift"
+
+#: src/i18n/labels.ts
+msgid "Shift Enter, newline without sending"
+msgstr "Shift Enter, xuống dòng mà không gửi"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab"
+msgstr "Shift Tab"
+
+#: src/i18n/labels.ts
+msgid "Shift Tab, cycle mode"
+msgstr "Shift Tab, chuyển chế độ"
+
+#. placeholder {0}: item.summary
+#: src/components/pane-chat-blocks.tsx
+msgid "Show {0}"
+msgstr "Hiện {0}"
+
+#: src/components/settings-alerts.tsx
+msgid "Show agents and their status on the home screen. Updates while Muqun is open."
+msgstr "Hiện các tác tử và trạng thái của chúng trên màn hình chính. Cập nhật khi Muqun đang mở."
+
+#: src/components/session-artifacts.tsx
+msgid "Show all files"
+msgstr "Hiện tất cả tệp"
+
+#: src/components/pairing-camera.tsx
+msgid "Show camera details"
+msgstr "Hiện chi tiết camera"
+
+#: src/components/session-artifacts.tsx
+msgid "Show code"
+msgstr "Hiện mã"
+
+#: src/components/session-artifacts.tsx
+msgid "Show documents"
+msgstr "Hiện tài liệu"
+
+#: src/components/settings-terminal.tsx
+msgid "Show Esc, Tab, Ctrl and navigation keys above input."
+msgstr "Hiện các phím Esc, Tab, Ctrl và điều hướng phía trên ô nhập."
+
+#: src/components/pane-chat-view.tsx
+msgid "Show every tool step"
+msgstr "Hiện mọi bước công cụ"
+
+#: src/components/session-artifacts.tsx
+msgid "Show images"
+msgstr "Hiện hình ảnh"
+
+#: src/components/editor-controls.tsx
+msgid "Show the editor keyboard"
+msgstr "Hiện bàn phím soạn thảo"
+
+#: src/components/app-drawer.tsx
+msgid "Show the server list"
+msgstr "Hiện danh sách máy chủ"
+
+#: src/components/app-drawer.tsx
+msgid "Show what is running"
+msgstr "Xem những gì đang chạy"
+
+#. placeholder {0}: entry.name
+#: src/components/simfarm-stage.tsx
+msgid "Shut down {0}"
+msgstr "Tắt {0}"
+
+#: src/components/simfarm-stage.tsx
+msgid "Shutting down…"
+msgstr "Đang tắt…"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Sign in"
+msgstr "Đăng nhập"
+
+#: src/components/ssh-host-form.tsx
+msgid "Sign in with"
+msgstr "Đăng nhập bằng"
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
+msgstr "simfarm là chương trình nhỏ trên máy đó cung cấp bản xem trước này. Hoặc nó không chạy, hoặc nó đang lắng nghe trên một cổng khác."
+
+#: src/components/simfarm-preview.tsx
+msgid "simfarm port"
+msgstr "Cổng simfarm"
+
+#: src/app/commands.tsx
+#: src/components/simfarm-preview.tsx
+msgid "Simulator"
+msgstr "Giả lập"
+
+#: src/components/simfarm-stage.tsx
+msgid "Simulator controls"
+msgstr "Điều khiển trình giả lập"
+
+#: src/components/asset-viewer.tsx
+msgid "Size"
+msgstr "Kích thước"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Some files did not upload"
+msgstr "Một số tệp không tải lên được"
+
+#: src/components/app-error-boundary.tsx
+msgid "Something went wrong"
+msgstr "Đã xảy ra lỗi"
+
+#: src/app/settings.tsx
+msgid "Source code"
+msgstr "Mã nguồn"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Space"
+msgstr "Space"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+#: src/components/ssh-host-list.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "SSH"
+msgstr "SSH"
+
+#: src/app/explore.tsx
+#: src/components/gateway-tunnel-badge.tsx
+msgid "SSH host"
+msgstr "Host SSH"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/pad-server-rail.tsx
+msgid "SSH hosts"
+msgstr "Host SSH"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "SSH tunnel through {host} is down"
+msgstr "Đường hầm SSH qua {host} đã ngắt"
+
+#: src/lib/agent-widget-layout.tsx
+msgid "stale · {age}"
+msgstr "cũ · {age}"
+
+#: src/lib/demo-gateway.ts
+msgid "Start a new session with empty context"
+msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
+
+#: src/app/commands.tsx
+#: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do."
+msgstr "Khởi động một tác tử và giao cho nó việc đầu tiên."
+
+#: src/components/new-task-sheet.tsx
+msgid "Start task"
+msgstr "Bắt đầu tác vụ"
+
+#: src/components/simfarm-stage.tsx
+msgid "Starting {name}"
+msgstr "Đang khởi động {name}"
+
+#: src/app/explore.tsx
+#: src/components/pairing-camera.tsx
+msgid "Starting the camera"
+msgstr "Đang khởi động camera"
+
+#: src/components/new-task-sheet.tsx
+#: src/components/simfarm-stage.tsx
+msgid "Starting…"
+msgstr "Đang bắt đầu…"
+
+#: src/components/pane-chat-blocks.tsx
+msgid "Still running…"
+msgstr "Vẫn đang chạy…"
+
+#: src/app/commands.tsx
+msgid "Stop"
+msgstr "Dừng"
+
+#: src/app/commands.tsx
+msgid "Stop this agent"
+msgstr "Dừng tác tử này"
+
+#: src/i18n/labels.ts
+msgid "Summarize progress"
+msgstr "Tóm tắt tiến độ"
+
+#: src/i18n/labels.ts
+msgid "Suspend"
+msgstr "Tạm dừng"
+
+#: src/components/workspace-title-switcher.tsx
+msgid "Swipe left or right to switch workspace"
+msgstr "Vuốt trái hoặc phải để chuyển không gian làm việc"
+
+#: src/components/simfarm-stage.tsx
+msgid "Switch apps"
+msgstr "Chuyển ứng dụng"
+
+#: src/i18n/labels.ts
+msgid "Switch between open files"
+msgstr "Chuyển giữa các tệp đang mở"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch session"
+msgstr "Chuyển phiên"
+
+#. placeholder {0}: panelTitle(pane, paneAgent)
+#: src/components/server-terminal-workspace.tsx
+msgid "Switch to {0}"
+msgstr "Chuyển sang {0}"
+
+#: src/i18n/labels.ts
+msgid "Switch to the chat view"
+msgstr "Chuyển sang chế độ xem trò chuyện"
+
+#: src/i18n/labels.ts
+msgid "Switch to the terminal view"
+msgstr "Chuyển sang chế độ xem terminal"
+
+#: src/components/virtual-keyboard.tsx
+msgid "Symbols"
+msgstr "Ký hiệu"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-language-sheet.tsx
+msgid "System"
+msgstr "Hệ thống"
+
+#: src/i18n/labels.ts
+msgid "Tab"
+msgstr "Tab"
+
+#: src/components/attachment-menu.tsx
+msgid "Take photo"
+msgstr "Chụp ảnh"
+
+#: src/components/ssh-host-form.tsx
+msgid "Tap again to remove"
+msgstr "Chạm lần nữa để gỡ"
+
+#: src/app/commands.tsx
+#: src/app/settings.tsx
+#: src/i18n/labels.ts
+msgid "Terminal"
+msgstr "Terminal"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Terminal colours follow the theme."
+msgstr "Màu terminal theo chủ đề."
+
+#: src/app/commands.tsx
+msgid "TERMINAL COMMANDS"
+msgstr "LỆNH TERMINAL"
+
+#: src/components/settings-terminal.tsx
+msgid "Terminal key row"
+msgstr "Hàng phím terminal"
+
+#: src/components/settings-terminal.tsx
+msgid "Text size"
+msgstr "Cỡ chữ"
+
+#: src/components/simfarm-stage.tsx
+msgid "Text to type on the simulator"
+msgstr "Văn bản để gõ trên trình giả lập"
+
+#: src/hooks/use-pane-approval.ts
+msgid "That answer did not reach the agent."
+msgstr "Câu trả lời đó không đến được tác tử."
+
+#: src/app/explore.tsx
+msgid "That code was refused. Hold still for a new one."
+msgstr "Mã đó bị từ chối. Hãy giữ yên để lấy mã mới."
+
+#: src/components/ssh-host-list.tsx
+msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
+msgstr "Đó là shell demo đi kèm, và là host duy nhất ở đây. Thêm một host của bạn để mở shell trên bất kỳ máy nào bạn kết nối được."
+
+#: src/lib/release-notes.ts
+msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
+msgstr "Shell đó chính là terminal bạn đã quen: cùng bàn phím, cùng hàng phím, cùng màu sắc, và bàn phím của điện thoại cho bất cứ thứ gì bạn muốn gõ."
+
+#: src/components/simfarm-stage.tsx
+msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."
+msgstr "Không thể khởi động trình giả lập đó từ đây. Hãy khởi động nó trên máy và nó sẽ xuất hiện trong danh sách."
+
+#: src/components/settings-servers.tsx
+msgid "The address is where this paired server is reached. Changing it does not unpair the device."
+msgstr "Địa chỉ là nơi kết nối đến máy chủ đã ghép nối này. Đổi địa chỉ không hủy ghép nối thiết bị."
+
+#: src/app/explore.tsx
+msgid "The address the Gateway prints when it starts."
+msgstr "Địa chỉ mà Gateway in ra khi khởi động."
+
+#: src/i18n/labels.ts
+msgid "The agent is asking something else now."
+msgstr "Tác tử giờ đang hỏi điều khác."
+
+#: src/i18n/labels.ts
+msgid "The agent is no longer waiting."
+msgstr "Tác tử không còn chờ nữa."
+
+#: src/components/pairing-camera.tsx
+msgid "The camera did not start"
+msgstr "Camera không khởi động"
+
+#: src/components/pairing-camera.tsx
+msgid "The camera reported an error."
+msgstr "Camera báo lỗi."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The connection dropped."
+msgstr "Kết nối đã rớt."
+
+#: src/components/simfarm-stage.tsx
+msgid "The connection to the simulator stopped."
+msgstr "Kết nối đến trình giả lập đã dừng."
+
+#. placeholder {0}: failure.code
+#: src/components/ssh-host-form.tsx
+msgid "The key could not be read ({0}). Check the key and its passphrase."
+msgstr "Không thể đọc khóa ({0}). Hãy kiểm tra khóa và cụm mật khẩu của nó."
+
+#: src/i18n/labels.ts
+msgid "The raw pane, on its grid and in its own colours."
+msgstr "Ngăn nguyên bản, trên lưới của nó và với màu sắc riêng."
+
+#: src/components/app-error-boundary.tsx
+msgid "The screen hit an error. Try again — your servers stay paired."
+msgstr "Màn hình gặp lỗi. Hãy thử lại — các máy chủ của bạn vẫn được ghép nối."
+
+#: src/components/ssh-host-form.tsx
+msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
+msgstr "Máy chủ tự đặt câu hỏi khi bạn kết nối, một mật khẩu hoặc mã dùng một lần, và không có gì được lưu trên thiết bị này."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The server did not return it."
+msgstr "Máy chủ không trả về nó."
+
+#: src/app/commands.tsx
+msgid "The server did not say which terminal it made."
+msgstr "Máy chủ không cho biết nó đã tạo terminal nào."
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "The server is asking for more before it lets you in."
+msgstr "Máy chủ yêu cầu thêm trước khi cho bạn vào."
+
+#: src/components/settings-servers.tsx
+msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "Máy chủ vẫn được giữ trên thiết bị này. Hãy đảm bảo Gateway của nó đang chạy, rồi thử lại."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "The shell exited."
+msgstr "Shell đã thoát."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shown."
+msgstr "Không thể hiển thị trình giả lập."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator could not be shut down."
+msgstr "Không thể tắt trình giả lập."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator could not be started."
+msgstr "Không thể khởi động trình giả lập."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not come up in time."
+msgstr "Trình giả lập không khởi động kịp thời."
+
+#: src/components/simfarm-stage.tsx
+msgid "The simulator did not shut down in time."
+msgstr "Trình giả lập không tắt kịp thời."
+
+#: src/app/commands.tsx
+msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
+msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale."
+
+#: src/i18n/labels.ts
+msgid "The transcript as a conversation, with tool steps folded away."
+msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công cụ được thu gọn."
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-theme-sheet.tsx
+msgid "Theme"
+msgstr "Chủ đề"
+
+#. placeholder {0}: pack.label
+#: src/components/settings-appearance.tsx
+msgid "Theme, {0}"
+msgstr "Chủ đề, {0}"
+
+#: src/i18n/labels.ts
+msgid "This agent did not offer that answer."
+msgstr "Tác tử này không đưa ra câu trả lời đó."
+
+#: src/lib/attachments.ts
+msgid "This device has no camera available."
+msgstr "Thiết bị này không có camera khả dụng."
+
+#: src/components/asset-viewer.tsx
+msgid "This file is empty."
+msgstr "Tệp này trống."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This file is not among the session artifacts."
+msgstr "Tệp này không nằm trong các sản phẩm của phiên."
+
+#: src/components/asset-viewer.tsx
+msgid "This file is too large to display. Copy it to read it elsewhere."
+msgstr "Tệp này quá lớn để hiển thị. Hãy sao chép để đọc ở nơi khác."
+
+#: src/lib/network-error.ts
+msgid "This Gateway does not answer to that address."
+msgstr "Gateway này không trả lời ở địa chỉ đó."
+
+#: src/components/session-artifacts.tsx
+msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "Gateway này chưa phục vụ tệp. Hãy cập nhật plugin gateway của Muqun để duyệt những gì phiên ghi ra."
+
+#: src/components/settings-servers.tsx
+msgid "This gateway has not listed any paired devices."
+msgstr "Gateway này chưa liệt kê thiết bị đã ghép nối nào."
+
+#: src/components/session-switcher-sheet.tsx
+msgid "This gateway runs more than one terminal backend. Pick the one to read."
+msgstr "Gateway này chạy nhiều hơn một backend terminal. Hãy chọn cái để đọc."
+
+#: src/components/session-map.tsx
+msgid "This group has no terminals."
+msgstr "Nhóm này không có terminal nào."
+
+#: src/components/ssh-terminal-workspace.tsx
+msgid "This host is no longer saved."
+msgstr "Host này không còn được lưu."
+
+#: src/components/image-preview-modal.tsx
+msgid "This image could not be loaded."
+msgstr "Không thể tải hình ảnh này."
+
+#: src/lib/demo-ssh.ts
+msgid "This is a bundled transcript, not a real server."
+msgstr "Đây là bản ghi đi kèm, không phải máy chủ thật."
+
+#: src/app/+not-found.tsx
+msgid "This link goes nowhere"
+msgstr "Liên kết này không dẫn đến đâu cả"
+
+#: src/app/explore.tsx
+msgid "This QR code is not valid."
+msgstr "Mã QR này không hợp lệ."
+
+#: src/lib/network-error.ts
+msgid "This server cannot use this device's stored key. Pair it again to reconnect."
+msgstr "Máy chủ này không thể dùng khóa đã lưu của thiết bị này. Hãy ghép nối lại để kết nối lại."
+
+#: src/lib/network-error.ts
+msgid "This server could not read the request. Check this device's date and time."
+msgstr "Máy chủ này không đọc được yêu cầu. Hãy kiểm tra ngày giờ của thiết bị này."
+
+#: src/components/new-task-sheet.tsx
+msgid "This server did not name any agents it can start."
+msgstr "Máy chủ này không nêu tên tác tử nào nó có thể khởi động."
+
+#: src/lib/network-error.ts
+msgid "This server had a problem answering."
+msgstr "Máy chủ này gặp sự cố khi trả lời."
+
+#: src/lib/network-error.ts
+msgid "This server has already handled that request."
+msgstr "Máy chủ này đã xử lý yêu cầu đó rồi."
+
+#: src/app/new-task.tsx
+msgid "This server has no session to start an agent in."
+msgstr "Máy chủ này không có phiên nào để khởi động tác tử."
+
+#: src/app/new-task.tsx
+#: src/app/simfarm.tsx
+#: src/app/web-service.tsx
+msgid "This server is no longer paired."
+msgstr "Máy chủ này không còn được ghép nối."
+
+#: src/lib/network-error.ts
+msgid "This server no longer recognises this device. Pair it again to reconnect."
+msgstr "Máy chủ này không còn nhận ra thiết bị này. Hãy ghép nối lại để kết nối lại."
+
+#: src/lib/network-error.ts
+msgid "This server refused the request."
+msgstr "Máy chủ này đã từ chối yêu cầu."
+
+#: src/components/terminal-boundary.tsx
+msgid "This terminal could not be drawn."
+msgstr "Không thể vẽ terminal này."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available."
+msgstr "Terminal này không còn khả dụng."
+
+#: src/components/session-map.tsx
+msgid "This workspace has no groups yet."
+msgstr "Không gian làm việc này chưa có nhóm nào."
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Through {host}"
+msgstr "Qua {host}"
+
+#: src/i18n/labels.ts
+msgid "Today"
+msgstr "Hôm nay"
+
+#: src/components/ssh-host-key-dialog.tsx
+msgid "Trust"
+msgstr "Tin cậy"
+
+#: src/components/app-error-boundary.tsx
+#: src/components/asset-viewer.tsx
+msgid "Try again"
+msgstr "Thử lại"
+
+#: src/components/settings-servers.tsx
+msgid "Try again once the gateway responds."
+msgstr "Hãy thử lại khi gateway phản hồi."
+
+#: src/app/(drawer)/index.tsx
+msgid "Try the demo"
+msgstr "Dùng thử demo"
+
+#: src/components/gateway-tunnel-badge.tsx
+msgid "Tunnel down"
+msgstr "Đường hầm đã ngắt"
+
+#: src/components/asset-viewer.tsx
+msgid "Type"
+msgstr "Loại"
+
+#: src/lib/demo-ssh.ts
+msgid "Type a line and press Enter; it is echoed back."
+msgstr "Gõ một dòng và nhấn Enter; nó sẽ được trả lại nguyên văn."
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Type into this editor"
+msgstr "Gõ vào trình soạn thảo này"
+
+#: src/components/new-task-sheet.tsx
+msgid "Type it, or use your keyboard's dictation key."
+msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của bạn."
+
+#: src/components/simfarm-stage.tsx
+msgid "Type on the simulator"
+msgstr "Gõ trên trình giả lập"
+
+#: src/i18n/labels.ts
+msgid "Undo"
+msgstr "Hoàn tác"
+
+#: src/components/asset-viewer.tsx
+msgid "unknown"
+msgstr "không rõ"
+
+#: src/i18n/labels.ts
+msgid "Unknown"
+msgstr "Không rõ"
+
+#: src/i18n/labels.ts
+msgid "Unknown date"
+msgstr "Không rõ ngày"
+
+#: src/lib/local-authentication.ts
+msgid "Unlock Muqun"
+msgstr "Mở khóa Muqun"
+
+#. placeholder {0}: authAvailability?.label ?? t`device authentication`
+#: src/components/settings-security.tsx
+msgid "Unlock with {0}"
+msgstr "Mở khóa bằng {0}"
+
+#: src/components/app-lock-gate.tsx
+msgid "Unlock with {authLabel}"
+msgstr "Mở khóa bằng {authLabel}"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair"
+msgstr "Hủy ghép nối"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair {label}"
+msgstr "Hủy ghép nối {label}"
+
+#: src/components/settings-servers.tsx
+msgid "Unpair this server"
+msgstr "Hủy ghép nối máy chủ này"
+
+#: src/components/settings-servers.tsx
+msgid "Unpairing {label}"
+msgstr "Đang hủy ghép nối {label}"
+
+#: src/components/settings-servers.tsx
+msgid "Unpairing…"
+msgstr "Đang hủy ghép nối…"
+
+#: src/components/virtual-keyboard.tsx
+#: src/i18n/labels.ts
+msgid "Up arrow"
+msgstr "Mũi tên lên"
+
+#: src/components/update-status-banner.tsx
+msgid "Update ready · restarting…"
+msgstr "Bản cập nhật đã sẵn sàng · đang khởi động lại…"
+
+#: src/components/update-status-banner.tsx
+msgid "Updating Muqun…"
+msgstr "Đang cập nhật Muqun…"
+
+#: src/components/attachment-strip.tsx
+msgid "upload failed"
+msgstr "tải lên thất bại"
+
+#: src/components/attachment-strip.tsx
+msgid "uploaded"
+msgstr "đã tải lên"
+
+#: src/components/attachment-strip.tsx
+msgid "uploading"
+msgstr "đang tải lên"
+
+#. placeholder {0}: server.label
+#: src/components/settings-servers.tsx
+msgid "Use {0}"
+msgstr "Dùng {0}"
+
+#: src/lib/local-authentication.ts
+msgid "Use device passcode"
+msgstr "Dùng mật mã thiết bị"
+
+#: src/components/settings-servers.tsx
+msgid "Use the scan button on the home screen to add one."
+msgstr "Dùng nút quét trên màn hình chính để thêm."
+
+#: src/components/settings-servers.tsx
+msgid "Use this server"
+msgstr "Dùng máy chủ này"
+
+#: src/components/ssh-host-form.tsx
+msgid "Username"
+msgstr "Tên người dùng"
+
+#: src/components/settings-servers.tsx
+msgid "USING"
+msgstr "ĐANG DÙNG"
+
+#. placeholder {0}: build ? ` (${build})` : ''
+#: src/app/settings.tsx
+msgid "Version {version}{0}"
+msgstr "Phiên bản {version}{0}"
+
+#: src/i18n/labels.ts
+msgid "Visual mode"
+msgstr "Chế độ visual"
+
+#: src/lib/demo-gateway.ts
+msgid "Visualize current context usage as a colored grid"
+msgstr "Hiển thị mức dùng ngữ cảnh hiện tại dưới dạng lưới màu"
+
+#: src/components/skia-terminal.web.tsx
+msgid "Waiting for output…"
+msgstr "Đang chờ đầu ra…"
+
+#: src/lib/network-error.ts
+msgid "Waiting for the network."
+msgstr "Đang chờ mạng."
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Waiting for uploads to finish…"
+msgstr "Đang chờ tải lên xong…"
+
+#: src/components/session-map.tsx
+msgid "What is running"
+msgstr "Những gì đang chạy"
+
+#: src/lib/release-notes.ts
+msgid "What's new"
+msgstr "Có gì mới"
+
+#: src/components/away-digest-card.tsx
+msgid "While you were away"
+msgstr "Khi bạn vắng mặt"
+
+#: src/i18n/labels.ts
+msgid "Working"
+msgstr "Đang làm việc"
+
+#: src/components/session-map.tsx
+msgid "Workspace"
+msgstr "Không gian làm việc"
+
+#: src/components/server-terminal-workspace.tsx
+#: src/components/ssh-terminal-workspace.tsx
+msgid "Write a line"
+msgstr "Viết một dòng"
+
+#: src/lib/demo-gateway.ts
+msgid "Write and quit"
+msgstr "Ghi và thoát"
+
+#: src/i18n/labels.ts
+#: src/lib/demo-gateway.ts
+msgid "Write the file"
+msgstr "Ghi tệp"
+
+#: src/i18n/labels.ts
+msgid "Write the file and quit"
+msgstr "Ghi tệp và thoát"
+
+#: src/i18n/labels.ts
+msgid "Yank this line"
+msgstr "Sao chép dòng này"
+
+#: src/i18n/labels.ts
+msgid "Yesterday"
+msgstr "Hôm qua"
+
+#: src/app/(drawer)/index.tsx
+#: src/components/app-drawer-content.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Your agents, anywhere."
+msgstr "Các tác tử của bạn, ở bất cứ đâu."
+
+#: src/components/app-drawer-content.tsx
+msgid "Your paired gateways"
+msgstr "Các gateway đã ghép nối của bạn"

@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Muqun",
+    "NSCameraUsageDescription": "Muqun сканирует QR-код Gateway для безопасного сопряжения и делает фотографии, которые вы прикрепляете к сеансу терминала.",
+    "NSPhotoLibraryUsageDescription": "Muqun отправляет выбранные вами фотографии на сопряжённый Gateway, чтобы агент мог их прочитать.",
+    "NSFaceIDUsageDescription": "Muqun использует Face ID для защиты сопряжённых серверов и сеансов терминала.",
+    "NSLocalNetworkUsageDescription": "Muqun подключается к Gateway, запущенному на вашем компьютере, который может находиться в вашей локальной сети."
+  },
+  "android": {
+    "app_name": "Muqun"
+  }
+}

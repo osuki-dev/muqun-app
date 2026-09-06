@@ -21,7 +21,10 @@
       "de": "./native-locales/de.json",
       "fr": "./native-locales/fr.json",
       "es": "./native-locales/es.json",
-      "pt": "./native-locales/pt.json"
+      "pt": "./native-locales/pt.json",
+      "zh-CN": "./native-locales/zh-CN.json",
+      "ru": "./native-locales/ru.json",
+      "vi": "./native-locales/vi.json"
     },
     "ios": {
       "bundleIdentifier": "dev.osuki.muqun",

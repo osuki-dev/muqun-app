@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Muqun",
+    "NSCameraUsageDescription": "Muqun quét mã QR của Gateway để ghép nối an toàn và chụp ảnh mà bạn đính kèm vào phiên terminal.",
+    "NSPhotoLibraryUsageDescription": "Muqun gửi ảnh bạn chọn đến Gateway đã ghép nối để tác tử có thể đọc.",
+    "NSFaceIDUsageDescription": "Muqun dùng Face ID để bảo vệ các máy chủ đã ghép nối và phiên terminal.",
+    "NSLocalNetworkUsageDescription": "Muqun kết nối đến Gateway đang chạy trên máy tính của bạn, có thể nằm trong mạng cục bộ của bạn."
+  },
+  "android": {
+    "app_name": "Muqun"
+  }
+}
