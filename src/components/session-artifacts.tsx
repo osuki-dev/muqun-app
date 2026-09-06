@@ -1,4 +1,5 @@
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
+import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { SearchInput, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
@@ -28,6 +29,7 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
 import { useRelativeTime } from '@/hooks/use-relative-time';
+import { artifactGroupLabel } from '@/i18n/labels';
 import { groupByDay, type ArtifactRow } from '@/lib/artifact-groups';
 import {
   assetImageSource,
@@ -735,16 +737,32 @@ const EmptyState = memo(function EmptyState({
 });
 
 /**
+ * `groupByDay` names the three buckets that are not dates -- today, yesterday
+ * and "no date at all" -- in English, because `artifact-groups` is a pure
+ * module under test and cannot hold a macro. The words are what it names them,
+ * so this is where they are translated. A weekday or a month-and-day is already
+ * in the reader's language: `dayLabel` formats those through `Intl`.
+ */
+const DAY_BUCKET_LABEL = {
+  Today: artifactGroupLabel.today,
+  Yesterday: artifactGroupLabel.yesterday,
+  'Unknown date': artifactGroupLabel.unknown,
+} as const;
+
+/**
  * The day is a rule across the list rather than another chip: it separates, it
  * is not something you press.
  */
 const DayHeading = memo(function DayHeading({ label, count }: { label: string; count: number }) {
   const theme = useThemeTokens();
+  const { _ } = useLinguiRuntime();
   useRenderTally('ArtifactDayHeading');
+  const bucket = DAY_BUCKET_LABEL[label as keyof typeof DAY_BUCKET_LABEL];
+  const spoken = bucket ? _(bucket) : label;
   return (
     <View style={styles.dayHeading}>
       <Text variant="caption" color={theme.colors.textMuted} style={styles.eyebrow}>
-        {label.toUpperCase()}
+        {spoken.toUpperCase()}
       </Text>
       <View style={[styles.rule, { backgroundColor: theme.colors.border }]} />
       <Text variant="caption" color={theme.colors.textMuted}>

@@ -20,17 +20,18 @@
 // picked would be worse than one that stayed English.
 //
 // **What it costs.** Importing `./index` pulls the three `@formatjs` polyfills,
-// their eight plural-rules data files, `@lingui/core` and all eight compiled
+// their ten plural-rules data files, `@lingui/core` and all eleven compiled
 // catalogs into the headless task's module graph. In bundle terms that is zero:
 // Metro ships one bundle, the app already imports every one of these modules,
 // and the widget task runs inside that same bundle. What is paid is *evaluation*
 // -- module factories that a headless wake used to skip now run. Measured under
-// Bun on this machine (`Intl` polyfills ~21ms, `@lingui/core` ~4.7ms, the eight
-// catalogs ~3.75ms, ~0.5ms each) that is roughly 30ms, and the polyfills, not
-// the catalogs, are almost all of it. Loading one catalog instead of eight would
-// save ~3ms, and it would cost a second hand-maintained list of eight locales in
-// a codebase that has already decided such lists drift; it is not worth it. The
-// whole ~30ms also sits against a headless wake that boots the entire JS bundle
+// Bun on this machine with eight catalogs (`Intl` polyfills ~21ms,
+// `@lingui/core` ~4.7ms, the catalogs ~3.75ms, ~0.5ms each) that is roughly
+// 30ms, and the polyfills, not the catalogs, are almost all of it. Loading one
+// catalog instead of all of them would save a few milliseconds, and it would
+// cost a second hand-maintained list of locales in a codebase that has already
+// decided such lists drift; it is not worth it. The whole ~30ms also sits
+// against a headless wake that boots the entire JS bundle
 // -- React Native, `expo-router/entry`, the Expo modules -- which is an order of
 // magnitude more, and against a task that Android runs at most every 30 minutes
 // (`updatePeriodMillis`), on add, and on resize.

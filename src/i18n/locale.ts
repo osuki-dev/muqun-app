@@ -5,22 +5,36 @@
 // used in four places that must agree or the feature silently degrades to
 // English: this catalog's directory name, the value persisted in app settings,
 // the `X-Muqun-Locale` request header, and the gateway's language table. So:
-// `zh-TW`, not `zh-Hant`, not `zh-Hant-TW`, not `zh_TW`.
+// `zh-TW`, not `zh-Hant`, not `zh-Hant-TW`, not `zh_TW`; and `zh-CN`, not
+// `zh-Hans`, not `zh_CN`.
 //
-// The six languages besides English and Traditional Chinese carry no region for
-// the same reason: the website spells them `ja ko de fr es pt`, so one `pt`
-// catalog serves Brazil and Portugal and one `es` catalog serves Spain and
-// Latin America. Splitting either into regional variants here would invent a
-// code the other two surfaces have never heard of.
+// The eight languages besides English and the two Chinese scripts carry no
+// region for the same reason: the website spells them `ja ko de fr es pt`, and
+// `ru` and `vi` follow the same shape, so one `pt` catalog serves Brazil and
+// Portugal and one `es` catalog serves Spain and Latin America. Splitting any
+// of them into regional variants here would invent a code the other two
+// surfaces have never heard of.
 //
 // The order is the website's, and it is the order the picker renders in:
-// English, Traditional Chinese, then the rest. It is not alphabetical and
-// should not be "tidied" into being.
+// English, the two Chinese scripts, then the rest in the order they were
+// added. It is not alphabetical and should not be "tidied" into being.
 //
 // Everything in this file is deliberately free of React and of native modules,
 // so the negotiation rules can be tested as the pure functions they are.
 
-export const APP_LOCALES = ['en', 'zh-TW', 'ja', 'ko', 'de', 'fr', 'es', 'pt'] as const;
+export const APP_LOCALES = [
+  'en',
+  'zh-TW',
+  'zh-CN',
+  'ja',
+  'ko',
+  'de',
+  'fr',
+  'es',
+  'pt',
+  'ru',
+  'vi',
+] as const;
 
 export type AppLocale = (typeof APP_LOCALES)[number];
 
@@ -35,12 +49,15 @@ export const SOURCE_LOCALE: AppLocale = 'en';
 export const LOCALE_LABELS: Record<AppLocale, string> = {
   en: 'English',
   'zh-TW': '繁體中文',
+  'zh-CN': '简体中文',
   ja: '日本語',
   ko: '한국어',
   de: 'Deutsch',
   fr: 'Français',
   es: 'Español',
   pt: 'Português',
+  ru: 'Русский',
+  vi: 'Tiếng Việt',
 };
 
 /**
@@ -59,11 +76,13 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
  *
  * Muqun is a brand name, and most of these files say "Muqun" for exactly that
  * reason -- the same reason the gateway's tables leave "Gateway" in Latin
- * script. `zh-TW` and `ja` are the deliberate exceptions: the site at
- * osuki.dev already gives the product a native name there (the CJK form of Muqun), and
- * `native-locales/zh-TW.json` and `native-locales/ja.json` carry it too, so a
- * reader who knows the app by that native name does not meet "Muqun" in a permission
- * prompt or the App Store's own listing of the app's name. The pipeline is
+ * script. `zh-TW`, `zh-CN` and `ja` are the deliberate exceptions: the site at
+ * osuki.dev already gives the product a native name there (the CJK form of
+ * Muqun, which is written with the same two characters in both Chinese
+ * scripts), and `native-locales/zh-TW.json`, `native-locales/zh-CN.json` and
+ * `native-locales/ja.json` carry it too, so a reader who knows the app by that
+ * native name does not meet "Muqun" in a permission prompt or the App Store's
+ * own listing of the app's name. The pipeline is
  * wired up for every locale regardless, because the alternative is
  * discovering it does not work on the day another market needs a local name,
  * and that day is a native build away from being fixed rather than an OTA.
@@ -87,12 +106,14 @@ export function isLocalePreference(value: unknown): value is LocalePreference {
  *
  * Matching is deliberately generous in one direction only. An exact hit wins;
  * then the script subtag, because `zh-Hant`, `zh-Hant-HK` and `zh-TW` are the
- * same catalog to us; then the region; and finally the bare language, but only
- * for languages whose variants we do not distinguish. A device set to
- * Simplified Chinese (`zh-Hans`, `zh-CN`, `zh-SG`) deliberately does *not*
- * match `zh-TW` -- serving Traditional characters to a Simplified reader is a
- * worse answer than English, and it would also be a silent claim to support a
- * language nobody has translated.
+ * same catalog to us, and `zh-Hans`, `zh-Hans-SG` and `zh-CN` are another;
+ * then the region; and finally the bare language, but only for languages whose
+ * variants we do not distinguish. The two Chinese catalogs never stand in for
+ * each other -- serving Traditional characters to a Simplified reader, or the
+ * reverse, is a worse answer than English. A bare `zh` with neither script nor
+ * region is Simplified, which is what the tag means by default (CLDR's likely
+ * subtags resolve `zh` to `zh-Hans-CN`) and what a phone that reports it is
+ * almost always set to.
  *
  * Chinese is the only language we split, so it is the only one with a rule of
  * its own. Every other catalog we ship is named by a bare language subtag, and
@@ -122,10 +143,10 @@ export function matchLocale(tag: string | null | undefined): AppLocale | null {
   if (language === 'zh') {
     // Script wins over region: `zh-Hans-TW` is Simplified text, whatever the
     // region says.
-    if (rest.includes('hans')) return null;
+    if (rest.includes('hans')) return 'zh-CN';
     if (rest.includes('hant')) return 'zh-TW';
     if (rest.some((part) => part === 'tw' || part === 'hk' || part === 'mo')) return 'zh-TW';
-    return null;
+    return 'zh-CN';
   }
 
   // Every remaining catalog is named by a bare language subtag, so the tag's

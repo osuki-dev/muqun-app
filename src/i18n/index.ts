@@ -26,11 +26,13 @@
 // changes.
 //
 // One plural-rules data file per language we ship, named by the *language*
-// subtag rather than the locale: the data for `zh-TW` is `zh`, and there is no
-// `zh-TW.js` to import. A locale whose data is missing does not throw -- it
-// falls back to English pluralisation, which is wrong in exactly the languages
-// that need it most, and wrong silently. So this list has to grow with
-// `APP_LOCALES` even though nothing type-checks that it did.
+// subtag rather than the locale: the data for both `zh-TW` and `zh-CN` is
+// `zh`, and there is no `zh-TW.js` to import. A locale whose data is missing
+// does not throw -- it falls back to English pluralisation, which is wrong in
+// exactly the languages that need it most, and wrong silently: Russian has
+// four categories (`one`, `few`, `many`, `other`) and would render the wrong
+// branch for every count but 1. So this list has to grow with `APP_LOCALES`
+// even though nothing type-checks that it did.
 import '@formatjs/intl-getcanonicallocales/polyfill-force.js';
 import '@formatjs/intl-locale/polyfill-force.js';
 import '@formatjs/intl-pluralrules/polyfill-force.js';
@@ -42,18 +44,23 @@ import '@formatjs/intl-pluralrules/locale-data/de.js';
 import '@formatjs/intl-pluralrules/locale-data/fr.js';
 import '@formatjs/intl-pluralrules/locale-data/es.js';
 import '@formatjs/intl-pluralrules/locale-data/pt.js';
+import '@formatjs/intl-pluralrules/locale-data/ru.js';
+import '@formatjs/intl-pluralrules/locale-data/vi.js';
 
 import { i18n } from '@lingui/core';
 
 import { setActiveLocale } from './active-locale';
 import { messages as enMessages } from './locales/en/messages';
 import { messages as zhTWMessages } from './locales/zh-TW/messages';
+import { messages as zhCNMessages } from './locales/zh-CN/messages';
 import { messages as jaMessages } from './locales/ja/messages';
 import { messages as koMessages } from './locales/ko/messages';
 import { messages as deMessages } from './locales/de/messages';
 import { messages as frMessages } from './locales/fr/messages';
 import { messages as esMessages } from './locales/es/messages';
 import { messages as ptMessages } from './locales/pt/messages';
+import { messages as ruMessages } from './locales/ru/messages';
+import { messages as viMessages } from './locales/vi/messages';
 import { APP_LOCALES, SOURCE_LOCALE, type AppLocale } from './locale';
 
 export * from './locale';
@@ -62,12 +69,15 @@ export { getActiveLocale, activeLocaleHeaders } from './active-locale';
 const catalogs: Record<AppLocale, typeof enMessages> = {
   en: enMessages,
   'zh-TW': zhTWMessages,
+  'zh-CN': zhCNMessages,
   ja: jaMessages,
   ko: koMessages,
   de: deMessages,
   fr: frMessages,
   es: esMessages,
   pt: ptMessages,
+  ru: ruMessages,
+  vi: viMessages,
 };
 
 let loaded = false;
@@ -75,8 +85,8 @@ let loaded = false;
 /**
  * Make every catalog available and select one.
  *
- * Every catalog is loaded rather than fetched on demand. Eight compiled
- * catalogs of ~200 messages are a few tens of kilobytes of strings the bundle
+ * Every catalog is loaded rather than fetched on demand. Eleven compiled
+ * catalogs of ~700 messages are a few tens of kilobytes of strings the bundle
  * already has to ship, and a language switch that has to wait on I/O is a
  * language switch that flickers. `i18n.activate` is what actually re-renders
  * the tree, through the `I18nProvider` in the root layout.
