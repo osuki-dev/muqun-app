@@ -1485,8 +1485,9 @@ export function ServerTerminalWorkspace({
   // The other axis of the same report, and read for the same reason: the pane's
   // own grid is what the snapshot should be laid out on, rather than however
   // many lines the read happened to return. `undefined` for a gateway that did
-  // not say -- every herdr pane today reports neither -- which leaves the
-  // parser's own measurement in charge exactly as it is now.
+  // not say -- a herdr pane on a gateway older than the one that reads the
+  // shell's own terminal size for it -- which leaves the parser's own
+  // measurement in charge exactly as it is now.
   const selectedPaneRows = selectedPane
     ? numberField(selectedPane, 'height') || undefined
     : undefined;

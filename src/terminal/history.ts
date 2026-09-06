@@ -294,6 +294,29 @@ const FURNITURE_MIN_ROWS = 2;
 const FURNITURE_VOLATILE_ROWS = 1;
 
 /**
+ * The shortest run of blank rows on a screen that is room rather than text.
+ *
+ * A full-screen program that scrolls -- Claude Code -- paints its header at
+ * the top of its screen and its composer at the bottom, and while the
+ * transcript is shorter than the screen the rows between them are simply
+ * unpainted. Measured on herdr 0.8.2 against a real 59-row Claude Code pane
+ * before its first prompt: one blank row, a four-row header, forty-eight blank
+ * rows, a six-row box. tmux reports such a pane as owning the screen and its
+ * read takes {@link altScreenFrame}, a picture placed at its bottom-left, so
+ * the gap is the top of the picture and scrolls away. Herdr cannot report it
+ * (it has no alternate-screen flag), so the same read takes the fold below as
+ * if the pane printed and scrolled -- and there the forty-eight rows are
+ * transcript, drawn and bottom-anchored, and the reader sees a composer with
+ * half a screen of nothing above it.
+ *
+ * Four, matching {@link REPEAT_BLOCK_ROWS} and {@link SCREEN_MIN_MATCH_ROWS}:
+ * this file's threshold for "a run of rows, not a coincidence". A shell
+ * leaves one or two blank rows between commands and keeps them; a program
+ * that left four in a row on its own screen was not printing.
+ */
+const SCREEN_GAP_ROWS = 4;
+
+/**
  * How much of the window's own tail a deeper read is allowed to disagree with
  * and still be recognised as reaching further back.
  *
@@ -331,7 +354,12 @@ export function foldPaneRead(
   ownsScreen = false,
   screenRows = 0
 ): string {
-  const incoming = sanitizePaneRead(latestOutput);
+  // A screen-owning read is a picture and keeps every row of it; a read
+  // folded as scrollback has the room its program left on the screen taken
+  // out first, so it is never drawn as transcript. See {@link collapseScreenGaps}.
+  const incoming = ownsScreen
+    ? sanitizePaneRead(latestOutput)
+    : collapseScreenGaps(sanitizePaneRead(latestOutput), screenRows);
   if (!currentOutput) return trimTerminalWindow(incoming, maximumLines);
   if (!incoming) return trimTerminalWindow(currentOutput, maximumLines);
 
@@ -488,6 +516,56 @@ export function altScreenFrame(output: string, screenRows: number): string {
   const rows = terminalLines(output);
   if (rows.length <= screenRows) return output;
   return rows.slice(rows.length - screenRows).join('\n');
+}
+
+/**
+ * A read with the room its program left on the screen taken out: every run of
+ * {@link SCREEN_GAP_ROWS} or more blank rows inside the screen -- the read's
+ * last `screenRows` rows -- becomes one blank row.
+ *
+ * Only the screen. Rows above it are the window's history as the gateway
+ * kept it, and a blank block there was printed by something. The screen is
+ * the one region a program paints as a rectangle rather than as a stream, so
+ * it is the one region in which "blank" can mean "not painted" -- and it is
+ * where the forty-eight rows of the measurement above sit.
+ *
+ * One row rather than none, so a header and the box under it stay two things.
+ * A pane whose height the gateway did not report (`0`) keeps its read intact,
+ * exactly as it did before this existed. The read comes back untouched, byte
+ * for byte, when there is nothing to collapse: this runs on every main-screen
+ * fold, and a read must not be re-serialised for no reason.
+ */
+export function collapseScreenGaps(output: string, screenRows: number): string {
+  if (!output || screenRows <= 0) return output;
+  try {
+    const rows = terminalLines(output);
+    const screenStart = Math.max(0, rows.length - screenRows);
+    const kept = rows.slice(0, screenStart);
+    let blank = 0;
+    let collapsed = false;
+    const flush = () => {
+      if (blank >= SCREEN_GAP_ROWS) {
+        kept.push('');
+        collapsed = true;
+      } else {
+        for (let step = 0; step < blank; step += 1) kept.push('');
+      }
+      blank = 0;
+    };
+    for (let index = screenStart; index < rows.length; index += 1) {
+      const row = rows[index];
+      if (row.trim() === '') {
+        blank += 1;
+        continue;
+      }
+      flush();
+      kept.push(row);
+    }
+    flush();
+    return collapsed ? kept.join('\n') : output;
+  } catch {
+    return output;
+  }
 }
 
 /**
