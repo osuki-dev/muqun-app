@@ -1,0 +1,32 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# theme-shots
+
+# section s1
+press "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+press "${TARGET}"
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+press "${TARGET}"
+
+# section s6
+wait stable 400 5000
+
+# section s7
+is visible "${TARGET}"
+
+# section s8
+press "${TARGET}"
+
+# section s9
+wait stable 400 5000
+
+# section s10
+is visible "${TARGET}"

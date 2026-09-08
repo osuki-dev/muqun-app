@@ -1,0 +1,14 @@
+# section back
+press "${TARGET}"
+
+# section settings
+press "${TARGET}"
+
+# section scroll
+scroll down --pixels 320
+
+# section toggle
+press "${TARGET}"
+
+# section verify
+is visible "${TARGET}"

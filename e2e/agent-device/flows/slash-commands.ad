@@ -1,0 +1,201 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# slash-commands
+
+# section s1
+is visible "${TARGET}"
+
+# section s2
+press "${TARGET}"
+
+# section s3
+wait stable 400 5000
+
+# section s4
+press "${TARGET}"
+
+# section s5
+type "/"
+
+# section s6
+is visible "${TARGET}"
+
+# section s7
+is visible "${TARGET}"
+
+# section s8
+is visible "${TARGET}"
+
+# section s9
+is visible "${TARGET}"
+
+# section s10
+type "co"
+
+# section s11
+wait stable 400 5000
+
+# section s12
+is visible "${TARGET}"
+
+# section s13
+is visible "${TARGET}"
+
+# section s14
+is hidden "${TARGET}"
+
+# section s15
+is hidden "${TARGET}"
+
+# section s16
+fill id="terminal-composer-input" "/" --delay-ms 80
+
+# section insert-cleared-slash
+press id="terminal-composer-input"
+type "/"
+
+# section verify-slash
+is visible "id=\"terminal-composer-input\" value=\"/\""
+
+# section reset-query-ios
+type "\b"
+type "\b"
+
+# section s18
+wait stable 400 5000
+
+# section s19
+is visible "${TARGET}"
+
+# section s20
+type "rel"
+
+# section s21
+wait stable 400 5000
+
+# section s22
+is visible "${TARGET}"
+
+# section s23
+is visible "${TARGET}"
+
+# section s24
+is hidden "${TARGET}"
+
+# section s25
+press "${TARGET}"
+
+# section s26
+wait stable 400 5000
+
+# section s27
+is hidden "${TARGET}"
+
+# section s28
+is visible "${TARGET}"
+
+# section s29
+press "${TARGET}"
+
+# section s30
+fill id="terminal-composer-input" "/mod" --delay-ms 80
+
+# section insert-cleared-model
+press id="terminal-composer-input"
+type "/mod" --delay-ms 80
+
+# section verify-model
+is visible "id=\"terminal-composer-input\" value=\"/mod\""
+
+# section model-query-ios
+type "\b"
+type "\b"
+type "\b"
+type "\b"
+type "/mod"
+
+# section s34
+wait stable 400 5000
+
+# section s36
+is visible "${TARGET}"
+
+# section s37
+is visible "${TARGET}"
+
+# section s38
+press "${TARGET}"
+
+# section s39
+wait stable 400 5000
+
+# section s40
+is hidden "${TARGET}"
+
+# section s41
+is hidden "${TARGET}"
+
+# section s42
+is visible "${TARGET}"
+
+# section s43
+type "opus"
+
+# section s44
+wait stable 400 5000
+
+# section s45
+is hidden "${TARGET}"
+
+# section s46
+is visible "${TARGET}"
+
+# section s47
+press "${TARGET}"
+
+# section s48
+press "${TARGET}"
+
+# section s49
+type "look at "
+
+# section s50
+type "src/lib"
+
+# section s51
+wait stable 400 5000
+
+# section s52
+is hidden "${TARGET}"
+
+# section s53
+is hidden "${TARGET}"
+
+# section s54
+is visible "${TARGET}"
+
+# section s55
+press "${TARGET}"
+
+# section s56
+wait stable 400 5000
+
+# section s57
+press "${TARGET}"
+
+# section s58
+wait stable 400 5000
+
+# section s59
+type "/"
+
+# section s60
+wait stable 400 5000
+
+# section s61
+is hidden "${TARGET}"
+
+# section s62
+is hidden "${TARGET}"
+
+# section s63
+is visible "${TARGET}"

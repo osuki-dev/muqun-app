@@ -51,7 +51,7 @@ example
 /.codex/
 /.vscode/
 /docs/
-/maestro/
+/e2e/
 /marketing/
 # Untracked here, so .gitignore does not keep it out of an upload: EAS reads
 # this file instead the moment it exists.

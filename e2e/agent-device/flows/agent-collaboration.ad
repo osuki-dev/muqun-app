@@ -1,0 +1,75 @@
+# Native regression: sending returns to the origin terminal's notification card.
+# suite.json enters an English offline demo before this script.
+wait "role=button text=\"Open quick actions\"" 15000
+press "role=button text=\"Open quick actions\""
+wait "id=\"quick-actions-tab-catalog\"" 10000
+press "id=\"quick-actions-tab-catalog\""
+wait "role=button label=\"/clear\"" 10000
+is hidden "role=button label=\"Summarize progress\""
+press "id=\"quick-actions-tab-saved\""
+wait "role=button label=\"Summarize progress\"" 10000
+is hidden "role=button label=\"/clear\""
+press "text=\"Agent collaboration\""
+wait "id=\"collaboration-assign\"" 15000
+press "id=\"collaboration-assign\""
+press "id=\"collaboration-new\""
+wait text "CLAUDE ✓" 10000
+fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: review current changes without editing files."
+keyboard dismiss
+press "id=\"collaboration-close\""
+wait "role=button text=\"Open quick actions\"" 10000
+press "role=button text=\"Open quick actions\""
+wait text "Agent collaboration" 10000
+press "text=\"Agent collaboration\""
+wait "id=\"collaboration-instructions\"" 10000
+is visible "id=\"collaboration-instructions\" value=\"Muqun collaboration regression: review current changes without editing files.\""
+press "id=\"collaboration-send\""
+wait "id=\"collaboration-notice\"" 20000
+is hidden "id=\"collaboration-instructions\""
+press "id=\"collaboration-notice-expand\""
+wait "id=\"collaboration-notice-output\"" 10000
+screenshot "shots/collaboration-notice.png"
+press "id=\"collaboration-notice-manage\""
+wait "id=\"collaboration-task-0-output\"" 15000
+is hidden "id=\"collaboration-instructions\""
+wait text "Ready for input" 20000
+press "id=\"collaboration-task-0-output\""
+wait "id=\"collaboration-output\"" 10000
+is text "id=\"collaboration-output\"" "Muqun collaboration regression: review current changes without editing files.\n\nReview finished. The theme fallback has test coverage. No changes were made."
+screenshot "shots/collaboration-output.png"
+press "id=\"collaboration-close\""
+wait text "Claude Code" 10000
+press "role=button text=\"Open quick actions\""
+wait text "Agent collaboration" 10000
+press "text=\"Agent collaboration\""
+wait "id=\"collaboration-assign\"" 10000
+press "id=\"collaboration-assign\""
+press "id=\"collaboration-existing\""
+wait text "Review assistant, Ready for input" 10000
+press "label=\"Review assistant, Ready for input\""
+fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: run the relevant tests and report the result."
+keyboard dismiss
+press "id=\"collaboration-send\""
+wait "id=\"collaboration-notice\"" 20000
+press "id=\"collaboration-notice-manage\""
+wait "id=\"collaboration-task-0-terminal\"" 10000
+is hidden "id=\"collaboration-instructions\""
+is visible "id=\"collaboration-history\""
+is hidden "id=\"collaboration-task-1-output\""
+press "id=\"collaboration-task-0-terminal\""
+wait text "Review assistant" 10000
+screenshot "shots/collaboration-terminal.png"
+press "role=button text=\"Open quick actions\""
+wait text "Agent collaboration" 10000
+press "text=\"Agent collaboration\""
+wait "id=\"collaboration-task-0-output\"" 10000
+press "id=\"collaboration-task-0-options\""
+wait "id=\"collaboration-remove\"" 10000
+press "id=\"collaboration-remove\""
+is hidden "id=\"collaboration-task-0-output\""
+press "id=\"collaboration-history\""
+press "id=\"collaboration-task-0-options\""
+wait "id=\"collaboration-remove\"" 10000
+press "id=\"collaboration-remove\""
+press "id=\"collaboration-close\""
+wait "role=button text=\"Open quick actions\"" 10000

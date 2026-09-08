@@ -1,0 +1,11 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# open-demo
+
+# section s1
+press "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+wait stable 400 5000

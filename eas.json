@@ -51,6 +51,7 @@
       "distribution": "internal",
       "environment": "production",
       "android": {
+        "credentialsSource": "remote",
         "buildType": "apk"
       }
     }

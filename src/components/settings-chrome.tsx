@@ -164,11 +164,12 @@ export function SettingsToggleRow({
         </Text>
       </View>
       <Toggle
+        accessibilityLabel={label}
         disabled={disabled}
         value={value}
         onValueChange={onValueChange}
-        // Maestro cannot target a bare Switch: rightOf/below match layout
-        // containers, not positions, so give each switch its label as an id.
+        // A stable id lets device tests target this switch independently of
+        // the label's surrounding layout containers.
         testID={`toggle-${label}`}
       />
     </View>

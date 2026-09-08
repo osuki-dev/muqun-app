@@ -126,7 +126,7 @@ export function NavHeaderBackButton({
 }: {
   /**
    * Named per screen: it is what a screen reader announces and, for Settings,
-   * what `maestro/flows/settings.yaml` taps.
+   * what the native settings end-to-end flow taps.
    */
   accessibilityLabel: string;
   onPress: () => void;

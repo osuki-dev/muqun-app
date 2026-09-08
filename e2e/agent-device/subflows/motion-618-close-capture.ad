@@ -1,0 +1,68 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# motion-618-close-capture
+
+# section s1
+wait stable 400 5000
+
+# section s2
+screenshot "dist/shots-618/60-view-mode-terminal-before.png"
+
+# section s3
+press "${TARGET}"
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+press "${TARGET}"
+
+# section s6
+wait stable 400 5000
+
+# section s7
+screenshot "dist/shots-618/61-view-mode-text.png"
+
+# section s8
+press "${TARGET}"
+
+# section s9
+is visible "${TARGET}"
+
+# section s10
+press "${TARGET}"
+
+# section s11
+wait stable 400 5000
+
+# section s12
+screenshot "dist/shots-618/62-view-mode-terminal-after.png"
+
+# section s13
+press "${TARGET}"
+
+# section s14
+is visible "${TARGET}"
+
+# section s15
+wait stable 400 5000
+
+# section s16
+screenshot "dist/shots-618/70-map-row-rest.png"
+
+# section s17
+longpress "${TARGET}" 1000
+
+# section s18
+wait stable 400 5000
+
+# section s19
+screenshot "dist/shots-618/71-map-row-menu.png"
+
+# section s20
+press "${X}" "${Y}"
+
+# section s21
+wait stable 400 5000
+
+# section s22
+screenshot "dist/shots-618/72-map-row-armed.png"
