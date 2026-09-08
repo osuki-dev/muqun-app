@@ -1,12 +1,14 @@
 import { t } from '@lingui/core/macro';
 
+import { TerminalBackendUnavailableError } from './herdr-compatibility';
+
 import {
   classifyTransportRefusal,
   GatewayTransportRefusalError,
   type TransportRefusal,
 } from './gateway-refusal';
 
-export type GatewayFailureKind = 'timeout' | 'network' | 'auth' | 'server' | 'request';
+export type GatewayFailureKind = 'timeout' | 'network' | 'auth' | 'server' | 'request' | 'backend';
 
 export type GatewayFailure = {
   kind: GatewayFailureKind;
@@ -120,6 +122,14 @@ export function describeGatewayFailure(
   error: unknown,
   fallback = t`Request failed.`
 ): GatewayFailure {
+  if (error instanceof TerminalBackendUnavailableError) {
+    return {
+      kind: 'backend',
+      message: error.message,
+      retryable: true,
+      needsPairing: false,
+    };
+  }
   // First, because it is the one case where the HTTP status is not enough to go
   // on. A pre-sealing refusal answers 403 for both `invalid_token` (pair again)
   // and `unknown_host` (pairing will not help at all), so the code decides.

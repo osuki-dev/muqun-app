@@ -81,6 +81,10 @@ msgstr "{0}分前"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· # 回確認あり}}"
 
+#: src/app/commands.tsx
+msgid "{collaborationCount} assigned tasks · view agents and output"
+msgstr "指派済み {collaborationCount} 件 · 進捗を確認"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
 msgstr "{host} は保存されている鍵と異なる鍵を提示しました。再インストール後に起こりますが、接続が傍受されている場合にも起こります。変わった理由が分かるまで置き換えないでください。"
@@ -162,9 +166,25 @@ msgstr "この行をサーバーの ~/.ssh/authorized_keys に追加してくだ
 msgid "AGENT"
 msgstr "エージェント"
 
+#: src/app/agent-collaboration.tsx
+#: src/app/commands.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Agent collaboration"
+msgstr "エージェント連携"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Agent collaboration is available in Herdr sessions."
+msgstr "エージェント連携は Herdr セッションで利用できます。"
+
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
 msgstr "エージェントコマンド"
+
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-collaboration-output.ts
+msgid "Agent no longer present"
+msgstr "エージェントは終了しました"
 
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
@@ -186,6 +206,10 @@ msgstr "QR コードを枠に合わせてください"
 msgid "All"
 msgstr "すべて"
 
+#: src/app/commands.tsx
+msgid "All commands"
+msgstr "すべてのコマンド"
+
 #: src/components/settings-servers.tsx
 msgid "All panes"
 msgstr "すべてのパネル"
@@ -197,6 +221,10 @@ msgstr "カメラを許可"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "カメラを許可するか、アドレスを入力してください。"
+
+#: src/app/agent-collaboration.tsx
+msgid "An extra pair of hands"
+msgstr "もう一人の助っ人"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -236,6 +264,10 @@ msgstr "承認"
 msgid "Approve and don't ask again"
 msgstr "承認し、今後は確認しない"
 
+#: src/app/agent-collaboration.tsx
+msgid "Ask another agent to review a change, investigate a bug, or run tests. Follow its status here while you keep working."
+msgstr "別のエージェントにレビューや調査、テストを依頼できます。作業を続けながら、ここで状態を確認できます。"
+
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "毎回たずねる"
@@ -247,6 +279,32 @@ msgstr "そのコードを Gateway に確認しています。"
 #: src/components/new-task-sheet.tsx
 msgid "Asking the server what it can run…"
 msgstr "このサーバーで実行できるものを問い合わせています…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Assign a task"
+msgstr "タスクを依頼"
+
+#: src/app/commands.tsx
+msgid "Assign work to another agent and follow its progress."
+msgstr "別のエージェントに依頼して進捗を確認します。"
+
+#: src/app/agent-collaboration.tsx
+msgid "Assignment history"
+msgstr "依頼履歴"
+
+#. placeholder {0}: history.length
+#: src/app/agent-collaboration.tsx
+msgid "Assignment history ({0})"
+msgstr "依頼履歴（{0}）"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Assignment options"
+msgstr "依頼のオプション"
+
+#: src/app/agent-collaboration.tsx
+msgid "Assignments on this device · current session"
+msgstr "この端末の依頼履歴 · 現在のセッション"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -284,6 +342,10 @@ msgstr "戻る"
 #: src/i18n/labels.ts
 msgid "Back one word"
 msgstr "1 単語戻る"
+
+#: src/app/agent-collaboration.tsx
+msgid "Back to assigned tasks"
+msgstr "依頼一覧に戻る"
 
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
@@ -355,6 +417,10 @@ msgstr "チャット"
 msgid "Check device authentication settings and try again."
 msgstr "デバイスの認証設定を確認して、もう一度お試しください。"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Check the assistant before sending again; it may have received the request."
+msgstr "再送する前に助手を確認してください。すでに届いている可能性があります。"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "システム認証を確認中…"
@@ -383,6 +449,10 @@ msgstr "ファイルを選択"
 msgid "Choose which simulator to show"
 msgstr "表示するシミュレータを選ぶ"
 
+#: src/app/agent-collaboration.tsx
+msgid "Choose who helps and what they should do."
+msgstr "誰に何を頼むかを選びます。"
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "行をクリア"
@@ -395,6 +465,10 @@ msgstr "ターミナルをクリア"
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "閉じる"
+
+#: src/app/agent-collaboration.tsx
+msgid "Close agent collaboration"
+msgstr "エージェント連携を閉じる"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -725,6 +799,7 @@ msgid "Could not generate a key"
 msgstr "鍵を生成できませんでした"
 
 #: src/components/new-task-sheet.tsx
+#: src/hooks/use-agent-collaboration.ts
 msgid "Could not list this server's agents."
 msgstr "このサーバーのエージェント一覧を取得できませんでした。"
 
@@ -777,8 +852,14 @@ msgid "Could not reach this server."
 msgstr "このサーバーに接続できませんでした。"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "ターミナルを読み取れませんでした。"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Could not refresh agent status."
+msgstr "エージェントの状態を更新できませんでした。"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -816,6 +897,10 @@ msgstr "キーを送信できませんでした。"
 msgid "Could not send shortcut."
 msgstr "ショートカットを送信できませんでした。"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Could not send the task."
+msgstr "タスクを送信できませんでした。"
+
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
 msgstr "ターミナルを開始できませんでした。"
@@ -839,6 +924,10 @@ msgstr "セッションを更新できませんでした。"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "ファイルをアップロードできませんでした。"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
+msgstr "Herdr のバージョンを確認できません。再接続するか Muqun Gateway を更新してください。"
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -883,6 +972,10 @@ msgstr "デモワークスペース"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒否"
+
+#: src/app/agent-collaboration.tsx
+msgid "Describe the task and what a good result looks like."
+msgstr "作業内容と期待する結果を説明してください。"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -931,6 +1024,7 @@ msgstr "新着情報を閉じる"
 msgid "Docs"
 msgstr "ドキュメント"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1008,6 +1102,10 @@ msgstr "URL を手動で入力"
 msgid "Escape"
 msgstr "エスケープ"
 
+#: src/app/agent-collaboration.tsx
+msgid "Existing assistant"
+msgstr "既存の助手"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -1067,6 +1165,10 @@ msgstr "1 単語進む"
 #: src/lib/demo-gateway.ts
 msgid "Free up context by summarizing the conversation so far"
 msgstr "これまでの会話を要約してコンテキストを空けます"
+
+#: src/app/commands.tsx
+msgid "Frequent"
+msgstr "よく使う"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -1156,9 +1258,22 @@ msgstr "{0} を隠す"
 msgid "Hide {name}"
 msgstr "{name} を隠す"
 
+#: src/app/agent-collaboration.tsx
+msgid "Hide assignment history"
+msgstr "依頼履歴を閉じる"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "キーボードを隠す"
+
+#: src/app/agent-collaboration.tsx
+msgid "Hide other agent types"
+msgstr "他の種類を閉じる"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Hide output"
+msgstr "出力を閉じる"
 
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
@@ -1197,6 +1312,10 @@ msgstr "待機"
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "画像"
+
+#: src/app/agent-collaboration.tsx
+msgid "Include current terminal output"
+msgstr "現在のターミナル出力を添付"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -1430,6 +1549,11 @@ msgstr "管理"
 msgid "Manage SSH hosts"
 msgstr "SSH ホストを管理"
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Mark reviewed"
+msgstr "確認済みにする"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
@@ -1511,6 +1635,11 @@ msgstr "名前"
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "名前を付けて、Gateway に表示されたコードを入力してください。"
 
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Needs your attention"
+msgstr "対応が必要です"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Never connected"
@@ -1520,6 +1649,10 @@ msgstr "一度も接続されていません"
 msgid "Never seen"
 msgstr "一度も確認されていません"
 
+#: src/app/agent-collaboration.tsx
+msgid "New assistant"
+msgstr "新しい助手"
+
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "新しいグループ"
@@ -1527,6 +1660,11 @@ msgstr "新しいグループ"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "新しいホスト鍵"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "New output available · refresh"
+msgstr "新しい出力があります · 更新"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
@@ -1562,6 +1700,10 @@ msgstr "実行中のエージェントはありません"
 msgid "No app on this phone opens web pages."
 msgstr "この端末にはウェブページを開けるアプリがありません。"
 
+#: src/app/agent-collaboration.tsx
+msgid "No assistants available yet. Try an existing assistant or reopen this picker."
+msgstr "利用できる助手がいません。既存の助手を選ぶか、この画面を開き直してください。"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "スキャンできるカメラがありません"
@@ -1577,6 +1719,14 @@ msgstr "一致するファイルはありません。"
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "Gateway がまだありませんか？"
+
+#: src/app/commands.tsx
+msgid "No matching commands. Try another word."
+msgstr "一致するコマンドがありません。別の語句で検索してください。"
+
+#: src/app/agent-collaboration.tsx
+msgid "No other agents in this session. Start a new assistant to collaborate."
+msgstr "他のエージェントがいません。新しい助手を起動できます。"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1623,6 +1773,10 @@ msgstr "SSH ホストはまだありません。追加すると、届く範囲�
 msgid "No still frames"
 msgstr "静止画に非対応"
 
+#: src/app/agent-collaboration.tsx
+msgid "No visible output yet."
+msgstr "まだ出力がありません。"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "利用できません"
@@ -1642,6 +1796,10 @@ msgstr "未接続"
 #: src/app/+not-found.tsx
 msgid "Not found"
 msgstr "見つかりません"
+
+#: src/app/agent-collaboration.tsx
+msgid "Not found on the Gateway's PATH. Herdr may still be able to start it."
+msgstr "Gateway の PATH にはありませんが、Herdr から起動できる場合があります。"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -1668,6 +1826,10 @@ msgstr "まだ何もありません。セッションが書き出したファイ
 msgid "Nothing to show yet."
 msgstr "まだ表示するものはありません。"
 
+#: src/components/toggle.tsx
+msgid "Off"
+msgstr "オフ"
+
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "オフライン"
@@ -1676,6 +1838,10 @@ msgstr "オフライン"
 msgid "Offline, not answering"
 msgstr "オフライン、応答がありません"
 
+#: src/components/toggle.tsx
+msgid "On"
+msgstr "オン"
+
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "オンラインです"
@@ -1683,6 +1849,10 @@ msgstr "オンラインです"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "オンライン"
+
+#: src/app/agent-collaboration.tsx
+msgid "Only the text below is shared. Conversation history is not shared automatically."
+msgstr "下のテキストだけを共有します。会話履歴は自動共有されません。"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open"
@@ -1746,6 +1916,11 @@ msgstr "クイックアクションを開く"
 msgid "Open SSH host {0}"
 msgstr "SSH ホスト {0} を開く"
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Open terminal"
+msgstr "ターミナルを見る"
+
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "ファイルツリーを開く"
@@ -1784,6 +1959,10 @@ msgstr "このエージェントのターミナルを開きます"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} のオプション"
+
+#: src/app/agent-collaboration.tsx
+msgid "Other agent types"
+msgstr "他のエージェント"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -1958,6 +2137,11 @@ msgstr "SSH ホスト {host} 経由で到達"
 msgid "Reaching the Gateway"
 msgstr "Gateway に接続中"
 
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Ready for input"
+msgstr "入力待ち"
+
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "エージェントが応答待ちになった通知と Gateway の更新を受け取ります。"
@@ -1965,6 +2149,11 @@ msgstr "エージェントが応答待ちになった通知と Gateway の更新
 #: src/i18n/labels.ts
 msgid "Recent commits"
 msgstr "最近のコミット"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Recent output"
+msgstr "最近の出力"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -1985,6 +2174,7 @@ msgstr "{0} に再接続"
 msgid "Reconnecting · {0}"
 msgstr "再接続中 · {0}"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "更新"
@@ -1993,12 +2183,25 @@ msgstr "更新"
 msgid "Refresh files"
 msgstr "ファイルを再読み込み"
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Refresh output"
+msgstr "出力を更新"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Refresh to check Gateway and Herdr compatibility before assigning."
+msgstr "更新して Gateway と Herdr の対応状況を確認してください。"
+
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} を取り除く"
+
+#: src/app/agent-collaboration.tsx
+msgid "Remove from history"
+msgstr "履歴から削除"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -2044,6 +2247,10 @@ msgstr "必須です。"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です。"
 
+#: src/app/agent-collaboration.tsx
+msgid "Respond to agent"
+msgstr "エージェントに応答"
+
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "更新を完了するには牧群を再起動してください"
@@ -2086,6 +2293,13 @@ msgstr "リターンキー"
 msgid "Return to the server list and pair again."
 msgstr "サーバー一覧に戻って、もう一度ペアリングしてください。"
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-collaboration-output.ts
+msgid "Return to this server to continue."
+msgstr "このサーバーに戻って続けてください。"
+
 #: src/lib/demo-gateway.ts
 msgid "Review"
 msgstr "レビュー"
@@ -2094,17 +2308,38 @@ msgstr "レビュー"
 msgid "Review a GitHub pull request"
 msgstr "GitHub のプルリクエストをレビューします"
 
+#: src/lib/demo-gateway.ts
+msgid "Review assistant"
+msgstr "レビュー助手"
+
+#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 msgid "Review changes"
 msgstr "変更をレビュー"
+
+#: src/lib/demo-gateway.ts
+msgid "Review finished. The theme fallback has test coverage. No changes were made."
+msgstr "レビュー終了。テーマのフォールバックはテスト済みです。ファイルは変更していません。"
 
 #: src/app/commands.tsx
 msgid "Review the current changes."
 msgstr "現在の変更をレビューしてください。"
 
+#: src/app/agent-collaboration.tsx
+msgid "Review the current changes. Report bugs and missing tests; do not edit files."
+msgstr "現在の変更をレビューし、不具合と不足するテストを報告してください。ファイルは変更しないでください。"
+
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "失敗しているテストを調べて直して。"
+
+#: src/app/agent-collaboration.tsx
+msgid "Reviewed by you"
+msgstr "確認済み"
+
+#: src/lib/demo-gateway.ts
+msgid "Reviewing the changes and checking the tests…"
+msgstr "変更とテストを確認中…"
 
 #: src/components/settings-servers.tsx
 msgid "Revoke"
@@ -2138,9 +2373,21 @@ msgstr "コマンドを実行"
 msgid "Run relevant tests"
 msgstr "関連するテストを実行"
 
+#: src/app/agent-collaboration.tsx
+msgid "Run tests"
+msgstr "テストを実行"
+
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります。"
+
+#: src/app/agent-collaboration.tsx
+msgid "Run the relevant tests and report failures with reproduction steps."
+msgstr "関連テストを実行し、失敗と再現手順を報告してください。"
+
+#: src/app/agent-collaboration.tsx
+msgid "Same workspace"
+msgstr "同じワークスペース"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -2211,6 +2458,10 @@ msgstr "スキャンにはカメラが必要ですが、このブラウザでは
 msgid "Search"
 msgstr "検索"
 
+#: src/app/commands.tsx
+msgid "Search actions and commands"
+msgstr "操作とコマンドを検索"
+
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "ファイルを検索"
@@ -2255,6 +2506,10 @@ msgstr "{spoken} を送信"
 msgid "Send a message"
 msgstr "メッセージを送信"
 
+#: src/app/agent-collaboration.tsx
+msgid "Send task"
+msgstr "タスクを送信"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "文字を送る"
@@ -2262,6 +2517,10 @@ msgstr "文字を送る"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "エージェントに送信"
+
+#: src/app/agent-collaboration.tsx
+msgid "Sending task…"
+msgstr "送信中…"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -2498,6 +2757,10 @@ msgstr "空のコンテキストで新しいセッションを開始します"
 msgid "Start an agent and send it the first thing to do."
 msgstr "エージェントを起動して、最初にやることを伝えます。"
 
+#: src/app/agent-collaboration.tsx
+msgid "Start assistant and send"
+msgstr "助手を起動して送信"
+
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "タスクを開始"
@@ -2505,6 +2768,10 @@ msgstr "タスクを開始"
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "{name} を起動しています"
+
+#: src/app/agent-collaboration.tsx
+msgid "Starting assistant and sending…"
+msgstr "アシスタントを起動して送信中…"
 
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
@@ -2515,6 +2782,24 @@ msgstr "カメラを起動しています"
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
 msgstr "開始しています…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Starts beside this terminal in the same project."
+msgstr "同じプロジェクトで隣に起動します。"
+
+#: src/app/agent-collaboration.tsx
+msgid "Status describes the agent, not task completion. Updates while connected; review its output to confirm the result. Removing history does not stop an agent."
+msgstr "状態はエージェントの状態であり、タスク完了を意味しません。接続中は自動更新されます。結果は出力で確認してください。履歴の削除ではエージェントは停止しません。"
+
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Status unavailable"
+msgstr "状態を取得できません"
+
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Status unknown"
+msgstr "状態不明"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -2586,6 +2871,14 @@ msgstr "写真を撮る"
 msgid "Tap again to remove"
 msgstr "もう一度タップで削除"
 
+#: src/app/agent-collaboration.tsx
+msgid "Task instructions"
+msgstr "タスクの指示"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Task sent. You can keep working in your current terminal."
+msgstr "送信しました。現在のターミナルで作業を続けられます。"
+
 #: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
@@ -2604,6 +2897,10 @@ msgstr "ターミナルコマンド"
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
 msgstr "ターミナルキー行"
+
+#: src/app/agent-collaboration.tsx
+msgid "Terminal snapshot · refresh to see newer output"
+msgstr "ターミナルのスナップショット · 更新して最新の出力を確認"
 
 #: src/components/settings-terminal.tsx
 msgid "Text size"
@@ -2648,6 +2945,18 @@ msgstr "エージェントは今、別のことを尋ねています。"
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
 msgstr "エージェントはもう待っていません。"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "The assistant could not start. Check its terminal before continuing. Your task has not been sent."
+msgstr "アシスタントを起動できませんでした。続ける前にターミナルを確認してください。タスクは送信されていません。"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "The assistant needs your approval or input in its terminal. Your task has not been sent. Your instructions are still here."
+msgstr "アシスタントがターミナルで承認または入力を待っています。タスクは送信されていません。指示は保持されています。"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "The assistant was created, but task delivery was not confirmed. Check its terminal before sending again. Your instructions are still here."
+msgstr "助手は作成されましたが、送達を確認できませんでした。再送前にターミナルを確認してください。指示は保持されています。"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
@@ -2726,6 +3035,10 @@ msgstr "シミュレータが時間内にシャットダウンしませんでし
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください。"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
+msgstr "ターミナルは作成されましたが、アシスタントの準備完了は確認できていません。まだ起動中の可能性があります。再試行する前にターミナルを確認してください。指示は保持されています。"
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "やり取りを会話として表示し、ツールの手順は折りたたみます。"
@@ -2743,6 +3056,14 @@ msgstr "テーマ、{0}"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "このエージェントはその選択肢を提示していません。"
+
+#: src/app/agent-collaboration.tsx
+msgid "This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one."
+msgstr "この助手は作業中か対応待ちです。ターミナルを確認するか、別の助手を選んでください。"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "This assistant is no longer ready. Refresh or choose another."
+msgstr "この助手は入力待ちではなくなりました。更新するか別の助手を選んでください。"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -2799,6 +3120,10 @@ msgstr "このリンクの先には何もありません"
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "この QR コードは正しくありません。"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "This server cannot start an assistant yet."
+msgstr "このサーバーではまだ助手を起動できません。"
 
 #: src/lib/network-error.ts
 msgid "This server cannot use this device's stored key. Pair it again to reconnect."
@@ -2954,9 +3279,17 @@ msgstr "解除しています…"
 msgid "Up arrow"
 msgstr "上矢印"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
+msgstr "連携には Muqun Gateway の更新が必要です。既存のターミナルは引き続き使えます。"
+
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "更新の準備完了 · 再起動中…"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
+msgstr "連携にはこのセッションの Herdr 0.9.0 以降が必要です。"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -3028,6 +3361,10 @@ msgstr "アップロードの完了を待っています…"
 msgid "What is running"
 msgstr "実行中のもの"
 
+#: src/app/agent-collaboration.tsx
+msgid "What should they do?"
+msgstr "何を依頼しますか？"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新着情報"
@@ -3036,6 +3373,8 @@ msgstr "新着情報"
 msgid "While you were away"
 msgstr "離席中の変化"
 
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "作業中"
@@ -3069,6 +3408,10 @@ msgstr "この行をヤンク"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "昨日"
+
+#: src/app/agent-collaboration.tsx
+msgid "You will stay in your current terminal. The assistant works independently."
+msgstr "現在のターミナルは切り替わりません。助手は独立して作業します。"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx

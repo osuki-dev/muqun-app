@@ -81,6 +81,10 @@ msgstr "{0}m ago"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· asked once} other {· asked # times}}"
 
+#: src/app/commands.tsx
+msgid "{collaborationCount} assigned tasks · view agents and output"
+msgstr "{collaborationCount} assigned tasks · view agents and output"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
 msgstr "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -162,9 +166,25 @@ msgstr "Add this line to ~/.ssh/authorized_keys on the server:"
 msgid "AGENT"
 msgstr "AGENT"
 
+#: src/app/agent-collaboration.tsx
+#: src/app/commands.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Agent collaboration"
+msgstr "Agent collaboration"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Agent collaboration is available in Herdr sessions."
+msgstr "Agent collaboration is available in Herdr sessions."
+
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
 msgstr "AGENT COMMANDS"
+
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-collaboration-output.ts
+msgid "Agent no longer present"
+msgstr "Agent no longer present"
 
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
@@ -186,6 +206,10 @@ msgstr "Align the QR inside the frame"
 msgid "All"
 msgstr "All"
 
+#: src/app/commands.tsx
+msgid "All commands"
+msgstr "All commands"
+
 #: src/components/settings-servers.tsx
 msgid "All panes"
 msgstr "All panes"
@@ -197,6 +221,10 @@ msgstr "Allow camera"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "Allow the camera, or enter the address instead."
+
+#: src/app/agent-collaboration.tsx
+msgid "An extra pair of hands"
+msgstr "An extra pair of hands"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -236,6 +264,10 @@ msgstr "Approve"
 msgid "Approve and don't ask again"
 msgstr "Approve and don't ask again"
 
+#: src/app/agent-collaboration.tsx
+msgid "Ask another agent to review a change, investigate a bug, or run tests. Follow its status here while you keep working."
+msgstr "Ask another agent to review a change, investigate a bug, or run tests. Follow its status here while you keep working."
+
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "Ask each time"
@@ -247,6 +279,32 @@ msgstr "Asking the Gateway about that code."
 #: src/components/new-task-sheet.tsx
 msgid "Asking the server what it can run…"
 msgstr "Asking the server what it can run…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Assign a task"
+msgstr "Assign a task"
+
+#: src/app/commands.tsx
+msgid "Assign work to another agent and follow its progress."
+msgstr "Assign work to another agent and follow its progress."
+
+#: src/app/agent-collaboration.tsx
+msgid "Assignment history"
+msgstr "Assignment history"
+
+#. placeholder {0}: history.length
+#: src/app/agent-collaboration.tsx
+msgid "Assignment history ({0})"
+msgstr "Assignment history ({0})"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Assignment options"
+msgstr "Assignment options"
+
+#: src/app/agent-collaboration.tsx
+msgid "Assignments on this device · current session"
+msgstr "Assignments on this device · current session"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -284,6 +342,10 @@ msgstr "Back"
 #: src/i18n/labels.ts
 msgid "Back one word"
 msgstr "Back one word"
+
+#: src/app/agent-collaboration.tsx
+msgid "Back to assigned tasks"
+msgstr "Back to assigned tasks"
 
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
@@ -355,6 +417,10 @@ msgstr "Chat"
 msgid "Check device authentication settings and try again."
 msgstr "Check device authentication settings and try again."
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Check the assistant before sending again; it may have received the request."
+msgstr "Check the assistant before sending again; it may have received the request."
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Checking system authentication…"
@@ -383,6 +449,10 @@ msgstr "Choose files"
 msgid "Choose which simulator to show"
 msgstr "Choose which simulator to show"
 
+#: src/app/agent-collaboration.tsx
+msgid "Choose who helps and what they should do."
+msgstr "Choose who helps and what they should do."
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "Clear line"
@@ -395,6 +465,10 @@ msgstr "Clear terminal"
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Close"
+
+#: src/app/agent-collaboration.tsx
+msgid "Close agent collaboration"
+msgstr "Close agent collaboration"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -725,6 +799,7 @@ msgid "Could not generate a key"
 msgstr "Could not generate a key"
 
 #: src/components/new-task-sheet.tsx
+#: src/hooks/use-agent-collaboration.ts
 msgid "Could not list this server's agents."
 msgstr "Could not list this server's agents."
 
@@ -777,8 +852,14 @@ msgid "Could not reach this server."
 msgstr "Could not reach this server."
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "Could not read the terminal."
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Could not refresh agent status."
+msgstr "Could not refresh agent status."
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -816,6 +897,10 @@ msgstr "Could not send key."
 msgid "Could not send shortcut."
 msgstr "Could not send shortcut."
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Could not send the task."
+msgstr "Could not send the task."
+
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
 msgstr "Could not start a terminal."
@@ -839,6 +924,10 @@ msgstr "Could not update the session."
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "Could not upload the file."
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
+msgstr "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
 
 #: src/i18n/labels.ts
 msgid "Current path"
@@ -883,6 +972,10 @@ msgstr "Demo workspace"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Deny"
+
+#: src/app/agent-collaboration.tsx
+msgid "Describe the task and what a good result looks like."
+msgstr "Describe the task and what a good result looks like."
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -931,6 +1024,7 @@ msgstr "Dismiss what's new"
 msgid "Docs"
 msgstr "Docs"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1008,6 +1102,10 @@ msgstr "Enter URL manually"
 msgid "Escape"
 msgstr "Escape"
 
+#: src/app/agent-collaboration.tsx
+msgid "Existing assistant"
+msgstr "Existing assistant"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -1067,6 +1165,10 @@ msgstr "Forward one word"
 #: src/lib/demo-gateway.ts
 msgid "Free up context by summarizing the conversation so far"
 msgstr "Free up context by summarizing the conversation so far"
+
+#: src/app/commands.tsx
+msgid "Frequent"
+msgstr "Frequent"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
@@ -1156,9 +1258,22 @@ msgstr "Hide {0}"
 msgid "Hide {name}"
 msgstr "Hide {name}"
 
+#: src/app/agent-collaboration.tsx
+msgid "Hide assignment history"
+msgstr "Hide assignment history"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Hide keyboard"
+
+#: src/app/agent-collaboration.tsx
+msgid "Hide other agent types"
+msgstr "Hide other agent types"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Hide output"
+msgstr "Hide output"
 
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
@@ -1197,6 +1312,10 @@ msgstr "Idle"
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "Images"
+
+#: src/app/agent-collaboration.tsx
+msgid "Include current terminal output"
+msgstr "Include current terminal output"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -1430,6 +1549,11 @@ msgstr "Manage"
 msgid "Manage SSH hosts"
 msgstr "Manage SSH hosts"
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Mark reviewed"
+msgstr "Mark reviewed"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
@@ -1511,6 +1635,11 @@ msgstr "Name"
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Name it, then enter the code shown by the Gateway."
 
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Needs your attention"
+msgstr "Needs your attention"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Never connected"
@@ -1520,6 +1649,10 @@ msgstr "Never connected"
 msgid "Never seen"
 msgstr "Never seen"
 
+#: src/app/agent-collaboration.tsx
+msgid "New assistant"
+msgstr "New assistant"
+
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "New group"
@@ -1527,6 +1660,11 @@ msgstr "New group"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "New host key"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "New output available · refresh"
+msgstr "New output available · refresh"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
@@ -1562,6 +1700,10 @@ msgstr "No agents running"
 msgid "No app on this phone opens web pages."
 msgstr "No app on this phone opens web pages."
 
+#: src/app/agent-collaboration.tsx
+msgid "No assistants available yet. Try an existing assistant or reopen this picker."
+msgstr "No assistants available yet. Try an existing assistant or reopen this picker."
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "No camera to scan with"
@@ -1577,6 +1719,14 @@ msgstr "No files match."
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "No Gateway yet?"
+
+#: src/app/commands.tsx
+msgid "No matching commands. Try another word."
+msgstr "No matching commands. Try another word."
+
+#: src/app/agent-collaboration.tsx
+msgid "No other agents in this session. Start a new assistant to collaborate."
+msgstr "No other agents in this session. Start a new assistant to collaborate."
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1623,6 +1773,10 @@ msgstr "No SSH hosts yet. Add one to open a shell on any machine you can reach."
 msgid "No still frames"
 msgstr "No still frames"
 
+#: src/app/agent-collaboration.tsx
+msgid "No visible output yet."
+msgstr "No visible output yet."
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Not available"
@@ -1642,6 +1796,10 @@ msgstr "NOT CONNECTED"
 #: src/app/+not-found.tsx
 msgid "Not found"
 msgstr "Not found"
+
+#: src/app/agent-collaboration.tsx
+msgid "Not found on the Gateway's PATH. Herdr may still be able to start it."
+msgstr "Not found on the Gateway's PATH. Herdr may still be able to start it."
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -1668,6 +1826,10 @@ msgstr "Nothing here yet. Files the session writes show up on their own."
 msgid "Nothing to show yet."
 msgstr "Nothing to show yet."
 
+#: src/components/toggle.tsx
+msgid "Off"
+msgstr "Off"
+
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "OFFLINE"
@@ -1676,6 +1838,10 @@ msgstr "OFFLINE"
 msgid "Offline, not answering"
 msgstr "Offline, not answering"
 
+#: src/components/toggle.tsx
+msgid "On"
+msgstr "On"
+
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "Online"
@@ -1683,6 +1849,10 @@ msgstr "Online"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "ONLINE"
+
+#: src/app/agent-collaboration.tsx
+msgid "Only the text below is shared. Conversation history is not shared automatically."
+msgstr "Only the text below is shared. Conversation history is not shared automatically."
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open"
@@ -1746,6 +1916,11 @@ msgstr "Open quick actions"
 msgid "Open SSH host {0}"
 msgstr "Open SSH host {0}"
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Open terminal"
+msgstr "Open terminal"
+
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "Open the file explorer"
@@ -1784,6 +1959,10 @@ msgstr "Opens this agent's terminal"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Options for {0}"
+
+#: src/app/agent-collaboration.tsx
+msgid "Other agent types"
+msgstr "Other agent types"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -1958,6 +2137,11 @@ msgstr "Reached through SSH host {host}"
 msgid "Reaching the Gateway"
 msgstr "Reaching the Gateway"
 
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Ready for input"
+msgstr "Ready for input"
+
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "Receive agent blocks and gateway updates."
@@ -1965,6 +2149,11 @@ msgstr "Receive agent blocks and gateway updates."
 #: src/i18n/labels.ts
 msgid "Recent commits"
 msgstr "Recent commits"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Recent output"
+msgstr "Recent output"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -1985,6 +2174,7 @@ msgstr "Reconnect to {0}"
 msgid "Reconnecting · {0}"
 msgstr "Reconnecting · {0}"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Refresh"
@@ -1993,12 +2183,25 @@ msgstr "Refresh"
 msgid "Refresh files"
 msgstr "Refresh files"
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+msgid "Refresh output"
+msgstr "Refresh output"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Refresh to check Gateway and Herdr compatibility before assigning."
+msgstr "Refresh to check Gateway and Herdr compatibility before assigning."
+
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Remove {0}"
+
+#: src/app/agent-collaboration.tsx
+msgid "Remove from history"
+msgstr "Remove from history"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
@@ -2044,6 +2247,10 @@ msgstr "Required."
 msgid "Requires iOS 16.1 or later."
 msgstr "Requires iOS 16.1 or later."
 
+#: src/app/agent-collaboration.tsx
+msgid "Respond to agent"
+msgstr "Respond to agent"
+
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Restart Muqun to finish updating"
@@ -2086,6 +2293,13 @@ msgstr "Return"
 msgid "Return to the server list and pair again."
 msgstr "Return to the server list and pair again."
 
+#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-collaboration-output.ts
+msgid "Return to this server to continue."
+msgstr "Return to this server to continue."
+
 #: src/lib/demo-gateway.ts
 msgid "Review"
 msgstr "Review"
@@ -2094,17 +2308,38 @@ msgstr "Review"
 msgid "Review a GitHub pull request"
 msgstr "Review a GitHub pull request"
 
+#: src/lib/demo-gateway.ts
+msgid "Review assistant"
+msgstr "Review assistant"
+
+#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 msgid "Review changes"
 msgstr "Review changes"
+
+#: src/lib/demo-gateway.ts
+msgid "Review finished. The theme fallback has test coverage. No changes were made."
+msgstr "Review finished. The theme fallback has test coverage. No changes were made."
 
 #: src/app/commands.tsx
 msgid "Review the current changes."
 msgstr "Review the current changes."
 
+#: src/app/agent-collaboration.tsx
+msgid "Review the current changes. Report bugs and missing tests; do not edit files."
+msgstr "Review the current changes. Report bugs and missing tests; do not edit files."
+
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "Review the failing test and fix it."
+
+#: src/app/agent-collaboration.tsx
+msgid "Reviewed by you"
+msgstr "Reviewed by you"
+
+#: src/lib/demo-gateway.ts
+msgid "Reviewing the changes and checking the tests…"
+msgstr "Reviewing the changes and checking the tests…"
 
 #: src/components/settings-servers.tsx
 msgid "Revoke"
@@ -2138,9 +2373,21 @@ msgstr "Run command"
 msgid "Run relevant tests"
 msgstr "Run relevant tests"
 
+#: src/app/agent-collaboration.tsx
+msgid "Run tests"
+msgstr "Run tests"
+
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
+
+#: src/app/agent-collaboration.tsx
+msgid "Run the relevant tests and report failures with reproduction steps."
+msgstr "Run the relevant tests and report failures with reproduction steps."
+
+#: src/app/agent-collaboration.tsx
+msgid "Same workspace"
+msgstr "Same workspace"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -2211,6 +2458,10 @@ msgstr "Scanning needs a camera, which this browser does not offer."
 msgid "Search"
 msgstr "Search"
 
+#: src/app/commands.tsx
+msgid "Search actions and commands"
+msgstr "Search actions and commands"
+
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "Search files"
@@ -2255,6 +2506,10 @@ msgstr "Send {spoken}"
 msgid "Send a message"
 msgstr "Send a message"
 
+#: src/app/agent-collaboration.tsx
+msgid "Send task"
+msgstr "Send task"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Send the text"
@@ -2262,6 +2517,10 @@ msgstr "Send the text"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Send to agent"
+
+#: src/app/agent-collaboration.tsx
+msgid "Sending task…"
+msgstr "Sending task…"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -2498,6 +2757,10 @@ msgstr "Start a new session with empty context"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Start an agent and send it the first thing to do."
 
+#: src/app/agent-collaboration.tsx
+msgid "Start assistant and send"
+msgstr "Start assistant and send"
+
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Start task"
@@ -2505,6 +2768,10 @@ msgstr "Start task"
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Starting {name}"
+
+#: src/app/agent-collaboration.tsx
+msgid "Starting assistant and sending…"
+msgstr "Starting assistant and sending…"
 
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
@@ -2515,6 +2782,24 @@ msgstr "Starting the camera"
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
 msgstr "Starting…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Starts beside this terminal in the same project."
+msgstr "Starts beside this terminal in the same project."
+
+#: src/app/agent-collaboration.tsx
+msgid "Status describes the agent, not task completion. Updates while connected; review its output to confirm the result. Removing history does not stop an agent."
+msgstr "Status describes the agent, not task completion. Updates while connected; review its output to confirm the result. Removing history does not stop an agent."
+
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Status unavailable"
+msgstr "Status unavailable"
+
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Status unknown"
+msgstr "Status unknown"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -2586,6 +2871,14 @@ msgstr "Take photo"
 msgid "Tap again to remove"
 msgstr "Tap again to remove"
 
+#: src/app/agent-collaboration.tsx
+msgid "Task instructions"
+msgstr "Task instructions"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Task sent. You can keep working in your current terminal."
+msgstr "Task sent. You can keep working in your current terminal."
+
 #: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
@@ -2604,6 +2897,10 @@ msgstr "TERMINAL COMMANDS"
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
 msgstr "Terminal key row"
+
+#: src/app/agent-collaboration.tsx
+msgid "Terminal snapshot · refresh to see newer output"
+msgstr "Terminal snapshot · refresh to see newer output"
 
 #: src/components/settings-terminal.tsx
 msgid "Text size"
@@ -2648,6 +2945,18 @@ msgstr "The agent is asking something else now."
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
 msgstr "The agent is no longer waiting."
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "The assistant could not start. Check its terminal before continuing. Your task has not been sent."
+msgstr "The assistant could not start. Check its terminal before continuing. Your task has not been sent."
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "The assistant needs your approval or input in its terminal. Your task has not been sent. Your instructions are still here."
+msgstr "The assistant needs your approval or input in its terminal. Your task has not been sent. Your instructions are still here."
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "The assistant was created, but task delivery was not confirmed. Check its terminal before sending again. Your instructions are still here."
+msgstr "The assistant was created, but task delivery was not confirmed. Check its terminal before sending again. Your instructions are still here."
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
@@ -2726,6 +3035,10 @@ msgstr "The simulator did not shut down in time."
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
+msgstr "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "The transcript as a conversation, with tool steps folded away."
@@ -2743,6 +3056,14 @@ msgstr "Theme, {0}"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "This agent did not offer that answer."
+
+#: src/app/agent-collaboration.tsx
+msgid "This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one."
+msgstr "This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one."
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "This assistant is no longer ready. Refresh or choose another."
+msgstr "This assistant is no longer ready. Refresh or choose another."
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -2799,6 +3120,10 @@ msgstr "This link goes nowhere"
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "This QR code is not valid."
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "This server cannot start an assistant yet."
+msgstr "This server cannot start an assistant yet."
 
 #: src/lib/network-error.ts
 msgid "This server cannot use this device's stored key. Pair it again to reconnect."
@@ -2954,9 +3279,17 @@ msgstr "Unpairing…"
 msgid "Up arrow"
 msgstr "Up arrow"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
+msgstr "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
+
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "Update ready · restarting…"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
+msgstr "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -3028,6 +3361,10 @@ msgstr "Waiting for uploads to finish…"
 msgid "What is running"
 msgstr "What is running"
 
+#: src/app/agent-collaboration.tsx
+msgid "What should they do?"
+msgstr "What should they do?"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "What's new"
@@ -3036,6 +3373,8 @@ msgstr "What's new"
 msgid "While you were away"
 msgstr "While you were away"
 
+#: src/components/collaboration-notice.tsx
+#: src/hooks/use-agent-collaboration.ts
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Working"
@@ -3069,6 +3408,10 @@ msgstr "Yank this line"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Yesterday"
+
+#: src/app/agent-collaboration.tsx
+msgid "You will stay in your current terminal. The assistant works independently."
+msgstr "You will stay in your current terminal. The assistant works independently."
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx

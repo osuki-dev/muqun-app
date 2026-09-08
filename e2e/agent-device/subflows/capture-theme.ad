@@ -1,0 +1,68 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# capture-theme
+
+# section s1
+press "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+press "${TARGET}"
+
+# section s4
+scroll down --pixels 320
+
+# section s5
+press "${TARGET}"
+
+# section s6
+wait stable 400 5000
+
+# section s7
+is visible "${TARGET}"
+
+# section s8
+press "${TARGET}"
+
+# section s9
+wait stable 400 5000
+
+# section s10
+is visible "${TARGET}"
+
+# section s11
+screenshot "shots/themes/${SHOT}-1-settings.png"
+
+# section s12
+press "${TARGET}"
+
+# section s13
+is visible "${TARGET}"
+
+# section s14
+wait stable 400 5000
+
+# section s15
+screenshot "shots/themes/${SHOT}-2-home.png"
+
+# section s16
+press "${TARGET}"
+
+# section s17
+is visible "${TARGET}"
+
+# section s18
+wait stable 400 5000
+
+# section s19
+screenshot "shots/themes/${SHOT}-3-terminal.png"
+
+# section s20
+press "${TARGET}"
+
+# section s21
+is visible "${TARGET}"
+
+# section s22
+wait stable 400 5000

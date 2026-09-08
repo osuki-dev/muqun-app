@@ -1,0 +1,71 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# store-shot-actions
+
+# section s1
+open "dev.osuki.muqun" --relaunch
+
+# section s2
+wait stable 400 5000
+
+# section s3
+press "${TARGET}"
+
+# section s4
+press "${TARGET}"
+
+# section s5
+is visible "${TARGET}"
+
+# section s6
+scroll down --pixels 320
+
+# section s7
+press "${TARGET}"
+
+# section s8
+is visible "${TARGET}"
+
+# section s9
+press "${TARGET}"
+
+# section s10
+wait stable 400 5000
+
+# section s11
+back
+
+# section s12
+wait stable 400 5000
+
+# section s13
+back
+
+# section s14
+wait stable 400 5000
+
+# section s15
+open "dev.osuki.muqun" --relaunch
+
+# section s16
+wait stable 400 5000
+
+# section s17
+is visible "${TARGET}"
+
+# section s18
+press "${TARGET}"
+
+# section s19
+is visible "${TARGET}"
+
+# section s20
+wait stable 400 5000
+
+# section s21
+press "${TARGET}"
+
+# section s22
+wait stable 400 5000
+
+# section s23
+screenshot "shots/actions.png"

@@ -75,8 +75,21 @@ export const demoRecord: GatewayRecord = {
 };
 
 let active = false;
+let demoAssistant: { kind: string; prompt: string; startedAt: number; instanceId: string } | null =
+  null;
+
+function demoAssistantStatus() {
+  return demoAssistant && Date.now() - demoAssistant.startedAt < 8000 ? 'working' : 'idle';
+}
+
+export function demoSendAgentText(target: string, text: string): void {
+  if (target === 'pane-assistant' && demoAssistant) {
+    demoAssistant = { ...demoAssistant, prompt: text, startedAt: Date.now() };
+  }
+}
 
 export function setDemoActive(value: boolean): void {
+  if (!value) demoAssistant = null;
   active = value;
 }
 
@@ -276,6 +289,15 @@ let tick = 0;
 
 function demoPaneRows(paneId: string, advance: boolean): string[] {
   if (advance) tick += 1;
+  if (paneId === 'pane-assistant' && demoAssistant) {
+    return [
+      demoAssistant.prompt,
+      '',
+      demoAssistantStatus() === 'working'
+        ? i18n._(msg`Reviewing the changes and checking the tests…`)
+        : i18n._(msg`Review finished. The theme fallback has test coverage. No changes were made.`),
+    ].flatMap((line) => line.split('\n'));
+  }
   if (paneId === 'pane-2') return NVIM_OUTPUT;
   if (paneId === 'pane-3') return ZSH_OUTPUT;
   if (paneId === 'pane-4') return GIT_OUTPUT;
@@ -847,12 +869,13 @@ export function demoHealth() {
     // would put a banner on screen that no bundled answer can resolve. Spawning
     // is listed because `demoSpawnedAgent` really does hand back a pane the
     // demo session has; agent_events because the away fixture answers it.
-    capabilities: ['agent_events', AGENT_SPAWN_CAPABILITY],
+    capabilities: ['agent_events', AGENT_SPAWN_CAPABILITY, 'agent_collaboration'],
+    backends: [{ sessionId: SESSION_ID, kind: 'herdr', connected: true, version: '0.9.0' }],
     serverId: DEMO_SERVER_ID,
     label: demoRecord.label,
     herdr: {
       connected: true,
-      version: '0.7.5',
+      version: '0.9.0',
       protocol: 17,
       compatible: true,
       supportedProtocolMin: 17,
@@ -872,10 +895,43 @@ export function demoTabs(): GatewayEntity[] {
   return normalizeGatewayEntities(tabsRaw(), []);
 }
 export function demoPanes(): GatewayEntity[] {
-  return normalizeGatewayEntities(panesRaw, []);
+  return normalizeGatewayEntities(
+    demoAssistant
+      ? [
+          ...panesRaw,
+          {
+            id: 'pane-assistant',
+            pane_id: 'pane-assistant',
+            tab_id: 'tab-1',
+            workspace_id: 'ws-1',
+            label: i18n._(msg`Review assistant`),
+            agent: demoAssistant.kind,
+            agent_status: demoAssistantStatus(),
+            cwd: '~/code/muqun',
+          },
+        ]
+      : panesRaw,
+    []
+  );
 }
 export function demoAgents(): GatewayEntity[] {
-  return normalizeGatewayEntities(agentsRaw, []);
+  return normalizeGatewayEntities(
+    demoAssistant
+      ? [
+          ...agentsRaw,
+          {
+            id: 'pane-assistant',
+            pane_id: 'pane-assistant',
+            target: 'pane-assistant',
+            instance_id: demoAssistant.instanceId,
+            agent: demoAssistant.kind,
+            label: i18n._(msg`Review assistant`),
+            status: demoAssistantStatus(),
+          },
+        ]
+      : agentsRaw,
+    []
+  );
 }
 
 /**
@@ -910,18 +966,25 @@ export function demoRecentCwds(): Record<string, unknown> {
 }
 
 /**
- * A spawn, answered with the demo's own agent pane.
- *
- * Nothing is created: the fixture session is a fixed five panes, and inventing
- * a sixth would hand the phone an id that the next snapshot does not contain,
- * which is the one failure the panel picker's retry cannot recover from. So the
- * demo does what a real gateway does at the only point that matters to the app
- * -- it names a pane that exists, and the sheet lands on it.
+ * An assistant appears in subsequent agent/pane snapshots and moves from
+ * working to ready. Leaving demo mode removes this transient fixture.
  */
-export function demoSpawnedAgent(request: { agent: string }): Record<string, unknown> {
+export function demoSpawnedAgent(request: {
+  agent: string;
+  prompt?: string;
+}): Record<string, unknown> {
+  demoAssistant = {
+    kind: request.agent,
+    prompt: request.prompt ?? '',
+    startedAt: Date.now(),
+    instanceId: `demo-${Date.now()}-${Math.random()}`,
+  };
   return {
+    agent_started: true,
+    prompt_submitted: Boolean(request.prompt),
+    agent_instance_id: demoAssistant.instanceId,
     pane: {
-      pane_id: 'pane-1',
+      pane_id: 'pane-assistant',
       tab_id: 'tab-1',
       workspace_id: 'ws-1',
       agent: request.agent,

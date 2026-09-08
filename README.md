@@ -36,8 +36,10 @@ because there isn't one.
 - **Finds its way around a busy machine.** One sheet outlines the whole
   workspace — every group, every terminal, addressed the way tmux addresses it — and
   you can open a port on that machine in your phone's browser.
-- **Starts the next one.** Pick an agent, pick a directory the session already
-  knows, type or dictate the prompt; Muqun opens the terminal it just made.
+- **Delegates without losing your place.** Quick actions → Agent collaboration
+  sends a task to a ready assistant or starts another in the same project.
+  Follow its status and inspect recent output in the same sheet; opening its
+  terminal is a separate, deliberate action.
 - **Looks like your setup.** 32 theme packs, each with a light half and a dark
   one, repainting the app and the terminal together. Eleven languages: English,
   繁體中文, 简体中文, 日本語, 한국어, Deutsch, Français, Español, Português,
@@ -89,12 +91,12 @@ Other ways in:
 
 - **APK, no store account** — CI builds a sideloadable APK for every tag and
   attaches it to that tag's [release](https://github.com/osuki-dev/muqun-app/releases)
-  (`.github/workflows/android-apk.yml`). It is the same app as the Play build —
-  same `dev.osuki.muqun` applicationId, same everything, just packaged as an APK
-  instead of an App Bundle. Because Android identifies an install by
-  applicationId _and_ signature, and Play re-signs its own artifact, the two
-  cannot sit on one phone: moving between them means uninstalling first, which
-  takes the paired Gateways with it. Pick one and stay on it.
+  (`.github/workflows/android-apk.yml`). It keeps the Play build's
+  `dev.osuki.muqun` applicationId and existing Expo-managed credentials, so it
+  does not install as a second app. In-place updates between APK and Play also
+  require matching distribution signing certificates and an increasing
+  versionCode. Expo's upload key is not necessarily Play's app signing key;
+  verify them before switching channels. See the [release instructions](release-notes/README.md).
 - **Or build it yourself** — see [below](#build-it-from-source).
 
 ## What you need to run it
@@ -102,6 +104,13 @@ Other ways in:
 One computer you own, running **macOS or Linux**, with **tmux** or
 [**Herdr**](https://github.com/ogulcancelik/herdr) 0.7.5 or newer on it.
 Windows is not supported yet.
+
+Agent collaboration additionally requires a Gateway declaring the
+`agent_collaboration` capability and a connected Herdr **0.9.0 or newer** for
+that session. Older versions keep normal terminal access; the optional feature
+explains which component needs updating. Status describes the assistant, not
+proof that a particular task succeeded. Earlier assignments stay in local
+history, and removing history does not stop an assistant.
 
 On that machine:
 
@@ -155,7 +164,7 @@ The checks, all of which must pass:
 npx tsc --noEmit
 bun run lint           # expo lint --max-warnings 0; a warning fails the run
 bun test src
-bash scripts/e2e.sh    # Maestro, offline, needs one booted device with the app installed
+bash scripts/e2e.sh    # native agent-device, offline; use a dedicated unpaired test device
 ```
 
 ## How the repo is laid out
@@ -170,7 +179,7 @@ src/terminal/     the VT parser, the screen model, and the Skia renderer
 src/constants/    design tokens, the 32 theme packs, stable configuration
 src/i18n/         Lingui setup and the eleven locale catalogs
 plugins/          Expo config plugins for the native projects
-maestro/          end-to-end flows and reusable subflows
+e2e/agent-device/  native .ad flows, suite manifest, and reusable action sections
 scripts/          mock gateway, benchmarks, soak tests, the e2e runner
 assets/           fonts, icons, bundled media
 ```
@@ -201,7 +210,7 @@ A few things that will save you a round trip:
 - User-facing strings are Lingui macros. Add English, run `bun run i18n`, and
   leave the other ten catalogs to a translator rather than to a guess.
 - Accessibility labels and test IDs are automation contracts. Renaming one
-  breaks a Maestro flow.
+  breaks a native end-to-end flow.
 - The app must keep working against an older Gateway. New endpoints go behind
   the capability gate in `src/lib/herdr-compatibility.ts`.
 

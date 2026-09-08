@@ -7,7 +7,37 @@
  */
 import { describe, expect, test } from 'bun:test';
 
-import { assertSupportedHerdr, MINIMUM_HERDR_VERSION } from '../herdr-compatibility';
+import {
+  assertSupportedHerdr,
+  MINIMUM_HERDR_VERSION,
+  TerminalBackendUnavailableError,
+} from '../herdr-compatibility';
+
+describe('a backend that starts after the Gateway', () => {
+  for (const backendKind of ['herdr', 'tmux', undefined]) {
+    test(`identifies unavailable ${backendKind ?? 'legacy Herdr'} without rejecting later recovery`, () => {
+      let failure: unknown;
+      try {
+        assertSupportedHerdr({ herdr: { connected: false }, backend: { kind: backendKind } });
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure instanceof TerminalBackendUnavailableError).toBe(true);
+      expect(() =>
+        assertSupportedHerdr({ herdr: { connected: true }, backend: { kind: backendKind } })
+      ).not.toThrow();
+    });
+  }
+  test('incompatible protocol is not a waiting-for-startup error', () => {
+    try {
+      assertSupportedHerdr({ herdr: { connected: true, compatible: false } });
+      throw new Error('Expected incompatibility');
+    } catch (error) {
+      expect(error instanceof TerminalBackendUnavailableError).toBe(false);
+      expect(String(error)).toContain('cannot speak');
+    }
+  });
+});
 
 describe('a backend the gateway accepts', () => {
   test('passes on the protocol Muqun shipped against', () => {

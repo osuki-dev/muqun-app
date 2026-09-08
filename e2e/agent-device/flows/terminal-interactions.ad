@@ -1,0 +1,150 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# terminal-interactions
+
+# section s1
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
+
+# section s2
+wait stable 400 5000
+
+# section s3
+is hidden "${TARGET}"
+
+# section s4
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
+
+# section s5
+wait stable 400 5000
+
+# section s6
+is hidden "${TARGET}"
+
+# section s7
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 600
+
+# section s8
+wait stable 400 5000
+
+# section s9
+is hidden "${TARGET}"
+
+# section s10
+is visible "${TARGET}"
+
+# section s11
+is visible "${TARGET}"
+
+# section s12
+is hidden "${TARGET}"
+
+# section s13
+longpress "${X}" "${Y}" 1000
+
+# section s14
+is visible "${TARGET}"
+
+# section s15
+is visible "${TARGET}"
+
+# section s16
+is visible "${TARGET}"
+
+# section s17
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 3000
+
+# section s18
+wait stable 400 5000
+
+# section s19
+is visible "${TARGET}"
+
+# section s20
+is hidden "${TARGET}"
+
+# section s21
+press "${TARGET}"
+
+# section s22
+is hidden "${TARGET}"
+
+# section s23
+press "${TARGET}"
+
+# section s24
+wait stable 400 5000
+
+# section s25
+is hidden "${TARGET}"
+
+# section s26
+press "${TARGET}"
+
+# section open-editor-picker
+# Full-screen editors intentionally hide the composer and its pane tabs.
+press "${TARGET}"
+
+# section s27
+wait stable 400 5000
+
+# section s28
+is hidden "${TARGET}"
+
+# section s29
+press "${TARGET}"
+
+# section s30
+wait stable 400 5000
+
+# section s31
+is hidden "${TARGET}"
+
+# section s32
+press "${TARGET}"
+
+# section s33
+is visible "${TARGET}"
+
+# section s34
+press "${TARGET}"
+
+# section s35
+is visible "${TARGET}"
+
+# section s36
+scroll down --pixels 320
+
+# section s37
+scroll down --pixels 320
+
+# section s38
+press "${TARGET}"
+
+# section s39
+wait stable 400 5000
+
+# section s40
+press "${TARGET}"
+
+# section s41
+press "${TARGET}"
+
+# section s42
+is visible "${TARGET}"
+
+# section s43
+wait stable 400 5000
+
+# section s44
+is hidden "${TARGET}"
+
+# section s45
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
+
+# section s46
+wait stable 400 5000
+
+# section s47
+is hidden "${TARGET}"
+
+# section s48
+is visible "${TARGET}"

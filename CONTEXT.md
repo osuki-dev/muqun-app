@@ -27,7 +27,7 @@ The app is a client-side layered monolith:
 - `src/terminal/`: terminal palette, parsing, and rendering support.
 - `src/constants/`: design tokens, theme packs, and stable configuration.
 - `src/i18n/`: Lingui setup and locale catalogs.
-- `maestro/`: end-to-end flows and reusable subflows.
+- `e2e/agent-device/`: native `.ad` flows and an explicit suite manifest; `scripts/e2e-native.ts` owns conditional setup, exact assertions, and scroll guards.
 - `scripts/`: test, demo gateway, build, store, and automation scripts.
 - `plugins/`: Expo config plugins for native project customization.
 - `ios/`, `android/`: generated/customized native projects and widget targets.
@@ -60,7 +60,7 @@ Theme selection flows from the persisted `themePack` setting through `useThemePa
 - Full offline end-to-end gate: `bash scripts/e2e.sh`
 - Smoke iteration only: `bash scripts/e2e.sh --smoke`
 
-Maestro reports and evidence are written under `dist/e2e-reports/` and are not committed. The checks are `npx tsc --noEmit`, `bun run lint`, `bun run format:check` and `bun test src`; a change that touches app code also runs the end-to-end suite.
+Native agent-device reports and evidence are written under `dist/e2e-reports/` and are not committed. The checks are `npx tsc --noEmit`, `bun run lint`, `bun run format:check` and `bun test src`; a change that touches app code also runs the end-to-end suite.
 
 ## Errors and Logging
 
@@ -80,6 +80,6 @@ This repository holds the app and nothing else. The store listing copy, the App 
 - A feature is not complete until the full offline end-to-end suite passes with one booted simulator or emulator and the app installed.
 - The theme picker must remain scrollable: the registry now contains thirty-two paired packs.
 - Form sheets have native layout constraints; `ScrollScreen` must remain the sheet root.
-- SecureStore survives Maestro `clearState`, so flows restore persistent preferences explicitly.
+- The native suite uses process relaunches and restores persistent preferences explicitly. Run it only on dedicated, unpaired test devices; it never erases user data.
 - OTA code can reach binaries that do not contain newly added native modules; guarded imports are intentional.
-- Use FizzyX for branches, readiness, synchronization, and promotion; do not merge protected branches manually.
+- Work on a branch, pass the local checks, then open a pull request. No external tracker or branch tool is required; do not merge protected branches manually.

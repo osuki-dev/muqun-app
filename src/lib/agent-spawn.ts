@@ -75,6 +75,11 @@ export interface SpawnedAgent {
   /** Absent from an answer that only names the pane. */
   tabId: string | null;
   workspaceId: string | null;
+  /** Modern gateways report partial creation explicitly (HTTP 207). */
+  agentStarted?: boolean;
+  promptSubmitted?: boolean;
+  agentInstanceId?: string;
+  failure?: { step: 'agent' | 'prompt'; code: string };
 }
 
 /** What a spawn asks for. `agent` is the only required field. */
@@ -156,11 +161,29 @@ export function spawnedAgentFromResponse(value: unknown): SpawnedAgent | null {
 
   const paneId = stringField(pane.pane_id) ?? stringField(result.pane_id);
   if (!paneId) return null;
+  const failedStep = Array.isArray(result.steps)
+    ? result.steps
+        .map(objectField)
+        .find(
+          (step) => step?.status === 'failed' && (step.step === 'agent' || step.step === 'prompt')
+        )
+    : undefined;
+  const failureCode = stringField(objectField(failedStep?.error)?.code);
 
   return {
     paneId,
     tabId: stringField(pane.tab_id) ?? stringField(result.tab_id) ?? null,
     workspaceId: stringField(pane.workspace_id) ?? stringField(result.workspace_id) ?? null,
+    ...(failedStep && failureCode
+      ? { failure: { step: failedStep.step as 'agent' | 'prompt', code: failureCode } }
+      : {}),
+    ...(stringField(result.agent_instance_id)
+      ? { agentInstanceId: stringField(result.agent_instance_id)! }
+      : {}),
+    ...(typeof result.agent_started === 'boolean' ? { agentStarted: result.agent_started } : {}),
+    ...(typeof result.prompt_submitted === 'boolean'
+      ? { promptSubmitted: result.prompt_submitted }
+      : {}),
   };
 }
 

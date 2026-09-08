@@ -1,4 +1,5 @@
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { resolvePanelPick } from '@/lib/resolve-panel-pick';
 import { type Href, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -45,6 +46,7 @@ import { AssetViewer } from '@/components/asset-viewer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { AwayDigestCard } from '@/components/away-digest-card';
+import { CollaborationNotice } from '@/components/collaboration-notice';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
@@ -258,6 +260,7 @@ type ConnectionStatus = {
   phase: ConnectionPhase;
   attempt: number;
   message?: string;
+  backendUnavailable?: boolean;
   /**
    * This server has no usable record of this device, so Retry can only fail
    * again. The notice offers pairing instead.
@@ -265,7 +268,7 @@ type ConnectionStatus = {
   needsPairing?: boolean;
 };
 
-type RefreshResult = { ok: true } | { ok: false; failure: GatewayFailure } | null;
+type RefreshResult = { ok: true; data: ServerData } | { ok: false; failure: GatewayFailure } | null;
 
 /**
  * What is known about the structured view of the selected pane.
@@ -320,17 +323,6 @@ const initialData: ServerData = {
 
 const initialSelection: Selection = { workspaceId: '', tabId: '', paneId: '' };
 const MAX_RECONNECT_DELAY_MS = 8_000;
-
-/**
- * How long a chosen panel is given to turn up in this screen's snapshot.
- *
- * Three quick asks rather than one, because the pick can name a panel that was
- * created a heartbeat ago: the sheet gets the new pane's id back from the
- * create call, and this screen only learns the pane exists on its next refresh.
- * A single check would report every freshly made panel as missing.
- */
-const PANEL_PICK_ATTEMPTS = 3;
-const PANEL_PICK_RETRY_MS = 200;
 
 /**
  * Half the pane carousel: the outgoing pane travels this far before the
@@ -559,8 +551,6 @@ export function ServerTerminalWorkspace({
   // Gives the in-memory Demo mirror one stable freshness boundary for this
   // mounted workspace. Real servers continue to use their persisted mirror.
   const [demoRailCheckedAtMs] = useState(() => Date.now());
-  /** How many refreshes a pending panel pick has already waited through. */
-  const [panelPickAttempt, setPanelPickAttempt] = useState(0);
   const [output, setOutput] = useState('');
   const [draft, setDraft] = useState('');
   // Where the caret is in the draft, which is half of what decides whether an
@@ -946,7 +936,7 @@ export function ServerTerminalWorkspace({
           return sameSelection(current, reconciled) ? current : reconciled;
         });
         setError(null);
-        return { ok: true };
+        return { ok: true, data: next };
       } catch (failure) {
         if (!isCurrentRequest()) return null;
         return { ok: false, failure: describeGatewayFailure(failure, t`Server unavailable.`) };
@@ -984,6 +974,7 @@ export function ServerTerminalWorkspace({
         phase: result.failure.retryable && attempt < 3 ? 'reconnecting' : 'offline',
         attempt,
         message: result.failure.message,
+        backendUnavailable: result.failure.kind === 'backend',
         needsPairing: result.failure.needsPairing,
       });
       if (result.failure.retryable) {
@@ -1903,23 +1894,42 @@ export function ServerTerminalWorkspace({
     const target = selectionForPane(data, panelPick.paneId);
     if (target.paneId === panelPick.paneId) {
       clearPanelPick();
-      setPanelPickAttempt(0);
       setSelection(target);
       setError(null);
-      return;
     }
-    if (panelPickAttempt >= PANEL_PICK_ATTEMPTS) {
-      clearPanelPick();
-      setPanelPickAttempt(0);
-      setError(t`This terminal is no longer available.`);
-      return;
-    }
-    const timer = setTimeout(() => {
-      void refreshData();
-      setPanelPickAttempt((current) => current + 1);
-    }, PANEL_PICK_RETRY_MS);
-    return () => clearTimeout(timer);
-  }, [clearPanelPick, data, panelPick, panelPickAttempt, refreshData, serverId, t]);
+  }, [clearPanelPick, data, panelPick, serverId]);
+
+  // Keep this read loop independent of data renders. The old 200ms timers
+  // launched overlapping refreshes and exhausted all attempts before a slow
+  // first response could arrive. Resolve directly from the returned snapshot.
+  useEffect(() => {
+    if (!ready || !panelPick || panelPick.serverId !== serverId) return;
+    let disposed = false;
+    const cancelled = () => disposed || usePanelPickerStore.getState().pick !== panelPick;
+    void resolvePanelPick(async () => {
+      const result = await refreshData();
+      if (result && !result.ok) throw new Error(result.failure.message);
+      if (!result) return null;
+      const target = selectionForPane(result.data, panelPick.paneId);
+      return target.paneId === panelPick.paneId ? target : null;
+    }, cancelled)
+      .then((target) => {
+        if (cancelled()) return;
+        clearPanelPick();
+        if (target) {
+          setSelection(target);
+          setError(null);
+        } else setError(t`This terminal is no longer available.`);
+      })
+      .catch((failure: unknown) => {
+        if (cancelled()) return;
+        clearPanelPick();
+        setError(describeGatewayFailure(failure, t`Server unavailable.`).message);
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [clearPanelPick, panelPick, ready, refreshData, serverId, t]);
 
   // Which keys and slash commands this pane responds to is the gateway's
   // answer, so a newly supported agent needs a gateway update rather than an
@@ -2955,6 +2965,7 @@ export function ServerTerminalWorkspace({
         tabId: selection.tabId,
         cwd: field(selectedPane, 'cwd'),
         mode: selectedAgent ? 'agent' : 'terminal',
+        backendKind: sessions.find((session) => session.id === data.sessionId)?.kind ?? '',
         // The health answer this screen is already holding. A gateway that
         // cannot spawn gets a sheet with neither New task nor Stop in it.
         canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
@@ -3322,6 +3333,7 @@ export function ServerTerminalWorkspace({
   const paneEntries = (fill: string) => (
     <>
       <PressableScale
+        accessibilityRole="button"
         accessibilityLabel={t`Open quick actions`}
         feedback="selection"
         pressedScale={0.9}
@@ -3546,6 +3558,19 @@ export function ServerTerminalWorkspace({
               it is news the user came back for, so a transient answer to a
               gesture queues underneath it rather than the other way round. */}
             {away.digest ? <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} /> : null}
+            <CollaborationNotice
+              context={{
+                serverId,
+                sessionId: data.sessionId,
+                paneId: selection.paneId,
+                workspaceId: selection.workspaceId,
+                tabId: selection.tabId,
+                cwd: field(selectedPane, 'cwd'),
+              }}
+              agents={data.agents}
+              connected={ready && connection.phase === 'connected'}
+              active={isFocused}
+            />
 
             {/* Last in the stack on purpose. An error bar and a connection notice
               are standing conditions and keep the top of the column; this is a
@@ -4274,13 +4299,14 @@ function ConnectionNotice({
   const connected = status.phase === 'connected';
   if (connected && !recovered) return null;
 
-  const title = connected
-    ? t`Connected`
-    : status.phase === 'connecting'
-      ? t`Connecting`
-      : status.phase === 'reconnecting'
-        ? t`Reconnecting · ${status.attempt}`
-        : t`Server offline`;
+  const title =
+    connected || status.backendUnavailable
+      ? t`Connected`
+      : status.phase === 'connecting'
+        ? t`Connecting`
+        : status.phase === 'reconnecting'
+          ? t`Reconnecting · ${status.attempt}`
+          : t`Server offline`;
 
   // One shape for every phase, and the colour only on the dot. The state is
   // carried by the words -- a status that is legible by hue alone is not
@@ -4288,7 +4314,7 @@ function ConnectionNotice({
   // sentence and a 7pt light, not the object the sentence arrives in.
   const light = connected
     ? theme.colors.success
-    : status.phase === 'offline'
+    : status.phase === 'offline' && !status.backendUnavailable
       ? theme.colors.danger
       : theme.colors.warning;
 
@@ -4451,7 +4477,7 @@ function reconcileSelection(data: ServerData, current: Selection): Selection {
   return { workspaceId: workspace.id, tabId: tab.id, paneId: pane?.id ?? '' };
 }
 
-/** Kept on the switch pills, because Maestro flows assert on them. */
+/** Kept on the switch pills for native end-to-end assertions. */
 const TAB_SWITCH_TEST_ID = 'tab-position-indicator';
 const WORKSPACE_SWITCH_TEST_ID = 'workspace-position-indicator';
 

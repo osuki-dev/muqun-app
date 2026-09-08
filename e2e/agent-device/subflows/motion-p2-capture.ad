@@ -1,0 +1,134 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# motion-p2-capture
+
+# section s1
+open "dev.osuki.muqun" --relaunch
+
+# section s2
+wait stable 400 5000
+
+# section s3
+screenshot "dist/motion-618-p2/10-home.png"
+
+# section s4
+press "${TARGET}"
+
+# section s5
+press "${TARGET}"
+
+# section s6
+is visible "${TARGET}"
+
+# section s7
+wait stable 400 5000
+
+# section s8
+screenshot "dist/motion-618-p2/11-pane-strip-before.png"
+
+# section s9
+press "${TARGET}"
+
+# section s10
+wait stable 400 5000
+
+# section s11
+screenshot "dist/motion-618-p2/12-pane-strip-after.png"
+
+# section s12
+press "${TARGET}"
+
+# section s13
+wait stable 400 5000
+
+# section s14
+screenshot "dist/motion-618-p2/13-send-unarmed.png"
+
+# section s15
+press "${X}" "${Y}"
+
+# section s16
+type "echo hello"
+
+# section s17
+wait stable 400 5000
+
+# section s18
+screenshot "dist/motion-618-p2/14-send-armed.png"
+
+# section s19
+type "\b\b\b\b\b\b\b\b\b\b"
+
+# section s20
+keyboard dismiss
+
+# section s21
+wait stable 400 5000
+
+# section s22
+press "${TARGET}"
+
+# section s23
+wait stable 400 5000
+
+# section s24
+screenshot "dist/motion-618-p2/15-virtual-keyboard.png"
+
+# section s25
+press "${TARGET}"
+
+# section s26
+wait stable 400 5000
+
+# section s27
+screenshot "dist/motion-618-p2/16-virtual-keyboard-shift.png"
+
+# section s28
+press "${TARGET}"
+
+# section s29
+wait stable 400 5000
+
+# section s30
+press "${TARGET}"
+
+# section s31
+wait stable 400 5000
+
+# section s32
+screenshot "dist/motion-618-p2/17-quick-actions.png"
+
+# section s33
+press "${TARGET}"
+
+# section s34
+wait stable 400 5000
+
+# section s35
+press "${TARGET}"
+
+# section s36
+wait stable 400 5000
+
+# section s37
+screenshot "dist/motion-618-p2/18-session-map.png"
+
+# section s38
+press "${TARGET}"
+
+# section s39
+wait stable 400 5000
+
+# section s40
+press "${TARGET}"
+
+# section s41
+wait stable 400 5000
+
+# section s42
+press "${TARGET}"
+
+# section s43
+wait stable 400 5000
+
+# section s44
+screenshot "dist/motion-618-p2/19-settings.png"

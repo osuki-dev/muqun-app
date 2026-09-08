@@ -1,0 +1,310 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# settings
+
+# section s1
+press "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+is visible "${TARGET}"
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+is visible "${TARGET}"
+
+# section s6
+scroll down --pixels 320
+
+# section s7
+scroll down --pixels 320
+
+# section s8
+press "${TARGET}"
+
+# section reset-theme
+press label="Osuki"
+wait stable 400 5000
+press "label=\"Theme, Osuki\""
+
+# section s9
+is visible "${TARGET}"
+
+# section s10
+is visible "${TARGET}"
+
+# section s11
+is visible "${TARGET}"
+
+# section s12
+is visible "${TARGET}"
+
+# section s13
+press "${TARGET}"
+
+# section s14
+wait stable 400 5000
+
+# section s15
+is visible "${TARGET}"
+
+# section s16
+scroll down --pixels 320
+
+# section reset-color-mode
+press label="SYSTEM"
+wait stable 400 5000
+
+# section reset-color-mode-control
+press "${TARGET}"
+wait stable 400 5000
+
+# section s17
+is visible "${TARGET}"
+
+# section s18
+press "${TARGET}"
+
+# section s19
+wait stable 400 5000
+
+# section s20
+is visible "${TARGET}"
+
+# section s21
+is visible "${TARGET}"
+
+# section s22
+press "${TARGET}"
+
+# section s23
+wait stable 400 5000
+
+# section s24
+is visible "${TARGET}"
+
+# section s25
+is visible "${TARGET}"
+
+# section s26
+scroll down --pixels 320
+
+# section s27
+press "${TARGET}"
+
+# section s28
+is visible "${TARGET}"
+
+# section s29
+is visible "${TARGET}"
+
+# section s30
+is visible "${TARGET}"
+
+# section s31
+press "${TARGET}"
+
+# section s32
+wait stable 400 5000
+
+# section s33
+is visible "${TARGET}"
+
+# section s34
+press "${TARGET}"
+
+# section s35
+is visible "${TARGET}"
+
+# section s36
+is visible "${TARGET}"
+
+# section s37
+is visible "${TARGET}"
+
+# section s38
+press "${TARGET}"
+
+# section s39
+wait stable 400 5000
+
+# section s40
+is visible "${TARGET}"
+
+# section s41
+press "${TARGET}"
+
+# section s42
+is visible "${TARGET}"
+
+# section s43
+is visible "${TARGET}"
+
+# section s44
+press "${TARGET}"
+
+# section s45
+is visible "${TARGET}"
+
+# section s46
+scroll down --pixels 320
+
+# section s47
+scroll down --pixels 320
+
+# section s48
+press "${TARGET}"
+
+# section s49
+wait stable 400 5000
+
+# section s50
+scroll down --pixels 320
+
+# section s51
+is visible "${TARGET}"
+
+# section s52
+press "${TARGET}"
+
+# section s53
+wait stable 400 5000
+
+# section s54
+is visible "${TARGET}"
+
+# section s55
+is visible "${TARGET}"
+
+# section s56
+scroll down --pixels 320
+
+# section s57
+scroll down --pixels 320
+
+# section s58
+scroll down --pixels 320
+
+# section scroll-notifications
+scroll down --pixels 320
+
+# section s59
+is visible "${TARGET}"
+
+# section s60
+press "${TARGET}"
+
+# section s61
+wait stable 400 5000
+
+# section s62
+is visible "${TARGET}"
+
+# section s63
+press "${TARGET}"
+
+# section s64
+wait stable 400 5000
+
+# section s65
+is visible "${TARGET}"
+
+# section s66
+scroll down --pixels 320
+
+# section s67
+scroll down --pixels 320
+
+# section s68
+scroll down --pixels 320
+
+# section s69
+scroll down --pixels 320
+
+# section s70
+scroll down --pixels 320
+
+# section s71
+scroll down --pixels 320
+
+# section s72
+scroll down --pixels 320
+
+# section s73
+open "dev.osuki.muqun" --relaunch
+
+# section s74
+wait stable 400 5000
+
+# section s75
+press "${TARGET}"
+
+# section s76
+is visible "${TARGET}"
+
+# section s77
+scroll down --pixels 320
+
+# section s78
+press "${TARGET}"
+
+# section s79
+is visible "${TARGET}"
+
+# section s80
+is visible "${TARGET}"
+
+# section s81
+press "${TARGET}"
+
+# section s82
+wait stable 400 5000
+
+# section s83
+is visible "${TARGET}"
+
+# section s84
+scroll down --pixels 320
+
+# section s85
+is visible "${TARGET}"
+
+# section s86
+press "${TARGET}"
+
+# section s87
+wait stable 400 5000
+
+# section s88
+is visible "${TARGET}"
+
+# section s89
+scroll down --pixels 320
+
+# section clear-native-header
+scroll up --pixels 240
+wait stable 400 5000
+
+# section s90
+press "${TARGET}"
+
+# section s91
+is visible "${TARGET}"
+
+# section s92
+is visible "${TARGET}"
+
+# section s93
+press "${TARGET}"
+
+# section s94
+is visible "${TARGET}"
+
+# section s95
+press "${TARGET}"
+
+# section s96
+is visible "${TARGET}"

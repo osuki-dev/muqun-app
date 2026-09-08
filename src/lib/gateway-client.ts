@@ -98,6 +98,7 @@ import {
   demoAgentEvents,
   demoAgentProfiles,
   demoAgents,
+  demoSendAgentText,
   demoAssetContentUri,
   demoAssetText,
   demoHealth,
@@ -394,7 +395,14 @@ async function encryptedGatewayFetch(
 }
 
 /** Every gateway call the generated client and this file make, on one budget. */
-const gatewayFetch: typeof globalThis.fetch = async (input, init) => {
+const gatewayFetch: typeof globalThis.fetch = (input, init) =>
+  gatewayFetchWithin(REQUEST_TIMEOUT_MS, input, init);
+
+async function gatewayFetchWithin(
+  timeoutMs: number,
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
   // The one place worth stamping the locale, because both the generated client
   // and every raw call in this file come through here. Merged underneath the
   // caller's own headers rather than over them, so a request that has a reason
@@ -403,7 +411,7 @@ const gatewayFetch: typeof globalThis.fetch = async (input, init) => {
   // next request without reconfiguring anything.
   const headers = { ...activeLocaleHeaders(), ...headerRecord(init?.headers) };
   if (shouldEncryptGatewayRequest(input)) {
-    return encryptedGatewayFetch(input, { ...init, headers });
+    return encryptedGatewayFetch(input, { ...init, headers }, timeoutMs);
   }
 
   // Exempt, and deliberately: see `isStreamingRequest`.
@@ -414,11 +422,11 @@ const gatewayFetch: typeof globalThis.fetch = async (input, init) => {
   // does not say so is filed as a plain request error: shown to the user
   // verbatim, in English, and marked not worth retrying -- which is the wrong
   // answer on all three counts for a server that simply went quiet.
-  return fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', input, {
+  return fetchWithin(timeoutMs, 'Timed out waiting for the server.', input, {
     ...init,
     headers,
   });
-};
+}
 
 export interface HealthResponse {
   ok: boolean;
@@ -463,11 +471,13 @@ export interface HealthResponse {
    * the backend that is down is tmux.
    */
   backend?: {
+    sessionId?: string;
     kind?: string;
     connected?: boolean;
     version?: string | null;
     protocol?: number | null;
   };
+  backends?: { sessionId: string; kind: string; connected: boolean; version?: string | null }[];
 }
 
 export interface SessionsResponse {
@@ -1786,7 +1796,10 @@ export async function spawnAgent(
     return spawned;
   }
 
-  const response = await gatewayFetch(
+  // Starting an interactive agent can take 30 seconds before it is ready.
+  // The ordinary 8-second read budget would abandon a successful creation.
+  const response = await gatewayFetchWithin(
+    60_000,
     gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agents/spawn`),
     {
       method: 'POST',
@@ -2122,7 +2135,7 @@ export async function sendAgentText(
   target: string,
   text: string
 ): Promise<void> {
-  if (isDemoActive()) return;
+  if (isDemoActive()) return demoSendAgentText(target, text);
   await postApiSessionsBySessionIdAgentsByTargetSend({ sessionId, target }, { text });
 }
 
