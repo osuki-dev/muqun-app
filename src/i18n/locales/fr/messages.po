@@ -168,6 +168,7 @@ msgstr "AGENT"
 
 #: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
+#: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
 msgstr "Collaboration entre agents"
@@ -255,6 +256,10 @@ msgstr "Apparence"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "Apparence, terminal, sécurité"
+
+#: src/components/custom-theme-library.tsx
+msgid "Apply theme"
+msgstr "Appliquer le thème"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -385,6 +390,7 @@ msgstr "L’accès à la caméra est désactivé. Activez-le dans Réglages pour
 msgid "Camera access needed"
 msgstr "Accès à la caméra requis"
 
+#: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -491,6 +497,7 @@ msgid "Close pairing"
 msgstr "Fermer l’appairage"
 
 #: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "Fermer l’aperçu"
@@ -598,6 +605,10 @@ msgstr "Confirmer le désappairage de {label}"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "Confirmer : {removeLabel} {label}"
+
+#: src/components/custom-theme-preview.tsx
+msgid "Connect"
+msgstr "Se connecter"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -877,6 +888,14 @@ msgstr "Impossible d’enregistrer les modifications"
 msgid "Could not save host"
 msgstr "Impossible d’enregistrer l’hôte"
 
+#: src/app/commands.tsx
+msgid "Could not save shortcut"
+msgstr "Impossible d’enregistrer le raccourci"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Could not save theme"
+msgstr "Impossible d’enregistrer le thème"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Envoi impossible"
@@ -929,6 +948,10 @@ msgstr "Impossible d’envoyer le fichier."
 msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
 msgstr "Impossible de vérifier la version de Herdr. Reconnectez-vous ou mettez Muqun Gateway à jour."
 
+#: src/components/agent-command-delivery-picker.tsx
+msgid "Current agent"
+msgstr "Agent actuel"
+
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "Chemin actuel"
@@ -937,6 +960,7 @@ msgstr "Chemin actuel"
 msgid "Customize terminal commands and key combinations."
 msgstr "Personnalisez les commandes de terminal et les combinaisons de touches."
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Sombre"
@@ -1117,6 +1141,14 @@ msgstr "Déplier {0}"
 msgid "Expires in {0}:{1}"
 msgstr "Expire dans {0}:{1}"
 
+#: src/components/custom-theme-library.tsx
+msgid "Export colors"
+msgstr "Exporter les couleurs"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export theme"
+msgstr "Exporter le thème"
+
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
@@ -1153,6 +1185,10 @@ msgstr "Empreinte"
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
 msgstr "PREMIER PROMPT"
+
+#: src/components/custom-theme-library.tsx
+msgid "Fix text contrast before applying this theme"
+msgstr "Corrigez le contraste du texte avant d’appliquer ce thème"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -1313,6 +1349,10 @@ msgstr "Inactif"
 msgid "Images"
 msgstr "Images"
 
+#: src/components/custom-theme-library.tsx
+msgid "Import file"
+msgstr "Importer un fichier"
+
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
 msgstr "Joindre la sortie du terminal actuel"
@@ -1467,6 +1507,7 @@ msgstr "Flèche gauche"
 msgid "Letters"
 msgstr "Lettres"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Clair"
@@ -1576,7 +1617,6 @@ msgid "Move the simulator controls"
 msgstr "Déplacer les commandes du simulateur"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/(drawer)/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -1625,6 +1665,10 @@ msgstr "Muqun reste dans cette langue, quelle que soit celle du téléphone."
 #: src/components/settings-security.tsx
 msgid "Muqun will use {0} when the app opens."
 msgstr "Muqun utilisera {0} à l’ouverture de l’app."
+
+#: src/components/custom-theme-library.tsx
+msgid "My themes"
+msgstr "Mes thèmes"
 
 #: src/app/commands.tsx
 #: src/components/ssh-host-form.tsx
@@ -2039,6 +2083,10 @@ msgstr "Les mots de passe et les clés sont scellés dans le trousseau de cet ap
 msgid "Paste"
 msgstr "Coller"
 
+#: src/components/custom-theme-library.tsx
+msgid "Paste JSON"
+msgstr "Coller du JSON"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2065,6 +2113,11 @@ msgstr "Présentée maintenant"
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
 msgstr "Appuyer sur Échap pour ignorer cette demande"
+
+#: src/components/custom-theme-library.tsx
+#: src/components/custom-theme-preview.tsx
+msgid "Preview"
+msgstr "Aperçu"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -2191,6 +2244,10 @@ msgstr "Actualiser la sortie"
 #: src/hooks/use-agent-collaboration.ts
 msgid "Refresh to check Gateway and Herdr compatibility before assigning."
 msgstr "Actualisez pour vérifier la compatibilité de Gateway et de Herdr avant l’attribution."
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove"
+msgstr "Supprimer"
 
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
@@ -2418,6 +2475,10 @@ msgstr "Enregistrer l’hôte"
 msgid "Save shortcut"
 msgstr "Enregistrer le raccourci"
 
+#: src/components/custom-theme-library.tsx
+msgid "Save theme"
+msgstr "Enregistrer le thème"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "Enregistrée"
@@ -2496,6 +2557,10 @@ msgstr "Vu à l’instant"
 #: src/components/skia-terminal.tsx
 msgid "Select all"
 msgstr "Tout sélectionner"
+
+#: src/components/custom-theme-library.tsx
+msgid "Selected"
+msgstr "Sélectionné"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2712,6 +2777,7 @@ msgid "Some files did not upload"
 msgstr "Certains fichiers n’ont pas été envoyés"
 
 #: src/components/app-error-boundary.tsx
+#: src/components/custom-theme-library.tsx
 msgid "Something went wrong"
 msgstr "Une erreur s’est produite"
 
@@ -3048,6 +3114,18 @@ msgstr "La transcription sous forme de conversation, avec les étapes d’outils
 msgid "Theme"
 msgstr "Thème"
 
+#: src/components/custom-theme-library.tsx
+msgid "Theme applied"
+msgstr "Thème appliqué"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme JSON"
+msgstr "JSON du thème"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme saved"
+msgstr "Thème enregistré"
+
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
@@ -3171,6 +3249,10 @@ msgstr "Ce terminal n'a pas pu être dessiné."
 msgid "This terminal is no longer available."
 msgstr "Ce terminal n'est plus disponible."
 
+#: src/components/custom-theme-library.tsx
+msgid "This theme contains images that must be installed before applying"
+msgstr "Ce thème contient des images à installer avant de l’appliquer"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Cet espace de travail n'a pas encore de groupes."
@@ -3225,6 +3307,7 @@ msgstr "Saisissez-le, ou utilisez la touche de dictée de votre clavier."
 msgid "Type on the simulator"
 msgstr "Saisir sur le simulateur"
 
+#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Annuler"

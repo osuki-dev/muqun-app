@@ -45,7 +45,9 @@ import {
   THEME_PICKER_MAX_CONTENT_WIDTH,
   themePickerGridLayout,
 } from '@/lib/theme-picker-layout';
-import { useAppSettings } from '@/stores/app-settings';
+import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { useThemeLibrary } from '@/stores/theme-library';
+import { useThemePack } from '@/hooks/use-theme-pack';
 
 export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
@@ -60,8 +62,8 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   );
   const gridLayout = themePickerGridLayout(measuredWidth || fallbackWidth);
 
-  const themePack = useAppSettings((state) => state.themePack);
-  const update = useAppSettings((state) => state.update);
+  const themePack = useThemePack().id;
+  const [error, setError] = useState<string | null>(null);
 
   /**
    * Apply, then leave.
@@ -73,8 +75,12 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
    * confirmation, not a no-op.
    */
   function choose(id: ThemePackId) {
-    if (id !== themePack) void update({ themePack: id });
-    onClose();
+    try {
+      useThemeLibrary.getState().apply({ kind: 'builtin', id });
+      onClose();
+    } catch {
+      setError(t`Could not save theme`);
+    }
   }
 
   return (
@@ -84,6 +90,8 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
       closeLabel={t`Close theme picker`}
       onClose={onClose}
       contentMaxWidth={THEME_PICKER_MAX_CONTENT_WIDTH}>
+      <CustomThemeLibrary />
+      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
       <View
         accessibilityRole="radiogroup"
         testID="theme-picker-grid"

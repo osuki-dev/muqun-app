@@ -168,6 +168,7 @@ msgstr "エージェント"
 
 #: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
+#: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
 msgstr "エージェント連携"
@@ -255,6 +256,10 @@ msgstr "外観"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "外観、ターミナル、セキュリティ"
+
+#: src/components/custom-theme-library.tsx
+msgid "Apply theme"
+msgstr "テーマを適用"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -385,6 +390,7 @@ msgstr "カメラへのアクセスがオフです。写真を撮るには設定
 msgid "Camera access needed"
 msgstr "カメラへのアクセスが必要です"
 
+#: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -491,6 +497,7 @@ msgid "Close pairing"
 msgstr "ペアリングを閉じる"
 
 #: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "プレビューを閉じる"
@@ -598,6 +605,10 @@ msgstr "{label} のペアリング解除を確認"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "確認：{removeLabel} {label}"
+
+#: src/components/custom-theme-preview.tsx
+msgid "Connect"
+msgstr "接続"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -877,6 +888,14 @@ msgstr "変更を保存できませんでした"
 msgid "Could not save host"
 msgstr "ホストを保存できませんでした"
 
+#: src/app/commands.tsx
+msgid "Could not save shortcut"
+msgstr "ショートカットを保存できませんでした"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Could not save theme"
+msgstr "テーマを保存できませんでした"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "送信できませんでした"
@@ -929,6 +948,10 @@ msgstr "ファイルをアップロードできませんでした。"
 msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
 msgstr "Herdr のバージョンを確認できません。再接続するか Muqun Gateway を更新してください。"
 
+#: src/components/agent-command-delivery-picker.tsx
+msgid "Current agent"
+msgstr "現在のエージェント"
+
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "現在のパス"
@@ -937,6 +960,7 @@ msgstr "現在のパス"
 msgid "Customize terminal commands and key combinations."
 msgstr "ターミナルのコマンドとキーの組み合わせをカスタマイズします。"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "ダーク"
@@ -1117,6 +1141,14 @@ msgstr "{0} を展開"
 msgid "Expires in {0}:{1}"
 msgstr "あと {0}:{1} で期限切れ"
 
+#: src/components/custom-theme-library.tsx
+msgid "Export colors"
+msgstr "色をエクスポート"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export theme"
+msgstr "テーマをエクスポート"
+
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
@@ -1153,6 +1185,10 @@ msgstr "フィンガープリント"
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
 msgstr "最初のプロンプト"
+
+#: src/components/custom-theme-library.tsx
+msgid "Fix text contrast before applying this theme"
+msgstr "このテーマを適用する前に文字のコントラストを修正してください"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -1313,6 +1349,10 @@ msgstr "待機"
 msgid "Images"
 msgstr "画像"
 
+#: src/components/custom-theme-library.tsx
+msgid "Import file"
+msgstr "ファイルをインポート"
+
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
 msgstr "現在のターミナル出力を添付"
@@ -1467,6 +1507,7 @@ msgstr "左矢印"
 msgid "Letters"
 msgstr "英字"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "ライト"
@@ -1576,7 +1617,6 @@ msgid "Move the simulator controls"
 msgstr "シミュレータの操作ボタンを移動"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/(drawer)/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -1625,6 +1665,10 @@ msgstr "端末の設定にかかわらず、牧群（ぼくぐん）はこの言
 #: src/components/settings-security.tsx
 msgid "Muqun will use {0} when the app opens."
 msgstr "アプリを開くとき、牧群は {0} を使います。"
+
+#: src/components/custom-theme-library.tsx
+msgid "My themes"
+msgstr "マイテーマ"
 
 #: src/app/commands.tsx
 #: src/components/ssh-host-form.tsx
@@ -2039,6 +2083,10 @@ msgstr "パスワードと鍵はこの端末のキーチェーンに封印され
 msgid "Paste"
 msgstr "ペースト"
 
+#: src/components/custom-theme-library.tsx
+msgid "Paste JSON"
+msgstr "JSON を貼り付け"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2065,6 +2113,11 @@ msgstr "今回の提示"
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
 msgstr "エスケープを送ってこのリクエストを閉じる"
+
+#: src/components/custom-theme-library.tsx
+#: src/components/custom-theme-preview.tsx
+msgid "Preview"
+msgstr "プレビュー"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -2191,6 +2244,10 @@ msgstr "出力を更新"
 #: src/hooks/use-agent-collaboration.ts
 msgid "Refresh to check Gateway and Herdr compatibility before assigning."
 msgstr "更新して Gateway と Herdr の対応状況を確認してください。"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove"
+msgstr "削除"
 
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
@@ -2418,6 +2475,10 @@ msgstr "ホストを保存"
 msgid "Save shortcut"
 msgstr "ショートカットを保存"
 
+#: src/components/custom-theme-library.tsx
+msgid "Save theme"
+msgstr "テーマを保存"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "保存済み"
@@ -2496,6 +2557,10 @@ msgstr "確認: たった今"
 #: src/components/skia-terminal.tsx
 msgid "Select all"
 msgstr "すべて選択"
+
+#: src/components/custom-theme-library.tsx
+msgid "Selected"
+msgstr "選択中"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2712,6 +2777,7 @@ msgid "Some files did not upload"
 msgstr "一部のファイルをアップロードできませんでした"
 
 #: src/components/app-error-boundary.tsx
+#: src/components/custom-theme-library.tsx
 msgid "Something went wrong"
 msgstr "問題が発生しました"
 
@@ -3048,6 +3114,18 @@ msgstr "やり取りを会話として表示し、ツールの手順は折りた
 msgid "Theme"
 msgstr "テーマ"
 
+#: src/components/custom-theme-library.tsx
+msgid "Theme applied"
+msgstr "テーマを適用しました"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme JSON"
+msgstr "テーマの JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme saved"
+msgstr "テーマを保存しました"
+
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
@@ -3171,6 +3249,10 @@ msgstr "このターミナルは描画できませんでした。"
 msgid "This terminal is no longer available."
 msgstr "このターミナルはもう利用できません。"
 
+#: src/components/custom-theme-library.tsx
+msgid "This theme contains images that must be installed before applying"
+msgstr "このテーマには画像が含まれています。適用する前に画像をインストールしてください"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "このワークスペースにはまだグループがありません。"
@@ -3225,6 +3307,7 @@ msgstr "入力するか、キーボードの音声入力キーを使ってくだ
 msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
 
+#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "取り消し"

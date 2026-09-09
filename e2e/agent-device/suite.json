@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "custom-themes",
+      "program": "flows/custom-themes",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-collaboration",
       "program": "flows/agent-collaboration",
       "tags": ["full"],
@@ -124,6 +130,69 @@
     }
   ],
   "programs": {
+    "flows/custom-themes": [
+      { "include": "subflows/launch-home" },
+      { "target": { "text": "Settings" }, "mode": "press", "run": "flows/custom-themes.ad#press" },
+      {
+        "target": { "id": "settings-theme-row" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "target": { "id": "settings-theme-row" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": { "id": "theme-paste-json" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      { "run": "flows/custom-themes.ad#input" },
+      {
+        "target": { "id": "theme-preview-json" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": { "id": "custom-theme-preview" },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#visible"
+      },
+      {
+        "target": { "id": "theme-apply" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      { "target": { "id": "theme-apply" }, "mode": "press", "run": "flows/custom-themes.ad#press" },
+      { "run": "flows/custom-themes.ad#settle" },
+      {
+        "target": { "text": "Theme applied" },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#visible"
+      },
+      {
+        "target": { "id": "theme-remove-previewed" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "target": { "id": "theme-remove-previewed" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": { "text": "Close theme picker" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      }
+    ],
     "flows/agent-collaboration": [
       { "include": "subflows/open-demo" },
       { "run": "flows/agent-collaboration.ad" }

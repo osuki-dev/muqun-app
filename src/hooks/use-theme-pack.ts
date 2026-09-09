@@ -1,8 +1,9 @@
 import { useThemeMode } from '@osuki-dev/ui';
 
-import { resolveThemePack, type ThemePack } from '@/constants/theme-packs';
+import { resolveThemePack, type ThemeAppearance } from '@/constants/theme-packs';
 import { createTerminalTheme, type TerminalTheme } from '@/terminal/palette';
 import { useAppSettings } from '@/stores/app-settings';
+import { useThemeLibrary } from '@/stores/theme-library';
 
 /**
  * The pack the app is currently wearing.
@@ -12,9 +13,11 @@ import { useAppSettings } from '@/stores/app-settings';
  * for as long as the choice is, and anything memoising on it re-runs exactly
  * when the theme changes and not once more.
  */
-export function useThemePack(): ThemePack {
+export function useThemePack(): ThemeAppearance {
   const themePack = useAppSettings((state) => state.themePack);
-  return resolveThemePack(themePack);
+  const custom = useThemeLibrary((state) => state.active);
+  const selection = useThemeLibrary((state) => state.library.selection);
+  return custom ?? resolveThemePack(selection?.kind === 'builtin' ? selection.id : themePack);
 }
 
 /**

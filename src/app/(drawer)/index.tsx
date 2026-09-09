@@ -53,6 +53,9 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
+import { useThemeLibrary } from '@/stores/theme-library';
+import { resolveHomeIdentity } from '@/theme/resolve';
+import { ThemeArtwork } from '@/components/theme-artwork';
 
 const brandMark = require('../../../assets/images/loading-mark.png');
 
@@ -85,6 +88,16 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   const router = useRouter();
   const theme = useThemeTokens();
+  const customTheme = useThemeLibrary((state) => state.active);
+  const identity = resolveHomeIdentity(customTheme?.manifest);
+  const customAssets = useThemeLibrary(
+    (state) =>
+      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
+  );
+  const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  const customLogo =
+    identity.logo && identity.logo !== 'builtin' ? customAssets?.[identity.logo] : undefined;
+  const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
@@ -263,6 +276,8 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
         ) : undefined
       }>
       <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
+        <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
+        <ThemeArtwork slot="home.decoration" />
         {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
@@ -272,14 +287,26 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           so the only thing that changes is where the brand is. */}
         {!isPad ? (
           <SafeAreaView edges={['top']} style={styles.topBar}>
-            <Animated.View pointerEvents="none" style={[styles.compactTitle, compactTitleStyle]}>
-              <View style={[styles.compactIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
-                <Image source={brandMark} contentFit="contain" style={styles.compactMark} />
-              </View>
-              <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
-                {t`Muqun`}
-              </Text>
-            </Animated.View>
+            {identity.showBrand ? (
+              <Animated.View pointerEvents="none" style={[styles.compactTitle, compactTitleStyle]}>
+                {identity.logo ? (
+                  <View
+                    style={[styles.compactIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
+                    <Image
+                      source={logoSource}
+                      onError={() => setFailedLogo(customLogo ?? null)}
+                      contentFit="contain"
+                      style={styles.compactMark}
+                    />
+                  </View>
+                ) : null}
+                {identity.name ? (
+                  <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
+                    {identity.name}
+                  </Text>
+                ) : null}
+              </Animated.View>
+            ) : null}
 
             {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
             the app's front door to everything that is not a server -- so it
@@ -345,7 +372,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             came for, and the name steps back to being the top of the page.
             `listLayout` carries the one change between them, so pairing a first
             server folds the poster down rather than cutting to a smaller one. */}
-          {!isPad ? (
+          {!isPad && identity.showBrand ? (
             <Animated.View
               entering={riseIn()}
               layout={listLayout('medium')}
@@ -357,34 +384,39 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
               gave a shape the mark already has, and cost it 30% of its own
               footprint to draw -- so the part meant to be read was the smaller
               half of the thing drawing attention to it. */}
-              <Image
-                source={brandMark}
-                contentFit="contain"
-                style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
-              />
-              <View style={styles.titleCopy}>
-                <Text
-                  style={[
-                    styles.brandTitle,
-                    {
-                      color: theme.colors.text,
-                      fontSize: metrics.brand.titleSize,
-                      lineHeight: metrics.brand.titleLineHeight,
-                      letterSpacing: metrics.brand.titleTracking,
-                    },
-                  ]}>
-                  {t`Muqun`}
-                </Text>
-                {/* Only where it is the whole message. On a screen already showing
+              {identity.logo ? (
+                <Image
+                  source={logoSource}
+                  onError={() => setFailedLogo(customLogo ?? null)}
+                  contentFit="contain"
+                  style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
+                />
+              ) : null}
+              {identity.name ? (
+                <View style={styles.titleCopy}>
+                  <Text
+                    style={[
+                      styles.brandTitle,
+                      {
+                        color: theme.colors.text,
+                        fontSize: metrics.brand.titleSize,
+                        lineHeight: metrics.brand.titleLineHeight,
+                        letterSpacing: metrics.brand.titleTracking,
+                      },
+                    ]}>
+                    {identity.name}
+                  </Text>
+                  {/* Only where it is the whole message. On a screen already showing
                 a machine and what is running on it, a line about what the app
                 is for is the product introducing itself to someone who has
                 been using it for months. */}
-                {metrics.brand.showsTagline ? (
-                  <Text variant="bodySmall" color={theme.colors.textMuted}>
-                    <Trans>Your agents, anywhere.</Trans>
-                  </Text>
-                ) : null}
-              </View>
+                  {metrics.brand.showsTagline ? (
+                    <Text variant="bodySmall" color={theme.colors.textMuted}>
+                      <Trans>Your agents, anywhere.</Trans>
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
             </Animated.View>
           ) : null}
 
@@ -444,7 +476,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                 // list does not: it starts where the reader is already looking
                 // and lets its slack collect underneath, because a single card
                 // marooned at mid-screen reads as a page still loading.
-                metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
+                identity.showBrand && metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
               ]}
             />
           ) : null}

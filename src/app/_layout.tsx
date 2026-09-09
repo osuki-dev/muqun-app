@@ -25,6 +25,7 @@ import { WhatsNewCard } from '@/components/whats-new-card';
 import { buildTheme } from '@/constants/theme';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useThemePack } from '@/hooks/use-theme-pack';
+import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
 import { useAppSettings } from '@/stores/app-settings';
@@ -100,6 +101,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     void hydrateSettings();
+    useThemeLibrary.getState().hydrate();
   }, [hydrateSettings]);
 
   return (
@@ -158,7 +160,19 @@ function RootContent() {
   const screenBackground = colors.background;
 
   return (
-    <ThemeProvider value={resolvedMode === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider
+      value={{
+        ...(resolvedMode === 'dark' ? DarkTheme : DefaultTheme),
+        colors: {
+          ...(resolvedMode === 'dark' ? DarkTheme.colors : DefaultTheme.colors),
+          primary: colors.primary,
+          background: colors.background,
+          card: colors.surface,
+          text: colors.text,
+          border: colors.border,
+          notification: colors.danger,
+        },
+      }}>
       <ToastProvider maxWidth={480}>
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
         <AnimatedSplashOverlay />

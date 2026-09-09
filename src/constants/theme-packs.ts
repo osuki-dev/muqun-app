@@ -108,6 +108,14 @@ export type ThemePack = {
   dark: ThemeVariant;
 };
 
+/** Shared runtime contract; imported palettes do not enter the built-in ID registry. */
+export type ThemeAppearance = {
+  id: string;
+  label: string;
+  light: ThemeVariant;
+  dark: ThemeVariant;
+};
+
 /* ------------------------------------------------------------------ osuki -- */
 
 /**
@@ -777,7 +785,10 @@ export function resolveThemePack(id: unknown): ThemePack {
   return osuki;
 }
 
-export function themeVariant(pack: ThemePack, mode: 'light' | 'dark'): ThemeVariant {
+export function themeVariant(
+  pack: Pick<ThemeAppearance, 'light' | 'dark'>,
+  mode: 'light' | 'dark'
+): ThemeVariant {
   return mode === 'dark' ? pack.dark : pack.light;
 }
 
@@ -787,7 +798,10 @@ export function themeVariant(pack: ThemePack, mode: 'light' | 'dark'): ThemeVari
  * Canvas first for the overall cast, then the three hues far enough apart to
  * tell two packs apart at 16pt: accent, link, warning.
  */
-export function themeSwatch(pack: ThemePack, mode: 'light' | 'dark'): readonly string[] {
+export function themeSwatch(
+  pack: Pick<ThemeAppearance, 'light' | 'dark'>,
+  mode: 'light' | 'dark'
+): readonly string[] {
   const { colors } = themeVariant(pack, mode);
   return [colors.background, colors.primary, colors.info, colors.warning];
 }

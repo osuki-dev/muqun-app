@@ -168,6 +168,7 @@ msgstr "TÁC TỬ"
 
 #: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
+#: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
 msgstr "Cộng tác giữa các tác nhân"
@@ -255,6 +256,10 @@ msgstr "Giao diện"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "Giao diện, terminal, bảo mật"
+
+#: src/components/custom-theme-library.tsx
+msgid "Apply theme"
+msgstr "Áp dụng giao diện"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -385,6 +390,7 @@ msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt đ�
 msgid "Camera access needed"
 msgstr "Cần quyền truy cập camera"
 
+#: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -491,6 +497,7 @@ msgid "Close pairing"
 msgstr "Đóng ghép nối"
 
 #: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "Đóng bản xem trước"
@@ -598,6 +605,10 @@ msgstr "Xác nhận hủy ghép nối {label}"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "Xác nhận: {removeLabel} {label}"
+
+#: src/components/custom-theme-preview.tsx
+msgid "Connect"
+msgstr "Kết nối"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -877,6 +888,14 @@ msgstr "Không thể lưu thay đổi"
 msgid "Could not save host"
 msgstr "Không thể lưu host"
 
+#: src/app/commands.tsx
+msgid "Could not save shortcut"
+msgstr "Không thể lưu lệnh tắt"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Could not save theme"
+msgstr "Không thể lưu giao diện"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Không thể gửi"
@@ -929,6 +948,10 @@ msgstr "Không thể tải tệp lên."
 msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
 msgstr "Không thể xác minh phiên bản Herdr. Hãy kết nối lại hoặc cập nhật Muqun Gateway."
 
+#: src/components/agent-command-delivery-picker.tsx
+msgid "Current agent"
+msgstr "Agent hiện tại"
+
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "Đường dẫn hiện tại"
@@ -937,6 +960,7 @@ msgstr "Đường dẫn hiện tại"
 msgid "Customize terminal commands and key combinations."
 msgstr "Tùy chỉnh lệnh terminal và tổ hợp phím."
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Tối"
@@ -1117,6 +1141,14 @@ msgstr "Mở rộng {0}"
 msgid "Expires in {0}:{1}"
 msgstr "Hết hạn sau {0}:{1}"
 
+#: src/components/custom-theme-library.tsx
+msgid "Export colors"
+msgstr "Xuất màu sắc"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export theme"
+msgstr "Xuất giao diện"
+
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
@@ -1153,6 +1185,10 @@ msgstr "Dấu vân tay"
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
 msgstr "PROMPT ĐẦU TIÊN"
+
+#: src/components/custom-theme-library.tsx
+msgid "Fix text contrast before applying this theme"
+msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng giao diện này"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -1313,6 +1349,10 @@ msgstr "Rảnh"
 msgid "Images"
 msgstr "Hình ảnh"
 
+#: src/components/custom-theme-library.tsx
+msgid "Import file"
+msgstr "Nhập tệp"
+
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
 msgstr "Đính kèm đầu ra terminal hiện tại"
@@ -1467,6 +1507,7 @@ msgstr "Mũi tên trái"
 msgid "Letters"
 msgstr "Chữ cái"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Sáng"
@@ -1576,7 +1617,6 @@ msgid "Move the simulator controls"
 msgstr "Di chuyển các nút điều khiển trình giả lập"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/(drawer)/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -1625,6 +1665,10 @@ msgstr "Muqun giữ nguyên ngôn ngữ này bất kể điện thoại đặt g
 #: src/components/settings-security.tsx
 msgid "Muqun will use {0} when the app opens."
 msgstr "Muqun sẽ dùng {0} khi mở ứng dụng."
+
+#: src/components/custom-theme-library.tsx
+msgid "My themes"
+msgstr "Giao diện của tôi"
 
 #: src/app/commands.tsx
 #: src/components/ssh-host-form.tsx
@@ -2039,6 +2083,10 @@ msgstr "Mật khẩu và khóa được niêm phong trong keychain của thiết
 msgid "Paste"
 msgstr "Dán"
 
+#: src/components/custom-theme-library.tsx
+msgid "Paste JSON"
+msgstr "Dán JSON"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2065,6 +2113,11 @@ msgstr "Đưa ra lần này"
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
 msgstr "Nhấn Escape để bỏ qua yêu cầu này"
+
+#: src/components/custom-theme-library.tsx
+#: src/components/custom-theme-preview.tsx
+msgid "Preview"
+msgstr "Xem trước"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -2191,6 +2244,10 @@ msgstr "Làm mới đầu ra"
 #: src/hooks/use-agent-collaboration.ts
 msgid "Refresh to check Gateway and Herdr compatibility before assigning."
 msgstr "Làm mới để kiểm tra khả năng tương thích của Gateway và Herdr trước khi giao việc."
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove"
+msgstr "Xóa"
 
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
@@ -2418,6 +2475,10 @@ msgstr "Lưu host"
 msgid "Save shortcut"
 msgstr "Lưu lệnh tắt"
 
+#: src/components/custom-theme-library.tsx
+msgid "Save theme"
+msgstr "Lưu giao diện"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "Đã lưu"
@@ -2496,6 +2557,10 @@ msgstr "Đã thấy vừa xong"
 #: src/components/skia-terminal.tsx
 msgid "Select all"
 msgstr "Chọn tất cả"
+
+#: src/components/custom-theme-library.tsx
+msgid "Selected"
+msgstr "Đã chọn"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2712,6 +2777,7 @@ msgid "Some files did not upload"
 msgstr "Một số tệp không tải lên được"
 
 #: src/components/app-error-boundary.tsx
+#: src/components/custom-theme-library.tsx
 msgid "Something went wrong"
 msgstr "Đã xảy ra lỗi"
 
@@ -3048,6 +3114,18 @@ msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công 
 msgid "Theme"
 msgstr "Chủ đề"
 
+#: src/components/custom-theme-library.tsx
+msgid "Theme applied"
+msgstr "Đã áp dụng giao diện"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme JSON"
+msgstr "JSON giao diện"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme saved"
+msgstr "Đã lưu giao diện"
+
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
@@ -3171,6 +3249,10 @@ msgstr "Không thể vẽ terminal này."
 msgid "This terminal is no longer available."
 msgstr "Terminal này không còn khả dụng."
 
+#: src/components/custom-theme-library.tsx
+msgid "This theme contains images that must be installed before applying"
+msgstr "Giao diện này chứa hình ảnh cần được cài đặt trước khi áp dụng"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Không gian làm việc này chưa có nhóm nào."
@@ -3225,6 +3307,7 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
+#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Hoàn tác"
