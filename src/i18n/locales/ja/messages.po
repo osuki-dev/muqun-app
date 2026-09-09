@@ -382,6 +382,10 @@ msgstr "応答待ち"
 msgid "Browser"
 msgstr "ブラウザー"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "内蔵テーマ"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "カメラへのアクセスがオフです。写真を撮るには設定でオンにしてください。"
@@ -956,6 +960,10 @@ msgstr "現在のエージェント"
 msgid "Current path"
 msgstr "現在のパス"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "現在のテーマ"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "ターミナルのコマンドとキーの組み合わせをカスタマイズします。"
@@ -1049,6 +1057,7 @@ msgid "Docs"
 msgstr "ドキュメント"
 
 #: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1350,6 +1359,10 @@ msgid "Images"
 msgstr "画像"
 
 #: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "インポート"
+
+#: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "ファイルをインポート"
 
@@ -1603,6 +1616,10 @@ msgstr "{0} をメンション"
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "更新日時"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "その他の操作"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -2114,6 +2131,7 @@ msgstr "今回の提示"
 msgid "Press Escape to dismiss this request"
 msgstr "エスケープを送ってこのリクエストを閉じる"
 
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
@@ -2263,6 +2281,10 @@ msgstr "履歴から削除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "ホストを削除"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "このテーマを削除しますか？"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3105,12 +3127,17 @@ msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他の�
 msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
 msgstr "ターミナルは作成されましたが、アシスタントの準備完了は確認できていません。まだ起動中の可能性があります。再試行する前にターミナルを確認してください。指示は保持されています。"
 
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "このデバイスからテーマが削除されます"
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "やり取りを会話として表示し、ツールの手順は折りたたみます。"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "テーマ"
 

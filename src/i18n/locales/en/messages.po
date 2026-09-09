@@ -382,6 +382,10 @@ msgstr "Blocked"
 msgid "Browser"
 msgstr "Browser"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "Built-in themes"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "Camera access is off. Turn it on in Settings to take a photo."
@@ -956,6 +960,10 @@ msgstr "Current agent"
 msgid "Current path"
 msgstr "Current path"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "Current theme"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Customize terminal commands and key combinations."
@@ -1049,6 +1057,7 @@ msgid "Docs"
 msgstr "Docs"
 
 #: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1350,6 +1359,10 @@ msgid "Images"
 msgstr "Images"
 
 #: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "Import"
+
+#: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "Import file"
 
@@ -1603,6 +1616,10 @@ msgstr "Mention {0}"
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Modified"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "More actions"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -2114,6 +2131,7 @@ msgstr "Presented now"
 msgid "Press Escape to dismiss this request"
 msgstr "Press Escape to dismiss this request"
 
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
@@ -2263,6 +2281,10 @@ msgstr "Remove from history"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "Remove host"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "Remove this theme?"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3105,12 +3127,17 @@ msgstr "The SSH tunnel carries the Gateway's port and no other, so the simulator
 msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
 msgstr "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
 
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "The theme will be removed from this device"
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "The transcript as a conversation, with tool steps folded away."
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Theme"
 

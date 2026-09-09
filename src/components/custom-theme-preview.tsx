@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { Text } from '@osuki-dev/ui';
+import { Image } from 'expo-image';
 import { View } from 'react-native';
 
 import type { ThemeManifest } from '@/theme/schema';
@@ -16,6 +17,12 @@ export function CustomThemePreview({
 }) {
   const { t } = useLingui();
   const identity = resolveHomeIdentity(manifest);
+  const logo =
+    identity.logo === 'builtin'
+      ? require('../../assets/images/loading-mark.png')
+      : identity.logo && assets[identity.logo]?.startsWith('file:///')
+        ? { uri: assets[identity.logo] }
+        : null;
   return (
     <View testID="custom-theme-preview" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
       {(['light', 'dark'] as const).map((mode) => {
@@ -42,11 +49,30 @@ export function CustomThemePreview({
             <Text variant="caption" color={colors.textMuted}>
               {mode === 'light' ? t`Light` : t`Dark`}
             </Text>
-            {identity.name ? (
-              <Text numberOfLines={2} color={colors.text}>
-                {identity.name}
-              </Text>
+            {identity.showBrand ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {logo ? (
+                  <Image
+                    source={logo}
+                    contentFit="contain"
+                    accessible={false}
+                    style={{ width: 28, height: 28 }}
+                  />
+                ) : null}
+                {identity.name ? (
+                  <Text numberOfLines={2} color={colors.text} style={{ flex: 1 }}>
+                    {identity.name}
+                  </Text>
+                ) : null}
+              </View>
             ) : null}
+            <ThemeArtworkLayer
+              manifest={manifest}
+              assets={assets}
+              slot="home.decoration"
+              mode={mode}
+              banner
+            />
             <View
               style={{ padding: 12, gap: 8, borderRadius: 12, backgroundColor: colors.surface }}>
               <Text variant="bodySmall" color={colors.text}>{t`Preview`}</Text>

@@ -1173,7 +1173,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             measureDockHeight(Math.ceil(event.nativeEvent.layout.height))
           }
           style={[styles.dockOverlay, dockKeyboardStyle]}>
-          <GlassChrome style={[styles.dock, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+          <GlassChrome
+            surface="composer"
+            style={[styles.dock, { paddingBottom: Math.max(insets.bottom, 10) }]}>
             {dock.virtualKeyboard ? virtualKeyboard : null}
             {dock.keyRow ? (
               <View style={styles.keyRow}>

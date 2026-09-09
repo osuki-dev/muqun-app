@@ -4,6 +4,7 @@
   "id": "comic-bloom",
   "name": "Comic Bloom",
   "version": "1.0.0",
+  "materials": { "default": "solid" },
   "variants": {
     "light": {
       "colors": {
@@ -99,6 +100,14 @@
     }
   },
   "assets": {
+    "garden-light": {
+      "path": "assets/garden-light.png",
+      "sha256": "24111d88e41bdcf2542b65b8c7b4faee75ff7b0bc298951a859b34b9c7be9339"
+    },
+    "garden-dark": {
+      "path": "assets/garden-dark.png",
+      "sha256": "6b350b48fe0c4edc0a47efb8eaa140969cab79ccba50209d988a4d7f24c21454"
+    },
     "paper-light": {
       "path": "assets/paper-light.png",
       "sha256": "917b84bd711d42cd9507e9fe67bbcae89c2381d2a5c3f708008507721bf16597"
@@ -110,6 +119,7 @@
   },
   "variantDecorations": {
     "light": {
+      "home.decoration": { "asset": "garden-light", "fit": "contain" },
       "shell.background": {
         "asset": "paper-light",
         "fit": "cover",
@@ -139,6 +149,7 @@
       }
     },
     "dark": {
+      "home.decoration": { "asset": "garden-dark", "fit": "contain" },
       "shell.background": {
         "asset": "paper-dark",
         "fit": "cover",

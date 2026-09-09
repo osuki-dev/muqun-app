@@ -382,6 +382,10 @@ msgstr "等待回应"
 msgid "Browser"
 msgstr "浏览器"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "内置主题"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "相机访问已关闭。请在“设置”中开启后再拍照。"
@@ -956,6 +960,10 @@ msgstr "当前 Agent"
 msgid "Current path"
 msgstr "当前路径"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "当前主题"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "自定义终端命令和组合键。"
@@ -1049,6 +1057,7 @@ msgid "Docs"
 msgstr "文档"
 
 #: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1350,6 +1359,10 @@ msgid "Images"
 msgstr "图片"
 
 #: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "导入"
+
+#: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "导入文件"
 
@@ -1603,6 +1616,10 @@ msgstr "提及 {0}"
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "修改时间"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "更多操作"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -2114,6 +2131,7 @@ msgstr "本次出示"
 msgid "Press Escape to dismiss this request"
 msgstr "按 Esc 键关闭此请求"
 
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
@@ -2263,6 +2281,10 @@ msgstr "移除记录"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "移除主机"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "移除此主题？"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3105,12 +3127,17 @@ msgstr "SSH 隧道只承载 Gateway 这一个端口，不含其他，所以从�
 msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
 msgstr "终端已创建，但尚未确认助手就绪，它可能仍在启动。请先检查终端再重试。你的指令已保留。"
 
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "此主题将从当前设备移除"
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "把对话记录当成聊天呈现，并收起工具步骤。"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "主题"
 

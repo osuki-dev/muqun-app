@@ -9,7 +9,7 @@ is hidden "role=button label=\"Summarize progress\""
 press "id=\"quick-actions-tab-saved\""
 wait "role=button label=\"Summarize progress\"" 10000
 is hidden "role=button label=\"/clear\""
-press "text=\"Agent collaboration\""
+press "role=button text=\"Agent collaboration\""
 wait "id=\"collaboration-assign\"" 15000
 press "id=\"collaboration-assign\""
 press "id=\"collaboration-new\""
@@ -20,7 +20,7 @@ press "id=\"collaboration-close\""
 wait "role=button text=\"Open quick actions\"" 10000
 press "role=button text=\"Open quick actions\""
 wait text "Agent collaboration" 10000
-press "text=\"Agent collaboration\""
+press "role=button text=\"Agent collaboration\""
 wait "id=\"collaboration-instructions\"" 10000
 is visible "id=\"collaboration-instructions\" value=\"Muqun collaboration regression: review current changes without editing files.\""
 press "id=\"collaboration-send\""
@@ -41,7 +41,7 @@ press "id=\"collaboration-close\""
 wait text "Claude Code" 10000
 press "role=button text=\"Open quick actions\""
 wait text "Agent collaboration" 10000
-press "text=\"Agent collaboration\""
+press "role=button text=\"Agent collaboration\""
 wait "id=\"collaboration-assign\"" 10000
 press "id=\"collaboration-assign\""
 press "id=\"collaboration-existing\""
@@ -61,7 +61,7 @@ wait text "Review assistant" 10000
 screenshot "shots/collaboration-terminal.png"
 press "role=button text=\"Open quick actions\""
 wait text "Agent collaboration" 10000
-press "text=\"Agent collaboration\""
+press "role=button text=\"Agent collaboration\""
 wait "id=\"collaboration-task-0-output\"" 10000
 press "id=\"collaboration-task-0-options\""
 wait "id=\"collaboration-remove\"" 10000

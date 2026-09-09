@@ -11,7 +11,9 @@ export type ThemeFilePreview = { manifest: ThemeManifest; prepared?: PreparedThe
 /** Explicit user selection only; no clipboard inspection or network requests. */
 export async function pickThemeManifest(): Promise<ThemeFilePreview | null> {
   const result = await DocumentPicker.getDocumentAsync({
-    type: ['application/json', 'text/plain', 'application/octet-stream', 'application/zip'],
+    // Providers do not consistently classify our custom extension. Let the user
+    // select it, then enforce byte limits and strict JSON/ZIP validation below.
+    type: '*/*',
     multiple: false,
     copyToCacheDirectory: true,
   });

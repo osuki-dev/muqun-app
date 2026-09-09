@@ -6,15 +6,24 @@ It does not replace or add images to existing built-in themes.
 
 ## Current status
 
-The light and dark wallpaper candidates are saved under `assets/`. They are not
-yet an installable theme pack. The complete manifest must be authored using the
-built-in Muqun theme skill once its safe agent delivery and import UI are ready.
-Do not label this folder a release or claim app validation has passed.
+The complete light/dark manifest and four original images form an installable
+offline package. Run `bun scripts/build-theme-pack.ts` from the repository root
+to create `dist/themes/comic-bloom.muqun-theme`. The builder validates the schema,
+contrast, image structure, SHA-256 hashes, and byte-exact archive round-trip.
+In Settings > Theme, choose Import > Import file, select that package, inspect
+both previews, and choose Apply theme. This remains an unreleased development
+pack while the complete device and platform gates are in progress.
 
 ## Artwork
 
 - `assets/paper-light.png`: light-mode comic paper
 - `assets/paper-dark.png`: composition-matched dark-mode comic paper
+- `assets/garden-light.png`: blossom sprites delivering a star letter in a tulip garden
+- `assets/garden-dark.png`: composition-matched muted-plum night garden
+
+The garden uses the optional `home.decoration` slot, contained in a bounded 2:1
+banner on phones and tablets. It never covers controls or terminal text. Themes
+without that slot retain their existing layout without an empty image placeholder.
 
 Generated with the built-in imagegen tool. The dark wallpaper edits the light
 wallpaper to keep the composition consistent. Both leave the content area quiet.

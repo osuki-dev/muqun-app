@@ -382,6 +382,10 @@ msgstr "응답 대기"
 msgid "Browser"
 msgstr "브라우저"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "기본 테마"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "카메라 접근이 꺼져 있습니다. 사진을 찍으려면 설정에서 켜 주세요."
@@ -956,6 +960,10 @@ msgstr "현재 에이전트"
 msgid "Current path"
 msgstr "현재 경로"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "현재 테마"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "터미널 명령과 키 조합을 사용자 지정합니다."
@@ -1049,6 +1057,7 @@ msgid "Docs"
 msgstr "문서"
 
 #: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1350,6 +1359,10 @@ msgid "Images"
 msgstr "이미지"
 
 #: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "가져오기"
+
+#: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "파일 가져오기"
 
@@ -1603,6 +1616,10 @@ msgstr "{0} 멘션"
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "수정일"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "추가 작업"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -2114,6 +2131,7 @@ msgstr "지금 제시됨"
 msgid "Press Escape to dismiss this request"
 msgstr "이스케이프를 눌러 이 요청 닫기"
 
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
@@ -2263,6 +2281,10 @@ msgstr "기록에서 삭제"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "호스트 제거"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "이 테마를 삭제할까요?"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3105,12 +3127,17 @@ msgstr "SSH 터널은 게이트웨이의 포트 하나만 전달하고 다른 �
 msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
 msgstr "터미널은 생성되었지만 도우미가 준비되었는지 확인되지 않았습니다. 아직 시작 중일 수 있습니다. 다시 시도하기 전에 터미널을 확인하세요. 지시 내용은 보관되어 있습니다."
 
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "이 기기에서 테마가 삭제됩니다"
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니다."
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "테마"
 

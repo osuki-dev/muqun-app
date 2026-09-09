@@ -382,6 +382,10 @@ msgstr "Bloqué"
 msgid "Browser"
 msgstr "Navigateur"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "Thèmes intégrés"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "L’accès à la caméra est désactivé. Activez-le dans Réglages pour prendre une photo."
@@ -956,6 +960,10 @@ msgstr "Agent actuel"
 msgid "Current path"
 msgstr "Chemin actuel"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "Thème actuel"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Personnalisez les commandes de terminal et les combinaisons de touches."
@@ -1049,6 +1057,7 @@ msgid "Docs"
 msgstr "Docs"
 
 #: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1350,6 +1359,10 @@ msgid "Images"
 msgstr "Images"
 
 #: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "Importer"
+
+#: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "Importer un fichier"
 
@@ -1603,6 +1616,10 @@ msgstr "Mentionner {0}"
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Modifié le"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "Autres actions"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -2114,6 +2131,7 @@ msgstr "Présentée maintenant"
 msgid "Press Escape to dismiss this request"
 msgstr "Appuyer sur Échap pour ignorer cette demande"
 
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
@@ -2263,6 +2281,10 @@ msgstr "Retirer de l’historique"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "Supprimer l’hôte"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "Supprimer ce thème ?"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3105,12 +3127,17 @@ msgstr "Le tunnel SSH transporte le port de la Gateway et aucun autre : depuis 
 msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
 msgstr "Le terminal a été créé, mais l’assistant n’est pas encore confirmé prêt. Il démarre peut-être encore. Vérifiez son terminal avant de réessayer. Vos instructions sont conservées."
 
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "Le thème sera supprimé de cet appareil"
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "La transcription sous forme de conversation, avec les étapes d’outils repliées."
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Thème"
 

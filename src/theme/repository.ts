@@ -196,6 +196,7 @@ export class ThemeRepository {
       variantDecorations: _variants,
       homeIdentity: _identity,
       source: _source,
+      materials: _materials,
       ...colors
     } = theme.manifest;
     return JSON.stringify(parseThemeManifest(JSON.stringify(colors)), null, 2);
