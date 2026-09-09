@@ -1,0 +1,179 @@
+{
+  "format": "muqun-theme",
+  "schemaVersion": 1,
+  "id": "comic-bloom",
+  "name": "Comic Bloom",
+  "version": "1.0.0",
+  "variants": {
+    "light": {
+      "colors": {
+        "background": "#FFF3F0",
+        "surface": "#FFFCF8",
+        "surfaceRaised": "#F7E7ED",
+        "border": "#E5CBD6",
+        "borderStrong": "#9B708A",
+        "text": "#38283D",
+        "textMuted": "#695266",
+        "textSubtle": "#766075",
+        "textDisabled": "#B49AA9",
+        "primary": "#A5366D",
+        "onPrimary": "#FFFAF5",
+        "primarySubtle": "#A5366D18",
+        "danger": "#B32C46",
+        "dangerSubtle": "#B32C4618",
+        "success": "#28644D",
+        "warning": "#855719",
+        "info": "#485FA0"
+      },
+      "terminal": {
+        "background": "#FFF8F2",
+        "foreground": "#38283D",
+        "cursor": "#A5366D",
+        "link": "#485FA0",
+        "selection": "#A5366D26",
+        "ansi": [
+          "#38283D",
+          "#AD304B",
+          "#28644D",
+          "#855719",
+          "#485FA0",
+          "#87458A",
+          "#246571",
+          "#675467",
+          "#786477",
+          "#A52347",
+          "#236143",
+          "#805013",
+          "#3E5496",
+          "#7B3882",
+          "#1F6070",
+          "#443048"
+        ]
+      }
+    },
+    "dark": {
+      "colors": {
+        "background": "#241E2C",
+        "surface": "#302637",
+        "surfaceRaised": "#3C3044",
+        "border": "#514057",
+        "borderStrong": "#8D6E93",
+        "text": "#FFF4EC",
+        "textMuted": "#DBC0D1",
+        "textSubtle": "#BE9FB7",
+        "textDisabled": "#836D83",
+        "primary": "#F2A8CE",
+        "onPrimary": "#392237",
+        "primarySubtle": "#F2A8CE20",
+        "danger": "#FFA0A5",
+        "dangerSubtle": "#FFA0A51F",
+        "success": "#99D6B5",
+        "warning": "#F5D58F",
+        "info": "#B7C7FF"
+      },
+      "terminal": {
+        "background": "#221C29",
+        "foreground": "#F2E3EA",
+        "cursor": "#F2A8CE",
+        "link": "#B7C7FF",
+        "selection": "#F2A8CE35",
+        "ansi": [
+          "#967F99",
+          "#EE98A7",
+          "#93CEB0",
+          "#E9C982",
+          "#A8BAF0",
+          "#D1A4E5",
+          "#94D1D7",
+          "#D6C0CF",
+          "#A68BAB",
+          "#FFB4BF",
+          "#B2E7C8",
+          "#FFE3A8",
+          "#CBD7FF",
+          "#E5C4F5",
+          "#B7E8EB",
+          "#FFF4EC"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "paper-light": {
+      "path": "assets/paper-light.png",
+      "sha256": "917b84bd711d42cd9507e9fe67bbcae89c2381d2a5c3f708008507721bf16597"
+    },
+    "paper-dark": {
+      "path": "assets/paper-dark.png",
+      "sha256": "840908183e24595d624c426044268285cb361cf1272f801f7cd38d128678c5b1"
+    }
+  },
+  "variantDecorations": {
+    "light": {
+      "shell.background": {
+        "asset": "paper-light",
+        "fit": "cover",
+        "opacity": 0.12,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "home.background": {
+        "asset": "paper-light",
+        "fit": "cover",
+        "opacity": 0.3,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "regular": {
+          "asset": "paper-light",
+          "fit": "contain",
+          "opacity": 0.4,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      }
+    },
+    "dark": {
+      "shell.background": {
+        "asset": "paper-dark",
+        "fit": "cover",
+        "opacity": 0.12,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "home.background": {
+        "asset": "paper-dark",
+        "fit": "cover",
+        "opacity": 0.26,
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "regular": {
+          "asset": "paper-dark",
+          "fit": "contain",
+          "opacity": 0.34,
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      }
+    }
+  },
+  "homeIdentity": {
+    "name": {
+      "mode": "default"
+    },
+    "logo": {
+      "mode": "default"
+    }
+  }
+}

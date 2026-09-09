@@ -17,6 +17,7 @@ import {
   type CollaborationContext,
 } from '@/lib/agent-collaboration';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
+import { AgentCommandSummary } from '@/components/agent-command-summary';
 
 export default function AgentCollaborationScreen() {
   const { t } = useLingui();
@@ -27,6 +28,7 @@ export default function AgentCollaborationScreen() {
   const [showHistory, setShowHistory] = useState(false);
   const [management, setManagement] = useState<string | null>(null);
   const {
+    command,
     originCwd,
     tasks,
     connectionMatches,
@@ -406,6 +408,9 @@ export default function AgentCollaborationScreen() {
                 ) : null}
               </View>
             )}
+            {command ? (
+              <AgentCommandSummary name={command.name} description={command.description} />
+            ) : null}
             <Input
               testID="collaboration-instructions"
               accessibilityLabel={t`Task instructions`}
@@ -419,22 +424,26 @@ export default function AgentCollaborationScreen() {
               placeholder={t`Describe the task and what a good result looks like.`}
               variant="outline"
             />
-            <View style={styles.row}>
-              <Button
-                variant="ghost"
-                disabled={busy || Boolean(prompt)}
-                onPress={() =>
-                  setPrompt(
-                    t`Review the current changes. Report bugs and missing tests; do not edit files.`
-                  )
-                }>{t`Review changes`}</Button>
-              <Button
-                variant="ghost"
-                disabled={busy || Boolean(prompt)}
-                onPress={() =>
-                  setPrompt(t`Run the relevant tests and report failures with reproduction steps.`)
-                }>{t`Run tests`}</Button>
-            </View>
+            {!command ? (
+              <View style={styles.row}>
+                <Button
+                  variant="ghost"
+                  disabled={busy || Boolean(prompt)}
+                  onPress={() =>
+                    setPrompt(
+                      t`Review the current changes. Report bugs and missing tests; do not edit files.`
+                    )
+                  }>{t`Review changes`}</Button>
+                <Button
+                  variant="ghost"
+                  disabled={busy || Boolean(prompt)}
+                  onPress={() =>
+                    setPrompt(
+                      t`Run the relevant tests and report failures with reproduction steps.`
+                    )
+                  }>{t`Run tests`}</Button>
+              </View>
+            ) : null}
             <View style={styles.row}>
               <View style={styles.grow}>
                 <Text variant="bodySmall">{t`Include current terminal output`}</Text>
@@ -467,7 +476,7 @@ export default function AgentCollaborationScreen() {
                 !ready ||
                 busy ||
                 contextLoading ||
-                !prompt.trim() ||
+                (!prompt.trim() && !command?.instructions) ||
                 (newAgent ? !kind : !selected || !canAssignToAgent(selected.status))
               }
               onPress={() => void assign()}>

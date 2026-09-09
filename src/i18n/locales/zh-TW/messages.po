@@ -168,6 +168,7 @@ msgstr "代理程式"
 
 #: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
+#: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
 msgstr "代理協作"
@@ -255,6 +256,10 @@ msgstr "外觀"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "外觀、終端機、安全性"
+
+#: src/components/custom-theme-library.tsx
+msgid "Apply theme"
+msgstr "套用主題"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -385,6 +390,7 @@ msgstr "相機存取已關閉。請到「設定」開啟後再拍照。"
 msgid "Camera access needed"
 msgstr "需要相機存取權"
 
+#: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -491,6 +497,7 @@ msgid "Close pairing"
 msgstr "關閉配對"
 
 #: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "關閉預覽"
@@ -598,6 +605,10 @@ msgstr "確認解除 {label} 的配對"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "確認：{removeLabel} {label}"
+
+#: src/components/custom-theme-preview.tsx
+msgid "Connect"
+msgstr "連線"
 
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -877,6 +888,14 @@ msgstr "無法儲存變更"
 msgid "Could not save host"
 msgstr "無法儲存主機"
 
+#: src/app/commands.tsx
+msgid "Could not save shortcut"
+msgstr "無法儲存快捷命令"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Could not save theme"
+msgstr "無法儲存主題"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "無法傳送"
@@ -929,6 +948,10 @@ msgstr "無法上傳檔案。"
 msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
 msgstr "無法確認此工作階段的 Herdr 版本。請重新連線或更新 Muqun Gateway。"
 
+#: src/components/agent-command-delivery-picker.tsx
+msgid "Current agent"
+msgstr "目前的 Agent"
+
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "目前路徑"
@@ -937,6 +960,7 @@ msgstr "目前路徑"
 msgid "Customize terminal commands and key combinations."
 msgstr "自訂終端機指令與按鍵組合。"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "深色"
@@ -1117,6 +1141,14 @@ msgstr "展開 {0}"
 msgid "Expires in {0}:{1}"
 msgstr "將於 {0}:{1} 後過期"
 
+#: src/components/custom-theme-library.tsx
+msgid "Export colors"
+msgstr "匯出色彩"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export theme"
+msgstr "匯出主題"
+
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
@@ -1153,6 +1185,10 @@ msgstr "指紋"
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
 msgstr "第一則提示詞"
+
+#: src/components/custom-theme-library.tsx
+msgid "Fix text contrast before applying this theme"
+msgstr "請先修正文字對比度再套用此主題"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -1313,6 +1349,10 @@ msgstr "閒置"
 msgid "Images"
 msgstr "圖片"
 
+#: src/components/custom-theme-library.tsx
+msgid "Import file"
+msgstr "匯入檔案"
+
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
 msgstr "附上目前終端輸出"
@@ -1467,6 +1507,7 @@ msgstr "向左鍵"
 msgid "Letters"
 msgstr "字母"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "淺色"
@@ -1576,7 +1617,6 @@ msgid "Move the simulator controls"
 msgstr "移動模擬器控制項"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/(drawer)/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -1625,6 +1665,10 @@ msgstr "無論手機設定為何，牧群都維持這個語言。"
 #: src/components/settings-security.tsx
 msgid "Muqun will use {0} when the app opens."
 msgstr "開啟 App 時，牧群會使用 {0}。"
+
+#: src/components/custom-theme-library.tsx
+msgid "My themes"
+msgstr "我的主題"
 
 #: src/app/commands.tsx
 #: src/components/ssh-host-form.tsx
@@ -2039,6 +2083,10 @@ msgstr "密碼與金鑰會封存在此裝置的鑰匙圈中，絕不會離開裝
 msgid "Paste"
 msgstr "貼上"
 
+#: src/components/custom-theme-library.tsx
+msgid "Paste JSON"
+msgstr "貼上 JSON"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2065,6 +2113,11 @@ msgstr "本次出示"
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
 msgstr "按 Esc 鍵關閉這項請求"
+
+#: src/components/custom-theme-library.tsx
+#: src/components/custom-theme-preview.tsx
+msgid "Preview"
+msgstr "預覽"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
@@ -2191,6 +2244,10 @@ msgstr "重新整理輸出"
 #: src/hooks/use-agent-collaboration.ts
 msgid "Refresh to check Gateway and Herdr compatibility before assigning."
 msgstr "請先重新整理並確認 Gateway 和 Herdr 版本支援協作。"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove"
+msgstr "移除"
 
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
@@ -2418,6 +2475,10 @@ msgstr "儲存主機"
 msgid "Save shortcut"
 msgstr "儲存快捷指令"
 
+#: src/components/custom-theme-library.tsx
+msgid "Save theme"
+msgstr "儲存主題"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "已儲存"
@@ -2496,6 +2557,10 @@ msgstr "剛剛確認過"
 #: src/components/skia-terminal.tsx
 msgid "Select all"
 msgstr "全選"
+
+#: src/components/custom-theme-library.tsx
+msgid "Selected"
+msgstr "已選取"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2712,6 +2777,7 @@ msgid "Some files did not upload"
 msgstr "有些檔案沒有上傳成功"
 
 #: src/components/app-error-boundary.tsx
+#: src/components/custom-theme-library.tsx
 msgid "Something went wrong"
 msgstr "發生錯誤"
 
@@ -3048,6 +3114,18 @@ msgstr "把逐字記錄當成對話呈現，並收合工具步驟。"
 msgid "Theme"
 msgstr "主題"
 
+#: src/components/custom-theme-library.tsx
+msgid "Theme applied"
+msgstr "已套用主題"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme JSON"
+msgstr "主題 JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme saved"
+msgstr "已儲存主題"
+
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
@@ -3171,6 +3249,10 @@ msgstr "無法繪製這個終端機。"
 msgid "This terminal is no longer available."
 msgstr "這個終端機已經不存在。"
 
+#: src/components/custom-theme-library.tsx
+msgid "This theme contains images that must be installed before applying"
+msgstr "此主題包含圖片，套用前需要先安裝圖片"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "這個工作區還沒有群組。"
@@ -3225,6 +3307,7 @@ msgstr "可以直接打字，或用鍵盤上的語音輸入鍵。"
 msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
 
+#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "復原"

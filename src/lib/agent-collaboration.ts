@@ -29,10 +29,13 @@ export type CollaborationContext = {
   workspaceId?: string;
   tabId?: string;
   cwd?: string;
+  /** Shortcut identity only; its draft and instruction snapshot stay off route URLs. */
+  commandId?: string;
 };
 
 /** In-memory only: preserve an unsent task while checking its terminal. */
 export type CollaborationDraft = {
+  command?: { name: string; instructions?: string; description?: string };
   context: CollaborationContext;
   prompt: string;
   target: string;

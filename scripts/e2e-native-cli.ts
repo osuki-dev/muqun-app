@@ -17,8 +17,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const which = (name: string) =>
   (process.env.PATH ?? '')
     .split(path.delimiter)
-    .map((directory) => path.join(directory, name))
-    .find((file) => existsSync(file));
+    .map((directory: string) => path.join(directory, name))
+    .find((file: string) => existsSync(file));
 const base = path.join(root, 'e2e/agent-device');
 const suite = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
 let tag = 'full';

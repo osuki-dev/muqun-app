@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 
 export type QuickCommandMode = 'terminal' | 'agent';
 export type QuickCommandKind = 'command' | 'keys';
+export type QuickCommandDelivery = 'current-agent' | 'collaboration';
 
 export type QuickCommand = {
   id: string;
@@ -10,6 +11,10 @@ export type QuickCommand = {
   mode: QuickCommandMode;
   kind?: QuickCommandKind;
   custom?: boolean;
+  delivery?: QuickCommandDelivery;
+  /** Only trusted built-ins can refer to bundled instruction builders. */
+  instructionId?: string;
+  labelLanguage?: 'en';
 };
 
 const STORAGE_KEY = 'muqun.quick-commands.v1';
@@ -18,6 +23,16 @@ const STORAGE_KEY = 'muqun.quick-commands.v1';
 const HIDDEN_KEY = 'muqun.quick-hidden.v1';
 
 const defaults: QuickCommand[] = [
+  // Opens the shared collaboration composer; never sent as a shell command.
+  {
+    id: 'agent-create-muqun-theme',
+    label: 'Create a Muqun theme',
+    value: '',
+    mode: 'agent',
+    delivery: 'collaboration',
+    instructionId: 'muqun-theme',
+    labelLanguage: 'en',
+  },
   { id: 'terminal-status', label: 'Git status', value: 'git status --short', mode: 'terminal' },
   { id: 'terminal-diff', label: 'Diff summary', value: 'git diff --stat', mode: 'terminal' },
   { id: 'terminal-pull', label: 'Pull', value: 'git pull --rebase', mode: 'terminal' },
@@ -92,7 +107,8 @@ export async function addQuickCommand(
   mode: QuickCommandMode,
   label: string,
   value: string,
-  kind: QuickCommandKind = 'command'
+  kind: QuickCommandKind = 'command',
+  delivery: QuickCommandDelivery = 'current-agent'
 ): Promise<QuickCommand[]> {
   const commands = await loadCustomCommands();
   const next = [
@@ -104,6 +120,7 @@ export async function addQuickCommand(
       mode,
       kind: mode === 'agent' ? 'command' : kind,
       custom: true,
+      ...(mode === 'agent' ? { delivery } : {}),
     } satisfies QuickCommand,
   ].slice(-24);
   await saveCustomCommands(next);
@@ -125,6 +142,19 @@ export async function removeQuickCommand(
     await saveCustomCommands(commands);
   }
   return loadQuickCommands(mode);
+}
+
+export async function updateQuickCommandDelivery(
+  id: string,
+  delivery: QuickCommandDelivery
+): Promise<QuickCommand[]> {
+  if (delivery !== 'current-agent' && delivery !== 'collaboration')
+    throw new Error('Invalid command delivery');
+  const commands = await loadCustomCommands();
+  const command = commands.find((item) => item.id === id && item.mode === 'agent');
+  if (!command) throw new Error('Agent shortcut no longer exists');
+  await saveCustomCommands(commands.map((item) => (item.id === id ? { ...item, delivery } : item)));
+  return loadQuickCommands('agent');
 }
 
 async function loadHiddenIds(): Promise<string[]> {
@@ -149,14 +179,22 @@ async function loadCustomCommands(): Promise<QuickCommand[]> {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value) as QuickCommand[];
-    return parsed.filter(
-      (command) =>
-        command.custom === true &&
-        (command.mode === 'terminal' || command.mode === 'agent') &&
-        typeof command.label === 'string' &&
-        typeof command.value === 'string' &&
-        (command.kind === undefined || command.kind === 'command' || command.kind === 'keys')
-    );
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (command) =>
+          command &&
+          typeof command.id === 'string' &&
+          command.custom === true &&
+          (command.mode === 'terminal' || command.mode === 'agent') &&
+          typeof command.label === 'string' &&
+          typeof command.value === 'string' &&
+          (command.kind === undefined || command.kind === 'command' || command.kind === 'keys') &&
+          (command.delivery === undefined ||
+            command.delivery === 'current-agent' ||
+            (command.mode === 'agent' && command.delivery === 'collaboration'))
+      )
+      .map(({ instructionId: _instructionId, labelLanguage: _language, ...command }) => command);
   } catch {
     return [];
   }

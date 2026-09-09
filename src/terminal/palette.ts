@@ -4,7 +4,7 @@ import {
   DEFAULT_THEME_PACK_ID,
   resolveThemePack,
   themeVariant,
-  type ThemePack,
+  type ThemeAppearance,
 } from '@/constants/theme-packs';
 import { isDarkSurface, type TerminalSurface } from '@/terminal/surface';
 
@@ -34,7 +34,7 @@ export const DEFAULT_TERMINAL_THEME: TerminalTheme =
  * carries the sixteen colours its own project publishes, so this only has to
  * pick a side.
  */
-export function createTerminalTheme(pack: ThemePack, mode: ResolvedThemeMode): TerminalTheme {
+export function createTerminalTheme(pack: ThemeAppearance, mode: ResolvedThemeMode): TerminalTheme {
   return themeVariant(pack, mode === 'dark' ? 'dark' : 'light').terminal;
 }
 
@@ -64,7 +64,7 @@ export function createTerminalTheme(pack: ThemePack, mode: ResolvedThemeMode): T
  * `appTheme` back by identity, so no memo downstream sees a change.
  */
 export function terminalPaneTheme(
-  pack: ThemePack,
+  pack: ThemeAppearance,
   appTheme: TerminalTheme,
   surface: TerminalSurface,
   ownsScreen: boolean
