@@ -1,46 +1,60 @@
+import { Textarea } from '@/components/themed-textarea';
 import { useLingui } from '@lingui/react/macro';
-import { Button, Text, Textarea, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 import { Check, ChevronRight, MoreHorizontal, X } from 'lucide-react-native';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
+import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { effectiveThemeManifest } from '@/theme/repository';
 import { PressableScale } from '@/components/pressable-scale';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
-import {
-  pickThemeManifest,
-  shareThemeColors,
-  shareThemeFile,
-  type ThemeFilePreview,
-} from '@/theme/local-files';
+import { pickThemeManifest, shareThemeColors, shareThemeFile } from '@/theme/local-files';
 import { exportInstalledTheme } from '@/theme/assets';
 import { useAppSettings } from '@/stores/app-settings';
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
+import type { ThemeEditorCandidate } from '@/theme/draft-session';
+import { formatThemeJson, ThemeJsonFormatError } from '@/theme/format-json';
 
 export function CustomThemeLibrary({
   initialManifest,
+  initialCandidate,
+  onOpenCandidate,
+  detail = false,
+  ownsPreparedAssets = true,
   onClosePreview,
   children,
 }: {
   initialManifest?: ThemeManifest;
+  initialCandidate?: ThemeEditorCandidate;
+  onOpenCandidate?: (candidate: ThemeEditorCandidate) => void;
+  detail?: boolean;
+  ownsPreparedAssets?: boolean;
   onClosePreview?: () => void;
   children?: ReactNode;
 } = {}) {
   const { t } = useLingui();
   const { colors } = useThemeTokens();
+  const background = useSurfaceBackground();
+  const { width } = useWindowDimensions();
+  const wideDetail = detail && width >= 840;
   const library = useThemeLibrary((state) => state.library);
   const currentPack = useThemePack();
   const [editing, setEditing] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [actionsOpen, setActionsOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(detail);
   const [removing, setRemoving] = useState(false);
   const [text, setText] = useState('');
-  const [candidate, setCandidate] = useState<
-    (ThemeFilePreview & { id?: string; assets?: Record<string, string> }) | null
-  >(initialManifest ? { manifest: initialManifest } : null);
+  const [formatUndo, setFormatUndo] = useState<{ before: string; after: string } | null>(null);
+  const [candidate, setCandidate] = useState<ThemeEditorCandidate | null>(
+    initialCandidate ?? (initialManifest ? { manifest: initialManifest } : null)
+  );
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,14 +71,20 @@ export function CustomThemeLibrary({
       mounted.current = false;
     };
   }, []);
-  useEffect(() => () => candidate?.prepared?.dispose(), [candidate?.prepared]);
+  useEffect(
+    () => () => {
+      if (ownsPreparedAssets) candidate?.prepared?.dispose();
+    },
+    [candidate?.prepared, ownsPreparedAssets]
+  );
   const contrast = candidate ? auditThemeContrast(candidate.manifest) : [];
   const imageCount = Object.keys(candidate?.manifest.assets ?? {}).length;
   const assets = candidate?.assets ?? candidate?.prepared?.assets ?? {};
   const missingImages = Object.keys(assets).length !== imageCount;
   const candidateSelected =
     library.selection?.kind === 'custom' && library.selection.id === candidate?.id;
-  const browsing = !initialManifest && !candidate && !editing;
+  const browsing = !initialManifest && !initialCandidate && !candidate && !editing;
+  const installedCandidate = library.themes.find((entry) => entry.id === candidate?.id);
 
   function closePreview() {
     setRemoving(false);
@@ -86,7 +106,8 @@ export function CustomThemeLibrary({
 
   function inspect(value: string) {
     const manifest = parseThemeManifest(value);
-    setCandidate({ manifest });
+    if (onOpenCandidate) onOpenCandidate({ manifest });
+    else setCandidate({ manifest });
     setText(value);
     setEditing(false);
     setImportOpen(false);
@@ -158,7 +179,7 @@ export function CustomThemeLibrary({
                 gap: 8,
                 padding: 12,
                 borderRadius: 16,
-                backgroundColor: colors.surfaceRaised,
+                backgroundColor: background(colors.surfaceRaised),
               }}>
               <Button
                 variant="secondary"
@@ -172,7 +193,8 @@ export function CustomThemeLibrary({
                         value.prepared?.dispose();
                         return;
                       }
-                      setCandidate(value);
+                      if (onOpenCandidate) onOpenCandidate(value);
+                      else setCandidate(value);
                       setEditing(false);
                       setImportOpen(false);
                       setActionsOpen(false);
@@ -186,6 +208,7 @@ export function CustomThemeLibrary({
                 testID="theme-paste-json"
                 onPress={() => {
                   setEditing(true);
+                  setFormatUndo(null);
                   setImportOpen(false);
                   setCandidate(null);
                   setError(null);
@@ -201,14 +224,49 @@ export function CustomThemeLibrary({
             accessibilityLabel={t`Theme JSON`}
             testID="theme-json-input"
             value={text}
-            onChangeText={setText}
+            onChangeText={(value) => {
+              setText(value);
+              setFormatUndo(null);
+              setError(null);
+            }}
             maxLength={THEME_LIMITS.manifestBytes}
             autoCorrect={false}
             autoCapitalize="none"
             minRows={4}
             maxRows={8}
           />
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <Button
+              variant="secondary"
+              disabled={busy || !text.trim()}
+              testID="theme-format-json"
+              onPress={() => {
+                try {
+                  const formatted = formatThemeJson(text);
+                  if (formatted !== text) {
+                    setFormatUndo({ before: text, after: formatted });
+                    setText(formatted);
+                  }
+                  setError(null);
+                } catch (failure) {
+                  setError(
+                    failure instanceof ThemeJsonFormatError && failure.code === 'too-large'
+                      ? t`Formatted JSON exceeds the theme size limit`
+                      : t`Fix invalid JSON before formatting`
+                  );
+                }
+              }}>{t`Format JSON`}</Button>
+            {formatUndo && text === formatUndo.after ? (
+              <Button
+                variant="ghost"
+                disabled={busy}
+                testID="theme-undo-format"
+                onPress={() => {
+                  setText(formatUndo.before);
+                  setFormatUndo(null);
+                  setError(null);
+                }}>{t`Undo formatting`}</Button>
+            ) : null}
             <Button
               disabled={busy || !text.trim()}
               testID="theme-preview-json"
@@ -216,7 +274,10 @@ export function CustomThemeLibrary({
             <Button
               variant="ghost"
               disabled={busy}
-              onPress={() => setEditing(false)}>{t`Cancel`}</Button>
+              onPress={() => {
+                setEditing(false);
+                setFormatUndo(null);
+              }}>{t`Cancel`}</Button>
           </View>
         </View>
       ) : null}
@@ -232,24 +293,90 @@ export function CustomThemeLibrary({
       ) : null}
       {candidate ? (
         <View style={{ gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
-              <Text selectable>{candidate.manifest.name}</Text>
-              {candidateSelected ? (
-                <Text variant="caption" color={colors.primary}>{t`Selected`}</Text>
+          {!detail || initialManifest ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                <Text selectable>{candidate.manifest.name}</Text>
+                {candidateSelected ? (
+                  <Text variant="caption" color={colors.primary}>{t`Selected`}</Text>
+                ) : null}
+              </View>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Close preview`}
+                testID="theme-close-preview"
+                disabled={busy}
+                onPress={closePreview}
+                style={{ padding: 12 }}>
+                <X size={20} color={colors.textMuted} />
+              </PressableScale>
+            </View>
+          ) : null}
+          <View
+            style={{
+              flexDirection: wideDetail ? 'row' : 'column',
+              gap: 24,
+              alignItems: 'flex-start',
+            }}>
+            <View
+              style={{
+                flex: wideDetail ? 1 : undefined,
+                width: wideDetail ? undefined : '100%',
+                minWidth: 0,
+              }}>
+              <CustomThemePreview
+                manifest={
+                  installedCandidate
+                    ? effectiveThemeManifest(installedCandidate)
+                    : candidate.manifest
+                }
+                assets={assets}
+              />
+            </View>
+            <View
+              style={{
+                flex: wideDetail ? 1 : undefined,
+                width: wideDetail ? undefined : '100%',
+                minWidth: 0,
+              }}>
+              {installedCandidate ? (
+                <ThemeAppearanceSettings
+                  key={installedCandidate.id}
+                  installed={installedCandidate}
+                  disabled={busy}
+                  onTerminalChange={(value) =>
+                    void perform(() =>
+                      useThemeLibrary
+                        .getState()
+                        .setTerminalBackgroundOpacity(installedCandidate.id, value)
+                    )
+                  }
+                  onSurfaceChange={(value) =>
+                    void perform(() =>
+                      useThemeLibrary
+                        .getState()
+                        .setSurfaceBackgroundOpacity(installedCandidate.id, value)
+                    )
+                  }
+                  onLogoChange={(value) =>
+                    void perform(() =>
+                      useThemeLibrary.getState().setHideHomeLogo(installedCandidate.id, value)
+                    )
+                  }
+                  onTextChange={(value) =>
+                    void perform(() =>
+                      useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
+                    )
+                  }
+                  onReset={() =>
+                    void perform(() =>
+                      useThemeLibrary.getState().resetAppearancePreferences(installedCandidate.id)
+                    )
+                  }
+                />
               ) : null}
             </View>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t`Close preview`}
-              testID="theme-close-preview"
-              disabled={busy}
-              onPress={closePreview}
-              style={{ padding: 12 }}>
-              <X size={20} color={colors.textMuted} />
-            </PressableScale>
           </View>
-          <CustomThemePreview manifest={candidate.manifest} assets={assets} />
           {contrast.length ? (
             <Text color={colors.danger}>{t`Fix text contrast before applying this theme`}</Text>
           ) : null}
@@ -268,16 +395,18 @@ export function CustomThemeLibrary({
             ) : (
               <Button disabled={busy} onPress={closePreview}>{t`Done`}</Button>
             )}
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t`More actions`}
-              accessibilityState={{ expanded: actionsOpen }}
-              testID="theme-more-actions"
-              disabled={busy}
-              onPress={() => setActionsOpen(!actionsOpen)}
-              style={{ padding: 12, justifyContent: 'center' }}>
-              <MoreHorizontal size={24} color={colors.textMuted} />
-            </PressableScale>
+            {!detail ? (
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`More actions`}
+                accessibilityState={{ expanded: actionsOpen }}
+                testID="theme-more-actions"
+                disabled={busy}
+                onPress={() => setActionsOpen(!actionsOpen)}
+                style={{ padding: 12, justifyContent: 'center' }}>
+                <MoreHorizontal size={24} color={colors.textMuted} />
+              </PressableScale>
+            ) : null}
           </View>
           {removing ? (
             <View
@@ -285,7 +414,7 @@ export function CustomThemeLibrary({
                 gap: 8,
                 padding: 12,
                 borderRadius: 16,
-                backgroundColor: colors.surfaceRaised,
+                backgroundColor: background(colors.surfaceRaised),
               }}>
               <Text>{t`Remove this theme?`}</Text>
               <Text
@@ -302,13 +431,13 @@ export function CustomThemeLibrary({
                   onPress={() => setRemoving(false)}>{t`Cancel`}</Button>
               </View>
             </View>
-          ) : actionsOpen ? (
+          ) : actionsOpen || detail ? (
             <View
               style={{
                 gap: 4,
                 padding: 8,
                 borderRadius: 16,
-                backgroundColor: colors.surfaceRaised,
+                backgroundColor: background(colors.surfaceRaised),
               }}>
               {!candidate.id ? (
                 <Button
@@ -365,11 +494,13 @@ export function CustomThemeLibrary({
               accessibilityLabel={installed.manifest.name}
               disabled={busy}
               onPress={() => {
-                setCandidate({
+                const next = {
                   manifest: installed.manifest,
                   id: installed.id,
                   assets: installed.assets,
-                });
+                };
+                if (onOpenCandidate) onOpenCandidate(next);
+                else setCandidate(next);
                 setError(null);
                 setNotice(null);
                 setEditing(false);
@@ -382,7 +513,7 @@ export function CustomThemeLibrary({
                 gap: 12,
                 padding: 12,
                 borderRadius: 12,
-                backgroundColor: colors.surfaceRaised,
+                backgroundColor: background(colors.surfaceRaised),
               }}>
               <ThemePaletteStrip pack={installed.manifest.variants} />
               <Text variant="bodySmall" numberOfLines={1} style={{ flex: 1, minWidth: 0 }}>

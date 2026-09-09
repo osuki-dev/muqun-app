@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The theme picker, on the surface it always wanted.
  *
@@ -48,11 +49,13 @@ import {
 import { CustomThemeLibrary } from '@/components/custom-theme-library';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { useThemePack } from '@/hooks/use-theme-pack';
+import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 
 export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
+  const openEditor = useOpenThemeEditor();
   useRenderTally('SettingsThemeSheet');
   const { width: windowWidth } = useWindowDimensions();
   const [measuredWidth, setMeasuredWidth] = useState(0);
@@ -90,7 +93,7 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
       closeLabel={t`Close theme picker`}
       onClose={onClose}
       contentMaxWidth={THEME_PICKER_MAX_CONTENT_WIDTH}>
-      <CustomThemeLibrary>
+      <CustomThemeLibrary onOpenCandidate={openEditor}>
         <Text variant="caption">{t`Built-in themes`}</Text>
         {error ? <Text accessibilityRole="alert">{error}</Text> : null}
         <View
@@ -132,6 +135,7 @@ function ThemePackTile({
   onSelect: () => void;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('ThemePackTile');
   const on = useSharedValue(selected ? 1 : 0);
 
@@ -148,12 +152,15 @@ function ThemePackTile({
       accessibilityLabel={pack.label}
       testID={`settings-selection:${selected ? 'on' : 'off'}:theme-${pack.id}`}
       onPress={onSelect}
-      style={[styles.tile, { width, backgroundColor: theme.colors.surfaceRaised }]}>
+      style={[
+        styles.tile,
+        { width, backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+      ]}>
       <Animated.View
         pointerEvents="none"
         style={[
           styles.selectedFill,
-          { backgroundColor: theme.colors.primarySubtle },
+          { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
           selectedStyle,
         ]}
       />

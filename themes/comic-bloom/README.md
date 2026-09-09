@@ -6,7 +6,7 @@ It does not replace or add images to existing built-in themes.
 
 ## Current status
 
-The complete light/dark manifest and four original images form an installable
+The light/dark manifest and coordinated scene and surface images form an installable
 offline package. Run `bun scripts/build-theme-pack.ts` from the repository root
 to create `dist/themes/comic-bloom.muqun-theme`. The builder validates the schema,
 contrast, image structure, SHA-256 hashes, and byte-exact archive round-trip.
@@ -16,14 +16,26 @@ pack while the complete device and platform gates are in progress.
 
 ## Artwork
 
-- `assets/paper-light.png`: light-mode comic paper
-- `assets/paper-dark.png`: composition-matched dark-mode comic paper
-- `assets/garden-light.png`: blossom sprites delivering a star letter in a tulip garden
-- `assets/garden-dark.png`: composition-matched muted-plum night garden
+- `assets/scene-light.png` and `scene-dark.png`: full-height blossom garden scenes
+- `assets/scene-wide-light.png` and `scene-wide-dark.png`: separately composed wide scenes for regular-width windows
+- `assets/chrome-light.png` and `chrome-dark.png`: matching navigation and tab textures
+- `assets/panel-light.png` and `panel-dark.png`: quieter card and action-sheet textures
+- `assets/action-light.png` and `action-dark.png`: berry and blush primary-button textures
+- `assets/empty-light.png` and `empty-dark.png`: pairing-state blossom messenger illustrations
 
-The garden uses the optional `home.decoration` slot, contained in a bounded 2:1
-banner on phones and tablets. It never covers controls or terminal text. Themes
-without that slot retain their existing layout without an empty image placeholder.
+The original PNGs remain production masters. Packaged surface textures and illustrations
+use `-512.png` derivatives to control memory, repeat density, and download size. On macOS,
+reproduce a derivative with `sips -Z 512 assets/chrome-light.png --out assets/chrome-light-512.png`
+and the equivalent command for each chrome, panel, action, and empty light/dark master.
+Update the manifest hash after regeneration; the package builder rejects stale hashes.
+Scenes retain their full resolution. Resampling changes dimensions, not artwork content.
+
+The flagship uses the shared shell rather than a separate Home banner. Navigation,
+composer, command tabs, shared cards, and action surfaces have matching image slots.
+Terminal cells remain opaque. Interactive surfaces limit artwork opacity to preserve
+token contrast; selected, disabled, and loading controls retain their native states.
+The optional banner remains available to other themes but is not used by this pack.
+The earlier paper and garden assets are retained as source explorations, not packaged.
 
 Generated with the built-in imagegen tool. The dark wallpaper edits the light
 wallpaper to keep the composition consistent. Both leave the content area quiet.

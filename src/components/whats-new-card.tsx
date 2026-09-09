@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
@@ -35,6 +36,7 @@ export function WhatsNewCard() {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -70,9 +72,13 @@ export function WhatsNewCard() {
         // this slot under the status bar.
         entering={fadeInDown('medium')}
         exiting={fadeOutUp('short')}
-        style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+        style={[styles.card, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <View style={styles.header}>
-          <View style={[styles.icon, { backgroundColor: theme.colors.primarySubtle }]}>
+          <View
+            style={[
+              styles.icon,
+              { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+            ]}>
             <Sparkles size={15} color={theme.colors.primary} strokeWidth={2.2} />
           </View>
           <Text variant="label" style={styles.title}>
@@ -87,7 +93,10 @@ export function WhatsNewCard() {
             hitSlop={10}
             pressedScale={0.9}
             onPress={() => setShow(false)}
-            style={[styles.close, { backgroundColor: theme.colors.surfaceRaised }]}>
+            style={[
+              styles.close,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
             <X size={15} color={theme.colors.textMuted} strokeWidth={2.2} />
           </PressableScale>
         </View>

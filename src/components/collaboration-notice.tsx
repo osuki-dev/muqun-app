@@ -1,5 +1,7 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Button, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import { type Href, useRouter } from 'expo-router';
 import { ChevronDown, ChevronUp, Ellipsis } from 'lucide-react-native';
 import { useState } from 'react';
@@ -31,6 +33,7 @@ export function CollaborationNotice({
   connected: boolean;
   active: boolean;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   const router = useRouter();
@@ -85,7 +88,7 @@ export function CollaborationNotice({
         padding: 12,
         gap: 8,
         borderRadius: appChrome.radius.control,
-        backgroundColor: theme.colors.surface,
+        backgroundColor: surfaceBackground(theme.colors.surface),
         boxShadow: appChrome.shadow.ambientCard,
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

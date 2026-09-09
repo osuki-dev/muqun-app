@@ -1,7 +1,9 @@
+import { SearchInput } from '@/components/themed-search-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { SearchInput, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import {
   File as FileIcon,
@@ -242,6 +244,7 @@ export function SessionArtifacts({
   ];
 
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
@@ -579,7 +582,9 @@ export function SessionArtifacts({
                   style={[
                     styles.filterChip,
                     {
-                      backgroundColor: selected ? theme.colors.primary : theme.colors.surfaceRaised,
+                      backgroundColor: surfaceBackground(
+                        selected ? theme.colors.primary : theme.colors.surfaceRaised
+                      ),
                     },
                   ]}>
                   <Text
@@ -625,7 +630,7 @@ export function SessionArtifacts({
         onEndReached={loadMore}
         onEndReachedThreshold={LOAD_MORE_THRESHOLD}
         onLayout={onListLayout}
-        style={[styles.sheet, { backgroundColor: theme.colors.surface }]}
+        style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
         // `flexGrow` is what makes this a full-height sheet, and it is not
         // decoration. The route asks for a single detent, and react-native-
         // screens answers a single detent with `isFitToContents` -- the sheet
@@ -792,6 +797,7 @@ const AssetRow = memo(function AssetRow({
   useRenderTally('ArtifactRow');
   const relativeTime = useRelativeTime();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const thumbnail = asset.kind === 'image' && asset.previewable ? assetImageSource(asset) : null;
   const detail = [formatAssetSize(asset.size), relativeTime(asset.modified_unix_ms)]
     .filter(Boolean)
@@ -801,9 +807,17 @@ const AssetRow = memo(function AssetRow({
     <PressableScale
       accessibilityLabel={t`Open ${asset.name}`}
       onPress={() => onOpen(asset)}
-      style={[styles.assetRow, { backgroundColor: theme.colors.surfaceRaised }]}>
+      style={[styles.assetRow, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
       {/* A picture of the file beats a glyph that says "this is a picture". */}
-      <View style={[styles.assetIcon, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[
+          styles.assetIcon,
+          {
+            backgroundColor: thumbnail
+              ? theme.colors.background
+              : surfaceBackground(theme.colors.background),
+          },
+        ]}>
         {thumbnail ? (
           <Image
             source={{ uri: thumbnail.uri, headers: thumbnail.headers }}

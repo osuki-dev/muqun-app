@@ -1,5 +1,8 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Button, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import { Stack, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -22,6 +25,7 @@ import { StyleSheet, View } from 'react-native';
  * So: say what happened, offer the one way out, and show nothing else.
  */
 export default function NotFoundScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   const router = useRouter();
@@ -29,7 +33,9 @@ export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t`Not found` }} />
-      <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[styles.screen, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+        <ThemeArtwork slot="shell.background" />
         <Text variant="heading" style={styles.centered}>
           <Trans>This link goes nowhere</Trans>
         </Text>

@@ -9,11 +9,37 @@ is visible "${TARGET}"
 # section scroll
 scroll down --pixels 300
 
+# section close-sheet
+back
+wait stable 400 5000
+is visible "label=\"Go back\""
+
 # section input
 fill "id=theme-json-input" "{\"format\":\"muqun-theme\",\"schemaVersion\":1,\"id\":\"theme-qa\",\"name\":\"Theme QA\",\"version\":\"1.0.0\",\"variants\":{\"light\":{\"colors\":{\"background\":\"#F7F3EC\",\"surface\":\"#FFFFFF\",\"surfaceRaised\":\"#ECE7DF\",\"border\":\"#E0DAD1\",\"borderStrong\":\"#C2B9AE\",\"text\":\"#050B12\",\"textMuted\":\"#5D6679\",\"textSubtle\":\"#6A7281\",\"textDisabled\":\"#A7ADB8\",\"primary\":\"#F1B7D8\",\"onPrimary\":\"#050B12\",\"primarySubtle\":\"#FF5A4A24\",\"danger\":\"#D93025\",\"dangerSubtle\":\"#D930251F\",\"success\":\"#1F9D6B\",\"warning\":\"#D98A1F\",\"info\":\"#3E63FF\"},\"terminal\":{\"background\":\"#F7F3EC\",\"foreground\":\"#050B12\",\"cursor\":\"#C54337\",\"link\":\"#3455DC\",\"selection\":\"#FF5A4A24\",\"ansi\":[\"#050B12\",\"#D93025\",\"#027A48\",\"#B54708\",\"#3538CD\",\"#6941C6\",\"#0E7090\",\"#475467\",\"#6A7281\",\"#B42318\",\"#027A48\",\"#B54708\",\"#3E63FF\",\"#7F56D9\",\"#0E7090\",\"#050B12\"]}},\"dark\":{\"colors\":{\"background\":\"#050B12\",\"surface\":\"#0B111A\",\"surfaceRaised\":\"#131B26\",\"border\":\"#1C2532\",\"borderStrong\":\"#2E3A4A\",\"text\":\"#FCFBFA\",\"textMuted\":\"#B6BDC8\",\"textSubtle\":\"#8B95A5\",\"textDisabled\":\"#6B7585\",\"primary\":\"#F1B7D8\",\"onPrimary\":\"#050B12\",\"primarySubtle\":\"#FF5A4A3D\",\"danger\":\"#F2554A\",\"dangerSubtle\":\"#F2554A29\",\"success\":\"#34C08B\",\"warning\":\"#F0A93C\",\"info\":\"#6B87FF\"},\"terminal\":{\"background\":\"#08111B\",\"foreground\":\"#D8E1EA\",\"cursor\":\"#FF5A4A\",\"link\":\"#A4BCFD\",\"selection\":\"#FF5A4A3D\",\"ansi\":[\"#0C121A\",\"#F2554A\",\"#34C08B\",\"#F0A93C\",\"#7DA2FF\",\"#C7A0FF\",\"#67E3F9\",\"#B6BDC8\",\"#6B7585\",\"#FDA29B\",\"#6CE9A6\",\"#FEC84B\",\"#A4BCFD\",\"#D6BBFB\",\"#A5F0FC\",\"#FCFBFA\"]}}},\"homeIdentity\":{\"name\":{\"mode\":\"default\"},\"logo\":{\"mode\":\"default\"}}}"
 
 # section settle
 wait stable 400 5000
+
+# section opacity-enable
+press "id=theme-terminal-opacity"
+wait stable 400 5000
+is visible "text=50%"
+
+# section opacity-adjust
+press "id=theme-surface-opacity"
+wait stable 400 5000
+is visible "text=50%"
+
+# section opacity-reset
+press "id=theme-appearance-reset"
+wait stable 400 5000
+is visible "text=100%"
+
+# section home-visibility
+press "id=theme-show-home-logo"
+press "id=theme-show-home-text"
+wait stable 400 5000
+is visible "id=theme-appearance-reset"
 
 # section confirm-remove
 press "id=theme-confirm-remove"

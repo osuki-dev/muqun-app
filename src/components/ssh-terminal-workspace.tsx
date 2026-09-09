@@ -1,3 +1,4 @@
+import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
@@ -20,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EditorControls } from '@/components/editor-controls';
 import { GlassChrome } from '@/components/glass-chrome';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { SshHostKeyDialog, SshKeyboardInteractiveDialog } from '@/components/ssh-host-key-dialog';
@@ -172,6 +174,7 @@ const VIEWPORT_SETTLE_MS = 100;
 export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -893,6 +896,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   if (!record) {
     return (
       <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+        <ThemeArtwork slot="shell.background" />
         <ScreenHeader title={t`SSH`} />
         <View style={styles.missing}>
           {loading ? (
@@ -906,7 +910,10 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
                 accessibilityRole="button"
                 accessibilityLabel={t`Back to SSH hosts`}
                 onPress={() => (router.canGoBack() ? router.back() : router.replace('/ssh'))}
-                style={[styles.pillButton, { backgroundColor: theme.colors.primary }]}>
+                style={[
+                  styles.pillButton,
+                  { backgroundColor: surfaceBackground(theme.colors.primary) },
+                ]}>
                 <Text variant="caption" color={theme.colors.onPrimary}>
                   <Trans>Back</Trans>
                 </Text>
@@ -925,7 +932,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       feedback="selection"
       pressedScale={0.9}
       onPress={openVirtualKeyboard}
-      style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+      style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
       <KeyboardIcon size={16} color={theme.colors.primary} />
     </PressableScale>
   );
@@ -965,7 +972,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       feedback="selection"
       pressedScale={0.9}
       onPress={() => setComposerRevealed(true)}
-      style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+      style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
       <PenLine size={16} color={chromeText} />
     </PressableScale>
   );
@@ -1048,7 +1055,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
               Keyboard.dismiss();
               setComposerRevealed(false);
             }}
-            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+            style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
             <KeyboardIcon size={16} color={theme.colors.primary} />
           </PressableScale>
           {keyStrip}
@@ -1060,6 +1067,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+      <ThemeArtwork slot="shell.background" />
       <ScreenHeader
         title={record.label}
         right={
@@ -1219,6 +1227,7 @@ function StatusLine({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   // Cancelled is the reader's doing and is lit in no colour at all; the
   // others are the connection's state.
   const light =
@@ -1260,7 +1269,7 @@ function StatusLine({
           style={[
             styles.pillButton,
             styles.statusAction,
-            { backgroundColor: theme.colors.primary },
+            { backgroundColor: surfaceBackground(theme.colors.primary) },
           ]}>
           <Text variant="caption" color={theme.colors.onPrimary}>
             <Trans>Reconnect</Trans>
@@ -1288,6 +1297,12 @@ function TerminalKeyChip({
   emphasisBorder: string;
 }) {
   const { t } = useLingui();
+  const surfaceBackground = useSurfaceBackground();
+  const theme = useThemeTokens();
+  const [pressed, setPressed] = useState(false);
+  useEffect(() => {
+    if (disabled) setPressed(false);
+  }, [disabled]);
   const { _ } = useLinguiRuntime();
   // The editor actions have a sentence behind their identity (`nvim:w`);
   // everything else is keyed by its English label. Same two tables, same
@@ -1303,14 +1318,23 @@ function TerminalKeyChip({
       pressedScale={0.94}
       hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
       onPress={onPress}
+      onPressIn={() => {
+        if (!disabled) setPressed(true);
+      }}
+      onPressOut={() => setPressed(false)}
       style={[
         styles.terminalKey,
-        { backgroundColor: background, opacity: disabled ? appChrome.opacity.disabled : 1 },
+        {
+          backgroundColor: surfaceBackground(
+            pressed && !disabled ? theme.colors.primary : background
+          ),
+          opacity: disabled ? appChrome.opacity.disabled : 1,
+        },
         item.emphasis ? [styles.terminalKeyEmphasis, { borderColor: emphasisBorder }] : null,
       ]}>
       <Text
         variant="caption"
-        color={textColor}
+        color={pressed && !disabled ? theme.colors.onPrimary : textColor}
         style={
           item.emphasis
             ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]

@@ -203,16 +203,29 @@
         "run": "flows/custom-themes.ad#visible"
       },
       {
-        "target": { "id": "theme-more-actions" },
+        "target": { "id": "theme-terminal-opacity" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 10000,
         "run": "flows/custom-themes.ad#scroll"
       },
+      { "run": "flows/custom-themes.ad#opacity-enable" },
+      { "run": "flows/custom-themes.ad#opacity-adjust" },
+      { "run": "flows/custom-themes.ad#home-visibility" },
       {
-        "target": { "id": "theme-more-actions" },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#press"
+        "target": { "id": "theme-appearance-reset" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      { "run": "flows/custom-themes.ad#opacity-reset" },
+      {
+        "target": { "id": "theme-remove-previewed" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
       },
       {
         "target": { "id": "theme-remove-previewed" },
@@ -220,11 +233,7 @@
         "run": "flows/custom-themes.ad#press"
       },
       { "run": "flows/custom-themes.ad#confirm-remove" },
-      {
-        "target": { "text": "Close theme picker" },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#press"
-      }
+      { "run": "flows/custom-themes.ad#close-sheet" }
     ],
     "flows/agent-collaboration": [
       { "include": "subflows/open-demo" },
@@ -793,6 +802,25 @@
       }
     ],
     "flows/away-digest": [
+      { "include": "subflows/launch-home" },
+      { "target": { "text": "Try the demo" }, "mode": "press", "run": "flows/away-digest.ad#s1" },
+      {
+        "target": { "text": "Claude Code" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/away-digest.ad#s2"
+      },
+      { "run": "flows/away-digest.ad#s3" },
+      { "include": "subflows/dismiss-logbox" },
+      { "target": { "id": "away-digest" }, "mode": "hidden", "run": "flows/away-digest.ad#s12" },
+      {
+        "target": { "id": "away-digest-dismiss" },
+        "mode": "hidden",
+        "run": "flows/away-digest.ad#s12"
+      },
+      { "run": "flows/away-digest.ad#s8" }
+    ],
+    "flows/away-digest-enabled": [
       {
         "include": "subflows/launch-home"
       },

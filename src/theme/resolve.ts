@@ -62,7 +62,12 @@ export function resolveHomeIdentity(manifest?: ThemeManifest) {
   const logo = manifest?.homeIdentity?.logo;
   return {
     name: name?.mode === 'hidden' ? null : name?.mode === 'custom' ? name.text : 'Muqun',
-    logo: logo?.mode === 'hidden' ? null : logo?.mode === 'custom' ? logo.asset : 'builtin',
+    logo:
+      logo?.mode === 'hidden'
+        ? null
+        : logo?.mode === 'custom'
+          ? { mode: 'custom' as const, asset: logo.asset }
+          : { mode: 'default' as const },
     showBrand: name?.mode !== 'hidden' || logo?.mode !== 'hidden',
   };
 }

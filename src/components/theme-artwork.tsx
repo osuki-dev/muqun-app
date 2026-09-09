@@ -7,6 +7,28 @@ import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 
+/** Use only to choose native fallback content; rendered artwork still validates its URI. */
+export function useHasThemeArtwork(slot: ThemeSlot, fallbackSlot?: ThemeSlot) {
+  const { resolvedMode } = useThemeMode();
+  const { width } = useWindowDimensions();
+  const active = useThemeLibrary((state) => state.active);
+  const assets = useThemeLibrary(
+    (state) =>
+      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
+  );
+  const image = active
+    ? resolveThemeImage(
+        active.manifest,
+        slot,
+        resolvedMode,
+        width >= 768 ? 'regular' : 'compact',
+        true,
+        fallbackSlot
+      )
+    : null;
+  return Boolean(image && assets?.[image.asset]?.startsWith('file:///'));
+}
+
 export function ThemeArtwork({
   slot,
   fallbackSlot,
@@ -47,6 +69,7 @@ export function ThemeArtworkLayer({
   fallbackSlot,
   banner = false,
   opacityLimit = 1,
+  viewport,
 }: {
   manifest: ThemeManifest;
   assets: Record<string, string>;
@@ -55,10 +78,12 @@ export function ThemeArtworkLayer({
   fallbackSlot?: ThemeSlot;
   banner?: boolean;
   opacityLimit?: number;
+  /** Preview cards model a compact screen independently of their parent window. */
+  viewport?: 'compact' | 'regular';
 }) {
   const { width } = useWindowDimensions();
   const [failed, setFailed] = useState<string | null>(null);
-  const size = width >= 768 ? 'regular' : 'compact';
+  const size = viewport ?? (width >= 768 ? 'regular' : 'compact');
   const image = resolveThemeImage(manifest, slot, mode, size, true, fallbackSlot);
   const uri = image ? assets[image.asset] : undefined;
   if (!image || !uri?.startsWith('file:///') || failed === uri) return null;

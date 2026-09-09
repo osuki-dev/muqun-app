@@ -1,4 +1,7 @@
-import { Button, Card, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Card } from '@/components/themed-card';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { Button } from '@/components/themed-button';
 import { Image } from 'expo-image';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
 import {
@@ -55,7 +58,8 @@ import { useServerReachability } from '@/stores/server-reachability';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveHomeIdentity } from '@/theme/resolve';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 
 const brandMark = require('../../../assets/images/loading-mark.png');
 
@@ -88,15 +92,17 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   const router = useRouter();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const customTheme = useThemeLibrary((state) => state.active);
   const identity = resolveHomeIdentity(customTheme?.manifest);
+  const hasScene = useHasThemeArtwork('home.background', 'shell.background');
   const customAssets = useThemeLibrary(
     (state) =>
       state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
   );
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const customLogo =
-    identity.logo && identity.logo !== 'builtin' ? customAssets?.[identity.logo] : undefined;
+    identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
   // Renaming and unpairing live in Settings, not here: the owner asked for one
@@ -261,6 +267,11 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
       padRail={
         isPad ? (
           <PadServerRail
+            homeBrand={{
+              name: identity.name,
+              logo: identity.logo ? logoSource : null,
+              visible: identity.showBrand,
+            }}
             servers={records}
             agentsByServer={agentsByServer}
             reachabilityByServer={padReachabilityByServer}
@@ -275,7 +286,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           />
         ) : undefined
       }>
-      <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
         {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
@@ -287,10 +298,28 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
         {!isPad ? (
           <SafeAreaView edges={['top']} style={styles.topBar}>
             {identity.showBrand ? (
-              <Animated.View pointerEvents="none" style={[styles.compactTitle, compactTitleStyle]}>
+              <Animated.View
+                testID="home-brand-compact"
+                pointerEvents="none"
+                style={[
+                  styles.compactTitle,
+                  compactTitleStyle,
+                  hasScene && {
+                    backgroundColor: background(theme.colors.surface),
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                  },
+                ]}>
+                <ThemedSurfaceArtwork
+                  slot="navigation.background"
+                  baseColor={theme.colors.surface}
+                />
                 {identity.logo ? (
                   <View
-                    style={[styles.compactIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
+                    style={[
+                      styles.compactIcon,
+                      { backgroundColor: background(theme.colors.surfaceRaised) },
+                    ]}>
                     <Image
                       source={logoSource}
                       onError={() => setFailedLogo(customLogo ?? null)}
@@ -373,6 +402,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             server folds the poster down rather than cutting to a smaller one. */}
           {!isPad && identity.showBrand ? (
             <Animated.View
+              testID="home-brand-expanded"
               entering={riseIn()}
               layout={listLayout('medium')}
               style={[
@@ -392,7 +422,24 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                 />
               ) : null}
               {identity.name ? (
-                <View style={styles.titleCopy}>
+                <View
+                  style={[
+                    styles.titleCopy,
+                    hasScene && {
+                      flex: 0,
+                      flexShrink: 1,
+                      backgroundColor: background(theme.colors.background),
+                      padding: 10,
+                      borderRadius: 14,
+                      overflow: 'hidden',
+                    },
+                  ]}>
+                  {hasScene ? (
+                    <ThemedSurfaceArtwork
+                      slot="navigation.background"
+                      baseColor={theme.colors.background}
+                    />
+                  ) : null}
                   <Text
                     style={[
                       styles.brandTitle,
@@ -443,7 +490,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                     {
                       padding: metrics.cardPadding,
                       borderRadius: metrics.cardRadius,
-                      backgroundColor: theme.colors.surface,
+                      backgroundColor: background(theme.colors.surface),
                     },
                   ]}>
                   <View style={styles.identityRow}>
@@ -573,13 +620,18 @@ function HeaderButton({
   children: ReactNode;
 }) {
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={8}
       onPress={onPress}
-      style={[styles.headerButton, { backgroundColor: theme.colors.surface }]}>
+      style={[
+        styles.headerButton,
+        { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
+      ]}>
+      <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
       {children}
     </PressableScale>
   );
@@ -634,6 +686,7 @@ function ServerCard({
   const { _ } = useLinguiRuntime();
 
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
 
   // Read at render because freshness is relative to *now*, not to whenever the
   // last state change happened: a card sitting untouched has to keep telling the
@@ -648,13 +701,15 @@ function ServerCard({
 
   return (
     <Animated.View entering={riseIn(cardDelay)} layout={listLayout()}>
-      <View
+      <ThemedSurface
+        slot="cards.decoration"
+        baseColor={theme.colors.surface}
         style={[
           styles.serverSection,
           {
             padding: metrics.cardPadding,
             borderRadius: metrics.cardRadius,
-            backgroundColor: theme.colors.surface,
+            overflow: 'hidden',
           },
         ]}>
         <View style={styles.identityRow}>
@@ -675,7 +730,9 @@ function ServerCard({
               style={[
                 styles.serverAvatar,
                 {
-                  backgroundColor: selected ? theme.colors.primary : theme.colors.surfaceRaised,
+                  backgroundColor: background(
+                    selected ? theme.colors.primary : theme.colors.surfaceRaised
+                  ),
                 },
               ]}>
               {selected ? (
@@ -777,7 +834,7 @@ function ServerCard({
           nowMs={nowMs}
           onOpenAgent={onOpenAgent}
         />
-      </View>
+      </ThemedSurface>
     </Animated.View>
   );
 }
@@ -800,6 +857,7 @@ function EmptyState({
 
   const theme = useThemeTokens();
   const corners = [styles.cornerTL, styles.cornerTR, styles.cornerBL, styles.cornerBR];
+  const hasIllustration = useHasThemeArtwork('emptyState.illustration');
 
   return (
     // It had an entrance and no exit, so pairing the first server made this
@@ -813,15 +871,28 @@ function EmptyState({
             the accent because the accent on this card belongs to the button --
             spending it twice, once on a picture of the action and once on the
             action, is what made the card read as two invitations. */}
-        <View style={styles.scanFrame}>
-          {corners.map((corner, index) => (
-            <View
-              key={index}
-              style={[styles.corner, corner, { borderColor: theme.colors.borderStrong }]}
-            />
-          ))}
-          <Server size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
-        </View>
+        {hasIllustration ? (
+          <View
+            style={{
+              width: isPad ? 180 : 128,
+              aspectRatio: 1,
+              alignSelf: 'center',
+              borderRadius: 24,
+              overflow: 'hidden',
+            }}>
+            <ThemeArtwork slot="emptyState.illustration" />
+          </View>
+        ) : (
+          <View style={styles.scanFrame}>
+            {corners.map((corner, index) => (
+              <View
+                key={index}
+                style={[styles.corner, corner, { borderColor: theme.colors.borderStrong }]}
+              />
+            ))}
+            <Server size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
+          </View>
+        )}
         <View style={[styles.emptyCopy, isPad && styles.padEmptyCopy]}>
           <Text variant="subheading">
             <Trans>Pair your first server</Trans>
@@ -984,8 +1055,8 @@ const styles = StyleSheet.create({
     // the icon travels straight up out of the block rather than sliding to a
     // centre it never occupied.
     left: CONTENT_GUTTER + BRAND_BLOCK_INSET,
-    // Clear of both controls and the gap before them.
-    right: HEADER_GUTTER + HEADER_BUTTON_SIZE * 2 + HEADER_BUTTON_GAP * 2,
+    // Reserve all three actions (SSH, scan, settings), including their gaps.
+    right: HEADER_GUTTER + HEADER_BUTTON_SIZE * 3 + HEADER_BUTTON_GAP * 3,
     bottom: 10,
     height: 40,
     flexDirection: 'row',
@@ -1005,6 +1076,8 @@ const styles = StyleSheet.create({
     height: '72%',
   },
   compactTitleText: {
+    flex: 1,
+    minWidth: 0,
     fontWeight: '600',
   },
   // The horizontal inset and the measure come from `homeServerListLayout` at

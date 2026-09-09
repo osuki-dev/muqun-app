@@ -1,4 +1,5 @@
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { BlurView } from 'expo-blur';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { type ComponentProps, type ReactNode, useEffect, useMemo, useState } from 'react';
@@ -20,6 +21,7 @@ import { resolveThemeImage } from '@/theme/resolve';
 import { resolveThemeMaterial, type ThemeSurface } from '@/theme/material';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { resolveArtworkOpacity } from '@/theme/artwork-contrast';
+import { jointArtworkOpacity } from '@/theme/opacity-policy';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -115,18 +117,26 @@ export function GlassChrome({
     ? resolveThemeImage(active.manifest, slot, resolvedMode, width >= 768 ? 'regular' : 'compact')
     : null;
   const hasImage = Boolean(artwork && assets?.[artwork.asset]?.startsWith('file:///'));
+  const background = useSurfaceBackground();
+  const backgroundOpacity = useSurfaceBackgroundOpacity();
   const glassAvailable = isGlassChromeLive();
-  const material = resolveThemeMaterial(active?.manifest, surface, hasImage, glassAvailable);
+  // Native glass includes its own system fill. An explicit translucent-color
+  // preference must use the real RGBA plane, not a tint hidden by that material.
+  const material =
+    backgroundOpacity < 1
+      ? 'solid'
+      : resolveThemeMaterial(active?.manifest, surface, hasImage, glassAvailable);
   const chromeStyle: StyleProp<ViewStyle> = [style, hasImage && { overflow: 'hidden' }];
   const opacityLimit = useMemo(
     () =>
       active && hasImage
-        ? resolveArtworkOpacity(
-            active.manifest.variants[resolvedMode].colors,
+        ? jointArtworkOpacity(
+            resolveArtworkOpacity(active.manifest.variants[resolvedMode].colors),
+            backgroundOpacity,
             artwork?.opacity ?? 1
           )
         : 0,
-    [active, hasImage, resolvedMode, artwork?.opacity]
+    [active, hasImage, resolvedMode, artwork?.opacity, backgroundOpacity]
   );
   const content = (
     <>
@@ -135,7 +145,10 @@ export function GlassChrome({
           pointerEvents="none"
           accessible={false}
           importantForAccessibility="no-hide-descendants"
-          style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.surfaceRaised }]}>
+          style={[
+            StyleSheet.absoluteFill,
+            material === 'glass' && { backgroundColor: theme.colors.surfaceRaised },
+          ]}>
           <ThemeArtwork slot={slot} opacityLimit={opacityLimit} />
         </View>
       ) : null}
@@ -156,7 +169,10 @@ export function GlassChrome({
       <Animated.View
         entering={entering}
         exiting={exiting}
-        style={[chromeStyle, { backgroundColor: theme.colors.surfaceRaised, overflow: 'hidden' }]}>
+        style={[
+          chromeStyle,
+          { backgroundColor: background(theme.colors.surfaceRaised), overflow: 'hidden' },
+        ]}>
         {content}
       </Animated.View>
     );

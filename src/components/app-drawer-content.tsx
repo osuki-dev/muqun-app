@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
@@ -32,6 +33,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
 
   const router = useRouter();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const pathname = usePathname();
   const { width } = useWindowDimensions();
   const permanent = isDrawerPermanent(width);
@@ -82,7 +84,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
   return (
     <SafeAreaView
       edges={['top', 'bottom']}
-      style={[styles.safeArea, { backgroundColor: theme.colors.surface }]}>
+      style={[styles.safeArea, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
       <View style={styles.header}>
         <View style={styles.flexOne}>
           <Text variant="heading">{t`Muqun`}</Text>
@@ -103,15 +105,19 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
               style={[
                 styles.navItem,
                 {
-                  backgroundColor: item.active
-                    ? theme.colors.primarySubtle
-                    : theme.colors.surfaceRaised,
+                  backgroundColor: surfaceBackground(
+                    item.active ? theme.colors.primarySubtle : theme.colors.surfaceRaised
+                  ),
                 },
               ]}>
               <View
                 style={[
                   styles.navIcon,
-                  { backgroundColor: item.active ? theme.colors.primary : theme.colors.background },
+                  {
+                    backgroundColor: surfaceBackground(
+                      item.active ? theme.colors.primary : theme.colors.background
+                    ),
+                  },
                 ]}>
                 <Icon
                   size={18}

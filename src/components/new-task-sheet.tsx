@@ -1,3 +1,5 @@
+import { Input } from '@/components/themed-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * Start a new agent task from the phone.
  *
@@ -22,7 +24,8 @@
  * field; nothing scrolls forever, and a sheet that reserved a session's worth
  * of height for four questions would be lying about how long this takes.
  */
-import { Button, Input, KeyboardToolbar, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { KeyboardToolbar, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Bot, Check, FolderOpen, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -85,6 +88,7 @@ export function NewTaskSheet({
   // has no way to know the result also depends on the active locale.
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('NewTaskSheet');
 
   const [profiles, setProfiles] = useState<AgentProfile[]>([]);
@@ -173,7 +177,7 @@ export function NewTaskSheet({
         // the Done button.
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardShouldPersistTaps="handled"
-        style={[styles.sheet, { backgroundColor: theme.colors.surface }]}
+        style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
         contentContainerStyle={styles.content}>
         {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
@@ -325,6 +329,7 @@ function AgentPill({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
 
   return (
     <PressableScale
@@ -337,7 +342,9 @@ function AgentPill({
       style={[
         styles.pill,
         {
-          backgroundColor: selected ? theme.colors.primarySubtle : theme.colors.surfaceRaised,
+          backgroundColor: surfaceBackground(
+            selected ? theme.colors.primarySubtle : theme.colors.surfaceRaised
+          ),
           borderColor: selected ? theme.colors.primary : 'transparent',
         },
       ]}>
@@ -373,6 +380,7 @@ function RecentCwdRow({
   onSelect: () => void;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
 
   return (
     <PressableScale
@@ -380,7 +388,10 @@ function RecentCwdRow({
       accessibilityState={{ selected }}
       accessibilityLabel={path}
       onPress={onSelect}
-      style={[styles.recentRow, { backgroundColor: theme.colors.surfaceRaised }]}>
+      style={[
+        styles.recentRow,
+        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+      ]}>
       <FolderOpen
         size={16}
         color={selected ? theme.colors.primary : theme.colors.textMuted}

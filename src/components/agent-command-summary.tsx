@@ -1,13 +1,20 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { View } from 'react-native';
 
 /** The full English instruction travels with the task, not in the text field or route. */
 export function AgentCommandSummary({ name, description }: { name: string; description?: string }) {
   const { colors } = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   return (
     <View
       testID="agent-command-summary"
-      style={{ padding: 16, gap: 8, borderRadius: 16, backgroundColor: colors.surfaceRaised }}>
+      style={{
+        padding: 16,
+        gap: 8,
+        borderRadius: 16,
+        backgroundColor: surfaceBackground(colors.surfaceRaised),
+      }}>
       <Text variant="bodySmall">{name}</Text>
       {description ? (
         <Text selectable variant="caption" color={colors.textMuted}>

@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter, type Href } from 'expo-router';
@@ -55,6 +56,7 @@ export function ArtifactsButton({
 
   const router = useRouter();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
 
   return (
     <PressableScale
@@ -87,7 +89,11 @@ export function ArtifactsButton({
           params: { sessionId, tabId, label },
         } as unknown as Href);
       }}
-      style={[styles.button, compact && styles.compactButton, { backgroundColor: background }]}>
+      style={[
+        styles.button,
+        compact && styles.compactButton,
+        { backgroundColor: surfaceBackground(background) },
+      ]}>
       <FolderOpen size={compact ? 15 : 16} color={theme.colors.primary} />
     </PressableScale>
   );

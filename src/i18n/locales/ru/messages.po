@@ -248,6 +248,10 @@ msgstr "Блокировка приложения включена"
 msgid "App Lock unavailable"
 msgstr "Блокировка приложения недоступна"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "Название приложения и слоган"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Оформление"
@@ -418,6 +422,10 @@ msgstr "Отменить правку {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "Отменено"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "Меняет цветные фоны, но не текст, значки или иллюстрации"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1196,12 +1204,24 @@ msgid "FIRST PROMPT"
 msgstr "ПЕРВЫЙ ПРОМПТ"
 
 #: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "Исправьте ошибки JSON перед форматированием"
+
+#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Исправьте контраст текста перед применением этой темы"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Свернуть шаги инструментов"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "Форматировать JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "После форматирования JSON превышает допустимый размер темы"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1388,6 +1408,10 @@ msgstr "Режим вставки"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Команда установки скопирована"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "Непрозрачность фона интерфейса"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1612,6 +1636,10 @@ msgstr "Отметить как проверенное"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Упомянуть {0}"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "Минимальная непрозрачность для читаемого текста: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1855,6 +1883,7 @@ msgid "NOT CONNECTED"
 msgstr "НЕ ПОДКЛЮЧЁН"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Не найден"
 
@@ -2740,9 +2769,21 @@ msgstr "Показывать Esc, Tab, Ctrl и клавиши навигации
 msgid "Show every tool step"
 msgstr "Показать каждый шаг инструментов"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "Показывать логотип на главной"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "Показывать текст на главной"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Показать изображения"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "Показывать фон приложения за текстом терминала"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2797,6 +2838,10 @@ msgstr "Размер"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Некоторые файлы не загрузились"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "Некоторым цветам темы требуется больше контраста"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
@@ -2973,6 +3018,10 @@ msgstr "Задача отправлена. Можно продолжить ра�
 msgid "Terminal"
 msgstr "Терминал"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "Непрозрачность фона терминала"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
@@ -3135,6 +3184,7 @@ msgstr "Тема будет удалена с этого устройства"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Транскрипт в виде беседы, шаги инструментов свёрнуты."
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
@@ -3339,6 +3389,10 @@ msgstr "Ввод на симуляторе"
 msgid "Undo"
 msgstr "Отменить"
 
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "Отменить форматирование"
+
 #: src/components/asset-viewer.tsx
 msgid "unknown"
 msgstr "неизвестно"
@@ -3429,6 +3483,10 @@ msgstr "Использовать код-пароль устройства"
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "Добавьте его кнопкой сканирования на главном экране."
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "Использовать настройки темы по умолчанию"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"

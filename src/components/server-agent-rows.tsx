@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
@@ -256,6 +257,7 @@ function AgentRow({
   onPress: () => void;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const pressed = useSharedValue(0);
 
   const tintStyle = useAnimatedStyle(() => ({ opacity: pressed.value }));
@@ -287,7 +289,11 @@ function AgentRow({
         {showsPressBackground ? (
           <Animated.View
             pointerEvents="none"
-            style={[styles.tint, { backgroundColor: theme.colors.surfaceRaised }, tintStyle]}
+            style={[
+              styles.tint,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              tintStyle,
+            ]}
           />
         ) : null}
         {children}

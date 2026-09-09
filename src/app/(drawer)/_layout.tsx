@@ -6,9 +6,11 @@ import { useLingui } from '@lingui/react/macro';
 
 import { AppDrawerContent } from '@/components/app-drawer-content';
 import { HOME_DRAWER_ENABLED, isDrawerPermanent } from '@/constants/navigation';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 export default function DrawerLayout() {
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const { width } = useWindowDimensions();
   const permanent = isDrawerPermanent(width);
   const { t } = useLingui();
@@ -33,7 +35,7 @@ export default function DrawerLayout() {
         overlayColor: 'rgba(3, 8, 14, 0.5)',
         drawerStyle: {
           width: 300,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: background(theme.colors.surface),
         },
       }}>
       <Drawer.Screen name="index" options={{ title: t`Muqun` }} />

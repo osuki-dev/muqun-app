@@ -248,6 +248,10 @@ msgstr "Đã bật Khóa ứng dụng"
 msgid "App Lock unavailable"
 msgstr "Khóa ứng dụng không khả dụng"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "Tên ứng dụng và khẩu hiệu"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Giao diện"
@@ -418,6 +422,10 @@ msgstr "Hủy chỉnh sửa {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "Đã hủy"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "Chỉ thay đổi nền màu, không ảnh hưởng đến chữ, biểu tượng hay hình trang trí"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1196,12 +1204,24 @@ msgid "FIRST PROMPT"
 msgstr "PROMPT ĐẦU TIÊN"
 
 #: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "Sửa JSON không hợp lệ trước khi định dạng"
+
+#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng giao diện này"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Thu gọn các bước công cụ"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "Định dạng JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "JSON sau khi định dạng vượt quá giới hạn kích thước giao diện"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1388,6 +1408,10 @@ msgstr "Chế độ chèn"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "Độ mờ đục của nền giao diện"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1612,6 +1636,10 @@ msgstr "Đánh dấu đã xem"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Nhắc đến {0}"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "Độ mờ tối thiểu để văn bản dễ đọc: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1855,6 +1883,7 @@ msgid "NOT CONNECTED"
 msgstr "CHƯA KẾT NỐI"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Không tìm thấy"
 
@@ -2740,9 +2769,21 @@ msgstr "Hiện các phím Esc, Tab, Ctrl và điều hướng phía trên ô nh�
 msgid "Show every tool step"
 msgstr "Hiện mọi bước công cụ"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "Hiển thị logo trên trang chủ"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "Hiển thị chữ trên trang chủ"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Hiện hình ảnh"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "Hiển thị nền ứng dụng phía sau văn bản terminal"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2797,6 +2838,10 @@ msgstr "Kích thước"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Một số tệp không tải lên được"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "Một số màu giao diện cần độ tương phản cao hơn"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
@@ -2973,6 +3018,10 @@ msgstr "Đã gửi tác vụ. Bạn có thể tiếp tục làm việc trong ter
 msgid "Terminal"
 msgstr "Terminal"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "Độ mờ đục của nền terminal"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
@@ -3135,6 +3184,7 @@ msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công cụ được thu gọn."
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
@@ -3339,6 +3389,10 @@ msgstr "Gõ trên trình giả lập"
 msgid "Undo"
 msgstr "Hoàn tác"
 
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "Hoàn tác định dạng"
+
 #: src/components/asset-viewer.tsx
 msgid "unknown"
 msgstr "không rõ"
@@ -3429,6 +3483,10 @@ msgstr "Dùng mật mã thiết bị"
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "Dùng nút quét trên màn hình chính để thêm."
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "Dùng thiết lập mặc định của giao diện"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"

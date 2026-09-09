@@ -1,3 +1,8 @@
+import { Input } from '@/components/themed-input';
+import { Card } from '@/components/themed-card';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
+import { ThemedSurface } from '@/components/themed-surface';
 /**
  * Quick actions: one thing done to the pane in front of you.
  *
@@ -57,7 +62,9 @@
  * whole reading it switched to, because this sheet was the only way in. See
  * `src/lib/pane-view-mode.ts`.
  */
-import { Button, Card, Input, Skeleton, Spinner, Tabs, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Skeleton, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Tabs } from '@/components/themed-tabs';
+import { Button } from '@/components/themed-button';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
@@ -151,6 +158,7 @@ const MONO_TEXT = {
 } as const;
 
 export default function QuickCommandsScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
@@ -563,7 +571,8 @@ export default function QuickCommandsScreen() {
     // The editor is the reason for the keyboard-aware scroller: a plain
     // ScrollView left both inputs under the keyboard, with the save button out
     // of reach entirely.
-    <View style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+      <ThemeArtwork slot="shell.background" />
       <KeyboardAwareScrollView
         bottomOffset={24}
         keyboardShouldPersistTaps="handled"
@@ -584,7 +593,7 @@ export default function QuickCommandsScreen() {
           style={[
             styles.stickyTop,
             isPadLayout && styles.padStickyTop,
-            { backgroundColor: theme.colors.background },
+            { backgroundColor: surfaceBackground(theme.colors.background) },
           ]}>
           {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
@@ -731,7 +740,11 @@ export default function QuickCommandsScreen() {
             things that stay. */}
         {available.canStopAgent ? (
           <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
-            <View style={[styles.group, { backgroundColor: theme.colors.dangerSubtle }]}>
+            <View
+              style={[
+                styles.group,
+                { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+              ]}>
               <ActionRow
                 accessibilityLabel={t`Stop this agent`}
                 name={t`Stop`}
@@ -796,7 +809,10 @@ export default function QuickCommandsScreen() {
 
         {!editing ? (
           <View style={styles.section}>
-            <View style={[styles.commandTabs, { backgroundColor: theme.colors.surface }]}>
+            <ThemedSurface
+              slot="tabs.background"
+              baseColor={theme.colors.surface}
+              style={[styles.commandTabs, { overflow: 'hidden' }]}>
               {(['saved', 'catalog'] as const).map((tab) => (
                 <PressableScale
                   key={tab}
@@ -810,8 +826,9 @@ export default function QuickCommandsScreen() {
                   style={[
                     styles.commandTab,
                     {
-                      backgroundColor:
-                        commandTab === tab ? theme.colors.primarySubtle : 'transparent',
+                      backgroundColor: surfaceBackground(
+                        commandTab === tab ? theme.colors.primarySubtle : 'transparent'
+                      ),
                     },
                   ]}>
                   <Text
@@ -821,7 +838,7 @@ export default function QuickCommandsScreen() {
                   </Text>
                 </PressableScale>
               ))}
-            </View>
+            </ThemedSurface>
             <Input
               accessibilityLabel={t`Search actions and commands`}
               placeholder={t`Search actions and commands`}
@@ -1160,6 +1177,7 @@ function ActionTile({
   selected?: boolean;
   onPress?: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const ink = disabled
     ? theme.colors.textSubtle
@@ -1170,7 +1188,11 @@ function ActionTile({
     <View
       style={[
         styles.tile,
-        { backgroundColor: withAlpha(theme.colors.text, appChrome.opacity.chromeControl) },
+        {
+          backgroundColor: surfaceBackground(
+            withAlpha(theme.colors.text, appChrome.opacity.chromeControl)
+          ),
+        },
       ]}>
       <PressableScale
         accessibilityRole="button"
@@ -1334,12 +1356,15 @@ function ActionRow({
  * always a tenth of whatever this pack writes with.
  */
 function KeyCaps({ keys }: { keys: string[] }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const fill = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
   return (
     <View style={styles.keyCaps}>
       {keys.map((key, index) => (
-        <View key={`${key}-${index}`} style={[styles.keyCap, { backgroundColor: fill }]}>
+        <View
+          key={`${key}-${index}`}
+          style={[styles.keyCap, { backgroundColor: surfaceBackground(fill) }]}>
           <Text variant="caption" color={theme.colors.text} style={styles.keyCapText}>
             {key}
           </Text>

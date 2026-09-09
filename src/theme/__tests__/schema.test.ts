@@ -161,7 +161,11 @@ describe('shared component resolution', () => {
   });
 
   test('hiding both home identity elements removes the brand block', () => {
-    expect(resolveHomeIdentity()).toEqual({ name: 'Muqun', logo: 'builtin', showBrand: true });
+    expect(resolveHomeIdentity()).toEqual({
+      name: 'Muqun',
+      logo: { mode: 'default' },
+      showBrand: true,
+    });
     for (const hideName of [false, true])
       for (const hideLogo of [false, true]) {
         const manifest = createThemeStarter();
@@ -172,8 +176,16 @@ describe('shared component resolution', () => {
         const identity = resolveHomeIdentity(manifest);
         expect(identity.showBrand).toBe(!(hideName && hideLogo));
         expect(identity.name).toBe(hideName ? null : 'Muqun');
-        expect(identity.logo).toBe(hideLogo ? null : 'builtin');
+        expect(identity.logo).toEqual(hideLogo ? null : { mode: 'default' });
       }
+  });
+
+  test('a custom asset named builtin cannot collide with the default logo', () => {
+    const manifest = createThemeStarter();
+    manifest.assets = { builtin: { path: 'assets/logo.png' } };
+    manifest.homeIdentity = { logo: { mode: 'custom', asset: 'builtin' } };
+    const identity = resolveHomeIdentity(parseThemeManifest(JSON.stringify(manifest)));
+    expect(identity.logo).toEqual({ mode: 'custom', asset: 'builtin' });
   });
 
   test('compiled state owns immutable data, detached from an editable draft', () => {

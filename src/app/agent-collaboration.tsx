@@ -1,4 +1,7 @@
-import { Button, Input, KeyboardToolbar, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Input } from '@/components/themed-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { KeyboardToolbar, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import { useLingui } from '@lingui/react/macro';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -20,6 +23,7 @@ import { useAgentCollaboration } from '@/stores/agent-collaboration';
 import { AgentCommandSummary } from '@/components/agent-command-summary';
 
 export default function AgentCollaborationScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   const router = useRouter();
@@ -91,7 +95,7 @@ export default function AgentCollaborationScreen() {
         contentInsetAdjustmentBehavior="automatic"
         bottomOffset={88}
         keyboardShouldPersistTaps="handled"
-        style={{ flex: 1, backgroundColor: theme.colors.surface }}
+        style={{ flex: 1, backgroundColor: surfaceBackground(theme.colors.surface) }}
         contentContainerStyle={styles.content}>
         <View style={styles.header}>
           {form ? (
