@@ -125,6 +125,22 @@ describe('theme v1 contract', () => {
 });
 
 describe('shared component resolution', () => {
+  test('shell fallback applies only when home is absent, never when explicitly disabled', () => {
+    const manifest = createThemeStarter();
+    manifest.decoration = { 'shell.background': { asset: 'paper' } };
+    const resolve = () =>
+      resolveThemeImage(manifest, 'home.background', 'dark', 'compact', true, 'shell.background');
+    expect(resolve()).toEqual({ asset: 'paper' });
+    manifest.decoration['home.background'] = null;
+    expect(resolve()).toBeNull();
+    manifest.decoration['home.background'] = { asset: 'home', compact: null };
+    expect(resolve()).toBeNull();
+    manifest.variantDecorations = { dark: { 'home.background': null } };
+    expect(resolve()).toBeNull();
+    manifest.variantDecorations.dark = { 'home.background': { asset: 'night', compact: null } };
+    expect(resolve()).toBeNull();
+  });
+
   test('undefined inherits; null disables; responsive overrides are final', () => {
     const manifest = parse({
       ...createThemeStarter(),

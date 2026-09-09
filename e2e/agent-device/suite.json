@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "theme-document",
+      "program": "flows/theme-document",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "custom-themes",
       "program": "flows/custom-themes",
       "tags": ["full"],
@@ -130,6 +136,22 @@
     }
   ],
   "programs": {
+    "flows/theme-document": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/theme-document.ad#open" },
+      {
+        "target": { "text": "Open muqun.muqun-theme.json" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/theme-document.ad#scroll"
+      },
+      {
+        "target": { "text": "Open muqun.muqun-theme.json" },
+        "mode": "press",
+        "run": "flows/theme-document.ad#preview"
+      }
+    ],
     "flows/custom-themes": [
       { "include": "subflows/launch-home" },
       { "target": { "text": "Settings" }, "mode": "press", "run": "flows/custom-themes.ad#press" },
@@ -142,6 +164,11 @@
       },
       {
         "target": { "id": "settings-theme-row" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": { "id": "theme-import" },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
@@ -176,17 +203,23 @@
         "run": "flows/custom-themes.ad#visible"
       },
       {
-        "target": { "id": "theme-remove-previewed" },
+        "target": { "id": "theme-more-actions" },
         "mode": "scroll",
         "direction": "down",
         "timeout": 10000,
         "run": "flows/custom-themes.ad#scroll"
       },
       {
+        "target": { "id": "theme-more-actions" },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
         "target": { "id": "theme-remove-previewed" },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
+      { "run": "flows/custom-themes.ad#confirm-remove" },
       {
         "target": { "text": "Close theme picker" },
         "mode": "press",

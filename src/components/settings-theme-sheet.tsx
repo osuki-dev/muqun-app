@@ -90,23 +90,25 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
       closeLabel={t`Close theme picker`}
       onClose={onClose}
       contentMaxWidth={THEME_PICKER_MAX_CONTENT_WIDTH}>
-      <CustomThemeLibrary />
-      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-      <View
-        accessibilityRole="radiogroup"
-        testID="theme-picker-grid"
-        onLayout={(event: LayoutChangeEvent) => setMeasuredWidth(event.nativeEvent.layout.width)}
-        style={styles.list}>
-        {THEME_PACKS.map((pack) => (
-          <ThemePackTile
-            key={pack.id}
-            pack={pack}
-            selected={pack.id === themePack}
-            width={gridLayout.itemWidth}
-            onSelect={() => choose(pack.id)}
-          />
-        ))}
-      </View>
+      <CustomThemeLibrary>
+        <Text variant="caption">{t`Built-in themes`}</Text>
+        {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+        <View
+          accessibilityRole="radiogroup"
+          testID="theme-picker-grid"
+          onLayout={(event: LayoutChangeEvent) => setMeasuredWidth(event.nativeEvent.layout.width)}
+          style={styles.list}>
+          {THEME_PACKS.map((pack) => (
+            <ThemePackTile
+              key={pack.id}
+              pack={pack}
+              selected={pack.id === themePack}
+              width={gridLayout.itemWidth}
+              onSelect={() => choose(pack.id)}
+            />
+          ))}
+        </View>
+      </CustomThemeLibrary>
     </SettingsSheet>
   );
 }

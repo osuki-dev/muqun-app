@@ -1,13 +1,25 @@
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { BlurView } from 'expo-blur';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
-import { type ComponentProps, type ReactNode, useEffect, useState } from 'react';
-import { Platform, type StyleProp, type ViewStyle } from 'react-native';
+import { type ComponentProps, type ReactNode, useEffect, useMemo, useState } from 'react';
+import {
+  Platform,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { DURATION } from '@/lib/motion';
+import { useThemeLibrary } from '@/stores/theme-library';
+import { resolveThemeImage } from '@/theme/resolve';
+import { resolveThemeMaterial, type ThemeSurface } from '@/theme/material';
+import { ThemeArtwork } from '@/components/theme-artwork';
+import { resolveArtworkOpacity } from '@/theme/artwork-contrast';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -49,6 +61,7 @@ type GlassChromeProps = {
   children: ReactNode;
   /** @default 'floating' */
   face?: GlassFace;
+  surface?: ThemeSurface;
   /**
    * The face's own shape -- size, radius, padding, shadow. The material is this
    * component's business; where the surface is and how big it is stays with the
@@ -83,6 +96,7 @@ type GlassChromeProps = {
 export function GlassChrome({
   children,
   face = 'floating',
+  surface = 'actions',
   style,
   entering,
   exiting,
@@ -90,6 +104,44 @@ export function GlassChrome({
   const { resolvedMode } = useThemeMode();
   const theme = useThemeTokens();
   const dark = resolvedMode === 'dark';
+  const { width } = useWindowDimensions();
+  const active = useThemeLibrary((state) => state.active);
+  const assets = useThemeLibrary(
+    (state) =>
+      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
+  );
+  const slot = `${surface}.background` as const;
+  const artwork = active
+    ? resolveThemeImage(active.manifest, slot, resolvedMode, width >= 768 ? 'regular' : 'compact')
+    : null;
+  const hasImage = Boolean(artwork && assets?.[artwork.asset]?.startsWith('file:///'));
+  const glassAvailable = isGlassChromeLive();
+  const material = resolveThemeMaterial(active?.manifest, surface, hasImage, glassAvailable);
+  const chromeStyle: StyleProp<ViewStyle> = [style, hasImage && { overflow: 'hidden' }];
+  const opacityLimit = useMemo(
+    () =>
+      active && hasImage
+        ? resolveArtworkOpacity(
+            active.manifest.variants[resolvedMode].colors,
+            artwork?.opacity ?? 1
+          )
+        : 0,
+    [active, hasImage, resolvedMode, artwork?.opacity]
+  );
+  const content = (
+    <>
+      {hasImage ? (
+        <View
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.surfaceRaised }]}>
+          <ThemeArtwork slot={slot} opacityLimit={opacityLimit} />
+        </View>
+      ) : null}
+      {children}
+    </>
+  );
 
   // Second render, not first: the material has to have been laid down as `none`
   // before `animate` has two states to move between. A face with no entering
@@ -99,7 +151,18 @@ export function GlassChrome({
     if (!settled) setSettled(true);
   }, [settled]);
 
-  if (isGlassChromeLive()) {
+  if (material === 'solid') {
+    return (
+      <Animated.View
+        entering={entering}
+        exiting={exiting}
+        style={[chromeStyle, { backgroundColor: theme.colors.surfaceRaised, overflow: 'hidden' }]}>
+        {content}
+      </Animated.View>
+    );
+  }
+
+  if (glassAvailable) {
     return (
       <GlassView
         colorScheme={dark ? 'dark' : 'light'}
@@ -118,8 +181,8 @@ export function GlassChrome({
                   : appChrome.opacity.glassFloatingTintLight
               )
         }
-        style={style}>
-        {children}
+        style={chromeStyle}>
+        {content}
       </GlassView>
     );
   }
@@ -131,8 +194,8 @@ export function GlassChrome({
       <Animated.View
         entering={entering}
         exiting={exiting}
-        style={[style, { backgroundColor: theme.colors.surfaceRaised }]}>
-        {children}
+        style={[chromeStyle, { backgroundColor: theme.colors.surfaceRaised }]}>
+        {content}
       </Animated.View>
     );
   }
@@ -143,7 +206,7 @@ export function GlassChrome({
         entering={entering}
         exiting={exiting}
         style={[
-          style,
+          chromeStyle,
           // Android has no cheap live blur here, so a nearly opaque raised
           // surface stands in for it. Derive the material from the active pack
           // rather than from mode-only literals: the Settings header, terminal
@@ -156,7 +219,7 @@ export function GlassChrome({
             ),
           },
         ]}>
-        {children}
+        {content}
       </Animated.View>
     );
   }
@@ -168,7 +231,7 @@ export function GlassChrome({
       intensity={78}
       tint={dark ? 'systemMaterialDark' : 'systemMaterialLight'}
       style={[
-        style,
+        chromeStyle,
         {
           // `BlurView` supplies the legacy material but its system tint is
           // neutral. This low-opacity overlay carries the selected pack's hue
@@ -179,7 +242,7 @@ export function GlassChrome({
           ),
         },
       ]}>
-      {children}
+      {content}
     </AnimatedBlurView>
   );
 }

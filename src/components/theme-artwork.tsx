@@ -10,9 +10,13 @@ import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 export function ThemeArtwork({
   slot,
   fallbackSlot,
+  banner = false,
+  opacityLimit = 1,
 }: {
   slot: ThemeSlot;
   fallbackSlot?: ThemeSlot;
+  banner?: boolean;
+  opacityLimit?: number;
 }) {
   const { resolvedMode } = useThemeMode();
   const active = useThemeLibrary((state) => state.active);
@@ -28,6 +32,8 @@ export function ThemeArtwork({
       slot={slot}
       fallbackSlot={fallbackSlot}
       mode={resolvedMode}
+      banner={banner}
+      opacityLimit={opacityLimit}
     />
   );
 }
@@ -39,29 +45,31 @@ export function ThemeArtworkLayer({
   slot,
   mode,
   fallbackSlot,
+  banner = false,
+  opacityLimit = 1,
 }: {
   manifest: ThemeManifest;
   assets: Record<string, string>;
   slot: ThemeSlot;
   mode: 'light' | 'dark';
   fallbackSlot?: ThemeSlot;
+  banner?: boolean;
+  opacityLimit?: number;
 }) {
   const { width } = useWindowDimensions();
   const [failed, setFailed] = useState<string | null>(null);
   const size = width >= 768 ? 'regular' : 'compact';
-  const image =
-    resolveThemeImage(manifest, slot, mode, size) ??
-    (fallbackSlot ? resolveThemeImage(manifest, fallbackSlot, mode, size) : null);
+  const image = resolveThemeImage(manifest, slot, mode, size, true, fallbackSlot);
   const uri = image ? assets[image.asset] : undefined;
   if (!image || !uri?.startsWith('file:///') || failed === uri) return null;
-  const style = [StyleSheet.absoluteFill, { opacity: image.opacity ?? 1 }];
+  const style = [StyleSheet.absoluteFill, { opacity: Math.min(image.opacity ?? 1, opacityLimit) }];
   return (
     <View
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={StyleSheet.absoluteFill}>
-      {image.fit === 'tile' ? (
+      style={banner ? styles.banner : StyleSheet.absoluteFill}>
+      {image.fit === 'tile' && !banner ? (
         // expo-image explicitly does not support repeat. Use RN's native tile path
         // only for this fit mode; both paths consume the same validated local file.
         <RepeatingImage
@@ -74,7 +82,7 @@ export function ThemeArtworkLayer({
       ) : (
         <Image
           source={{ uri }}
-          contentFit={image.fit ?? 'cover'}
+          contentFit={banner || image.fit === 'tile' ? 'contain' : (image.fit ?? 'cover')}
           contentPosition={
             image.focalPoint
               ? { left: `${image.focalPoint.x * 100}%`, top: `${image.focalPoint.y * 100}%` }
@@ -90,3 +98,15 @@ export function ThemeArtworkLayer({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  banner: {
+    width: '100%',
+    maxWidth: 560,
+    aspectRatio: 2,
+    alignSelf: 'center',
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+});

@@ -382,6 +382,10 @@ msgstr "Đang chờ"
 msgid "Browser"
 msgstr "Trình duyệt"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "Giao diện tích hợp"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt để chụp ảnh."
@@ -956,6 +960,10 @@ msgstr "Agent hiện tại"
 msgid "Current path"
 msgstr "Đường dẫn hiện tại"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "Giao diện hiện tại"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Tùy chỉnh lệnh terminal và tổ hợp phím."
@@ -1049,6 +1057,7 @@ msgid "Docs"
 msgstr "Tài liệu"
 
 #: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1350,6 +1359,10 @@ msgid "Images"
 msgstr "Hình ảnh"
 
 #: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "Nhập"
+
+#: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "Nhập tệp"
 
@@ -1603,6 +1616,10 @@ msgstr "Nhắc đến {0}"
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Đã sửa đổi"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "Thao tác khác"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -2114,6 +2131,7 @@ msgstr "Đưa ra lần này"
 msgid "Press Escape to dismiss this request"
 msgstr "Nhấn Escape để bỏ qua yêu cầu này"
 
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
@@ -2263,6 +2281,10 @@ msgstr "Xóa khỏi lịch sử"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "Gỡ host"
+
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "Xóa giao diện này?"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3105,12 +3127,17 @@ msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng n�
 msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
 msgstr "Terminal đã được tạo nhưng chưa xác nhận trợ lý đã sẵn sàng. Trợ lý có thể vẫn đang khởi động. Hãy kiểm tra terminal trước khi thử lại. Hướng dẫn của bạn vẫn được giữ lại."
 
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
+
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công cụ được thu gọn."
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Chủ đề"
 

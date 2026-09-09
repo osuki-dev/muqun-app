@@ -38,12 +38,18 @@ export function resolveThemeImage(
   slot: ThemeSlot,
   mode: 'light' | 'dark',
   width: 'compact' | 'regular',
-  decorationsEnabled = true
+  decorationsEnabled = true,
+  fallbackSlot?: ThemeSlot
 ): ThemeImage | null {
   if (!decorationsEnabled) return null;
   const variant = manifest.variantDecorations?.[mode]?.[slot];
   const shared = manifest.decoration?.[slot];
-  const selected = variant === undefined ? shared : variant;
+  let selected = variant === undefined ? shared : variant;
+  if (selected === undefined && fallbackSlot) {
+    const fallbackVariant = manifest.variantDecorations?.[mode]?.[fallbackSlot];
+    selected =
+      fallbackVariant === undefined ? manifest.decoration?.[fallbackSlot] : fallbackVariant;
+  }
   if (!selected) return null;
   const responsive = selected[width];
   if (responsive !== undefined) return responsive;

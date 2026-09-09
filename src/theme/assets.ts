@@ -5,7 +5,7 @@ import type { InstalledTheme } from '@/theme/repository';
 
 export type PreparedThemeAssets = {
   assets: Record<string, string>;
-  install: () => Record<string, string>;
+  install: () => Promise<Record<string, string>>;
   dispose: () => void;
 };
 export function isOwnedThemeAsset(_uri: string): boolean {

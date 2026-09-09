@@ -277,7 +277,6 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
       }>
       <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
         <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
-        <ThemeArtwork slot="home.decoration" />
         {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
@@ -419,6 +418,8 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
               ) : null}
             </Animated.View>
           ) : null}
+
+          <ThemeArtwork slot="home.decoration" banner />
 
           {loading ? (
             // The shape of the list that is coming, not a logo in the middle of

@@ -192,6 +192,7 @@ test('color export is parseable and excludes image paths, source links and home 
   const theme = {
     ...createThemeStarter(),
     source: 'https://example.invalid/theme?private=1',
+    materials: { default: 'solid' },
     assets: { paper: { path: 'assets/paper.png' } },
     decoration: { 'shell.background': { asset: 'paper' } },
   };
@@ -203,6 +204,7 @@ test('color export is parseable and excludes image paths, source links and home 
   expect(exported.assets).toBeUndefined();
   expect(exported.source).toBeUndefined();
   expect(exported.homeIdentity).toBeUndefined();
+  expect(exported.materials).toBeUndefined();
 });
 
 test('removal and corrupt persistence fall back without discarding unrelated valid themes', () => {

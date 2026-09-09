@@ -25,7 +25,7 @@ export function isOwnedThemeAsset(uri: string): boolean {
 
 export type PreparedThemeAssets = {
   assets: Record<string, string>;
-  install: () => Record<string, string>;
+  install: () => Promise<Record<string, string>>;
   dispose: () => void;
 };
 
@@ -39,7 +39,13 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
   const assets: Record<string, string> = {};
   const staged = new Map<string, File>();
   let disposed = false;
+  let installing = false;
+  let disposalRequested = false;
   const dispose = () => {
+    disposalRequested = true;
+    // File.copy is asynchronous in SDK 57. Retain its source until the active
+    // installation settles, even if the preview is dismissed in the meantime.
+    if (installing) return;
     if (disposed) return;
     disposed = true;
     try {
@@ -91,24 +97,31 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
     return {
       assets,
       dispose,
-      install() {
-        if (disposed) throw new Error('Theme preview is no longer available');
-        const directory = assetDirectory();
-        directory.create({ intermediates: true, idempotent: true });
-        const installed: Record<string, string> = {};
-        for (const [id, uri] of Object.entries(assets)) {
-          const source = new File(uri);
-          const destination = new File(directory, source.name);
-          if (!destination.exists) source.copy(destination);
-          // Content hashes are filenames, not a reason to trust preexisting bytes.
-          if (
-            destination.size > THEME_LIMITS.assetBytes ||
-            hash(destination.bytesSync()) !== source.name.split('.')[0]
-          )
-            throw new Error('An installed theme image is corrupt');
-          installed[id] = destination.uri;
+      async install() {
+        if (disposed || disposalRequested) throw new Error('Theme preview is no longer available');
+        if (installing) throw new Error('Theme installation is already in progress');
+        installing = true;
+        try {
+          const directory = assetDirectory();
+          directory.create({ intermediates: true, idempotent: true });
+          const installed: Record<string, string> = {};
+          for (const [id, uri] of Object.entries(assets)) {
+            const source = new File(uri);
+            const destination = new File(directory, source.name);
+            if (!destination.exists) await source.copy(destination);
+            // Content hashes are filenames, not a reason to trust preexisting bytes.
+            if (
+              destination.size > THEME_LIMITS.assetBytes ||
+              hash(await destination.bytes()) !== source.name.split('.')[0]
+            )
+              throw new Error('An installed theme image is corrupt');
+            installed[id] = destination.uri;
+          }
+          return installed;
+        } finally {
+          installing = false;
+          if (disposalRequested) dispose();
         }
-        return installed;
       },
     };
   } catch (error) {

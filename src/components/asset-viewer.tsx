@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Check, Copy, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -25,6 +25,8 @@ import {
 } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
+import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { themeFromDocument } from '@/theme/file-preview';
 
 /**
  * Read-only view of one artifact the agent produced.
@@ -188,6 +190,12 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
+  const [previewedThemeDocument, setPreviewedThemeDocument] = useState<string | null>(null);
+  const themeDocumentIdentity = `${asset.id}:${asset.modified_unix_ms}`;
+  const themeManifest = useMemo(
+    () => themeFromDocument(asset.name, content),
+    [asset.name, content]
+  );
 
   useEffect(() => {
     if (!readable) return;
@@ -299,14 +307,35 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
           </View>
         </View>
 
-        <AssetBody
-          asset={asset}
-          readable={readable}
-          content={content}
-          error={error}
-          markdownStyle={markdownStyle}
-          onRetry={() => setAttempt((previous) => previous + 1)}
-        />
+        {previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+            <CustomThemeLibrary
+              key={themeDocumentIdentity}
+              initialManifest={themeManifest}
+              onClosePreview={() => setPreviewedThemeDocument(null)}
+            />
+          </ScrollView>
+        ) : (
+          <>
+            {themeManifest ? (
+              <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+                <Button
+                  testID="asset-preview-theme"
+                  onPress={() =>
+                    setPreviewedThemeDocument(themeDocumentIdentity)
+                  }>{t`Preview`}</Button>
+              </View>
+            ) : null}
+            <AssetBody
+              asset={asset}
+              readable={readable}
+              content={content}
+              error={error}
+              markdownStyle={markdownStyle}
+              onRetry={() => setAttempt((previous) => previous + 1)}
+            />
+          </>
+        )}
       </View>
     </Modal>
   );

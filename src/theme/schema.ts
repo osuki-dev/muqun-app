@@ -119,18 +119,22 @@ export const decorationSchema = z.strictObject({
   'home.background': slotSchema,
   'home.decoration': slotSchema,
   'navigation.background': slotSchema,
-  'tabs.background': slotSchema,
   'composer.background': slotSchema,
   'actions.background': slotSchema,
-  'buttons.primary.background': slotSchema,
-  'cards.decoration': slotSchema,
-  'emptyState.illustration': slotSchema,
 });
 
 const visibilitySchema = z.union([
   z.strictObject({ mode: z.literal('default') }),
   z.strictObject({ mode: z.literal('hidden') }),
 ]);
+
+const materialSchema = z.enum(['auto', 'solid', 'glass']);
+export const themeMaterialsSchema = z.strictObject({
+  default: materialSchema.optional(),
+  navigation: materialSchema.optional(),
+  composer: materialSchema.optional(),
+  actions: materialSchema.optional(),
+});
 
 /** Structural schema only: references, download policy and contrast are separate gates. */
 export const themeManifestSchema = z.strictObject({
@@ -146,6 +150,7 @@ export const themeManifestSchema = z.strictObject({
   license: plainText(100).optional(),
   source: httpsUrl.optional(),
   variants: z.strictObject({ light: themeVariantSchema, dark: themeVariantSchema }),
+  materials: themeMaterialsSchema.optional(),
   assets: z.record(identifier, assetSchema).optional(),
   decoration: decorationSchema.optional(),
   variantDecorations: z

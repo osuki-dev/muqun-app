@@ -3842,7 +3842,9 @@ export function ServerTerminalWorkspace({
               out under a single surface instead of passing behind two floating
               pieces with a gap between them.
             */}
-              <GlassChrome style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
+              <GlassChrome
+                surface="composer"
+                style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
                 {/*
               The dock's own height is a moving thing: an approval banner, the
               pane strip, the upload-wait row and a growing multiline input all
