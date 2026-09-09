@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * New Task, on a home-screen server card's `...` menu.
  *
@@ -26,6 +27,7 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
 export function NewTaskAction({ serverId, label }: { serverId: string; label: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
 
   // Hydrated from here rather than from the screen, so the home list does not
@@ -48,7 +50,7 @@ export function NewTaskAction({ serverId, label }: { serverId: string; label: st
         // sheet resolves the session itself once it has selected this server.
         router.push({ pathname: '/new-task', params: { serverId, origin: 'home' } } as Href)
       }
-      style={[styles.button, { backgroundColor: theme.colors.primarySubtle }]}>
+      style={[styles.button, { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }]}>
       <Sparkles size={16} color={theme.colors.primary} strokeWidth={2} />
     </PressableScale>
   );

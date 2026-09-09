@@ -1,3 +1,5 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
@@ -79,6 +81,7 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.g
  * Nothing was dropped. Every control the old page could reach, this one can.
  */
 export default function SettingsScreen() {
+  const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -148,7 +151,8 @@ export default function SettingsScreen() {
   }
 
   return (
-    <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+      <ThemeArtwork slot="shell.background" />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
       <RenderTally id="settings">

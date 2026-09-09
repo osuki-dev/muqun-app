@@ -45,8 +45,10 @@ export const themeColorsSchema = z.strictObject({
 
 export const themeVariantSchema = z.strictObject({
   colors: themeColorsSchema,
+  surfaces: z.strictObject({ backgroundOpacity: z.number().min(0).max(1).optional() }).optional(),
   terminal: z.strictObject({
     background: opaque,
+    backgroundOpacity: z.number().min(0).max(1).optional(),
     foreground: opaque,
     cursor: opaque,
     link: opaque,
@@ -121,6 +123,10 @@ export const decorationSchema = z.strictObject({
   'navigation.background': slotSchema,
   'composer.background': slotSchema,
   'actions.background': slotSchema,
+  'cards.decoration': slotSchema,
+  'buttons.primary.background': slotSchema,
+  'tabs.background': slotSchema,
+  'emptyState.illustration': slotSchema,
 });
 
 const visibilitySchema = z.union([

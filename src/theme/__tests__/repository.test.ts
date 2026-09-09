@@ -26,6 +26,71 @@ function setup() {
   };
 }
 
+test('corrupt and unsupported hydration never grants garbage collection authority', () => {
+  for (const value of ['', '{bad', JSON.stringify({ version: 99, themes: [] })]) {
+    const repository = new ThemeRepository({ read: () => value, write: () => {} }, () => 'id');
+    expect(repository.hasAuthoritativeAssetReferences()).toBe(false);
+    expect(repository.hydrate().themes).toEqual([]);
+    expect(repository.hasAuthoritativeAssetReferences()).toBe(false);
+  }
+  const { repository } = setup();
+  repository.hydrate();
+  expect(repository.hasAuthoritativeAssetReferences()).toBe(true);
+});
+
+test('filtered hydration preserves files until an actual successful metadata write', () => {
+  const manifest = createThemeStarter();
+  manifest.assets = { picture: { path: 'assets/picture.png' } };
+  let value = JSON.stringify({
+    version: 1,
+    themes: [{ id: 'old', manifest, assets: { picture: 'file:///old.png' } }],
+    selection: { kind: 'custom', id: 'old' },
+    previous: null,
+  });
+  let fail = true;
+  const repository = new ThemeRepository(
+    {
+      read: () => value,
+      write: (next) => {
+        if (fail) throw new Error('disk full');
+        value = next;
+      },
+    },
+    () => 'new',
+    () => false
+  );
+  const before = value;
+  expect(repository.hydrate().themes).toEqual([]);
+  expect(repository.hasAuthoritativeAssetReferences()).toBe(false);
+  expect(value).toBe(before);
+  expect(() => repository.apply({ kind: 'builtin', id: 'osuki' })).toThrow('disk full');
+  expect(repository.hasAuthoritativeAssetReferences()).toBe(false);
+  expect(value).toBe(before);
+  fail = false;
+  repository.apply({ kind: 'builtin', id: 'osuki' });
+  expect(repository.hasAuthoritativeAssetReferences()).toBe(true);
+  expect(value).not.toBe(before);
+});
+
+test('successful complete hydration grants authority and later read failure revokes it', () => {
+  let fail = false;
+  const repository = new ThemeRepository(
+    {
+      read: () => {
+        if (fail) throw new Error('read failed');
+        return JSON.stringify({ version: 1, themes: [], selection: null, previous: null });
+      },
+      write: () => {},
+    },
+    () => 'id'
+  );
+  repository.hydrate();
+  expect(repository.hasAuthoritativeAssetReferences()).toBe(true);
+  fail = true;
+  expect(() => repository.hydrate()).toThrow('read failed');
+  expect(repository.hasAuthoritativeAssetReferences()).toBe(false);
+});
+
 test('JSON theme clones preserve valid data and detach every mutable layer', () => {
   const manifest = createThemeStarter();
   const copy = cloneThemeData(manifest);

@@ -295,6 +295,7 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            <Stack.Screen name="custom-theme" options={{ presentation: 'fullScreenModal' }} />
             <Stack.Screen
               name="settings-language"
               options={{

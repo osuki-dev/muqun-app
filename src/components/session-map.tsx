@@ -1,7 +1,10 @@
+import { Input } from '@/components/themed-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Button, Input, ScrollScreen, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { ScrollScreen, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import { Bot, Plus, RefreshCw, SquareTerminal, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -108,6 +111,7 @@ export function SessionMap({
   onChoosePane: (paneId: string) => void;
   onClose: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -380,7 +384,7 @@ export function SessionMap({
     <ScrollScreen
       variant="surface"
       safeArea="bottom"
-      style={styles.sheet}
+      style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
       contentContainerStyle={styles.content}
       onLayout={(event: LayoutChangeEvent) => {
         const nextWidth = Math.floor(event.nativeEvent.layout.width);
@@ -400,7 +404,8 @@ export function SessionMap({
           button and the row they were reaching for. `stickyHeaderIndices`
           needs a constant index, which is why the platform-only handle lives
           inside this node rather than beside it. */}
-      <View style={[styles.stickyTop, { backgroundColor: theme.colors.surface }]}>
+      <View
+        style={[styles.stickyTop, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
         <View style={styles.header}>
@@ -510,7 +515,10 @@ export function SessionMap({
             accessibilityLabel={t`New workspace`}
             disabled={busy}
             onPress={() => void createAndSelect(() => createWorkspace(sessionId, { focus: false }))}
-            style={[styles.createChip, { backgroundColor: theme.colors.surfaceRaised }]}>
+            style={[
+              styles.createChip,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
             <Plus size={16} color={theme.colors.textMuted} />
             <Text variant="caption" color={theme.colors.text}>
               <Trans>Workspace</Trans>
@@ -586,7 +594,11 @@ export function SessionMap({
               levels of nesting read as "header plus grouped block", and the group
               boundary becomes something you can actually see.
             */}
-            <View style={[styles.groupCard, { backgroundColor: theme.colors.surfaceRaised }]}>
+            <View
+              style={[
+                styles.groupCard,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              ]}>
               {group.panes.map((pane) => {
                 const agent = agents.find((item) => field(item, 'pane_id') === pane.id);
                 const title = panelTitle(pane, agent);
@@ -644,7 +656,7 @@ export function SessionMap({
         }
         style={[
           styles.createRow,
-          { backgroundColor: theme.colors.surfaceRaised },
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           gridLayout.columns > 1 ? { width: gridLayout.itemWidth } : null,
         ]}>
         {/* Plain text on a raised fill, not accent. This sheet is for picking,
@@ -703,6 +715,7 @@ function WorkspaceChip({
   onPress: () => void;
   onLongPress: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const chosen = useSharedValue(selected ? 1 : 0);
   useEffect(() => {
@@ -724,7 +737,7 @@ function WorkspaceChip({
         style={[
           styles.workspaceChip,
           {
-            backgroundColor: theme.colors.surfaceRaised,
+            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           },
         ]}>
         <Animated.View
@@ -732,7 +745,7 @@ function WorkspaceChip({
           style={[
             StyleSheet.absoluteFill,
             styles.chipFill,
-            { backgroundColor: theme.colors.text },
+            { backgroundColor: surfaceBackground(theme.colors.text) },
             selectedStyle,
           ]}
         />
@@ -814,6 +827,7 @@ function PanelRow({
   onPress: () => void;
   onLongPress: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The runtime `_`, for the status descriptor below. `useLingui` from the macro
   // package hands back `t`, which translates a template written at the call
@@ -842,7 +856,7 @@ function PanelRow({
           pointerEvents="none"
           style={[
             StyleSheet.absoluteFill,
-            { backgroundColor: theme.colors.primarySubtle },
+            { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
             selectedStyle,
           ]}
         />
@@ -933,6 +947,7 @@ function PanelRow({
  * rather than a spinner, so the layout does not move when the answer lands.
  */
 function SessionMapSkeleton({ width }: { width: number }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   return (
@@ -945,7 +960,11 @@ function SessionMapSkeleton({ width }: { width: number }) {
         <Skeleton variant="text" width={25} height={12} />
         <Skeleton variant="text" width={120} height={12} />
       </View>
-      <View style={[styles.groupCard, { backgroundColor: theme.colors.surfaceRaised }]}>
+      <View
+        style={[
+          styles.groupCard,
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         {[0, 1, 2].map((row) => (
           <View key={row} style={styles.panelRow}>
             {/* The glyph the address slug used to stand beside. The slug is

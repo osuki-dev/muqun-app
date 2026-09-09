@@ -248,6 +248,10 @@ msgstr "앱 잠금 켜짐"
 msgid "App Lock unavailable"
 msgstr "앱 잠금 사용 불가"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "앱 이름과 슬로건"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "외관"
@@ -418,6 +422,10 @@ msgstr "{0} 편집 취소"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "취소됨"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "텍스트, 아이콘, 장식 이미지는 그대로 두고 배경색만 변경"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1196,12 +1204,24 @@ msgid "FIRST PROMPT"
 msgstr "첫 프롬프트"
 
 #: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "서식을 정리하기 전에 잘못된 JSON을 수정하세요"
+
+#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "이 테마를 적용하기 전에 텍스트 대비를 조정하세요"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "도구 단계 접기"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "JSON 서식 정리"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "서식을 정리한 JSON이 테마 크기 제한을 초과합니다"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1388,6 +1408,10 @@ msgstr "입력 모드"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "화면 배경 불투명도"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1612,6 +1636,10 @@ msgstr "확인 완료로 표시"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "{0} 멘션"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "텍스트 가독성을 위한 최소 불투명도: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1855,6 +1883,7 @@ msgid "NOT CONNECTED"
 msgstr "연결 안 됨"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "찾을 수 없음"
 
@@ -2740,9 +2769,21 @@ msgstr "입력창 위에 Esc, Tab, Ctrl과 방향키를 표시합니다."
 msgid "Show every tool step"
 msgstr "모든 도구 단계 표시"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "홈 로고 표시"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "홈 텍스트 표시"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "이미지 표시"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "터미널 텍스트 뒤에 앱 배경 표시"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2797,6 +2838,10 @@ msgstr "크기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "일부 파일을 업로드하지 못했습니다"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "일부 테마 색상은 대비를 높여야 합니다"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
@@ -2973,6 +3018,10 @@ msgstr "작업을 보냈습니다. 현재 터미널에서 계속 작업할 수 �
 msgid "Terminal"
 msgstr "터미널"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "터미널 배경 불투명도"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
@@ -3135,6 +3184,7 @@ msgstr "이 기기에서 테마가 삭제됩니다"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니다."
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
@@ -3339,6 +3389,10 @@ msgstr "시뮬레이터에 입력"
 msgid "Undo"
 msgstr "실행 취소"
 
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "서식 정리 취소"
+
 #: src/components/asset-viewer.tsx
 msgid "unknown"
 msgstr "알 수 없음"
@@ -3429,6 +3483,10 @@ msgstr "기기 암호 사용"
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "홈 화면의 스캔 버튼으로 추가하세요."
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "테마 기본값 사용"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"

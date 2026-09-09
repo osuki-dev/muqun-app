@@ -4,18 +4,20 @@
   "id": "comic-bloom",
   "name": "Comic Bloom",
   "version": "1.0.0",
-  "materials": { "default": "solid" },
+  "materials": {
+    "default": "solid"
+  },
   "variants": {
     "light": {
       "colors": {
         "background": "#FFF3F0",
         "surface": "#FFFCF8",
-        "surfaceRaised": "#F7E7ED",
+        "surfaceRaised": "#FFF5F5",
         "border": "#E5CBD6",
         "borderStrong": "#9B708A",
         "text": "#38283D",
-        "textMuted": "#695266",
-        "textSubtle": "#766075",
+        "textMuted": "#594251",
+        "textSubtle": "#604857",
         "textDisabled": "#B49AA9",
         "primary": "#A5366D",
         "onPrimary": "#FFFAF5",
@@ -56,12 +58,12 @@
       "colors": {
         "background": "#241E2C",
         "surface": "#302637",
-        "surfaceRaised": "#3C3044",
+        "surfaceRaised": "#302637",
         "border": "#514057",
         "borderStrong": "#8D6E93",
         "text": "#FFF4EC",
         "textMuted": "#DBC0D1",
-        "textSubtle": "#BE9FB7",
+        "textSubtle": "#D8BACE",
         "textDisabled": "#836D83",
         "primary": "#F2A8CE",
         "onPrimary": "#392237",
@@ -100,82 +102,146 @@
     }
   },
   "assets": {
-    "garden-light": {
-      "path": "assets/garden-light.png",
-      "sha256": "24111d88e41bdcf2542b65b8c7b4faee75ff7b0bc298951a859b34b9c7be9339"
+    "scene-dark": {
+      "path": "assets/scene-dark.png",
+      "sha256": "47164a1b70af8baa15158f4c7bfc9ff8f3cf222492fdc832be3f708882b386e6"
     },
-    "garden-dark": {
-      "path": "assets/garden-dark.png",
-      "sha256": "6b350b48fe0c4edc0a47efb8eaa140969cab79ccba50209d988a4d7f24c21454"
+    "scene-light": {
+      "path": "assets/scene-light.png",
+      "sha256": "baf1802654e8d619810d19ae66426e49b5c6729f1a1bdd2fe98a0e0a2533aacc"
     },
-    "paper-light": {
-      "path": "assets/paper-light.png",
-      "sha256": "917b84bd711d42cd9507e9fe67bbcae89c2381d2a5c3f708008507721bf16597"
+    "chrome-dark": {
+      "path": "assets/chrome-dark-512.png",
+      "sha256": "8440bf99bb087c113689932f577c78cf8198bf36c071bf10ab7bbab79d1c58f9"
     },
-    "paper-dark": {
-      "path": "assets/paper-dark.png",
-      "sha256": "840908183e24595d624c426044268285cb361cf1272f801f7cd38d128678c5b1"
+    "chrome-light": {
+      "path": "assets/chrome-light-512.png",
+      "sha256": "69abaf32fbe95b5a694be21cc2107eda1cef8bbc17474a0c240836b28b0c5e3c"
+    },
+    "panel-dark": {
+      "path": "assets/panel-dark-512.png",
+      "sha256": "40744aa0877e02d40e435e78e0acafed4e1dc4677812763b47a5b3e1b6ae28eb"
+    },
+    "panel-light": {
+      "path": "assets/panel-light-512.png",
+      "sha256": "9127375fd3b9e630a1af178a40df905507534b7386c2ebdad89641a7e9b84320"
+    },
+    "action-dark": {
+      "path": "assets/action-dark-512.png",
+      "sha256": "479ae246e1be4be4f4a1a30bbf1a7a0b359b510d80b221b33234c70d4f3d2efd"
+    },
+    "action-light": {
+      "path": "assets/action-light-512.png",
+      "sha256": "374addbd375c7dfd67a7b09c9336ebaa76756c725a3a325026376c24a876b33b"
+    },
+    "empty-dark": {
+      "path": "assets/empty-dark-512.png",
+      "sha256": "df9c7bc6fc4c1818b28055d559cffbbcdff931c0d308a619a9f66fe22c9ca4b5"
+    },
+    "empty-light": {
+      "path": "assets/empty-light-512.png",
+      "sha256": "854efa12862bee22df1c16d50d5a35413ab4004eae2ba3ff6f054a2f0f011e98"
+    },
+    "scene-wide-light": {
+      "path": "assets/scene-wide-light.png",
+      "sha256": "cf146734ad869bb9b4b2da1980909a16095db41420cb07fe7b8160f17dc8df4f"
+    },
+    "scene-wide-dark": {
+      "path": "assets/scene-wide-dark.png",
+      "sha256": "f0b5e65c34aed6d28ac0e51df30fe5435bd1e1b1242c88e5fd3fdc1820feec30"
     }
   },
   "variantDecorations": {
     "light": {
-      "home.decoration": { "asset": "garden-light", "fit": "contain" },
       "shell.background": {
-        "asset": "paper-light",
+        "asset": "scene-light",
         "fit": "cover",
-        "opacity": 0.12,
         "focalPoint": {
           "x": 0.5,
-          "y": 0.5
-        }
-      },
-      "home.background": {
-        "asset": "paper-light",
-        "fit": "cover",
-        "opacity": 0.3,
-        "focalPoint": {
-          "x": 0.5,
-          "y": 0.5
+          "y": 0.65
         },
         "regular": {
-          "asset": "paper-light",
-          "fit": "contain",
-          "opacity": 0.4,
+          "asset": "scene-wide-light",
+          "fit": "cover",
           "focalPoint": {
             "x": 0.5,
-            "y": 0.5
+            "y": 0.65
           }
         }
+      },
+      "navigation.background": {
+        "asset": "chrome-light",
+        "fit": "tile"
+      },
+      "composer.background": {
+        "asset": "chrome-light",
+        "fit": "tile"
+      },
+      "tabs.background": {
+        "asset": "chrome-light",
+        "fit": "tile"
+      },
+      "actions.background": {
+        "asset": "panel-light",
+        "fit": "tile"
+      },
+      "cards.decoration": {
+        "asset": "panel-light",
+        "fit": "tile"
+      },
+      "buttons.primary.background": {
+        "asset": "action-light",
+        "fit": "tile"
+      },
+      "emptyState.illustration": {
+        "asset": "empty-light",
+        "fit": "contain"
       }
     },
     "dark": {
-      "home.decoration": { "asset": "garden-dark", "fit": "contain" },
       "shell.background": {
-        "asset": "paper-dark",
+        "asset": "scene-dark",
         "fit": "cover",
-        "opacity": 0.12,
         "focalPoint": {
           "x": 0.5,
-          "y": 0.5
-        }
-      },
-      "home.background": {
-        "asset": "paper-dark",
-        "fit": "cover",
-        "opacity": 0.26,
-        "focalPoint": {
-          "x": 0.5,
-          "y": 0.5
+          "y": 0.65
         },
         "regular": {
-          "asset": "paper-dark",
-          "fit": "contain",
-          "opacity": 0.34,
+          "asset": "scene-wide-dark",
+          "fit": "cover",
           "focalPoint": {
             "x": 0.5,
-            "y": 0.5
+            "y": 0.65
           }
         }
+      },
+      "navigation.background": {
+        "asset": "chrome-dark",
+        "fit": "tile"
+      },
+      "composer.background": {
+        "asset": "chrome-dark",
+        "fit": "tile"
+      },
+      "tabs.background": {
+        "asset": "chrome-dark",
+        "fit": "tile"
+      },
+      "actions.background": {
+        "asset": "panel-dark",
+        "fit": "tile"
+      },
+      "cards.decoration": {
+        "asset": "panel-dark",
+        "fit": "tile"
+      },
+      "buttons.primary.background": {
+        "asset": "action-dark",
+        "fit": "tile"
+      },
+      "emptyState.illustration": {
+        "asset": "empty-dark",
+        "fit": "contain"
       }
     }
   },

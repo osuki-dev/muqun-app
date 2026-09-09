@@ -248,6 +248,10 @@ msgstr "已启用应用锁"
 msgid "App Lock unavailable"
 msgstr "应用锁不可用"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "App 名称和标语"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "外观"
@@ -418,6 +422,10 @@ msgstr "取消编辑 {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "已取消"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "只调整背景颜色，不影响文字、图标或装饰图片"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1196,12 +1204,24 @@ msgid "FIRST PROMPT"
 msgstr "第一条提示词"
 
 #: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "请先修正 JSON 语法错误再格式化"
+
+#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "请先修正文字对比度再应用此主题"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "收起工具步骤"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "格式化 JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "格式化后的 JSON 超出主题大小限制"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1388,6 +1408,10 @@ msgstr "插入模式"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "已复制安装命令"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "界面背景不透明度"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1612,6 +1636,10 @@ msgstr "标记已查看"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "提及 {0}"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "确保文字清晰的最低不透明度：{minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1855,6 +1883,7 @@ msgid "NOT CONNECTED"
 msgstr "未连接"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "未找到"
 
@@ -2740,9 +2769,21 @@ msgstr "在输入栏上方显示 Esc、Tab、Ctrl 和方向键。"
 msgid "Show every tool step"
 msgstr "显示每个工具步骤"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "显示首页 Logo"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "显示首页文字"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "显示图片"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "在终端文字后显示 App 背景"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2797,6 +2838,10 @@ msgstr "大小"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "有些文件没有上传成功"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "部分主题颜色需要更高的对比度"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
@@ -2973,6 +3018,10 @@ msgstr "任务已发送，你可以继续手头的工作。"
 msgid "Terminal"
 msgstr "终端"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "终端背景不透明度"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
@@ -3135,6 +3184,7 @@ msgstr "此主题将从当前设备移除"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "把对话记录当成聊天呈现，并收起工具步骤。"
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
@@ -3339,6 +3389,10 @@ msgstr "在模拟器上输入"
 msgid "Undo"
 msgstr "撤销"
 
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "撤销格式化"
+
 #: src/components/asset-viewer.tsx
 msgid "unknown"
 msgstr "未知"
@@ -3429,6 +3483,10 @@ msgstr "使用设备密码"
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "使用主页上的扫描按钮来添加。"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "使用主题默认设置"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"

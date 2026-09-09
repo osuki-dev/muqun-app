@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -35,6 +36,7 @@ export function TransientPill({
   bottomInset?: number;
   testID?: string;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   return (
     <View pointerEvents="none" style={[styles.anchor, { bottom: bottomInset }]}>
@@ -42,7 +44,10 @@ export function TransientPill({
         <View
           style={[
             styles.indicator,
-            { backgroundColor: theme.colors.primary, borderRadius: theme.radius.pill },
+            {
+              backgroundColor: surfaceBackground(theme.colors.primary),
+              borderRadius: theme.radius.pill,
+            },
           ]}>
           <Text
             variant="caption"

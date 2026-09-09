@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Send } from 'lucide-react-native';
 import { useEffect, type ComponentProps, type ReactNode, type Ref } from 'react';
@@ -59,6 +60,7 @@ export function TerminalComposer({
   exiting,
   layout,
 }: TerminalComposerProps) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const chromeText = theme.colors.text;
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
@@ -72,7 +74,7 @@ export function TerminalComposer({
       entering={entering}
       exiting={exiting}
       layout={layout}
-      style={[composerStyles.composer, { backgroundColor: chromeGlassQuiet }]}>
+      style={[composerStyles.composer, { backgroundColor: surfaceBackground(chromeGlassQuiet) }]}>
       {leading}
       <TextInput
         ref={inputRef}
@@ -129,6 +131,7 @@ export function ComposerSendButton({
   restText: string;
   activeText: string;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const armedValue = useSharedValue(armed ? 1 : 0);
   const sendingValue = useSharedValue(sending ? 1 : 0);
   useEffect(() => {
@@ -153,13 +156,13 @@ export function ComposerSendButton({
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={onPress}
-      style={[composerStyles.button, { backgroundColor: restFill }]}>
+      style={[composerStyles.button, { backgroundColor: surfaceBackground(restFill) }]}>
       <Animated.View
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
           composerStyles.buttonFill,
-          { backgroundColor: armedFill },
+          { backgroundColor: surfaceBackground(armedFill) },
           fillStyle,
         ]}
       />

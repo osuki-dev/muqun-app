@@ -1,5 +1,7 @@
+import { Input } from '@/components/themed-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Input, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Canvas, Fill, Group, Image as SkiaImage } from '@shopify/react-native-skia';
 import {
   ArrowLeft,
@@ -137,6 +139,7 @@ export function SimfarmStage({
    */
   onLost: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
@@ -548,7 +551,12 @@ export function SimfarmStage({
 
   if (stream.status === 'lost') {
     return (
-      <View style={[styles.fill, styles.middle, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[
+          styles.fill,
+          styles.middle,
+          { backgroundColor: surfaceBackground(theme.colors.background) },
+        ]}>
         {/* The one way off this screen on iOS is a close button, so the state
             with no picture and no button still draws one: the sheet this used
             to be could be swiped away, and a full-screen modal cannot. */}
@@ -572,7 +580,10 @@ export function SimfarmStage({
           accessibilityRole="button"
           testID="simfarm-reconnect"
           onPress={onLost}
-          style={[styles.reconnect, { backgroundColor: theme.colors.surfaceRaised }]}>
+          style={[
+            styles.reconnect,
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
           <RefreshCw size={16} color={theme.colors.text} strokeWidth={2} />
           <Text variant="bodySmall">{t`Look again`}</Text>
         </PressableScale>
@@ -582,7 +593,7 @@ export function SimfarmStage({
 
   return (
     <View
-      style={[styles.fill, { backgroundColor: theme.colors.background }]}
+      style={[styles.fill, { backgroundColor: surfaceBackground(theme.colors.background) }]}
       onLayout={onLayout}
       testID="simfarm-stage">
       <GestureDetector gesture={gesture}>
@@ -684,7 +695,7 @@ export function SimfarmStage({
                 bottom: menuAt.bottom,
                 maxHeight: menuAt.maxHeight,
                 maxWidth: Math.max(0, viewport.width - MENU_MARGIN * 2),
-                backgroundColor: theme.colors.surfaceRaised,
+                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                 borderColor: theme.colors.border,
               },
             ]}>
@@ -776,7 +787,10 @@ export function SimfarmStage({
                               accessibilityLabel={t`Shut down ${entry.name}`}
                               testID={`simfarm-shutdown-${entry.id}`}
                               onPress={() => shutdown(entry.id)}
-                              style={[styles.power, { backgroundColor: theme.colors.surface }]}>
+                              style={[
+                                styles.power,
+                                { backgroundColor: surfaceBackground(theme.colors.surface) },
+                              ]}>
                               <Power size={14} color={theme.colors.textMuted} strokeWidth={2} />
                             </PressableScale>
                           ) : stopping ? (

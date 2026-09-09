@@ -248,6 +248,10 @@ msgstr "Verrouillage de l’app activé"
 msgid "App Lock unavailable"
 msgstr "Verrouillage de l’app indisponible"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "Nom de l’app et slogan"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Apparence"
@@ -418,6 +422,10 @@ msgstr "Annuler la modification de {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "Annulé"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "Modifie les fonds colorés, pas le texte, les icônes ni les illustrations"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1196,12 +1204,24 @@ msgid "FIRST PROMPT"
 msgstr "PREMIER PROMPT"
 
 #: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "Corrigez le JSON invalide avant de le formater"
+
+#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Corrigez le contraste du texte avant d’appliquer ce thème"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Replier les étapes d’outils"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "Formater le JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "Le JSON formaté dépasse la taille maximale du thème"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1388,6 +1408,10 @@ msgstr "Mode insertion"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Commande d'installation copiée"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "Opacité du fond de l’interface"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1612,6 +1636,10 @@ msgstr "Marquer comme vérifié"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Mentionner {0}"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "Opacité minimale pour un texte lisible : {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1855,6 +1883,7 @@ msgid "NOT CONNECTED"
 msgstr "NON CONNECTÉ"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Introuvable"
 
@@ -2740,9 +2769,21 @@ msgstr "Affiche les touches Esc, Tab, Ctrl et les touches de navigation au-dessu
 msgid "Show every tool step"
 msgstr "Afficher toutes les étapes d’outils"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "Afficher le logo sur l’accueil"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "Afficher le texte sur l’accueil"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Afficher les images"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "Afficher le fond de l’application derrière le texte du terminal"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2797,6 +2838,10 @@ msgstr "Taille"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Certains fichiers n’ont pas été envoyés"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "Certaines couleurs du thème nécessitent plus de contraste"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
@@ -2973,6 +3018,10 @@ msgstr "Tâche envoyée. Vous pouvez continuer dans votre terminal actuel."
 msgid "Terminal"
 msgstr "Terminal"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "Opacité du fond du terminal"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
@@ -3135,6 +3184,7 @@ msgstr "Le thème sera supprimé de cet appareil"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "La transcription sous forme de conversation, avec les étapes d’outils repliées."
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
@@ -3339,6 +3389,10 @@ msgstr "Saisir sur le simulateur"
 msgid "Undo"
 msgstr "Annuler"
 
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "Annuler le formatage"
+
 #: src/components/asset-viewer.tsx
 msgid "unknown"
 msgstr "inconnu"
@@ -3429,6 +3483,10 @@ msgstr "Utiliser le code de l’appareil"
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "Ajoutez-en un avec le bouton de scan de l’écran d’accueil."
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "Utiliser les valeurs par défaut du thème"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"

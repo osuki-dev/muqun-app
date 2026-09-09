@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
@@ -107,6 +108,7 @@ export const PaneChatView = memo(function PaneChatView({
   /** Switches every run of tool calls between folded and shown. */
   onToggleDetail?: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -182,7 +184,12 @@ export const PaneChatView = memo(function PaneChatView({
   // no reader's place to lose when there was nothing to read.
   if (items.length === 0) {
     return (
-      <View style={[styles.shell, styles.empty, { backgroundColor: theme.colors.background }]}>
+      <View
+        style={[
+          styles.shell,
+          styles.empty,
+          { backgroundColor: surfaceBackground(theme.colors.background) },
+        ]}>
         {awaitingFirstParts ? (
           // The shape of a transcript, while the gateway is being asked for
           // one. It used to say "Nothing to show yet." the instant the view
@@ -212,7 +219,7 @@ export const PaneChatView = memo(function PaneChatView({
   }
 
   return (
-    <View style={[styles.shell, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.shell, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
       <LegendList
         data={items}
         keyExtractor={keyOfItem}
@@ -282,7 +289,7 @@ export const PaneChatView = memo(function PaneChatView({
                 style={[
                   styles.foldToggle,
                   {
-                    backgroundColor: theme.colors.surfaceRaised,
+                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                   },
                 ]}>
                 <FoldIcon size={14} color={theme.colors.textMuted} strokeWidth={2} />

@@ -53,7 +53,9 @@ export function Toggle({
   const thumb = resolvedMode === 'dark' ? colors.text : colors.surface;
 
   return (
-    <View style={[styles.hitArea, disabled ? styles.disabled : null, style]}>
+    // Keep the native Switch parent stable when disabled opacity changes. Fabric
+    // must not flatten/unflatten this wrapper during the same controlled update.
+    <View collapsable={false} style={[styles.hitArea, disabled ? styles.disabled : null, style]}>
       <Switch
         value={value}
         disabled={disabled}

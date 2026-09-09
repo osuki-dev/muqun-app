@@ -1,0 +1,256 @@
+{
+  "format": "muqun-theme",
+  "schemaVersion": 1,
+  "id": "cloud-atelier",
+  "name": "Cloud Atelier",
+  "version": "1.0.0",
+  "materials": {
+    "default": "solid"
+  },
+  "variants": {
+    "light": {
+      "colors": {
+        "background": "#F1F3FC",
+        "surface": "#FFFCF4",
+        "surfaceRaised": "#F5F5FF",
+        "border": "#D2D9E9",
+        "borderStrong": "#8291B0",
+        "text": "#26334E",
+        "textMuted": "#404E69",
+        "textSubtle": "#4C5670",
+        "textDisabled": "#9AA5BA",
+        "primary": "#344E8E",
+        "onPrimary": "#FFFFFF",
+        "primarySubtle": "#344E8E18",
+        "danger": "#A33349",
+        "dangerSubtle": "#A3334918",
+        "success": "#276346",
+        "warning": "#74511B",
+        "info": "#355A91"
+      },
+      "terminal": {
+        "background": "#F7F8FF",
+        "foreground": "#26334E",
+        "cursor": "#344E8E",
+        "link": "#355A91",
+        "selection": "#344E8E30",
+        "ansi": [
+          "#26334E",
+          "#A33349",
+          "#276346",
+          "#74511B",
+          "#355A91",
+          "#69548A",
+          "#286976",
+          "#5B657C",
+          "#66728B",
+          "#AC3048",
+          "#246A43",
+          "#775215",
+          "#315F9E",
+          "#73528F",
+          "#256674",
+          "#FCFCFF"
+        ]
+      }
+    },
+    "dark": {
+      "colors": {
+        "background": "#141C2D",
+        "surface": "#1C263A",
+        "surfaceRaised": "#222C40",
+        "border": "#39475F",
+        "borderStrong": "#7789AC",
+        "text": "#F0F3FF",
+        "textMuted": "#C1CCE2",
+        "textSubtle": "#B6C2DA",
+        "textDisabled": "#74829D",
+        "primary": "#BED0FF",
+        "onPrimary": "#19243E",
+        "primarySubtle": "#BED0FF20",
+        "danger": "#FFB6BE",
+        "dangerSubtle": "#FFB6BE20",
+        "success": "#A6DDB8",
+        "warning": "#F1D6A2",
+        "info": "#B9D0FF"
+      },
+      "terminal": {
+        "background": "#141C2D",
+        "foreground": "#EDF2FF",
+        "cursor": "#BED0FF",
+        "link": "#B9D0FF",
+        "selection": "#BED0FF38",
+        "ansi": [
+          "#7887A5",
+          "#FFB6BE",
+          "#A6DDB8",
+          "#F1D6A2",
+          "#B9D0FF",
+          "#D2BFED",
+          "#A3DCE0",
+          "#E1E8F7",
+          "#9AAACA",
+          "#FFD0D4",
+          "#C2ECCB",
+          "#FFE6B5",
+          "#D0DFFF",
+          "#E5D3FA",
+          "#BFEFF0",
+          "#FAFCFF"
+        ]
+      }
+    }
+  },
+  "assets": {
+    "scene-light": {
+      "path": "assets/scene-light.png",
+      "sha256": "d2072895c5fde11a6c436d7f2d82df7844122ac350d868b52fe8ea4c3865c9cc"
+    },
+    "scene-wide-light": {
+      "path": "assets/scene-wide-light.png",
+      "sha256": "1c2d44ca5133d57f0ac3d007fd0ea37ab7d92c48f24d230fa475ddd91f548326"
+    },
+    "chrome-light": {
+      "path": "assets/chrome-light-512.png",
+      "sha256": "4cabd633d61821bd9cf5218749370283c81bae8f9c9280b1018be88394e8c178"
+    },
+    "panel-light": {
+      "path": "assets/panel-light-512.png",
+      "sha256": "ba81f47d627fa643b43ca01ad6eb4723279270847c099894fd7f295550cad317"
+    },
+    "action-light": {
+      "path": "assets/action-light-512.png",
+      "sha256": "c205a1db20e12e3277bc568cf58546b253e56dd1a7d90cd302e0964ebf3399e3"
+    },
+    "empty-light": {
+      "path": "assets/empty-light-512.png",
+      "sha256": "47942297d4892362657f537fe59894b88bb470ed852886fa4515f10e85127060"
+    },
+    "scene-dark": {
+      "path": "assets/scene-dark.png",
+      "sha256": "c679486f409b1e6b49da1b1c0d7f71524de040f6bf65fbafe737a95c095e3d29"
+    },
+    "scene-wide-dark": {
+      "path": "assets/scene-wide-dark.png",
+      "sha256": "4a6cbfff68c66a62fc895c81ce07b5dd31b47fa82a551c0425b58c4ed8af4de8"
+    },
+    "chrome-dark": {
+      "path": "assets/chrome-dark-512.png",
+      "sha256": "8148a89ec8634c27a78b6d8dee30c11747feaf5c236d398bee9b0b7dd4d4d9e0"
+    },
+    "panel-dark": {
+      "path": "assets/panel-dark-512.png",
+      "sha256": "306c301f13d9ad5e5c24fb276f1ef92f2d5772437691fc00e1ddf688e49ac74b"
+    },
+    "action-dark": {
+      "path": "assets/action-dark-512.png",
+      "sha256": "d5e7d704b0cf213a3d28115db4aeb6890bf2d00bde2446bef50a0637761af4b5"
+    },
+    "empty-dark": {
+      "path": "assets/empty-dark-512.png",
+      "sha256": "b4fae9468efe840ddd8e3638808ffdf6448fbaea48311026178ff359f7cdd378"
+    }
+  },
+  "variantDecorations": {
+    "light": {
+      "shell.background": {
+        "asset": "scene-light",
+        "fit": "cover",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "regular": {
+          "asset": "scene-wide-light",
+          "fit": "cover",
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      },
+      "navigation.background": {
+        "asset": "chrome-light",
+        "fit": "cover"
+      },
+      "composer.background": {
+        "asset": "chrome-light",
+        "fit": "cover"
+      },
+      "tabs.background": {
+        "asset": "chrome-light",
+        "fit": "cover"
+      },
+      "actions.background": {
+        "asset": "panel-light",
+        "fit": "cover"
+      },
+      "cards.decoration": {
+        "asset": "panel-light",
+        "fit": "cover"
+      },
+      "buttons.primary.background": {
+        "asset": "action-light",
+        "fit": "cover"
+      },
+      "emptyState.illustration": {
+        "asset": "empty-light",
+        "fit": "contain"
+      }
+    },
+    "dark": {
+      "shell.background": {
+        "asset": "scene-dark",
+        "fit": "cover",
+        "focalPoint": {
+          "x": 0.5,
+          "y": 0.5
+        },
+        "regular": {
+          "asset": "scene-wide-dark",
+          "fit": "cover",
+          "focalPoint": {
+            "x": 0.5,
+            "y": 0.5
+          }
+        }
+      },
+      "navigation.background": {
+        "asset": "chrome-dark",
+        "fit": "cover"
+      },
+      "composer.background": {
+        "asset": "chrome-dark",
+        "fit": "cover"
+      },
+      "tabs.background": {
+        "asset": "chrome-dark",
+        "fit": "cover"
+      },
+      "actions.background": {
+        "asset": "panel-dark",
+        "fit": "cover"
+      },
+      "cards.decoration": {
+        "asset": "panel-dark",
+        "fit": "cover"
+      },
+      "buttons.primary.background": {
+        "asset": "action-dark",
+        "fit": "cover"
+      },
+      "emptyState.illustration": {
+        "asset": "empty-dark",
+        "fit": "contain"
+      }
+    }
+  },
+  "homeIdentity": {
+    "name": {
+      "mode": "default"
+    },
+    "logo": {
+      "mode": "default"
+    }
+  }
+}

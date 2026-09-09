@@ -248,6 +248,10 @@ msgstr "アプリロックを有効にしました"
 msgid "App Lock unavailable"
 msgstr "アプリロックを利用できません"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "アプリ名とキャッチコピー"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "外観"
@@ -418,6 +422,10 @@ msgstr "{0} の編集をキャンセル"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "キャンセルしました"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "背景色だけを変更し、文字・アイコン・画像は変更しません"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1196,12 +1204,24 @@ msgid "FIRST PROMPT"
 msgstr "最初のプロンプト"
 
 #: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "整形する前にJSONの構文エラーを修正してください"
+
+#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "このテーマを適用する前に文字のコントラストを修正してください"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "ツールの手順を折りたたむ"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "JSONを整形"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "整形後のJSONがテーマのサイズ上限を超えています"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1388,6 +1408,10 @@ msgstr "挿入モード"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "インストールコマンドをコピーしました"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "画面の背景の不透明度"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1612,6 +1636,10 @@ msgstr "確認済みにする"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "{0} をメンション"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "文字を読みやすくする最低不透明度: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1855,6 +1883,7 @@ msgid "NOT CONNECTED"
 msgstr "未接続"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "見つかりません"
 
@@ -2740,9 +2769,21 @@ msgstr "入力欄の上に Esc、Tab、Ctrl と方向キーを表示します。
 msgid "Show every tool step"
 msgstr "ツールの手順をすべて表示"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "ホームのロゴを表示"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "ホームのテキストを表示"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "画像を表示"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "ターミナルの文字の背後にアプリの背景を表示"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2797,6 +2838,10 @@ msgstr "サイズ"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "一部のファイルをアップロードできませんでした"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "一部のテーマカラーはコントラストを高める必要があります"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
@@ -2973,6 +3018,10 @@ msgstr "送信しました。現在のターミナルで作業を続けられま
 msgid "Terminal"
 msgstr "ターミナル"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "ターミナルの背景の不透明度"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
@@ -3135,6 +3184,7 @@ msgstr "このデバイスからテーマが削除されます"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "やり取りを会話として表示し、ツールの手順は折りたたみます。"
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
@@ -3339,6 +3389,10 @@ msgstr "シミュレータに入力する"
 msgid "Undo"
 msgstr "取り消し"
 
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "整形を元に戻す"
+
 #: src/components/asset-viewer.tsx
 msgid "unknown"
 msgstr "不明"
@@ -3429,6 +3483,10 @@ msgstr "デバイスのパスコードを使用"
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "ホーム画面のスキャンボタンから追加してください。"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "テーマの初期設定を使用"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"

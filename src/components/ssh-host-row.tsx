@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import {
@@ -75,6 +76,7 @@ export function SshHostRow({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const address = sshHomeSubtitle(record);
   const trusted = Boolean(record.trustedHostKey);
 
@@ -87,14 +89,20 @@ export function SshHostRow({
     : `${address} · ${lastConnected}`;
 
   return (
-    <View testID={testID} style={[styles.row, { backgroundColor: theme.colors.surface }]}>
+    <View
+      testID={testID}
+      style={[styles.row, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={t`Open SSH host ${record.label}`}
         accessibilityHint={hint}
         onPress={onOpen}
         style={styles.rowMain}>
-        <View style={[styles.rowIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
+        <View
+          style={[
+            styles.rowIcon,
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
           {record.auth.type === 'privateKey' ? (
             <KeyRound size={18} color={theme.colors.primary} strokeWidth={2} />
           ) : record.auth.type === 'keyboardInteractive' ? (
@@ -130,7 +138,10 @@ export function SshHostRow({
           accessibilityLabel={t`Edit ${record.label}`}
           onPress={onEdit}
           hitSlop={6}
-          style={[styles.rowAction, { backgroundColor: theme.colors.surfaceRaised }]}>
+          style={[
+            styles.rowAction,
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
           <Pencil size={16} color={theme.colors.text} strokeWidth={2} />
         </PressableScale>
       ) : null}

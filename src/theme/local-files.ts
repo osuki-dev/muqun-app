@@ -1,10 +1,41 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import QuickCrypto from 'react-native-quick-crypto';
 
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
 import { unpackTheme } from '@/theme/package';
 import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
+import { createThemeFileSharer } from '@/theme/file-sharing';
+
+const shareFile = createThemeFileSharer({
+  available: Sharing.isAvailableAsync,
+  create(name, data) {
+    const directory = new Directory(
+      Paths.cache,
+      `theme-export-${QuickCrypto.randomBytes(12).toString('hex')}`
+    );
+    directory.create();
+    try {
+      const file = new File(directory, name);
+      file.create();
+      file.write(data);
+      return { uri: file.uri, dispose: () => directory.delete() };
+    } catch (error) {
+      try {
+        directory.delete();
+      } catch {
+        // Do not replace the useful write failure with cache-cleanup failure.
+      }
+      throw error;
+    }
+  },
+  share: (uri, packaged) =>
+    Sharing.shareAsync(uri, {
+      mimeType: packaged ? 'application/zip' : 'application/json',
+      UTI: packaged ? 'public.zip-archive' : 'public.json',
+    }),
+});
 
 export type ThemeFilePreview = { manifest: ThemeManifest; prepared?: PreparedThemeAssets };
 
@@ -63,16 +94,5 @@ export async function shareThemeFile(
   const size = typeof data === 'string' ? new TextEncoder().encode(data).length : data.length;
   if (size > (packaged ? THEME_LIMITS.packageBytes : THEME_LIMITS.manifestBytes))
     throw new Error('Theme export exceeds the size limit');
-  if (!(await Sharing.isAvailableAsync())) throw new Error('File sharing is unavailable');
-  const directory = new Directory(Paths.cache, 'theme-exports');
-  directory.create({ intermediates: true, idempotent: true });
-  // This module owns the directory; retain at most one manifest-sized export.
-  for (const previous of directory.list()) if (previous instanceof File) previous.delete();
-  const file = new File(directory, name);
-  file.create({ overwrite: true });
-  file.write(data);
-  await Sharing.shareAsync(file.uri, {
-    mimeType: packaged ? 'application/zip' : 'application/json',
-    UTI: packaged ? 'public.zip-archive' : 'public.json',
-  });
+  await shareFile({ name, data, packaged });
 }

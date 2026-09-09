@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -31,6 +32,7 @@ import { paneAddressText, type PaneAddress } from '@/lib/pane-address';
  * gesture fired.
  */
 export function SwitchIndicator({ address, testID }: { address: PaneAddress; testID?: string }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   return (
     <Animated.View
@@ -42,7 +44,10 @@ export function SwitchIndicator({ address, testID }: { address: PaneAddress; tes
       <View
         style={[
           styles.indicator,
-          { backgroundColor: theme.colors.primary, borderRadius: theme.radius.pill },
+          {
+            backgroundColor: surfaceBackground(theme.colors.primary),
+            borderRadius: theme.radius.pill,
+          },
         ]}>
         <Text
           variant="caption"

@@ -248,6 +248,10 @@ msgstr "App Lock enabled"
 msgid "App Lock unavailable"
 msgstr "App Lock unavailable"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "App name and tagline"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Appearance"
@@ -418,6 +422,10 @@ msgstr "Cancel editing {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "Cancelled"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "Changes colored backgrounds, not text, icons or artwork"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1196,12 +1204,24 @@ msgid "FIRST PROMPT"
 msgstr "FIRST PROMPT"
 
 #: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "Fix invalid JSON before formatting"
+
+#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Fix text contrast before applying this theme"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Fold the tool steps away"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "Format JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "Formatted JSON exceeds the theme size limit"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1388,6 +1408,10 @@ msgstr "Insert mode"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Install command copied"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "Interface background opacity"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1612,6 +1636,10 @@ msgstr "Mark reviewed"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Mention {0}"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "Minimum opacity for readable text: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1855,6 +1883,7 @@ msgid "NOT CONNECTED"
 msgstr "NOT CONNECTED"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Not found"
 
@@ -2740,9 +2769,21 @@ msgstr "Show Esc, Tab, Ctrl and navigation keys above input."
 msgid "Show every tool step"
 msgstr "Show every tool step"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "Show Home logo"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "Show Home text"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Show images"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "Show the app background behind terminal text"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2797,6 +2838,10 @@ msgstr "Size"
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Some files did not upload"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "Some theme colors need more contrast"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
@@ -2973,6 +3018,10 @@ msgstr "Task sent. You can keep working in your current terminal."
 msgid "Terminal"
 msgstr "Terminal"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "Terminal background opacity"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
@@ -3135,6 +3184,7 @@ msgstr "The theme will be removed from this device"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "The transcript as a conversation, with tool steps folded away."
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
@@ -3339,6 +3389,10 @@ msgstr "Type on the simulator"
 msgid "Undo"
 msgstr "Undo"
 
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "Undo formatting"
+
 #: src/components/asset-viewer.tsx
 msgid "unknown"
 msgstr "unknown"
@@ -3429,6 +3483,10 @@ msgstr "Use device passcode"
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "Use the scan button on the home screen to add one."
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "Use theme defaults"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"

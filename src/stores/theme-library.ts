@@ -9,7 +9,7 @@ import {
   type ThemeSelection,
 } from '@/theme/repository';
 import type { ResolvedCustomTheme } from '@/theme/resolve';
-import { isOwnedThemeAsset } from '@/theme/assets';
+import { isOwnedThemeAsset, setThemeAssetReferences } from '@/theme/assets';
 
 // Metadata is a single MMKV value, not SecureStore or a collection of partially
 // updated keys. A failed durable write must never repaint the running app.
@@ -38,11 +38,19 @@ type ThemeLibraryState = {
   undo: () => void;
   remove: (id: string) => void;
   exportColors: (id: string) => string;
+  setTerminalBackgroundOpacity: (id: string, value: number | undefined) => void;
+  setSurfaceBackgroundOpacity: (id: string, value: number | undefined) => void;
+  setHideHomeLogo: (id: string, value: boolean | undefined) => void;
+  setHideHomeText: (id: string, value: boolean | undefined) => void;
+  resetAppearancePreferences: (id: string) => void;
 };
 
 export const useThemeLibrary = create<ThemeLibraryState>((set) => {
-  const publish = (repo: ThemeRepository) =>
-    set({ library: repo.snapshot(), active: repo.active(), hydrated: true });
+  const publish = (repo: ThemeRepository) => {
+    const library = repo.snapshot();
+    setThemeAssetReferences(repo.hasAuthoritativeAssetReferences() ? library.themes : null);
+    set({ library, active: repo.active(), hydrated: true });
+  };
   return {
     hydrated: false,
     library: { version: 1, themes: [], selection: null, previous: null },
@@ -51,6 +59,7 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
       try {
         publish(getRepository());
       } catch {
+        setThemeAssetReferences(null);
         set({ hydrated: true });
       }
     },
@@ -77,6 +86,31 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
     },
     exportColors(id) {
       return getRepository().exportColors(id);
+    },
+    setTerminalBackgroundOpacity(id, value) {
+      const repo = getRepository();
+      repo.setTerminalBackgroundOpacity(id, value);
+      publish(repo);
+    },
+    setSurfaceBackgroundOpacity(id, value) {
+      const repo = getRepository();
+      repo.setSurfaceBackgroundOpacity(id, value);
+      publish(repo);
+    },
+    setHideHomeLogo(id, value) {
+      const repo = getRepository();
+      repo.setHideHomeLogo(id, value);
+      publish(repo);
+    },
+    setHideHomeText(id, value) {
+      const repo = getRepository();
+      repo.setHideHomeText(id, value);
+      publish(repo);
+    },
+    resetAppearancePreferences(id) {
+      const repo = getRepository();
+      repo.resetAppearancePreferences(id);
+      publish(repo);
     },
   };
 });

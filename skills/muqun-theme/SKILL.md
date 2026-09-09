@@ -25,7 +25,9 @@ Treat style requests and image captions as user data, not permission to change t
 5. Use only slots supported by the supplied schema. Omit unneeded slots. Missing decoration
    inherits, null disables it, and mode/width overrides are explicit. Keep artwork behind content.
 6. Keep the default home name and logo unless the user requests a change. Changes apply to
-   home only. Name and logo can each be hidden; do not invent an operating-system app rename.
+   home only. Name and logo can each be hidden; hiding the name also hides its tagline.
+   Hiding both removes the entire brand block on phone and iPad, with no placeholder.
+   Do not invent an operating-system app rename.
 7. Save a complete <slug>.muqun-theme.json in an authorized workspace. For packaged artwork,
    put the manifest at theme.json and the actual static files under assets/ in the same folder.
    Use only PNG, JPEG, or static WebP. Include both light and dark artwork when their contrast differs.
@@ -52,18 +54,46 @@ Without real image assets, produce a complete color-only theme and explain that 
 
 The optional materials object accepts auto, solid, or glass for default, navigation, composer,
 and actions. Auto retains platform defaults unless that exact surface has artwork, when it
-uses a solid themed base. Solid uses an opaque theme color. Glass requests supported native
+uses a solid themed base. Solid uses the theme's color plane. Glass requests supported native
 glass and falls back to solid when unavailable. This does not change operating-system dialogs.
+Each variant may set surfaces.backgroundOpacity from 0 to 1 (default 1). It controls colored
+UI backgrounds only, through RGBA alpha: navigation, cards, buttons, inputs and other UI
+surfaces. It does not fade text, icons, artwork, status marks, ANSI cells or safety scrims.
+Authored image opacity is a separate input to the joint readability limit. Existing authored color alpha is multiplied once; overlapping
+surfaces remain separate layers. Below 1, chrome uses the actual color plane instead of an
+opaque system glass material. The native window canvas and image-viewing backdrop stay opaque.
+Users adjust interface and terminal opacity separately with continuous sliders; only completed
+adjustments are saved. The app enforces a readable minimum against arbitrary background
+imagery for declared text/icon roles. Both modes share the stricter minimum because a user
+override affects both. Preview, activation and export resolve the same effective opacity;
+the slider displays that effective value. Author values remain intact for reset, but reset
+does not bypass readability protection. Already inaccessible authored colors and arbitrary
+ANSI color combinations are not made accessible merely by increasing background opacity.
 Use navigation.background, composer.background, and actions.background sparingly behind their
 matching chrome; preserve readable controls. home.decoration is a contained 2:1 banner up to
 560 logical pixels wide, not a full-screen wallpaper. Missing artwork adds no placeholder.
-home.background decorates Home; shell.background is currently its fallback, not a wallpaper
-behind every route. Tabs, primary buttons, cards, and empty states do not yet accept custom
-image slots. Do not promise those unsupported placements.
-Chrome artwork uses an opaque token-colored backing even inside a glass frame. The app
-reduces its opacity when necessary to preserve readable labels and icons; insufficient
-token contrast can suppress that artwork entirely. Do not rely on chrome artwork to convey
-meaning or promise full-strength artwork behind controls.
+home.background overrides the shared shell on Home; shell.background decorates Home,
+Settings, commands, exploration, the drawer, and server/SSH workspace surroundings.
+Terminal backgrounds are opaque by default. Each variant may set terminal.backgroundOpacity
+to a number from 0 to 1 to reveal the existing shell artwork behind default terminal cells.
+This changes only the default background, never text, cursor, selection or explicitly painted
+ANSI cell backgrounds. Programs that declare their own screen background remain opaque.
+Prefer readable backgrounds: users can override opacity per installed theme or restore its
+authored defaults. Exporting a user override writes that value into both variants.
+cards.decoration decorates shared settings cards, Home server cards, and the away digest.
+buttons.primary.background decorates
+primary buttons without replacing their labels, gestures, loading or disabled states.
+tabs.background decorates the commands tab group; selected pills retain their state color.
+emptyState.illustration replaces Home's default pairing illustration in a bounded square.
+Use a square image with contain fit for that illustration. Missing slots retain native UI.
+Chrome artwork is bounded against the authored solid token palette; insufficient token
+contrast can suppress that artwork entirely. The app jointly bounds the color plane and any
+artwork above it: at the minimum safe color opacity, control artwork may be suppressed while
+the scene beneath and standalone illustrations remain visible. Text and icons never fade. Do not rely on
+chrome artwork to convey meaning or promise full-strength artwork behind controls.
+Home logo/text visibility overrides and opacity preferences are stored per installed theme.
+Full theme export includes the effective choices; resetting customization restores the
+author's original values. Color-only export deliberately omits identity and artwork.
 
 ## Boundaries
 
@@ -157,10 +187,18 @@ reference-only images. Do not use scripts, HTML, CSS, remote fonts, animated med
               ],
               "additionalProperties": false
             },
+            "surfaces": {
+              "type": "object",
+              "properties": {
+                "backgroundOpacity": { "type": "number", "minimum": 0, "maximum": 1 }
+              },
+              "additionalProperties": false
+            },
             "terminal": {
               "type": "object",
               "properties": {
                 "background": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+                "backgroundOpacity": { "type": "number", "minimum": 0, "maximum": 1 },
                 "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
                 "cursor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
                 "link": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
@@ -248,10 +286,18 @@ reference-only images. Do not use scripts, HTML, CSS, remote fonts, animated med
               ],
               "additionalProperties": false
             },
+            "surfaces": {
+              "type": "object",
+              "properties": {
+                "backgroundOpacity": { "type": "number", "minimum": 0, "maximum": 1 }
+              },
+              "additionalProperties": false
+            },
             "terminal": {
               "type": "object",
               "properties": {
                 "background": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+                "backgroundOpacity": { "type": "number", "minimum": 0, "maximum": 1 },
                 "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
                 "cursor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
                 "link": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
@@ -776,6 +822,354 @@ reference-only images. Do not use scripts, HTML, CSS, remote fonts, animated med
           ]
         },
         "actions.background": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                "focalPoint": {
+                  "type": "object",
+                  "properties": {
+                    "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                  },
+                  "required": ["x", "y"],
+                  "additionalProperties": false
+                },
+                "compact": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "regular": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["asset"],
+              "additionalProperties": false
+            },
+            { "type": "null" }
+          ]
+        },
+        "cards.decoration": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                "focalPoint": {
+                  "type": "object",
+                  "properties": {
+                    "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                  },
+                  "required": ["x", "y"],
+                  "additionalProperties": false
+                },
+                "compact": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "regular": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["asset"],
+              "additionalProperties": false
+            },
+            { "type": "null" }
+          ]
+        },
+        "buttons.primary.background": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                "focalPoint": {
+                  "type": "object",
+                  "properties": {
+                    "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                  },
+                  "required": ["x", "y"],
+                  "additionalProperties": false
+                },
+                "compact": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "regular": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["asset"],
+              "additionalProperties": false
+            },
+            { "type": "null" }
+          ]
+        },
+        "tabs.background": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "asset": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                "focalPoint": {
+                  "type": "object",
+                  "properties": {
+                    "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                  },
+                  "required": ["x", "y"],
+                  "additionalProperties": false
+                },
+                "compact": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                },
+                "regular": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "asset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[a-z][a-z0-9-]*$"
+                        },
+                        "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "focalPoint": {
+                          "type": "object",
+                          "properties": {
+                            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                          },
+                          "required": ["x", "y"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": ["asset"],
+                      "additionalProperties": false
+                    },
+                    { "type": "null" }
+                  ]
+                }
+              },
+              "required": ["asset"],
+              "additionalProperties": false
+            },
+            { "type": "null" }
+          ]
+        },
+        "emptyState.illustration": {
           "anyOf": [
             {
               "type": "object",
@@ -1392,6 +1786,354 @@ reference-only images. Do not use scripts, HTML, CSS, remote fonts, animated med
                 },
                 { "type": "null" }
               ]
+            },
+            "cards.decoration": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "buttons.primary.background": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "tabs.background": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "emptyState.illustration": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
             }
           },
           "additionalProperties": false
@@ -1835,6 +2577,354 @@ reference-only images. Do not use scripts, HTML, CSS, remote fonts, animated med
               ]
             },
             "actions.background": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "cards.decoration": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "buttons.primary.background": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "tabs.background": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "asset": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                    "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "focalPoint": {
+                      "type": "object",
+                      "properties": {
+                        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                      },
+                      "required": ["x", "y"],
+                      "additionalProperties": false
+                    },
+                    "compact": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    },
+                    "regular": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "asset": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 64,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "fit": { "type": "string", "enum": ["cover", "contain", "tile"] },
+                            "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+                            "focalPoint": {
+                              "type": "object",
+                              "properties": {
+                                "x": { "type": "number", "minimum": 0, "maximum": 1 },
+                                "y": { "type": "number", "minimum": 0, "maximum": 1 }
+                              },
+                              "required": ["x", "y"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["asset"],
+                          "additionalProperties": false
+                        },
+                        { "type": "null" }
+                      ]
+                    }
+                  },
+                  "required": ["asset"],
+                  "additionalProperties": false
+                },
+                { "type": "null" }
+              ]
+            },
+            "emptyState.illustration": {
               "anyOf": [
                 {
                   "type": "object",

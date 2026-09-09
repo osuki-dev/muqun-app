@@ -1,6 +1,7 @@
 import { isThemePackId, type ThemePackId } from '@/constants/theme-packs';
 import { auditThemeContrast } from '@/theme/contrast';
 import { cloneThemeData } from '@/theme/clone';
+import { clampThemeOpacity } from '@/theme/opacity-policy';
 import { compileTheme, type ResolvedCustomTheme } from '@/theme/resolve';
 import { parseThemeManifest, type ThemeManifest } from '@/theme/schema';
 
@@ -11,7 +12,58 @@ export type InstalledTheme = {
   manifest: ThemeManifest;
   /** App-owned files already installed by the asset pipeline, never author URLs. */
   assets: Record<string, string>;
+  /** Undefined follows each mode's authored opacity. */
+  terminalBackgroundOpacity?: number;
+  surfaceBackgroundOpacity?: number;
+  /** Undefined follows author; false explicitly shows custom or system identity. */
+  hideHomeLogo?: boolean;
+  hideHomeText?: boolean;
 };
+
+type ThemePreferenceKey =
+  | 'terminalBackgroundOpacity'
+  | 'surfaceBackgroundOpacity'
+  | 'hideHomeLogo'
+  | 'hideHomeText';
+
+function validBackgroundOpacity(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+}
+
+/** User preferences never mutate the author's stored manifest. */
+export function effectiveThemeManifest(installed: InstalledTheme): ThemeManifest {
+  const manifest = cloneThemeData(installed.manifest);
+  if (validBackgroundOpacity(installed.terminalBackgroundOpacity)) {
+    for (const mode of ['light', 'dark'] as const)
+      manifest.variants[mode].terminal.backgroundOpacity = installed.terminalBackgroundOpacity;
+  }
+  if (validBackgroundOpacity(installed.surfaceBackgroundOpacity)) {
+    for (const mode of ['light', 'dark'] as const)
+      manifest.variants[mode].surfaces = {
+        ...manifest.variants[mode].surfaces,
+        backgroundOpacity: installed.surfaceBackgroundOpacity,
+      };
+  }
+  if (typeof installed.hideHomeLogo === 'boolean') {
+    manifest.homeIdentity ??= {};
+    const authored = manifest.homeIdentity.logo;
+    manifest.homeIdentity.logo = installed.hideHomeLogo
+      ? { mode: 'hidden' }
+      : authored?.mode === 'custom'
+        ? authored
+        : { mode: 'default' };
+  }
+  if (typeof installed.hideHomeText === 'boolean') {
+    manifest.homeIdentity ??= {};
+    const authored = manifest.homeIdentity.name;
+    manifest.homeIdentity.name = installed.hideHomeText
+      ? { mode: 'hidden' }
+      : authored?.mode === 'custom'
+        ? authored
+        : { mode: 'default' };
+  }
+  return clampThemeOpacity(manifest);
+}
 
 export type ThemeLibrary = {
   version: 1;
@@ -72,6 +124,7 @@ function validateInstalledAssets(manifest: ThemeManifest, assets: Record<string,
 export class ThemeRepository {
   private state: ThemeLibrary = empty();
   private compiled = new Map<string, ResolvedCustomTheme>();
+  private authoritativeReferences = false;
 
   constructor(
     private storage: ThemeLibraryStorage,
@@ -80,10 +133,15 @@ export class ThemeRepository {
   ) {}
 
   hydrate(): ThemeLibrary {
+    this.authoritativeReferences = false;
     // Storage failures are not corrupt JSON. Let the adapter retry later rather
     // than silently replacing a temporarily unreadable library with an empty one.
     const value = this.storage.read();
     try {
+      if (value === undefined) {
+        this.authoritativeReferences = true;
+        return this.resetMemory();
+      }
       if (!value || value.length > MAX_LIBRARY_BYTES) return this.resetMemory();
       const raw = JSON.parse(value) as Partial<ThemeLibrary>;
       if (raw.version !== 1 || !Array.isArray(raw.themes) || raw.themes.length > MAX_THEMES)
@@ -100,7 +158,23 @@ export class ThemeRepository {
           const manifest = parseThemeManifest(JSON.stringify(candidate.manifest));
           validateInstalledAssets(manifest, candidate.assets);
           if (Object.values(candidate.assets).some((uri) => !this.assetAvailable(uri))) continue;
-          themes.push({ id: candidate.id, manifest, assets: { ...candidate.assets } });
+          themes.push({
+            id: candidate.id,
+            manifest,
+            assets: { ...candidate.assets },
+            ...(validBackgroundOpacity(candidate.terminalBackgroundOpacity)
+              ? { terminalBackgroundOpacity: candidate.terminalBackgroundOpacity }
+              : {}),
+            ...(validBackgroundOpacity(candidate.surfaceBackgroundOpacity)
+              ? { surfaceBackgroundOpacity: candidate.surfaceBackgroundOpacity }
+              : {}),
+            ...(typeof candidate.hideHomeLogo === 'boolean'
+              ? { hideHomeLogo: candidate.hideHomeLogo }
+              : {}),
+            ...(typeof candidate.hideHomeText === 'boolean'
+              ? { hideHomeText: candidate.hideHomeText }
+              : {}),
+          });
         } catch {
           /* Preserve other valid installations when one record is corrupt. */
         }
@@ -113,6 +187,7 @@ export class ThemeRepository {
         previous,
       };
       this.compiled.clear();
+      this.authoritativeReferences = themes.length === raw.themes.length;
       return this.snapshot();
     } catch {
       return this.resetMemory();
@@ -121,6 +196,11 @@ export class ThemeRepository {
 
   snapshot(): ThemeLibrary {
     return cloneThemeData(this.state);
+  }
+
+  /** A recovery view is not permission to delete bytes from the stored library. */
+  hasAuthoritativeAssetReferences(): boolean {
+    return this.authoritativeReferences;
   }
 
   save(text: string, installedAssets: Record<string, string> = {}): InstalledTheme {
@@ -149,6 +229,69 @@ export class ThemeRepository {
     if (this.state.selection?.kind === valid.kind && this.state.selection.id === valid.id)
       return this.snapshot();
     this.commit({ ...this.state, previous: this.state.selection, selection: valid });
+    return this.snapshot();
+  }
+
+  setTerminalBackgroundOpacity(id: string, value: number | undefined): ThemeLibrary {
+    if (value !== undefined && !validBackgroundOpacity(value))
+      throw new Error('Terminal background opacity must be between 0 and 1');
+    return this.updatePreference(id, 'terminalBackgroundOpacity', value);
+  }
+
+  setSurfaceBackgroundOpacity(id: string, value: number | undefined): ThemeLibrary {
+    if (value !== undefined && !validBackgroundOpacity(value))
+      throw new Error('Surface background opacity must be between 0 and 1');
+    return this.updatePreference(id, 'surfaceBackgroundOpacity', value);
+  }
+
+  setHideHomeLogo(id: string, value: boolean | undefined): ThemeLibrary {
+    if (value !== undefined && typeof value !== 'boolean')
+      throw new Error('Invalid home logo preference');
+    return this.updatePreference(id, 'hideHomeLogo', value);
+  }
+
+  setHideHomeText(id: string, value: boolean | undefined): ThemeLibrary {
+    if (value !== undefined && typeof value !== 'boolean')
+      throw new Error('Invalid home text preference');
+    return this.updatePreference(id, 'hideHomeText', value);
+  }
+
+  resetAppearancePreferences(id: string): ThemeLibrary {
+    const installed = this.state.themes.find((theme) => theme.id === id);
+    if (!installed) throw new Error('Theme is no longer installed');
+    const keys: ThemePreferenceKey[] = [
+      'terminalBackgroundOpacity',
+      'surfaceBackgroundOpacity',
+      'hideHomeLogo',
+      'hideHomeText',
+    ];
+    if (keys.every((key) => installed[key] === undefined)) return this.snapshot();
+    const updated = { ...installed };
+    for (const key of keys) delete updated[key];
+    this.commit({
+      ...this.state,
+      themes: this.state.themes.map((theme) => (theme.id === id ? updated : theme)),
+    });
+    this.compiled.delete(id);
+    return this.snapshot();
+  }
+
+  private updatePreference<K extends ThemePreferenceKey>(
+    id: string,
+    key: K,
+    value: InstalledTheme[K]
+  ): ThemeLibrary {
+    const installed = this.state.themes.find((theme) => theme.id === id);
+    if (!installed) throw new Error('Theme is no longer installed');
+    if (installed[key] === value) return this.snapshot();
+    const updated = { ...installed };
+    if (value === undefined) delete updated[key];
+    else updated[key] = value;
+    this.commit({
+      ...this.state,
+      themes: this.state.themes.map((theme) => (theme.id === id ? updated : theme)),
+    });
+    this.compiled.delete(id);
     return this.snapshot();
   }
 
@@ -181,7 +324,7 @@ export class ThemeRepository {
     if (!installed) return null;
     let result = this.compiled.get(id);
     if (!result) {
-      result = compileTheme(installed.manifest, id);
+      result = compileTheme(effectiveThemeManifest(installed), id);
       this.compiled.set(id, result);
     }
     return result;
@@ -198,7 +341,7 @@ export class ThemeRepository {
       source: _source,
       materials: _materials,
       ...colors
-    } = theme.manifest;
+    } = effectiveThemeManifest(theme);
     return JSON.stringify(parseThemeManifest(JSON.stringify(colors)), null, 2);
   }
 
@@ -208,6 +351,7 @@ export class ThemeRepository {
       throw new Error('Theme library is full');
     this.storage.write(value);
     this.state = next;
+    this.authoritativeReferences = true;
   }
 
   private resetMemory(): ThemeLibrary {

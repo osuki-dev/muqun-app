@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Pencil, Trash2, X } from 'lucide-react-native';
@@ -64,6 +65,7 @@ export function RowActionMenu({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const [armed, setArmed] = useState(false);
   // The default lives here rather than in the parameter list so the word is
   // in the active locale, not in the source one.
@@ -87,7 +89,11 @@ export function RowActionMenu({
       <PressableScale
         accessibilityLabel={t`Rename ${label}`}
         onPress={onRename}
-        style={[styles.button, styles.square, { backgroundColor: theme.colors.surfaceRaised }]}>
+        style={[
+          styles.button,
+          styles.square,
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         <Pencil size={16} color={theme.colors.text} strokeWidth={2} />
       </PressableScale>
       {/* The wrapper, not the button, carries `layout`: `PressableScale` takes
@@ -105,14 +111,14 @@ export function RowActionMenu({
           style={[
             styles.button,
             armed ? styles.armed : styles.square,
-            { backgroundColor: theme.colors.dangerSubtle },
+            { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
           ]}>
           <Animated.View
             pointerEvents="none"
             style={[
               StyleSheet.absoluteFill,
               armedFillStyle,
-              { backgroundColor: theme.colors.danger },
+              { backgroundColor: surfaceBackground(theme.colors.danger) },
             ]}
           />
           <Animated.View style={styles.glyph}>
@@ -138,7 +144,11 @@ export function RowActionMenu({
       <PressableScale
         accessibilityLabel={t`Cancel`}
         onPress={onCancel}
-        style={[styles.button, styles.square, { backgroundColor: theme.colors.surfaceRaised }]}>
+        style={[
+          styles.button,
+          styles.square,
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         <X size={16} color={theme.colors.textMuted} strokeWidth={2} />
       </PressableScale>
     </Animated.View>

@@ -1,3 +1,5 @@
+import { ThemeArtwork } from '@/components/theme-artwork';
+import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
 import { type Href, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
@@ -46,10 +48,12 @@ import { AssetViewer } from '@/components/asset-viewer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { AwayDigestCard } from '@/components/away-digest-card';
+import { featureFlags } from '@/constants/feature-flags';
 import { CollaborationNotice } from '@/components/collaboration-notice';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
@@ -504,6 +508,7 @@ export function ServerTerminalWorkspace({
     [rememberSimfarmPortForServer, serverId]
   );
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
@@ -571,6 +576,7 @@ export function ServerTerminalWorkspace({
   const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [sending, setSending] = useState(false);
+  const [composerSendGuard] = useState(() => new ComposerSendGuard());
   const [sendingKey, setSendingKey] = useState<string | null>(null);
   const [shortcuts, setShortcuts] = useState<PaneShortcuts | null>(null);
   // The dock's measured height, throttled: the reason it cannot be written
@@ -856,6 +862,7 @@ export function ServerTerminalWorkspace({
     workspaceMemoryRef.current = {};
     tabPaneMemoryRef.current = {};
     setConnection({ phase: 'connecting', attempt: 0 });
+    composerSendGuard.reset();
     setSending(false);
     setSendingKey(null);
     outputLineLimitRef.current = INITIAL_PANE_OUTPUT_LINES;
@@ -877,7 +884,7 @@ export function ServerTerminalWorkspace({
     setAttachmentMenuOpen(false);
     setPreviewAttachmentId(null);
     clearAttachments();
-  }, [clearAttachments]);
+  }, [clearAttachments, composerSendGuard]);
 
   useEffect(() => {
     if (selectedServer) return;
@@ -894,9 +901,10 @@ export function ServerTerminalWorkspace({
     if (ready) return;
     dataRequestIdRef.current += 1;
     outputRequestIdRef.current += 1;
+    composerSendGuard.reset();
     setSending(false);
     setSendingKey(null);
-  }, [ready]);
+  }, [composerSendGuard, ready]);
 
   const refreshData = useCallback(
     async (showLoading = false): Promise<RefreshResult> => {
@@ -2807,6 +2815,12 @@ export function ServerTerminalWorkspace({
     const hasAttachments = attachments.length > 0;
     if (connection.phase !== 'connected' || !ready || !requestPaneId || sending) return;
     if (!draft.trim() && !hasAttachments) return;
+    const sendToken = composerSendGuard.acquire();
+    if (sendToken === null) return;
+    const isCurrentSend = () =>
+      composerSendGuard.owns(sendToken) &&
+      activeServerRef.current === requestServerId &&
+      activePaneRef.current === requestPaneId;
     setSending(true);
     setError(null);
     try {
@@ -2824,9 +2838,7 @@ export function ServerTerminalWorkspace({
         });
         return;
       }
-      if (activeServerRef.current !== requestServerId || activePaneRef.current !== requestPaneId) {
-        return;
-      }
+      if (!isCurrentSend()) return;
 
       // With nothing attached the draft goes over exactly as typed. Attachments
       // join with spaces, not newlines: in a plain shell pane every newline is
@@ -2852,21 +2864,22 @@ export function ServerTerminalWorkspace({
         // an image.
         await sendPaneCharacters(requestPaneId, value, 'composer', !fullScreenPane);
       }
-      if (activeServerRef.current !== requestServerId || activePaneRef.current !== requestPaneId) {
-        return;
-      }
+      if (!isCurrentSend()) return;
       setDraft('');
       setCaret(0);
       clearAttachments();
       setStickBottomNonce((value) => value + 1);
-      await refreshOutput();
-      setTimeout(() => void refreshOutput(), 500);
+      // Delivery is acknowledged. Painting its output must not keep the input
+      // locked behind another network round trip. Events and the existing
+      // polling fallback cover output that arrives after this immediate read.
+      void refreshOutput();
     } catch (failure) {
-      if (activeServerRef.current === requestServerId) {
+      if (isCurrentSend()) {
         setError(describeGatewayFailure(failure, t`Could not send input.`).message);
       }
     } finally {
-      if (activeServerRef.current === requestServerId) setSending(false);
+      if (composerSendGuard.release(sendToken) && activeServerRef.current === requestServerId)
+        setSending(false);
     }
   }
 
@@ -3177,7 +3190,7 @@ export function ServerTerminalWorkspace({
       feedback="selection"
       pressedScale={0.9}
       onPress={() => setComposerRevealed(true)}
-      style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+      style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
       <PenLine size={16} color={chromeText} />
     </PressableScale>
   );
@@ -3228,8 +3241,10 @@ export function ServerTerminalWorkspace({
             onPress={() => setAttachmentMenuOpen((open) => !open)}
             style={[
               composerStyles.button,
-              { backgroundColor: chromeGlass },
-              attachmentMenuOpen ? { backgroundColor: theme.colors.primarySubtle } : null,
+              { backgroundColor: surfaceBackground(chromeGlass) },
+              attachmentMenuOpen
+                ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
+                : null,
             ]}>
             <Paperclip size={17} color={theme.colors.primary} />
           </PressableScale>
@@ -3320,7 +3335,7 @@ export function ServerTerminalWorkspace({
               Keyboard.dismiss();
               setComposerRevealed(false);
             }}
-            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+            style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
             <KeyboardIcon size={16} color={theme.colors.primary} />
           </PressableScale>
           {terminalKeyStrip}
@@ -3342,7 +3357,7 @@ export function ServerTerminalWorkspace({
         style={[
           styles.keyRowToggle,
           isPadLayout && styles.padKeyRowEntry,
-          { backgroundColor: fill },
+          { backgroundColor: surfaceBackground(fill) },
         ]}>
         <Zap size={isPadLayout ? 15 : 16} color={theme.colors.primary} />
       </PressableScale>
@@ -3500,7 +3515,8 @@ export function ServerTerminalWorkspace({
           or the window is too narrow to keep both halves usable, so this is a
           row of one for the whole of the compact layout and most of the Pad. */}
       <View style={styles.workspaceSplit}>
-        <View style={[styles.page, { backgroundColor: terminalBackground }]}>
+        <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
+          <ThemeArtwork slot="shell.background" />
           <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
           {/*
           One column for every notice that floats over the terminal.
@@ -3527,7 +3543,10 @@ export function ServerTerminalWorkspace({
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
                 layout={listLayout('short')}
-                style={[styles.errorBar, { backgroundColor: theme.colors.dangerSubtle }]}>
+                style={[
+                  styles.errorBar,
+                  { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+                ]}>
                 <Text selectable variant="caption" color={theme.colors.danger}>
                   {error}
                 </Text>
@@ -3557,7 +3576,9 @@ export function ServerTerminalWorkspace({
               below the standing conditions: it is news rather than a state, but
               it is news the user came back for, so a transient answer to a
               gesture queues underneath it rather than the other way round. */}
-            {away.digest ? <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} /> : null}
+            {featureFlags.terminalAwayDigest && away.digest ? (
+              <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
+            ) : null}
             <CollaborationNotice
               context={{
                 serverId,
@@ -3758,7 +3779,7 @@ export function ServerTerminalWorkspace({
                 style={[
                   styles.floatingEntriesTray,
                   {
-                    backgroundColor: theme.colors.surfaceRaised,
+                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                   },
                 ]}>
                 {paneEntries('transparent')}
@@ -3960,7 +3981,10 @@ export function ServerTerminalWorkspace({
                               Keyboard.dismiss();
                               setKeyboardMode(true);
                             }}
-                            style={[styles.keyRowToggle, { backgroundColor: chromeGlass }]}>
+                            style={[
+                              styles.keyRowToggle,
+                              { backgroundColor: surfaceBackground(chromeGlass) },
+                            ]}>
                             <KeyboardIcon size={16} color={chromeText} />
                           </PressableScale>
                           {terminalKeyStrip}
@@ -4088,6 +4112,7 @@ function PaneChip({
   onLayout: (event: LayoutChangeEvent) => void;
   onPress: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const selected = useSharedValue(active ? 1 : 0);
   useEffect(() => {
     selected.value = withTiming(active ? 1 : 0, timing('toggle'));
@@ -4110,7 +4135,7 @@ function PaneChip({
         style={[
           StyleSheet.absoluteFill,
           styles.paneChipFill,
-          { backgroundColor: activeFill },
+          { backgroundColor: surfaceBackground(activeFill) },
           selectedStyle,
         ]}
       />
@@ -4158,6 +4183,7 @@ function TerminalKeyButton({
   activeText: string;
 }) {
   const { t } = useLingui();
+  const surfaceBackground = useSurfaceBackground();
   const { _ } = useLinguiRuntime();
   // vim's vocabulary is the same in every language, so the cap is left alone;
   // what a screen reader says about it is not.
@@ -4187,6 +4213,10 @@ function TerminalKeyButton({
   // first and only then leaves it -- which makes the beat the same length
   // whether the gateway took 20 ms or 200.
   const held = useSharedValue(0);
+  const pressed = useSharedValue(0);
+  useEffect(() => {
+    if (disabled) pressed.value = 0;
+  }, [disabled, pressed]);
   // Only a key that was actually sending has a release to play. The effect
   // also runs on mount with `sending` false, and playing the sequence there
   // pulsed every key in the row -- the whole row flashed on every remount,
@@ -4202,9 +4232,15 @@ function TerminalKeyButton({
     }
   }, [held, sending]);
 
-  const activeFillStyle = useAnimatedStyle(() => ({ opacity: held.value }));
-  const restLabelStyle = useAnimatedStyle(() => ({ opacity: 1 - held.value }));
-  const activeLabelStyle = useAnimatedStyle(() => ({ opacity: held.value }));
+  const activeFillStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(held.value, pressed.value),
+  }));
+  const restLabelStyle = useAnimatedStyle(() => ({
+    opacity: 1 - Math.max(held.value, pressed.value),
+  }));
+  const activeLabelStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(held.value, pressed.value),
+  }));
 
   return (
     <PressableScale
@@ -4213,9 +4249,15 @@ function TerminalKeyButton({
       pressedScale={0.94}
       hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
       onPress={onPress}
+      onPressIn={() => {
+        if (!disabled) pressed.value = 1;
+      }}
+      onPressOut={() => {
+        pressed.value = 0;
+      }}
       style={[
         styles.terminalKey,
-        { backgroundColor: background },
+        { backgroundColor: surfaceBackground(background) },
         // Insert mode's Esc: bigger, and bordered in the same colour the
         // press animation below already uses for "sent", so it reads as the
         // row's one deliberate action rather than another glass chip.
@@ -4226,7 +4268,7 @@ function TerminalKeyButton({
         style={[
           StyleSheet.absoluteFill,
           styles.terminalKeyFill,
-          { backgroundColor: activeBackground },
+          { backgroundColor: surfaceBackground(activeBackground) },
           activeFillStyle,
         ]}
       />

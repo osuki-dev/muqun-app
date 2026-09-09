@@ -10,6 +10,7 @@ import { isDarkSurface, type TerminalSurface } from '@/terminal/surface';
 
 export type TerminalTheme = {
   background: string;
+  backgroundOpacity?: number;
   foreground: string;
   cursor: string;
   link: string;
@@ -71,13 +72,21 @@ export function terminalPaneTheme(
 ): TerminalTheme {
   if (!ownsScreen || !surface.verbatim) return appTheme;
   const background = surface.background ?? themeVariant(pack, 'dark').terminal.background;
-  if (background === appTheme.background) return appTheme;
+  if (
+    background === appTheme.background &&
+    (surface.background == null || (appTheme.backgroundOpacity ?? 1) === 1)
+  )
+    return appTheme;
   // Defaults, cursor and the ANSI row all come from whichever side of the pack
   // the adopted surface belongs to. A default-coloured glyph has to stay legible
   // on it, and taking the foreground from one side and the background from the
   // other is exactly how you get dark text on a dark screen.
   const base = themeVariant(pack, isDarkSurface(background) ? 'dark' : 'light').terminal;
-  return { ...base, background };
+  return {
+    ...base,
+    background,
+    backgroundOpacity: surface.background == null ? appTheme.backgroundOpacity : 1,
+  };
 }
 
 export function terminalIndexedColor(

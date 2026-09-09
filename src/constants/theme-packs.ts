@@ -50,6 +50,7 @@ export type AnsiPalette = readonly [
 
 export type TerminalTokens = {
   background: string;
+  backgroundOpacity?: number;
   foreground: string;
   cursor: string;
   link: string;
