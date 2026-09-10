@@ -29,6 +29,7 @@ import { useAppSettings } from '@/stores/app-settings';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
+import { isDemoRecord } from '@/lib/demo-gateway';
 
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
@@ -145,6 +146,10 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
   const notificationsEnabled = useAppSettings((state) => state.notificationsEnabled);
 
   useEffect(() => {
+    // Demo is offline, including when notifications are disabled. Neither
+    // registration nor removal may look up an Expo/APNs/FCM token for it.
+    // Local notification handlers and the in-app queue remain independent.
+    if (isDemoRecord(record)) return;
     if (!notificationsEnabled) {
       void unregisterPushNotificationsAsync(Boolean(record)).catch(() => undefined);
       return;
