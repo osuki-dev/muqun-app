@@ -69,16 +69,18 @@ export default function RootLayout() {
     void NavigationBar.setVisibilityAsync('hidden');
   }, []);
 
-  // The product's wide workspace is a landscape-only tablet surface. Expo's
-  // static `orientation` setting is app-wide, so using it would rotate phones
-  // too; choose the native lock from the actual device class instead. iPad's
-  // supported orientations are also declared in app.json so the launch frame
-  // starts in the right shape before JavaScript is ready.
+  // iPad follows its resizable window instead of enforcing a landscape lock.
+  // Keep the existing phone and Android tablet policies separate: an app-wide
+  // unlock would also rotate phones. Native iPad orientations are declared in
+  // app.json so launch and split-view frames work before JavaScript is ready.
   useEffect(() => {
     let mounted = true;
     void Device.getDeviceTypeAsync()
       .then((deviceType) => {
         if (!mounted) return;
+        if (Platform.OS === 'ios' && deviceType === Device.DeviceType.TABLET) {
+          return ScreenOrientation.unlockAsync();
+        }
         const lock =
           deviceType === Device.DeviceType.TABLET
             ? ScreenOrientation.OrientationLock.LANDSCAPE

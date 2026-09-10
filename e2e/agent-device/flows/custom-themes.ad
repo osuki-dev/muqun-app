@@ -20,6 +20,14 @@ fill "id=theme-json-input" "{\"format\":\"muqun-theme\",\"schemaVersion\":1,\"id
 # section settle
 wait stable 400 5000
 
+# section link-import
+press "id=theme-import-link"
+is visible "id=theme-link-input"
+is visible "id=theme-link-inspect"
+press "id=theme-link-cancel"
+is hidden "id=theme-link-input"
+is visible "id=theme-paste-json"
+
 # section format-json
 press "id=theme-format-json"
 is visible "id=theme-undo-format"

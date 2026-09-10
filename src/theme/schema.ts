@@ -186,7 +186,9 @@ export type ThemeSlot = keyof ThemeDecoration;
 export type ThemeImage = z.infer<typeof imageSchema>;
 
 export function themeJsonSchema() {
-  return z.toJSONSchema(themeManifestSchema);
+  // Reuse shared light/dark, color, image and slot definitions. Inlining the
+  // same contract at every occurrence consumes almost the entire send budget.
+  return z.toJSONSchema(themeManifestSchema, { reused: 'ref' });
 }
 
 export class ThemeValidationError extends Error {

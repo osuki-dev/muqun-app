@@ -192,7 +192,7 @@ export const Input: React.FC<InputProps> = ({
         </Animated.View>
       )}
       {hasHelper && (
-        <Text variant="caption" colorKey="textDisabled">
+        <Text variant="caption" colorKey="textMuted">
           {helper}
         </Text>
       )}

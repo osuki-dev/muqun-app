@@ -1,3 +1,4 @@
+import { throwIfThemeAborted } from '@/theme/abort';
 import { Inflate, strToU8, zipSync } from 'fflate';
 
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
@@ -109,7 +110,7 @@ export function unpackTheme(bytes: Uint8Array, signal?: AbortSignal): ThemePacka
   const files = new Map<string, Uint8Array>();
   let expectedOffset = 0;
   for (const entry of archive.entries) {
-    signal?.throwIfAborted();
+    throwIfThemeAborted(signal);
     const offset = entry.offset;
     if (
       offset !== expectedOffset ||
@@ -162,7 +163,7 @@ export function unpackTheme(bytes: Uint8Array, signal?: AbortSignal): ThemePacka
       const inflater = new Inflate((chunk) => accept(chunk));
       // Limit temporary decoder output even when the ZIP lies about original size.
       for (let cursor = start; cursor < end; cursor += 1024) {
-        signal?.throwIfAborted();
+        throwIfThemeAborted(signal);
         inflater.push(bytes.subarray(cursor, Math.min(cursor + 1024, end)), cursor + 1024 >= end);
       }
     }

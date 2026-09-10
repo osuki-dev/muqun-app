@@ -1,4 +1,6 @@
+import { throwIfThemeAborted, themeAbortReason, abortThemeOperation } from '@/theme/abort';
 import { cloneThemeData } from '@/theme/clone';
+import type { ThemeAssetChunk } from '@/theme/asset-stream';
 import { inspectThemeImage } from '@/theme/image-inspection';
 import { unpackTheme, type ThemePackage } from '@/theme/package';
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
@@ -46,13 +48,13 @@ export function publicThemeUrl(value: string, base?: string): string {
 }
 
 async function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
-  signal.throwIfAborted();
+  throwIfThemeAborted(signal);
   let rejectAbort: (() => void) | undefined;
   try {
     return await Promise.race([
       promise,
       new Promise<never>((_, reject) => {
-        rejectAbort = () => reject(signal.reason ?? new Error('Theme download canceled'));
+        rejectAbort = () => reject(themeAbortReason(signal));
         signal.addEventListener('abort', rejectAbort, { once: true });
         if (signal.aborted) rejectAbort();
       }),
@@ -69,19 +71,19 @@ async function download(
   signal?: AbortSignal,
   approvedDomains?: ReadonlySet<string>
 ): Promise<{ bytes: Uint8Array; url: string }> {
-  signal?.throwIfAborted();
+  throwIfThemeAborted(signal);
   const controller = new AbortController();
-  const cancel = () => controller.abort(signal?.reason);
+  const cancel = () => abortThemeOperation(controller, themeAbortReason(signal));
   signal?.addEventListener('abort', cancel, { once: true });
   const timer = setTimeout(
-    () => controller.abort(new Error('Theme download timed out')),
+    () => abortThemeOperation(controller, new Error('Theme download timed out')),
     REMOTE_THEME_LIMITS.timeoutMs
   );
   try {
     let url = publicThemeUrl(input);
     const visited = new Set<string>();
     for (let hop = 0; hop <= REMOTE_THEME_LIMITS.redirects; hop++) {
-      controller.signal.throwIfAborted();
+      throwIfThemeAborted(controller.signal);
       if (approvedDomains && !approvedDomains.has(new URL(url).hostname))
         throw new Error('Theme image redirects to an unapproved resource domain');
       if (visited.has(url)) throw new Error('Theme download redirect loop');
@@ -90,7 +92,7 @@ async function download(
         transport.get(url, { signal: controller.signal, maxBytes }),
         controller.signal
       );
-      controller.signal.throwIfAborted();
+      throwIfThemeAborted(controller.signal);
       if (!(response.bytes instanceof Uint8Array) || response.bytes.byteLength > maxBytes)
         throw new Error('Theme download exceeds the size limit');
       if ([301, 302, 303, 307, 308].includes(response.status)) {
@@ -115,6 +117,10 @@ export type RemoteThemeInspection = {
   sourceUrl: string;
   resourceDomains: readonly string[];
   manifest: ThemeManifest;
+  /** Review domains first, then pass this iterator and the manifest to native
+   * staging. Only one bounded image is fetched per consumer request; no aggregate
+   * quota or retained image collection. ZIP input is still a bounded archive. */
+  assets: (signal?: AbortSignal) => AsyncGenerator<ThemeAssetChunk>;
   /** Does not fetch images until the user has reviewed the resource domains.
    * The returned package still requires prepareThemeAssets native decode/hash
    * verification before preview or atomic installation. */
@@ -144,14 +150,37 @@ export async function inspectRemoteTheme(
     id,
     url: 'url' in asset ? publicThemeUrl(asset.url) : publicThemeUrl(asset.path, result.url),
   }));
+  const approvedDomains = new Set(resources.map((asset) => new URL(asset.url).hostname));
   return {
     sourceUrl: result.url,
     resourceDomains: archive
       ? []
       : [...new Set(resources.map((asset) => new URL(asset.url).hostname))],
     manifest: cloneThemeData(owned),
+    async *assets(signal = options.signal) {
+      throwIfThemeAborted(signal);
+      for (const resource of resources) {
+        throwIfThemeAborted(signal);
+        const bytes = archive
+          ? archive.assets[resource.id].slice()
+          : (
+              await download(
+                transport,
+                resource.url,
+                THEME_LIMITS.assetBytes,
+                signal,
+                approvedDomains
+              )
+            ).bytes;
+        throwIfThemeAborted(signal);
+        inspectThemeImage(bytes);
+        // Native staging still owns full decoding, checksum verification,
+        // disk-space checks and rollback. No library writes happen here.
+        yield { id: resource.id, bytes };
+      }
+    },
     async downloadAssets(signal) {
-      signal?.throwIfAborted();
+      throwIfThemeAborted(signal);
       if (archive)
         return {
           manifest: cloneThemeData(owned),
@@ -171,7 +200,7 @@ export async function inspectRemoteTheme(
           signal,
           new Set(resources.map((asset) => new URL(asset.url).hostname))
         );
-        signal?.throwIfAborted();
+        throwIfThemeAborted(signal);
         total += fetched.bytes.length;
         const info = inspectThemeImage(fetched.bytes);
         assets[resource.id] = fetched.bytes;

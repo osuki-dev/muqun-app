@@ -91,6 +91,7 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
+import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
@@ -99,7 +100,6 @@ import {
   interruptAgent,
   splitPane,
   loadPaneShortcuts,
-  sendAgentText,
   sendPaneKeys,
   sendPaneText,
   type SlashCommand,
@@ -221,6 +221,10 @@ export default function QuickCommandsScreen() {
     params.sessionId
   ).length;
   const manageOnly = params.manage === '1';
+  const agentDelivery = useAgentCommandDelivery({
+    ...params,
+    enabled: mode === 'agent' && !manageOnly,
+  });
   const [commands, setCommands] = useState<QuickCommand[]>([]);
   const [commandTab, setCommandTab] = useState<'saved' | 'catalog'>('saved');
   const [search, setSearch] = useState('');
@@ -350,7 +354,7 @@ export default function QuickCommandsScreen() {
     setError(null);
     try {
       if (mode === 'agent') {
-        await sendAgentText(params.sessionId, params.paneId, command.value);
+        await agentDelivery.send(command.value);
       } else if (command.kind === 'keys') {
         await sendPaneKeys(params.sessionId, params.paneId, quickCommandKeys(command));
       } else {
@@ -377,7 +381,7 @@ export default function QuickCommandsScreen() {
     setError(null);
     try {
       if (mode === 'agent') {
-        await sendAgentText(params.sessionId, params.paneId, entry.command);
+        await agentDelivery.send(entry.command);
       } else {
         // An editor's `:q` is text plus Return, not an agent message: this pane
         // has no agent to send to.

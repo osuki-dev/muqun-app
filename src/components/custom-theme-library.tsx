@@ -7,6 +7,7 @@ import { useWindowDimensions, View } from 'react-native';
 import { Check, ChevronRight, MoreHorizontal, X } from 'lucide-react-native';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
+import { ThemeLinkImport } from '@/components/theme-link-import';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { effectiveThemeManifest } from '@/theme/repository';
@@ -48,6 +49,7 @@ export function CustomThemeLibrary({
   const currentPack = useThemePack();
   const [editing, setEditing] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [linkImportOpen, setLinkImportOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(detail);
   const [removing, setRemoving] = useState(false);
   const [text, setText] = useState('');
@@ -173,7 +175,7 @@ export function CustomThemeLibrary({
                 }>{t`Undo`}</Button>
             ) : null}
           </View>
-          {importOpen ? (
+          {importOpen && !linkImportOpen ? (
             <View
               style={{
                 gap: 8,
@@ -181,6 +183,11 @@ export function CustomThemeLibrary({
                 borderRadius: 16,
                 backgroundColor: background(colors.surfaceRaised),
               }}>
+              <Button
+                variant="secondary"
+                disabled={busy}
+                testID="theme-import-link"
+                onPress={() => setLinkImportOpen(true)}>{t`Import link`}</Button>
               <Button
                 variant="secondary"
                 disabled={busy}
@@ -214,6 +221,19 @@ export function CustomThemeLibrary({
                   setError(null);
                 }}>{t`Paste JSON`}</Button>
             </View>
+          ) : null}
+          {importOpen && linkImportOpen ? (
+            <ThemeLinkImport
+              onClose={() => setLinkImportOpen(false)}
+              onReady={(value) => {
+                if (onOpenCandidate) onOpenCandidate(value);
+                else setCandidate(value);
+                setLinkImportOpen(false);
+                setImportOpen(false);
+                setActionsOpen(false);
+                setText('');
+              }}
+            />
           ) : null}
         </View>
       ) : null}

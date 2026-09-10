@@ -32,6 +32,45 @@ const suite: Suite = {
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
 describe('native end-to-end gate', () => {
+  test('reopening a dismissed slash query observes trigger deletion before typing a new one', async () => {
+    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
+    const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
+    for (const cleared of [true, false]) {
+      let value = '/rel';
+      let typed = 0;
+      const runner = new NativeRunner(
+        manifest,
+        base,
+        '/unused',
+        async (args) => {
+          if (args[0] === 'fill') {
+            if (args[2] === '/mod') typed++;
+            if (cleared) value = args[2];
+          }
+          if (args[0] === 'snapshot') {
+            return {
+              nodes: [
+                {
+                  ...node,
+                  type: 'android.widget.EditText',
+                  identifier: 'terminal-composer-input',
+                  label: value || 'Send a message',
+                  value,
+                },
+              ],
+            };
+          }
+          return { pass: args[0] !== 'is' || value === 'draft' };
+        },
+        {}
+      );
+      const result = runner.run([{ run: 'flows/slash-commands.ad#s30' }], {});
+      if (cleared) await result;
+      else await expect(result).rejects.toThrow();
+      expect(typed).toBe(cleared ? 1 : 0);
+      expect(value).toBe(cleared ? '/mod' : '/rel');
+    }
+  });
   test('Android slash recovery types only into an observed empty composer, never partial input', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
     const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
