@@ -11,7 +11,8 @@ keyboard dismiss
 press "id=\"quick-command-delivery-tab-collaboration\""
 press "id=\"quick-command-save\""
 press "label=\"Done editing shortcuts\""
-scroll up 3
+# Leaving edit mode already returns the saved command to the visible list.
+# A viewport-length pull from the sheet header dismisses the native sheet.
 wait "role=button label=\"QA review instructions\"" 10000
 press "role=button label=\"QA review instructions\""
 wait "id=\"agent-command-summary\"" 10000
