@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { LocalNotificationPreview, type LocalPreviewPorts } from '../local-notification-preview';
+import {
+  LocalNotificationPreview,
+  LocalPreviewFocus,
+  type LocalPreviewPorts,
+  type PreviewPermission,
+} from '../local-notification-preview';
 import { noticeFromPush } from '../in-app-notifications';
 
 function fixture() {
@@ -41,6 +46,57 @@ function fixture() {
 const sample = { title: 'Sample', body: 'Local sample' };
 
 describe('local notification preview', () => {
+  test('pending permission resolves after route blur without unmount and cannot revive on refocus', async () => {
+    for (const granted of [true, false]) {
+      const f = fixture();
+      const focus = new LocalPreviewFocus();
+      const blur = focus.activate();
+      f.ports.enabled = focus.capture();
+      let settle!: (value: PreviewPermission) => void;
+      let started!: () => void;
+      const requested = new Promise<void>((resolve) => {
+        started = resolve;
+      });
+      f.ports.permission = () => {
+        started();
+        return new Promise((resolve) => {
+          settle = resolve;
+        });
+      };
+      const result = new LocalNotificationPreview().run(f.ports, sample);
+      await requested;
+      blur();
+      const leaveNewFocus = focus.activate();
+      settle({ granted, status: granted ? 'granted' : 'denied', canAskAgain: false });
+      expect(await result).toBe('disabled');
+      expect(f.calls).toEqual(['channel']);
+      expect(focus.capture()()).toBe(true);
+      leaveNewFocus();
+    }
+  });
+  test('disabling notifications while the OS request is pending suppresses denial feedback', async () => {
+    const f = fixture();
+    f.deny('undetermined');
+    f.ports.requestPermission = async () => {
+      f.disable();
+      return { granted: false, status: 'denied', canAskAgain: false };
+    };
+    expect(await new LocalNotificationPreview().run(f.ports, sample)).toBe('disabled');
+    expect(f.calls).toEqual(['channel', 'permission']);
+  });
+  test('route ownership starts inactive and ignores stale focus cleanup', () => {
+    const focus = new LocalPreviewFocus();
+    expect(focus.capture()()).toBe(false);
+    const oldCleanup = focus.activate();
+    const oldOwner = focus.capture();
+    expect(oldOwner()).toBe(true);
+    const cleanup = focus.activate();
+    oldCleanup();
+    expect(oldOwner()).toBe(false);
+    expect(focus.capture()()).toBe(true);
+    cleanup();
+    expect(focus.capture()()).toBe(false);
+  });
   test('disabled notifications perform no native operations', async () => {
     const f = fixture();
     f.disable();
