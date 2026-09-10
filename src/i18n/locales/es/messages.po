@@ -382,6 +382,10 @@ msgstr "biometría"
 msgid "Blocked"
 msgstr "Bloqueado"
 
+#: src/components/theme-link-import.tsx
+msgid "Branch or commit (optional)"
+msgstr "Rama o commit (opcional)"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "Navegador"
@@ -405,6 +409,7 @@ msgstr "Se necesita acceso a la cámara"
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
+#: src/components/theme-link-import.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Cancelar"
@@ -436,8 +441,13 @@ msgid "Check device authentication settings and try again."
 msgstr "Revisa los ajustes de autenticación del dispositivo e inténtalo de nuevo."
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "Revisa al asistente antes de volver a enviar: puede que ya haya recibido la solicitud."
+
+#: src/components/theme-link-import.tsx
+msgid "Check the repository URL, branch and theme file"
+msgstr "Comprueba la URL del repositorio, la rama y el archivo del tema"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
@@ -989,6 +999,10 @@ msgstr "Predeterminado"
 msgid "DEFAULT"
 msgstr "PREDETERMINADO"
 
+#: src/components/theme-link-import.tsx
+msgid "Defaults to theme.json at the repository root"
+msgstr "Por defecto, theme.json en la raíz del repositorio"
+
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Eliminar"
@@ -1080,6 +1094,10 @@ msgstr "Terminar de editar los atajos"
 #: src/i18n/labels.ts
 msgid "Down arrow"
 msgstr "Flecha abajo"
+
+#: src/components/theme-link-import.tsx
+msgid "Download and preview"
+msgstr "Descargar y previsualizar"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1378,6 +1396,10 @@ msgstr "Inactivo"
 msgid "Images"
 msgstr "Imágenes"
 
+#: src/components/theme-link-import.tsx
+msgid "Images download from"
+msgstr "Las imágenes se descargan desde"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import"
 msgstr "Importar"
@@ -1385,6 +1407,10 @@ msgstr "Importar"
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "Importar archivo"
+
+#: src/components/custom-theme-library.tsx
+msgid "Import link"
+msgstr "Importar enlace"
 
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
@@ -1566,6 +1592,7 @@ msgid "Live Activity"
 msgstr "Actividad en Vivo"
 
 #: src/components/session-map.tsx
+#: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Cargando"
 
@@ -2129,6 +2156,10 @@ msgstr "Las contraseñas y claves se guardan selladas en el llavero de este disp
 msgid "Paste"
 msgstr "Pegar"
 
+#: src/components/theme-link-import.tsx
+msgid "Paste a public theme link or GitHub repository"
+msgstr "Pega un enlace de tema público o la URL de un repositorio de GitHub"
+
 #: src/components/custom-theme-library.tsx
 msgid "Paste JSON"
 msgstr "Pegar JSON"
@@ -2142,6 +2173,10 @@ msgstr "Ruta"
 msgid "Photo library"
 msgstr "Galería de fotos"
 
+#: src/components/theme-link-import.tsx
+msgid "Pinned commit"
+msgstr "Commit fijado"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -2151,6 +2186,10 @@ msgstr "Puerto"
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "PUERTO"
+
+#: src/components/theme-link-import.tsx
+msgid "Preparing images"
+msgstr "Preparando imágenes"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
@@ -2178,6 +2217,10 @@ msgstr "Ver un simulador"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "Vista previa del simulador: no disponible a través del túnel SSH"
+
+#: src/components/theme-link-import.tsx
+msgid "Preview first. Your current theme stays unchanged"
+msgstr "Revisa primero la vista previa. Tu tema actual no cambiará"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2404,6 +2447,7 @@ msgstr "Vuelve a la lista de servidores y vincúlalo de nuevo."
 #: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
 msgstr "Vuelve a este servidor para continuar."
@@ -2428,6 +2472,10 @@ msgstr "Revisar cambios"
 #: src/lib/demo-gateway.ts
 msgid "Review finished. The theme fallback has test coverage. No changes were made."
 msgstr "Revisión terminada. El comportamiento alternativo del tema tiene pruebas. No se modificaron archivos."
+
+#: src/components/theme-link-import.tsx
+msgid "Review link"
+msgstr "Revisar enlace"
 
 #: src/app/commands.tsx
 msgid "Review the current changes."
@@ -2845,6 +2893,7 @@ msgstr "Algunos colores del tema necesitan más contraste"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Algo salió mal"
 
@@ -3195,6 +3244,10 @@ msgstr "Tema"
 msgid "Theme applied"
 msgstr "Tema aplicado"
 
+#: src/components/theme-link-import.tsx
+msgid "Theme file (optional)"
+msgstr "Archivo del tema (opcional)"
+
 #: src/components/custom-theme-library.tsx
 msgid "Theme JSON"
 msgstr "JSON del tema"
@@ -3202,6 +3255,10 @@ msgstr "JSON del tema"
 #: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "Tema guardado"
+
+#: src/components/theme-link-import.tsx
+msgid "Theme URL"
+msgstr "URL del tema"
 
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
@@ -3217,6 +3274,7 @@ msgid "This assistant is busy or needs attention. Open its terminal, choose a re
 msgstr "Este asistente está ocupado o necesita atención. Abre su terminal o elige otro asistente."
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "This assistant is no longer ready. Refresh or choose another."
 msgstr "Este asistente ya no está listo. Actualiza o elige otro."
 
@@ -3444,12 +3502,17 @@ msgid "Up arrow"
 msgstr "Flecha arriba"
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "Actualiza Muqun Gateway para colaborar. Tus terminales seguirán funcionando."
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "Actualización lista · reiniciando…"
+
+#: src/components/theme-link-import.tsx
+msgid "Update the app to import public theme links. You can still import a file"
+msgstr "Actualiza la app para importar temas desde enlaces públicos. Aún puedes importar un archivo"
 
 #: src/hooks/use-agent-collaboration.ts
 msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
@@ -3479,6 +3542,10 @@ msgstr "Usar {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Usar el código del dispositivo"
+
+#: src/components/theme-link-import.tsx
+msgid "Use the repository URL, then enter its branch and theme file below"
+msgstr "Usa la URL del repositorio e introduce debajo su rama y el archivo del tema"
 
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."

@@ -150,3 +150,80 @@ test('abort settles promptly even when a transport never resolves', async () => 
   controller.abort(new Error('Canceled by user'));
   await expect(result).rejects.toThrow('Canceled by user');
 });
+
+test('image iterator waits for consumption and keeps each download budget independent', async () => {
+  const manifest = createThemeStarter();
+  manifest.assets = {
+    paper: { url: 'https://images.example.com/paper.png' },
+    chrome: { url: 'https://images.example.com/chrome.png' },
+  };
+  const png = new Uint8Array(readFileSync('assets/images/favicon.png'));
+  const calls: { url: string; maxBytes: number }[] = [];
+  const inspected = await inspectRemoteTheme(
+    {
+      async get(url, options) {
+        calls.push({ url, maxBytes: options.maxBytes });
+        return ok(url.includes('images.example.com') ? png : text(manifest));
+      },
+    },
+    'https://example.com/theme.json'
+  );
+  const iterator = inspected.assets();
+  expect(calls).toHaveLength(1);
+  expect((await iterator.next()).value).toEqual({ id: 'paper', bytes: png });
+  await Promise.resolve();
+  expect(calls).toHaveLength(2);
+  expect((await iterator.next()).value).toEqual({ id: 'chrome', bytes: png });
+  expect(calls.slice(1).map((call) => call.maxBytes)).toEqual([
+    THEME_LIMITS.assetBytes,
+    THEME_LIMITS.assetBytes,
+  ]);
+  expect((await iterator.next()).done).toBe(true);
+  expect(calls).toHaveLength(3);
+});
+
+test('stream inherits cancellation and never requests the next image after cancellation', async () => {
+  const manifest = createThemeStarter();
+  manifest.assets = {
+    paper: { path: 'assets/paper.png' },
+    chrome: { path: 'assets/chrome.png' },
+  };
+  const png = new Uint8Array(readFileSync('assets/images/favicon.png'));
+  const controller = new AbortController();
+  let calls = 0;
+  const inspected = await inspectRemoteTheme(
+    {
+      async get() {
+        return ok(++calls === 1 ? text(manifest) : png);
+      },
+    },
+    'https://example.com/theme.json',
+    { signal: controller.signal }
+  );
+  const iterator = inspected.assets();
+  await iterator.next();
+  controller.abort(new Error('Canceled by user'));
+  await expect(iterator.next()).rejects.toThrow('Canceled by user');
+  expect(calls).toBe(2);
+});
+
+test('editing preview domains cannot authorize new streaming redirect destinations', async () => {
+  const manifest = createThemeStarter();
+  manifest.assets = { paper: { url: 'https://images.example.com/paper.png' } };
+  const calls: string[] = [];
+  const inspected = await inspectRemoteTheme(
+    {
+      async get(url) {
+        calls.push(url);
+        return calls.length === 1
+          ? ok(text(manifest))
+          : { status: 302, location: 'https://other.example.com/image', bytes: new Uint8Array() };
+      },
+    },
+    'https://example.com/theme.json'
+  );
+  (inspected.resourceDomains as string[]).push('other.example.com');
+  inspected.manifest.assets!.paper = { url: 'https://other.example.com/image' };
+  await expect(inspected.assets().next()).rejects.toThrow('unapproved');
+  expect(calls).toEqual(['https://example.com/theme.json', 'https://images.example.com/paper.png']);
+});

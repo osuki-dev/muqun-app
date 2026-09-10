@@ -13,7 +13,9 @@ export type ThemeAssetInventoryEntry = { name: string; bytes: number };
  */
 export function planThemeAssetInstall(
   inventory: readonly ThemeAssetInventoryEntry[],
-  incoming: readonly ThemeAssetInventoryEntry[]
+  incoming: readonly ThemeAssetInventoryEntry[],
+  /** Streaming imports are constrained by real disk capacity, not ZIP quotas. */
+  policy: 'legacy-package' | 'streamed' = 'legacy-package'
 ): string[] {
   const known = new Map<string, number>();
   let bytes = 0;
@@ -27,9 +29,11 @@ export function planThemeAssetInstall(
     }
     // Subtract before adding: even individually safe integers may overflow
     // when summed. Reject without ever constructing an unsafe running total.
-    if (entry.bytes > THEME_ASSET_STORAGE_LIMITS.bytes - bytes)
+    if (policy === 'legacy-package' && entry.bytes > THEME_ASSET_STORAGE_LIMITS.bytes - bytes)
       throw new Error('Theme asset storage exceeds 100 MiB');
-    if (known.size >= THEME_ASSET_STORAGE_LIMITS.files)
+    if (entry.bytes > Number.MAX_SAFE_INTEGER - bytes)
+      throw new Error('Theme asset size must be a nonnegative safe integer total');
+    if (policy === 'legacy-package' && known.size >= THEME_ASSET_STORAGE_LIMITS.files)
       throw new Error('Theme asset storage exceeds 256 files');
     known.set(entry.name, entry.bytes);
     bytes += entry.bytes;

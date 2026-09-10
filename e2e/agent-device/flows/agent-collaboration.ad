@@ -50,26 +50,34 @@ press "label=\"Review assistant, Ready for input\""
 fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: run the relevant tests and report the result."
 keyboard dismiss
 press "id=\"collaboration-send\""
-wait "id=\"collaboration-notice\"" 20000
-press "id=\"collaboration-notice-manage\""
+wait "text=\"Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual.\"" 10000
+is visible "id=\"collaboration-instructions\" value=\"Muqun collaboration regression: run the relevant tests and report the result.\""
+press "id=\"collaboration-close\""
+wait "role=button text=\"Open quick actions\"" 10000
+press "role=button text=\"Open quick actions\""
+wait text "Agent collaboration" 10000
+press "role=button text=\"Agent collaboration\""
+wait "id=\"collaboration-instructions\"" 10000
+is visible "id=\"collaboration-instructions\" value=\"Muqun collaboration regression: run the relevant tests and report the result.\""
+press "role=button label=\"Back to assigned tasks\""
 wait "id=\"collaboration-task-0-terminal\"" 10000
 is hidden "id=\"collaboration-instructions\""
-is visible "id=\"collaboration-history\""
 is hidden "id=\"collaboration-task-1-output\""
+press "id=\"collaboration-task-0-output\""
+wait "id=\"collaboration-output\"" 10000
+is text "id=\"collaboration-output\"" "Muqun collaboration regression: review current changes without editing files.\n\nReview finished. The theme fallback has test coverage. No changes were made."
 press "id=\"collaboration-task-0-terminal\""
 wait text "Review assistant" 10000
 screenshot "shots/collaboration-terminal.png"
 press "role=button text=\"Open quick actions\""
 wait text "Agent collaboration" 10000
 press "role=button text=\"Agent collaboration\""
+wait "role=button label=\"Back to assigned tasks\"" 10000
+press "role=button label=\"Back to assigned tasks\""
 wait "id=\"collaboration-task-0-output\"" 10000
 press "id=\"collaboration-task-0-options\""
 wait "id=\"collaboration-remove\"" 10000
 press "id=\"collaboration-remove\""
 is hidden "id=\"collaboration-task-0-output\""
-press "id=\"collaboration-history\""
-press "id=\"collaboration-task-0-options\""
-wait "id=\"collaboration-remove\"" 10000
-press "id=\"collaboration-remove\""
 press "id=\"collaboration-close\""
 wait "role=button text=\"Open quick actions\"" 10000

@@ -47,6 +47,19 @@ test('built-in theme skill uses the same pipeline with a complete template', () 
     parseThemeManifest(text.split('```muqun-theme\n')[1].split('\n```')[0]).schemaVersion
   ).toBe(1);
   expect(new TextEncoder().encode(text).length < 64 * 1024).toBe(true);
+  expect(new TextEncoder().encode(text).length).toBeLessThan(13 * 1024);
+  const withContext = collaborationTaskText(
+    'Create a cute comic theme with an original cloud observatory. '.repeat(100),
+    'Reference captions: pale blue, ivory paper, crisp labels, no launcher rename.',
+    draft.command?.instructions
+  );
+  expect(new TextEncoder().encode(withContext).length).toBeLessThan(20 * 1024);
+  expect(withContext).toContain(
+    'Create a cute comic theme with an original cloud observatory. '.repeat(100).trim()
+  );
+  expect(withContext).toContain(
+    'Reference captions: pale blue, ivory paper, crisp labels, no launcher rename.'
+  );
 });
 
 test('custom data cannot impersonate a bundled skill and current-agent commands stay direct', () => {

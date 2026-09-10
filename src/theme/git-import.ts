@@ -1,3 +1,4 @@
+import { throwIfThemeAborted } from '@/theme/abort';
 import { cloneThemeData } from './clone';
 import { inspectThemeImage } from './image-inspection';
 import { publicThemeUrl } from './remote-import';
@@ -54,6 +55,31 @@ export async function inspectGitTheme(
   objects: GitThemeObjects,
   input: GitThemeSource,
   signal?: AbortSignal
+) {
+  return inspectGitTree(objects, input, signal);
+}
+
+/** Provider adapters may attest the commit-to-tree mapping over authenticated
+ * HTTPS when their API cannot return raw commit bytes. This does NOT verify a
+ * commit hash/signature. Every tree/blob still receives Git identity validation.
+ * Keep this explicit entry point separate from inspectGitTheme's raw-Git proof. */
+export async function inspectProviderGitTree(
+  objects: GitThemeObjects,
+  input: GitThemeSource,
+  root: { provider: 'github'; tree: string },
+  signal?: AbortSignal
+) {
+  if (!/^[a-f0-9]{40}$/.test(root.tree) || input.commit.length !== 40)
+    throw new Error('Invalid provider-attested Git tree');
+  const result = await inspectGitTree(objects, input, signal, root.tree);
+  return { ...result, verification: 'provider-attested-commit-verified-objects' as const };
+}
+
+async function inspectGitTree(
+  objects: GitThemeObjects,
+  input: GitThemeSource,
+  signal?: AbortSignal,
+  attestedRoot?: string
 ): Promise<{
   source: GitThemeSource;
   manifest: ThemeManifest;
@@ -73,9 +99,9 @@ export async function inspectGitTheme(
     maxBytes: number,
     currentSignal?: AbortSignal
   ) => {
-    currentSignal?.throwIfAborted();
+    throwIfThemeAborted(currentSignal);
     const object = await objects.read(oid, { maxBytes, signal: currentSignal });
-    currentSignal?.throwIfAborted();
+    throwIfThemeAborted(currentSignal);
     if (
       object.type !== type ||
       !(object.bytes instanceof Uint8Array) ||
@@ -88,7 +114,7 @@ export async function inspectGitTheme(
     identity.set(object.bytes, header.length);
     if ((await objects.digest(algorithm, identity)) !== oid)
       throw new Error('Git object identity mismatch');
-    currentSignal?.throwIfAborted();
+    throwIfThemeAborted(currentSignal);
     return object.bytes;
   };
   const tree = async (oid: string, currentSignal?: AbortSignal) => {
@@ -121,16 +147,20 @@ export async function inspectGitTheme(
     trees.set(oid, entries);
     return entries;
   };
-  const commit = await read(source.commit, 'commit', GIT_THEME_LIMITS.commitBytes, signal);
-  const root = decoder.decode(commit).split('\n', 1)[0];
-  if (!new RegExp(`^tree [a-f0-9]{${source.commit.length}}$`).test(root))
-    throw new Error('Malformed Git commit');
-  const rootOid = root.slice(5);
+  let rootOid = attestedRoot;
+  if (!rootOid) {
+    const commit = await read(source.commit, 'commit', GIT_THEME_LIMITS.commitBytes, signal);
+    const root = decoder.decode(commit).split('\n', 1)[0];
+    if (!new RegExp(`^tree [a-f0-9]{${source.commit.length}}$`).test(root))
+      throw new Error('Malformed Git commit');
+    rootOid = root.slice(5);
+  }
+  const verifiedRoot = rootOid;
   const resolve = async (path: string, currentSignal?: AbortSignal) => {
     const parts = gitThemePath(path).split('/');
-    let oid = rootOid;
+    let oid = verifiedRoot;
     for (let index = 0; index < parts.length; index++) {
-      currentSignal?.throwIfAborted();
+      throwIfThemeAborted(currentSignal);
       const entry = (await tree(oid, currentSignal)).get(parts[index]);
       if (!entry) throw new Error('Git theme file is missing');
       if (entry.mode !== (index === parts.length - 1 ? '100644' : '40000'))
@@ -161,7 +191,7 @@ export async function inspectGitTheme(
         inspectThemeImage(bytes);
         if (resource.sha256 && (await objects.digest('sha256', bytes)) !== resource.sha256)
           throw new Error('Theme image checksum mismatch');
-        currentSignal?.throwIfAborted();
+        throwIfThemeAborted(currentSignal);
         yield { id: resource.id, bytes };
       }
     },

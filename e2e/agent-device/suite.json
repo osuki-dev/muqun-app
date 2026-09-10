@@ -172,6 +172,7 @@
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
+      { "run": "flows/custom-themes.ad#link-import" },
       {
         "target": { "id": "theme-paste-json" },
         "mode": "press",

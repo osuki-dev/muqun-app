@@ -1,3 +1,4 @@
+import { throwIfThemeAborted } from '@/theme/abort';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Image } from 'expo-image';
 import QuickCrypto from 'react-native-quick-crypto';
@@ -5,9 +6,15 @@ import QuickCrypto from 'react-native-quick-crypto';
 import { inspectThemeImage } from '@/theme/image-inspection';
 import { packTheme, type ThemePackage } from '@/theme/package';
 import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
-import { THEME_LIMITS } from '@/theme/schema';
+import { THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
 import { ThemeAssetLifecycle } from '@/theme/asset-lifecycle';
 import { planThemeAssetInstall } from '@/theme/asset-storage-policy';
+import {
+  stageThemeAssetStream,
+  requireThemeDiskSpace,
+  type ThemeAssetChunk,
+  type ThemeAssetStreamOptions,
+} from '@/theme/asset-stream';
 
 const assetDirectory = () => new Directory(Paths.document, 'theme-assets-v1');
 const hash = (bytes: Uint8Array) => QuickCrypto.createHash('sha256').update(bytes).digest('hex');
@@ -61,12 +68,34 @@ export type PreparedThemeAssets = {
 
 /** Staged preview owns its bytes; it never renders a theme author's URL. */
 export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedThemeAssets> {
+  async function* chunks() {
+    for (const [id, bytes] of Object.entries(theme.assets)) yield { id, bytes };
+  }
+  return prepareAssetStream(theme.manifest, chunks(), {}, 'legacy-package');
+}
+
+/** Git and other sequential producers stage directly to owned files. No fixed
+ * aggregate theme or installed-library byte quota applies to this path. */
+export async function prepareThemeAssetStream(
+  manifest: ThemeManifest,
+  chunks: AsyncIterable<ThemeAssetChunk>,
+  options: ThemeAssetStreamOptions = {}
+): Promise<PreparedThemeAssets> {
+  return prepareAssetStream(manifest, chunks, options, 'streamed');
+}
+
+async function prepareAssetStream(
+  manifest: ThemeManifest,
+  chunks: AsyncIterable<ThemeAssetChunk>,
+  options: ThemeAssetStreamOptions,
+  policy: 'legacy-package' | 'streamed'
+): Promise<PreparedThemeAssets> {
+  throwIfThemeAborted(options.signal);
   const stage = new Directory(
     Paths.cache,
     `theme-stage-${QuickCrypto.randomBytes(12).toString('hex')}`
   );
   stage.create();
-  const assets: Record<string, string> = {};
   const staged = new Map<string, File>();
   let disposed = false;
   let installing = false;
@@ -89,49 +118,44 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
     collectThemeAssetGarbage();
   };
   try {
-    const expected = Object.keys(theme.manifest.assets ?? {});
-    if (
-      expected.length !== Object.keys(theme.assets).length ||
-      expected.some((id) => !Object.hasOwn(theme.assets, id))
-    )
-      throw new Error('Theme images do not match the manifest');
-    let total = 0;
-    for (const [id, descriptor] of Object.entries(theme.manifest.assets ?? {})) {
-      const bytes = theme.assets[id];
-      total += bytes.length;
-      if (total > THEME_LIMITS.extractedBytes)
-        throw new Error('Theme images exceed the package limit');
-      const info = inspectThemeImage(bytes);
-      const digest = hash(bytes);
-      if (descriptor.sha256 && descriptor.sha256 !== digest)
-        throw new Error('Theme image checksum does not match');
-      const name = `${digest}.${info.format}`;
-      let file = staged.get(name);
-      if (!file) {
-        file = new File(stage, name);
-        file.create();
-        file.write(bytes);
-        // Structural validation precedes decoding, so excessive dimensions never
-        // reach the platform decoder. Decode sequentially and release each ref.
-        const decoded = await Image.loadAsync(file.uri);
-        try {
-          if (
-            decoded.isAnimated ||
-            Math.round(decoded.width * decoded.scale) !== info.width ||
-            Math.round(decoded.height * decoded.scale) !== info.height
-          )
-            throw new Error('Theme image could not be decoded safely');
-        } finally {
-          decoded.release();
-        }
-        staged.set(name, file);
-      }
-      assets[id] = file.uri;
-    }
+    const assets = await stageThemeAssetStream(
+      manifest,
+      chunks,
+      {
+        hash,
+        rollback: dispose,
+        async writeAndDecode(name, bytes, info, signal) {
+          throwIfThemeAborted(signal);
+          requireThemeDiskSpace(bytes.length, Paths.availableDiskSpace);
+          const file = new File(stage, name);
+          file.create();
+          file.write(bytes);
+          // Persist before requesting the next chunk. Release the native decoder
+          // reference even if canceled while the asynchronous decode was running.
+          const decoded = await Image.loadAsync(file.uri);
+          try {
+            throwIfThemeAborted(signal);
+            if (
+              decoded.isAnimated ||
+              Math.round(decoded.width * decoded.scale) !== info.width ||
+              Math.round(decoded.height * decoded.scale) !== info.height
+            )
+              throw new Error('Theme image could not be decoded safely');
+          } finally {
+            decoded.release();
+          }
+          staged.set(name, file);
+          return file.uri;
+        },
+      },
+      options,
+      policy === 'legacy-package' ? THEME_LIMITS.extractedBytes : undefined
+    );
     return {
       assets,
       dispose,
       async install() {
+        throwIfThemeAborted(options.signal);
         if (disposed || disposalRequested) throw new Error('Theme preview is no longer available');
         if (installing) throw new Error('Theme installation is already in progress');
         // Reclaim abandoned owned files before quota planning, not only after a
@@ -140,6 +164,7 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
         installing = true;
         try {
           return await lifecycle.install(async () => {
+            throwIfThemeAborted(options.signal);
             const directory = assetDirectory();
             directory.create({ intermediates: true, idempotent: true });
             const inventory = directory.list().map((entry) => {
@@ -150,7 +175,8 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
             const needed = new Set(
               planThemeAssetInstall(
                 inventory,
-                [...staged.values()].map((file) => ({ name: file.name, bytes: file.size }))
+                [...staged.values()].map((file) => ({ name: file.name, bytes: file.size })),
+                policy
               )
             );
             releaseReservation ??= lifecycle.reserve(
@@ -158,15 +184,18 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
             );
             const installed: Record<string, string> = {};
             for (const [id, uri] of Object.entries(assets)) {
+              throwIfThemeAborted(options.signal);
               const source = new File(uri);
               const destination = new File(directory, source.name);
               if (needed.has(source.name)) {
+                requireThemeDiskSpace(source.size, Paths.availableDiskSpace);
                 const temporary = new File(
                   directory,
                   `pending-${QuickCrypto.randomBytes(12).toString('hex')}.part`
                 );
                 try {
                   await source.copy(temporary);
+                  throwIfThemeAborted(options.signal);
                   if (
                     temporary.size > THEME_LIMITS.assetBytes ||
                     hash(await temporary.bytes()) !== source.name.split('.')[0]
@@ -175,6 +204,7 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
                   // Both paths are in the same owned directory. Publish only the
                   // fully written, verified file; never overwrite a live asset.
                   await temporary.move(destination);
+                  throwIfThemeAborted(options.signal);
                   needed.delete(source.name);
                 } finally {
                   // move updates the File object's URI: never delete the promoted
@@ -190,6 +220,7 @@ export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedT
                 throw new Error('An installed theme image is corrupt');
               installed[id] = destination.uri;
             }
+            throwIfThemeAborted(options.signal);
             return installed;
           });
         } catch (error) {

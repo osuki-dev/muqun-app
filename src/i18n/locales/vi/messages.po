@@ -382,6 +382,10 @@ msgstr "sinh trắc học"
 msgid "Blocked"
 msgstr "Đang chờ"
 
+#: src/components/theme-link-import.tsx
+msgid "Branch or commit (optional)"
+msgstr "Nhánh hoặc commit (không bắt buộc)"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "Trình duyệt"
@@ -405,6 +409,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
+#: src/components/theme-link-import.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Hủy"
@@ -436,8 +441,13 @@ msgid "Check device authentication settings and try again."
 msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại."
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "Kiểm tra trợ lý trước khi gửi lại; trợ lý có thể đã nhận được yêu cầu."
+
+#: src/components/theme-link-import.tsx
+msgid "Check the repository URL, branch and theme file"
+msgstr "Kiểm tra URL kho mã, nhánh và tệp giao diện"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
@@ -989,6 +999,10 @@ msgstr "Mặc định"
 msgid "DEFAULT"
 msgstr "MẶC ĐỊNH"
 
+#: src/components/theme-link-import.tsx
+msgid "Defaults to theme.json at the repository root"
+msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
+
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Xóa"
@@ -1080,6 +1094,10 @@ msgstr "Xong chỉnh sửa lệnh tắt"
 #: src/i18n/labels.ts
 msgid "Down arrow"
 msgstr "Mũi tên xuống"
+
+#: src/components/theme-link-import.tsx
+msgid "Download and preview"
+msgstr "Tải xuống và xem trước"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1378,6 +1396,10 @@ msgstr "Rảnh"
 msgid "Images"
 msgstr "Hình ảnh"
 
+#: src/components/theme-link-import.tsx
+msgid "Images download from"
+msgstr "Nguồn tải hình ảnh"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import"
 msgstr "Nhập"
@@ -1385,6 +1407,10 @@ msgstr "Nhập"
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "Nhập tệp"
+
+#: src/components/custom-theme-library.tsx
+msgid "Import link"
+msgstr "Nhập từ liên kết"
 
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
@@ -1566,6 +1592,7 @@ msgid "Live Activity"
 msgstr "Live Activity"
 
 #: src/components/session-map.tsx
+#: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Đang tải"
 
@@ -2129,6 +2156,10 @@ msgstr "Mật khẩu và khóa được niêm phong trong keychain của thiết
 msgid "Paste"
 msgstr "Dán"
 
+#: src/components/theme-link-import.tsx
+msgid "Paste a public theme link or GitHub repository"
+msgstr "Dán liên kết giao diện công khai hoặc URL kho mã GitHub"
+
 #: src/components/custom-theme-library.tsx
 msgid "Paste JSON"
 msgstr "Dán JSON"
@@ -2142,6 +2173,10 @@ msgstr "Đường dẫn"
 msgid "Photo library"
 msgstr "Thư viện ảnh"
 
+#: src/components/theme-link-import.tsx
+msgid "Pinned commit"
+msgstr "Commit đã ghim"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -2151,6 +2186,10 @@ msgstr "Cổng"
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "CỔNG"
+
+#: src/components/theme-link-import.tsx
+msgid "Preparing images"
+msgstr "Đang chuẩn bị hình ảnh"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
@@ -2178,6 +2217,10 @@ msgstr "Xem trước trình giả lập"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "Xem trước trình giả lập, không khả dụng qua đường hầm SSH"
+
+#: src/components/theme-link-import.tsx
+msgid "Preview first. Your current theme stays unchanged"
+msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2404,6 +2447,7 @@ msgstr "Quay lại danh sách máy chủ và ghép nối lại."
 #: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
 msgstr "Quay lại máy chủ này để tiếp tục."
@@ -2428,6 +2472,10 @@ msgstr "Xem xét thay đổi"
 #: src/lib/demo-gateway.ts
 msgid "Review finished. The theme fallback has test coverage. No changes were made."
 msgstr "Đã rà soát xong. Cơ chế dự phòng giao diện có kiểm thử. Không sửa tệp nào."
+
+#: src/components/theme-link-import.tsx
+msgid "Review link"
+msgstr "Kiểm tra liên kết"
 
 #: src/app/commands.tsx
 msgid "Review the current changes."
@@ -2845,6 +2893,7 @@ msgstr "Một số màu giao diện cần độ tương phản cao hơn"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Đã xảy ra lỗi"
 
@@ -3195,6 +3244,10 @@ msgstr "Chủ đề"
 msgid "Theme applied"
 msgstr "Đã áp dụng giao diện"
 
+#: src/components/theme-link-import.tsx
+msgid "Theme file (optional)"
+msgstr "Tệp giao diện (không bắt buộc)"
+
 #: src/components/custom-theme-library.tsx
 msgid "Theme JSON"
 msgstr "JSON giao diện"
@@ -3202,6 +3255,10 @@ msgstr "JSON giao diện"
 #: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "Đã lưu giao diện"
+
+#: src/components/theme-link-import.tsx
+msgid "Theme URL"
+msgstr "URL giao diện"
 
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
@@ -3217,6 +3274,7 @@ msgid "This assistant is busy or needs attention. Open its terminal, choose a re
 msgstr "Trợ lý này đang bận hoặc cần bạn xử lý. Mở terminal của trợ lý hoặc chọn trợ lý khác."
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "This assistant is no longer ready. Refresh or choose another."
 msgstr "Trợ lý này không còn sẵn sàng. Làm mới hoặc chọn trợ lý khác."
 
@@ -3444,12 +3502,17 @@ msgid "Up arrow"
 msgstr "Mũi tên lên"
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "Cập nhật Muqun Gateway để cộng tác. Các terminal vẫn hoạt động bình thường."
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "Bản cập nhật đã sẵn sàng · đang khởi động lại…"
+
+#: src/components/theme-link-import.tsx
+msgid "Update the app to import public theme links. You can still import a file"
+msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
 
 #: src/hooks/use-agent-collaboration.ts
 msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
@@ -3479,6 +3542,10 @@ msgstr "Dùng {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Dùng mật mã thiết bị"
+
+#: src/components/theme-link-import.tsx
+msgid "Use the repository URL, then enter its branch and theme file below"
+msgstr "Dùng URL kho mã, rồi nhập nhánh và tệp giao diện bên dưới"
 
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."

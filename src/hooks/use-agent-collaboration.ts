@@ -21,7 +21,6 @@ import {
   loadSessions,
   loadAgentProfiles,
   readPaneOutput,
-  sendAgentText,
   spawnAgent,
   type AgentProfile,
   type HerdrEntity,
@@ -328,9 +327,12 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
         if (!selected?.instanceId || field(live, 'instance_id') !== selected.instanceId) {
           throw new Error(t`This assistant is no longer ready. Refresh or choose another.`);
         }
-        dispatchAttempted = true;
-        await sendAgentText(sessionId, field(live, 'target') || target, text);
-        agentInstanceId = field(live, 'instance_id') || undefined;
+        // TODO: Send only through a backend-enforced instance-bound contract.
+        // A fresh lookup cannot prevent this mutable target being reassigned
+        // between verification and delivery. Keep the draft instead of guessing.
+        throw new Error(
+          t`Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual.`
+        );
       }
       const task: CollaborationTask = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,

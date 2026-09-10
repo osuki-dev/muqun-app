@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 
-import { createThemeAuthoringPrompt, createThemeStarter } from '@/theme/authoring';
+import {
+  createThemeAuthoringPrompt,
+  createThemeStarter,
+  THEME_SKILL_VERSION,
+} from '@/theme/authoring';
 import { compileTheme, resolveHomeIdentity, resolveThemeImage } from '@/theme/resolve';
 import {
   parseThemeManifest,
@@ -117,10 +122,51 @@ describe('theme v1 contract', () => {
 
   test('skill carries the exact current schema and a parseable complete template', () => {
     const prompt = createThemeAuthoringPrompt();
+    expect(new TextEncoder().encode(prompt).length).toBeLessThan(12 * 1024);
     expect(prompt).toContain(JSON.stringify(themeJsonSchema()));
     const template = prompt.split('```muqun-theme\n')[1].split('\n```')[0];
     expect(parseThemeManifest(template)).toEqual(createThemeStarter());
     expect(/[\p{Script=Han}]/u.test(prompt)).toBe(false);
+  });
+
+  test('generated skill and command carry the same complete contract and starter', () => {
+    const skill = readFileSync(
+      new URL('../../../skills/muqun-theme/SKILL.md', import.meta.url),
+      'utf8'
+    );
+    expect(skill).toContain(`version: ${THEME_SKILL_VERSION}`);
+    expect(JSON.parse(skill.split('```json\n')[1].split('\n```')[0])).toEqual(themeJsonSchema());
+    expect(parseThemeManifest(skill.split('```muqun-theme\n')[1].split('\n```')[0])).toEqual(
+      createThemeStarter()
+    );
+    for (const content of [skill, createThemeAuthoringPrompt()]) {
+      expect(content).toContain('Public HTTPS images download after link review');
+      expect(content).toContain('Do not auto-apply');
+      expect(content).toContain('Report only checks actually run');
+    }
+  });
+
+  test('compact schema references resolve locally without dropping the shared variant contract', () => {
+    const schema = themeJsonSchema();
+    let references = 0;
+    function visit(value: unknown) {
+      if (!value || typeof value !== 'object') return;
+      const record = value as Record<string, unknown>;
+      if (typeof record.$ref === 'string') {
+        references += 1;
+        expect(record.$ref.startsWith('#/')).toBe(true);
+        let target: unknown = schema;
+        for (const segment of record.$ref.slice(2).split('/')) {
+          target = (target as Record<string, unknown>)[
+            segment.replace(/~1/g, '/').replace(/~0/g, '~')
+          ];
+        }
+        expect(target).not.toBeUndefined();
+      }
+      for (const child of Object.values(record)) visit(child);
+    }
+    visit(schema);
+    expect(references > 0).toBe(true);
   });
 });
 

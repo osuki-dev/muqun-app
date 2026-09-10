@@ -382,6 +382,10 @@ msgstr "生物识别"
 msgid "Blocked"
 msgstr "等待回应"
 
+#: src/components/theme-link-import.tsx
+msgid "Branch or commit (optional)"
+msgstr "分支或提交（可选）"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "浏览器"
@@ -405,6 +409,7 @@ msgstr "需要相机访问权限"
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
+#: src/components/theme-link-import.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
@@ -436,8 +441,13 @@ msgid "Check device authentication settings and try again."
 msgstr "请检查设备的验证设置后重试。"
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "再次发送前请先查看助手，它可能已经收到了请求。"
+
+#: src/components/theme-link-import.tsx
+msgid "Check the repository URL, branch and theme file"
+msgstr "请检查仓库链接、分支和主题文件"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
@@ -989,6 +999,10 @@ msgstr "默认"
 msgid "DEFAULT"
 msgstr "默认"
 
+#: src/components/theme-link-import.tsx
+msgid "Defaults to theme.json at the repository root"
+msgstr "默认为仓库根目录下的 theme.json"
+
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "删除"
@@ -1080,6 +1094,10 @@ msgstr "结束编辑快捷命令"
 #: src/i18n/labels.ts
 msgid "Down arrow"
 msgstr "向下键"
+
+#: src/components/theme-link-import.tsx
+msgid "Download and preview"
+msgstr "下载并预览"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1378,6 +1396,10 @@ msgstr "空闲"
 msgid "Images"
 msgstr "图片"
 
+#: src/components/theme-link-import.tsx
+msgid "Images download from"
+msgstr "图片下载来源"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import"
 msgstr "导入"
@@ -1385,6 +1407,10 @@ msgstr "导入"
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "导入文件"
+
+#: src/components/custom-theme-library.tsx
+msgid "Import link"
+msgstr "从链接导入"
 
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
@@ -1566,6 +1592,7 @@ msgid "Live Activity"
 msgstr "实时活动"
 
 #: src/components/session-map.tsx
+#: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "加载中"
 
@@ -2129,6 +2156,10 @@ msgstr "密码和密钥会封存在本设备的钥匙串中，绝不会离开设
 msgid "Paste"
 msgstr "粘贴"
 
+#: src/components/theme-link-import.tsx
+msgid "Paste a public theme link or GitHub repository"
+msgstr "粘贴公开的主题链接或 GitHub 仓库链接"
+
 #: src/components/custom-theme-library.tsx
 msgid "Paste JSON"
 msgstr "粘贴 JSON"
@@ -2142,6 +2173,10 @@ msgstr "路径"
 msgid "Photo library"
 msgstr "照片图库"
 
+#: src/components/theme-link-import.tsx
+msgid "Pinned commit"
+msgstr "固定提交"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
@@ -2151,6 +2186,10 @@ msgstr "端口"
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "端口"
+
+#: src/components/theme-link-import.tsx
+msgid "Preparing images"
+msgstr "正在准备图片"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
@@ -2178,6 +2217,10 @@ msgstr "预览模拟器"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "预览模拟器，通过 SSH 隧道时不可用"
+
+#: src/components/theme-link-import.tsx
+msgid "Preview first. Your current theme stays unchanged"
+msgstr "先预览，当前主题保持不变"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2404,6 +2447,7 @@ msgstr "请回到服务器列表重新配对。"
 #: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
 msgstr "请返回此服务器后继续。"
@@ -2428,6 +2472,10 @@ msgstr "查看更改"
 #: src/lib/demo-gateway.ts
 msgid "Review finished. The theme fallback has test coverage. No changes were made."
 msgstr "审查结束。主题回退逻辑已有测试覆盖，未修改任何文件。"
+
+#: src/components/theme-link-import.tsx
+msgid "Review link"
+msgstr "查看链接"
 
 #: src/app/commands.tsx
 msgid "Review the current changes."
@@ -2845,6 +2893,7 @@ msgstr "部分主题颜色需要更高的对比度"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "出了点问题"
 
@@ -3195,6 +3244,10 @@ msgstr "主题"
 msgid "Theme applied"
 msgstr "主题已应用"
 
+#: src/components/theme-link-import.tsx
+msgid "Theme file (optional)"
+msgstr "主题文件（可选）"
+
 #: src/components/custom-theme-library.tsx
 msgid "Theme JSON"
 msgstr "主题 JSON"
@@ -3202,6 +3255,10 @@ msgstr "主题 JSON"
 #: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "主题已保存"
+
+#: src/components/theme-link-import.tsx
+msgid "Theme URL"
+msgstr "主题链接"
 
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
@@ -3217,6 +3274,7 @@ msgid "This assistant is busy or needs attention. Open its terminal, choose a re
 msgstr "此助手正在忙或需要你处理。可以查看它的终端，或选择其他助手。"
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "This assistant is no longer ready. Refresh or choose another."
 msgstr "此助手已不再空闲，请刷新或选择其他助手。"
 
@@ -3444,12 +3502,17 @@ msgid "Up arrow"
 msgstr "向上键"
 
 #: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "更新 Muqun Gateway 后即可使用代理协作，现有终端功能不受影响。"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "更新已就绪 · 正在重新启动…"
+
+#: src/components/theme-link-import.tsx
+msgid "Update the app to import public theme links. You can still import a file"
+msgstr "更新 App 后即可从公开链接导入主题，你仍然可以从文件导入"
 
 #: src/hooks/use-agent-collaboration.ts
 msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
@@ -3479,6 +3542,10 @@ msgstr "使用 {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "使用设备密码"
+
+#: src/components/theme-link-import.tsx
+msgid "Use the repository URL, then enter its branch and theme file below"
+msgstr "请使用仓库链接，并在下方填写分支和主题文件"
 
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
