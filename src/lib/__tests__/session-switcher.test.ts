@@ -17,6 +17,7 @@ import {
   sameSessionChoices,
   sessionChoices,
   shouldShowSessionSwitcher,
+  withSessionAvailability,
   type ServerSessionIndex,
 } from '../session-switcher';
 
@@ -25,29 +26,59 @@ const two = [
   { id: 'bravo', label: 'Bravo tmux', socket_path: '/tmp/b.sock', backend: 'tmux' },
 ];
 
-describe('when the switcher is shown', () => {
-  test('never for one session, which is the ordinary gateway', () => {
-    expect(shouldShowSessionSwitcher(sessionChoices([two[0]]))).toBe(false);
+describe('running backends, not configured backends', () => {
+  test('after reboot, stopped tmux is not a switch target', () => {
+    const choices = sessionChoices([
+      { ...two[0], connected: false },
+      { ...two[1], backend: 'herdr', connected: true },
+    ]);
+    expect(choices.map((choice) => choice.id)).toEqual(['bravo']);
+    expect(shouldShowSessionSwitcher(choices)).toBe(false);
   });
-
-  test('never for a gateway that named no sessions at all', () => {
-    expect(shouldShowSessionSwitcher(sessionChoices(undefined))).toBe(false);
-    expect(shouldShowSessionSwitcher(sessionChoices([]))).toBe(false);
+  test('starting the second backend makes the switch available on the next read', () => {
+    expect(
+      shouldShowSessionSwitcher(
+        sessionChoices(two.map((session) => ({ ...session, connected: true })))
+      )
+    ).toBe(true);
+    expect(shouldShowSessionSwitcher([])).toBe(false);
+    expect(shouldShowSessionSwitcher(sessionChoices([two[0]]), 2)).toBe(true);
   });
-
-  test('once there are two to switch between', () => {
-    expect(shouldShowSessionSwitcher(sessionChoices(two))).toBe(true);
+  test('older gateway health identifies stopped sessions by ID, not backend kind', () => {
+    const result = withSessionAvailability(
+      { sessions: two },
+      {
+        backends: [
+          { sessionId: 'default', kind: 'tmux', connected: false },
+          { sessionId: 'bravo', kind: 'tmux', connected: true },
+        ],
+      }
+    );
+    expect(sessionChoices(result.sessions).map((choice) => choice.id)).toEqual(['bravo']);
+    expect(sessionChoices(result.sessions, true)).toHaveLength(2);
   });
+  test('explicit current session connectivity wins over an older health result', () => {
+    const result = withSessionAvailability(
+      { sessions: [{ ...two[0], connected: true }] },
+      { backends: [{ sessionId: 'default', kind: 'tmux', connected: false }] }
+    );
+    expect(sessionChoices(result.sessions)).toHaveLength(1);
+  });
+});
 
+describe('session normalization', () => {
+  test('a gateway may name no sessions', () => {
+    expect(sessionChoices(undefined)).toEqual([]);
+    expect(sessionChoices([])).toEqual([]);
+  });
   test('a duplicated id is one session, not two', () => {
     const duplicated = [two[0], { ...two[0], label: 'Alpha again' }];
     expect(sessionChoices(duplicated)).toHaveLength(1);
-    expect(shouldShowSessionSwitcher(sessionChoices(duplicated))).toBe(false);
   });
 
   test('a session with no usable id is not a choice', () => {
     const broken = [two[0], { id: '   ', label: 'Nameless', socket_path: '/tmp/c.sock' }];
-    expect(shouldShowSessionSwitcher(sessionChoices(broken))).toBe(false);
+    expect(sessionChoices(broken)).toHaveLength(1);
   });
 });
 

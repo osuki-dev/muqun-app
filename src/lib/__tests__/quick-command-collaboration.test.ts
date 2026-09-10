@@ -86,3 +86,14 @@ test('management needs no agent; execution requires a valid agent collaboration 
   expect(collaborationCommandAvailable({ ...live, serverId: undefined })).toBe(false);
   expect(collaborationCommandAvailable({ ...live, backendKind: 'tmux' })).toBe(false);
 });
+
+test('assembled instructions are bounded by UTF-8 bytes, including shared context', () => {
+  expect(collaborationTaskText('Review', '')).toBe('Review');
+  expect(collaborationTaskText('My requirement', '', 'Bundled instructions')).toContain(
+    '## Additional requirements\nMy requirement'
+  );
+  expect(collaborationTaskText('x'.repeat(65536), '')).toHaveLength(65536);
+  expect(() => collaborationTaskText('x'.repeat(65537), '')).toThrow('limit');
+  expect(() => collaborationTaskText('🌸'.repeat(16385), '')).toThrow('limit');
+  expect(() => collaborationTaskText('x'.repeat(65536), 'context')).toThrow('limit');
+});

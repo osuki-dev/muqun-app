@@ -1,0 +1,31 @@
+# User-authored instructions use the shared composer, without a bundled preset.
+wait "role=button text=\"Open quick actions\"" 15000
+press "role=button text=\"Open quick actions\""
+wait "label=\"Edit shortcuts\"" 10000
+press "label=\"Edit shortcuts\""
+scroll down 3
+wait "id=\"quick-command-name\"" 10000
+fill "id=\"quick-command-name\"" "QA review instructions"
+fill "id=\"quick-command-value\"" "Review this project without changing any files"
+keyboard dismiss
+press "id=\"quick-command-delivery-tab-collaboration\""
+press "id=\"quick-command-save\""
+press "label=\"Done editing shortcuts\""
+scroll up 3
+wait "role=button label=\"QA review instructions\"" 10000
+press "role=button label=\"QA review instructions\""
+wait "id=\"agent-command-summary\"" 10000
+is visible "id=\"collaboration-instructions\" value=\"Review this project without changing any files\""
+fill "id=\"collaboration-instructions\"" "Keep this custom instruction draft while I inspect the terminal"
+keyboard dismiss
+press "id=\"collaboration-close\""
+wait "role=button text=\"Open quick actions\"" 10000
+press "role=button text=\"Open quick actions\""
+press "role=button label=\"QA review instructions\""
+wait "id=\"collaboration-instructions\"" 10000
+is visible "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\""
+press "id=\"collaboration-close\""
+press "role=button text=\"Open quick actions\""
+press "label=\"Edit shortcuts\""
+press "label=\"Delete QA review instructions\""
+is hidden "label=\"Delete QA review instructions\""

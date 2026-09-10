@@ -7,16 +7,21 @@ import type { QuickCommandDelivery } from '@/lib/quick-commands';
 export function AgentCommandDeliveryPicker({
   value,
   onChange,
+  testID,
+  disabled = false,
 }: {
   value: QuickCommandDelivery;
   onChange: (value: QuickCommandDelivery) => void;
+  testID?: string;
+  disabled?: boolean;
 }) {
   const { t } = useLingui();
   return (
     <Tabs
+      testID={testID}
       options={[
-        { label: t`Current agent`, value: 'current-agent' },
-        { label: t`Agent collaboration`, value: 'collaboration' },
+        { label: t`Current agent`, value: 'current-agent', disabled },
+        { label: t`Agent collaboration`, value: 'collaboration', disabled },
       ]}
       value={value}
       variant="pill"

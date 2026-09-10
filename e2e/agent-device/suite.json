@@ -133,127 +133,213 @@
       "program": "subflows/motion-p2-capture",
       "tags": ["capture"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "agent-shortcuts",
+      "program": "flows/agent-shortcuts",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "machine-switcher",
+      "program": "flows/machine-switcher",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
     "flows/theme-document": [
-      { "include": "subflows/open-demo" },
-      { "run": "flows/theme-document.ad#open" },
       {
-        "target": { "text": "Open muqun.muqun-theme.json" },
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/theme-document.ad#open"
+      },
+      {
+        "target": {
+          "text": "Open muqun.muqun-theme.json"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/theme-document.ad#scroll"
       },
       {
-        "target": { "text": "Open muqun.muqun-theme.json" },
+        "target": {
+          "text": "Open muqun.muqun-theme.json"
+        },
         "mode": "press",
         "run": "flows/theme-document.ad#preview"
       }
     ],
     "flows/custom-themes": [
-      { "include": "subflows/launch-home" },
-      { "target": { "text": "Settings" }, "mode": "press", "run": "flows/custom-themes.ad#press" },
       {
-        "target": { "id": "settings-theme-row" },
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-theme-row"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#scroll"
       },
       {
-        "target": { "id": "settings-theme-row" },
+        "target": {
+          "id": "settings-theme-row"
+        },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
       {
-        "target": { "id": "theme-import" },
+        "target": {
+          "id": "theme-import"
+        },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
-      { "run": "flows/custom-themes.ad#link-import" },
       {
-        "target": { "id": "theme-paste-json" },
+        "run": "flows/custom-themes.ad#link-import"
+      },
+      {
+        "target": {
+          "id": "theme-paste-json"
+        },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
-      { "run": "flows/custom-themes.ad#input" },
-      { "run": "flows/custom-themes.ad#format-json" },
       {
-        "target": { "id": "theme-undo-format" },
+        "run": "flows/custom-themes.ad#input"
+      },
+      {
+        "run": "flows/custom-themes.ad#format-json"
+      },
+      {
+        "target": {
+          "id": "theme-undo-format"
+        },
         "mode": "hidden",
         "run": "flows/custom-themes.ad#hidden"
       },
       {
-        "target": { "id": "theme-preview-json" },
+        "target": {
+          "id": "theme-preview-json"
+        },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
       {
-        "target": { "id": "custom-theme-preview" },
+        "target": {
+          "id": "custom-theme-preview"
+        },
         "mode": "visible",
         "run": "flows/custom-themes.ad#visible"
       },
       {
-        "target": { "id": "theme-apply" },
+        "target": {
+          "id": "theme-apply"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 10000,
         "run": "flows/custom-themes.ad#scroll"
       },
-      { "target": { "id": "theme-apply" }, "mode": "press", "run": "flows/custom-themes.ad#press" },
-      { "run": "flows/custom-themes.ad#settle" },
       {
-        "target": { "text": "Theme applied" },
+        "target": {
+          "id": "theme-apply"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#settle"
+      },
+      {
+        "target": {
+          "text": "Theme applied"
+        },
         "mode": "visible",
         "run": "flows/custom-themes.ad#visible"
       },
       {
-        "target": { "id": "theme-terminal-opacity" },
+        "target": {
+          "id": "theme-terminal-opacity"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 10000,
         "run": "flows/custom-themes.ad#scroll"
       },
-      { "run": "flows/custom-themes.ad#opacity-enable" },
       {
-        "target": { "text": "Minimum opacity for readable text: 100%" },
+        "run": "flows/custom-themes.ad#opacity-enable"
+      },
+      {
+        "target": {
+          "text": "Minimum opacity for readable text: 100%"
+        },
         "mode": "visible",
         "run": "flows/custom-themes.ad#opacity-adjust"
       },
       {
-        "target": { "text": "Some theme colors need more contrast" },
+        "target": {
+          "text": "Some theme colors need more contrast"
+        },
         "mode": "visible",
         "run": "flows/custom-themes.ad#visible"
       },
-      { "run": "flows/custom-themes.ad#home-visibility" },
       {
-        "target": { "id": "theme-appearance-reset" },
+        "run": "flows/custom-themes.ad#home-visibility"
+      },
+      {
+        "target": {
+          "id": "theme-appearance-reset"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 10000,
         "run": "flows/custom-themes.ad#scroll"
       },
-      { "run": "flows/custom-themes.ad#opacity-reset" },
       {
-        "target": { "id": "theme-remove-previewed" },
+        "run": "flows/custom-themes.ad#opacity-reset"
+      },
+      {
+        "target": {
+          "id": "theme-remove-previewed"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 10000,
         "run": "flows/custom-themes.ad#scroll"
       },
       {
-        "target": { "id": "theme-remove-previewed" },
+        "target": {
+          "id": "theme-remove-previewed"
+        },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
       },
-      { "run": "flows/custom-themes.ad#confirm-remove" },
-      { "run": "flows/custom-themes.ad#close-sheet" }
+      {
+        "run": "flows/custom-themes.ad#confirm-remove"
+      },
+      {
+        "run": "flows/custom-themes.ad#close-sheet"
+      }
     ],
     "flows/agent-collaboration": [
-      { "include": "subflows/open-demo" },
-      { "run": "flows/agent-collaboration.ad" }
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/agent-collaboration.ad"
+      }
     ],
     "flows/artifacts": [
       {
@@ -627,7 +713,7 @@
       },
       {
         "target": {
-          "text": "No preview for this kind of file. It stays on the server."
+          "text": "No preview for this kind of file. It stays on the server"
         },
         "mode": "visible",
         "run": "flows/artifacts.ad#s57"
@@ -762,7 +848,7 @@
       },
       {
         "target": {
-          "text": "Open Claude Code\\. Long press to close\\."
+          "text": "Open Claude Code\\. Long press to close"
         },
         "mode": "press",
         "run": "flows/attachments-ui.ad#choose-agent"
@@ -818,23 +904,47 @@
       }
     ],
     "flows/away-digest": [
-      { "include": "subflows/launch-home" },
-      { "target": { "text": "Try the demo" }, "mode": "press", "run": "flows/away-digest.ad#s1" },
       {
-        "target": { "text": "Claude Code" },
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "flows/away-digest.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
         "mode": "visible",
         "timeout": 15000,
         "run": "flows/away-digest.ad#s2"
       },
-      { "run": "flows/away-digest.ad#s3" },
-      { "include": "subflows/dismiss-logbox" },
-      { "target": { "id": "away-digest" }, "mode": "hidden", "run": "flows/away-digest.ad#s12" },
       {
-        "target": { "id": "away-digest-dismiss" },
+        "run": "flows/away-digest.ad#s3"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "away-digest"
+        },
         "mode": "hidden",
         "run": "flows/away-digest.ad#s12"
       },
-      { "run": "flows/away-digest.ad#s8" }
+      {
+        "target": {
+          "id": "away-digest-dismiss"
+        },
+        "mode": "hidden",
+        "run": "flows/away-digest.ad#s12"
+      },
+      {
+        "run": "flows/away-digest.ad#s8"
+      }
     ],
     "flows/away-digest-enabled": [
       {
@@ -1099,7 +1209,7 @@
       },
       {
         "target": {
-          "text": "Open workspace .*, 5 running\\. Long press to close\\."
+          "text": "Open workspace .*, 5 running\\. Long press to close"
         },
         "mode": "visible",
         "run": "flows/demo-tour.ad#s16"
@@ -2369,14 +2479,14 @@
       },
       {
         "target": {
-          "text": "Leave it empty to start where the session already is."
+          "text": "Leave it empty to start where the session already is"
         },
         "mode": "visible",
         "run": "flows/new-task.ad#s27"
       },
       {
         "target": {
-          "text": "Type it, or use your keyboard's dictation key."
+          "text": "Type it, or use your keyboard's dictation key"
         },
         "mode": "visible",
         "run": "flows/new-task.ad#s28"
@@ -2403,7 +2513,7 @@
       },
       {
         "target": {
-          "text": "Review the failing test and fix it."
+          "text": "Review the failing test and fix it"
         },
         "mode": "press",
         "run": "flows/new-task.ad#s33"
@@ -2667,7 +2777,7 @@
       },
       {
         "target": {
-          "text": "Open Claude Code\\. Long press to close\\."
+          "text": "Open Claude Code\\. Long press to close"
         },
         "mode": "press",
         "run": "flows/pad-workspace.ad#s18"
@@ -2844,7 +2954,7 @@
       },
       {
         "target": {
-          "text": "Use the scan button on the home screen to add one."
+          "text": "Use the scan button on the home screen to add one"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s4"
@@ -2882,7 +2992,9 @@
         "run": "flows/settings.ad#s8"
       },
       {
-        "target": { "id": "settings-selection:(on|off):theme-osuki" },
+        "target": {
+          "id": "settings-selection:(on|off):theme-osuki"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
@@ -2892,7 +3004,9 @@
         "run": "flows/settings.ad#reset-theme"
       },
       {
-        "target": { "id": "settings-selection:(on|off):theme-ayu" },
+        "target": {
+          "id": "settings-selection:(on|off):theme-ayu"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
@@ -2935,7 +3049,9 @@
         "run": "flows/settings.ad#scroll-up"
       },
       {
-        "target": { "text": "Catppuccin" },
+        "target": {
+          "text": "Catppuccin"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
@@ -3375,7 +3491,7 @@
       },
       {
         "target": {
-          "text": "Muqun settings stay on this device."
+          "text": "Muqun settings stay on this device"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3423,7 +3539,9 @@
         "run": "flows/settings.ad#s78"
       },
       {
-        "target": { "id": "settings-selection:(on|off):theme-ayu" },
+        "target": {
+          "id": "settings-selection:(on|off):theme-ayu"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
@@ -3448,7 +3566,9 @@
         "run": "flows/settings.ad#s7"
       },
       {
-        "target": { "id": "settings-selection:(on|off):theme-osuki" },
+        "target": {
+          "id": "settings-selection:(on|off):theme-osuki"
+        },
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
@@ -3509,7 +3629,7 @@
       },
       {
         "target": {
-          "text": "Quick actions, Add commands and custom key combinations."
+          "text": "Quick actions, Add commands and custom key combinations"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3517,12 +3637,19 @@
         "run": "flows/settings.ad#s89"
       },
       {
-        "when": { "env": "PLATFORM", "equals": "ios" },
-        "steps": [{ "run": "flows/settings.ad#clear-native-header" }]
+        "when": {
+          "env": "PLATFORM",
+          "equals": "ios"
+        },
+        "steps": [
+          {
+            "run": "flows/settings.ad#clear-native-header"
+          }
+        ]
       },
       {
         "target": {
-          "text": "Quick actions, Add commands and custom key combinations."
+          "text": "Quick actions, Add commands and custom key combinations"
         },
         "mode": "press",
         "run": "flows/settings.ad#s90"
@@ -3668,19 +3795,42 @@
         "run": "flows/slash-commands.ad#s15"
       },
       {
-        "when": { "env": "PLATFORM", "equals": "android" },
+        "when": {
+          "env": "PLATFORM",
+          "equals": "android"
+        },
         "steps": [
-          { "run": "flows/slash-commands.ad#s16" },
           {
-            "when": { "target": { "id": "terminal-composer-input", "text": "Send a message" } },
-            "steps": [{ "run": "flows/slash-commands.ad#insert-cleared-slash" }]
+            "run": "flows/slash-commands.ad#s16"
           },
-          { "run": "flows/slash-commands.ad#verify-slash" }
+          {
+            "when": {
+              "target": {
+                "id": "terminal-composer-input",
+                "text": "Send a message"
+              }
+            },
+            "steps": [
+              {
+                "run": "flows/slash-commands.ad#insert-cleared-slash"
+              }
+            ]
+          },
+          {
+            "run": "flows/slash-commands.ad#verify-slash"
+          }
         ]
       },
       {
-        "when": { "env": "PLATFORM", "equals": "ios" },
-        "steps": [{ "run": "flows/slash-commands.ad#reset-query-ios" }]
+        "when": {
+          "env": "PLATFORM",
+          "equals": "ios"
+        },
+        "steps": [
+          {
+            "run": "flows/slash-commands.ad#reset-query-ios"
+          }
+        ]
       },
       {
         "run": "flows/slash-commands.ad#s18"
@@ -3752,19 +3902,42 @@
         "run": "flows/slash-commands.ad#s29"
       },
       {
-        "when": { "env": "PLATFORM", "equals": "android" },
+        "when": {
+          "env": "PLATFORM",
+          "equals": "android"
+        },
         "steps": [
-          { "run": "flows/slash-commands.ad#s30" },
           {
-            "when": { "target": { "id": "terminal-composer-input", "text": "Send a message" } },
-            "steps": [{ "run": "flows/slash-commands.ad#insert-cleared-model" }]
+            "run": "flows/slash-commands.ad#s30"
           },
-          { "run": "flows/slash-commands.ad#verify-model" }
+          {
+            "when": {
+              "target": {
+                "id": "terminal-composer-input",
+                "text": "Send a message"
+              }
+            },
+            "steps": [
+              {
+                "run": "flows/slash-commands.ad#insert-cleared-model"
+              }
+            ]
+          },
+          {
+            "run": "flows/slash-commands.ad#verify-model"
+          }
         ]
       },
       {
-        "when": { "env": "PLATFORM", "equals": "ios" },
-        "steps": [{ "run": "flows/slash-commands.ad#model-query-ios" }]
+        "when": {
+          "env": "PLATFORM",
+          "equals": "ios"
+        },
+        "steps": [
+          {
+            "run": "flows/slash-commands.ad#model-query-ios"
+          }
+        ]
       },
       {
         "run": "flows/slash-commands.ad#s34"
@@ -4479,7 +4652,7 @@
       },
       {
         "target": {
-          "text": "Open zsh\\. Long press to close\\."
+          "text": "Open zsh\\. Long press to close"
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#s26"
@@ -5987,6 +6160,22 @@
         },
         "mode": "visible",
         "run": "subflows/restore-key-row.ad#verify"
+      }
+    ],
+    "flows/agent-shortcuts": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/agent-shortcuts.ad"
+      }
+    ],
+    "flows/machine-switcher": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/machine-switcher.ad"
       }
     ]
   }

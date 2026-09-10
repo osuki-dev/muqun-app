@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { messages as enMessages } from '../locales/en/messages';
+import { withoutClosingFullStop } from '../../../scripts/normalize-translation-punctuation';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -121,7 +122,7 @@ describe('the Lingui macro actually ran', () => {
       for (const match of source.matchAll(PLAIN_T_LITERAL)) {
         const message = normalize(match[1]);
         if (!message) continue;
-        if (!catalogStrings.has(message)) {
+        if (!catalogStrings.has(withoutClosingFullStop(message))) {
           missing.push(`${path.slice(SRC.length + 1)}: ${message}`);
         }
       }
@@ -150,7 +151,7 @@ describe('the Lingui macro actually ran', () => {
       for (const match of source.matchAll(PLAIN_MSG_LITERAL)) {
         const message = normalize(match[1]);
         if (!message) continue;
-        if (!catalogStrings.has(message)) {
+        if (!catalogStrings.has(withoutClosingFullStop(message))) {
           missing.push(`${path.slice(SRC.length + 1)}: ${message}`);
         }
       }

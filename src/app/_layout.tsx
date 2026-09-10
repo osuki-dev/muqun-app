@@ -21,6 +21,7 @@ import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { AppLockGate } from '@/components/app-lock-gate';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
+import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { buildTheme } from '@/constants/theme';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -377,6 +378,7 @@ function RootContent() {
               }}
             />
           </Stack>
+          <InAppNotificationHost />
         </AppLockGate>
         <SshConnectPromptGate />
         <UpdateStatusBanner />
