@@ -18,6 +18,8 @@ import {
   snapshotNodes,
   tokenize,
   validateTarget,
+  isNotificationFixtureCommand,
+  runWithCleanup,
   type Suite,
 } from '../e2e-native';
 
@@ -33,6 +35,94 @@ const suite: Suite = {
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
 describe('native end-to-end gate', () => {
+  test('flow cleanup follows failure evidence, always closes, and preserves original failure', async () => {
+    const order: string[] = [];
+    const failure = await runWithCleanup({
+      run: async () => {
+        order.push('run');
+        throw new Error('assertion failed');
+      },
+      captureFailure: async () => {
+        order.push('evidence');
+      },
+      cleanup: async () => {
+        order.push('cleanup');
+        throw new Error('permission restore failed');
+      },
+      close: async () => {
+        order.push('close');
+      },
+    });
+    expect(order).toEqual(['run', 'evidence', 'cleanup', 'close']);
+    expect(failure?.includes('assertion failed')).toBe(true);
+    expect(failure?.includes('permission restore failed')).toBe(true);
+    const cleanupFailure = await runWithCleanup({
+      run: async () => {},
+      captureFailure: async () => {},
+      cleanup: async () => {
+        throw new Error('restore');
+      },
+      close: async () => {},
+    });
+    expect(cleanupFailure?.includes('Flow cleanup failed')).toBe(true);
+  });
+  test('local notification cleanup never dismisses an unrelated native alert', async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'muqun-notification-alert-'));
+    try {
+      await writeFile(path.join(base, 'dismiss.ad'), 'alert dismiss\n');
+      for (const title of [
+        'Notifications are not allowed',
+        'Allow notifications in system settings to preview them',
+        'Trust this server?',
+        'Delete data?',
+      ]) {
+        let dismissed = 0;
+        const runner = new NativeRunner(
+          suite,
+          base,
+          base,
+          async (args) => {
+            if (args[1] === 'get')
+              return {
+                kind: 'alertStatus',
+                alert: {
+                  title,
+                  buttons: ['Notifications are not allowed', 'Cancel', 'Open settings'],
+                },
+              };
+            dismissed++;
+            return {};
+          },
+          {}
+        );
+        const expected =
+          title === 'Notifications are not allowed' ||
+          title === 'Allow notifications in system settings to preview them';
+        if (expected) await runner.runSection('dismiss.ad', {});
+        else await expect(runner.runSection('dismiss.ad', {})).rejects.toThrow('Only the expected');
+        expect(dismissed).toBe(expected ? 1 : 0);
+      }
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  });
+  test('notification fixture permission commands are narrowly bounded', () => {
+    expect(isNotificationFixtureCommand(['settings', 'permission', 'grant', 'notifications'])).toBe(
+      true
+    );
+    expect(isNotificationFixtureCommand(['settings', 'permission', 'deny', 'notifications'])).toBe(
+      true
+    );
+    expect(isNotificationFixtureCommand(['alert', 'dismiss'])).toBe(true);
+    for (const args of [
+      ['settings', 'permission', 'reset', 'notifications'],
+      ['settings', 'permission', 'grant', 'camera'],
+      ['settings', 'clear-app-state'],
+      ['settings', 'permission', 'grant', 'notifications', 'extra'],
+      ['alert', 'accept'],
+    ])
+      expect(isNotificationFixtureCommand(args)).toBe(false);
+  });
   test('reopening a dismissed slash query observes trigger deletion before typing a new one', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
     const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;

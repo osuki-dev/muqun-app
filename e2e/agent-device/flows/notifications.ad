@@ -1,0 +1,38 @@
+# Native local delivery only: no APNs, FCM, Gateway, or push-token fixture.
+# The dedicated unpaired QA device starts and finishes with notification permission denied.
+
+# section press
+press "${TARGET}"
+
+# section scroll
+scroll down --pixels 320
+
+# section grant
+settings permission grant notifications
+
+# section receipt
+is visible "id=\"in-app-notification\""
+is visible "text=\"This is a local sample, not an agent update\""
+screenshot dist/notification-received.png
+
+# section dismissed
+is hidden "id=\"in-app-notification\""
+
+# section disabled
+is exists "id=\"notification-preview\" enabled=false"
+is visible "text=\"Enable Gateway notifications to preview\""
+is hidden "id=\"in-app-notification\""
+screenshot dist/notification-disabled.png
+
+# section deny
+settings permission deny notifications
+
+# section denied
+wait stable 400 5000
+is visible "text=\"Notifications are not allowed\""
+screenshot dist/notification-denied.png
+alert dismiss
+
+# section finish
+is hidden "id=\"in-app-notification\""
+back

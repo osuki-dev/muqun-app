@@ -4,6 +4,18 @@ import path from 'node:path';
 
 export type Target = { text?: string; id?: string; selected?: boolean; checked?: boolean };
 
+/** Dedicated local-notification fixtures cannot widen into arbitrary OS permission changes. */
+export function isNotificationFixtureCommand(args: string[]): boolean {
+  return (
+    (args.length === 4 &&
+      args[0] === 'settings' &&
+      args[1] === 'permission' &&
+      (args[2] === 'grant' || args[2] === 'deny') &&
+      args[3] === 'notifications') ||
+    (args.length === 2 && args[0] === 'alert' && args[1] === 'dismiss')
+  );
+}
+
 /** JSON manifests must not silently discard unsupported selector constraints. */
 export function validateTarget(target: unknown): asserts target is Target {
   if (!target || typeof target !== 'object' || Array.isArray(target))
@@ -41,7 +53,37 @@ export type Flow = {
   tags: string[];
   platforms: string[];
   disabled?: string;
+  cleanup?: string;
 };
+
+export async function runWithCleanup(ports: {
+  run: () => Promise<void>;
+  captureFailure: () => Promise<void>;
+  cleanup: () => Promise<void>;
+  close: () => Promise<void>;
+}): Promise<string | undefined> {
+  let failure: string | undefined;
+  try {
+    await ports.run();
+  } catch (error) {
+    failure = String(error);
+    await ports.captureFailure().catch(() => undefined);
+  }
+  try {
+    await ports.cleanup();
+  } catch (error) {
+    const detail = `Flow cleanup failed: ${String(error)}`;
+    failure = failure ? `${failure}\n${detail}` : detail;
+  } finally {
+    try {
+      await ports.close();
+    } catch (error) {
+      const detail = `Session cleanup failed: ${String(error)}`;
+      failure = failure ? `${failure}\n${detail}` : detail;
+    }
+  }
+  return failure;
+}
 export type Suite = { version: number; flows: Flow[]; programs: Record<string, Step[]> };
 type Node = {
   index: number;
@@ -554,6 +596,20 @@ export class NativeRunner {
         await mkdir(path.dirname(args[1]), { recursive: true });
       }
       if (guardedMutations.has(args[0])) await this.readySnapshot();
+      if (args[0] === 'alert' && args[1] === 'dismiss') {
+        const status = await this.invoke(['alert', 'get']);
+        const alert = status.alert as { title?: string; buttons?: string[] } | null;
+        const expectedTitle =
+          alert?.title === 'Notifications are not allowed' ||
+          (alert?.title === 'Allow notifications in system settings to preview them' &&
+            alert.buttons?.includes('Notifications are not allowed'));
+        if (
+          status.kind !== 'alertStatus' ||
+          !expectedTitle ||
+          !alert?.buttons?.some((label) => /^cancel$/i.test(label))
+        )
+          throw new Error('Only the expected local-notification denial alert may be dismissed');
+      }
       let result: Record<string, unknown>;
       try {
         result = await this.invoke(args);
