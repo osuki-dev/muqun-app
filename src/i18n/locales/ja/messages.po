@@ -168,6 +168,10 @@ msgstr "マシンを追加"
 msgid "Add one first"
 msgstr "先に追加する"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Add reference images"
+msgstr "参考画像を追加"
+
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "この行をサーバーの ~/.ssh/authorized_keys に追加してください:"
@@ -407,6 +411,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
+#: src/hooks/use-agent-collaboration.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "キャンセル"
@@ -805,6 +810,10 @@ msgstr "公開鍵をコピーする"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "ファイルを追加できませんでした"
+
+#: src/hooks/use-agent-references.ts
+msgid "Could not add images. Choose up to nine images, each under 10 MB."
+msgstr "画像を追加できませんでした。各 10 MB 未満で、最大 9 枚まで選択できます"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -1365,6 +1374,10 @@ msgstr "待機"
 msgid "Images"
 msgstr "画像"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Images will be uploaded to {gatewayName} and shared with the new assistant. Its AI provider may process them. They are not automatically copied to other machines."
+msgstr "画像は {gatewayName} にアップロードされ、新しいアシスタントに共有されます。AI プロバイダーが画像を処理する場合があります。他のマシンには自動でコピーされません"
+
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
 msgstr "現在のターミナル出力を添付"
@@ -1613,6 +1626,15 @@ msgstr "SSH ホストを管理"
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "確認済みにする"
+
+#. placeholder {0}: index + 1
+#: src/components/agent-reference-editor.tsx
+msgid "May include image {0} in the result"
+msgstr "画像 {0} を成果物に含めてもよい"
+
+#: src/components/agent-reference-editor.tsx
+msgid "May include in the result"
+msgstr "成果物に含めてもよい"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -1899,6 +1921,10 @@ msgstr "通知が許可されていません"
 msgid "Off"
 msgstr "オフ"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Off means reference only. This does not grant permission to publish the image."
+msgstr "オフの場合は参考用のみです。この設定は画像の公開を許可するものではありません"
+
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "オフライン"
@@ -2005,6 +2031,10 @@ msgstr "ファイルツリーを開く"
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "ワークスペース {0} を開く（{1, plural, one {# 実行中} other {# 実行中}}）。長押しで閉じる"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Opening photos…"
+msgstr "写真を開いています…"
+
 #: src/app/explore.tsx
 msgid "Opening the server."
 msgstr "サーバーを開いています"
@@ -2028,6 +2058,10 @@ msgstr "シミュレータのメニュー（デバイス、ボタン、キーボ
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "このエージェントのターミナルを開きます"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Optional images stay on this device until you approve sending"
+msgstr "送信を承認するまで、画像はこのデバイスにのみ保持されます"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2256,6 +2290,15 @@ msgstr "{0} に再接続"
 msgid "Reconnecting · {0}"
 msgstr "再接続中 · {0}"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Reference images"
+msgstr "参考画像"
+
+#: src/components/agent-reference-editor.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Reference images can be sent when starting a new assistant"
+msgstr "新しいアシスタントを起動するときに参考画像を送信できます"
+
 #: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -2274,6 +2317,10 @@ msgstr "出力を更新"
 msgid "Refresh to check Gateway and Herdr compatibility before assigning."
 msgstr "更新して Gateway と Herdr の対応状況を確認してください"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Remove"
+msgstr "削除"
+
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
@@ -2288,6 +2335,11 @@ msgstr "履歴から削除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "ホストを削除"
+
+#. placeholder {0}: index + 1
+#: src/components/agent-reference-editor.tsx
+msgid "Remove image {0}"
+msgstr "画像 {0} を削除"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -2588,6 +2640,10 @@ msgstr "{spoken} を送信"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "メッセージを送信"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Send reference images?"
+msgstr "参考画像を送信しますか？"
 
 #: src/app/agent-collaboration.tsx
 msgid "Send task"
@@ -3367,6 +3423,10 @@ msgid "Update ready · restarting…"
 msgstr "更新の準備完了 · 再起動中…"
 
 #: src/hooks/use-agent-collaboration.ts
+msgid "Update this Gateway to upload reference images"
+msgstr "参考画像をアップロードするには、この Gateway を更新してください"
+
+#: src/hooks/use-agent-collaboration.ts
 msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
 msgstr "連携にはこのセッションの Herdr 0.9.0 以降が必要です"
 
@@ -3374,9 +3434,17 @@ msgstr "連携にはこのセッションの Herdr 0.9.0 以降が必要です"
 msgid "Updating Muqun…"
 msgstr "牧群（ぼくぐん）を更新中…"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Upload and send"
+msgstr "アップロードして送信"
+
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
 msgstr "アップロード失敗"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Upload failed. Send again to retry, or remove this image."
+msgstr "アップロードに失敗しました。再度送信してやり直すか、この画像を削除してください"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -3385,6 +3453,10 @@ msgstr "アップロード済み"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "アップロード中"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Uploading…"
+msgstr "アップロード中…"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3435,6 +3507,10 @@ msgstr "ネットワークを待っています"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "アップロードの完了を待っています…"
+
+#: src/components/agent-reference-editor.tsx
+msgid "What do you like about this image?"
+msgstr "この画像のどんなところが好きですか？"
 
 #: src/components/session-map.tsx
 msgid "What is running"

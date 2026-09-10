@@ -168,6 +168,10 @@ msgstr "Добавить компьютер"
 msgid "Add one first"
 msgstr "Сначала добавьте один"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Add reference images"
+msgstr "Добавить изображения-референсы"
+
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Добавьте эту строку в ~/.ssh/authorized_keys на сервере:"
@@ -407,6 +411,7 @@ msgstr "Нужен доступ к камере"
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
+#: src/hooks/use-agent-collaboration.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Отмена"
@@ -805,6 +810,10 @@ msgstr "Копировать открытый ключ"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Не удалось добавить файл"
+
+#: src/hooks/use-agent-references.ts
+msgid "Could not add images. Choose up to nine images, each under 10 MB."
+msgstr "Не удалось добавить изображения. Выберите до девяти изображений размером менее 10 МБ каждое"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -1365,6 +1374,10 @@ msgstr "Простаивает"
 msgid "Images"
 msgstr "Изображения"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Images will be uploaded to {gatewayName} and shared with the new assistant. Its AI provider may process them. They are not automatically copied to other machines."
+msgstr "Изображения будут загружены на {gatewayName} и переданы новому ассистенту. Его провайдер ИИ может их обработать. Они не будут автоматически скопированы на другие машины"
+
 #: src/app/agent-collaboration.tsx
 msgid "Include current terminal output"
 msgstr "Приложить вывод текущего терминала"
@@ -1613,6 +1626,15 @@ msgstr "Управлять SSH-хостами"
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "Отметить как проверенное"
+
+#. placeholder {0}: index + 1
+#: src/components/agent-reference-editor.tsx
+msgid "May include image {0} in the result"
+msgstr "Можно включить изображение {0} в результат"
+
+#: src/components/agent-reference-editor.tsx
+msgid "May include in the result"
+msgstr "Можно включить в результат"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -1899,6 +1921,10 @@ msgstr "Уведомления не разрешены"
 msgid "Off"
 msgstr "Выключено"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Off means reference only. This does not grant permission to publish the image."
+msgstr "Если выключено, изображение используется только как референс. Это не даёт разрешения на его публикацию"
+
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "НЕ В СЕТИ"
@@ -2005,6 +2031,10 @@ msgstr "Открыть обозреватель файлов"
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Открыть пространство {0}, {1, plural, one {# в работе} few {# в работе} many {# в работе} other {# в работе}}. Удерживайте, чтобы закрыть"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Opening photos…"
+msgstr "Открываем фото…"
+
 #: src/app/explore.tsx
 msgid "Opening the server."
 msgstr "Открываем сервер"
@@ -2028,6 +2058,10 @@ msgstr "Открывает меню симулятора: устройство, 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Открывает терминал этого агента"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Optional images stay on this device until you approve sending"
+msgstr "Необязательные изображения останутся на этом устройстве, пока вы не разрешите отправку"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2256,6 +2290,15 @@ msgstr "Переподключиться к {0}"
 msgid "Reconnecting · {0}"
 msgstr "Переподключение · {0}"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Reference images"
+msgstr "Изображения-референсы"
+
+#: src/components/agent-reference-editor.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Reference images can be sent when starting a new assistant"
+msgstr "Изображения-референсы можно отправить при запуске нового ассистента"
+
 #: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -2274,6 +2317,10 @@ msgstr "Обновить вывод"
 msgid "Refresh to check Gateway and Herdr compatibility before assigning."
 msgstr "Обновите данные, чтобы проверить совместимость Gateway и Herdr перед назначением"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Remove"
+msgstr "Удалить"
+
 #. placeholder {0}: attachment.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
@@ -2288,6 +2335,11 @@ msgstr "Удалить из истории"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "Удалить хост"
+
+#. placeholder {0}: index + 1
+#: src/components/agent-reference-editor.tsx
+msgid "Remove image {0}"
+msgstr "Удалить изображение {0}"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -2588,6 +2640,10 @@ msgstr "Отправить {spoken}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "Отправить сообщение"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Send reference images?"
+msgstr "Отправить изображения-референсы?"
 
 #: src/app/agent-collaboration.tsx
 msgid "Send task"
@@ -3367,6 +3423,10 @@ msgid "Update ready · restarting…"
 msgstr "Обновление готово · перезапуск…"
 
 #: src/hooks/use-agent-collaboration.ts
+msgid "Update this Gateway to upload reference images"
+msgstr "Обновите этот Gateway, чтобы загружать изображения-референсы"
+
+#: src/hooks/use-agent-collaboration.ts
 msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
 msgstr "Для совместной работы обновите Herdr этого сеанса до версии 0.9.0 или новее"
 
@@ -3374,9 +3434,17 @@ msgstr "Для совместной работы обновите Herdr этог
 msgid "Updating Muqun…"
 msgstr "Обновляем Muqun…"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Upload and send"
+msgstr "Загрузить и отправить"
+
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
 msgstr "загрузка не удалась"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Upload failed. Send again to retry, or remove this image."
+msgstr "Не удалось загрузить. Отправьте ещё раз, чтобы повторить попытку, или удалите это изображение"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -3385,6 +3453,10 @@ msgstr "загружено"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "загружается"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Uploading…"
+msgstr "Загрузка…"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3435,6 +3507,10 @@ msgstr "Ждём сеть"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Ждём завершения загрузок…"
+
+#: src/components/agent-reference-editor.tsx
+msgid "What do you like about this image?"
+msgstr "Что вам нравится в этом изображении?"
 
 #: src/components/session-map.tsx
 msgid "What is running"
