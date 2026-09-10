@@ -229,6 +229,10 @@ msgstr "Tous les panneaux"
 msgid "Allow camera"
 msgstr "Autoriser la caméra"
 
+#: src/components/settings-alerts.tsx
+msgid "Allow notifications in system settings to preview them"
+msgstr "Autorisez les notifications dans les réglages système pour les prévisualiser"
+
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "Autorisez la caméra, ou saisissez l'adresse"
@@ -398,6 +402,7 @@ msgstr "Accès à la caméra requis"
 
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-alerts.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
@@ -838,6 +843,10 @@ msgstr "Impossible de charger les fichiers"
 msgid "Could not load what is running."
 msgstr "Impossible de charger ce qui tourne"
 
+#: src/components/settings-alerts.tsx
+msgid "Could not open system settings"
+msgstr "Impossible d’ouvrir les réglages système"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "Impossible d’ouvrir le fichier"
@@ -857,6 +866,10 @@ msgstr "Impossible d’ouvrir le tunnel SSH"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "Impossible d’ouvrir ce fichier"
+
+#: src/components/settings-alerts.tsx
+msgid "Could not preview notification"
+msgstr "Impossible d’afficher l’aperçu de notification"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1102,6 +1115,10 @@ msgstr "Modifier l’hôte SSH"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "Modifier ce serveur"
+
+#: src/components/settings-alerts.tsx
+msgid "Enable Gateway notifications to preview"
+msgstr "Activez les notifications du Gateway pour voir l’aperçu"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1870,6 +1887,14 @@ msgstr "Rien ici pour l’instant. Les fichiers écrits par la session apparaiss
 msgid "Nothing to show yet."
 msgstr "Rien à afficher pour l’instant"
 
+#: src/components/settings-alerts.tsx
+msgid "Notification preview"
+msgstr "Aperçu de notification"
+
+#: src/components/settings-alerts.tsx
+msgid "Notifications are not allowed"
+msgstr "Les notifications ne sont pas autorisées"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Désactivé"
@@ -1953,6 +1978,10 @@ msgstr "Ouvrir le port {recent}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "Ouvrir les actions rapides"
+
+#: src/components/settings-alerts.tsx
+msgid "Open settings"
+msgstr "Ouvrir les réglages"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2103,6 +2132,10 @@ msgstr "Port"
 msgid "PORT"
 msgstr "PORT"
 
+#: src/components/settings-alerts.tsx
+msgid "Preparing notification"
+msgstr "Préparation de la notification"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "Présentée maintenant"
@@ -2123,6 +2156,10 @@ msgstr "Voir un simulateur"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "Aperçu d’un simulateur — indisponible via le tunnel SSH"
+
+#: src/components/settings-alerts.tsx
+msgid "Preview notification"
+msgstr "Prévisualiser une notification"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2658,6 +2695,10 @@ msgid "Show {0}"
 msgstr "Afficher {0}"
 
 #: src/components/settings-alerts.tsx
+msgid "Show a local sample without contacting a server"
+msgstr "Afficher un exemple local sans contacter de serveur"
+
+#: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Affiche les agents et leur statut sur l’écran d’accueil. Se met à jour tant que Muqun est ouvert"
 
@@ -3145,6 +3186,10 @@ msgstr "Impossible de charger cette image"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "Ceci est une transcription intégrée, pas un vrai serveur"
+
+#: src/components/settings-alerts.tsx
+msgid "This is a local sample, not an agent update"
+msgstr "Ceci est un exemple local, pas une mise à jour d’agent"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"

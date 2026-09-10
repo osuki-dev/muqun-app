@@ -17,6 +17,7 @@ import {
   selectFlows,
   snapshotNodes,
   tokenize,
+  validateTarget,
   type Suite,
 } from '../e2e-native';
 
@@ -32,6 +33,26 @@ const suite: Suite = {
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
 describe('native end-to-end gate', () => {
+  test('manifest targets reject unsupported constraints instead of broadening a match', () => {
+    expect(() => validateTarget({ text: 'Osuki', role: 'radiobutton' })).toThrow(
+      'Unsupported native target key: role'
+    );
+    for (const invalid of [
+      null,
+      [],
+      {},
+      'Osuki',
+      { id: '' },
+      { checked: 'false' },
+      { selected: 0 },
+      { checked: true },
+    ])
+      expect(() => validateTarget(invalid)).toThrow();
+    expect(() =>
+      validateTarget({ id: 'settings-selection:(on|off):theme-osuki', selected: false })
+    ).not.toThrow();
+    expect(() => validateTarget({ text: 'Osuki', checked: true })).not.toThrow();
+  });
   test('Android slash recovery types only into an observed empty composer, never partial input', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
     const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;

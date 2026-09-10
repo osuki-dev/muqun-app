@@ -7,9 +7,13 @@
  * ALERTS and a one-row HOME SCREEN further down.
  */
 import { useLingui } from '@lingui/react/macro';
-import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { Bell } from 'lucide-react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Linking, Platform } from 'react-native';
 
-import { SettingsSection, SettingsToggleRow } from '@/components/settings-chrome';
+import { SettingsNavRow, SettingsSection, SettingsToggleRow } from '@/components/settings-chrome';
+import { LocalNotificationPreview } from '@/lib/local-notification-preview';
 import { clearAgentWidget, isAgentWidgetSupported } from '@/lib/agent-widget';
 import { endAgentActivity, isLiveActivitySupported } from '@/lib/live-activity';
 import { useRenderTally } from '@/lib/render-tally';
@@ -27,6 +31,70 @@ export function SettingsAlerts({ title }: { title: string }) {
 
   const liveActivitySupported = isLiveActivitySupported();
   const agentWidgetSupported = isAgentWidgetSupported();
+  const [preview] = useState(() => new LocalNotificationPreview());
+  const [previewing, setPreviewing] = useState(false);
+  const previewBusy = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  async function previewNotification() {
+    if (!notificationsEnabled || previewBusy.current) return;
+    previewBusy.current = true;
+    setPreviewing(true);
+    try {
+      const result = await preview.run(
+        {
+          enabled: () => mounted.current && useAppSettings.getState().notificationsEnabled,
+          prepare: async () => {
+            if (Platform.OS === 'android') {
+              await Notifications.setNotificationChannelAsync('notification-preview', {
+                name: t`Notification preview`,
+                importance: Notifications.AndroidImportance.DEFAULT,
+              });
+            }
+          },
+          permission: Notifications.getPermissionsAsync,
+          requestPermission: () =>
+            Notifications.requestPermissionsAsync({
+              ios: { allowAlert: true, allowBadge: false, allowSound: false },
+            }),
+          schedule: (request) =>
+            Notifications.scheduleNotificationAsync({
+              ...request,
+              trigger: Platform.OS === 'android' ? { channelId: 'notification-preview' } : null,
+            }),
+        },
+        { title: t`Notification preview`, body: t`This is a local sample, not an agent update` }
+      );
+      if (mounted.current && result === 'permission-denied') {
+        Alert.alert(
+          t`Notifications are not allowed`,
+          t`Allow notifications in system settings to preview them`,
+          [
+            { text: t`Cancel`, style: 'cancel' },
+            {
+              text: t`Open settings`,
+              onPress: () => {
+                void Linking.openSettings().catch(() => {
+                  Alert.alert(t`Could not open system settings`);
+                });
+              },
+            },
+          ]
+        );
+      }
+    } catch {
+      if (mounted.current) Alert.alert(t`Could not preview notification`);
+    } finally {
+      previewBusy.current = false;
+      if (mounted.current) setPreviewing(false);
+    }
+  }
 
   return (
     <SettingsSection title={title}>
@@ -42,6 +110,21 @@ export function SettingsAlerts({ title }: { title: string }) {
         value={notificationsEnabled}
         onValueChange={(value) => void update({ notificationsEnabled: value })}
       />
+      {Platform.OS !== 'web' ? (
+        <SettingsNavRow
+          disabled={!notificationsEnabled || previewing}
+          busy={previewing}
+          testID="notification-preview"
+          label={previewing ? t`Preparing notification` : t`Preview notification`}
+          detail={
+            notificationsEnabled
+              ? t`Show a local sample without contacting a server`
+              : t`Enable Gateway notifications to preview`
+          }
+          trailing={Bell}
+          onPress={() => void previewNotification()}
+        />
+      ) : null}
       {/* Live Activities are an iOS surface. Off iOS the row is not shown at
           all rather than shown permanently greyed out; the disabled state is
           kept for an iOS device that only needs to update. */}
