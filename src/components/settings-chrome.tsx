@@ -191,9 +191,8 @@ export function SettingsToggleRow({
  * chipped row among switches indents one label by 52 points and leaves the
  * column ragged, which is the exact defect this pass exists to remove.
  *
- * No `accessibilityLabel`: React Native builds one by concatenating the two
- * lines, which is what the e2e flow taps, and an explicit label here would
- * silently change those strings.
+ * Name the row explicitly: Android can otherwise replace the inferred child
+ * label with the busy state. Keep the same title/detail order as the visible row.
  */
 export function SettingsNavRow({
   icon: Icon,
@@ -219,6 +218,7 @@ export function SettingsNavRow({
   return (
     <PressableScale
       accessibilityRole="button"
+      accessibilityLabel={detail ? `${label}, ${detail}` : label}
       accessibilityState={{ disabled, busy }}
       disabled={disabled}
       testID={testID}
