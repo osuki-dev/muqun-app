@@ -27,14 +27,27 @@ import { notificationRoute } from '@/lib/notification-route';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import { useAppSettings } from '@/stores/app-settings';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
+import { useInAppNotifications } from '@/stores/in-app-notifications';
+import { isDemoRecord } from '@/lib/demo-gateway';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: useAppSettings.getState().notificationsEnabled,
-    shouldShowList: useAppSettings.getState().notificationsEnabled,
-  }),
+  handleNotification: async (notification) => {
+    const presentation = noticePresentation(
+      useAppSettings.getState().notificationsEnabled,
+      AppState.currentState === 'active'
+    );
+    if (presentation.inApp) {
+      const notice = noticeFromPush(notification.request.identifier, notification.request.content);
+      if (notice) useInAppNotifications.getState().enqueue(notice);
+    }
+    return {
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: presentation.system,
+      shouldShowList: presentation.system,
+    };
+  },
 });
 
 /**
@@ -133,6 +146,10 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
   const notificationsEnabled = useAppSettings((state) => state.notificationsEnabled);
 
   useEffect(() => {
+    // Demo is offline, including when notifications are disabled. Neither
+    // registration nor removal may look up an Expo/APNs/FCM token for it.
+    // Local notification handlers and the in-app queue remain independent.
+    if (isDemoRecord(record)) return;
     if (!notificationsEnabled) {
       void unregisterPushNotificationsAsync(Boolean(record)).catch(() => undefined);
       return;

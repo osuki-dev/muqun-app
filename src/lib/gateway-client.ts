@@ -119,6 +119,7 @@ import {
   setDemoActive,
 } from './demo-gateway';
 import type { GatewayRecord } from './gateway-storage';
+import { withSessionAvailability } from './session-switcher';
 import type { PairingPayload } from './pairing';
 import {
   CODE_PAIRING_CLAIM_AAD,
@@ -482,6 +483,7 @@ export interface HealthResponse {
 
 export interface SessionsResponse {
   sessions?: {
+    connected?: boolean;
     id: string;
     label: string;
     socket_path: string;
@@ -1700,7 +1702,33 @@ export async function loadHealth(): Promise<HealthResponse> {
 
 export async function loadSessions(): Promise<SessionsResponse> {
   if (isDemoActive()) return demoSessions() as SessionsResponse;
-  return getApiSessions() as Promise<SessionsResponse>;
+  const sessions = (await getApiSessions()) as SessionsResponse;
+  return sessions.sessions?.some((session) => typeof session.connected !== 'boolean')
+    ? withSessionAvailability(sessions, (await getHealth()) as HealthResponse)
+    : sessions;
+}
+
+/** Inspect a saved machine without switching the active terminal's credentials. */
+export async function loadRecordSessions(record: GatewayRecord): Promise<SessionsResponse> {
+  if (isDemoRecord(record)) return demoSessions() as SessionsResponse;
+  return withRecordBaseUrl(record, async (baseUrl) => {
+    const init = {
+      headers: { Authorization: `Bearer ${record.token}`, ...activeLocaleHeaders() },
+    };
+    async function read(path: string) {
+      const url = `${baseUrl}${path}`;
+      const response =
+        record.transport === GATEWAY_TRANSPORT
+          ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...record, url: baseUrl })
+          : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    }
+    const sessions = (await read('/api/sessions')) as SessionsResponse;
+    return sessions.sessions?.some((session) => typeof session.connected !== 'boolean')
+      ? withSessionAvailability(sessions, (await read('/health')) as HealthResponse)
+      : sessions;
+  });
 }
 
 export async function loadWorkspaces(sessionId: string): Promise<HerdrEntity[]> {

@@ -16,6 +16,39 @@ function urisOf(text: string, kind: TerminalLink['kind']): string[] {
 }
 
 describe('URL links', () => {
+  test('Chinese prose punctuation ends a bare URL without requiring a space', () => {
+    for (const separator of ['）：', '：', '，', '。', '；', '！', '？', '】', '」', '”']) {
+      expect(urisOf(`设置（https://example.com/settings${separator}组件化模型搜索`, 'url')).toEqual(
+        ['https://example.com/settings']
+      );
+    }
+  });
+
+  test('the screenshot link and attached bracketed explanations exclude the suffix', () => {
+    for (const suffix of ['): 组件化模型搜索', '):组件化模型搜索', '）：组件化模型搜索']) {
+      expect(urisOf(`设置 (https://example.com/settings${suffix}`, 'url')).toEqual([
+        'https://example.com/settings',
+      ]);
+    }
+    const [link] = linksOf('设置（https://example.com/settings）：组件化模型搜索');
+    expect(link.endColumn - link.startColumn).toBe('https://example.com/settings'.length);
+  });
+
+  test('valid URL punctuation, Unicode paths and encoded delimiters survive', () => {
+    for (const uri of [
+      'https://example.com/wiki/Function_(mathematics)',
+      'http://[::1]:8080/path?q=a,b&next=%2Fhome#section',
+      'https://example.com/中文路径?q=中文&name=a%EF%BC%89b',
+      'https://example.com/?filter[]=one',
+    ])
+      expect(urisOf(`open ${uri}`, 'url')).toEqual([uri]);
+  });
+
+  test('explicit OSC 8 URLs are not shortened using prose heuristics', () => {
+    const uri = 'https://example.com/中文，路径';
+    expect(urisOf(`\u001b]8;;${uri}\u0007打开\u001b]8;;\u0007 后续说明`, 'url')).toEqual([uri]);
+  });
+
   test('a bare http(s) URL is detected and tagged as a url', () => {
     const links = linksOf('open https://example.com/docs now');
     expect(links).toHaveLength(1);

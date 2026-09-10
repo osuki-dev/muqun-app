@@ -548,9 +548,13 @@ export default function QuickCommandsScreen() {
 
   async function add() {
     if (!label.trim() || !value.trim()) return;
-    setCommands(await addQuickCommand(mode, label, value, kind, delivery));
-    setLabel('');
-    setValue('');
+    try {
+      setCommands(await addQuickCommand(mode, label, value, kind, delivery));
+      setLabel('');
+      setValue('');
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   async function changeDelivery(id: string, next: QuickCommandDelivery) {
@@ -562,13 +566,21 @@ export default function QuickCommandsScreen() {
   }
 
   async function remove(id: string) {
-    setCommands(await removeQuickCommand(id, mode));
-    setCanRestore(await hasHiddenDefaults());
+    try {
+      setCommands(await removeQuickCommand(id, mode));
+      setCanRestore(await hasHiddenDefaults());
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   async function restore() {
-    setCommands(await restoreDefaultCommands(mode));
-    setCanRestore(false);
+    try {
+      setCommands(await restoreDefaultCommands(mode));
+      setCanRestore(false);
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   return (
@@ -1059,11 +1071,16 @@ export default function QuickCommandsScreen() {
               ) : null}
 
               {mode === 'agent' ? (
-                <AgentCommandDeliveryPicker value={delivery} onChange={setDelivery} />
+                <AgentCommandDeliveryPicker
+                  testID="quick-command-delivery"
+                  value={delivery}
+                  onChange={setDelivery}
+                />
               ) : null}
 
               <View style={styles.addFields}>
                 <Input
+                  testID="quick-command-name"
                   label={t`Name`}
                   value={label}
                   onChangeText={setLabel}
@@ -1077,6 +1094,7 @@ export default function QuickCommandsScreen() {
                   variant="outline"
                 />
                 <Input
+                  testID="quick-command-value"
                   label={mode === 'agent' ? t`Prompt` : kind === 'keys' ? t`Keys` : t`Command`}
                   value={value}
                   onChangeText={setValue}
@@ -1095,7 +1113,10 @@ export default function QuickCommandsScreen() {
                 />
               </View>
 
-              <Button onPress={() => void add()} disabled={!label.trim() || !value.trim()}>
+              <Button
+                testID="quick-command-save"
+                onPress={() => void add()}
+                disabled={!label.trim() || !value.trim()}>
                 {t`Save shortcut`}
               </Button>
             </Card>
