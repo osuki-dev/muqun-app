@@ -1,6 +1,7 @@
 import { File } from 'expo-file-system';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
+import { assertDeliveryCurrent, deliverPasteAndEnter } from './bound-delivery';
 
 import {
   configure,
@@ -308,11 +309,12 @@ async function encryptedGatewayFetch(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
-  endpoint?: GatewayEndpoint
+  endpoint?: GatewayEndpoint,
+  isCurrent: () => boolean = () => true
 ): Promise<Response> {
-  const token = endpoint?.token ?? currentToken;
-  const deviceId = endpoint?.deviceId ?? currentDeviceId;
-  const transportKey = endpoint?.transportKey ?? currentTransportKey;
+  const token = endpoint ? endpoint.token : currentToken;
+  const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
+  const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
   if (!token || !deviceId || !transportKey) throw new Error('Not connected to a server.');
   if (isStreamingRequest(init)) {
     throw new Error('Encrypted event streams use the dedicated stream transport.');
@@ -324,6 +326,7 @@ async function encryptedGatewayFetch(
     ([name]) => name.toLowerCase() === 'content-type'
   )?.[1];
   const serialized = await serializeBody(init.body, contentType);
+  assertDeliveryCurrent(isCurrent);
   const plaintext: EncryptedRequestPayload = {
     token,
     ...(serialized.contentType ? { content_type: serialized.contentType } : {}),
@@ -715,7 +718,7 @@ export async function setGatewayLabel(label: string): Promise<void> {
 }
 
 export interface UploadedAttachment {
-  /** Path on the gateway host, which is what a pane or agent can actually read. */
+  /** Path on this Gateway host only; remote agents need a separate transfer mechanism. */
   path: string;
   name: string;
   size: number;
@@ -748,53 +751,61 @@ function localFilePath(fileUri: string): string {
  * as well as the send.
  */
 export async function uploadAttachment(
+  record: GatewayRecord,
   fileUri: string,
   name: string,
-  mime: string
+  mime: string,
+  isCurrent: () => boolean
 ): Promise<UploadedAttachment> {
-  if (isDemoActive()) throw new Error('Attachments are not available in the demo.');
-  const baseUrl = currentBaseUrl.replace(/\/$/, '');
-  if (!baseUrl || !currentToken) throw new Error('Not connected to a server.');
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) throw new Error('Attachments are not available in the demo.');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, async (baseUrl) => {
+    assertDeliveryCurrent(isCurrent);
+    const endpoint = { ...captured, url: baseUrl };
+    if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
 
-  const form = new FormData();
-  // React Native's FormData takes a local file as this triple. nitro-fetch
-  // recognises it and assembles the multipart body natively, reading the file
-  // on its own thread, so the bytes never pass through JS.
-  form.append('file', { uri: localFilePath(fileUri), name, type: mime } as unknown as Blob);
+    const form = new FormData();
+    // React Native's FormData takes a local file as this triple. nitro-fetch
+    // recognises it and assembles the multipart body natively, reading the file
+    // on its own thread, so the bytes never pass through JS.
+    form.append('file', { uri: localFilePath(fileUri), name, type: mime } as unknown as Blob);
 
-  const uploadUrl = `${baseUrl}/api/uploads`;
-  const uploadInit: RequestInit = {
-    method: 'POST',
-    // Content-Type is deliberately unset: the multipart boundary belongs to
-    // whichever layer writes the body, and setting it here would not match.
-    headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${currentToken}` },
-    body: form,
-  };
-  const response =
-    currentTransport === GATEWAY_TRANSPORT
-      ? await encryptedGatewayFetch(uploadUrl, uploadInit, UPLOAD_TIMEOUT_MS)
-      : await fetchWithin(
-          UPLOAD_TIMEOUT_MS,
-          // "Timed out" so `describeGatewayFailure` files this as one; see `gatewayFetch`.
-          'Timed out waiting for the upload.',
-          uploadUrl,
-          uploadInit
-        );
+    const uploadUrl = `${baseUrl}/api/uploads`;
+    const uploadInit: RequestInit = {
+      method: 'POST',
+      // Content-Type is deliberately unset: the multipart boundary belongs to
+      // whichever layer writes the body, and setting it here would not match.
+      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${endpoint.token}` },
+      body: form,
+    };
+    const response =
+      endpoint.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(uploadUrl, uploadInit, UPLOAD_TIMEOUT_MS, endpoint, isCurrent)
+        : await fetchWithin(
+            UPLOAD_TIMEOUT_MS,
+            // "Timed out" so `describeGatewayFailure` files this as one; see `gatewayFetch`.
+            'Timed out waiting for the upload.',
+            uploadUrl,
+            uploadInit
+          );
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-  }
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
 
-  const value = (await response.json()) as Partial<UploadedAttachment> | null;
-  if (!value || typeof value.path !== 'string' || value.path.length === 0) {
-    throw new Error('The server did not return a file path.');
-  }
-  return {
-    path: value.path,
-    name: typeof value.name === 'string' ? value.name : name,
-    size: typeof value.size === 'number' ? value.size : 0,
-    mime: typeof value.mime === 'string' ? value.mime : mime,
-  };
+    const value = (await response.json()) as Partial<UploadedAttachment> | null;
+    assertDeliveryCurrent(isCurrent);
+    if (!value || typeof value.path !== 'string' || value.path.length === 0) {
+      throw new Error('The server did not return a file path.');
+    }
+    return {
+      path: value.path,
+      name: typeof value.name === 'string' ? value.name : name,
+      size: typeof value.size === 'number' ? value.size : 0,
+      mime: typeof value.mime === 'string' ? value.mime : mime,
+    };
+  });
 }
 
 /**
@@ -2147,6 +2158,60 @@ function isSlashCommand(value: unknown): value is SlashCommand {
 export async function sendPaneText(sessionId: string, paneId: string, text: string): Promise<void> {
   if (isDemoActive()) return;
   await postApiSessionsBySessionIdPanesByPaneIdSendText({ sessionId, paneId }, { text });
+}
+
+/** One immutable host and tunnel lease for the entire composed paste/ACK/Enter operation. */
+export async function sendBoundPaneText(
+  record: GatewayRecord,
+  sessionId: string,
+  paneId: string,
+  text: string,
+  submit: boolean,
+  isCurrent: () => boolean
+): Promise<void> {
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) return;
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  await withRecordBaseUrl(captured, async (baseUrl) => {
+    const endpoint = { ...captured, url: baseUrl };
+    if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
+    const panePath = `${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}`;
+    async function post(action: string, body: object) {
+      assertDeliveryCurrent(isCurrent);
+      const init = {
+        method: 'POST',
+        headers: {
+          ...activeLocaleHeaders(),
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${endpoint.token}`,
+        },
+        body: JSON.stringify(body),
+      };
+      const response =
+        endpoint.transport === GATEWAY_TRANSPORT
+          ? await encryptedGatewayFetch(
+              `${panePath}/${action}`,
+              init,
+              REQUEST_TIMEOUT_MS,
+              endpoint,
+              isCurrent
+            )
+          : await fetchWithin(
+              REQUEST_TIMEOUT_MS,
+              'Timed out waiting for the server.',
+              `${panePath}/${action}`,
+              init
+            );
+      // Consume the ACK before the next request and before releasing the tunnel.
+      const reply = await response.text();
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${reply}`);
+    }
+    await deliverPasteAndEnter(
+      () => post('send-text', { text }),
+      submit ? () => post('send-keys', { keys: ['enter'] }) : null,
+      isCurrent
+    );
+  });
 }
 
 export async function sendPaneKeys(
