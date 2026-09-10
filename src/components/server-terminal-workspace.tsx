@@ -2,7 +2,15 @@ import { ThemeArtwork } from '@/components/theme-artwork';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
-import { type Href, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  type Href,
+  useFocusEffect,
+  useIsFocused,
+  useLocalSearchParams,
+  useRouter,
+} from 'expo-router';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
 import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
@@ -117,7 +125,7 @@ import {
   type PanePart,
   sendAgentText,
   sendPaneKeys,
-  sendPaneText,
+  sendBoundPaneText,
   type FileMentionHit,
   type FileMentionSearch,
   type FileMentionTrigger,
@@ -521,13 +529,13 @@ export function ServerTerminalWorkspace({
   const demoMode = isDemoRecord(record);
   const {
     attachments,
-    addFiles,
+    capturePicker,
     retryUpload,
     removeAttachment,
     clearAttachments,
     uploading: attachmentsUploading,
     awaitUploads,
-  } = useAttachmentUploads();
+  } = useAttachmentUploads(record);
   const panelPick = usePanelPickerStore((state) => state.pick);
   const clearPanelPick = usePanelPickerStore((state) => state.clearPick);
   /**
@@ -559,7 +567,17 @@ export function ServerTerminalWorkspace({
   const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
   const [data, setData] = useState<ServerData>(initialData);
-  const [selection, setSelection] = useState<Selection>(initialSelection);
+  const [deliveryOwnership] = useState(() => new DeliveryOwnership());
+  const [selectionOwner] = useState(
+    () => new DeliverySelection(initialSelection, sameSelection, deliveryOwnership)
+  );
+  const [selection, publishSelection] = useState<Selection>(initialSelection);
+  const setSelection = useCallback(
+    (next: Selection | ((current: Selection) => Selection)) => {
+      publishSelection(selectionOwner.update(next));
+    },
+    [selectionOwner]
+  );
   // Gives the in-memory Demo mirror one stable freshness boundary for this
   // mounted workspace. Real servers continue to use their persisted mirror.
   const [demoRailCheckedAtMs] = useState(() => Date.now());
@@ -584,6 +602,14 @@ export function ServerTerminalWorkspace({
   const [loadingData, setLoadingData] = useState(true);
   const [sending, setSending] = useState(false);
   const [composerSendGuard] = useState(() => new ComposerSendGuard());
+  useFocusEffect(useCallback(() => () => deliveryOwnership.invalidate(), [deliveryOwnership]));
+  useEffect(
+    () =>
+      useGatewayConnectionStore.subscribe((next, previous) => {
+        if (next.record !== previous.record) deliveryOwnership.invalidate();
+      }),
+    [deliveryOwnership]
+  );
   const [sendingKey, setSendingKey] = useState<string | null>(null);
   const [shortcuts, setShortcuts] = useState<PaneShortcuts | null>(null);
   // The dock's measured height, throttled: the reason it cannot be written
@@ -808,9 +834,11 @@ export function ServerTerminalWorkspace({
   const hasLoadedData = Boolean(data.health);
 
   useLayoutEffect(() => {
+    if (!ready) deliveryOwnership.invalidate();
     activeServerRef.current = ready ? serverId : null;
     activePaneRef.current = ready ? selection.paneId : null;
-  }, [ready, selection.paneId, serverId]);
+    return () => deliveryOwnership.invalidate();
+  }, [ready, selection.paneId, serverId, data.sessionId, deliveryOwnership]);
 
   useEffect(() => {
     if (isFocused && !loading && routeRecord && record?.serverId !== routeRecord.serverId) {
@@ -847,6 +875,7 @@ export function ServerTerminalWorkspace({
    * second path.
    */
   const resetSessionState = useCallback(() => {
+    deliveryOwnership.invalidate();
     dataRequestIdRef.current += 1;
     outputRequestIdRef.current += 1;
     // Every remembered window is a fact about the session being left, and pane
@@ -891,7 +920,7 @@ export function ServerTerminalWorkspace({
     setAttachmentMenuOpen(false);
     setPreviewAttachmentId(null);
     clearAttachments();
-  }, [clearAttachments, composerSendGuard]);
+  }, [clearAttachments, composerSendGuard, deliveryOwnership, setSelection]);
 
   useEffect(() => {
     if (selectedServer) return;
@@ -970,7 +999,7 @@ export function ServerTerminalWorkspace({
         if (isCurrentRequest()) setLoadingData(false);
       }
     },
-    [preferredSessionId, ready, serverId, t]
+    [preferredSessionId, ready, serverId, t, setSelection]
   );
 
   useEffect(() => {
@@ -1910,7 +1939,7 @@ export function ServerTerminalWorkspace({
     } else {
       setError(t`This terminal is no longer available.`);
     }
-  }, [data, notificationId, requestedPaneId, requestedSessionId, serverId, t]);
+  }, [data, notificationId, requestedPaneId, requestedSessionId, serverId, t, setSelection]);
 
   // The panel picker is a sheet route, so it hands its choice back through the
   // store rather than through navigation params.
@@ -1929,7 +1958,7 @@ export function ServerTerminalWorkspace({
       setSelection(target);
       setError(null);
     }
-  }, [clearPanelPick, data, panelPick, serverId]);
+  }, [clearPanelPick, data, panelPick, serverId, setSelection]);
 
   // Keep this read loop independent of data renders. The old 200ms timers
   // launched overlapping refreshes and exhausted all attempts before a slow
@@ -1961,7 +1990,7 @@ export function ServerTerminalWorkspace({
     return () => {
       disposed = true;
     };
-  }, [clearPanelPick, panelPick, ready, refreshData, serverId, t]);
+  }, [clearPanelPick, panelPick, ready, refreshData, serverId, t, setSelection]);
 
   // Which keys and slash commands this pane responds to is the gateway's
   // answer, so a newly supported agent needs a gateway update rather than an
@@ -2652,7 +2681,7 @@ export function ServerTerminalWorkspace({
       });
       setError(null);
     },
-    [data]
+    [data, setSelection]
   );
 
   /**
@@ -2841,8 +2870,11 @@ export function ServerTerminalWorkspace({
     if (!draft.trim() && !hasAttachments) return;
     const sendToken = composerSendGuard.acquire();
     if (sendToken === null) return;
+    const ownsDelivery = deliveryOwnership.capture();
     const isCurrentSend = () =>
       composerSendGuard.owns(sendToken) &&
+      ownsDelivery() &&
+      useGatewayConnectionStore.getState().record === record &&
       activeServerRef.current === requestServerId &&
       activePaneRef.current === requestPaneId;
     setSending(true);
@@ -2929,8 +2961,22 @@ export function ServerTerminalWorkspace({
       // two halves of a command line.
       return sendPaneKeys(data.sessionId, paneId, paneKeystrokes(text, { submit }));
     }
-    return sendPaneText(data.sessionId, paneId, text).then(() =>
-      submit ? sendPaneKeys(data.sessionId, paneId, ['enter']) : undefined
+    if (!record) return Promise.reject(new Error('Not connected to a server.'));
+    const capturedRecord = record;
+    const requestServerId = serverId;
+    const requestSessionId = data.sessionId;
+    return sendBoundPaneText(
+      capturedRecord,
+      requestSessionId,
+      paneId,
+      text,
+      submit,
+      deliveryOwnership.capture(
+        () =>
+          useGatewayConnectionStore.getState().record === capturedRecord &&
+          activeServerRef.current === requestServerId &&
+          activePaneRef.current === paneId
+      )
     );
   }
 
@@ -3038,9 +3084,12 @@ export function ServerTerminalWorkspace({
   // empty result, so only a thrown error is ever surfaced.
   function chooseAttachmentSource(source: AttachmentSource) {
     setAttachmentMenuOpen(false);
+    const picker = capturePicker();
+    if (!picker.isCurrent()) return;
     void pickAttachments(source)
-      .then(addFiles)
+      .then(picker.addFiles)
       .catch((failure: unknown) => {
+        if (!picker.isCurrent()) return;
         showToast({
           variant: 'danger',
           title: t`Could not add a file`,
