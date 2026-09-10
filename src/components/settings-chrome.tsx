@@ -201,17 +201,29 @@ export function SettingsNavRow({
   detail,
   trailing: Trailing,
   onPress,
+  disabled = false,
+  busy = false,
+  testID,
 }: {
   icon?: LucideIcon;
   label: string;
   detail?: string;
   trailing: LucideIcon;
   onPress: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+  testID?: string;
 }) {
   const theme = useThemeTokens();
   useRenderTally('SettingsNavRow');
   return (
-    <PressableScale accessibilityRole="button" onPress={onPress} style={styles.row}>
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityState={{ disabled, busy }}
+      disabled={disabled}
+      testID={testID}
+      onPress={onPress}
+      style={styles.row}>
       {Icon ? (
         <View style={[styles.chip, { backgroundColor: theme.colors.surfaceRaised }]}>
           <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />

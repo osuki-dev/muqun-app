@@ -229,6 +229,10 @@ msgstr "모든 패널"
 msgid "Allow camera"
 msgstr "카메라 허용"
 
+#: src/components/settings-alerts.tsx
+msgid "Allow notifications in system settings to preview them"
+msgstr "미리 보려면 시스템 설정에서 알림을 허용하세요"
+
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "카메라를 허용하거나 주소를 입력하세요"
@@ -398,6 +402,7 @@ msgstr "카메라 접근 권한 필요"
 
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-alerts.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
@@ -838,6 +843,10 @@ msgstr "파일을 불러오지 못했습니다"
 msgid "Could not load what is running."
 msgstr "실행 중인 것을 불러오지 못했습니다"
 
+#: src/components/settings-alerts.tsx
+msgid "Could not open system settings"
+msgstr "시스템 설정을 열 수 없습니다"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "파일을 열지 못했습니다"
@@ -857,6 +866,10 @@ msgstr "SSH 터널을 열 수 없습니다"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "이 파일을 열지 못했습니다"
+
+#: src/components/settings-alerts.tsx
+msgid "Could not preview notification"
+msgstr "알림을 미리 볼 수 없습니다"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1102,6 +1115,10 @@ msgstr "SSH 호스트 편집"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "이 서버 편집"
+
+#: src/components/settings-alerts.tsx
+msgid "Enable Gateway notifications to preview"
+msgstr "미리 보려면 Gateway 알림을 켜세요"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1870,6 +1887,14 @@ msgstr "아직 아무것도 없습니다. 세션이 쓴 파일은 저절로 나�
 msgid "Nothing to show yet."
 msgstr "아직 표시할 내용이 없습니다"
 
+#: src/components/settings-alerts.tsx
+msgid "Notification preview"
+msgstr "알림 미리보기"
+
+#: src/components/settings-alerts.tsx
+msgid "Notifications are not allowed"
+msgstr "알림이 허용되지 않았습니다"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "꺼짐"
@@ -1953,6 +1978,10 @@ msgstr "포트 {recent} 열기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "빠른 동작 열기"
+
+#: src/components/settings-alerts.tsx
+msgid "Open settings"
+msgstr "설정 열기"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2103,6 +2132,10 @@ msgstr "포트"
 msgid "PORT"
 msgstr "포트"
 
+#: src/components/settings-alerts.tsx
+msgid "Preparing notification"
+msgstr "알림 준비 중"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "지금 제시됨"
@@ -2123,6 +2156,10 @@ msgstr "시뮬레이터 보기"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "시뮬레이터 미리보기, SSH 터널에서는 사용할 수 없음"
+
+#: src/components/settings-alerts.tsx
+msgid "Preview notification"
+msgstr "알림 미리 보기"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2658,6 +2695,10 @@ msgid "Show {0}"
 msgstr "{0} 표시"
 
 #: src/components/settings-alerts.tsx
+msgid "Show a local sample without contacting a server"
+msgstr "서버에 연결하지 않고 로컬 예시 표시"
+
+#: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "홈 화면에 에이전트와 상태를 표시합니다. Muqun이 열려 있는 동안 갱신됩니다"
 
@@ -3145,6 +3186,10 @@ msgstr "이 이미지를 불러오지 못했습니다"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "이것은 번들된 기록이며 실제 서버가 아닙니다"
+
+#: src/components/settings-alerts.tsx
+msgid "This is a local sample, not an agent update"
+msgstr "이 알림은 로컬 예시이며 에이전트 업데이트가 아닙니다"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"

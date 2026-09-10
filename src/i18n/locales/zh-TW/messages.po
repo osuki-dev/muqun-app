@@ -229,6 +229,10 @@ msgstr "所有面板"
 msgid "Allow camera"
 msgstr "允許相機"
 
+#: src/components/settings-alerts.tsx
+msgid "Allow notifications in system settings to preview them"
+msgstr "請在系統設定中允許通知以查看預覽"
+
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "允許使用相機，或改為輸入位址"
@@ -398,6 +402,7 @@ msgstr "需要相機存取權"
 
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-alerts.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
@@ -838,6 +843,10 @@ msgstr "無法載入檔案"
 msgid "Could not load what is running."
 msgstr "無法載入正在執行的項目"
 
+#: src/components/settings-alerts.tsx
+msgid "Could not open system settings"
+msgstr "無法開啟系統設定"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "無法開啟檔案"
@@ -857,6 +866,10 @@ msgstr "無法開啟 SSH 通道"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "無法開啟這個檔案"
+
+#: src/components/settings-alerts.tsx
+msgid "Could not preview notification"
+msgstr "無法預覽通知"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1102,6 +1115,10 @@ msgstr "編輯 SSH 主機"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "編輯這台伺服器"
+
+#: src/components/settings-alerts.tsx
+msgid "Enable Gateway notifications to preview"
+msgstr "啟用 Gateway 通知後即可預覽"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1870,6 +1887,14 @@ msgstr "這裡還是空的。工作階段寫出的檔案會自動出現"
 msgid "Nothing to show yet."
 msgstr "目前還沒有內容"
 
+#: src/components/settings-alerts.tsx
+msgid "Notification preview"
+msgstr "通知預覽"
+
+#: src/components/settings-alerts.tsx
+msgid "Notifications are not allowed"
+msgstr "通知權限尚未開啟"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "關閉"
@@ -1953,6 +1978,10 @@ msgstr "開啟連接埠 {recent}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "開啟快速動作"
+
+#: src/components/settings-alerts.tsx
+msgid "Open settings"
+msgstr "開啟設定"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2103,6 +2132,10 @@ msgstr "連接埠"
 msgid "PORT"
 msgstr "連接埠"
 
+#: src/components/settings-alerts.tsx
+msgid "Preparing notification"
+msgstr "正在準備通知"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "本次出示"
@@ -2123,6 +2156,10 @@ msgstr "預覽模擬器"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "預覽模擬器，透過 SSH 通道時無法使用"
+
+#: src/components/settings-alerts.tsx
+msgid "Preview notification"
+msgstr "預覽通知"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2658,6 +2695,10 @@ msgid "Show {0}"
 msgstr "顯示 {0}"
 
 #: src/components/settings-alerts.tsx
+msgid "Show a local sample without contacting a server"
+msgstr "顯示本機範例，不會連線至伺服器"
+
+#: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "在主畫面顯示代理程式與其狀態。牧群開啟時會持續更新"
 
@@ -3145,6 +3186,10 @@ msgstr "這張圖片載入失敗"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "這是內建的紀錄，不是真正的伺服器"
+
+#: src/components/settings-alerts.tsx
+msgid "This is a local sample, not an agent update"
+msgstr "這是本機範例，不是 Agent 的更新"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"

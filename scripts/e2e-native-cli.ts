@@ -10,6 +10,7 @@ import {
   selectFlows,
   subprocess,
   tokenize,
+  validateTarget,
   type Suite,
 } from './e2e-native';
 
@@ -97,6 +98,8 @@ async function validate(): Promise<void> {
   for (const program of Object.values(suite.programs)) {
     const visit = async (steps: typeof program, stack: string[] = []): Promise<void> => {
       for (const step of steps) {
+        if (step.target !== undefined) validateTarget(step.target);
+        if (step.when?.target !== undefined) validateTarget(step.when.target);
         if (step.include) {
           if (stack.includes(step.include) || !suite.programs[step.include])
             throw new Error(`Invalid include: ${step.include}`);
