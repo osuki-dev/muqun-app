@@ -229,6 +229,10 @@ msgstr "All panes"
 msgid "Allow camera"
 msgstr "Allow camera"
 
+#: src/components/settings-alerts.tsx
+msgid "Allow notifications in system settings to preview them"
+msgstr "Allow notifications in system settings to preview them"
+
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "Allow the camera, or enter the address instead"
@@ -415,6 +419,7 @@ msgstr "Camera access needed"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-alerts.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
@@ -869,6 +874,10 @@ msgstr "Could not load files"
 msgid "Could not load what is running."
 msgstr "Could not load what is running"
 
+#: src/components/settings-alerts.tsx
+msgid "Could not open system settings"
+msgstr "Could not open system settings"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "Could not open the file"
@@ -888,6 +897,10 @@ msgstr "Could not open the SSH tunnel"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "Could not open this file"
+
+#: src/components/settings-alerts.tsx
+msgid "Could not preview notification"
+msgstr "Could not preview notification"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1151,6 +1164,10 @@ msgstr "Edit SSH host"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "Edit this server"
+
+#: src/components/settings-alerts.tsx
+msgid "Enable Gateway notifications to preview"
+msgstr "Enable Gateway notifications to preview"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1977,6 +1994,14 @@ msgstr "Nothing here yet. Files the session writes show up on their own"
 msgid "Nothing to show yet."
 msgstr "Nothing to show yet"
 
+#: src/components/settings-alerts.tsx
+msgid "Notification preview"
+msgstr "Notification preview"
+
+#: src/components/settings-alerts.tsx
+msgid "Notifications are not allowed"
+msgstr "Notifications are not allowed"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Off"
@@ -2060,6 +2085,10 @@ msgstr "Open port {recent}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "Open quick actions"
+
+#: src/components/settings-alerts.tsx
+msgid "Open settings"
+msgstr "Open settings"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2226,6 +2255,10 @@ msgstr "PORT"
 msgid "Preparing images"
 msgstr "Preparing images"
 
+#: src/components/settings-alerts.tsx
+msgid "Preparing notification"
+msgstr "Preparing notification"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "Presented now"
@@ -2256,6 +2289,10 @@ msgstr "Preview a simulator, unavailable over the SSH tunnel"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Preview first. Your current theme stays unchanged"
+
+#: src/components/settings-alerts.tsx
+msgid "Preview notification"
+msgstr "Preview notification"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2811,6 +2848,10 @@ msgid "Show {0}"
 msgstr "Show {0}"
 
 #: src/components/settings-alerts.tsx
+msgid "Show a local sample without contacting a server"
+msgstr "Show a local sample without contacting a server"
+
+#: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Show agents and their status on the home screen. Updates while Muqun is open"
 
@@ -3346,6 +3387,10 @@ msgstr "This image could not be loaded"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "This is a bundled transcript, not a real server"
+
+#: src/components/settings-alerts.tsx
+msgid "This is a local sample, not an agent update"
+msgstr "This is a local sample, not an agent update"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"

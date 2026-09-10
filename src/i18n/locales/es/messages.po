@@ -229,6 +229,10 @@ msgstr "Todos los paneles"
 msgid "Allow camera"
 msgstr "Permitir cámara"
 
+#: src/components/settings-alerts.tsx
+msgid "Allow notifications in system settings to preview them"
+msgstr "Permite las notificaciones en los ajustes del sistema para previsualizarlas"
+
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "Permite la cámara o introduce la dirección"
@@ -415,6 +419,7 @@ msgstr "Se necesita acceso a la cámara"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-alerts.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
@@ -869,6 +874,10 @@ msgstr "No se pudieron cargar los archivos"
 msgid "Could not load what is running."
 msgstr "No se pudo cargar lo que se está ejecutando"
 
+#: src/components/settings-alerts.tsx
+msgid "Could not open system settings"
+msgstr "No se pudieron abrir los ajustes del sistema"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "No se pudo abrir el archivo"
@@ -888,6 +897,10 @@ msgstr "No se pudo abrir el túnel SSH"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "No se pudo abrir este archivo"
+
+#: src/components/settings-alerts.tsx
+msgid "Could not preview notification"
+msgstr "No se pudo mostrar la notificación de muestra"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1151,6 +1164,10 @@ msgstr "Editar host SSH"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "Editar este servidor"
+
+#: src/components/settings-alerts.tsx
+msgid "Enable Gateway notifications to preview"
+msgstr "Activa las notificaciones del Gateway para ver la muestra"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1977,6 +1994,14 @@ msgstr "Aquí todavía no hay nada. Los archivos que escriba la sesión aparecen
 msgid "Nothing to show yet."
 msgstr "Todavía no hay nada que mostrar"
 
+#: src/components/settings-alerts.tsx
+msgid "Notification preview"
+msgstr "Notificación de muestra"
+
+#: src/components/settings-alerts.tsx
+msgid "Notifications are not allowed"
+msgstr "Las notificaciones no están permitidas"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Desactivado"
@@ -2060,6 +2085,10 @@ msgstr "Abrir el puerto {recent}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "Abrir las acciones rápidas"
+
+#: src/components/settings-alerts.tsx
+msgid "Open settings"
+msgstr "Abrir ajustes"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2226,6 +2255,10 @@ msgstr "PUERTO"
 msgid "Preparing images"
 msgstr "Preparando imágenes"
 
+#: src/components/settings-alerts.tsx
+msgid "Preparing notification"
+msgstr "Preparando notificación"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "Presentada ahora"
@@ -2256,6 +2289,10 @@ msgstr "Vista previa del simulador: no disponible a través del túnel SSH"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Revisa primero la vista previa. Tu tema actual no cambiará"
+
+#: src/components/settings-alerts.tsx
+msgid "Preview notification"
+msgstr "Ver notificación de muestra"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2811,6 +2848,10 @@ msgid "Show {0}"
 msgstr "Mostrar {0}"
 
 #: src/components/settings-alerts.tsx
+msgid "Show a local sample without contacting a server"
+msgstr "Muestra un ejemplo local sin contactar con un servidor"
+
+#: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Muestra los agentes y su estado en la pantalla de inicio. Se actualiza mientras Muqun está abierto"
 
@@ -3346,6 +3387,10 @@ msgstr "No se pudo cargar esta imagen"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "Esto es una transcripción incluida, no un servidor real"
+
+#: src/components/settings-alerts.tsx
+msgid "This is a local sample, not an agent update"
+msgstr "Este es un ejemplo local, no una actualización de un agente"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"

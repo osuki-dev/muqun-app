@@ -229,6 +229,10 @@ msgstr "すべてのパネル"
 msgid "Allow camera"
 msgstr "カメラを許可"
 
+#: src/components/settings-alerts.tsx
+msgid "Allow notifications in system settings to preview them"
+msgstr "プレビューするにはシステム設定で通知を許可してください"
+
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "カメラを許可するか、アドレスを入力してください"
@@ -415,6 +419,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-alerts.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
@@ -869,6 +874,10 @@ msgstr "ファイルを読み込めませんでした"
 msgid "Could not load what is running."
 msgstr "実行中のものを読み込めませんでした"
 
+#: src/components/settings-alerts.tsx
+msgid "Could not open system settings"
+msgstr "システム設定を開けませんでした"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "ファイルを開けませんでした"
@@ -888,6 +897,10 @@ msgstr "SSH トンネルを開けませんでした"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "このファイルを開けませんでした"
+
+#: src/components/settings-alerts.tsx
+msgid "Could not preview notification"
+msgstr "通知をプレビューできませんでした"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1151,6 +1164,10 @@ msgstr "SSH ホストを編集"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "このサーバーを編集"
+
+#: src/components/settings-alerts.tsx
+msgid "Enable Gateway notifications to preview"
+msgstr "プレビューするには Gateway 通知を有効にしてください"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1977,6 +1994,14 @@ msgstr "まだ何もありません。セッションが書き出したファイ
 msgid "Nothing to show yet."
 msgstr "まだ表示するものはありません"
 
+#: src/components/settings-alerts.tsx
+msgid "Notification preview"
+msgstr "通知プレビュー"
+
+#: src/components/settings-alerts.tsx
+msgid "Notifications are not allowed"
+msgstr "通知が許可されていません"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "オフ"
@@ -2060,6 +2085,10 @@ msgstr "ポート {recent} を開く"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "クイックアクションを開く"
+
+#: src/components/settings-alerts.tsx
+msgid "Open settings"
+msgstr "設定を開く"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2226,6 +2255,10 @@ msgstr "ポート"
 msgid "Preparing images"
 msgstr "画像を準備中"
 
+#: src/components/settings-alerts.tsx
+msgid "Preparing notification"
+msgstr "通知を準備中"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "今回の提示"
@@ -2256,6 +2289,10 @@ msgstr "シミュレーターをプレビュー（SSH トンネル経由では�
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
+
+#: src/components/settings-alerts.tsx
+msgid "Preview notification"
+msgstr "通知をプレビュー"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2811,6 +2848,10 @@ msgid "Show {0}"
 msgstr "{0} を表示"
 
 #: src/components/settings-alerts.tsx
+msgid "Show a local sample without contacting a server"
+msgstr "サーバーに接続せずローカルのサンプルを表示"
+
+#: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます"
 
@@ -3346,6 +3387,10 @@ msgstr "この画像を読み込めませんでした"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "これは同梱された記録で、本物のサーバーではありません"
+
+#: src/components/settings-alerts.tsx
+msgid "This is a local sample, not an agent update"
+msgstr "これはローカルのサンプルで、エージェントからの更新ではありません"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
