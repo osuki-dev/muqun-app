@@ -101,6 +101,7 @@ press "${TARGET}"
 # Android's atomic fill is not proof that React observed a trigger-free draft.
 # agent-device rejects empty/blank fills; ordinary draft text removes the query.
 fill id="terminal-composer-input" "draft"
+wait "id=\"terminal-composer-input\" value=\"draft\"" 10000
 is visible "id=\"terminal-composer-input\" value=\"draft\""
 fill id="terminal-composer-input" "/mod" --delay-ms 80
 
