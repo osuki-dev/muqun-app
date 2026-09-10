@@ -2,6 +2,13 @@
   "version": 1,
   "flows": [
     {
+      "name": "notifications",
+      "program": "flows/notifications",
+      "cleanup": "cleanup/notifications",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "theme-document",
       "program": "flows/theme-document",
       "tags": ["full"],
@@ -148,6 +155,86 @@
     }
   ],
   "programs": {
+    "cleanup/notifications": [{ "run": "flows/notifications.ad#deny" }],
+    "flows/notifications": [
+      { "include": "subflows/launch-home" },
+      { "run": "flows/notifications.ad#grant" },
+      { "target": { "text": "Settings" }, "mode": "press", "run": "flows/notifications.ad#press" },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/notifications.ad#scroll"
+      },
+      {
+        "when": { "target": { "id": "toggle-Gateway notifications", "checked": false } },
+        "steps": [
+          {
+            "target": { "id": "toggle-Gateway notifications" },
+            "mode": "press",
+            "run": "flows/notifications.ad#press"
+          }
+        ]
+      },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      {
+        "target": { "id": "in-app-notification-open" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/notifications.ad#receipt"
+      },
+      {
+        "target": { "id": "in-app-notification-dismiss" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#dismissed" },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      {
+        "target": { "id": "in-app-notification-open" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#dismissed" },
+      {
+        "target": { "id": "toggle-Gateway notifications" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#disabled" },
+      {
+        "target": { "id": "toggle-Gateway notifications" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#deny" },
+      { "include": "subflows/launch-home" },
+      { "target": { "text": "Settings" }, "mode": "press", "run": "flows/notifications.ad#press" },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/notifications.ad#scroll"
+      },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#denied" },
+      { "run": "flows/notifications.ad#finish" }
+    ],
     "flows/theme-document": [
       {
         "include": "subflows/open-demo"
