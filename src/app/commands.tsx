@@ -81,6 +81,7 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
+import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { appChrome } from '@/constants/appearance';
@@ -91,7 +92,6 @@ import {
   interruptAgent,
   splitPane,
   loadPaneShortcuts,
-  sendAgentText,
   sendPaneKeys,
   sendPaneText,
   type SlashCommand,
@@ -105,11 +105,17 @@ import { useComposerDraftStore } from '@/stores/composer-draft';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
+import {
+  collaborationCommandAvailable,
+  collaborationDraftScope,
+  commandCollaborationDraft,
+} from '@/lib/quick-command-collaboration';
 import { supportsCollaboration, tasksForSession } from '@/lib/agent-collaboration';
 import { useServerSimfarm } from '@/stores/server-simfarm';
 import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   addQuickCommand,
+  updateQuickCommandDelivery,
   hasHiddenDefaults,
   loadQuickCommands,
   quickCommandKeys,
@@ -118,8 +124,10 @@ import {
   type QuickCommand,
   type QuickCommandKind,
   type QuickCommandMode,
+  type QuickCommandDelivery,
 } from '@/lib/quick-commands';
 import { quickCommandName } from '@/i18n/labels';
+import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 
 /**
  * The face a value is set in when tapping the row types that value into the
@@ -205,12 +213,17 @@ export default function QuickCommandsScreen() {
     params.sessionId
   ).length;
   const manageOnly = params.manage === '1';
+  const agentDelivery = useAgentCommandDelivery({
+    ...params,
+    enabled: mode === 'agent' && !manageOnly,
+  });
   const [commands, setCommands] = useState<QuickCommand[]>([]);
   const [commandTab, setCommandTab] = useState<'saved' | 'catalog'>('saved');
   const [search, setSearch] = useState('');
   const [label, setLabel] = useState('');
   const [value, setValue] = useState('');
   const [kind, setKind] = useState<QuickCommandKind>('command');
+  const [delivery, setDelivery] = useState<QuickCommandDelivery>('current-agent');
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [agentCommands, setAgentCommands] = useState<SlashCommand[]>([]);
@@ -228,6 +241,14 @@ export default function QuickCommandsScreen() {
   const editing = manageOnly || editRequested;
   const query = editing ? '' : search.trim().toLocaleLowerCase();
   const visibleCommands = commands.filter((command) => {
+    if (
+      command.delivery === 'collaboration' &&
+      !collaborationCommandAvailable({
+        ...params,
+        manageOnly,
+      })
+    )
+      return false;
     const descriptor = command.custom ? undefined : quickCommandName[command.id];
     const name = descriptor ? _(descriptor) : command.label;
     return `${name} ${command.value}`.toLocaleLowerCase().includes(query);
@@ -283,12 +304,49 @@ export default function QuickCommandsScreen() {
   }, [params.paneId, params.sessionId]);
 
   async function run(command: QuickCommand) {
+    if (command.delivery === 'collaboration') {
+      if (
+        manageOnly ||
+        !params.serverId ||
+        !collaborationCommandAvailable({ ...params, manageOnly: false })
+      )
+        return;
+      try {
+        const draft = commandCollaborationDraft(command, {
+          serverId: params.serverId,
+          sessionId: params.sessionId,
+          paneId: params.paneId,
+          workspaceId: params.workspaceId,
+          tabId: params.tabId,
+          cwd: params.cwd,
+        });
+        const scope = collaborationDraftScope(draft.context);
+        if (!useAgentCollaboration.getState().drafts[scope]) {
+          useAgentCollaboration.getState().saveDraft(scope, draft);
+        }
+        router.replace({
+          pathname: '/agent-collaboration',
+          params: {
+            serverId: params.serverId,
+            sessionId: params.sessionId,
+            paneId: params.paneId,
+            workspaceId: params.workspaceId,
+            tabId: params.tabId,
+            cwd: params.cwd,
+            commandId: command.id,
+          },
+        } as Href);
+      } catch (failure) {
+        setError(describeGatewayFailure(failure, t`Could not send shortcut.`).message);
+      }
+      return;
+    }
     if (!params.paneId || !params.sessionId || sendingId) return;
     setSendingId(command.id);
     setError(null);
     try {
       if (mode === 'agent') {
-        await sendAgentText(params.sessionId, params.paneId, command.value);
+        await agentDelivery.send(command.value);
       } else if (command.kind === 'keys') {
         await sendPaneKeys(params.sessionId, params.paneId, quickCommandKeys(command));
       } else {
@@ -315,7 +373,7 @@ export default function QuickCommandsScreen() {
     setError(null);
     try {
       if (mode === 'agent') {
-        await sendAgentText(params.sessionId, params.paneId, entry.command);
+        await agentDelivery.send(entry.command);
       } else {
         // An editor's `:q` is text plus Return, not an agent message: this pane
         // has no agent to send to.
@@ -482,19 +540,39 @@ export default function QuickCommandsScreen() {
 
   async function add() {
     if (!label.trim() || !value.trim()) return;
-    setCommands(await addQuickCommand(mode, label, value, kind));
-    setLabel('');
-    setValue('');
+    try {
+      setCommands(await addQuickCommand(mode, label, value, kind, delivery));
+      setLabel('');
+      setValue('');
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
+  }
+
+  async function changeDelivery(id: string, next: QuickCommandDelivery) {
+    try {
+      setCommands(await updateQuickCommandDelivery(id, next));
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   async function remove(id: string) {
-    setCommands(await removeQuickCommand(id, mode));
-    setCanRestore(await hasHiddenDefaults());
+    try {
+      setCommands(await removeQuickCommand(id, mode));
+      setCanRestore(await hasHiddenDefaults());
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   async function restore() {
-    setCommands(await restoreDefaultCommands(mode));
-    setCanRestore(false);
+    try {
+      setCommands(await restoreDefaultCommands(mode));
+      setCanRestore(false);
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   return (
@@ -815,6 +893,9 @@ export default function QuickCommandsScreen() {
                       }
                       keys={command.kind === 'keys' ? quickCommandKeys(command) : undefined}
                       detailColor={theme.colors.textMuted}
+                      detail={
+                        command.delivery === 'collaboration' ? t`Agent collaboration` : undefined
+                      }
                       busy={sendingId === command.id}
                       busyColor={theme.colors.primary}
                       // In edit mode a row is what is being edited, not what is
@@ -839,6 +920,12 @@ export default function QuickCommandsScreen() {
                         ) : null
                       }
                     />
+                    {editing && command.custom && command.mode === 'agent' ? (
+                      <AgentCommandDeliveryPicker
+                        value={command.delivery ?? 'current-agent'}
+                        onChange={(next) => void changeDelivery(command.id, next)}
+                      />
+                    ) : null}
                   </Animated.View>
                 );
               })}
@@ -966,8 +1053,17 @@ export default function QuickCommandsScreen() {
                 />
               ) : null}
 
+              {mode === 'agent' ? (
+                <AgentCommandDeliveryPicker
+                  testID="quick-command-delivery"
+                  value={delivery}
+                  onChange={setDelivery}
+                />
+              ) : null}
+
               <View style={styles.addFields}>
                 <Input
+                  testID="quick-command-name"
                   label={t`Name`}
                   value={label}
                   onChangeText={setLabel}
@@ -981,6 +1077,7 @@ export default function QuickCommandsScreen() {
                   variant="outline"
                 />
                 <Input
+                  testID="quick-command-value"
                   label={mode === 'agent' ? t`Prompt` : kind === 'keys' ? t`Keys` : t`Command`}
                   value={value}
                   onChangeText={setValue}
@@ -999,7 +1096,10 @@ export default function QuickCommandsScreen() {
                 />
               </View>
 
-              <Button onPress={() => void add()} disabled={!label.trim() || !value.trim()}>
+              <Button
+                testID="quick-command-save"
+                onPress={() => void add()}
+                disabled={!label.trim() || !value.trim()}>
                 {t`Save shortcut`}
               </Button>
             </Card>

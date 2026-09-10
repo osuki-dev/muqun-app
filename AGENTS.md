@@ -1,5 +1,8 @@
 # Expo HAS CHANGED
 
+Write all repository documentation, architecture notes, release notes, and
+bundled agent skill instructions in English. UI localization is separate.
+
 Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
 
 ## Working on this

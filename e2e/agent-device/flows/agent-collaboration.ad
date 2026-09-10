@@ -13,7 +13,7 @@ press "text=\"Agent collaboration\""
 wait "id=\"collaboration-assign\"" 15000
 press "id=\"collaboration-assign\""
 press "id=\"collaboration-new\""
-wait text "CLAUDE ✓" 10000
+wait "id=\"collaboration-profile-picker\"" 10000
 fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: review current changes without editing files."
 keyboard dismiss
 press "id=\"collaboration-close\""
@@ -35,7 +35,7 @@ is hidden "id=\"collaboration-instructions\""
 wait text "Ready for input" 20000
 press "id=\"collaboration-task-0-output\""
 wait "id=\"collaboration-output\"" 10000
-is text "id=\"collaboration-output\"" "Muqun collaboration regression: review current changes without editing files.\n\nReview finished. The theme fallback has test coverage. No changes were made."
+is text "id=\"collaboration-output\"" "Muqun collaboration regression: review current changes without editing files.\n\nReview finished. The theme fallback has test coverage. No changes were made"
 screenshot "shots/collaboration-output.png"
 press "id=\"collaboration-close\""
 wait text "Claude Code" 10000

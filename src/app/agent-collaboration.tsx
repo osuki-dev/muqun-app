@@ -2,8 +2,16 @@ import { Button, Input, KeyboardToolbar, Spinner, Text, useThemeTokens } from '@
 import { useLingui } from '@lingui/react/macro';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Check, ChevronRight, Ellipsis, X } from 'lucide-react-native';
-import { Keyboard, StyleSheet, Switch, View } from 'react-native';
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Ellipsis,
+  Folder,
+  X,
+} from 'lucide-react-native';
+import { Keyboard, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import {
   KeyboardAwareScrollView,
   type KeyboardAwareScrollViewRef,
@@ -17,6 +25,7 @@ import {
   type CollaborationContext,
 } from '@/lib/agent-collaboration';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
+import { AgentCommandSummary } from '@/components/agent-command-summary';
 
 export default function AgentCollaborationScreen() {
   const { t } = useLingui();
@@ -24,9 +33,11 @@ export default function AgentCollaborationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<CollaborationContext>();
   const [showOtherProfiles, setShowOtherProfiles] = useState(false);
+  const [choosingProfile, setChoosingProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [management, setManagement] = useState<string | null>(null);
   const {
+    command,
     originCwd,
     tasks,
     connectionMatches,
@@ -107,11 +118,11 @@ export default function AgentCollaborationScreen() {
           ) : null}
           <View style={styles.grow}>
             <Text variant="heading">{form ? t`Assign a task` : t`Agent collaboration`}</Text>
-            <Text variant="caption" color={muted}>
-              {form
-                ? t`Choose who helps and what they should do.`
-                : t`Assignments on this device · current session`}
-            </Text>
+            {!form ? (
+              <Text variant="caption" color={muted}>
+                {t`Assignments on this device · current session`}
+              </Text>
+            ) : null}
           </View>
           <PressableScale
             testID="collaboration-close"
@@ -290,201 +301,281 @@ export default function AgentCollaborationScreen() {
             ) : null}
           </>
         ) : (
-          <>
-            <View style={styles.row}>
-              <Button
-                testID="collaboration-existing"
-                variant={newAgent ? 'ghost' : 'secondary'}
-                disabled={busy}
-                onPress={() => setNewAgent(false)}>{t`Existing assistant`}</Button>
-              {canSpawn ? (
-                <Button
-                  testID="collaboration-new"
-                  variant={newAgent ? 'secondary' : 'ghost'}
-                  disabled={busy}
-                  onPress={() => setNewAgent(true)}>{t`New assistant`}</Button>
-              ) : null}
-            </View>
-            {newAgent ? (
-              <View style={styles.section}>
+          <View style={styles.formLayout}>
+            <View style={[styles.assistantSection, { borderColor: theme.colors.border }]}>
+              <View style={styles.projectRow}>
+                <Folder size={16} color={muted} />
                 <Text
+                  selectable
                   variant="caption"
-                  color={muted}>{t`Starts beside this terminal in the same project.`}</Text>
-                <View style={styles.row}>
-                  {profiles
-                    .filter((profile) => profile.available || showOtherProfiles)
-                    .map((profile) => (
-                      <Button
-                        key={profile.kind}
-                        variant={kind === profile.kind ? 'secondary' : 'ghost'}
-                        disabled={busy}
-                        onPress={() => setKind(profile.kind)}>
-                        {`${profile.kind}${kind === profile.kind ? ' ✓' : ''}`}
-                      </Button>
-                    ))}
-                </View>
-                {profiles.some((profile) => !profile.available) ? (
-                  <Button
-                    variant="ghost"
-                    disabled={busy}
-                    onPress={() => setShowOtherProfiles((value) => !value)}>
-                    {showOtherProfiles ? t`Hide other agent types` : t`Other agent types`}
-                  </Button>
-                ) : null}
-                {profiles.find((profile) => profile.kind === kind)?.available === false ? (
-                  <Text
-                    variant="caption"
-                    color={
-                      muted
-                    }>{t`Not found on the Gateway's PATH. Herdr may still be able to start it.`}</Text>
-                ) : null}
-                {profiles.length === 0 ? (
-                  <Text
-                    variant="caption"
-                    color={
-                      muted
-                    }>{t`No assistants available yet. Try an existing assistant or reopen this picker.`}</Text>
-                ) : null}
-                <Text variant="caption" color={muted}>
+                  color={muted}
+                  numberOfLines={2}
+                  style={styles.grow}>
                   {originCwd}
                 </Text>
               </View>
-            ) : (
-              <View style={styles.section}>
-                {candidates.length === 0 ? (
-                  <Text
-                    color={muted}
-                    variant="bodySmall">{t`No other agents in this session. Start a new assistant to collaborate.`}</Text>
-                ) : null}
-                {candidates.map((agent) => (
+              <View style={[styles.modeSwitch, { backgroundColor: theme.colors.surfaceRaised }]}>
+                {[false, ...(canSpawn ? [true] : [])].map((create) => (
                   <PressableScale
-                    key={agent.paneId}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: target === agent.paneId, disabled: busy }}
-                    accessibilityLabel={`${agent.name}, ${statusLabel(agent.status)}`}
+                    key={String(create)}
+                    testID={create ? 'collaboration-new' : 'collaboration-existing'}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: newAgent === create, disabled: busy }}
                     disabled={busy}
-                    onPress={() => setTarget(agent.paneId)}
+                    onPress={() => setNewAgent(create)}
                     style={[
-                      styles.card,
+                      styles.modeOption,
                       {
-                        borderColor:
-                          target === agent.paneId ? theme.colors.primary : theme.colors.border,
+                        backgroundColor: newAgent === create ? theme.colors.surface : 'transparent',
+                        borderColor: newAgent === create ? theme.colors.border : 'transparent',
                       },
                     ]}>
-                    <View style={styles.row}>
-                      <Text variant="bodySmall" style={styles.grow}>
-                        {agent.name}
-                      </Text>
-                      {target === agent.paneId ? (
-                        <Check size={18} color={theme.colors.primary} />
-                      ) : (
-                        <ChevronRight size={18} color={muted} />
-                      )}
-                    </View>
-                    <Text variant="caption" color={muted}>
-                      {statusLabel(agent.status)}
-                      {agent.sameWorkspace ? ` · ${t`Same workspace`}` : ''}
+                    <Text
+                      variant="bodySmall"
+                      color={newAgent === create ? theme.colors.text : muted}>
+                      {create ? t`New assistant` : t`Existing assistant`}
                     </Text>
-                    {agent.cwd ? (
-                      <Text numberOfLines={1} variant="caption" color={muted}>
-                        {agent.cwd}
-                      </Text>
-                    ) : null}
                   </PressableScale>
                 ))}
-                {selected && !canAssignToAgent(selected.status) ? (
-                  <View style={styles.section}>
+              </View>
+              {newAgent ? (
+                <View style={styles.section}>
+                  <PressableScale
+                    testID="collaboration-profile-picker"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`New assistant`}
+                    accessibilityState={{ expanded: choosingProfile, disabled: busy }}
+                    disabled={busy}
+                    onPress={() => setChoosingProfile((value) => !value)}
+                    style={[
+                      styles.selectedProfile,
+                      {
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.surfaceRaised,
+                      },
+                    ]}>
+                    <Text variant="bodySmall" style={styles.grow}>
+                      {kind || t`New assistant`}
+                    </Text>
+                    <ChevronDown size={18} color={muted} />
+                  </PressableScale>
+                  {choosingProfile ? (
+                    <>
+                      <ScrollView
+                        nestedScrollEnabled
+                        keyboardShouldPersistTaps="handled"
+                        style={styles.profileViewport}
+                        contentContainerStyle={styles.profileGrid}>
+                        {profiles
+                          .filter((profile) => profile.available || showOtherProfiles)
+                          .map((profile) => (
+                            <PressableScale
+                              key={profile.kind}
+                              accessibilityRole="button"
+                              accessibilityLabel={profile.kind}
+                              accessibilityState={{
+                                selected: kind === profile.kind,
+                                disabled: busy,
+                              }}
+                              disabled={busy}
+                              onPress={() => {
+                                setKind(profile.kind);
+                                setChoosingProfile(false);
+                                setShowOtherProfiles(false);
+                              }}
+                              style={[
+                                styles.profileOption,
+                                {
+                                  borderColor:
+                                    kind === profile.kind
+                                      ? theme.colors.primary
+                                      : theme.colors.border,
+                                  backgroundColor: theme.colors.surfaceRaised,
+                                },
+                              ]}>
+                              <Text variant="bodySmall" style={styles.grow}>
+                                {profile.kind}
+                              </Text>
+                              {kind === profile.kind ? (
+                                <Check size={16} color={theme.colors.primary} />
+                              ) : null}
+                            </PressableScale>
+                          ))}
+                      </ScrollView>
+                      {profiles.some((profile) => !profile.available) ? (
+                        <Button
+                          variant="ghost"
+                          disabled={busy}
+                          onPress={() => setShowOtherProfiles((value) => !value)}>
+                          {showOtherProfiles ? t`Hide other agent types` : t`Other agent types`}
+                        </Button>
+                      ) : null}
+                    </>
+                  ) : null}
+                  <Text
+                    variant="caption"
+                    color={muted}>{t`Starts beside this terminal in the same project.`}</Text>
+                  {profiles.find((profile) => profile.kind === kind)?.available === false ? (
+                    <Text
+                      variant="caption"
+                      color={
+                        muted
+                      }>{t`Not found on the Gateway's PATH. Herdr may still be able to start it.`}</Text>
+                  ) : null}
+                  {profiles.length === 0 ? (
+                    <Text
+                      variant="caption"
+                      color={
+                        muted
+                      }>{t`No assistants available yet. Try an existing assistant or reopen this picker.`}</Text>
+                  ) : null}
+                </View>
+              ) : (
+                <View style={styles.section}>
+                  {candidates.length === 0 ? (
                     <Text
                       color={muted}
-                      variant="bodySmall">{t`This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one.`}</Text>
-                    {recoveryPane !== selected.paneId ? (
-                      <Button
-                        variant="secondary"
-                        onPress={() => openPane(selected.paneId)}>{t`Open terminal`}</Button>
-                    ) : null}
-                  </View>
-                ) : null}
-              </View>
-            )}
-            <Input
-              testID="collaboration-instructions"
-              accessibilityLabel={t`Task instructions`}
-              label={t`What should they do?`}
-              value={prompt}
-              onChangeText={setPrompt}
-              editable={!busy}
-              multiline
-              numberOfLines={4}
-              maxLength={4000}
-              placeholder={t`Describe the task and what a good result looks like.`}
-              variant="outline"
-            />
-            <View style={styles.row}>
-              <Button
-                variant="ghost"
-                disabled={busy || Boolean(prompt)}
-                onPress={() =>
-                  setPrompt(
-                    t`Review the current changes. Report bugs and missing tests; do not edit files.`
-                  )
-                }>{t`Review changes`}</Button>
-              <Button
-                variant="ghost"
-                disabled={busy || Boolean(prompt)}
-                onPress={() =>
-                  setPrompt(t`Run the relevant tests and report failures with reproduction steps.`)
-                }>{t`Run tests`}</Button>
+                      variant="bodySmall">{t`No other agents in this session. Start a new assistant to collaborate.`}</Text>
+                  ) : null}
+                  {candidates.map((agent) => (
+                    <PressableScale
+                      key={agent.paneId}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: target === agent.paneId, disabled: busy }}
+                      accessibilityLabel={`${agent.name}, ${statusLabel(agent.status)}`}
+                      disabled={busy}
+                      onPress={() => setTarget(agent.paneId)}
+                      style={[
+                        styles.card,
+                        {
+                          borderColor:
+                            target === agent.paneId ? theme.colors.primary : theme.colors.border,
+                        },
+                      ]}>
+                      <View style={styles.row}>
+                        <Text variant="bodySmall" style={styles.grow}>
+                          {agent.name}
+                        </Text>
+                        {target === agent.paneId ? (
+                          <Check size={18} color={theme.colors.primary} />
+                        ) : (
+                          <ChevronRight size={18} color={muted} />
+                        )}
+                      </View>
+                      <Text variant="caption" color={muted}>
+                        {statusLabel(agent.status)}
+                        {agent.sameWorkspace ? ` · ${t`Same workspace`}` : ''}
+                      </Text>
+                      {agent.cwd ? (
+                        <Text numberOfLines={1} variant="caption" color={muted}>
+                          {agent.cwd}
+                        </Text>
+                      ) : null}
+                    </PressableScale>
+                  ))}
+                  {selected && !canAssignToAgent(selected.status) ? (
+                    <View style={styles.section}>
+                      <Text
+                        color={muted}
+                        variant="bodySmall">{t`This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one.`}</Text>
+                      {recoveryPane !== selected.paneId ? (
+                        <Button
+                          variant="secondary"
+                          onPress={() => openPane(selected.paneId)}>{t`Open terminal`}</Button>
+                      ) : null}
+                    </View>
+                  ) : null}
+                </View>
+              )}
             </View>
-            <View style={styles.row}>
-              <View style={styles.grow}>
-                <Text variant="bodySmall">{t`Include current terminal output`}</Text>
-                <Text
-                  variant="caption"
-                  color={
-                    muted
-                  }>{t`Only the text below is shared. Conversation history is not shared automatically.`}</Text>
-              </View>
-              <Switch
-                accessibilityLabel={t`Include current terminal output`}
-                disabled={busy || contextLoading}
-                value={includeContext}
-                onValueChange={(value) => void shareContext(value)}
+            <View style={styles.taskSection}>
+              {command ? (
+                <AgentCommandSummary name={command.name} description={command.description} />
+              ) : null}
+              <Input
+                testID="collaboration-instructions"
+                accessibilityLabel={t`Task instructions`}
+                label={t`What should they do?`}
+                value={prompt}
+                onChangeText={setPrompt}
+                editable={!busy}
+                multiline
+                numberOfLines={4}
+                maxLength={4000}
+                placeholder={t`Describe the task and what a good result looks like.`}
+                variant="outline"
               />
-            </View>
-            {contextLoading ? (
-              <Spinner size="sm" />
-            ) : includeContext ? (
+              {!command ? (
+                <View style={styles.row}>
+                  <Button
+                    variant="ghost"
+                    disabled={busy || Boolean(prompt)}
+                    onPress={() =>
+                      setPrompt(
+                        t`Review the current changes. Report bugs and missing tests; do not edit files.`
+                      )
+                    }>{t`Review changes`}</Button>
+                  <Button
+                    variant="ghost"
+                    disabled={busy || Boolean(prompt)}
+                    onPress={() =>
+                      setPrompt(
+                        t`Run the relevant tests and report failures with reproduction steps.`
+                      )
+                    }>{t`Run tests`}</Button>
+                </View>
+              ) : null}
+              <View style={[styles.contextOption, { borderColor: theme.colors.border }]}>
+                <View style={styles.grow}>
+                  <Text variant="bodySmall">{t`Include current terminal output`}</Text>
+                  <Text
+                    variant="caption"
+                    color={
+                      muted
+                    }>{t`Only the text below is shared. Conversation history is not shared automatically.`}</Text>
+                </View>
+                <Switch
+                  accessibilityLabel={t`Include current terminal output`}
+                  disabled={busy || contextLoading}
+                  value={includeContext}
+                  onValueChange={(value) => void shareContext(value)}
+                />
+              </View>
+              {contextLoading ? (
+                <Spinner size="sm" />
+              ) : includeContext ? (
+                <Text
+                  selectable
+                  variant="caption"
+                  style={[styles.card, { borderColor: theme.colors.border }]}>
+                  {context || t`No visible output yet.`}
+                </Text>
+              ) : null}
+              <Button
+                testID="collaboration-send"
+                disabled={
+                  !ready ||
+                  busy ||
+                  contextLoading ||
+                  (!prompt.trim() && !command?.instructions) ||
+                  (newAgent ? !kind : !selected || !canAssignToAgent(selected.status))
+                }
+                onPress={() => void assign()}>
+                {busy
+                  ? newAgent
+                    ? t`Starting assistant and sending…`
+                    : t`Sending task…`
+                  : newAgent
+                    ? t`Start assistant and send`
+                    : t`Send task`}
+              </Button>
               <Text
-                selectable
                 variant="caption"
-                style={[styles.card, { borderColor: theme.colors.border }]}>
-                {context || t`No visible output yet.`}
-              </Text>
-            ) : null}
-            <Button
-              testID="collaboration-send"
-              disabled={
-                !ready ||
-                busy ||
-                contextLoading ||
-                !prompt.trim() ||
-                (newAgent ? !kind : !selected || !canAssignToAgent(selected.status))
-              }
-              onPress={() => void assign()}>
-              {busy
-                ? newAgent
-                  ? t`Starting assistant and sending…`
-                  : t`Sending task…`
-                : newAgent
-                  ? t`Start assistant and send`
-                  : t`Send task`}
-            </Button>
-            <Text
-              variant="caption"
-              color={
-                muted
-              }>{t`You will stay in your current terminal. The assistant works independently.`}</Text>
-          </>
+                color={
+                  muted
+                }>{t`You will stay in your current terminal. The assistant works independently.`}</Text>
+            </View>
+          </View>
         )}
       </KeyboardAwareScrollView>
       <KeyboardToolbar showArrows={false} doneText={t`Done`} />
@@ -493,7 +584,67 @@ export default function AgentCollaborationScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 20, paddingTop: 28, paddingBottom: 40, gap: 20 },
+  content: {
+    width: '100%',
+    maxWidth: 960,
+    alignSelf: 'center',
+    padding: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+    gap: 16,
+  },
+  formLayout: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 24 },
+  assistantSection: {
+    flexBasis: 280,
+    flexGrow: 1,
+    minWidth: 0,
+    gap: 16,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+  },
+  taskSection: { flexBasis: 340, flexGrow: 2, minWidth: 0, gap: 16 },
+  projectRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  selectedProfile: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+  },
+  contextOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 16,
+  },
+  modeSwitch: { flexDirection: 'row', padding: 4, gap: 4, borderRadius: 14 },
+  modeOption: {
+    flex: 1,
+    minHeight: 44,
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileViewport: { maxHeight: 192 },
+  profileGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingVertical: 2 },
+  profileOption: {
+    flexBasis: '46%',
+    flexGrow: 1,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   grow: { flex: 1 },
   icon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
