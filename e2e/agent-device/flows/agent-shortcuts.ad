@@ -18,12 +18,14 @@ press "role=button label=\"QA review instructions\""
 wait "id=\"agent-command-summary\"" 10000
 is visible "id=\"collaboration-instructions\" value=\"Review this project without changing any files\""
 fill "id=\"collaboration-instructions\"" "Keep this custom instruction draft while I inspect the terminal"
+wait "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\"" 10000
 keyboard dismiss
 press "id=\"collaboration-close\""
 wait "role=button text=\"Open quick actions\"" 10000
 press "role=button text=\"Open quick actions\""
 press "role=button label=\"QA review instructions\""
 wait "id=\"collaboration-instructions\"" 10000
+wait "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\"" 10000
 is visible "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\""
 press "id=\"collaboration-close\""
 press "role=button text=\"Open quick actions\""

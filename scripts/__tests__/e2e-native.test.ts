@@ -123,6 +123,24 @@ describe('native end-to-end gate', () => {
     ])
       expect(isNotificationFixtureCommand(args)).toBe(false);
   });
+  test('controlled replacements verify the actual value before another edit or navigation', async () => {
+    const base = path.resolve(
+      fileURLToPath(new URL('../../e2e/agent-device/flows/', import.meta.url))
+    );
+    for (const [file, value] of [
+      ['slash-commands.ad', 'draft'],
+      ['agent-shortcuts.ad', 'Keep this custom instruction draft while I inspect the terminal'],
+    ]) {
+      const lines = (await readFile(path.join(base, file), 'utf8')).split('\n');
+      const filled = lines.findIndex((line) => line.startsWith('fill ') && line.includes(value));
+      expect(filled >= 0).toBe(true);
+      expect(lines[filled + 1].startsWith('wait ')).toBe(true);
+      expect(lines[filled + 1].includes(value)).toBe(true);
+      expect(lines.some((line) => line.startsWith('is visible ') && line.includes(value))).toBe(
+        true
+      );
+    }
+  });
   test('reopening a dismissed slash query observes trigger deletion before typing a new one', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
     const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
