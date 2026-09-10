@@ -229,6 +229,10 @@ msgstr "Все панели"
 msgid "Allow camera"
 msgstr "Разрешить камеру"
 
+#: src/components/settings-alerts.tsx
+msgid "Allow notifications in system settings to preview them"
+msgstr "Разрешите уведомления в системных настройках для предпросмотра"
+
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "Разрешите камеру или введите адрес вручную"
@@ -415,6 +419,7 @@ msgstr "Нужен доступ к камере"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-alerts.tsx
 #: src/components/settings-servers.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
@@ -869,6 +874,10 @@ msgstr "Не удалось загрузить файлы"
 msgid "Could not load what is running."
 msgstr "Не удалось загрузить, что сейчас запущено"
 
+#: src/components/settings-alerts.tsx
+msgid "Could not open system settings"
+msgstr "Не удалось открыть системные настройки"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "Не удалось открыть файл"
@@ -888,6 +897,10 @@ msgstr "Не удалось открыть SSH-туннель"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "Не удалось открыть этот файл"
+
+#: src/components/settings-alerts.tsx
+msgid "Could not preview notification"
+msgstr "Не удалось показать пример уведомления"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1151,6 +1164,10 @@ msgstr "Изменить SSH-хост"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "Изменить этот сервер"
+
+#: src/components/settings-alerts.tsx
+msgid "Enable Gateway notifications to preview"
+msgstr "Включите уведомления Gateway для предпросмотра"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1977,6 +1994,14 @@ msgstr "Пока пусто. Файлы, которые записывает с�
 msgid "Nothing to show yet."
 msgstr "Пока нечего показать"
 
+#: src/components/settings-alerts.tsx
+msgid "Notification preview"
+msgstr "Пример уведомления"
+
+#: src/components/settings-alerts.tsx
+msgid "Notifications are not allowed"
+msgstr "Уведомления не разрешены"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Выключено"
@@ -2060,6 +2085,10 @@ msgstr "Открыть порт {recent}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "Открыть быстрые действия"
+
+#: src/components/settings-alerts.tsx
+msgid "Open settings"
+msgstr "Открыть настройки"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2226,6 +2255,10 @@ msgstr "ПОРТ"
 msgid "Preparing images"
 msgstr "Подготовка изображений"
 
+#: src/components/settings-alerts.tsx
+msgid "Preparing notification"
+msgstr "Подготовка уведомления"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
 msgstr "Предъявлен сейчас"
@@ -2256,6 +2289,10 @@ msgstr "Предпросмотр симулятора, недоступно че
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Сначала просмотрите тему. Текущая тема не изменится"
+
+#: src/components/settings-alerts.tsx
+msgid "Preview notification"
+msgstr "Посмотреть пример уведомления"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
@@ -2811,6 +2848,10 @@ msgid "Show {0}"
 msgstr "Показать {0}"
 
 #: src/components/settings-alerts.tsx
+msgid "Show a local sample without contacting a server"
+msgstr "Показать локальный пример без обращения к серверу"
+
+#: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Показывать агентов и их статус на экране «Домой». Обновляется, пока Muqun открыт"
 
@@ -3346,6 +3387,10 @@ msgstr "Не удалось загрузить это изображение"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "Это встроенная запись, а не настоящий сервер"
+
+#: src/components/settings-alerts.tsx
+msgid "This is a local sample, not an agent update"
+msgstr "Это локальный пример, а не обновление от агента"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"

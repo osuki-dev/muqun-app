@@ -17,6 +17,7 @@ import {
   selectFlows,
   snapshotNodes,
   tokenize,
+  validateTarget,
   type Suite,
 } from '../e2e-native';
 
@@ -70,6 +71,26 @@ describe('native end-to-end gate', () => {
       expect(typed).toBe(cleared ? 1 : 0);
       expect(value).toBe(cleared ? '/mod' : '/rel');
     }
+  });
+  test('manifest targets reject unsupported constraints instead of broadening a match', () => {
+    expect(() => validateTarget({ text: 'Osuki', role: 'radiobutton' })).toThrow(
+      'Unsupported native target key: role'
+    );
+    for (const invalid of [
+      null,
+      [],
+      {},
+      'Osuki',
+      { id: '' },
+      { checked: 'false' },
+      { selected: 0 },
+      { checked: true },
+    ])
+      expect(() => validateTarget(invalid)).toThrow();
+    expect(() =>
+      validateTarget({ id: 'settings-selection:(on|off):theme-osuki', selected: false })
+    ).not.toThrow();
+    expect(() => validateTarget({ text: 'Osuki', checked: true })).not.toThrow();
   });
   test('Android slash recovery types only into an observed empty composer, never partial input', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));

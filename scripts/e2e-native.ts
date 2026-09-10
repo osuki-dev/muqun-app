@@ -3,6 +3,24 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export type Target = { text?: string; id?: string; selected?: boolean; checked?: boolean };
+
+/** JSON manifests must not silently discard unsupported selector constraints. */
+export function validateTarget(target: unknown): asserts target is Target {
+  if (!target || typeof target !== 'object' || Array.isArray(target))
+    throw new Error('Native target must be an object');
+  for (const [key, value] of Object.entries(target)) {
+    if (key === 'text' || key === 'id') {
+      if (typeof value !== 'string' || !value.length)
+        throw new Error(`Native target ${key} must be a nonempty string`);
+    } else if (key === 'selected' || key === 'checked') {
+      if (typeof value !== 'boolean') throw new Error(`Native target ${key} must be boolean`);
+    } else {
+      throw new Error(`Unsupported native target key: ${key}`);
+    }
+  }
+  if (!('text' in target) && !('id' in target))
+    throw new Error('Native target requires text or id');
+}
 export type Step = {
   run?: string;
   include?: string;
