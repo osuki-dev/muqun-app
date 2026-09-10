@@ -8,12 +8,13 @@
  */
 import { useLingui } from '@lingui/react/macro';
 import * as Notifications from 'expo-notifications';
+import { useFocusEffect } from 'expo-router';
 import { Bell } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 
 import { SettingsNavRow, SettingsSection, SettingsToggleRow } from '@/components/settings-chrome';
-import { LocalNotificationPreview } from '@/lib/local-notification-preview';
+import { LocalNotificationPreview, LocalPreviewFocus } from '@/lib/local-notification-preview';
 import { clearAgentWidget, isAgentWidgetSupported } from '@/lib/agent-widget';
 import { endAgentActivity, isLiveActivitySupported } from '@/lib/live-activity';
 import { useRenderTally } from '@/lib/render-tally';
@@ -32,6 +33,8 @@ export function SettingsAlerts({ title }: { title: string }) {
   const liveActivitySupported = isLiveActivitySupported();
   const agentWidgetSupported = isAgentWidgetSupported();
   const [preview] = useState(() => new LocalNotificationPreview());
+  const [previewFocus] = useState(() => new LocalPreviewFocus());
+  useFocusEffect(useCallback(() => previewFocus.activate(), [previewFocus]));
   const [previewing, setPreviewing] = useState(false);
   const previewBusy = useRef(false);
   const mounted = useRef(true);
@@ -43,13 +46,16 @@ export function SettingsAlerts({ title }: { title: string }) {
   }, []);
 
   async function previewNotification() {
-    if (!notificationsEnabled || previewBusy.current) return;
+    const ownsFocus = previewFocus.capture();
+    const enabled = () =>
+      mounted.current && ownsFocus() && useAppSettings.getState().notificationsEnabled;
+    if (!enabled() || previewBusy.current) return;
     previewBusy.current = true;
     setPreviewing(true);
     try {
       const result = await preview.run(
         {
-          enabled: () => mounted.current && useAppSettings.getState().notificationsEnabled,
+          enabled,
           prepare: async () => {
             if (Platform.OS === 'android') {
               await Notifications.setNotificationChannelAsync('notification-preview', {
@@ -71,7 +77,7 @@ export function SettingsAlerts({ title }: { title: string }) {
         },
         { title: t`Notification preview`, body: t`This is a local sample, not an agent update` }
       );
-      if (mounted.current && result === 'permission-denied') {
+      if (enabled() && result === 'permission-denied') {
         Alert.alert(
           t`Notifications are not allowed`,
           t`Allow notifications in system settings to preview them`,
@@ -80,8 +86,9 @@ export function SettingsAlerts({ title }: { title: string }) {
             {
               text: t`Open settings`,
               onPress: () => {
+                if (!enabled()) return;
                 void Linking.openSettings().catch(() => {
-                  Alert.alert(t`Could not open system settings`);
+                  if (enabled()) Alert.alert(t`Could not open system settings`);
                 });
               },
             },
@@ -89,7 +96,7 @@ export function SettingsAlerts({ title }: { title: string }) {
         );
       }
     } catch {
-      if (mounted.current) Alert.alert(t`Could not preview notification`);
+      if (enabled()) Alert.alert(t`Could not preview notification`);
     } finally {
       previewBusy.current = false;
       if (mounted.current) setPreviewing(false);
