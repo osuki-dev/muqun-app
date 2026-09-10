@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { DeliveryOwnership } from '@/lib/bound-delivery';
+import type { GatewayRecord } from '@/lib/gateway-storage';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
 import {
   isBusy,
@@ -23,6 +27,7 @@ export interface AttachmentUploads {
   attachments: PendingAttachment[];
   /** Stage files and start uploading them straight away. */
   addFiles: (files: PickedFile[]) => void;
+  capturePicker: () => { addFiles: (files: PickedFile[]) => void; isCurrent: () => boolean };
   /** Re-send one file that failed, from its own tile. */
   retryUpload: (id: string) => void;
   removeAttachment: (id: string) => void;
@@ -48,10 +53,14 @@ export interface AttachmentUploads {
  * reads and writes entries between awaits, and a ref synchronised by an effect
  * would still be showing the previous pass by the time it did.
  */
-export function useAttachmentUploads(): AttachmentUploads {
+export function useAttachmentUploads(record: GatewayRecord | null): AttachmentUploads {
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
   const mountedRef = useRef(true);
+  const [ownership] = useState(() => new DeliveryOwnership());
+  const destinations = useRef(
+    new Map<string, { record: GatewayRecord; isCurrent: () => boolean }>()
+  );
   // Sends parked until the queue drains. They are resolved by whichever upload
   // finishes last, so Send never polls.
   const waitingRef = useRef<(() => void)[]>([]);
@@ -79,7 +88,10 @@ export function useAttachmentUploads(): AttachmentUploads {
   const runUpload = useCallback(
     async (id: string) => {
       const entry = attachmentsRef.current.find((item) => item.id === id);
-      if (!entry) return;
+      const destination = destinations.current.get(id);
+      if (!entry || !destination || !destination.isCurrent()) return;
+      const isCurrent = () =>
+        destination.isCurrent() && destinations.current.get(id) === destination;
       commit(markUploading(attachmentsRef.current, id));
       try {
         // Compression sits here rather than at picking so it costs one file at
@@ -95,10 +107,18 @@ export function useAttachmentUploads(): AttachmentUploads {
           width: entry.width,
           height: entry.height,
         });
-        const uploaded = await uploadAttachment(source.uri, source.name, source.mime);
-        commit(markUploaded(attachmentsRef.current, id, uploaded));
+        if (!isCurrent()) return;
+        const uploaded = await uploadAttachment(
+          destination.record,
+          source.uri,
+          source.name,
+          source.mime,
+          isCurrent
+        );
+        if (isCurrent()) commit(markUploaded(attachmentsRef.current, id, uploaded));
       } catch (failure) {
-        commit(markFailed(attachmentsRef.current, id, describeUploadFailure(failure)));
+        if (isCurrent())
+          commit(markFailed(attachmentsRef.current, id, describeUploadFailure(failure)));
       }
       // A finished upload frees a slot, so whatever is still queued moves up.
       pumpRef.current();
@@ -116,21 +136,47 @@ export function useAttachmentUploads(): AttachmentUploads {
 
   useEffect(() => {
     mountedRef.current = true;
+    const ownedDestinations = destinations.current;
     return () => {
       mountedRef.current = false;
+      ownership.invalidate();
+      ownedDestinations.clear();
       // The screen is gone and nothing will resolve these otherwise, so a send
       // that was waiting on the queue is let go rather than left hanging.
       releaseWaiters();
     };
-  }, [releaseWaiters]);
+  }, [releaseWaiters, ownership]);
 
+  const capturePicker = useCallback(() => {
+    const currentRecord = record;
+    const isCurrent = ownership.capture(
+      () =>
+        mountedRef.current &&
+        currentRecord !== null &&
+        useGatewayConnectionStore.getState().record === currentRecord
+    );
+    const captured = currentRecord
+      ? {
+          ...currentRecord,
+          sshTunnel: currentRecord.sshTunnel ? { ...currentRecord.sshTunnel } : undefined,
+        }
+      : null;
+    return {
+      isCurrent,
+      addFiles: (files: PickedFile[]) => {
+        if (!captured || !isCurrent() || files.length === 0) return;
+        const previous = attachmentsRef.current;
+        const next = stageFiles(previous, files);
+        for (const entry of next.slice(previous.length))
+          destinations.current.set(entry.id, { record: captured, isCurrent });
+        commit(next);
+        pump();
+      },
+    };
+  }, [record, ownership, commit, pump]);
   const addFiles = useCallback(
-    (files: PickedFile[]) => {
-      if (files.length === 0) return;
-      commit(stageFiles(attachmentsRef.current, files));
-      pump();
-    },
-    [commit, pump]
+    (files: PickedFile[]) => capturePicker().addFiles(files),
+    [capturePicker]
   );
 
   const retryUpload = useCallback(
@@ -143,16 +189,29 @@ export function useAttachmentUploads(): AttachmentUploads {
 
   const removeAttachment = useCallback(
     (id: string) => {
-      // An upload already in flight for this entry is left to finish and land
-      // nowhere: cancelling it would not give the user their bandwidth back any
-      // sooner, and the patch by id drops the result.
+      // Prevent transmission after compression and discard late replies. A
+      // request already sent cannot be recalled or safely retried here.
+      destinations.current.delete(id);
       commit(removeEntry(attachmentsRef.current, id));
       pump();
     },
     [commit, pump]
   );
 
-  const clearAttachments = useCallback(() => commit([]), [commit]);
+  const clearAttachments = useCallback(() => {
+    ownership.invalidate();
+    destinations.current.clear();
+    commit([]);
+  }, [commit, ownership]);
+
+  useFocusEffect(useCallback(() => () => clearAttachments(), [clearAttachments]));
+  useEffect(
+    () =>
+      useGatewayConnectionStore.subscribe((next, previous) => {
+        if (next.record !== previous.record) clearAttachments();
+      }),
+    [clearAttachments]
+  );
 
   const awaitUploads = useCallback(
     () =>
@@ -170,6 +229,7 @@ export function useAttachmentUploads(): AttachmentUploads {
   return {
     attachments,
     addFiles,
+    capturePicker,
     retryUpload,
     removeAttachment,
     clearAttachments,
