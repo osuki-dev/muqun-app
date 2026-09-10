@@ -35,6 +35,9 @@ export type CollaborationContext = {
 
 /** In-memory only: preserve an unsent task while checking its terminal. */
 export type CollaborationDraft = {
+  /** Memory-only editor identity: an old request cannot replace a reopened draft. */
+  owner?: symbol;
+  references?: import('./agent-command-references').AgentReferenceDraft;
   command?: { name: string; instructions?: string; description?: string };
   context: CollaborationContext;
   prompt: string;

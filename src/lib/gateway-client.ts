@@ -1825,6 +1825,56 @@ export async function loadRecentCwds(sessionId: string): Promise<string[]> {
  * thrown error so `describeGatewayFailure` can lift it -- the alternative is a
  * sheet that says "could not start" about three fields at once.
  */
+export async function spawnBoundAgent(
+  record: GatewayRecord,
+  sessionId: string,
+  request: AgentSpawnRequest,
+  isCurrent: () => boolean
+): Promise<SpawnedAgent> {
+  assertDeliveryCurrent(isCurrent);
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  const body = JSON.stringify(request);
+  if (isDemoRecord(captured)) {
+    const spawned = spawnedAgentFromResponse(demoSpawnedAgent({ ...request }));
+    if (!spawned) throw new Error('The server did not say which panel it made.');
+    return spawned;
+  }
+  let acknowledged: SpawnedAgent | undefined;
+  try {
+    return await withRecordBaseUrl(captured, async (baseUrl) => {
+      assertDeliveryCurrent(isCurrent);
+      const endpoint = { ...captured, url: baseUrl };
+      if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
+      const url = `${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/agents/spawn`;
+      const init: RequestInit = {
+        method: 'POST',
+        headers: {
+          ...activeLocaleHeaders(),
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${endpoint.token}`,
+        },
+        body,
+      };
+      const response =
+        endpoint.transport === GATEWAY_TRANSPORT
+          ? await encryptedGatewayFetch(url, init, 60_000, endpoint, isCurrent)
+          : await fetchWithin(60_000, 'Timed out waiting for the server.', url, init);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      const spawned = spawnedAgentFromResponse(await response.json());
+      if (!spawned) throw new Error('The server did not say which panel it made.');
+      // Once transmitted, retain the real outcome for history/recovery. The
+      // caller still owns deciding whether its current UI may be updated.
+      acknowledged = spawned;
+      return spawned;
+    });
+  } catch (failure) {
+    // A tunnel cleanup failure must not turn a known creation into an unknown
+    // outcome that invites another spawn. Never retry either kind of failure.
+    if (acknowledged) return acknowledged;
+    throw failure;
+  }
+}
+
 export async function spawnAgent(
   sessionId: string,
   request: AgentSpawnRequest

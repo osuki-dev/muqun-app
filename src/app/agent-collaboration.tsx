@@ -26,6 +26,7 @@ import {
 } from '@/lib/agent-collaboration';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
 import { AgentCommandSummary } from '@/components/agent-command-summary';
+import { AgentReferenceEditor } from '@/components/agent-reference-editor';
 
 export default function AgentCollaborationScreen() {
   const { t } = useLingui();
@@ -38,6 +39,7 @@ export default function AgentCollaborationScreen() {
   const [management, setManagement] = useState<string | null>(null);
   const {
     command,
+    references,
     originCwd,
     tasks,
     connectionMatches,
@@ -525,6 +527,7 @@ export default function AgentCollaborationScreen() {
                     }>{t`Run tests`}</Button>
                 </View>
               ) : null}
+              <AgentReferenceEditor references={references} disabled={busy} newAgent={newAgent} />
               <View style={[styles.contextOption, { borderColor: theme.colors.border }]}>
                 <View style={styles.grow}>
                   <Text variant="bodySmall">{t`Include current terminal output`}</Text>
@@ -556,15 +559,18 @@ export default function AgentCollaborationScreen() {
                 disabled={
                   !ready ||
                   busy ||
+                  references.picking ||
                   contextLoading ||
                   (!prompt.trim() && !command?.instructions) ||
                   (newAgent ? !kind : !selected || !canAssignToAgent(selected.status))
                 }
                 onPress={() => void assign()}>
                 {busy
-                  ? newAgent
-                    ? t`Starting assistant and sending…`
-                    : t`Sending task…`
+                  ? references.draft.images.some((image) => image.upload?.status === 'uploading')
+                    ? t`Uploading…`
+                    : newAgent
+                      ? t`Starting assistant and sending…`
+                      : t`Sending task…`
                   : newAgent
                     ? t`Start assistant and send`
                     : t`Send task`}
