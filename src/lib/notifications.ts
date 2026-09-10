@@ -27,14 +27,26 @@ import { notificationRoute } from '@/lib/notification-route';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import { useAppSettings } from '@/stores/app-settings';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
+import { useInAppNotifications } from '@/stores/in-app-notifications';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: useAppSettings.getState().notificationsEnabled,
-    shouldShowList: useAppSettings.getState().notificationsEnabled,
-  }),
+  handleNotification: async (notification) => {
+    const presentation = noticePresentation(
+      useAppSettings.getState().notificationsEnabled,
+      AppState.currentState === 'active'
+    );
+    if (presentation.inApp) {
+      const notice = noticeFromPush(notification.request.identifier, notification.request.content);
+      if (notice) useInAppNotifications.getState().enqueue(notice);
+    }
+    return {
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowBanner: presentation.system,
+      shouldShowList: presentation.system,
+    };
+  },
 });
 
 /**

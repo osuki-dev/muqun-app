@@ -6,8 +6,6 @@ import {
   canAssignToAgent,
   collaborationAvailability,
   collaborationAgents,
-  collaborationPrompt,
-  collaborationScope,
   collaborationSpawnOutcome,
   supportsCollaboration,
   tasksForSession,
@@ -23,7 +21,6 @@ import {
   loadSessions,
   loadAgentProfiles,
   readPaneOutput,
-  sendAgentText,
   spawnAgent,
   type AgentProfile,
   type HerdrEntity,
@@ -34,14 +31,17 @@ import { useAgentCollaboration } from '@/stores/agent-collaboration';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useCollaborationOutput } from '@/hooks/use-collaboration-output';
+import { collaborationDraftScope, collaborationTaskText } from '@/lib/quick-command-collaboration';
 export function useAgentCollaborationController(routeParams: CollaborationContext) {
   const { t } = useLingui();
   const router = useRouter();
-  const scope = collaborationScope(routeParams.serverId, routeParams.sessionId);
+  const scope = collaborationDraftScope(routeParams);
   const [initialDraft] = useState(() => useAgentCollaboration.getState().drafts[scope]);
   // Going to an assistant's terminal must not lose the unsent instructions
   // or silently change which terminal/project the assignment came from.
   const params = initialDraft?.context ?? routeParams;
+  const command = initialDraft?.command;
+  const instructions = command?.instructions;
   const { serverId, sessionId, paneId } = params;
   const allTasks = useAgentCollaboration((state) => state.tasks);
   const tasks = tasksForSession(allTasks, serverId, sessionId);
@@ -57,7 +57,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
   const [checkedAt, setCheckedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
-  const [form, setForm] = useState(Boolean(initialDraft));
+  const [form, setForm] = useState(Boolean(initialDraft) || Boolean(command));
   const [target, setTarget] = useState(initialDraft?.target ?? '');
   const [newAgent, setNewAgent] = useState(initialDraft?.newAgent ?? false);
   const [kind, setKind] = useState(initialDraft?.kind ?? '');
@@ -83,9 +83,18 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
   useEffect(() => {
     useAgentCollaboration.getState().saveDraft(
       scope,
-      prompt.trim()
+      prompt.trim() || (command && form)
         ? {
-            context: { serverId, sessionId, paneId, workspaceId, tabId, cwd },
+            context: {
+              serverId,
+              sessionId,
+              paneId,
+              workspaceId,
+              tabId,
+              cwd,
+              commandId: params.commandId,
+            },
+            command,
             prompt,
             target,
             newAgent,
@@ -107,6 +116,9 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
     newAgent,
     kind,
     recoveryPane,
+    command,
+    params.commandId,
+    form,
   ]);
 
   // The existing transport is scoped to the selected paired server. Never
@@ -253,7 +265,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
   }
 
   async function assign() {
-    if (submitting.current || !prompt.trim()) return;
+    if (submitting.current || (!prompt.trim() && !instructions)) return;
     submitting.current = true;
     setBusy(true);
     setNotice(null);
@@ -273,7 +285,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
       if (collaborationAvailability(health, sessionId, session.backend ?? 'herdr') !== 'ready') {
         throw new Error(t`Refresh to check Gateway and Herdr compatibility before assigning.`);
       }
-      const text = collaborationPrompt(prompt, includeContext ? context : '');
+      const text = collaborationTaskText(prompt, includeContext ? context : '', instructions);
       let destination = target;
       let name = selected?.name ?? target;
       let agentInstanceId: string | undefined;
@@ -315,9 +327,12 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
         if (!selected?.instanceId || field(live, 'instance_id') !== selected.instanceId) {
           throw new Error(t`This assistant is no longer ready. Refresh or choose another.`);
         }
-        dispatchAttempted = true;
-        await sendAgentText(sessionId, field(live, 'target') || target, text);
-        agentInstanceId = field(live, 'instance_id') || undefined;
+        // TODO: Send only through a backend-enforced instance-bound contract.
+        // A fresh lookup cannot prevent this mutable target being reassigned
+        // between verification and delivery. Keep the draft instead of guessing.
+        throw new Error(
+          t`Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual.`
+        );
       }
       const task: CollaborationTask = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -327,7 +342,9 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
         paneId: destination,
         agentName: name,
         ...(agentInstanceId ? { agentInstanceId } : {}),
-        prompt: prompt.trim(),
+        prompt: command
+          ? `${command.name}${prompt.trim() ? `: ${prompt.trim()}` : ''}`
+          : prompt.trim(),
         createdAt: Date.now(),
       };
       useAgentCollaboration.getState().add(task);
@@ -372,6 +389,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
   }
 
   return {
+    command,
     originCwd: params.cwd,
     tasks,
     connectionMatches,
