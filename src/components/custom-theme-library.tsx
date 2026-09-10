@@ -301,15 +301,24 @@ export function CustomThemeLibrary({
           </View>
         </View>
       ) : null}
-      {error ? (
-        <Text selectable accessibilityRole="alert" color={colors.danger}>
-          {error}
-        </Text>
-      ) : null}
-      {notice ? (
-        <Text accessibilityLiveRegion="polite" color={colors.text}>
-          {notice}
-        </Text>
+      {error || notice ? (
+        <View
+          testID="theme-status-message"
+          style={{
+            padding: 12,
+            borderRadius: 12,
+            backgroundColor: background(colors.surfaceRaised),
+          }}>
+          {error ? (
+            <Text selectable accessibilityRole="alert" color={colors.danger}>
+              {error}
+            </Text>
+          ) : (
+            <Text selectable accessibilityLiveRegion="polite" color={colors.text}>
+              {notice}
+            </Text>
+          )}
+        </View>
       ) : null}
       {candidate ? (
         <View style={{ gap: 12 }}>

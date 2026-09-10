@@ -20,6 +20,11 @@ fill "id=theme-json-input" "{\"format\":\"muqun-theme\",\"schemaVersion\":1,\"id
 # section settle
 wait stable 400 5000
 
+# section applied-status
+is visible "text=\"Theme applied\""
+is visible "id=\"theme-status-message\""
+screenshot dist/theme-applied-status.png
+
 # section link-import
 press "id=theme-import-link"
 is visible "id=theme-link-input"
