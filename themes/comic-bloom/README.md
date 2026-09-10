@@ -32,7 +32,11 @@ Scenes retain their full resolution. Resampling changes dimensions, not artwork 
 
 The flagship uses the shared shell rather than a separate Home banner. Navigation,
 composer, command tabs, shared cards, and action surfaces have matching image slots.
-Terminal cells remain opaque. Interactive surfaces limit artwork opacity to preserve
+The adjusted ANSI palette supports an 85% minimum terminal background opacity in
+both modes while protecting normal text, links, the cursor, and all declared ANSI
+foregrounds against the default background. The default remains opaque; explicit
+ANSI background cells do not become transparent. Interactive surfaces share the
+remaining contrast budget between their color fill and artwork to preserve
 token contrast; selected, disabled, and loading controls retain their native states.
 The optional banner remains available to other themes but is not used by this pack.
 The earlier paper and garden assets are retained as source explorations, not packaged.

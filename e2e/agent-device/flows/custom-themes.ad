@@ -20,15 +20,21 @@ fill "id=theme-json-input" "{\"format\":\"muqun-theme\",\"schemaVersion\":1,\"id
 # section settle
 wait stable 400 5000
 
+# section format-json
+press "id=theme-format-json"
+is visible "id=theme-undo-format"
+press "id=theme-undo-format"
+
 # section opacity-enable
 press "id=theme-terminal-opacity"
 wait stable 400 5000
-is visible "text=50%"
+is visible "text=99%"
 
 # section opacity-adjust
-press "id=theme-surface-opacity"
-wait stable 400 5000
-is visible "text=50%"
+is visible "${TARGET}"
+
+# section hidden
+is hidden "${TARGET}"
 
 # section opacity-reset
 press "id=theme-appearance-reset"

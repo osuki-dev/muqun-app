@@ -31,9 +31,13 @@ state receive coordinated artwork. Textures use `cover`, never repeated tiles.
 The night primary button uses pale periwinkle artwork with dark label ink.
 
 The home name and logo remain Muqun. No separate home banner is installed.
-Terminal backgrounds remain opaque by default; the App's transparent-terminal
-control is an explicit user preference. Artwork on controls is contrast-limited
-over an opaque color base, while scene images remain full-strength. Disabled,
+Terminal backgrounds remain opaque by default. The adjusted ANSI palette supports
+an 85% minimum terminal background opacity in both modes, protecting normal text,
+links, the cursor, and ANSI entries already readable against the default background.
+Light ANSI 15 intentionally remains near-white and is not covered by that guarantee;
+explicit ANSI background cells are also independent of the default-plane setting.
+Artwork on controls shares the remaining contrast budget with their color fill,
+while scene images remain full-strength. Disabled,
 selected, and loading controls preserve their normal interaction states.
 
 ## Artwork sources and runtime assets

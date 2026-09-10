@@ -25,6 +25,9 @@ scroll down --pixels 320
 # section s8
 press "${TARGET}"
 
+# section scroll-up
+scroll up --pixels 320
+
 # section reset-theme
 press "role=radiobutton label=\"Osuki\""
 wait stable 400 5000

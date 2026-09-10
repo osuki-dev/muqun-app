@@ -178,6 +178,12 @@
         "run": "flows/custom-themes.ad#press"
       },
       { "run": "flows/custom-themes.ad#input" },
+      { "run": "flows/custom-themes.ad#format-json" },
+      {
+        "target": { "id": "theme-undo-format" },
+        "mode": "hidden",
+        "run": "flows/custom-themes.ad#hidden"
+      },
       {
         "target": { "id": "theme-preview-json" },
         "mode": "press",
@@ -210,7 +216,16 @@
         "run": "flows/custom-themes.ad#scroll"
       },
       { "run": "flows/custom-themes.ad#opacity-enable" },
-      { "run": "flows/custom-themes.ad#opacity-adjust" },
+      {
+        "target": { "text": "Minimum opacity for readable text: 100%" },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#opacity-adjust"
+      },
+      {
+        "target": { "text": "Some theme colors need more contrast" },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#visible"
+      },
       { "run": "flows/custom-themes.ad#home-visibility" },
       {
         "target": { "id": "theme-appearance-reset" },
@@ -2880,23 +2895,36 @@
         "target": {
           "text": "Catppuccin"
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s10"
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
           "text": "Dracula"
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s11"
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
           "text": "Osuki",
           "selected": true
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s12"
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/settings.ad#scroll-up"
+      },
+      {
+        "target": { "text": "Catppuccin" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
@@ -3392,8 +3420,17 @@
           "text": "Catppuccin",
           "selected": true
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s80"
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
+      },
+      {
+        "target": { "text": "Osuki", "role": "radiobutton" },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/settings.ad#scroll-up"
       },
       {
         "target": {
