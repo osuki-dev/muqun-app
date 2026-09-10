@@ -29,3 +29,15 @@ test('every supported artwork slot has a named runtime consumer', () => {
     }
   }
 });
+
+test('theme operation messages retain a shared readable surface without fading their text', () => {
+  const source = readFileSync('src/components/custom-theme-library.tsx', 'utf8');
+  const message = source.match(/testID="theme-status-message"[\s\S]*?<\/View>/)?.[0];
+  expect(message).toBeDefined();
+  expect(message).toContain('backgroundColor: background(colors.surfaceRaised)');
+  expect(message).toContain('accessibilityRole="alert"');
+  expect(message).toContain('accessibilityLiveRegion="polite"');
+  expect(message).toContain('{error}');
+  expect(message).toContain('{notice}');
+  expect(/\bopacity\s*:/.test(message ?? '')).toBe(false);
+});

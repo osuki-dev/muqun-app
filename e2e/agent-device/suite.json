@@ -354,7 +354,7 @@
           "text": "Theme applied"
         },
         "mode": "visible",
-        "run": "flows/custom-themes.ad#visible"
+        "run": "flows/custom-themes.ad#applied-status"
       },
       {
         "target": {
