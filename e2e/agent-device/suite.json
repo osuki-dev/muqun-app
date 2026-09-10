@@ -2882,7 +2882,21 @@
         "run": "flows/settings.ad#s8"
       },
       {
+        "target": { "id": "settings-selection:(on|off):theme-osuki" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
+      },
+      {
         "run": "flows/settings.ad#reset-theme"
+      },
+      {
+        "target": { "id": "settings-selection:(on|off):theme-ayu" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
@@ -3409,6 +3423,13 @@
         "run": "flows/settings.ad#s78"
       },
       {
+        "target": { "id": "settings-selection:(on|off):theme-ayu" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
+      },
+      {
         "target": {
           "text": "Ayu"
         },
@@ -3427,7 +3448,7 @@
         "run": "flows/settings.ad#s7"
       },
       {
-        "target": { "text": "Osuki", "role": "radiobutton" },
+        "target": { "id": "settings-selection:(on|off):theme-osuki" },
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
