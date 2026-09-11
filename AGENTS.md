@@ -93,6 +93,21 @@ NODE_USE_ENV_PROXY=1 node node_modules/react-native-enriched-markdown/postinstal
 The same variable belongs on any `bunx expo prebuild` or CI install step that
 runs behind a proxy.
 
+An EAS **local** build is one of those steps, and it is easy to miss because it
+does not look like an install. `eas build --local` copies the project to a temp
+directory and runs `bun install --frozen-lockfile` there, in an environment that
+is not the shell you typed in. Without the variable that install reaches the
+vendor step, fails to fetch, and `check-vendored-ratex.ts` stops the build in the
+`INSTALL_DEPENDENCIES` phase -- which is the guard working, but a long way from
+the Android output you were waiting for, and on a platform that does not use
+RaTeX at all. So every `*:local` build script in `package.json` now carries
+`NODE_USE_ENV_PROXY=1` itself rather than relying on the caller's environment.
+
+One more thing about that failure: when a local build fails, `eas-cli` prints
+the job payload it was invoked with, and that payload contains the Android
+keystore and its passwords in base64. Do not paste a failed local-build log
+anywhere, and delete any file it was captured into.
+
 ## End-to-end test gate
 
 Optional Gateway features use capability detection, not a guessed Gateway version.
