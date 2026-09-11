@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useAppActive } from '@/hooks/use-app-active';
 import { PULSE_PERIOD, STATE_POP_SCALE, timing } from '@/lib/motion';
 
 /**
@@ -58,6 +59,7 @@ export function StatusDot({
   const reduceMotion = useReducedMotion();
   const pop = useSharedValue(1);
   const ripple = useSharedValue(0);
+  const appActive = useAppActive();
 
   // Keyed on the two things that make this a different status, so a re-render
   // that changes neither -- a parent list re-sorting, a clock tick -- does not
@@ -71,7 +73,10 @@ export function StatusDot({
   }, [color, filled, pop, reduceMotion]);
 
   useEffect(() => {
-    if (!pulse || reduceMotion) {
+    // A ripple nobody can see is still a worklet on the UI thread every frame,
+    // and there is one of these per live server row. Home stays mounted under
+    // the terminal, so without this they keep running for as long as the app.
+    if (!pulse || reduceMotion || !appActive) {
       cancelAnimation(ripple);
       ripple.value = 0;
       return;
@@ -79,7 +84,7 @@ export function StatusDot({
     ripple.value = 0;
     ripple.value = withRepeat(withTiming(1, timing(PULSE_PERIOD)), -1, false);
     return () => cancelAnimation(ripple);
-  }, [pulse, reduceMotion, ripple]);
+  }, [appActive, pulse, reduceMotion, ripple]);
 
   const dotStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
   const rippleStyle = useAnimatedStyle(() => ({
