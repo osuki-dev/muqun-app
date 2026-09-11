@@ -116,6 +116,50 @@ const slotSchema = imageSchema
   .nullable()
   .optional();
 
+/**
+ * The chrome glyphs a pack may replace.
+ *
+ * Named for the role, not for the component that happens to draw it today: a
+ * pack written against `chrome.back` keeps working when the header is rebuilt,
+ * and a name is the one thing in a published theme that can never be corrected
+ * later.
+ *
+ * The app reads only these names. The schema below deliberately accepts others.
+ */
+export const THEME_ICONS = ['chrome.back', 'chrome.send'] as const;
+export type ThemeIconName = (typeof THEME_ICONS)[number];
+
+const iconSchema = z.strictObject({
+  asset: identifier,
+  /**
+   * `template` takes the glyph's shape from the image's alpha and its colour
+   * from the theme, so one drawing serves light and dark. `original` keeps the
+   * image's own colours, which a mark with fixed branding wants and a plain
+   * arrow does not -- an arrow in fixed black disappears in dark mode.
+   *
+   * Explicit from the first release on purpose. Adding it later with a default
+   * would silently change how every already-published pack renders.
+   */
+  render: z.enum(['template', 'original']).default('template'),
+});
+
+/**
+ * Deliberately open, and the only part of this schema that is.
+ *
+ * Everything else is a `strictObject`, so an unknown key fails the whole
+ * manifest -- which is right for colours, where a typo is a mistake, and wrong
+ * here. Icons are the one part of a pack that is already defined to be optional:
+ * a missing glyph falls back to the built-in one, silently. "A name this build
+ * does not know" is therefore the same situation as "not supplied", and it is
+ * the situation a reader is in whenever their app is older than the pack they
+ * were sent. Rejecting the entire theme for it would make every new glyph a
+ * breaking change for everyone who has not updated yet.
+ *
+ * `muqun-theme check` reports unrecognised names so an author still hears about
+ * a typo -- just as a warning, where it belongs, rather than as a refusal.
+ */
+export const iconsSchema = z.record(z.string(), iconSchema.nullable().optional());
+
 export const decorationSchema = z.strictObject({
   'shell.background': slotSchema,
   'home.background': slotSchema,
@@ -159,6 +203,7 @@ export const themeManifestSchema = z.strictObject({
   materials: themeMaterialsSchema.optional(),
   assets: z.record(identifier, assetSchema).optional(),
   decoration: decorationSchema.optional(),
+  icons: iconsSchema.optional(),
   variantDecorations: z
     .strictObject({
       light: decorationSchema.optional(),

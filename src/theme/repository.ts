@@ -208,6 +208,25 @@ export class ThemeRepository {
     validateInstalledAssets(manifest, installedAssets);
     if (Object.values(installedAssets).some((uri) => !this.assetAvailable(uri)))
       throw new Error('Theme images must be stored in the app theme library');
+    // Re-importing a theme is iteration, not a second theme. Replacing in place
+    // keeps the installation id -- so a theme that is currently applied stays
+    // applied and simply becomes the new version -- and keeps the appearance
+    // preferences, which are the reader's choices about this theme rather than
+    // anything the author shipped. Appending instead filled the library with
+    // same-named rows that nothing could tell apart.
+    const existing = this.state.themes.find((theme) => theme.manifest.id === manifest.id);
+    if (existing) {
+      const replaced: InstalledTheme = {
+        ...existing,
+        manifest,
+        assets: { ...installedAssets },
+      };
+      this.commit({
+        ...this.state,
+        themes: this.state.themes.map((theme) => (theme.id === existing.id ? replaced : theme)),
+      });
+      return cloneThemeData(replaced);
+    }
     if (this.state.themes.length >= MAX_THEMES)
       throw new Error('Remove a saved theme before adding another');
     const id = this.allocateId();

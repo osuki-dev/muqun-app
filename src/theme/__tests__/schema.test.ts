@@ -14,6 +14,9 @@ import {
   THEME_LIMITS,
 } from '@/theme/schema';
 
+import { auditThemeContrast } from '@/theme/contrast';
+import { themeOpacityPolicy } from '@/theme/opacity-policy';
+
 const parse = (value: unknown) => parseThemeManifest(JSON.stringify(value));
 
 describe('theme v1 contract', () => {
@@ -22,7 +25,30 @@ describe('theme v1 contract', () => {
     expect(parse(theme)).toEqual(theme);
     expect(Object.keys(theme.variants.light.colors)).toHaveLength(17);
     expect(theme.variants.dark.terminal.ansi).toHaveLength(16);
-    expect(theme.variants.light.colors.primarySubtle).toBe('#FF5A4A24');
+    // An alpha-carrying hex is the one colour form a round trip could drop.
+    expect(/^#[\da-fA-F]{8}$/.test(theme.variants.light.colors.primarySubtle)).toBe(true);
+  });
+
+  test('the starter can actually be applied, which is what three places promise', () => {
+    // `theme init` says "already passes the contrast gate", the spec says
+    // "complete, valid ... adapt it", and `authoring.ts` says the seed meets the
+    // gate. All three were wrong: the palette came from a built-in, and built-ins
+    // are never put through `auditThemeContrast` -- only custom packs are, on
+    // apply. The seed failed in seventeen places and could not be applied at all,
+    // so the documented first step of authoring handed back something unusable.
+    expect(auditThemeContrast(createThemeStarter())).toEqual([]);
+  });
+
+  test('neither mode is pinned at full opacity', () => {
+    // A baseline failure forces the floor to 1 and the slider to nothing. This
+    // is the same property as above read through the policy, and it is the one
+    // an author sees first.
+    const starter = createThemeStarter();
+    for (const mode of ['light', 'dark'] as const) {
+      const policy = themeOpacityPolicy(starter.variants[mode]);
+      expect(policy.surface.baselineIssues).toEqual([]);
+      expect(policy.terminal.baselineIssues).toEqual([]);
+    }
   });
 
   for (const mode of ['light', 'dark'] as const) {
@@ -122,7 +148,11 @@ describe('theme v1 contract', () => {
 
   test('skill carries the exact current schema and a parseable complete template', () => {
     const prompt = createThemeAuthoringPrompt();
-    expect(new TextEncoder().encode(prompt).length).toBeLessThan(12 * 1024);
+    // Headroom, not a hard edge: the delivered task is capped at 64 KiB
+    // (`collaborationTaskText`), and this prompt is only one part of it -- the
+    // reader's own words, the terminal context and any reference JSON share
+    // that budget. 16 KiB keeps three quarters of it free.
+    expect(new TextEncoder().encode(prompt).length).toBeLessThan(16 * 1024);
     expect(prompt).toContain(JSON.stringify(themeJsonSchema()));
     const template = prompt.split('```muqun-theme\n')[1].split('\n```')[0];
     expect(parseThemeManifest(template)).toEqual(createThemeStarter());

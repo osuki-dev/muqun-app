@@ -6,6 +6,15 @@ import { ThemeRepository } from '@/theme/repository';
 import { parseThemeManifest } from '@/theme/schema';
 import { cloneThemeData } from '@/theme/clone';
 
+/**
+ * A second theme needs a second author id. Re-importing an id replaces the
+ * installation it names, so two starters that differ only in their colours
+ * would be one row, not two.
+ */
+function starterWithId(id: string): ReturnType<typeof createThemeStarter> {
+  return { ...createThemeStarter(), id, name: id };
+}
+
 function setup() {
   let value: string | undefined;
   let fail = false;
@@ -130,16 +139,67 @@ test('contrast calculation and complete starter readability', () => {
   expect(auditThemeContrast(createThemeStarter())).toEqual([]);
 });
 
-test('save does not apply, duplicate author IDs create independent installations', () => {
+test('save does not apply, and re-importing an author ID replaces that installation', () => {
   const { repository } = setup();
   const text = JSON.stringify(createThemeStarter());
   const a = repository.save(text);
   const b = repository.save(text);
-  expect(a.id).not.toBe(b.id);
+  // Re-importing is iteration, not a second theme: one row, one installation id.
+  expect(b.id).toBe(a.id);
+  expect(repository.snapshot().themes).toHaveLength(1);
   expect(repository.active()).toBeNull();
   repository.apply({ kind: 'custom', id: a.id });
   expect(repository.active()?.installationId).toBe(a.id);
   expect(repository.active()).toBe(repository.active());
+});
+
+test('a different author ID is still its own installation', () => {
+  const { repository } = setup();
+  const starter = createThemeStarter();
+  const a = repository.save(JSON.stringify(starter));
+  const b = repository.save(JSON.stringify({ ...starter, id: 'other-theme', name: 'Other' }));
+  expect(b.id).not.toBe(a.id);
+  expect(repository.snapshot().themes).toHaveLength(2);
+});
+
+test('replacing a theme carries its new manifest and drops the old images', () => {
+  const { repository } = setup();
+  const starter = createThemeStarter();
+  const first = repository.save(JSON.stringify(starter));
+  expect(first.manifest.name).toBe(starter.name);
+  const renamed = { ...starter, name: 'Second draft' };
+  const second = repository.save(JSON.stringify(renamed));
+  expect(second.manifest.name).toBe('Second draft');
+  expect(repository.snapshot().themes[0].manifest.name).toBe('Second draft');
+  // The replacement's asset set is the new one outright, not a merge.
+  expect(repository.snapshot().themes[0].assets).toEqual({});
+});
+
+test('a theme that is applied stays applied when it is re-imported', () => {
+  const { repository } = setup();
+  const starter = createThemeStarter();
+  const installed = repository.save(JSON.stringify(starter));
+  repository.apply({ kind: 'custom', id: installed.id });
+  repository.save(JSON.stringify({ ...starter, name: 'Updated live' }));
+  // The selection points at the installation, so an update lands on screen
+  // rather than orphaning the choice the reader already made.
+  expect(repository.active()?.installationId).toBe(installed.id);
+  expect(repository.active()?.manifest.name).toBe('Updated live');
+});
+
+test('the reader appearance preferences survive a re-import', () => {
+  const { repository } = setup();
+  const starter = createThemeStarter();
+  const installed = repository.save(JSON.stringify(starter));
+  repository.setTerminalBackgroundOpacity(installed.id, 0.9);
+  repository.setHideHomeLogo(installed.id, true);
+  repository.save(JSON.stringify({ ...starter, name: 'Next' }));
+  const [theme] = repository.snapshot().themes;
+  // Opacity and home identity are the reader's choices about this theme, not
+  // anything the author shipped, so a new version must not silently reset them.
+  expect(theme.terminalBackgroundOpacity).toBe(0.9);
+  expect(theme.hideHomeLogo).toBe(true);
+  expect(theme.manifest.name).toBe('Next');
 });
 
 test('failed persistence never changes current appearance', () => {
@@ -175,7 +235,7 @@ test('unreadable themes can be saved for repair but not activated', () => {
 
 test('hydration discards an unreadable undo target without deleting the saved theme', () => {
   const { repository, storage } = setup();
-  const theme = createThemeStarter();
+  const theme = starterWithId('unreadable-theme');
   theme.variants.dark.colors.text = theme.variants.dark.colors.background;
   const unreadable = repository.save(JSON.stringify(theme));
   const current = repository.save(JSON.stringify(createThemeStarter()));
@@ -195,7 +255,7 @@ test('hydration discards an unreadable undo target without deleting the saved th
 
 test('an unreadable persisted selection recovers to a readable previous selection', () => {
   const { repository, storage } = setup();
-  const theme = createThemeStarter();
+  const theme = starterWithId('unreadable-theme');
   theme.variants.light.colors.text = theme.variants.light.colors.background;
   const unreadable = repository.save(JSON.stringify(theme));
   const previous = repository.save(JSON.stringify(createThemeStarter()));
@@ -211,7 +271,7 @@ test('an unreadable persisted selection recovers to a readable previous selectio
 
 test('removing the active theme cannot restore an unreadable persisted previous theme', () => {
   const { repository, storage } = setup();
-  const theme = createThemeStarter();
+  const theme = starterWithId('unreadable-theme');
   theme.variants.dark.colors.text = theme.variants.dark.colors.background;
   const unreadable = repository.save(JSON.stringify(theme));
   const current = repository.save(JSON.stringify(createThemeStarter()));
@@ -275,7 +335,7 @@ test('color export is parseable and excludes image paths, source links and home 
 test('removal and corrupt persistence fall back without discarding unrelated valid themes', () => {
   const { repository, storage } = setup();
   const a = repository.save(JSON.stringify(createThemeStarter()));
-  const b = repository.save(JSON.stringify(createThemeStarter()));
+  const b = repository.save(JSON.stringify(starterWithId('second-theme')));
   repository.apply({ kind: 'custom', id: a.id });
   repository.apply({ kind: 'custom', id: b.id });
   repository.remove(b.id);

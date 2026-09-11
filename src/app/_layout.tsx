@@ -31,6 +31,7 @@ import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
 import { useAppSettings } from '@/stores/app-settings';
 import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
+import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
 
 /**
  * One library warning, silenced, because LogBox answers it by covering the
@@ -56,6 +57,17 @@ import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web implementation.']);
 
 SplashScreen.preventAutoHideAsync();
+
+/**
+ * Listens for a theme file handed to the app from outside it.
+ *
+ * A component rather than a call in `RootLayout` so the listener mounts with
+ * the tree it navigates into, and renders nothing of its own.
+ */
+function ThemeFileOpener() {
+  useThemeFileOpen();
+  return null;
+}
 
 export default function RootLayout() {
   const hydrateSettings = useAppSettings((state) => state.hydrate);
@@ -179,11 +191,19 @@ function RootContent() {
       <ToastProvider maxWidth={480}>
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
         <AnimatedSplashOverlay />
+        <ThemeFileOpener />
         <AppLockGate>
           <Stack
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: screenBackground },
+              // A screen nobody is looking at should not be rendering. Home
+              // sits under the terminal for as long as the terminal is open,
+              // and without this its artwork layers and its one pulse per live
+              // server card keep the UI thread at vsync the whole time. Work
+              // that must outlive a blur already lives in a store rather than
+              // in a screen, so nothing here depends on rendering while hidden.
+              freezeOnBlur: true,
             }}>
             <Stack.Screen name="(drawer)" />
             {/* Settings rises from the bottom like the terminal, over the home

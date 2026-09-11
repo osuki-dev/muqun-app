@@ -2,7 +2,7 @@ import { resolveThemePack } from '@/constants/theme-packs';
 import { parseThemeManifest, themeJsonSchema, type ThemeManifest } from '@/theme/schema';
 
 export const THEME_SKILL_ID = 'muqun-theme';
-export const THEME_SKILL_VERSION = '1.0.3';
+export const THEME_SKILL_VERSION = '1.1.0';
 
 /** Bundled, English-only instructions. Never supplied by an imported theme. */
 export const THEME_AUTHORING_INSTRUCTIONS = `# Create a Muqun theme
@@ -43,6 +43,13 @@ If supplying SHA-256, compute it from the actual file bytes.
   navigation/composer/actions.background decorate their matching chrome;
   cards.decoration, buttons.primary.background, and tabs.background decorate controls without
   replacing labels or state. Use a square, contain-fit emptyState.illustration.
+- icons replaces a chrome glyph. Known names are chrome.back and chrome.send; an
+  unknown name is ignored rather than failing the theme, so an older app simply keeps
+  its own glyph. render is "template" by default -- the drawing supplies the shape
+  through its alpha and the theme supplies the colour, so one image is correct in light
+  and dark. Use "original" only for a mark whose colours are fixed; a plain arrow in
+  fixed black disappears in dark mode. A glyph is never required: whatever is absent
+  stays the built-in icon.
 - Keep default home name/logo unless asked. Hide either independently; hiding name also hides
   tagline, hiding both removes the block. This never renames the launcher app.
 - materials selects auto, solid, or glass per supported role. Auto uses platform defaults
@@ -96,9 +103,37 @@ export function createThemeStarter(): ThemeManifest {
     },
   });
   const light = variant('light');
-  // The authoring seed meets the custom-pack contrast gate without changing
-  // the published built-in Osuki palette.
+  const dark = variant('dark');
+  /*
+   * Osuki is a built-in, and built-ins are not put through `auditThemeContrast`
+   * -- only a custom pack is, on apply. Handed over unchanged the palette
+   * therefore fails that gate in seventeen places and cannot be applied at all,
+   * which made "adapt the starter" the first step of an authoring flow that
+   * could not finish. These are the smallest edits that clear it.
+   *
+   * The accents move rather than the surfaces: an author expects to recolour a
+   * theme, not to discover that the paper it is printed on was the problem.
+   * Both `*Subtle` tints are cut hardest because a tint sits between the ink
+   * and the surface and spends the contrast budget twice.
+   */
   light.terminal = { ...light.terminal, link: '#3455DC', cursor: '#C54337' };
+  light.colors = {
+    ...light.colors,
+    textSubtle: '#5A6272',
+    // The accents above are dark enough that the label on them has to invert.
+    onPrimary: '#FFFFFF',
+    primary: '#A62A18',
+    primarySubtle: '#A62A180F',
+    danger: '#9E1F14',
+    dangerSubtle: '#9E1F140F',
+    success: '#177A53',
+    warning: '#8A5710',
+  };
+  dark.colors = {
+    ...dark.colors,
+    primarySubtle: '#FF5A4A1F',
+    dangerSubtle: '#F2554A14',
+  };
   return parseThemeManifest(
     JSON.stringify({
       format: 'muqun-theme',
@@ -106,7 +141,7 @@ export function createThemeStarter(): ThemeManifest {
       id: 'my-theme',
       name: 'My theme',
       version: '1.0.0',
-      variants: { light, dark: variant('dark') },
+      variants: { light, dark },
       homeIdentity: { name: { mode: 'default' }, logo: { mode: 'default' } },
     })
   );

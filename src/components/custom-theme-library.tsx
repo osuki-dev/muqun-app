@@ -4,10 +4,11 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View } from 'react-native';
-import { Check, ChevronRight, MoreHorizontal, X } from 'lucide-react-native';
+import { Check, ChevronRight, MoreHorizontal, Trash2, X } from 'lucide-react-native';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
 import { ThemeLinkImport } from '@/components/theme-link-import';
+import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { effectiveThemeManifest } from '@/theme/repository';
@@ -60,6 +61,10 @@ export function CustomThemeLibrary({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Copying a dozen images into permanent storage reports nothing on its own.
+  const [step, setStep] = useState<'installing' | null>(null);
+  // Removal reachable from the list, without opening the theme to find it.
+  const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
   const legacyTheme = useAppSettings((state) => state.themePack);
@@ -131,20 +136,34 @@ export function CustomThemeLibrary({
         setError(cause instanceof Error ? cause.message : t`Something went wrong`);
     } finally {
       pending.current = false;
-      if (mounted.current) setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+        setStep(null);
+      }
     }
   }
 
   async function save(apply: boolean) {
     if (!candidate) return;
-    const installedAssets = candidate.id ? undefined : await candidate.prepared?.install();
+    let installedAssets: Record<string, string> | undefined;
+    if (!candidate.id && candidate.prepared) {
+      setStep('installing');
+      installedAssets = await candidate.prepared.install();
+    }
     if (!mounted.current) return;
     const store = useThemeLibrary.getState();
     const id = candidate.id ?? store.save(JSON.stringify(candidate.manifest), installedAssets).id;
     // Retain the installed identity even if a subsequent activation write fails.
     setCandidate({ ...candidate, id });
-    if (apply) store.apply({ kind: 'custom', id });
-    setNotice(apply ? t`Theme applied` : t`Theme saved`);
+    if (apply) {
+      store.apply({ kind: 'custom', id });
+      // Applying is a confirmation, exactly as choosing a built-in pack is:
+      // write first, then leave. Holding the screen open behind a notice read
+      // as the app having ignored the tap.
+      closePreview();
+      return;
+    }
+    setNotice(t`Theme saved`);
   }
 
   return (
@@ -300,6 +319,9 @@ export function CustomThemeLibrary({
               }}>{t`Cancel`}</Button>
           </View>
         </View>
+      ) : null}
+      {step ? (
+        <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
       ) : null}
       {error || notice ? (
         <View
@@ -517,44 +539,94 @@ export function CustomThemeLibrary({
         <View style={{ gap: 8 }}>
           <Text variant="bodySmall">{t`My themes`}</Text>
           {library.themes.map((installed) => (
-            <PressableScale
-              key={installed.id}
-              accessibilityRole="button"
-              accessibilityLabel={installed.manifest.name}
-              disabled={busy}
-              onPress={() => {
-                const next = {
-                  manifest: installed.manifest,
-                  id: installed.id,
-                  assets: installed.assets,
-                };
-                if (onOpenCandidate) onOpenCandidate(next);
-                else setCandidate(next);
-                setError(null);
-                setNotice(null);
-                setEditing(false);
-                setActionsOpen(false);
-                setImportOpen(false);
-              }}
+            <View key={installed.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={installed.manifest.name}
+                // The row and its remove button both carry the theme's name, so
+                // the name alone cannot name the row. The manifest id is the
+                // stable handle a test can hold.
+                testID={`theme-row-${installed.manifest.id}`}
+                disabled={busy}
+                onPress={() => {
+                  const next = {
+                    manifest: installed.manifest,
+                    id: installed.id,
+                    assets: installed.assets,
+                  };
+                  if (onOpenCandidate) onOpenCandidate(next);
+                  else setCandidate(next);
+                  setError(null);
+                  setNotice(null);
+                  setEditing(false);
+                  setActionsOpen(false);
+                  setImportOpen(false);
+                }}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: 12,
+                  borderRadius: 12,
+                  backgroundColor: background(colors.surfaceRaised),
+                }}>
+                <ThemePaletteStrip pack={installed.manifest.variants} />
+                <Text variant="bodySmall" numberOfLines={1} style={{ flex: 1, minWidth: 0 }}>
+                  {installed.manifest.name}
+                </Text>
+                {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
+                  <Check size={18} color={colors.primary} />
+                ) : (
+                  <ChevronRight size={18} color={colors.textMuted} />
+                )}
+              </PressableScale>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Remove ${installed.manifest.name}`}
+                testID={`theme-remove-${installed.id}`}
+                disabled={busy}
+                onPress={() => {
+                  setPendingRemoval(installed.id);
+                  setError(null);
+                  setNotice(null);
+                }}
+                style={{ padding: 12 }}>
+                <Trash2 size={18} color={colors.textMuted} />
+              </PressableScale>
+            </View>
+          ))}
+          {pendingRemoval ? (
+            <View
+              testID="theme-list-remove-confirm"
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
+                gap: 8,
                 padding: 12,
-                borderRadius: 12,
+                borderRadius: 16,
                 backgroundColor: background(colors.surfaceRaised),
               }}>
-              <ThemePaletteStrip pack={installed.manifest.variants} />
-              <Text variant="bodySmall" numberOfLines={1} style={{ flex: 1, minWidth: 0 }}>
-                {installed.manifest.name}
-              </Text>
-              {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
-                <Check size={18} color={colors.primary} />
-              ) : (
-                <ChevronRight size={18} color={colors.textMuted} />
-              )}
-            </PressableScale>
-          ))}
+              <Text>{t`Remove this theme?`}</Text>
+              <Text
+                variant="bodySmall"
+                color={colors.textMuted}>{t`The theme will be removed from this device`}</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Button
+                  disabled={busy}
+                  testID="theme-list-confirm-remove"
+                  onPress={() =>
+                    void perform(() => {
+                      useThemeLibrary.getState().remove(pendingRemoval);
+                      setPendingRemoval(null);
+                    })
+                  }>{t`Remove`}</Button>
+                <Button
+                  disabled={busy}
+                  variant="ghost"
+                  onPress={() => setPendingRemoval(null)}>{t`Cancel`}</Button>
+              </View>
+            </View>
+          ) : null}
         </View>
       ) : null}
       {browsing ? children : null}

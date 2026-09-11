@@ -33,7 +33,10 @@ const shareFile = createThemeFileSharer({
   share: (uri, packaged) =>
     Sharing.shareAsync(uri, {
       mimeType: packaged ? 'application/zip' : 'application/json',
-      UTI: packaged ? 'public.zip-archive' : 'public.json',
+      // The app declares `dev.osuki.muqun.theme` and owns the extension, so a
+      // shared pack says what it is rather than arriving as an anonymous zip
+      // the receiving device has no handler for.
+      UTI: packaged ? 'dev.osuki.muqun.theme' : 'public.json',
     }),
 });
 
@@ -50,21 +53,81 @@ export async function pickThemeManifest(): Promise<ThemeFilePreview | null> {
   });
   if (result.canceled) return null;
   const asset = result.assets[0];
-  const file = new File(asset.uri);
+  return readThemeFile(asset.uri, asset.name, asset.size);
+}
+
+/** Enough of the head to recognise a signature, and not one byte more. */
+async function firstBytes(file: File, count: number): Promise<Uint8Array> {
+  const reader = file.readableStream().getReader();
   try {
-    const packaged = /\.(muqun-theme|zip)$/i.test(asset.name);
-    const limit = packaged ? THEME_LIMITS.packageBytes : THEME_LIMITS.manifestBytes;
-    if (asset.size !== undefined && asset.size > limit)
+    const head = new Uint8Array(count);
+    let filled = 0;
+    while (filled < count) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const take = Math.min(count - filled, value.length);
+      head.set(value.subarray(0, take), filled);
+      filled += take;
+    }
+    return head.subarray(0, filled);
+  } finally {
+    await reader.cancel();
+  }
+}
+
+/** The local file header every ZIP begins with, and a packaged theme is a ZIP. */
+function isZipArchive(bytes: Uint8Array): boolean {
+  return (
+    bytes.length >= 4 &&
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    bytes[2] === 0x03 &&
+    bytes[3] === 0x04
+  );
+}
+
+/**
+ * A theme file the reader has chosen, wherever they chose it.
+ *
+ * The picker is one way in; a file handed to the app from Mail, AirDrop or the
+ * Files app is another, and both must apply the same limits and the same strict
+ * validation. Lifting this out of the picker is what keeps the second route
+ * from quietly becoming a laxer one.
+ */
+export async function readThemeFile(
+  uri: string,
+  /** The picker knows it; an Android `content://` hand-off often does not. */
+  name?: string,
+  reportedSize?: number
+): Promise<ThemeFilePreview> {
+  const file = new File(uri);
+  try {
+    // A name is a hint and the bytes are the fact. Android hands over a
+    // `content://` URI whose path carries no filename at all, so deciding the
+    // form by extension alone would work on one platform and quietly fail on
+    // the other. Read the first bytes and ask them instead.
+    //
+    // Only the signature is read first, and the form it names decides the
+    // ceiling for reading the rest. Reading everything and rejecting afterwards
+    // would let anything that can hand this app a file pull 25 MiB into memory
+    // before being told no -- and since the document type went live, that is
+    // any app on the device, not just the picker.
+    if (reportedSize !== undefined && reportedSize > THEME_LIMITS.packageBytes)
       throw new Error('Theme file exceeds the import size limit');
-    if (!file.exists || file.size > limit)
+    if (!file.exists || file.size > THEME_LIMITS.packageBytes)
       throw new Error('Theme file is unavailable or exceeds the import size limit');
+    const packaged = isZipArchive(await firstBytes(file, 4));
+    if (file.size > (packaged ? THEME_LIMITS.packageBytes : THEME_LIMITS.manifestBytes))
+      throw new Error('Theme file exceeds the import size limit');
+    const bytes = await file.bytes();
     if (packaged) {
-      const theme = unpackTheme(await file.bytes());
+      const theme = unpackTheme(bytes);
       const prepared = await prepareThemeAssets(theme);
       return { manifest: theme.manifest, prepared };
     }
-    const text = await file.text();
-    return { manifest: parseThemeManifest(text) };
+    return {
+      manifest: parseThemeManifest(new TextDecoder('utf-8', { fatal: true }).decode(bytes)),
+    };
   } finally {
     // Expo owns this freshly made copy. Never delete the original selected file.
     const pickerCache = new Directory(Paths.cache, 'DocumentPicker').uri + '/';
