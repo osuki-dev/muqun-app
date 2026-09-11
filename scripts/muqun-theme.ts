@@ -114,7 +114,7 @@ function cmdPack(dir: string, out?: string): void {
 }
 
 function cmdCheck(file: string, explain = false): number {
-  const { manifest } = readTheme(file);
+  const { manifest, assets: packaged } = readTheme(file);
   console.log(bold(`${manifest.name}  ${dim(manifest.id)}`));
 
   let problems = 0;
@@ -180,6 +180,7 @@ function cmdCheck(file: string, explain = false): number {
 
   const assets = Object.entries(manifest.assets ?? {});
   console.log(`  ${assets.length}/${THEME_LIMITS.assets} asset(s) declared`);
+  problems += reportArtworkSizes(manifest, packaged);
 
   // The icons table accepts names this build does not know, so that an older
   // app ignores a newer pack's glyph instead of refusing the whole theme. The
@@ -203,6 +204,80 @@ function cmdCheck(file: string, explain = false): number {
     }
   }
   return problems;
+}
+
+/**
+ * What each drawing costs the phone that loads it.
+ *
+ * `THEME_LIMITS.imagePixels` is 16 megapixels -- a ceiling against a decode
+ * bomb, not advice. It says nothing about the only number an author can act on:
+ * a picture is decoded to width x height x 4 bytes and held while its slot is on
+ * screen, so a 1254x1254 drawing behind a 44pt navigation bar costs 6.3 MB to
+ * show a strip it could have filled at a twentieth of that.
+ *
+ * So the slots are budgeted by what they actually cover. `shell.background` is
+ * the one full-screen slot and gets a phone screen's worth of pixels; every
+ * other slot is chrome -- a bar, a dock, a tile -- and 1024 on its longest edge
+ * is already generous for one. Reported as a warning, never a failure: a pack
+ * that ignores this still installs and still draws, and an author who has a
+ * reason to ship something larger is not stopped by a linter.
+ */
+function pngSize(bytes: Uint8Array): { width: number; height: number } | null {
+  // IHDR is the first chunk of every PNG, and its two dimensions are the first
+  // eight bytes of its data -- byte 16 onward, big-endian.
+  const png = [0x89, 0x50, 0x4e, 0x47];
+  if (bytes.length < 24 || png.some((value, index) => bytes[index] !== value)) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return { width: view.getUint32(16), height: view.getUint32(20) };
+}
+
+/** A phone at 3x, which is the largest screen `compact` artwork ever fills. */
+const FULL_SCREEN_EDGE = 3000;
+/** Bars, docks and tiles. None of them is ever a third of the screen. */
+const CHROME_EDGE = 1024;
+
+function reportArtworkSizes(
+  manifest: ThemeManifest,
+  packaged: Record<string, Uint8Array> | undefined
+): number {
+  if (!packaged) return 0;
+  // Which slots each asset is drawn in, so the budget matches the use.
+  const slots = new Map<string, Set<string>>();
+  for (const modes of Object.values(manifest.variantDecorations ?? {})) {
+    for (const [slot, decoration] of Object.entries(modes ?? {})) {
+      if (!decoration) continue;
+      for (const entry of [decoration, decoration.regular, decoration.compact]) {
+        const asset = entry && typeof entry === 'object' ? entry.asset : undefined;
+        if (asset) slots.set(asset, (slots.get(asset) ?? new Set()).add(slot));
+      }
+    }
+  }
+  let warnings = 0;
+  for (const [id, bytes] of Object.entries(packaged)) {
+    const size = pngSize(bytes);
+    if (!size) continue;
+    const used = [...(slots.get(id) ?? [])];
+    const fullScreen = used.some(
+      (slot) => slot.endsWith('.background') && slot.startsWith('shell')
+    );
+    const budget = fullScreen ? FULL_SCREEN_EDGE : CHROME_EDGE;
+    const edge = Math.max(size.width, size.height);
+    const memory = (size.width * size.height * 4) / 1_000_000;
+    const line = `    ${id.padEnd(20)} ${size.width}x${size.height}  ${memory.toFixed(1)} MB decoded`;
+    if (edge > budget) {
+      warnings += 1;
+      console.log(
+        `${line} ${red(`larger than ${budget}px on its longest edge`)} ` +
+          dim(used.length ? `(drawn in ${used.join(', ')})` : '(declared, never drawn)')
+      );
+    } else if (!used.length) {
+      console.log(`${line} ${dim('declared, never drawn')}`);
+    }
+  }
+  // Warnings, not problems: `check` exits non-zero on things that are wrong,
+  // and an oversized drawing is only expensive.
+  if (warnings) console.log(dim(`  ${warnings} drawing(s) larger than their slot needs`));
+  return 0;
 }
 
 function cmdValidate(file: string): void {
