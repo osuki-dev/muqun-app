@@ -7,6 +7,7 @@ import {
   type AgentCommandDestination,
 } from '../agent-command-delivery';
 import { normalizeGatewayEntities } from '../gateway-entities';
+import { supportsExistingAgentDelivery } from '../agent-collaboration';
 
 const agents = (instance = 'first', status = 'idle') =>
   normalizeGatewayEntities(
@@ -25,12 +26,43 @@ test('agent command entry points do not bypass the unavailable bound-delivery co
     'utf8'
   );
   const commands = readFileSync(new URL('../../app/commands.tsx', import.meta.url), 'utf8');
-  expect(hook).toContain('supportsBoundDelivery: async () => false');
+  // The property, not the literal. What must hold is that no entry point can
+  // answer "yes" to bound delivery while the contract does not exist -- so the
+  // answer comes from `supportsExistingAgentDelivery`, which is the one place
+  // that knows, rather than from a `false` written out at each call site or,
+  // worse, from a capability label the server does not enforce.
+  expect(supportsExistingAgentDelivery()).toBe(false);
+  expect(hook).toContain('supportsBoundDelivery: async () => supportsExistingAgentDelivery()');
+  expect(/supportsBoundDelivery:[^\n]*capabilities/.test(hook)).toBe(false);
   expect(commands).toContain('agentDelivery.send(command.value)');
   expect(commands).toContain('agentDelivery.send(entry.command)');
   expect(commands).not.toContain('sendAgentText');
   expect(collaboration).not.toContain('sendAgentText');
-  expect(collaboration).toContain('backend-enforced instance-bound contract');
+  expect(collaboration).toContain('instance-bound contract');
+});
+
+test('the unavailable path does not tell the reader to do something that cannot help', () => {
+  // It used to say "Update Muqun Gateway to use Agent collaboration" -- at a
+  // point where the Gateway's `agent_collaboration` capability had already been
+  // checked and found present. No upgrade would have changed the outcome, so
+  // the only instruction given was the one guaranteed to fail. AGENTS.md asks
+  // for an actionable explanation; this is the guard that it stays one.
+  for (const file of [
+    '../../hooks/use-agent-command-delivery.ts',
+    '../../hooks/use-agent-collaboration.ts',
+  ]) {
+    const source = readFileSync(new URL(file, import.meta.url), 'utf8');
+    const unsupported = source.slice(source.indexOf('instance-bound'));
+    expect(unsupported).not.toContain('Update Muqun Gateway to use Agent collaboration');
+  }
+  // The genuine capability gap keeps the upgrade wording, because there it is
+  // true: `collaborationAvailability` returned `gateway`, so the Gateway really
+  // is missing the capability and updating it really is the fix.
+  const collaboration = readFileSync(
+    new URL('../../hooks/use-agent-collaboration.ts', import.meta.url),
+    'utf8'
+  );
+  expect(collaboration).toContain('Update Muqun Gateway to use Agent collaboration');
 });
 
 function setup() {

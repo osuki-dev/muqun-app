@@ -10,6 +10,7 @@ import {
   taskAgent,
   partitionCollaborationTasks,
   recordCollaborationTask,
+  supportsExistingAgentDelivery,
   readCollaborationOutput,
   compactCollaborationOutput,
   type CollaborationTask,
@@ -268,4 +269,30 @@ test('a replaced agent or changed connection never exposes the pending snapshot'
       () => {}
     )
   ).toBe('private output');
+});
+
+describe('where a task can actually go', () => {
+  test('handing work to an assistant that is already running is not available', () => {
+    // Both delivery paths stop on this, and the screen stops offering the
+    // target because of it. If this ever returns true without the Gateway
+    // enforcing an instance-bound request, a task can land on whichever agent
+    // happens to occupy the pane by the time it arrives -- the wrong assistant
+    // receiving someone's work, which is worse than nothing receiving it.
+    expect(supportsExistingAgentDelivery()).toBe(false);
+  });
+
+  test('the screen offers only targets that can be delivered to', () => {
+    // The list the segmented control is built from. `false` is "already
+    // running", `true` is "start a new one". With existing delivery
+    // unavailable, a server that can spawn offers exactly one target -- and
+    // one target is not a choice, so no switch is drawn.
+    const modes = (canSpawn: boolean) => [
+      ...(supportsExistingAgentDelivery() ? [false] : []),
+      ...(canSpawn ? [true] : []),
+    ];
+    expect(modes(true)).toEqual([true]);
+    // Nothing to spawn with and nothing to hand work to: the form has nowhere
+    // to send, and says so instead of collecting a task it cannot deliver.
+    expect(modes(false)).toEqual([]);
+  });
 });

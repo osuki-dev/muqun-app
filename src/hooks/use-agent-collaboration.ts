@@ -16,6 +16,7 @@ import {
   partitionCollaborationTasks,
   type CollaborationTask,
   type CollaborationContext,
+  supportsExistingAgentDelivery,
 } from '@/lib/agent-collaboration';
 import {
   loadAgents,
@@ -229,9 +230,17 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
           setCanSpawn(enabled && Boolean(health.capabilities?.includes('agent_spawn')));
           if (enabled && !initializedPicker.current) {
             initializedPicker.current = true;
+            const canStart = Boolean(health.capabilities?.includes('agent_spawn'));
+            // Starting a new assistant is preferred whenever it is the only
+            // thing that can actually deliver. This used to land on "existing
+            // assistant" as soon as any other agent was running, which is the
+            // most common case on a real machine -- so the default target was
+            // the one guaranteed to fail, and the reader found out only after
+            // writing the task. See `supportsExistingAgentDelivery`.
             setNewAgent(
-              Boolean(health.capabilities?.includes('agent_spawn')) &&
-                !nextAgents.some((agent) => (field(agent, 'pane_id') || agent.id) !== paneId)
+              canStart &&
+                (!supportsExistingAgentDelivery() ||
+                  !nextAgents.some((agent) => (field(agent, 'pane_id') || agent.id) !== paneId))
             );
           }
           setPanes(nextPanes);
@@ -450,11 +459,12 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
         if (!selected?.instanceId || field(live, 'instance_id') !== selected.instanceId) {
           throw new Error(t`This assistant is no longer ready. Refresh or choose another.`);
         }
-        // TODO: Send only through a backend-enforced instance-bound contract.
-        // A fresh lookup cannot prevent this mutable target being reassigned
-        // between verification and delivery. Keep the draft instead of guessing.
+        // Send only through a backend-enforced instance-bound contract, which
+        // does not exist yet -- see `supportsExistingAgentDelivery`. A fresh
+        // lookup cannot prevent this mutable target being reassigned between
+        // verification and delivery. Keep the draft instead of guessing.
         throw new Error(
-          t`Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual.`
+          t`Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here.`
         );
       }
       const task: CollaborationTask = {
