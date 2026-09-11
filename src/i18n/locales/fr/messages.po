@@ -168,6 +168,10 @@ msgstr "Ajouter une machine"
 msgid "Add one first"
 msgstr "Ajoutez-en un d’abord"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Add reference images"
+msgstr "Ajouter des images de référence"
+
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Ajoutez cette ligne à ~/.ssh/authorized_keys sur le serveur :"
@@ -425,6 +429,7 @@ msgstr "Accès à la caméra requis"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
+#: src/hooks/use-agent-collaboration.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Annuler"
@@ -837,6 +842,10 @@ msgstr "Copier la clé publique"
 msgid "Could not add a file"
 msgstr "Impossible d’ajouter le fichier"
 
+#: src/hooks/use-agent-references.ts
+msgid "Could not add images. Choose up to nine images, each under 10 MB."
+msgstr "Impossible d’ajouter les images. Choisissez jusqu’à neuf images de moins de 10 Mo chacune"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Connexion impossible"
@@ -917,6 +926,10 @@ msgstr "Impossible de joindre le Gateway. Vérifiez qu’il tourne, actualisez l
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "Impossible de joindre ce serveur"
+
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Impossible de lire les serveurs enregistrés. Tes données enregistrées n’ont pas été modifiées. Déverrouille cet appareil et réessaie"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
@@ -1434,6 +1447,10 @@ msgstr "Clé d’hôte approuvée"
 msgid "Idle"
 msgstr "Inactif"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "Si le problème persiste, redémarre l’app ou vérifie son installation"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "Images"
@@ -1441,6 +1458,10 @@ msgstr "Images"
 #: src/components/theme-link-import.tsx
 msgid "Images download from"
 msgstr "Les images seront téléchargées depuis"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Images will be uploaded to {gatewayName} and shared with the new assistant. Its AI provider may process them. They are not automatically copied to other machines."
+msgstr "Les images seront envoyées à {gatewayName} et partagées avec le nouvel assistant. Son fournisseur d’IA pourra les traiter. Elles ne seront pas automatiquement copiées sur d’autres machines"
 
 #: src/components/custom-theme-library.tsx
 msgid "Import"
@@ -1633,6 +1654,7 @@ msgstr "Répertorie uniquement les panneaux exécutant un agent reconnu"
 msgid "Live Activity"
 msgstr "Activité en direct"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
 msgid "Loading"
@@ -1708,6 +1730,15 @@ msgstr "Gérer les hôtes SSH"
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "Marquer comme vérifié"
+
+#. placeholder {0}: index + 1
+#: src/components/agent-reference-editor.tsx
+msgid "May include image {0} in the result"
+msgstr "Peut inclure l’image {0} dans le résultat"
+
+#: src/components/agent-reference-editor.tsx
+msgid "May include in the result"
+msgstr "Peut l’inclure dans le résultat"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -2006,6 +2037,10 @@ msgstr "Les notifications ne sont pas autorisées"
 msgid "Off"
 msgstr "Désactivé"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Off means reference only. This does not grant permission to publish the image."
+msgstr "Désactivé signifie uniquement comme référence. Cela n’autorise pas la publication de l’image"
+
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "HORS LIGNE"
@@ -2112,6 +2147,10 @@ msgstr "Ouvrir l'explorateur de fichiers"
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Ouvrir l'espace de travail {0}, {1, plural, one {# actif} other {# actifs}}. Appui long pour fermer"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Opening photos…"
+msgstr "Ouverture des photos…"
+
 #: src/app/explore.tsx
 msgid "Opening the server."
 msgstr "Ouverture du serveur"
@@ -2135,6 +2174,10 @@ msgstr "Ouvre le menu du simulateur : l’appareil, ses touches, le clavier et l
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Ouvre le terminal de cet agent"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Optional images stay on this device until you approve sending"
+msgstr "Les images facultatives restent sur cet appareil jusqu’à votre autorisation d’envoi"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2389,6 +2432,15 @@ msgstr "Reconnecter à {0}"
 msgid "Reconnecting · {0}"
 msgstr "Reconnexion · {0}"
 
+#: src/components/agent-reference-editor.tsx
+msgid "Reference images"
+msgstr "Images de référence"
+
+#: src/components/agent-reference-editor.tsx
+#: src/hooks/use-agent-collaboration.ts
+msgid "Reference images can be sent when starting a new assistant"
+msgstr "Vous pouvez envoyer des images de référence au démarrage d’un nouvel assistant"
+
 #: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -2407,6 +2459,7 @@ msgstr "Actualiser la sortie"
 msgid "Refresh to check Gateway and Herdr compatibility before assigning."
 msgstr "Actualisez pour vérifier la compatibilité de Gateway et de Herdr avant l’attribution"
 
+#: src/components/agent-reference-editor.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "Supprimer"
@@ -2425,6 +2478,11 @@ msgstr "Retirer de l’historique"
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "Supprimer l’hôte"
+
+#. placeholder {0}: index + 1
+#: src/components/agent-reference-editor.tsx
+msgid "Remove image {0}"
+msgstr "Supprimer l’image {0}"
 
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
@@ -2486,6 +2544,7 @@ msgstr "Restaurer les commandes par défaut masquées"
 msgid "Restore hidden defaults"
 msgstr "Restaurer les valeurs par défaut masquées"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -2741,6 +2800,10 @@ msgstr "Envoyer {spoken}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
 msgstr "Envoyer un message"
+
+#: src/hooks/use-agent-collaboration.ts
+msgid "Send reference images?"
+msgstr "Envoyer les images de référence ?"
 
 #: src/app/agent-collaboration.tsx
 msgid "Send task"
@@ -3581,6 +3644,10 @@ msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Mettez l’app à jour pour importer des thèmes depuis des liens publics. Vous pouvez toujours importer un fichier"
 
 #: src/hooks/use-agent-collaboration.ts
+msgid "Update this Gateway to upload reference images"
+msgstr "Mettez à jour ce Gateway pour envoyer des images de référence"
+
+#: src/hooks/use-agent-collaboration.ts
 msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
 msgstr "Mettez Herdr de cette session à jour vers la version 0.9.0 ou ultérieure pour collaborer"
 
@@ -3588,9 +3655,17 @@ msgstr "Mettez Herdr de cette session à jour vers la version 0.9.0 ou ultérieu
 msgid "Updating Muqun…"
 msgstr "Mise à jour de Muqun…"
 
+#: src/hooks/use-agent-collaboration.ts
+msgid "Upload and send"
+msgstr "Importer et envoyer"
+
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
 msgstr "échec de l’envoi"
+
+#: src/components/agent-reference-editor.tsx
+msgid "Upload failed. Send again to retry, or remove this image."
+msgstr "Échec de l’envoi. Renvoyez pour réessayer ou supprimez cette image"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -3599,6 +3674,11 @@ msgstr "envoyé"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "envoi en cours"
+
+#: src/app/agent-collaboration.tsx
+#: src/components/agent-reference-editor.tsx
+msgid "Uploading…"
+msgstr "Envoi en cours…"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3657,6 +3737,10 @@ msgstr "En attente du réseau"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "En attente de la fin des envois…"
+
+#: src/components/agent-reference-editor.tsx
+msgid "What do you like about this image?"
+msgstr "Qu’aimez-vous dans cette image ?"
 
 #: src/components/session-map.tsx
 msgid "What is running"

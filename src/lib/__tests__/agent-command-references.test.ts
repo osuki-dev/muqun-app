@@ -191,3 +191,17 @@ test('context preserves reference order and permissions, without leaking phone p
     )
   ).toBe('Plain command');
 });
+
+test('long reference JSON is never truncated by the terminal-context limit', () => {
+  let draft = ready();
+  draft = editAgentImageReference(draft, 'first', 'a'.repeat(4000), 'reference-only');
+  draft = addAgentImageReference(draft, 'second', file);
+  draft = editAgentImageReference(draft, 'second', 'b'.repeat(4000), 'may-include');
+  const next = beginAgentReferenceUpload(draft, 'second', scope);
+  draft = finishAgentReferenceUpload(next.draft, next.ticket, { path: '/second.png' }, scope);
+  const text = agentCommandTextWithReferences('Task', 'old'.repeat(3000), undefined, draft, scope);
+  const json = text.slice(text.indexOf('[{"path"'));
+  expect(JSON.parse(json)).toHaveLength(2);
+  expect(JSON.parse(json)[0].caption).toHaveLength(4000);
+  expect(JSON.parse(json)[1].caption).toHaveLength(4000);
+});

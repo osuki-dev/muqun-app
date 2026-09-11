@@ -53,6 +53,7 @@ import { reachabilityFromProbe, type ServerReachability } from '@/lib/server-rea
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -109,7 +110,8 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   // place that manages servers, and the tablet branch's long-press row menu was
   // a second answer to the same question. The layout work from that branch is
   // kept; its row menu is not.
-  const { record, records, loading, selectRecord, enterDemo } = useGatewayRecord();
+  const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
+    useGatewayRecord();
   const [refreshing, setRefreshing] = useState(false);
   const scrollY = useSharedValue(0);
   // Gutter, measure, card geometry and row density in one answer -- see
@@ -174,10 +176,10 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   const addressNeeded = useMemo(() => serverIdsNeedingAddress(records), [records]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || hydrationError) return;
     void keepServerAgents(serverIds);
     keepReachability(serverIds);
-  }, [keepReachability, keepServerAgents, loading, serverIds]);
+  }, [keepReachability, keepServerAgents, loading, hydrationError, serverIds]);
 
   // Ask the one server the app is already configured for whether it is there.
   // On focus rather than on an interval: the answer is only worth having while
@@ -468,7 +470,8 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
           <ThemeArtwork slot="home.decoration" banner />
 
-          {loading ? (
+          {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
+          {loading && !hydrationError ? (
             // The shape of the list that is coming, not a logo in the middle of
             // an empty screen. Reading the paired servers out of SecureStore is
             // fast but not free, and what the loader used to do was hold the
@@ -529,7 +532,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             />
           ) : null}
 
-          {!loading && records.length === 0 ? (
+          {!loading && !hydrationError && records.length === 0 ? (
             <EmptyState isPad={isPad} onPair={() => router.push('/explore')} onDemo={openDemo} />
           ) : null}
 

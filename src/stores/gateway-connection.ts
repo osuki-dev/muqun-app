@@ -8,6 +8,7 @@ import {
   clearGateway,
   loadGateway,
   loadGateways,
+  readGatewaySnapshot,
   removeGateway,
   renameGateway,
   selectGateway,
@@ -19,6 +20,7 @@ interface GatewayConnectionState {
   record: GatewayRecord | null;
   records: GatewayRecord[];
   loading: boolean;
+  hydrationError: 'unavailable' | 'timeout' | null;
   hydrate: () => Promise<void>;
   setRecord: (record: GatewayRecord | null) => void;
   selectRecord: (serverId: string) => Promise<boolean>;
@@ -37,6 +39,8 @@ interface GatewayConnectionState {
 
 let selectionRequestId = 0;
 let selectionQueue: Promise<unknown> = Promise.resolve();
+let hydration: Promise<void> | null = null;
+const HYDRATION_TIMEOUT_MS = 8_000;
 
 /**
  * Serialize every record read-modify-write behind one chain. Storage helpers all
@@ -65,13 +69,46 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
   record: null,
   records: [],
   loading: true,
+  hydrationError: null,
 
-  async hydrate() {
+  hydrate() {
+    if (hydration) return hydration;
     const requestId = selectionRequestId;
-    const [record, records] = await Promise.all([loadGateway(), loadGateways()]);
-    if (requestId !== selectionRequestId) return;
-    configureGateway(record);
-    set({ record, records, loading: false });
+    const initialRecord = get().record;
+    const initialRecords = get().records;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let timedOut = false;
+    set({ loading: true });
+    const current = () =>
+      requestId === selectionRequestId &&
+      get().record === initialRecord &&
+      get().records === initialRecords;
+    hydration = (async () => {
+      try {
+        const { record, records } = await Promise.race([
+          readGatewaySnapshot(),
+          new Promise<never>((_resolve, reject) => {
+            timer = setTimeout(() => {
+              timedOut = true;
+              reject(new Error('Gateway storage read timed out'));
+            }, HYDRATION_TIMEOUT_MS);
+          }),
+        ]);
+        if (!current()) return;
+        configureGateway(record);
+        set({ record, records, loading: false, hydrationError: null });
+      } catch {
+        if (current())
+          set({ loading: false, hydrationError: timedOut ? 'timeout' : 'unavailable' });
+      } finally {
+        clearTimeout(timer);
+        hydration = null;
+        // A competing selection may itself still be waiting on the keychain.
+        // Never leave the initial loader up after this attempt has settled.
+        if (get().loading) set({ loading: false, hydrationError: 'unavailable' });
+      }
+    })();
+    return hydration;
   },
 
   setRecord(record) {
@@ -80,6 +117,7 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     set((state) => ({
       record,
       loading: false,
+      hydrationError: null,
       records: record
         ? [record, ...state.records.filter((item) => item.serverId !== record.serverId)]
         : state.records,
@@ -91,7 +129,7 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     // vanishes on disconnect, so it never joins the real server list.
     selectionRequestId += 1;
     configureGateway(demoRecord);
-    set({ record: demoRecord, loading: false });
+    set({ record: demoRecord, loading: false, hydrationError: null });
   },
 
   async selectRecord(serverId) {
@@ -103,14 +141,14 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       if (requestId !== selectionRequestId) return false;
       if (serverId === DEMO_SERVER_ID) {
         configureGateway(demoRecord);
-        set({ record: demoRecord, loading: false });
+        set({ record: demoRecord, loading: false, hydrationError: null });
         return true;
       }
       const record = await selectGateway(serverId);
       const records = await loadGateways();
       if (requestId !== selectionRequestId || !record) return false;
       configureGateway(record);
-      set({ record, records, loading: false });
+      set({ record, records, loading: false, hydrationError: null });
       return true;
     });
   },
