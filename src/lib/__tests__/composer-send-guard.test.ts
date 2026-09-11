@@ -49,7 +49,17 @@ test('normal send awaits upload and delivery acknowledgment, not post-send outpu
     ts.forEachChild(node, visit);
   }
   visit(send!);
-  expect(awaited).toEqual(['awaitUploads', 'sendAgentText', 'sendPaneCharacters']);
+  // Uploads, then exactly one delivery, and nothing else. `assignment.assign`
+  // is the third delivery this composer can perform -- start an assistant and
+  // give it the task -- and it belongs in this list for the same reason the
+  // other two do: a send is not finished until the write is acknowledged.
+  // What must stay out is anything that waits for the *result* to appear.
+  expect(awaited).toEqual([
+    'awaitUploads',
+    'assignment.assign',
+    'sendAgentText',
+    'sendPaneCharacters',
+  ]);
   const body = send!.getText(source);
   expect(body).toContain('void refreshOutput();');
   expect(body).not.toContain('setTimeout(');

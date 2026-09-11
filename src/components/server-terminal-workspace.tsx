@@ -17,6 +17,7 @@ import {
   Monitor,
   Paperclip,
   PenLine,
+  Plus,
   SquareTerminal,
   X,
   Zap,
@@ -40,7 +41,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
@@ -85,6 +86,10 @@ import {
 } from '@/lib/pane-input';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
+import { useComposerAssignment } from '@/hooks/use-composer-assignment';
+import type { AgentProfile } from '@/lib/agent-spawn';
+import { AgentAssignmentBar } from '@/components/agent-assignment-bar';
+import { collaborationAgents } from '@/lib/agent-collaboration';
 import { useAwayDigest } from '@/hooks/use-away-digest';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
@@ -102,6 +107,10 @@ import {
   type AttachmentSource,
 } from '@/lib/attachments';
 import {
+  ATTACHMENT_CONNECTION_GENERATION,
+  type AttachmentDestination,
+} from '@/lib/attachment-queue';
+import {
   createFileMentionSearch,
   FILE_MENTION_LIMIT,
   findFileMentionTrigger,
@@ -111,6 +120,7 @@ import {
   listPaneParts,
   MAX_PANE_OUTPUT_LINES,
   PANE_OUTPUT_PAGE_LINES,
+  loadAgentProfiles,
   loadPaneShortcuts,
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
@@ -210,6 +220,7 @@ import {
   type WorkspaceMemory,
 } from '@/lib/workspace-cycle';
 import { useAppSettings } from '@/stores/app-settings';
+import { useComposerAssignmentStore } from '@/stores/composer-assignment';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import {
@@ -262,6 +273,27 @@ type Selection = {
 };
 
 type ConnectionPhase = 'connecting' | 'connected' | 'reconnecting' | 'offline';
+
+/**
+ * What the dock keeps clear of the home indicator with the keyboard down.
+ *
+ * Not the full `insets.bottom`. That is 34pt on an indicator phone, and the dock
+ * is a surface the indicator is allowed to sit on -- what has to stay clear is
+ * the *field*, not the glass under it. A full safe area left a visible dead band
+ * below the composer that read as a layout mistake. 14 is the app's own floating
+ * anchor gap (`floatingEntries`), so the field clears the indicator by the same
+ * margin everything else on this screen does.
+ *
+ * `Math.min` with the real inset, so a device without an indicator is not given
+ * clearance it does not need, and the 8pt floor still applies with the keyboard
+ * up -- there is no indicator to clear when the keyboard covers it.
+ */
+const DOCK_INDICATOR_CLEARANCE = 14;
+
+/** Output re-read cadence with the stream up: a safety net, not a heartbeat. */
+const OUTPUT_POLL_STREAMING_MS = 10_000;
+/** With the stream down, reads are the only way new output arrives. */
+const OUTPUT_POLL_FALLBACK_MS = 1_000;
 
 type ConnectionStatus = {
   phase: ConnectionPhase;
@@ -432,7 +464,6 @@ const CONNECTION_RECOVERED_MS = 1_400;
  * `createAnimatedComponent` returns a new component type each call, and one
  * created during render would remount the whole dock on every render.
  */
-const AnimatedSafeAreaView = Animated.createAnimatedComponent(SafeAreaView);
 
 /**
  * `esc`, in the shape the key row sends keys in.
@@ -523,6 +554,21 @@ export function ServerTerminalWorkspace({
     useGatewayRecord();
   const { showToast } = useToast();
   const demoMode = isDemoRecord(record);
+  /**
+   * Where a file picked right now would be staged for.
+   *
+   * A ref read at stage time rather than a value captured here, because the pane
+   * changes under this hook and what has to be recorded is where a file was
+   * staged -- not where the screen happened to start. The getter is stable so
+   * the picker's identity does not churn on every pane change.
+   *
+   * `connectionGeneration` is a constant, and deliberately the same constant the
+   * collaboration stack passes: the field is reserved for a real per-connection
+   * counter that neither stack has yet, and picking a different placeholder here
+   * would make two destinations that describe the same place compare unequal.
+   */
+  const attachmentDestinationRef = useRef<AttachmentDestination | undefined>(undefined);
+  const attachmentDestination = useCallback(() => attachmentDestinationRef.current, []);
   const {
     attachments,
     capturePicker,
@@ -531,7 +577,7 @@ export function ServerTerminalWorkspace({
     clearAttachments,
     uploading: attachmentsUploading,
     awaitUploads,
-  } = useAttachmentUploads(record);
+  } = useAttachmentUploads(record, attachmentDestination);
   const panelPick = usePanelPickerStore((state) => state.pick);
   const clearPanelPick = usePanelPickerStore((state) => state.clearPick);
   /**
@@ -625,6 +671,17 @@ export function ServerTerminalWorkspace({
   const [composerRevealed, setComposerRevealed] = useState(false);
   const [stickBottomNonce, setStickBottomNonce] = useState(0);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  /** Whether the event stream is delivering. Decides how often output is re-read. */
+  const [streamUp, setStreamUp] = useState(false);
+  /**
+   * The agent kinds this gateway will start, loaded the first time the
+   * attachment menu is opened rather than on every screen mount.
+   *
+   * The catalog is a fact about the host, not about this pane, so one fetch per
+   * connection is enough; a failure leaves the list empty, which draws the menu
+   * exactly as it was before assistants could be started from it.
+   */
+  const [assistantKinds, setAssistantKinds] = useState<AgentProfile[]>([]);
   const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
   // An artifact opened from a path printed in the output, or from a part that
   // names it. Resolving either is a request, so a ref guards against a second
@@ -645,13 +702,19 @@ export function ServerTerminalWorkspace({
   // rather than on a poll of its own.
   const [paneRevision, setPaneRevision] = useState(-1);
 
+  const assignmentRequest = useComposerAssignmentStore((state) => state.request);
+  const clearAssignmentRequest = useComposerAssignmentStore((state) => state.clear);
   const prefilledDraft = useComposerDraftStore((state) => state.draft);
   const clearPrefilledDraft = useComposerDraftStore((state) => state.clearDraft);
   const [error, setError] = useState<string | null>(null);
-  const [connection, setConnection] = useState<ConnectionStatus>({
-    phase: 'connecting',
+  const [connection, setConnection] = useState<ConnectionStatus>(() => ({
+    // A warm snapshot is a reply this process received on an open connection a
+    // moment ago (`server-warm-cache`). Painting it under a banner that says
+    // Connecting is the flash the cache exists to remove. The poller runs at
+    // once either way and corrects this if the gateway has since gone.
+    phase: warmWorkspace(serverId) ? 'connected' : 'connecting',
     attempt: 0,
-  });
+  }));
   const [retryNonce, setRetryNonce] = useState(0);
   const [loadingEarlierOutput, setLoadingEarlierOutput] = useState(false);
   const [canLoadEarlierOutput, setCanLoadEarlierOutput] = useState(false);
@@ -789,6 +852,27 @@ export function ServerTerminalWorkspace({
   // what a separate KeyboardStickyView occasionally did.
   const composerKeyboardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: keyboardOffset.value }],
+  }));
+  /**
+   * The dock's bottom clearance, on the UI thread with the keyboard.
+   *
+   * It used to be a SafeAreaView's inset with 8pt padded on top of it, and the
+   * inset stayed while the keyboard was up. On a phone with a home indicator
+   * that is 42pt of empty glass under the field with the keyboard down, and a
+   * 34pt gap between the field and the keys with it up -- the keyboard covers
+   * the indicator, so the room reserved for it has nothing left to clear.
+   *
+   * The inset is the clearance, not a base to pad from: `max(8, inset)` keeps
+   * the 8 only where there is no indicator. And it falls with the keyboard --
+   * `keyboardOffset` is negative while up, so the inset is spent point for
+   * point as the dock rises, and the field lands flush on the keys.
+   */
+  const dockBottomFloor = isPadLayout ? appChrome.layout.padWorkspaceGutter : 8;
+  const dockClearanceStyle = useAnimatedStyle(() => ({
+    paddingBottom: Math.max(
+      dockBottomFloor,
+      Math.min(DOCK_INDICATOR_CLEARANCE, insets.bottom) + keyboardOffset.value
+    ),
   }));
   // A dismissal backdrop covers the pane and stops where the composer starts.
   // Why it is bounded rather than an absolute fill is `composerBackdropBottom`;
@@ -989,7 +1073,19 @@ export function ServerTerminalWorkspace({
   );
 
   useEffect(() => {
-    if (!ready) return;
+    // `appActive`, not just `ready`. `ready` carries `isFocused`, which is
+    // *navigation* focus -- it stays true while this screen sits under a
+    // backgrounded app. Without this the slow poll went on waking the radio
+    // every twelve seconds, with four parallel requests each time
+    // (`loadWorkspaceSnapshot`), for a screen nobody was looking at: the one
+    // remaining thing this workspace did in someone's pocket. The stream and
+    // the output poll already stood down here; this did not.
+    //
+    // Deliberately not folded into `ready` itself: its falling edge cancels
+    // in-flight requests, so backgrounding mid-send would turn into a lost
+    // send. Coming back re-runs this effect, and `poll` reads immediately --
+    // which is the same catch-up the stream's reconnect performs.
+    if (!ready || !appActive) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let attempt = 0;
@@ -1036,7 +1132,7 @@ export function ServerTerminalWorkspace({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [hasLoadedData, ready, refreshData, retryNonce, serverId, t]);
+  }, [appActive, hasLoadedData, ready, refreshData, retryNonce, serverId, t]);
 
   // A burst of structural events (opening a workspace spawns several) should
   // cause one refresh, not one per event.
@@ -1699,6 +1795,64 @@ export function ServerTerminalWorkspace({
   // A staged file is worth sending on its own; it started uploading the moment
   // it was picked, so Send is usually only collecting paths that already exist.
   const hasSendableContent = Boolean(draft.trim()) || attachments.length > 0;
+  /**
+   * Whether the next send starts an assistant instead of typing into this pane.
+   *
+   * The composer already talks to the agent in front of the reader; this is the
+   * one collaboration action that has nowhere better to live, because everything
+   * it needs -- the text, the attachments, the cwd -- is already here. Handing
+   * work to an assistant that is *not* on screen stays refused; see
+   * `supportsExistingAgentDelivery`.
+   */
+  // In an effect rather than during render. Files are staged from an event
+  // handler, which always runs after the effects for the render that put that
+  // pane on screen, so the destination a file records is still this pane's.
+  useEffect(() => {
+    attachmentDestinationRef.current =
+      selection.paneId && data.sessionId
+        ? {
+            serverId,
+            sessionId: data.sessionId,
+            sourcePaneId: selection.paneId,
+            connectionGeneration: ATTACHMENT_CONNECTION_GENERATION,
+          }
+        : undefined;
+  }, [serverId, data.sessionId, selection.paneId]);
+  /**
+   * Fetch the agent catalog once, the first time the reader opens the menu that
+   * shows it. It describes the host rather than this pane, so one fetch per
+   * mount is enough; a failure leaves the list empty and the menu is exactly
+   * what it was before assistants could be started from it.
+   */
+  const loadAssistantKinds = useCallback(async () => {
+    if (assistantKinds.length > 0) return;
+    if (!gatewaySupportsAgentSpawn(data.health?.capabilities)) return;
+    try {
+      const profiles = await loadAgentProfiles();
+      setAssistantKinds(profiles);
+    } catch {
+      // Silent: the menu still attaches files, which is what it was opened for.
+    }
+  }, [assistantKinds.length, data.health?.capabilities]);
+  const assignment = useComposerAssignment({
+    serverId,
+    sessionId: data.sessionId,
+    sourcePaneId: selection.paneId,
+    tabId: selection.tabId,
+    cwd: field(selectedPane, 'cwd'),
+  });
+  /**
+   * The other assistants in this session, from the poll this screen already
+   * runs. No extra request: `data.agents` and `data.panes` are refreshed for
+   * the pane strip, and this is the same join `collaborationAgents` has always made.
+   */
+  const assignmentCandidates = useMemo(
+    () =>
+      collaborationAgents(data.agents, data.panes, selection.paneId, selection.workspaceId).flatMap(
+        (candidate) => (candidate.instanceId ? [candidate] : [])
+      ),
+    [data.agents, data.panes, selection.paneId, selection.workspaceId]
+  );
   // Only images can be opened full screen, and the viewer pages between them,
   // so the tapped tile's position is resolved within that subset.
   const previewImages = useMemo<PreviewImage[]>(
@@ -2016,6 +2170,31 @@ export function ServerTerminalWorkspace({
     setCaret(prefilledDraft.length);
     clearPrefilledDraft();
   }, [clearPrefilledDraft, prefilledDraft]);
+
+  // A shortcut or Quick actions asked for the assistant strip. Same shape as a
+  // prefilled draft: consumed once, on the screen it was meant for, and never
+  // left behind for the next one.
+  useEffect(() => {
+    if (!assignmentRequest) return;
+    if (assignmentRequest.serverId !== serverId || assignmentRequest.paneId !== selection.paneId)
+      return;
+    assignment.setOpen(true);
+    assignment.setCommand(assignmentRequest.command ?? null);
+    if (assignmentRequest.kind) assignment.choose({ type: 'new', kind: assignmentRequest.kind });
+    if (assignmentRequest.prompt !== undefined) {
+      setDraft(assignmentRequest.prompt);
+      setCaret(assignmentRequest.prompt.length);
+    }
+    void loadAssistantKinds();
+    clearAssignmentRequest();
+  }, [
+    assignment,
+    assignmentRequest,
+    clearAssignmentRequest,
+    loadAssistantKinds,
+    selection.paneId,
+    serverId,
+  ]);
 
   // The shared tail of "new output for this pane arrived" -- whether it came
   // from a read or was pushed inline over the event stream. Kept in one place so
@@ -2350,9 +2529,18 @@ export function ServerTerminalWorkspace({
     // the radio awake, so it stands down with the app and re-arms on return --
     // the read on the way back in is this same first `refreshOutput`.
     void refreshOutput();
-    const timer = setInterval(() => void refreshOutput(), 1000);
+    // While the stream is up it inlines every change to this pane, so this is
+    // a slow safety net for a missed event. It was 1Hz regardless, which is a
+    // full-window read plus a line-level fold every second on a phone that had
+    // already been handed the text -- the single largest steady drain on the
+    // radio and the CPU this screen had. Only a stream that is actually down
+    // earns the fast cadence, and only until it is back.
+    const timer = setInterval(
+      () => void refreshOutput(),
+      streamUp ? OUTPUT_POLL_STREAMING_MS : OUTPUT_POLL_FALLBACK_MS
+    );
     return () => clearInterval(timer);
-  }, [appActive, connection.phase, ready, refreshOutput, selection.paneId]);
+  }, [appActive, connection.phase, ready, refreshOutput, selection.paneId, streamUp]);
 
   /**
    * Warm the two panes a swipe can reach, so the switch onto them is a paint
@@ -2597,7 +2785,9 @@ export function ServerTerminalWorkspace({
           applyPaneOutputRef.current(paneId, text, revision, 'frame');
         },
         onStructureChanged: () => refreshDataRef.current(),
+        onDisconnected: () => setStreamUp(false),
         onConnected: () => {
+          setStreamUp(true);
           readRevisionRef.current = { paneId: '', revision: -1 };
           refreshOutputRef.current();
           refreshDataRef.current();
@@ -2862,7 +3052,7 @@ export function ServerTerminalWorkspace({
     const requestPaneId = selection.paneId;
     const hasAttachments = attachments.length > 0;
     if (connection.phase !== 'connected' || !ready || !requestPaneId || sending) return;
-    if (!draft.trim() && !hasAttachments) return;
+    if (!draft.trim() && !hasAttachments && !assignment.command) return;
     const sendToken = composerSendGuard.acquire();
     if (sendToken === null) return;
     const ownsDelivery = deliveryOwnership.capture();
@@ -2902,7 +3092,45 @@ export function ServerTerminalWorkspace({
           : draft;
       if (!value.trim()) return;
 
-      if (selectedAgent) {
+      if (assignment.active) {
+        // The task goes to an assistant that does not exist yet, so this neither
+        // types into the pane nor folds attachment paths into the line: the
+        // references travel as their own block (`attachmentCommandText`), and a
+        // bundled instruction set rides with them rather than in the field.
+        if (!record) throw new Error('Not connected to a server.');
+        const outcome = await assignment.assign(
+          record,
+          draft,
+          attachments,
+          {
+            serverId: requestServerId,
+            sessionId: data.sessionId,
+            sourcePaneId: requestPaneId,
+            connectionGeneration: ATTACHMENT_CONNECTION_GENERATION,
+          },
+          isCurrentSend
+        );
+        if (!isCurrentSend()) return;
+        if (outcome.status === 'sent') {
+          assignment.close();
+          showToast({
+            variant: 'success',
+            title: t`Assistant started`,
+            message: t`It works on its own. Follow it in Agent collaboration.`,
+          });
+        } else {
+          // Never retried automatically: a second attempt would be a second
+          // assistant, and nothing here can tell whether the first received the
+          // task. The text stays in the composer and the chip stays armed so the
+          // reader decides, after checking the terminal that was created.
+          showToast({
+            variant: 'danger',
+            title: t`Delivery not confirmed`,
+            message: t`A terminal was created. Check it before sending again — your task is still here.`,
+          });
+          return;
+        }
+      } else if (selectedAgent) {
         await sendAgentText(data.sessionId, requestPaneId, value);
       } else {
         // A shell needs Enter to run what was typed. An editor does not: Enter
@@ -3216,6 +3444,20 @@ export function ServerTerminalWorkspace({
   // inside the keyboard panel when that is up. Opening the keyboard used to
   // take this row away, which on an editor meant losing `esc`, `:w` and the
   // Ctrl chords at the moment the reader started typing.
+  const terminalKeyButtons = terminalKeys.map((item) => (
+    <TerminalKeyButton
+      key={item.key}
+      item={item}
+      sending={sendingKey === item.key}
+      disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
+      onPress={() => void sendTerminalKey(item)}
+      textColor={chromeText}
+      background={chromeGlass}
+      activeBackground={theme.colors.primary}
+      activeText={theme.colors.onPrimary}
+    />
+  ));
+
   const terminalKeyStrip = (
     <ScrollView
       horizontal
@@ -3223,19 +3465,7 @@ export function ServerTerminalWorkspace({
       showsHorizontalScrollIndicator={false}
       style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
       contentContainerStyle={styles.terminalKeyList}>
-      {terminalKeys.map((item) => (
-        <TerminalKeyButton
-          key={item.key}
-          item={item}
-          sending={sendingKey === item.key}
-          disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
-          onPress={() => void sendTerminalKey(item)}
-          textColor={chromeText}
-          background={chromeGlass}
-          activeBackground={theme.colors.primary}
-          activeText={theme.colors.onPrimary}
-        />
-      ))}
+      {terminalKeyButtons}
     </ScrollView>
   );
 
@@ -3248,6 +3478,64 @@ export function ServerTerminalWorkspace({
    * for one control, out of the height the keyboard had just been opened to
    * get.
    */
+  /**
+   * The one control in the key row that is not a key: who the next message is
+   * for.
+   *
+   * A toggle rather than a menu, because the answer is a row of assistants and
+   * a row is what opens above the field. It is here rather than in the header
+   * for the same reason the keyboard toggle is: it changes what typing does, so
+   * it belongs beside the typing.
+   */
+  /**
+   * What the destination is called, in one place, so the chip, the placeholder
+   * and the Send button cannot describe it three different ways.
+   */
+  const assignmentLabel =
+    assignment.target === null
+      ? ''
+      : assignment.target.type === 'new'
+        ? t`a new ${assignment.target.kind}`
+        : assignment.target.name;
+
+  // Shown on capability, not on loaded data: the catalog is fetched when the
+  // strip opens, so gating the toggle on `assistantKinds` would hide the only
+  // control that loads them. A gateway that can spawn, or a session with
+  // another assistant in it, has something to offer; anything else has not.
+  const assignmentToggle =
+    gatewaySupportsAgentSpawn(data.health?.capabilities) || assignmentCandidates.length > 0 ? (
+      <PressableScale
+        testID="assignment-toggle"
+        accessibilityRole="button"
+        accessibilityState={{ expanded: assignment.open }}
+        accessibilityLabel={
+          assignment.open ? t`Stop assigning a task` : t`Assign this to an assistant`
+        }
+        feedback="selection"
+        pressedScale={0.9}
+        disabled={!selectedPane || sending}
+        onPress={() => {
+          if (assignment.open) {
+            assignment.close();
+            return;
+          }
+          assignment.setOpen(true);
+          // Fetched when the row that shows them is opened, not on mount: most
+          // sessions never open it, and the catalog is a request.
+          void loadAssistantKinds();
+        }}
+        style={[
+          styles.keyRowToggle,
+          {
+            backgroundColor: surfaceBackground(
+              assignment.open ? theme.colors.primarySubtle : chromeGlass
+            ),
+          },
+        ]}>
+        <Bot size={16} color={theme.colors.primary} />
+      </PressableScale>
+    ) : null;
+
   const composerEntry = (
     <PressableScale
       accessibilityRole="button"
@@ -3289,13 +3577,68 @@ export function ServerTerminalWorkspace({
     the keys to paste a line without giving up `esc` and the chords to do it.
     `dock.composer` is what decides now, and it accounts for both.
   */
+  /**
+   * Who the next message is for, above the field that writes it.
+   *
+   * Written once because the composer is rendered in two places -- the ordinary
+   * dock, and floating in the editor panel -- and a strip that only existed in
+   * one of them was a control the reader could open and never see.
+   */
+  const assignmentBar =
+    dock.composer && assignment.open ? (
+      <AgentAssignmentBar
+        candidates={assignmentCandidates}
+        kinds={assistantKinds}
+        target={assignment.target}
+        onChoose={assignment.choose}
+        onClose={assignment.close}
+        disabled={sending}
+        commandName={assignment.command?.name}
+      />
+    ) : null;
+
   const composerField = (
     <TerminalComposer
       entering={fadeInDown('short')}
       exiting={fadeOutDown('short')}
       layout={dockRowLayout}
       leading={
-        dock.attachEntry ? (
+        // The target chip replaces the paperclip rather than sitting beside it:
+        // the row is already at its width budget on a phone, and while a task is
+        // addressed the most important thing the composer can say is who it is
+        // addressed to. Attachments staged before arming are kept and still go
+        // with the task, so nothing is lost by the swap. Tapping it disarms.
+        assignment.active && assignment.target ? (
+          <PressableScale
+            testID="composer-assignment-chip"
+            accessibilityRole="button"
+            accessibilityLabel={t`Send to ${assignmentLabel} — tap to change`}
+            disabled={sending}
+            onPress={() => assignment.setOpen(true)}
+            style={[
+              composerStyles.button,
+              styles.assignmentChip,
+              {
+                backgroundColor: surfaceBackground(
+                  assignment.target.type === 'new'
+                    ? theme.colors.primarySubtle
+                    : withAlpha(theme.colors.success, appChrome.opacity.chromeControl)
+                ),
+                borderColor:
+                  assignment.target.type === 'new' ? theme.colors.primary : theme.colors.success,
+              },
+            ]}>
+            {/* Two different glyphs, not one glyph in two colours: starting an
+                assistant and handing work to one that is already running are
+                different acts with different consequences, and colour alone is
+                never a status in this app. */}
+            {assignment.target.type === 'new' ? (
+              <Plus size={15} color={theme.colors.primary} />
+            ) : (
+              <Bot size={15} color={theme.colors.success} />
+            )}
+          </PressableScale>
+        ) : dock.attachEntry ? (
           <PressableScale
             accessibilityLabel={
               attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
@@ -3344,18 +3687,29 @@ export function ServerTerminalWorkspace({
         // and grew the composer to match, on the one screen where vertical
         // space is worth most -- and on the Pad's compact composer, which
         // the tablet branch hit independently.
-        placeholder: selectedAgent
-          ? t`Send a message`
-          : fullScreenPane
-            ? t`Type into this editor`
-            : t`Run a terminal command`,
+        placeholder: assignment.active
+          ? assignment.target?.type === 'new'
+            ? t`Task for a new ${assignment.target.kind}`
+            : t`Task for ${assignmentLabel}`
+          : selectedAgent
+            ? t`Send a message`
+            : fullScreenPane
+              ? t`Type into this editor`
+              : t`Run a terminal command`,
       }}
       send={{
-        accessibilityLabel: selectedAgent ? t`Send to agent` : t`Run command`,
-        armed: Boolean(hasSendableContent && selectedPane),
+        accessibilityLabel: assignment.active
+          ? t`Send this task to ${assignmentLabel}`
+          : selectedAgent
+            ? t`Send to agent`
+            : t`Run command`,
+        armed: Boolean((hasSendableContent || assignment.command) && selectedPane),
         sending,
         disabled:
-          connection.phase !== 'connected' || !hasSendableContent || !selectedPane || sending,
+          connection.phase !== 'connected' ||
+          !(hasSendableContent || assignment.command) ||
+          !selectedPane ||
+          sending,
         onPress: () => void sendInput(),
       }}
     />
@@ -3403,9 +3757,21 @@ export function ServerTerminalWorkspace({
             style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
             <KeyboardIcon size={16} color={theme.colors.primary} />
           </PressableScale>
-          {terminalKeyStrip}
+          <ScrollView
+            horizontal
+            keyboardShouldPersistTaps="always"
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.keyRowScroller}>
+            {assignmentToggle}
+            {terminalKeyButtons}
+          </ScrollView>
         </Animated.View>
       ) : null}
+      {/* Above the field, because it answers a question the field then asks:
+          who is this for. It is the pane strip's shape on purpose -- a row of
+          named, scrollable targets -- so the two read as the same kind of
+          choice rather than as two unrelated pickers. */}
+      {assignmentBar}
       {dock.composer ? composerField : null}
     </>
   );
@@ -3950,13 +4316,16 @@ export function ServerTerminalWorkspace({
               surface covering it move together instead of the terminal snapping
               a beat after the dock.
             */}
-                <AnimatedSafeAreaView
-                  edges={['bottom']}
+                <Animated.View
                   layout={dockRowLayout}
                   onLayout={(event: LayoutChangeEvent) => {
                     measureComposerHeight(Math.ceil(event.nativeEvent.layout.height));
                   }}
-                  style={[styles.composerSafeArea, isPadLayout && styles.padComposerSafeArea]}>
+                  style={[
+                    styles.composerSafeArea,
+                    isPadLayout && styles.padComposerSafeArea,
+                    dockClearanceStyle,
+                  ]}>
                   {/* Inside the dock rather than floating over the pane: the dock is
                 measured into `composerHeight`, so the terminal reserves room
                 for the banner instead of having its last lines covered by it --
@@ -4045,23 +4414,39 @@ export function ServerTerminalWorkspace({
                           exiting={fadeOutDown('short')}
                           layout={dockRowLayout}
                           style={styles.keyRowWrap}>
+                          {/* The Pad's pane switcher keeps its own scroller --
+                              nesting two horizontal ScrollViews would leave
+                              neither able to say which one a drag belongs to. */}
                           {isPadLayout ? padPaneSwitcher : null}
-                          {paneEntries(chromeGlass)}
-                          <PressableScale
-                            accessibilityLabel={t`Open on-screen keyboard`}
-                            feedback="selection"
-                            pressedScale={0.9}
-                            onPress={() => {
-                              Keyboard.dismiss();
-                              setKeyboardMode(true);
-                            }}
-                            style={[
-                              styles.keyRowToggle,
-                              { backgroundColor: surfaceBackground(chromeGlass) },
-                            ]}>
-                            <KeyboardIcon size={16} color={chromeText} />
-                          </PressableScale>
-                          {terminalKeyStrip}
+                          {/* Everything else scrolls as one row. The entries
+                              used to be pinned to the left while only the keys
+                              moved, which fixed the row's budget at whatever
+                              four circles and the keys could fit -- so a fifth
+                              control had nowhere to go, and on a narrow phone
+                              the keys were already losing their tail. */}
+                          <ScrollView
+                            horizontal
+                            keyboardShouldPersistTaps="always"
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.keyRowScroller}>
+                            {paneEntries(chromeGlass)}
+                            <PressableScale
+                              accessibilityLabel={t`Open on-screen keyboard`}
+                              feedback="selection"
+                              pressedScale={0.9}
+                              onPress={() => {
+                                Keyboard.dismiss();
+                                setKeyboardMode(true);
+                              }}
+                              style={[
+                                styles.keyRowToggle,
+                                { backgroundColor: surfaceBackground(chromeGlass) },
+                              ]}>
+                              <KeyboardIcon size={16} color={chromeText} />
+                            </PressableScale>
+                            {assignmentToggle}
+                            {terminalKeyButtons}
+                          </ScrollView>
                         </Animated.View>
                       ) : null}
                       {/* The files staged for the next message. They are not lost while
@@ -4106,8 +4491,9 @@ export function ServerTerminalWorkspace({
                 the panel instead. `dock.composer` is what decides in both
                 places, and it accounts for the approval, the keyboard and the
                 editor alike. */}
+                  {assignmentBar}
                   {dock.composer ? composerField : null}
-                </AnimatedSafeAreaView>
+                </Animated.View>
               </GlassChrome>
             </Animated.View>
           ) : null}
@@ -4744,8 +5130,8 @@ const styles = StyleSheet.create({
     zIndex: 1,
     paddingTop: 8,
     paddingHorizontal: 12,
-    paddingBottom: 8,
     gap: 7,
+    // Bottom clearance is animated -- see `dockClearanceStyle`.
   },
   padComposerSafeArea: {
     width: '100%',
@@ -4755,7 +5141,6 @@ const styles = StyleSheet.create({
     // inside makes the controls' left clearance and the input's bottom
     // clearance visibly equal instead of inheriting compact's 12 / 8 split.
     paddingHorizontal: appChrome.layout.padWorkspaceGutter,
-    paddingBottom: appChrome.layout.padWorkspaceGutter,
   },
   composerFade: {
     position: 'absolute',
@@ -4807,6 +5192,10 @@ const styles = StyleSheet.create({
   padComposerFloatingContent: {
     maxWidth: '100%',
   },
+  // The scrolling half of the key row. `alignItems` keeps circles and key caps
+  // on one baseline when they differ in height; the trailing pad stops the last
+  // key sitting flush against the edge when the row is longer than the screen.
+  keyRowScroller: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 6 },
   keyRowWrap: {
     flexDirection: 'row',
     // Stated, and centred: the row used to have no height of its own and hang
@@ -4961,6 +5350,9 @@ const styles = StyleSheet.create({
   terminalKeyEmphasisText: {
     fontWeight: '700',
   },
+  // The target chip stands in for the paperclip while a task is addressed, so
+  // it keeps the paperclip's footprint exactly and only changes what fills it.
+  assignmentChip: { alignItems: 'center', justifyContent: 'center' },
   viewToggle: {
     width: 46,
     height: 46,

@@ -288,6 +288,37 @@ export function attachmentReferenceContext(
   );
 }
 
+/**
+ * The task text, assembled from the shared attachment queue.
+ *
+ * The same function as `agentCommandTextWithReferences` in every respect that
+ * reaches the agent -- same order, same separator, same truncation rule for the
+ * terminal context, same 64 KiB ceiling -- differing only in where the images
+ * come from. That equivalence is the point and it is asserted directly: the
+ * tests build both from matching inputs and compare the bytes.
+ *
+ * It exists so the composer can address an assistant using the attachment stack
+ * the rest of the app uses, with its preview, its per-item retry and its staged
+ * tiles, rather than a second thumbnail strip of its own.
+ */
+export function attachmentCommandText(
+  prompt: string,
+  context: string,
+  instructions: string | undefined,
+  attachments: readonly PendingAttachment[],
+  active: AttachmentDestination
+): string {
+  const text = [
+    collaborationTaskText(prompt, context, instructions),
+    attachmentReferenceContext(attachments, active),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+  if (new TextEncoder().encode(text).length > 64 * 1024)
+    throw new Error('Task exceeds the 64 KiB delivery limit');
+  return text;
+}
+
 export function agentCommandTextWithReferences(
   prompt: string,
   context: string,

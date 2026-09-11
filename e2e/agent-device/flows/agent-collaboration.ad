@@ -1,88 +1,30 @@
-# Native regression: sending returns to the origin terminal's notification card.
+# Native regression: the composer does not offer a task it cannot deliver.
 # suite.json enters an English offline demo before this script.
+#
+# The demo session has exactly one agent, and it is the pane the reader is in.
+# Starting a new assistant is held back by `AGENT_SPAWN_SHIPPED`, and the only
+# other target -- an assistant already running elsewhere in the session -- does
+# not exist here. So there is nowhere to send a task, and the control that
+# would open the assistant strip is absent rather than opening an empty row.
+#
+# This is the same rule the old task screen broke for a year: it offered
+# "Existing assistant" as the default target and only said the target was
+# unavailable after the whole task had been written. The strip is built from
+# the targets that can actually be delivered to, so when there are none there
+# is no strip and no toggle.
 wait "role=button text=\"Open quick actions\"" 15000
+is hidden "id=\"assignment-toggle\""
+is hidden "id=\"assignment-bar-close\""
+is hidden "id=\"composer-assignment-chip\""
+# The composer is an ordinary composer, addressed to the agent on screen.
+is visible "id=\"terminal-composer-input\""
+is visible "label=\"Send to agent\""
+# Quick actions still lists the entry, and it still closes onto this terminal:
+# the row is about where a task is written, not about whether one can be sent,
+# and the strip it asks for appears as soon as the session has a target.
 press "role=button text=\"Open quick actions\""
-wait "id=\"quick-actions-tab-catalog\"" 10000
-press "id=\"quick-actions-tab-catalog\""
-wait "role=button label=\"/clear\"" 10000
-is hidden "role=button label=\"Summarize progress\""
-press "id=\"quick-actions-tab-saved\""
-wait "role=button label=\"Summarize progress\"" 10000
-is hidden "role=button label=\"/clear\""
-press "role=button text=\"Agent collaboration\""
-wait "id=\"collaboration-assign\"" 15000
-press "id=\"collaboration-assign\""
-# No mode switch to press: starting a new assistant is the only target this
-# build can deliver to, and one option is not a choice worth drawing.
-is hidden "id=\"collaboration-existing\""
-wait "id=\"collaboration-profile-picker\"" 10000
-fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: review current changes without editing files."
-keyboard dismiss
-press "id=\"collaboration-close\""
+wait text "Assign a task" 10000
+press "role=button text=\"Assign a task\""
 wait "role=button text=\"Open quick actions\"" 10000
-press "role=button text=\"Open quick actions\""
-wait text "Agent collaboration" 10000
-press "role=button text=\"Agent collaboration\""
-wait "id=\"collaboration-instructions\"" 10000
-is visible "id=\"collaboration-instructions\" value=\"Muqun collaboration regression: review current changes without editing files.\""
-press "id=\"collaboration-send\""
-wait "id=\"collaboration-notice\"" 20000
-is hidden "id=\"collaboration-instructions\""
-press "id=\"collaboration-notice-expand\""
-wait "id=\"collaboration-notice-output\"" 10000
-screenshot "shots/collaboration-notice.png"
-press "id=\"collaboration-notice-manage\""
-wait "id=\"collaboration-task-0-output\"" 15000
-is hidden "id=\"collaboration-instructions\""
-wait text "Ready for input" 20000
-press "id=\"collaboration-task-0-output\""
-wait "id=\"collaboration-output\"" 10000
-is text "id=\"collaboration-output\"" "Muqun collaboration regression: review current changes without editing files.\n\nReview finished. The theme fallback has test coverage. No changes were made"
-screenshot "shots/collaboration-output.png"
-press "id=\"collaboration-close\""
-wait text "Claude Code" 10000
-press "role=button text=\"Open quick actions\""
-wait text "Agent collaboration" 10000
-press "role=button text=\"Agent collaboration\""
-wait "id=\"collaboration-assign\"" 10000
-press "id=\"collaboration-assign\""
-# This used to select "Existing assistant", send, and assert the reply
-# "Update Muqun Gateway to use Agent collaboration" -- which encoded a bug as
-# expected behaviour. By that point the Gateway's agent_collaboration
-# capability had already been checked and found present, so no upgrade the
-# reader could perform would have changed the outcome: the app simply has no
-# instance-bound delivery contract, and the one instruction it gave was the one
-# thing guaranteed not to work. The target is no longer offered at all.
-is hidden "id=\"collaboration-existing\""
-wait "id=\"collaboration-profile-picker\"" 10000
-fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: run the relevant tests and report the result."
-keyboard dismiss
-press "id=\"collaboration-close\""
-wait "role=button text=\"Open quick actions\"" 10000
-press "role=button text=\"Open quick actions\""
-wait text "Agent collaboration" 10000
-press "role=button text=\"Agent collaboration\""
-wait "id=\"collaboration-instructions\"" 10000
-is visible "id=\"collaboration-instructions\" value=\"Muqun collaboration regression: run the relevant tests and report the result.\""
-press "role=button label=\"Back to assigned tasks\""
-wait "id=\"collaboration-task-0-terminal\"" 10000
-is hidden "id=\"collaboration-instructions\""
-is hidden "id=\"collaboration-task-1-output\""
-press "id=\"collaboration-task-0-output\""
-wait "id=\"collaboration-output\"" 10000
-is text "id=\"collaboration-output\"" "Muqun collaboration regression: review current changes without editing files.\n\nReview finished. The theme fallback has test coverage. No changes were made"
-press "id=\"collaboration-task-0-terminal\""
-wait text "Review assistant" 10000
-screenshot "shots/collaboration-terminal.png"
-press "role=button text=\"Open quick actions\""
-wait text "Agent collaboration" 10000
-press "role=button text=\"Agent collaboration\""
-wait "role=button label=\"Back to assigned tasks\"" 10000
-press "role=button label=\"Back to assigned tasks\""
-wait "id=\"collaboration-task-0-output\"" 10000
-press "id=\"collaboration-task-0-options\""
-wait "id=\"collaboration-remove\"" 10000
-press "id=\"collaboration-remove\""
-is hidden "id=\"collaboration-task-0-output\""
-press "id=\"collaboration-close\""
-wait "role=button text=\"Open quick actions\"" 10000
+is visible "id=\"terminal-composer-input\""
+screenshot "shots/collaboration-composer.png"

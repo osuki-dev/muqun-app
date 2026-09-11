@@ -2,7 +2,9 @@ import { expect, test } from 'bun:test';
 
 import {
   addAgentImageReference,
+  agentCommandTextWithReferences,
   agentReferenceContext,
+  attachmentCommandText,
   attachmentReferenceContext,
   beginAgentReferenceUpload,
   createAgentReferenceDraft,
@@ -171,4 +173,53 @@ test('an adapted draft is refused once its destination moves', () => {
       sourcePaneId: 'elsewhere',
     })
   ).toThrow('Reference destination changed');
+});
+
+test('the whole task text is byte-identical, not only the reference block', () => {
+  // The block being equal is necessary and not sufficient: what reaches the
+  // agent is prompt, terminal context, instructions and references assembled in
+  // one order with one separator. `attachmentCommandText` is what the composer
+  // sends through, so the equality has to hold for the assembled text.
+  const { draft, queue } = bothQueues();
+  for (const [prompt, context, instructions] of [
+    ['Review the diff', '', undefined],
+    ['Run the tests', '$ bun test\n3 pass', undefined],
+    ['', '', 'Report failures with reproduction steps.'],
+    ['Check this', 'tail of the pane', 'Do not edit files.'],
+  ] as const) {
+    expect(attachmentCommandText(prompt, context, instructions, queue, destination)).toBe(
+      agentCommandTextWithReferences(prompt, context, instructions, draft, scope)
+    );
+  }
+});
+
+test('a task assembled from a drifted queue is refused before anything is sent', () => {
+  // The composer spawns an assistant to receive this text. Building it first is
+  // what keeps a queue that has moved from costing the reader an assistant that
+  // then gets nothing -- so the refusal has to come from the text builder, not
+  // from a check somewhere after the spawn.
+  const { queue } = bothQueues();
+  expect(() =>
+    attachmentCommandText('Review', '', undefined, queue, {
+      ...destination,
+      sourcePaneId: 'another-pane',
+    })
+  ).toThrow();
+  expect(() =>
+    attachmentCommandText('Review', '', undefined, queue, {
+      ...destination,
+      connectionGeneration: destination.connectionGeneration + 1,
+    })
+  ).toThrow();
+});
+
+test('an oversized task is refused, and by the same ceiling as the other builder', () => {
+  // Which layer refuses is not the point and is not pinned: `collaborationTaskText`
+  // has its own limit and reaches an over-long prompt first. What matters is that
+  // the two builders agree -- a task one accepts is not one the other rejects,
+  // or the composer and the screen would disagree about what is sendable.
+  const huge = 'x'.repeat(64 * 1024 + 1);
+  const { draft } = bothQueues();
+  expect(() => attachmentCommandText(huge, '', undefined, [], destination)).toThrow();
+  expect(() => agentCommandTextWithReferences(huge, '', undefined, draft, scope)).toThrow();
 });

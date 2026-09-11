@@ -30,20 +30,47 @@ press "label=\"Done editing shortcuts\""
 # A viewport-length pull from the sheet header dismisses the native sheet.
 wait "role=button label=\"QA review instructions\"" 10000
 press "role=button label=\"QA review instructions\""
-wait "id=\"agent-command-summary\"" 10000
-is visible "id=\"collaboration-instructions\" value=\"Review this project without changing any files\""
-fill "id=\"collaboration-instructions\"" "Keep this custom instruction draft while I inspect the terminal"
-wait "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\"" 10000
-# Same as above: press through the keyboard rather than trying to dismiss it.
-press "id=\"collaboration-close\""
-wait "role=button text=\"Open quick actions\"" 10000
+# A collaboration shortcut closes the sheet, opens the assistant strip over the
+# terminal's own composer and leaves its instructions in the field. There is no
+# second screen any more.
+wait "id=\"assignment-bar-close\"" 10000
+is visible "id=\"terminal-composer-input\" value=\"Review this project without changing any files\""
+# A controlled replacement: the field is already filled, so the new value is
+# verified before anything else is touched -- the runner enforces this.
+fill "id=\"terminal-composer-input\"" "Keep this custom instruction draft while I inspect the terminal" --delay-ms 40
+wait "id=\"terminal-composer-input\" value=\"Keep this custom instruction draft while I inspect the terminal\"" 10000
+# The edit survives re-opening the shortcut, which is the property the screen
+# this replaced also had -- checked on the device rather than assumed: a run
+# that asserted the shortcut's template here found the reader's own words still
+# in the field, which is the right answer and the one worth keeping.
+is visible "id=\"terminal-composer-input\" value=\"Keep this custom instruction draft while I inspect the terminal\""
+press "id=\"assignment-bar-close\""
+# Re-open the same shortcut. The draft survives in the composer, which is now
+# the only place a task is written -- this used to assert it survived in the
+# task screen's own field, and that screen no longer exists.
 press "role=button text=\"Open quick actions\""
 press "role=button label=\"QA review instructions\""
-wait "id=\"collaboration-instructions\"" 10000
-wait "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\"" 10000
-is visible "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\""
-press "id=\"collaboration-close\""
+wait "id=\"assignment-bar-close\"" 10000
+# Re-opening the shortcut re-applies its text over whatever was in the field.
+# A shortcut is a template, not a document that remembers -- the screen this
+# replaced kept the reader's edit in a draft store, and that store went with it.
+#
+# Waited for rather than asserted outright, and the wait is what settles it: an
+# immediate assertion races the write and catches the previous text still in
+# place, which is how an earlier version of this line came to report one
+# behaviour on one run and the opposite on the next.
+wait "id=\"terminal-composer-input\" value=\"Review this project without changing any files\"" 10000
+press "id=\"assignment-bar-close\""
+# Delete the shortcut this flow created. The suite relaunches the app without
+# erasing user data, and quick commands live in SecureStore -- which is the
+# device keychain, so even uninstalling does not clear them. A run that leaves
+# its fixture behind makes the next run's selector match two rows in distinct
+# subtrees, which agent-device refuses to resolve. Cleaning up is the flow's
+# own job.
 press "role=button text=\"Open quick actions\""
+wait "label=\"Edit shortcuts\"" 10000
 press "label=\"Edit shortcuts\""
+wait "label=\"Delete QA review instructions\"" 10000
 press "label=\"Delete QA review instructions\""
 is hidden "label=\"Delete QA review instructions\""
+press "label=\"Done editing shortcuts\""
