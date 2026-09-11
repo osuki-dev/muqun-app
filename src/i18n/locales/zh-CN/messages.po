@@ -896,6 +896,10 @@ msgstr "无法连接到 Gateway。请确认它正在运行，然后刷新二维�
 msgid "Could not reach this server."
 msgstr "无法连接到这台服务器"
 
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "无法读取已保存的服务器，保存的数据未被修改，请解锁此设备后重试"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
@@ -1370,6 +1374,10 @@ msgstr "主机密钥已信任"
 msgid "Idle"
 msgstr "空闲"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "如果问题仍然存在，请重启 App 或检查 App 安装"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "图片"
@@ -1552,6 +1560,7 @@ msgstr "只列出正在运行可识别代理的面板"
 msgid "Live Activity"
 msgstr "实时活动"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 msgid "Loading"
 msgstr "加载中"
@@ -2397,6 +2406,7 @@ msgstr "恢复隐藏的默认命令"
 msgid "Restore hidden defaults"
 msgstr "恢复隐藏的默认项"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -3454,6 +3464,7 @@ msgstr "已上传"
 msgid "uploading"
 msgstr "上传中"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/agent-reference-editor.tsx
 msgid "Uploading…"
 msgstr "正在上传…"

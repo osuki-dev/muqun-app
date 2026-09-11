@@ -896,6 +896,10 @@ msgstr "無法連上 Gateway。請確定它正在執行，然後重新整理 QR 
 msgid "Could not reach this server."
 msgstr "無法連線到這台伺服器"
 
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "無法讀取已儲存的伺服器，儲存的資料未被修改，請解鎖此裝置後重試"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
@@ -1370,6 +1374,10 @@ msgstr "主機金鑰已信任"
 msgid "Idle"
 msgstr "閒置"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "如果問題仍然存在，請重新啟動 App 或檢查 App 安裝"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "圖片"
@@ -1552,6 +1560,7 @@ msgstr "只列出正在執行可辨識代理程式的面板"
 msgid "Live Activity"
 msgstr "即時動態"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 msgid "Loading"
 msgstr "載入中"
@@ -2397,6 +2406,7 @@ msgstr "還原隱藏的預設指令"
 msgid "Restore hidden defaults"
 msgstr "還原隱藏的預設"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -3454,6 +3464,7 @@ msgstr "已上傳"
 msgid "uploading"
 msgstr "上傳中"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/agent-reference-editor.tsx
 msgid "Uploading…"
 msgstr "正在上傳…"

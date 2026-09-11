@@ -896,6 +896,10 @@ msgstr "Gateway ist nicht erreichbar. Stelle sicher, dass es läuft, aktualisier
 msgid "Could not reach this server."
 msgstr "Dieser Server war nicht erreichbar"
 
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Gespeicherte Server konnten nicht gelesen werden. Deine gespeicherten Daten wurden nicht geändert. Entsperre dieses Gerät und versuche es erneut"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
@@ -1370,6 +1374,10 @@ msgstr "Host-Schlüssel vertraut"
 msgid "Idle"
 msgstr "Inaktiv"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "Wenn das Problem weiterhin besteht, starte die App neu oder prüfe die App-Installation"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "Bilder"
@@ -1552,6 +1560,7 @@ msgstr "Listet nur Panels mit einem erkannten Agenten"
 msgid "Live Activity"
 msgstr "Live-Aktivität"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 msgid "Loading"
 msgstr "Wird geladen"
@@ -2397,6 +2406,7 @@ msgstr "Ausgeblendete Standardbefehle wiederherstellen"
 msgid "Restore hidden defaults"
 msgstr "Ausgeblendete Standards wiederherstellen"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -3454,6 +3464,7 @@ msgstr "hochgeladen"
 msgid "uploading"
 msgstr "wird hochgeladen"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/agent-reference-editor.tsx
 msgid "Uploading…"
 msgstr "Wird hochgeladen…"
