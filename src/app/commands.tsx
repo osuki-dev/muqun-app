@@ -107,6 +107,7 @@ import {
 import { describeGatewayFailure } from '@/lib/network-error';
 import { quickActionAvailability } from '@/lib/quick-actions';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { slashArgumentRequired } from '@/lib/slash-argument';
 import { SIMFARM_DEFAULT_PORT, simfarmSocketUrl } from '@/lib/simfarm';
 import { warmSimfarm } from '@/lib/simfarm-stream';
 import { useComposerDraftStore } from '@/stores/composer-draft';
@@ -370,9 +371,12 @@ export default function QuickCommandsScreen() {
 
   async function runSlashCommand(entry: SlashCommand) {
     if (!params.paneId || !params.sessionId || sendingId) return;
-    // A command that takes an argument cannot be fired blind: hand it to the
-    // composer with the cursor after it so the argument can be typed.
-    if (entry.argument_hint) {
+    // A command that needs an argument cannot be fired blind: hand it to the
+    // composer with the cursor after it so the argument can be typed. An
+    // *optional* hint is not that -- `[instructions]` runs perfectly well with
+    // nothing after it, and diverting those closed the sheet with no visible
+    // result for most of the catalogue.
+    if (slashArgumentRequired(entry.argument_hint)) {
       prefillDraft(`${entry.command} `);
       router.back();
       return;
