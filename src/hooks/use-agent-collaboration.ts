@@ -1,7 +1,10 @@
 import { useLingui } from '@lingui/react/macro';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Keyboard } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Alert, AppState, Keyboard } from 'react-native';
+import { DeliveryOwnership, DeliverySelection, assertDeliveryCurrent } from '@/lib/bound-delivery';
+import { useAgentReferences } from '@/hooks/use-agent-references';
+import { agentCommandTextWithReferences } from '@/lib/agent-command-references';
 import {
   canAssignToAgent,
   collaborationAvailability,
@@ -21,7 +24,7 @@ import {
   loadSessions,
   loadAgentProfiles,
   readPaneOutput,
-  spawnAgent,
+  spawnBoundAgent,
   type AgentProfile,
   type HerdrEntity,
 } from '@/lib/gateway-client';
@@ -37,12 +40,59 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
   const router = useRouter();
   const scope = collaborationDraftScope(routeParams);
   const [initialDraft] = useState(() => useAgentCollaboration.getState().drafts[scope]);
+  const [draftOwner] = useState(() => Symbol('collaboration-editor'));
+  useLayoutEffect(() => {
+    useAgentCollaboration.getState().claimDraft(scope, draftOwner);
+  }, [scope, draftOwner]);
+  const [ownership] = useState(() => new DeliveryOwnership());
+  useFocusEffect(useCallback(() => () => ownership.invalidate(), [ownership]));
+  useEffect(
+    () =>
+      useGatewayConnectionStore.subscribe((next, previous) => {
+        if (next.record !== previous.record) ownership.invalidate();
+      }),
+    [ownership]
+  );
   // Going to an assistant's terminal must not lose the unsent instructions
   // or silently change which terminal/project the assignment came from.
   const params = initialDraft?.context ?? routeParams;
   const command = initialDraft?.command;
   const instructions = command?.instructions;
   const { serverId, sessionId, paneId } = params;
+  useLayoutEffect(
+    () => () => ownership.invalidate(),
+    [
+      ownership,
+      serverId,
+      sessionId,
+      paneId,
+      params.workspaceId,
+      params.tabId,
+      params.cwd,
+      params.commandId,
+    ]
+  );
+  const capture = useCallback(() => {
+    const record = useGatewayConnectionStore.getState().record;
+    return ownership.capture(
+      () =>
+        Boolean(record) &&
+        record?.serverId === serverId &&
+        useGatewayConnectionStore.getState().record === record &&
+        useAgentCollaboration.getState().draftOwners[scope] === draftOwner
+    );
+  }, [ownership, serverId, scope, draftOwner]);
+  const references = useAgentReferences(
+    {
+      serverId,
+      sessionId,
+      sourcePaneId: paneId,
+      commandId: params.commandId,
+      connectionGeneration: 0,
+    },
+    initialDraft?.references,
+    capture
+  );
   const allTasks = useAgentCollaboration((state) => state.tasks);
   const tasks = tasksForSession(allTasks, serverId, sessionId);
   const connectedServerId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -58,9 +108,9 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [form, setForm] = useState(Boolean(initialDraft) || Boolean(command));
-  const [target, setTarget] = useState(initialDraft?.target ?? '');
-  const [newAgent, setNewAgent] = useState(initialDraft?.newAgent ?? false);
-  const [kind, setKind] = useState(initialDraft?.kind ?? '');
+  const [target, setTarget] = useOwnedSelection(initialDraft?.target ?? '', ownership);
+  const [newAgent, setNewAgent] = useOwnedSelection(initialDraft?.newAgent ?? false, ownership);
+  const [kind, setKind] = useOwnedSelection(initialDraft?.kind ?? '', ownership);
   const [prompt, setPrompt] = useState(initialDraft?.prompt ?? '');
   const [context, setContext] = useState('');
   const [includeContext, setIncludeContext] = useState(false);
@@ -81,10 +131,12 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
   const outputState = useCollaborationOutput(detailTask, connectionMatches);
   const { workspaceId, tabId, cwd } = params;
   useEffect(() => {
-    useAgentCollaboration.getState().saveDraft(
+    useAgentCollaboration.getState().saveOwnedDraft(
       scope,
-      prompt.trim() || (command && form)
+      draftOwner,
+      prompt.trim() || references.draft.images.length || (command && form)
         ? {
+            owner: draftOwner,
             context: {
               serverId,
               sessionId,
@@ -100,6 +152,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
             newAgent,
             kind,
             recoveryPane,
+            references: references.draft,
           }
         : null
     );
@@ -119,6 +172,8 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
     command,
     params.commandId,
     form,
+    references.draft,
+    draftOwner,
   ]);
 
   // The existing transport is scoped to the selected paired server. Never
@@ -137,6 +192,8 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
     let metadataExpiresAt = 0;
     async function poll() {
       if (running || cancelled || AppState.currentState !== 'active') return;
+      const isCurrent = capture();
+      if (!isCurrent()) return;
       running = true;
       try {
         // Metadata is stable. Status alone needs the three-second cadence.
@@ -146,7 +203,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
             : Promise.resolve(null),
           loadAgents(sessionId),
         ]);
-        if (cancelled || AppState.currentState !== 'active') return;
+        if (cancelled || !isCurrent() || AppState.currentState !== 'active') return;
         if (metadata) {
           const [health, sessions, nextPanes] = metadata;
           metadataExpiresAt = Date.now() + 30_000;
@@ -184,7 +241,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
         setError(null);
       } catch (failure) {
         metadataExpiresAt = 0;
-        if (!cancelled) {
+        if (!cancelled && isCurrent()) {
           setCheckedAt(null);
           setError(describeGatewayFailure(failure, t`Could not refresh agent status.`).message);
         }
@@ -209,19 +266,20 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
       clearTimeout(timer);
       subscription.remove();
     };
-  }, [connectionMatches, sessionId, paneId, refresh, t]);
+  }, [connectionMatches, sessionId, paneId, refresh, t, capture, setNewAgent]);
 
   useEffect(() => {
     if (!newAgent || !canSpawn || !connectionMatches) return;
     let cancelled = false;
+    const isCurrent = capture();
     void loadAgentProfiles()
       .then((items) => {
-        if (cancelled) return;
+        if (cancelled || !isCurrent()) return;
         setProfiles(items);
         setKind((current) => current || items.find((item) => item.available)?.kind || '');
       })
       .catch((failure: unknown) => {
-        if (!cancelled)
+        if (!cancelled && isCurrent())
           setNotice(
             describeGatewayFailure(failure, t`Could not list this server's agents.`).message
           );
@@ -229,17 +287,20 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
     return () => {
       cancelled = true;
     };
-  }, [newAgent, canSpawn, connectionMatches, t]);
+  }, [newAgent, canSpawn, connectionMatches, t, capture, setKind]);
 
   async function shareContext(enabled: boolean) {
+    const isCurrent = capture();
     setIncludeContext(enabled);
     if (!enabled) return;
     setContextLoading(true);
     try {
       assertConnection();
       const text = await readPaneOutput(sessionId, paneId, 'text', 40, 'visible');
+      assertDeliveryCurrent(isCurrent);
       setContext(text.slice(-6000));
     } catch (failure) {
+      if (!isCurrent()) return;
       setIncludeContext(false);
       setNotice(describeGatewayFailure(failure, t`Could not read the terminal.`).message);
     } finally {
@@ -271,36 +332,98 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
     setNotice(null);
     setRecoveryPane(null);
     let dispatchAttempted = false;
+    const destinationCurrent = capture();
+    const referenceDraft = references.snapshot();
+    const referencesCurrent = references.captureRevision();
+    const isCurrent = () => destinationCurrent() && referencesCurrent();
+    const sourceRecord = useGatewayConnectionStore.getState().record;
+    const record = sourceRecord
+      ? {
+          ...sourceRecord,
+          ...(sourceRecord.sshTunnel ? { sshTunnel: { ...sourceRecord.sshTunnel } } : {}),
+        }
+      : null;
     try {
       assertConnection();
+      assertDeliveryCurrent(isCurrent);
+      if (!record) throw new Error(t`Return to this server to continue.`);
+      if (referenceDraft.images.length) {
+        if (!newAgent)
+          throw new Error(t`Reference images can be sent when starting a new assistant`);
+        const gatewayName = record.label || record.serverId;
+        const approved = await new Promise<boolean>((resolve) =>
+          Alert.alert(
+            t`Send reference images?`,
+            t`Images will be uploaded to ${gatewayName} and shared with the new assistant. Its AI provider may process them. They are not automatically copied to other machines.`,
+            [
+              { text: t`Cancel`, style: 'cancel', onPress: () => resolve(false) },
+              { text: t`Upload and send`, onPress: () => resolve(true) },
+            ],
+            { cancelable: true, onDismiss: () => resolve(false) }
+          )
+        );
+        if (!approved) return;
+        assertDeliveryCurrent(isCurrent);
+      }
       const [health, sessions, current] = await Promise.all([
         loadHealth(),
         loadSessions(),
         loadAgents(sessionId),
       ]);
       assertConnection();
+      assertDeliveryCurrent(isCurrent);
       const session = sessions.sessions?.find((item) => item.id === sessionId);
       if (!session || !supportsCollaboration(session.backend ?? 'herdr'))
         throw new Error(t`Agent collaboration is available in Herdr sessions.`);
       if (collaborationAvailability(health, sessionId, session.backend ?? 'herdr') !== 'ready') {
         throw new Error(t`Refresh to check Gateway and Herdr compatibility before assigning.`);
       }
-      const text = collaborationTaskText(prompt, includeContext ? context : '', instructions);
+      let text = collaborationTaskText(prompt, includeContext ? context : '', instructions);
       let destination = target;
       let name = selected?.name ?? target;
       let agentInstanceId: string | undefined;
       if (newAgent) {
         if (!kind || !health.capabilities?.includes('agent_spawn'))
           throw new Error(t`This server cannot start an assistant yet.`);
+        if (referenceDraft.images.length) {
+          if (!health.capabilities?.includes('file_uploads'))
+            throw new Error(t`Update this Gateway to upload reference images`);
+          const prepared = await references.prepare(record, isCurrent);
+          assertDeliveryCurrent(isCurrent);
+          text = agentCommandTextWithReferences(
+            prompt,
+            includeContext ? context : '',
+            instructions,
+            prepared,
+            prepared.scope
+          );
+        }
+        assertDeliveryCurrent(isCurrent);
         dispatchAttempted = true;
-        const created = await spawnAgent(sessionId, {
-          agent: kind,
-          cwd: params.cwd,
-          tab_id: params.tabId,
-          prompt: text,
-        });
+        const created = await spawnBoundAgent(
+          record,
+          sessionId,
+          {
+            agent: kind,
+            cwd: params.cwd,
+            tab_id: params.tabId,
+            prompt: text,
+          },
+          isCurrent
+        );
         const outcome = collaborationSpawnOutcome(created);
         if (outcome !== 'sent') {
+          // Preserve recovery even when navigation changed after transmission;
+          // never automatically create another assistant to replace this one.
+          const saved = useAgentCollaboration.getState().drafts[scope];
+          if (saved?.owner === draftOwner)
+            useAgentCollaboration.getState().saveOwnedDraft(scope, draftOwner, {
+              ...saved,
+              recoveryPane: created.paneId,
+              newAgent: false,
+              target: created.paneId,
+            });
+          if (!isCurrent()) return;
           setRecoveryPane(created.paneId);
           setNewAgent(false);
           setTarget(created.paneId);
@@ -348,7 +471,20 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
         createdAt: Date.now(),
       };
       useAgentCollaboration.getState().add(task);
-      useAgentCollaboration.getState().saveDraft(scope, null);
+      if (!isCurrent()) {
+        const saved = useAgentCollaboration.getState().drafts[scope];
+        if (saved?.owner === draftOwner) {
+          useAgentCollaboration.getState().saveOwnedDraft(scope, draftOwner, {
+            ...saved,
+            recoveryPane: destination,
+            newAgent: false,
+            target: destination,
+          });
+        }
+        return;
+      }
+      useAgentCollaboration.getState().saveOwnedDraft(scope, draftOwner, null);
+      references.clear();
       Keyboard.dismiss();
       setForm(false);
       setPrompt('');
@@ -359,6 +495,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
       usePanelPickerStore.getState().choosePanel({ serverId, paneId });
       router.back();
     } catch (failure) {
+      if (!isCurrent()) return;
       setNotice(
         describeGatewayFailure(failure, t`Could not send the task.`).message +
           (dispatchAttempted
@@ -390,6 +527,7 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
 
   return {
     command,
+    references,
     originCwd: params.cwd,
     tasks,
     connectionMatches,
@@ -430,4 +568,17 @@ export function useAgentCollaborationController(routeParams: CollaborationContex
     context,
     assign,
   };
+}
+
+/** Native events queued before the busy render must still invalidate old targets. */
+function useOwnedSelection<T>(initial: T, ownership: DeliveryOwnership) {
+  const [value, publish] = useState(initial);
+  const [selection] = useState(() => new DeliverySelection(initial, Object.is, ownership));
+  const update = useCallback(
+    (next: T | ((previous: T) => T)) => {
+      publish(selection.update(next));
+    },
+    [selection]
+  );
+  return [value, update] as const;
 }

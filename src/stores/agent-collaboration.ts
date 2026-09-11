@@ -20,6 +20,9 @@ const storage = (() => {
 type CollaborationState = {
   tasks: CollaborationTask[];
   drafts: Record<string, CollaborationDraft>;
+  draftOwners: Record<string, symbol>;
+  claimDraft: (scope: string, owner: symbol) => void;
+  saveOwnedDraft: (scope: string, owner: symbol, draft: CollaborationDraft | null) => void;
   saveDraft: (scope: string, draft: CollaborationDraft | null) => void;
   add: (task: CollaborationTask) => void;
   review: (id: string) => void;
@@ -47,12 +50,27 @@ function restore(): CollaborationTask[] {
 export const useAgentCollaboration = create<CollaborationState>((set) => ({
   tasks: restore(),
   drafts: {},
+  draftOwners: {},
+  claimDraft: (scope, owner) =>
+    set((state) => ({
+      draftOwners: { ...state.draftOwners, [scope]: owner },
+    })),
+  saveOwnedDraft: (scope, owner, draft) =>
+    set((state) => {
+      if (state.draftOwners[scope] !== owner) return state;
+      const drafts = { ...state.drafts };
+      if (draft) drafts[scope] = { ...draft, owner };
+      else delete drafts[scope];
+      return { drafts };
+    }),
   saveDraft: (scope, draft) =>
     set((state) => {
       const drafts = { ...state.drafts };
+      const draftOwners = { ...state.draftOwners };
+      delete draftOwners[scope];
       if (draft) drafts[scope] = draft;
       else delete drafts[scope];
-      return { drafts };
+      return { drafts, draftOwners };
     }),
   add: (task) =>
     set((state) => {

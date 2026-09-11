@@ -88,6 +88,7 @@ import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useAwayDigest } from '@/hooks/use-away-digest';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
@@ -524,7 +525,8 @@ export function ServerTerminalWorkspace({
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
-  const { record, records, loading, selectRecord, disconnect } = useGatewayRecord();
+  const { record, records, loading, hydrationError, retryHydration, selectRecord, disconnect } =
+    useGatewayRecord();
   const { showToast } = useToast();
   const demoMode = isDemoRecord(record);
   const {
@@ -3179,6 +3181,13 @@ export function ServerTerminalWorkspace({
       },
     } as Href);
   }
+
+  if (hydrationError)
+    return (
+      <AppDrawer>
+        <GatewayStorageError busy={loading} onRetry={retryHydration} />
+      </AppDrawer>
+    );
 
   if (!loading && !routeRecord) {
     return (

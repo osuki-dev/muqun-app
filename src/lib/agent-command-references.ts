@@ -205,9 +205,15 @@ export function agentCommandTextWithReferences(
   draft: AgentReferenceDraft,
   active: AgentReferenceScope
 ): string {
-  return collaborationTaskText(
-    prompt,
-    [context, agentReferenceContext(draft, active)].filter(Boolean).join('\n\n'),
-    instructions
-  );
+  // Terminal context is intentionally truncated by collaborationTaskText.
+  // Reference JSON is a complete contract and must never pass through that slice.
+  const text = [
+    collaborationTaskText(prompt, context, instructions),
+    agentReferenceContext(draft, active),
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+  if (new TextEncoder().encode(text).length > 64 * 1024)
+    throw new Error('Task exceeds the 64 KiB delivery limit');
+  return text;
 }
