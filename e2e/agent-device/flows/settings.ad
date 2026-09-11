@@ -29,7 +29,10 @@ press "${TARGET}"
 scroll up --pixels 320
 
 # section reset-theme
-press "role=radiobutton label=\"Osuki\""
+# The tile declares `accessibilityRole="radio"`, which this runtime reports as
+# a cell, so `role=radiobutton` never matches. The bare label matches the text
+# inside the tile as well as the tile, so the role is what separates them.
+press "role=cell label=\"Osuki\""
 wait stable 400 5000
 press "label=\"Theme, Osuki\""
 
@@ -285,10 +288,26 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section s89
-scroll down --pixels 320
+# Used by the step that must leave Quick actions visible. Scrolling down toward
+# it does not work: the row enters the accessibility tree while still off-screen
+# and settles at y=-20, just above the top edge, so "scroll until visible" never
+# becomes true and a tap on its clamped centre hits the status bar -- which on
+# iOS scrolls the list to the top and loses it outright.
+#
+# Measured on this runtime: at the bottom of Settings the row is at y=-20, and
+# one `scroll up --pixels 60` puts it at y=414. `--pixels` is a gesture
+# magnitude rather than a literal delta, so 96 and above carry it straight back
+# out of the tree.
+scroll bottom
+wait stable 400 5000
+scroll up --pixels 60
 
 # section clear-native-header
-scroll up --pixels 240
+# Settle only. This used to scroll up to lift the row clear of the native
+# large-title header, back when the step above overshot and left it at y=-20.
+# That step is now a measured `scroll bottom` plus one small nudge, so the row
+# arrives where it is reachable and any further scrolling here only carries it
+# straight back out of the tree.
 wait stable 400 5000
 
 # section s90

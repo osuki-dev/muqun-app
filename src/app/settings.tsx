@@ -3,16 +3,10 @@ import { ThemeArtwork } from '@/components/theme-artwork';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
-import {
-  Code,
-  ExternalLink,
-  Info,
-  MessageSquare,
-  Settings2,
-  ShieldCheck,
-} from 'lucide-react-native';
+import { Code, ExternalLink, MessageSquare, Settings2, ShieldCheck } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,12 +17,7 @@ import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { ScreenHeader } from '@/components/screen-header';
 import { SettingsAlerts } from '@/components/settings-alerts';
 import { SettingsAppearance } from '@/components/settings-appearance';
-import {
-  LADDER,
-  SettingsInfoRow,
-  SettingsNavRow,
-  SettingsSection,
-} from '@/components/settings-chrome';
+import { LADDER, SettingsNavRow, SettingsSection } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
 import { SettingsServers } from '@/components/settings-servers';
 import { SettingsTerminal } from '@/components/settings-terminal';
@@ -215,16 +204,6 @@ export default function SettingsScreen() {
                       label={t`Privacy policy`}
                       onPress={() => void openPrivacyPolicy()}
                     />
-                    <SettingsInfoRow
-                      icon={Info}
-                      label={t`Muqun`}
-                      detail={
-                        <Trans>
-                          Version {version}
-                          {build ? ` (${build})` : ''}
-                        </Trans>
-                      }
-                    />
                   </SettingsSection>
                 </View>
               </View>
@@ -233,6 +212,31 @@ export default function SettingsScreen() {
                 <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
                 <Text variant="caption" color={theme.colors.textMuted}>
                   <Trans>Muqun settings stay on this device.</Trans>
+                </Text>
+              </View>
+
+              {/* The end of the page, and the only thing on this screen that is
+                  the app rather than a setting. The version used to be a row in
+                  `About`, which is where a reader looks for it deliberately --
+                  but it is also the thing anyone is asked to quote in a bug
+                  report, and a centred line under the mark is easier to find
+                  and to read back than the trailing detail of a list row.
+                  It is here *instead of* there, not as well: the same string
+                  twice on one screen is a question about whether they agree. */}
+              <View style={styles.brand}>
+                <Image
+                  source={require('@/assets/images/loading-mark.png')}
+                  style={styles.brandMark}
+                  contentFit="contain"
+                  // Decorative: the version beneath it already names the app,
+                  // and the screen is titled `Settings`.
+                  accessible={false}
+                />
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.brandVersion}>
+                  <Trans>
+                    Version {version}
+                    {build ? ` (${build})` : ''}
+                  </Trans>
                 </Text>
               </View>
             </>
@@ -289,4 +293,15 @@ const styles = StyleSheet.create({
     gap: LADDER.gap,
     paddingHorizontal: LADDER.tight,
   },
+  brand: {
+    alignItems: 'center',
+    gap: LADDER.tight,
+    // The page's own `gap: LADDER.section` already sits above this, so the mark
+    // is not crowded by the line about settings staying on the device.
+    paddingBottom: LADDER.gutter,
+  },
+  brandMark: { width: 64, height: 64 },
+  // Centred even when the string wraps, which it does in the locales that spell
+  // `Version` out at length.
+  brandVersion: { textAlign: 'center' },
 });
