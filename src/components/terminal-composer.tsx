@@ -6,6 +6,8 @@ import { Platform, StyleSheet, TextInput, type TextInputProps } from 'react-nati
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { ThemedSurfaceArtwork } from '@/components/themed-surface';
+import { ThemeIcon } from '@/components/theme-icon';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { timing } from '@/lib/motion';
@@ -164,13 +166,19 @@ export function ComposerSendButton({
           composerStyles.buttonFill,
           { backgroundColor: surfaceBackground(armedFill) },
           fillStyle,
-        ]}
-      />
+        ]}>
+        {/* Rides the armed fill rather than the rest state: the artwork is what
+            the primary colour becomes, so it appears and fades with it instead
+            of sitting under a disarmed button. `ThemedSurfaceArtwork` clamps its
+            own opacity against the glyph colours, so a busy image cannot take
+            the arrow with it. */}
+        <ThemedSurfaceArtwork slot="buttons.primary.background" baseColor={armedFill} />
+      </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, restGlyphStyle]}>
-        <Send size={18} color={restText} />
+        <ThemeIcon name="chrome.send" fallback={Send} size={18} color={restText} />
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, armedGlyphStyle]}>
-        <Send size={18} color={activeText} />
+        <ThemeIcon name="chrome.send" fallback={Send} size={18} color={activeText} />
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, spinnerStyle]}>
         <Spinner size="sm" color={activeText} />

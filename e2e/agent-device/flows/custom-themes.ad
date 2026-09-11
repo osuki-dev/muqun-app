@@ -10,7 +10,10 @@ is visible "${TARGET}"
 scroll down --pixels 300
 
 # section close-sheet
-back
+# Removing the theme already returned from the detail route, so what is on
+# screen now is the theme picker itself -- a native sheet, which has a close
+# control rather than an in-app back control for `back` to find.
+press "label=\"Close theme picker\""
 wait stable 400 5000
 is visible "label=\"Go back\""
 
@@ -21,9 +24,17 @@ fill "id=theme-json-input" "{\"format\":\"muqun-theme\",\"schemaVersion\":1,\"id
 wait stable 400 5000
 
 # section applied-status
-is visible "text=\"Theme applied\""
-is visible "id=\"theme-status-message\""
+# Applying is a confirmation: the screen leaves, exactly as choosing a built-in
+# pack does. The theme is then reachable again from the list it was added to.
+is hidden "id=\"theme-apply\""
 screenshot dist/theme-applied-status.png
+
+# section reopen-applied
+# The row and its remove button both carry the theme's name, so neither the
+# name nor the name plus a role identifies the row. Its testID does.
+press "id=theme-row-theme-qa"
+wait stable 400 5000
+is visible "id=\"custom-theme-preview\""
 
 # section link-import
 press "id=theme-import-link"
@@ -39,9 +50,14 @@ is visible "id=theme-undo-format"
 press "id=theme-undo-format"
 
 # section opacity-enable
+# This theme's palette leaves a terminal floor of 97%, so the whole track spans
+# three points. Asserting an exact percentage after a tap measures where the tap
+# landed on that track, not what the app did -- it reports 100% here. What is
+# worth holding is that the control renders and states the floor the policy
+# computed; the floor itself is asserted by the step that follows.
 press "id=theme-terminal-opacity"
 wait stable 400 5000
-is visible "text=99%"
+is visible "id=theme-terminal-opacity-value"
 
 # section opacity-adjust
 is visible "${TARGET}"

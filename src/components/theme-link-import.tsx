@@ -5,12 +5,14 @@ import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
 import { Input } from '@/components/themed-input';
+import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { prepareThemeAssetStream, type PreparedThemeAssets } from '@/theme/assets';
 import type { ThemeAssetProgress } from '@/theme/asset-stream';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { inspectThemeLink, themeLinkImportAvailable } from '@/theme/link-import';
 import { isGitHubThemeLink, type ThemeLinkInspection } from '@/theme/link-source';
+import { normalizeThemeLink } from '@/theme/link-normalize';
 import { GitThemeSourceError } from '@/theme/git-source';
 import { ThemeImportRequest } from '@/theme/import-request';
 
@@ -33,6 +35,11 @@ export function ThemeLinkImport({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<ThemeAssetProgress | null>(null);
+  // Which wait the reader is in. Fetching a manifest reports nothing until it
+  // finishes, so without this the whole review step is a blank panel.
+  const [stage, setStage] = useState<'inspecting' | 'downloading' | null>(null);
+  // A blob/tree link names a branch. Say so, because a branch can move under it.
+  const [splitFromLink, setSplitFromLink] = useState(false);
   const active = useRef<ThemeImportRequest | null>(null);
   const mounted = useRef(true);
   useEffect(() => {
@@ -49,6 +56,7 @@ export function ThemeLinkImport({
     active.current = null;
     setBusy(false);
     setProgress(null);
+    setStage(null);
   }
 
   async function run(action: (request: ThemeImportRequest) => Promise<void>) {
@@ -75,14 +83,30 @@ export function ThemeLinkImport({
         active.current = null;
         setBusy(false);
         setProgress(null);
+        setStage(null);
       }
     }
   }
 
   function inspect() {
     if (!themeLinkImportAvailable) return;
+    // Split a branch link into the three fields this screen already shows,
+    // rather than telling the reader to do it by hand. The mutable ref stays
+    // visible and editable; nothing here widens what the parser accepts.
+    const link = normalizeThemeLink(url);
+    const nextRevision = link.revision ?? revision;
+    const nextManifestPath = link.manifestPath ?? manifestPath;
+    if (link.url !== url) setUrl(link.url);
+    if (link.revision) setRevision(link.revision);
+    if (link.manifestPath) setManifestPath(link.manifestPath);
+    setSplitFromLink(Boolean(link.branchFromLink));
     void run(async ({ signal }) => {
-      const inspection = await inspectThemeLink(url, { signal, revision, manifestPath });
+      setStage('inspecting');
+      const inspection = await inspectThemeLink(link.url, {
+        signal,
+        revision: nextRevision,
+        manifestPath: nextManifestPath,
+      });
       throwIfThemeAborted(signal);
       if (mounted.current) setReview(inspection);
     });
@@ -92,6 +116,7 @@ export function ThemeLinkImport({
     if (!review) return;
     void run(async (request) => {
       const { signal } = request;
+      setStage('downloading');
       let prepared: PreparedThemeAssets | undefined;
       let transferred = false;
       try {
@@ -134,8 +159,14 @@ export function ThemeLinkImport({
           setUrl(value);
           setReview(null);
           setError(null);
+          setSplitFromLink(false);
         }}
       />
+      {splitFromLink ? (
+        <Text testID="theme-link-split" selectable variant="caption" color={colors.textMuted}>
+          {t`Branch and theme file came from the link. A branch can change later`}
+        </Text>
+      ) : null}
       {isGitHubThemeLink(url) ? (
         <View style={{ gap: 12 }}>
           <Input
@@ -215,10 +246,14 @@ export function ThemeLinkImport({
           </Text>
         </View>
       ) : null}
-      {progress ? (
-        <Text testID="theme-link-progress" accessibilityLiveRegion="polite" variant="caption">
-          {t`Preparing images`} {progress.completedAssets}/{progress.totalAssets}
-        </Text>
+      {stage ? (
+        <ThemeImportProgress
+          testID="theme-link-progress"
+          label={stage === 'inspecting' ? t`Reading the theme link` : t`Preparing images`}
+          completed={progress?.completedAssets}
+          total={progress?.totalAssets}
+          receivedBytes={progress?.receivedBytes}
+        />
       ) : null}
       {error ? (
         <Text selectable testID="theme-link-error" accessibilityRole="alert" color={colors.danger}>

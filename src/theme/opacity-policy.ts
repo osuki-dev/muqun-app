@@ -58,7 +58,13 @@ function policy(pairs: Pair[]) {
       ? [{ path: pair.path, ratio, required: pair.required }]
       : [];
   });
-  if (baselineIssues.length) return { minimum: 1, baselineIssues };
+  const explain = () =>
+    pairs
+      .map((pair) => ({ path: pair.path, required: pair.required, floor: pairFloor(pair) }))
+      .sort((a, b) => b.floor - a.floor);
+  // A theme with baseline failures needs this most of all, so it comes back on
+  // both paths rather than only on the one that got as far as a search.
+  if (baselineIssues.length) return { minimum: 1, baselineIssues, explain };
   const safe = (alpha: number) =>
     pairs.every((pair) => minimumContrast(pair, alpha) >= pair.required);
   let low = 0;
@@ -68,7 +74,32 @@ function policy(pairs: Pair[]) {
     if (safe(middle)) high = middle;
     else low = middle;
   }
-  return { minimum: Math.min(1, Math.ceil(high * 100) / 100), baselineIssues };
+  return {
+    minimum: Math.min(1, Math.ceil(high * 100) / 100),
+    baselineIssues,
+    /**
+     * The floor each pair would impose on its own, worst first.
+     *
+     * The group's floor is the highest of these, so this is the answer to the
+     * question the number alone cannot answer: which colours to change. Computed
+     * on demand rather than eagerly -- the policy cache is on the hot render
+     * path and nothing there needs it.
+     */
+    explain,
+  };
+}
+
+/** The lowest alpha at which one pair still meets its ratio. */
+function pairFloor(pair: Pair): number {
+  if (minimumContrast(pair, 1) < pair.required) return 1;
+  let low = 0;
+  let high = 1;
+  for (let i = 0; i < 48; i++) {
+    const middle = (low + high) / 2;
+    if (minimumContrast(pair, middle) >= pair.required) high = middle;
+    else low = middle;
+  }
+  return Math.min(1, Math.ceil(high * 100) / 100);
 }
 
 /** Declared label/chrome pairings only; disabled text, arbitrary terminal ANSI

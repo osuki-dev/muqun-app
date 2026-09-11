@@ -1,5 +1,7 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronLeft } from 'lucide-react-native';
+
+import { ThemeIcon } from '@/components/theme-icon';
 import { type ReactNode } from 'react';
 import { StyleSheet, type StyleProp, View, type ViewStyle } from 'react-native';
 
@@ -143,7 +145,13 @@ export function NavHeaderBackButton({
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
         style={styles.circleButton}>
-        <ChevronLeft size={21} color={theme.colors.text} strokeWidth={2} />
+        <ThemeIcon
+          name="chrome.back"
+          fallback={ChevronLeft}
+          size={21}
+          color={theme.colors.text}
+          strokeWidth={2}
+        />
       </PressableScale>
     </NavHeaderCircle>
   );
