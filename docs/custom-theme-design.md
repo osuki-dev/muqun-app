@@ -140,6 +140,16 @@ Default export is an offline package using installed validated bytes, without do
 
 ## Built-in English authoring skill
 
+Agent shortcut delivery is configurable, not theme-specific. A shortcut may send
+to the current agent or open Agent collaboration with an editable task draft.
+Existing shortcuts default to current-agent delivery. Custom agent shortcuts can
+choose collaboration at creation or change it later in the shortcut editor.
+Bundled instruction builders are registered separately; the theme creator is one
+registry entry. Custom text cannot impersonate a bundled instruction builder.
+Route URLs carry only command identity, while instruction snapshots and separate
+per-command/per-machine drafts stay in local memory. All delegated commands reuse
+the existing compatibility checks, agent picker, submission, task history, and output.
+
 The built-in command is `Create a Muqun theme`. Its versioned English instruction is bundled with the app, not downloaded from theme authors or translated into locale catalogs. Derive its format reference from the same schema as the parser and include a complete valid light/dark template.
 
 Tapping opens the existing composer with a collapsible Theme creator instruction attachment, optional requirements, and optional pictures. Avoid a full-screen wall of English instructions.
