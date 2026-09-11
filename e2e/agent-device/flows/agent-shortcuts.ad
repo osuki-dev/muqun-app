@@ -5,9 +5,24 @@ wait "label=\"Edit shortcuts\"" 10000
 press "label=\"Edit shortcuts\""
 scroll down 3
 wait "id=\"quick-command-name\"" 10000
-fill "id=\"quick-command-name\"" "QA review instructions"
-fill "id=\"quick-command-value\"" "Review this project without changing any files"
-keyboard dismiss
+# This field drops characters on iOS when typed at full speed -- a run saved
+# "QA rview instructions" and the assertion on the real name then timed out.
+# The tool's own guidance for a debounced field is to slow the keystrokes.
+fill "id=\"quick-command-name\"" "QA review instructions" --delay-ms 60
+# Filling the name raises the keyboard, which takes enough of the viewport to
+# push the next field below the fold. `fill` refuses an off-screen target, so
+# bring it back into view before reaching for it.
+scroll down 1
+wait "id=\"quick-command-value\"" 10000
+fill "id=\"quick-command-value\"" "Review this project without changing any files" --delay-ms 60
+# The iOS keyboard here exposes no dismiss key, and agent-device will not tap
+# outside it to close one (no such tap can be proven side-effect-free). Its own
+# guidance is to press the next target directly; the keyboard does not block a
+# press the way it blocks a fill.
+# The keyboard is still up, so the delivery tabs sit below the rendered
+# window. Bring them into view before reaching for one.
+scroll down 1
+wait "id=\"quick-command-delivery-tab-collaboration\"" 10000
 press "id=\"quick-command-delivery-tab-collaboration\""
 press "id=\"quick-command-save\""
 press "label=\"Done editing shortcuts\""
@@ -19,7 +34,7 @@ wait "id=\"agent-command-summary\"" 10000
 is visible "id=\"collaboration-instructions\" value=\"Review this project without changing any files\""
 fill "id=\"collaboration-instructions\"" "Keep this custom instruction draft while I inspect the terminal"
 wait "id=\"collaboration-instructions\" value=\"Keep this custom instruction draft while I inspect the terminal\"" 10000
-keyboard dismiss
+# Same as above: press through the keyboard rather than trying to dismiss it.
 press "id=\"collaboration-close\""
 wait "role=button text=\"Open quick actions\"" 10000
 press "role=button text=\"Open quick actions\""
