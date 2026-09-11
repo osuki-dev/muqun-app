@@ -9,10 +9,12 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   agentStatusesAreCurrent,
+  MAX_PROBED_SERVERS,
   needsReachabilityProbe,
   reachabilityFromProbe,
   REACHABILITY_FRESH_MS,
   REACHABILITY_RECHECK_MS,
+  serversToProbe,
   type ReachabilityProbe,
 } from '../server-reachability';
 
@@ -93,5 +95,70 @@ describe('whether an agent status is still worth colouring in', () => {
     // Dropping their colours would say "these are stale", which is a different
     // claim and an untrue one.
     expect(agentStatusesAreCurrent('unknown', false)).toBe(true);
+  });
+});
+
+describe('which servers the list is willing to ask', () => {
+  const ids = (records: { serverId: string }[]) => records.map((r) => r.serverId);
+  const records = [{ serverId: 'a' }, { serverId: 'b' }, { serverId: 'c' }, { serverId: 'd' }];
+
+  test('the configured server is asked first even when another was opened later', () => {
+    // It is the one the app is pointed at and the one whose workspace is
+    // warmed. Losing its place to a machine that happens to have been opened
+    // more recently would make the dot the reader is waiting on the last to
+    // fill in.
+    const order = serversToProbe(records, { a: 10, b: 9_999, c: 20 }, 'a');
+    expect(ids(order)[0]).toBe('a');
+  });
+
+  test('after that, most recently viewed wins', () => {
+    expect(ids(serversToProbe(records, { b: 3, c: 9, d: 5 }, 'a'))).toEqual(['a', 'c', 'd', 'b']);
+  });
+
+  test('a server never opened here sorts last but keeps the list order', () => {
+    // Arbitrary order among equals would make the four probed servers change
+    // from launch to launch for no reason the reader could see.
+    expect(ids(serversToProbe(records, { c: 5 }))).toEqual(['c', 'a', 'b', 'd']);
+  });
+
+  test('a fresh install with no marks at all probes top-down', () => {
+    expect(ids(serversToProbe(records, {}))).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  test('the ceiling holds, so a long-lived install does not contact everything', () => {
+    // The reason the fan-out is allowed at all: bounded, it is a handful of
+    // machines someone uses; unbounded, it is every host they ever paired,
+    // contacted on every launch.
+    const many = Array.from({ length: 20 }, (_, i) => ({ serverId: `s${i}` }));
+    expect(serversToProbe(many, {}).length).toBe(MAX_PROBED_SERVERS);
+    expect(MAX_PROBED_SERVERS).toBeLessThan(many.length);
+  });
+
+  test('the configured server survives the ceiling however stale it is', () => {
+    const many = Array.from({ length: 20 }, (_, i) => ({ serverId: `s${i}` }));
+    const viewed = Object.fromEntries(many.map((r, i) => [r.serverId, i]));
+    expect(ids(serversToProbe(many, viewed, 's0'))).toContain('s0');
+  });
+
+  test('a configured id that is not in the list does not invent a row', () => {
+    // The caller filters out tunnelled and demo records before calling, so the
+    // configured server can legitimately be absent. It must not reappear here.
+    expect(ids(serversToProbe(records, {}, 'gone'))).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  test('a nonsense mark is treated as no mark rather than as a time', () => {
+    // The marks come off disk. `NaN` sorting into the middle of the list would
+    // be a silent reordering with no cause the reader could ever find.
+    expect(ids(serversToProbe(records, { a: Number.NaN, b: 5 }))).toEqual(['b', 'a', 'c', 'd']);
+  });
+
+  test('asking for nothing asks nothing', () => {
+    expect(serversToProbe(records, {}, 'a', 0)).toEqual([]);
+  });
+
+  test('the input is not reordered under the caller', () => {
+    const input = [...records];
+    serversToProbe(input, { d: 9 });
+    expect(ids(input)).toEqual(['a', 'b', 'c', 'd']);
   });
 });
