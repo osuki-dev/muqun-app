@@ -87,9 +87,9 @@ msgstr "{0} 分钟前"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· 询问了 # 次}}"
 
-#: src/app/commands.tsx
-msgid "{collaborationCount} assigned tasks · view agents and output"
-msgstr "已指派 {collaborationCount} 项任务 · 查看进展"
+#: src/components/agent-assignment-bar.tsx
+msgid "{commandName} · sending to"
+msgstr "{commandName}·发送给"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -119,6 +119,11 @@ msgstr "还有 {overflow} 个"
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "你能通过 SSH 登录的机器上的 Gateway，即使它只在自己的 loopback 上监听也可以"
 
+#. placeholder {0}: assignment.target.kind
+#: src/components/server-terminal-workspace.tsx
+msgid "a new {0}"
+msgstr "新的 {0}"
+
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
 msgstr "服务器的密钥第一次就会记住，之后每次都会核对；密钥变了就会中止连接，除非你另行确认"
@@ -134,6 +139,10 @@ msgstr "模拟器不只能看，还能操作，因此预览只在 Tailscale 或 
 #: src/components/simfarm-stage.tsx
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "已关机的模拟器可能需要一分钟才能启动"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "A terminal was created. Check it before sending again — your task is still here."
+msgstr "已经创建了一个终端。再次发送前先查看一下——你的任务还在"
 
 #: src/app/settings.tsx
 msgid "About"
@@ -168,10 +177,6 @@ msgstr "添加机器"
 msgid "Add one first"
 msgstr "先添加一个"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Add reference images"
-msgstr "添加参考图片"
-
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "将这一行添加到服务器的 ~/.ssh/authorized_keys："
@@ -180,23 +185,17 @@ msgstr "将这一行添加到服务器的 ~/.ssh/authorized_keys："
 msgid "AGENT"
 msgstr "代理"
 
-#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
 msgstr "代理协作"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Agent collaboration is available in Herdr sessions."
-msgstr "代理协作仅适用于 Herdr 会话"
-
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
 msgstr "代理命令"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Agent no longer present"
 msgstr "代理已退出"
@@ -240,10 +239,6 @@ msgstr "请在系统设置中允许通知以查看预览"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "允许使用相机，或改为输入地址"
-
-#: src/app/agent-collaboration.tsx
-msgid "An extra pair of hands"
-msgstr "找个帮手"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -291,10 +286,6 @@ msgstr "批准"
 msgid "Approve and don't ask again"
 msgstr "批准且不再询问"
 
-#: src/app/agent-collaboration.tsx
-msgid "Ask another agent to review a change, investigate a bug, or run tests. Follow its status here while you keep working."
-msgstr "让另一个代理帮你审查代码、排查问题或运行测试。在这里查看进展，不打断手头的工作"
-
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "每次询问"
@@ -307,31 +298,21 @@ msgstr "正在向 Gateway 确认这个代码"
 msgid "Asking the server what it can run…"
 msgstr "正在询问服务器可以运行哪些代理…"
 
-#: src/app/agent-collaboration.tsx
-msgid "Assign a task"
-msgstr "指派任务"
-
 #: src/app/commands.tsx
-msgid "Assign work to another agent and follow its progress."
-msgstr "让另一个代理帮忙，随时查看进展"
+msgid "Assign a task"
+msgstr "分配任务"
 
-#: src/app/agent-collaboration.tsx
-msgid "Assignment history"
-msgstr "指派历史"
+#: src/components/server-terminal-workspace.tsx
+msgid "Assign this to an assistant"
+msgstr "交给一个助手去做"
 
-#. placeholder {0}: history.length
-#: src/app/agent-collaboration.tsx
-msgid "Assignment history ({0})"
-msgstr "指派历史（{0}）"
-
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Assignment options"
 msgstr "任务选项"
 
-#: src/app/agent-collaboration.tsx
-msgid "Assignments on this device · current session"
-msgstr "本设备上的指派记录 · 当前会话"
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant started"
+msgstr "助手已启动"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -369,10 +350,6 @@ msgstr "返回"
 #: src/i18n/labels.ts
 msgid "Back one word"
 msgstr "后退一个词"
-
-#: src/app/agent-collaboration.tsx
-msgid "Back to assigned tasks"
-msgstr "返回任务列表"
 
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
@@ -424,6 +401,7 @@ msgstr "相机访问已关闭。请在“设置”中开启后再拍照"
 msgid "Camera access needed"
 msgstr "需要相机访问权限"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -433,7 +411,6 @@ msgstr "需要相机访问权限"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
@@ -464,7 +441,6 @@ msgstr "聊天"
 msgid "Check device authentication settings and try again."
 msgstr "请检查设备的验证设置后重试"
 
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "再次发送前请先查看助手，它可能已经收到了请求"
@@ -488,6 +464,18 @@ msgstr "选择模拟器"
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator from the menu."
 msgstr "请从菜单中选择模拟器"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Choose an assistant"
+msgstr "选择助手"
+
+#: src/app/commands.tsx
+msgid "Choose an assistant above the message field · {collaborationCount} assigned"
+msgstr "在输入框上方选择助手 · 已分配 {collaborationCount} 个"
+
+#: src/app/commands.tsx
+msgid "Choose an assistant above the message field, then write the task there."
+msgstr "在输入框上方选择助手，然后在那里写任务"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -518,10 +506,6 @@ msgstr "清屏"
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "关闭"
-
-#: src/app/agent-collaboration.tsx
-msgid "Close agent collaboration"
-msgstr "关闭代理协作"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -846,10 +830,6 @@ msgstr "复制公钥"
 msgid "Could not add a file"
 msgstr "无法添加文件"
 
-#: src/hooks/use-agent-references.ts
-msgid "Could not add images. Choose up to nine images, each under 10 MB."
-msgstr "无法添加图片，最多可选择九张，每张小于 10 MB"
-
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "无法连接"
@@ -871,7 +851,6 @@ msgid "Could not generate a key"
 msgstr "无法生成密钥"
 
 #: src/components/new-task-sheet.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Could not list this server's agents."
 msgstr "无法获取这台服务器的代理列表"
 
@@ -936,14 +915,9 @@ msgid "Could not read saved servers. Your saved data has not been changed. Unloc
 msgstr "无法读取已保存的服务器，保存的数据未被修改，请解锁此设备后重试"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "无法读取终端"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not refresh agent status."
-msgstr "无法刷新代理状态"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -989,10 +963,6 @@ msgstr "无法发送按键"
 msgid "Could not send shortcut."
 msgstr "无法发送快捷命令"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not send the task."
-msgstr "任务发送失败"
-
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
 msgstr "无法启动终端"
@@ -1016,10 +986,6 @@ msgstr "无法更新会话"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "无法上传文件"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
-msgstr "无法确认此会话的 Herdr 版本。请重新连接或更新 Muqun Gateway"
 
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
@@ -1070,6 +1036,10 @@ msgstr "删除 {name}"
 msgid "Delete this line"
 msgstr "删除这一行"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Delivery not confirmed"
+msgstr "发送未确认"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "示例 Shell"
@@ -1081,10 +1051,6 @@ msgstr "示例工作区"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒绝"
-
-#: src/app/agent-collaboration.tsx
-msgid "Describe the task and what a good result looks like."
-msgstr "说明要做的事，以及你期望的结果"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -1133,7 +1099,6 @@ msgstr "关闭新功能卡片"
 msgid "Docs"
 msgstr "文档"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1219,10 +1184,6 @@ msgstr "手动输入网址"
 #: src/i18n/labels.ts
 msgid "Escape"
 msgstr "Esc 键"
-
-#: src/app/agent-collaboration.tsx
-msgid "Existing assistant"
-msgstr "已有助手"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1400,19 +1361,10 @@ msgstr "隐藏 {0}"
 msgid "Hide {name}"
 msgstr "隐藏 {name}"
 
-#: src/app/agent-collaboration.tsx
-msgid "Hide assignment history"
-msgstr "收起指派历史"
-
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "隐藏键盘"
 
-#: src/app/agent-collaboration.tsx
-msgid "Hide other agent types"
-msgstr "收起其他类型"
-
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "收起输出"
@@ -1463,10 +1415,6 @@ msgstr "图片"
 msgid "Images download from"
 msgstr "图片下载来源"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Images will be uploaded to {gatewayName} and shared with the new assistant. Its AI provider may process them. They are not automatically copied to other machines."
-msgstr "图片将上传到 {gatewayName} 并提供给新助手，其 AI 服务商可能会处理这些图片，图片不会自动复制到其他机器"
-
 #: src/components/custom-theme-library.tsx
 msgid "Import"
 msgstr "导入"
@@ -1478,10 +1426,6 @@ msgstr "导入文件"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "从链接导入"
-
-#: src/app/agent-collaboration.tsx
-msgid "Include current terminal output"
-msgstr "附上当前终端输出"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -1533,6 +1477,10 @@ msgstr "它可能已经过期，或者本来就不是给这个应用的。没有
 #: src/components/pairing-camera.tsx
 msgid "It was found, but never showed a picture. Another app may be holding it."
 msgstr "找到了相机，但它始终没有画面。可能有其他应用正在占用它"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "It works on its own. Follow it in Agent collaboration."
+msgstr "它会独立工作。可以在「Agent 协作」里跟进"
 
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
@@ -1734,19 +1682,9 @@ msgstr "管理机器"
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主机"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "标记已查看"
-
-#. placeholder {0}: index + 1
-#: src/components/agent-reference-editor.tsx
-msgid "May include image {0} in the result"
-msgstr "允许在结果中使用第 {0} 张图片"
-
-#: src/components/agent-reference-editor.tsx
-msgid "May include in the result"
-msgstr "允许在结果中使用"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -1841,7 +1779,6 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "为它命名，然后输入 Gateway 显示的代码"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Needs your attention"
 msgstr "需要你处理"
 
@@ -1854,10 +1791,6 @@ msgstr "从未连接过"
 msgid "Never seen"
 msgstr "从未在线"
 
-#: src/app/agent-collaboration.tsx
-msgid "New assistant"
-msgstr "新建助手"
-
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "新建分组"
@@ -1866,7 +1799,6 @@ msgstr "新建分组"
 msgid "New host key"
 msgstr "新的主机密钥"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "有新输出 · 点击刷新"
@@ -1905,10 +1837,6 @@ msgstr "没有运行中的代理"
 msgid "No app on this phone opens web pages."
 msgstr "这部手机上没有可以打开网页的应用"
 
-#: src/app/agent-collaboration.tsx
-msgid "No assistants available yet. Try an existing assistant or reopen this picker."
-msgstr "暂无可用助手。请选择已有助手，或重新打开此面板"
-
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "没有可用于扫描的相机"
@@ -1929,9 +1857,9 @@ msgstr "还没有 Gateway？"
 msgid "No matching commands. Try another word."
 msgstr "没有匹配的命令，换个关键词试试"
 
-#: src/app/agent-collaboration.tsx
-msgid "No other agents in this session. Start a new assistant to collaborate."
-msgstr "此会话还没有其他代理，可以新建一个助手"
+#: src/components/agent-assignment-bar.tsx
+msgid "No other assistants in this session yet."
+msgstr "这个会话里还没有其他助手"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1978,10 +1906,6 @@ msgstr "还没有 SSH 主机。添加一个，即可在任何能连上的机器�
 msgid "No still frames"
 msgstr "不支持静态画面"
 
-#: src/app/agent-collaboration.tsx
-msgid "No visible output yet."
-msgstr "暂无输出"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "不可用"
@@ -2002,10 +1926,6 @@ msgstr "未连接"
 #: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "未找到"
-
-#: src/app/agent-collaboration.tsx
-msgid "Not found on the Gateway's PATH. Herdr may still be able to start it."
-msgstr "Gateway 未找到此程序，Herdr 可能仍能启动它"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -2044,10 +1964,6 @@ msgstr "通知权限未开启"
 msgid "Off"
 msgstr "关闭"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Off means reference only. This does not grant permission to publish the image."
-msgstr "关闭时仅供参考，此选项不代表授权发布图片"
-
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "离线"
@@ -2067,10 +1983,6 @@ msgstr "在线"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "在线"
-
-#: src/app/agent-collaboration.tsx
-msgid "Only the text below is shared. Conversation history is not shared automatically."
-msgstr "仅分享下方预览的文字，不会自动分享对话历史"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2139,7 +2051,6 @@ msgstr "打开设置"
 msgid "Open SSH host {0}"
 msgstr "打开 SSH 主机 {0}"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Open terminal"
 msgstr "查看终端"
@@ -2153,10 +2064,6 @@ msgstr "打开文件浏览器"
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "打开工作区 {0}，{1, plural, one {# 个运行中} other {# 个运行中}}。长按可关闭"
-
-#: src/components/agent-reference-editor.tsx
-msgid "Opening photos…"
-msgstr "正在打开照片…"
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -2182,18 +2089,10 @@ msgstr "打开模拟器菜单：设备、按键、键盘和退出。拖动即可
 msgid "Opens this agent's terminal"
 msgstr "打开这个代理的终端"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Optional images stay on this device until you approve sending"
-msgstr "发送前需经你确认，未确认的图片仅保留在此设备"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 的选项"
-
-#: src/app/agent-collaboration.tsx
-msgid "Other agent types"
-msgstr "其他助手类型"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2323,11 +2222,6 @@ msgstr "按 Esc 键关闭此请求"
 msgid "Preview"
 msgstr "预览"
 
-#. placeholder {0}: outputTheme.name
-#: src/app/agent-collaboration.tsx
-msgid "Preview {0}"
-msgstr "预览 {0}"
-
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2412,7 +2306,6 @@ msgid "Reading the theme link"
 msgstr "正在读取主题链接"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
 msgstr "等待输入"
 
@@ -2424,7 +2317,6 @@ msgstr "接收代理的等待回应事件和 Gateway 更新"
 msgid "Recent commits"
 msgstr "最近的提交"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
 msgstr "查看输出"
@@ -2448,16 +2340,6 @@ msgstr "重新连接到 {0}"
 msgid "Reconnecting · {0}"
 msgstr "重新连接中 · {0}"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Reference images"
-msgstr "参考图片"
-
-#: src/components/agent-reference-editor.tsx
-#: src/hooks/use-agent-collaboration.ts
-msgid "Reference images can be sent when starting a new assistant"
-msgstr "新建助手时可以发送参考图片"
-
-#: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "刷新"
@@ -2466,16 +2348,10 @@ msgstr "刷新"
 msgid "Refresh files"
 msgstr "刷新文件"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "刷新输出"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Refresh to check Gateway and Herdr compatibility before assigning."
-msgstr "请先刷新并确认 Gateway 和 Herdr 版本支持协作"
-
-#: src/components/agent-reference-editor.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "移除"
@@ -2489,18 +2365,13 @@ msgstr "移除"
 msgid "Remove {0}"
 msgstr "移除 {0}"
 
-#: src/app/agent-collaboration.tsx
+#: src/components/collaboration-notice.tsx
 msgid "Remove from history"
 msgstr "移除记录"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "移除主机"
-
-#. placeholder {0}: index + 1
-#: src/components/agent-reference-editor.tsx
-msgid "Remove image {0}"
-msgstr "移除第 {0} 张图片"
 
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
@@ -2546,10 +2417,6 @@ msgstr "必填"
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或更高版本"
 
-#: src/app/agent-collaboration.tsx
-msgid "Respond to agent"
-msgstr "去处理"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "请重新启动牧群以完成更新"
@@ -2593,9 +2460,7 @@ msgstr "Enter 键"
 msgid "Return to the server list and pair again."
 msgstr "请回到服务器列表重新配对"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
@@ -2613,7 +2478,6 @@ msgstr "审阅 GitHub 上的拉取请求"
 msgid "Review assistant"
 msgstr "审查助手"
 
-#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 msgid "Review changes"
 msgstr "查看更改"
@@ -2630,17 +2494,9 @@ msgstr "查看链接"
 msgid "Review the current changes."
 msgstr "查看当前的更改"
 
-#: src/app/agent-collaboration.tsx
-msgid "Review the current changes. Report bugs and missing tests; do not edit files."
-msgstr "审查当前改动，报告问题和缺失的测试，不要修改文件"
-
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "看一下失败的测试，然后修好它"
-
-#: src/app/agent-collaboration.tsx
-msgid "Reviewed by you"
-msgstr "你已查看"
 
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
@@ -2678,21 +2534,9 @@ msgstr "运行命令"
 msgid "Run relevant tests"
 msgstr "运行相关测试"
 
-#: src/app/agent-collaboration.tsx
-msgid "Run tests"
-msgstr "运行测试"
-
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
-
-#: src/app/agent-collaboration.tsx
-msgid "Run the relevant tests and report failures with reproduction steps."
-msgstr "运行相关测试，报告失败项和复现步骤"
-
-#: src/app/agent-collaboration.tsx
-msgid "Same workspace"
-msgstr "同一工作区"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -2819,34 +2663,25 @@ msgstr "发送 {spoken}"
 msgid "Send a message"
 msgstr "发送消息"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Send reference images?"
-msgstr "发送参考图片？"
-
-#: src/app/agent-collaboration.tsx
-msgid "Send task"
-msgstr "发送任务"
-
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "发送文字"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Send this task to {assignmentLabel}"
+msgstr "把这个任务发给 {assignmentLabel}"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send to {assignmentLabel} — tap to change"
+msgstr "发给 {assignmentLabel}——点按可更换"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "发送给代理"
 
-#: src/app/agent-collaboration.tsx
-msgid "Sending task…"
-msgstr "正在发送…"
-
-#: src/app/agent-collaboration.tsx
-msgid "Sending to an assistant that is already running is not available yet, and this server cannot start a new one. Your terminals work as usual."
-msgstr "暂时还不能发送给已经在运行的助手，这台服务器也无法启动新的助手。你的终端照常可用"
-
-#: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
-msgid "Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here."
-msgstr "暂时还不能发送给已经在运行的助手。请改为启动一个新助手——你写的内容还在"
+#: src/components/agent-assignment-bar.tsx
+msgid "Sending to"
+msgstr "发送给"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -3082,6 +2917,11 @@ msgstr "通过 {host} 的 SSH 隧道已断开"
 msgid "stale · {age}"
 msgstr "数据过旧 · {age}"
 
+#. placeholder {0}: profile.kind
+#: src/components/agent-assignment-bar.tsx
+msgid "Start a new {0}"
+msgstr "启动新的 {0}"
+
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "以空白上下文开始新会话"
@@ -3091,10 +2931,6 @@ msgstr "以空白上下文开始新会话"
 msgid "Start an agent and send it the first thing to do."
 msgstr "启动一个代理，并告诉它第一件要做的事"
 
-#: src/app/agent-collaboration.tsx
-msgid "Start assistant and send"
-msgstr "创建助手并发送"
-
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "开始任务"
@@ -3102,10 +2938,6 @@ msgstr "开始任务"
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "正在启动 {name}"
-
-#: src/app/agent-collaboration.tsx
-msgid "Starting assistant and sending…"
-msgstr "正在启动助手并发送…"
 
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
@@ -3117,21 +2949,11 @@ msgstr "正在启动相机"
 msgid "Starting…"
 msgstr "启动中…"
 
-#: src/app/agent-collaboration.tsx
-msgid "Starts beside this terminal in the same project."
-msgstr "在同一项目中新建助手，不会替换当前终端"
-
-#: src/app/agent-collaboration.tsx
-msgid "Status describes the agent, not task completion. Updates while connected; review its output to confirm the result. Removing history does not stop an agent."
-msgstr "连接时自动更新代理状态。是否完成任务，请查看输出确认。移除记录不会停止代理"
-
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Status unavailable"
 msgstr "暂时无法获取状态"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Status unknown"
 msgstr "状态未知"
 
@@ -3142,6 +2964,11 @@ msgstr "仍在运行…"
 #: src/app/commands.tsx
 msgid "Stop"
 msgstr "停止"
+
+#: src/components/agent-assignment-bar.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Stop assigning a task"
+msgstr "取消分配任务"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
@@ -3209,13 +3036,14 @@ msgstr "再点一次以移除"
 msgid "Tap to connect"
 msgstr "点按连接"
 
-#: src/app/agent-collaboration.tsx
-msgid "Task instructions"
-msgstr "任务说明"
+#: src/components/server-terminal-workspace.tsx
+msgid "Task for {assignmentLabel}"
+msgstr "给 {assignmentLabel} 的任务"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Task sent. You can keep working in your current terminal."
-msgstr "任务已发送，你可以继续手头的工作"
+#. placeholder {0}: assignment.target.kind
+#: src/components/server-terminal-workspace.tsx
+msgid "Task for a new {0}"
+msgstr "给新的 {0} 的任务"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
@@ -3240,10 +3068,6 @@ msgstr "终端命令"
 msgid "Terminal key row"
 msgstr "终端按键行"
 
-#: src/app/agent-collaboration.tsx
-msgid "Terminal snapshot · refresh to see newer output"
-msgstr "终端快照 · 刷新可查看最新输出"
-
 #: src/components/settings-terminal.tsx
 msgid "Text size"
 msgstr "文字大小"
@@ -3255,6 +3079,10 @@ msgstr "要输入到模拟器的文字"
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
 msgstr "这个回答没有送达代理"
+
+#: src/hooks/use-agent-command-delivery.ts
+msgid "That assistant is no longer in this terminal. Reopen it and try again."
+msgstr "那个助手已经不在这个终端里了。重新打开后再试"
 
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
@@ -3287,18 +3115,6 @@ msgstr "代理现在问的是别的问题"
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
 msgstr "代理已经不再等待了"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant could not start. Check its terminal before continuing. Your task has not been sent."
-msgstr "助手启动失败。请先检查它的终端。任务尚未发送"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant needs your approval or input in its terminal. Your task has not been sent. Your instructions are still here."
-msgstr "助手需要你在终端中确认授权或输入内容。任务尚未发送，你的指令已保留"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant was created, but task delivery was not confirmed. Check its terminal before sending again. Your instructions are still here."
-msgstr "助手已创建，但尚未确认任务送达。再次发送前请查看终端，你的任务说明已保留"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
@@ -3377,10 +3193,6 @@ msgstr "模拟器未在规定时间内关机"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 隧道只承载 Gateway 这一个端口，不含其他，所以从这里无法访问模拟器和浏览器。请改用本地网络或 Tailscale 连接"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
-msgstr "终端已创建，但尚未确认助手就绪，它可能仍在启动。请先检查终端再重试。你的指令已保留"
-
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "此主题将从当前设备移除"
@@ -3417,22 +3229,9 @@ msgstr "主题链接"
 msgid "Theme, {0}"
 msgstr "主题，{0}"
 
-#: src/app/agent-collaboration.tsx
-msgid "There is nowhere to send a task from this session yet."
-msgstr "这个会话暂时还没有可以发送任务的目标"
-
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "这个代理没有提供那个选项"
-
-#: src/app/agent-collaboration.tsx
-msgid "This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one."
-msgstr "此助手正在忙或需要你处理。可以查看它的终端，或选择其他助手"
-
-#: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This assistant is no longer ready. Refresh or choose another."
-msgstr "此助手已不再空闲，请刷新或选择其他助手"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3490,9 +3289,9 @@ msgstr "这个链接没有指向任何地方"
 msgid "This QR code is not valid."
 msgstr "这个二维码无效"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "This server cannot start an assistant yet."
-msgstr "此服务器暂不支持新建助手"
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This server cannot run that command yet."
+msgstr "这台服务器还不能运行该命令"
 
 #: src/lib/network-error.ts
 msgid "This server cannot use this device's stored key. Pair it again to reconnect."
@@ -3657,10 +3456,6 @@ msgstr "正在取消配对…"
 msgid "Up arrow"
 msgstr "向上键"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
-msgstr "更新 Muqun Gateway 后即可使用代理协作，现有终端功能不受影响"
-
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "更新已就绪 · 正在重新启动…"
@@ -3669,29 +3464,13 @@ msgstr "更新已就绪 · 正在重新启动…"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 后即可从公开链接导入主题，你仍然可以从文件导入"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Update this Gateway to upload reference images"
-msgstr "更新此 Gateway 后即可上传参考图片"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
-msgstr "请将此会话的 Herdr 更新至 0.9.0 或更高版本，以使用代理协作"
-
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "正在更新牧群…"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Upload and send"
-msgstr "上传并发送"
-
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
 msgstr "上传失败"
-
-#: src/components/agent-reference-editor.tsx
-msgid "Upload failed. Send again to retry, or remove this image."
-msgstr "上传失败，请再次发送以重试，或移除此图片"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -3700,11 +3479,6 @@ msgstr "已上传"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "上传中"
-
-#: src/app/agent-collaboration.tsx
-#: src/components/agent-reference-editor.tsx
-msgid "Uploading…"
-msgstr "正在上传…"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3764,17 +3538,9 @@ msgstr "正在等待网络"
 msgid "Waiting for uploads to finish…"
 msgstr "正在等待上传完成…"
 
-#: src/components/agent-reference-editor.tsx
-msgid "What do you like about this image?"
-msgstr "你喜欢这张图片的哪些地方？"
-
 #: src/components/session-map.tsx
 msgid "What is running"
 msgstr "正在运行的项目"
-
-#: src/app/agent-collaboration.tsx
-msgid "What should they do?"
-msgstr "让助手做什么？"
 
 #: src/lib/release-notes.ts
 msgid "What's new"
@@ -3785,7 +3551,6 @@ msgid "While you were away"
 msgstr "离开期间"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"
@@ -3819,10 +3584,6 @@ msgstr "复制这一行"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "昨天"
-
-#: src/app/agent-collaboration.tsx
-msgid "You will stay in your current terminal. The assistant works independently."
-msgstr "助手独立工作，不会切换你当前的终端"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
