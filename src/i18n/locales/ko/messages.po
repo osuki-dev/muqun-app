@@ -401,6 +401,10 @@ msgid "Blocked"
 msgstr "응답 대기"
 
 #: src/components/theme-link-import.tsx
+msgid "Branch and theme file came from the link. A branch can change later"
+msgstr "브랜치와 테마 파일은 링크에서 가져왔습니다. 브랜치는 나중에 바뀔 수 있습니다"
+
+#: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "브랜치 또는 커밋 (선택 사항)"
 
@@ -1498,6 +1502,10 @@ msgstr "입력 모드"
 msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
 
+#: src/components/custom-theme-library.tsx
+msgid "Installing images"
+msgstr "이미지 설치 중"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "화면 배경 불투명도"
@@ -1770,7 +1778,6 @@ msgid "Move the simulator controls"
 msgstr "시뮬레이터 컨트롤 이동"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2316,6 +2323,11 @@ msgstr "이스케이프를 눌러 이 요청 닫기"
 msgid "Preview"
 msgstr "미리 보기"
 
+#. placeholder {0}: outputTheme.name
+#: src/app/agent-collaboration.tsx
+msgid "Preview {0}"
+msgstr "{0} 미리 보기"
+
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2395,6 +2407,10 @@ msgstr "SSH 호스트 {host}을(를) 통해 연결"
 msgid "Reaching the Gateway"
 msgstr "Gateway에 연결하는 중"
 
+#: src/components/theme-link-import.tsx
+msgid "Reading the theme link"
+msgstr "테마 링크 읽는 중"
+
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
@@ -2465,8 +2481,10 @@ msgid "Remove"
 msgstr "제거"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} 제거"
@@ -2820,6 +2838,15 @@ msgstr "에이전트에게 보내기"
 #: src/app/agent-collaboration.tsx
 msgid "Sending task…"
 msgstr "보내는 중…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Sending to an assistant that is already running is not available yet, and this server cannot start a new one. Your terminals work as usual."
+msgstr "이미 실행 중인 어시스턴트로 보내는 기능은 아직 사용할 수 없고, 이 서버는 새 어시스턴트를 시작할 수 없습니다. 터미널은 평소처럼 사용할 수 있습니다"
+
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
+msgid "Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here."
+msgstr "이미 실행 중인 어시스턴트로 보내는 기능은 아직 사용할 수 없습니다. 대신 새 어시스턴트를 시작하세요. 작성한 내용은 그대로 남아 있습니다"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -3369,10 +3396,6 @@ msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니�
 msgid "Theme"
 msgstr "테마"
 
-#: src/components/custom-theme-library.tsx
-msgid "Theme applied"
-msgstr "테마가 적용되었어요"
-
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
 msgstr "테마 파일 (선택 사항)"
@@ -3393,6 +3416,10 @@ msgstr "테마 URL"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "테마, {0}"
+
+#: src/app/agent-collaboration.tsx
+msgid "There is nowhere to send a task from this session yet."
+msgstr "아직 이 세션에서 작업을 보낼 곳이 없습니다"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -3631,7 +3658,6 @@ msgid "Up arrow"
 msgstr "위쪽 화살표"
 
 #: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "협업을 사용하려면 Muqun Gateway를 업데이트하세요. 기존 터미널은 계속 사용할 수 있습니다"
 

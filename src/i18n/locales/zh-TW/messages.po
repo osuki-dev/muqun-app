@@ -401,6 +401,10 @@ msgid "Blocked"
 msgstr "等待回應"
 
 #: src/components/theme-link-import.tsx
+msgid "Branch and theme file came from the link. A branch can change later"
+msgstr "分支和主題檔案來自該連結。分支之後可能會變"
+
+#: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "分支或提交（選填）"
 
@@ -1498,6 +1502,10 @@ msgstr "插入模式"
 msgid "Install command copied"
 msgstr "已複製安裝指令"
 
+#: src/components/custom-theme-library.tsx
+msgid "Installing images"
+msgstr "正在安裝圖片"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "介面背景不透明度"
@@ -1770,7 +1778,6 @@ msgid "Move the simulator controls"
 msgstr "移動模擬器控制項"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2316,6 +2323,11 @@ msgstr "按 Esc 鍵關閉這項請求"
 msgid "Preview"
 msgstr "預覽"
 
+#. placeholder {0}: outputTheme.name
+#: src/app/agent-collaboration.tsx
+msgid "Preview {0}"
+msgstr "預覽 {0}"
+
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2395,6 +2407,10 @@ msgstr "透過 SSH 主機 {host} 連線"
 msgid "Reaching the Gateway"
 msgstr "正在連線 Gateway"
 
+#: src/components/theme-link-import.tsx
+msgid "Reading the theme link"
+msgstr "正在讀取主題連結"
+
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
@@ -2465,8 +2481,10 @@ msgid "Remove"
 msgstr "移除"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
@@ -2820,6 +2838,15 @@ msgstr "傳送給代理程式"
 #: src/app/agent-collaboration.tsx
 msgid "Sending task…"
 msgstr "正在傳送…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Sending to an assistant that is already running is not available yet, and this server cannot start a new one. Your terminals work as usual."
+msgstr "暫時還不能傳送給已經在執行的助理，這台伺服器也無法啟動新的助理。你的終端機照常可用"
+
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
+msgid "Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here."
+msgstr "暫時還不能傳送給已經在執行的助理。請改為啟動一個新助理——你寫的內容還在"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -3369,10 +3396,6 @@ msgstr "把逐字記錄當成對話呈現，並收合工具步驟"
 msgid "Theme"
 msgstr "主題"
 
-#: src/components/custom-theme-library.tsx
-msgid "Theme applied"
-msgstr "已套用主題"
-
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
 msgstr "主題檔案（選填）"
@@ -3393,6 +3416,10 @@ msgstr "主題網址"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "主題，{0}"
+
+#: src/app/agent-collaboration.tsx
+msgid "There is nowhere to send a task from this session yet."
+msgstr "這個工作階段暫時還沒有可以傳送任務的目標"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -3631,7 +3658,6 @@ msgid "Up arrow"
 msgstr "向上鍵"
 
 #: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "更新 Muqun Gateway 後即可使用代理協作，現有終端功能不受影響"
 
