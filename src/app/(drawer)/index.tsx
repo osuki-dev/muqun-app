@@ -49,13 +49,20 @@ import {
 } from '@/lib/responsive-layout';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
 import type { ServerAgent, ServerAgentsSnapshot } from '@/lib/server-agents';
-import { reachabilityFromProbe, type ServerReachability } from '@/lib/server-reachability';
+import {
+  reachabilityFromProbe,
+  serversToProbe,
+  type ServerReachability,
+} from '@/lib/server-reachability';
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useServerLastViewed } from '@/stores/server-last-viewed';
+import { useServerSession } from '@/stores/server-session';
+import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveHomeIdentity } from '@/theme/resolve';
@@ -126,8 +133,17 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   const keepServerAgents = useServerAgents((state) => state.keepOnly);
 
   const probes = useServerReachability((state) => state.probes);
-  const refreshReachability = useServerReachability((state) => state.refresh);
+  const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const keepReachability = useServerReachability((state) => state.keepOnly);
+
+  // Which servers have been opened on this device, and when. Already stored for
+  // the "while you were away" digest; the probe order is its second reader, and
+  // wants exactly the same fact -- which machines this person actually uses.
+  const lastViewedByServer = useServerLastViewed((state) => state.byServer);
+  const hydrateLastViewed = useServerLastViewed((state) => state.hydrate);
+  useEffect(() => {
+    void hydrateLastViewed();
+  }, [hydrateLastViewed]);
   const padReachabilityByServer = useMemo(
     () =>
       Object.fromEntries(
@@ -181,50 +197,60 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
     keepReachability(serverIds);
   }, [keepReachability, keepServerAgents, loading, hydrationError, serverIds]);
 
-  // Ask the one server the app is already configured for whether it is there.
-  // On focus rather than on an interval: the answer is only worth having while
-  // someone is looking at it, and the store rate-limits repeat asks. Every
-  // other card says `NOT CONNECTED`, which is the honest description of a
-  // machine nobody asked -- see `stores/server-reachability.ts` for why the
-  // list does not fan out.
+  // Ask the servers worth asking whether they are there. On focus rather than
+  // on an interval: the answer is only worth having while someone is looking at
+  // it, and the store rate-limits repeat asks.
+  //
+  // Up to `MAX_PROBED_SERVERS`, configured record first and most recently viewed
+  // after -- see `serversToProbe`. Anything past that ceiling still says
+  // `NOT CONNECTED`, which remains the honest description of a machine nobody
+  // asked; what changed is that the common case is no longer "nobody asked".
+  const probeTargets = useMemo(
+    () =>
+      serversToProbe(
+        // A tunnelled record is excluded because its stored address belongs to
+        // the SSH host rather than the gateway, and the demo record has nothing
+        // to answer. Both are the store's guards too; filtering here as well
+        // keeps them out of the ceiling, so four real servers are not crowded
+        // out by records that were never going to be probed.
+        records.filter((server) => server.serverId !== DEMO_SERVER_ID && !server.sshTunnel),
+        lastViewedByServer,
+        record?.serverId
+      ),
+    [records, lastViewedByServer, record?.serverId]
+  );
+
   useFocusEffect(
     useCallback(() => {
-      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) return;
-      void refreshReachability({
-        serverId: record.serverId,
-        url: record.url,
-        token: record.token,
-        deviceId: record.deviceId,
-        transportKey: record.transportKey,
-        transport: record.transport,
-      });
-    }, [record, refreshReachability])
+      void refreshReachabilityMany(probeTargets);
+      // And load what the configured server's workspace is, so opening it paints
+      // instead of spelling out `Connecting`. Still only that one: a probe is a
+      // single request, a warm is six, and six times four on every return to
+      // this screen is a different thing entirely.
+      if (record && record.serverId !== DEMO_SERVER_ID && !record.sshTunnel)
+        void warmConfiguredWorkspace(
+          record.serverId,
+          useServerSession.getState().byServer[record.serverId]
+        );
+    }, [probeTargets, record, refreshReachabilityMany])
   );
 
   // A pull is someone asking, so it overrides the store's own rate limit. The
   // focus probe deliberately does not -- it fires on every return to the
   // screen, and honouring all of those would put the pairing token on the wire
   // for a fact the app already has.
+  //
+  // The same set as the focus probe, forced. A refresh that re-asked only the
+  // configured server would leave the other dots showing an answer from up to
+  // `REACHABILITY_FRESH_MS` ago while the control said it had just refreshed.
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      if (record && record.serverId !== DEMO_SERVER_ID && !record.sshTunnel) {
-        await refreshReachability(
-          {
-            serverId: record.serverId,
-            url: record.url,
-            token: record.token,
-            deviceId: record.deviceId,
-            transportKey: record.transportKey,
-            transport: record.transport,
-          },
-          { force: true }
-        );
-      }
+      await refreshReachabilityMany(probeTargets, { force: true });
     } finally {
       setRefreshing(false);
     }
-  }, [record, refreshReachability]);
+  }, [probeTargets, refreshReachabilityMany]);
 
   const onScroll = useAnimatedScrollHandler({
     onScroll(event) {
