@@ -20,6 +20,7 @@ import {
   type SkTypefaceFontProvider,
 } from '@shopify/react-native-skia';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
 
@@ -106,6 +107,7 @@ import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import {
   paintsCellBackground,
+  blendedTerminalFill,
   terminalBackgroundFill,
   terminalBackgroundOpacity,
 } from '@/terminal/background';
@@ -467,6 +469,10 @@ export function SkiaTerminal({
 }) {
   const fontSize = terminalFontSize(textSize);
   const theme = useThemeTokens();
+  // Whether anything patterned sits behind this canvas. `shell.background` is
+  // the only slot that reaches behind a terminal; Home's own wallpaper never
+  // has one over it.
+  const wallpaperBehind = useHasThemeArtwork('shell.background');
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const { showToast } = useToast();
@@ -620,6 +626,15 @@ export function SkiaTerminal({
       true
     );
   }, [frame, ownsScreen, screenRows, terminalTheme, themePack]);
+  // Which canvas this pane gets, decided once from the two things that decide
+  // it. Keeping it out of the render body keeps the two halves -- the flag and
+  // the fill -- from ever disagreeing about which path is being taken.
+  const paneOpacity = terminalBackgroundOpacity(paneTheme.backgroundOpacity);
+  const canvasIsOpaque = paneOpacity === 1 || !wallpaperBehind;
+  const canvasFill = canvasIsOpaque
+    ? blendedTerminalFill(paneTheme.background, theme.colors.background, paneOpacity)
+    : terminalBackgroundFill(paneTheme);
+
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
     () => measureCellWidth(fontSize, fontManager, nerdFont),
@@ -2896,10 +2911,19 @@ export function SkiaTerminal({
   return (
     <View onLayout={handleLayout} style={styles.shell}>
       <GestureDetector gesture={gesture}>
-        <Canvas
-          opaque={terminalBackgroundOpacity(paneTheme.backgroundOpacity) === 1}
-          style={styles.canvas}>
-          <Fill color={terminalBackgroundFill(paneTheme)} />
+        {/* A translucent canvas is not a cheaper canvas: react-native-skia swaps
+            the native view outright, and the non-opaque one is a texture HWUI
+            re-samples and recomposites every frame, with whatever is behind it
+            blended in rather than occlusion-skipped.
+
+            It is only worth that when something patterned is behind it. With
+            nothing but the app's own flat background there, translucent-over-
+            flat and opaque-pre-blended are the same pixels, so the canvas keeps
+            the fast path and the fill carries the blend. With wallpaper behind
+            it, each pixel meets a different colour and no single fill can stand
+            in, so the translucent path is taken and paid for. */}
+        <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
+          <Fill color={canvasFill} />
           <Group transform={contentTransform}>
             {chunkDraws.map((chunk, index) => (
               // A block records its rows from its own first row down and is

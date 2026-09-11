@@ -1,4 +1,5 @@
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { EdgeFade } from '@/components/edge-fade';
+import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
@@ -181,6 +182,12 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
   const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTheme = useTerminalTheme();
+  // The wallpaper is uncovered in exactly one strip on this screen -- between
+  // the header and the terminal, which paints its own opaque background over
+  // everything below. Without a transition that strip ends in a straight line
+  // across the display. The gateway screen never shows it: there the terminal
+  // fills the page and the header floats over it.
+  const hasShellArtwork = useHasThemeArtwork('shell.background');
 
   const hosts = useSshHostsStore((state) => state.hosts);
   const loading = useSshHostsStore((state) => state.loading);
@@ -1095,6 +1102,10 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
 
       <StatusLine status={status} address={sshHostAddress(record)} onReconnect={reconnect} />
 
+      {hasShellArtwork ? (
+        <EdgeFade edge="bottom" color={terminalTheme.background} style={styles.terminalTopFade} />
+      ) : null}
+
       <View
         style={styles.terminal}
         onLayout={(event: LayoutChangeEvent) => {
@@ -1228,6 +1239,11 @@ function StatusLine({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  // This line is the only text on the screen that sits directly on the shell
+  // wallpaper: the header pills carry their own chrome and the terminal below
+  // paints its own background. `textMuted` is proven against the theme's own
+  // surfaces, never against an author's photograph, so give it one to sit on.
+  const hasShell = useHasThemeArtwork('shell.background');
   // Cancelled is the reader's doing and is lit in no colour at all; the
   // others are the connection's state.
   const light =
@@ -1251,14 +1267,27 @@ function StatusLine({
 
   return (
     <View style={styles.statusLine} accessibilityRole="text" accessibilityLabel={text}>
-      <View style={[styles.statusDot, { backgroundColor: light }]} />
-      <Text
-        variant="caption"
-        color={theme.colors.textMuted}
-        numberOfLines={1}
-        style={styles.statusText}>
-        {text}
-      </Text>
+      <View
+        style={[
+          styles.statusIdentity,
+          hasShell
+            ? {
+                backgroundColor: surfaceBackground(theme.colors.background),
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 8,
+              }
+            : null,
+        ]}>
+        <View style={[styles.statusDot, { backgroundColor: light }]} />
+        <Text
+          variant="caption"
+          color={theme.colors.textMuted}
+          numberOfLines={1}
+          style={styles.statusText}>
+          {text}
+        </Text>
+      </View>
       {status.phase === 'disconnected' ||
       status.phase === 'failed' ||
       status.phase === 'cancelled' ? (
@@ -1374,6 +1403,13 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     minHeight: 28,
   },
+  statusIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+  },
   statusDot: {
     width: 7,
     height: 7,
@@ -1392,6 +1428,9 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  terminalTopFade: {
+    height: 16,
   },
   terminal: {
     flex: 1,

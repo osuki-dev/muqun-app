@@ -1,4 +1,3 @@
-import { ThemeArtwork } from '@/components/theme-artwork';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
@@ -106,7 +105,6 @@ import {
   createFileMentionSearch,
   FILE_MENTION_LIMIT,
   findFileMentionTrigger,
-  gatewayTransport,
   INITIAL_PANE_OUTPUT_LINES,
   insertFileMention,
   listPaneFiles,
@@ -219,9 +217,10 @@ import {
   resolveSessionId,
   sameSessionChoices,
   type SessionChoice,
-  sessionChoices,
   shouldShowSessionSwitcher,
 } from '@/lib/session-switcher';
+import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
+import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
@@ -251,15 +250,10 @@ import {
   terminalViewportRows,
 } from '@/terminal/history';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
+import { rememberWarmWorkspace, warmWorkspace, type WarmWorkspace } from '@/lib/server-warm-cache';
 
-type ServerData = {
-  health: HealthResponse | null;
-  sessionId: string;
-  workspaces: HerdrEntity[];
-  tabs: HerdrEntity[];
-  panes: HerdrEntity[];
-  agents: HerdrEntity[];
-};
+/** The cache and this screen describe the same snapshot, so they share a type. */
+type ServerData = WarmWorkspace;
 
 type Selection = {
   workspaceId: string;
@@ -568,7 +562,10 @@ export function ServerTerminalWorkspace({
   } | null>(null);
   const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
-  const [data, setData] = useState<ServerData>(initialData);
+  // Opening a server the app was just in paints its workspace instead of
+  // spelling out `Connecting`. The snapshot only decides the first frame: the
+  // poller below runs immediately and corrects or confirms it.
+  const [data, setData] = useState<ServerData>(() => warmWorkspace(serverId) ?? initialData);
   const [deliveryOwnership] = useState(() => new DeliveryOwnership());
   const [selectionOwner] = useState(
     () => new DeliverySelection(initialSelection, sameSelection, deliveryOwnership)
@@ -811,6 +808,7 @@ export function ServerTerminalWorkspace({
   // until `open`. A direct record reports `open` at once and holds nothing.
   const tunnel = useGatewayTunnel(record, selectedServer);
   const tunnelReady = !tunnel.tunnelled || tunnel.phase === 'open';
+  const appActive = useAppActive();
   const ready = isFocused && selectedServer && tunnelReady;
   /**
    * Whether the reader can still see this screen -- which is not whether it is
@@ -955,38 +953,24 @@ export function ServerTerminalWorkspace({
       try {
         // Health costs a herdr round-trip and is only read as a "have we loaded
         // anything yet" flag, so it is fetched once rather than every poll.
-        const [health, sessions] = await Promise.all([
-          healthRef.current ? Promise.resolve(healthRef.current) : gatewayTransport.loadHealth(),
-          gatewayTransport.loadSessions(),
-        ]);
-        if (!isCurrentRequest()) return null;
-        // What this gateway offers, and which of it the reader is owed. The
-        // rule for both is `lib/session-switcher`: the gateway's order is kept
-        // as it arrived, and a preference naming a session that has since gone
-        // falls through to the first rather than failing.
-        const choices = sessionChoices(sessions.sessions);
+        const health = healthRef.current;
         const previous = resolvedSessionRef.current;
         // A backend coming back must reveal a choice, not pull the reader away
         // from the live fallback they are now using. Explicit picks reset this.
+        // This is the one part of the load the home screen cannot share: it
+        // needs state only this screen has. What it decides is the preference,
+        // which is all `loadWorkspaceSnapshot` is told.
         const stablePreference =
           previous?.serverId === serverId && previous.preference === preferredSessionId
             ? previous.sessionId
             : preferredSessionId;
-        const sessionId = resolveSessionId(
-          choices.length ? choices : sessionChoices(sessions.sessions, true),
-          stablePreference
-        );
-        setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
-        const [workspaces, tabs, panes, agents] = await Promise.all([
-          gatewayTransport.loadWorkspaces(sessionId),
-          gatewayTransport.loadTabs(sessionId),
-          gatewayTransport.loadPanes(sessionId),
-          gatewayTransport.loadAgents(sessionId),
-        ]);
+        const { snapshot: next, choices } = await loadWorkspaceSnapshot(stablePreference, health);
         if (!isCurrentRequest()) return null;
+        setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
+        const { sessionId } = next;
         resolvedSessionRef.current = { serverId, preference: preferredSessionId, sessionId };
-        healthRef.current = health;
-        const next = { health, sessionId, workspaces, tabs, panes, agents };
+        healthRef.current = next.health;
+        rememberWarmWorkspace(serverId, next);
         setData((current) => (sameServerData(current, next) ? current : next));
         setSelection((current) => {
           const reconciled = reconcileSelection(next, current);
@@ -2357,14 +2341,18 @@ export function ServerTerminalWorkspace({
   }, [applyPaneOutput]);
 
   useEffect(() => {
-    if (!ready || connection.phase !== 'connected' || !selection.paneId) return;
+    if (!appActive || !ready || connection.phase !== 'connected' || !selection.paneId) return;
     // First read on selecting the pane; after that the event stream drives it.
     // The interval is a safety net for a missed event or a cursor-only
     // change that does not bump the revision -- not the primary path.
+    //
+    // A safety net for a screen nobody is looking at catches nothing and keeps
+    // the radio awake, so it stands down with the app and re-arms on return --
+    // the read on the way back in is this same first `refreshOutput`.
     void refreshOutput();
     const timer = setInterval(() => void refreshOutput(), 1000);
     return () => clearInterval(timer);
-  }, [connection.phase, ready, refreshOutput, selection.paneId]);
+  }, [appActive, connection.phase, ready, refreshOutput, selection.paneId]);
 
   /**
    * Warm the two panes a swipe can reach, so the switch onto them is a paint
@@ -2558,7 +2546,12 @@ export function ServerTerminalWorkspace({
     // structural and approval events this stream also carries are session-wide
     // and unaffected by which pane it inlines.
     selectedServer ? streamPaneId || null : null,
-    ready && connection.phase === 'connected',
+    // Backgrounding stands the stream down; `retryNonce` above already brings
+    // it back on return, which is the path that existed for a socket the OS had
+    // suspended anyway. Only the stream and the poll are gated this way -- not
+    // `ready` itself, whose falling edge cancels in-flight requests and would
+    // turn backgrounding mid-send into a lost send.
+    appActive && ready && connection.phase === 'connected',
     retryNonce,
     useMemo(
       () => ({
@@ -3585,8 +3578,19 @@ export function ServerTerminalWorkspace({
           or the window is too narrow to keep both halves usable, so this is a
           row of one for the whole of the compact layout and most of the Pad. */}
       <View style={styles.workspaceSplit}>
-        <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
-          <ThemeArtwork slot="shell.background" />
+        {/* No background and no wallpaper of its own. `AppDrawer` wraps this
+            screen and already paints both, and painting them again here drew a
+            second full-screen image that nothing could ever see: the opaque
+            fill on this view covered the drawer's copy, and HWUI does no
+            occlusion culling, so the hidden one was still decoded and still
+            drawn on every frame.
+
+            Letting the drawer's single layer through is also what finally makes
+            the reader's surface-opacity preference apply here: the drawer paints
+            `surfaceBackground(colors.background)`, which at the default alpha of
+            1 is `colors.background` exactly -- the same pixels as before -- and
+            below 1 is the translucency that was being asked for and ignored. */}
+        <View style={styles.page}>
           <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
           {/*
           One column for every notice that floats over the terminal.
