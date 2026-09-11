@@ -171,6 +171,35 @@ export function recordCollaborationTask(tasks: CollaborationTask[], task: Collab
   ].slice(0, 40);
 }
 
+/**
+ * Whether this build can hand a task to an assistant that is already running.
+ *
+ * It cannot, and saying so in one place is the point of this function.
+ *
+ * Delivery to an existing agent needs the Gateway to accept a request bound to
+ * an agent *instance*, and to refuse it if that instance is gone. Without that,
+ * the app can only look the agent up and then send -- and a pane is mutable, so
+ * between the lookup and the send the target can become a different agent
+ * entirely. That is not a race worth taking with someone's task: the wrong
+ * assistant receiving it is worse than nothing receiving it.
+ *
+ * So both delivery paths stop here (`use-agent-collaboration`'s `assign`, and
+ * `use-agent-command-delivery`'s `supportsBoundDelivery`). They used to stop
+ * with "Update Muqun Gateway to use Agent collaboration", which was false in a
+ * specific and costly way: by the time either path runs, the Gateway's
+ * `agent_collaboration` capability has already been checked and found present
+ * (`collaborationAvailability` returning `ready`). No upgrade the reader could
+ * perform would change the outcome, so the one instruction the message gave was
+ * the one thing guaranteed not to work. AGENTS.md asks for an *actionable*
+ * explanation; "start a new assistant instead" is one, and it is true.
+ *
+ * A function rather than a `false` constant so the call sites read as questions
+ * and so flipping it is one edit when the contract lands.
+ */
+export function supportsExistingAgentDelivery(): boolean {
+  return false;
+}
+
 export function canAssignToAgent(status: string): boolean {
   // A busy agent may accept another prompt, but Herdr cannot correlate its
   // completion with a specific turn. Start new assignments at an idle prompt.

@@ -4,7 +4,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { KeyboardToolbar, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Check,
@@ -24,12 +24,15 @@ import { useAgentCollaborationController } from '@/hooks/use-agent-collaboration
 import {
   canAssignToAgent,
   partitionCollaborationTasks,
+  supportsExistingAgentDelivery,
   taskAgent,
   type CollaborationContext,
 } from '@/lib/agent-collaboration';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
 import { AgentCommandSummary } from '@/components/agent-command-summary';
 import { AgentReferenceEditor } from '@/components/agent-reference-editor';
+import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
+import { extractThemeFromOutput } from '@/theme/agent-output';
 
 export default function AgentCollaborationScreen() {
   const surfaceBackground = useSurfaceBackground();
@@ -41,6 +44,7 @@ export default function AgentCollaborationScreen() {
   const [choosingProfile, setChoosingProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [management, setManagement] = useState<string | null>(null);
+  const openThemeEditor = useOpenThemeEditor();
   const {
     command,
     references,
@@ -88,7 +92,22 @@ export default function AgentCollaborationScreen() {
     context,
     assign,
   } = useAgentCollaborationController(params);
+  // The authoring prompt asks for a manifest fenced as `muqun-theme`. Reading
+  // it back here is what turns "the agent wrote a file on some other machine"
+  // into a theme this phone can preview and apply.
+  const outputTheme = useMemo(() => extractThemeFromOutput(output), [output]);
   const muted = theme.colors.textMuted;
+  // Which targets this build can actually deliver to, in the order they are
+  // offered. `false` is "an assistant already running" and is absent until the
+  // instance-bound contract exists; `true` is "start a new one" and depends on
+  // the Gateway advertising `agent_spawn`. Empty means collaboration has
+  // nowhere to send, which the form says outright rather than presenting
+  // fields that cannot lead anywhere.
+  const targetModes = [
+    ...(supportsExistingAgentDelivery() ? [false] : []),
+    ...(canSpawn ? [true] : []),
+  ];
+  const canDeliver = targetModes.length > 0;
   const { current, history } = partitionCollaborationTasks(tasks, agents);
   const currentIds = new Set(current.map((task) => task.id));
   const ready = !loading && supported && connectionMatches && Boolean(checkedAt);
@@ -288,6 +307,13 @@ export default function AgentCollaborationScreen() {
                           {output || t`No visible output yet.`}
                         </Text>
                       )}
+                      {outputTheme ? (
+                        <Button
+                          testID="collaboration-open-theme"
+                          onPress={() => openThemeEditor({ manifest: outputTheme })}>
+                          {t`Preview ${outputTheme.name}`}
+                        </Button>
+                      ) : null}
                       {outputError ? (
                         <Text variant="caption" color={theme.colors.danger}>
                           {outputError}
@@ -308,6 +334,19 @@ export default function AgentCollaborationScreen() {
           </>
         ) : (
           <View style={styles.formLayout}>
+            {ready && !canDeliver ? (
+              // Said before the fields rather than after the task. This server
+              // can neither start an assistant nor hand work to one that is
+              // already running, so there is nothing a written task could do.
+              <View style={[styles.card, { borderColor: theme.colors.border }]}>
+                <Text variant="bodySmall">{t`There is nowhere to send a task from this session yet.`}</Text>
+                <Text
+                  variant="caption"
+                  color={
+                    muted
+                  }>{t`Sending to an assistant that is already running is not available yet, and this server cannot start a new one. Your terminals work as usual.`}</Text>
+              </View>
+            ) : null}
             <View style={[styles.assistantSection, { borderColor: theme.colors.border }]}>
               <View style={styles.projectRow}>
                 <Folder size={16} color={muted} />
@@ -320,36 +359,45 @@ export default function AgentCollaborationScreen() {
                   {originCwd}
                 </Text>
               </View>
-              <View
-                style={[
-                  styles.modeSwitch,
-                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                ]}>
-                {[false, ...(canSpawn ? [true] : [])].map((create) => (
-                  <PressableScale
-                    key={String(create)}
-                    testID={create ? 'collaboration-new' : 'collaboration-existing'}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: newAgent === create, disabled: busy }}
-                    disabled={busy}
-                    onPress={() => setNewAgent(create)}
-                    style={[
-                      styles.modeOption,
-                      {
-                        backgroundColor: surfaceBackground(
-                          newAgent === create ? theme.colors.surface : 'transparent'
-                        ),
-                        borderColor: newAgent === create ? theme.colors.border : 'transparent',
-                      },
-                    ]}>
-                    <Text
-                      variant="bodySmall"
-                      color={newAgent === create ? theme.colors.text : muted}>
-                      {create ? t`New assistant` : t`Existing assistant`}
-                    </Text>
-                  </PressableScale>
-                ))}
-              </View>
+              {/* A segmented control is a choice, so it is drawn only when
+                  there is one. Handing a task to an assistant that is already
+                  running is not something this build can do
+                  (`supportsExistingAgentDelivery`), and offering it as the
+                  first and default segment meant the reader wrote the whole
+                  task before being told. When only one target is possible the
+                  switch disappears and the section below says which it is. */}
+              {targetModes.length > 1 ? (
+                <View
+                  style={[
+                    styles.modeSwitch,
+                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
+                  {targetModes.map((create) => (
+                    <PressableScale
+                      key={String(create)}
+                      testID={create ? 'collaboration-new' : 'collaboration-existing'}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: newAgent === create, disabled: busy }}
+                      disabled={busy}
+                      onPress={() => setNewAgent(create)}
+                      style={[
+                        styles.modeOption,
+                        {
+                          backgroundColor: surfaceBackground(
+                            newAgent === create ? theme.colors.surface : 'transparent'
+                          ),
+                          borderColor: newAgent === create ? theme.colors.border : 'transparent',
+                        },
+                      ]}>
+                      <Text
+                        variant="bodySmall"
+                        color={newAgent === create ? theme.colors.text : muted}>
+                        {create ? t`New assistant` : t`Existing assistant`}
+                      </Text>
+                    </PressableScale>
+                  ))}
+                </View>
+              ) : null}
               {newAgent ? (
                 <View style={styles.section}>
                   <PressableScale
@@ -568,6 +616,9 @@ export default function AgentCollaborationScreen() {
                 testID="collaboration-send"
                 disabled={
                   !ready ||
+                  // Nowhere to send is a disabled Send, not a Send that
+                  // explains itself only once it has been pressed.
+                  !canDeliver ||
                   busy ||
                   references.picking ||
                   contextLoading ||

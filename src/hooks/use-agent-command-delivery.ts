@@ -7,6 +7,7 @@ import {
   sendVerifiedAgentCommand,
   type AgentCommandDestination,
 } from '@/lib/agent-command-delivery';
+import { supportsExistingAgentDelivery } from '@/lib/agent-collaboration';
 import { loadAgents } from '@/lib/gateway-client';
 import { collaborationTaskText } from '@/lib/quick-command-collaboration';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -53,9 +54,11 @@ export function useAgentCommandDelivery(context: {
       await sendVerifiedAgentCommand(currentDestination, collaborationTaskText(text, ''), {
         connectedServerId: () => useGatewayConnectionStore.getState().record?.serverId,
         loadAgents,
-        // TODO: Wire the verified Gateway/backend instance-bound request contract.
-        // A capability label without server enforcement is not sufficient.
-        supportsBoundDelivery: async () => false,
+        // A capability label without server enforcement is not sufficient; the
+        // instance-bound request contract is what this waits on. One source of
+        // truth for that, so the answer and the words the reader gets cannot
+        // drift apart -- see `supportsExistingAgentDelivery`.
+        supportsBoundDelivery: async () => supportsExistingAgentDelivery(),
         send: async () => {
           throw new AgentCommandDeliveryError('unsupported');
         },
@@ -67,7 +70,7 @@ export function useAgentCommandDelivery(context: {
           throw new Error(t`Return to this server to continue.`);
         case 'unsupported':
           throw new Error(
-            t`Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual.`
+            t`Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here.`
           );
         case 'ambiguous':
           throw new Error(

@@ -12,7 +12,9 @@ is hidden "role=button label=\"/clear\""
 press "role=button text=\"Agent collaboration\""
 wait "id=\"collaboration-assign\"" 15000
 press "id=\"collaboration-assign\""
-press "id=\"collaboration-new\""
+# No mode switch to press: starting a new assistant is the only target this
+# build can deliver to, and one option is not a choice worth drawing.
+is hidden "id=\"collaboration-existing\""
 wait "id=\"collaboration-profile-picker\"" 10000
 fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: review current changes without editing files."
 keyboard dismiss
@@ -44,14 +46,17 @@ wait text "Agent collaboration" 10000
 press "role=button text=\"Agent collaboration\""
 wait "id=\"collaboration-assign\"" 10000
 press "id=\"collaboration-assign\""
-press "id=\"collaboration-existing\""
-wait text "Review assistant, Ready for input" 10000
-press "label=\"Review assistant, Ready for input\""
+# This used to select "Existing assistant", send, and assert the reply
+# "Update Muqun Gateway to use Agent collaboration" -- which encoded a bug as
+# expected behaviour. By that point the Gateway's agent_collaboration
+# capability had already been checked and found present, so no upgrade the
+# reader could perform would have changed the outcome: the app simply has no
+# instance-bound delivery contract, and the one instruction it gave was the one
+# thing guaranteed not to work. The target is no longer offered at all.
+is hidden "id=\"collaboration-existing\""
+wait "id=\"collaboration-profile-picker\"" 10000
 fill "id=\"collaboration-instructions\"" "Muqun collaboration regression: run the relevant tests and report the result."
 keyboard dismiss
-press "id=\"collaboration-send\""
-wait "text=\"Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual\"" 10000
-is visible "id=\"collaboration-instructions\" value=\"Muqun collaboration regression: run the relevant tests and report the result.\""
 press "id=\"collaboration-close\""
 wait "role=button text=\"Open quick actions\"" 10000
 press "role=button text=\"Open quick actions\""
