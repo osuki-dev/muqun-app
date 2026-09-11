@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  annotateEntry,
+  assertAttachmentDestination,
+  sameAttachmentDestination,
   hasFailures,
   isBusy,
   markFailed,
@@ -198,5 +201,123 @@ describe('what Send collects', () => {
     expect(isBusy(queue)).toBe(true);
     queue = markUploaded(queue, queue[1].id, { path: '/uploads/b.jpg' });
     expect(isBusy(queue)).toBe(false);
+  });
+});
+
+describe('annotateEntry', () => {
+  test('an ordinary attachment carries no caption and no use', () => {
+    const [entry] = stageFiles([], [pick('a.jpg')]);
+    expect(entry.caption).toBeUndefined();
+    expect(entry.use).toBeUndefined();
+  });
+
+  test('a caption and a use attach to one entry and leave the rest alone', () => {
+    let queue = stageFiles([], [pick('a.jpg'), pick('b.jpg')]);
+    queue = annotateEntry(queue, queue[0].id, { caption: 'the header', use: 'may-include' });
+    expect(queue[0].caption).toBe('the header');
+    expect(queue[0].use).toBe('may-include');
+    expect(queue[1].caption).toBeUndefined();
+  });
+
+  test('annotating never disturbs an upload that is still running', () => {
+    let queue = stageFiles([], [pick('a.jpg')]);
+    const id = queue[0].id;
+    queue = markUploading(queue, id);
+    queue = annotateEntry(queue, id, { caption: 'written mid-flight' });
+    expect(queue[0].status).toBe('uploading');
+    queue = markUploaded(queue, id, { path: '/uploads/a.jpg' });
+    // The reply lands after the caption and must not erase it.
+    expect(queue[0].caption).toBe('written mid-flight');
+    expect(queue[0].remotePath).toBe('/uploads/a.jpg');
+  });
+
+  test('one field can be set without clearing the other', () => {
+    let queue = stageFiles([], [pick('a.jpg')]);
+    const id = queue[0].id;
+    queue = annotateEntry(queue, id, { caption: 'a note', use: 'reference-only' });
+    queue = annotateEntry(queue, id, { use: 'may-include' });
+    expect(queue[0].caption).toBe('a note');
+    expect(queue[0].use).toBe('may-include');
+  });
+
+  test('an id that is not in the queue changes nothing', () => {
+    const queue = stageFiles([], [pick('a.jpg')]);
+    expect(annotateEntry(queue, 'missing', { caption: 'x' })).toEqual(queue);
+  });
+});
+
+describe('destination binding', () => {
+  const here = {
+    serverId: 's1',
+    sessionId: 'sess',
+    sourcePaneId: 'pane',
+    connectionGeneration: 1,
+  };
+
+  test('a composer attachment records no destination and binds at the record level', () => {
+    const [entry] = stageFiles([], [pick('a.jpg')]);
+    expect(entry.destination).toBeUndefined();
+  });
+
+  test('a file staged for a destination carries it', () => {
+    const [entry] = stageFiles([], [pick('a.jpg')], here);
+    expect(entry.destination).toEqual(here);
+  });
+
+  test('a queue still at its destination passes', () => {
+    const queue = stageFiles([], [pick('a.jpg'), pick('b.jpg')], here);
+    expect(() => assertAttachmentDestination(queue, here)).not.toThrow();
+  });
+
+  test('a reconnect alone moves the destination', () => {
+    // The pane and the server are unchanged; the connection behind them is not.
+    const queue = stageFiles([], [pick('a.jpg')], here);
+    expect(() => assertAttachmentDestination(queue, { ...here, connectionGeneration: 2 })).toThrow(
+      'Reference destination changed'
+    );
+  });
+
+  test('another pane on the same session is another destination', () => {
+    const queue = stageFiles([], [pick('a.jpg')], here);
+    expect(() => assertAttachmentDestination(queue, { ...here, sourcePaneId: 'other' })).toThrow(
+      'Reference destination changed'
+    );
+  });
+
+  test('a differing command id is another destination', () => {
+    const queue = stageFiles([], [pick('a.jpg')], { ...here, commandId: 'one' });
+    expect(() => assertAttachmentDestination(queue, { ...here, commandId: 'two' })).toThrow(
+      'Reference destination changed'
+    );
+  });
+
+  test('one drifted entry rejects the whole queue rather than being dropped', () => {
+    // A task assembled from a drifted queue is the wrong task, not a smaller one.
+    const queue = [
+      ...stageFiles([], [pick('a.jpg')], here),
+      ...stageFiles([], [pick('b.jpg')], { ...here, sourcePaneId: 'elsewhere' }),
+    ];
+    expect(() => assertAttachmentDestination(queue, here)).toThrow('Reference destination changed');
+  });
+
+  test('an unbound entry is refused, never treated as bindable to anything', () => {
+    const queue = stageFiles([], [pick('a.jpg')]);
+    expect(() => assertAttachmentDestination(queue, here)).toThrow('Reference destination changed');
+  });
+
+  test('an empty queue has nothing to have drifted', () => {
+    expect(() => assertAttachmentDestination([], here)).not.toThrow();
+  });
+
+  test('sameAttachmentDestination compares every field that addresses an agent', () => {
+    expect(sameAttachmentDestination(here, { ...here })).toBe(true);
+    for (const change of [
+      { serverId: 'other' },
+      { sessionId: 'other' },
+      { sourcePaneId: 'other' },
+      { connectionGeneration: 9 },
+      { commandId: 'set' },
+    ])
+      expect(sameAttachmentDestination(here, { ...here, ...change })).toBe(false);
   });
 });
