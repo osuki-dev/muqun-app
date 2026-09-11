@@ -62,6 +62,70 @@ export interface PendingAttachment {
   status: AttachmentUploadStatus;
   remotePath?: string;
   error?: string;
+  /**
+   * What the reader wrote about this file, and what the receiver may do with
+   * it. Both are optional and absent for an ordinary composer attachment: they
+   * exist so an agent reference -- an image sent as guidance rather than as
+   * content -- is the same staged file with two more facts on it, rather than
+   * a parallel queue with its own uploads, its own retries and its own strip.
+   */
+  caption?: string;
+  use?: AttachmentUse;
+  /** Recorded when the file is staged; see {@link AttachmentDestination}. */
+  destination?: AttachmentDestination;
+}
+
+/** `reference-only` is the safe default: look at it, do not ship it. */
+export type AttachmentUse = 'reference-only' | 'may-include';
+
+/**
+ * Where a file was staged to go.
+ *
+ * The composer binds an upload to the gateway record it was picked for, which
+ * is enough for a message addressed to "the terminal in front of me". A task is
+ * addressed to one agent in one pane, so it needs the pane and the connection
+ * generation too -- otherwise a reconnect, or a switch to another pane, can
+ * carry a staged file somewhere it was never meant for. That is the bug commit
+ * `bd8288e` fixed, and this is the shape that keeps it fixed while the two
+ * staging stacks converge (see `docs/collaboration-composer.md`).
+ */
+export type AttachmentDestination = {
+  serverId: string;
+  sessionId: string;
+  sourcePaneId: string;
+  commandId?: string;
+  connectionGeneration: number;
+};
+
+export function sameAttachmentDestination(
+  a: AttachmentDestination,
+  b: AttachmentDestination
+): boolean {
+  return (
+    a.serverId === b.serverId &&
+    a.sessionId === b.sessionId &&
+    a.sourcePaneId === b.sourcePaneId &&
+    a.commandId === b.commandId &&
+    a.connectionGeneration === b.connectionGeneration
+  );
+}
+
+/**
+ * Every staged file still belongs where it was staged.
+ *
+ * Throws rather than filtering: a task assembled from a queue that has drifted
+ * is not a smaller task, it is the wrong task. An unbound entry is refused for
+ * the same reason -- silently treating "no destination recorded" as "any
+ * destination will do" is exactly the hole this closes.
+ */
+export function assertAttachmentDestination(
+  queue: readonly PendingAttachment[],
+  active: AttachmentDestination
+): void {
+  for (const entry of queue) {
+    if (!entry.destination || !sameAttachmentDestination(entry.destination, active))
+      throw new Error('Reference destination changed');
+  }
 }
 
 let attachmentCounter = 0;
@@ -98,7 +162,12 @@ export function isImageAttachment(mime: string): boolean {
  * A known-oversized pick is failed here, before any socket is opened, so the
  * user learns at selection instead of after streaming the file into a refusal.
  */
-export function stageFiles(queue: PendingAttachment[], files: PickedFile[]): PendingAttachment[] {
+export function stageFiles(
+  queue: PendingAttachment[],
+  files: PickedFile[],
+  /** Omitted by the composer, which binds at the record level instead. */
+  destination?: AttachmentDestination
+): PendingAttachment[] {
   if (files.length === 0) return queue;
   return [
     ...queue,
@@ -106,6 +175,7 @@ export function stageFiles(queue: PendingAttachment[], files: PickedFile[]): Pen
       const tooLarge = file.size !== undefined && file.size > MAX_UPLOAD_BYTES;
       return {
         id: nextAttachmentId(),
+        destination,
         localUri: file.uri,
         name: file.name,
         mime: file.mime,
@@ -198,6 +268,21 @@ export function requeue(queue: PendingAttachment[], id: string): PendingAttachme
 
 export function removeEntry(queue: PendingAttachment[], id: string): PendingAttachment[] {
   return queue.filter((entry) => entry.id !== id);
+}
+
+/**
+ * Describe a staged file: what it is for, and whether the receiver may use it.
+ *
+ * Annotation is independent of the upload. A caption written while the bytes
+ * are still going up must survive the reply that lands after it, so this only
+ * ever touches the two fields it names and never the status or the path.
+ */
+export function annotateEntry(
+  queue: PendingAttachment[],
+  id: string,
+  annotation: { caption?: string; use?: AttachmentUse }
+): PendingAttachment[] {
+  return queue.map((entry) => (entry.id === id ? { ...entry, ...annotation } : entry));
 }
 
 /** Still queued or in flight, which is what Send has to wait out. */
