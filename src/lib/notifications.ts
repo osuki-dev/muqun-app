@@ -11,6 +11,8 @@ import { router, type Href } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
 
+import { warmNotificationTarget } from '@/lib/workspace-snapshot';
+
 import {
   registerDevicePushToken,
   unregisterDevicePushToken,
@@ -88,7 +90,20 @@ export function useNotificationObserver() {
         notification.request.content.data,
         notification.request.identifier
       );
-      if (route) router.navigate(route as Href);
+      if (!route) return;
+      // The same fetch-on-intent the home screen's cards make, for the other
+      // way into a terminal. A tapped notification is the strongest statement
+      // of intent the app ever gets -- the reader is already looking at the
+      // pane's name -- and it is also the coldest start, because the app may
+      // have been killed. Starting the workspace load before the navigation
+      // means the screen finds a filled cache instead of opening on
+      // `Connecting`.
+      //
+      // Never awaited and never reported: a failure here costs the head start
+      // and nothing else, since the screen connects exactly as it did before.
+      if (typeof route === 'object' && route.params.serverId)
+        void warmNotificationTarget(route.params.serverId, route.params.sessionId);
+      router.navigate(route as Href);
     }
 
     /**
