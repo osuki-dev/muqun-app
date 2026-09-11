@@ -401,6 +401,10 @@ msgid "Blocked"
 msgstr "Đang chờ"
 
 #: src/components/theme-link-import.tsx
+msgid "Branch and theme file came from the link. A branch can change later"
+msgstr "Nhánh và tệp chủ đề lấy từ liên kết. Một nhánh có thể thay đổi về sau"
+
+#: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "Nhánh hoặc commit (không bắt buộc)"
 
@@ -1498,6 +1502,10 @@ msgstr "Chế độ chèn"
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
 
+#: src/components/custom-theme-library.tsx
+msgid "Installing images"
+msgstr "Đang cài đặt hình ảnh"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "Độ mờ đục của nền giao diện"
@@ -1770,7 +1778,6 @@ msgid "Move the simulator controls"
 msgstr "Di chuyển các nút điều khiển trình giả lập"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2316,6 +2323,11 @@ msgstr "Nhấn Escape để bỏ qua yêu cầu này"
 msgid "Preview"
 msgstr "Xem trước"
 
+#. placeholder {0}: outputTheme.name
+#: src/app/agent-collaboration.tsx
+msgid "Preview {0}"
+msgstr "Xem trước {0}"
+
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2395,6 +2407,10 @@ msgstr "Kết nối qua host SSH {host}"
 msgid "Reaching the Gateway"
 msgstr "Đang kết nối Gateway"
 
+#: src/components/theme-link-import.tsx
+msgid "Reading the theme link"
+msgstr "Đang đọc liên kết chủ đề"
+
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
@@ -2465,8 +2481,10 @@ msgid "Remove"
 msgstr "Xóa"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Gỡ {0}"
@@ -2820,6 +2838,15 @@ msgstr "Gửi cho tác tử"
 #: src/app/agent-collaboration.tsx
 msgid "Sending task…"
 msgstr "Đang gửi…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Sending to an assistant that is already running is not available yet, and this server cannot start a new one. Your terminals work as usual."
+msgstr "Việc gửi đến một trợ lý đang chạy chưa khả dụng, và máy chủ này không thể khởi động trợ lý mới. Các terminal của bạn vẫn hoạt động bình thường"
+
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
+msgid "Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here."
+msgstr "Việc gửi đến một trợ lý đang chạy chưa khả dụng. Hãy khởi động một trợ lý mới — hướng dẫn của bạn vẫn còn đây"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -3369,10 +3396,6 @@ msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công 
 msgid "Theme"
 msgstr "Chủ đề"
 
-#: src/components/custom-theme-library.tsx
-msgid "Theme applied"
-msgstr "Đã áp dụng giao diện"
-
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
 msgstr "Tệp giao diện (không bắt buộc)"
@@ -3393,6 +3416,10 @@ msgstr "URL giao diện"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "Chủ đề, {0}"
+
+#: src/app/agent-collaboration.tsx
+msgid "There is nowhere to send a task from this session yet."
+msgstr "Chưa có nơi nào để gửi tác vụ từ phiên này"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -3631,7 +3658,6 @@ msgid "Up arrow"
 msgstr "Mũi tên lên"
 
 #: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "Cập nhật Muqun Gateway để cộng tác. Các terminal vẫn hoạt động bình thường"
 

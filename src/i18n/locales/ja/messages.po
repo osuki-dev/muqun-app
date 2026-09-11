@@ -401,6 +401,10 @@ msgid "Blocked"
 msgstr "応答待ち"
 
 #: src/components/theme-link-import.tsx
+msgid "Branch and theme file came from the link. A branch can change later"
+msgstr "ブランチとテーマファイルはリンクから取得しました。ブランチは後で変わることがあります"
+
+#: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "ブランチまたはコミット（任意）"
 
@@ -1498,6 +1502,10 @@ msgstr "挿入モード"
 msgid "Install command copied"
 msgstr "インストールコマンドをコピーしました"
 
+#: src/components/custom-theme-library.tsx
+msgid "Installing images"
+msgstr "画像をインストールしています"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "画面の背景の不透明度"
@@ -1770,7 +1778,6 @@ msgid "Move the simulator controls"
 msgstr "シミュレータの操作ボタンを移動"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2316,6 +2323,11 @@ msgstr "エスケープを送ってこのリクエストを閉じる"
 msgid "Preview"
 msgstr "プレビュー"
 
+#. placeholder {0}: outputTheme.name
+#: src/app/agent-collaboration.tsx
+msgid "Preview {0}"
+msgstr "{0} をプレビュー"
+
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2395,6 +2407,10 @@ msgstr "SSH ホスト {host} 経由で到達"
 msgid "Reaching the Gateway"
 msgstr "Gateway に接続中"
 
+#: src/components/theme-link-import.tsx
+msgid "Reading the theme link"
+msgstr "テーマのリンクを読み込んでいます"
+
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
@@ -2465,8 +2481,10 @@ msgid "Remove"
 msgstr "削除"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} を取り除く"
@@ -2820,6 +2838,15 @@ msgstr "エージェントに送信"
 #: src/app/agent-collaboration.tsx
 msgid "Sending task…"
 msgstr "送信中…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Sending to an assistant that is already running is not available yet, and this server cannot start a new one. Your terminals work as usual."
+msgstr "すでに実行中のアシスタントへの送信はまだ利用できず、このサーバーは新しいアシスタントを起動できません。ターミナルはこれまでどおり使えます"
+
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
+msgid "Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here."
+msgstr "すでに実行中のアシスタントへの送信はまだ利用できません。代わりに新しいアシスタントを起動してください。入力した内容はそのまま残っています"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -3369,10 +3396,6 @@ msgstr "やり取りを会話として表示し、ツールの手順は折りた
 msgid "Theme"
 msgstr "テーマ"
 
-#: src/components/custom-theme-library.tsx
-msgid "Theme applied"
-msgstr "テーマを適用しました"
-
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
 msgstr "テーマファイル（任意）"
@@ -3393,6 +3416,10 @@ msgstr "テーマの URL"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "テーマ、{0}"
+
+#: src/app/agent-collaboration.tsx
+msgid "There is nowhere to send a task from this session yet."
+msgstr "このセッションからタスクを送れる先はまだありません"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -3631,7 +3658,6 @@ msgid "Up arrow"
 msgstr "上矢印"
 
 #: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "連携には Muqun Gateway の更新が必要です。既存のターミナルは引き続き使えます"
 

@@ -401,6 +401,10 @@ msgid "Blocked"
 msgstr "Bloqueado"
 
 #: src/components/theme-link-import.tsx
+msgid "Branch and theme file came from the link. A branch can change later"
+msgstr "A ramificação e o arquivo de tema vieram do link. Uma ramificação pode mudar depois"
+
+#: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "Branch ou commit (opcional)"
 
@@ -1498,6 +1502,10 @@ msgstr "Modo de inserção"
 msgid "Install command copied"
 msgstr "Comando de instalação copiado"
 
+#: src/components/custom-theme-library.tsx
+msgid "Installing images"
+msgstr "Instalando imagens"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "Opacidade do fundo da interface"
@@ -1770,7 +1778,6 @@ msgid "Move the simulator controls"
 msgstr "Mover os controlos do simulador"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2316,6 +2323,11 @@ msgstr "Pressione Escape para dispensar esta solicitação"
 msgid "Preview"
 msgstr "Prévia"
 
+#. placeholder {0}: outputTheme.name
+#: src/app/agent-collaboration.tsx
+msgid "Preview {0}"
+msgstr "Visualizar {0}"
+
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2395,6 +2407,10 @@ msgstr "Alcançado pelo host SSH {host}"
 msgid "Reaching the Gateway"
 msgstr "A contactar o Gateway"
 
+#: src/components/theme-link-import.tsx
+msgid "Reading the theme link"
+msgstr "Lendo o link do tema"
+
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
@@ -2465,8 +2481,10 @@ msgid "Remove"
 msgstr "Remover"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Remover {0}"
@@ -2820,6 +2838,15 @@ msgstr "Enviar ao agente"
 #: src/app/agent-collaboration.tsx
 msgid "Sending task…"
 msgstr "Enviando…"
+
+#: src/app/agent-collaboration.tsx
+msgid "Sending to an assistant that is already running is not available yet, and this server cannot start a new one. Your terminals work as usual."
+msgstr "Enviar para um assistente que já está em execução ainda não está disponível, e este servidor não consegue iniciar um novo. Seus terminais funcionam normalmente"
+
+#: src/hooks/use-agent-collaboration.ts
+#: src/hooks/use-agent-command-delivery.ts
+msgid "Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here."
+msgstr "Enviar para um assistente que já está em execução ainda não está disponível. Inicie um novo assistente — suas instruções continuam aqui"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -3369,10 +3396,6 @@ msgstr "A transcrição como uma conversa, com os passos das ferramentas recolhi
 msgid "Theme"
 msgstr "Tema"
 
-#: src/components/custom-theme-library.tsx
-msgid "Theme applied"
-msgstr "Tema aplicado"
-
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
 msgstr "Arquivo do tema (opcional)"
@@ -3393,6 +3416,10 @@ msgstr "URL do tema"
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
 msgstr "Tema, {0}"
+
+#: src/app/agent-collaboration.tsx
+msgid "There is nowhere to send a task from this session yet."
+msgstr "Ainda não há para onde enviar uma tarefa a partir desta sessão"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -3631,7 +3658,6 @@ msgid "Up arrow"
 msgstr "Seta para cima"
 
 #: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
 msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
 msgstr "Atualize o Muqun Gateway para colaborar. Seus terminais continuam funcionando normalmente"
 
