@@ -351,10 +351,13 @@
       },
       {
         "target": {
-          "text": "Theme applied"
+          "id": "theme-apply"
         },
-        "mode": "visible",
+        "mode": "hidden",
         "run": "flows/custom-themes.ad#applied-status"
+      },
+      {
+        "run": "flows/custom-themes.ad#reopen-applied"
       },
       {
         "target": {
@@ -3715,12 +3718,6 @@
         "run": "flows/settings.ad#s88"
       },
       {
-        "target": {
-          "text": "Quick actions, Add commands and custom key combinations"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
         "run": "flows/settings.ad#s89"
       },
       {

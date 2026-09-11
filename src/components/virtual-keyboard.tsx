@@ -522,8 +522,15 @@ function VirtualKey({
           ? [styles.keyPressed, { backgroundColor: surfaceBackground(theme.colors.primary) }]
           : null,
       ]}>
-      {({ pressed }) =>
-        typeof children === 'function' ? children({ pressed: pressed && !disabled }) : children
+      {/* Pass the state through rather than rebuilding it: Expo's web types
+          augment this callback with a `hovered` field, so a hand-built object
+          stops compiling as soon as anyone runs `expo start` and the generated
+          `expo-env.d.ts` pulls those declarations in. Only `pressed` is
+          overridden, which is the one thing a disabled key must not report. */}
+      {(state) =>
+        typeof children === 'function'
+          ? children({ ...state, pressed: state.pressed && !disabled })
+          : children
       }
     </Pressable>
   );
