@@ -896,6 +896,10 @@ msgstr "Không thể kết nối đến gateway. Hãy đảm bảo nó đang ch�
 msgid "Could not reach this server."
 msgstr "Không thể kết nối đến máy chủ này"
 
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Không thể đọc các máy chủ đã lưu. Dữ liệu đã lưu không bị thay đổi. Hãy mở khóa thiết bị rồi thử lại"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
@@ -1370,6 +1374,10 @@ msgstr "Khóa host đã được tin cậy"
 msgid "Idle"
 msgstr "Rảnh"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng dụng hoặc kiểm tra bản cài đặt"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "Hình ảnh"
@@ -1552,6 +1560,7 @@ msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 msgid "Loading"
 msgstr "Đang tải"
@@ -2397,6 +2406,7 @@ msgstr "Khôi phục các lệnh mặc định đã ẩn"
 msgid "Restore hidden defaults"
 msgstr "Khôi phục mặc định đã ẩn"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -3454,6 +3464,7 @@ msgstr "đã tải lên"
 msgid "uploading"
 msgstr "đang tải lên"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/agent-reference-editor.tsx
 msgid "Uploading…"
 msgstr "Đang tải lên…"

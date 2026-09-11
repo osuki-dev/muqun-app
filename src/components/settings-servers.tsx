@@ -18,6 +18,7 @@ import { SettingsSegmented } from '@/components/settings-segmented';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { StatusDot } from '@/components/status-dot';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
@@ -77,7 +78,8 @@ export function SettingsServers({ title }: { title: string }) {
 
   const theme = useThemeTokens();
   const { showToast } = useToast();
-  const { record, records, loading, selectRecord, removeRecord } = useGatewayRecord();
+  const { record, records, loading, hydrationError, retryHydration, selectRecord, removeRecord } =
+    useGatewayRecord();
   const probes = useServerReachability((state) => state.probes);
   const refreshReachability = useServerReachability((state) => state.refresh);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
@@ -142,7 +144,9 @@ export function SettingsServers({ title }: { title: string }) {
 
   return (
     <SettingsSection title={title}>
-      {loading ? (
+      {hydrationError ? (
+        <GatewayStorageError busy={loading} onRetry={retryHydration} />
+      ) : loading ? (
         <View style={styles.note}>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Loading servers</Trans>

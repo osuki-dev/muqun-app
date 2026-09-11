@@ -896,6 +896,10 @@ msgstr "Could not reach the gateway. Make sure it is running, then refresh the Q
 msgid "Could not reach this server."
 msgstr "Could not reach this server"
 
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
@@ -1370,6 +1374,10 @@ msgstr "Host key trusted"
 msgid "Idle"
 msgstr "Idle"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "If this continues, restart the app or check the app installation"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "Images"
@@ -1552,6 +1560,7 @@ msgstr "List only the panes running a recognised agent"
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 msgid "Loading"
 msgstr "Loading"
@@ -2397,6 +2406,7 @@ msgstr "Restore hidden default commands"
 msgid "Restore hidden defaults"
 msgstr "Restore hidden defaults"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -3454,6 +3464,7 @@ msgstr "uploaded"
 msgid "uploading"
 msgstr "uploading"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/agent-reference-editor.tsx
 msgid "Uploading…"
 msgstr "Uploading…"

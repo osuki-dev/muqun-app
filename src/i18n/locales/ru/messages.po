@@ -896,6 +896,10 @@ msgstr "Не удалось связаться с Gateway. Убедитесь, �
 msgid "Could not reach this server."
 msgstr "Не удалось связаться с этим сервером"
 
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Не удалось прочитать сохранённые серверы. Сохранённые данные не изменены. Разблокируйте устройство и повторите попытку"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
@@ -1370,6 +1374,10 @@ msgstr "Ключ хоста доверенный"
 msgid "Idle"
 msgstr "Простаивает"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "Если проблема сохраняется, перезапустите приложение или проверьте его установку"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "Изображения"
@@ -1552,6 +1560,7 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 msgid "Loading"
 msgstr "Загрузка"
@@ -2397,6 +2406,7 @@ msgstr "Восстановить скрытые команды по умолча
 msgid "Restore hidden defaults"
 msgstr "Восстановить скрытые значения по умолчанию"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -3454,6 +3464,7 @@ msgstr "загружено"
 msgid "uploading"
 msgstr "загружается"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/agent-reference-editor.tsx
 msgid "Uploading…"
 msgstr "Загрузка…"

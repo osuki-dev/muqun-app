@@ -896,6 +896,10 @@ msgstr "Gateway에 연결하지 못했습니다. 실행 중인지 확인한 뒤 
 msgid "Could not reach this server."
 msgstr "이 서버에 연결하지 못했습니다"
 
+#: src/components/gateway-storage-error.tsx
+msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "저장된 서버를 읽을 수 없습니다. 저장된 데이터는 변경되지 않았습니다. 기기 잠금을 해제하고 다시 시도하세요"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
@@ -1370,6 +1374,10 @@ msgstr "호스트 키 신뢰됨"
 msgid "Idle"
 msgstr "대기"
 
+#: src/components/gateway-storage-error.tsx
+msgid "If this continues, restart the app or check the app installation"
+msgstr "문제가 계속되면 앱을 다시 시작하거나 앱 설치 상태를 확인하세요"
+
 #: src/components/session-artifacts.tsx
 msgid "Images"
 msgstr "이미지"
@@ -1552,6 +1560,7 @@ msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 msgid "Loading"
 msgstr "불러오는 중"
@@ -2397,6 +2406,7 @@ msgstr "숨긴 기본 명령 복원"
 msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
+#: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
@@ -3454,6 +3464,7 @@ msgstr "업로드됨"
 msgid "uploading"
 msgstr "업로드 중"
 
+#: src/app/agent-collaboration.tsx
 #: src/components/agent-reference-editor.tsx
 msgid "Uploading…"
 msgstr "업로드 중…"
