@@ -225,7 +225,17 @@ export default function SettingsScreen() {
                   twice on one screen is a question about whether they agree. */}
               <View style={styles.brand}>
                 <Image
-                  source={require('@/assets/images/loading-mark.png')}
+                  // The rendered mascot with a real alpha channel, not the
+                  // launcher icon: that one carries an opaque plate, which on a
+                  // themed page reads as a square nobody asked for. Two cuts,
+                  // because the dark master is lit for a dark ground and its
+                  // rim would fringe on a light one. `resolvedMode` rather than
+                  // the system scheme, so a theme chosen in Appearance counts.
+                  source={
+                    resolvedMode === 'dark'
+                      ? require('@/assets/images/brand-mark-3d-dark.png')
+                      : require('@/assets/images/brand-mark-3d.png')
+                  }
                   style={styles.brandMark}
                   contentFit="contain"
                   // Decorative: the version beneath it already names the app,
@@ -300,7 +310,9 @@ const styles = StyleSheet.create({
     // is not crowded by the line about settings staying on the device.
     paddingBottom: LADDER.gutter,
   },
-  brandMark: { width: 64, height: 64 },
+  // Larger than the flat mark was: this artwork is rendered with depth and
+  // reads as a smudge below about this size.
+  brandMark: { width: 88, height: 88 },
   // Centred even when the string wraps, which it does in the locales that spell
   // `Version` out at length.
   brandVersion: { textAlign: 'center' },
