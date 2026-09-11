@@ -1,0 +1,203 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# artifacts
+
+# section s1
+press "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+wait stable 400 5000
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+is visible "${TARGET}"
+
+# section s6
+screenshot "shots/06-files.png"
+
+# section s7
+scroll down --pixels 320
+
+# section s8
+scroll down --pixels 320
+
+# section s9
+scroll down --pixels 320
+
+# section s10
+scroll up --pixels 320
+
+# section s11
+scroll up --pixels 320
+
+# section s12
+press "${TARGET}"
+
+# section s13
+type "diff"
+
+# section s14
+wait stable 400 5000
+
+# section s15
+is visible "${TARGET}"
+
+# section s16
+is hidden "${TARGET}"
+
+# section s17
+press "${TARGET}"
+
+# section s18
+wait stable 400 5000
+
+# section s19
+is visible "${TARGET}"
+
+# section s20
+press "${TARGET}"
+
+# section s21
+wait stable 400 5000
+
+# section s22
+is visible "${TARGET}"
+
+# section s23
+is hidden "${TARGET}"
+
+# section s24
+press "${TARGET}"
+
+# section s25
+wait stable 400 5000
+
+# section s26
+is visible "${TARGET}"
+
+# section s27
+press "${TARGET}"
+
+# section s28
+is visible "${TARGET}"
+
+# section s29
+wait stable 400 5000
+
+# section s30
+is visible "${TARGET}"
+
+# section s31
+is visible "${TARGET}"
+
+# section s32
+is visible "${TARGET}"
+
+# section s33
+is hidden "${TARGET}"
+
+# section s34
+screenshot "shots/07-artifact-markdown.png"
+
+# section s35
+press "${TARGET}"
+
+# section s36
+is visible "${TARGET}"
+
+# section s37
+scroll down --pixels 320
+
+# section s38
+press "${TARGET}"
+
+# section s39
+is visible "${TARGET}"
+
+# section s40
+wait stable 400 5000
+
+# section s41
+is visible "${TARGET}"
+
+# section s42
+screenshot "shots/08-artifact-diff.png"
+
+# section s43
+press "${TARGET}"
+
+# section s44
+is visible "${TARGET}"
+
+# section s45
+scroll down --pixels 320
+
+# section s46
+press "${TARGET}"
+
+# section s47
+is visible "${TARGET}"
+
+# section s48
+wait stable 400 5000
+
+# section s49
+is visible "${TARGET}"
+
+# section s50
+screenshot "shots/09-artifact-source.png"
+
+# section s51
+press "${TARGET}"
+
+# section s52
+is visible "${TARGET}"
+
+# section s53
+scroll down --pixels 320
+
+# section s54
+press "${TARGET}"
+
+# section s55
+is visible "${TARGET}"
+
+# section s56
+wait stable 400 5000
+
+# section s57
+is visible "${TARGET}"
+
+# section s58
+is visible "${TARGET}"
+
+# section s59
+is visible "${TARGET}"
+
+# section s60
+is visible "${TARGET}"
+
+# section s61
+is visible "${TARGET}"
+
+# section s62
+is visible "${TARGET}"
+
+# section s63
+press "${TARGET}"
+
+# section s64
+is visible "${TARGET}"
+
+# section s65
+scroll up --pixels 320
+
+# section s66
+press "${TARGET}"
+
+# section s67
+is visible "${TARGET}"

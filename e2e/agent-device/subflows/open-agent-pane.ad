@@ -1,0 +1,5 @@
+# Use the unique picker entry: private AX may merge the dock chip into a wider ancestor.
+press "label=\"Show what is running\""
+wait "label=\"Open Claude Code. Long press to close\"" 10000
+press "label=\"Open Claude Code. Long press to close\""
+wait "id=\"terminal-composer-input\"" 10000

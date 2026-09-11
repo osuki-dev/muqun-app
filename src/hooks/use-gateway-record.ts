@@ -7,6 +7,7 @@ export function useGatewayRecord() {
   const record = useGatewayConnectionStore((state) => state.record);
   const records = useGatewayConnectionStore((state) => state.records);
   const loading = useGatewayConnectionStore((state) => state.loading);
+  const hydrationError = useGatewayConnectionStore((state) => state.hydrationError);
   const hydrate = useGatewayConnectionStore((state) => state.hydrate);
   const setRecord = useGatewayConnectionStore((state) => state.setRecord);
   const selectGatewayRecord = useGatewayConnectionStore((state) => state.selectRecord);
@@ -47,6 +48,8 @@ export function useGatewayRecord() {
     record,
     records,
     loading,
+    hydrationError,
+    retryHydration: hydrate,
     setRecord,
     selectRecord,
     enterDemo,

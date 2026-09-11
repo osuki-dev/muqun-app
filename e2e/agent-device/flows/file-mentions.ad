@@ -1,0 +1,104 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# file-mentions
+
+# section s1
+press "${TARGET}"
+
+# section s2
+press "${TARGET}"
+
+# section s3
+type "@"
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+is visible "${TARGET}"
+
+# section s6
+is visible "${TARGET}"
+
+# section s7
+type "the"
+
+# section s8
+wait stable 400 5000
+
+# section s9
+is visible "${TARGET}"
+
+# section s10
+is visible "${TARGET}"
+
+# section s11
+is hidden "${TARGET}"
+
+# section s12
+is hidden "${TARGET}"
+
+# section s13
+press "${TARGET}"
+
+# section s14
+wait stable 400 5000
+
+# section s15
+is hidden "${TARGET}"
+
+# section s16
+is hidden "${TARGET}"
+
+# section s17
+is visible "${TARGET}"
+
+# section s18
+is visible "${TARGET}"
+
+# section s19
+press "${TARGET}"
+
+# section s20
+press "${TARGET}"
+
+# section s21
+type "mail ellen"
+
+# section s22
+type "@"
+
+# section s23
+type "exa"
+
+# section s24
+wait stable 400 5000
+
+# section s25
+is hidden "${TARGET}"
+
+# section s26
+is hidden "${TARGET}"
+
+# section s27
+press "${TARGET}"
+
+# section s28
+wait stable 400 5000
+
+# section s29
+press "${TARGET}"
+
+# section s30
+type "@"
+
+# section s31
+wait stable 400 5000
+
+# section s32
+is hidden "${TARGET}"
+
+# section s33
+is hidden "${TARGET}"
+
+# section s34
+is hidden "${TARGET}"

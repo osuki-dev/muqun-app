@@ -21,6 +21,7 @@ import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { AppLockGate } from '@/components/app-lock-gate';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
+import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { buildTheme } from '@/constants/theme';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -308,6 +309,15 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            <Stack.Screen
+              name="agent-collaboration"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: [1],
+                sheetGrabberVisible: true,
+                contentStyle: { backgroundColor: 'transparent' },
+              }}
+            />
             {/*
               Open a web service (card #829). Content-sized like New Task, and
               for less reason than any of them: this is one field with a row of
@@ -351,6 +361,7 @@ function RootContent() {
               }}
             />
           </Stack>
+          <InAppNotificationHost />
         </AppLockGate>
         <SshConnectPromptGate />
         <UpdateStatusBanner />

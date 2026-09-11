@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 
 export type QuickCommandMode = 'terminal' | 'agent';
 export type QuickCommandKind = 'command' | 'keys';
+export type QuickCommandDelivery = 'current-agent' | 'collaboration';
 
 export type QuickCommand = {
   id: string;
@@ -10,12 +11,26 @@ export type QuickCommand = {
   mode: QuickCommandMode;
   kind?: QuickCommandKind;
   custom?: boolean;
+  delivery?: QuickCommandDelivery;
+  /** Only trusted built-ins can refer to bundled instruction builders. */
+  instructionId?: string;
 };
 
 const STORAGE_KEY = 'muqun.quick-commands.v1';
 // Ids of built-in defaults the user has hidden. Kept separate from the custom
 // list so a hidden default can be restored without losing the user's own ones.
 const HIDDEN_KEY = 'muqun.quick-hidden.v1';
+let mutations: Promise<void> = Promise.resolve();
+
+/** Serialize read-modify-write edits so fast taps cannot discard another shortcut. */
+function mutate<T>(operation: () => Promise<T>): Promise<T> {
+  const result = mutations.then(operation);
+  mutations = result.then(
+    () => undefined,
+    () => undefined
+  );
+  return result;
+}
 
 const defaults: QuickCommand[] = [
   { id: 'terminal-status', label: 'Git status', value: 'git status --short', mode: 'terminal' },
@@ -84,47 +99,74 @@ export async function hasHiddenDefaults(): Promise<boolean> {
 
 /** Bring back every hidden built-in default. Custom commands are untouched. */
 export async function restoreDefaultCommands(mode: QuickCommandMode): Promise<QuickCommand[]> {
-  await SecureStore.deleteItemAsync(HIDDEN_KEY);
-  return loadQuickCommands(mode);
+  return mutate(async () => {
+    await SecureStore.deleteItemAsync(HIDDEN_KEY);
+    return loadQuickCommands(mode);
+  });
 }
 
 export async function addQuickCommand(
   mode: QuickCommandMode,
   label: string,
   value: string,
-  kind: QuickCommandKind = 'command'
+  kind: QuickCommandKind = 'command',
+  delivery: QuickCommandDelivery = 'current-agent'
 ): Promise<QuickCommand[]> {
-  const commands = await loadCustomCommands();
-  const next = [
-    ...commands,
-    {
-      id: `custom-${Date.now().toString(36)}`,
-      label: label.trim(),
-      value: value.trim(),
-      mode,
-      kind: mode === 'agent' ? 'command' : kind,
-      custom: true,
-    } satisfies QuickCommand,
-  ].slice(-24);
-  await saveCustomCommands(next);
-  return loadQuickCommands(mode);
+  return mutate(async () => {
+    if (delivery !== 'current-agent' && delivery !== 'collaboration')
+      throw new Error('Invalid command delivery');
+    const commands = await loadCustomCommands();
+    const next = [
+      ...commands,
+      {
+        id: `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+        label: label.trim(),
+        value: value.trim(),
+        mode,
+        kind: mode === 'agent' ? 'command' : kind,
+        custom: true,
+        ...(mode === 'agent' ? { delivery } : {}),
+      } satisfies QuickCommand,
+    ].slice(-24);
+    await saveCustomCommands(next);
+    return loadQuickCommands(mode);
+  });
 }
 
 export async function removeQuickCommand(
   id: string,
   mode: QuickCommandMode
 ): Promise<QuickCommand[]> {
-  const isDefault = defaults.some((command) => command.id === id);
-  if (isDefault) {
-    // A built-in isn't deleted (it lives in the bundle) -- it's remembered as
-    // hidden so the user is never forced to keep a default they don't want.
-    const hidden = await loadHiddenIds();
-    if (!hidden.includes(id)) await saveHiddenIds([...hidden, id]);
-  } else {
-    const commands = (await loadCustomCommands()).filter((command) => command.id !== id);
-    await saveCustomCommands(commands);
-  }
-  return loadQuickCommands(mode);
+  return mutate(async () => {
+    const isDefault = defaults.some((command) => command.id === id);
+    if (isDefault) {
+      // A built-in isn't deleted (it lives in the bundle) -- it's remembered as
+      // hidden so the user is never forced to keep a default they don't want.
+      const hidden = await loadHiddenIds();
+      if (!hidden.includes(id)) await saveHiddenIds([...hidden, id]);
+    } else {
+      const commands = (await loadCustomCommands()).filter((command) => command.id !== id);
+      await saveCustomCommands(commands);
+    }
+    return loadQuickCommands(mode);
+  });
+}
+
+export async function updateQuickCommandDelivery(
+  id: string,
+  delivery: QuickCommandDelivery
+): Promise<QuickCommand[]> {
+  return mutate(async () => {
+    if (delivery !== 'current-agent' && delivery !== 'collaboration')
+      throw new Error('Invalid command delivery');
+    const commands = await loadCustomCommands();
+    const command = commands.find((item) => item.id === id && item.mode === 'agent');
+    if (!command) throw new Error('Agent shortcut no longer exists');
+    await saveCustomCommands(
+      commands.map((item) => (item.id === id ? { ...item, delivery } : item))
+    );
+    return loadQuickCommands('agent');
+  });
 }
 
 async function loadHiddenIds(): Promise<string[]> {
@@ -149,14 +191,22 @@ async function loadCustomCommands(): Promise<QuickCommand[]> {
   if (!value) return [];
   try {
     const parsed = JSON.parse(value) as QuickCommand[];
-    return parsed.filter(
-      (command) =>
-        command.custom === true &&
-        (command.mode === 'terminal' || command.mode === 'agent') &&
-        typeof command.label === 'string' &&
-        typeof command.value === 'string' &&
-        (command.kind === undefined || command.kind === 'command' || command.kind === 'keys')
-    );
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter(
+        (command) =>
+          command &&
+          typeof command.id === 'string' &&
+          command.custom === true &&
+          (command.mode === 'terminal' || command.mode === 'agent') &&
+          typeof command.label === 'string' &&
+          typeof command.value === 'string' &&
+          (command.kind === undefined || command.kind === 'command' || command.kind === 'keys') &&
+          (command.delivery === undefined ||
+            command.delivery === 'current-agent' ||
+            (command.mode === 'agent' && command.delivery === 'collaboration'))
+      )
+      .map(({ instructionId: _instructionId, ...command }) => command);
   } catch {
     return [];
   }

@@ -136,7 +136,7 @@ function ThemePackTile({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={pack.label}
-      testID={`theme-${pack.id}`}
+      testID={`settings-selection:${selected ? 'on' : 'off'}:theme-${pack.id}`}
       onPress={onSelect}
       style={[styles.tile, { width, backgroundColor: theme.colors.surfaceRaised }]}>
       <Animated.View

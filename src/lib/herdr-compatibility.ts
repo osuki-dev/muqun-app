@@ -1,5 +1,13 @@
 export const MINIMUM_HERDR_VERSION = '0.7.5';
 
+/** The Gateway answered, but its terminal backend is not ready yet. */
+export class TerminalBackendUnavailableError extends Error {
+  constructor(readonly backendKind: string | undefined) {
+    super(explainDisconnected(backendKind));
+    this.name = 'TerminalBackendUnavailableError';
+  }
+}
+
 type HerdrCompatibility = {
   connected?: boolean;
   version?: string;
@@ -104,7 +112,7 @@ function explainDisconnected(kind: string | undefined): string {
 export function assertSupportedHerdr(health: HerdrCompatibilityHealth): void {
   const herdr = health.herdr;
   if (!herdr?.connected) {
-    throw new Error(explainDisconnected(health.backend?.kind));
+    throw new TerminalBackendUnavailableError(health.backend?.kind);
   }
   // Only an explicit `false` is a refusal. A gateway old enough to omit the
   // field has still told us it connected, and that is the only verdict it has;

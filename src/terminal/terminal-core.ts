@@ -1213,9 +1213,14 @@ export function terminalFrameLinks(frame: TerminalFrame): TerminalLink[] {
     }
 
     const { text, spans } = terminalLineTextSpans(line);
-    for (const match of text.matchAll(/https?:\/\/[^\s<>"'`]+/giu)) {
+    // Bare links have no explicit endpoint. Chinese prose commonly follows
+    // them without whitespace; treat its punctuation as a boundary, not as
+    // URL text. Explicit OSC 8 links above keep their exact supplied URI.
+    for (const match of text.matchAll(
+      /https?:\/\/[^\s<>"'`，。；：！？、（）【】「」『』《》“”‘’]+/giu
+    )) {
       if (match.index === undefined) continue;
-      const uri = trimTrailingPunctuation(match[0]);
+      const uri = bareTerminalUrl(match[0]);
       if (!uri || !isSupportedTerminalUri(uri)) continue;
       addTextLink(links, spans, row, match.index, uri, 'url');
     }
@@ -1377,6 +1382,23 @@ function terminalLineTextSpans(line: TerminalLine): {
 }
 
 /** Strip sentence punctuation a link picked up from surrounding prose. */
+function bareTerminalUrl(value: string): string {
+  const closing: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
+  const stack: string[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (closing[character]) {
+      stack.push(closing[character]);
+    } else if (character === ')' || character === ']' || character === '}') {
+      // An unmatched closing bracket ends the surrounding Markdown/prose,
+      // even when its following explanation contains no whitespace.
+      if (stack.pop() !== character) return trimTrailingPunctuation(value.slice(0, index));
+    }
+  }
+  // Keep balanced URL brackets (including IPv6 hosts and Wikipedia paths).
+  return value.replace(/[.,;:!?]+$/u, '');
+}
+
 function trimTrailingPunctuation(value: string): string {
   let uri = value;
   while (/[.,;:!?\]}]$/.test(uri)) uri = uri.slice(0, -1);

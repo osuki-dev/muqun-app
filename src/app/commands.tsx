@@ -81,6 +81,7 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
+import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { appChrome } from '@/constants/appearance';
@@ -91,7 +92,6 @@ import {
   interruptAgent,
   splitPane,
   loadPaneShortcuts,
-  sendAgentText,
   sendPaneKeys,
   sendPaneText,
   type SlashCommand,
@@ -104,10 +104,18 @@ import { warmSimfarm } from '@/lib/simfarm-stream';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
+import { useAgentCollaboration } from '@/stores/agent-collaboration';
+import {
+  collaborationCommandAvailable,
+  collaborationDraftScope,
+  commandCollaborationDraft,
+} from '@/lib/quick-command-collaboration';
+import { supportsCollaboration, tasksForSession } from '@/lib/agent-collaboration';
 import { useServerSimfarm } from '@/stores/server-simfarm';
 import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
   addQuickCommand,
+  updateQuickCommandDelivery,
   hasHiddenDefaults,
   loadQuickCommands,
   quickCommandKeys,
@@ -116,8 +124,10 @@ import {
   type QuickCommand,
   type QuickCommandKind,
   type QuickCommandMode,
+  type QuickCommandDelivery,
 } from '@/lib/quick-commands';
 import { quickCommandName } from '@/i18n/labels';
+import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 
 /**
  * The face a value is set in when tapping the row types that value into the
@@ -163,6 +173,7 @@ export default function QuickCommandsScreen() {
     /** Where the pane behind the sheet is, so a new task starts there too. */
     cwd?: string;
     mode?: string;
+    backendKind?: string;
     manage?: string;
     /**
      * Whether this gateway said it can start and stop an agent.
@@ -195,11 +206,24 @@ export default function QuickCommandsScreen() {
     params.serverId ? state.openByServer[params.serverId] === true : false
   );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
+  const collaborationTasks = useAgentCollaboration((state) => state.tasks);
+  const collaborationCount = tasksForSession(
+    collaborationTasks,
+    params.serverId ?? '',
+    params.sessionId
+  ).length;
   const manageOnly = params.manage === '1';
+  const agentDelivery = useAgentCommandDelivery({
+    ...params,
+    enabled: mode === 'agent' && !manageOnly,
+  });
   const [commands, setCommands] = useState<QuickCommand[]>([]);
+  const [commandTab, setCommandTab] = useState<'saved' | 'catalog'>('saved');
+  const [search, setSearch] = useState('');
   const [label, setLabel] = useState('');
   const [value, setValue] = useState('');
   const [kind, setKind] = useState<QuickCommandKind>('command');
+  const [delivery, setDelivery] = useState<QuickCommandDelivery>('current-agent');
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [agentCommands, setAgentCommands] = useState<SlashCommand[]>([]);
@@ -215,6 +239,25 @@ export default function QuickCommandsScreen() {
   // so it has nothing to ask for and no way back out of it.
   const [editRequested, setEditRequested] = useState(false);
   const editing = manageOnly || editRequested;
+  const query = editing ? '' : search.trim().toLocaleLowerCase();
+  const visibleCommands = commands.filter((command) => {
+    if (
+      command.delivery === 'collaboration' &&
+      !collaborationCommandAvailable({
+        ...params,
+        manageOnly,
+      })
+    )
+      return false;
+    const descriptor = command.custom ? undefined : quickCommandName[command.id];
+    const name = descriptor ? _(descriptor) : command.label;
+    return `${name} ${command.value}`.toLocaleLowerCase().includes(query);
+  });
+  const visibleAgentCommands = agentCommands.filter((entry) =>
+    `${entry.command} ${entry.description}`.toLocaleLowerCase().includes(query)
+  );
+  const showSaved = editing || commandTab === 'saved' || Boolean(query);
+  const showCatalog = !editing && (commandTab === 'catalog' || Boolean(query));
   const prefillDraft = useComposerDraftStore((state) => state.prefillDraft);
   const choosePanel = usePanelPickerStore((state) => state.choosePanel);
 
@@ -261,12 +304,49 @@ export default function QuickCommandsScreen() {
   }, [params.paneId, params.sessionId]);
 
   async function run(command: QuickCommand) {
+    if (command.delivery === 'collaboration') {
+      if (
+        manageOnly ||
+        !params.serverId ||
+        !collaborationCommandAvailable({ ...params, manageOnly: false })
+      )
+        return;
+      try {
+        const draft = commandCollaborationDraft(command, {
+          serverId: params.serverId,
+          sessionId: params.sessionId,
+          paneId: params.paneId,
+          workspaceId: params.workspaceId,
+          tabId: params.tabId,
+          cwd: params.cwd,
+        });
+        const scope = collaborationDraftScope(draft.context);
+        if (!useAgentCollaboration.getState().drafts[scope]) {
+          useAgentCollaboration.getState().saveDraft(scope, draft);
+        }
+        router.replace({
+          pathname: '/agent-collaboration',
+          params: {
+            serverId: params.serverId,
+            sessionId: params.sessionId,
+            paneId: params.paneId,
+            workspaceId: params.workspaceId,
+            tabId: params.tabId,
+            cwd: params.cwd,
+            commandId: command.id,
+          },
+        } as Href);
+      } catch (failure) {
+        setError(describeGatewayFailure(failure, t`Could not send shortcut.`).message);
+      }
+      return;
+    }
     if (!params.paneId || !params.sessionId || sendingId) return;
     setSendingId(command.id);
     setError(null);
     try {
       if (mode === 'agent') {
-        await sendAgentText(params.sessionId, params.paneId, command.value);
+        await agentDelivery.send(command.value);
       } else if (command.kind === 'keys') {
         await sendPaneKeys(params.sessionId, params.paneId, quickCommandKeys(command));
       } else {
@@ -293,7 +373,7 @@ export default function QuickCommandsScreen() {
     setError(null);
     try {
       if (mode === 'agent') {
-        await sendAgentText(params.sessionId, params.paneId, entry.command);
+        await agentDelivery.send(entry.command);
       } else {
         // An editor's `:q` is text plus Return, not an agent message: this pane
         // has no agent to send to.
@@ -460,19 +540,39 @@ export default function QuickCommandsScreen() {
 
   async function add() {
     if (!label.trim() || !value.trim()) return;
-    setCommands(await addQuickCommand(mode, label, value, kind));
-    setLabel('');
-    setValue('');
+    try {
+      setCommands(await addQuickCommand(mode, label, value, kind, delivery));
+      setLabel('');
+      setValue('');
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
+  }
+
+  async function changeDelivery(id: string, next: QuickCommandDelivery) {
+    try {
+      setCommands(await updateQuickCommandDelivery(id, next));
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   async function remove(id: string) {
-    setCommands(await removeQuickCommand(id, mode));
-    setCanRestore(await hasHiddenDefaults());
+    try {
+      setCommands(await removeQuickCommand(id, mode));
+      setCanRestore(await hasHiddenDefaults());
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   async function restore() {
-    setCommands(await restoreDefaultCommands(mode));
-    setCanRestore(false);
+    try {
+      setCommands(await restoreDefaultCommands(mode));
+      setCanRestore(false);
+    } catch (failure) {
+      setError(describeGatewayFailure(failure, t`Could not save shortcut`).message);
+    }
   }
 
   return (
@@ -667,6 +767,36 @@ export default function QuickCommandsScreen() {
             tile does its thing and closes; this one hands over to a form with
             three questions on it, and a label that has to say so is a sentence
             rather than a word. */}
+        {!manageOnly &&
+        params.serverId &&
+        params.paneId &&
+        supportsCollaboration(params.backendKind) ? (
+          <SettingsCard>
+            <ActionRow
+              accessibilityLabel={t`Agent collaboration`}
+              name={t`Agent collaboration`}
+              detail={
+                collaborationCount > 0
+                  ? t`${collaborationCount} assigned tasks · view agents and output`
+                  : t`Assign work to another agent and follow its progress.`
+              }
+              detailColor={theme.colors.textMuted}
+              onPress={() =>
+                router.replace({
+                  pathname: '/agent-collaboration',
+                  params: {
+                    serverId: params.serverId,
+                    sessionId: params.sessionId,
+                    paneId: params.paneId,
+                    workspaceId: params.workspaceId,
+                    tabId: params.tabId,
+                    cwd: params.cwd,
+                  },
+                } as Href)
+              }
+            />
+          </SettingsCard>
+        ) : null}
         {available.canStartTask ? (
           <SettingsCard>
             <ActionRow
@@ -680,85 +810,143 @@ export default function QuickCommandsScreen() {
           </SettingsCard>
         ) : null}
 
-        <View style={styles.section}>
-          <SectionHeading title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`} />
-          <SettingsCard>
-            {commands.map((command, index) => {
-              // A default's name is ours to translate; a custom one is the
-              // user's own word, shown exactly as they typed it.
-              const descriptor = command.custom ? undefined : quickCommandName[command.id];
-              const name = descriptor ? _(descriptor) : command.label;
-              return (
-                // Adding, deleting and restoring all rewrite this list, and each
-                // of them used to pop a row in or snap the rest up into the gap.
-                // The stagger is on the entrance only, so a first open reads as
-                // a list arriving and a single delete is just the one row
-                // leaving.
+        {!editing ? (
+          <View style={styles.section}>
+            <View style={[styles.commandTabs, { backgroundColor: theme.colors.surface }]}>
+              {(['saved', 'catalog'] as const).map((tab) => (
+                <PressableScale
+                  key={tab}
+                  testID={`quick-actions-tab-${tab}`}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: commandTab === tab }}
+                  onPress={() => {
+                    setCommandTab(tab);
+                    setSearch('');
+                  }}
+                  style={[
+                    styles.commandTab,
+                    {
+                      backgroundColor:
+                        commandTab === tab ? theme.colors.primarySubtle : 'transparent',
+                    },
+                  ]}>
+                  <Text
+                    variant="bodySmall"
+                    color={commandTab === tab ? theme.colors.primary : theme.colors.textMuted}>
+                    {tab === 'saved' ? t`Frequent` : t`All commands`}
+                  </Text>
+                </PressableScale>
+              ))}
+            </View>
+            <Input
+              accessibilityLabel={t`Search actions and commands`}
+              placeholder={t`Search actions and commands`}
+              value={search}
+              onChangeText={setSearch}
+              variant="outline"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {query && visibleCommands.length === 0 && visibleAgentCommands.length === 0 ? (
+              <Text
+                variant="bodySmall"
+                color={theme.colors.textMuted}>{t`No matching commands. Try another word.`}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        {showSaved ? (
+          <View style={styles.section}>
+            <SectionHeading title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`} />
+            <SettingsCard>
+              {visibleCommands.map((command, index) => {
+                // A default's name is ours to translate; a custom one is the
+                // user's own word, shown exactly as they typed it.
+                const descriptor = command.custom ? undefined : quickCommandName[command.id];
+                const name = descriptor ? _(descriptor) : command.label;
+                return (
+                  // Adding, deleting and restoring all rewrite this list, and each
+                  // of them used to pop a row in or snap the rest up into the gap.
+                  // The stagger is on the entrance only, so a first open reads as
+                  // a list arriving and a single delete is just the one row
+                  // leaving.
+                  <Animated.View
+                    key={command.id}
+                    entering={riseIn(index * STAGGER.row)}
+                    exiting={fadeOut('micro')}
+                    layout={listLayout('short')}>
+                    <ActionRow
+                      accessibilityLabel={name}
+                      name={name}
+                      // A key combo is keys and a command is characters; they
+                      // leave by different calls, so they are drawn differently.
+                      //
+                      // An agent prompt is neither: it is prose the reader wrote
+                      // and then named, so its second line was the title again at
+                      // greater length. It is shown only under Edit, which is the
+                      // one moment its exact wording is what is being decided
+                      // about -- see decision 2 at the top of this file.
+                      value={
+                        command.kind === 'keys' || (mode === 'agent' && !editing)
+                          ? undefined
+                          : command.value
+                      }
+                      keys={command.kind === 'keys' ? quickCommandKeys(command) : undefined}
+                      detailColor={theme.colors.textMuted}
+                      detail={
+                        command.delivery === 'collaboration' ? t`Agent collaboration` : undefined
+                      }
+                      busy={sendingId === command.id}
+                      busyColor={theme.colors.primary}
+                      // In edit mode a row is what is being edited, not what is
+                      // being sent: it stops firing so that reaching for its
+                      // delete cannot send it to a live pane instead.
+                      disabled={editing || Boolean(sendingId)}
+                      onPress={editing ? undefined : () => void run(command)}
+                      trailing={
+                        editing ? (
+                          // Every command can be removed -- custom ones are
+                          // deleted, built-in defaults are hidden and can be
+                          // restored below -- so the defaults are never forced on
+                          // anyone.
+                          <PressableScale
+                            accessibilityLabel={
+                              command.custom ? t`Delete ${name}` : t`Hide ${name}`
+                            }
+                            onPress={() => void remove(command.id)}
+                            style={styles.deleteButton}>
+                            <Trash2 size={16} color={theme.colors.danger} />
+                          </PressableScale>
+                        ) : null
+                      }
+                    />
+                    {editing && command.custom && command.mode === 'agent' ? (
+                      <AgentCommandDeliveryPicker
+                        value={command.delivery ?? 'current-agent'}
+                        onChange={(next) => void changeDelivery(command.id, next)}
+                      />
+                    ) : null}
+                  </Animated.View>
+                );
+              })}
+              {editing && canRestore ? (
                 <Animated.View
-                  key={command.id}
-                  entering={riseIn(index * STAGGER.row)}
+                  entering={fadeIn('short')}
                   exiting={fadeOut('micro')}
                   layout={listLayout('short')}>
                   <ActionRow
-                    accessibilityLabel={name}
-                    name={name}
-                    // A key combo is keys and a command is characters; they
-                    // leave by different calls, so they are drawn differently.
-                    //
-                    // An agent prompt is neither: it is prose the reader wrote
-                    // and then named, so its second line was the title again at
-                    // greater length. It is shown only under Edit, which is the
-                    // one moment its exact wording is what is being decided
-                    // about -- see decision 2 at the top of this file.
-                    value={
-                      command.kind === 'keys' || (mode === 'agent' && !editing)
-                        ? undefined
-                        : command.value
-                    }
-                    keys={command.kind === 'keys' ? quickCommandKeys(command) : undefined}
-                    detailColor={theme.colors.textMuted}
-                    busy={sendingId === command.id}
-                    busyColor={theme.colors.primary}
-                    // In edit mode a row is what is being edited, not what is
-                    // being sent: it stops firing so that reaching for its
-                    // delete cannot send it to a live pane instead.
-                    disabled={editing || Boolean(sendingId)}
-                    onPress={editing ? undefined : () => void run(command)}
-                    trailing={
-                      editing ? (
-                        // Every command can be removed -- custom ones are
-                        // deleted, built-in defaults are hidden and can be
-                        // restored below -- so the defaults are never forced on
-                        // anyone.
-                        <PressableScale
-                          accessibilityLabel={command.custom ? t`Delete ${name}` : t`Hide ${name}`}
-                          onPress={() => void remove(command.id)}
-                          style={styles.deleteButton}>
-                          <Trash2 size={16} color={theme.colors.danger} />
-                        </PressableScale>
-                      ) : null
-                    }
+                    accessibilityLabel={t`Restore hidden default commands`}
+                    name={t`Restore hidden defaults`}
+                    nameColor={theme.colors.textMuted}
+                    onPress={() => void restore()}
                   />
                 </Animated.View>
-              );
-            })}
-            {editing && canRestore ? (
-              <Animated.View
-                entering={fadeIn('short')}
-                exiting={fadeOut('micro')}
-                layout={listLayout('short')}>
-                <ActionRow
-                  accessibilityLabel={t`Restore hidden default commands`}
-                  name={t`Restore hidden defaults`}
-                  nameColor={theme.colors.textMuted}
-                  onPress={() => void restore()}
-                />
-              </Animated.View>
-            ) : null}
-          </SettingsCard>
-        </View>
+              ) : null}
+            </SettingsCard>
+          </View>
+        ) : null}
 
-        {!manageOnly && loadingAgentCommands ? (
+        {!manageOnly && showCatalog && loadingAgentCommands ? (
           // The section's own shape while the gateway is being asked for it. It
           // is the same height as the rows that replace it, so the sheet does
           // not move when the answer lands -- which was the other half of the
@@ -787,11 +975,11 @@ export default function QuickCommandsScreen() {
           </Animated.View>
         ) : null}
 
-        {!manageOnly && !loadingAgentCommands && agentCommands.length > 0 ? (
+        {!manageOnly && showCatalog && !loadingAgentCommands && visibleAgentCommands.length > 0 ? (
           <Animated.View entering={fadeIn('short')} style={styles.section}>
             <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`TERMINAL COMMANDS`} />
             <SettingsCard>
-              {agentCommands.map((entry, index) => (
+              {visibleAgentCommands.map((entry, index) => (
                 <Animated.View
                   key={entry.command}
                   entering={riseIn(index * STAGGER.row)}
@@ -865,8 +1053,17 @@ export default function QuickCommandsScreen() {
                 />
               ) : null}
 
+              {mode === 'agent' ? (
+                <AgentCommandDeliveryPicker
+                  testID="quick-command-delivery"
+                  value={delivery}
+                  onChange={setDelivery}
+                />
+              ) : null}
+
               <View style={styles.addFields}>
                 <Input
+                  testID="quick-command-name"
                   label={t`Name`}
                   value={label}
                   onChangeText={setLabel}
@@ -880,6 +1077,7 @@ export default function QuickCommandsScreen() {
                   variant="outline"
                 />
                 <Input
+                  testID="quick-command-value"
                   label={mode === 'agent' ? t`Prompt` : kind === 'keys' ? t`Keys` : t`Command`}
                   value={value}
                   onChangeText={setValue}
@@ -898,7 +1096,10 @@ export default function QuickCommandsScreen() {
                 />
               </View>
 
-              <Button onPress={() => void add()} disabled={!label.trim() || !value.trim()}>
+              <Button
+                testID="quick-command-save"
+                onPress={() => void add()}
+                disabled={!label.trim() || !value.trim()}>
                 {t`Save shortcut`}
               </Button>
             </Card>
@@ -1174,6 +1375,14 @@ function KeyCaps({ keys }: { keys: string[] }) {
 }
 
 const styles = StyleSheet.create({
+  commandTabs: { flexDirection: 'row', padding: 4, borderRadius: 14 },
+  commandTab: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+  },
   sheet: {
     // The stack renders form sheets over a transparent background so the
     // native sheet keeps its own corners; without filling the height, that

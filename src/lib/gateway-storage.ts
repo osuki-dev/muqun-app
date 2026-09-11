@@ -115,7 +115,16 @@ async function encryptValue(value: unknown): Promise<string> {
 
 async function decryptValue<T>(value: string): Promise<T> {
   const key = await getOrCreateKey();
+  return decryptWithKey<T>(value, key);
+}
+
+function decryptWithKey<T>(value: string, key: Uint8Array): T {
   const blob = JSON.parse(value) as EncryptedBlob;
+  if (
+    blob.version !== 1 ||
+    ![blob.iv, blob.tag, blob.data].every((part) => typeof part === 'string')
+  )
+    throw new Error('Invalid saved server data');
   const decipher = QuickCrypto.createDecipheriv('aes-256-gcm', key, fromBase64(blob.iv));
   decipher.setAuthTag(fromBase64(blob.tag));
   const decrypted = QuickCrypto.Buffer.concat([
@@ -123,6 +132,44 @@ async function decryptValue<T>(value: string): Promise<T> {
     decipher.final(),
   ]);
   return JSON.parse(decrypted.toString('utf8')) as T;
+}
+
+/** Startup is strictly read-only: unavailable keys are errors, never a new key
+ * or an empty pairing list. Legacy migration remains in the existing write flows. */
+export async function readGatewaySnapshot(): Promise<{
+  record: GatewayRecord | null;
+  records: GatewayRecord[];
+}> {
+  const value = await SecureStore.getItemAsync(RECORDS_ID);
+  const legacy = value === null ? await SecureStore.getItemAsync(LEGACY_RECORD_ID) : null;
+  if (value === null && legacy === null) return { record: null, records: [] };
+  const encodedKey = await SecureStore.getItemAsync(KEY_ID);
+  if (!encodedKey) throw new Error('Saved server key is unavailable');
+  const key = fromBase64(encodedKey);
+  if (key.length !== 32) throw new Error('Saved server key is invalid');
+  const raw: unknown = value !== null ? decryptWithKey(value, key) : [decryptWithKey(legacy!, key)];
+  if (!Array.isArray(raw)) throw new Error('Invalid saved server list');
+  const records = raw.map((item: unknown) => {
+    if (!item || typeof item !== 'object') throw new Error('Invalid saved server');
+    const record = item as GatewayRecord;
+    if (
+      ![record.serverId, record.label, record.url, record.token].every(
+        (field) => typeof field === 'string'
+      ) ||
+      !record.serverId ||
+      !record.url ||
+      !record.token ||
+      !Number.isFinite(record.pairedAt)
+    )
+      throw new Error('Invalid saved server');
+    return normalizeRecord(record);
+  });
+  if (!records.length) return { record: null, records };
+  const selectedId = await SecureStore.getItemAsync(SELECTED_RECORD_ID);
+  return {
+    record: records.find((record) => record.serverId === selectedId) ?? records[0],
+    records,
+  };
 }
 
 function normalizeRecord(record: GatewayRecord): GatewayRecord {

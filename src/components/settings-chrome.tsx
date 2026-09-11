@@ -164,11 +164,12 @@ export function SettingsToggleRow({
         </Text>
       </View>
       <Toggle
+        accessibilityLabel={label}
         disabled={disabled}
         value={value}
         onValueChange={onValueChange}
-        // Maestro cannot target a bare Switch: rightOf/below match layout
-        // containers, not positions, so give each switch its label as an id.
+        // A stable id lets device tests target this switch independently of
+        // the label's surrounding layout containers.
         testID={`toggle-${label}`}
       />
     </View>
@@ -190,9 +191,8 @@ export function SettingsToggleRow({
  * chipped row among switches indents one label by 52 points and leaves the
  * column ragged, which is the exact defect this pass exists to remove.
  *
- * No `accessibilityLabel`: React Native builds one by concatenating the two
- * lines, which is what the e2e flow taps, and an explicit label here would
- * silently change those strings.
+ * Name the row explicitly: Android can otherwise replace the inferred child
+ * label with the busy state. Keep the same title/detail order as the visible row.
  */
 export function SettingsNavRow({
   icon: Icon,
@@ -200,17 +200,30 @@ export function SettingsNavRow({
   detail,
   trailing: Trailing,
   onPress,
+  disabled = false,
+  busy = false,
+  testID,
 }: {
   icon?: LucideIcon;
   label: string;
   detail?: string;
   trailing: LucideIcon;
   onPress: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+  testID?: string;
 }) {
   const theme = useThemeTokens();
   useRenderTally('SettingsNavRow');
   return (
-    <PressableScale accessibilityRole="button" onPress={onPress} style={styles.row}>
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={detail ? `${label}, ${detail}` : label}
+      accessibilityState={{ disabled, busy }}
+      disabled={disabled}
+      testID={testID}
+      onPress={onPress}
+      style={styles.row}>
       {Icon ? (
         <View style={[styles.chip, { backgroundColor: theme.colors.surfaceRaised }]}>
           <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />

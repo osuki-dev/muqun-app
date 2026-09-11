@@ -1,0 +1,4 @@
+# A single live backend on one machine has nothing to switch to.
+wait "role=button text=\"Open quick actions\"" 15000
+is hidden "id=\"machine-session-switcher\""
+screenshot "shots/single-machine-no-switcher.png"

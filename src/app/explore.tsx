@@ -831,88 +831,93 @@ export default function PairModal() {
               work -- same control, same words, more weight -- so a reader on a
               device with no lens is not left choosing between a dead frame and
               a caption. */}
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
-                onPress={() => {
-                  setSshOpen(false);
-                  setManualOpen((value) => !value);
-                }}
-                style={[
-                  styles.manualToggle,
-                  {
-                    // The quiet state is the aperture's own surface, not `surface`:
-                    // in several packs `surface` is brighter than the page, so a
-                    // 42pt pill outshone the 460pt frame it is subordinate to.
-                    backgroundColor:
-                      scan.promotesManualEntry && !manualOpen
-                        ? theme.colors.primarySubtle
-                        : theme.colors.surfaceRaised,
-                  },
-                ]}>
-                {manualOpen ? (
-                  <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
-                ) : (
-                  <KeyboardIcon
-                    size={17}
-                    color={scan.promotesManualEntry ? theme.colors.primary : theme.colors.textMuted}
-                    strokeWidth={2}
-                  />
-                )}
-                <Text
-                  variant="label"
-                  color={
-                    !manualOpen && scan.promotesManualEntry
-                      ? theme.colors.primary
-                      : theme.colors.textMuted
-                  }>
-                  {manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
-                </Text>
-              </PressableScale>
+              <View style={[styles.alternatives, { backgroundColor: theme.colors.surfaceRaised }]}>
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
+                  onPress={() => {
+                    setSshOpen(false);
+                    setManualOpen((value) => !value);
+                  }}
+                  style={[
+                    styles.manualToggle,
+                    {
+                      // The quiet state is the aperture's own surface, not `surface`:
+                      // in several packs `surface` is brighter than the page, so a
+                      // 42pt pill outshone the 460pt frame it is subordinate to.
+                      backgroundColor:
+                        scan.promotesManualEntry && !manualOpen
+                          ? theme.colors.primarySubtle
+                          : theme.colors.surfaceRaised,
+                    },
+                  ]}>
+                  {manualOpen ? (
+                    <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                  ) : (
+                    <KeyboardIcon
+                      size={17}
+                      color={
+                        scan.promotesManualEntry ? theme.colors.primary : theme.colors.textMuted
+                      }
+                      strokeWidth={2}
+                    />
+                  )}
+                  <Text
+                    variant="bodySmall"
+                    color={
+                      !manualOpen && scan.promotesManualEntry
+                        ? theme.colors.primary
+                        : theme.colors.textMuted
+                    }>
+                    {manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
+                  </Text>
+                </PressableScale>
 
-              {/* The gateway that cannot be reached at all from here -- loopback
+                {/* The gateway that cannot be reached at all from here -- loopback
               only, or firewalled -- but whose machine the reader can already
               SSH into. Same weight as the manual toggle; it is a peer mode. */}
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={sshOpen ? t`Scan a gateway QR` : t`Pair through an SSH host`}
-                testID="pairing-ssh-toggle"
-                onPress={() => {
-                  setManualOpen(false);
-                  setSshOpen((value) => !value);
-                }}
-                style={[styles.manualToggle, { backgroundColor: theme.colors.surfaceRaised }]}>
-                {sshOpen ? (
-                  <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
-                ) : (
-                  <Waypoints size={17} color={theme.colors.textMuted} strokeWidth={2} />
-                )}
-                <Text variant="label" color={theme.colors.textMuted}>
-                  {sshOpen ? t`Scan a gateway QR` : t`Pair through an SSH host`}
-                </Text>
-              </PressableScale>
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={sshOpen ? t`Scan a gateway QR` : t`Pair through an SSH host`}
+                  testID="pairing-ssh-toggle"
+                  onPress={() => {
+                    setManualOpen(false);
+                    setSshOpen((value) => !value);
+                  }}
+                  style={[styles.manualToggle, { backgroundColor: theme.colors.surfaceRaised }]}>
+                  {sshOpen ? (
+                    <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                  ) : (
+                    <Waypoints size={17} color={theme.colors.textMuted} strokeWidth={2} />
+                  )}
+                  <Text variant="bodySmall" color={theme.colors.textMuted}>
+                    {sshOpen ? t`Scan a gateway QR` : t`Pair through an SSH host`}
+                  </Text>
+                </PressableScale>
+              </View>
 
               {/* The way out for the reader who has neither a QR nor an address,
               which is everyone opening this screen for the first time. Quiet,
               and below the toggle: it is the answer to "I do not have one of
               those yet", not a third way to pair. */}
-              <PressableScale
-                accessibilityRole="link"
-                accessibilityLabel={t`Set up a Gateway on your computer`}
-                onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
-                style={styles.setupLink}>
-                {/* The gap is laid out, not typed. A literal space inside the Text
+              <View style={[styles.setupGroup, { borderColor: theme.colors.border }]}>
+                <PressableScale
+                  accessibilityRole="link"
+                  accessibilityLabel={t`Set up a Gateway on your computer`}
+                  onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
+                  style={styles.setupLink}>
+                  {/* The gap is laid out, not typed. A literal space inside the Text
                 becomes part of the node's own text, so every matcher -- and the
                 screen reader -- sees "No Gateway yet? " with a tail on it. */}
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  {t`No Gateway yet?`}
-                </Text>
-                <Text variant="caption" color={theme.colors.primary}>
-                  {t`Set one up on your computer`}
-                </Text>
-              </PressableScale>
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {t`No Gateway yet?`}
+                  </Text>
+                  <Text variant="caption" color={theme.colors.primary}>
+                    {t`Set one up on your computer`}
+                  </Text>
+                </PressableScale>
 
-              {/* The command itself, under the link that would otherwise be the
+                {/* The command itself, under the link that would otherwise be the
               only answer.
 
               The link sends a reader with a phone in one hand and a laptop in
@@ -926,29 +931,30 @@ export default function PairModal() {
               retyped from a phone screen is a command retyped wrong. It stays
               legible either way: the text is selectable, so the reader who has
               no shared clipboard can still read it off and type it. */}
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityHint={t`Copies it, ready to paste into a terminal`}
-                accessibilityLabel={
-                  copiedInstall ? t`Install command copied` : t`Copy the install command`
-                }
-                testID="pairing-install-command"
-                onPress={() => void copyInstallCommand()}
-                style={[styles.installRow, { backgroundColor: theme.colors.surfaceRaised }]}>
-                {/* Two lines, not one shrunk to fit: the command wraps at the phone
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityHint={t`Copies it, ready to paste into a terminal`}
+                  accessibilityLabel={
+                    copiedInstall ? t`Install command copied` : t`Copy the install command`
+                  }
+                  testID="pairing-install-command"
+                  onPress={() => void copyInstallCommand()}
+                  style={[styles.installRow, { backgroundColor: theme.colors.surfaceRaised }]}>
+                  {/* Two lines, not one shrunk to fit: the command wraps at the phone
                 widths this screen is read on, and a command scaled down until it
                 fits is a command nobody can read off the screen. */}
-                <Text
-                  numberOfLines={2}
-                  style={[styles.installCommand, { color: theme.colors.textMuted }]}>
-                  {GATEWAY_INSTALL_COMMAND}
-                </Text>
-                {copiedInstall ? (
-                  <Check size={16} color={theme.colors.primary} strokeWidth={2} />
-                ) : (
-                  <CopyIcon size={16} color={theme.colors.textMuted} strokeWidth={2} />
-                )}
-              </PressableScale>
+                  <Text
+                    numberOfLines={2}
+                    style={[styles.installCommand, { color: theme.colors.textMuted }]}>
+                    {GATEWAY_INSTALL_COMMAND}
+                  </Text>
+                  {copiedInstall ? (
+                    <Check size={16} color={theme.colors.primary} strokeWidth={2} />
+                  ) : (
+                    <CopyIcon size={16} color={theme.colors.textMuted} strokeWidth={2} />
+                  )}
+                </PressableScale>
+              </View>
             </Animated.View>
           ) : step === 'confirm' ? (
             <Animated.View key="confirm" entering={stepEntering} exiting={stepExiting}>
@@ -1287,7 +1293,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 10,
@@ -1304,25 +1309,35 @@ const styles = StyleSheet.create({
     lineHeight: 17,
   },
   setupLink: {
-    alignSelf: 'center',
+    alignSelf: 'stretch',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     flexWrap: 'wrap',
     gap: 5,
     minHeight: 34,
-    paddingHorizontal: 12,
-    marginTop: 10,
+    paddingHorizontal: 0,
+  },
+  alternatives: {
+    borderRadius: 16,
+    padding: 6,
+    gap: 2,
+  },
+  setupGroup: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: 12,
+    gap: 4,
   },
   manualToggle: {
-    alignSelf: 'center',
-    minHeight: 42,
-    borderRadius: 21,
+    alignSelf: 'stretch',
+    minHeight: 48,
+    borderRadius: 10,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
     paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   // The form, on the aperture's own ground, centred in the square rather than
   // sizing it. It was a Card inside the step and the step was already a

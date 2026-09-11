@@ -1,10 +1,20 @@
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
-import { type Href, useIsFocused, useLocalSearchParams, useRouter } from 'expo-router';
+import { ComposerSendGuard } from '@/lib/composer-send-guard';
+import { resolvePanelPick } from '@/lib/resolve-panel-pick';
+import {
+  type Href,
+  useFocusEffect,
+  useIsFocused,
+  useLocalSearchParams,
+  useRouter,
+} from 'expo-router';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
 import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
   Keyboard as KeyboardIcon,
-  Layers,
+  Monitor,
   Paperclip,
   PenLine,
   SquareTerminal,
@@ -45,6 +55,7 @@ import { AssetViewer } from '@/components/asset-viewer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { AwayDigestCard } from '@/components/away-digest-card';
+import { CollaborationNotice } from '@/components/collaboration-notice';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
@@ -74,6 +85,7 @@ import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useAwayDigest } from '@/hooks/use-away-digest';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
@@ -111,7 +123,7 @@ import {
   type PanePart,
   sendAgentText,
   sendPaneKeys,
-  sendPaneText,
+  sendBoundPaneText,
   type FileMentionHit,
   type FileMentionSearch,
   type FileMentionTrigger,
@@ -258,6 +270,7 @@ type ConnectionStatus = {
   phase: ConnectionPhase;
   attempt: number;
   message?: string;
+  backendUnavailable?: boolean;
   /**
    * This server has no usable record of this device, so Retry can only fail
    * again. The notice offers pairing instead.
@@ -265,7 +278,7 @@ type ConnectionStatus = {
   needsPairing?: boolean;
 };
 
-type RefreshResult = { ok: true } | { ok: false; failure: GatewayFailure } | null;
+type RefreshResult = { ok: true; data: ServerData } | { ok: false; failure: GatewayFailure } | null;
 
 /**
  * What is known about the structured view of the selected pane.
@@ -320,17 +333,6 @@ const initialData: ServerData = {
 
 const initialSelection: Selection = { workspaceId: '', tabId: '', paneId: '' };
 const MAX_RECONNECT_DELAY_MS = 8_000;
-
-/**
- * How long a chosen panel is given to turn up in this screen's snapshot.
- *
- * Three quick asks rather than one, because the pick can name a panel that was
- * created a heartbeat ago: the sheet gets the new pane's id back from the
- * create call, and this screen only learns the pane exists on its next refresh.
- * A single check would report every freshly made panel as missing.
- */
-const PANEL_PICK_ATTEMPTS = 3;
-const PANEL_PICK_RETRY_MS = 200;
 
 /**
  * Half the pane carousel: the outgoing pane travels this far before the
@@ -482,7 +484,11 @@ export function ServerTerminalWorkspace({
   const serverId = providedServerId ?? routeParams.serverId ?? '';
   const [padRequestedPaneId, setPadRequestedPaneId] = useState<string | undefined>();
   const requestedSessionId = providedSessionId ?? routeParams.sessionId;
-  const requestedPaneId = providedPaneId ?? padRequestedPaneId ?? routeParams.paneId;
+  const rememberedPaneId = useServerSession(
+    (state) => state.panesByServer[serverId]?.[requestedSessionId ?? state.byServer[serverId] ?? '']
+  );
+  const requestedPaneId =
+    providedPaneId ?? padRequestedPaneId ?? routeParams.paneId ?? rememberedPaneId;
   const notificationId = providedNotificationId ?? routeParams.notificationId;
   const router = useRouter();
   const isFocused = useIsFocused();
@@ -515,27 +521,26 @@ export function ServerTerminalWorkspace({
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
-  const { record, records, loading, selectRecord, disconnect } = useGatewayRecord();
+  const { record, records, loading, hydrationError, retryHydration, selectRecord, disconnect } =
+    useGatewayRecord();
   const { showToast } = useToast();
   const demoMode = isDemoRecord(record);
   const {
     attachments,
-    addFiles,
+    capturePicker,
     retryUpload,
     removeAttachment,
     clearAttachments,
     uploading: attachmentsUploading,
     awaitUploads,
-  } = useAttachmentUploads();
+  } = useAttachmentUploads(record);
   const panelPick = usePanelPickerStore((state) => state.pick);
   const clearPanelPick = usePanelPickerStore((state) => state.clearPick);
   /**
    * Which of this gateway's sessions the reader is in, and how they said so.
    *
-   * Almost every gateway offers one and none of this is visible: the header
-   * draws no control (`shouldShowSessionSwitcher`) and the workspace opens the
-   * gateway's first session exactly as it always did. A gateway with two or
-   * more gets a switcher, and three things can name the session it lands on --
+   * The unified machine picker is always available. Three things can name the
+   * session the workspace lands on --
    * a pick made in this visit, a pane deep link from a push notification, and
    * what the reader was last reading here. They are ranked in that order below.
    */
@@ -552,15 +557,28 @@ export function ServerTerminalWorkspace({
    * any of them, or none of them, into a session this gateway actually has.
    */
   const preferredSessionId = chosenSessionId ?? requestedSessionId ?? rememberedSessionId;
+  const resolvedSessionRef = useRef<{
+    serverId: string;
+    preference: string | null | undefined;
+    sessionId: string;
+  } | null>(null);
   const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
   const [data, setData] = useState<ServerData>(initialData);
-  const [selection, setSelection] = useState<Selection>(initialSelection);
+  const [deliveryOwnership] = useState(() => new DeliveryOwnership());
+  const [selectionOwner] = useState(
+    () => new DeliverySelection(initialSelection, sameSelection, deliveryOwnership)
+  );
+  const [selection, publishSelection] = useState<Selection>(initialSelection);
+  const setSelection = useCallback(
+    (next: Selection | ((current: Selection) => Selection)) => {
+      publishSelection(selectionOwner.update(next));
+    },
+    [selectionOwner]
+  );
   // Gives the in-memory Demo mirror one stable freshness boundary for this
   // mounted workspace. Real servers continue to use their persisted mirror.
   const [demoRailCheckedAtMs] = useState(() => Date.now());
-  /** How many refreshes a pending panel pick has already waited through. */
-  const [panelPickAttempt, setPanelPickAttempt] = useState(0);
   const [output, setOutput] = useState('');
   const [draft, setDraft] = useState('');
   // Where the caret is in the draft, which is half of what decides whether an
@@ -581,6 +599,15 @@ export function ServerTerminalWorkspace({
   const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [sending, setSending] = useState(false);
+  const [composerSendGuard] = useState(() => new ComposerSendGuard());
+  useFocusEffect(useCallback(() => () => deliveryOwnership.invalidate(), [deliveryOwnership]));
+  useEffect(
+    () =>
+      useGatewayConnectionStore.subscribe((next, previous) => {
+        if (next.record !== previous.record) deliveryOwnership.invalidate();
+      }),
+    [deliveryOwnership]
+  );
   const [sendingKey, setSendingKey] = useState<string | null>(null);
   const [shortcuts, setShortcuts] = useState<PaneShortcuts | null>(null);
   // The dock's measured height, throttled: the reason it cannot be written
@@ -805,9 +832,11 @@ export function ServerTerminalWorkspace({
   const hasLoadedData = Boolean(data.health);
 
   useLayoutEffect(() => {
+    if (!ready) deliveryOwnership.invalidate();
     activeServerRef.current = ready ? serverId : null;
     activePaneRef.current = ready ? selection.paneId : null;
-  }, [ready, selection.paneId, serverId]);
+    return () => deliveryOwnership.invalidate();
+  }, [ready, selection.paneId, serverId, data.sessionId, deliveryOwnership]);
 
   useEffect(() => {
     if (isFocused && !loading && routeRecord && record?.serverId !== routeRecord.serverId) {
@@ -844,6 +873,7 @@ export function ServerTerminalWorkspace({
    * second path.
    */
   const resetSessionState = useCallback(() => {
+    deliveryOwnership.invalidate();
     dataRequestIdRef.current += 1;
     outputRequestIdRef.current += 1;
     // Every remembered window is a fact about the session being left, and pane
@@ -866,6 +896,7 @@ export function ServerTerminalWorkspace({
     workspaceMemoryRef.current = {};
     tabPaneMemoryRef.current = {};
     setConnection({ phase: 'connecting', attempt: 0 });
+    composerSendGuard.reset();
     setSending(false);
     setSendingKey(null);
     outputLineLimitRef.current = INITIAL_PANE_OUTPUT_LINES;
@@ -887,7 +918,7 @@ export function ServerTerminalWorkspace({
     setAttachmentMenuOpen(false);
     setPreviewAttachmentId(null);
     clearAttachments();
-  }, [clearAttachments]);
+  }, [clearAttachments, composerSendGuard, deliveryOwnership, setSelection]);
 
   useEffect(() => {
     if (selectedServer) return;
@@ -904,9 +935,10 @@ export function ServerTerminalWorkspace({
     if (ready) return;
     dataRequestIdRef.current += 1;
     outputRequestIdRef.current += 1;
+    composerSendGuard.reset();
     setSending(false);
     setSendingKey(null);
-  }, [ready]);
+  }, [composerSendGuard, ready]);
 
   const refreshData = useCallback(
     async (showLoading = false): Promise<RefreshResult> => {
@@ -929,7 +961,17 @@ export function ServerTerminalWorkspace({
         // as it arrived, and a preference naming a session that has since gone
         // falls through to the first rather than failing.
         const choices = sessionChoices(sessions.sessions);
-        const sessionId = resolveSessionId(choices, preferredSessionId);
+        const previous = resolvedSessionRef.current;
+        // A backend coming back must reveal a choice, not pull the reader away
+        // from the live fallback they are now using. Explicit picks reset this.
+        const stablePreference =
+          previous?.serverId === serverId && previous.preference === preferredSessionId
+            ? previous.sessionId
+            : preferredSessionId;
+        const sessionId = resolveSessionId(
+          choices.length ? choices : sessionChoices(sessions.sessions, true),
+          stablePreference
+        );
         setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
         const [workspaces, tabs, panes, agents] = await Promise.all([
           gatewayTransport.loadWorkspaces(sessionId),
@@ -938,6 +980,7 @@ export function ServerTerminalWorkspace({
           gatewayTransport.loadAgents(sessionId),
         ]);
         if (!isCurrentRequest()) return null;
+        resolvedSessionRef.current = { serverId, preference: preferredSessionId, sessionId };
         healthRef.current = health;
         const next = { health, sessionId, workspaces, tabs, panes, agents };
         setData((current) => (sameServerData(current, next) ? current : next));
@@ -946,7 +989,7 @@ export function ServerTerminalWorkspace({
           return sameSelection(current, reconciled) ? current : reconciled;
         });
         setError(null);
-        return { ok: true };
+        return { ok: true, data: next };
       } catch (failure) {
         if (!isCurrentRequest()) return null;
         return { ok: false, failure: describeGatewayFailure(failure, t`Server unavailable.`) };
@@ -954,7 +997,7 @@ export function ServerTerminalWorkspace({
         if (isCurrentRequest()) setLoadingData(false);
       }
     },
-    [preferredSessionId, ready, serverId, t]
+    [preferredSessionId, ready, serverId, t, setSelection]
   );
 
   useEffect(() => {
@@ -984,6 +1027,7 @@ export function ServerTerminalWorkspace({
         phase: result.failure.retryable && attempt < 3 ? 'reconnecting' : 'offline',
         attempt,
         message: result.failure.message,
+        backendUnavailable: result.failure.kind === 'backend',
         needsPairing: result.failure.needsPairing,
       });
       if (result.failure.retryable) {
@@ -1037,6 +1081,7 @@ export function ServerTerminalWorkspace({
   // session already open costs nothing.
   useEffect(() => {
     if (!sessionPick || sessionPick.serverId !== serverId) return;
+    resolvedSessionRef.current = null;
     clearSessionPick();
     setChosenSessionId(sessionPick.sessionId);
   }, [clearSessionPick, serverId, sessionPick]);
@@ -1058,10 +1103,15 @@ export function ServerTerminalWorkspace({
    */
   useEffect(() => {
     if (!hasLoadedData || sessions.length === 0) return;
-    if (resolveSessionId(sessions, preferredSessionId) === data.sessionId) return;
+    const previous = resolvedSessionRef.current;
+    const preference =
+      previous?.serverId === serverId && previous.preference === preferredSessionId
+        ? previous.sessionId
+        : preferredSessionId;
+    if (resolveSessionId(sessions, preference) === data.sessionId) return;
     resetSessionState();
     setRetryNonce((value) => value + 1);
-  }, [data.sessionId, hasLoadedData, preferredSessionId, resetSessionState, sessions]);
+  }, [data.sessionId, hasLoadedData, preferredSessionId, resetSessionState, serverId, sessions]);
 
   const selectedWorkspace = useMemo(
     () => data.workspaces.find((item) => item.id === selection.workspaceId),
@@ -1887,7 +1937,7 @@ export function ServerTerminalWorkspace({
     } else {
       setError(t`This terminal is no longer available.`);
     }
-  }, [data, notificationId, requestedPaneId, requestedSessionId, serverId, t]);
+  }, [data, notificationId, requestedPaneId, requestedSessionId, serverId, t, setSelection]);
 
   // The panel picker is a sheet route, so it hands its choice back through the
   // store rather than through navigation params.
@@ -1903,23 +1953,42 @@ export function ServerTerminalWorkspace({
     const target = selectionForPane(data, panelPick.paneId);
     if (target.paneId === panelPick.paneId) {
       clearPanelPick();
-      setPanelPickAttempt(0);
       setSelection(target);
       setError(null);
-      return;
     }
-    if (panelPickAttempt >= PANEL_PICK_ATTEMPTS) {
-      clearPanelPick();
-      setPanelPickAttempt(0);
-      setError(t`This terminal is no longer available.`);
-      return;
-    }
-    const timer = setTimeout(() => {
-      void refreshData();
-      setPanelPickAttempt((current) => current + 1);
-    }, PANEL_PICK_RETRY_MS);
-    return () => clearTimeout(timer);
-  }, [clearPanelPick, data, panelPick, panelPickAttempt, refreshData, serverId, t]);
+  }, [clearPanelPick, data, panelPick, serverId, setSelection]);
+
+  // Keep this read loop independent of data renders. The old 200ms timers
+  // launched overlapping refreshes and exhausted all attempts before a slow
+  // first response could arrive. Resolve directly from the returned snapshot.
+  useEffect(() => {
+    if (!ready || !panelPick || panelPick.serverId !== serverId) return;
+    let disposed = false;
+    const cancelled = () => disposed || usePanelPickerStore.getState().pick !== panelPick;
+    void resolvePanelPick(async () => {
+      const result = await refreshData();
+      if (result && !result.ok) throw new Error(result.failure.message);
+      if (!result) return null;
+      const target = selectionForPane(result.data, panelPick.paneId);
+      return target.paneId === panelPick.paneId ? target : null;
+    }, cancelled)
+      .then((target) => {
+        if (cancelled()) return;
+        clearPanelPick();
+        if (target) {
+          setSelection(target);
+          setError(null);
+        } else setError(t`This terminal is no longer available.`);
+      })
+      .catch((failure: unknown) => {
+        if (cancelled()) return;
+        clearPanelPick();
+        setError(describeGatewayFailure(failure, t`Server unavailable.`).message);
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [clearPanelPick, panelPick, ready, refreshData, serverId, t, setSelection]);
 
   // Which keys and slash commands this pane responds to is the gateway's
   // answer, so a newly supported agent needs a gateway update rather than an
@@ -2610,7 +2679,7 @@ export function ServerTerminalWorkspace({
       });
       setError(null);
     },
-    [data]
+    [data, setSelection]
   );
 
   /**
@@ -2797,6 +2866,15 @@ export function ServerTerminalWorkspace({
     const hasAttachments = attachments.length > 0;
     if (connection.phase !== 'connected' || !ready || !requestPaneId || sending) return;
     if (!draft.trim() && !hasAttachments) return;
+    const sendToken = composerSendGuard.acquire();
+    if (sendToken === null) return;
+    const ownsDelivery = deliveryOwnership.capture();
+    const isCurrentSend = () =>
+      composerSendGuard.owns(sendToken) &&
+      ownsDelivery() &&
+      useGatewayConnectionStore.getState().record === record &&
+      activeServerRef.current === requestServerId &&
+      activePaneRef.current === requestPaneId;
     setSending(true);
     setError(null);
     try {
@@ -2814,9 +2892,7 @@ export function ServerTerminalWorkspace({
         });
         return;
       }
-      if (activeServerRef.current !== requestServerId || activePaneRef.current !== requestPaneId) {
-        return;
-      }
+      if (!isCurrentSend()) return;
 
       // With nothing attached the draft goes over exactly as typed. Attachments
       // join with spaces, not newlines: in a plain shell pane every newline is
@@ -2842,21 +2918,22 @@ export function ServerTerminalWorkspace({
         // an image.
         await sendPaneCharacters(requestPaneId, value, 'composer', !fullScreenPane);
       }
-      if (activeServerRef.current !== requestServerId || activePaneRef.current !== requestPaneId) {
-        return;
-      }
+      if (!isCurrentSend()) return;
       setDraft('');
       setCaret(0);
       clearAttachments();
       setStickBottomNonce((value) => value + 1);
-      await refreshOutput();
-      setTimeout(() => void refreshOutput(), 500);
+      // Delivery is acknowledged. Painting its output must not keep the input
+      // locked behind another network round trip. Events and the existing
+      // polling fallback cover output that arrives after this immediate read.
+      void refreshOutput();
     } catch (failure) {
-      if (activeServerRef.current === requestServerId) {
+      if (isCurrentSend()) {
         setError(describeGatewayFailure(failure, t`Could not send input.`).message);
       }
     } finally {
-      if (activeServerRef.current === requestServerId) setSending(false);
+      if (composerSendGuard.release(sendToken) && activeServerRef.current === requestServerId)
+        setSending(false);
     }
   }
 
@@ -2882,8 +2959,22 @@ export function ServerTerminalWorkspace({
       // two halves of a command line.
       return sendPaneKeys(data.sessionId, paneId, paneKeystrokes(text, { submit }));
     }
-    return sendPaneText(data.sessionId, paneId, text).then(() =>
-      submit ? sendPaneKeys(data.sessionId, paneId, ['enter']) : undefined
+    if (!record) return Promise.reject(new Error('Not connected to a server.'));
+    const capturedRecord = record;
+    const requestServerId = serverId;
+    const requestSessionId = data.sessionId;
+    return sendBoundPaneText(
+      capturedRecord,
+      requestSessionId,
+      paneId,
+      text,
+      submit,
+      deliveryOwnership.capture(
+        () =>
+          useGatewayConnectionStore.getState().record === capturedRecord &&
+          activeServerRef.current === requestServerId &&
+          activePaneRef.current === paneId
+      )
     );
   }
 
@@ -2955,6 +3046,7 @@ export function ServerTerminalWorkspace({
         tabId: selection.tabId,
         cwd: field(selectedPane, 'cwd'),
         mode: selectedAgent ? 'agent' : 'terminal',
+        backendKind: sessions.find((session) => session.id === data.sessionId)?.kind ?? '',
         // The health answer this screen is already holding. A gateway that
         // cannot spawn gets a sheet with neither New task nor Stop in it.
         canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
@@ -2990,9 +3082,12 @@ export function ServerTerminalWorkspace({
   // empty result, so only a thrown error is ever surfaced.
   function chooseAttachmentSource(source: AttachmentSource) {
     setAttachmentMenuOpen(false);
+    const picker = capturePicker();
+    if (!picker.isCurrent()) return;
     void pickAttachments(source)
-      .then(addFiles)
+      .then(picker.addFiles)
       .catch((failure: unknown) => {
+        if (!picker.isCurrent()) return;
         showToast({
           variant: 'danger',
           title: t`Could not add a file`,
@@ -3053,25 +3148,15 @@ export function ServerTerminalWorkspace({
     [openMatchingAsset]
   );
 
-  /**
-   * Whether the header carries a session control at all.
-   *
-   * One session is the ordinary gateway and has nothing to switch between, so
-   * the header must look exactly as it did before this existed -- no icon, no
-   * reserved width, no extra row. The rule is a number, so it lives in
-   * `lib/session-switcher` where it is tested, rather than as an `&&` in the
-   * header's JSX where the next change to this row can quietly make it
-   * "sometimes".
-   */
-  const canSwitchSessions = shouldShowSessionSwitcher(sessions);
-
   function openSessionSwitcher() {
     Keyboard.dismiss();
+    useServerSession.getState().rememberPane(serverId, data.sessionId, selection.paneId);
     router.push({
       pathname: '/sessions',
       params: {
         serverId,
         sessionId: data.sessionId,
+        embedded: providedServerId === undefined ? '0' : '1',
         // The list the header just decided from, rather than a second read the
         // sheet makes for itself: a sheet sized to its contents that grows a
         // row while it opens is a worse answer than one that is right at once.
@@ -3092,6 +3177,13 @@ export function ServerTerminalWorkspace({
       },
     } as Href);
   }
+
+  if (hydrationError)
+    return (
+      <AppDrawer>
+        <GatewayStorageError busy={loading} onRetry={retryHydration} />
+      </AppDrawer>
+    );
 
   if (!loading && !routeRecord) {
     return (
@@ -3322,6 +3414,7 @@ export function ServerTerminalWorkspace({
   const paneEntries = (fill: string) => (
     <>
       <PressableScale
+        accessibilityRole="button"
         accessibilityLabel={t`Open quick actions`}
         feedback="selection"
         pressedScale={0.9}
@@ -3456,18 +3549,16 @@ export function ServerTerminalWorkspace({
         close and nothing else the header could mean by it.
       */
       detailAccessory={[
-        /*
-          Which of the gateway's terminal backends is on screen, and only when
-          there is more than one of them. A machine that runs a single session
-          -- which is nearly all of them -- gets the header it has always had.
-        */
-        canSwitchSessions ? (
+        // Only actual alternatives justify a switch button; stopped backends
+        // remain configured without appearing here as live choices.
+        shouldShowSessionSwitcher(sessions, railServers.length) ? (
           <PressableScale
             key="session"
-            accessibilityLabel={t`Switch session`}
+            accessibilityLabel={t`Switch machine or session`}
+            testID="machine-session-switcher"
             onPress={openSessionSwitcher}
             style={navHeaderButtonStyle}>
-            <Layers size={18} color={theme.colors.text} strokeWidth={2} />
+            <Monitor size={18} color={theme.colors.text} strokeWidth={2} />
           </PressableScale>
         ) : null,
         simfarmSplit.previewWidth > 0 ? (
@@ -3546,6 +3637,19 @@ export function ServerTerminalWorkspace({
               it is news the user came back for, so a transient answer to a
               gesture queues underneath it rather than the other way round. */}
             {away.digest ? <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} /> : null}
+            <CollaborationNotice
+              context={{
+                serverId,
+                sessionId: data.sessionId,
+                paneId: selection.paneId,
+                workspaceId: selection.workspaceId,
+                tabId: selection.tabId,
+                cwd: field(selectedPane, 'cwd'),
+              }}
+              agents={data.agents}
+              connected={ready && connection.phase === 'connected'}
+              active={isFocused}
+            />
 
             {/* Last in the stack on purpose. An error bar and a connection notice
               are standing conditions and keep the top of the column; this is a
@@ -4274,13 +4378,14 @@ function ConnectionNotice({
   const connected = status.phase === 'connected';
   if (connected && !recovered) return null;
 
-  const title = connected
-    ? t`Connected`
-    : status.phase === 'connecting'
-      ? t`Connecting`
-      : status.phase === 'reconnecting'
-        ? t`Reconnecting · ${status.attempt}`
-        : t`Server offline`;
+  const title =
+    connected || status.backendUnavailable
+      ? t`Connected`
+      : status.phase === 'connecting'
+        ? t`Connecting`
+        : status.phase === 'reconnecting'
+          ? t`Reconnecting · ${status.attempt}`
+          : t`Server offline`;
 
   // One shape for every phase, and the colour only on the dot. The state is
   // carried by the words -- a status that is legible by hue alone is not
@@ -4288,7 +4393,7 @@ function ConnectionNotice({
   // sentence and a 7pt light, not the object the sentence arrives in.
   const light = connected
     ? theme.colors.success
-    : status.phase === 'offline'
+    : status.phase === 'offline' && !status.backendUnavailable
       ? theme.colors.danger
       : theme.colors.warning;
 
@@ -4451,7 +4556,7 @@ function reconcileSelection(data: ServerData, current: Selection): Selection {
   return { workspaceId: workspace.id, tabId: tab.id, paneId: pane?.id ?? '' };
 }
 
-/** Kept on the switch pills, because Maestro flows assert on them. */
+/** Kept on the switch pills for native end-to-end assertions. */
 const TAB_SWITCH_TEST_ID = 'tab-position-indicator';
 const WORKSPACE_SWITCH_TEST_ID = 'workspace-position-indicator';
 

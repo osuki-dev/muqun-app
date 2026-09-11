@@ -1,0 +1,155 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# demo-tour
+
+# section s1
+screenshot "shots/00-home.png"
+
+# section s2
+press "${TARGET}"
+
+# section s3
+is visible "${TARGET}"
+
+# section s4
+wait stable 400 5000
+
+# section s5
+screenshot "shots/01-terminal.png"
+
+# section s6
+press "${TARGET}"
+
+# section s7
+is visible "${TARGET}"
+
+# section s8
+wait stable 400 5000
+
+# section s9
+screenshot "shots/02-actions.png"
+
+# section s10
+press "${TARGET}"
+
+# section s11
+wait stable 400 5000
+
+# section s12
+press "${TARGET}"
+
+# section s13
+is visible "${TARGET}"
+
+# section s14
+wait stable 400 5000
+
+# section s15
+is visible "${TARGET}"
+
+# section s16
+is visible "${TARGET}"
+
+# section s17
+screenshot "shots/03-panels.png"
+
+# section s18
+scroll down --pixels 320
+
+# section s19
+scroll up --pixels 320
+
+# section s20
+press "${TARGET}"
+
+# section s21
+wait stable 400 5000
+
+# section s22
+press "${TARGET}"
+
+# section s23
+is visible "${TARGET}"
+
+# section s24
+wait stable 400 5000
+
+# section s25
+is visible "${TARGET}"
+
+# section s26
+screenshot "shots/03b-files.png"
+
+# section s27
+press "${TARGET}"
+
+# section s28
+wait stable 400 5000
+
+# section s29
+press "${TARGET}"
+
+# section s30
+wait stable 400 5000
+
+# section s31
+screenshot "shots/04-terminal.png"
+
+# section s32
+press "${TARGET}"
+
+# section s33
+is visible "${TARGET}"
+
+# section s34
+press "${TARGET}"
+
+# section s35
+is visible "${TARGET}"
+
+# section s36
+wait stable 400 5000
+
+# section s37
+screenshot "shots/05-privacy.png"
+
+# section s38
+scroll down --pixels 320
+
+# section s39
+press "${TARGET}"
+
+# section s40
+wait stable 400 5000
+
+# section s41
+press "${TARGET}"
+
+# section s42
+press "${TARGET}"
+
+# section s43
+is visible "${TARGET}"
+
+# section s44
+wait stable 400 5000
+
+# section s45
+is visible "${TARGET}"
+
+# section s46
+is visible "${TARGET}"
+
+# section s47
+screenshot "shots/06-floating-entries.png"
+
+# section s48
+press "${TARGET}"
+
+# section s49
+is visible "${TARGET}"
+
+# section s50
+press "${TARGET}"
+
+# section s51
+wait stable 400 5000

@@ -1,0 +1,5 @@
+# Editors expose a floating keyboard handle, then an explicit prose composer.
+press "label=\"Show the editor keyboard\""
+wait "role=button label=\"Write a line\"" 10000
+press "role=button label=\"Write a line\""
+wait "id=\"terminal-composer-input\"" 10000
