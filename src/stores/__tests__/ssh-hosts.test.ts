@@ -10,10 +10,15 @@ const { module: mockModule } = (
 ).mock;
 
 let vault: Record<string, string> = {};
+/** Reads of the host-list blob only, so hydrate's de-duplication is observable. */
+let reads = 0;
 
 mockModule('expo-secure-store', () => ({
   WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'whenUnlockedThisDeviceOnly',
-  getItemAsync: async (key: string) => vault[key] ?? null,
+  getItemAsync: async (key: string) => {
+    if (key === 'muqun.ssh.hosts.v1') reads += 1;
+    return vault[key] ?? null;
+  },
   setItemAsync: async (key: string, value: string) => {
     vault[key] = value;
   },
@@ -63,6 +68,34 @@ describe('hydrate', () => {
     await store.getState().hydrate();
     expect(store.getState().hosts).toEqual([]);
     expect(store.getState().loading).toBe(false);
+  });
+
+  test('callers that arrive together share one keychain read', async () => {
+    // The tunnel now waits on this read instead of racing it, so a cold screen
+    // can ask several times at once. One read has to serve all of them.
+    await store.getState().addHost(INPUT);
+    store.setState({ ...initial, hosts: [], loading: true });
+    reads = 0;
+    const [a, b, c] = await Promise.all([
+      store.getState().hydrate(),
+      store.getState().hydrate(),
+      store.getState().hydrate(),
+    ]);
+    expect([a, b, c]).toEqual([undefined, undefined, undefined]);
+    expect(store.getState().hosts).toHaveLength(1);
+    expect(store.getState().loading).toBe(false);
+    expect(reads).toBe(1);
+  });
+
+  test('a later caller re-reads rather than inheriting a failed read', async () => {
+    await store.getState().addHost(INPUT);
+    store.setState({ ...initial, hosts: [], loading: true });
+    await store.getState().hydrate();
+    reads = 0;
+    store.setState({ ...initial, hosts: [], loading: true });
+    await store.getState().hydrate();
+    expect(reads).toBeGreaterThan(0);
+    expect(store.getState().hosts).toHaveLength(1);
   });
 });
 
