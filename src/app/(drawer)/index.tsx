@@ -60,9 +60,9 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
-import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
+import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveHomeIdentity } from '@/theme/resolve';
@@ -222,17 +222,15 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   useFocusEffect(
     useCallback(() => {
+      // Reachability and nothing else. This used to also warm the configured
+      // server's workspace -- six requests on every return to the list -- so
+      // that opening it painted instead of saying Connecting. The list is not
+      // where that belongs: it exists to say which machines are up and to get
+      // out of the way. The workspace keeps its own last snapshot
+      // (`server-warm-cache`) and paints from it on re-entry; a server not
+      // opened recently costs one honest round trip.
       void refreshReachabilityMany(probeTargets);
-      // And load what the configured server's workspace is, so opening it paints
-      // instead of spelling out `Connecting`. Still only that one: a probe is a
-      // single request, a warm is six, and six times four on every return to
-      // this screen is a different thing entirely.
-      if (record && record.serverId !== DEMO_SERVER_ID && !record.sshTunnel)
-        void warmConfiguredWorkspace(
-          record.serverId,
-          useServerSession.getState().byServer[record.serverId]
-        );
-    }, [probeTargets, record, refreshReachabilityMany])
+    }, [probeTargets, refreshReachabilityMany])
   );
 
   // A pull is someone asking, so it overrides the store's own rate limit. The
@@ -263,6 +261,25 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   }));
 
   function openServer(serverId: string, paneId?: string) {
+    // Fetch on intent, not on sight.
+    //
+    // This screen used to warm the configured server's workspace on every
+    // focus -- six requests each time, for a server the reader might never
+    // open, and the single most expensive thing the list did. Warming on the
+    // tap instead costs the same six requests but only when they are certainly
+    // wanted, and buys *more* speed rather than less: the request is already in
+    // flight while the push animates, so the workspace screen finds a filled
+    // cache on mount (`warmWorkspace` seeds both `data` and the connection
+    // phase) instead of painting `Connecting` and asking afterwards.
+    //
+    // Deliberately not awaited. The push has to be on this frame, and the
+    // warm's only job is to be further along than it would otherwise be by the
+    // time the screen asks.
+    if (serverId !== DEMO_SERVER_ID) {
+      const server = records.find((item) => item.serverId === serverId);
+      if (server && !server.sshTunnel)
+        void warmConfiguredWorkspace(serverId, useServerSession.getState().byServer[serverId]);
+    }
     // Push straight away so the slide-in is immediate; the server screen
     // selects the record on mount. Awaiting the SecureStore write here left a
     // dead beat that read as no transition at all.

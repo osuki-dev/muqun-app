@@ -68,3 +68,23 @@ export async function warmConfiguredWorkspace(
     // Deliberately silent: see above.
   }
 }
+
+/**
+ * The head start for a tapped notification.
+ *
+ * Same warm as a home-screen tap, with one difference it has to handle: the
+ * notification names a server that may not be the one the app is connected to,
+ * and the transport is scoped to the selected record. Warming the wrong server
+ * would put a request on the wire against another machine's base URL, so this
+ * only runs once that server is the selected one -- which the workspace screen
+ * does on mount. Until then it is a no-op, and the screen's own load is the
+ * whole trip, exactly as before.
+ */
+export async function warmNotificationTarget(
+  serverId: string,
+  sessionPreference?: string
+): Promise<void> {
+  const { useGatewayConnectionStore } = await import('@/stores/gateway-connection');
+  if (useGatewayConnectionStore.getState().record?.serverId !== serverId) return;
+  await warmConfiguredWorkspace(serverId, sessionPreference);
+}
