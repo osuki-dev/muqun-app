@@ -33,6 +33,12 @@ async function openConnection(
   hostId: string,
   events: { onDropped: (reason: string) => void }
 ): Promise<TunnelConnectionHandle> {
+  // The saved hosts come out of SecureStore asynchronously, and this runs on
+  // the screen's first frame. Reading the list before that lands finds nothing,
+  // reports a host that is saved as missing, and leaves the tunnel `down` --
+  // and `down` is terminal, so the reader had to press Reconnect for what was
+  // only a race the button happened to win by arriving later. Wait for the read.
+  if (useSshHostsStore.getState().loading) await useSshHostsStore.getState().hydrate();
   const hostsStore = useSshHostsStore.getState();
   const record = hostsStore.hosts.find((item) => item.id === hostId);
   if (!record) {
