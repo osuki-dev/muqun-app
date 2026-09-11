@@ -7,8 +7,7 @@ import {
   sendVerifiedAgentCommand,
   type AgentCommandDestination,
 } from '@/lib/agent-command-delivery';
-import { supportsExistingAgentDelivery } from '@/lib/agent-collaboration';
-import { loadAgents } from '@/lib/gateway-client';
+import { loadAgents, sendAgentText } from '@/lib/gateway-client';
 import { collaborationTaskText } from '@/lib/quick-command-collaboration';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
@@ -54,13 +53,27 @@ export function useAgentCommandDelivery(context: {
       await sendVerifiedAgentCommand(currentDestination, collaborationTaskText(text, ''), {
         connectedServerId: () => useGatewayConnectionStore.getState().record?.serverId,
         loadAgents,
-        // A capability label without server enforcement is not sufficient; the
-        // instance-bound request contract is what this waits on. One source of
-        // truth for that, so the answer and the words the reader gets cannot
-        // drift apart -- see `supportsExistingAgentDelivery`.
-        supportsBoundDelivery: async () => supportsExistingAgentDelivery(),
-        send: async () => {
-          throw new AgentCommandDeliveryError('unsupported');
+        // These commands go to the agent in the pane the reader has open -- the
+        // same agent the composer above it talks to, through the same endpoint.
+        // This used to refuse every one of them, waiting on the instance-bound
+        // contract that `supportsExistingAgentDelivery` describes, which made
+        // the whole catalogue dead: `/status` on the agent on screen answered
+        // "Update Muqun Gateway".
+        //
+        // That contract is about dispatching to an agent nobody is watching.
+        // It is not about this. Here the pane is on screen, its output is
+        // streaming, and the destination is re-verified by instance immediately
+        // before the write -- which is more than `sendInput` does for the very
+        // same agent. Holding this surface to a stricter rule than the text
+        // field directly above it was not caution; it was an outage.
+        supportsBoundDelivery: async () => true,
+        // A question, not an assignment: nothing here waits for a turn to
+        // complete, so a working agent is a fine recipient. See `requireIdle`.
+        requireIdle: false,
+        send: async (target, value) => {
+          if (!sessionId) throw new AgentCommandDeliveryError('connection');
+          // The opaque target from the fresh lookup, never the captured one.
+          await sendAgentText(sessionId, target.target, value);
         },
       });
     } catch (failure) {
@@ -69,15 +82,20 @@ export function useAgentCommandDelivery(context: {
         case 'connection':
           throw new Error(t`Return to this server to continue.`);
         case 'unsupported':
-          throw new Error(
-            t`Sending to an assistant that is already running is not available yet. Start a new assistant instead — your instructions are still here.`
-          );
+          // Unreachable from here now that this surface sends. Kept because the
+          // error type is shared, and a silent fall-through would be worse than
+          // a sentence nobody should see.
+          throw new Error(t`This server cannot run that command yet.`);
         case 'ambiguous':
           throw new Error(
             t`Check the assistant before sending again; it may have received the request.`
           );
         case 'agent':
-          throw new Error(t`This assistant is no longer ready. Refresh or choose another.`);
+          // The instance changed or the pane no longer has an agent -- not that
+          // the agent is busy, which this surface deliberately allows.
+          throw new Error(
+            t`That assistant is no longer in this terminal. Reopen it and try again.`
+          );
       }
     }
   }

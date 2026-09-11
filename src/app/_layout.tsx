@@ -346,15 +346,6 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
-            <Stack.Screen
-              name="agent-collaboration"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
-            />
             {/*
               Open a web service (card #829). Content-sized like New Task, and
               for less reason than any of them: this is one field with a row of

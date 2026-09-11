@@ -97,6 +97,17 @@ export type AttachmentDestination = {
   connectionGeneration: number;
 };
 
+/**
+ * The placeholder both staging stacks pass for `connectionGeneration`.
+ *
+ * The field is reserved for a real per-connection counter that neither stack
+ * has yet -- `use-agent-collaboration` passes a literal `0` for the same reason.
+ * It is a named constant rather than a `0` written out twice because two
+ * destinations describing the same place must compare equal, and the moment one
+ * side invents its own placeholder they stop doing so.
+ */
+export const ATTACHMENT_CONNECTION_GENERATION = 0;
+
 export function sameAttachmentDestination(
   a: AttachmentDestination,
   b: AttachmentDestination

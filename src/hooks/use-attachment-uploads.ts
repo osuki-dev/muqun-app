@@ -14,6 +14,7 @@ import {
   stageFiles,
   startableIds,
   uploadedPaths,
+  type AttachmentDestination,
 } from '@/lib/attachment-queue';
 import {
   compressPickedImage,
@@ -53,7 +54,23 @@ export interface AttachmentUploads {
  * reads and writes entries between awaits, and a ref synchronised by an effect
  * would still be showing the previous pass by the time it did.
  */
-export function useAttachmentUploads(record: GatewayRecord | null): AttachmentUploads {
+export function useAttachmentUploads(
+  record: GatewayRecord | null,
+  /**
+   * Where these files are being staged for, recorded on each entry.
+   *
+   * Nothing in the ordinary send path asserts it -- a composer message goes to
+   * whatever terminal is in front of the reader, which is why this stack binds
+   * at the record level and clears the queue when the record changes. It is
+   * recorded so the stricter caller can check it: a task addressed to an
+   * assistant is addressed to one pane on one connection, and
+   * `assertAttachmentDestination` is what refuses a queue that has since drifted.
+   *
+   * Omitting it leaves entries unbound, and an unbound entry is refused by that
+   * check rather than treated as bindable anywhere.
+   */
+  destination?: () => AttachmentDestination | undefined
+): AttachmentUploads {
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
   const mountedRef = useRef(true);
@@ -166,14 +183,14 @@ export function useAttachmentUploads(record: GatewayRecord | null): AttachmentUp
       addFiles: (files: PickedFile[]) => {
         if (!captured || !isCurrent() || files.length === 0) return;
         const previous = attachmentsRef.current;
-        const next = stageFiles(previous, files);
+        const next = stageFiles(previous, files, destination?.());
         for (const entry of next.slice(previous.length))
           destinations.current.set(entry.id, { record: captured, isCurrent });
         commit(next);
         pump();
       },
     };
-  }, [record, ownership, commit, pump]);
+  }, [record, ownership, commit, pump, destination]);
   const addFiles = useCallback(
     (files: PickedFile[]) => capturePicker().addFiles(files),
     [capturePicker]

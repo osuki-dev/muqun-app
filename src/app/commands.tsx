@@ -114,9 +114,9 @@ import { useComposerDraftStore } from '@/stores/composer-draft';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
+import { useComposerAssignmentStore } from '@/stores/composer-assignment';
 import {
   collaborationCommandAvailable,
-  collaborationDraftScope,
   commandCollaborationDraft,
 } from '@/lib/quick-command-collaboration';
 import { supportsCollaboration, tasksForSession } from '@/lib/agent-collaboration';
@@ -329,22 +329,18 @@ export default function QuickCommandsScreen() {
           tabId: params.tabId,
           cwd: params.cwd,
         });
-        const scope = collaborationDraftScope(draft.context);
-        if (!useAgentCollaboration.getState().drafts[scope]) {
-          useAgentCollaboration.getState().saveDraft(scope, draft);
-        }
-        router.replace({
-          pathname: '/agent-collaboration',
-          params: {
-            serverId: params.serverId,
-            sessionId: params.sessionId,
-            paneId: params.paneId,
-            workspaceId: params.workspaceId,
-            tabId: params.tabId,
-            cwd: params.cwd,
-            commandId: command.id,
-          },
-        } as Href);
+        // The task is written in the terminal's own composer, with the
+        // assistant chosen from the strip above it. This sheet closes and
+        // leaves the instructions there -- it used to open a second screen
+        // with its own field, image strip and Send, all of which the composer
+        // already had.
+        useComposerAssignmentStore.getState().request_({
+          serverId: params.serverId,
+          paneId: params.paneId,
+          prompt: draft.prompt,
+          command: draft.command,
+        });
+        router.back();
       } catch (failure) {
         setError(describeGatewayFailure(failure, t`Could not send shortcut.`).message);
       }
@@ -780,37 +776,33 @@ export default function QuickCommandsScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Not a tile, and the only one of the sheet's verbs that is not. Every
-            tile does its thing and closes; this one hands over to a form with
-            three questions on it, and a label that has to say so is a sentence
-            rather than a word. */}
+        {/* It used to hand over to a form with three questions on it, so its
+            label was a sentence rather than a word. The form is gone: this now
+            closes like every other tile and opens the assistant strip over the
+            terminal's own field, so the label says what the reader will be
+            looking at a moment later, and the detail says where. */}
         {!manageOnly &&
         params.serverId &&
         params.paneId &&
         supportsCollaboration(params.backendKind) ? (
           <SettingsCard>
             <ActionRow
-              accessibilityLabel={t`Agent collaboration`}
-              name={t`Agent collaboration`}
+              accessibilityLabel={t`Assign a task`}
+              name={t`Assign a task`}
               detail={
                 collaborationCount > 0
-                  ? t`${collaborationCount} assigned tasks · view agents and output`
-                  : t`Assign work to another agent and follow its progress.`
+                  ? t`Choose an assistant above the message field · ${collaborationCount} assigned`
+                  : t`Choose an assistant above the message field, then write the task there.`
               }
               detailColor={theme.colors.textMuted}
-              onPress={() =>
-                router.replace({
-                  pathname: '/agent-collaboration',
-                  params: {
-                    serverId: params.serverId,
-                    sessionId: params.sessionId,
-                    paneId: params.paneId,
-                    workspaceId: params.workspaceId,
-                    tabId: params.tabId,
-                    cwd: params.cwd,
-                  },
-                } as Href)
-              }
+              onPress={() => {
+                if (!params.serverId || !params.paneId) return;
+                useComposerAssignmentStore.getState().request_({
+                  serverId: params.serverId,
+                  paneId: params.paneId,
+                });
+                router.back();
+              }}
             />
           </SettingsCard>
         ) : null}

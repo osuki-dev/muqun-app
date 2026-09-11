@@ -31,8 +31,19 @@ export function agentCommandDestination(
 
 /**
  * One guard for user-authored instructions and agent slash commands.
- * The send port MUST enforce expected instance identity at the server/backend;
- * these fresh reads alone cannot close a replacement race after validation.
+ *
+ * The destination is captured when the surface opens and re-verified against a
+ * fresh read immediately before the send: same pane, same agent instance. That
+ * is strictly more than the composer does for the same agent -- `sendInput`
+ * checks the pane and not the instance -- and it is what a command sheet can
+ * honestly offer. It cannot close a replacement race in the window between the
+ * check and the write, and it does not claim to.
+ *
+ * `requireIdle` is the collaboration rule, not a rule about agents. A new
+ * assignment starts at an idle prompt because Herdr cannot correlate its
+ * completion with a specific turn (`canAssignToAgent`). A slash command has no
+ * completion to correlate -- `/status` asked of a working agent is an ordinary
+ * question -- so the surface that sends those passes `false`.
  */
 export async function sendVerifiedAgentCommand(
   destination: AgentCommandDestination | null,
@@ -42,6 +53,8 @@ export async function sendVerifiedAgentCommand(
     loadAgents: (sessionId: string) => Promise<GatewayEntity[]>;
     supportsBoundDelivery: () => Promise<boolean>;
     send: (destination: AgentCommandDestination, text: string) => Promise<void>;
+    /** Defaults to the collaboration rule; see above. */
+    requireIdle?: boolean;
   }
 ): Promise<void> {
   if (!destination) throw new AgentCommandDeliveryError('agent');
@@ -66,7 +79,7 @@ export async function sendVerifiedAgentCommand(
   if (
     !current ||
     current.instanceId !== destination.instanceId ||
-    !canAssignToAgent(agent?.status ?? 'unknown')
+    ((ports.requireIdle ?? true) && !canAssignToAgent(agent?.status ?? 'unknown'))
   )
     throw new AgentCommandDeliveryError('agent');
   try {

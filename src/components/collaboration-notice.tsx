@@ -2,10 +2,9 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
-import { type Href, useRouter } from 'expo-router';
 import { ChevronDown, ChevronUp, Ellipsis } from 'lucide-react-native';
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { useCollaborationOutput } from '@/hooks/use-collaboration-output';
@@ -36,7 +35,6 @@ export function CollaborationNotice({
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const router = useRouter();
   const stored = useAgentCollaboration((state) => state.tasks);
   const { current } = partitionCollaborationTasks(
     tasksForSession(stored, context.serverId, context.sessionId),
@@ -102,7 +100,22 @@ export function CollaborationNotice({
           accessibilityLabel={t`Assignment options`}
           hitSlop={10}
           onPress={() =>
-            router.push({ pathname: '/agent-collaboration', params: context } as Href)
+            // History lives on this device and these two are its only
+            // operations. Both work offline and neither stops an agent
+            // (AGENTS.md) -- they change what this card remembers, not what
+            // the assistant is doing.
+            Alert.alert(task.agentName, task.prompt, [
+              {
+                text: t`Mark reviewed`,
+                onPress: () => useAgentCollaboration.getState().review(task.id),
+              },
+              {
+                text: t`Remove from history`,
+                style: 'destructive',
+                onPress: () => useAgentCollaboration.getState().remove(task.id),
+              },
+              { text: t`Cancel`, style: 'cancel' },
+            ])
           }>
           <Ellipsis size={18} color={theme.colors.textMuted} />
         </PressableScale>
