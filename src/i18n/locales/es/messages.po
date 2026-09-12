@@ -306,10 +306,6 @@ msgstr "Asignar una tarea"
 msgid "Assign this to an assistant"
 msgstr "Asignar esto a un asistente"
 
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "Opciones de tarea"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Asistente iniciado"
@@ -401,7 +397,6 @@ msgstr "El acceso a la cámara está desactivado. Actívalo en Ajustes para toma
 msgid "Camera access needed"
 msgstr "Se necesita acceso a la cámara"
 
-#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -2352,6 +2347,7 @@ msgstr "Actualizar los archivos"
 msgid "Refresh output"
 msgstr "Actualizar salida"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "Eliminar"
@@ -2366,8 +2362,8 @@ msgid "Remove {0}"
 msgstr "Quitar {0}"
 
 #: src/components/collaboration-notice.tsx
-msgid "Remove from history"
-msgstr "Eliminar del historial"
+msgid "Remove from history?"
+msgstr "¿Quitar del historial?"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"

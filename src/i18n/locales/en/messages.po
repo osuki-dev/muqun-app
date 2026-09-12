@@ -306,10 +306,6 @@ msgstr "Assign a task"
 msgid "Assign this to an assistant"
 msgstr "Assign this to an assistant"
 
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "Assignment options"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Assistant started"
@@ -401,7 +397,6 @@ msgstr "Camera access is off. Turn it on in Settings to take a photo"
 msgid "Camera access needed"
 msgstr "Camera access needed"
 
-#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -2352,6 +2347,7 @@ msgstr "Refresh files"
 msgid "Refresh output"
 msgstr "Refresh output"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "Remove"
@@ -2366,8 +2362,8 @@ msgid "Remove {0}"
 msgstr "Remove {0}"
 
 #: src/components/collaboration-notice.tsx
-msgid "Remove from history"
-msgstr "Remove from history"
+msgid "Remove from history?"
+msgstr "Remove from history?"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"

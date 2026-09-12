@@ -306,10 +306,6 @@ msgstr "指派任務"
 msgid "Assign this to an assistant"
 msgstr "交給一個助理去做"
 
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "任務選項"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "助理已啟動"
@@ -401,7 +397,6 @@ msgstr "相機存取已關閉。請到「設定」開啟後再拍照"
 msgid "Camera access needed"
 msgstr "需要相機存取權"
 
-#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -2352,6 +2347,7 @@ msgstr "重新整理檔案"
 msgid "Refresh output"
 msgstr "重新整理輸出"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "移除"
@@ -2366,8 +2362,8 @@ msgid "Remove {0}"
 msgstr "移除 {0}"
 
 #: src/components/collaboration-notice.tsx
-msgid "Remove from history"
-msgstr "移除記錄"
+msgid "Remove from history?"
+msgstr "從歷史移除？"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"

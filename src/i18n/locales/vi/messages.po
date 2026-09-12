@@ -306,10 +306,6 @@ msgstr "Giao một tác vụ"
 msgid "Assign this to an assistant"
 msgstr "Giao việc này cho một trợ lý"
 
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "Tùy chọn nhiệm vụ"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Đã khởi động trợ lý"
@@ -401,7 +397,6 @@ msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt đ�
 msgid "Camera access needed"
 msgstr "Cần quyền truy cập camera"
 
-#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -2352,6 +2347,7 @@ msgstr "Làm mới tệp"
 msgid "Refresh output"
 msgstr "Làm mới đầu ra"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "Xóa"
@@ -2366,8 +2362,8 @@ msgid "Remove {0}"
 msgstr "Gỡ {0}"
 
 #: src/components/collaboration-notice.tsx
-msgid "Remove from history"
-msgstr "Xóa khỏi lịch sử"
+msgid "Remove from history?"
+msgstr "Xóa khỏi lịch sử?"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"

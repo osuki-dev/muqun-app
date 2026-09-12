@@ -2,10 +2,11 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
-import { ChevronDown, ChevronUp, Ellipsis } from 'lucide-react-native';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
+import { TerminalTranscript } from '@/components/terminal-transcript';
 import { appChrome } from '@/constants/appearance';
 import { useCollaborationOutput } from '@/hooks/use-collaboration-output';
 import {
@@ -41,6 +42,7 @@ export function CollaborationNotice({
     agents
   );
   const task = current[0];
+  const [removing, setRemoving] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
@@ -94,31 +96,6 @@ export function CollaborationNotice({
           {t`Agent collaboration`}
           {current.length > 1 ? ` · ${current.length}` : ''}
         </Text>
-        <PressableScale
-          testID="collaboration-notice-manage"
-          accessibilityRole="button"
-          accessibilityLabel={t`Assignment options`}
-          hitSlop={10}
-          onPress={() =>
-            // History lives on this device and these two are its only
-            // operations. Both work offline and neither stops an agent
-            // (AGENTS.md) -- they change what this card remembers, not what
-            // the assistant is doing.
-            Alert.alert(task.agentName, task.prompt, [
-              {
-                text: t`Mark reviewed`,
-                onPress: () => useAgentCollaboration.getState().review(task.id),
-              },
-              {
-                text: t`Remove from history`,
-                style: 'destructive',
-                onPress: () => useAgentCollaboration.getState().remove(task.id),
-              },
-              { text: t`Cancel`, style: 'cancel' },
-            ])
-          }>
-          <Ellipsis size={18} color={theme.colors.textMuted} />
-        </PressableScale>
       </View>
       <PressableScale
         testID="collaboration-notice-expand"
@@ -164,10 +141,17 @@ export function CollaborationNotice({
           </Button>
           {output.outputLoading ? <Spinner size="sm" /> : null}
           {output.output ? (
-            <ScrollView style={{ maxHeight: 140 }} nestedScrollEnabled>
-              <Text testID="collaboration-notice-output" selectable variant="caption">
-                {output.output}
-              </Text>
+            <ScrollView
+              style={{ maxHeight: 140 }}
+              nestedScrollEnabled
+              horizontal={false}
+              showsVerticalScrollIndicator={false}>
+              {/* The agent's answer is a pane snapshot: monospaced, column
+                  aligned, and carrying SGR escapes. Drawn as an ordinary
+                  caption it lost all three, so a table or a diff the agent drew
+                  arrived as ragged prose. See `TerminalTranscript` for why this
+                  reuses the parser rather than standing up a second canvas. */}
+              <TerminalTranscript testID="collaboration-notice-output" output={output.output} />
             </ScrollView>
           ) : null}
           {output.outputError || error ? (
@@ -188,6 +172,27 @@ export function CollaborationNotice({
               onPress={() =>
                 useAgentCollaboration.getState().review(task.id)
               }>{t`Mark reviewed`}</Button>
+            {/* Arm-to-confirm in place, the pattern the theme library and the
+                row menu already use. This was a native `Alert` for a while --
+                the only one in the app outside a permission failure -- put
+                there when the screen its `...` used to open was deleted. A
+                system dialog in the middle of the app's own chrome is not a
+                confirmation, it is a different application briefly. */}
+            <Button
+              testID="collaboration-notice-remove"
+              variant="ghost"
+              onPress={() => {
+                if (removing !== task.id) {
+                  setRemoving(task.id);
+                  return;
+                }
+                // Local history only: this forgets the card, and never reaches
+                // the assistant (AGENTS.md).
+                useAgentCollaboration.getState().remove(task.id);
+                setRemoving(null);
+              }}>
+              {removing === task.id ? t`Remove from history?` : t`Remove`}
+            </Button>
           </View>
         </>
       ) : null}
