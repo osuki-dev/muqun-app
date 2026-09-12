@@ -207,13 +207,27 @@ is visible "${TARGET}"
 gesture pan 200 600 0 -120 400
 
 # section s57
-scroll down --pixels 320
+# A pan for the same reason `s56` uses one: these three targets sit within a
+# couple of rows of each other, and a flick's momentum carries whichever one is
+# sought clear past the top of the screen. When that happens the row's centre
+# lands in the status bar, and pressing there is not a miss -- iOS reads a
+# status-bar tap as "scroll to top", so the list jumps home and the control was
+# never touched. A press that reported success at (339, 36) is what that looks
+# like from the runner's side.
+gesture pan 200 600 0 -120 400
 
 # section s58
 scroll down --pixels 320
 
 # section scroll-notifications
-scroll down --pixels 320
+# A pan for the same reason `s56` uses one: these three targets sit within a
+# couple of rows of each other, and a flick's momentum carries whichever one is
+# sought clear past the top of the screen. When that happens the row's centre
+# lands in the status bar, and pressing there is not a miss -- iOS reads a
+# status-bar tap as "scroll to top", so the list jumps home and the control was
+# never touched. A press that reported success at (339, 36) is what that looks
+# like from the runner's side.
+gesture pan 200 600 0 -120 400
 
 # section s59
 is visible "${TARGET}"
