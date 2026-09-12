@@ -10,6 +10,7 @@ import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
+import { ThemedSurface } from '@/components/themed-surface';
 import { appChrome } from '@/constants/appearance';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { agentStatusWord } from '@/i18n/labels';
@@ -78,11 +79,18 @@ export function AwayDigestCard({
           content of the card, unreadable, behind a button that throws it away.
           The rows stay individually accessible instead, and the dismissal is
           published by the close control below, which is a real button. */}
-      <Pressable
-        accessible={false}
-        onPress={dismiss}
-        style={[styles.card, { backgroundColor: theme.colors.surface }]}
-        testID="away-digest">
+      <Pressable accessible={false} onPress={dismiss} style={styles.card} testID="away-digest">
+        <ThemedSurface
+          slot="cards.decoration"
+          baseColor={theme.colors.surface}
+          pointerEvents="none"
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          style={[
+            StyleSheet.absoluteFill,
+            { borderRadius: appChrome.radius.control, overflow: 'hidden' },
+          ]}
+        />
         <View style={styles.header}>
           <History size={14} color={theme.colors.textMuted} strokeWidth={2.2} />
           <Text variant="label" colorKey="text" style={styles.title} numberOfLines={1}>

@@ -2,14 +2,21 @@
   "version": 1,
   "flows": [
     {
-      "name": "agent-shortcuts",
-      "program": "flows/agent-shortcuts",
+      "name": "notifications",
+      "program": "flows/notifications",
+      "cleanup": "cleanup/notifications",
       "tags": ["full"],
       "platforms": ["ios", "android"]
     },
     {
-      "name": "machine-switcher",
-      "program": "flows/machine-switcher",
+      "name": "theme-document",
+      "program": "flows/theme-document",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "custom-themes",
+      "program": "flows/custom-themes",
       "tags": ["full"],
       "platforms": ["ios", "android"]
     },
@@ -133,20 +140,296 @@
       "program": "subflows/motion-p2-capture",
       "tags": ["capture"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "agent-shortcuts",
+      "program": "flows/agent-shortcuts",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "machine-switcher",
+      "program": "flows/machine-switcher",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
-    "flows/agent-shortcuts": [
-      { "include": "subflows/open-demo" },
-      { "run": "flows/agent-shortcuts.ad" }
+    "cleanup/notifications": [{ "run": "flows/notifications.ad#deny" }],
+    "flows/notifications": [
+      { "include": "subflows/launch-home" },
+      { "run": "flows/notifications.ad#grant" },
+      { "target": { "text": "Settings" }, "mode": "press", "run": "flows/notifications.ad#press" },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/notifications.ad#scroll"
+      },
+      {
+        "when": { "target": { "id": "toggle-Gateway notifications", "checked": false } },
+        "steps": [
+          {
+            "target": { "id": "toggle-Gateway notifications" },
+            "mode": "press",
+            "run": "flows/notifications.ad#press"
+          }
+        ]
+      },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      {
+        "target": { "id": "in-app-notification-open" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/notifications.ad#receipt"
+      },
+      {
+        "target": { "id": "in-app-notification-dismiss" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#dismissed" },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      {
+        "target": { "id": "in-app-notification-open" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#dismissed" },
+      {
+        "target": { "id": "toggle-Gateway notifications" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#disabled" },
+      {
+        "target": { "id": "toggle-Gateway notifications" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#deny" },
+      { "include": "subflows/launch-home" },
+      { "target": { "text": "Settings" }, "mode": "press", "run": "flows/notifications.ad#press" },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/notifications.ad#scroll"
+      },
+      {
+        "target": { "id": "notification-preview" },
+        "mode": "press",
+        "run": "flows/notifications.ad#press"
+      },
+      { "run": "flows/notifications.ad#denied" },
+      { "run": "flows/notifications.ad#finish" }
     ],
-    "flows/machine-switcher": [
-      { "include": "subflows/open-demo" },
-      { "run": "flows/machine-switcher.ad" }
+    "flows/theme-document": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/theme-document.ad#open"
+      },
+      {
+        "target": {
+          "text": "Open muqun.muqun-theme.json"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/theme-document.ad#scroll"
+      },
+      {
+        "target": {
+          "text": "Open muqun.muqun-theme.json"
+        },
+        "mode": "press",
+        "run": "flows/theme-document.ad#preview"
+      }
+    ],
+    "flows/custom-themes": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-theme-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "settings-theme-row"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": {
+          "id": "theme-import"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#link-import"
+      },
+      {
+        "target": {
+          "id": "theme-paste-json"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#input"
+      },
+      {
+        "run": "flows/custom-themes.ad#format-json"
+      },
+      {
+        "target": {
+          "id": "theme-undo-format"
+        },
+        "mode": "hidden",
+        "run": "flows/custom-themes.ad#hidden"
+      },
+      {
+        "target": {
+          "id": "theme-preview-json"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": {
+          "id": "custom-theme-preview"
+        },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#visible"
+      },
+      {
+        "target": {
+          "id": "theme-apply"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "theme-apply"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#settle"
+      },
+      {
+        "target": {
+          "id": "theme-apply"
+        },
+        "mode": "hidden",
+        "run": "flows/custom-themes.ad#applied-status"
+      },
+      {
+        "run": "flows/custom-themes.ad#reopen-applied"
+      },
+      {
+        "target": {
+          "id": "theme-terminal-opacity"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "run": "flows/custom-themes.ad#opacity-enable"
+      },
+      {
+        "target": {
+          "text": "Minimum opacity for readable text: 100%"
+        },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#opacity-adjust"
+      },
+      {
+        "target": {
+          "text": "Some theme colors need more contrast"
+        },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#visible"
+      },
+      {
+        "run": "flows/custom-themes.ad#home-visibility"
+      },
+      {
+        "target": {
+          "id": "theme-appearance-reset"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "run": "flows/custom-themes.ad#opacity-reset"
+      },
+      {
+        "target": {
+          "id": "theme-remove-previewed"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "theme-remove-previewed"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#confirm-remove"
+      },
+      {
+        "run": "flows/custom-themes.ad#close-sheet"
+      }
     ],
     "flows/agent-collaboration": [
-      { "include": "subflows/open-demo" },
-      { "run": "flows/agent-collaboration.ad" }
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/agent-collaboration.ad"
+      }
     ],
     "flows/artifacts": [
       {
@@ -711,6 +994,49 @@
       }
     ],
     "flows/away-digest": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "flows/away-digest.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/away-digest.ad#s2"
+      },
+      {
+        "run": "flows/away-digest.ad#s3"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "away-digest"
+        },
+        "mode": "hidden",
+        "run": "flows/away-digest.ad#s12"
+      },
+      {
+        "target": {
+          "id": "away-digest-dismiss"
+        },
+        "mode": "hidden",
+        "run": "flows/away-digest.ad#s12"
+      },
+      {
+        "run": "flows/away-digest.ad#s8"
+      }
+    ],
+    "flows/away-digest-enabled": [
       {
         "include": "subflows/launch-home"
       },
@@ -2277,7 +2603,7 @@
       },
       {
         "target": {
-          "text": "Review the failing test and fix it."
+          "text": "Review the failing test and fix it"
         },
         "mode": "press",
         "run": "flows/new-task.ad#s33"
@@ -2756,7 +3082,25 @@
         "run": "flows/settings.ad#s8"
       },
       {
+        "target": {
+          "id": "settings-selection:(on|off):theme-osuki"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
+      },
+      {
         "run": "flows/settings.ad#reset-theme"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-ayu"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
@@ -2770,23 +3114,38 @@
         "target": {
           "text": "Catppuccin"
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s10"
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
           "text": "Dracula"
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s11"
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
           "text": "Osuki",
           "selected": true
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s12"
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/settings.ad#scroll-up"
+      },
+      {
+        "target": {
+          "text": "Catppuccin"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
       },
       {
         "target": {
@@ -3271,6 +3630,15 @@
       },
       {
         "target": {
+          "id": "settings-selection:(on|off):theme-ayu"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
+      },
+      {
+        "target": {
           "text": "Ayu"
         },
         "mode": "visible",
@@ -3282,8 +3650,19 @@
           "text": "Catppuccin",
           "selected": true
         },
-        "mode": "visible",
-        "run": "flows/settings.ad#s80"
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-osuki"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/settings.ad#scroll-up"
       },
       {
         "target": {
@@ -3339,17 +3718,18 @@
         "run": "flows/settings.ad#s88"
       },
       {
-        "target": {
-          "text": "Quick actions, Add commands and custom key combinations"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
         "run": "flows/settings.ad#s89"
       },
       {
-        "when": { "env": "PLATFORM", "equals": "ios" },
-        "steps": [{ "run": "flows/settings.ad#clear-native-header" }]
+        "when": {
+          "env": "PLATFORM",
+          "equals": "ios"
+        },
+        "steps": [
+          {
+            "run": "flows/settings.ad#clear-native-header"
+          }
+        ]
       },
       {
         "target": {
@@ -3499,19 +3879,42 @@
         "run": "flows/slash-commands.ad#s15"
       },
       {
-        "when": { "env": "PLATFORM", "equals": "android" },
+        "when": {
+          "env": "PLATFORM",
+          "equals": "android"
+        },
         "steps": [
-          { "run": "flows/slash-commands.ad#s16" },
           {
-            "when": { "target": { "id": "terminal-composer-input", "text": "Send a message" } },
-            "steps": [{ "run": "flows/slash-commands.ad#insert-cleared-slash" }]
+            "run": "flows/slash-commands.ad#s16"
           },
-          { "run": "flows/slash-commands.ad#verify-slash" }
+          {
+            "when": {
+              "target": {
+                "id": "terminal-composer-input",
+                "text": "Send a message"
+              }
+            },
+            "steps": [
+              {
+                "run": "flows/slash-commands.ad#insert-cleared-slash"
+              }
+            ]
+          },
+          {
+            "run": "flows/slash-commands.ad#verify-slash"
+          }
         ]
       },
       {
-        "when": { "env": "PLATFORM", "equals": "ios" },
-        "steps": [{ "run": "flows/slash-commands.ad#reset-query-ios" }]
+        "when": {
+          "env": "PLATFORM",
+          "equals": "ios"
+        },
+        "steps": [
+          {
+            "run": "flows/slash-commands.ad#reset-query-ios"
+          }
+        ]
       },
       {
         "run": "flows/slash-commands.ad#s18"
@@ -3583,19 +3986,42 @@
         "run": "flows/slash-commands.ad#s29"
       },
       {
-        "when": { "env": "PLATFORM", "equals": "android" },
+        "when": {
+          "env": "PLATFORM",
+          "equals": "android"
+        },
         "steps": [
-          { "run": "flows/slash-commands.ad#s30" },
           {
-            "when": { "target": { "id": "terminal-composer-input", "text": "Send a message" } },
-            "steps": [{ "run": "flows/slash-commands.ad#insert-cleared-model" }]
+            "run": "flows/slash-commands.ad#s30"
           },
-          { "run": "flows/slash-commands.ad#verify-model" }
+          {
+            "when": {
+              "target": {
+                "id": "terminal-composer-input",
+                "text": "Send a message"
+              }
+            },
+            "steps": [
+              {
+                "run": "flows/slash-commands.ad#insert-cleared-model"
+              }
+            ]
+          },
+          {
+            "run": "flows/slash-commands.ad#verify-model"
+          }
         ]
       },
       {
-        "when": { "env": "PLATFORM", "equals": "ios" },
-        "steps": [{ "run": "flows/slash-commands.ad#model-query-ios" }]
+        "when": {
+          "env": "PLATFORM",
+          "equals": "ios"
+        },
+        "steps": [
+          {
+            "run": "flows/slash-commands.ad#model-query-ios"
+          }
+        ]
       },
       {
         "run": "flows/slash-commands.ad#s34"
@@ -5818,6 +6244,22 @@
         },
         "mode": "visible",
         "run": "subflows/restore-key-row.ad#verify"
+      }
+    ],
+    "flows/agent-shortcuts": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/agent-shortcuts.ad"
+      }
+    ],
+    "flows/machine-switcher": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/machine-switcher.ad"
       }
     ]
   }

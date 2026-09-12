@@ -1,5 +1,7 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronLeft } from 'lucide-react-native';
+
+import { ThemeIcon } from '@/components/theme-icon';
 import { type ReactNode } from 'react';
 import { StyleSheet, type StyleProp, View, type ViewStyle } from 'react-native';
 
@@ -104,7 +106,11 @@ export const navHeaderTitleTextStyle = styles.titleText;
 
 /** A glass circle sized to the row. The screen owns what goes inside it. */
 export function NavHeaderCircle({ children }: { children: ReactNode }) {
-  return <GlassChrome style={styles.circle}>{children}</GlassChrome>;
+  return (
+    <GlassChrome surface="navigation" style={styles.circle}>
+      {children}
+    </GlassChrome>
+  );
 }
 
 /**
@@ -139,7 +145,13 @@ export function NavHeaderBackButton({
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}
         style={styles.circleButton}>
-        <ChevronLeft size={21} color={theme.colors.text} strokeWidth={2} />
+        <ThemeIcon
+          name="chrome.back"
+          fallback={ChevronLeft}
+          size={21}
+          color={theme.colors.text}
+          strokeWidth={2}
+        />
       </PressableScale>
     </NavHeaderCircle>
   );
@@ -160,7 +172,7 @@ export function NavHeaderTitlePill({
 }) {
   const theme = useThemeTokens();
   return (
-    <GlassChrome style={[styles.titlePill, style]}>
+    <GlassChrome surface="navigation" style={[styles.titlePill, style]}>
       <Text
         variant="bodySmall"
         numberOfLines={1}

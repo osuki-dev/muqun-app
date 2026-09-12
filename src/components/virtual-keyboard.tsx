@@ -6,6 +6,7 @@ import type { MessageDescriptor } from '@lingui/core';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ArrowBigUp, Delete, Keyboard as KeyboardIcon } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -126,6 +127,7 @@ export function VirtualKeyboard({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const [shift, setShift] = useState(false);
   const [symbols, setSymbols] = useState(false);
   /**
@@ -141,9 +143,11 @@ export function VirtualKeyboard({
   const [ctrl, setCtrl] = useState(false);
 
   const keyText = theme.colors.text;
-  const keyFill = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
-  const fnFill = withAlpha(theme.colors.text, appChrome.opacity.chromeControlQuiet);
-  const activeFill = theme.colors.primary;
+  const keyFill = surfaceBackground(withAlpha(theme.colors.text, appChrome.opacity.chromeControl));
+  const fnFill = surfaceBackground(
+    withAlpha(theme.colors.text, appChrome.opacity.chromeControlQuiet)
+  );
+  const activeFill = surfaceBackground(theme.colors.primary);
   const activeText = theme.colors.onPrimary;
 
   const rows = symbols ? (shift ? SHIFTED_SYMBOL_ROWS : SYMBOL_ROWS) : LETTER_ROWS;
@@ -201,6 +205,7 @@ export function VirtualKeyboard({
           fill={ctrl ? activeFill : fnFill}
           disabled={disabled}
           accessibilityLabel={t`Control`}
+          selected={ctrl}
           onPress={() => setCtrl((value) => !value)}
         />
         <VirtualKey
@@ -208,7 +213,7 @@ export function VirtualKeyboard({
           commit="up"
           onPress={onClose}
           style={[styles.key, styles.closeKey, { backgroundColor: fnFill }]}>
-          <KeyboardIcon size={16} color={keyText} />
+          {({ pressed }) => <KeyboardIcon size={16} color={pressed ? activeText : keyText} />}
         </VirtualKey>
       </View>
 
@@ -241,9 +246,14 @@ export function VirtualKeyboard({
                 disabled={disabled}
                 onPress={() => pressChar(char)}
                 style={[styles.key, styles.unitKey, { backgroundColor: keyFill }]}>
-                <Text variant="bodySmall" color={keyText} style={styles.keyText}>
-                  {!symbols && shift ? char.toUpperCase() : char}
-                </Text>
+                {({ pressed }) => (
+                  <Text
+                    variant="bodySmall"
+                    color={pressed ? activeText : keyText}
+                    style={styles.keyText}>
+                    {!symbols && shift ? char.toUpperCase() : char}
+                  </Text>
+                )}
               </VirtualKey>
             ))}
 
@@ -253,7 +263,7 @@ export function VirtualKeyboard({
                 disabled={disabled}
                 onPress={() => onKey('backspace')}
                 style={[styles.key, styles.shiftKey, { backgroundColor: keyFill }]}>
-                <Delete size={18} color={keyText} />
+                {({ pressed }) => <Delete size={18} color={pressed ? activeText : keyText} />}
               </VirtualKey>
             ) : null}
             {lead > 0 ? <View style={{ flex: lead }} /> : null}
@@ -272,18 +282,22 @@ export function VirtualKeyboard({
             setShift(false);
           }}
           style={[styles.key, styles.pageKey, { backgroundColor: keyFill }]}>
-          <Text variant="caption" color={keyText} style={styles.keyText}>
-            {symbols ? 'abc' : '123'}
-          </Text>
+          {({ pressed }) => (
+            <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+              {symbols ? 'abc' : '123'}
+            </Text>
+          )}
         </VirtualKey>
         <VirtualKey
           accessibilityLabel={t`Space`}
           disabled={disabled}
           onPress={() => onText(' ')}
           style={[styles.key, styles.spaceKey, { backgroundColor: keyFill }]}>
-          <Text variant="caption" color={keyText} style={styles.keyText}>
-            space
-          </Text>
+          {({ pressed }) => (
+            <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+              space
+            </Text>
+          )}
         </VirtualKey>
         {/* One control, not four strays: the gap inside the cluster is tighter
             than the row's, and each arrow takes back in hit slop what it gives
@@ -297,9 +311,14 @@ export function VirtualKeyboard({
               hitSlop={{ top: 6, bottom: 6 }}
               onPress={() => onKey(arrow.key)}
               style={[styles.key, styles.unitKey, { backgroundColor: fnFill }]}>
-              <Text variant="caption" color={keyText} style={styles.keyText}>
-                {arrow.label}
-              </Text>
+              {({ pressed }) => (
+                <Text
+                  variant="caption"
+                  color={pressed ? activeText : keyText}
+                  style={styles.keyText}>
+                  {arrow.label}
+                </Text>
+              )}
             </VirtualKey>
           ))}
         </View>
@@ -308,9 +327,11 @@ export function VirtualKeyboard({
           disabled={disabled}
           onPress={() => onKey('enter')}
           style={[styles.key, styles.returnKey, { backgroundColor: keyFill }]}>
-          <Text variant="caption" color={keyText} style={styles.keyText}>
-            ↵
-          </Text>
+          {({ pressed }) => (
+            <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+              ↵
+            </Text>
+          )}
         </VirtualKey>
       </View>
     </View>
@@ -359,38 +380,43 @@ function ShiftKey({
   return (
     <VirtualKey
       accessibilityLabel={symbols ? t`More symbols` : t`Shift`}
+      accessibilityState={{ selected: shift }}
       onPress={onPress}
       style={[styles.key, styles.shiftKey, { backgroundColor: keyFill }]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          styles.keyFill,
-          { backgroundColor: activeFill },
-          heldStyle,
-        ]}
-      />
-      {/* Both faces of the key, cross-faded: a Lucide icon's colour and fill are
+      {({ pressed }) => (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              styles.keyFill,
+              { backgroundColor: activeFill },
+              heldStyle,
+            ]}
+          />
+          {/* Both faces of the key, cross-faded: a Lucide icon's colour and fill are
           props rather than styles, and the design system's `Text` resolves its
           own colour, so neither leaves the UI thread anything to drive. */}
-      <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, restingStyle]}>
-        {symbols ? (
-          <Text variant="caption" color={keyText} style={styles.keyText}>
-            #+=
-          </Text>
-        ) : (
-          <ArrowBigUp size={18} color={keyText} fill="transparent" />
-        )}
-      </Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, heldStyle]}>
-        {symbols ? (
-          <Text variant="caption" color={activeText} style={styles.keyText}>
-            123
-          </Text>
-        ) : (
-          <ArrowBigUp size={18} color={activeText} fill={activeText} />
-        )}
-      </Animated.View>
+          <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, restingStyle]}>
+            {symbols ? (
+              <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+                #+=
+              </Text>
+            ) : (
+              <ArrowBigUp size={18} color={pressed ? activeText : keyText} fill="transparent" />
+            )}
+          </Animated.View>
+          <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, heldStyle]}>
+            {symbols ? (
+              <Text variant="caption" color={activeText} style={styles.keyText}>
+                123
+              </Text>
+            ) : (
+              <ArrowBigUp size={18} color={activeText} fill={activeText} />
+            )}
+          </Animated.View>
+        </>
+      )}
     </VirtualKey>
   );
 }
@@ -402,6 +428,7 @@ function FunctionKey({
   disabled,
   onPress,
   accessibilityLabel,
+  selected,
 }: {
   label: string;
   color: string;
@@ -413,16 +440,24 @@ function FunctionKey({
    * read correctly as themselves; `⌃` does not read as anything.
    */
   accessibilityLabel?: string;
+  selected?: boolean;
 }) {
+  const theme = useThemeTokens();
   return (
     <VirtualKey
       accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={selected === undefined ? undefined : { selected }}
       disabled={disabled}
       onPress={onPress}
       style={[styles.key, styles.functionWide, { backgroundColor: fill }]}>
-      <Text variant="caption" color={color} style={styles.keyText}>
-        {label}
-      </Text>
+      {({ pressed }) => (
+        <Text
+          variant="caption"
+          color={pressed ? theme.colors.onPrimary : color}
+          style={styles.keyText}>
+          {label}
+        </Text>
+      )}
     </VirtualKey>
   );
 }
@@ -434,6 +469,7 @@ function FunctionKey({
  * Pressable state keeps the tactile response without that mount cost.
  */
 function VirtualKey({
+  children,
   disabled,
   onPress,
   onPressIn,
@@ -452,6 +488,8 @@ function VirtualKey({
    */
   commit?: 'down' | 'up';
 }) {
+  const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   // The ref keeps a screen reader working through the 'down' path: an
   // accessibility activation arrives as a bare `onPress` with no touch-down
   // before it, so it still fires; a real touch marks the ref on the way down
@@ -478,8 +516,23 @@ function VirtualKey({
         }
         if (!disabled) onPress?.(event);
       }}
-      style={({ pressed }) => [style, pressed && !disabled ? styles.keyPressed : null]}
-    />
+      style={({ pressed }) => [
+        style,
+        pressed && !disabled
+          ? [styles.keyPressed, { backgroundColor: surfaceBackground(theme.colors.primary) }]
+          : null,
+      ]}>
+      {/* Pass the state through rather than rebuilding it: Expo's web types
+          augment this callback with a `hovered` field, so a hand-built object
+          stops compiling as soon as anyone runs `expo start` and the generated
+          `expo-env.d.ts` pulls those declarations in. Only `pressed` is
+          overridden, which is the one thing a disabled key must not report. */}
+      {(state) =>
+        typeof children === 'function'
+          ? children({ ...state, pressed: state.pressed && !disabled })
+          : children
+      }
+    </Pressable>
   );
 }
 

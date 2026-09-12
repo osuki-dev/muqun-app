@@ -14,6 +14,7 @@ export type QuickCommand = {
   delivery?: QuickCommandDelivery;
   /** Only trusted built-ins can refer to bundled instruction builders. */
   instructionId?: string;
+  labelLanguage?: 'en';
 };
 
 const STORAGE_KEY = 'muqun.quick-commands.v1';
@@ -33,6 +34,16 @@ function mutate<T>(operation: () => Promise<T>): Promise<T> {
 }
 
 const defaults: QuickCommand[] = [
+  // Opens the shared collaboration composer; never sent as a shell command.
+  {
+    id: 'agent-create-muqun-theme',
+    label: 'Create a Muqun theme',
+    value: '',
+    mode: 'agent',
+    delivery: 'collaboration',
+    instructionId: 'muqun-theme',
+    labelLanguage: 'en',
+  },
   { id: 'terminal-status', label: 'Git status', value: 'git status --short', mode: 'terminal' },
   { id: 'terminal-diff', label: 'Diff summary', value: 'git diff --stat', mode: 'terminal' },
   { id: 'terminal-pull', label: 'Pull', value: 'git pull --rebase', mode: 'terminal' },
@@ -206,7 +217,7 @@ async function loadCustomCommands(): Promise<QuickCommand[]> {
             command.delivery === 'current-agent' ||
             (command.mode === 'agent' && command.delivery === 'collaboration'))
       )
-      .map(({ instructionId: _instructionId, ...command }) => command);
+      .map(({ instructionId: _instructionId, labelLanguage: _language, ...command }) => command);
   } catch {
     return [];
   }

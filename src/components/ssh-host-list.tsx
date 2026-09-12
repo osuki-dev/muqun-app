@@ -1,3 +1,5 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
@@ -44,6 +46,7 @@ const KEYBOARD_BOTTOM_OFFSET = 88;
 export function SshHostList() {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { record: gateway } = useGatewayRecord();
@@ -68,7 +71,8 @@ export function SshHostList() {
   const nowMs = Date.now();
 
   return (
-    <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+      <ThemeArtwork slot="shell.background" />
       <ScreenHeader
         title={editing === 'new' ? t`New SSH host` : editing ? t`Edit SSH host` : t`SSH`}
         onBack={editing ? () => setEditing(null) : undefined}
@@ -136,7 +140,10 @@ export function SshHostList() {
                   accessibilityRole="button"
                   accessibilityLabel={t`Add an SSH host`}
                   onPress={() => setEditing('new')}
-                  style={[styles.primaryButton, { backgroundColor: theme.colors.primary }]}>
+                  style={[
+                    styles.primaryButton,
+                    { backgroundColor: surfaceBackground(theme.colors.primary) },
+                  ]}>
                   <Text variant="caption" color={theme.colors.onPrimary}>
                     <Trans>Add a host</Trans>
                   </Text>

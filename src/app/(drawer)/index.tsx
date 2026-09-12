@@ -1,4 +1,7 @@
-import { Button, Card, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Card } from '@/components/themed-card';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { Button } from '@/components/themed-button';
 import { Image } from 'expo-image';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
 import {
@@ -46,14 +49,25 @@ import {
 } from '@/lib/responsive-layout';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
 import type { ServerAgent, ServerAgentsSnapshot } from '@/lib/server-agents';
-import { reachabilityFromProbe, type ServerReachability } from '@/lib/server-reachability';
+import {
+  reachabilityFromProbe,
+  serversToProbe,
+  type ServerReachability,
+} from '@/lib/server-reachability';
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useServerSession } from '@/stores/server-session';
+import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
+import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
+import { useThemeLibrary } from '@/stores/theme-library';
+import { resolveHomeIdentity } from '@/theme/resolve';
+import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 
 const brandMark = require('../../../assets/images/loading-mark.png');
 
@@ -86,6 +100,18 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   const router = useRouter();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const customTheme = useThemeLibrary((state) => state.active);
+  const identity = resolveHomeIdentity(customTheme?.manifest);
+  const hasScene = useHasThemeArtwork('home.background', 'shell.background');
+  const customAssets = useThemeLibrary(
+    (state) =>
+      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
+  );
+  const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  const customLogo =
+    identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
+  const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
@@ -107,8 +133,17 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   const keepServerAgents = useServerAgents((state) => state.keepOnly);
 
   const probes = useServerReachability((state) => state.probes);
-  const refreshReachability = useServerReachability((state) => state.refresh);
+  const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const keepReachability = useServerReachability((state) => state.keepOnly);
+
+  // Which servers have been opened on this device, and when. Already stored for
+  // the "while you were away" digest; the probe order is its second reader, and
+  // wants exactly the same fact -- which machines this person actually uses.
+  const lastViewedByServer = useServerLastViewed((state) => state.byServer);
+  const hydrateLastViewed = useServerLastViewed((state) => state.hydrate);
+  useEffect(() => {
+    void hydrateLastViewed();
+  }, [hydrateLastViewed]);
   const padReachabilityByServer = useMemo(
     () =>
       Object.fromEntries(
@@ -162,50 +197,58 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
     keepReachability(serverIds);
   }, [keepReachability, keepServerAgents, loading, hydrationError, serverIds]);
 
-  // Ask the one server the app is already configured for whether it is there.
-  // On focus rather than on an interval: the answer is only worth having while
-  // someone is looking at it, and the store rate-limits repeat asks. Every
-  // other card says `NOT CONNECTED`, which is the honest description of a
-  // machine nobody asked -- see `stores/server-reachability.ts` for why the
-  // list does not fan out.
+  // Ask the servers worth asking whether they are there. On focus rather than
+  // on an interval: the answer is only worth having while someone is looking at
+  // it, and the store rate-limits repeat asks.
+  //
+  // Up to `MAX_PROBED_SERVERS`, configured record first and most recently viewed
+  // after -- see `serversToProbe`. Anything past that ceiling still says
+  // `NOT CONNECTED`, which remains the honest description of a machine nobody
+  // asked; what changed is that the common case is no longer "nobody asked".
+  const probeTargets = useMemo(
+    () =>
+      serversToProbe(
+        // A tunnelled record is excluded because its stored address belongs to
+        // the SSH host rather than the gateway, and the demo record has nothing
+        // to answer. Both are the store's guards too; filtering here as well
+        // keeps them out of the ceiling, so four real servers are not crowded
+        // out by records that were never going to be probed.
+        records.filter((server) => server.serverId !== DEMO_SERVER_ID && !server.sshTunnel),
+        lastViewedByServer,
+        record?.serverId
+      ),
+    [records, lastViewedByServer, record?.serverId]
+  );
+
   useFocusEffect(
     useCallback(() => {
-      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) return;
-      void refreshReachability({
-        serverId: record.serverId,
-        url: record.url,
-        token: record.token,
-        deviceId: record.deviceId,
-        transportKey: record.transportKey,
-        transport: record.transport,
-      });
-    }, [record, refreshReachability])
+      // Reachability and nothing else. This used to also warm the configured
+      // server's workspace -- six requests on every return to the list -- so
+      // that opening it painted instead of saying Connecting. The list is not
+      // where that belongs: it exists to say which machines are up and to get
+      // out of the way. The workspace keeps its own last snapshot
+      // (`server-warm-cache`) and paints from it on re-entry; a server not
+      // opened recently costs one honest round trip.
+      void refreshReachabilityMany(probeTargets);
+    }, [probeTargets, refreshReachabilityMany])
   );
 
   // A pull is someone asking, so it overrides the store's own rate limit. The
   // focus probe deliberately does not -- it fires on every return to the
   // screen, and honouring all of those would put the pairing token on the wire
   // for a fact the app already has.
+  //
+  // The same set as the focus probe, forced. A refresh that re-asked only the
+  // configured server would leave the other dots showing an answer from up to
+  // `REACHABILITY_FRESH_MS` ago while the control said it had just refreshed.
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      if (record && record.serverId !== DEMO_SERVER_ID && !record.sshTunnel) {
-        await refreshReachability(
-          {
-            serverId: record.serverId,
-            url: record.url,
-            token: record.token,
-            deviceId: record.deviceId,
-            transportKey: record.transportKey,
-            transport: record.transport,
-          },
-          { force: true }
-        );
-      }
+      await refreshReachabilityMany(probeTargets, { force: true });
     } finally {
       setRefreshing(false);
     }
-  }, [record, refreshReachability]);
+  }, [probeTargets, refreshReachabilityMany]);
 
   const onScroll = useAnimatedScrollHandler({
     onScroll(event) {
@@ -218,6 +261,25 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   }));
 
   function openServer(serverId: string, paneId?: string) {
+    // Fetch on intent, not on sight.
+    //
+    // This screen used to warm the configured server's workspace on every
+    // focus -- six requests each time, for a server the reader might never
+    // open, and the single most expensive thing the list did. Warming on the
+    // tap instead costs the same six requests but only when they are certainly
+    // wanted, and buys *more* speed rather than less: the request is already in
+    // flight while the push animates, so the workspace screen finds a filled
+    // cache on mount (`warmWorkspace` seeds both `data` and the connection
+    // phase) instead of painting `Connecting` and asking afterwards.
+    //
+    // Deliberately not awaited. The push has to be on this frame, and the
+    // warm's only job is to be further along than it would otherwise be by the
+    // time the screen asks.
+    if (serverId !== DEMO_SERVER_ID) {
+      const server = records.find((item) => item.serverId === serverId);
+      if (server && !server.sshTunnel)
+        void warmConfiguredWorkspace(serverId, useServerSession.getState().byServer[serverId]);
+    }
     // Push straight away so the slide-in is immediate; the server screen
     // selects the record on mount. Awaiting the SecureStore write here left a
     // dead beat that read as no transition at all.
@@ -250,6 +312,11 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
       padRail={
         isPad ? (
           <PadServerRail
+            homeBrand={{
+              name: identity.name,
+              logo: identity.logo ? logoSource : null,
+              visible: identity.showBrand,
+            }}
             servers={records}
             agentsByServer={agentsByServer}
             reachabilityByServer={padReachabilityByServer}
@@ -264,7 +331,8 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           />
         ) : undefined
       }>
-      <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
+        <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
         {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
@@ -274,14 +342,44 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           so the only thing that changes is where the brand is. */}
         {!isPad ? (
           <SafeAreaView edges={['top']} style={styles.topBar}>
-            <Animated.View pointerEvents="none" style={[styles.compactTitle, compactTitleStyle]}>
-              <View style={[styles.compactIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
-                <Image source={brandMark} contentFit="contain" style={styles.compactMark} />
-              </View>
-              <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
-                {t`Muqun`}
-              </Text>
-            </Animated.View>
+            {identity.showBrand ? (
+              <Animated.View
+                testID="home-brand-compact"
+                pointerEvents="none"
+                style={[
+                  styles.compactTitle,
+                  compactTitleStyle,
+                  hasScene && {
+                    backgroundColor: background(theme.colors.surface),
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                  },
+                ]}>
+                <ThemedSurfaceArtwork
+                  slot="navigation.background"
+                  baseColor={theme.colors.surface}
+                />
+                {identity.logo ? (
+                  <View
+                    style={[
+                      styles.compactIcon,
+                      { backgroundColor: background(theme.colors.surfaceRaised) },
+                    ]}>
+                    <Image
+                      source={logoSource}
+                      onError={() => setFailedLogo(customLogo ?? null)}
+                      contentFit="contain"
+                      style={styles.compactMark}
+                    />
+                  </View>
+                ) : null}
+                {identity.name ? (
+                  <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
+                    {identity.name}
+                  </Text>
+                ) : null}
+              </Animated.View>
+            ) : null}
 
             {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
             the app's front door to everything that is not a server -- so it
@@ -347,8 +445,9 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             came for, and the name steps back to being the top of the page.
             `listLayout` carries the one change between them, so pairing a first
             server folds the poster down rather than cutting to a smaller one. */}
-          {!isPad ? (
+          {!isPad && identity.showBrand ? (
             <Animated.View
+              testID="home-brand-expanded"
               entering={riseIn()}
               layout={listLayout('medium')}
               style={[
@@ -359,36 +458,60 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
               gave a shape the mark already has, and cost it 30% of its own
               footprint to draw -- so the part meant to be read was the smaller
               half of the thing drawing attention to it. */}
-              <Image
-                source={brandMark}
-                contentFit="contain"
-                style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
-              />
-              <View style={styles.titleCopy}>
-                <Text
+              {identity.logo ? (
+                <Image
+                  source={logoSource}
+                  onError={() => setFailedLogo(customLogo ?? null)}
+                  contentFit="contain"
+                  style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
+                />
+              ) : null}
+              {identity.name ? (
+                <View
                   style={[
-                    styles.brandTitle,
-                    {
-                      color: theme.colors.text,
-                      fontSize: metrics.brand.titleSize,
-                      lineHeight: metrics.brand.titleLineHeight,
-                      letterSpacing: metrics.brand.titleTracking,
+                    styles.titleCopy,
+                    hasScene && {
+                      flex: 0,
+                      flexShrink: 1,
+                      backgroundColor: background(theme.colors.background),
+                      padding: 10,
+                      borderRadius: 14,
+                      overflow: 'hidden',
                     },
                   ]}>
-                  {t`Muqun`}
-                </Text>
-                {/* Only where it is the whole message. On a screen already showing
+                  {hasScene ? (
+                    <ThemedSurfaceArtwork
+                      slot="navigation.background"
+                      baseColor={theme.colors.background}
+                    />
+                  ) : null}
+                  <Text
+                    style={[
+                      styles.brandTitle,
+                      {
+                        color: theme.colors.text,
+                        fontSize: metrics.brand.titleSize,
+                        lineHeight: metrics.brand.titleLineHeight,
+                        letterSpacing: metrics.brand.titleTracking,
+                      },
+                    ]}>
+                    {identity.name}
+                  </Text>
+                  {/* Only where it is the whole message. On a screen already showing
                 a machine and what is running on it, a line about what the app
                 is for is the product introducing itself to someone who has
                 been using it for months. */}
-                {metrics.brand.showsTagline ? (
-                  <Text variant="bodySmall" color={theme.colors.textMuted}>
-                    <Trans>Your agents, anywhere.</Trans>
-                  </Text>
-                ) : null}
-              </View>
+                  {metrics.brand.showsTagline ? (
+                    <Text variant="bodySmall" color={theme.colors.textMuted}>
+                      <Trans>Your agents, anywhere.</Trans>
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
             </Animated.View>
           ) : null}
+
+          <ThemeArtwork slot="home.decoration" banner />
 
           {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
           {loading && !hydrationError ? (
@@ -413,7 +536,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                     {
                       padding: metrics.cardPadding,
                       borderRadius: metrics.cardRadius,
-                      backgroundColor: theme.colors.surface,
+                      backgroundColor: background(theme.colors.surface),
                     },
                   ]}>
                   <View style={styles.identityRow}>
@@ -447,7 +570,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                 // list does not: it starts where the reader is already looking
                 // and lets its slack collect underneath, because a single card
                 // marooned at mid-screen reads as a page still loading.
-                metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
+                identity.showBrand && metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
               ]}
             />
           ) : null}
@@ -543,13 +666,18 @@ function HeaderButton({
   children: ReactNode;
 }) {
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={8}
       onPress={onPress}
-      style={[styles.headerButton, { backgroundColor: theme.colors.surface }]}>
+      style={[
+        styles.headerButton,
+        { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
+      ]}>
+      <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
       {children}
     </PressableScale>
   );
@@ -604,6 +732,7 @@ function ServerCard({
   const { _ } = useLinguiRuntime();
 
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
 
   // Read at render because freshness is relative to *now*, not to whenever the
   // last state change happened: a card sitting untouched has to keep telling the
@@ -618,13 +747,15 @@ function ServerCard({
 
   return (
     <Animated.View entering={riseIn(cardDelay)} layout={listLayout()}>
-      <View
+      <ThemedSurface
+        slot="cards.decoration"
+        baseColor={theme.colors.surface}
         style={[
           styles.serverSection,
           {
             padding: metrics.cardPadding,
             borderRadius: metrics.cardRadius,
-            backgroundColor: theme.colors.surface,
+            overflow: 'hidden',
           },
         ]}>
         <View style={styles.identityRow}>
@@ -645,7 +776,9 @@ function ServerCard({
               style={[
                 styles.serverAvatar,
                 {
-                  backgroundColor: selected ? theme.colors.primary : theme.colors.surfaceRaised,
+                  backgroundColor: background(
+                    selected ? theme.colors.primary : theme.colors.surfaceRaised
+                  ),
                 },
               ]}>
               {selected ? (
@@ -747,7 +880,7 @@ function ServerCard({
           nowMs={nowMs}
           onOpenAgent={onOpenAgent}
         />
-      </View>
+      </ThemedSurface>
     </Animated.View>
   );
 }
@@ -770,6 +903,7 @@ function EmptyState({
 
   const theme = useThemeTokens();
   const corners = [styles.cornerTL, styles.cornerTR, styles.cornerBL, styles.cornerBR];
+  const hasIllustration = useHasThemeArtwork('emptyState.illustration');
 
   return (
     // It had an entrance and no exit, so pairing the first server made this
@@ -783,15 +917,28 @@ function EmptyState({
             the accent because the accent on this card belongs to the button --
             spending it twice, once on a picture of the action and once on the
             action, is what made the card read as two invitations. */}
-        <View style={styles.scanFrame}>
-          {corners.map((corner, index) => (
-            <View
-              key={index}
-              style={[styles.corner, corner, { borderColor: theme.colors.borderStrong }]}
-            />
-          ))}
-          <Server size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
-        </View>
+        {hasIllustration ? (
+          <View
+            style={{
+              width: isPad ? 180 : 128,
+              aspectRatio: 1,
+              alignSelf: 'center',
+              borderRadius: 24,
+              overflow: 'hidden',
+            }}>
+            <ThemeArtwork slot="emptyState.illustration" />
+          </View>
+        ) : (
+          <View style={styles.scanFrame}>
+            {corners.map((corner, index) => (
+              <View
+                key={index}
+                style={[styles.corner, corner, { borderColor: theme.colors.borderStrong }]}
+              />
+            ))}
+            <Server size={26} color={theme.colors.textMuted} strokeWidth={1.8} />
+          </View>
+        )}
         <View style={[styles.emptyCopy, isPad && styles.padEmptyCopy]}>
           <Text variant="subheading">
             <Trans>Pair your first server</Trans>
@@ -954,8 +1101,8 @@ const styles = StyleSheet.create({
     // the icon travels straight up out of the block rather than sliding to a
     // centre it never occupied.
     left: CONTENT_GUTTER + BRAND_BLOCK_INSET,
-    // Clear of both controls and the gap before them.
-    right: HEADER_GUTTER + HEADER_BUTTON_SIZE * 2 + HEADER_BUTTON_GAP * 2,
+    // Reserve all three actions (SSH, scan, settings), including their gaps.
+    right: HEADER_GUTTER + HEADER_BUTTON_SIZE * 3 + HEADER_BUTTON_GAP * 3,
     bottom: 10,
     height: 40,
     flexDirection: 'row',
@@ -975,6 +1122,8 @@ const styles = StyleSheet.create({
     height: '72%',
   },
   compactTitleText: {
+    flex: 1,
+    minWidth: 0,
     fontWeight: '600',
   },
   // The horizontal inset and the measure come from `homeServerListLayout` at

@@ -1,4 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { router, type Href } from 'expo-router';
 import { Bell, X } from 'lucide-react-native';
@@ -16,6 +17,7 @@ import { PressableScale } from './pressable-scale';
 
 /** Mounted inside AppLockGate: neither contents nor actions cross the lock. */
 export function InAppNotificationHost() {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const enabled = useAppSettings((state) => state.notificationsEnabled);
@@ -46,12 +48,12 @@ export function InAppNotificationHost() {
         style={[
           styles.card,
           {
-            backgroundColor: colors.surfaceRaised,
+            backgroundColor: surfaceBackground(colors.surfaceRaised),
             borderColor: colors.border,
           },
         ]}
         testID="in-app-notification">
-        <View style={[styles.icon, { backgroundColor: colors.primarySubtle }]}>
+        <View style={[styles.icon, { backgroundColor: surfaceBackground(colors.primarySubtle) }]}>
           <Bell size={18} color={colors.primary} />
         </View>
         <View style={styles.content} accessibilityLiveRegion="polite">

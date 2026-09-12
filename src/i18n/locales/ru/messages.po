@@ -87,9 +87,9 @@ msgstr "{0} мин. назад"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· спрашивал # раз} few {· спрашивал # раза} many {· спрашивал # раз} other {· спрашивал # раза}}"
 
-#: src/app/commands.tsx
-msgid "{collaborationCount} assigned tasks · view agents and output"
-msgstr "Назначено задач: {collaborationCount} · посмотреть ход работы"
+#: src/components/agent-assignment-bar.tsx
+msgid "{commandName} · sending to"
+msgstr "{commandName} · отправка"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -119,6 +119,11 @@ msgstr "Ещё {overflow}"
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "Gateway на машине, куда вы можете зайти по SSH, даже если он слушает только собственный loopback"
 
+#. placeholder {0}: assignment.target.kind
+#: src/components/server-terminal-workspace.tsx
+msgid "a new {0}"
+msgstr "новый {0}"
+
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
 msgstr "Ключ сервера запоминается в первый раз и проверяется при каждом следующем подключении; изменившийся ключ останавливает соединение, пока вы не решите иначе"
@@ -134,6 +139,10 @@ msgstr "Симулятором можно управлять, а не тольк
 #: src/components/simfarm-stage.tsx
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "Выключенному симулятору может понадобиться минута, чтобы запуститься"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "A terminal was created. Check it before sending again — your task is still here."
+msgstr "Терминал создан. Проверьте его, прежде чем отправлять снова, — ваша задача сохранена"
 
 #: src/app/settings.tsx
 msgid "About"
@@ -168,10 +177,6 @@ msgstr "Добавить компьютер"
 msgid "Add one first"
 msgstr "Сначала добавьте один"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Add reference images"
-msgstr "Добавить изображения-референсы"
-
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Добавьте эту строку в ~/.ssh/authorized_keys на сервере:"
@@ -180,23 +185,17 @@ msgstr "Добавьте эту строку в ~/.ssh/authorized_keys на се
 msgid "AGENT"
 msgstr "АГЕНТ"
 
-#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
 msgstr "Совместная работа агентов"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Agent collaboration is available in Herdr sessions."
-msgstr "Совместная работа доступна в сеансах Herdr"
-
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
 msgstr "КОМАНДЫ АГЕНТА"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Agent no longer present"
 msgstr "Агент больше не запущен"
@@ -241,10 +240,6 @@ msgstr "Разрешите уведомления в системных наст
 msgid "Allow the camera, or enter the address instead."
 msgstr "Разрешите камеру или введите адрес вручную"
 
-#: src/app/agent-collaboration.tsx
-msgid "An extra pair of hands"
-msgstr "Ещё один помощник"
-
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Ответ"
@@ -266,6 +261,10 @@ msgstr "Блокировка приложения включена"
 msgid "App Lock unavailable"
 msgstr "Блокировка приложения недоступна"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "Название приложения и слоган"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Оформление"
@@ -275,6 +274,10 @@ msgstr "Оформление"
 msgid "Appearance, terminal, security"
 msgstr "Оформление, терминал, безопасность"
 
+#: src/components/custom-theme-library.tsx
+msgid "Apply theme"
+msgstr "Применить тему"
+
 #: src/i18n/labels.ts
 msgid "Approve"
 msgstr "Разрешить"
@@ -282,10 +285,6 @@ msgstr "Разрешить"
 #: src/i18n/labels.ts
 msgid "Approve and don't ask again"
 msgstr "Разрешить и больше не спрашивать"
-
-#: src/app/agent-collaboration.tsx
-msgid "Ask another agent to review a change, investigate a bug, or run tests. Follow its status here while you keep working."
-msgstr "Поручите другому агенту проверить изменения, разобраться с ошибкой или запустить тесты. Следите за его состоянием здесь, продолжая свою работу"
 
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
@@ -299,31 +298,17 @@ msgstr "Проверяем этот код у Gateway"
 msgid "Asking the server what it can run…"
 msgstr "Спрашиваем сервер, что он может запустить…"
 
-#: src/app/agent-collaboration.tsx
-msgid "Assign a task"
-msgstr "Назначить задачу"
-
 #: src/app/commands.tsx
-msgid "Assign work to another agent and follow its progress."
-msgstr "Поручите работу другому агенту и следите за её ходом"
+msgid "Assign a task"
+msgstr "Поручить задачу"
 
-#: src/app/agent-collaboration.tsx
-msgid "Assignment history"
-msgstr "История поручений"
+#: src/components/server-terminal-workspace.tsx
+msgid "Assign this to an assistant"
+msgstr "Поручить ассистенту"
 
-#. placeholder {0}: history.length
-#: src/app/agent-collaboration.tsx
-msgid "Assignment history ({0})"
-msgstr "История поручений ({0})"
-
-#: src/app/agent-collaboration.tsx
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "Действия с поручением"
-
-#: src/app/agent-collaboration.tsx
-msgid "Assignments on this device · current session"
-msgstr "Задачи на этом устройстве · текущий сеанс"
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant started"
+msgstr "Ассистент запущен"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -362,10 +347,6 @@ msgstr "Назад"
 msgid "Back one word"
 msgstr "На слово назад"
 
-#: src/app/agent-collaboration.tsx
-msgid "Back to assigned tasks"
-msgstr "Назад к назначенным задачам"
-
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "К серверам"
@@ -392,9 +373,21 @@ msgstr "биометрия"
 msgid "Blocked"
 msgstr "Ждёт ответа"
 
+#: src/components/theme-link-import.tsx
+msgid "Branch and theme file came from the link. A branch can change later"
+msgstr "Ветка и файл темы взяты из ссылки. Ветка может измениться позже"
+
+#: src/components/theme-link-import.tsx
+msgid "Branch or commit (optional)"
+msgstr "Ветка или коммит (необязательно)"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "Браузер"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "Встроенные темы"
 
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
@@ -404,6 +397,7 @@ msgstr "Доступ к камере выключен. Включите его �
 msgid "Camera access needed"
 msgstr "Нужен доступ к камере"
 
+#: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-alerts.tsx
@@ -411,7 +405,7 @@ msgstr "Нужен доступ к камере"
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
-#: src/hooks/use-agent-collaboration.ts
+#: src/components/theme-link-import.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Отмена"
@@ -430,6 +424,10 @@ msgstr "Отменить правку {0}"
 msgid "Cancelled"
 msgstr "Отменено"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "Меняет цветные фоны, но не текст, значки или иллюстрации"
+
 #: src/i18n/labels.ts
 msgid "Chat"
 msgstr "Чат"
@@ -438,10 +436,13 @@ msgstr "Чат"
 msgid "Check device authentication settings and try again."
 msgstr "Проверьте настройки аутентификации устройства и попробуйте ещё раз"
 
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "Перед повторной отправкой проверьте помощника: возможно, он уже получил запрос"
+
+#: src/components/theme-link-import.tsx
+msgid "Check the repository URL, branch and theme file"
+msgstr "Проверьте URL репозитория, ветку и файл темы"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
@@ -458,6 +459,18 @@ msgstr "Выберите симулятор"
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator from the menu."
 msgstr "Выберите симулятор в меню"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Choose an assistant"
+msgstr "Выберите ассистента"
+
+#: src/app/commands.tsx
+msgid "Choose an assistant above the message field · {collaborationCount} assigned"
+msgstr "Выберите ассистента над полем ввода · назначено: {collaborationCount}"
+
+#: src/app/commands.tsx
+msgid "Choose an assistant above the message field, then write the task there."
+msgstr "Выберите ассистента над полем ввода и напишите задачу там"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -489,10 +502,6 @@ msgstr "Очистить терминал"
 msgid "Close"
 msgstr "Закрыть"
 
-#: src/app/agent-collaboration.tsx
-msgid "Close agent collaboration"
-msgstr "Закрыть совместную работу"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Закрыть файл"
@@ -514,6 +523,7 @@ msgid "Close pairing"
 msgstr "Закрыть привязку"
 
 #: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "Закрыть предпросмотр"
@@ -621,6 +631,10 @@ msgstr "Подтвердить отвязку {label}"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "Подтвердите: {removeLabel} {label}"
+
+#: src/components/custom-theme-preview.tsx
+msgid "Connect"
+msgstr "Подключиться"
 
 #. placeholder {0}: machine.label
 #: src/components/machine-switcher-sheet.tsx
@@ -811,10 +825,6 @@ msgstr "Копировать открытый ключ"
 msgid "Could not add a file"
 msgstr "Не удалось добавить файл"
 
-#: src/hooks/use-agent-references.ts
-msgid "Could not add images. Choose up to nine images, each under 10 MB."
-msgstr "Не удалось добавить изображения. Выберите до девяти изображений размером менее 10 МБ каждое"
-
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Не удалось подключиться"
@@ -836,7 +846,6 @@ msgid "Could not generate a key"
 msgstr "Не удалось создать ключ"
 
 #: src/components/new-task-sheet.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Could not list this server's agents."
 msgstr "Не удалось получить список агентов этого сервера"
 
@@ -901,14 +910,9 @@ msgid "Could not read saved servers. Your saved data has not been changed. Unloc
 msgstr "Не удалось прочитать сохранённые серверы. Сохранённые данные не изменены. Разблокируйте устройство и повторите попытку"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "Не удалось прочитать терминал"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not refresh agent status."
-msgstr "Не удалось обновить состояние агента"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -930,6 +934,10 @@ msgstr "Не удалось сохранить хост"
 msgid "Could not save shortcut"
 msgstr "Не удалось сохранить команду"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Could not save theme"
+msgstr "Не удалось сохранить тему"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Не удалось отправить"
@@ -949,10 +957,6 @@ msgstr "Не удалось отправить клавишу"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Не удалось отправить быструю команду"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not send the task."
-msgstr "Не удалось отправить задачу"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -978,10 +982,6 @@ msgstr "Не удалось обновить сеанс"
 msgid "Could not upload the file."
 msgstr "Не удалось загрузить файл"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
-msgstr "Не удалось проверить версию Herdr. Подключитесь заново или обновите Muqun Gateway"
-
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Текущий агент"
@@ -994,10 +994,15 @@ msgstr "Текущий компьютер"
 msgid "Current path"
 msgstr "Текущий путь"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "Текущая тема"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Настройте команды терминала и сочетания клавиш"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Тёмная"
@@ -1009,6 +1014,10 @@ msgstr "По умолчанию"
 #: src/components/approval-banner.tsx
 msgid "DEFAULT"
 msgstr "ПО УМОЛЧАНИЮ"
+
+#: src/components/theme-link-import.tsx
+msgid "Defaults to theme.json at the repository root"
+msgstr "По умолчанию — theme.json в корне репозитория"
 
 #: src/components/row-action-menu.tsx
 msgid "Delete"
@@ -1022,6 +1031,10 @@ msgstr "Удалить {name}"
 msgid "Delete this line"
 msgstr "Удалить эту строку"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Delivery not confirmed"
+msgstr "Доставка не подтверждена"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Демо-shell"
@@ -1033,10 +1046,6 @@ msgstr "Демо-пространство"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Отклонить"
-
-#: src/app/agent-collaboration.tsx
-msgid "Describe the task and what a good result looks like."
-msgstr "Опишите задачу и ожидаемый результат"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -1085,7 +1094,7 @@ msgstr "Скрыть новости"
 msgid "Docs"
 msgstr "Документы"
 
-#: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1100,6 +1109,10 @@ msgstr "Завершить правку быстрых команд"
 #: src/i18n/labels.ts
 msgid "Down arrow"
 msgstr "Стрелка вниз"
+
+#: src/components/theme-link-import.tsx
+msgid "Download and preview"
+msgstr "Скачать и просмотреть"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1167,10 +1180,6 @@ msgstr "Ввести URL вручную"
 msgid "Escape"
 msgstr "Escape"
 
-#: src/app/agent-collaboration.tsx
-msgid "Existing assistant"
-msgstr "Текущий помощник"
-
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -1181,6 +1190,14 @@ msgstr "Развернуть {0}"
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "Истекает через {0}:{1}"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export colors"
+msgstr "Экспортировать цвета"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export theme"
+msgstr "Экспортировать тему"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -1219,9 +1236,25 @@ msgstr "Отпечаток"
 msgid "FIRST PROMPT"
 msgstr "ПЕРВЫЙ ПРОМПТ"
 
+#: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "Исправьте ошибки JSON перед форматированием"
+
+#: src/components/custom-theme-library.tsx
+msgid "Fix text contrast before applying this theme"
+msgstr "Исправьте контраст текста перед применением этой темы"
+
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Свернуть шаги инструментов"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "Форматировать JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "После форматирования JSON превышает допустимый размер темы"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1323,19 +1356,10 @@ msgstr "Скрыть {0}"
 msgid "Hide {name}"
 msgstr "Скрыть {name}"
 
-#: src/app/agent-collaboration.tsx
-msgid "Hide assignment history"
-msgstr "Скрыть историю поручений"
-
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Скрыть клавиатуру"
 
-#: src/app/agent-collaboration.tsx
-msgid "Hide other agent types"
-msgstr "Скрыть другие типы"
-
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "Скрыть вывод"
@@ -1382,13 +1406,21 @@ msgstr "Если проблема сохраняется, перезапусти
 msgid "Images"
 msgstr "Изображения"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Images will be uploaded to {gatewayName} and shared with the new assistant. Its AI provider may process them. They are not automatically copied to other machines."
-msgstr "Изображения будут загружены на {gatewayName} и переданы новому ассистенту. Его провайдер ИИ может их обработать. Они не будут автоматически скопированы на другие машины"
+#: src/components/theme-link-import.tsx
+msgid "Images download from"
+msgstr "Источники загрузки изображений"
 
-#: src/app/agent-collaboration.tsx
-msgid "Include current terminal output"
-msgstr "Приложить вывод текущего терминала"
+#: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "Импорт"
+
+#: src/components/custom-theme-library.tsx
+msgid "Import file"
+msgstr "Импортировать файл"
+
+#: src/components/custom-theme-library.tsx
+msgid "Import link"
+msgstr "Импорт по ссылке"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -1408,6 +1440,14 @@ msgstr "Режим вставки"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Команда установки скопирована"
+
+#: src/components/custom-theme-library.tsx
+msgid "Installing images"
+msgstr "Установка изображений"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "Непрозрачность фона интерфейса"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1432,6 +1472,10 @@ msgstr "Возможно, он устарел или предназначен д
 #: src/components/pairing-camera.tsx
 msgid "It was found, but never showed a picture. Another app may be holding it."
 msgstr "Камера найдена, но так и не показала изображение. Возможно, её занимает другое приложение"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "It works on its own. Follow it in Agent collaboration."
+msgstr "Он работает самостоятельно. Следите за ним в разделе «Совместная работа агентов»"
 
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
@@ -1540,6 +1584,7 @@ msgstr "Стрелка влево"
 msgid "Letters"
 msgstr "Буквы"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Светлая"
@@ -1562,6 +1607,7 @@ msgstr "Live Activity"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
+#: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Загрузка"
 
@@ -1631,28 +1677,26 @@ msgstr "Управление компьютерами"
 msgid "Manage SSH hosts"
 msgstr "Управлять SSH-хостами"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "Отметить как проверенное"
-
-#. placeholder {0}: index + 1
-#: src/components/agent-reference-editor.tsx
-msgid "May include image {0} in the result"
-msgstr "Можно включить изображение {0} в результат"
-
-#: src/components/agent-reference-editor.tsx
-msgid "May include in the result"
-msgstr "Можно включить в результат"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Упомянуть {0}"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "Минимальная непрозрачность для читаемого текста: {minimumPercent}%"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Изменён"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "Другие действия"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -1667,8 +1711,6 @@ msgid "Move the simulator controls"
 msgstr "Переместить кнопки симулятора"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/(drawer)/index.tsx
-#: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -1718,6 +1760,10 @@ msgstr "Muqun остаётся на этом языке, что бы ни был
 msgid "Muqun will use {0} when the app opens."
 msgstr "Muqun будет использовать {0} при открытии приложения"
 
+#: src/components/custom-theme-library.tsx
+msgid "My themes"
+msgstr "Мои темы"
+
 #: src/app/commands.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
@@ -1728,7 +1774,6 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Назовите его, затем введите код, который показывает Gateway"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Needs your attention"
 msgstr "Требуется ваше внимание"
 
@@ -1741,10 +1786,6 @@ msgstr "Ни разу не подключался"
 msgid "Never seen"
 msgstr "Ни разу не был в сети"
 
-#: src/app/agent-collaboration.tsx
-msgid "New assistant"
-msgstr "Новый помощник"
-
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "Новая группа"
@@ -1753,7 +1794,6 @@ msgstr "Новая группа"
 msgid "New host key"
 msgstr "Новый ключ хоста"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "Есть новый вывод · обновить"
@@ -1792,10 +1832,6 @@ msgstr "Нет запущенных агентов"
 msgid "No app on this phone opens web pages."
 msgstr "На этом телефоне нет приложения, открывающего веб-страницы"
 
-#: src/app/agent-collaboration.tsx
-msgid "No assistants available yet. Try an existing assistant or reopen this picker."
-msgstr "Нет доступных помощников. Выберите уже запущенного или откройте эту панель заново"
-
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "Нет камеры для сканирования"
@@ -1816,9 +1852,9 @@ msgstr "Ещё нет Gateway?"
 msgid "No matching commands. Try another word."
 msgstr "Команды не найдены. Попробуйте другое слово"
 
-#: src/app/agent-collaboration.tsx
-msgid "No other agents in this session. Start a new assistant to collaborate."
-msgstr "В этом сеансе нет других агентов. Можно запустить нового помощника"
+#: src/components/agent-assignment-bar.tsx
+msgid "No other assistants in this session yet."
+msgstr "В этой сессии пока нет других ассистентов"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1865,10 +1901,6 @@ msgstr "Пока нет SSH-хостов. Добавьте один, чтобы 
 msgid "No still frames"
 msgstr "Нет стоп-кадров"
 
-#: src/app/agent-collaboration.tsx
-msgid "No visible output yet."
-msgstr "Вывода пока нет"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Недоступно"
@@ -1886,12 +1918,9 @@ msgid "NOT CONNECTED"
 msgstr "НЕ ПОДКЛЮЧЁН"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Не найден"
-
-#: src/app/agent-collaboration.tsx
-msgid "Not found on the Gateway's PATH. Herdr may still be able to start it."
-msgstr "Не найден в PATH сервера Gateway. Возможно, Herdr всё же сможет его запустить"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -1930,10 +1959,6 @@ msgstr "Уведомления не разрешены"
 msgid "Off"
 msgstr "Выключено"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Off means reference only. This does not grant permission to publish the image."
-msgstr "Если выключено, изображение используется только как референс. Это не даёт разрешения на его публикацию"
-
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "НЕ В СЕТИ"
@@ -1953,10 +1978,6 @@ msgstr "В сети"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "В СЕТИ"
-
-#: src/app/agent-collaboration.tsx
-msgid "Only the text below is shared. Conversation history is not shared automatically."
-msgstr "Передаётся только текст ниже. История разговора автоматически не передаётся"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2025,7 +2046,6 @@ msgstr "Открыть настройки"
 msgid "Open SSH host {0}"
 msgstr "Открыть SSH-хост {0}"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Open terminal"
 msgstr "Открыть терминал"
@@ -2039,10 +2059,6 @@ msgstr "Открыть обозреватель файлов"
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Открыть пространство {0}, {1, plural, one {# в работе} few {# в работе} many {# в работе} other {# в работе}}. Удерживайте, чтобы закрыть"
-
-#: src/components/agent-reference-editor.tsx
-msgid "Opening photos…"
-msgstr "Открываем фото…"
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -2068,18 +2084,10 @@ msgstr "Открывает меню симулятора: устройство, 
 msgid "Opens this agent's terminal"
 msgstr "Открывает терминал этого агента"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Optional images stay on this device until you approve sending"
-msgstr "Необязательные изображения останутся на этом устройстве, пока вы не разрешите отправку"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Параметры {0}"
-
-#: src/app/agent-collaboration.tsx
-msgid "Other agent types"
-msgstr "Другие типы агентов"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2156,6 +2164,14 @@ msgstr "Пароли и ключи запечатаны в связке ключ
 msgid "Paste"
 msgstr "Вставить"
 
+#: src/components/theme-link-import.tsx
+msgid "Paste a public theme link or GitHub repository"
+msgstr "Вставьте публичную ссылку на тему или URL репозитория GitHub"
+
+#: src/components/custom-theme-library.tsx
+msgid "Paste JSON"
+msgstr "Вставить JSON"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2164,6 +2180,10 @@ msgstr "Путь"
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
 msgstr "Медиатека"
+
+#: src/components/theme-link-import.tsx
+msgid "Pinned commit"
+msgstr "Зафиксированный коммит"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -2174,6 +2194,10 @@ msgstr "Порт"
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "ПОРТ"
+
+#: src/components/theme-link-import.tsx
+msgid "Preparing images"
+msgstr "Подготовка изображений"
 
 #: src/components/settings-alerts.tsx
 msgid "Preparing notification"
@@ -2187,6 +2211,12 @@ msgstr "Предъявлен сейчас"
 msgid "Press Escape to dismiss this request"
 msgstr "Нажмите Escape, чтобы отклонить этот запрос"
 
+#: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
+#: src/components/custom-theme-preview.tsx
+msgid "Preview"
+msgstr "Предпросмотр"
+
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2199,6 +2229,10 @@ msgstr "Предпросмотр симулятора"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "Предпросмотр симулятора, недоступно через SSH-туннель"
+
+#: src/components/theme-link-import.tsx
+msgid "Preview first. Your current theme stays unchanged"
+msgstr "Сначала просмотрите тему. Текущая тема не изменится"
 
 #: src/components/settings-alerts.tsx
 msgid "Preview notification"
@@ -2262,8 +2296,11 @@ msgstr "Доступен через SSH-хост {host}"
 msgid "Reaching the Gateway"
 msgstr "Подключаемся к Gateway"
 
+#: src/components/theme-link-import.tsx
+msgid "Reading the theme link"
+msgstr "Чтение ссылки на тему"
+
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
 msgstr "Ожидает ввода"
 
@@ -2275,7 +2312,6 @@ msgstr "Получать сообщения о том, что агент ждё�
 msgid "Recent commits"
 msgstr "Последние коммиты"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
 msgstr "Последний вывод"
@@ -2299,16 +2335,6 @@ msgstr "Переподключиться к {0}"
 msgid "Reconnecting · {0}"
 msgstr "Переподключение · {0}"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Reference images"
-msgstr "Изображения-референсы"
-
-#: src/components/agent-reference-editor.tsx
-#: src/hooks/use-agent-collaboration.ts
-msgid "Reference images can be sent when starting a new assistant"
-msgstr "Изображения-референсы можно отправить при запуске нового ассистента"
-
-#: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Обновить"
@@ -2317,38 +2343,35 @@ msgstr "Обновить"
 msgid "Refresh files"
 msgstr "Обновить файлы"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "Обновить вывод"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Refresh to check Gateway and Herdr compatibility before assigning."
-msgstr "Обновите данные, чтобы проверить совместимость Gateway и Herdr перед назначением"
-
-#: src/components/agent-reference-editor.tsx
+#: src/components/collaboration-notice.tsx
+#: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "Удалить"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Удалить {0}"
 
-#: src/app/agent-collaboration.tsx
-msgid "Remove from history"
-msgstr "Удалить из истории"
+#: src/components/collaboration-notice.tsx
+msgid "Remove from history?"
+msgstr "Удалить из истории?"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "Удалить хост"
 
-#. placeholder {0}: index + 1
-#: src/components/agent-reference-editor.tsx
-msgid "Remove image {0}"
-msgstr "Удалить изображение {0}"
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "Удалить эту тему?"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -2389,10 +2412,6 @@ msgstr "Обязательно"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "Требуется iOS 16.1 или новее"
-
-#: src/app/agent-collaboration.tsx
-msgid "Respond to agent"
-msgstr "Ответить агенту"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -2437,9 +2456,7 @@ msgstr "Return"
 msgid "Return to the server list and pair again."
 msgstr "Вернитесь к списку серверов и привяжите его снова"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
@@ -2457,7 +2474,6 @@ msgstr "Провести ревью pull request на GitHub"
 msgid "Review assistant"
 msgstr "Помощник по проверке"
 
-#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 msgid "Review changes"
 msgstr "Проверить изменения"
@@ -2466,21 +2482,17 @@ msgstr "Проверить изменения"
 msgid "Review finished. The theme fallback has test coverage. No changes were made."
 msgstr "Проверка завершена. Резервное поведение темы покрыто тестами. Файлы не изменялись"
 
+#: src/components/theme-link-import.tsx
+msgid "Review link"
+msgstr "Проверить ссылку"
+
 #: src/app/commands.tsx
 msgid "Review the current changes."
 msgstr "Проверьте текущие изменения"
 
-#: src/app/agent-collaboration.tsx
-msgid "Review the current changes. Report bugs and missing tests; do not edit files."
-msgstr "Проверьте текущие изменения. Сообщите об ошибках и недостающих тестах, не изменяя файлы"
-
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "Посмотрите на падающий тест и почините его"
-
-#: src/app/agent-collaboration.tsx
-msgid "Reviewed by you"
-msgstr "Проверено вами"
 
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
@@ -2518,21 +2530,9 @@ msgstr "Выполнить команду"
 msgid "Run relevant tests"
 msgstr "Запустить нужные тесты"
 
-#: src/app/agent-collaboration.tsx
-msgid "Run tests"
-msgstr "Запустить тесты"
-
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Запустите Gateway на своём компьютере и отсканируйте QR-код, который он выводит. Привязка остаётся на этом устройстве"
-
-#: src/app/agent-collaboration.tsx
-msgid "Run the relevant tests and report failures with reproduction steps."
-msgstr "Запустите нужные тесты и сообщите об ошибках с шагами воспроизведения"
-
-#: src/app/agent-collaboration.tsx
-msgid "Same workspace"
-msgstr "Та же рабочая область"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -2562,6 +2562,10 @@ msgstr "Сохранить хост"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Сохранить быструю команду"
+
+#: src/components/custom-theme-library.tsx
+msgid "Save theme"
+msgstr "Сохранить тему"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
@@ -2642,6 +2646,10 @@ msgstr "Проверен только что"
 msgid "Select all"
 msgstr "Выбрать всё"
 
+#: src/components/custom-theme-library.tsx
+msgid "Selected"
+msgstr "Выбрано"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Send {spoken}"
@@ -2651,25 +2659,25 @@ msgstr "Отправить {spoken}"
 msgid "Send a message"
 msgstr "Отправить сообщение"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Send reference images?"
-msgstr "Отправить изображения-референсы?"
-
-#: src/app/agent-collaboration.tsx
-msgid "Send task"
-msgstr "Отправить задачу"
-
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Отправить текст"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Send this task to {assignmentLabel}"
+msgstr "Отправить эту задачу: {assignmentLabel}"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send to {assignmentLabel} — tap to change"
+msgstr "Отправить: {assignmentLabel} — нажмите, чтобы изменить"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Отправить агенту"
 
-#: src/app/agent-collaboration.tsx
-msgid "Sending task…"
-msgstr "Отправляем…"
+#: src/components/agent-assignment-bar.tsx
+msgid "Sending to"
+msgstr "Отправка"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -2792,9 +2800,21 @@ msgstr "Показывать Esc, Tab, Ctrl и клавиши навигации
 msgid "Show every tool step"
 msgstr "Показать каждый шаг инструментов"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "Показывать логотип на главной"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "Показывать текст на главной"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Показать изображения"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "Показывать фон приложения за текстом терминала"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2850,7 +2870,13 @@ msgstr "Размер"
 msgid "Some files did not upload"
 msgstr "Некоторые файлы не загрузились"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "Некоторым цветам темы требуется больше контраста"
+
 #: src/components/app-error-boundary.tsx
+#: src/components/custom-theme-library.tsx
+#: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
 
@@ -2887,6 +2913,11 @@ msgstr "SSH-туннель через {host} разорван"
 msgid "stale · {age}"
 msgstr "устарело · {age}"
 
+#. placeholder {0}: profile.kind
+#: src/components/agent-assignment-bar.tsx
+msgid "Start a new {0}"
+msgstr "Запустить новый {0}"
+
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "Начать новый сеанс с пустым контекстом"
@@ -2896,10 +2927,6 @@ msgstr "Начать новый сеанс с пустым контекстом"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Запустите агента и дайте ему первое задание"
 
-#: src/app/agent-collaboration.tsx
-msgid "Start assistant and send"
-msgstr "Запустить помощника и отправить"
-
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Запустить задачу"
@@ -2907,10 +2934,6 @@ msgstr "Запустить задачу"
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Запускаем {name}"
-
-#: src/app/agent-collaboration.tsx
-msgid "Starting assistant and sending…"
-msgstr "Запуск помощника и отправка…"
 
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
@@ -2922,21 +2945,11 @@ msgstr "Запускаем камеру"
 msgid "Starting…"
 msgstr "Запуск…"
 
-#: src/app/agent-collaboration.tsx
-msgid "Starts beside this terminal in the same project."
-msgstr "Запускается рядом с этим терминалом в том же проекте"
-
-#: src/app/agent-collaboration.tsx
-msgid "Status describes the agent, not task completion. Updates while connected; review its output to confirm the result. Removing history does not stop an agent."
-msgstr "Состояние относится к агенту, а не к завершению задачи. Оно обновляется при подключении. Подтвердите результат по выводу. Удаление истории не останавливает агента"
-
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Status unavailable"
 msgstr "Состояние недоступно"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Status unknown"
 msgstr "Состояние неизвестно"
 
@@ -2947,6 +2960,11 @@ msgstr "Всё ещё выполняется…"
 #: src/app/commands.tsx
 msgid "Stop"
 msgstr "Остановить"
+
+#: src/components/agent-assignment-bar.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Stop assigning a task"
+msgstr "Отменить назначение задачи"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
@@ -3014,19 +3032,24 @@ msgstr "Коснитесь ещё раз, чтобы удалить"
 msgid "Tap to connect"
 msgstr "Нажмите для подключения"
 
-#: src/app/agent-collaboration.tsx
-msgid "Task instructions"
-msgstr "Указания к задаче"
+#: src/components/server-terminal-workspace.tsx
+msgid "Task for {assignmentLabel}"
+msgstr "Задача для {assignmentLabel}"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Task sent. You can keep working in your current terminal."
-msgstr "Задача отправлена. Можно продолжить работу в текущем терминале"
+#. placeholder {0}: assignment.target.kind
+#: src/components/server-terminal-workspace.tsx
+msgid "Task for a new {0}"
+msgstr "Задача для нового {0}"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Терминал"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "Непрозрачность фона терминала"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -3041,10 +3064,6 @@ msgstr "КОМАНДЫ ТЕРМИНАЛА"
 msgid "Terminal key row"
 msgstr "Ряд клавиш терминала"
 
-#: src/app/agent-collaboration.tsx
-msgid "Terminal snapshot · refresh to see newer output"
-msgstr "Снимок терминала · обновите, чтобы увидеть новый вывод"
-
 #: src/components/settings-terminal.tsx
 msgid "Text size"
 msgstr "Размер текста"
@@ -3056,6 +3075,10 @@ msgstr "Текст для ввода на симуляторе"
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
 msgstr "Этот ответ не дошёл до агента"
+
+#: src/hooks/use-agent-command-delivery.ts
+msgid "That assistant is no longer in this terminal. Reopen it and try again."
+msgstr "Этого ассистента больше нет в этом терминале. Откройте его заново и попробуйте ещё раз"
 
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
@@ -3088,18 +3111,6 @@ msgstr "Агент теперь спрашивает о другом"
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
 msgstr "Агент больше не ждёт"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant could not start. Check its terminal before continuing. Your task has not been sent."
-msgstr "Не удалось запустить помощника. Проверьте его терминал, прежде чем продолжить. Задание не отправлено"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant needs your approval or input in its terminal. Your task has not been sent. Your instructions are still here."
-msgstr "Помощнику требуется ваше разрешение или ввод в терминале. Задание не отправлено. Ваши инструкции сохранены"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant was created, but task delivery was not confirmed. Check its terminal before sending again. Your instructions are still here."
-msgstr "Помощник создан, но доставка задачи не подтверждена. Проверьте терминал перед повторной отправкой. Ваши указания сохранены"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
@@ -3178,18 +3189,36 @@ msgstr "Симулятор не выключился вовремя"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH-туннель переносит только порт Gateway и никакой другой, поэтому симулятор и браузер отсюда недоступны. Подключитесь через локальную сеть или Tailscale"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
-msgstr "Терминал создан, но готовность помощника ещё не подтверждена. Возможно, он всё ещё запускается. Проверьте терминал перед повторной попыткой. Ваши инструкции сохранены"
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "Тема будет удалена с этого устройства"
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Транскрипт в виде беседы, шаги инструментов свёрнуты"
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Тема"
+
+#: src/components/theme-link-import.tsx
+msgid "Theme file (optional)"
+msgstr "Файл темы (необязательно)"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme JSON"
+msgstr "JSON темы"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme saved"
+msgstr "Тема сохранена"
+
+#: src/components/theme-link-import.tsx
+msgid "Theme URL"
+msgstr "URL темы"
 
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
@@ -3199,15 +3228,6 @@ msgstr "Тема, {0}"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Этот агент не предлагал такой ответ"
-
-#: src/app/agent-collaboration.tsx
-msgid "This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one."
-msgstr "Помощник занят или ждёт вашего решения. Откройте его терминал или выберите другого помощника"
-
-#: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This assistant is no longer ready. Refresh or choose another."
-msgstr "Помощник больше не готов к вводу. Обновите данные или выберите другого"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3265,9 +3285,9 @@ msgstr "Эта ссылка никуда не ведёт"
 msgid "This QR code is not valid."
 msgstr "Этот QR-код недействителен"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "This server cannot start an assistant yet."
-msgstr "Этот сервер пока не может запускать помощников"
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This server cannot run that command yet."
+msgstr "Этот сервер пока не может выполнить эту команду"
 
 #: src/lib/network-error.ts
 msgid "This server cannot use this device's stored key. Pair it again to reconnect."
@@ -3314,6 +3334,10 @@ msgstr "Не удалось отрисовать этот терминал"
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."
 msgstr "Этот терминал больше недоступен"
+
+#: src/components/custom-theme-library.tsx
+msgid "This theme contains images that must be installed before applying"
+msgstr "Эта тема содержит изображения, которые нужно установить перед её применением"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -3369,9 +3393,14 @@ msgstr "Наберите его или используйте клавишу д�
 msgid "Type on the simulator"
 msgstr "Ввод на симуляторе"
 
+#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Отменить"
+
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "Отменить форматирование"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"
@@ -3423,38 +3452,21 @@ msgstr "Отвязываем…"
 msgid "Up arrow"
 msgstr "Стрелка вверх"
 
-#: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
-msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
-msgstr "Обновите Muqun Gateway для совместной работы. Терминалы продолжат работать как обычно"
-
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "Обновление готово · перезапуск…"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Update this Gateway to upload reference images"
-msgstr "Обновите этот Gateway, чтобы загружать изображения-референсы"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
-msgstr "Для совместной работы обновите Herdr этого сеанса до версии 0.9.0 или новее"
+#: src/components/theme-link-import.tsx
+msgid "Update the app to import public theme links. You can still import a file"
+msgstr "Обновите приложение для импорта тем по публичным ссылкам. Импорт из файла по-прежнему доступен"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Обновляем Muqun…"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Upload and send"
-msgstr "Загрузить и отправить"
-
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
 msgstr "загрузка не удалась"
-
-#: src/components/agent-reference-editor.tsx
-msgid "Upload failed. Send again to retry, or remove this image."
-msgstr "Не удалось загрузить. Отправьте ещё раз, чтобы повторить попытку, или удалите это изображение"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -3463,11 +3475,6 @@ msgstr "загружено"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "загружается"
-
-#: src/app/agent-collaboration.tsx
-#: src/components/agent-reference-editor.tsx
-msgid "Uploading…"
-msgstr "Загрузка…"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3478,9 +3485,17 @@ msgstr "Использовать {0}"
 msgid "Use device passcode"
 msgstr "Использовать код-пароль устройства"
 
+#: src/components/theme-link-import.tsx
+msgid "Use the repository URL, then enter its branch and theme file below"
+msgstr "Используйте URL репозитория, а ниже укажите ветку и файл темы"
+
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "Добавьте его кнопкой сканирования на главном экране"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "Использовать настройки темы по умолчанию"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"
@@ -3519,17 +3534,9 @@ msgstr "Ждём сеть"
 msgid "Waiting for uploads to finish…"
 msgstr "Ждём завершения загрузок…"
 
-#: src/components/agent-reference-editor.tsx
-msgid "What do you like about this image?"
-msgstr "Что вам нравится в этом изображении?"
-
 #: src/components/session-map.tsx
 msgid "What is running"
 msgstr "Что запущено"
-
-#: src/app/agent-collaboration.tsx
-msgid "What should they do?"
-msgstr "Что нужно сделать?"
 
 #: src/lib/release-notes.ts
 msgid "What's new"
@@ -3540,7 +3547,6 @@ msgid "While you were away"
 msgstr "Пока вас не было"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Работает"
@@ -3574,10 +3580,6 @@ msgstr "Скопировать эту строку"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Вчера"
-
-#: src/app/agent-collaboration.tsx
-msgid "You will stay in your current terminal. The assistant works independently."
-msgstr "Вы останетесь в текущем терминале. Помощник работает независимо"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx

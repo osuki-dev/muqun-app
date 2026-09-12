@@ -1,6 +1,7 @@
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Asset } from 'expo-asset';
+import { createThemeStarter } from '@/theme/authoring';
 
 import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
 import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
@@ -670,6 +671,17 @@ export function demoSessionAssets(): SessionAsset[] {
       origin,
       previewable: false,
     },
+    {
+      id: 'as-demo-theme',
+      path: '~/code/muqun/out/muqun.muqun-theme.json',
+      name: 'muqun.muqun-theme.json',
+      kind: 'text',
+      mime: 'application/json',
+      size: new TextEncoder().encode(demoAssetText('as-demo-theme')).length,
+      modified_unix_ms: demoAssetModifiedAt('as-demo-theme'),
+      origin,
+      previewable: true,
+    },
   ];
 }
 
@@ -843,6 +855,11 @@ export function demoPaneParts(paneId: string): Record<string, unknown> {
 }
 
 export function demoAssetText(assetId: string): string {
+  if (assetId === 'as-demo-theme') {
+    const theme = createThemeStarter();
+    theme.name = i18n._(msg`Theme`);
+    return JSON.stringify(theme, null, 2);
+  }
   return DEMO_ASSET_TEXT[assetId] ?? '';
 }
 

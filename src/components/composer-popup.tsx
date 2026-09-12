@@ -1,5 +1,7 @@
+import { Card } from '@/components/themed-card';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Card, PressableCard, Stack, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
+import { PressableCard, Stack, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -50,6 +52,7 @@ export function ComposerPopup({
 }: ComposerPopupProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   if (rows.length === 0) return null;
 
   const visibleRows = Math.min(rows.length, COMPOSER_POPUP_VISIBLE_ROWS);
@@ -82,6 +85,11 @@ export function ComposerPopup({
                 exiting={fadeOut('micro')}>
                 <PressableCard
                   variant="flat"
+                  style={{
+                    backgroundColor: surfaceBackground(
+                      theme.colors[theme.components.Card.flat.background]
+                    ),
+                  }}
                   radius="sm"
                   padding="xs"
                   onPress={() => onPick(row)}

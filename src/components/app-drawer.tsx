@@ -1,3 +1,5 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
@@ -102,6 +104,7 @@ export default function AppDrawer({
 
   const router = useRouter();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { record } = useGatewayRecord();
@@ -127,7 +130,8 @@ export default function AppDrawer({
   const serverDetail = detailTitle !== undefined;
 
   return (
-    <View style={[styles.shell, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.shell, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+      <ThemeArtwork slot="shell.background" />
       {/*
         Entering and exiting rather than a width animated to nothing: the rail
         carries a shadow, and clipping a column down to zero would have meant
@@ -145,8 +149,8 @@ export default function AppDrawer({
             styles.padRail,
             {
               width: workspaceLayout.railWidth,
-              backgroundColor: theme.colors.surface,
-              // The rail is an opaque surface, so its own top edge -- not only
+              // PadServerRail owns its fill; painting the wrapper too would
+              // double the user-selected alpha. Its own top edge -- not only
               // its first child -- has to clear the status bar. PadServerRail
               // consequently applies only the bottom safe-area inset.
               marginTop: insets.top + appChrome.layout.padWorkspaceGutter,
@@ -180,7 +184,6 @@ export default function AppDrawer({
               styles.padRailPeek,
               {
                 width: workspaceLayout.railWidth,
-                backgroundColor: theme.colors.surface,
                 marginTop: insets.top + appChrome.layout.padWorkspaceGutter,
               },
             ]}>
@@ -213,7 +216,10 @@ export default function AppDrawer({
                 onPress={() => setRailPeeked(true)}
                 style={[
                   styles.railHandle,
-                  { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  {
+                    backgroundColor: surfaceBackground(theme.colors.surface),
+                    borderColor: theme.colors.border,
+                  },
                 ]}>
                 <PanelsTopLeft size={18} color={theme.colors.textMuted} />
               </PressableScale>

@@ -1,7 +1,8 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Image } from 'expo-image';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { Image, type ImageSource } from 'expo-image';
 import {
   ChevronRight,
   Fingerprint,
@@ -20,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { useSshHostAgeLabel } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
+import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { duplicatePadServerRailLabels } from '@/lib/pad-server-rail';
@@ -63,6 +65,8 @@ export type PadServerRailProps = {
   nowMs?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  /** Home-only identity override; workspace rails retain the product identity. */
+  homeBrand?: { name: string | null; logo: ImageSource | number | null; visible: boolean };
 };
 
 /**
@@ -89,9 +93,11 @@ export function PadServerRail({
   nowMs = Date.now(),
   style,
   testID = 'pad-server-rail',
+  homeBrand,
 }: PadServerRailProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const duplicateLabels = duplicatePadServerRailLabels(servers.map((server) => server.label));
   const showsSshHosts = Boolean(sshHosts && sshHosts.length > 0 && onSelectSshHost);
 
@@ -99,20 +105,33 @@ export function PadServerRail({
     <SafeAreaView
       edges={['bottom']}
       testID={testID}
-      style={[styles.shell, { backgroundColor: theme.colors.surface }, style]}>
-      <View style={styles.brand}>
-        <View style={[styles.brandIconFrame, { backgroundColor: theme.colors.surfaceRaised }]}>
-          <Image source={brandMark} contentFit="contain" style={styles.brandIcon} />
+      style={[styles.shell, { backgroundColor: background(theme.colors.surface) }, style]}>
+      <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
+      {homeBrand?.visible !== false ? (
+        <View testID={homeBrand ? 'home-brand-rail' : undefined} style={styles.brand}>
+          {homeBrand?.logo !== null ? (
+            <View
+              style={[
+                styles.brandIconFrame,
+                { backgroundColor: background(theme.colors.surfaceRaised) },
+              ]}>
+              <Image
+                source={homeBrand?.logo ?? brandMark}
+                contentFit="contain"
+                style={styles.brandIcon}
+              />
+            </View>
+          ) : null}
+          {homeBrand?.name !== null ? (
+            <View style={styles.brandCopy}>
+              <Text variant="heading">{homeBrand?.name ?? <Trans>Muqun</Trans>}</Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                <Trans>Your agents, anywhere.</Trans>
+              </Text>
+            </View>
+          ) : null}
         </View>
-        <View style={styles.brandCopy}>
-          <Text variant="heading">
-            <Trans>Muqun</Trans>
-          </Text>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            <Trans>Your agents, anywhere.</Trans>
-          </Text>
-        </View>
-      </View>
+      ) : null}
 
       <View style={styles.heading}>
         <Text variant="label" color={theme.colors.textMuted}>
@@ -214,6 +233,7 @@ function RailAction({
   onPress: () => void;
 }) {
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   return (
     <Pressable
       accessibilityRole="button"
@@ -221,9 +241,9 @@ function RailAction({
       onPress={onPress}
       style={({ pressed }) => [
         styles.action,
-        { backgroundColor: pressed ? theme.colors.surfaceRaised : 'transparent' },
+        { backgroundColor: background(pressed ? theme.colors.surfaceRaised : 'transparent') },
       ]}>
-      <View style={[styles.actionIcon, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.actionIcon, { backgroundColor: background(theme.colors.background) }]}>
         <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
       </View>
       <View style={styles.actionCopy}>
@@ -262,6 +282,7 @@ function ServerGroup({
 }) {
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
   const selectedServer = server.serverId === selectedServerId;
 
@@ -272,9 +293,14 @@ function ServerGroup({
         testID={`${testID}-server-${server.serverId}`}
         style={[
           styles.serverPill,
-          { backgroundColor: selectedServer ? theme.colors.primarySubtle : 'transparent' },
+          {
+            backgroundColor: background(
+              selectedServer ? theme.colors.primarySubtle : 'transparent'
+            ),
+          },
         ]}>
-        <View style={[styles.serverIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
+        <View
+          style={[styles.serverIcon, { backgroundColor: background(theme.colors.surfaceRaised) }]}>
           <Server size={17} color={theme.colors.textMuted} strokeWidth={2} />
         </View>
         <View style={styles.serverCopy}>
@@ -342,6 +368,7 @@ function SshHostPill({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const address = sshHomeSubtitle(host);
   const trusted = Boolean(host.trustedHostKey);
   const lastConnected = useSshHostAgeLabel(sshHomeAge(host, nowMs));
@@ -358,9 +385,10 @@ function SshHostPill({
       onPress={onPress}
       style={({ pressed }) => [
         styles.serverPill,
-        { backgroundColor: pressed ? theme.colors.surfaceRaised : 'transparent' },
+        { backgroundColor: background(pressed ? theme.colors.surfaceRaised : 'transparent') },
       ]}>
-      <View style={[styles.serverIcon, { backgroundColor: theme.colors.surfaceRaised }]}>
+      <View
+        style={[styles.serverIcon, { backgroundColor: background(theme.colors.surfaceRaised) }]}>
         {host.auth.type === 'privateKey' ? (
           <KeyRound size={17} color={theme.colors.textMuted} strokeWidth={2} />
         ) : host.auth.type === 'keyboardInteractive' ? (

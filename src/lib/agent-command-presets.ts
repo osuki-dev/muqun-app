@@ -1,7 +1,12 @@
-export type AgentCommandPreset = {
-  description: string;
-  build: () => string;
-};
+import { createThemeAuthoringPrompt } from '@/theme/authoring';
 
-/** Trusted bundled builders only; user-authored commands remain plain instruction text. */
-export const agentCommandPresets: Readonly<Record<string, AgentCommandPreset>> = {};
+export type AgentCommandPreset = { description: string; build: () => string };
+
+/** Trusted bundled instruction builders. Custom command text never selects a builder. */
+export const agentCommandPresets: Readonly<Record<string, AgentCommandPreset>> = {
+  'muqun-theme': {
+    description:
+      'Complete light/dark colors, terminal palette, optional artwork, and an importable theme file',
+    build: createThemeAuthoringPrompt,
+  },
+};

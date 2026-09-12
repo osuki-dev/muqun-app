@@ -87,9 +87,9 @@ msgstr "{0} phút trước"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· đã hỏi # lần}}"
 
-#: src/app/commands.tsx
-msgid "{collaborationCount} assigned tasks · view agents and output"
-msgstr "{collaborationCount} tác vụ đã giao · xem tiến độ"
+#: src/components/agent-assignment-bar.tsx
+msgid "{commandName} · sending to"
+msgstr "{commandName} · đang gửi đến"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -119,6 +119,11 @@ msgstr "+{overflow} nữa"
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "Một Gateway trên máy bạn có thể SSH vào, kể cả máy chỉ lắng nghe trên loopback của chính nó"
 
+#. placeholder {0}: assignment.target.kind
+#: src/components/server-terminal-workspace.tsx
+msgid "a new {0}"
+msgstr "một {0} mới"
+
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
 msgstr "Khóa của máy chủ được ghi nhớ lần đầu và kiểm tra mọi lần sau, và một khóa đã thay đổi sẽ chặn kết nối cho đến khi bạn quyết định khác"
@@ -134,6 +139,10 @@ msgstr "Trình giả lập có thể được điều khiển chứ không chỉ
 #: src/components/simfarm-stage.tsx
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "Trình giả lập đã tắt có thể mất một phút để khởi động"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "A terminal was created. Check it before sending again — your task is still here."
+msgstr "Một terminal đã được tạo. Hãy kiểm tra trước khi gửi lại — tác vụ của bạn vẫn còn đây"
 
 #: src/app/settings.tsx
 msgid "About"
@@ -168,10 +177,6 @@ msgstr "Thêm máy"
 msgid "Add one first"
 msgstr "Thêm một cái trước đã"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Add reference images"
-msgstr "Thêm ảnh tham khảo"
-
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Thêm dòng này vào ~/.ssh/authorized_keys trên máy chủ:"
@@ -180,23 +185,17 @@ msgstr "Thêm dòng này vào ~/.ssh/authorized_keys trên máy chủ:"
 msgid "AGENT"
 msgstr "TÁC TỬ"
 
-#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
 msgstr "Cộng tác giữa các tác nhân"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Agent collaboration is available in Herdr sessions."
-msgstr "Tính năng cộng tác có trong các phiên Herdr"
-
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
 msgstr "LỆNH TÁC TỬ"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Agent no longer present"
 msgstr "Tác nhân không còn hoạt động"
@@ -241,10 +240,6 @@ msgstr "Cho phép thông báo trong cài đặt hệ thống để xem trước"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Cho phép camera, hoặc nhập địa chỉ thay thế"
 
-#: src/app/agent-collaboration.tsx
-msgid "An extra pair of hands"
-msgstr "Thêm một người trợ giúp"
-
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Trả lời"
@@ -266,6 +261,10 @@ msgstr "Đã bật Khóa ứng dụng"
 msgid "App Lock unavailable"
 msgstr "Khóa ứng dụng không khả dụng"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "App name and tagline"
+msgstr "Tên ứng dụng và khẩu hiệu"
+
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Giao diện"
@@ -275,6 +274,10 @@ msgstr "Giao diện"
 msgid "Appearance, terminal, security"
 msgstr "Giao diện, terminal, bảo mật"
 
+#: src/components/custom-theme-library.tsx
+msgid "Apply theme"
+msgstr "Áp dụng giao diện"
+
 #: src/i18n/labels.ts
 msgid "Approve"
 msgstr "Chấp thuận"
@@ -282,10 +285,6 @@ msgstr "Chấp thuận"
 #: src/i18n/labels.ts
 msgid "Approve and don't ask again"
 msgstr "Chấp thuận và không hỏi lại"
-
-#: src/app/agent-collaboration.tsx
-msgid "Ask another agent to review a change, investigate a bug, or run tests. Follow its status here while you keep working."
-msgstr "Nhờ tác nhân khác rà soát thay đổi, điều tra lỗi hoặc chạy kiểm thử. Theo dõi trạng thái tại đây trong khi bạn tiếp tục công việc"
 
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
@@ -299,31 +298,17 @@ msgstr "Đang hỏi Gateway về mã đó"
 msgid "Asking the server what it can run…"
 msgstr "Đang hỏi máy chủ xem nó có thể chạy gì…"
 
-#: src/app/agent-collaboration.tsx
-msgid "Assign a task"
-msgstr "Giao tác vụ"
-
 #: src/app/commands.tsx
-msgid "Assign work to another agent and follow its progress."
-msgstr "Giao việc cho tác nhân khác và theo dõi tiến độ"
+msgid "Assign a task"
+msgstr "Giao một tác vụ"
 
-#: src/app/agent-collaboration.tsx
-msgid "Assignment history"
-msgstr "Lịch sử giao việc"
+#: src/components/server-terminal-workspace.tsx
+msgid "Assign this to an assistant"
+msgstr "Giao việc này cho một trợ lý"
 
-#. placeholder {0}: history.length
-#: src/app/agent-collaboration.tsx
-msgid "Assignment history ({0})"
-msgstr "Lịch sử giao việc ({0})"
-
-#: src/app/agent-collaboration.tsx
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "Tùy chọn nhiệm vụ"
-
-#: src/app/agent-collaboration.tsx
-msgid "Assignments on this device · current session"
-msgstr "Tác vụ trên thiết bị này · phiên hiện tại"
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant started"
+msgstr "Đã khởi động trợ lý"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -362,10 +347,6 @@ msgstr "Quay lại"
 msgid "Back one word"
 msgstr "Lùi một từ"
 
-#: src/app/agent-collaboration.tsx
-msgid "Back to assigned tasks"
-msgstr "Về danh sách tác vụ"
-
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "Về danh sách máy chủ"
@@ -392,9 +373,21 @@ msgstr "sinh trắc học"
 msgid "Blocked"
 msgstr "Đang chờ"
 
+#: src/components/theme-link-import.tsx
+msgid "Branch and theme file came from the link. A branch can change later"
+msgstr "Nhánh và tệp chủ đề lấy từ liên kết. Một nhánh có thể thay đổi về sau"
+
+#: src/components/theme-link-import.tsx
+msgid "Branch or commit (optional)"
+msgstr "Nhánh hoặc commit (không bắt buộc)"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "Trình duyệt"
+
+#: src/components/settings-theme-sheet.tsx
+msgid "Built-in themes"
+msgstr "Giao diện tích hợp"
 
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
@@ -404,6 +397,7 @@ msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt đ�
 msgid "Camera access needed"
 msgstr "Cần quyền truy cập camera"
 
+#: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-alerts.tsx
@@ -411,7 +405,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
-#: src/hooks/use-agent-collaboration.ts
+#: src/components/theme-link-import.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Hủy"
@@ -430,6 +424,10 @@ msgstr "Hủy chỉnh sửa {0}"
 msgid "Cancelled"
 msgstr "Đã hủy"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Changes colored backgrounds, not text, icons or artwork"
+msgstr "Chỉ thay đổi nền màu, không ảnh hưởng đến chữ, biểu tượng hay hình trang trí"
+
 #: src/i18n/labels.ts
 msgid "Chat"
 msgstr "Trò chuyện"
@@ -438,10 +436,13 @@ msgstr "Trò chuyện"
 msgid "Check device authentication settings and try again."
 msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại"
 
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "Kiểm tra trợ lý trước khi gửi lại; trợ lý có thể đã nhận được yêu cầu"
+
+#: src/components/theme-link-import.tsx
+msgid "Check the repository URL, branch and theme file"
+msgstr "Kiểm tra URL kho mã, nhánh và tệp giao diện"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
@@ -458,6 +459,18 @@ msgstr "Chọn trình giả lập"
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator from the menu."
 msgstr "Chọn một trình giả lập từ menu"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Choose an assistant"
+msgstr "Chọn một trợ lý"
+
+#: src/app/commands.tsx
+msgid "Choose an assistant above the message field · {collaborationCount} assigned"
+msgstr "Chọn trợ lý phía trên ô nhập · đã giao {collaborationCount}"
+
+#: src/app/commands.tsx
+msgid "Choose an assistant above the message field, then write the task there."
+msgstr "Chọn trợ lý phía trên ô nhập rồi viết tác vụ ở đó"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -489,10 +502,6 @@ msgstr "Xóa màn hình terminal"
 msgid "Close"
 msgstr "Đóng"
 
-#: src/app/agent-collaboration.tsx
-msgid "Close agent collaboration"
-msgstr "Đóng cộng tác"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Đóng tệp"
@@ -514,6 +523,7 @@ msgid "Close pairing"
 msgstr "Đóng ghép nối"
 
 #: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "Đóng bản xem trước"
@@ -621,6 +631,10 @@ msgstr "Xác nhận hủy ghép nối {label}"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "Xác nhận: {removeLabel} {label}"
+
+#: src/components/custom-theme-preview.tsx
+msgid "Connect"
+msgstr "Kết nối"
 
 #. placeholder {0}: machine.label
 #: src/components/machine-switcher-sheet.tsx
@@ -811,10 +825,6 @@ msgstr "Sao chép khóa công khai"
 msgid "Could not add a file"
 msgstr "Không thể thêm tệp"
 
-#: src/hooks/use-agent-references.ts
-msgid "Could not add images. Choose up to nine images, each under 10 MB."
-msgstr "Không thể thêm ảnh. Chọn tối đa chín ảnh, mỗi ảnh dưới 10 MB"
-
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Không thể kết nối"
@@ -836,7 +846,6 @@ msgid "Could not generate a key"
 msgstr "Không thể tạo khóa"
 
 #: src/components/new-task-sheet.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Could not list this server's agents."
 msgstr "Không thể liệt kê các tác tử của máy chủ này"
 
@@ -901,14 +910,9 @@ msgid "Could not read saved servers. Your saved data has not been changed. Unloc
 msgstr "Không thể đọc các máy chủ đã lưu. Dữ liệu đã lưu không bị thay đổi. Hãy mở khóa thiết bị rồi thử lại"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "Không thể đọc terminal"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not refresh agent status."
-msgstr "Không thể cập nhật trạng thái tác nhân"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -930,6 +934,10 @@ msgstr "Không thể lưu host"
 msgid "Could not save shortcut"
 msgstr "Không thể lưu lệnh nhanh"
 
+#: src/components/settings-theme-sheet.tsx
+msgid "Could not save theme"
+msgstr "Không thể lưu giao diện"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Không thể gửi"
@@ -949,10 +957,6 @@ msgstr "Không thể gửi phím"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Không thể gửi lệnh tắt"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not send the task."
-msgstr "Không thể gửi tác vụ"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -978,10 +982,6 @@ msgstr "Không thể cập nhật phiên"
 msgid "Could not upload the file."
 msgstr "Không thể tải tệp lên"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Could not verify this session's Herdr version. Reconnect or update Muqun Gateway."
-msgstr "Không thể xác minh phiên bản Herdr. Hãy kết nối lại hoặc cập nhật Muqun Gateway"
-
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Agent hiện tại"
@@ -994,10 +994,15 @@ msgstr "Máy hiện tại"
 msgid "Current path"
 msgstr "Đường dẫn hiện tại"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current theme"
+msgstr "Giao diện hiện tại"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Tùy chỉnh lệnh terminal và tổ hợp phím"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Tối"
@@ -1009,6 +1014,10 @@ msgstr "Mặc định"
 #: src/components/approval-banner.tsx
 msgid "DEFAULT"
 msgstr "MẶC ĐỊNH"
+
+#: src/components/theme-link-import.tsx
+msgid "Defaults to theme.json at the repository root"
+msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
 
 #: src/components/row-action-menu.tsx
 msgid "Delete"
@@ -1022,6 +1031,10 @@ msgstr "Xóa {name}"
 msgid "Delete this line"
 msgstr "Xóa dòng này"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Delivery not confirmed"
+msgstr "Chưa xác nhận được việc gửi"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Shell demo"
@@ -1033,10 +1046,6 @@ msgstr "Không gian làm việc demo"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Từ chối"
-
-#: src/app/agent-collaboration.tsx
-msgid "Describe the task and what a good result looks like."
-msgstr "Mô tả công việc và kết quả mong muốn"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -1085,7 +1094,7 @@ msgstr "Bỏ qua có gì mới"
 msgid "Docs"
 msgstr "Tài liệu"
 
-#: src/app/agent-collaboration.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1100,6 +1109,10 @@ msgstr "Xong chỉnh sửa lệnh tắt"
 #: src/i18n/labels.ts
 msgid "Down arrow"
 msgstr "Mũi tên xuống"
+
+#: src/components/theme-link-import.tsx
+msgid "Download and preview"
+msgstr "Tải xuống và xem trước"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1167,10 +1180,6 @@ msgstr "Nhập URL thủ công"
 msgid "Escape"
 msgstr "Escape"
 
-#: src/app/agent-collaboration.tsx
-msgid "Existing assistant"
-msgstr "Trợ lý hiện có"
-
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -1181,6 +1190,14 @@ msgstr "Mở rộng {0}"
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "Hết hạn sau {0}:{1}"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export colors"
+msgstr "Xuất màu sắc"
+
+#: src/components/custom-theme-library.tsx
+msgid "Export theme"
+msgstr "Xuất giao diện"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -1219,9 +1236,25 @@ msgstr "Dấu vân tay"
 msgid "FIRST PROMPT"
 msgstr "PROMPT ĐẦU TIÊN"
 
+#: src/components/custom-theme-library.tsx
+msgid "Fix invalid JSON before formatting"
+msgstr "Sửa JSON không hợp lệ trước khi định dạng"
+
+#: src/components/custom-theme-library.tsx
+msgid "Fix text contrast before applying this theme"
+msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng giao diện này"
+
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Thu gọn các bước công cụ"
+
+#: src/components/custom-theme-library.tsx
+msgid "Format JSON"
+msgstr "Định dạng JSON"
+
+#: src/components/custom-theme-library.tsx
+msgid "Formatted JSON exceeds the theme size limit"
+msgstr "JSON sau khi định dạng vượt quá giới hạn kích thước giao diện"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1323,19 +1356,10 @@ msgstr "Ẩn {0}"
 msgid "Hide {name}"
 msgstr "Ẩn {name}"
 
-#: src/app/agent-collaboration.tsx
-msgid "Hide assignment history"
-msgstr "Ẩn lịch sử giao việc"
-
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
 msgstr "Ẩn bàn phím"
 
-#: src/app/agent-collaboration.tsx
-msgid "Hide other agent types"
-msgstr "Ẩn các loại khác"
-
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
 msgstr "Ẩn đầu ra"
@@ -1382,13 +1406,21 @@ msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng d�
 msgid "Images"
 msgstr "Hình ảnh"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Images will be uploaded to {gatewayName} and shared with the new assistant. Its AI provider may process them. They are not automatically copied to other machines."
-msgstr "Ảnh sẽ được tải lên {gatewayName} và chia sẻ với trợ lý mới. Nhà cung cấp AI của trợ lý có thể xử lý ảnh. Ảnh không tự động được sao chép sang máy khác"
+#: src/components/theme-link-import.tsx
+msgid "Images download from"
+msgstr "Nguồn tải hình ảnh"
 
-#: src/app/agent-collaboration.tsx
-msgid "Include current terminal output"
-msgstr "Đính kèm đầu ra terminal hiện tại"
+#: src/components/custom-theme-library.tsx
+msgid "Import"
+msgstr "Nhập"
+
+#: src/components/custom-theme-library.tsx
+msgid "Import file"
+msgstr "Nhập tệp"
+
+#: src/components/custom-theme-library.tsx
+msgid "Import link"
+msgstr "Nhập từ liên kết"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -1408,6 +1440,14 @@ msgstr "Chế độ chèn"
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
+
+#: src/components/custom-theme-library.tsx
+msgid "Installing images"
+msgstr "Đang cài đặt hình ảnh"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Interface background opacity"
+msgstr "Độ mờ đục của nền giao diện"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
@@ -1432,6 +1472,10 @@ msgstr "Nó có thể đã lỗi thời, hoặc dành cho một ứng dụng kh�
 #: src/components/pairing-camera.tsx
 msgid "It was found, but never showed a picture. Another app may be holding it."
 msgstr "Đã tìm thấy camera nhưng nó không bao giờ hiện hình. Có thể một ứng dụng khác đang giữ nó"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "It works on its own. Follow it in Agent collaboration."
+msgstr "Nó làm việc độc lập. Theo dõi trong phần Cộng tác với trợ lý"
 
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
@@ -1540,6 +1584,7 @@ msgstr "Mũi tên trái"
 msgid "Letters"
 msgstr "Chữ cái"
 
+#: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "Sáng"
@@ -1562,6 +1607,7 @@ msgstr "Live Activity"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
+#: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Đang tải"
 
@@ -1631,28 +1677,26 @@ msgstr "Quản lý máy"
 msgid "Manage SSH hosts"
 msgstr "Quản lý host SSH"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "Đánh dấu đã xem"
-
-#. placeholder {0}: index + 1
-#: src/components/agent-reference-editor.tsx
-msgid "May include image {0} in the result"
-msgstr "Cho phép đưa ảnh {0} vào kết quả"
-
-#: src/components/agent-reference-editor.tsx
-msgid "May include in the result"
-msgstr "Cho phép đưa vào kết quả"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Nhắc đến {0}"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum opacity for readable text: {minimumPercent}%"
+msgstr "Độ mờ tối thiểu để văn bản dễ đọc: {minimumPercent}%"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Đã sửa đổi"
+
+#: src/components/custom-theme-library.tsx
+msgid "More actions"
+msgstr "Thao tác khác"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -1667,8 +1711,6 @@ msgid "Move the simulator controls"
 msgstr "Di chuyển các nút điều khiển trình giả lập"
 
 #: src/app/(drawer)/_layout.tsx
-#: src/app/(drawer)/index.tsx
-#: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -1718,6 +1760,10 @@ msgstr "Muqun giữ nguyên ngôn ngữ này bất kể điện thoại đặt g
 msgid "Muqun will use {0} when the app opens."
 msgstr "Muqun sẽ dùng {0} khi mở ứng dụng"
 
+#: src/components/custom-theme-library.tsx
+msgid "My themes"
+msgstr "Giao diện của tôi"
+
 #: src/app/commands.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
@@ -1728,7 +1774,6 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Đặt tên cho nó, rồi nhập mã mà Gateway hiển thị"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Needs your attention"
 msgstr "Cần bạn xử lý"
 
@@ -1741,10 +1786,6 @@ msgstr "Chưa từng kết nối"
 msgid "Never seen"
 msgstr "Chưa từng thấy"
 
-#: src/app/agent-collaboration.tsx
-msgid "New assistant"
-msgstr "Trợ lý mới"
-
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "Nhóm mới"
@@ -1753,7 +1794,6 @@ msgstr "Nhóm mới"
 msgid "New host key"
 msgstr "Khóa host mới"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "Có đầu ra mới · làm mới"
@@ -1792,10 +1832,6 @@ msgstr "Không có tác tử nào đang chạy"
 msgid "No app on this phone opens web pages."
 msgstr "Không có ứng dụng nào trên điện thoại này mở được trang web"
 
-#: src/app/agent-collaboration.tsx
-msgid "No assistants available yet. Try an existing assistant or reopen this picker."
-msgstr "Chưa có trợ lý khả dụng. Chọn trợ lý hiện có hoặc mở lại bảng này"
-
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "Không có camera để quét"
@@ -1816,9 +1852,9 @@ msgstr "Chưa có Gateway?"
 msgid "No matching commands. Try another word."
 msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
 
-#: src/app/agent-collaboration.tsx
-msgid "No other agents in this session. Start a new assistant to collaborate."
-msgstr "Phiên này chưa có tác nhân khác. Bạn có thể tạo trợ lý mới"
+#: src/components/agent-assignment-bar.tsx
+msgid "No other assistants in this session yet."
+msgstr "Phiên này chưa có trợ lý nào khác"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -1865,10 +1901,6 @@ msgstr "Chưa có host SSH nào. Thêm một cái để mở shell trên bất k
 msgid "No still frames"
 msgstr "Không có khung hình tĩnh"
 
-#: src/app/agent-collaboration.tsx
-msgid "No visible output yet."
-msgstr "Chưa có đầu ra"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
@@ -1886,12 +1918,9 @@ msgid "NOT CONNECTED"
 msgstr "CHƯA KẾT NỐI"
 
 #: src/app/+not-found.tsx
+#: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Không tìm thấy"
-
-#: src/app/agent-collaboration.tsx
-msgid "Not found on the Gateway's PATH. Herdr may still be able to start it."
-msgstr "Không tìm thấy trong PATH của Gateway. Herdr vẫn có thể khởi động được"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -1930,10 +1959,6 @@ msgstr "Thông báo chưa được cho phép"
 msgid "Off"
 msgstr "Tắt"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Off means reference only. This does not grant permission to publish the image."
-msgstr "Khi tắt, ảnh chỉ dùng để tham khảo. Tùy chọn này không cấp quyền công bố ảnh"
-
 #: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "NGOẠI TUYẾN"
@@ -1953,10 +1978,6 @@ msgstr "Trực tuyến"
 #: src/i18n/labels.ts
 msgid "ONLINE"
 msgstr "TRỰC TUYẾN"
-
-#: src/app/agent-collaboration.tsx
-msgid "Only the text below is shared. Conversation history is not shared automatically."
-msgstr "Chỉ chia sẻ văn bản bên dưới. Lịch sử hội thoại không được tự động chia sẻ"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2025,7 +2046,6 @@ msgstr "Mở cài đặt"
 msgid "Open SSH host {0}"
 msgstr "Mở host SSH {0}"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Open terminal"
 msgstr "Mở terminal"
@@ -2039,10 +2059,6 @@ msgstr "Mở trình duyệt tệp"
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Mở không gian làm việc {0}, {1, plural, other {# đang chạy}}. Nhấn giữ để đóng"
-
-#: src/components/agent-reference-editor.tsx
-msgid "Opening photos…"
-msgstr "Đang mở ảnh…"
 
 #: src/app/explore.tsx
 msgid "Opening the server."
@@ -2068,18 +2084,10 @@ msgstr "Mở menu của trình giả lập: thiết bị, các phím, bàn phím
 msgid "Opens this agent's terminal"
 msgstr "Mở terminal của tác tử này"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Optional images stay on this device until you approve sending"
-msgstr "Ảnh chỉ được lưu trên thiết bị này cho đến khi bạn đồng ý gửi"
-
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Tùy chọn cho {0}"
-
-#: src/app/agent-collaboration.tsx
-msgid "Other agent types"
-msgstr "Các loại tác nhân khác"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2156,6 +2164,14 @@ msgstr "Mật khẩu và khóa được niêm phong trong keychain của thiết
 msgid "Paste"
 msgstr "Dán"
 
+#: src/components/theme-link-import.tsx
+msgid "Paste a public theme link or GitHub repository"
+msgstr "Dán liên kết giao diện công khai hoặc URL kho mã GitHub"
+
+#: src/components/custom-theme-library.tsx
+msgid "Paste JSON"
+msgstr "Dán JSON"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2164,6 +2180,10 @@ msgstr "Đường dẫn"
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
 msgstr "Thư viện ảnh"
+
+#: src/components/theme-link-import.tsx
+msgid "Pinned commit"
+msgstr "Commit đã ghim"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -2174,6 +2194,10 @@ msgstr "Cổng"
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
 msgstr "CỔNG"
+
+#: src/components/theme-link-import.tsx
+msgid "Preparing images"
+msgstr "Đang chuẩn bị hình ảnh"
 
 #: src/components/settings-alerts.tsx
 msgid "Preparing notification"
@@ -2187,6 +2211,12 @@ msgstr "Đưa ra lần này"
 msgid "Press Escape to dismiss this request"
 msgstr "Nhấn Escape để bỏ qua yêu cầu này"
 
+#: src/components/asset-viewer.tsx
+#: src/components/custom-theme-library.tsx
+#: src/components/custom-theme-preview.tsx
+msgid "Preview"
+msgstr "Xem trước"
+
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
@@ -2199,6 +2229,10 @@ msgstr "Xem trước trình giả lập"
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "Xem trước trình giả lập, không khả dụng qua đường hầm SSH"
+
+#: src/components/theme-link-import.tsx
+msgid "Preview first. Your current theme stays unchanged"
+msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
 
 #: src/components/settings-alerts.tsx
 msgid "Preview notification"
@@ -2262,8 +2296,11 @@ msgstr "Kết nối qua host SSH {host}"
 msgid "Reaching the Gateway"
 msgstr "Đang kết nối Gateway"
 
+#: src/components/theme-link-import.tsx
+msgid "Reading the theme link"
+msgstr "Đang đọc liên kết chủ đề"
+
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Ready for input"
 msgstr "Đang chờ nhập"
 
@@ -2275,7 +2312,6 @@ msgstr "Nhận thông báo khi tác tử chờ và các cập nhật của gatew
 msgid "Recent commits"
 msgstr "Các commit gần đây"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
 msgstr "Đầu ra gần đây"
@@ -2299,16 +2335,6 @@ msgstr "Kết nối lại đến {0}"
 msgid "Reconnecting · {0}"
 msgstr "Đang kết nối lại · {0}"
 
-#: src/components/agent-reference-editor.tsx
-msgid "Reference images"
-msgstr "Ảnh tham khảo"
-
-#: src/components/agent-reference-editor.tsx
-#: src/hooks/use-agent-collaboration.ts
-msgid "Reference images can be sent when starting a new assistant"
-msgstr "Bạn có thể gửi ảnh tham khảo khi khởi động trợ lý mới"
-
-#: src/app/agent-collaboration.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Làm mới"
@@ -2317,38 +2343,35 @@ msgstr "Làm mới"
 msgid "Refresh files"
 msgstr "Làm mới tệp"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "Làm mới đầu ra"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Refresh to check Gateway and Herdr compatibility before assigning."
-msgstr "Làm mới để kiểm tra khả năng tương thích của Gateway và Herdr trước khi giao việc"
-
-#: src/components/agent-reference-editor.tsx
+#: src/components/collaboration-notice.tsx
+#: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "Xóa"
 
 #. placeholder {0}: attachment.name
+#. placeholder {0}: installed.manifest.name
 #. placeholder {0}: record.label
 #: src/components/attachment-strip.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Gỡ {0}"
 
-#: src/app/agent-collaboration.tsx
-msgid "Remove from history"
-msgstr "Xóa khỏi lịch sử"
+#: src/components/collaboration-notice.tsx
+msgid "Remove from history?"
+msgstr "Xóa khỏi lịch sử?"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
 msgstr "Gỡ host"
 
-#. placeholder {0}: index + 1
-#: src/components/agent-reference-editor.tsx
-msgid "Remove image {0}"
-msgstr "Xóa ảnh {0}"
+#: src/components/custom-theme-library.tsx
+msgid "Remove this theme?"
+msgstr "Xóa giao diện này?"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -2389,10 +2412,6 @@ msgstr "Bắt buộc"
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
-
-#: src/app/agent-collaboration.tsx
-msgid "Respond to agent"
-msgstr "Trả lời tác nhân"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
@@ -2437,9 +2456,7 @@ msgstr "Return"
 msgid "Return to the server list and pair again."
 msgstr "Quay lại danh sách máy chủ và ghép nối lại"
 
-#: src/app/agent-collaboration.tsx
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
@@ -2457,7 +2474,6 @@ msgstr "Xem xét một pull request trên GitHub"
 msgid "Review assistant"
 msgstr "Trợ lý rà soát"
 
-#: src/app/agent-collaboration.tsx
 #: src/app/commands.tsx
 msgid "Review changes"
 msgstr "Xem xét thay đổi"
@@ -2466,21 +2482,17 @@ msgstr "Xem xét thay đổi"
 msgid "Review finished. The theme fallback has test coverage. No changes were made."
 msgstr "Đã rà soát xong. Cơ chế dự phòng giao diện có kiểm thử. Không sửa tệp nào"
 
+#: src/components/theme-link-import.tsx
+msgid "Review link"
+msgstr "Kiểm tra liên kết"
+
 #: src/app/commands.tsx
 msgid "Review the current changes."
 msgstr "Xem xét các thay đổi hiện tại"
 
-#: src/app/agent-collaboration.tsx
-msgid "Review the current changes. Report bugs and missing tests; do not edit files."
-msgstr "Rà soát các thay đổi hiện tại. Báo lỗi và kiểm thử còn thiếu; không sửa tệp"
-
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "Xem bài kiểm thử đang lỗi và sửa nó"
-
-#: src/app/agent-collaboration.tsx
-msgid "Reviewed by you"
-msgstr "Bạn đã xem"
 
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
@@ -2518,21 +2530,9 @@ msgstr "Chạy lệnh"
 msgid "Run relevant tests"
 msgstr "Chạy các kiểm thử liên quan"
 
-#: src/app/agent-collaboration.tsx
-msgid "Run tests"
-msgstr "Chạy kiểm thử"
-
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
-
-#: src/app/agent-collaboration.tsx
-msgid "Run the relevant tests and report failures with reproduction steps."
-msgstr "Chạy các kiểm thử liên quan và báo lỗi kèm các bước tái hiện"
-
-#: src/app/agent-collaboration.tsx
-msgid "Same workspace"
-msgstr "Cùng không gian làm việc"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -2562,6 +2562,10 @@ msgstr "Lưu host"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Lưu lệnh tắt"
+
+#: src/components/custom-theme-library.tsx
+msgid "Save theme"
+msgstr "Lưu giao diện"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
@@ -2642,6 +2646,10 @@ msgstr "Đã thấy vừa xong"
 msgid "Select all"
 msgstr "Chọn tất cả"
 
+#: src/components/custom-theme-library.tsx
+msgid "Selected"
+msgstr "Đã chọn"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Send {spoken}"
@@ -2651,25 +2659,25 @@ msgstr "Gửi {spoken}"
 msgid "Send a message"
 msgstr "Gửi tin nhắn"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Send reference images?"
-msgstr "Gửi ảnh tham khảo?"
-
-#: src/app/agent-collaboration.tsx
-msgid "Send task"
-msgstr "Gửi tác vụ"
-
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Gửi văn bản"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Send this task to {assignmentLabel}"
+msgstr "Gửi tác vụ này đến {assignmentLabel}"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Send to {assignmentLabel} — tap to change"
+msgstr "Gửi đến {assignmentLabel} — chạm để đổi"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Gửi cho tác tử"
 
-#: src/app/agent-collaboration.tsx
-msgid "Sending task…"
-msgstr "Đang gửi…"
+#: src/components/agent-assignment-bar.tsx
+msgid "Sending to"
+msgstr "Đang gửi đến"
 
 #: src/app/artifacts.tsx
 #: src/app/panels.tsx
@@ -2792,9 +2800,21 @@ msgstr "Hiện các phím Esc, Tab, Ctrl và điều hướng phía trên ô nh�
 msgid "Show every tool step"
 msgstr "Hiện mọi bước công cụ"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home logo"
+msgstr "Hiển thị logo trên trang chủ"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show Home text"
+msgstr "Hiển thị chữ trên trang chủ"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Hiện hình ảnh"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show the app background behind terminal text"
+msgstr "Hiển thị nền ứng dụng phía sau văn bản terminal"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
@@ -2850,7 +2870,13 @@ msgstr "Kích thước"
 msgid "Some files did not upload"
 msgstr "Một số tệp không tải lên được"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Some theme colors need more contrast"
+msgstr "Một số màu giao diện cần độ tương phản cao hơn"
+
 #: src/components/app-error-boundary.tsx
+#: src/components/custom-theme-library.tsx
+#: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Đã xảy ra lỗi"
 
@@ -2887,6 +2913,11 @@ msgstr "Đường hầm SSH qua {host} đã ngắt"
 msgid "stale · {age}"
 msgstr "cũ · {age}"
 
+#. placeholder {0}: profile.kind
+#: src/components/agent-assignment-bar.tsx
+msgid "Start a new {0}"
+msgstr "Khởi động {0} mới"
+
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
 msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
@@ -2896,10 +2927,6 @@ msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Khởi động một tác tử và giao cho nó việc đầu tiên"
 
-#: src/app/agent-collaboration.tsx
-msgid "Start assistant and send"
-msgstr "Khởi động trợ lý và gửi"
-
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Bắt đầu tác vụ"
@@ -2907,10 +2934,6 @@ msgstr "Bắt đầu tác vụ"
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Đang khởi động {name}"
-
-#: src/app/agent-collaboration.tsx
-msgid "Starting assistant and sending…"
-msgstr "Đang khởi động trợ lý và gửi…"
 
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
@@ -2922,21 +2945,11 @@ msgstr "Đang khởi động camera"
 msgid "Starting…"
 msgstr "Đang bắt đầu…"
 
-#: src/app/agent-collaboration.tsx
-msgid "Starts beside this terminal in the same project."
-msgstr "Khởi động cạnh terminal này trong cùng dự án"
-
-#: src/app/agent-collaboration.tsx
-msgid "Status describes the agent, not task completion. Updates while connected; review its output to confirm the result. Removing history does not stop an agent."
-msgstr "Trạng thái mô tả tác nhân, không có nghĩa là tác vụ đã hoàn tất. Trạng thái tự cập nhật khi có kết nối. Xem đầu ra để xác nhận kết quả. Xóa lịch sử không dừng tác nhân"
-
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Status unavailable"
 msgstr "Không lấy được trạng thái"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 msgid "Status unknown"
 msgstr "Chưa rõ trạng thái"
 
@@ -2947,6 +2960,11 @@ msgstr "Vẫn đang chạy…"
 #: src/app/commands.tsx
 msgid "Stop"
 msgstr "Dừng"
+
+#: src/components/agent-assignment-bar.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Stop assigning a task"
+msgstr "Ngừng giao tác vụ"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
@@ -3014,19 +3032,24 @@ msgstr "Chạm lần nữa để gỡ"
 msgid "Tap to connect"
 msgstr "Nhấn để kết nối"
 
-#: src/app/agent-collaboration.tsx
-msgid "Task instructions"
-msgstr "Hướng dẫn tác vụ"
+#: src/components/server-terminal-workspace.tsx
+msgid "Task for {assignmentLabel}"
+msgstr "Tác vụ cho {assignmentLabel}"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Task sent. You can keep working in your current terminal."
-msgstr "Đã gửi tác vụ. Bạn có thể tiếp tục làm việc trong terminal hiện tại"
+#. placeholder {0}: assignment.target.kind
+#: src/components/server-terminal-workspace.tsx
+msgid "Task for a new {0}"
+msgstr "Tác vụ cho một {0} mới"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Terminal background opacity"
+msgstr "Độ mờ đục của nền terminal"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -3041,10 +3064,6 @@ msgstr "LỆNH TERMINAL"
 msgid "Terminal key row"
 msgstr "Hàng phím terminal"
 
-#: src/app/agent-collaboration.tsx
-msgid "Terminal snapshot · refresh to see newer output"
-msgstr "Ảnh chụp đầu ra terminal · làm mới để xem nội dung mới"
-
 #: src/components/settings-terminal.tsx
 msgid "Text size"
 msgstr "Cỡ chữ"
@@ -3056,6 +3075,10 @@ msgstr "Văn bản để gõ trên trình giả lập"
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
 msgstr "Câu trả lời đó không đến được tác tử"
+
+#: src/hooks/use-agent-command-delivery.ts
+msgid "That assistant is no longer in this terminal. Reopen it and try again."
+msgstr "Trợ lý đó không còn trong terminal này. Hãy mở lại và thử lần nữa"
 
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
@@ -3088,18 +3111,6 @@ msgstr "Tác tử giờ đang hỏi điều khác"
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
 msgstr "Tác tử không còn chờ nữa"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant could not start. Check its terminal before continuing. Your task has not been sent."
-msgstr "Không thể khởi động trợ lý. Hãy kiểm tra terminal của trợ lý trước khi tiếp tục. Nhiệm vụ chưa được gửi"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant needs your approval or input in its terminal. Your task has not been sent. Your instructions are still here."
-msgstr "Trợ lý cần bạn phê duyệt hoặc nhập nội dung trong terminal. Nhiệm vụ chưa được gửi. Hướng dẫn của bạn vẫn được giữ lại"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "The assistant was created, but task delivery was not confirmed. Check its terminal before sending again. Your instructions are still here."
-msgstr "Đã tạo trợ lý nhưng chưa xác nhận tác vụ đã đến. Kiểm tra terminal trước khi gửi lại. Hướng dẫn vẫn được giữ lại"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
@@ -3178,18 +3189,36 @@ msgstr "Trình giả lập không tắt kịp thời"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "The terminal was created, but the assistant is not confirmed ready. It may still be starting. Check its terminal before trying again. Your instructions are still here."
-msgstr "Terminal đã được tạo nhưng chưa xác nhận trợ lý đã sẵn sàng. Trợ lý có thể vẫn đang khởi động. Hãy kiểm tra terminal trước khi thử lại. Hướng dẫn của bạn vẫn được giữ lại"
+#: src/components/custom-theme-library.tsx
+msgid "The theme will be removed from this device"
+msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công cụ được thu gọn"
 
+#: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
+#: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Chủ đề"
+
+#: src/components/theme-link-import.tsx
+msgid "Theme file (optional)"
+msgstr "Tệp giao diện (không bắt buộc)"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme JSON"
+msgstr "JSON giao diện"
+
+#: src/components/custom-theme-library.tsx
+msgid "Theme saved"
+msgstr "Đã lưu giao diện"
+
+#: src/components/theme-link-import.tsx
+msgid "Theme URL"
+msgstr "URL giao diện"
 
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
@@ -3199,15 +3228,6 @@ msgstr "Chủ đề, {0}"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Tác tử này không đưa ra câu trả lời đó"
-
-#: src/app/agent-collaboration.tsx
-msgid "This assistant is busy or needs attention. Open its terminal, choose a ready assistant, or start a new one."
-msgstr "Trợ lý này đang bận hoặc cần bạn xử lý. Mở terminal của trợ lý hoặc chọn trợ lý khác"
-
-#: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This assistant is no longer ready. Refresh or choose another."
-msgstr "Trợ lý này không còn sẵn sàng. Làm mới hoặc chọn trợ lý khác"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3265,9 +3285,9 @@ msgstr "Liên kết này không dẫn đến đâu cả"
 msgid "This QR code is not valid."
 msgstr "Mã QR này không hợp lệ"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "This server cannot start an assistant yet."
-msgstr "Máy chủ này chưa thể khởi động trợ lý"
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This server cannot run that command yet."
+msgstr "Máy chủ này chưa chạy được lệnh đó"
 
 #: src/lib/network-error.ts
 msgid "This server cannot use this device's stored key. Pair it again to reconnect."
@@ -3314,6 +3334,10 @@ msgstr "Không thể vẽ terminal này"
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."
 msgstr "Terminal này không còn khả dụng"
+
+#: src/components/custom-theme-library.tsx
+msgid "This theme contains images that must be installed before applying"
+msgstr "Giao diện này chứa hình ảnh cần được cài đặt trước khi áp dụng"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -3369,9 +3393,14 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
+#: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Hoàn tác"
+
+#: src/components/custom-theme-library.tsx
+msgid "Undo formatting"
+msgstr "Hoàn tác định dạng"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"
@@ -3423,38 +3452,21 @@ msgstr "Đang hủy ghép nối…"
 msgid "Up arrow"
 msgstr "Mũi tên lên"
 
-#: src/hooks/use-agent-collaboration.ts
-#: src/hooks/use-agent-command-delivery.ts
-msgid "Update Muqun Gateway to use Agent collaboration. Your terminals still work as usual."
-msgstr "Cập nhật Muqun Gateway để cộng tác. Các terminal vẫn hoạt động bình thường"
-
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
 msgstr "Bản cập nhật đã sẵn sàng · đang khởi động lại…"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Update this Gateway to upload reference images"
-msgstr "Cập nhật Gateway này để tải ảnh tham khảo lên"
-
-#: src/hooks/use-agent-collaboration.ts
-msgid "Update this session to Herdr 0.9.0 or newer to use Agent collaboration."
-msgstr "Cập nhật Herdr của phiên này lên 0.9.0 trở lên để cộng tác"
+#: src/components/theme-link-import.tsx
+msgid "Update the app to import public theme links. You can still import a file"
+msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Đang cập nhật Muqun…"
 
-#: src/hooks/use-agent-collaboration.ts
-msgid "Upload and send"
-msgstr "Tải lên và gửi"
-
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
 msgstr "tải lên thất bại"
-
-#: src/components/agent-reference-editor.tsx
-msgid "Upload failed. Send again to retry, or remove this image."
-msgstr "Tải lên thất bại. Gửi lại để thử lại hoặc xóa ảnh này"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
@@ -3463,11 +3475,6 @@ msgstr "đã tải lên"
 #: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "đang tải lên"
-
-#: src/app/agent-collaboration.tsx
-#: src/components/agent-reference-editor.tsx
-msgid "Uploading…"
-msgstr "Đang tải lên…"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -3478,9 +3485,17 @@ msgstr "Dùng {0}"
 msgid "Use device passcode"
 msgstr "Dùng mật mã thiết bị"
 
+#: src/components/theme-link-import.tsx
+msgid "Use the repository URL, then enter its branch and theme file below"
+msgstr "Dùng URL kho mã, rồi nhập nhánh và tệp giao diện bên dưới"
+
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
 msgstr "Dùng nút quét trên màn hình chính để thêm"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Use theme defaults"
+msgstr "Dùng thiết lập mặc định của giao diện"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"
@@ -3519,17 +3534,9 @@ msgstr "Đang chờ mạng"
 msgid "Waiting for uploads to finish…"
 msgstr "Đang chờ tải lên xong…"
 
-#: src/components/agent-reference-editor.tsx
-msgid "What do you like about this image?"
-msgstr "Bạn thích điểm nào ở ảnh này?"
-
 #: src/components/session-map.tsx
 msgid "What is running"
 msgstr "Những gì đang chạy"
-
-#: src/app/agent-collaboration.tsx
-msgid "What should they do?"
-msgstr "Trợ lý cần làm gì?"
 
 #: src/lib/release-notes.ts
 msgid "What's new"
@@ -3540,7 +3547,6 @@ msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
 #: src/components/collaboration-notice.tsx
-#: src/hooks/use-agent-collaboration.ts
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Đang làm việc"
@@ -3574,10 +3580,6 @@ msgstr "Sao chép dòng này"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Hôm qua"
-
-#: src/app/agent-collaboration.tsx
-msgid "You will stay in your current terminal. The assistant works independently."
-msgstr "Bạn vẫn ở terminal hiện tại. Trợ lý làm việc độc lập"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx

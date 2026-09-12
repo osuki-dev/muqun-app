@@ -149,7 +149,14 @@ describe('every built-in quick command has a translated name', () => {
   });
 
   test('each id has an entry, so no row falls back to its English label', () => {
-    const missing = defaultIds.filter((id) => !names.has(id));
+    // Bundled authoring skills may explicitly keep their command label English.
+    // This is metadata on that command, not a blanket exemption for shortcuts.
+    const englishIds = new Set(
+      [...source.matchAll(/\{[^{}]*id:\s*'([^']+)'[^{}]*labelLanguage:\s*'en'[^{}]*\}/g)].map(
+        (match) => match[1]
+      )
+    );
+    const missing = defaultIds.filter((id) => !names.has(id) && !englishIds.has(id));
     expect(missing).toEqual([]);
   });
 });

@@ -26,10 +26,12 @@ import { WhatsNewCard } from '@/components/whats-new-card';
 import { buildTheme } from '@/constants/theme';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useThemePack } from '@/hooks/use-theme-pack';
+import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
 import { useAppSettings } from '@/stores/app-settings';
 import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
+import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
 
 /**
  * One library warning, silenced, because LogBox answers it by covering the
@@ -56,6 +58,17 @@ LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web impleme
 
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Listens for a theme file handed to the app from outside it.
+ *
+ * A component rather than a call in `RootLayout` so the listener mounts with
+ * the tree it navigates into, and renders nothing of its own.
+ */
+function ThemeFileOpener() {
+  useThemeFileOpen();
+  return null;
+}
+
 export default function RootLayout() {
   const hydrateSettings = useAppSettings((state) => state.hydrate);
 
@@ -69,16 +82,18 @@ export default function RootLayout() {
     void NavigationBar.setVisibilityAsync('hidden');
   }, []);
 
-  // The product's wide workspace is a landscape-only tablet surface. Expo's
-  // static `orientation` setting is app-wide, so using it would rotate phones
-  // too; choose the native lock from the actual device class instead. iPad's
-  // supported orientations are also declared in app.json so the launch frame
-  // starts in the right shape before JavaScript is ready.
+  // iPad follows its resizable window instead of enforcing a landscape lock.
+  // Keep the existing phone and Android tablet policies separate: an app-wide
+  // unlock would also rotate phones. Native iPad orientations are declared in
+  // app.json so launch and split-view frames work before JavaScript is ready.
   useEffect(() => {
     let mounted = true;
     void Device.getDeviceTypeAsync()
       .then((deviceType) => {
         if (!mounted) return;
+        if (Platform.OS === 'ios' && deviceType === Device.DeviceType.TABLET) {
+          return ScreenOrientation.unlockAsync();
+        }
         const lock =
           deviceType === Device.DeviceType.TABLET
             ? ScreenOrientation.OrientationLock.LANDSCAPE
@@ -101,6 +116,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     void hydrateSettings();
+    useThemeLibrary.getState().hydrate();
   }, [hydrateSettings]);
 
   return (
@@ -159,15 +175,35 @@ function RootContent() {
   const screenBackground = colors.background;
 
   return (
-    <ThemeProvider value={resolvedMode === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider
+      value={{
+        ...(resolvedMode === 'dark' ? DarkTheme : DefaultTheme),
+        colors: {
+          ...(resolvedMode === 'dark' ? DarkTheme.colors : DefaultTheme.colors),
+          primary: colors.primary,
+          background: colors.background,
+          card: colors.surface,
+          text: colors.text,
+          border: colors.border,
+          notification: colors.danger,
+        },
+      }}>
       <ToastProvider maxWidth={480}>
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
         <AnimatedSplashOverlay />
+        <ThemeFileOpener />
         <AppLockGate>
           <Stack
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: screenBackground },
+              // A screen nobody is looking at should not be rendering. Home
+              // sits under the terminal for as long as the terminal is open,
+              // and without this its artwork layers and its one pulse per live
+              // server card keep the UI thread at vsync the whole time. Work
+              // that must outlive a blur already lives in a store rather than
+              // in a screen, so nothing here depends on rendering while hidden.
+              freezeOnBlur: true,
             }}>
             <Stack.Screen name="(drawer)" />
             {/* Settings rises from the bottom like the terminal, over the home
@@ -282,6 +318,7 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            <Stack.Screen name="custom-theme" options={{ presentation: 'fullScreenModal' }} />
             <Stack.Screen
               name="settings-language"
               options={{
@@ -305,15 +342,6 @@ function RootContent() {
               options={{
                 presentation: 'formSheet',
                 sheetAllowedDetents: 'fitToContents',
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
-            />
-            <Stack.Screen
-              name="agent-collaboration"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: [1],
                 sheetGrabberVisible: true,
                 contentStyle: { backgroundColor: 'transparent' },
               }}

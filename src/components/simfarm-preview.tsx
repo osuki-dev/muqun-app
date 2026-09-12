@@ -1,5 +1,8 @@
+import { Input } from '@/components/themed-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Button, Input, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import * as Clipboard from 'expo-clipboard';
 import { Check, Copy as CopyIcon, Lock, MonitorSmartphone, X } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
@@ -284,6 +287,7 @@ function PreviewNotice({
   onClose?: () => void;
   children: ReactNode;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const { t } = useLingui();
   // The modal reaches the top of the screen with the status bar hidden, so
@@ -292,7 +296,7 @@ function PreviewNotice({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.fill, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.fill, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
       {/* Only in the modal, and only on the states that are not the simulator.
           The preview itself stays headerless on purpose -- what is inside it is
           a device drawn at 1:1, and a bar over it would crop the thing the
@@ -335,7 +339,11 @@ function PreviewNotice({
         ]}>
         <View style={styles.column}>
           {icon ? (
-            <View style={[styles.glyph, { backgroundColor: theme.colors.surfaceRaised }]}>
+            <View
+              style={[
+                styles.glyph,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              ]}>
               {icon}
             </View>
           ) : null}
@@ -362,6 +370,7 @@ function PreviewNotice({
  * with no shared clipboard can still read it off and type it.
  */
 function RunCommand() {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const { t } = useLingui();
   const [copied, setCopied] = useState(false);
@@ -390,7 +399,10 @@ function RunCommand() {
           resetTimer.current = setTimeout(() => setCopied(false), COPIED_HOLD_MS);
         })();
       }}
-      style={[styles.commandRow, { backgroundColor: theme.colors.surfaceRaised }]}>
+      style={[
+        styles.commandRow,
+        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+      ]}>
       {/* Two lines, not one shrunk to fit: the command wraps at the widths this
           is read at -- a phone and a Pad's narrower column -- and a
           command scaled down until it fits is a command nobody can read off the

@@ -29,7 +29,7 @@
     "ios": {
       "bundleIdentifier": "dev.osuki.muqun",
       "supportsTablet": true,
-      "requireFullScreen": true,
+      "requireFullScreen": false,
       "icon": {
         "light": "./assets/images/icon.png",
         "dark": "./assets/images/icon-dark.png"
@@ -41,6 +41,8 @@
         "NSLocalNetworkUsageDescription": "Muqun connects to the Gateway running on your own computer, which may be on your local network.",
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
         "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
           "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight"
         ],
@@ -48,7 +50,31 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
-        }
+        },
+        "UTExportedTypeDeclarations": [
+          {
+            "UTTypeIdentifier": "dev.osuki.muqun.theme",
+            "UTTypeDescription": "Muqun theme",
+            "UTTypeConformsTo": ["public.zip-archive"],
+            "UTTypeTagSpecification": {
+              "public.filename-extension": ["muqun-theme"]
+            }
+          }
+        ],
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "Muqun theme",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Owner",
+            "LSItemContentTypes": ["dev.osuki.muqun.theme"]
+          },
+          {
+            "CFBundleTypeName": "Muqun theme colours",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate",
+            "LSItemContentTypes": ["public.json"]
+          }
+        ]
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -79,7 +105,35 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "content",
+              "mimeType": "application/zip",
+              "pathPattern": ".*\\.muqun-theme"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/json",
+              "pathPattern": ".*\\.muqun-theme\\.json"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "*/*",
+              "pathPattern": ".*\\.muqun-theme"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "*/*",
+              "pathPattern": ".*\\.muqun-theme\\.json"
+            }
+          ]
+        }
+      ]
     },
     "web": {
       "output": "static",

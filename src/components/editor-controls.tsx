@@ -128,7 +128,14 @@ export function EditorControls({
         accessibilityLabel={t`Show the editor keyboard`}
         accessibilityHint={t`Opens the keyboard, the editor keys and the composer over this editor. Drag to move.`}
         moveLabel={t`Move the editor controls`}>
-        <KeyboardIcon size={20} color={theme.colors.text} />
+        {/* `primary`, not `text`. This handle floats over the *pane*, whose
+            background is the terminal's, while `text` is the colour of the
+            app's own surfaces -- so in light mode it drew a dark glyph on a
+            dark editor and the control read as a blank grey disc. The other
+            controls that float over the pane (`paneEntries` in its transparent
+            tray) already use `primary` for the same reason, and a custom pack's
+            primary is contrast-checked against its surfaces. */}
+        <KeyboardIcon size={20} color={theme.colors.primary} />
       </FloatingHandle>
       {expanded ? (
         <Animated.View pointerEvents="box-none" style={[styles.panelAnchor, panelStyle]}>

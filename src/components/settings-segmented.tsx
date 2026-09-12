@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The settings page's segmented control: colour mode, terminal text size, and
  * the agent view default when its flag is on.
@@ -52,6 +53,7 @@ export function SettingsSegmented({
   testID?: string;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsSegmented');
   const [trackWidth, setTrackWidth] = useState(0);
 
@@ -105,7 +107,7 @@ export function SettingsSegmented({
             styles.pill,
             {
               width: segment,
-              backgroundColor: theme.colors.surface,
+              backgroundColor: surfaceBackground(theme.colors.surface),
               borderRadius: theme.radius.pill,
             },
             pillStyle,

@@ -17,7 +17,11 @@ import '@/global.css';
 import { createThemePreset, type ThemeOverride } from '@osuki-dev/ui';
 
 import { appAppearanceConfig, appThemeAppearanceOverride } from '@/constants/appearance';
-import { DEFAULT_THEME_PACK_ID, resolveThemePack, type ThemePack } from '@/constants/theme-packs';
+import {
+  DEFAULT_THEME_PACK_ID,
+  resolveThemePack,
+  type ThemeAppearance,
+} from '@/constants/theme-packs';
 
 /**
  * The shape of the app, independent of its colours: density, corner radius and
@@ -25,7 +29,7 @@ import { DEFAULT_THEME_PACK_ID, resolveThemePack, type ThemePack } from '@/const
  * with, never how tightly it is packed -- otherwise picking Tokyo Night would
  * silently re-lay-out every screen.
  */
-export function buildTheme(pack: ThemePack): ThemeOverride {
+export function buildTheme(pack: ThemeAppearance): ThemeOverride {
   const preset = createThemePreset({
     name: `muqun-${pack.id}`,
     tone: 'commerce',

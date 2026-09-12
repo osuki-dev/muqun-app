@@ -1,6 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { Button } from '@/components/themed-button';
 import { Check, Copy, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -25,6 +27,8 @@ import {
 } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
+import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { themeFromDocument } from '@/theme/file-preview';
 
 /**
  * Read-only view of one artifact the agent produced.
@@ -169,6 +173,7 @@ const RENDER_MAX_BYTES = 64 * 1024;
 
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
+  const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -188,6 +193,12 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
+  const [previewedThemeDocument, setPreviewedThemeDocument] = useState<string | null>(null);
+  const themeDocumentIdentity = `${asset.id}:${asset.modified_unix_ms}`;
+  const themeManifest = useMemo(
+    () => themeFromDocument(asset.name, content),
+    [asset.name, content]
+  );
 
   useEffect(() => {
     if (!readable) return;
@@ -282,7 +293,10 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               <PressableScale
                 accessibilityLabel={t`Copy`}
                 onPress={copy}
-                style={[styles.close, { backgroundColor: theme.colors.surfaceRaised }]}>
+                style={[
+                  styles.close,
+                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                ]}>
                 {copied ? (
                   <Check size={18} color={theme.colors.success} />
                 ) : (
@@ -293,20 +307,45 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             <PressableScale
               accessibilityLabel={t`Close file`}
               onPress={onClose}
-              style={[styles.close, { backgroundColor: theme.colors.surfaceRaised }]}>
+              style={[
+                styles.close,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              ]}>
               <X size={18} color={theme.colors.text} />
             </PressableScale>
           </View>
         </View>
 
-        <AssetBody
-          asset={asset}
-          readable={readable}
-          content={content}
-          error={error}
-          markdownStyle={markdownStyle}
-          onRetry={() => setAttempt((previous) => previous + 1)}
-        />
+        {previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+            <CustomThemeLibrary
+              key={themeDocumentIdentity}
+              initialManifest={themeManifest}
+              detail
+              onClosePreview={() => setPreviewedThemeDocument(null)}
+            />
+          </ScrollView>
+        ) : (
+          <>
+            {themeManifest ? (
+              <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+                <Button
+                  testID="asset-preview-theme"
+                  onPress={() =>
+                    setPreviewedThemeDocument(themeDocumentIdentity)
+                  }>{t`Preview`}</Button>
+              </View>
+            ) : null}
+            <AssetBody
+              asset={asset}
+              readable={readable}
+              content={content}
+              error={error}
+              markdownStyle={markdownStyle}
+              onRetry={() => setAttempt((previous) => previous + 1)}
+            />
+          </>
+        )}
       </View>
     </Modal>
   );
@@ -327,6 +366,7 @@ function AssetBody({
   markdownStyle: ReturnType<typeof createMarkdownStyle>;
   onRetry: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
 
   const theme = useThemeTokens();
@@ -376,7 +416,10 @@ function AssetBody({
           <PressableScale
             accessibilityLabel={t`Try again`}
             onPress={onRetry}
-            style={[styles.retry, { backgroundColor: theme.colors.surfaceRaised }]}>
+            style={[
+              styles.retry,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
             <Text variant="caption" color={theme.colors.primary}>
               <Trans>Try again</Trans>
             </Text>
@@ -491,6 +534,7 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
   const relativeTime = useRelativeTime();
 
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const rows: { label: string; value: string }[] = [
     { label: t`Type`, value: asset.mime || asset.kind },
     { label: t`Size`, value: formatAssetSize(asset.size) || t`unknown` },
@@ -503,7 +547,11 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
       <Text variant="bodySmall" color={theme.colors.textMuted}>
         <Trans>No preview for this kind of file. It stays on the server.</Trans>
       </Text>
-      <View style={[styles.detailsCard, { backgroundColor: theme.colors.surfaceRaised }]}>
+      <View
+        style={[
+          styles.detailsCard,
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         {rows.map((row) => (
           <View key={row.label} style={styles.detailsRow}>
             <Text variant="caption" color={theme.colors.textMuted}>

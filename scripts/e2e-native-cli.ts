@@ -11,6 +11,8 @@ import {
   subprocess,
   tokenize,
   validateTarget,
+  isNotificationFixtureCommand,
+  runWithCleanup,
   type Suite,
 } from './e2e-native';
 
@@ -18,8 +20,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const which = (name: string) =>
   (process.env.PATH ?? '')
     .split(path.delimiter)
-    .map((directory) => path.join(directory, name))
-    .find((file) => existsSync(file));
+    .map((directory: string) => path.join(directory, name))
+    .find((file: string) => existsSync(file));
 const base = path.join(root, 'e2e/agent-device');
 const suite = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
 let tag = 'full';
@@ -94,6 +96,11 @@ async function validate(): Promise<void> {
     if (names.has(flow.name)) throw new Error(`Duplicate flow: ${flow.name}`);
     names.add(flow.name);
     if (!suite.programs[flow.program]) throw new Error(`Missing flow program: ${flow.program}`);
+    if (
+      flow.cleanup !== undefined &&
+      (typeof flow.cleanup !== 'string' || !suite.programs[flow.cleanup])
+    )
+      throw new Error(`Missing flow cleanup program: ${flow.cleanup}`);
   }
   for (const program of Object.values(suite.programs)) {
     const visit = async (steps: typeof program, stack: string[] = []): Promise<void> => {
@@ -113,7 +120,8 @@ async function validate(): Promise<void> {
             throw new Error(`Missing section: ${step.run}`);
           for (const line of contents.split('\n')) {
             if (!line.trim() || line.startsWith('#') || line.startsWith('context ')) continue;
-            const command = tokenize(line)[0];
+            const commandArgs = tokenize(line);
+            const command = commandArgs[0];
             if (
               ![
                 'open',
@@ -131,7 +139,8 @@ async function validate(): Promise<void> {
                 'back',
                 'react-native',
                 'close',
-              ].includes(command)
+              ].includes(command) &&
+              !isNotificationFixtureCommand(commandArgs)
             )
               throw new Error(`Unsupported native command: ${command}`);
           }
@@ -232,21 +241,20 @@ for (const flow of flows) {
     devClientUrl: process.env.E2E_DEV_CLIENT_URL,
     allowCameraDenial: flow.name === 'pairing-manual',
   });
-  let failure: string | undefined;
-  try {
-    await runner.run(suite.programs[flow.program], env);
-  } catch (error) {
-    failure = String(error);
-    console.error(`e2e: FAILED ${flow.name}: ${failure}`);
-    await invoke(['screenshot', path.join(artifacts, 'failure.png')]).catch(() => undefined);
-    await invoke(['snapshot']).catch(() => undefined);
-  } finally {
-    try {
+  const failure = await runWithCleanup({
+    run: () => runner.run(suite.programs[flow.program], env),
+    captureFailure: async () => {
+      await invoke(['screenshot', path.join(artifacts, 'failure.png')]).catch(() => undefined);
+      await invoke(['snapshot']).catch(() => undefined);
+    },
+    cleanup: async () => {
+      if (flow.cleanup) await runner.run(suite.programs[flow.cleanup], env);
+    },
+    close: async () => {
       await invoke(['close']);
-    } catch (error) {
-      failure ??= `Session cleanup failed: ${String(error)}`;
-    }
-  }
+    },
+  });
+  if (failure) console.error(`e2e: FAILED ${flow.name}: ${failure}`);
   results.push({
     name: flow.name,
     seconds: (Date.now() - started) / 1000,

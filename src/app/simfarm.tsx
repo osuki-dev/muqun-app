@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The simulator preview's route.
  *
@@ -67,6 +68,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerSimfarm } from '@/stores/server-simfarm';
 
 export default function SimfarmScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   const { t } = useLingui();
@@ -126,7 +128,7 @@ export default function SimfarmScreen() {
     <>
       <StatusBar hidden animated hideTransitionAnimation="slide" />
       {!record ? (
-        <View style={[styles.notice, { backgroundColor: theme.colors.surface }]}>
+        <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
           <Text selectable variant="bodySmall" color={theme.colors.danger}>
             {t`This server is no longer paired.`}
           </Text>

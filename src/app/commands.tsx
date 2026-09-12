@@ -1,3 +1,8 @@
+import { Input } from '@/components/themed-input';
+import { Card } from '@/components/themed-card';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
+import { ThemedSurface } from '@/components/themed-surface';
 /**
  * Quick actions: one thing done to the pane in front of you.
  *
@@ -57,7 +62,9 @@
  * whole reading it switched to, because this sheet was the only way in. See
  * `src/lib/pane-view-mode.ts`.
  */
-import { Button, Card, Input, Skeleton, Spinner, Tabs, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Skeleton, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Tabs } from '@/components/themed-tabs';
+import { Button } from '@/components/themed-button';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
@@ -84,6 +91,7 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
+import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
@@ -99,15 +107,16 @@ import {
 import { describeGatewayFailure } from '@/lib/network-error';
 import { quickActionAvailability } from '@/lib/quick-actions';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { slashArgumentRequired } from '@/lib/slash-argument';
 import { SIMFARM_DEFAULT_PORT, simfarmSocketUrl } from '@/lib/simfarm';
 import { warmSimfarm } from '@/lib/simfarm-stream';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
+import { useComposerAssignmentStore } from '@/stores/composer-assignment';
 import {
   collaborationCommandAvailable,
-  collaborationDraftScope,
   commandCollaborationDraft,
 } from '@/lib/quick-command-collaboration';
 import { supportsCollaboration, tasksForSession } from '@/lib/agent-collaboration';
@@ -127,7 +136,6 @@ import {
   type QuickCommandDelivery,
 } from '@/lib/quick-commands';
 import { quickCommandName } from '@/i18n/labels';
-import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 
 /**
  * The face a value is set in when tapping the row types that value into the
@@ -151,6 +159,7 @@ const MONO_TEXT = {
 } as const;
 
 export default function QuickCommandsScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
@@ -320,22 +329,18 @@ export default function QuickCommandsScreen() {
           tabId: params.tabId,
           cwd: params.cwd,
         });
-        const scope = collaborationDraftScope(draft.context);
-        if (!useAgentCollaboration.getState().drafts[scope]) {
-          useAgentCollaboration.getState().saveDraft(scope, draft);
-        }
-        router.replace({
-          pathname: '/agent-collaboration',
-          params: {
-            serverId: params.serverId,
-            sessionId: params.sessionId,
-            paneId: params.paneId,
-            workspaceId: params.workspaceId,
-            tabId: params.tabId,
-            cwd: params.cwd,
-            commandId: command.id,
-          },
-        } as Href);
+        // The task is written in the terminal's own composer, with the
+        // assistant chosen from the strip above it. This sheet closes and
+        // leaves the instructions there -- it used to open a second screen
+        // with its own field, image strip and Send, all of which the composer
+        // already had.
+        useComposerAssignmentStore.getState().request_({
+          serverId: params.serverId,
+          paneId: params.paneId,
+          prompt: draft.prompt,
+          command: draft.command,
+        });
+        router.back();
       } catch (failure) {
         setError(describeGatewayFailure(failure, t`Could not send shortcut.`).message);
       }
@@ -362,9 +367,12 @@ export default function QuickCommandsScreen() {
 
   async function runSlashCommand(entry: SlashCommand) {
     if (!params.paneId || !params.sessionId || sendingId) return;
-    // A command that takes an argument cannot be fired blind: hand it to the
-    // composer with the cursor after it so the argument can be typed.
-    if (entry.argument_hint) {
+    // A command that needs an argument cannot be fired blind: hand it to the
+    // composer with the cursor after it so the argument can be typed. An
+    // *optional* hint is not that -- `[instructions]` runs perfectly well with
+    // nothing after it, and diverting those closed the sheet with no visible
+    // result for most of the catalogue.
+    if (slashArgumentRequired(entry.argument_hint)) {
       prefillDraft(`${entry.command} `);
       router.back();
       return;
@@ -579,7 +587,8 @@ export default function QuickCommandsScreen() {
     // The editor is the reason for the keyboard-aware scroller: a plain
     // ScrollView left both inputs under the keyboard, with the save button out
     // of reach entirely.
-    <View style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+      <ThemeArtwork slot="shell.background" />
       <KeyboardAwareScrollView
         bottomOffset={24}
         keyboardShouldPersistTaps="handled"
@@ -600,7 +609,7 @@ export default function QuickCommandsScreen() {
           style={[
             styles.stickyTop,
             isPadLayout && styles.padStickyTop,
-            { backgroundColor: theme.colors.background },
+            { backgroundColor: surfaceBackground(theme.colors.background) },
           ]}>
           {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
@@ -747,7 +756,11 @@ export default function QuickCommandsScreen() {
             things that stay. */}
         {available.canStopAgent ? (
           <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
-            <View style={[styles.group, { backgroundColor: theme.colors.dangerSubtle }]}>
+            <View
+              style={[
+                styles.group,
+                { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+              ]}>
               <ActionRow
                 accessibilityLabel={t`Stop this agent`}
                 name={t`Stop`}
@@ -763,37 +776,33 @@ export default function QuickCommandsScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Not a tile, and the only one of the sheet's verbs that is not. Every
-            tile does its thing and closes; this one hands over to a form with
-            three questions on it, and a label that has to say so is a sentence
-            rather than a word. */}
+        {/* It used to hand over to a form with three questions on it, so its
+            label was a sentence rather than a word. The form is gone: this now
+            closes like every other tile and opens the assistant strip over the
+            terminal's own field, so the label says what the reader will be
+            looking at a moment later, and the detail says where. */}
         {!manageOnly &&
         params.serverId &&
         params.paneId &&
         supportsCollaboration(params.backendKind) ? (
           <SettingsCard>
             <ActionRow
-              accessibilityLabel={t`Agent collaboration`}
-              name={t`Agent collaboration`}
+              accessibilityLabel={t`Assign a task`}
+              name={t`Assign a task`}
               detail={
                 collaborationCount > 0
-                  ? t`${collaborationCount} assigned tasks · view agents and output`
-                  : t`Assign work to another agent and follow its progress.`
+                  ? t`Choose an assistant above the message field · ${collaborationCount} assigned`
+                  : t`Choose an assistant above the message field, then write the task there.`
               }
               detailColor={theme.colors.textMuted}
-              onPress={() =>
-                router.replace({
-                  pathname: '/agent-collaboration',
-                  params: {
-                    serverId: params.serverId,
-                    sessionId: params.sessionId,
-                    paneId: params.paneId,
-                    workspaceId: params.workspaceId,
-                    tabId: params.tabId,
-                    cwd: params.cwd,
-                  },
-                } as Href)
-              }
+              onPress={() => {
+                if (!params.serverId || !params.paneId) return;
+                useComposerAssignmentStore.getState().request_({
+                  serverId: params.serverId,
+                  paneId: params.paneId,
+                });
+                router.back();
+              }}
             />
           </SettingsCard>
         ) : null}
@@ -812,7 +821,10 @@ export default function QuickCommandsScreen() {
 
         {!editing ? (
           <View style={styles.section}>
-            <View style={[styles.commandTabs, { backgroundColor: theme.colors.surface }]}>
+            <ThemedSurface
+              slot="tabs.background"
+              baseColor={theme.colors.surface}
+              style={[styles.commandTabs, { overflow: 'hidden' }]}>
               {(['saved', 'catalog'] as const).map((tab) => (
                 <PressableScale
                   key={tab}
@@ -826,8 +838,9 @@ export default function QuickCommandsScreen() {
                   style={[
                     styles.commandTab,
                     {
-                      backgroundColor:
-                        commandTab === tab ? theme.colors.primarySubtle : 'transparent',
+                      backgroundColor: surfaceBackground(
+                        commandTab === tab ? theme.colors.primarySubtle : 'transparent'
+                      ),
                     },
                   ]}>
                   <Text
@@ -837,7 +850,7 @@ export default function QuickCommandsScreen() {
                   </Text>
                 </PressableScale>
               ))}
-            </View>
+            </ThemedSurface>
             <Input
               accessibilityLabel={t`Search actions and commands`}
               placeholder={t`Search actions and commands`}
@@ -1185,6 +1198,7 @@ function ActionTile({
   selected?: boolean;
   onPress?: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const ink = disabled
     ? theme.colors.textSubtle
@@ -1195,7 +1209,11 @@ function ActionTile({
     <View
       style={[
         styles.tile,
-        { backgroundColor: withAlpha(theme.colors.text, appChrome.opacity.chromeControl) },
+        {
+          backgroundColor: surfaceBackground(
+            withAlpha(theme.colors.text, appChrome.opacity.chromeControl)
+          ),
+        },
       ]}>
       <PressableScale
         accessibilityRole="button"
@@ -1359,12 +1377,15 @@ function ActionRow({
  * always a tenth of whatever this pack writes with.
  */
 function KeyCaps({ keys }: { keys: string[] }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const fill = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
   return (
     <View style={styles.keyCaps}>
       {keys.map((key, index) => (
-        <View key={`${key}-${index}`} style={[styles.keyCap, { backgroundColor: fill }]}>
+        <View
+          key={`${key}-${index}`}
+          style={[styles.keyCap, { backgroundColor: surfaceBackground(fill) }]}>
           <Text variant="caption" color={theme.colors.text} style={styles.keyCapText}>
             {key}
           </Text>

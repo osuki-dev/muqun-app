@@ -71,8 +71,20 @@ mock.module('@/lib/demo-gateway', () => ({
 }));
 
 // The one edge that must stay under this test's control: these three are the
-// whole of what the store imports from the gateway client.
+// whole of what the store imports from the gateway client. `gatewayTransport`
+// is not used here and is present only because `mock.module` is process-wide:
+// whichever fake registers first is the one every suite gets, so a fake missing
+// something another suite's code path reaches for breaks that suite, not this
+// one. See the same note in `stores/__tests__/ssh-hosts.test.ts`.
 mock.module('@/lib/gateway-client', () => ({
+  gatewayTransport: {
+    loadHealth: async () => ({ ok: true }),
+    loadSessions: async () => ({ sessions: [] }),
+    loadWorkspaces: async () => [],
+    loadTabs: async () => [],
+    loadPanes: async () => [],
+    loadAgents: async () => [],
+  },
   configureGateway: () => {},
   setGatewayLabel: async () => {},
   revokeOwnGatewayPairing: async (target: GatewayRecord) => {

@@ -85,13 +85,27 @@ function withCredential(
   };
 }
 
+let hydration: Promise<void> | null = null;
+
 export const useSshHostsStore = create<SshHostsState>((set) => ({
   hosts: [],
   loading: true,
 
-  async hydrate() {
-    const hosts = await enqueue(loadSshHosts);
-    set({ hosts: sortSshHosts(hosts), loading: false });
+  hydrate() {
+    // Callers now wait on this read rather than racing it (see the tunnel's
+    // `openConnection`), so several can arrive at once on a cold screen. One
+    // keychain read serves all of them; a failed read leaves `loading` set so
+    // the next caller tries again rather than inheriting an empty list.
+    if (hydration) return hydration;
+    hydration = (async () => {
+      try {
+        const hosts = await enqueue(loadSshHosts);
+        set({ hosts: sortSshHosts(hosts), loading: false });
+      } finally {
+        hydration = null;
+      }
+    })();
+    return hydration;
   },
 
   async addHost(input) {

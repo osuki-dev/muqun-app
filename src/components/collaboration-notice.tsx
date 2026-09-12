@@ -1,10 +1,12 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Button, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
-import { type Href, useRouter } from 'expo-router';
-import { ChevronDown, ChevronUp, Ellipsis } from 'lucide-react-native';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
+import { TerminalTranscript } from '@/components/terminal-transcript';
 import { appChrome } from '@/constants/appearance';
 import { useCollaborationOutput } from '@/hooks/use-collaboration-output';
 import {
@@ -31,15 +33,16 @@ export function CollaborationNotice({
   connected: boolean;
   active: boolean;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const router = useRouter();
   const stored = useAgentCollaboration((state) => state.tasks);
   const { current } = partitionCollaborationTasks(
     tasksForSession(stored, context.serverId, context.sessionId),
     agents
   );
   const task = current[0];
+  const [removing, setRemoving] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [opening, setOpening] = useState(false);
@@ -85,7 +88,7 @@ export function CollaborationNotice({
         padding: 12,
         gap: 8,
         borderRadius: appChrome.radius.control,
-        backgroundColor: theme.colors.surface,
+        backgroundColor: surfaceBackground(theme.colors.surface),
         boxShadow: appChrome.shadow.ambientCard,
       }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -93,16 +96,6 @@ export function CollaborationNotice({
           {t`Agent collaboration`}
           {current.length > 1 ? ` · ${current.length}` : ''}
         </Text>
-        <PressableScale
-          testID="collaboration-notice-manage"
-          accessibilityRole="button"
-          accessibilityLabel={t`Assignment options`}
-          hitSlop={10}
-          onPress={() =>
-            router.push({ pathname: '/agent-collaboration', params: context } as Href)
-          }>
-          <Ellipsis size={18} color={theme.colors.textMuted} />
-        </PressableScale>
       </View>
       <PressableScale
         testID="collaboration-notice-expand"
@@ -148,10 +141,17 @@ export function CollaborationNotice({
           </Button>
           {output.outputLoading ? <Spinner size="sm" /> : null}
           {output.output ? (
-            <ScrollView style={{ maxHeight: 140 }} nestedScrollEnabled>
-              <Text testID="collaboration-notice-output" selectable variant="caption">
-                {output.output}
-              </Text>
+            <ScrollView
+              style={{ maxHeight: 140 }}
+              nestedScrollEnabled
+              horizontal={false}
+              showsVerticalScrollIndicator={false}>
+              {/* The agent's answer is a pane snapshot: monospaced, column
+                  aligned, and carrying SGR escapes. Drawn as an ordinary
+                  caption it lost all three, so a table or a diff the agent drew
+                  arrived as ragged prose. See `TerminalTranscript` for why this
+                  reuses the parser rather than standing up a second canvas. */}
+              <TerminalTranscript testID="collaboration-notice-output" output={output.output} />
             </ScrollView>
           ) : null}
           {output.outputError || error ? (
@@ -172,6 +172,27 @@ export function CollaborationNotice({
               onPress={() =>
                 useAgentCollaboration.getState().review(task.id)
               }>{t`Mark reviewed`}</Button>
+            {/* Arm-to-confirm in place, the pattern the theme library and the
+                row menu already use. This was a native `Alert` for a while --
+                the only one in the app outside a permission failure -- put
+                there when the screen its `...` used to open was deleted. A
+                system dialog in the middle of the app's own chrome is not a
+                confirmation, it is a different application briefly. */}
+            <Button
+              testID="collaboration-notice-remove"
+              variant="ghost"
+              onPress={() => {
+                if (removing !== task.id) {
+                  setRemoving(task.id);
+                  return;
+                }
+                // Local history only: this forgets the card, and never reaches
+                // the assistant (AGENTS.md).
+                useAgentCollaboration.getState().remove(task.id);
+                setRemoving(null);
+              }}>
+              {removing === task.id ? t`Remove from history?` : t`Remove`}
+            </Button>
           </View>
         </>
       ) : null}
