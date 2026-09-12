@@ -443,7 +443,10 @@ export function CustomThemeLibrary({
                 testID="theme-apply"
                 disabled={busy || contrast.length > 0 || missingImages}
                 onPress={() => void perform(() => save(true))}>{t`Apply theme`}</Button>
-            ) : (
+            ) : detail ? // The detail route pins its own Done to the bottom of the screen
+            // (`app/custom-theme.tsx`). A second one here would be the same
+            // word twice, one of them halfway up a scroll.
+            null : (
               <Button disabled={busy} onPress={closePreview}>{t`Done`}</Button>
             )}
             {!detail ? (
