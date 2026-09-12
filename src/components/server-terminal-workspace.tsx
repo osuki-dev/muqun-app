@@ -17,7 +17,6 @@ import {
   Monitor,
   Paperclip,
   PenLine,
-  Plus,
   SquareTerminal,
   X,
   Zap,
@@ -3603,42 +3602,18 @@ export function ServerTerminalWorkspace({
       exiting={fadeOutDown('short')}
       layout={dockRowLayout}
       leading={
-        // The target chip replaces the paperclip rather than sitting beside it:
-        // the row is already at its width budget on a phone, and while a task is
-        // addressed the most important thing the composer can say is who it is
-        // addressed to. Attachments staged before arming are kept and still go
-        // with the task, so nothing is lost by the swap. Tapping it disarms.
-        assignment.active && assignment.target ? (
-          <PressableScale
-            testID="composer-assignment-chip"
-            accessibilityRole="button"
-            accessibilityLabel={t`Send to ${assignmentLabel} — tap to change`}
-            disabled={sending}
-            onPress={() => assignment.setOpen(true)}
-            style={[
-              composerStyles.button,
-              styles.assignmentChip,
-              {
-                backgroundColor: surfaceBackground(
-                  assignment.target.type === 'new'
-                    ? theme.colors.primarySubtle
-                    : withAlpha(theme.colors.success, appChrome.opacity.chromeControl)
-                ),
-                borderColor:
-                  assignment.target.type === 'new' ? theme.colors.primary : theme.colors.success,
-              },
-            ]}>
-            {/* Two different glyphs, not one glyph in two colours: starting an
-                assistant and handing work to one that is already running are
-                different acts with different consequences, and colour alone is
-                never a status in this app. */}
-            {assignment.target.type === 'new' ? (
-              <Plus size={15} color={theme.colors.primary} />
-            ) : (
-              <Bot size={15} color={theme.colors.success} />
-            )}
-          </PressableScale>
-        ) : dock.attachEntry ? (
+        // The paperclip keeps this seat, always.
+        //
+        // It used to be swapped for a chip naming the assistant while a task
+        // was addressed, on the reasoning that the row had no width to spare
+        // and the destination was the most important thing to say. Both halves
+        // were wrong. Attaching a reference image is the single most likely
+        // thing to want *while* writing a task -- reusing this queue is why
+        // collaboration moved into the composer at all -- so the one mode that
+        // needs the paperclip most was the one mode that hid it. And the
+        // destination was never unsaid: the strip above highlights the chosen
+        // assistant, the placeholder names it, and Send names it again.
+        dock.attachEntry ? (
           <PressableScale
             accessibilityLabel={
               attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
@@ -5350,9 +5325,6 @@ const styles = StyleSheet.create({
   terminalKeyEmphasisText: {
     fontWeight: '700',
   },
-  // The target chip stands in for the paperclip while a task is addressed, so
-  // it keeps the paperclip's footprint exactly and only changes what fills it.
-  assignmentChip: { alignItems: 'center', justifyContent: 'center' },
   viewToggle: {
     width: 46,
     height: 46,
