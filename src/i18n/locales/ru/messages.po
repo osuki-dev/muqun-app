@@ -306,10 +306,6 @@ msgstr "Поручить задачу"
 msgid "Assign this to an assistant"
 msgstr "Поручить ассистенту"
 
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "Действия с поручением"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Ассистент запущен"
@@ -401,7 +397,6 @@ msgstr "Доступ к камере выключен. Включите его �
 msgid "Camera access needed"
 msgstr "Нужен доступ к камере"
 
-#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -2352,6 +2347,7 @@ msgstr "Обновить файлы"
 msgid "Refresh output"
 msgstr "Обновить вывод"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "Удалить"
@@ -2366,8 +2362,8 @@ msgid "Remove {0}"
 msgstr "Удалить {0}"
 
 #: src/components/collaboration-notice.tsx
-msgid "Remove from history"
-msgstr "Удалить из истории"
+msgid "Remove from history?"
+msgstr "Удалить из истории?"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"

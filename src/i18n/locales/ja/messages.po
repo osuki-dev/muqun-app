@@ -306,10 +306,6 @@ msgstr "タスクを割り当てる"
 msgid "Assign this to an assistant"
 msgstr "アシスタントに任せる"
 
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "依頼のオプション"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "アシスタントを起動しました"
@@ -401,7 +397,6 @@ msgstr "カメラへのアクセスがオフです。写真を撮るには設定
 msgid "Camera access needed"
 msgstr "カメラへのアクセスが必要です"
 
-#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -2352,6 +2347,7 @@ msgstr "ファイルを再読み込み"
 msgid "Refresh output"
 msgstr "出力を更新"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "削除"
@@ -2366,8 +2362,8 @@ msgid "Remove {0}"
 msgstr "{0} を取り除く"
 
 #: src/components/collaboration-notice.tsx
-msgid "Remove from history"
-msgstr "履歴から削除"
+msgid "Remove from history?"
+msgstr "履歴から削除しますか？"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"

@@ -306,10 +306,6 @@ msgstr "分配任务"
 msgid "Assign this to an assistant"
 msgstr "交给一个助手去做"
 
-#: src/components/collaboration-notice.tsx
-msgid "Assignment options"
-msgstr "任务选项"
-
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "助手已启动"
@@ -401,7 +397,6 @@ msgstr "相机访问已关闭。请在“设置”中开启后再拍照"
 msgid "Camera access needed"
 msgstr "需要相机访问权限"
 
-#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -2352,6 +2347,7 @@ msgstr "刷新文件"
 msgid "Refresh output"
 msgstr "刷新输出"
 
+#: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Remove"
 msgstr "移除"
@@ -2366,8 +2362,8 @@ msgid "Remove {0}"
 msgstr "移除 {0}"
 
 #: src/components/collaboration-notice.tsx
-msgid "Remove from history"
-msgstr "移除记录"
+msgid "Remove from history?"
+msgstr "从历史移除？"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
