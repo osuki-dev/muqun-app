@@ -1,4 +1,5 @@
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useLingui } from '@lingui/react/macro';
 import { Switch, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { appChrome } from '@/constants/appearance';
@@ -34,13 +35,16 @@ export function Toggle({
   disabled = false,
   style,
   testID,
+  accessibilityLabel,
 }: {
   value: boolean;
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
   style?: ViewStyle;
   testID?: string;
+  accessibilityLabel?: string;
 }) {
+  const { t } = useLingui();
   const { colors } = useThemeTokens();
   const { resolvedMode } = useThemeMode();
 
@@ -53,6 +57,9 @@ export function Toggle({
       <Switch
         value={value}
         disabled={disabled}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ checked: value, disabled }}
+        accessibilityValue={{ text: value ? t`On` : t`Off` }}
         onValueChange={(next) => {
           void feedback(next ? 'success' : 'selection');
           onValueChange(next);

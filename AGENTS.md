@@ -1,5 +1,8 @@
 # Expo HAS CHANGED
 
+Write all repository documentation, architecture notes, release notes, and
+bundled agent skill instructions in English. UI localization is separate.
+
 Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before writing any code.
 
 ## Working on this
@@ -10,6 +13,37 @@ process.
 The maintainers use a card tracker and a branch tool of their own, and its
 configuration is not in this repository. Nothing about it is needed to
 contribute here, and nothing in this file assumes you have it.
+
+Complete local development and all five checks below before opening a PR.
+If a check is blocked or fails, report it and continue fixing it; do not open
+a PR claiming the change is ready.
+
+## Releases and Android signing
+
+- Release from a reviewed, tested commit using a `vX.Y.Z` tag. Do not create or
+  push a release tag unless the user requested a release.
+- Every GitHub Release must include human-written release notes: user-visible
+  changes, fixes, compatibility requirements (App/Gateway/Herdr), and upgrade
+  instructions. Commit them at `release-notes/vX.Y.Z.md` before tagging. An APK
+  attachment or an automatically generated commit list is not sufficient.
+- Android and iOS signing credentials are managed in Expo. The team's current
+  workflow builds locally with EAS `--local` and uses EAS Submit for submission.
+  GitHub CI should run the same local APK build on its runner using the
+  `production-apk` profile and existing Expo-managed credentials. `EXPO_TOKEN`
+  authenticates CI; it is not a replacement signing key.
+- Preserve `dev.osuki.muqun`, the Expo project, and the existing Android
+  keystore. Never generate or rotate a keystore to make CI pass. Missing
+  credentials are a configuration problem to report, not permission to create
+  new signing identity. Never commit or print private signing credentials.
+- APK and Play builds share the package name and must not become separate
+  apps. Cross-channel in-place upgrades additionally require the same signing
+  certificate and increasing versionCode. Verify the actual Play App Signing
+  certificate against the APK certificate before claiming this works; an
+  upload key is not necessarily Google's distribution signing key.
+- Run `.github/workflows/android-apk.yml` on version tags. Attach the APK and
+  its SHA-256 checksum to the matching GitHub Release, built from that exact
+  tag. A manual run without a tag is build-only. Do not submit to Play or
+  publish a release as an incidental part of developing a feature.
 
 ## Installing behind a proxy
 
@@ -61,17 +95,43 @@ runs behind a proxy.
 
 ## End-to-end test gate
 
+Optional Gateway features use capability detection, not a guessed Gateway version.
+Agent collaboration requires `agent_collaboration` and a connected Herdr 0.9.0+
+backend for the selected session. An older Gateway or Herdr must retain ordinary
+terminal use and show an actionable upgrade explanation for collaboration.
+Agent status is not proof of task completion; never display fabricated progress
+percentages or treat an idle agent as a successfully completed assignment.
+Bind current assignments to the Gateway's opaque agent instance identity, not a
+reusable pane id. Keep earlier assignments as history; marking or removing history
+must work offline and must not stop an agent. New output must not move the reader's
+viewport or replace the snapshot until they choose to refresh it.
+
+Changes to agent startup or task delivery also need a real, paired App-to-Gateway-to-agent
+check; offline demo fixtures alone cannot prove delivery. Use an isolated Herdr session
+and a dedicated test device, never a user's active workspace. On the development Mac,
+enable `proxy_on` in a new terminal before launching AI agents. Verify existing-agent
+assignment, new-agent startup, follow-up delivery, actual returned output, and status
+changes without automatic terminal navigation. Ask before answering agent trust or
+approval prompts, and never retry an ambiguous delivery automatically.
+
 Finishing a feature means the whole app still works, not just the screen that was touched.
 
 - Every change that touches app code runs the full end-to-end suite before it lands: `bash scripts/e2e.sh`.
-  It needs one booted emulator or simulator with the app installed; the flows drive offline demo
+  It needs a dedicated, unpaired emulator or simulator with the app installed and English selected; the flows drive offline demo
   mode, so no gateway, no network and no pairing.
 - `bash scripts/e2e.sh --smoke` is the fast subset (`demo-tour` only). It is for iterating, not for
   closing a card.
-- Reports land in `dist/e2e-reports/` (JUnit XML plus the run's screenshots and view hierarchies).
+- Reports land in `dist/e2e-reports/` (JUnit XML plus the run's screenshots, native command results and view hierarchies).
   The directory is build output and is not committed.
-- A flow that covers a new surface belongs in `maestro/flows/` with the `full` tag, added in the
-  same change as the feature. An untagged flow is a flow the gate does not enforce.
+- A flow that covers a new surface belongs in `e2e/agent-device/` as native `.ad` actions, registered
+  with the `full` tag in `suite.json` in the same change as the feature. A flow without that tag is
+  not enforced by the gate. Use agent-device 0.20.10 and the native runner; do not introduce another
+  test-driver format. `bash scripts/e2e.sh --check` validates native syntax and manifest references
+  without driving a device. The runner's own tests run before the device suite.
+- The suite relaunches the app without erasing user data. Never run it on a simulator with real
+  paired servers or SSH hosts. Pass `--device ID --platform ios|android` when several devices exist.
+  For development builds, set `E2E_AD_METRO_HOST` and `E2E_AD_METRO_PORT`. Test full suites on each
+  supported platform before claiming platform-specific coverage.
 - Run `bash scripts/e2e.sh` and quote the result in the pull request. The gate is the suite
   passing, not a tool remembering that it did.
 

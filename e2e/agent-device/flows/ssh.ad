@@ -1,0 +1,98 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# ssh
+
+# section s1
+press "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+wait stable 400 5000
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+screenshot "shots/ssh-01-hosts.png"
+
+# section s6
+press "${TARGET}"
+
+# section s7
+is visible "${TARGET}"
+
+# section s8
+is visible "${TARGET}"
+
+# section s9
+wait stable 400 5000
+
+# section s10
+is hidden "${TARGET}"
+
+# section s11
+screenshot "shots/ssh-02-shell.png"
+
+# section s12
+press "${TARGET}"
+
+# section s13
+press "${TARGET}"
+
+# section s14
+wait stable 400 5000
+
+# section s15
+is hidden "${TARGET}"
+
+# section s16
+is visible "${TARGET}"
+
+# section s17
+press "${TARGET}"
+
+# section s18
+is visible "${TARGET}"
+
+# section s19
+screenshot "shots/ssh-03-keyboard.png"
+
+# section s20
+press "${TARGET}"
+
+# section s21
+press "${TARGET}"
+
+# section s22
+is visible "${TARGET}"
+
+# section s23
+is hidden "${TARGET}"
+
+# section s24
+press "${TARGET}"
+
+# section s25
+is visible "${TARGET}"
+
+# section s26
+is visible "${TARGET}"
+
+# section s27
+press "${TARGET}"
+
+# section s28
+is visible "${TARGET}"
+
+# section s29
+press "${TARGET}"
+
+# section s30
+is visible "${TARGET}"
+
+# section s31
+press "${TARGET}"
+
+# section s32
+is visible "${TARGET}"

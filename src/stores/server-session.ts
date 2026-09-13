@@ -33,6 +33,9 @@ type SessionPick = {
 type ServerSessionState = {
   hydrated: boolean;
   byServer: ServerSessionIndex;
+  /** Visit memory only; always scoped by machine AND backend session. */
+  panesByServer: Record<string, Record<string, string>>;
+  rememberPane: (serverId: string, sessionId: string, paneId: string) => void;
   hydrate: () => Promise<void>;
   /** The pick the sheet just made, until the workspace has acted on it. */
   pick: SessionPick | null;
@@ -46,6 +49,16 @@ type ServerSessionState = {
 export const useServerSession = create<ServerSessionState>((set, get) => ({
   hydrated: false,
   byServer: {},
+  panesByServer: {},
+  rememberPane(serverId, sessionId, paneId) {
+    if (!serverId || !sessionId || !paneId) return;
+    set((state) => ({
+      panesByServer: {
+        ...state.panesByServer,
+        [serverId]: { ...state.panesByServer[serverId], [sessionId]: paneId },
+      },
+    }));
+  },
   pick: null,
 
   async hydrate() {

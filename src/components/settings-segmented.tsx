@@ -112,7 +112,13 @@ export function SettingsSegmented({
           ]}
         />
         {options.map((option) => (
-          <Tabs.Trigger key={option.value} value={option.value} style={styles.trigger}>
+          <Tabs.Trigger
+            key={option.value}
+            value={option.value}
+            // Android's native driver omits selected. Expose the same source
+            // state in a test identifier, without changing spoken labels.
+            testID={`settings-selection:${option.value === value ? 'on' : 'off'}:${testID ?? 'segment'}-${option.value}`}
+            style={styles.trigger}>
             <Tabs.Label>{option.label}</Tabs.Label>
           </Tabs.Trigger>
         ))}

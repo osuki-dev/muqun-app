@@ -1,0 +1,116 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# light-shots
+
+# section s1
+open "dev.osuki.muqun" --relaunch
+
+# section s2
+wait stable 400 5000
+
+# section s3
+press "${TARGET}"
+
+# section s4
+wait stable 400 5000
+
+# section s5
+press "${TARGET}"
+
+# section s6
+is visible "${TARGET}"
+
+# section s7
+press "${TARGET}"
+
+# section s8
+wait stable 400 5000
+
+# section s9
+screenshot "shots/light/01-settings-top.png"
+
+# section s10
+wait stable 400 5000
+
+# section s11
+screenshot "shots/light/02-settings-appearance.png"
+
+# section s12
+scroll down --pixels 320
+
+# section s13
+wait stable 400 5000
+
+# section s14
+screenshot "shots/light/03-settings-alerts.png"
+
+# section s15
+scroll down --pixels 320
+
+# section s16
+wait stable 400 5000
+
+# section s17
+screenshot "shots/light/04-settings-terminal.png"
+
+# section s18
+scroll down --pixels 320
+
+# section s19
+wait stable 400 5000
+
+# section s20
+screenshot "shots/light/05-settings-about.png"
+
+# section s21
+press "${TARGET}"
+
+# section s22
+is visible "${TARGET}"
+
+# section s23
+wait stable 400 5000
+
+# section s24
+screenshot "shots/light/06-home.png"
+
+# section s25
+press "${TARGET}"
+
+# section s26
+is visible "${TARGET}"
+
+# section s27
+wait stable 400 5000
+
+# section s28
+screenshot "shots/light/07-server.png"
+
+# section s29
+press "${TARGET}"
+
+# section s30
+wait stable 400 5000
+
+# section s31
+screenshot "shots/light/08-panels.png"
+
+# section s32
+press "${TARGET}"
+
+# section s33
+wait stable 400 5000
+
+# section s34
+press "${TARGET}"
+
+# section s35
+wait stable 400 5000
+
+# section s36
+screenshot "shots/light/09-files.png"
+
+# section s37
+press "${TARGET}"
+
+# section s38
+wait stable 400 5000

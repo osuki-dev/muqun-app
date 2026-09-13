@@ -14,7 +14,7 @@
  * all, what order the choices are in, and where a remembered choice that has
  * since disappeared lands instead.
  */
-import type { SessionsResponse } from '@/lib/gateway-client';
+import type { HealthResponse, SessionsResponse } from '@/lib/gateway-client';
 
 /** The default the gateway omits: a session with no `backend` is a Herdr one. */
 const DEFAULT_BACKEND_KIND = 'herdr';
@@ -44,8 +44,39 @@ export type SessionChoice = {
  * -- while also making the first item, which is what an app with no remembered
  * choice opens, disagree with what every other client sees.
  */
-export function sessionChoices(sessions: SessionsResponse['sessions']): SessionChoice[] {
-  return normalizeChoices(sessions);
+export function sessionChoices(
+  sessions: SessionsResponse['sessions'],
+  includeDisconnected = false
+): SessionChoice[] {
+  return normalizeChoices(
+    includeDisconnected ? sessions : sessions?.filter((session) => session.connected !== false)
+  );
+}
+
+/** Older gateways already report per-session connectivity in /health. */
+export function withSessionAvailability(
+  sessions: SessionsResponse,
+  health: Pick<HealthResponse, 'backend' | 'backends'>
+): SessionsResponse {
+  return {
+    ...sessions,
+    sessions: sessions.sessions?.map((session) => {
+      if (typeof session.connected === 'boolean') return session;
+      const backend =
+        health.backends?.find((item) => item.sessionId === session.id) ??
+        (health.backend?.sessionId === session.id ? health.backend : undefined);
+      return typeof backend?.connected === 'boolean'
+        ? { ...session, connected: backend.connected }
+        : session;
+    }),
+  };
+}
+
+export function shouldShowSessionSwitcher(
+  choices: readonly SessionChoice[],
+  machineCount = 1
+): boolean {
+  return choices.length > 1 || machineCount > 1;
 }
 
 /**
@@ -105,20 +136,6 @@ function normalizeChoices(sessions: readonly unknown[] | undefined): SessionChoi
     });
   }
   return choices;
-}
-
-/**
- * Whether the workspace draws the switcher at all.
- *
- * One session is the overwhelmingly common case and it has nothing to switch
- * between, so the header must look exactly as it did before this feature
- * existed -- no icon, no chip, no reserved width. That is a rule about a number
- * rather than a rendering detail, which is why it lives here and is tested,
- * instead of being an `&&` inside the header's JSX where the next change to the
- * row can quietly turn it into "sometimes".
- */
-export function shouldShowSessionSwitcher(choices: readonly SessionChoice[]): boolean {
-  return choices.length > 1;
 }
 
 /**
