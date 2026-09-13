@@ -57,6 +57,21 @@ test('both launch surfaces take their mark from the shared fallback chain', () =
     expect(source).toContain('loading-mark.png');
     expect(source).toContain("kind === 'default'");
   }
+
+  // The applied theme, never a previewed one. Both surfaces draw the app
+  // itself rather than a route -- the overlay covers everything while the
+  // router is still starting, the lock gate sits above the whole stack -- so
+  // neither can be inside a `CandidateThemeProvider` today, and neither should
+  // follow one if a future screen puts it there. A splash wearing whichever
+  // theme was last previewed would be the app showing a decision the reader
+  // has not made.
+  //
+  // Asserted against the calls and the import rather than the text, since the
+  // file's own docblock argues the point by naming the hook it does not use.
+  const wiring = readFileSync('src/hooks/use-launch-artwork.ts', 'utf8');
+  expect(wiring).toContain('useAppliedCustomTheme()');
+  expect(wiring).not.toContain('useEffectiveCustomTheme(');
+  expect(/import[^;]*useEffectiveCustomTheme/.test(wiring)).toBe(false);
 });
 
 test('the SSH status line keeps a readable plate wherever the shell wallpaper is bare', () => {
