@@ -159,13 +159,18 @@ export function SettingsStorage({ title }: { title: string }) {
     setIncomplete(false);
     let failed = false;
 
+    // Both of these answer `false` rather than throwing when they decline --
+    // on Android they need a current activity and return `false` without one --
+    // so the result is checked as well as the throw. A silent `false` is
+    // exactly the case that would otherwise report a cleared cache and leave
+    // the number where it was.
     try {
-      await Image.clearDiskCache();
+      if (!(await Image.clearDiskCache())) failed = true;
     } catch {
       failed = true;
     }
     try {
-      await Image.clearMemoryCache();
+      if (!(await Image.clearMemoryCache())) failed = true;
     } catch {
       failed = true;
     }
