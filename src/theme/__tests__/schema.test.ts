@@ -177,8 +177,11 @@ describe('theme v1 contract', () => {
     // Headroom, not a hard edge: the delivered task is capped at 64 KiB
     // (`collaborationTaskText`), and this prompt is only one part of it -- the
     // reader's own words, the terminal context and any reference JSON share
-    // that budget. 16 KiB keeps three quarters of it free.
-    expect(new TextEncoder().encode(prompt).length).toBeLessThan(16 * 1024);
+    // that budget. The prompt is 13,419 bytes at this commit; 18 KiB still
+    // leaves the delivered task more than two thirds of the cap, and matches
+    // the ceiling `quick-command-collaboration.test.ts` puts on the task text
+    // this prompt is embedded in, so the two cannot disagree about the budget.
+    expect(new TextEncoder().encode(prompt).length).toBeLessThan(18 * 1024);
     expect(prompt).toContain(JSON.stringify(themeJsonSchema()));
     const template = prompt.split('```muqun-theme\n')[1].split('\n```')[0];
     expect(parseThemeManifest(template)).toEqual(createThemeStarter());

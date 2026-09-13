@@ -15,8 +15,16 @@ const { module: mockModule } = (
   bunTest as unknown as { mock: { module: (id: string, factory: () => unknown) => void } }
 ).mock;
 
+// `mock.module` is process-wide and the first fake registered is the one every
+// later suite sees, so this has to answer for more than `live-activity.ts`
+// needs. `StyleSheet` is carried for `markdown-style.test.ts`, which registers
+// the same fake: whichever file the runner reaches first, both get a module
+// that has what they import. Without it a full-suite run fails that other file
+// with `Export named 'StyleSheet' not found`, while running it alone passes.
+// Keep the two fakes identical.
 mockModule('react-native', () => ({
   Platform: { OS: 'ios', Version: '17.0' },
+  StyleSheet: { hairlineWidth: 0.5 },
 }));
 
 type EndCall = { dismissal: unknown; props: unknown };

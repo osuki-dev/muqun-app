@@ -162,7 +162,9 @@ export function createThemeAuthoringPrompt(): string {
     '## JSON Schema\n\n```json',
     JSON.stringify(themeJsonSchema()),
     '```',
-    '## Complete starter manifest\n\n```muqun-theme',
+    // The blank line keeps the closing fence and the next heading apart, which is
+    // what a Markdown formatter expects of the exported skill file.
+    '\n## Complete starter manifest\n\n```muqun-theme',
     JSON.stringify(createThemeStarter()),
     '```',
   ].join('\n');

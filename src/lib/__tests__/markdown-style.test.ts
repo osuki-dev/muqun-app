@@ -18,6 +18,9 @@ const { module: mockModule } = (
   bunTest as unknown as { mock: { module: (id: string, factory: () => unknown) => void } }
 ).mock;
 
+// Identical to the fake `live-activity.test.ts` registers, on purpose:
+// `mock.module` is process-wide and first-registration wins, so the two suites
+// have to agree or whichever runs second gets a module missing what it imports.
 mockModule('react-native', () => ({
   Platform: { OS: 'ios', Version: '17.0' },
   StyleSheet: { hairlineWidth: 0.5 },
