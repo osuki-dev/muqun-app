@@ -2,7 +2,7 @@ import { resolveThemePack } from '@/constants/theme-packs';
 import { parseThemeManifest, themeJsonSchema, type ThemeManifest } from '@/theme/schema';
 
 export const THEME_SKILL_ID = 'muqun-theme';
-export const THEME_SKILL_VERSION = '1.1.0';
+export const THEME_SKILL_VERSION = '1.2.0';
 
 /** Bundled, English-only instructions. Never supplied by an imported theme. */
 export const THEME_AUTHORING_INSTRUCTIONS = `# Create a Muqun theme

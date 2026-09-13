@@ -84,12 +84,38 @@ describe('theme v1 contract', () => {
     });
   }
 
-  test('rejects unknown fields rather than pretending unsupported styling worked', () => {
-    expect(() => parse({ ...createThemeStarter(), javascript: 'bad' })).toThrow();
-    expect(() =>
-      parse({ ...createThemeStarter(), decoration: { 'terminal.background': null } })
-    ).toThrow();
-    expect(() => parse({ ...createThemeStarter(), schemaVersion: 2 })).toThrow();
+  test('tolerates what a newer app might add, and drops it rather than acting on it', () => {
+    // The whole point of the change in `docs/theme-contract.md`: a pack written
+    // against a later build installs here, minus the parts this build has never
+    // heard of. Strictness made every added field a breaking change for every
+    // app already in someone's hands.
+    const withFuture = parse({
+      ...createThemeStarter(),
+      javascript: 'bad',
+      decoration: { 'terminal.background': null },
+    });
+    // Dropped, not carried: an unknown key must not survive into the compiled
+    // theme, or it becomes a thing the app is quietly storing on a reader's
+    // device without knowing what it is.
+    expect(Object.hasOwn(withFuture, 'javascript')).toBe(false);
+  });
+
+  test('a pack from a later format says so, instead of failing as a broken v1', () => {
+    expect(() => parse({ ...createThemeStarter(), schemaVersion: 2 })).toThrow(
+      'needs a newer version of Muqun'
+    );
+    expect(() => parse({ ...createThemeStarter(), schemaVersion: 0 })).toThrow('schemaVersion');
+  });
+
+  test('colours stay strict, because there a typo has no sensible fallback', () => {
+    const theme = createThemeStarter();
+    (theme.variants.light.colors as Record<string, string>).backgrnd = '#000000';
+    expect(() => parse(theme)).toThrow();
+  });
+
+  test('an unknown material degrades to auto instead of failing the pack', () => {
+    const theme = { ...createThemeStarter(), materials: { navigation: 'frosted' } };
+    expect(parse(theme).materials?.navigation).toBe('auto');
   });
 
   for (const color of ['red', '#fff', 'transparent', '#12345600', 'url(https://example.invalid)']) {

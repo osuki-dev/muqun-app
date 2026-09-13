@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { decorationSchema } from '../schema';
+import { THEME_SLOTS } from '../schema';
 
 // Contract guard, not a replacement for native screenshots or interaction QA.
 // Every advertised slot must retain a real consumer rather than a schema-only promise.
@@ -19,7 +19,11 @@ const consumers = {
 } as const;
 
 test('every supported artwork slot has a named runtime consumer', () => {
-  expect(Object.keys(decorationSchema.shape).sort()).toEqual(Object.keys(consumers).sort());
+  // `THEME_SLOTS` rather than the schema's keys: the schema accepts any slot
+  // name now, so the closed list is the only place "what this build draws" is
+  // written down, and it is what this test exists to hold to account.
+  const slots: string[] = [...THEME_SLOTS];
+  expect(slots.sort()).toEqual(Object.keys(consumers).sort());
   for (const [slot, file] of Object.entries(consumers)) {
     const source = readFileSync(file, 'utf8');
     if (file.endsWith('glass-chrome.tsx')) {

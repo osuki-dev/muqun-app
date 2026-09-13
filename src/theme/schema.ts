@@ -160,45 +160,116 @@ const iconSchema = z.strictObject({
  */
 export const iconsSchema = z.record(z.string(), iconSchema.nullable().optional());
 
-export const decorationSchema = z.strictObject({
-  'shell.background': slotSchema,
-  'home.background': slotSchema,
-  'home.decoration': slotSchema,
-  'navigation.background': slotSchema,
-  'composer.background': slotSchema,
-  'actions.background': slotSchema,
-  'cards.decoration': slotSchema,
-  'buttons.primary.background': slotSchema,
-  'tabs.background': slotSchema,
-  'emptyState.illustration': slotSchema,
-});
+/**
+ * The decoration slots this build draws.
+ *
+ * Same arrangement as {@link THEME_ICONS}: a closed list the app reads, over a
+ * schema that deliberately accepts others. The list is what gives call sites
+ * their spelling check -- `<ThemeArtwork slot="shel.background" />` is still a
+ * type error -- while the schema stays forward compatible.
+ */
+export const THEME_SLOTS = [
+  'shell.background',
+  'home.background',
+  'home.decoration',
+  'navigation.background',
+  'composer.background',
+  'actions.background',
+  'cards.decoration',
+  'buttons.primary.background',
+  'tabs.background',
+  'emptyState.illustration',
+] as const;
+export type ThemeSlot = (typeof THEME_SLOTS)[number];
+
+/**
+ * Open, for the reason argued at {@link iconsSchema}.
+ *
+ * A slot is already optional and a missing one already means "do not decorate
+ * there", so a slot name this build does not know is the situation the reader
+ * is in whenever their app is older than the pack they were sent -- and it has
+ * a correct answer that is not "your theme is invalid". Keeping this strict
+ * made every future slot a breaking change for every installed app.
+ *
+ * `muqun-theme validate` names unrecognised slots as warnings, so an author
+ * still hears about a typo before their readers do.
+ */
+export const decorationSchema = z.record(z.string(), slotSchema);
 
 const visibilitySchema = z.union([
   z.strictObject({ mode: z.literal('default') }),
   z.strictObject({ mode: z.literal('hidden') }),
 ]);
 
-const materialSchema = z.enum(['auto', 'solid', 'glass']);
-export const themeMaterialsSchema = z.strictObject({
-  default: materialSchema.optional(),
-  navigation: materialSchema.optional(),
-  composer: materialSchema.optional(),
-  actions: materialSchema.optional(),
-});
+export const THEME_MATERIALS = ['auto', 'solid', 'glass'] as const;
+export const THEME_MATERIAL_SURFACES = ['default', 'navigation', 'composer', 'actions'] as const;
+export type ThemeMaterialSurface = (typeof THEME_MATERIAL_SURFACES)[number];
 
-/** Structural schema only: references, download policy and contrast are separate gates. */
-export const themeManifestSchema = z.strictObject({
+/**
+ * Open on both axes, and for the same reason as the two above: a pack may name
+ * a surface this build does not paint, or a material it does not have.
+ *
+ * `.catch('auto')` is what makes the second half safe. A value outside the enum
+ * would otherwise fail the record entry and take the manifest with it; caught,
+ * it becomes `auto`, which is what `resolveThemeMaterial` already does with
+ * anything that is not `solid` or `glass`. So an older app meeting a newer
+ * material falls back to the platform default rather than refusing to install.
+ */
+const materialSchema = z.enum(THEME_MATERIALS).catch('auto');
+export const themeMaterialsSchema = z.record(z.string(), materialSchema.optional());
+
+/**
+ * The highest `schemaVersion` this build understands.
+ *
+ * A pack above it is refused, but by {@link parseThemeManifest} with a sentence
+ * that names the situation -- not by the schema with "expected 1". The
+ * difference matters to the only person who ever sees it: a reader whose app is
+ * older than the theme they were sent, who needs to be told to update, not told
+ * their file is broken.
+ */
+export const SUPPORTED_SCHEMA_VERSION = 1;
+
+const semver = z
+  .string()
+  .regex(/^\d+\.\d+\.\d+$/)
+  .max(32);
+
+/**
+ * Structural schema only: references, download policy and contrast are separate
+ * gates.
+ *
+ * `z.object` rather than `z.strictObject`: unknown keys are dropped instead of
+ * fatal. Strictness here meant no field could ever be added without breaking
+ * every installed app, which made the format unable to grow at all -- see
+ * `docs/theme-contract.md`. Unknown keys are still reported, as warnings, by
+ * `muqun-theme validate`.
+ *
+ * `colors` and `terminal` stay strict, deliberately. Every colour in them is
+ * required and the set is complete, so an unknown key there is a typo with no
+ * sensible fallback -- the one case where refusing is the kindest answer.
+ */
+export const themeManifestSchema = z.object({
   format: z.literal('muqun-theme'),
-  schemaVersion: z.literal(1),
+  schemaVersion: z.int().min(1),
   id: identifier,
   name: plainText(64),
-  version: z
-    .string()
-    .regex(/^\d+\.\d+\.\d+$/)
-    .max(32),
+  version: semver,
   author: plainText(100).optional(),
   license: plainText(100).optional(),
   source: httpsUrl.optional(),
+  /**
+   * What a pack needs from the app, so the app can say so.
+   *
+   * Present from the first release because it is the field that makes every
+   * other future change survivable: without it, a pack built for a later Muqun
+   * can only fail as a validation error that blames its author for the reader's
+   * old install.
+   */
+  minAppVersion: semver.optional(),
+  /** Gallery metadata. The app ignores all three; a gallery cannot invent them. */
+  description: plainText(280).optional(),
+  tags: z.array(identifier).max(12).optional(),
+  preview: identifier.optional(),
   variants: z.strictObject({ light: themeVariantSchema, dark: themeVariantSchema }),
   materials: themeMaterialsSchema.optional(),
   assets: z.record(identifier, assetSchema).optional(),
@@ -227,7 +298,6 @@ export const themeManifestSchema = z.strictObject({
 
 export type ThemeManifest = z.infer<typeof themeManifestSchema>;
 export type ThemeDecoration = z.infer<typeof decorationSchema>;
-export type ThemeSlot = keyof ThemeDecoration;
 export type ThemeImage = z.infer<typeof imageSchema>;
 
 export function themeJsonSchema() {
@@ -257,6 +327,23 @@ export function parseThemeManifest(text: string): ThemeManifest {
   } catch {
     throw new ThemeValidationError([
       { path: '$', message: 'Expected a complete JSON theme manifest' },
+    ]);
+  }
+  // Asked before the schema runs, and off the raw input, so a pack from a later
+  // format is told what is actually wrong with it rather than being walked
+  // through the ways it fails to be a v1 manifest.
+  if (
+    input !== null &&
+    typeof input === 'object' &&
+    'schemaVersion' in input &&
+    typeof input.schemaVersion === 'number' &&
+    input.schemaVersion > SUPPORTED_SCHEMA_VERSION
+  ) {
+    throw new ThemeValidationError([
+      {
+        path: 'schemaVersion',
+        message: `This theme needs a newer version of Muqun (it uses theme format ${input.schemaVersion}, this app reads ${SUPPORTED_SCHEMA_VERSION})`,
+      },
     ]);
   }
   const parsed = themeManifestSchema.safeParse(input);
@@ -292,6 +379,9 @@ export function parseThemeManifest(text: string): ThemeManifest {
   if (manifest.homeIdentity?.logo?.mode === 'custom') {
     reference(manifest.homeIdentity.logo.asset, 'homeIdentity.logo.asset');
   }
+  // The app never draws it, but a dangling reference is still a mistake, and an
+  // author finds out here rather than from a gallery card with a hole in it.
+  if (manifest.preview !== undefined) reference(manifest.preview, 'preview');
   if (issues.length) throw new ThemeValidationError(issues.slice(0, 20));
   return manifest;
 }
