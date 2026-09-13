@@ -274,9 +274,14 @@ msgstr "外观"
 msgid "Appearance, terminal, security"
 msgstr "外观、终端、安全"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "应用主题"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Applying…"
+msgstr "正在应用…"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -297,10 +302,6 @@ msgstr "正在向 Gateway 确认这个代码"
 #: src/components/new-task-sheet.tsx
 msgid "Asking the server what it can run…"
 msgstr "正在询问服务器可以运行哪些代理…"
-
-#: src/app/commands.tsx
-msgid "Assign a task"
-msgstr "分配任务"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -364,6 +365,10 @@ msgstr "回到屏幕键盘"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "退格键"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "低于 {minimumPercent}% 后,文字不再保证可读"
 
 #: src/lib/local-authentication.ts
 msgid "biometrics"
@@ -463,14 +468,6 @@ msgstr "请从菜单中选择模拟器"
 #: src/components/agent-assignment-bar.tsx
 msgid "Choose an assistant"
 msgstr "选择助手"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field · {collaborationCount} assigned"
-msgstr "在输入框上方选择助手 · 已分配 {collaborationCount} 个"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field, then write the task there."
-msgstr "在输入框上方选择助手，然后在那里写任务"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -865,6 +862,10 @@ msgstr "无法加载正在运行的项目"
 msgid "Could not open system settings"
 msgstr "无法打开系统设置"
 
+#: src/hooks/use-theme-file-open.ts
+msgid "Could not open that theme"
+msgstr "无法打开这个主题"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "无法打开文件"
@@ -884,6 +885,11 @@ msgstr "无法打开 SSH 隧道"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "无法打开这个文件"
+
+#: src/components/asset-viewer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open this theme."
+msgstr "无法打开这个主题"
 
 #: src/components/settings-alerts.tsx
 msgid "Could not preview notification"
@@ -1082,6 +1088,10 @@ msgstr "连接已断开"
 msgid "Dismiss the approval error"
 msgstr "关闭批准错误信息"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Dismiss this theme"
+msgstr "关闭这个主题"
+
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "关闭离开期间的摘要"
@@ -1094,6 +1104,7 @@ msgstr "关闭新功能卡片"
 msgid "Docs"
 msgstr "文档"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1113,6 +1124,21 @@ msgstr "向下键"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "下载并预览"
+
+#. placeholder {0}: formatBytes(state.received)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0}"
+msgstr "正在下载 · {0}"
+
+#. placeholder {0}: formatBytes(state.received)
+#. placeholder {1}: formatBytes(state.total)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0} of {1}"
+msgstr "正在下载 · {0} / {1}"
+
+#: src/components/asset-viewer.tsx
+msgid "Downloading theme"
+msgstr "正在下载主题"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1441,6 +1467,7 @@ msgstr "插入模式"
 msgid "Install command copied"
 msgstr "已复制安装命令"
 
+#: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "正在安装图片"
@@ -1685,10 +1712,6 @@ msgstr "标记已查看"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "提及 {0}"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum opacity for readable text: {minimumPercent}%"
-msgstr "确保文字清晰的最低不透明度：{minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2060,6 +2083,15 @@ msgstr "打开文件浏览器"
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "打开工作区 {0}，{1, plural, one {# 个运行中} other {# 个运行中}}。长按可关闭"
 
+#: src/app/+not-found.tsx
+msgid "Opening"
+msgstr "正在打开"
+
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Opening that file"
+msgstr "正在打开这个文件"
+
 #: src/app/explore.tsx
 msgid "Opening the server."
 msgstr "正在打开服务器"
@@ -2230,6 +2262,10 @@ msgstr "预览模拟器"
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "预览模拟器，通过 SSH 隧道时不可用"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Preview and apply"
+msgstr "预览并应用"
+
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先预览，当前主题保持不变"
@@ -2296,6 +2332,11 @@ msgstr "通过 SSH 主机 {host} 连接"
 msgid "Reaching the Gateway"
 msgstr "正在连接 Gateway"
 
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Reading the theme"
+msgstr "正在读取主题"
+
 #: src/components/theme-link-import.tsx
 msgid "Reading the theme link"
 msgstr "正在读取主题链接"
@@ -2303,6 +2344,10 @@ msgstr "正在读取主题链接"
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "等待输入"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Ready to preview. Nothing is applied until you say so."
+msgstr "可以预览了。你不点,什么都不会被应用"
 
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
@@ -2315,6 +2360,10 @@ msgstr "最近的提交"
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
 msgstr "查看输出"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "文字清晰的建议最低值:{minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2666,10 +2715,6 @@ msgstr "发送文字"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
 msgstr "把这个任务发给 {assignmentLabel}"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Send to {assignmentLabel} — tap to change"
-msgstr "发给 {assignmentLabel}——点按可更换"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -3083,6 +3128,10 @@ msgstr "那个助手已经不在这个终端里了。重新打开后再试"
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "这个代码被拒绝了。请保持稳定以读取新的代码"
+
+#: src/hooks/use-theme-file-open.ts
+msgid "That file is not a Muqun theme"
+msgstr "这个文件不是 Muqun 主题"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."

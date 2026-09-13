@@ -17,12 +17,28 @@ import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
-import { pickThemeManifest, shareThemeColors, shareThemeFile } from '@/theme/local-files';
+import {
+  pickThemeManifest,
+  shareThemeColors,
+  shareThemeFile,
+  type ThemeFileStage,
+} from '@/theme/local-files';
 import { exportInstalledTheme } from '@/theme/assets';
 import { useAppSettings } from '@/stores/app-settings';
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { formatThemeJson, ThemeJsonFormatError } from '@/theme/format-json';
+
+/**
+ * What the one primary button on a theme does, described rather than drawn.
+ *
+ * `applies` is the difference between the two things that button can be: the
+ * theme is not the current one and pressing writes it, or it already is and
+ * pressing only leaves. `disabled` folds in the same guards the inline button
+ * carried, so a host cannot forget one of them, and `run` is the whole action
+ * including the leave that follows an apply.
+ */
+export type ThemePrimaryAction = { applies: boolean; disabled: boolean; run: () => void };
 
 export function CustomThemeLibrary({
   initialManifest,
@@ -31,6 +47,7 @@ export function CustomThemeLibrary({
   detail = false,
   ownsPreparedAssets = true,
   onClosePreview,
+  onPrimaryActionChange,
   children,
 }: {
   initialManifest?: ThemeManifest;
@@ -39,6 +56,21 @@ export function CustomThemeLibrary({
   detail?: boolean;
   ownsPreparedAssets?: boolean;
   onClosePreview?: () => void;
+  /**
+   * Hand the primary action to the host instead of drawing it here.
+   *
+   * The detail route (`app/custom-theme.tsx`) pins one button to the bottom of
+   * the screen, and that button is now the apply: an inline Apply halfway up a
+   * scroll plus a sticky Done underneath it were two confirm-ish controls for
+   * one decision. Passing this prop is the host saying it draws that control
+   * itself, so this component stops rendering its own and reports the state the
+   * host needs instead. Hosts that do not pass it -- the theme picker sheet, and
+   * the packaged-theme preview inside the file viewer, which has no footer of
+   * its own -- keep the inline button exactly as before.
+   *
+   * `null` means there is no candidate on screen and so nothing to confirm.
+   */
+  onPrimaryActionChange?: (action: ThemePrimaryAction | null) => void;
   children?: ReactNode;
 } = {}) {
   const { t } = useLingui();
@@ -63,6 +95,16 @@ export function CustomThemeLibrary({
   const [busy, setBusy] = useState(false);
   // Copying a dozen images into permanent storage reports nothing on its own.
   const [step, setStep] = useState<'installing' | null>(null);
+  /**
+   * What a file chosen from the picker is doing, while it does it.
+   *
+   * Reading a pack is the slowest thing on this screen -- a 4 MB archive is a
+   * read, a validated unpack, and every image decoded and written -- and until
+   * now the sheet showed nothing at all between the picker closing and the
+   * editor opening, which on a phone is about ten seconds of a screen that
+   * looks like it ignored the tap.
+   */
+  const [readStage, setReadStage] = useState<ThemeFileStage | null>(null);
   // Removal reachable from the list, without opening the theme to find it.
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null);
   const pending = useRef(false);
@@ -166,6 +208,54 @@ export function CustomThemeLibrary({
     setNotice(t`Theme saved`);
   }
 
+  /**
+   * The host's button is pressed long after the render that described it, so
+   * `run` must reach today's `candidate` rather than the one captured when the
+   * description was last sent. Everything it needs -- `perform`, `save`,
+   * `closePreview` -- is rebuilt on every render, so a ref refreshed on every
+   * commit keeps the call current while letting the reported action be rebuilt
+   * only when something the host can see actually changes. Reporting on every
+   * render instead would hand the host a new object each time, and the host
+   * storing it in state would render again, forever.
+   */
+  const primaryRef = useRef({ apply: () => {}, close: () => {} });
+  useEffect(() => {
+    primaryRef.current = {
+      apply: () => void perform(() => save(true)),
+      close: closePreview,
+    };
+  });
+  const hostDrivesPrimaryAction = Boolean(onPrimaryActionChange);
+  // Depend on the count, not the array: `auditThemeContrast` returns a fresh
+  // array every render and only its emptiness is a guard.
+  const contrastBlocked = contrast.length > 0;
+  const hasCandidate = Boolean(candidate);
+  useEffect(() => {
+    if (!onPrimaryActionChange) return;
+    if (!hasCandidate) {
+      onPrimaryActionChange(null);
+      return;
+    }
+    // Already the selected theme: the only thing left to do is leave, and the
+    // single guard on leaving is that nothing is mid-write.
+    const applies = !candidateSelected;
+    onPrimaryActionChange({
+      applies,
+      disabled: applies ? busy || contrastBlocked || missingImages : busy,
+      run: () => (applies ? primaryRef.current.apply() : primaryRef.current.close()),
+    });
+  }, [
+    onPrimaryActionChange,
+    hasCandidate,
+    candidateSelected,
+    busy,
+    contrastBlocked,
+    missingImages,
+  ]);
+  // A host holding the description in state would otherwise keep a button alive
+  // for a screen that has gone.
+  useEffect(() => () => onPrimaryActionChange?.(null), [onPrimaryActionChange]);
+
   return (
     <View testID="custom-theme-library" style={{ gap: 16 }}>
       {browsing ? (
@@ -213,7 +303,9 @@ export function CustomThemeLibrary({
                 testID="theme-import-file"
                 onPress={() =>
                   void perform(async () => {
-                    const value = await pickThemeManifest();
+                    const value = await pickThemeManifest(setReadStage).finally(() =>
+                      setReadStage(null)
+                    );
                     if (value !== null) {
                       if (!mounted.current) {
                         value.prepared?.dispose();
@@ -322,6 +414,20 @@ export function CustomThemeLibrary({
       ) : null}
       {step ? (
         <ThemeImportProgress testID="theme-install-progress" label={t`Installing images`} />
+      ) : null}
+      {readStage ? (
+        <ThemeImportProgress
+          testID="theme-read-progress"
+          label={
+            readStage.phase === 'staging'
+              ? t`Installing images`
+              : readStage.phase === 'unpacking'
+                ? t`Reading the theme`
+                : t`Opening that file`
+          }
+          completed={readStage.phase === 'staging' ? readStage.completed : undefined}
+          total={readStage.phase === 'staging' ? readStage.total : undefined}
+        />
       ) : null}
       {error || notice ? (
         <View
@@ -438,15 +544,24 @@ export function CustomThemeLibrary({
               }>{t`This theme contains images that must be installed before applying`}</Text>
           ) : null}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {!candidateSelected ? (
+            {/*
+              A host that draws the primary action itself gets no button here:
+              the detail route pins one to the bottom of the screen and it both
+              applies and closes, so an inline Apply above it would be the same
+              decision offered twice, once halfway up a scroll. The two
+              explanations above stay where they are -- they are why that
+              bottom button is disabled.
+
+              Where no host takes it over, this is still the confirm: Apply
+              while the theme is not the current one, and -- outside a detail
+              view, which has its own way out -- Done once it is.
+            */}
+            {hostDrivesPrimaryAction ? null : !candidateSelected ? (
               <Button
                 testID="theme-apply"
                 disabled={busy || contrast.length > 0 || missingImages}
                 onPress={() => void perform(() => save(true))}>{t`Apply theme`}</Button>
-            ) : detail ? // The detail route pins its own Done to the bottom of the screen
-            // (`app/custom-theme.tsx`). A second one here would be the same
-            // word twice, one of them halfway up a scroll.
-            null : (
+            ) : detail ? null : (
               <Button disabled={busy} onPress={closePreview}>{t`Done`}</Button>
             )}
             {!detail ? (
@@ -493,7 +608,16 @@ export function CustomThemeLibrary({
                 borderRadius: 16,
                 backgroundColor: background(colors.surfaceRaised),
               }}>
-              {!candidate.id ? (
+              {/* Not where a host draws the primary action. On the detail
+                  route the button at the bottom already both installs and
+                  applies -- `save(true)` writes the theme before it activates
+                  it -- so a Save above it offers the same write twice, once
+                  under a different word, and puts the reader back in front of
+                  the pair of half-synonymous buttons this screen was cleaned
+                  up to get rid of. Elsewhere it stays: the picker sheet has no
+                  footer of its own, and there "keep this without wearing it"
+                  is a real second intent with nowhere else to live. */}
+              {!candidate.id && !hostDrivesPrimaryAction ? (
                 <Button
                   variant="ghost"
                   disabled={busy || missingImages}

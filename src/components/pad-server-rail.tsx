@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   SquareTerminal,
 } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +23,8 @@ import { ServerAgentRows } from '@/components/server-agent-rows';
 import { useSshHostAgeLabel } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { ThemedSurfaceArtwork } from '@/components/themed-surface';
+import { useThemeLibrary } from '@/stores/theme-library';
+import { resolveHomeIdentity } from '@/theme/resolve';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { duplicatePadServerRailLabels } from '@/lib/pad-server-rail';
@@ -65,7 +68,16 @@ export type PadServerRailProps = {
   nowMs?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
-  /** Home-only identity override; workspace rails retain the product identity. */
+  /**
+   * An identity the caller has already resolved, for a caller that has one.
+   *
+   * Omitting it no longer means "use the product's own name". This used to be
+   * a home-only override, and the result on a tablet was one rail wearing two
+   * identities: the home screen said what the pack asked it to say, and the
+   * moment the reader opened a terminal the same strip beside them went back
+   * to the Muqun mark and the Muqun name. The rail resolves the pack itself
+   * now, so every rail agrees without the caller having to remember.
+   */
   homeBrand?: { name: string | null; logo: ImageSource | number | null; visible: boolean };
 };
 
@@ -98,6 +110,27 @@ export function PadServerRail({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
+  /** Anything in the rail at all -- a paired gateway, or a saved SSH host. */
+  const compactActions = servers.length > 0 || (sshHosts?.length ?? 0) > 0;
+  const activeTheme = useThemeLibrary((state) => state.active);
+  const themeAssets = useThemeLibrary(
+    (state) =>
+      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
+  );
+  const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  // The caller's answer when it has one, the pack's otherwise. Resolved here so
+  // the workspace rail cannot differ from the home rail by omission.
+  const brand = useMemo(() => {
+    if (homeBrand) return homeBrand;
+    const identity = resolveHomeIdentity(activeTheme?.manifest);
+    const custom =
+      identity.logo?.mode === 'custom' ? themeAssets?.[identity.logo.asset] : undefined;
+    return {
+      name: identity.name,
+      logo: identity.logo ? (custom && custom !== failedLogo ? { uri: custom } : brandMark) : null,
+      visible: identity.showBrand,
+    };
+  }, [homeBrand, activeTheme, themeAssets, failedLogo]);
   const duplicateLabels = duplicatePadServerRailLabels(servers.map((server) => server.label));
   const showsSshHosts = Boolean(sshHosts && sshHosts.length > 0 && onSelectSshHost);
 
@@ -107,24 +140,29 @@ export function PadServerRail({
       testID={testID}
       style={[styles.shell, { backgroundColor: background(theme.colors.surface) }, style]}>
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
-      {homeBrand?.visible !== false ? (
+      {brand.visible !== false ? (
         <View testID={homeBrand ? 'home-brand-rail' : undefined} style={styles.brand}>
-          {homeBrand?.logo !== null ? (
+          {brand.logo !== null ? (
             <View
               style={[
                 styles.brandIconFrame,
                 { backgroundColor: background(theme.colors.surfaceRaised) },
               ]}>
               <Image
-                source={homeBrand?.logo ?? brandMark}
+                source={brand.logo ?? brandMark}
+                onError={() => {
+                  const uri = brand.logo;
+                  if (uri && typeof uri === 'object' && 'uri' in uri && uri.uri)
+                    setFailedLogo(uri.uri);
+                }}
                 contentFit="contain"
                 style={styles.brandIcon}
               />
             </View>
           ) : null}
-          {homeBrand?.name !== null ? (
+          {brand.name !== null ? (
             <View style={styles.brandCopy}>
-              <Text variant="heading">{homeBrand?.name ?? <Trans>Muqun</Trans>}</Text>
+              <Text variant="heading">{brand.name ?? <Trans>Muqun</Trans>}</Text>
               <Text variant="caption" color={theme.colors.textMuted}>
                 <Trans>Your agents, anywhere.</Trans>
               </Text>
@@ -195,29 +233,85 @@ export function PadServerRail({
         ) : null}
       </ScrollView>
 
-      <View style={styles.actions}>
-        <RailAction
-          label={t`Pair a server`}
-          detail={t`Scan a gateway QR`}
-          icon={ScanLine}
-          onPress={onPairServer}
-        />
-        {onOpenSsh ? (
+      {/* Three explained rows while the rail is empty, three glyphs once it is
+          not.
+
+          On a rail with nothing in it these are the only things to do, and the
+          second line under each one is what tells a first-time reader what a
+          gateway is and how it differs from an SSH host -- that is onboarding
+          and it earns its height. The moment there is a machine in the list,
+          the same block is three lines of explanation under the thing the
+          reader actually came for, and it is the list that should have the
+          room. So it collapses: same three destinations, same order, one row. */}
+      {compactActions ? (
+        <View style={styles.actionBar}>
+          <RailGlyphAction label={t`Pair a server`} icon={ScanLine} onPress={onPairServer} />
+          {onOpenSsh ? (
+            <RailGlyphAction label={t`SSH`} icon={SquareTerminal} onPress={onOpenSsh} />
+          ) : null}
+          <RailGlyphAction label={t`Settings`} icon={Settings} onPress={onOpenSettings} />
+        </View>
+      ) : (
+        <View style={styles.actions}>
           <RailAction
-            label={t`SSH`}
-            detail={t`A shell on any machine with sshd`}
-            icon={SquareTerminal}
-            onPress={onOpenSsh}
+            label={t`Pair a server`}
+            detail={t`Scan a gateway QR`}
+            icon={ScanLine}
+            onPress={onPairServer}
           />
-        ) : null}
-        <RailAction
-          label={t`Settings`}
-          detail={t`Appearance, terminal, security`}
-          icon={Settings}
-          onPress={onOpenSettings}
-        />
-      </View>
+          {onOpenSsh ? (
+            <RailAction
+              label={t`SSH`}
+              detail={t`A shell on any machine with sshd`}
+              icon={SquareTerminal}
+              onPress={onOpenSsh}
+            />
+          ) : null}
+          <RailAction
+            label={t`Settings`}
+            detail={t`Appearance, terminal, security`}
+            icon={Settings}
+            onPress={onOpenSettings}
+          />
+        </View>
+      )}
     </SafeAreaView>
+  );
+}
+
+/**
+ * The same destination as `RailAction`, with the explanation taken away.
+ *
+ * Its label survives as the accessibility name and nothing is dropped from the
+ * rail but the second line, so the reader who needed the sentence -- the one
+ * with an empty rail -- still gets it.
+ */
+function RailGlyphAction({
+  label,
+  icon: Icon,
+  onPress,
+}: {
+  label: string;
+  icon: typeof ScanLine;
+  onPress: () => void;
+}) {
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.glyphAction,
+        {
+          backgroundColor: background(
+            pressed ? theme.colors.surfaceRaised : theme.colors.background
+          ),
+        },
+      ]}>
+      <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
+    </Pressable>
   );
 }
 
@@ -408,9 +502,13 @@ function SshHostPill({
             </View>
           ) : null}
         </View>
-        <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
-          {address}
-        </Text>
+        {/* No `user@host` here. The rail is a list of things to open, and every
+            gateway above it is identified by its name alone; an address under
+            one of them is a second line of detail on a row nobody came to
+            inspect. It stays in `accessibilityHint` above, because two hosts
+            can share a label and a reader who cannot see the row is the one
+            who needs the thing that tells them apart. The host list at `/ssh`
+            is where an address belongs, and it still shows one. */}
       </View>
       <ChevronRight size={16} color={theme.colors.textMuted} />
     </Pressable>
@@ -480,6 +578,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingTop: 10,
     paddingBottom: 4,
+  },
+  // The collapsed form: the same padding box as `actions`, so the rail's
+  // bottom edge does not move when the first machine arrives -- only the
+  // height inside it does.
+  actionBar: {
+    flexDirection: 'row',
+    gap: 7,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  glyphAction: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   action: {
     minHeight: 58,

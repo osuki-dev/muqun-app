@@ -1,5 +1,5 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
@@ -71,6 +71,11 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.g
  */
 export default function SettingsScreen() {
   const surfaceBackground = useSurfaceBackground();
+  // Loose text on this page -- the two lines below the last card -- has no card
+  // under it, so against a pack's wallpaper it is read on whatever the picture
+  // happens to put there. `SettingsSection` already solved this for its
+  // instrument labels; these two are the only other bare strings on the page.
+  const hasShell = useHasThemeArtwork('shell.background');
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -85,6 +90,20 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
+  // The hugging plate `SettingsSection` already gives its instrument labels,
+  // for the two bare strings at the end of the page that have no card of their
+  // own. `null` when no pack supplies a wallpaper: on a flat ground the text is
+  // read against `background` either way, and a plate there is a box nobody
+  // asked for.
+  const plate = hasShell
+    ? {
+        backgroundColor: surfaceBackground(theme.colors.background),
+        paddingHorizontal: LADDER.gap,
+        paddingVertical: LADDER.tight,
+        borderRadius: 8,
+        overflow: 'hidden' as const,
+      }
+    : null;
   useRenderTally('SettingsScreen');
 
   /**
@@ -208,7 +227,7 @@ export default function SettingsScreen() {
                 </View>
               </View>
 
-              <View style={styles.footer}>
+              <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
                 <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
                 <Text variant="caption" color={theme.colors.textMuted}>
                   <Trans>Muqun settings stay on this device.</Trans>
@@ -242,7 +261,16 @@ export default function SettingsScreen() {
                   // and the screen is titled `Settings`.
                   accessible={false}
                 />
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.brandVersion}>
+                <Text
+                  variant="caption"
+                  color={theme.colors.textMuted}
+                  // Centred under the mark, so the plate hugs from the middle
+                  // rather than from the leading edge.
+                  style={
+                    plate
+                      ? { ...styles.brandVersion, ...plate, alignSelf: 'center' }
+                      : styles.brandVersion
+                  }>
                   <Trans>
                     Version {version}
                     {build ? ` (${build})` : ''}

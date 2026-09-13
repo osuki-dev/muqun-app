@@ -332,7 +332,7 @@
       },
       {
         "target": {
-          "id": "theme-apply"
+          "id": "custom-theme-done"
         },
         "mode": "scroll",
         "direction": "down",
@@ -341,7 +341,7 @@
       },
       {
         "target": {
-          "id": "theme-apply"
+          "id": "custom-theme-done"
         },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
@@ -373,7 +373,7 @@
       },
       {
         "target": {
-          "text": "Minimum opacity for readable text: 100%"
+          "text": "Recommended minimum for readable text: 100%"
         },
         "mode": "visible",
         "run": "flows/custom-themes.ad#opacity-adjust"
@@ -4247,7 +4247,7 @@
         "target": {
           "text": "Connected to demo@demo.invalid"
         },
-        "mode": "visible",
+        "mode": "hidden",
         "run": "flows/ssh.ad#s8"
       },
       {

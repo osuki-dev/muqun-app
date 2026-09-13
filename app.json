@@ -111,26 +111,30 @@
           "action": "VIEW",
           "category": ["DEFAULT", "BROWSABLE"],
           "data": [
-            {
-              "scheme": "content",
-              "mimeType": "application/zip",
-              "pathPattern": ".*\\.muqun-theme"
-            },
-            {
-              "scheme": "content",
-              "mimeType": "application/json",
-              "pathPattern": ".*\\.muqun-theme\\.json"
-            },
-            {
-              "scheme": "file",
-              "mimeType": "*/*",
-              "pathPattern": ".*\\.muqun-theme"
-            },
-            {
-              "scheme": "file",
-              "mimeType": "*/*",
-              "pathPattern": ".*\\.muqun-theme\\.json"
-            }
+            { "scheme": "content" },
+            { "scheme": "file" },
+            { "host": "*" },
+            { "mimeType": "application/zip" },
+            { "mimeType": "application/octet-stream" },
+            { "pathSuffix": ".muqun-theme" },
+            { "pathPattern": ".*\\\\.muqun-theme" },
+            { "pathPattern": ".*\\\\..*\\\\.muqun-theme" },
+            { "pathPattern": ".*\\\\..*\\\\..*\\\\.muqun-theme" }
+          ]
+        },
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            { "scheme": "content" },
+            { "scheme": "file" },
+            { "host": "*" },
+            { "mimeType": "application/json" },
+            { "mimeType": "application/octet-stream" },
+            { "pathSuffix": ".muqun-theme.json" },
+            { "pathPattern": ".*\\\\.muqun-theme\\\\.json" },
+            { "pathPattern": ".*\\\\..*\\\\.muqun-theme\\\\.json" },
+            { "pathPattern": ".*\\\\..*\\\\..*\\\\.muqun-theme\\\\.json" }
           ]
         }
       ]

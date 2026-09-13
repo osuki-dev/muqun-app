@@ -274,9 +274,14 @@ msgstr "Giao diện"
 msgid "Appearance, terminal, security"
 msgstr "Giao diện, terminal, bảo mật"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "Áp dụng giao diện"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Applying…"
+msgstr "Đang áp dụng…"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -297,10 +302,6 @@ msgstr "Đang hỏi Gateway về mã đó"
 #: src/components/new-task-sheet.tsx
 msgid "Asking the server what it can run…"
 msgstr "Đang hỏi máy chủ xem nó có thể chạy gì…"
-
-#: src/app/commands.tsx
-msgid "Assign a task"
-msgstr "Giao một tác vụ"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -364,6 +365,10 @@ msgstr "Về bàn phím trên màn hình"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "Backspace"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ đọc"
 
 #: src/lib/local-authentication.ts
 msgid "biometrics"
@@ -463,14 +468,6 @@ msgstr "Chọn một trình giả lập từ menu"
 #: src/components/agent-assignment-bar.tsx
 msgid "Choose an assistant"
 msgstr "Chọn một trợ lý"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field · {collaborationCount} assigned"
-msgstr "Chọn trợ lý phía trên ô nhập · đã giao {collaborationCount}"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field, then write the task there."
-msgstr "Chọn trợ lý phía trên ô nhập rồi viết tác vụ ở đó"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -865,6 +862,10 @@ msgstr "Không thể tải những gì đang chạy"
 msgid "Could not open system settings"
 msgstr "Không thể mở cài đặt hệ thống"
 
+#: src/hooks/use-theme-file-open.ts
+msgid "Could not open that theme"
+msgstr "Không thể mở giao diện đó"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "Không thể mở tệp"
@@ -884,6 +885,11 @@ msgstr "Không thể mở đường hầm SSH"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "Không thể mở tệp này"
+
+#: src/components/asset-viewer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open this theme."
+msgstr "Không mở được chủ đề này"
 
 #: src/components/settings-alerts.tsx
 msgid "Could not preview notification"
@@ -1082,6 +1088,10 @@ msgstr "Đã ngắt kết nối"
 msgid "Dismiss the approval error"
 msgstr "Bỏ qua lỗi chấp thuận"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Dismiss this theme"
+msgstr "Bỏ qua chủ đề này"
+
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "Bỏ qua những gì đã xảy ra khi bạn vắng mặt"
@@ -1094,6 +1104,7 @@ msgstr "Bỏ qua có gì mới"
 msgid "Docs"
 msgstr "Tài liệu"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1113,6 +1124,21 @@ msgstr "Mũi tên xuống"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Tải xuống và xem trước"
+
+#. placeholder {0}: formatBytes(state.received)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0}"
+msgstr "Đang tải · {0}"
+
+#. placeholder {0}: formatBytes(state.received)
+#. placeholder {1}: formatBytes(state.total)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0} of {1}"
+msgstr "Đang tải · {0} trên {1}"
+
+#: src/components/asset-viewer.tsx
+msgid "Downloading theme"
+msgstr "Đang tải chủ đề"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1441,6 +1467,7 @@ msgstr "Chế độ chèn"
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
 
+#: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Đang cài đặt hình ảnh"
@@ -1685,10 +1712,6 @@ msgstr "Đánh dấu đã xem"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Nhắc đến {0}"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum opacity for readable text: {minimumPercent}%"
-msgstr "Độ mờ tối thiểu để văn bản dễ đọc: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2060,6 +2083,15 @@ msgstr "Mở trình duyệt tệp"
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Mở không gian làm việc {0}, {1, plural, other {# đang chạy}}. Nhấn giữ để đóng"
 
+#: src/app/+not-found.tsx
+msgid "Opening"
+msgstr "Đang mở"
+
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Opening that file"
+msgstr "Đang mở tệp đó"
+
 #: src/app/explore.tsx
 msgid "Opening the server."
 msgstr "Đang mở máy chủ"
@@ -2230,6 +2262,10 @@ msgstr "Xem trước trình giả lập"
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "Xem trước trình giả lập, không khả dụng qua đường hầm SSH"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Preview and apply"
+msgstr "Xem trước và áp dụng"
+
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
@@ -2296,6 +2332,11 @@ msgstr "Kết nối qua host SSH {host}"
 msgid "Reaching the Gateway"
 msgstr "Đang kết nối Gateway"
 
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Reading the theme"
+msgstr "Đang đọc giao diện"
+
 #: src/components/theme-link-import.tsx
 msgid "Reading the theme link"
 msgstr "Đang đọc liên kết chủ đề"
@@ -2303,6 +2344,10 @@ msgstr "Đang đọc liên kết chủ đề"
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "Đang chờ nhập"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Ready to preview. Nothing is applied until you say so."
+msgstr "Sẵn sàng để xem. Không có gì được áp dụng cho đến khi bạn quyết định"
 
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
@@ -2315,6 +2360,10 @@ msgstr "Các commit gần đây"
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
 msgstr "Đầu ra gần đây"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "Mức tối thiểu khuyến nghị để chữ dễ đọc: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2666,10 +2715,6 @@ msgstr "Gửi văn bản"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
 msgstr "Gửi tác vụ này đến {assignmentLabel}"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Send to {assignmentLabel} — tap to change"
-msgstr "Gửi đến {assignmentLabel} — chạm để đổi"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -3083,6 +3128,10 @@ msgstr "Trợ lý đó không còn trong terminal này. Hãy mở lại và th�
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "Mã đó bị từ chối. Hãy giữ yên để lấy mã mới"
+
+#: src/hooks/use-theme-file-open.ts
+msgid "That file is not a Muqun theme"
+msgstr "Tệp đó không phải là giao diện Muqun"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."

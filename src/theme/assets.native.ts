@@ -67,11 +67,21 @@ export type PreparedThemeAssets = {
 };
 
 /** Staged preview owns its bytes; it never renders a theme author's URL. */
-export async function prepareThemeAssets(theme: ThemePackage): Promise<PreparedThemeAssets> {
+export async function prepareThemeAssets(
+  theme: ThemePackage,
+  /**
+   * Staging a pack's images is the slowest step of any import -- ten photographs
+   * are ten decodes and ten writes -- and this path used to drop the options on
+   * the floor, so it was also the only step with nothing to show for itself.
+   * The stream already counts assets as it goes; this just stops discarding the
+   * count. See `readThemeFile`, which is what waits on it.
+   */
+  options: ThemeAssetStreamOptions = {}
+): Promise<PreparedThemeAssets> {
   async function* chunks() {
     for (const [id, bytes] of Object.entries(theme.assets)) yield { id, bytes };
   }
-  return prepareAssetStream(theme.manifest, chunks(), {}, 'legacy-package');
+  return prepareAssetStream(theme.manifest, chunks(), options, 'legacy-package');
 }
 
 /** Git and other sequential producers stage directly to owned files. No fixed

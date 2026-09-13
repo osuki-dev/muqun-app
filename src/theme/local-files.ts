@@ -42,8 +42,16 @@ const shareFile = createThemeFileSharer({
 
 export type ThemeFilePreview = { manifest: ThemeManifest; prepared?: PreparedThemeAssets };
 
+/** Where a local read has got to. `staging` is the only countable phase. */
+export type ThemeFileStage =
+  | { phase: 'reading' }
+  | { phase: 'unpacking' }
+  | { phase: 'staging'; completed: number; total: number };
+
 /** Explicit user selection only; no clipboard inspection or network requests. */
-export async function pickThemeManifest(): Promise<ThemeFilePreview | null> {
+export async function pickThemeManifest(
+  onStage?: (stage: ThemeFileStage) => void
+): Promise<ThemeFilePreview | null> {
   const result = await DocumentPicker.getDocumentAsync({
     // Providers do not consistently classify our custom extension. Let the user
     // select it, then enforce byte limits and strict JSON/ZIP validation below.
@@ -53,7 +61,7 @@ export async function pickThemeManifest(): Promise<ThemeFilePreview | null> {
   });
   if (result.canceled) return null;
   const asset = result.assets[0];
-  return readThemeFile(asset.uri, asset.name, asset.size);
+  return readThemeFile(asset.uri, asset.name, asset.size, onStage);
 }
 
 /** Enough of the head to recognise a signature, and not one byte more. */
@@ -98,7 +106,18 @@ export async function readThemeFile(
   uri: string,
   /** The picker knows it; an Android `content://` hand-off often does not. */
   name?: string,
-  reportedSize?: number
+  reportedSize?: number,
+  /**
+   * What the wait is doing, for a caller that has somewhere to say it.
+   *
+   * This read is the slowest thing in any import and it used to be the only
+   * one with nothing to show: a 4 MB pack is a read, a validated unpack, and
+   * ten images decoded and written, which is about ten seconds on a phone with
+   * an empty screen in front of it. `reading` and `unpacking` are single
+   * opaque waits and say only their name; `staging` is countable and carries
+   * the asset counter the stream already keeps.
+   */
+  onStage?: (stage: ThemeFileStage) => void
 ): Promise<ThemeFilePreview> {
   const file = new File(uri);
   try {
@@ -112,6 +131,7 @@ export async function readThemeFile(
     // would let anything that can hand this app a file pull 25 MiB into memory
     // before being told no -- and since the document type went live, that is
     // any app on the device, not just the picker.
+    onStage?.({ phase: 'reading' });
     if (reportedSize !== undefined && reportedSize > THEME_LIMITS.packageBytes)
       throw new Error('Theme file exceeds the import size limit');
     if (!file.exists || file.size > THEME_LIMITS.packageBytes)
@@ -121,8 +141,12 @@ export async function readThemeFile(
       throw new Error('Theme file exceeds the import size limit');
     const bytes = await file.bytes();
     if (packaged) {
+      onStage?.({ phase: 'unpacking' });
       const theme = unpackTheme(bytes);
-      const prepared = await prepareThemeAssets(theme);
+      const prepared = await prepareThemeAssets(theme, {
+        onProgress: ({ completedAssets, totalAssets }) =>
+          onStage?.({ phase: 'staging', completed: completedAssets, total: totalAssets }),
+      });
       return { manifest: theme.manifest, prepared };
     }
     return {

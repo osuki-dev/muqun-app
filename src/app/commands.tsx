@@ -113,13 +113,11 @@ import { warmSimfarm } from '@/lib/simfarm-stream';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
-import { useAgentCollaboration } from '@/stores/agent-collaboration';
 import { useComposerAssignmentStore } from '@/stores/composer-assignment';
 import {
   collaborationCommandAvailable,
   commandCollaborationDraft,
 } from '@/lib/quick-command-collaboration';
-import { supportsCollaboration, tasksForSession } from '@/lib/agent-collaboration';
 import { useServerSimfarm } from '@/stores/server-simfarm';
 import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
@@ -215,12 +213,6 @@ export default function QuickCommandsScreen() {
     params.serverId ? state.openByServer[params.serverId] === true : false
   );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
-  const collaborationTasks = useAgentCollaboration((state) => state.tasks);
-  const collaborationCount = tasksForSession(
-    collaborationTasks,
-    params.serverId ?? '',
-    params.sessionId
-  ).length;
   const manageOnly = params.manage === '1';
   const agentDelivery = useAgentCommandDelivery({
     ...params,
@@ -587,8 +579,29 @@ export default function QuickCommandsScreen() {
     // The editor is the reason for the keyboard-aware scroller: a plain
     // ScrollView left both inputs under the keyboard, with the save button out
     // of reach entirely.
-    <View style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.background" />
+    <View style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
+      {/* Wallpaper under a surface, not a surface under wallpaper.
+          The fill used to sit on the line above and the picture on top of it,
+          which paints the picture at full strength over the thing meant to
+          calm it: the sheet's ground *became* the wallpaper, every block on it
+          drew its own pale panel, and the gaps between the blocks stayed raw
+          picture -- a panel with holes in it. `SettingsSheet` had already
+          solved this the other way round, and this is the same two layers in
+          the same order. A page is entitled to the picture at full strength; a
+          sheet is a surface. */}
+      <View
+        pointerEvents="none"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        style={StyleSheet.absoluteFill}>
+        <ThemeArtwork slot="shell.background" />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: surfaceBackground(theme.colors.background) },
+          ]}
+        />
+      </View>
       <KeyboardAwareScrollView
         bottomOffset={24}
         keyboardShouldPersistTaps="handled"
@@ -605,12 +618,29 @@ export default function QuickCommandsScreen() {
           isPadLayout && styles.padContent,
           { paddingBottom: LADDER.section + bottomInset },
         ]}>
-        <View
-          style={[
-            styles.stickyTop,
-            isPadLayout && styles.padStickyTop,
-            { backgroundColor: surfaceBackground(theme.colors.background) },
-          ]}>
+        {/* No surface of its own.
+
+            Everything below this on the sheet -- the tabs, the search field,
+            the command list -- is a rounded panel floating straight on the
+            sheet's ground, with nothing wrapping it. This block used to be the
+            exception: a slab drawn around its title, its subtitle and its
+            tiles, so the top of the sheet was built from a different set of
+            parts than the rest of it. Against a pack that tints these surfaces
+            that reads as a lid stuck on, and no amount of matching the radius
+            or adding an edge fixes it, because the extra layer is the problem
+            rather than how it is drawn.
+
+            So the container carries nothing. The tiles keep their own panels,
+            and the title and subtitle sit on the ground exactly as the
+            `SAVED PROMPTS` label below them does.
+
+            The cost, stated because it is real: rows scrolling under a sticky
+            header with no fill are visible behind the text. The tiles cover
+            most of that band with their own surfaces, and what passes behind
+            two lines of type is legible rather than confusing -- but if that
+            ever stops being true, the answer is to give the *ground* more
+            opacity, not to put the slab back. */}
+        <View style={[styles.stickyTop, isPadLayout && styles.padStickyTop]}>
           {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
           {/* No glyph beside the title. The reader arrived here by pressing the
@@ -776,36 +806,18 @@ export default function QuickCommandsScreen() {
           </Animated.View>
         ) : null}
 
-        {/* It used to hand over to a form with three questions on it, so its
-            label was a sentence rather than a word. The form is gone: this now
-            closes like every other tile and opens the assistant strip over the
-            terminal's own field, so the label says what the reader will be
-            looking at a moment later, and the detail says where. */}
-        {!manageOnly &&
-        params.serverId &&
-        params.paneId &&
-        supportsCollaboration(params.backendKind) ? (
-          <SettingsCard>
-            <ActionRow
-              accessibilityLabel={t`Assign a task`}
-              name={t`Assign a task`}
-              detail={
-                collaborationCount > 0
-                  ? t`Choose an assistant above the message field · ${collaborationCount} assigned`
-                  : t`Choose an assistant above the message field, then write the task there.`
-              }
-              detailColor={theme.colors.textMuted}
-              onPress={() => {
-                if (!params.serverId || !params.paneId) return;
-                useComposerAssignmentStore.getState().request_({
-                  serverId: params.serverId,
-                  paneId: params.paneId,
-                });
-                router.back();
-              }}
-            />
-          </SettingsCard>
-        ) : null}
+        {/* Assigning a task is not a row here any more.
+            
+            It was, back when it opened a form of its own. Now it opens the
+            assistant strip over the terminal's composer -- and the control that
+            does that sits in the key row, a few points below this sheet, always
+            visible while the composer is. Two entries to one strip, one of them
+            behind a sheet the reader has to open first, is a choice about which
+            button to press rather than about what to do.
+            
+            Shortcuts that deliver through collaboration still live in the list
+            below: those carry instructions of their own, which is a different
+            thing from choosing an assistant. */}
         {available.canStartTask ? (
           <SettingsCard>
             <ActionRow
@@ -1430,18 +1442,38 @@ const styles = StyleSheet.create({
   // beside it and under its corners on their way up. Same negative-margin trick
   // the panels sheet uses, and it has to track `content` (and `padContent`) if
   // either of those paddings ever moves.
+  /**
+   * A block in the same stack, not a lid across the top of it.
+   *
+   * This used to cancel the content's gutter with a negative margin and run
+   * edge to edge. Everything below it -- the tabs, the search field, the list
+   * -- is an inset rounded card floating on the sheet, so against a pack that
+   * paints this surface the top of the sheet read as a slab stuck onto a page
+   * of cards. Dropping the negative margins is the whole fix: the block then
+   * sits inside the gutter the content already has, and the radius is the one
+   * the cards below use rather than a second opinion about roundness.
+   *
+   * Nothing scrolls through the gaps it leaves at either side, because the
+   * content underneath is inset by the same gutter -- what shows there is the
+   * sheet's own ground, which is what it would show anyway.
+   */
+  /**
+   * A band, not a block. It carries no fill, no radius and no edge, because it
+   * is not a surface -- the tiles inside it are, exactly as the tabs, the
+   * search field and the list below are, and the whole sheet is then built
+   * from one kind of part. `Settings` reads the same way: an instrument label
+   * on the page's own ground, a card under it, and nothing wrapping the pair.
+   *
+   * No horizontal padding for the same reason: the content container's gutter
+   * is the sheet's one margin, so the title lands where `SAVED PROMPTS` lands
+   * and the tiles span exactly what the cards below them span.
+   */
   stickyTop: {
-    marginHorizontal: -LADDER.gutter,
-    paddingHorizontal: LADDER.gutter,
-    marginTop: -LADDER.gap,
     paddingTop: LADDER.gap,
     paddingBottom: LADDER.gap,
     gap: LADDER.snug,
   },
-  padStickyTop: {
-    marginHorizontal: -LADDER.section,
-    paddingHorizontal: LADDER.section,
-  },
+  padStickyTop: {},
   sheetHandle: {
     width: 38,
     height: 4,
@@ -1456,12 +1488,18 @@ const styles = StyleSheet.create({
   },
   headerCopy: { flex: 1, minWidth: 0, gap: 2 },
   headerTitle: { includeFontPadding: false },
-  // 38 and half of it, which is the disc every other sheet in this app gives a
-  // header button. `GlassChrome` draws the material and nothing else, so the
-  // shape is stated here and the pressable inside fills it.
+  /**
+   * 38 and half of it, which is the disc every other sheet in this app gives a
+   * header button. `GlassChrome` draws the material and nothing else, so the
+   * shape is stated here and the pressable inside fills it.
+   *
+   * `GlassChrome` draws the edge these need when a pack has thinned its own
+   * fill; see the note on `chromeStyle` there.
+   */
   headerButton: {
     width: 38,
     height: 38,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 19,
     borderCurve: 'continuous',
     overflow: 'hidden',
