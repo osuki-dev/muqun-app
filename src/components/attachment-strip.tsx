@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { isImageAttachment, type PendingAttachment } from '@/lib/attachments';
 import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
@@ -33,6 +34,9 @@ export function AttachmentStrip({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  // Above the early return: these tiles are painted over the composer, which is
+  // itself above the artwork, so their fills follow the reader's slider.
+  const surfaceBackground = useSurfaceBackground();
   if (attachments.length === 0) return null;
 
   /** What the overlay is showing, for anyone who cannot see the overlay. */
@@ -87,7 +91,7 @@ export function AttachmentStrip({
               style={[
                 styles.tile,
                 {
-                  backgroundColor: theme.colors.surfaceRaised,
+                  backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                 },
                 failed
                   ? { borderColor: theme.colors.danger, borderWidth: StyleSheet.hairlineWidth }
@@ -156,7 +160,10 @@ export function AttachmentStrip({
               <Animated.View
                 entering={zoomIn('micro')}
                 exiting={fadeOut('micro')}
-                style={[styles.readyBadge, { backgroundColor: theme.colors.success }]}>
+                style={[
+                  styles.readyBadge,
+                  { backgroundColor: surfaceBackground(theme.colors.success) },
+                ]}>
                 <Icon name="Check" size={9} color="#FFFFFF" strokeWidth={3} />
               </Animated.View>
             ) : null}
@@ -165,7 +172,7 @@ export function AttachmentStrip({
               hitSlop={6}
               pressedScale={0.9}
               onPress={() => onRemove(attachment.id)}
-              style={[styles.remove, { backgroundColor: theme.colors.text }]}>
+              style={[styles.remove, { backgroundColor: surfaceBackground(theme.colors.text) }]}>
               <Icon name="X" size={11} color={theme.colors.background} strokeWidth={3} />
             </PressableScale>
           </Animated.View>
