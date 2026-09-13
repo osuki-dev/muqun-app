@@ -789,6 +789,43 @@
       },
       {
         "target": {
+          "text": "Staged"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s22"
+      },
+      {
+        "target": {
+          "text": "Show src/lib/git-diff.ts"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/git-diff.ad#s23"
+      },
+      {
+        "target": {
+          "text": "Show src/components/git-diff-view.tsx"
+        },
+        "mode": "hidden",
+        "run": "flows/git-diff.ad#s24"
+      },
+      {
+        "target": {
+          "text": "All"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Show src/components/git-diff-view.tsx"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/git-diff.ad#s26"
+      },
+      {
+        "target": {
           "text": "Show src/lib/demo-terminal-history.ts"
         },
         "mode": "press",

@@ -231,6 +231,7 @@ msgstr "Cảnh báo"
 msgid "Align the QR inside the frame"
 msgstr "Căn mã QR vào trong khung"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "Tất cả"
@@ -3005,6 +3006,14 @@ msgstr "Host SSH"
 msgid "SSH tunnel through {host} is down"
 msgstr "Đường hầm SSH qua {host} đã ngắt"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "Đã staged"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "Đã staged và chưa staged"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "cũ · {age}"
@@ -3556,6 +3565,10 @@ msgstr "Đang hủy ghép nối {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Đang hủy ghép nối…"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "Chưa staged"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
