@@ -445,7 +445,14 @@ export function GitDiffView({
     // react-native-screens gives it the whole sheet's height and draws it under
     // the header.
     <>
-      <View collapsable={false} style={styles.headerBlock}>
+      {/* Painted, not inherited: on Android the form sheet itself is
+          transparent (the route asks for it, so the corner radius survives),
+          and a header with no fill of its own let the terminal show through
+          behind the title and the segmented control. iOS hid this with the
+          sheet's own white. */}
+      <View
+        collapsable={false}
+        style={[styles.headerBlock, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         {/* Android only: iOS has the system grabber. The panels and files
             sheets both draw this, and a third that did not would read as a
             different app. */}
