@@ -734,7 +734,19 @@ const FileRow = memo(function FileRow({
       feedback="selection"
       pressedScale={0.995}
       onPress={() => onToggle(row.path)}
-      style={[styles.fileRow, { width, backgroundColor: fill }]}>
+      // A collapsed file is a line in a list and sits on the sheet's own
+      // surface with a hairline under it; the raised fill is for the expanded
+      // file only, where the header is also the sticky one and has to read as
+      // a band over the code below it. Painting every file row raised turned
+      // a six-file list into one beige block that stopped mid-sheet.
+      style={[
+        styles.fileRow,
+        {
+          width,
+          backgroundColor: row.expanded ? fill : 'transparent',
+          borderBottomColor: colors.border,
+        },
+      ]}>
       <Animated.View style={[styles.pinned, styles.fileBody, pinned, { width: pinnedWidth }]}>
         <Chevron size={15} color={colors.subtle} />
         <View style={styles.flexOne}>
@@ -848,7 +860,7 @@ const LINE_ROW_HEIGHT = 18;
 // there (`server-terminal-workspace.tsx`, `ssh-host-form.tsx`).
 const MONO_FONT = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 const HUNK_ROW_HEIGHT = 26;
-const FILE_ROW_HEIGHT = 58;
+const FILE_ROW_HEIGHT = 52;
 const MORE_ROW_HEIGHT = 44;
 /** Two five-digit columns and a marker, with room to breathe. */
 const GUTTER_WIDTH = 78;
@@ -997,6 +1009,7 @@ const styles = StyleSheet.create({
   fileRow: {
     height: FILE_ROW_HEIGHT,
     justifyContent: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   fileBody: {
     gap: 10,
