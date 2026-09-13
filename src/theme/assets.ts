@@ -13,6 +13,10 @@ export type PreparedThemeAssets = {
 export function isOwnedThemeAsset(_uri: string): boolean {
   return false;
 }
+/** No owned directory here, so the Storage section has nothing to walk. */
+export function themeAssetDirectoryUri(): string | null {
+  return null;
+}
 export function setThemeAssetReferences(_themes: readonly InstalledTheme[] | null): void {}
 export async function prepareThemeAssets(
   _theme: ThemePackage,
