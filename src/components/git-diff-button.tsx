@@ -119,7 +119,7 @@ export function GitDiffButton({
           style={[
             styles.badge,
             compact && styles.compactBadge,
-            { backgroundColor: theme.colors.primary },
+            { backgroundColor: surfaceBackground(theme.colors.primary) },
           ]}>
           <Text variant="caption" color={theme.colors.onPrimary} style={styles.badgeText}>
             {count}
