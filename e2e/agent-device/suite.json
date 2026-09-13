@@ -3588,6 +3588,99 @@
       },
       {
         "target": {
+          "text": "STORAGE"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "text": "Images"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "text": "Temporary files"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "text": "Other"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "text": "Clear cache, [0-9].*"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "id": "settings-clear-cache-row"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-clear-cache-confirm"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-clear-cache-cancel"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-clear-cache-confirm"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#storage-press"
+      },
+      {
+        "run": "flows/settings.ad#storage-settle"
+      },
+      {
+        "target": {
+          "id": "settings-clear-cache-row"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "text": "Clear cache, [0-9].*"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
           "text": "ABOUT"
         },
         "mode": "scroll",

@@ -262,6 +262,28 @@ scroll down --pixels 320
 # section s67
 scroll down --pixels 320
 
+# section storage-scroll
+# STORAGE sits between SECURITY and ABOUT. Its four rows are within a screen of
+# each other, so the ordinary flick is enough here: unlike the ALERTS heading in
+# `s56`, every target below is a full row rather than a 13pt instrument label,
+# and a flick that overshoots one of them still leaves it in the tree for the
+# scroll-to-visible to come back to.
+scroll down --pixels 320
+
+# section storage-visible
+is visible "${TARGET}"
+
+# section storage-press
+press "${TARGET}"
+
+# section storage-settle
+# Clearing is several native round trips -- expo-image's two cache calls, then
+# one directory delete per allow-listed entry -- and each one hands the frame
+# back before the next, so the row returns to its idle state a little after the
+# tap rather than on it. The recount that follows is what fills the size in
+# again, and the assertion after this step carries its own timeout for that.
+wait stable 400 5000
+
 # section s68
 scroll down --pixels 320
 
