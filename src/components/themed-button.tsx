@@ -18,8 +18,8 @@ import {
   Spinner,
   type ButtonProps,
 } from '@osuki-dev/ui';
-import { useThemeLibrary } from '@/stores/theme-library';
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';
 import { safeArtworkOpacity } from '@/theme/artwork-contrast';
 import { jointArtworkOpacity } from '@/theme/opacity-policy';
@@ -51,11 +51,7 @@ export function Button(props: ButtonProps) {
   const backgroundOpacity = useSurfaceBackgroundOpacity();
   const { resolvedMode } = useThemeMode();
   const { width } = useWindowDimensions();
-  const active = useThemeLibrary((state) => state.active);
-  const assets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const { theme: active, assets } = useEffectiveCustomTheme();
   const artwork =
     active && variant === 'primary'
       ? resolveThemeImage(

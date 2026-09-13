@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { StyleSheet, useWindowDimensions, View, type ViewProps } from 'react-native';
 
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
-import { useThemeLibrary } from '@/stores/theme-library';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { safeArtworkOpacity } from '@/theme/artwork-contrast';
 import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeSlot } from '@/theme/schema';
@@ -24,11 +24,7 @@ export function ThemedSurfaceArtwork({ slot, baseColor, disabled, selected }: Ar
   const { resolvedMode } = useThemeMode();
   const baseOpacity = useSurfaceBackgroundOpacity();
   const { width } = useWindowDimensions();
-  const active = useThemeLibrary((state) => state.active);
-  const assets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const { theme: active, assets } = useEffectiveCustomTheme();
   const artwork = active
     ? resolveThemeImage(active.manifest, slot, resolvedMode, width >= 768 ? 'regular' : 'compact')
     : null;
