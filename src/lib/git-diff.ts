@@ -923,6 +923,47 @@ export function closeFile(order: readonly string[], path: string): string[] {
 }
 
 /** `99+`, and the exact number below that. */
+/**
+ * Which side of the index the sheet is looking at.
+ *
+ * `all` is the working tree against `HEAD`, staged and unstaged together --
+ * the answer to "what did the agent change". The other two are the halves of
+ * that answer, and switching between them is one tap on a segmented control in
+ * the sheet's header, never a control per file: on a phone there is no room
+ * for one, and on a Pad the same control reads the same way.
+ */
+export type GitDiffSide = 'all' | 'staged' | 'unstaged';
+
+export const GIT_DIFF_SIDES: readonly GitDiffSide[] = ['all', 'staged', 'unstaged'];
+
+/**
+ * The files on one side. An untracked file is unstaged by definition; a file
+ * on both sides (a rename whose new path was then edited, say) is in both
+ * halves, and it is the one the marks in the `all` view exist to point out.
+ */
+export function filterFilesBySide(
+  files: readonly GitFileChange[],
+  side: GitDiffSide
+): readonly GitFileChange[] {
+  if (side === 'all') return files;
+  return files.filter((file) => (side === 'staged' ? file.staged : file.unstaged));
+}
+
+/** Which side(s) a file is on, for the marks in the `all` view. */
+export function sideOfFile(file: GitFileChange): GitDiffSide | 'both' {
+  if (file.staged && file.unstaged) return 'both';
+  return file.staged ? 'staged' : 'unstaged';
+}
+
+/**
+ * What to send as `staged` for a side: nothing for the union, which is what
+ * the Gateway answers by default.
+ */
+export function stagedParamForSide(side: GitDiffSide): boolean | undefined {
+  if (side === 'all') return undefined;
+  return side === 'staged';
+}
+
 export function badgeCount(count: number): string {
   return count > MAX_BADGE_COUNT ? `${MAX_BADGE_COUNT}+` : `${Math.max(0, Math.trunc(count))}`;
 }

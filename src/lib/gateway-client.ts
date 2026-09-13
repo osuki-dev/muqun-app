@@ -1440,6 +1440,10 @@ export {
   NO_PATCH_CARRY,
   parseUnifiedPatch,
   shouldAutoExpand,
+  filterFilesBySide,
+  sideOfFile,
+  stagedParamForSide,
+  GIT_DIFF_SIDES,
   widestRow,
   type GitDiffHunk,
   type GitDiffLine,
@@ -1452,6 +1456,7 @@ export {
   type GitFileStatus,
   type GitRepoSummary,
   type GitStatus,
+  type GitDiffSide,
   type PaneAgentContext,
   type PaneContext,
   type ParsedPatch,
@@ -1537,7 +1542,14 @@ export async function loadGitFileDiff(
   sessionId: string,
   paneId: string,
   path: string,
-  options: { from?: number; lines?: number; context?: number; oldPath?: string | null } = {},
+  options: {
+    from?: number;
+    lines?: number;
+    context?: number;
+    oldPath?: string | null;
+    /** Absent: working tree against HEAD. `true`: index against HEAD. `false`: working tree against index. */
+    staged?: boolean;
+  } = {},
   signal?: AbortSignal
 ): Promise<GitFilePatchPage> {
   const from = Math.max(0, Math.round(options.from ?? 0));
@@ -1563,6 +1575,7 @@ export async function loadGitFileDiff(
   // Both ends of a rename, or git renders the move as a brand-new file and the
   // reader is shown a thousand added lines where one line actually changed.
   if (options.oldPath) query.push(`old_path=${encodeURIComponent(options.oldPath)}`);
+  if (options.staged !== undefined) query.push(`staged=${options.staged ? 'true' : 'false'}`);
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(

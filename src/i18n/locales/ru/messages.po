@@ -231,6 +231,7 @@ msgstr "Уведомления"
 msgid "Align the QR inside the frame"
 msgstr "Наведите рамку на QR-код"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "Все"
@@ -3005,6 +3006,14 @@ msgstr "SSH-хосты"
 msgid "SSH tunnel through {host} is down"
 msgstr "SSH-туннель через {host} разорван"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "В индексе"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "В индексе и не в индексе"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "устарело · {age}"
@@ -3556,6 +3565,10 @@ msgstr "Отвязываем {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Отвязываем…"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "Не в индексе"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

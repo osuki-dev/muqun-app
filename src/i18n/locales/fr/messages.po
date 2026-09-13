@@ -231,6 +231,7 @@ msgstr "Alertes"
 msgid "Align the QR inside the frame"
 msgstr "Alignez le QR code dans le cadre"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "Tous"
@@ -3005,6 +3006,14 @@ msgstr "Hôtes SSH"
 msgid "SSH tunnel through {host} is down"
 msgstr "Le tunnel SSH via {host} est coupé"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "Indexé"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "Indexé et non indexé"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "obsolète · {age}"
@@ -3556,6 +3565,10 @@ msgstr "Dissociation de {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Dissociation…"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "Non indexé"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

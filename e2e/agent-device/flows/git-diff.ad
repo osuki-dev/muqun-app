@@ -63,3 +63,18 @@ press "${TARGET}"
 
 # section s21
 is visible "${TARGET}"
+
+# section s22
+press "${TARGET}"
+
+# section s23
+is visible "${TARGET}"
+
+# section s24
+is hidden "${TARGET}"
+
+# section s25
+press "${TARGET}"
+
+# section s26
+is visible "${TARGET}"

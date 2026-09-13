@@ -231,6 +231,7 @@ msgstr "提醒"
 msgid "Align the QR inside the frame"
 msgstr "將 QR code 對準框內"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "全部"
@@ -3005,6 +3006,14 @@ msgstr "SSH 主機"
 msgid "SSH tunnel through {host} is down"
 msgstr "透過 {host} 的 SSH 通道已中斷"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "已暫存"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "已暫存和未暫存"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "資料過舊 · {age}"
@@ -3556,6 +3565,10 @@ msgstr "正在解除配對 {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "正在解除配對…"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "未暫存"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
