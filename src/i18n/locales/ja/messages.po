@@ -1972,12 +1972,13 @@ msgstr "SSH ホストはまだありません。追加すると、届く範囲�
 msgid "No still frames"
 msgstr "静止画に非対応"
 
-#: src/components/theme-gallery.tsx
-msgid "No themes are published yet"
-msgstr "公開されているテーマはまだありません"
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "テキストの変更なし"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "公開されているテーマはまだありません"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"

@@ -1972,12 +1972,13 @@ msgstr "Ainda não há hosts SSH. Adicione um para abrir um shell em qualquer m�
 msgid "No still frames"
 msgstr "Sem imagens fixas"
 
-#: src/components/theme-gallery.tsx
-msgid "No themes are published yet"
-msgstr "Ainda não há temas publicados"
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "Sem alteração de texto"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "Ainda não há temas publicados"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"

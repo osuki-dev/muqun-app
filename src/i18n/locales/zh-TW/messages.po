@@ -1972,12 +1972,13 @@ msgstr "尚無 SSH 主機。新增一個，即可在任何連得到的機器上�
 msgid "No still frames"
 msgstr "不支援靜態畫面"
 
-#: src/components/theme-gallery.tsx
-msgid "No themes are published yet"
-msgstr "尚未有已發布的佈景主題"
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "沒有文字變更"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "尚未有已發布的佈景主題"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
