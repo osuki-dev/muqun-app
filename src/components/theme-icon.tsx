@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import type { LucideIcon } from 'lucide-react-native';
 
-import { useThemeLibrary } from '@/stores/theme-library';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import type { ThemeIconName } from '@/theme/schema';
 
 /**
@@ -31,11 +31,8 @@ export function ThemeIcon({
   color: string;
   strokeWidth?: number;
 }) {
-  const icon = useThemeLibrary((state) => state.active?.manifest.icons?.[name]);
-  const assets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const { theme, assets } = useEffectiveCustomTheme();
+  const icon = theme?.manifest.icons?.[name];
   const uri = icon ? assets?.[icon.asset] : undefined;
   // App-owned files only, the same rule every other artwork consumer applies:
   // a manifest cannot point this at an arbitrary path or a remote URL.
