@@ -34,6 +34,11 @@ msgstr "[PR 番号]"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 日}}"
 
+#. placeholder {0}: pending.files.length
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# file changed} other {# files changed}}"
+msgstr "{0, plural, other {# 件のファイルが変更されました}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -43,6 +48,11 @@ msgstr "{0, plural, other {# 時間}}"
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# 分}}"
+
+#. placeholder {0}: row.remaining
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# more line} other {# more lines}}"
+msgstr "{0, plural, other {残り # 行}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -180,6 +190,11 @@ msgstr "先に追加する"
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "この行をサーバーの ~/.ssh/authorized_keys に追加してください:"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Added"
+msgstr "追加"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -366,6 +381,10 @@ msgstr "バックスペース"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% を下回ると、文字が読めることは保証されません"
 
+#: src/components/git-diff-view.tsx
+msgid "Binary file"
+msgstr "バイナリファイル"
+
 #: src/lib/local-authentication.ts
 msgid "biometrics"
 msgstr "生体認証"
@@ -427,6 +446,15 @@ msgstr "{0} の編集をキャンセル"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "キャンセルしました"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Changed"
+msgstr "変更"
+
+#: src/components/git-diff-view.tsx
+msgid "Changes"
+msgstr "変更点"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes colored backgrounds, not text, icons or artwork"
@@ -498,6 +526,10 @@ msgstr "ターミナルをクリア"
 #: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "閉じる"
+
+#: src/components/git-diff-view.tsx
+msgid "Close changes"
+msgstr "変更点を閉じる"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -628,6 +660,11 @@ msgstr "{label} のペアリング解除を確認"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "確認：{removeLabel} {label}"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Conflicted"
+msgstr "コンフリクト"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -788,6 +825,11 @@ msgstr "コントロール Y、ペースト"
 msgid "Control Z, suspend"
 msgstr "コントロール Z、一時停止"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Copied"
+msgstr "コピー"
+
 #: src/components/skia-terminal.tsx
 msgid "Copied to clipboard"
 msgstr "クリップボードにコピーしました"
@@ -907,10 +949,18 @@ msgstr "このサーバーに接続できませんでした"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "保存済みサーバーを読み取れませんでした。保存データは変更されていません。デバイスのロックを解除して再試行してください"
 
+#: src/components/git-diff-view.tsx
+msgid "Could not read the changes."
+msgstr "変更点を読み込めませんでした"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "ターミナルを読み取れませんでした"
+
+#: src/components/git-diff-view.tsx
+msgid "Could not read this file."
+msgstr "このファイルを読み込めませんでした"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1028,6 +1078,11 @@ msgstr "{name} を削除"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "この行を削除"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Deleted"
+msgstr "削除"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1351,6 +1406,8 @@ msgid "Haptic feedback"
 msgstr "触覚フィードバック"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "{0} を隠す"
@@ -1698,6 +1755,11 @@ msgstr "{0} をメンション"
 msgid "Modified"
 msgstr "更新日時"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Modified"
+msgstr "変更"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "その他の操作"
@@ -1844,6 +1906,10 @@ msgstr "スキャンできるカメラがありません"
 msgid "No camera was found on this device."
 msgstr "このデバイスでカメラが見つかりませんでした"
 
+#: src/components/git-diff-view.tsx
+msgid "No changes. The working tree matches HEAD."
+msgstr "変更はありません。作業ツリーは HEAD と一致しています"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "一致するファイルはありません"
@@ -1908,6 +1974,9 @@ msgstr "静止画に非対応"
 #: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "公開されているテーマはまだありません"
+#: src/components/git-diff-view.tsx
+msgid "No textual change"
+msgstr "テキストの変更なし"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2000,6 +2069,10 @@ msgstr "{title} を開く。長押しで閉じる"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "それでも開く"
+
+#: src/components/git-diff-button.tsx
+msgid "Open changes"
+msgstr "変更点を開く"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -2349,6 +2422,10 @@ msgstr "再接続中 · {0}"
 msgid "Refresh"
 msgstr "更新"
 
+#: src/components/git-diff-view.tsx
+msgid "Refresh changes"
+msgstr "変更点を再読み込み"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "ファイルを再読み込み"
@@ -2398,6 +2475,11 @@ msgstr "ターミナルの名前を変更"
 #: src/components/session-map.tsx
 msgid "Rename workspace"
 msgstr "ワークスペース名を変更"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Renamed"
+msgstr "名前変更"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
@@ -2686,6 +2768,7 @@ msgid "Sending to"
 msgstr "送信先"
 
 #: src/app/artifacts.tsx
+#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2770,6 +2853,8 @@ msgid "Shift Tab, cycle mode"
 msgstr "シフト タブ、モードを切り替え"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "{0} を表示"
@@ -2814,6 +2899,10 @@ msgstr "ホームのテキストを表示"
 msgid "Show images"
 msgstr "画像を表示"
 
+#: src/components/git-diff-view.tsx
+msgid "Show more"
+msgstr "さらに表示"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "ターミナルの文字の背後にアプリの背景を表示"
@@ -2821,6 +2910,10 @@ msgstr "ターミナルの文字の背後にアプリの背景を表示"
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "エディタ用キーボードを表示"
+
+#: src/components/git-diff-view.tsx
+msgid "Show the newer list of changes"
+msgstr "新しい変更一覧を表示"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3288,6 +3381,10 @@ msgstr "これは同梱された記録で、本物のサーバーではありま
 msgid "This link goes nowhere"
 msgstr "このリンクの先には何もありません"
 
+#: src/components/git-diff-view.tsx
+msgid "This pane is not working inside a git repository, so there is nothing to compare."
+msgstr "このパネルは git リポジトリの中で作業していないため、比較するものがありません"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "この QR コードは正しくありません"
@@ -3358,12 +3455,17 @@ msgstr "{host} 経由"
 msgid "Today"
 msgstr "今日"
 
+#: src/components/git-diff-view.tsx
+msgid "Too many changes to list. This is the start of them, not all of them."
+msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
 msgstr "信頼する"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/git-diff-view.tsx
 msgid "Try again"
 msgstr "もう一度試す"
 
@@ -3386,6 +3488,11 @@ msgstr "種類"
 #: src/lib/demo-ssh.ts
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "一行入力して Enter を押すと、そのまま返ってきます"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Type changed"
+msgstr "種類の変更"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3449,6 +3556,11 @@ msgstr "{label} のペアリングを解除しています"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "解除しています…"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Untracked"
+msgstr "未追跡"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
