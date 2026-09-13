@@ -1,6 +1,9 @@
-import { Button, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { View } from 'react-native';
+
+import { Button } from '@/components/themed-button';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 /** A failed secure read is not an empty list and must not suggest pairing again. */
 export function GatewayStorageError({
@@ -12,13 +15,14 @@ export function GatewayStorageError({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   return (
     <View
       testID="gateway-storage-error"
       style={{
         padding: 16,
         gap: 12,
-        backgroundColor: theme.colors.surfaceRaised,
+        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
         borderRadius: 12,
       }}>
       <Text variant="bodySmall" selectable accessibilityRole="alert">
