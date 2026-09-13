@@ -11,19 +11,49 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
-import { themeDraftSessions } from '@/theme/draft-session';
+import { CandidateThemeProvider } from '@/components/theme-candidate';
+import { themeDraftSessions, type ThemeEditorCandidate } from '@/theme/draft-session';
 
+/**
+ * The theme being looked at, worn by the screen looking at it.
+ *
+ * This route used to be the applied theme's screen with the candidate's two
+ * preview cards on it, which asked the reader to judge a theme from two
+ * postage stamps surrounded by the theme they were replacing. Everything the
+ * candidate can decide, it decides here: the floor, the shell wallpaper, the
+ * header glass and its back arrow, the bar at the bottom and the button that
+ * applies it.
+ *
+ * `CandidateThemeProvider` does both halves of that -- the kit tokens every
+ * ordinary control is painted from, and the custom-theme context the artwork,
+ * material and surface-opacity consumers read -- so the screen below it is the
+ * screen it always was, with nothing in it that knows it is a preview. The two
+ * preview cards keep painting themselves from the manifest: they show light and
+ * dark at once, and only one of those can be the screen's own mode.
+ */
 export default function CustomThemeScreen() {
-  const { t } = useLingui();
-  const router = useRouter();
   const { draft } = useLocalSearchParams<{ draft?: string }>();
   const candidate = typeof draft === 'string' ? themeDraftSessions.get(draft) : undefined;
-  const theme = useThemeTokens();
-  const insets = useSafeAreaInsets();
-  const background = useSurfaceBackground();
   useEffect(() => {
     if (typeof draft === 'string') return themeDraftSessions.hold(draft);
   }, [draft]);
+  if (!candidate) return <CustomThemeScene />;
+  return (
+    <CandidateThemeProvider
+      manifest={candidate.manifest}
+      assets={candidate.assets ?? candidate.prepared?.assets}
+      installationId={candidate.id}>
+      <CustomThemeScene candidate={candidate} />
+    </CandidateThemeProvider>
+  );
+}
+
+function CustomThemeScene({ candidate }: { candidate?: ThemeEditorCandidate }) {
+  const { t } = useLingui();
+  const router = useRouter();
+  const theme = useThemeTokens();
+  const insets = useSafeAreaInsets();
+  const background = useSurfaceBackground();
   /**
    * Done closes the editor and everything it was opened on top of.
    *
