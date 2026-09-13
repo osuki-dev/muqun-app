@@ -3597,7 +3597,23 @@
       },
       {
         "target": {
+          "id": "settings-storage-images-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#storage-scroll"
+      },
+      {
+        "target": {
           "text": "Images"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-storage-temporary-row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3608,6 +3624,13 @@
         "target": {
           "text": "Temporary files"
         },
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-storage-other-row"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
@@ -3617,10 +3640,8 @@
         "target": {
           "text": "Other"
         },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/settings.ad#storage-scroll"
+        "mode": "visible",
+        "run": "flows/settings.ad#storage-visible"
       },
       {
         "target": {
