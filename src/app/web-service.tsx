@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The Open a web service sheet's route.
  *
@@ -17,6 +18,7 @@ import { OpenWebServiceSheet } from '@/components/open-web-service-sheet';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
 export default function WebServiceScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
@@ -34,7 +36,7 @@ export default function WebServiceScreen() {
 
   if (!record) {
     return (
-      <View style={[styles.notice, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <Text selectable variant="bodySmall" color={theme.colors.danger}>
           {t`This server is no longer paired.`}
         </Text>

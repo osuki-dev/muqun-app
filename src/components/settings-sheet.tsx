@@ -19,11 +19,13 @@
  * renders empty.
  */
 import { ScrollScreen, Text, useThemeTokens } from '@osuki-dev/ui';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { X } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { GlassChrome } from '@/components/glass-chrome';
+import { ThemeArtwork } from '@/components/theme-artwork';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER } from '@/components/settings-chrome';
 import { useRenderTally } from '@/lib/render-tally';
@@ -49,35 +51,58 @@ export function SettingsSheet({
   children: ReactNode;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsSheet');
   return (
     <ScrollScreen
       variant="surface"
       safeArea="bottom"
-      style={styles.sheet}
-      contentContainerStyle={[styles.content, { maxWidth: contentMaxWidth }]}>
-      {/* iOS draws the grabber itself; Android's form sheet does not, and a
+      style={[styles.sheet, { backgroundColor: theme.colors.background }]}
+      contentContainerStyle={styles.canvas}>
+      {/* A sheet is a new scene, not a transparent window onto the previous
+          route's labels. Keep the native scroll root and its opaque floor;
+          only the paint above the local wallpaper follows surface opacity. */}
+      <View
+        testID="settings-sheet-scene"
+        pointerEvents="none"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        style={StyleSheet.absoluteFill}>
+        <ThemeArtwork slot="shell.background" />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: surfaceBackground(theme.colors.surface) },
+          ]}
+        />
+      </View>
+      <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. The panels sheet carries the same two lines. */}
-      {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+        {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
 
-      <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <Text variant="bodySmall" style={styles.title}>
-            {title}
-          </Text>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {caption}
-          </Text>
+        <View style={styles.header}>
+          <View style={styles.headerCopy}>
+            <Text variant="bodySmall" style={styles.title}>
+              {title}
+            </Text>
+            <Text variant="caption" color={theme.colors.textMuted}>
+              {caption}
+            </Text>
+          </View>
+          <GlassChrome face="sheet" style={styles.closeButton}>
+            <PressableScale
+              accessibilityLabel={closeLabel}
+              onPress={onClose}
+              style={styles.closeHit}>
+              <X size={18} color={theme.colors.text} />
+            </PressableScale>
+          </GlassChrome>
         </View>
-        <GlassChrome face="sheet" style={styles.closeButton}>
-          <PressableScale accessibilityLabel={closeLabel} onPress={onClose} style={styles.closeHit}>
-            <X size={18} color={theme.colors.text} />
-          </PressableScale>
-        </GlassChrome>
-      </View>
 
-      {children}
+        {children}
+      </View>
     </ScrollScreen>
   );
 }
@@ -87,6 +112,7 @@ const styles = StyleSheet.create({
   // height is not resolved when a percentage is measured and the sheet renders
   // empty. Every other sheet in this app fills the same way.
   sheet: { flex: 1 },
+  canvas: { flexGrow: 1, width: '100%' },
   content: {
     width: '100%',
     alignSelf: 'center',

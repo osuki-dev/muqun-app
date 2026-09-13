@@ -16,14 +16,21 @@ import {
  * Reading a stored "online" off disk at launch and painting a green dot with it
  * would recreate exactly the lie this replaced.
  *
- * ## Why only one server is probed
+ * ## Why the fan-out is bounded rather than forbidden
  *
- * Each paired record carries its own gateway token. Probing every card would
- * put every one of those tokens on the wire every time the list is drawn --
- * which is the same reason the agent mirror exists instead of a fan-out query
- * (see `lib/server-agents.ts`). So the list probes the server the app is
- * already configured for and nothing else, and says `NOT CONNECTED` about the
- * rest, which is the truthful description of a machine nobody asked.
+ * Each paired record carries its own gateway token, so a list that probed every
+ * card would put every one of those tokens on the wire every time it was drawn
+ * -- the same concern that makes the agent mirror a mirror instead of a fan-out
+ * query (see `lib/server-agents.ts`). This used to be answered by probing one
+ * server, the configured one, and saying `NOT CONNECTED` about the rest.
+ *
+ * That answer was truthful and unhelpful: the screen exists to say which
+ * machines are up, and someone with three of them saw one light and two shrugs.
+ * So the ceiling moved from one to `MAX_PROBED_SERVERS`, ordered by
+ * `serversToProbe` -- and the guards that actually protect the token stayed
+ * exactly where they were. A tunnelled record is still never probed, each token
+ * still goes only to the server that issued it, the per-server rate limit still
+ * applies, and `refreshMany` asks one server at a time.
  */
 type ServerReachabilityState = {
   probes: Record<string, ReachabilityProbe>;
@@ -36,17 +43,32 @@ type ServerReachabilityState = {
    * pulling the list down is, and answering it with a cached probe is how a
    * refresh control comes to mean nothing.
    */
-  refresh: (
-    endpoint: Pick<
-      GatewayRecord,
-      'serverId' | 'url' | 'token' | 'deviceId' | 'transportKey' | 'transport'
-    > &
-      Pick<GatewayRecord, 'sshTunnel'>,
+  refresh: (endpoint: ReachabilityEndpoint, options?: { force?: boolean }) => Promise<void>;
+  /**
+   * Probe several servers, one after another.
+   *
+   * Sequential on purpose, and it is the half of the fan-out that keeps it
+   * cheap. Four simultaneous TLS handshakes on a cold radio is exactly the kind
+   * of launch cost that shows up as heat rather than as a slow screen, and
+   * nothing here is waiting on the result: the dots fill in as the answers
+   * arrive, in the order the reader is most likely to care about them.
+   *
+   * The caller decides who is in the list -- see `serversToProbe`. This only
+   * guarantees that being in it costs one request at a time.
+   */
+  refreshMany: (
+    endpoints: readonly ReachabilityEndpoint[],
     options?: { force?: boolean }
   ) => Promise<void>;
   /** Drops results for servers this device no longer has. */
   keepOnly: (serverIds: readonly string[]) => void;
 };
+
+/** The fields a probe needs, and deliberately nothing else. */
+export type ReachabilityEndpoint = Pick<
+  GatewayRecord,
+  'serverId' | 'url' | 'token' | 'deviceId' | 'transportKey' | 'transport' | 'sshTunnel'
+>;
 
 /**
  * One flight per server. Two screens mounting together, or a focus event
@@ -80,6 +102,20 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
       }));
     } finally {
       inFlight.delete(serverId);
+    }
+  },
+
+  async refreshMany(endpoints, options) {
+    // Awaited in a loop rather than started together: see the doc comment on
+    // the type. A rejection is impossible here -- `refresh` swallows its own --
+    // but the loop is written so one bad endpoint could not strand the rest.
+    for (const endpoint of endpoints) {
+      try {
+        await get().refresh(endpoint, options);
+      } catch {
+        // One unreachable machine is not a reason to stop asking about the
+        // others; that is the entire point of probing more than one.
+      }
     }
   },
 

@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import * as Updates from 'expo-updates';
@@ -14,6 +15,7 @@ import { fadeInDown, fadeOutUp, timing } from '@/lib/motion';
 const DOWNLOAD_RAMP_MS = 2400;
 
 export function UpdateStatusBanner() {
+  const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -85,10 +87,11 @@ export function UpdateStatusBanner() {
         style={[
           styles.banner,
           {
-            backgroundColor: theme.colors.surface,
+            backgroundColor: surfaceBackground(theme.colors.surface),
           },
         ]}>
-        <View style={[styles.icon, { backgroundColor: theme.colors.primarySubtle }]}>
+        <View
+          style={[styles.icon, { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }]}>
           {ready ? (
             <Check size={15} color={theme.colors.primary} strokeWidth={2.4} />
           ) : (
@@ -99,7 +102,11 @@ export function UpdateStatusBanner() {
           <Text variant="caption" numberOfLines={1} style={styles.label}>
             {label}
           </Text>
-          <View style={[styles.track, { backgroundColor: theme.colors.primarySubtle }]}>
+          <View
+            style={[
+              styles.track,
+              { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+            ]}>
             <Animated.View
               style={[styles.progress, { backgroundColor: theme.colors.primary }, progressStyle]}
             />

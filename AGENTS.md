@@ -93,6 +93,21 @@ NODE_USE_ENV_PROXY=1 node node_modules/react-native-enriched-markdown/postinstal
 The same variable belongs on any `bunx expo prebuild` or CI install step that
 runs behind a proxy.
 
+An EAS **local** build is one of those steps, and it is easy to miss because it
+does not look like an install. `eas build --local` copies the project to a temp
+directory and runs `bun install --frozen-lockfile` there, in an environment that
+is not the shell you typed in. Without the variable that install reaches the
+vendor step, fails to fetch, and `check-vendored-ratex.ts` stops the build in the
+`INSTALL_DEPENDENCIES` phase -- which is the guard working, but a long way from
+the Android output you were waiting for, and on a platform that does not use
+RaTeX at all. So every `*:local` build script in `package.json` now carries
+`NODE_USE_ENV_PROXY=1` itself rather than relying on the caller's environment.
+
+One more thing about that failure: when a local build fails, `eas-cli` prints
+the job payload it was invoked with, and that payload contains the Android
+keystore and its passwords in base64. Do not paste a failed local-build log
+anywhere, and delete any file it was captured into.
+
 ## End-to-end test gate
 
 Optional Gateway features use capability detection, not a guessed Gateway version.
@@ -155,6 +170,18 @@ Linting is `oxlint` and formatting is `oxfmt` (the same pair as the org's `kit` 
 cannot quietly grow a new baseline the way it did before card #611.
 
 ## agent-device
+
+Reuse the existing Android QA AVD `muqun_collaboration_qa` and iOS simulator
+`muqun-collaboration-tests`. Do not create a simulator or AVD for each feature
+unless the user explicitly asks. Serialize access to a shared QA device, discover
+its current port or UDID on every run, and never use the user's own devices or
+paired sessions for automation.
+
+Carry the explicit Android `--serial` or iOS `--udid` on every direct agent-device
+command. A session name alone is not device identity: the suite closes sessions,
+and a later capture or open may create a new session on another running device.
+After a suite or close, verify the returned device identity before any install or
+UI action; never let automatic device discovery choose a user's device.
 
 Use agent-device only for app/device automation tasks. Before planning commands, run `agent-device --version` and read `agent-device help workflow`. For TV, Fire TV, or Vega OS tasks, read `agent-device help tv`. For exploratory QA, read `agent-device help dogfood`. For logs, network, audio, traces, or runtime failures, read `agent-device help debugging`. For React Native component trees, props/state/hooks, slow renders, or rerenders, read `agent-device help react-devtools`. For React Native JavaScript heap growth, heap snapshots, or retained-object leaks, read `agent-device help cdp`. For React Native apps, overlays, Metro/Fast Refresh blockers, and routing to React DevTools or debugging evidence, read `agent-device help react-native`.
 

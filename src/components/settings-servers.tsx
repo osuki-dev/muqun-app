@@ -1,6 +1,8 @@
+import { Input } from '@/components/themed-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { Input, Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useFocusEffect } from 'expo-router';
 import { Check, ChevronDown, Pencil, Trash2 } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useState } from 'react';
@@ -268,6 +270,7 @@ function ServerRow({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsServerRow');
 
   /**
@@ -329,7 +332,11 @@ function ServerRow({
                 servers has to answer first: which of these is the app talking
                 to. */}
             {current ? (
-              <View style={[styles.usingChip, { backgroundColor: theme.colors.primarySubtle }]}>
+              <View
+                style={[
+                  styles.usingChip,
+                  { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                ]}>
                 <Text variant="caption" color={theme.colors.primary} style={styles.usingText}>
                   <Trans>USING</Trans>
                 </Text>
@@ -390,7 +397,10 @@ function ServerRow({
                 accessibilityLabel={t`Use ${server.label}`}
                 feedback="selection"
                 onPress={onUse}
-                style={[styles.action, { backgroundColor: theme.colors.primarySubtle }]}>
+                style={[
+                  styles.action,
+                  { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                ]}>
                 <Check size={16} color={theme.colors.primary} strokeWidth={2.2} />
                 <Text variant="caption" color={theme.colors.primary}>
                   <Trans>Use this server</Trans>
@@ -430,6 +440,7 @@ function ServerRowEditor({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const [editing, setEditing] = useState(false);
 
   if (editing) {
@@ -442,7 +453,7 @@ function ServerRowEditor({
         accessibilityRole="button"
         accessibilityLabel={t`Edit ${server.label}`}
         onPress={() => setEditing(true)}
-        style={[styles.action, { backgroundColor: theme.colors.surfaceRaised }]}>
+        style={[styles.action, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
         <Pencil size={15} color={theme.colors.text} strokeWidth={2} />
         <Text variant="caption" color={theme.colors.text}>
           <Trans>Edit this server</Trans>
@@ -474,6 +485,7 @@ function ServerRowEditor({
 function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () => void }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const { editRecord } = useGatewayRecord();
   const [label, setLabel] = useState(server.label);
@@ -565,7 +577,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
           style={[
             styles.action,
             styles.editButton,
-            { backgroundColor: theme.colors.surfaceRaised },
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Cancel</Trans>
@@ -577,7 +589,11 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
           feedback="selection"
           disabled={saving}
           onPress={() => void save()}
-          style={[styles.action, styles.editButton, { backgroundColor: theme.colors.primary }]}>
+          style={[
+            styles.action,
+            styles.editButton,
+            { backgroundColor: surfaceBackground(theme.colors.primary) },
+          ]}>
           <Text variant="caption" color={theme.colors.onPrimary}>
             {saving ? t`Saving…` : t`Save`}
           </Text>
@@ -595,6 +611,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
 function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Promise<void> }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const [armed, setArmed] = useState(false);
   const [pending, setPending] = useState(false);
   const view = unpairView({ armed, pending });
@@ -629,7 +646,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         style={[
           styles.action,
           styles.armedButton,
-          { backgroundColor: theme.colors.danger },
+          { backgroundColor: surfaceBackground(theme.colors.danger) },
           view.confirm.dimmed && styles.pendingAction,
         ]}>
         {view.confirm.icon === 'spinner' ? (
@@ -652,7 +669,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         style={[
           styles.action,
           styles.armedButton,
-          { backgroundColor: theme.colors.surfaceRaised },
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           view.cancel.dimmed && styles.pendingAction,
         ]}>
         <Text variant="caption" color={theme.colors.textMuted}>
@@ -665,7 +682,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
       accessibilityRole="button"
       accessibilityLabel={t`Unpair ${label}`}
       onPress={() => setArmed(true)}
-      style={[styles.action, { backgroundColor: theme.colors.dangerSubtle }]}>
+      style={[styles.action, { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) }]}>
       <Trash2 size={15} color={theme.colors.danger} strokeWidth={2} />
       <Text variant="caption" color={theme.colors.danger}>
         <Trans>Unpair this server</Trans>
@@ -687,6 +704,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
 function PairedDevices({ server }: { server: GatewayRecord }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const [devices, setDevices] = useState<PairedDevice[] | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
@@ -797,7 +815,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
               feedback="selection"
               disabled={revoking !== null}
               onPress={() => void revoke(device)}
-              style={[styles.revoke, { backgroundColor: theme.colors.danger }]}>
+              style={[styles.revoke, { backgroundColor: surfaceBackground(theme.colors.danger) }]}>
               <Text variant="caption" color={theme.colors.onPrimary} style={styles.armedText}>
                 <Trans>Revoke</Trans>
               </Text>

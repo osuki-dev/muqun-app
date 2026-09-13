@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The settings page's furniture: the section surface, the five kinds of row that
  * go in it, and the one spacing ladder they all measure from.
@@ -22,6 +23,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
+import { ThemedSurface } from '@/components/themed-surface';
+import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { appChrome } from '@/constants/appearance';
 import { useRenderTally } from '@/lib/render-tally';
 
@@ -76,9 +79,25 @@ const CHIP_SIZE = 36;
  */
 export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   useRenderTally('SettingsSection');
+  const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
+  const hasShell = useHasThemeArtwork('shell.background');
   return (
     <View style={styles.section}>
-      <Text variant="label" style={styles.sectionTitle}>
+      <Text
+        variant="label"
+        style={[
+          styles.sectionTitle,
+          hasShell
+            ? {
+                alignSelf: 'flex-start',
+                backgroundColor: surfaceBackground(theme.colors.background),
+                paddingHorizontal: LADDER.gap,
+                paddingVertical: LADDER.tight,
+                borderRadius: 8,
+              }
+            : {},
+        ]}>
         {title}
       </Text>
       <SettingsCard>{children}</SettingsCard>
@@ -99,14 +118,17 @@ export function SettingsCard({ children }: { children: ReactNode }) {
   const theme = useThemeTokens();
   const rows = Children.toArray(children);
   return (
-    <View style={[styles.sectionBody, { backgroundColor: theme.colors.surface }]}>
+    <ThemedSurface
+      slot="cards.decoration"
+      baseColor={theme.colors.surface}
+      style={styles.sectionBody}>
       {rows.map((row, index) => (
         <Fragment key={index}>
           {index > 0 ? <SettingsSeparator /> : null}
           {row}
         </Fragment>
       ))}
-    </View>
+    </ThemedSurface>
   );
 }
 
@@ -214,6 +236,7 @@ export function SettingsNavRow({
   testID?: string;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsNavRow');
   return (
     <PressableScale
@@ -225,7 +248,8 @@ export function SettingsNavRow({
       onPress={onPress}
       style={styles.row}>
       {Icon ? (
-        <View style={[styles.chip, { backgroundColor: theme.colors.surfaceRaised }]}>
+        <View
+          style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
           <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
         </View>
       ) : null}
@@ -329,10 +353,12 @@ export function SettingsInfoRow({
   detail: ReactNode;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsInfoRow');
   return (
     <View style={styles.row}>
-      <View style={[styles.chip, { backgroundColor: theme.colors.surfaceRaised }]}>
+      <View
+        style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
         <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
       </View>
       <View style={styles.rowCopy}>

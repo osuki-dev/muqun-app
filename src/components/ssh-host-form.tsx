@@ -1,5 +1,9 @@
+import { Input } from '@/components/themed-input';
+import { Textarea } from '@/components/themed-textarea';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Input, SegmentedControl, Text, Textarea, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { SegmentedControl } from '@/components/themed-segmented-control';
 import * as Clipboard from 'expo-clipboard';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -42,6 +46,7 @@ export function SshHostForm({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const addHost = useSshHostsStore((state) => state.addHost);
   const updateHost = useSshHostsStore((state) => state.updateHost);
@@ -198,7 +203,7 @@ export function SshHostForm({
   const keyAuth = draft.authType === 'privateKey';
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+    <View style={[styles.card, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
       <Input
         label={t`Name`}
         value={draft.label}
@@ -306,13 +311,20 @@ export function SshHostForm({
             accessibilityLabel={t`Generate an Ed25519 key`}
             disabled={generating || saving}
             onPress={() => void generate()}
-            style={[styles.secondaryButton, { backgroundColor: theme.colors.surfaceRaised }]}>
+            style={[
+              styles.secondaryButton,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
             <Text variant="caption" color={theme.colors.text}>
               {generating ? t`Generating…` : t`Generate an Ed25519 key`}
             </Text>
           </PressableScale>
           {publicKey ? (
-            <View style={[styles.publicKey, { backgroundColor: theme.colors.primarySubtle }]}>
+            <View
+              style={[
+                styles.publicKey,
+                { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+              ]}>
               <Text variant="caption" color={theme.colors.textMuted}>
                 <Trans>Add this line to ~/.ssh/authorized_keys on the server:</Trans>
               </Text>
@@ -323,7 +335,10 @@ export function SshHostForm({
                 accessibilityRole="button"
                 accessibilityLabel={t`Copy the public key`}
                 onPress={() => void copyPublicKey()}
-                style={[styles.secondaryButton, { backgroundColor: theme.colors.surface }]}>
+                style={[
+                  styles.secondaryButton,
+                  { backgroundColor: surfaceBackground(theme.colors.surface) },
+                ]}>
                 <Text variant="caption" color={theme.colors.text}>
                   <Trans>Copy public key</Trans>
                 </Text>
@@ -362,7 +377,11 @@ export function SshHostForm({
       </Text>
 
       {record && ridingGateways.length > 0 ? (
-        <View style={[styles.ridingCard, { backgroundColor: theme.colors.surfaceRaised }]}>
+        <View
+          style={[
+            styles.ridingCard,
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Gateways reached through this host</Trans>
           </Text>
@@ -380,7 +399,10 @@ export function SshHostForm({
           accessibilityLabel={t`Cancel`}
           disabled={saving}
           onPress={onDone}
-          style={[styles.button, { backgroundColor: theme.colors.surfaceRaised }]}>
+          style={[
+            styles.button,
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Cancel</Trans>
           </Text>
@@ -391,7 +413,7 @@ export function SshHostForm({
           feedback="selection"
           disabled={saving}
           onPress={() => void save()}
-          style={[styles.button, { backgroundColor: theme.colors.primary }]}>
+          style={[styles.button, { backgroundColor: surfaceBackground(theme.colors.primary) }]}>
           <Text variant="caption" color={theme.colors.onPrimary}>
             {saving ? t`Saving…` : t`Save`}
           </Text>
@@ -408,7 +430,11 @@ export function SshHostForm({
           onPress={() => void remove()}
           style={[
             styles.button,
-            { backgroundColor: removeArmed ? theme.colors.danger : theme.colors.dangerSubtle },
+            {
+              backgroundColor: surfaceBackground(
+                removeArmed ? theme.colors.danger : theme.colors.dangerSubtle
+              ),
+            },
           ]}>
           <Text
             variant="caption"

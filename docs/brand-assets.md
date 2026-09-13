@@ -7,11 +7,22 @@ its package identity.
 
 ## Asset mapping
 
-| Asset                         | Consumer                         | Requirements           |
-| ----------------------------- | -------------------------------- | ---------------------- |
-| `assets/images/icon.png`      | Expo fallback and iOS light icon | 1024 × 1024 opaque PNG |
-| `assets/images/icon-dark.png` | iOS dark icon                    | 1024 × 1024 opaque PNG |
-| `assets/images/favicon.png`   | Web favicon                      | 64 × 64 PNG            |
+| Asset                                  | Consumer                                 | Requirements              |
+| -------------------------------------- | ---------------------------------------- | ------------------------- |
+| `assets/images/icon.png`               | Expo fallback and iOS light icon         | 1024 × 1024 opaque PNG    |
+| `assets/images/icon-dark.png`          | iOS dark icon                            | 1024 × 1024 opaque PNG    |
+| `assets/images/favicon.png`            | Web favicon                              | 64 × 64 PNG               |
+| `assets/images/brand-mark-3d.png`      | In-app mark on light surfaces (Settings) | 512 × 512 PNG, real alpha |
+| `assets/images/brand-mark-3d-dark.png` | In-app mark on dark surfaces (Settings)  | 512 × 512 PNG, real alpha |
+
+The two in-app marks are cut from the masters, not painted: the flat plate is
+flood-filled to alpha 0 from the border, edge pixels have the plate colour
+removed by un-blending against the nearest fully opaque neighbour, and the soft
+grounding shadow becomes translucent black rather than a plate-tinted smear.
+Verify with `sips -g hasAlpha` and by compositing on a saturated colour -- both
+were checked on magenta and cyan. The dark cut keeps the dark rim the master was
+lit with, so it is only ever drawn on a dark ground; the light cut is the one to
+reach for anywhere the ground is not known.
 
 The existing Expo configuration already references these paths. Preserve
 `dev.osuki.muqun`, the Expo project, and signing credentials. Native launcher

@@ -185,6 +185,16 @@ const DESCRIPTOR_BACKED: { file: string; sinks: string[]; provenBy: string }[] =
  *    three glyphs printed on the cap are not.
  */
 const ALLOWED: { file: string; text: string; why: string }[] = [
+  {
+    file: 'src/components/custom-theme-preview.tsx',
+    text: '$ bun test',
+    why: 'Non-executing terminal command sample for palette preview, not natural-language copy',
+  },
+  {
+    file: 'src/lib/agent-command-presets.ts',
+    text: 'Complete light/dark colors, terminal palette, optional artwork, and an importable theme file',
+    why: 'Bundled English-only theme authoring skill synopsis, explicitly requested by the user',
+  },
   { file: 'src/app/(drawer)/_layout.tsx', text: 'Muqun', why: 'product name' },
   { file: 'src/app/(drawer)/index.tsx', text: 'Muqun', why: 'product name' },
   { file: 'src/app/settings.tsx', text: 'Muqun', why: 'product name' },

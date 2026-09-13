@@ -171,6 +171,49 @@ export function recordCollaborationTask(tasks: CollaborationTask[], task: Collab
   ].slice(0, 40);
 }
 
+/**
+ * Whether this build can hand a task to an assistant that is already running.
+ *
+ * It can, and what it is trading to do so is written down here rather than
+ * spread across the call sites.
+ *
+ * The strongest guarantee would be a Gateway that accepts a request bound to an
+ * agent *instance* and refuses it if that instance is gone. There is no such
+ * contract. Without it the app looks the agent up and then sends, and a pane is
+ * mutable, so between the lookup and the write the target could in principle
+ * become a different agent.
+ *
+ * This used to return `false` on the strength of that race, and the result was
+ * a feature that never worked at all -- every attempt died with "Update Muqun
+ * Gateway to use Agent collaboration", at a point where the Gateway's
+ * `agent_collaboration` capability had already been checked and found present,
+ * so the one instruction it gave was the one thing guaranteed not to help.
+ *
+ * What is actually done about the race:
+ *
+ *  - The destination is captured when the assistant is chosen, carrying the
+ *    agent's `instance_id`, and re-verified against a fresh read immediately
+ *    before the write. An assistant that has exited, restarted, or been
+ *    replaced in its pane fails the check and the task is not sent.
+ *  - The opaque `target` used for the write is the one from that fresh read,
+ *    never the captured one.
+ *  - A write whose acknowledgement is lost is reported as ambiguous and is
+ *    never retried, because nothing here can tell a lost reply from a lost
+ *    request (AGENTS.md).
+ *
+ * That is the same bargain the composer has always made with the agent in front
+ * of the reader -- `sendInput` checks the pane and not even the instance -- and
+ * strictly more careful. Holding collaboration to a standard the composer does
+ * not meet, and calling the difference safety, bought nothing and cost the
+ * whole feature.
+ *
+ * A function rather than a constant so the call sites read as questions, and so
+ * this reasoning has one home if the real contract ever arrives.
+ */
+export function supportsExistingAgentDelivery(): boolean {
+  return true;
+}
+
 export function canAssignToAgent(status: string): boolean {
   // A busy agent may accept another prompt, but Herdr cannot correlate its
   // completion with a specific turn. Start new assignments at an idle prompt.

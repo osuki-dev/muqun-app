@@ -108,7 +108,24 @@ export const SERVER_AGENTS_STORAGE_KEY = 'muqun.server-agents.v1';
  * serve.
  */
 export const MAX_SERVER_AGENTS = 24;
-const MAX_AGENT_NAME_LENGTH = 32;
+/**
+ * A bound on what gets stored, not a guess at what fits on a row.
+ *
+ * This is a hard cut with no ellipsis, applied before the name reaches any
+ * view, so whatever it removes is gone: a reader sees a name that stops
+ * mid-word with space still left beside it, and nothing on the screen admits
+ * that anything was dropped. At 32 that happened constantly, because the rows
+ * are titled by what the agent is doing ("claude · PR stack branch switching")
+ * rather than by a short handle.
+ *
+ * The card gives the name two lines (`server-agent-rows`), which is about 60
+ * Latin characters on a phone and more meaning than that in CJK, so the cut
+ * now sits past what the layout can show and the layout does the eliding --
+ * with an ellipsis, where it belongs. Still bounded: 24 agents at this length
+ * is a trivial payload, and an unbounded name is a remote string written
+ * straight into local storage.
+ */
+const MAX_AGENT_NAME_LENGTH = 72;
 const MAX_AGENT_CWD_LENGTH = 48;
 
 /**

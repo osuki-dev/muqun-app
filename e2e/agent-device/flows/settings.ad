@@ -25,10 +25,22 @@ scroll down --pixels 320
 # section s8
 press "${TARGET}"
 
+# section scroll-up
+scroll up --pixels 320
+
 # section reset-theme
-press label="Osuki"
+# Selected by testID, not by role. The tile declares
+# `accessibilityRole="radio"`, and the two runtimes report that differently:
+# iOS surfaces it as a cell, Android as `android.widget.RadioButton`. A flow
+# that names either one passes on that platform and fails on the other, which
+# is exactly what `role=cell` did here -- green on iOS for as long as nobody
+# ran it on Android. The id carries the selection state, so the manifest
+# matches it with the same `(on|off)` pattern the scroll steps already use.
+press "${TARGET}"
 wait stable 400 5000
-press "label=\"Theme, Osuki\""
+
+# section confirm-reset
+press "${TARGET}"
 
 # section s9
 is visible "${TARGET}"
@@ -180,16 +192,48 @@ is visible "${TARGET}"
 is visible "${TARGET}"
 
 # section s56
-scroll down --pixels 320
+# A pan, not a scroll, and this is the one place in the flow that needs it.
+#
+# `scroll --pixels` is a flick: the number is a gesture magnitude and momentum
+# carries it much further -- measured on this runner, 60pt of gesture moved the
+# list 434pt. The ALERTS heading is 13pt tall, so no flick magnitude lands on
+# it; every one of them carries the heading from below the viewport to above it
+# between two visibility checks. 320 and 120 were both tried and both overshot
+# to the same place, with `Haptic feedback` at y=16 and the heading just off the
+# top.
+#
+# It used to pass only because the page ended soon after ALERTS, so the flick
+# hit the bottom stop and settled there. Adding the brand mark and version to
+# the foot gave the list room to keep travelling, and the accident stopped
+# working.
+#
+# `gesture pan <x> <y> <dx> <dy> <ms>` moves the distance it is given. 120pt per
+# iteration cannot skip a 13pt heading, and the step's own 20s timeout has room
+# for the extra iterations.
+gesture pan 200 600 0 -120 400
 
 # section s57
-scroll down --pixels 320
+# A pan for the same reason `s56` uses one: these three targets sit within a
+# couple of rows of each other, and a flick's momentum carries whichever one is
+# sought clear past the top of the screen. When that happens the row's centre
+# lands in the status bar, and pressing there is not a miss -- iOS reads a
+# status-bar tap as "scroll to top", so the list jumps home and the control was
+# never touched. A press that reported success at (339, 36) is what that looks
+# like from the runner's side.
+gesture pan 200 600 0 -120 400
 
 # section s58
 scroll down --pixels 320
 
 # section scroll-notifications
-scroll down --pixels 320
+# A pan for the same reason `s56` uses one: these three targets sit within a
+# couple of rows of each other, and a flick's momentum carries whichever one is
+# sought clear past the top of the screen. When that happens the row's centre
+# lands in the status bar, and pressing there is not a miss -- iOS reads a
+# status-bar tap as "scroll to top", so the list jumps home and the control was
+# never touched. A press that reported success at (339, 36) is what that looks
+# like from the runner's side.
+gesture pan 200 600 0 -120 400
 
 # section s59
 is visible "${TARGET}"
@@ -282,10 +326,43 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section s89
-scroll down --pixels 320
+# Used by the step that must leave Quick actions visible. Scrolling down toward
+# it does not work: the row enters the accessibility tree while still off-screen
+# and settles at y=-20, just above the top edge, so "scroll until visible" never
+# becomes true and a tap on its clamped centre hits the status bar -- which on
+# iOS scrolls the list to the top and loses it outright.
+#
+# Measured on this runtime: at the bottom of Settings the row is at y=-20, and
+# one `scroll up --pixels 60` puts it at y=414. `--pixels` is a gesture
+# magnitude rather than a literal delta, so 96 and above carry it straight back
+# out of the tree.
+scroll bottom
+wait stable 400 5000
+scroll up --pixels 60
+
+# section s89-android
+# Android's own calibration of the step above, kept apart rather than merged.
+# `scroll up --pixels 60` is a flick, and its magnitude does not mean the same
+# thing on both runtimes: on iOS it lands the row at y=414, on Android it leaves
+# it at y=32..198 -- overlapping the app's floating header (y=158..279) and
+# hard against the status bar, so the tap that follows opens nothing and the
+# flow fails two steps later looking for a sheet that never came.
+#
+# `gesture pan` is a drag rather than a flick, so its delta is the delta.
+# Measured here on a Pixel 8 emulator at 1080x2400: from the bottom of
+# Settings, panning down 400 moves the row from y=32..198 to y=403..569, which
+# clears the header with room to spare.
+scroll bottom
+wait stable 400 5000
+gesture pan 540 800 0 400 400
+wait stable 400 5000
 
 # section clear-native-header
-scroll up --pixels 240
+# Settle only. This used to scroll up to lift the row clear of the native
+# large-title header, back when the step above overshot and left it at y=-20.
+# That step is now a measured `scroll bottom` plus one small nudge, so the row
+# arrives where it is reachable and any further scrolling here only carries it
+# straight back out of the tree.
 wait stable 400 5000
 
 # section s90
