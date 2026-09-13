@@ -770,8 +770,16 @@ reason this viewer is more than a pretty-printer; copy-a-hunk.
 
 ## 7. Open questions
 
-1. **Staged vs unstaged.** v1 shows the union with a per-file badge. Is a
-   three-way split wanted immediately, or is it v2?
+1. **Staged vs unstaged** — decided 2026-09-13. The sheet's header carries a
+   segmented All / Staged / Unstaged (the existing `SettingsSegmented`): one tap
+   to switch views on a phone, the same control on a Pad. In the union view
+   each file carries an `S`, `U` or `S U` mark, letters rather than words
+   because a file row has room for `+1000 −1000` and one more glyph, with the
+   words on the accessibility label. Switching sides drops every open patch: a
+   file's two halves are different text. No control per file, and no
+   stage/unstage action: the Gateway is read-only and a write needs its own
+   safety boundary. A Pad-only side-by-side layout (file list left, patch
+   right) is v2.
 2. **Untracked files.** `git diff --no-index /dev/null <path>` renders a new file
    as an all-additions patch, usually what the reader wants but potentially
    enormous for generated output. Cap and collapse, or list untracked files
