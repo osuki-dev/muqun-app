@@ -1,15 +1,14 @@
 import { useThemeMode } from '@osuki-dev/ui';
 import { useCallback } from 'react';
 
-import { useThemeLibrary } from '@/stores/theme-library';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { surfaceBackgroundFill, surfaceBackgroundOpacity } from '@/theme/surface-background';
 
 export function useSurfaceBackgroundOpacity() {
   const { resolvedMode } = useThemeMode();
-  return useThemeLibrary((state) =>
-    surfaceBackgroundOpacity(
-      state.active?.manifest.variants[resolvedMode].surfaces?.backgroundOpacity
-    )
+  const { theme } = useEffectiveCustomTheme();
+  return surfaceBackgroundOpacity(
+    theme?.manifest.variants[resolvedMode].surfaces?.backgroundOpacity
   );
 }
 

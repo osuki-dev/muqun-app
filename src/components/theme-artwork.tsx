@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Image as RepeatingImage, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { useThemeLibrary } from '@/stores/theme-library';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 
@@ -11,11 +11,7 @@ import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 export function useHasThemeArtwork(slot: ThemeSlot, fallbackSlot?: ThemeSlot) {
   const { resolvedMode } = useThemeMode();
   const { width } = useWindowDimensions();
-  const active = useThemeLibrary((state) => state.active);
-  const assets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const { theme: active, assets } = useEffectiveCustomTheme();
   const image = active
     ? resolveThemeImage(
         active.manifest,
@@ -41,11 +37,7 @@ export function ThemeArtwork({
   opacityLimit?: number;
 }) {
   const { resolvedMode } = useThemeMode();
-  const active = useThemeLibrary((state) => state.active);
-  const assets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((theme) => theme.id === state.active?.installationId)?.assets
-  );
+  const { theme: active, assets } = useEffectiveCustomTheme();
   if (!active || !assets) return null;
   return (
     <ThemeArtworkLayer

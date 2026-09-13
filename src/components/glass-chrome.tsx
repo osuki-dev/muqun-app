@@ -16,10 +16,10 @@ import Animated from 'react-native-reanimated';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { DURATION } from '@/lib/motion';
-import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveThemeImage } from '@/theme/resolve';
 import { resolveThemeMaterial, type ThemeSurface } from '@/theme/material';
 import { ThemeArtwork } from '@/components/theme-artwork';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveArtworkOpacity } from '@/theme/artwork-contrast';
 import { jointArtworkOpacity } from '@/theme/opacity-policy';
 
@@ -107,11 +107,7 @@ export function GlassChrome({
   const theme = useThemeTokens();
   const dark = resolvedMode === 'dark';
   const { width } = useWindowDimensions();
-  const active = useThemeLibrary((state) => state.active);
-  const assets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const { theme: active, assets } = useEffectiveCustomTheme();
   const slot = `${surface}.background` as const;
   const artwork = active
     ? resolveThemeImage(active.manifest, slot, resolvedMode, width >= 768 ? 'regular' : 'compact')
