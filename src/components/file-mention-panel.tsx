@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The `@` file mention picker: a short list of workspace files floating over the
  * composer, close enough to the caret that picking one reads as finishing the
@@ -56,6 +57,7 @@ export function FileMentionPanel({
 }: FileMentionPanelProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   if (hits.length === 0) return null;
 
   return (
@@ -64,7 +66,7 @@ export function FileMentionPanel({
       style={[
         styles.panel,
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: surfaceBackground(theme.colors.surface),
         },
       ]}>
       {query ? null : (

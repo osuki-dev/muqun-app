@@ -1,0 +1,21 @@
+# An explicitly opened document offers preview without changing the current theme.
+
+# section open
+wait "text=\"Open files\"" 15000
+press "text=\"Open files\""
+
+# section scroll
+scroll down --pixels 350
+
+# section preview
+press "${TARGET}"
+wait "id=asset-preview-theme" 10000
+press "id=asset-preview-theme"
+wait "id=custom-theme-preview" 10000
+is visible "id=theme-apply"
+screenshot "shots/theme-document.png"
+press "id=theme-close-preview"
+wait "id=asset-preview-theme" 10000
+press "label=\"Close file\""
+wait "label=\"Close files\"" 10000
+press "label=\"Close files\""

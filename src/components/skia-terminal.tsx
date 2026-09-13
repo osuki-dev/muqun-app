@@ -19,7 +19,9 @@ import {
   type SkRect,
   type SkTypefaceFontProvider,
 } from '@shopify/react-native-skia';
-import { Button, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useHasThemeArtwork } from '@/components/theme-artwork';
+import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
 
 import { LogoLoader } from '@/components/logo-loader';
@@ -102,6 +104,13 @@ import {
 } from '@/terminal/touch-input';
 import { readTerminalSurface } from '@/terminal/surface';
 import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import {
+  paintsCellBackground,
+  blendedTerminalFill,
+  terminalBackgroundFill,
+  terminalBackgroundOpacity,
+} from '@/terminal/background';
 import {
   TERMINAL_LONG_PRESS_MS,
   TERMINAL_LONG_PRESS_SLOP,
@@ -460,6 +469,11 @@ export function SkiaTerminal({
 }) {
   const fontSize = terminalFontSize(textSize);
   const theme = useThemeTokens();
+  // Whether anything patterned sits behind this canvas. `shell.background` is
+  // the only slot that reaches behind a terminal; Home's own wallpaper never
+  // has one over it.
+  const wallpaperBehind = useHasThemeArtwork('shell.background');
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const { showToast } = useToast();
   // Follows the theme pack, both halves of it: a light terminal in light mode,
@@ -612,6 +626,15 @@ export function SkiaTerminal({
       true
     );
   }, [frame, ownsScreen, screenRows, terminalTheme, themePack]);
+  // Which canvas this pane gets, decided once from the two things that decide
+  // it. Keeping it out of the render body keeps the two halves -- the flag and
+  // the fill -- from ever disagreeing about which path is being taken.
+  const paneOpacity = terminalBackgroundOpacity(paneTheme.backgroundOpacity);
+  const canvasIsOpaque = paneOpacity === 1 || !wallpaperBehind;
+  const canvasFill = canvasIsOpaque
+    ? blendedTerminalFill(paneTheme.background, theme.colors.background, paneOpacity)
+    : terminalBackgroundFill(paneTheme);
+
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
     () => measureCellWidth(fontSize, fontManager, nerdFont),
@@ -2886,10 +2909,21 @@ export function SkiaTerminal({
   }
 
   return (
-    <View onLayout={handleLayout} style={[styles.shell, { backgroundColor: paneTheme.background }]}>
+    <View onLayout={handleLayout} style={styles.shell}>
       <GestureDetector gesture={gesture}>
-        <Canvas opaque style={styles.canvas}>
-          <Fill color={paneTheme.background} />
+        {/* A translucent canvas is not a cheaper canvas: react-native-skia swaps
+            the native view outright, and the non-opaque one is a texture HWUI
+            re-samples and recomposites every frame, with whatever is behind it
+            blended in rather than occlusion-skipped.
+
+            It is only worth that when something patterned is behind it. With
+            nothing but the app's own flat background there, translucent-over-
+            flat and opaque-pre-blended are the same pixels, so the canvas keeps
+            the fast path and the fill carries the blend. With wallpaper behind
+            it, each pixel meets a different colour and no single fill can stand
+            in, so the translucent path is taken and paid for. */}
+        <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
+          <Fill color={canvasFill} />
           <Group transform={contentTransform}>
             {chunkDraws.map((chunk, index) => (
               // A block records its rows from its own first row down and is
@@ -2953,7 +2987,7 @@ export function SkiaTerminal({
             styles.historyIndicator,
             {
               top: historyIndicatorTopInset,
-              backgroundColor: theme.colors.surfaceRaised,
+              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               borderColor: theme.colors.border,
             },
             pullIndicatorStyle,
@@ -2976,7 +3010,7 @@ export function SkiaTerminal({
             styles.selectionBar,
             {
               bottom: 14 + bottomInset,
-              backgroundColor: theme.colors.surfaceRaised,
+              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               borderColor: theme.colors.border,
             },
           ]}>
@@ -3026,7 +3060,7 @@ export function SkiaTerminal({
             style={[
               styles.latestButton,
               {
-                backgroundColor: theme.colors.surfaceRaised,
+                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                 borderColor: theme.colors.border,
               },
             ]}>
@@ -3047,16 +3081,11 @@ export function SkiaTerminal({
         one transition every user of this app sees most.
       */}
       {!nerdFont && fontError ? (
-        <View
-          pointerEvents="none"
-          style={[styles.empty, { backgroundColor: paneTheme.background }]}>
+        <View pointerEvents="none" style={styles.empty}>
           <Text style={[styles.emptyText, { color: theme.colors.textSubtle }]}>{fontError}</Text>
         </View>
       ) : !nerdFont || !hasOutput ? (
-        <Animated.View
-          pointerEvents="none"
-          exiting={fadeOut('short')}
-          style={[styles.loading, { backgroundColor: paneTheme.background }]}>
+        <Animated.View pointerEvents="none" exiting={fadeOut('short')} style={styles.loading}>
           <LogoLoader accessibilityLabel={t`Loading terminal`} size={64} />
         </Animated.View>
       ) : null}
@@ -3217,7 +3246,7 @@ function recordTerminalChunk({
     const y = (row - startRow) * lineHeight;
     for (const run of lines[row].runs) {
       const colors = resolveColors(run.style, terminalTheme);
-      if (colors.background !== terminalTheme.background) {
+      if (paintsCellBackground(run.style, colors.background, terminalTheme.background)) {
         const paint = getRectPaint(colors.background);
         canvas.drawRect(
           rect(
@@ -3363,7 +3392,9 @@ function drawRunCells({
   nerdFont: SkFont | null;
   fontManager: SkTypefaceFontProvider | null;
 }) {
-  const color = run.style.hidden ? colors.background : colors.foreground;
+  // Concealed text must not become an opaque glyph-shaped silhouette over wallpaper.
+  if (run.style.hidden) return;
+  const color = colors.foreground;
   const fill = getSolidPaint(color);
   // No bold face ships with the app, so bold is synthesised by stroking the
   // glyph outline -- the same trick terminals use for a missing weight.

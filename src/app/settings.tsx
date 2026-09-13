@@ -1,16 +1,12 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
+import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
-import {
-  Code,
-  ExternalLink,
-  Info,
-  MessageSquare,
-  Settings2,
-  ShieldCheck,
-} from 'lucide-react-native';
+import { Code, ExternalLink, MessageSquare, Settings2, ShieldCheck } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,12 +17,7 @@ import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { ScreenHeader } from '@/components/screen-header';
 import { SettingsAlerts } from '@/components/settings-alerts';
 import { SettingsAppearance } from '@/components/settings-appearance';
-import {
-  LADDER,
-  SettingsInfoRow,
-  SettingsNavRow,
-  SettingsSection,
-} from '@/components/settings-chrome';
+import { LADDER, SettingsNavRow, SettingsSection } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
 import { SettingsServers } from '@/components/settings-servers';
 import { SettingsTerminal } from '@/components/settings-terminal';
@@ -79,6 +70,12 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.g
  * Nothing was dropped. Every control the old page could reach, this one can.
  */
 export default function SettingsScreen() {
+  const surfaceBackground = useSurfaceBackground();
+  // Loose text on this page -- the two lines below the last card -- has no card
+  // under it, so against a pack's wallpaper it is read on whatever the picture
+  // happens to put there. `SettingsSection` already solved this for its
+  // instrument labels; these two are the only other bare strings on the page.
+  const hasShell = useHasThemeArtwork('shell.background');
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -93,6 +90,20 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
+  // The hugging plate `SettingsSection` already gives its instrument labels,
+  // for the two bare strings at the end of the page that have no card of their
+  // own. `null` when no pack supplies a wallpaper: on a flat ground the text is
+  // read against `background` either way, and a plate there is a box nobody
+  // asked for.
+  const plate = hasShell
+    ? {
+        backgroundColor: surfaceBackground(theme.colors.background),
+        paddingHorizontal: LADDER.gap,
+        paddingVertical: LADDER.tight,
+        borderRadius: 8,
+        overflow: 'hidden' as const,
+      }
+    : null;
   useRenderTally('SettingsScreen');
 
   /**
@@ -148,7 +159,8 @@ export default function SettingsScreen() {
   }
 
   return (
-    <View style={[styles.page, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+      <ThemeArtwork slot="shell.background" />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
       <RenderTally id="settings">
@@ -211,24 +223,58 @@ export default function SettingsScreen() {
                       label={t`Privacy policy`}
                       onPress={() => void openPrivacyPolicy()}
                     />
-                    <SettingsInfoRow
-                      icon={Info}
-                      label={t`Muqun`}
-                      detail={
-                        <Trans>
-                          Version {version}
-                          {build ? ` (${build})` : ''}
-                        </Trans>
-                      }
-                    />
                   </SettingsSection>
                 </View>
               </View>
 
-              <View style={styles.footer}>
+              <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
                 <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
-                <Text variant="caption" color={theme.colors.textMuted}>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
                   <Trans>Muqun settings stay on this device.</Trans>
+                </Text>
+              </View>
+
+              {/* The end of the page, and the only thing on this screen that is
+                  the app rather than a setting. The version used to be a row in
+                  `About`, which is where a reader looks for it deliberately --
+                  but it is also the thing anyone is asked to quote in a bug
+                  report, and a centred line under the mark is easier to find
+                  and to read back than the trailing detail of a list row.
+                  It is here *instead of* there, not as well: the same string
+                  twice on one screen is a question about whether they agree. */}
+              <View style={styles.brand}>
+                <Image
+                  // The rendered mascot with a real alpha channel, not the
+                  // launcher icon: that one carries an opaque plate, which on a
+                  // themed page reads as a square nobody asked for. Two cuts,
+                  // because the dark master is lit for a dark ground and its
+                  // rim would fringe on a light one. `resolvedMode` rather than
+                  // the system scheme, so a theme chosen in Appearance counts.
+                  source={
+                    resolvedMode === 'dark'
+                      ? require('@/assets/images/brand-mark-3d-dark.png')
+                      : require('@/assets/images/brand-mark-3d.png')
+                  }
+                  style={styles.brandMark}
+                  contentFit="contain"
+                  // Decorative: the version beneath it already names the app,
+                  // and the screen is titled `Settings`.
+                  accessible={false}
+                />
+                <Text
+                  variant="caption"
+                  color={theme.colors.textMuted}
+                  // Centred under the mark, so the plate hugs from the middle
+                  // rather than from the leading edge.
+                  style={
+                    plate
+                      ? { ...styles.brandVersion, ...plate, alignSelf: 'center' }
+                      : styles.brandVersion
+                  }>
+                  <Trans>
+                    Version {version}
+                    {build ? ` (${build})` : ''}
+                  </Trans>
                 </Text>
               </View>
             </>
@@ -285,4 +331,23 @@ const styles = StyleSheet.create({
     gap: LADDER.gap,
     paddingHorizontal: LADDER.tight,
   },
+  // A row lays its children out at their intrinsic width, so this line ran past
+  // the plate's right edge in any language whose translation is longer than the
+  // English -- Japanese renders it as 牧群（ぼくぐん）の設定は…, half again as
+  // wide. Shrinking is what lets it wrap instead. `minWidth: 0` goes with it
+  // because `flexShrink` alone will not take a box below its content width.
+  footerText: { flexShrink: 1, minWidth: 0 },
+  brand: {
+    alignItems: 'center',
+    gap: LADDER.tight,
+    // The page's own `gap: LADDER.section` already sits above this, so the mark
+    // is not crowded by the line about settings staying on the device.
+    paddingBottom: LADDER.gutter,
+  },
+  // Larger than the flat mark was: this artwork is rendered with depth and
+  // reads as a smudge below about this size.
+  brandMark: { width: 88, height: 88 },
+  // Centred even when the string wraps, which it does in the locales that spell
+  // `Version` out at length.
+  brandVersion: { textAlign: 'center' },
 });

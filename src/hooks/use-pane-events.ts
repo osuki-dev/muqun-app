@@ -76,6 +76,12 @@ type PaneEventHandlers = {
   /** Connected or reconnected. Everything since the last event is unknown. */
   onConnected: () => void;
   /**
+   * The socket went away and a reconnect is scheduled. Between this and the
+   * next `onConnected` nothing arrives, so a caller that leans on the stream
+   * for deltas has to fall back to reading -- and this is how it knows to.
+   */
+  onDisconnected?: () => void;
+  /**
    * A pane started or stopped waiting on a permission menu. `payload` is the
    * gateway's approval envelope, parsed by the caller -- this hook stays a
    * transport and does not know what an approval is.
@@ -260,6 +266,7 @@ export function usePaneEvents(
       }
 
       if (cancelled) return;
+      handlersRef.current.onDisconnected?.();
       const delay = Math.min(1000 * 2 ** retryAttempt, MAX_RECONNECT_DELAY_MS);
       retryAttempt += 1;
       retryTimer = setTimeout(() => void connect(), delay);

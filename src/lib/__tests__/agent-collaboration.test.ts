@@ -10,6 +10,7 @@ import {
   taskAgent,
   partitionCollaborationTasks,
   recordCollaborationTask,
+  supportsExistingAgentDelivery,
   readCollaborationOutput,
   compactCollaborationOutput,
   type CollaborationTask,
@@ -268,4 +269,14 @@ test('a replaced agent or changed connection never exposes the pending snapshot'
       () => {}
     )
   ).toBe('private output');
+});
+
+describe('where a task can actually go', () => {
+  test('handing work to an assistant that is already running is available', () => {
+    // It returned false for a long time on the strength of a race a fresh
+    // instance check narrows and the composer takes anyway. What guards it now
+    // is written in `use-composer-assignment`: verify the instance immediately
+    // before the write, use the target from that read, never retry.
+    expect(supportsExistingAgentDelivery()).toBe(true);
+  });
 });

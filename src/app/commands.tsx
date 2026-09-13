@@ -1,3 +1,8 @@
+import { Input } from '@/components/themed-input';
+import { Card } from '@/components/themed-card';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
+import { ThemedSurface } from '@/components/themed-surface';
 /**
  * Quick actions: one thing done to the pane in front of you.
  *
@@ -57,7 +62,9 @@
  * whole reading it switched to, because this sheet was the only way in. See
  * `src/lib/pane-view-mode.ts`.
  */
-import { Button, Card, Input, Skeleton, Spinner, Tabs, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Skeleton, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Tabs } from '@/components/themed-tabs';
+import { Button } from '@/components/themed-button';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
@@ -84,6 +91,7 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
+import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
@@ -99,18 +107,17 @@ import {
 import { describeGatewayFailure } from '@/lib/network-error';
 import { quickActionAvailability } from '@/lib/quick-actions';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { slashArgumentRequired } from '@/lib/slash-argument';
 import { SIMFARM_DEFAULT_PORT, simfarmSocketUrl } from '@/lib/simfarm';
 import { warmSimfarm } from '@/lib/simfarm-stream';
 import { useComposerDraftStore } from '@/stores/composer-draft';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
-import { useAgentCollaboration } from '@/stores/agent-collaboration';
+import { useComposerAssignmentStore } from '@/stores/composer-assignment';
 import {
   collaborationCommandAvailable,
-  collaborationDraftScope,
   commandCollaborationDraft,
 } from '@/lib/quick-command-collaboration';
-import { supportsCollaboration, tasksForSession } from '@/lib/agent-collaboration';
 import { useServerSimfarm } from '@/stores/server-simfarm';
 import { useSimfarmSplit } from '@/stores/simfarm-split';
 import {
@@ -127,7 +134,6 @@ import {
   type QuickCommandDelivery,
 } from '@/lib/quick-commands';
 import { quickCommandName } from '@/i18n/labels';
-import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 
 /**
  * The face a value is set in when tapping the row types that value into the
@@ -151,6 +157,7 @@ const MONO_TEXT = {
 } as const;
 
 export default function QuickCommandsScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
@@ -206,12 +213,6 @@ export default function QuickCommandsScreen() {
     params.serverId ? state.openByServer[params.serverId] === true : false
   );
   const mode: QuickCommandMode = params.mode === 'agent' ? 'agent' : 'terminal';
-  const collaborationTasks = useAgentCollaboration((state) => state.tasks);
-  const collaborationCount = tasksForSession(
-    collaborationTasks,
-    params.serverId ?? '',
-    params.sessionId
-  ).length;
   const manageOnly = params.manage === '1';
   const agentDelivery = useAgentCommandDelivery({
     ...params,
@@ -320,22 +321,18 @@ export default function QuickCommandsScreen() {
           tabId: params.tabId,
           cwd: params.cwd,
         });
-        const scope = collaborationDraftScope(draft.context);
-        if (!useAgentCollaboration.getState().drafts[scope]) {
-          useAgentCollaboration.getState().saveDraft(scope, draft);
-        }
-        router.replace({
-          pathname: '/agent-collaboration',
-          params: {
-            serverId: params.serverId,
-            sessionId: params.sessionId,
-            paneId: params.paneId,
-            workspaceId: params.workspaceId,
-            tabId: params.tabId,
-            cwd: params.cwd,
-            commandId: command.id,
-          },
-        } as Href);
+        // The task is written in the terminal's own composer, with the
+        // assistant chosen from the strip above it. This sheet closes and
+        // leaves the instructions there -- it used to open a second screen
+        // with its own field, image strip and Send, all of which the composer
+        // already had.
+        useComposerAssignmentStore.getState().request_({
+          serverId: params.serverId,
+          paneId: params.paneId,
+          prompt: draft.prompt,
+          command: draft.command,
+        });
+        router.back();
       } catch (failure) {
         setError(describeGatewayFailure(failure, t`Could not send shortcut.`).message);
       }
@@ -362,9 +359,12 @@ export default function QuickCommandsScreen() {
 
   async function runSlashCommand(entry: SlashCommand) {
     if (!params.paneId || !params.sessionId || sendingId) return;
-    // A command that takes an argument cannot be fired blind: hand it to the
-    // composer with the cursor after it so the argument can be typed.
-    if (entry.argument_hint) {
+    // A command that needs an argument cannot be fired blind: hand it to the
+    // composer with the cursor after it so the argument can be typed. An
+    // *optional* hint is not that -- `[instructions]` runs perfectly well with
+    // nothing after it, and diverting those closed the sheet with no visible
+    // result for most of the catalogue.
+    if (slashArgumentRequired(entry.argument_hint)) {
       prefillDraft(`${entry.command} `);
       router.back();
       return;
@@ -580,6 +580,28 @@ export default function QuickCommandsScreen() {
     // ScrollView left both inputs under the keyboard, with the save button out
     // of reach entirely.
     <View style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
+      {/* Wallpaper under a surface, not a surface under wallpaper.
+          The fill used to sit on the line above and the picture on top of it,
+          which paints the picture at full strength over the thing meant to
+          calm it: the sheet's ground *became* the wallpaper, every block on it
+          drew its own pale panel, and the gaps between the blocks stayed raw
+          picture -- a panel with holes in it. `SettingsSheet` had already
+          solved this the other way round, and this is the same two layers in
+          the same order. A page is entitled to the picture at full strength; a
+          sheet is a surface. */}
+      <View
+        pointerEvents="none"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        style={StyleSheet.absoluteFill}>
+        <ThemeArtwork slot="shell.background" />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: surfaceBackground(theme.colors.background) },
+          ]}
+        />
+      </View>
       <KeyboardAwareScrollView
         bottomOffset={24}
         keyboardShouldPersistTaps="handled"
@@ -596,12 +618,29 @@ export default function QuickCommandsScreen() {
           isPadLayout && styles.padContent,
           { paddingBottom: LADDER.section + bottomInset },
         ]}>
-        <View
-          style={[
-            styles.stickyTop,
-            isPadLayout && styles.padStickyTop,
-            { backgroundColor: theme.colors.background },
-          ]}>
+        {/* No surface of its own.
+
+            Everything below this on the sheet -- the tabs, the search field,
+            the command list -- is a rounded panel floating straight on the
+            sheet's ground, with nothing wrapping it. This block used to be the
+            exception: a slab drawn around its title, its subtitle and its
+            tiles, so the top of the sheet was built from a different set of
+            parts than the rest of it. Against a pack that tints these surfaces
+            that reads as a lid stuck on, and no amount of matching the radius
+            or adding an edge fixes it, because the extra layer is the problem
+            rather than how it is drawn.
+
+            So the container carries nothing. The tiles keep their own panels,
+            and the title and subtitle sit on the ground exactly as the
+            `SAVED PROMPTS` label below them does.
+
+            The cost, stated because it is real: rows scrolling under a sticky
+            header with no fill are visible behind the text. The tiles cover
+            most of that band with their own surfaces, and what passes behind
+            two lines of type is legible rather than confusing -- but if that
+            ever stops being true, the answer is to give the *ground* more
+            opacity, not to put the slab back. */}
+        <View style={[styles.stickyTop, isPadLayout && styles.padStickyTop]}>
           {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
           {/* No glyph beside the title. The reader arrived here by pressing the
@@ -747,7 +786,11 @@ export default function QuickCommandsScreen() {
             things that stay. */}
         {available.canStopAgent ? (
           <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
-            <View style={[styles.group, { backgroundColor: theme.colors.dangerSubtle }]}>
+            <View
+              style={[
+                styles.group,
+                { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+              ]}>
               <ActionRow
                 accessibilityLabel={t`Stop this agent`}
                 name={t`Stop`}
@@ -763,40 +806,18 @@ export default function QuickCommandsScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Not a tile, and the only one of the sheet's verbs that is not. Every
-            tile does its thing and closes; this one hands over to a form with
-            three questions on it, and a label that has to say so is a sentence
-            rather than a word. */}
-        {!manageOnly &&
-        params.serverId &&
-        params.paneId &&
-        supportsCollaboration(params.backendKind) ? (
-          <SettingsCard>
-            <ActionRow
-              accessibilityLabel={t`Agent collaboration`}
-              name={t`Agent collaboration`}
-              detail={
-                collaborationCount > 0
-                  ? t`${collaborationCount} assigned tasks · view agents and output`
-                  : t`Assign work to another agent and follow its progress.`
-              }
-              detailColor={theme.colors.textMuted}
-              onPress={() =>
-                router.replace({
-                  pathname: '/agent-collaboration',
-                  params: {
-                    serverId: params.serverId,
-                    sessionId: params.sessionId,
-                    paneId: params.paneId,
-                    workspaceId: params.workspaceId,
-                    tabId: params.tabId,
-                    cwd: params.cwd,
-                  },
-                } as Href)
-              }
-            />
-          </SettingsCard>
-        ) : null}
+        {/* Assigning a task is not a row here any more.
+            
+            It was, back when it opened a form of its own. Now it opens the
+            assistant strip over the terminal's composer -- and the control that
+            does that sits in the key row, a few points below this sheet, always
+            visible while the composer is. Two entries to one strip, one of them
+            behind a sheet the reader has to open first, is a choice about which
+            button to press rather than about what to do.
+            
+            Shortcuts that deliver through collaboration still live in the list
+            below: those carry instructions of their own, which is a different
+            thing from choosing an assistant. */}
         {available.canStartTask ? (
           <SettingsCard>
             <ActionRow
@@ -812,7 +833,10 @@ export default function QuickCommandsScreen() {
 
         {!editing ? (
           <View style={styles.section}>
-            <View style={[styles.commandTabs, { backgroundColor: theme.colors.surface }]}>
+            <ThemedSurface
+              slot="tabs.background"
+              baseColor={theme.colors.surface}
+              style={[styles.commandTabs, { overflow: 'hidden' }]}>
               {(['saved', 'catalog'] as const).map((tab) => (
                 <PressableScale
                   key={tab}
@@ -826,8 +850,9 @@ export default function QuickCommandsScreen() {
                   style={[
                     styles.commandTab,
                     {
-                      backgroundColor:
-                        commandTab === tab ? theme.colors.primarySubtle : 'transparent',
+                      backgroundColor: surfaceBackground(
+                        commandTab === tab ? theme.colors.primarySubtle : 'transparent'
+                      ),
                     },
                   ]}>
                   <Text
@@ -837,7 +862,7 @@ export default function QuickCommandsScreen() {
                   </Text>
                 </PressableScale>
               ))}
-            </View>
+            </ThemedSurface>
             <Input
               accessibilityLabel={t`Search actions and commands`}
               placeholder={t`Search actions and commands`}
@@ -1185,6 +1210,7 @@ function ActionTile({
   selected?: boolean;
   onPress?: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const ink = disabled
     ? theme.colors.textSubtle
@@ -1195,7 +1221,11 @@ function ActionTile({
     <View
       style={[
         styles.tile,
-        { backgroundColor: withAlpha(theme.colors.text, appChrome.opacity.chromeControl) },
+        {
+          backgroundColor: surfaceBackground(
+            withAlpha(theme.colors.text, appChrome.opacity.chromeControl)
+          ),
+        },
       ]}>
       <PressableScale
         accessibilityRole="button"
@@ -1359,12 +1389,15 @@ function ActionRow({
  * always a tenth of whatever this pack writes with.
  */
 function KeyCaps({ keys }: { keys: string[] }) {
+  const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const fill = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
   return (
     <View style={styles.keyCaps}>
       {keys.map((key, index) => (
-        <View key={`${key}-${index}`} style={[styles.keyCap, { backgroundColor: fill }]}>
+        <View
+          key={`${key}-${index}`}
+          style={[styles.keyCap, { backgroundColor: surfaceBackground(fill) }]}>
           <Text variant="caption" color={theme.colors.text} style={styles.keyCapText}>
             {key}
           </Text>
@@ -1409,18 +1442,38 @@ const styles = StyleSheet.create({
   // beside it and under its corners on their way up. Same negative-margin trick
   // the panels sheet uses, and it has to track `content` (and `padContent`) if
   // either of those paddings ever moves.
+  /**
+   * A block in the same stack, not a lid across the top of it.
+   *
+   * This used to cancel the content's gutter with a negative margin and run
+   * edge to edge. Everything below it -- the tabs, the search field, the list
+   * -- is an inset rounded card floating on the sheet, so against a pack that
+   * paints this surface the top of the sheet read as a slab stuck onto a page
+   * of cards. Dropping the negative margins is the whole fix: the block then
+   * sits inside the gutter the content already has, and the radius is the one
+   * the cards below use rather than a second opinion about roundness.
+   *
+   * Nothing scrolls through the gaps it leaves at either side, because the
+   * content underneath is inset by the same gutter -- what shows there is the
+   * sheet's own ground, which is what it would show anyway.
+   */
+  /**
+   * A band, not a block. It carries no fill, no radius and no edge, because it
+   * is not a surface -- the tiles inside it are, exactly as the tabs, the
+   * search field and the list below are, and the whole sheet is then built
+   * from one kind of part. `Settings` reads the same way: an instrument label
+   * on the page's own ground, a card under it, and nothing wrapping the pair.
+   *
+   * No horizontal padding for the same reason: the content container's gutter
+   * is the sheet's one margin, so the title lands where `SAVED PROMPTS` lands
+   * and the tiles span exactly what the cards below them span.
+   */
   stickyTop: {
-    marginHorizontal: -LADDER.gutter,
-    paddingHorizontal: LADDER.gutter,
-    marginTop: -LADDER.gap,
     paddingTop: LADDER.gap,
     paddingBottom: LADDER.gap,
     gap: LADDER.snug,
   },
-  padStickyTop: {
-    marginHorizontal: -LADDER.section,
-    paddingHorizontal: LADDER.section,
-  },
+  padStickyTop: {},
   sheetHandle: {
     width: 38,
     height: 4,
@@ -1435,9 +1488,14 @@ const styles = StyleSheet.create({
   },
   headerCopy: { flex: 1, minWidth: 0, gap: 2 },
   headerTitle: { includeFontPadding: false },
-  // 38 and half of it, which is the disc every other sheet in this app gives a
-  // header button. `GlassChrome` draws the material and nothing else, so the
-  // shape is stated here and the pressable inside fills it.
+  /**
+   * 38 and half of it, which is the disc every other sheet in this app gives a
+   * header button. `GlassChrome` draws the material and nothing else, so the
+   * shape is stated here and the pressable inside fills it.
+   *
+   * `GlassChrome` draws the edge these need when a pack has thinned its own
+   * fill; see the note on `chromeStyle` there.
+   */
   headerButton: {
     width: 38,
     height: 38,

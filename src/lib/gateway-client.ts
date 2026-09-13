@@ -975,17 +975,36 @@ async function requestSessionAssets(
 export async function resolveAssetByPath(
   sessionId: string,
   tabId: string,
-  path: string
+  path: string,
+  /** The pane's directory, so a relative path means what it says. */
+  cwd?: string
 ): Promise<SessionAsset | null> {
   if (isDemoActive()) return findAssetByPath(demoSessionAssets(), path);
 
-  // Only an absolute path is worth asking about: `~` is the shell's, not the
-  // gateway's, and sending it would only ever come back empty.
-  if (path.startsWith('/')) {
+  // Every form of the path is worth asking about, including `~`.
+  //
+  // This used to ask only about paths beginning with `/`, reasoning that `~` is
+  // the shell's and not the gateway's. That was the client deciding on the
+  // gateway's behalf that a question would fail -- and the gateway is the only
+  // party that knows its own home directory, so it is the only one that can
+  // answer. An agent that writes a file and prints `~/Desktop/theme.muqun-theme`
+  // is describing a file the gateway can read; refusing to ask about it made
+  // that file unreachable from the app for no reason the reader could see.
+  //
+  // A relative path is asked about too, paired with the pane's directory when
+  // the caller knows it: `./theme.muqun-theme` means something precise, and it
+  // is the form an agent is most likely to print.
+  const candidates = [
+    path,
+    cwd && !path.startsWith('/') && !path.startsWith('~')
+      ? `${cwd.replace(/\/+$/, '')}/${path.replace(/^\.\//, '')}`
+      : null,
+  ].filter((value): value is string => Boolean(value));
+  for (const candidate of candidates) {
     const exact = await requestSessionAssets(sessionId, tabId, [
-      `path=${encodeURIComponent(path)}`,
+      `path=${encodeURIComponent(candidate)}`,
     ]);
-    const match = findAssetByPath(exact, path);
+    const match = findAssetByPath(exact, candidate) ?? findAssetByPath(exact, path);
     if (match) return match;
   }
 
@@ -1121,6 +1140,78 @@ export async function readAssetText(
     throw new Error('HTTP 413: This file is too large to open here.');
   }
   return response.text();
+}
+
+/**
+ * A packaged theme's bytes, streamed so the reader sees it arrive.
+ *
+ * `readAssetText` exists for files a viewer shows as text and refuses anything
+ * large; a theme package is a ZIP of artwork and is neither. The gateway has
+ * always been able to serve it -- the same endpoint that feeds the image viewer
+ * -- so what was missing was only a caller that reads bytes and reports
+ * progress while it does.
+ *
+ * `onProgress` is called with bytes received and, when the server declares one,
+ * the total. A server that declines to declare a length still reports the
+ * bytes, which is enough for a spinner that means something.
+ *
+ * The ceiling is the importer's own, checked twice: against the declared size
+ * before a byte is requested, and against the running total while reading, so a
+ * server that under-declares cannot spend more of the phone's memory than the
+ * importer would ever accept.
+ */
+export async function readAssetBytes(
+  asset: SessionAsset,
+  options: {
+    signal?: AbortSignal;
+    maxBytes: number;
+    onProgress?: (received: number, total: number | null) => void;
+  }
+): Promise<Uint8Array> {
+  if (asset.size > options.maxBytes) throw new Error('HTTP 413: This file is too large to open.');
+  const url = assetContentUrl(asset.id);
+  const init = { headers: gatewayAuthHeaders(), signal: options.signal };
+  const response =
+    currentTransport === GATEWAY_TRANSPORT
+      ? await encryptedGatewayFetch(url, init, ASSET_CONTENT_TIMEOUT_MS)
+      : await fetchWithin(ASSET_CONTENT_TIMEOUT_MS, 'Timed out reading the file.', url, init);
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  const declared = Number(response.headers.get('content-length') ?? '0');
+  if (declared > options.maxBytes) throw new Error('HTTP 413: This file is too large to open.');
+  const total = declared > 0 ? declared : null;
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const whole = new Uint8Array(await response.arrayBuffer());
+    if (whole.length > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
+    options.onProgress?.(whole.length, total);
+    return whole;
+  }
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      received += value.length;
+      // Checked while reading, not after: the point of the ceiling is to not
+      // hold the bytes, and a check that runs once they are all here has
+      // already failed at that.
+      if (received > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
+      chunks.push(value);
+      options.onProgress?.(received, total);
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return bytes;
 }
 
 /**

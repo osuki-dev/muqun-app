@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["MuqunThemeTransportModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.muqunthemetransport.MuqunThemeTransportModule"]
+  }
+}

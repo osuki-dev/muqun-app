@@ -326,7 +326,7 @@ export function WorkspaceTitleSwitcher({
             platform view that varies by OS, and the gesture should not depend
             on which one this build rendered. */}
         <View collapsable={false}>
-          <GlassChrome style={detailTitlePillStyle}>
+          <GlassChrome surface="navigation" style={detailTitlePillStyle}>
             <Animated.View
               accessible
               accessibilityRole="header"

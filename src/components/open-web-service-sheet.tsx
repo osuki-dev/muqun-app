@@ -1,3 +1,5 @@
+import { Input } from '@/components/themed-input';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * Open a web service that is running on the machine this phone is paired to.
  *
@@ -21,7 +23,8 @@
  * path and not on `/`, and a check that blocked would be wrong more often than
  * it was right.
  */
-import { Button, Input, KeyboardToolbar, Text, useThemeTokens } from '@osuki-dev/ui';
+import { KeyboardToolbar, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
@@ -66,6 +69,7 @@ export function OpenWebServiceSheet({
   // has no way to know the result also depends on the active locale.
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('OpenWebServiceSheet');
 
   const hydrate = useServerWebPorts((state) => state.hydrate);
@@ -143,7 +147,7 @@ export function OpenWebServiceSheet({
       <KeyboardAwareScrollView
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardShouldPersistTaps="handled"
-        style={[styles.sheet, { backgroundColor: theme.colors.surface }]}
+        style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
         contentContainerStyle={styles.content}>
         {/* iOS draws the grabber itself; Android's form sheet does not, and a
             sheet with no handle reads as a screen that arrived from the wrong
@@ -194,7 +198,7 @@ export function OpenWebServiceSheet({
                       styles.chip,
                       {
                         borderColor: theme.colors.border,
-                        backgroundColor: theme.colors.surfaceRaised,
+                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                       },
                     ]}>
                     <Text variant="data">{String(recent)}</Text>

@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
@@ -59,6 +60,7 @@ export function AttachmentMenu({
   textColor: string;
 }) {
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { _ } = useLingui();
 
   return (
@@ -68,7 +70,7 @@ export function AttachmentMenu({
       style={[
         styles.menu,
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: surfaceBackground(theme.colors.surface),
         },
       ]}>
       {OPTIONS.map(({ source, label, Icon }) => {

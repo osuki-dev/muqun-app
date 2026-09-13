@@ -1,5 +1,10 @@
+import { Input } from '@/components/themed-input';
+import { Card } from '@/components/themed-card';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Button, Card, Input, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { Button } from '@/components/themed-button';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
 import { type Href, useRouter } from 'expo-router';
@@ -139,6 +144,7 @@ const RETICLE_CONFIRM_INSET = 0.06;
 const OVER_PREVIEW_INK = '#FFFFFF';
 
 export default function PairModal() {
+  const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
   // Compiler memoizes a global `t` call whose arguments have not changed and
   // has no way to know the result also depends on the active locale.
@@ -550,7 +556,8 @@ export default function PairModal() {
   return (
     <SafeAreaView
       edges={['top']}
-      style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      style={[styles.safeArea, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+      <ThemeArtwork slot="shell.background" />
       <KeyboardAwareScrollView
         bottomOffset={24}
         contentContainerStyle={styles.content}
@@ -592,7 +599,10 @@ export default function PairModal() {
           <PressableScale
             accessibilityLabel={t`Close pairing`}
             onPress={close}
-            style={[styles.closeButton, { backgroundColor: theme.colors.surfaceRaised }]}>
+            style={[
+              styles.closeButton,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
             <X size={20} color={theme.colors.text} />
           </PressableScale>
         </View>
@@ -630,7 +640,7 @@ export default function PairModal() {
                   {
                     width: apertureSize,
                     height: apertureSize,
-                    backgroundColor: theme.colors.surfaceRaised,
+                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                     // A hairline, because `surfaceRaised` and `background` are the
                     // same colour to within a percent in several packs -- an
                     // aperture defined only by its fill simply vanished in those,
@@ -676,9 +686,9 @@ export default function PairModal() {
                               style={[
                                 styles.sshHostRow,
                                 {
-                                  backgroundColor: selected
-                                    ? theme.colors.primarySubtle
-                                    : theme.colors.surface,
+                                  backgroundColor: surfaceBackground(
+                                    selected ? theme.colors.primarySubtle : theme.colors.surface
+                                  ),
                                   borderColor: selected
                                     ? theme.colors.primary
                                     : theme.colors.border,
@@ -831,7 +841,11 @@ export default function PairModal() {
               work -- same control, same words, more weight -- so a reader on a
               device with no lens is not left choosing between a dead frame and
               a caption. */}
-              <View style={[styles.alternatives, { backgroundColor: theme.colors.surfaceRaised }]}>
+              <View
+                style={[
+                  styles.alternatives,
+                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                ]}>
                 <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
@@ -845,10 +859,11 @@ export default function PairModal() {
                       // The quiet state is the aperture's own surface, not `surface`:
                       // in several packs `surface` is brighter than the page, so a
                       // 42pt pill outshone the 460pt frame it is subordinate to.
-                      backgroundColor:
+                      backgroundColor: surfaceBackground(
                         scan.promotesManualEntry && !manualOpen
                           ? theme.colors.primarySubtle
-                          : theme.colors.surfaceRaised,
+                          : theme.colors.surfaceRaised
+                      ),
                     },
                   ]}>
                   {manualOpen ? (
@@ -884,7 +899,10 @@ export default function PairModal() {
                     setManualOpen(false);
                     setSshOpen((value) => !value);
                   }}
-                  style={[styles.manualToggle, { backgroundColor: theme.colors.surfaceRaised }]}>
+                  style={[
+                    styles.manualToggle,
+                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
                   {sshOpen ? (
                     <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
                   ) : (
@@ -939,7 +957,10 @@ export default function PairModal() {
                   }
                   testID="pairing-install-command"
                   onPress={() => void copyInstallCommand()}
-                  style={[styles.installRow, { backgroundColor: theme.colors.surfaceRaised }]}>
+                  style={[
+                    styles.installRow,
+                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
                   {/* Two lines, not one shrunk to fit: the command wraps at the phone
                 widths this screen is read on, and a command scaled down until it
                 fits is a command nobody can read off the screen. */}
@@ -1030,12 +1051,18 @@ export default function PairModal() {
               key="success"
               entering={stepEntering ?? fadeIn('short')}
               exiting={stepExiting}
-              style={[styles.successCard, { backgroundColor: theme.colors.primarySubtle }]}>
+              style={[
+                styles.successCard,
+                { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+              ]}>
               <Animated.View
                 // Timed, not sprung: the design system rules out bounce, and the
                 // tick landing cleanly reads as confirmation rather than as a toy.
                 entering={zoomIn('short')}
-                style={[styles.successIcon, { backgroundColor: theme.colors.primary }]}>
+                style={[
+                  styles.successIcon,
+                  { backgroundColor: surfaceBackground(theme.colors.primary) },
+                ]}>
                 <Check size={30} strokeWidth={2.5} color={theme.colors.onPrimary} />
               </Animated.View>
               <View style={styles.successCopy}>
@@ -1059,7 +1086,10 @@ export default function PairModal() {
             entering={fadeIn('short')}
             exiting={fadeOut('micro')}
             layout={listLayout('short')}
-            style={[styles.message, { backgroundColor: theme.colors.dangerSubtle }]}>
+            style={[
+              styles.message,
+              { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+            ]}>
             <Text selectable variant="bodySmall" color={theme.colors.danger}>
               {message}
             </Text>

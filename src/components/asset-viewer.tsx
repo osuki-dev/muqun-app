@@ -1,9 +1,11 @@
 import * as Clipboard from 'expo-clipboard';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { Button } from '@/components/themed-button';
 import { Check, Copy, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,9 +24,18 @@ import {
   readAssetText,
   type AssetImageSource,
   type SessionAsset,
+  readAssetBytes,
 } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
+import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { ThemeImportProgress } from '@/components/theme-import-progress';
+import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
+import { ThemeImportRequest } from '@/theme/import-request';
+import { unpackTheme } from '@/theme/package';
+import { THEME_LIMITS } from '@/theme/schema';
+import type { ThemeEditorCandidate } from '@/theme/draft-session';
+import { themeFromDocument } from '@/theme/file-preview';
 
 /**
  * Read-only view of one artifact the agent produced.
@@ -169,6 +180,7 @@ const RENDER_MAX_BYTES = 64 * 1024;
 
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
+  const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -188,6 +200,88 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
+  const [previewedThemeDocument, setPreviewedThemeDocument] = useState<string | null>(null);
+  const themeDocumentIdentity = `${asset.id}:${asset.modified_unix_ms}`;
+  const themeManifest = useMemo(
+    () => themeFromDocument(asset.name, content),
+    [asset.name, content]
+  );
+  /**
+   * A packaged theme, fetched and opened without leaving this file.
+   *
+   * A `.muqun-theme` is a ZIP, so none of the viewer's text paths apply and the
+   * reader used to be told to go and find the file themselves -- for a package
+   * an agent had just written into this very session. The gateway serves it on
+   * the same endpoint that feeds the image viewer, so the whole trip is: tap,
+   * watch it arrive, and look at it here.
+   *
+   * `prepared` holds decoded artwork and must be disposed. This owns it, which
+   * is why `CustomThemeLibrary` is told it does not.
+   */
+  const packaged = /\.muqun-theme$/i.test(asset.name);
+  const [pack, setPack] = useState<ThemeEditorCandidate | null>(null);
+  const [packProgress, setPackProgress] = useState<{ done: number; total: number | null } | null>(
+    null
+  );
+  useEffect(() => () => pack?.prepared?.dispose(), [pack]);
+  /**
+   * The download and the staging, owned until the state above takes them.
+   *
+   * Closing the viewer mid-download used to orphan a whole staged directory
+   * under `Paths.cache`: the cleanup on the effect above had already run --
+   * against a `pack` that was still null -- and the `setPack` that arrived
+   * afterwards on an unmounted component went nowhere, so the images just
+   * decoded themselves onto the disk and stayed there. Nothing ever collected
+   * them; `collectThemeAssetGarbage` only sweeps the *installed* directory.
+   *
+   * The discipline is `ThemeLinkImport`'s, not a second one: a request owns the
+   * work, unmount cancels it, `handoff` is the single boundary where ownership
+   * moves to whoever disposes next, and the `finally` disposes whenever it did
+   * not. `handoff` throws on an aborted signal before it sets its flag, which is
+   * what closes the gap between the last check and the assignment.
+   */
+  const active = useRef<ThemeImportRequest | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      active.current?.cancel();
+      active.current = null;
+    };
+  }, []);
+  async function openPackagedTheme() {
+    if (packProgress || active.current) return;
+    const request = new ThemeImportRequest();
+    active.current = request;
+    setError(null);
+    setPackProgress({ done: 0, total: asset.size || null });
+    let prepared: PreparedThemeAssets | undefined;
+    let transferred = false;
+    try {
+      const bytes = await readAssetBytes(asset, {
+        signal: request.signal,
+        maxBytes: THEME_LIMITS.packageBytes,
+        onProgress: (done, total) => {
+          if (mounted.current && !request.signal.aborted) setPackProgress({ done, total });
+        },
+      });
+      const unpacked = unpackTheme(bytes);
+      prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
+      const candidate = { manifest: unpacked.manifest, prepared };
+      request.handoff(() => setPack(candidate));
+      transferred = true;
+    } catch (failure) {
+      // A read this screen itself cancelled is not a failure to report: there is
+      // no longer a screen to report it on.
+      if (mounted.current && !request.isCanceled)
+        setError(describeGatewayFailure(failure, t`Could not open this theme.`).message);
+    } finally {
+      if (!transferred) prepared?.dispose();
+      if (active.current === request) active.current = null;
+      if (mounted.current) setPackProgress(null);
+    }
+  }
 
   useEffect(() => {
     if (!readable) return;
@@ -282,7 +376,10 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               <PressableScale
                 accessibilityLabel={t`Copy`}
                 onPress={copy}
-                style={[styles.close, { backgroundColor: theme.colors.surfaceRaised }]}>
+                style={[
+                  styles.close,
+                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                ]}>
                 {copied ? (
                   <Check size={18} color={theme.colors.success} />
                 ) : (
@@ -293,20 +390,72 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             <PressableScale
               accessibilityLabel={t`Close file`}
               onPress={onClose}
-              style={[styles.close, { backgroundColor: theme.colors.surfaceRaised }]}>
+              style={[
+                styles.close,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              ]}>
               <X size={18} color={theme.colors.text} />
             </PressableScale>
           </View>
         </View>
 
-        <AssetBody
-          asset={asset}
-          readable={readable}
-          content={content}
-          error={error}
-          markdownStyle={markdownStyle}
-          onRetry={() => setAttempt((previous) => previous + 1)}
-        />
+        {pack ? (
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+            <CustomThemeLibrary
+              key={`${themeDocumentIdentity}:pack`}
+              initialCandidate={pack}
+              detail
+              // The prepared artwork belongs to this screen, which disposes it
+              // when the reader closes the file.
+              ownsPreparedAssets={false}
+              onClosePreview={() => setPack(null)}
+            />
+          </ScrollView>
+        ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
+          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+            <CustomThemeLibrary
+              key={themeDocumentIdentity}
+              initialManifest={themeManifest}
+              detail
+              onClosePreview={() => setPreviewedThemeDocument(null)}
+            />
+          </ScrollView>
+        ) : (
+          <>
+            {themeManifest ? (
+              <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+                <Button
+                  testID="asset-preview-theme"
+                  onPress={() =>
+                    setPreviewedThemeDocument(themeDocumentIdentity)
+                  }>{t`Preview`}</Button>
+              </View>
+            ) : packaged ? (
+              <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 8 }}>
+                <Button
+                  testID="asset-open-theme-package"
+                  disabled={Boolean(packProgress)}
+                  onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
+                {packProgress ? (
+                  <ThemeImportProgress
+                    label={t`Downloading theme`}
+                    receivedBytes={packProgress.done}
+                    completed={packProgress.done}
+                    total={packProgress.total ?? undefined}
+                  />
+                ) : null}
+              </View>
+            ) : null}
+            <AssetBody
+              asset={asset}
+              readable={readable}
+              content={content}
+              error={error}
+              markdownStyle={markdownStyle}
+              onRetry={() => setAttempt((previous) => previous + 1)}
+            />
+          </>
+        )}
       </View>
     </Modal>
   );
@@ -327,6 +476,7 @@ function AssetBody({
   markdownStyle: ReturnType<typeof createMarkdownStyle>;
   onRetry: () => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
 
   const theme = useThemeTokens();
@@ -376,7 +526,10 @@ function AssetBody({
           <PressableScale
             accessibilityLabel={t`Try again`}
             onPress={onRetry}
-            style={[styles.retry, { backgroundColor: theme.colors.surfaceRaised }]}>
+            style={[
+              styles.retry,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
             <Text variant="caption" color={theme.colors.primary}>
               <Trans>Try again</Trans>
             </Text>
@@ -491,6 +644,7 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
   const relativeTime = useRelativeTime();
 
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const rows: { label: string; value: string }[] = [
     { label: t`Type`, value: asset.mime || asset.kind },
     { label: t`Size`, value: formatAssetSize(asset.size) || t`unknown` },
@@ -503,7 +657,11 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
       <Text variant="bodySmall" color={theme.colors.textMuted}>
         <Trans>No preview for this kind of file. It stays on the server.</Trans>
       </Text>
-      <View style={[styles.detailsCard, { backgroundColor: theme.colors.surfaceRaised }]}>
+      <View
+        style={[
+          styles.detailsCard,
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         {rows.map((row) => (
           <View key={row.label} style={styles.detailsRow}>
             <Text variant="caption" color={theme.colors.textMuted}>

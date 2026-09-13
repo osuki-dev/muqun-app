@@ -27,7 +27,7 @@ import { useRouter } from 'expo-router';
 
 import { SettingsBlock, SettingsChoiceRow, SettingsSection } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
-import { resolveThemePack } from '@/constants/theme-packs';
+import { useThemePack } from '@/hooks/use-theme-pack';
 import { LOCALE_LABELS } from '@/i18n/locale';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
@@ -41,9 +41,7 @@ export function SettingsAppearance({ title }: { title: string }) {
   useRenderTally('SettingsAppearance');
 
   const language = useAppSettings((state) => state.language);
-  const themePack = useAppSettings((state) => state.themePack);
-
-  const pack = resolveThemePack(themePack);
+  const pack = useThemePack();
   // "System" is a description rather than a name, so it is the one entry in the
   // language list that is translated. Every language is written in itself.
   const languageName = language ? LOCALE_LABELS[language] : t`System`;

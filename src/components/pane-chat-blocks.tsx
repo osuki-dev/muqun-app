@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react-native';
@@ -110,9 +111,10 @@ export const PaneChatPromptRow = memo(function PaneChatPromptRow({
   text: string;
   colors: PaneChatColors;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   return (
     <View style={styles.promptAlign}>
-      <View style={[styles.promptBubble, { backgroundColor: colors.bubble }]}>
+      <View style={[styles.promptBubble, { backgroundColor: surfaceBackground(colors.bubble) }]}>
         <Text variant="bodySmall" selectable color={colors.text}>
           {text}
         </Text>
@@ -216,6 +218,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
   onToggle: (id: string) => void;
   onOpenAsset?: (assetId: string) => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   switch (part.type) {
     case 'text':
@@ -276,7 +279,11 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
           accessibilityLabel={t`Open ${part.fallback_text || part.asset_id}`}
           disabled={!onOpenAsset}
           onPress={() => onOpenAsset?.(part.asset_id)}
-          style={[styles.assetCard, styles.agentAlign, { backgroundColor: colors.surfaceRaised }]}>
+          style={[
+            styles.assetCard,
+            styles.agentAlign,
+            { backgroundColor: surfaceBackground(colors.surfaceRaised) },
+          ]}>
           <FileText size={17} color={colors.accent} />
           <Text variant="bodySmall" color={colors.text} numberOfLines={2} style={styles.flexOne}>
             {part.fallback_text || part.asset_id}
@@ -314,12 +321,13 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
   open: boolean;
   onToggle?: (id: string) => void;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const summary = firstLine(block.input);
   const Chevron = open ? ChevronDown : ChevronRight;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.surfaceRaised }]}>
+    <View style={[styles.card, { backgroundColor: surfaceBackground(colors.surfaceRaised) }]}>
       <PressableScale
         accessibilityLabel={open ? t`Collapse ${block.tool}` : t`Expand ${block.tool}`}
         feedback="selection"
@@ -389,8 +397,14 @@ const TodoCard = memo(function TodoCard({
   part: Extract<PanePart, { type: 'todo' }>;
   colors: PaneChatColors;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   return (
-    <View style={[styles.card, styles.agentAlign, { backgroundColor: colors.surfaceRaised }]}>
+    <View
+      style={[
+        styles.card,
+        styles.agentAlign,
+        { backgroundColor: surfaceBackground(colors.surfaceRaised) },
+      ]}>
       {part.items.map((item, index) => (
         <View key={`${index}-${item.text}`} style={styles.todoItem}>
           <View
@@ -423,6 +437,7 @@ const DiffRow = memo(function DiffRow({
   part: Extract<PanePart, { type: 'diff' }>;
   colors: PaneChatColors;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const lines = useMemo(() => part.hunks.flatMap((hunk) => hunk.split('\n')), [part.hunks]);
 
   return (
@@ -430,7 +445,7 @@ const DiffRow = memo(function DiffRow({
       style={[
         styles.diffCard,
         styles.agentAlign,
-        { borderColor: colors.border, backgroundColor: colors.surface },
+        { borderColor: colors.border, backgroundColor: surfaceBackground(colors.surface) },
       ]}>
       {part.file ? (
         <Text variant="caption" color={colors.muted} numberOfLines={1} style={styles.diffFile}>
@@ -477,6 +492,7 @@ const TableRow = memo(function TableRow({
   part: Extract<PanePart, { type: 'table' }>;
   colors: PaneChatColors;
 }) {
+  const surfaceBackground = useSurfaceBackground();
   return (
     <View style={[styles.tableCard, styles.agentAlign, { borderColor: colors.border }]}>
       {part.rows.map((row, rowIndex) => (
@@ -487,7 +503,9 @@ const TableRow = memo(function TableRow({
             {
               // Best-effort, like the cells themselves: the model has no header
               // flag, and a leading header row is what agents actually print.
-              backgroundColor: rowIndex === 0 ? colors.surfaceRaised : 'transparent',
+              backgroundColor: surfaceBackground(
+                rowIndex === 0 ? colors.surfaceRaised : 'transparent'
+              ),
               borderTopColor: colors.border,
               borderTopWidth: rowIndex === 0 ? 0 : StyleSheet.hairlineWidth,
             },

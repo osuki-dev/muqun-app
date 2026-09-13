@@ -10,8 +10,9 @@
  *
  * The design system's own rule applies throughout -- "percussive, mechanical
  * precision -- no spring, no bounce" -- so everything here is `withTiming` on
- * the system ease-out, with exactly one exception (`settleTo`, below) which is
- * critically damped and therefore does not bounce either.
+ * the system ease-out. `settleTo` is critically damped; `kitButtonPressMotion`
+ * preserves the existing kit Button's press feedback without inventing a
+ * different interaction when a theme adds artwork.
  */
 import { motion as tokens } from '@osuki-dev/ui';
 import {
@@ -202,7 +203,7 @@ export const INSTANT: WithTimingConfig = {
 };
 
 /**
- * The one spring in the app, and the reason it is allowed to exist.
+ * The drag-settling spring, and the reason it is allowed to exist.
  *
  * "no spring, no bounce" is a rule about *transitions*: a toggle, a modal, a
  * dropdown -- things the app decides to do, where an overshoot is the surface
@@ -245,6 +246,17 @@ export const SETTLE: WithSpringConfig = {
 export function settleTo(value: SharedValue<number>, to: number, velocity = 0) {
   'worklet';
   value.value = withSpring(to, { ...SETTLE, velocity });
+}
+
+/** Compatibility with @osuki-dev/ui 1.0.1 Button, not a general spring preset. */
+export function kitButtonPressMotion(pressed: boolean): number {
+  'worklet';
+  return withSpring(pressed ? 1 : 0, {
+    ...(pressed
+      ? { stiffness: 520, damping: 34, mass: 0.72 }
+      : { stiffness: 420, damping: 30, mass: 0.78 }),
+    reduceMotion: ReduceMotion.System,
+  });
 }
 
 /**

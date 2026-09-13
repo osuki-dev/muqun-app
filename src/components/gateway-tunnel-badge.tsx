@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Waypoints } from 'lucide-react-native';
@@ -25,6 +26,7 @@ export function GatewayTunnelBadge({
   record: GatewayRecord | null | undefined;
   variant?: 'badge' | 'notice';
 }) {
+  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   // Observe, do not hold: this is a status view. The screens that need the
@@ -69,7 +71,7 @@ export function GatewayTunnelBadge({
     return (
       <View
         accessibilityLabel={a11y}
-        style={[styles.notice, { backgroundColor: theme.colors.surfaceRaised }]}>
+        style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
         <StatusDot color={color} filled={!connecting} pulse={connecting} size={7} />
         <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
           {label}

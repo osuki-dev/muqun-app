@@ -1,3 +1,4 @@
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * The New Task sheet's route.
  *
@@ -25,6 +26,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 
 export default function NewTaskScreen() {
+  const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
@@ -110,7 +112,7 @@ export default function NewTaskScreen() {
 
   if (error || !serverId) {
     return (
-      <View style={[styles.notice, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <Text selectable variant="bodySmall" color={theme.colors.danger}>
           {error ?? t`No server to start a task on.`}
         </Text>
@@ -120,7 +122,7 @@ export default function NewTaskScreen() {
 
   if (!sessionId || needsSelect) {
     return (
-      <View style={[styles.notice, { backgroundColor: theme.colors.surface }]}>
+      <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <Spinner size="sm" color={theme.colors.primary} />
         <Text variant="caption" color={theme.colors.textMuted}>
           {/* The same word the connection banner uses, not a second one with
