@@ -133,6 +133,20 @@ press "id=theme-confirm-remove"
 # the app on the pack it is actually showing.
 press "${TARGET}"
 
+# section theme-anchor
+# The other edge of the problem `storage-anchor` below describes. Coming back
+# up from STORAGE, the scroll-to-visible stops the moment the Theme row enters
+# the tree, which leaves it against the *top* edge -- underneath the floating
+# Settings header, which is painted over the list rather than above it. The
+# accessibility tree knows nothing about what is drawn on top of a row, so the
+# visibility probe passes and the press is then dispatched at the row's centre:
+# measured here at y=254 on a 1080x2400 device, which is inside the header's
+# own `Go back` button. The sheet never opened and every step below it failed.
+# `scroll top` is a position the list always has; from it the Theme row sits at
+# y=1068, clear of the header above and the navigation bar below.
+scroll top
+wait stable 400 5000
+
 # section scroll-up
 scroll up --pixels 300
 
