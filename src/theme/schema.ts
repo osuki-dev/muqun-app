@@ -126,7 +126,7 @@ const slotSchema = imageSchema
  *
  * The app reads only these names. The schema below deliberately accepts others.
  */
-export const THEME_ICONS = ['chrome.back', 'chrome.send'] as const;
+export const THEME_ICONS = ['chrome.back', 'chrome.send', 'chrome.attach'] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];
 
 const iconSchema = z.strictObject({
