@@ -3653,6 +3653,9 @@
         "run": "flows/settings.ad#storage-scroll"
       },
       {
+        "run": "flows/settings.ad#storage-anchor"
+      },
+      {
         "target": {
           "id": "settings-clear-cache-row"
         },
