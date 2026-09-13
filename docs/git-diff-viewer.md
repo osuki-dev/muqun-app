@@ -415,7 +415,15 @@ inline diff in the transcript and the full viewer look like the same thing.
   `FILE_PATCH_MAX_LINES = 4 000`. The App renders a "show more" row, and
   `onEndReached` never triggers a fetch by itself — paging is an explicit tap,
   because a diff that grows under the reader is the viewport-moving behaviour
-  AGENTS.md forbids.
+  AGENTS.md forbids. The Gateway cuts a page back to a hunk boundary only when
+  one lies past the middle of the page; a single hunk longer than a page (every
+  third line of a file changed is one hunk) is cut raw, so the parser carries
+  the old/new line counters from one page into the next and a page that opens
+  without an `@@` header continues the previous hunk. Found by running the real
+  Gateway against a real repository: with a boundary-only rule the first page
+  of such a file was four header lines and a "show more" button.
+- A rename is fetched with both paths (`old_path` from the status entry).
+  With the new path alone as the pathspec git renders a brand-new file.
 - Every fetch carries an `AbortSignal`, aborted on unmount and on the question
   changing, the way `session-artifacts.tsx:288-293` already does with its
   `inFlightRef`: a slow earlier answer must not repaint over the current one.
@@ -638,7 +646,7 @@ Routes, beside the existing pane routes at `main.rs:2084`:
 ```
 GET /api/sessions/{session_id}/panes/{pane_id}/context
 GET /api/sessions/{session_id}/panes/{pane_id}/git/status
-GET /api/sessions/{session_id}/panes/{pane_id}/git/diff?path=&staged=&context=&from=&lines=
+GET /api/sessions/{session_id}/panes/{pane_id}/git/diff?path=&old_path=&staged=&context=&from=&lines=
 GET /api/sessions/{session_id}/panes/{pane_id}/git/show?rev=          (v2)
 GET /api/sessions/{session_id}/panes/{pane_id}/usage                  (v2, agent_usage)
 ```
