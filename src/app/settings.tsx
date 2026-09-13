@@ -20,6 +20,7 @@ import { SettingsAppearance } from '@/components/settings-appearance';
 import { LADDER, SettingsNavRow, SettingsSection } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
 import { SettingsServers } from '@/components/settings-servers';
+import { SettingsStorage } from '@/components/settings-storage';
 import { SettingsTerminal } from '@/components/settings-terminal';
 import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL } from '@/constants/links';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -63,9 +64,12 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.g
  * language they cannot read cannot scroll past six English headings looking for
  * it. Then the two sections about how the app behaves (the terminal, then what
  * it is allowed to do when nobody is watching), then the lock on the front
- * door, then the app itself. Nine sections became six: `Home screen` moved
- * inside SERVERS, next to the list it describes, and `Feedback and support`
- * merged into ABOUT, which is where a reader looks for a way to reach a human.
+ * door, then the housekeeping, then the app itself. Nine sections became six:
+ * `Home screen` moved inside SERVERS, next to the list it describes, and
+ * `Feedback and support` merged into ABOUT, which is where a reader looks for a
+ * way to reach a human. STORAGE is the one addition since, and it is last
+ * before ABOUT for the same reason ABOUT is last: it is about the app rather
+ * than about anything the app does.
  *
  * Nothing was dropped. Every control the old page could reach, this one can.
  */
@@ -107,14 +111,16 @@ export default function SettingsScreen() {
   useRenderTally('SettingsScreen');
 
   /**
-   * Whether the four sections below the fold have been built yet.
+   * Whether the five sections below the fold have been built yet.
    *
    * A phone shows SERVERS and the top of APPEARANCE when this page arrives;
-   * TERMINAL, ALERTS, SECURITY and ABOUT are off the bottom of the screen, and
-   * building them on the same frame as the ones the reader can see costs about
-   * a third of the page's mount for nothing they are looking at. `SECURITY` is
-   * the worst of them -- it asks the OS what kind of authentication this device
-   * has the moment it mounts.
+   * TERMINAL, ALERTS, SECURITY, STORAGE and ABOUT are off the bottom of the
+   * screen, and building them on the same frame as the ones the reader can see
+   * costs about a third of the page's mount for nothing they are looking at.
+   * `SECURITY` is the worst of them -- it asks the OS what kind of
+   * authentication this device has the moment it mounts -- with `STORAGE`
+   * behind it, which would otherwise start walking the cache directory on the
+   * frame the push is still animating.
    *
    * `requestIdleCallback` rather than a timer, because the beat being waited
    * for is "the push has stopped asking for frames", not a number of
@@ -193,6 +199,16 @@ export default function SettingsScreen() {
                 </View>
                 <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
                   <SettingsSecurity title={t`Security`} />
+                </View>
+
+                {/* After the lock and before the app itself. Storage is
+                    housekeeping rather than a setting -- nothing here changes
+                    how Muqun behaves -- so it sits at the end of the sections
+                    that do, next to the version and the privacy policy a
+                    reader is already looking at when they are asking the app
+                    about itself. */}
+                <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
+                  <SettingsStorage title={t`Storage`} />
                 </View>
 
                 {/* `Feedback and support` used to be a section of its own
