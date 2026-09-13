@@ -786,7 +786,14 @@ export function flattenDiffRows(
   for (const file of files) {
     const open = expanded.has(file.path);
     const state = pages.get(file.path);
-    const loading = open && (state?.loading ?? true);
+    const fetching = open && (state?.loading ?? true);
+    // Loading hides the rows only while there are none to show. A later page
+    // being fetched keeps every row already on screen: dropping them while the
+    // request is out collapses the list to a few headers, the scroll offset is
+    // clamped to the top, and the reader who tapped "show more" at line 3000
+    // is thrown back to line 1 -- the viewport-moving behaviour the whole
+    // design exists to avoid. The "more" row is what shows the spinner.
+    const loading = fetching && (state?.hunks.length ?? 0) === 0;
     const binary = file.binary || (state?.binary ?? false);
     const error = state?.error ?? null;
     rows.push({
@@ -844,7 +851,7 @@ export function flattenDiffRows(
         key: `m:${file.path}`,
         path: file.path,
         remaining: state.totalLines - state.loadedLines,
-        loading: false,
+        loading: fetching,
       });
     }
   }

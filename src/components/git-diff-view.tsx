@@ -1,5 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
+import { type LegendListRef, type LegendListRenderItemProps } from '@legendapp/list/react-native';
+import { AnimatedLegendList } from '@legendapp/list/reanimated';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
@@ -120,6 +121,17 @@ export function GitDiffView({
   const [pages, setPages] = useState<ReadonlyMap<string, GitFilePatchState>>(() => new Map());
 
   const statusRequest = useRef<AbortController | null>(null);
+  const listRef = useRef<LegendListRef>(null);
+  /**
+   * The file header to land on once the rows change, keyed like the row.
+   *
+   * Collapsing a file the reader is four thousand lines into removes every
+   * row under the viewport; nothing above it moved, so the offset stays where
+   * it was, which is now past the end of the content and shows a blank sheet
+   * that will not scroll back. Landing on the header the reader just tapped is
+   * the one place that is both still there and what they asked to see.
+   */
+  const landOnRef = useRef<string | null>(null);
   const patchRequests = useRef(new Map<string, AbortController>());
 
   useEffect(
@@ -280,6 +292,7 @@ export function GitDiffView({
         // A collapsed file drops its rows. `MAX_OPEN_FILES` bounds what is
         // held open; a collapsed file that kept its patch would sit outside
         // that bound and never be released.
+        landOnRef.current = `f:${path}`;
         setExpandedOrder(closeFile(expandedOrder, path));
         dropPatches([path]);
         return;
@@ -305,6 +318,13 @@ export function GitDiffView({
   const expanded = useMemo(() => new Set(expandedOrder), [expandedOrder]);
   const rows = useMemo(() => flattenDiffRows(files, expanded, pages), [expanded, files, pages]);
   const stickyIndices = useMemo(() => fileHeaderIndices(rows), [rows]);
+  useEffect(() => {
+    const key = landOnRef.current;
+    if (!key) return;
+    landOnRef.current = null;
+    const index = rows.findIndex((row) => row.key === key);
+    if (index >= 0) listRef.current?.scrollToIndex({ index, animated: false });
+  }, [rows]);
 
   // ---------------------------------------------------------------------
   // Width
@@ -483,7 +503,8 @@ export function GitDiffView({
         style={[styles.scroller, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
         contentContainerStyle={styles.scrollerContent}>
         {rows.length > 0 ? (
-          <LegendList
+          <AnimatedLegendList
+            ref={listRef}
             data={rows}
             keyExtractor={keyOfRow}
             renderItem={renderRow}
@@ -500,10 +521,12 @@ export function GitDiffView({
             // move because of it.
             maintainVisibleContentPosition={MAINTAIN_POSITION}
             // The file being read is always named, however deep into its patch
-            // the reader has scrolled. Legend List docks a sticky header only
-            // on an animated scroll component, hence `renderScrollComponent`.
+            // the reader has scrolled. Sticky headers need the list's Reanimated
+            // integration: the core list drives its scroll view with React
+            // Native's `Animated.event`, an object, and handing that to a
+            // Reanimated `ScrollView` through `renderScrollComponent` crashed the
+            // first fling with "Object is not a function".
             stickyHeaderIndices={stickyIndices}
-            renderScrollComponent={renderAnimatedScrollView}
             style={{ width: contentWidth }}
             contentContainerStyle={styles.listContent}
           />
@@ -781,13 +804,19 @@ const ShowMoreRow = memo(function ShowMoreRow({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={t`Show more`}
+      accessibilityState={{ busy: row.loading }}
+      disabled={row.loading}
       onPress={() => onPress(row.path)}
       style={[styles.moreRow, { width }]}>
       <Animated.View style={[styles.pinned, styles.moreBody, pinned, { width: pinnedWidth }]}>
         <View style={[styles.moreChip, { borderColor: colors.border }]}>
-          <Text variant="caption" color={colors.accent}>
-            <Trans>Show more</Trans>
-          </Text>
+          {row.loading ? (
+            <ActivityIndicator size="small" color={colors.accent} />
+          ) : (
+            <Text variant="caption" color={colors.accent}>
+              <Trans>Show more</Trans>
+            </Text>
+          )}
           <Text variant="caption" color={colors.subtle}>
             <Plural value={row.remaining} one="# more line" other="# more lines" />
           </Text>
@@ -845,12 +874,6 @@ function typeOfRow(row: GitDiffRow): GitDiffRowType {
 
 function sizeOfRow(row: GitDiffRow): number {
   return ROW_HEIGHT[row.type];
-}
-
-/** Legend List docks its sticky headers only on an animated scroll view. */
-// oxlint-disable-next-line typescript/no-explicit-any -- the library types this prop as `(props: any)`.
-function renderAnimatedScrollView(props: any) {
-  return <Animated.ScrollView {...props} />;
 }
 
 /**
