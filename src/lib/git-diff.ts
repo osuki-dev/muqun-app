@@ -371,7 +371,7 @@ export interface GitDiffLine {
 
 /** One `@@ … @@` run. */
 export interface GitDiffHunk {
-  /** The header as git wrote it, for the row that shows it. */
+  /** The header as git wrote it, for the row that shows it. Empty on a carry. */
   header: string;
   /** The function or section name git puts after the second `@@`, if any. */
   heading: string;
@@ -380,13 +380,40 @@ export interface GitDiffHunk {
   newStart: number;
   newLines: number;
   lines: GitDiffLine[];
+  /**
+   * The rest of the previous page's last hunk, rather than a hunk of its own.
+   * `appendPatchPage` splices it onto what came before and it never reaches the
+   * row list as a header.
+   */
+  continuation: boolean;
 }
+
+/**
+ * Where the parser was when the page ran out.
+ *
+ * A page can end in the middle of a hunk: the gateway only backs up to a hunk
+ * boundary when one lies past the middle of the page, so a single hunk longer
+ * than the page size is cut raw. The next page then opens with continuation
+ * lines and no `@@` header of its own, and the only way to number them is to be
+ * told where the last one left off.
+ */
+export interface PatchCarry {
+  oldLine: number;
+  newLine: number;
+  /** Whether the page ended inside a hunk, which is what makes the rest valid. */
+  inHunk: boolean;
+}
+
+/** The carry a first page starts from: nothing is open yet. */
+export const NO_PATCH_CARRY: PatchCarry = { oldLine: 0, newLine: 0, inHunk: false };
 
 /** What one page of patch text turned into. */
 export interface ParsedPatch {
   hunks: GitDiffHunk[];
   /** git said this file is binary; there are no hunks and there never will be. */
   binary: boolean;
+  /** Hand this back to the next page of the same file. */
+  carry: PatchCarry;
 }
 
 /**
@@ -409,10 +436,15 @@ const CHAR_CR = 13;
 /**
  * A unified patch, or one page of one.
  *
- * The gateway cuts a page at a hunk boundary, so every page starts at a
- * `diff --git` or an `@@` line and can be parsed on its own -- which is what
- * makes "show more" a matter of appending hunks rather than of re-parsing the
- * file from the top.
+ * A page usually starts at a `diff --git` or an `@@` line and parses on its
+ * own, which is what makes "show more" a matter of appending hunks rather than
+ * of re-parsing the file from the top. Usually, and not always: the gateway
+ * backs up to a hunk boundary only when one lies past the middle of the page,
+ * so a file that is one hunk longer than the page size is cut mid-hunk. That is
+ * what `carry` is for -- hand back the previous page's carry and the lines
+ * before the first `@@` are the rest of that hunk, numbered continuously.
+ * Without a carry those same lines are metadata and are dropped, which is the
+ * right answer for a first page.
  *
  * Line-oriented on purpose: one `split('\n')` and a `charCodeAt` switch. The
  * only regular expression is the hunk header, which runs a handful of times per
@@ -422,14 +454,36 @@ const CHAR_CR = 13;
  * numbers rather than wrong ones; text before any hunk is metadata and is
  * dropped; a `+`/`-` line outside a hunk is not a diff line and is ignored.
  */
-export function parseUnifiedPatch(patch: string): ParsedPatch {
+export function parseUnifiedPatch(patch: string, carry?: PatchCarry | null): ParsedPatch {
   const hunks: GitDiffHunk[] = [];
-  if (typeof patch !== 'string' || !patch) return { hunks, binary: false };
+  const opening: PatchCarry = carry ?? NO_PATCH_CARRY;
+  if (typeof patch !== 'string' || !patch) {
+    return { hunks, binary: false, carry: opening };
+  }
 
   let binary = false;
   let current: GitDiffHunk | null = null;
   let oldLine = 0;
   let newLine = 0;
+
+  // The previous page ended inside a hunk, so this page opens inside it. The
+  // hunk is pushed now and dropped again below if nothing lands in it -- which
+  // is what happens when the page did start at a header after all.
+  if (opening.inHunk) {
+    current = {
+      header: '',
+      heading: '',
+      oldStart: opening.oldLine,
+      oldLines: 0,
+      newStart: opening.newLine,
+      newLines: 0,
+      lines: [],
+      continuation: true,
+    };
+    oldLine = opening.oldLine;
+    newLine = opening.newLine;
+    hunks.push(current);
+  }
 
   const rows = patch.split('\n');
   for (let index = 0; index < rows.length; index += 1) {
@@ -455,6 +509,7 @@ export function parseUnifiedPatch(patch: string): ParsedPatch {
           newStart,
           newLines: match[4] === undefined ? 1 : Number.parseInt(match[4], 10),
           lines: [],
+          continuation: false,
         };
         oldLine = oldStart;
         newLine = newStart;
@@ -470,6 +525,7 @@ export function parseUnifiedPatch(patch: string): ParsedPatch {
           newStart: 0,
           newLines: 0,
           lines: [],
+          continuation: false,
         };
         oldLine = 0;
         newLine = 0;
@@ -551,7 +607,11 @@ export function parseUnifiedPatch(patch: string): ParsedPatch {
     // than rendered as a line that lies about what changed.
   }
 
-  return { hunks, binary };
+  // A carry that caught nothing: the page opened at a header of its own after
+  // all, so the placeholder is not a hunk and must not become a row.
+  if (hunks.length > 0 && hunks[0].continuation && hunks[0].lines.length === 0) hunks.shift();
+
+  return { hunks, binary, carry: { oldLine, newLine, inHunk: current !== null } };
 }
 
 // ---------------------------------------------------------------------------
@@ -574,33 +634,67 @@ export interface GitFilePatchState {
   loading: boolean;
   /** A sentence already in the reader's language, or `null`. */
   error: string | null;
+  /** Where the last page left the parser. See `PatchCarry`. */
+  carry: PatchCarry;
 }
 
 /** The empty state for a file that is expanding for the first time. */
 export function emptyFilePatchState(): GitFilePatchState {
-  return { hunks: [], binary: false, loadedLines: 0, totalLines: 0, loading: true, error: null };
+  return {
+    hunks: [],
+    binary: false,
+    loadedLines: 0,
+    totalLines: 0,
+    loading: true,
+    error: null,
+    carry: NO_PATCH_CARRY,
+  };
 }
 
 /**
- * Appends a freshly parsed page to what is already in hand.
+ * Parses a page and folds it into what is already in hand.
  *
- * Pure, and the only place page arithmetic happens. A page that starts before
- * where the last one ended is a re-read of the same range -- which is what a
- * retry after an error is -- so it replaces rather than duplicates.
+ * Pure, and the only place page arithmetic happens. Three rules live here:
+ *
+ * - A page that starts before where the last one ended is a re-read of the same
+ *   range -- which is what a retry after an error is -- so it replaces rather
+ *   than duplicates.
+ * - A page that opens with continuation lines is the rest of the previous
+ *   page's last hunk, so those lines are spliced onto it rather than becoming a
+ *   headerless hunk of their own. Existing hunk and line indices are untouched,
+ *   which is what keeps the row keys stable across a "show more".
+ * - The raw patch string never leaves this function. Only rows are retained.
  */
-export function appendPatchPage(
+export function applyPatchPage(
   previous: GitFilePatchState | undefined,
-  page: GitFilePatchPage,
-  parsed: ParsedPatch
+  page: GitFilePatchPage
 ): GitFilePatchState {
   const base = previous && page.from > 0 && page.from <= previous.loadedLines ? previous : null;
+  const parsed = parseUnifiedPatch(page.patch, base?.carry);
+
+  let hunks: GitDiffHunk[];
+  if (base) {
+    hunks = [...base.hunks];
+    const incoming = parsed.hunks;
+    let first = 0;
+    if (incoming.length > 0 && incoming[0].continuation && hunks.length > 0) {
+      const last = hunks[hunks.length - 1];
+      hunks[hunks.length - 1] = { ...last, lines: [...last.lines, ...incoming[0].lines] };
+      first = 1;
+    }
+    for (let index = first; index < incoming.length; index += 1) hunks.push(incoming[index]);
+  } else {
+    hunks = parsed.hunks;
+  }
+
   return {
-    hunks: base ? [...base.hunks, ...parsed.hunks] : parsed.hunks,
+    hunks,
     binary: parsed.binary || page.binary,
     loadedLines: Math.max(page.end, base?.loadedLines ?? 0),
     totalLines: Math.max(page.totalLines, page.end),
     loading: false,
     error: null,
+    carry: parsed.carry,
   };
 }
 
@@ -692,13 +786,17 @@ export function flattenDiffRows(
 
     for (let hunkIndex = 0; hunkIndex < state.hunks.length; hunkIndex += 1) {
       const hunk = state.hunks[hunkIndex];
-      rows.push({
-        type: 'hunk',
-        key: `h:${hunkIndex}:${file.path}`,
-        path: file.path,
-        header: hunk.header,
-        heading: hunk.heading,
-      });
+      // A headerless hunk is a continuation that found nothing to attach to.
+      // Its lines are real; a blank header row above them would not be.
+      if (hunk.header) {
+        rows.push({
+          type: 'hunk',
+          key: `h:${hunkIndex}:${file.path}`,
+          path: file.path,
+          header: hunk.header,
+          heading: hunk.heading,
+        });
+      }
       for (let lineIndex = 0; lineIndex < hunk.lines.length; lineIndex += 1) {
         const line = hunk.lines[lineIndex];
         rows.push({

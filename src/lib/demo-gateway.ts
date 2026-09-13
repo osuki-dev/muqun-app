@@ -4,6 +4,7 @@ import { Asset } from 'expo-asset';
 import { createThemeStarter } from '@/theme/authoring';
 
 import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
+import { GIT_DIFF_CAPABILITY, PANE_CONTEXT_CAPABILITY } from '@/lib/git-diff';
 import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
 import type { SessionAsset } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -885,8 +886,17 @@ export function demoHealth() {
     // capability here is a promise the fixtures have to keep: `pane_approvals`
     // would put a banner on screen that no bundled answer can resolve. Spawning
     // is listed because `demoSpawnedAgent` really does hand back a pane the
-    // demo session has; agent_events because the away fixture answers it.
-    capabilities: ['agent_events', AGENT_SPAWN_CAPABILITY, 'agent_collaboration'],
+    // demo session has; agent_events because the away fixture answers it, and
+    // the two diff capabilities because `demoPaneContext`, `demoGitStatus` and
+    // `demoGitDiff` answer all three routes -- including the paging one, which
+    // is the whole reason the large fixture exists.
+    capabilities: [
+      'agent_events',
+      AGENT_SPAWN_CAPABILITY,
+      'agent_collaboration',
+      PANE_CONTEXT_CAPABILITY,
+      GIT_DIFF_CAPABILITY,
+    ],
     backends: [{ sessionId: SESSION_ID, kind: 'herdr', connected: true, version: '0.9.0' }],
     serverId: DEMO_SERVER_ID,
     label: demoRecord.label,
@@ -1083,4 +1093,355 @@ export function demoPaneFiles(
       })),
     },
   };
+}
+
+// ---------------------------------------------------------------------------
+// The diff viewer
+// ---------------------------------------------------------------------------
+
+/**
+ * The demo's checkout: one branch, one repository, and the pane that is working
+ * in it.
+ *
+ * Only `pane-1` is in a repository. That is not an oversight -- the entry point
+ * is gated on the pane's own context saying `git` is non-null, so a demo where
+ * every pane answered the same way would never exercise the gate that keeps the
+ * icon off an `nvim` pane in a directory nobody has checked out.
+ *
+ * Nothing here is translated, and that is the one exception to the rule at the
+ * top of this file. A branch name, a path and a line of TypeScript are not
+ * prose: `git` would hand back exactly these bytes in any language, and a
+ * localized diff would be a lie about what the tool does.
+ */
+const DEMO_GIT_PANE = 'pane-1';
+
+const DEMO_GIT_REPO = {
+  toplevel: '/Users/demo/code/muqun',
+  branch: 'feat/git-diff',
+  upstream: 'origin/main',
+  ahead: 2,
+  behind: 0,
+  detached: false,
+  head: '70c8c85',
+};
+
+/**
+ * The changed files, in the order `git status --porcelain=v2` reports them.
+ *
+ * Deliberately mixed: a modification, a new file, a deletion, a rename, a
+ * binary, an untracked file and one very large change. Every row in the sheet
+ * has a fixture behind it, including the ones that draw a note instead of a
+ * patch.
+ */
+const DEMO_GIT_FILES = [
+  {
+    path: 'src/components/git-diff-view.tsx',
+    old_path: null,
+    status: 'modified',
+    staged: false,
+    unstaged: true,
+    binary: false,
+    added: 34,
+    removed: 8,
+  },
+  {
+    path: 'src/lib/git-diff.ts',
+    old_path: null,
+    status: 'added',
+    staged: true,
+    unstaged: false,
+    binary: false,
+    added: 12,
+    removed: 0,
+  },
+  {
+    path: 'src/lib/demo-terminal-history.ts',
+    old_path: null,
+    status: 'modified',
+    staged: false,
+    unstaged: true,
+    binary: false,
+    added: 2790,
+    removed: 2790,
+  },
+  {
+    path: 'docs/git-diff-viewer.md',
+    old_path: 'docs/diffs.md',
+    status: 'renamed',
+    staged: true,
+    unstaged: true,
+    binary: false,
+    added: 6,
+    removed: 2,
+  },
+  {
+    path: 'src/lib/legacy-diff.ts',
+    old_path: null,
+    status: 'deleted',
+    staged: false,
+    unstaged: true,
+    binary: false,
+    added: 0,
+    removed: 5,
+  },
+  {
+    path: 'assets/screenshots/changes.png',
+    old_path: null,
+    status: 'modified',
+    staged: false,
+    unstaged: true,
+    binary: true,
+    added: null,
+    removed: null,
+  },
+  {
+    path: 'scratch/notes.md',
+    old_path: null,
+    status: 'untracked',
+    staged: false,
+    unstaged: true,
+    binary: false,
+    added: 4,
+    removed: 0,
+  },
+];
+
+/** The small patches, written out as `git` would print them. */
+const DEMO_GIT_PATCHES: Record<string, string[]> = {
+  'src/components/git-diff-view.tsx': [
+    'diff --git a/src/components/git-diff-view.tsx b/src/components/git-diff-view.tsx',
+    'index 3f8a1c2..9d41b07 100644',
+    '--- a/src/components/git-diff-view.tsx',
+    '+++ b/src/components/git-diff-view.tsx',
+    '@@ -18,7 +18,9 @@ export function GitDiffView({ sessionId, paneId }: Props) {',
+    '   const { t } = useLingui();',
+    '   const theme = useThemeTokens();',
+    '-  const [rows, setRows] = useState<GitDiffRow[]>([]);',
+    '+  const [status, setStatus] = useState<GitStatus | null>(null);',
+    '+  const [expanded, setExpanded] = useState<string[]>([]);',
+    '+  const pages = useRef(new Map<string, GitFilePatchState>());',
+    '   const inFlight = useRef<AbortController | null>(null);',
+    ' ',
+    '@@ -44,6 +46,7 @@ export function GitDiffView({ sessionId, paneId }: Props) {',
+    '   return (',
+    '     <LegendList',
+    '       data={rows}',
+    '+      recycleItems',
+    '       keyExtractor={keyOfRow}',
+    '       getItemType={rowTypeOf}',
+    '     />',
+  ],
+  'src/lib/git-diff.ts': [
+    'diff --git a/src/lib/git-diff.ts b/src/lib/git-diff.ts',
+    'new file mode 100644',
+    'index 0000000..1a2b3c4',
+    '--- /dev/null',
+    '+++ b/src/lib/git-diff.ts',
+    '@@ -0,0 +1,6 @@',
+    "+export const GIT_DIFF_CAPABILITY = 'git_diff';",
+    '+',
+    '+export function gatewaySupportsGitDiff(capabilities?: readonly string[] | null) {',
+    '+  return Array.isArray(capabilities) && capabilities.includes(GIT_DIFF_CAPABILITY);',
+    '+}',
+    '+',
+  ],
+  'docs/git-diff-viewer.md': [
+    'diff --git a/docs/diffs.md b/docs/git-diff-viewer.md',
+    'similarity index 82%',
+    'rename from docs/diffs.md',
+    'rename to docs/git-diff-viewer.md',
+    'index 55c0d19..77ae3b1 100644',
+    '--- a/docs/diffs.md',
+    '+++ b/docs/git-diff-viewer.md',
+    '@@ -1,5 +1,7 @@',
+    '-# Diffs',
+    '+# A git diff viewer for a pane',
+    ' ',
+    '-The gateway could run git.',
+    '+**The Gateway runs `git`, the App renders rows.** A pane whose working',
+    '+directory is a checkout gets one more icon beside the keyboard controls.',
+    '+It opens a full-height sheet listing the changed files.',
+    ' ',
+    ' ## Where the diff comes from',
+  ],
+  'src/lib/legacy-diff.ts': [
+    'diff --git a/src/lib/legacy-diff.ts b/src/lib/legacy-diff.ts',
+    'deleted file mode 100644',
+    'index 6fd2e10..0000000',
+    '--- a/src/lib/legacy-diff.ts',
+    '+++ /dev/null',
+    '@@ -1,5 +0,0 @@',
+    '-// Superseded by src/lib/git-diff.ts.',
+    '-export function splitPatch(patch: string) {',
+    '-  return patch.split(/^@@/m);',
+    '-}',
+    '-',
+  ],
+  'assets/screenshots/changes.png': [
+    'diff --git a/assets/screenshots/changes.png b/assets/screenshots/changes.png',
+    'index a1b2c3d..e4f5a6b 100644',
+    'Binary files a/assets/screenshots/changes.png and b/assets/screenshots/changes.png differ',
+  ],
+  'scratch/notes.md': [
+    'diff --git a/scratch/notes.md b/scratch/notes.md',
+    'new file mode 100644',
+    'index 0000000..9c8b7a6',
+    '--- /dev/null',
+    '+++ b/scratch/notes.md',
+    '@@ -0,0 +1,4 @@',
+    '+- one outer horizontal scroller, never one per row',
+    '+- fixed row heights, so the list never re-measures',
+    '+- the raw patch is dropped as soon as it is parsed',
+    '+- refresh is a tap, never a surprise',
+    '\\ No newline at end of file',
+  ],
+};
+
+/** Where the big file's patch is cached once it has been generated. */
+let demoLargePatchLines: string[] | null = null;
+
+/**
+ * One deliberately enormous patch, about six thousand lines of it.
+ *
+ * Built rather than written out, and built lazily: it exists so the paging
+ * path, the "show more" row and the scroll budget are exercised offline, and a
+ * six-thousand-line string literal in the bundle would cost every launch of the
+ * app to serve one fixture. Generated on first request and kept, so a refresh
+ * of the sheet is answered from memory.
+ *
+ * Sixty-two hunks of fifty-one lines each. The hunk count is what matters: the
+ * gateway cuts a page at a hunk boundary, so a fixture with one huge hunk would
+ * page in exactly one step and prove nothing.
+ */
+function demoLargePatch(): string[] {
+  if (demoLargePatchLines) return demoLargePatchLines;
+  const lines: string[] = [
+    'diff --git a/src/lib/demo-terminal-history.ts b/src/lib/demo-terminal-history.ts',
+    'index 9f1c0a2..4b7e551 100644',
+    '--- a/src/lib/demo-terminal-history.ts',
+    '+++ b/src/lib/demo-terminal-history.ts',
+  ];
+  for (let hunk = 0; hunk < 62; hunk += 1) {
+    const start = hunk * 120 + 1;
+    lines.push(`@@ -${start},51 +${start},51 @@ function frame${hunk}(): TerminalRow[] {`);
+    lines.push('   const rows: TerminalRow[] = [];');
+    lines.push(`   const seed = ${hunk * 7919};`);
+    lines.push(`   // frame ${hunk}`);
+    for (let row = 0; row < 45; row += 1) {
+      lines.push(`-  rows.push(row(seed + ${row}, 'legacy', ${row % 8}));`);
+    }
+    for (let row = 0; row < 45; row += 1) {
+      lines.push(`+  rows.push(row(seed + ${row}, 'replayed', ${(row % 8) + 1}));`);
+    }
+    lines.push('   return rows;');
+    lines.push(' }');
+    lines.push(' ');
+  }
+  demoLargePatchLines = lines;
+  return lines;
+}
+
+function demoPatchLines(path: string): string[] {
+  if (path === 'src/lib/demo-terminal-history.ts') return demoLargePatch();
+  return DEMO_GIT_PATCHES[path] ?? [''];
+}
+
+/**
+ * Where a page may stop, by the gateway's own rule.
+ *
+ * A page is cut at the last hunk boundary inside it -- but only if that
+ * boundary lies past the middle of the page. A single hunk longer than the page
+ * is cut raw instead, because backing up to the previous boundary would send a
+ * page that made almost no progress. The fixture has to follow the same rule or
+ * the demo would exercise a parser path the wire never produces, and miss the
+ * one it does.
+ */
+function demoPageEnd(lines: string[], from: number, count: number): number {
+  const end = Math.min(lines.length, from + count);
+  if (end >= lines.length) return lines.length;
+  const middle = from + Math.floor(count / 2);
+  let snapped = -1;
+  for (let index = from + 1; index <= end; index += 1) {
+    const line = lines[index];
+    if (line.startsWith('@@') || line.startsWith('diff --git ')) snapped = index;
+  }
+  return snapped > middle ? snapped : end;
+}
+
+function demoContentEnvelope(data: Record<string, unknown>): Record<string, unknown> {
+  return {
+    schema_version: '1.5.0',
+    capabilities: { parts: true, assets: true, pane_context: true, git_diff: true },
+    data,
+  };
+}
+
+/**
+ * `GET …/panes/{pane_id}/context`, as the demo answers it.
+ *
+ * The badge's whole source: `changed_files` here is what the toolbar shows, so
+ * the icon can carry a count without the file list ever being asked for.
+ */
+export function demoPaneContext(paneId: string): Record<string, unknown> {
+  const inRepo = paneId === DEMO_GIT_PANE;
+  return demoContentEnvelope({
+    session_id: SESSION_ID,
+    pane_id: paneId,
+    cwd: inRepo ? '/Users/demo/code/muqun' : null,
+    cwd_in_fence: inRepo,
+    git: inRepo ? { ...DEMO_GIT_REPO, changed_files: DEMO_GIT_FILES.length } : null,
+    agent: inRepo
+      ? { kind: 'claude', status: 'working', foreground_command: 'claude', profile: true }
+      : null,
+  });
+}
+
+/** `GET …/panes/{pane_id}/git/status`. */
+export function demoGitStatus(paneId: string): Record<string, unknown> {
+  const inRepo = paneId === DEMO_GIT_PANE;
+  return demoContentEnvelope({
+    session_id: SESSION_ID,
+    pane_id: paneId,
+    repo: inRepo ? { ...DEMO_GIT_REPO, changed_files: DEMO_GIT_FILES.length } : null,
+    truncated: false,
+    files: inRepo ? DEMO_GIT_FILES : [],
+  });
+}
+
+/** `GET …/panes/{pane_id}/git/diff`, paged exactly as the route pages. */
+export function demoGitDiff(
+  paneId: string,
+  path: string,
+  from: number,
+  lines: number
+): Record<string, unknown> {
+  if (paneId !== DEMO_GIT_PANE) {
+    return demoContentEnvelope({
+      session_id: SESSION_ID,
+      pane_id: paneId,
+      path,
+      binary: false,
+      from: 0,
+      end: 0,
+      total_lines: 0,
+      truncated: false,
+      patch: '',
+    });
+  }
+
+  const all = demoPatchLines(path);
+  const start = Math.max(0, Math.min(from, all.length));
+  const end = demoPageEnd(all, start, Math.max(1, lines));
+  return demoContentEnvelope({
+    session_id: SESSION_ID,
+    pane_id: paneId,
+    path,
+    binary: path.endsWith('.png'),
+    from: start,
+    end,
+    total_lines: all.length,
+    truncated: end < all.length,
+    // Every line is newline-terminated, as git writes them.
+    patch: end > start ? `${all.slice(start, end).join('\n')}\n` : '',
+  });
 }
