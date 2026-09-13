@@ -119,3 +119,59 @@ is visible "id=theme-appearance-reset"
 
 # section confirm-remove
 press "id=theme-confirm-remove"
+
+# section storage-entry
+# The tail of this flow covers the Storage section's own removal action, and it
+# starts by installing the theme a second time. The steps above spend the first
+# installation proving the detail route -- the reader opens a theme and removes
+# it from there -- and a theme can only be removed once. Rather than take that
+# coverage away, the demo document is imported again from the same file, which
+# is the only offline route a custom theme has into this app.
+#
+# What the tail is for: the applied theme is protected and the row says so, a
+# built-in selection makes it removable, and removing it from Settings leaves
+# the app on the pack it is actually showing.
+press "${TARGET}"
+
+# section scroll-up
+scroll up --pixels 300
+
+# section apply-builtin
+# Applying from the picker is a confirmation: the sheet closes and Settings is
+# underneath it again, with the pack's name in the Theme row. The wait is for
+# that, not for the paint.
+press "${TARGET}"
+wait stable 400 5000
+
+# section storage-scroll
+# STORAGE is the last card before ABOUT. Every target below it is a full row
+# rather than the 13pt instrument label the settings flow needs a pan for, so
+# the ordinary flick is enough: one that overshoots still leaves the row in the
+# tree for the scroll-to-visible to come back to.
+scroll down --pixels 320
+
+# section storage-anchor
+# Where the taps below are made from, and never the position the flick above
+# happened to stop at. A scroll that stops the moment a row enters the tree
+# leaves it against the bottom edge, and the press that follows lands on the
+# navigation bar rather than the row -- the settings flow measured that at
+# y=2398 on a 1080x2400 device. `scroll bottom` is a position the list always
+# has, whatever is in it.
+scroll bottom
+wait stable 400 5000
+
+# section storage-visible
+# The row states its own state: `SettingsNavRow` composes its label and detail
+# into one accessibility label, so `0 themes · 0 B` is what a disabled row says
+# and the manifest asserts that rather than a disabled flag the native matcher
+# does not carry.
+is visible "${TARGET}"
+
+# section storage-press
+press "${TARGET}"
+
+# section storage-settle
+# Removal is one durable library write per theme, each handing the frame back
+# before the next, and then a fresh walk of the theme directory to fill the
+# size in again. The assertion after this step carries its own timeout for it.
+wait stable 400 5000
