@@ -1972,12 +1972,13 @@ msgstr "还没有 SSH 主机。添加一个，即可在任何能连上的机器�
 msgid "No still frames"
 msgstr "不支持静态画面"
 
-#: src/components/theme-gallery.tsx
-msgid "No themes are published yet"
-msgstr "还没有已发布的主题"
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "没有文本改动"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "还没有已发布的主题"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"

@@ -1972,12 +1972,13 @@ msgstr "Пока нет SSH-хостов. Добавьте один, чтобы 
 msgid "No still frames"
 msgstr "Нет стоп-кадров"
 
-#: src/components/theme-gallery.tsx
-msgid "No themes are published yet"
-msgstr "Пока нет опубликованных тем"
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "Текст не изменился"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "Пока нет опубликованных тем"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"

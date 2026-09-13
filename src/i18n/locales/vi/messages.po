@@ -1972,12 +1972,13 @@ msgstr "Chưa có host SSH nào. Thêm một cái để mở shell trên bất k
 msgid "No still frames"
 msgstr "Không có khung hình tĩnh"
 
-#: src/components/theme-gallery.tsx
-msgid "No themes are published yet"
-msgstr "Chưa có giao diện nào được công bố"
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "Không có thay đổi văn bản"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "Chưa có giao diện nào được công bố"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
