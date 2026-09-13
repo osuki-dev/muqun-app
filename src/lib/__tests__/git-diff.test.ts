@@ -524,6 +524,25 @@ describe('flattenDiffRows', () => {
     expect(rows[0]).toMatchObject({ type: 'file', loading: true, note: null });
   });
 
+  test('a later page loading keeps every row already on screen', () => {
+    // The reader tapped "show more" at the bottom of a long file. Dropping the
+    // rows while the request is out would collapse the list and clamp the
+    // scroll offset to the top -- exactly the jump the design forbids.
+    const loaded = parseUnifiedPatch(
+      'diff --git a/src/a.ts b/src/a.ts\n--- a/src/a.ts\n+++ b/src/a.ts\n@@ -1,2 +1,2 @@\n a\n-b\n+B\n'
+    );
+    const pages = new Map([
+      ['src/a.ts', state({ hunks: loaded.hunks, loadedLines: 7, totalLines: 4005, loading: true })],
+    ]);
+    const rows = flattenDiffRows(FILES, new Set(['src/a.ts']), pages);
+    expect(rows[0]).toMatchObject({ type: 'file', loading: false });
+    expect(rows.filter((row) => row.type === 'line')).toHaveLength(3);
+    expect(rows.find((row) => row.type === 'more')).toMatchObject({
+      loading: true,
+      remaining: 3998,
+    });
+  });
+
   test('an expanded file with no page yet is treated as loading', () => {
     const rows = flattenDiffRows(FILES, new Set(['src/a.ts']), new Map());
     expect(rows[0]).toMatchObject({ loading: true });
