@@ -7,6 +7,7 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { AppState, type AppStateStatus, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useLaunchArtwork } from '@/hooks/use-launch-artwork';
 import { feedback } from '@/lib/feedback';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import {
@@ -36,6 +37,16 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const { t } = useLingui();
 
   const theme = useThemeTokens();
+  /*
+   * The lock screen is the app's face while the app itself is hidden, and
+   * every colour on it already comes from the active pack. The mark in the
+   * middle was the one thing that did not: a reader who had dressed Muqun in
+   * their own theme still met the app's default icon every time they came
+   * back to it. It follows the same order as the launch overlay -- the pack's
+   * empty-state picture, then its Home logo, then the bundled mark -- so the
+   * two screens that bracket a session cannot show different faces.
+   */
+  const launchArtwork = useLaunchArtwork();
   const hydrated = useAppSettings((state) => state.hydrated);
   const appLockEnabled = useAppSettings((state) => state.appLockEnabled);
   const [locked, setLocked] = useState(false);
@@ -197,7 +208,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
           style={[styles.lockScreen, { backgroundColor: theme.colors.background }]}>
           <Animated.View entering={fadeIn('short')} style={styles.lockContent}>
             <View style={[styles.iconFrame, { backgroundColor: theme.colors.surfaceRaised }]}>
-              <Image source={brandMark} contentFit="contain" style={styles.appIcon} />
+              <Image
+                source={launchArtwork.kind === 'default' ? brandMark : { uri: launchArtwork.uri }}
+                contentFit="contain"
+                style={styles.appIcon}
+              />
               <View style={[styles.lockBadge, { backgroundColor: theme.colors.primary }]}>
                 <LockKeyhole size={16} color={theme.colors.onPrimary} strokeWidth={2.4} />
               </View>
