@@ -5,7 +5,13 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronDown, ChevronRight, RefreshCw, X } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  Platform,
+} from 'react-native';
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -807,6 +813,11 @@ const RULER = 'M'.repeat(50);
 
 const LINE_FONT_SIZE = 11.5;
 const LINE_ROW_HEIGHT = 18;
+// `monospace` is a real family on Android and not on iOS, where it falls back
+// to the proportional system font -- and then no two columns line up, which is
+// the one thing a diff exists to do. Menlo is what the rest of the app uses
+// there (`server-terminal-workspace.tsx`, `ssh-host-form.tsx`).
+const MONO_FONT = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 const HUNK_ROW_HEIGHT = 26;
 const FILE_ROW_HEIGHT = 58;
 const MORE_ROW_HEIGHT = 44;
@@ -980,7 +991,7 @@ const styles = StyleSheet.create({
   },
   hunkText: {
     paddingHorizontal: LINE_PADDING,
-    fontFamily: 'monospace',
+    fontFamily: MONO_FONT,
     fontSize: 10.5,
   },
   lineRow: {
@@ -988,7 +999,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lineText: {
-    fontFamily: 'monospace',
+    fontFamily: MONO_FONT,
     fontSize: LINE_FONT_SIZE,
     lineHeight: LINE_ROW_HEIGHT,
     includeFontPadding: false,
@@ -1022,7 +1033,7 @@ const styles = StyleSheet.create({
     lineHeight: LINE_ROW_HEIGHT,
     textAlign: 'center',
     includeFontPadding: false,
-    fontFamily: 'monospace',
+    fontFamily: MONO_FONT,
   },
   moreRow: {
     height: MORE_ROW_HEIGHT,
