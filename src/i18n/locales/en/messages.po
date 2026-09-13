@@ -54,6 +54,12 @@ msgstr "{0, plural, one {# minute} other {# minutes}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# more line} other {# more lines}}"
 
+#. placeholder {0}: unused.count
+#. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
+#: src/components/settings-storage.tsx
+msgid "{0, plural, one {# theme} other {# themes}} · {1}"
+msgstr "{0, plural, one {# theme} other {# themes}} · {1}"
+
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
@@ -669,6 +675,10 @@ msgstr "Confirm clear cache"
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "Confirm pairing"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm remove unused themes"
+msgstr "Confirm remove unused themes"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-host-form.tsx
@@ -1603,6 +1613,10 @@ msgstr "Keep {label}"
 msgid "Keep cached files"
 msgstr "Keep cached files"
 
+#: src/components/settings-storage.tsx
+msgid "Keep saved themes"
+msgstr "Keep saved themes"
+
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "Keep the terminal you are watching on the Lock Screen while its agent works"
@@ -2477,6 +2491,7 @@ msgstr "Refresh output"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-storage.tsx
 msgid "Remove"
 msgstr "Remove"
 
@@ -2500,6 +2515,18 @@ msgstr "Remove host"
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
 msgstr "Remove this theme?"
+
+#: src/components/settings-storage.tsx
+msgid "Remove unused themes"
+msgstr "Remove unused themes"
+
+#: src/components/settings-storage.tsx
+msgid "Removing unused themes"
+msgstr "Removing unused themes"
+
+#: src/components/settings-storage.tsx
+msgid "Removing…"
+msgstr "Removing…"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
