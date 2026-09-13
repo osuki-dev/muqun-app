@@ -30,9 +30,21 @@ function validBackgroundOpacity(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
 }
 
-/** User preferences never mutate the author's stored manifest. */
+/**
+ * User preferences never mutate the author's stored manifest.
+ *
+ * The contrast floor is applied to the author's values and only to them.
+ * `clampThemeOpacity` answers "what may a pack someone else made impose on a
+ * reader who never asked for it", and that is worth enforcing -- but it used to
+ * run last, over the whole manifest, which meant it also answered "how
+ * transparent may you make your own terminal on your own device", and there it
+ * has no standing. Clamping the author first and laying the owner's choice on
+ * top afterwards keeps the first answer and drops the second: a pack still
+ * cannot ship something unreadable, and the slider in Appearance goes wherever
+ * the person holding the phone puts it.
+ */
 export function effectiveThemeManifest(installed: InstalledTheme): ThemeManifest {
-  const manifest = cloneThemeData(installed.manifest);
+  const manifest = clampThemeOpacity(cloneThemeData(installed.manifest));
   if (validBackgroundOpacity(installed.terminalBackgroundOpacity)) {
     for (const mode of ['light', 'dark'] as const)
       manifest.variants[mode].terminal.backgroundOpacity = installed.terminalBackgroundOpacity;
@@ -62,7 +74,7 @@ export function effectiveThemeManifest(installed: InstalledTheme): ThemeManifest
         ? authored
         : { mode: 'default' };
   }
-  return clampThemeOpacity(manifest);
+  return manifest;
 }
 
 export type ThemeLibrary = {

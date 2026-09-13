@@ -126,7 +126,30 @@ export function GlassChrome({
     backgroundOpacity < 1
       ? 'solid'
       : resolveThemeMaterial(active?.manifest, surface, hasImage, glassAvailable);
-  const chromeStyle: StyleProp<ViewStyle> = [style, hasImage && { overflow: 'hidden' }];
+  /**
+   * An edge, wherever a pack has made surfaces translucent.
+   *
+   * Chrome is drawn from `surfaceRaised` and it usually sits on `background` or
+   * `surface` -- three tokens a pack is free to make nearly the same colour, and
+   * several do. At full opacity the kit's own shadow separates them; once a pack
+   * sets a surface opacity the fill thins towards whatever is behind it and the
+   * control stops having a shape. That is how a header button became two loose
+   * glyphs on a panel and a close button became a smudge.
+   *
+   * `border` is the one token every theme defines for exactly this, and it
+   * holds whatever the fill underneath ends up being. On `chromeStyle` rather
+   * than in the five branches below, because every one of them needs it and a
+   * rule that has to be repeated five times is a rule that will be repeated
+   * four.
+   */
+  const chromeStyle: StyleProp<ViewStyle> = [
+    style,
+    hasImage && { overflow: 'hidden' },
+    backgroundOpacity < 1 && {
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: theme.colors.border,
+    },
+  ];
   const opacityLimit = useMemo(
     () =>
       active && hasImage
@@ -210,7 +233,7 @@ export function GlassChrome({
       <Animated.View
         entering={entering}
         exiting={exiting}
-        style={[chromeStyle, { backgroundColor: theme.colors.surfaceRaised }]}>
+        style={[chromeStyle, { backgroundColor: background(theme.colors.surfaceRaised) }]}>
         {content}
       </Animated.View>
     );

@@ -10,12 +10,16 @@ is visible "${TARGET}"
 scroll down --pixels 300
 
 # section close-sheet
-# Removing the theme already returned from the detail route, so what is on
-# screen now is the theme picker itself -- a native sheet, which has a close
-# control rather than an in-app back control for `back` to find.
-press "label=\"Close theme picker\""
+# Removing the theme leaves the detail route, and leaving it unwinds the whole
+# root stack -- Settings is a pushed screen on that stack, not a modal over it
+# -- so what is on screen is Home, with the built-in theme back. Captured from
+# the device: the failure shot for the older reading of this step was Home
+# wearing the default pack, which is the right end state and the one worth
+# asserting. There is no picker left to close and no in-app back control to
+# find, so this checks the thing that proves the removal landed.
 wait stable 400 5000
-is visible "label=\"Go back\""
+is visible "label=\"Settings\""
+is hidden "id=\"theme-row-theme-qa\""
 
 # section input
 fill "id=theme-json-input" "{\"format\":\"muqun-theme\",\"schemaVersion\":1,\"id\":\"theme-qa\",\"name\":\"Theme QA\",\"version\":\"1.0.0\",\"variants\":{\"light\":{\"colors\":{\"background\":\"#F7F3EC\",\"surface\":\"#FFFFFF\",\"surfaceRaised\":\"#ECE7DF\",\"border\":\"#E0DAD1\",\"borderStrong\":\"#C2B9AE\",\"text\":\"#050B12\",\"textMuted\":\"#5D6679\",\"textSubtle\":\"#6A7281\",\"textDisabled\":\"#A7ADB8\",\"primary\":\"#F1B7D8\",\"onPrimary\":\"#050B12\",\"primarySubtle\":\"#FF5A4A24\",\"danger\":\"#D93025\",\"dangerSubtle\":\"#D930251F\",\"success\":\"#1F9D6B\",\"warning\":\"#D98A1F\",\"info\":\"#3E63FF\"},\"terminal\":{\"background\":\"#F7F3EC\",\"foreground\":\"#050B12\",\"cursor\":\"#C54337\",\"link\":\"#3455DC\",\"selection\":\"#FF5A4A24\",\"ansi\":[\"#050B12\",\"#D93025\",\"#027A48\",\"#B54708\",\"#3538CD\",\"#6941C6\",\"#0E7090\",\"#475467\",\"#6A7281\",\"#B42318\",\"#027A48\",\"#B54708\",\"#3E63FF\",\"#7F56D9\",\"#0E7090\",\"#050B12\"]}},\"dark\":{\"colors\":{\"background\":\"#050B12\",\"surface\":\"#0B111A\",\"surfaceRaised\":\"#131B26\",\"border\":\"#1C2532\",\"borderStrong\":\"#2E3A4A\",\"text\":\"#FCFBFA\",\"textMuted\":\"#B6BDC8\",\"textSubtle\":\"#8B95A5\",\"textDisabled\":\"#6B7585\",\"primary\":\"#F1B7D8\",\"onPrimary\":\"#050B12\",\"primarySubtle\":\"#FF5A4A3D\",\"danger\":\"#F2554A\",\"dangerSubtle\":\"#F2554A29\",\"success\":\"#34C08B\",\"warning\":\"#F0A93C\",\"info\":\"#6B87FF\"},\"terminal\":{\"background\":\"#08111B\",\"foreground\":\"#D8E1EA\",\"cursor\":\"#FF5A4A\",\"link\":\"#A4BCFD\",\"selection\":\"#FF5A4A3D\",\"ansi\":[\"#0C121A\",\"#F2554A\",\"#34C08B\",\"#F0A93C\",\"#7DA2FF\",\"#C7A0FF\",\"#67E3F9\",\"#B6BDC8\",\"#6B7585\",\"#FDA29B\",\"#6CE9A6\",\"#FEC84B\",\"#A4BCFD\",\"#D6BBFB\",\"#A5F0FC\",\"#FCFBFA\"]}}},\"homeIdentity\":{\"name\":{\"mode\":\"default\"},\"logo\":{\"mode\":\"default\"}}}"
@@ -30,6 +34,24 @@ is hidden "id=\"theme-apply\""
 screenshot dist/theme-applied-status.png
 
 # section reopen-applied
+# Applying now leaves, and it leaves further than it used to. The one button at
+# the bottom of the detail route both writes the theme and closes the stack it
+# was opened on, and `dismissAll` unwinds the root stack -- Settings is a pushed
+# screen on it, not a modal over it -- so the reader lands on Home. Captured
+# from the device rather than assumed: the failure shot for this step was the
+# Home screen wearing the theme that had just been applied. So the way back to
+# the row is the way in was: Settings, then the picker. The property under test
+# is unchanged -- a theme that has just been applied is still reachable from the
+# list it was added to.
+press "label=\"Settings\""
+wait stable 400 5000
+# No scroll. `scroll --pixels` is a flick and carries about seven times the
+# momentum it is given, so a 300 here landed at the foot of the page with the
+# row far above the viewport -- the failure shot for that attempt was ABOUT and
+# the version line. Appearance is the second section and the row is on the
+# first screen of Settings.
+press "id=settings-theme-row"
+wait stable 400 5000
 # The row and its remove button both carry the theme's name, so neither the
 # name nor the name plus a role identifies the row. Its testID does.
 press "id=theme-row-theme-qa"
@@ -72,6 +94,12 @@ is visible "text=100%"
 
 # section home-visibility
 press "id=theme-show-home-logo"
+# `Show Home text` sits directly under `Show Home logo`, which puts it behind
+# the DONE bar this route pins to the bottom of the screen. A deterministic pan
+# rather than `scroll --pixels`: that one is a flick and overshoots by about
+# sevenfold, which on this short page means the foot of it.
+gesture pan 200 620 0 -150 400
+wait stable 400 5000
 press "id=theme-show-home-text"
 wait stable 400 5000
 is visible "id=theme-appearance-reset"

@@ -1,4 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
+
+import { resolveHomeIdentity } from '@/theme/resolve';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { useState } from 'react';
 import { View } from 'react-native';
@@ -87,7 +89,7 @@ export function ThemeAppearanceSettings({
         <Toggle
           testID="theme-show-home-logo"
           accessibilityLabel={t`Show Home logo`}
-          value={effective.homeIdentity?.logo?.mode !== 'hidden'}
+          value={resolveHomeIdentity(effective).logo !== null}
           disabled={disabled}
           onValueChange={(visible) => onLogoChange(!visible)}
         />
@@ -100,7 +102,7 @@ export function ThemeAppearanceSettings({
         <Toggle
           testID="theme-show-home-text"
           accessibilityLabel={t`Show Home text`}
-          value={effective.homeIdentity?.name?.mode !== 'hidden'}
+          value={resolveHomeIdentity(effective).name !== null}
           disabled={disabled}
           onValueChange={(visible) => onTextChange(!visible)}
         />
@@ -136,8 +138,26 @@ function OpacityControl({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const [draft, setDraft] = useState<number | null>(null);
-  const shown = Math.max(minimum, draft ?? value);
+  /**
+   * The contrast floor advises here; it does not hold the slider.
+   *
+   * Two different things were being decided by one number. `clampThemeOpacity`
+   * raises an *authored* value to this floor at install time, and that is worth
+   * keeping: it governs what a pack someone else made can impose on a reader
+   * who never asked for it. This control is the other case entirely -- the
+   * owner of the device, moving their own slider, on a wallpaper they chose.
+   * Refusing them is not protection, it is a guess about their eyes made by a
+   * formula that assumes the worst possible backdrop (`minimumContrast` bounds
+   * every pair against pure black *and* pure white, so the floor can never
+   * reach 0 no matter how dark the picture actually is).
+   *
+   * So the number stays on screen, as the recommendation it always was, and
+   * the travel below it is theirs. Anyone who takes the terminal to nothing
+   * and cannot read it has the same slider to bring it back.
+   */
+  const shown = draft ?? value;
   const minimumPercent = Math.ceil(minimum * 100);
+  const belowRecommended = shown + 0.0001 < minimum;
   return (
     <View style={{ gap: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -154,7 +174,7 @@ function OpacityControl({
       </Text>
       <OpacitySlider
         value={shown}
-        minimumValue={minimum}
+        minimumValue={0}
         disabled={disabled}
         label={label}
         testID={testID}
@@ -164,8 +184,10 @@ function OpacityControl({
           onCommit(next);
         }}
       />
-      <Text variant="caption" color={colors.textMuted}>
-        {t`Minimum opacity for readable text: ${minimumPercent}%`}
+      <Text variant="caption" color={belowRecommended ? colors.warning : colors.textMuted}>
+        {belowRecommended
+          ? t`Below ${minimumPercent}%, text is no longer guaranteed to stay readable`
+          : t`Recommended minimum for readable text: ${minimumPercent}%`}
       </Text>
     </View>
   );

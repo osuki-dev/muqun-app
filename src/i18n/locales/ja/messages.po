@@ -274,9 +274,14 @@ msgstr "外観"
 msgid "Appearance, terminal, security"
 msgstr "外観、ターミナル、セキュリティ"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "テーマを適用"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Applying…"
+msgstr "適用中…"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -297,10 +302,6 @@ msgstr "そのコードを Gateway に確認しています"
 #: src/components/new-task-sheet.tsx
 msgid "Asking the server what it can run…"
 msgstr "このサーバーで実行できるものを問い合わせています…"
-
-#: src/app/commands.tsx
-msgid "Assign a task"
-msgstr "タスクを割り当てる"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -364,6 +365,10 @@ msgstr "ソフトウェアキーボードに戻る"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "バックスペース"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "{minimumPercent}% を下回ると、文字が読めることは保証されません"
 
 #: src/lib/local-authentication.ts
 msgid "biometrics"
@@ -463,14 +468,6 @@ msgstr "メニューからシミュレータを選んでください"
 #: src/components/agent-assignment-bar.tsx
 msgid "Choose an assistant"
 msgstr "アシスタントを選択"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field · {collaborationCount} assigned"
-msgstr "入力欄の上でアシスタントを選択 · {collaborationCount} 件割り当て済み"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field, then write the task there."
-msgstr "入力欄の上でアシスタントを選び、そこにタスクを書いてください"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -865,6 +862,10 @@ msgstr "実行中のものを読み込めませんでした"
 msgid "Could not open system settings"
 msgstr "システム設定を開けませんでした"
 
+#: src/hooks/use-theme-file-open.ts
+msgid "Could not open that theme"
+msgstr "そのテーマを開けませんでした"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "ファイルを開けませんでした"
@@ -884,6 +885,11 @@ msgstr "SSH トンネルを開けませんでした"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "このファイルを開けませんでした"
+
+#: src/components/asset-viewer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open this theme."
+msgstr "このテーマを開けませんでした"
 
 #: src/components/settings-alerts.tsx
 msgid "Could not preview notification"
@@ -1082,6 +1088,10 @@ msgstr "切断しました"
 msgid "Dismiss the approval error"
 msgstr "承認エラーを閉じる"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Dismiss this theme"
+msgstr "このテーマを閉じる"
+
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "離席中の変化を閉じる"
@@ -1094,6 +1104,7 @@ msgstr "新着情報を閉じる"
 msgid "Docs"
 msgstr "ドキュメント"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1113,6 +1124,21 @@ msgstr "下矢印"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "ダウンロードしてプレビュー"
+
+#. placeholder {0}: formatBytes(state.received)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0}"
+msgstr "ダウンロード中 · {0}"
+
+#. placeholder {0}: formatBytes(state.received)
+#. placeholder {1}: formatBytes(state.total)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0} of {1}"
+msgstr "ダウンロード中 · {0} / {1}"
+
+#: src/components/asset-viewer.tsx
+msgid "Downloading theme"
+msgstr "テーマをダウンロード中"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1441,6 +1467,7 @@ msgstr "挿入モード"
 msgid "Install command copied"
 msgstr "インストールコマンドをコピーしました"
 
+#: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "画像をインストールしています"
@@ -1685,10 +1712,6 @@ msgstr "確認済みにする"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "{0} をメンション"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum opacity for readable text: {minimumPercent}%"
-msgstr "文字を読みやすくする最低不透明度: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2060,6 +2083,15 @@ msgstr "ファイルツリーを開く"
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "ワークスペース {0} を開く（{1, plural, one {# 実行中} other {# 実行中}}）。長押しで閉じる"
 
+#: src/app/+not-found.tsx
+msgid "Opening"
+msgstr "開いています"
+
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Opening that file"
+msgstr "そのファイルを開いています"
+
 #: src/app/explore.tsx
 msgid "Opening the server."
 msgstr "サーバーを開いています"
@@ -2230,6 +2262,10 @@ msgstr "シミュレータを見る"
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "シミュレーターをプレビュー（SSH トンネル経由では利用できません）"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Preview and apply"
+msgstr "プレビューして適用"
+
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
@@ -2296,6 +2332,11 @@ msgstr "SSH ホスト {host} 経由で到達"
 msgid "Reaching the Gateway"
 msgstr "Gateway に接続中"
 
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Reading the theme"
+msgstr "テーマを読み込んでいます"
+
 #: src/components/theme-link-import.tsx
 msgid "Reading the theme link"
 msgstr "テーマのリンクを読み込んでいます"
@@ -2303,6 +2344,10 @@ msgstr "テーマのリンクを読み込んでいます"
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "入力待ち"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Ready to preview. Nothing is applied until you say so."
+msgstr "プレビューの準備ができました。あなたが決めるまで何も適用しません"
 
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
@@ -2315,6 +2360,10 @@ msgstr "最近のコミット"
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
 msgstr "最近の出力"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "文字が読める推奨の下限:{minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2666,10 +2715,6 @@ msgstr "文字を送る"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
 msgstr "このタスクを {assignmentLabel} に送る"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Send to {assignmentLabel} — tap to change"
-msgstr "{assignmentLabel} に送信 — タップで変更"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -3083,6 +3128,10 @@ msgstr "そのアシスタントはこのターミナルにはもういません
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください"
+
+#: src/hooks/use-theme-file-open.ts
+msgid "That file is not a Muqun theme"
+msgstr "そのファイルは Muqun のテーマではありません"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."

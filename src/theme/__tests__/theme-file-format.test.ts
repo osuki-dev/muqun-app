@@ -75,7 +75,12 @@ test('a file from outside the app is previewed, never applied', () => {
   // The one property that matters for a file arriving from a message: it is as
   // unreviewed as one picked by hand, so it stops at the preview.
   const hook = readFileSync('src/hooks/use-theme-file-open.ts', 'utf8');
-  expect(hook).toContain('openThemeEditor(preview)');
+  // The editor and nothing else. The second argument says only what the editor
+  // should leave behind it -- a handed file has `+not-found` under it, so home
+  // replaces that placeholder first (`use-open-theme-editor`) -- and carries no
+  // permission to write anything. What this test is really guarding is the two
+  // negatives below: this path never applies and never saves.
+  expect(/openThemeEditor\(preview(, true)?\)/.test(hook)).toBe(true);
   expect(hook).not.toContain('apply(');
   expect(hook).not.toContain('save(');
 });

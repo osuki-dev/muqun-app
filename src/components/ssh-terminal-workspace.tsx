@@ -1,4 +1,3 @@
-import { EdgeFade } from '@/components/edge-fade';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -25,6 +24,7 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
+import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { SshHostKeyDialog, SshKeyboardInteractiveDialog } from '@/components/ssh-host-key-dialog';
 import { SkiaTerminal, type TerminalCellMetrics } from '@/components/skia-terminal';
 import {
@@ -182,12 +182,6 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const terminalTextSize = useAppSettings((state) => state.terminalTextSize);
   const showTerminalKeyRow = useAppSettings((state) => state.showTerminalKeyRow);
   const terminalTheme = useTerminalTheme();
-  // The wallpaper is uncovered in exactly one strip on this screen -- between
-  // the header and the terminal, which paints its own opaque background over
-  // everything below. Without a transition that strip ends in a straight line
-  // across the display. The gateway screen never shows it: there the terminal
-  // fills the page and the header floats over it.
-  const hasShellArtwork = useHasThemeArtwork('shell.background');
 
   const hosts = useSshHostsStore((state) => state.hosts);
   const loading = useSshHostsStore((state) => state.loading);
@@ -1075,36 +1069,6 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
       <ThemeArtwork slot="shell.background" />
-      <ScreenHeader
-        title={record.label}
-        right={
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={
-              connecting
-                ? t`Cancel connecting to ${record.label}`
-                : connected
-                  ? t`Disconnect from ${record.label}`
-                  : t`Reconnect to ${record.label}`
-            }
-            onPress={connecting ? cancelConnect : connected ? disconnect : reconnect}
-            style={styles.headerButton}>
-            {connecting ? (
-              <X size={19} color={theme.colors.text} strokeWidth={2} />
-            ) : connected ? (
-              <Unplug size={19} color={theme.colors.text} strokeWidth={2} />
-            ) : (
-              <RefreshCw size={19} color={theme.colors.text} strokeWidth={2} />
-            )}
-          </PressableScale>
-        }
-      />
-
-      <StatusLine status={status} address={sshHostAddress(record)} onReconnect={reconnect} />
-
-      {hasShellArtwork ? (
-        <EdgeFade edge="bottom" color={terminalTheme.background} style={styles.terminalTopFade} />
-      ) : null}
 
       <View
         style={styles.terminal}
@@ -1122,6 +1086,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             terminalId={`ssh:${record.id}:${attempt}`}
             textSize={terminalTextSize}
             stickBottomNonce={stickBottomNonce}
+            // What the floating chrome covers at the top, the same number the
+            // gateway screen passes for the same glass.
+            topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
             // What the dock covers, so the canvas rests the live rows above it
             // rather than behind it. The box no longer shrinks for the dock, so
             // this is what replaces the height the dock used to take.
@@ -1206,6 +1173,53 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           </GlassChrome>
         </Animated.View>
       )}
+
+      {/* Over the terminal, not above it.
+
+          The wallpaper used to be uncovered in a strip between the header and
+          the canvas: a pack's picture ran at full strength down to a straight
+          line across the display and washed out below it, which reads as one
+          image broken in half rather than as a terminal on a page. The gateway
+          screen never showed that, for the reason its own comment gives -- the
+          terminal fills the page and the chrome floats over it -- so this is
+          that arrangement rather than a new one, and `topInset` on the canvas
+          is what keeps the live rows clear of the glass. */}
+      <View pointerEvents="box-none" style={styles.headerOverlay}>
+        <ScreenHeader
+          title={record.label}
+          right={
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={
+                connecting
+                  ? t`Cancel connecting to ${record.label}`
+                  : connected
+                    ? t`Disconnect from ${record.label}`
+                    : t`Reconnect to ${record.label}`
+              }
+              onPress={connecting ? cancelConnect : connected ? disconnect : reconnect}
+              style={styles.headerButton}>
+              {connecting ? (
+                <X size={19} color={theme.colors.text} strokeWidth={2} />
+              ) : connected ? (
+                <Unplug size={19} color={theme.colors.text} strokeWidth={2} />
+              ) : (
+                <RefreshCw size={19} color={theme.colors.text} strokeWidth={2} />
+              )}
+            </PressableScale>
+          }
+        />
+
+        {/* A connected shell says so by working. The line is for the states
+            that need words -- connecting, disconnected, failed, cancelled --
+            and it used to stay after a successful connect, holding 28 points
+            of the terminal open to repeat what the prompt below it was already
+            demonstrating. It comes back the moment the connection stops being
+            the boring case. */}
+        {status.phase === 'connected' ? null : (
+          <StatusLine status={status} address={sshHostAddress(record)} onReconnect={reconnect} />
+        )}
+      </View>
 
       {prompt && (prompt.kind === 'trust' || prompt.kind === 'mismatch') ? (
         <SshHostKeyDialog
@@ -1429,8 +1443,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  terminalTopFade: {
-    height: 16,
+  /** The chrome's layer: over the terminal, pinned to the top of the screen. */
+  headerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   terminal: {
     flex: 1,

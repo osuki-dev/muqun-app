@@ -19,12 +19,14 @@ is hidden "id=\"composer-assignment-chip\""
 # The composer is an ordinary composer, addressed to the agent on screen.
 is visible "id=\"terminal-composer-input\""
 is visible "label=\"Send to agent\""
-# Quick actions still lists the entry, and it still closes onto this terminal:
-# the row is about where a task is written, not about whether one can be sent,
-# and the strip it asks for appears as soon as the session has a target.
+# Quick actions no longer carries its own entry for this. The control that
+# opens the assistant strip lives in the key row, a few points below the sheet
+# and visible whenever the composer is, so a second one behind a sheet was a
+# choice about which button to press rather than about what to do.
 press "role=button text=\"Open quick actions\""
-wait text "Assign a task" 10000
-press "role=button text=\"Assign a task\""
+wait text "Quick actions" 10000
+is hidden "role=button text=\"Assign a task\""
+press "role=button label=\"Close quick actions\" || label=\"Close\""
 wait "role=button text=\"Open quick actions\"" 10000
 is visible "id=\"terminal-composer-input\""
 screenshot "shots/collaboration-composer.png"

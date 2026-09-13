@@ -64,12 +64,26 @@ export function SshHostRow({
   onOpen,
   onEdit,
   nowMs,
+  showAddress = true,
   testID,
 }: {
   record: SshHostRecord;
   onOpen: () => void;
   /** Absent for the demo host, which is not saved and cannot be changed, and on the home screen. */
   onEdit?: () => void;
+  /**
+   * Whether `user@host` is drawn under the name.
+   *
+   * The host list is where a reader goes to tell two machines apart and to
+   * check what they are about to connect to, so it keeps the address. The home
+   * screen is a list of things to open, sitting under a column of gateway
+   * cards that identify themselves by name alone -- an address there is a
+   * second line of detail on a row nobody came to inspect.
+   *
+   * Explicit rather than inferred from `onEdit`, which is also absent for the
+   * demo host inside the list, where the address should still show.
+   */
+  showAddress?: boolean;
   /** Read at the caller's render, so a screen of rows ages against one clock. */
   nowMs: number;
   testID?: string;
@@ -83,7 +97,10 @@ export function SshHostRow({
   const lastConnected = useSshHostAgeLabel(sshHomeAge(record, nowMs));
 
   // The hint carries what the glyphs say, so a screen reader hears the
-  // address, the age and the trust in one breath after the name.
+  // address, the age and the trust in one breath after the name. It keeps the
+  // address even where the row does not draw it: two hosts can share a label,
+  // and a reader who cannot see the row is the one who needs the thing that
+  // tells them apart most.
   const hint = trusted
     ? `${address} · ${lastConnected} · ${t`Host key trusted`}`
     : `${address} · ${lastConnected}`;
@@ -123,9 +140,11 @@ export function SshHostRow({
               </View>
             ) : null}
           </View>
-          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-            {address}
-          </Text>
+          {showAddress ? (
+            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+              {address}
+            </Text>
+          ) : null}
           <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
             {lastConnected}
           </Text>

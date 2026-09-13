@@ -41,8 +41,16 @@ test('the SSH status line keeps a readable plate wherever the shell wallpaper is
   expect(line).toContain('hasShell');
   expect(line).toContain('backgroundColor: surfaceBackground(theme.colors.background)');
   expect(source).toContain("useHasThemeArtwork('shell.background')");
-  // The strip between header and terminal must not end in a straight edge.
-  expect(source).toContain('styles.terminalTopFade');
+  // There must be no strip of bare wallpaper between the header and the
+  // terminal at all. This used to be guarded by requiring a fade at the
+  // terminal's top edge, which softened the straight line the strip ended in
+  // rather than removing it -- the picture still ran vivid above and washed
+  // out below. The chrome now floats over a terminal that fills the page, the
+  // arrangement the gateway screen always had, so the guard is that the header
+  // is an overlay and the canvas is told what it covers.
+  expect(source).toContain('styles.headerOverlay');
+  expect(source).toContain('topInset={insets.top + NAV_HEADER_TOP_GAP + 54}');
+  expect(source).not.toContain('terminalTopFade');
 });
 
 test('the send button carries the primary-button artwork, not just the plain buttons', () => {

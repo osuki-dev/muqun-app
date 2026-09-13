@@ -274,9 +274,14 @@ msgstr "Aspeto"
 msgid "Appearance, terminal, security"
 msgstr "Aspeto, terminal, segurança"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "Aplicar tema"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Applying…"
+msgstr "Aplicando…"
 
 #: src/i18n/labels.ts
 msgid "Approve"
@@ -297,10 +302,6 @@ msgstr "A consultar esse código no Gateway"
 #: src/components/new-task-sheet.tsx
 msgid "Asking the server what it can run…"
 msgstr "A perguntar ao servidor o que pode executar…"
-
-#: src/app/commands.tsx
-msgid "Assign a task"
-msgstr "Atribuir uma tarefa"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -364,6 +365,10 @@ msgstr "Voltar ao teclado no ecrã"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "Retrocesso"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "Abaixo de {minimumPercent}%, a legibilidade do texto deixa de ser garantida"
 
 #: src/lib/local-authentication.ts
 msgid "biometrics"
@@ -463,14 +468,6 @@ msgstr "Escolha um simulador no menu"
 #: src/components/agent-assignment-bar.tsx
 msgid "Choose an assistant"
 msgstr "Escolha um assistente"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field · {collaborationCount} assigned"
-msgstr "Escolha um assistente acima do campo de mensagem · {collaborationCount} atribuídas"
-
-#: src/app/commands.tsx
-msgid "Choose an assistant above the message field, then write the task there."
-msgstr "Escolha um assistente acima do campo de mensagem e escreva a tarefa ali"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -865,6 +862,10 @@ msgstr "Não foi possível carregar o que está a correr"
 msgid "Could not open system settings"
 msgstr "Não foi possível abrir as configurações do sistema"
 
+#: src/hooks/use-theme-file-open.ts
+msgid "Could not open that theme"
+msgstr "Não foi possível abrir esse tema"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "Não foi possível abrir o ficheiro"
@@ -884,6 +885,11 @@ msgstr "Não foi possível abrir o túnel SSH"
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
 msgstr "Não foi possível abrir este ficheiro"
+
+#: src/components/asset-viewer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Could not open this theme."
+msgstr "Não foi possível abrir este tema"
 
 #: src/components/settings-alerts.tsx
 msgid "Could not preview notification"
@@ -1082,6 +1088,10 @@ msgstr "Desconectado"
 msgid "Dismiss the approval error"
 msgstr "Dispensar o erro de aprovação"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Dismiss this theme"
+msgstr "Dispensar este tema"
+
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
 msgstr "Dispensar o que aconteceu enquanto você esteve fora"
@@ -1094,6 +1104,7 @@ msgstr "Dispensar as novidades"
 msgid "Docs"
 msgstr "Docs"
 
+#: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1113,6 +1124,21 @@ msgstr "Seta para baixo"
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Baixar e visualizar"
+
+#. placeholder {0}: formatBytes(state.received)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0}"
+msgstr "Baixando · {0}"
+
+#. placeholder {0}: formatBytes(state.received)
+#. placeholder {1}: formatBytes(state.total)
+#: src/components/terminal-theme-drop.tsx
+msgid "Downloading · {0} of {1}"
+msgstr "Baixando · {0} de {1}"
+
+#: src/components/asset-viewer.tsx
+msgid "Downloading theme"
+msgstr "Baixando o tema"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1441,6 +1467,7 @@ msgstr "Modo de inserção"
 msgid "Install command copied"
 msgstr "Comando de instalação copiado"
 
+#: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Instalando imagens"
@@ -1685,10 +1712,6 @@ msgstr "Marcar como revisado"
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Mencionar {0}"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum opacity for readable text: {minimumPercent}%"
-msgstr "Opacidade mínima para texto legível: {minimumPercent}%"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2060,6 +2083,15 @@ msgstr "Abrir o explorador de ficheiros"
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Abrir o espaço de trabalho {0}, {1, plural, one {# ativo} other {# ativos}}. Prima sem soltar para fechar"
 
+#: src/app/+not-found.tsx
+msgid "Opening"
+msgstr "Abrindo"
+
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Opening that file"
+msgstr "Abrindo esse arquivo"
+
 #: src/app/explore.tsx
 msgid "Opening the server."
 msgstr "A abrir o servidor"
@@ -2230,6 +2262,10 @@ msgstr "Ver um simulador"
 msgid "Preview a simulator, unavailable over the SSH tunnel"
 msgstr "Pré-visualizar um simulador — indisponível através do túnel SSH"
 
+#: src/components/terminal-theme-drop.tsx
+msgid "Preview and apply"
+msgstr "Ver e aplicar"
+
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Confira a prévia primeiro. Seu tema atual não será alterado"
@@ -2296,6 +2332,11 @@ msgstr "Alcançado pelo host SSH {host}"
 msgid "Reaching the Gateway"
 msgstr "A contactar o Gateway"
 
+#: src/app/+not-found.tsx
+#: src/components/custom-theme-library.tsx
+msgid "Reading the theme"
+msgstr "Lendo o tema"
+
 #: src/components/theme-link-import.tsx
 msgid "Reading the theme link"
 msgstr "Lendo o link do tema"
@@ -2303,6 +2344,10 @@ msgstr "Lendo o link do tema"
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "Aguardando entrada"
+
+#: src/components/terminal-theme-drop.tsx
+msgid "Ready to preview. Nothing is applied until you say so."
+msgstr "Pronto para ver. Nada é aplicado até você decidir"
 
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
@@ -2315,6 +2360,10 @@ msgstr "Commits recentes"
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
 msgstr "Saída recente"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "Mínimo recomendado para texto legível: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -2666,10 +2715,6 @@ msgstr "Enviar o texto"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
 msgstr "Enviar esta tarefa para {assignmentLabel}"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Send to {assignmentLabel} — tap to change"
-msgstr "Enviar para {assignmentLabel} — toque para mudar"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
@@ -3083,6 +3128,10 @@ msgstr "Esse assistente não está mais neste terminal. Reabra-o e tente novamen
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "Esse código foi recusado. Mantenha firme para ler outro"
+
+#: src/hooks/use-theme-file-open.ts
+msgid "That file is not a Muqun theme"
+msgstr "Esse arquivo não é um tema do Muqun"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."

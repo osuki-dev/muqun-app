@@ -57,17 +57,33 @@ export function resolveThemeImage(
   return image;
 }
 
+/**
+ * What Home says the app is called, and what mark it shows.
+ *
+ * A pack that says nothing gets nothing. That is the part worth stating: with
+ * no custom theme (`manifest` absent) Home is the app's own -- its mark and its
+ * name -- and that has not changed. But once a pack is applied, Home is the
+ * pack's: it brought a picture and an identity of its own, and printing the
+ * app's logo and tagline over someone's illustration is the app talking across
+ * it. So the branding is opt-in for a pack rather than opt-out, and a pack that
+ * wants it back asks by declaring `mode: 'default'`.
+ *
+ * The editor's two switches are the reader's override on top of that, and they
+ * write the same explicit `default`/`hidden` a pack would.
+ */
 export function resolveHomeIdentity(manifest?: ThemeManifest) {
   const name = manifest?.homeIdentity?.name;
   const logo = manifest?.homeIdentity?.logo;
+  // Undeclared means hidden for a pack, and means the app's own for no pack.
+  const nameHidden = manifest ? name === undefined || name.mode === 'hidden' : false;
+  const logoHidden = manifest ? logo === undefined || logo.mode === 'hidden' : false;
   return {
-    name: name?.mode === 'hidden' ? null : name?.mode === 'custom' ? name.text : 'Muqun',
-    logo:
-      logo?.mode === 'hidden'
-        ? null
-        : logo?.mode === 'custom'
-          ? { mode: 'custom' as const, asset: logo.asset }
-          : { mode: 'default' as const },
-    showBrand: name?.mode !== 'hidden' || logo?.mode !== 'hidden',
+    name: nameHidden ? null : name?.mode === 'custom' ? name.text : 'Muqun',
+    logo: logoHidden
+      ? null
+      : logo?.mode === 'custom'
+        ? { mode: 'custom' as const, asset: logo.asset }
+        : { mode: 'default' as const },
+    showBrand: !nameHidden || !logoHidden,
   };
 }

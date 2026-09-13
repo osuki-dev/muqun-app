@@ -4,11 +4,11 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
 import { ScreenHeader } from '@/components/screen-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { themeDraftSessions } from '@/theme/draft-session';
@@ -35,6 +35,23 @@ export default function CustomThemeScreen() {
    * simply closes the one modal.
    */
   const close = () => (router.canDismiss() ? router.dismissAll() : router.back());
+  /**
+   * The one button at the bottom is the one decision on this screen.
+   *
+   * The library used to draw its own Apply between the settings card and the
+   * export card, with this screen's Done pinned below it: two confirm-ish
+   * controls for one theme, and the one that mattered was the one you had to
+   * scroll to find. So the library hands the action over instead
+   * (`onPrimaryActionChange`) and this screen draws it once, where the way out
+   * already was. `setPrimary` is a `useState` setter, so its identity is stable
+   * and the library reports again only when the action itself changes; the
+   * action is an object rather than a function, so it is never mistaken for a
+   * state updater.
+   *
+   * Until the first report lands -- and when there is no theme to confirm --
+   * the button is what it has always been: Done, which closes.
+   */
+  const [primary, setPrimary] = useState<ThemePrimaryAction | null>(null);
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Stack.Screen options={{ title: candidate?.manifest.name ?? t`Theme` }} />
@@ -52,6 +69,7 @@ export default function CustomThemeScreen() {
               detail
               ownsPreparedAssets={false}
               onClosePreview={close}
+              onPrimaryActionChange={setPrimary}
             />
           ) : (
             <Text>{t`Not found`}</Text>
@@ -62,7 +80,9 @@ export default function CustomThemeScreen() {
           the reader has to go looking for. Everything above it is the theme --
           its preview, its sliders, its export and remove actions, and on a
           phone that is several screens of it -- so an inline Done sat in the
-          middle of the page with content on both sides of it. */}
+          middle of the page with content on both sides of it. It keeps the
+          `custom-theme-done` id through the change of label: it is still the
+          same control, the one that ends the visit. */}
       {candidate ? (
         <View
           style={{
@@ -72,7 +92,12 @@ export default function CustomThemeScreen() {
             backgroundColor: background(theme.colors.surface),
           }}>
           <View style={{ width: '100%', maxWidth: 1120, alignSelf: 'center' }}>
-            <Button testID="custom-theme-done" onPress={close}>{t`Done`}</Button>
+            <Button
+              testID="custom-theme-done"
+              disabled={primary?.disabled ?? false}
+              onPress={() => (primary ? primary.run() : close())}>
+              {primary?.applies ? t`Apply theme` : t`Done`}
+            </Button>
           </View>
         </View>
       ) : null}

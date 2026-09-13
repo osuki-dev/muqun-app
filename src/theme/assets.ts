@@ -14,7 +14,10 @@ export function isOwnedThemeAsset(_uri: string): boolean {
   return false;
 }
 export function setThemeAssetReferences(_themes: readonly InstalledTheme[] | null): void {}
-export async function prepareThemeAssets(_theme: ThemePackage): Promise<PreparedThemeAssets> {
+export async function prepareThemeAssets(
+  _theme: ThemePackage,
+  _options?: ThemeAssetStreamOptions
+): Promise<PreparedThemeAssets> {
   throw new Error('Theme artwork import is available on Android and iOS');
 }
 export async function prepareThemeAssetStream(

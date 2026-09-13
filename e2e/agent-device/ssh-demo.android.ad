@@ -9,7 +9,10 @@ wait "role=button label=\"Open SSH host Demo shell\""
 press "role=\"button\" label=\"Open SSH host Demo shell\" || label=\"Open SSH host Demo shell\""
 wait "stable" 800 10000
 wait "role=button label=\"Disconnect from Demo shell\""
-wait "text" "Connected to demo@demo.invalid"
+# A connected shell says so by working: the disconnect button above is what
+# proves it, and the status line stands down rather than holding a row open to
+# repeat the prompt underneath it.
+is hidden "text=\"Connected to demo@demo.invalid\""
 press "role=\"button\" label=\"Send Enter\" || label=\"Send Enter\""
 wait "stable" 800 10000
 wait "role=button label=\"Disconnect from Demo shell\""
