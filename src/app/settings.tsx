@@ -229,7 +229,7 @@ export default function SettingsScreen() {
 
               <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
                 <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
-                <Text variant="caption" color={theme.colors.textMuted}>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
                   <Trans>Muqun settings stay on this device.</Trans>
                 </Text>
               </View>
@@ -331,6 +331,12 @@ const styles = StyleSheet.create({
     gap: LADDER.gap,
     paddingHorizontal: LADDER.tight,
   },
+  // A row lays its children out at their intrinsic width, so this line ran past
+  // the plate's right edge in any language whose translation is longer than the
+  // English -- Japanese renders it as 牧群（ぼくぐん）の設定は…, half again as
+  // wide. Shrinking is what lets it wrap instead. `minWidth: 0` goes with it
+  // because `flexShrink` alone will not take a box below its content width.
+  footerText: { flexShrink: 1, minWidth: 0 },
   brand: {
     alignItems: 'center',
     gap: LADDER.tight,
