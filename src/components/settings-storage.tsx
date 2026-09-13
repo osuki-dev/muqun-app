@@ -206,9 +206,24 @@ export function SettingsStorage({ title }: { title: string }) {
 
   return (
     <SettingsSection title={title}>
-      <SettingsInfoRow icon={Images} label={t`Images`} detail={images} />
-      <SettingsInfoRow icon={FileClock} label={t`Temporary files`} detail={temporary} />
-      <SettingsInfoRow icon={HardDrive} label={t`Other`} detail={other} />
+      <SettingsInfoRow
+        icon={Images}
+        label={t`Images`}
+        detail={images}
+        testID="settings-storage-images-row"
+      />
+      <SettingsInfoRow
+        icon={FileClock}
+        label={t`Temporary files`}
+        detail={temporary}
+        testID="settings-storage-temporary-row"
+      />
+      <SettingsInfoRow
+        icon={HardDrive}
+        label={t`Other`}
+        detail={other}
+        testID="settings-storage-other-row"
+      />
       {armed ? (
         // Two taps, never one, and the confirm stays inside the card the way
         // the unpair control does. A system alert here would be the one modal
