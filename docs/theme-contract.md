@@ -137,7 +137,8 @@ overwrites.
 - **Decoration slots.** 10 today. New ones are additive once `decoration` is
   open; a pack that uses one an app does not know simply does not decorate
   there.
-- **Icon names.** 2 today (`chrome.back`, `chrome.send`). Already growable.
+- **Icon names.** 3 today (`chrome.back`, `chrome.send`, `chrome.attach`). Already
+  growable.
 - **Materials.** `auto` / `solid` / `glass` over 4 surfaces.
 - **`THEME_LIMITS`.** Raising a limit is always safe. **Lowering one is a
   breaking change** and belongs with a `schemaVersion` bump — worth writing down

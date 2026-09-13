@@ -54,15 +54,18 @@ test('an icon entry still needs a real asset id', () => {
   expect(() => parseThemeManifest(withIcons({ 'chrome.back': {} }))).toThrow();
 });
 
+/** Which file draws each advertised glyph. Both guards below read this one. */
+const CONSUMERS: Record<(typeof THEME_ICONS)[number], string> = {
+  'chrome.back': 'src/components/nav-header.tsx',
+  'chrome.send': 'src/components/terminal-composer.tsx',
+  'chrome.attach': 'src/components/server-terminal-workspace.tsx',
+};
+
 test('every advertised glyph is drawn by a real consumer', () => {
   // The same guard the artwork slots have: a name in the table that nothing
   // reads is a promise to authors the app does not keep.
-  const consumers: Record<(typeof THEME_ICONS)[number], string> = {
-    'chrome.back': 'src/components/nav-header.tsx',
-    'chrome.send': 'src/components/terminal-composer.tsx',
-  };
-  expect(Object.keys(consumers).sort()).toEqual([...THEME_ICONS].sort());
-  for (const [name, file] of Object.entries(consumers))
+  expect(Object.keys(CONSUMERS).sort()).toEqual([...THEME_ICONS].sort());
+  for (const [name, file] of Object.entries(CONSUMERS))
     expect(readFileSync(file, 'utf8')).toContain(`name="${name}"`);
 });
 
@@ -70,7 +73,11 @@ test('every consumer passes a fallback, so no glyph can go missing', () => {
   // A control whose icon merely vanished is a screen with no way out. The
   // component requires `fallback`, and this is the guard that it is always a
   // real built-in icon rather than something that can resolve to nothing.
-  for (const file of ['src/components/nav-header.tsx', 'src/components/terminal-composer.tsx']) {
+  //
+  // Derived from the table above rather than listed again. A hand-written list
+  // here is a guard that silently stops covering the next glyph added, which is
+  // exactly the failure it exists to catch.
+  for (const file of new Set(Object.values(CONSUMERS))) {
     const source = readFileSync(file, 'utf8');
     for (const use of source.match(/<ThemeIcon[\s\S]*?\/>/g) ?? [])
       expect(/fallback=\{[A-Z]\w*\}/.test(use)).toBe(true);

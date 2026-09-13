@@ -2,7 +2,7 @@ import { resolveThemePack } from '@/constants/theme-packs';
 import { parseThemeManifest, themeJsonSchema, type ThemeManifest } from '@/theme/schema';
 
 export const THEME_SKILL_ID = 'muqun-theme';
-export const THEME_SKILL_VERSION = '1.2.0';
+export const THEME_SKILL_VERSION = '1.3.0';
 
 /** Bundled, English-only instructions. Never supplied by an imported theme. */
 export const THEME_AUTHORING_INSTRUCTIONS = `# Create a Muqun theme
@@ -47,7 +47,9 @@ If supplying SHA-256, compute it from the actual file bytes.
   navigation/composer/actions.background decorate their matching chrome;
   cards.decoration, buttons.primary.background, and tabs.background decorate controls without
   replacing labels or state. Use a square, contain-fit emptyState.illustration.
-- icons replaces a chrome glyph. Known names are chrome.back and chrome.send; an
+- icons replaces a chrome glyph. Known names are chrome.back, chrome.send and
+  chrome.attach -- the header's back arrow, and the composer's send and attachment
+  controls, the last two drawn at 17pt in the primary colour by default. An
   unknown name is ignored rather than failing the theme, so an older app simply keeps
   its own glyph. render is "template" by default -- the drawing supplies the shape
   through its alpha and the theme supplies the colour, so one image is correct in light
