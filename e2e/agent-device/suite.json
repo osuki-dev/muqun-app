@@ -289,6 +289,163 @@
       },
       {
         "run": "flows/custom-themes.ad#close-sheet"
+      },
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/custom-themes.ad#install"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#storage-entry"
+      },
+      {
+        "target": {
+          "text": "STORAGE"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "id": "settings-remove-themes-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "text": "Remove unused themes, 0 themes · 0 B"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-theme-row"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#scroll-up"
+      },
+      {
+        "target": {
+          "id": "settings-theme-row"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-osuki"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-osuki"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#apply-builtin"
+      },
+      {
+        "target": {
+          "text": "Theme, Osuki"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/custom-themes.ad#visible"
+      },
+      {
+        "target": {
+          "text": "STORAGE"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "id": "settings-remove-themes-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#storage-scroll"
+      },
+      {
+        "target": {
+          "text": "Remove unused themes, 1 theme · .*"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "run": "flows/custom-themes.ad#storage-anchor"
+      },
+      {
+        "target": {
+          "id": "settings-remove-themes-row"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#storage-press"
+      },
+      {
+        "target": {
+          "id": "settings-remove-themes-confirm"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-remove-themes-cancel"
+        },
+        "mode": "visible",
+        "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "target": {
+          "id": "settings-remove-themes-confirm"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#storage-press"
+      },
+      {
+        "run": "flows/custom-themes.ad#storage-settle"
+      },
+      {
+        "target": {
+          "text": "Remove unused themes, 0 themes · 0 B"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "target": {
+          "text": "Theme, Osuki"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#scroll-up"
       }
     ],
     "flows/agent-collaboration": [
