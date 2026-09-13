@@ -54,6 +54,12 @@ msgstr "{0, plural, other {# 分鐘}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {還有 # 行}}"
 
+#. placeholder {0}: unused.count
+#. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
+#: src/components/settings-storage.tsx
+msgid "{0, plural, one {# theme} other {# themes}} · {1}"
+msgstr "{0, plural, other {# 個主題}} · {1}"
+
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
@@ -669,6 +675,10 @@ msgstr "確認清除快取"
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "確認配對"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm remove unused themes"
+msgstr "確認移除未使用的主題"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-host-form.tsx
@@ -1603,6 +1613,10 @@ msgstr "保留 {label}"
 msgid "Keep cached files"
 msgstr "保留快取檔案"
 
+#: src/components/settings-storage.tsx
+msgid "Keep saved themes"
+msgstr "保留已安裝的主題"
+
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "代理程式工作時，把你正在看的終端機留在鎖定畫面上"
@@ -2477,6 +2491,7 @@ msgstr "重新整理輸出"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-storage.tsx
 msgid "Remove"
 msgstr "移除"
 
@@ -2500,6 +2515,18 @@ msgstr "移除主機"
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
 msgstr "移除此主題？"
+
+#: src/components/settings-storage.tsx
+msgid "Remove unused themes"
+msgstr "移除未使用的主題"
+
+#: src/components/settings-storage.tsx
+msgid "Removing unused themes"
+msgstr "正在移除未使用的主題"
+
+#: src/components/settings-storage.tsx
+msgid "Removing…"
+msgstr "正在移除…"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"

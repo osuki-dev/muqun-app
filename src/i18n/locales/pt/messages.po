@@ -54,6 +54,12 @@ msgstr "{0, plural, one {# minuto} other {# minutos}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# linha a mais} other {# linhas a mais}}"
 
+#. placeholder {0}: unused.count
+#. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
+#: src/components/settings-storage.tsx
+msgid "{0, plural, one {# theme} other {# themes}} · {1}"
+msgstr "{0, plural, one {# tema} other {# temas}} · {1}"
+
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
@@ -669,6 +675,10 @@ msgstr "Confirmar a limpeza da cache"
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "Confirmar o emparelhamento"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm remove unused themes"
+msgstr "Confirmar a remoção dos temas não utilizados"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-host-form.tsx
@@ -1603,6 +1613,10 @@ msgstr "Manter {label}"
 msgid "Keep cached files"
 msgstr "Manter os ficheiros em cache"
 
+#: src/components/settings-storage.tsx
+msgid "Keep saved themes"
+msgstr "Manter os temas guardados"
+
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "Manter no ecrã bloqueado o terminal que está a ver enquanto o agente trabalha"
@@ -2477,6 +2491,7 @@ msgstr "Atualizar saída"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-storage.tsx
 msgid "Remove"
 msgstr "Remover"
 
@@ -2500,6 +2515,18 @@ msgstr "Remover host"
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
 msgstr "Remover este tema?"
+
+#: src/components/settings-storage.tsx
+msgid "Remove unused themes"
+msgstr "Remover os temas não utilizados"
+
+#: src/components/settings-storage.tsx
+msgid "Removing unused themes"
+msgstr "A remover os temas não utilizados"
+
+#: src/components/settings-storage.tsx
+msgid "Removing…"
+msgstr "A remover…"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"

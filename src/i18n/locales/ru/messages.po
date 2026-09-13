@@ -54,6 +54,12 @@ msgstr "{0, plural, one {# минута} few {# минуты} many {# минут
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {ещё # строка} few {ещё # строки} many {ещё # строк} other {ещё # строки}}"
 
+#. placeholder {0}: unused.count
+#. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
+#: src/components/settings-storage.tsx
+msgid "{0, plural, one {# theme} other {# themes}} · {1}"
+msgstr "{0, plural, one {# тема} few {# темы} many {# тем} other {# темы}} · {1}"
+
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
@@ -669,6 +675,10 @@ msgstr "Подтвердить очистку кэша"
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "Подтвердить привязку"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm remove unused themes"
+msgstr "Подтвердить удаление неиспользуемых тем"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-host-form.tsx
@@ -1603,6 +1613,10 @@ msgstr "Оставить {label}"
 msgid "Keep cached files"
 msgstr "Оставить кэш"
 
+#: src/components/settings-storage.tsx
+msgid "Keep saved themes"
+msgstr "Оставить сохранённые темы"
+
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "Держать терминал, за которым вы следите, на экране блокировки, пока его агент работает"
@@ -2477,6 +2491,7 @@ msgstr "Обновить вывод"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-storage.tsx
 msgid "Remove"
 msgstr "Удалить"
 
@@ -2500,6 +2515,18 @@ msgstr "Удалить хост"
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
 msgstr "Удалить эту тему?"
+
+#: src/components/settings-storage.tsx
+msgid "Remove unused themes"
+msgstr "Удалить неиспользуемые темы"
+
+#: src/components/settings-storage.tsx
+msgid "Removing unused themes"
+msgstr "Удаляем неиспользуемые темы"
+
+#: src/components/settings-storage.tsx
+msgid "Removing…"
+msgstr "Удаляем…"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
