@@ -11,7 +11,7 @@ import {
 } from '@osuki-dev/ui';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { AppState, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -23,9 +23,8 @@ import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { WhatsNewCard } from '@/components/whats-new-card';
-import { buildTheme } from '@/constants/theme';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
-import { useThemePack } from '@/hooks/use-theme-pack';
+import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
@@ -112,7 +111,7 @@ export default function RootLayout() {
   // Osuki and the chosen theme lands a tick later -- behind the splash overlay,
   // which is why the splash colours stay pinned to the default pack.
   const pack = useThemePack();
-  const theme = useMemo(() => buildTheme(pack), [pack]);
+  const theme = useThemePalette(pack);
 
   useEffect(() => {
     void hydrateSettings();
