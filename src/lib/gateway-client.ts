@@ -1419,6 +1419,7 @@ export async function listAgentEvents(sessionId: string): Promise<AgentEvent[]> 
 export {
   AUTO_EXPAND_MAX_LINES,
   DIFF_CONTEXT_LINES,
+  DIFF_TAB_WIDTH,
   FILE_PATCH_MAX_LINES,
   GIT_DIFF_CAPABILITY,
   MAX_OPEN_FILES,
@@ -1427,6 +1428,7 @@ export {
   badgeCount,
   closeFile,
   emptyFilePatchState,
+  expandTabs,
   fileHeaderIndices,
   flattenDiffRows,
   gatewaySupportsGitDiff,
