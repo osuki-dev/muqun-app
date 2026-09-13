@@ -302,6 +302,18 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            <Stack.Screen
+              name="git-diff"
+              options={{
+                presentation: 'formSheet',
+                // Full height only, and for the plainest reason of the three:
+                // a diff is read a line at a time, and a partial detent would
+                // halve the number of lines on screen at once.
+                sheetAllowedDetents: [1],
+                sheetGrabberVisible: true,
+                contentStyle: { backgroundColor: 'transparent' },
+              }}
+            />
             {/*
               The two Appearance pickers (card #683) started as content-sized
               closed lists. Language still fits that model; themes no longer

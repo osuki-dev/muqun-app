@@ -51,6 +51,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import AppDrawer from '@/components/app-drawer';
 import { ApprovalBanner } from '@/components/approval-banner';
 import { ArtifactsButton } from '@/components/artifacts-button';
+import { GitDiffButton } from '@/components/git-diff-button';
 import { AssetViewer } from '@/components/asset-viewer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
@@ -4054,6 +4055,19 @@ export function ServerTerminalWorkspace({
         sessionId={data.sessionId}
         tabId={selection.tabId}
         label={routeRecord?.label ?? record?.label ?? t`Server`}
+        disabled={!selectedPane}
+        background={fill}
+        compact={isPadLayout}
+      />
+      {/* And this is what the session changed in place. It draws nothing at
+          all unless the gateway has the routes and this pane's directory is a
+          checkout, so the row is unchanged on an older server. */}
+      <GitDiffButton
+        sessionId={data.sessionId}
+        paneId={selection.paneId}
+        cwd={field(selectedPane, 'cwd')}
+        label={routeRecord?.label ?? record?.label ?? t`Server`}
+        capabilities={data.health?.capabilities}
         disabled={!selectedPane}
         background={fill}
         compact={isPadLayout}

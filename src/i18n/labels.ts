@@ -20,6 +20,7 @@
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 
+import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
 import type { ServerReachability } from '@/lib/server-reachability';
@@ -134,6 +135,27 @@ export const artifactGroupLabel: Record<'today' | 'yesterday' | 'unknown', Messa
   today: msg`Today`,
   yesterday: msg`Yesterday`,
   unknown: msg`Unknown date`,
+};
+
+/**
+ * What happened to a file, in a word, for the diff sheet's file rows.
+ *
+ * Keyed by the status `git status --porcelain=v2` reports and `git-diff.ts`
+ * normalises -- a pure module with a test suite, which therefore cannot hold a
+ * macro. `unknown` is a real key and not a fallback nobody reaches: a gateway
+ * newer than this build can report a status this one has never heard of, and a
+ * blank where a word should be is worse than an honest one.
+ */
+export const gitFileStatusWord: Record<GitFileStatus, MessageDescriptor> = {
+  added: msg`Added`,
+  modified: msg`Modified`,
+  deleted: msg`Deleted`,
+  renamed: msg`Renamed`,
+  copied: msg`Copied`,
+  untracked: msg`Untracked`,
+  conflicted: msg`Conflicted`,
+  type_changed: msg`Type changed`,
+  unknown: msg`Changed`,
 };
 
 /**
