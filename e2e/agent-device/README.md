@@ -68,8 +68,11 @@ mutations and reject ambiguous controls. Coordinates are reserved for the Skia
 canvas gestures and the two historical motion-capture touches.
 
 The default suite covers the demo tour, manual pairing, terminal interactions,
-SSH, file mentions, attachments, artifacts, settings, away digest, slash commands,
-and responsive workspace navigation. Pad-specific rail assertions execute when
+SSH, file mentions, attachments, artifacts, the git diff viewer, settings, away
+digest, slash commands, and responsive workspace navigation. The `git-diff` flow
+opens the demo checkout, expands its six-thousand-line file, pages it with
+`Show more`, and refreshes -- all against the bundled fixtures, so it proves the
+rows and the paging rather than anything about a real `git`. Pad-specific rail assertions execute when
 the persistent Servers rail is present. Run on a landscape tablet to verify
 those branches; passing a phone suite does not prove tablet coverage.
 

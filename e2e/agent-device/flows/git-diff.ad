@@ -1,0 +1,65 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# git-diff
+
+# section s1
+press "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+wait stable 400 8000
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+screenshot "shots/20-changes.png"
+
+# section s6
+press "${TARGET}"
+
+# section s7
+wait stable 400 15000
+
+# section s8
+scroll down --pixels 320
+
+# section s9
+scroll down --pixels 320
+
+# section s10
+scroll down --pixels 320
+
+# section s11
+screenshot "shots/21-changes-expanded.png"
+
+# section s12
+scroll bottom
+
+# section s13
+press "${TARGET}"
+
+# section s14
+wait stable 400 15000
+
+# section s15
+scroll up --pixels 320
+
+# section s16
+is visible "${TARGET}"
+
+# section s17
+press "${TARGET}"
+
+# section s18
+wait stable 400 8000
+
+# section s19
+is visible "${TARGET}"
+
+# section s20
+press "${TARGET}"
+
+# section s21
+is visible "${TARGET}"
