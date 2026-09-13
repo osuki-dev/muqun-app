@@ -1499,7 +1499,6 @@ const styles = StyleSheet.create({
   headerButton: {
     width: 38,
     height: 38,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 19,
     borderCurve: 'continuous',
     overflow: 'hidden',
