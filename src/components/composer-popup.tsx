@@ -1,5 +1,5 @@
 import { Card } from '@/components/themed-card';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { PressableCard, Stack, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
 import { ScrollView, View } from 'react-native';
@@ -53,6 +53,7 @@ export function ComposerPopup({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   if (rows.length === 0) return null;
 
   const visibleRows = Math.min(rows.length, COMPOSER_POPUP_VISIBLE_ROWS);
@@ -127,7 +128,26 @@ export function ComposerPopup({
                     {/* Where a command came from is the one thing its name cannot
                       say: `/review` shipped with the agent and `/review` written
                       into this repo do different work. */}
-                    {row.badge ? <Tag variant="pill">{row.badge}</Tag> : null}
+                    {row.badge ? (
+                      // `Tag` paints an opaque `surfaceRaised` and the app's
+                      // style is merged after the kit's. Painting it through
+                      // the hook instead would put a second fill at the
+                      // reader's alpha directly on top of the row card's own,
+                      // and the badge would show the wallpaper at (1 - a)
+                      // squared where the rest of the row shows it at (1 - a)
+                      // -- the stacking `themed-tabs.tsx` takes apart. One
+                      // layer per pixel, and the row card is already that
+                      // layer, so under a custom theme the badge gives up its
+                      // fill and keeps its uppercase muted label. A default
+                      // theme has no alpha to honour and keeps the kit's pill.
+                      <Tag
+                        variant="pill"
+                        style={
+                          surfaceOpacity === 1 ? undefined : { backgroundColor: 'transparent' }
+                        }>
+                        {row.badge}
+                      </Tag>
+                    ) : null}
                   </Stack>
                 </PressableCard>
               </Animated.View>
