@@ -62,6 +62,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "git-diff",
+      "program": "flows/git-diff",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "settings",
       "program": "flows/settings",
       "tags": ["full"],
@@ -743,6 +749,133 @@
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/artifacts.ad#s67"
+      }
+    ],
+    "flows/git-diff": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open changes"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Close changes"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/git-diff.ad#s2"
+      },
+      {
+        "run": "flows/git-diff.ad#s3"
+      },
+      {
+        "target": {
+          "text": "feat/git-diff · Demo workspace"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/git-diff.ad#s4"
+      },
+      {
+        "run": "flows/git-diff.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Show src/lib/demo-terminal-history.ts"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s6"
+      },
+      {
+        "run": "flows/git-diff.ad#s7"
+      },
+      {
+        "run": "flows/git-diff.ad#s8"
+      },
+      {
+        "run": "flows/git-diff.ad#s9"
+      },
+      {
+        "run": "flows/git-diff.ad#s10"
+      },
+      {
+        "run": "flows/git-diff.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Show more"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/git-diff.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Show more"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s13"
+      },
+      {
+        "run": "flows/git-diff.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Hide src/lib/demo-terminal-history.ts"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 30000,
+        "run": "flows/git-diff.ad#s15"
+      },
+      {
+        "target": {
+          "text": "Hide src/lib/demo-terminal-history.ts"
+        },
+        "mode": "visible",
+        "run": "flows/git-diff.ad#s16"
+      },
+      {
+        "target": {
+          "text": "Refresh changes"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s17"
+      },
+      {
+        "run": "flows/git-diff.ad#s18"
+      },
+      {
+        "target": {
+          "text": "Changes"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/git-diff.ad#s19"
+      },
+      {
+        "target": {
+          "text": "Close changes"
+        },
+        "mode": "press",
+        "run": "flows/git-diff.ad#s20"
+      },
+      {
+        "target": {
+          "text": "Open changes"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/git-diff.ad#s21"
       }
     ],
     "flows/attachments-ui": [
@@ -2953,12 +3086,16 @@
         "run": "flows/settings.ad#s7"
       },
       {
-        "target": { "id": "settings-selection:(on|off):theme-osuki" },
+        "target": {
+          "id": "settings-selection:(on|off):theme-osuki"
+        },
         "mode": "press",
         "run": "flows/settings.ad#reset-theme"
       },
       {
-        "target": { "text": "Theme, Osuki" },
+        "target": {
+          "text": "Theme, Osuki"
+        },
         "mode": "press",
         "run": "flows/settings.ad#confirm-reset"
       },
