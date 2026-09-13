@@ -59,6 +59,11 @@ msgstr "{0, plural, one {# more line} other {# more lines}}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, one {and # more agent} other {and # more agents}}"
 
+#. placeholder {0}: formatCacheSize(totals.other)
+#: src/components/settings-storage.tsx
+msgid "{0} · Managed by the system. Clear cache leaves it alone."
+msgstr "{0} · Managed by the system. Clear cache leaves it alone"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -414,6 +419,10 @@ msgstr "Browser"
 msgid "Built-in themes"
 msgstr "Built-in themes"
 
+#: src/components/settings-storage.tsx
+msgid "Calculating…"
+msgstr "Calculating…"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "Camera access is off. Turn it on in Settings to take a photo"
@@ -426,6 +435,7 @@ msgstr "Camera access needed"
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -513,6 +523,14 @@ msgstr "Choose where to work"
 msgid "Choose which simulator to show"
 msgstr "Choose which simulator to show"
 
+#: src/components/settings-storage.tsx
+msgid "Clear"
+msgstr "Clear"
+
+#: src/components/settings-storage.tsx
+msgid "Clear cache"
+msgstr "Clear cache"
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "Clear line"
@@ -520,6 +538,14 @@ msgstr "Clear line"
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Clear terminal"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing cache"
+msgstr "Clearing cache"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing…"
+msgstr "Clearing…"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -635,6 +661,10 @@ msgstr "Commit & push"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Compact"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm clear cache"
+msgstr "Confirm clear cache"
 
 #: src/app/explore.tsx
 msgid "Confirm pairing"
@@ -1464,6 +1494,7 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "If this continues, restart the app or check the app installation"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Images"
 msgstr "Images"
 
@@ -1567,6 +1598,10 @@ msgstr "just now"
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Keep {label}"
+
+#: src/components/settings-storage.tsx
+msgid "Keep cached files"
+msgstr "Keep cached files"
 
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
@@ -2168,6 +2203,10 @@ msgstr "Opens this agent's terminal"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Options for {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other"
+msgstr "Other"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2963,6 +3002,10 @@ msgstr "Simulator controls"
 msgid "Size"
 msgstr "Size"
 
+#: src/components/settings-storage.tsx
+msgid "Some files could not be removed · {clearable}"
+msgstr "Some files could not be removed · {clearable}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Some files did not upload"
@@ -3076,6 +3119,10 @@ msgstr "Stop assigning a task"
 msgid "Stop this agent"
 msgstr "Stop this agent"
 
+#: src/app/settings.tsx
+msgid "Storage"
+msgstr "Storage"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "Summarize progress"
@@ -3146,6 +3193,10 @@ msgstr "Task for {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Task for a new {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Temporary files"
+msgstr "Temporary files"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx

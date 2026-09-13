@@ -59,6 +59,11 @@ msgstr "{0, plural, other {残り # 行}}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {ほか # 件のエージェント}}"
 
+#. placeholder {0}: formatCacheSize(totals.other)
+#: src/components/settings-storage.tsx
+msgid "{0} · Managed by the system. Clear cache leaves it alone."
+msgstr "{0} · システムが管理しているため、キャッシュを削除しても残ります"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -414,6 +419,10 @@ msgstr "ブラウザー"
 msgid "Built-in themes"
 msgstr "内蔵テーマ"
 
+#: src/components/settings-storage.tsx
+msgid "Calculating…"
+msgstr "計算中…"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "カメラへのアクセスがオフです。写真を撮るには設定でオンにしてください"
@@ -426,6 +435,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -513,6 +523,14 @@ msgstr "作業する場所を選択"
 msgid "Choose which simulator to show"
 msgstr "表示するシミュレータを選ぶ"
 
+#: src/components/settings-storage.tsx
+msgid "Clear"
+msgstr "削除"
+
+#: src/components/settings-storage.tsx
+msgid "Clear cache"
+msgstr "キャッシュを削除"
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "行をクリア"
@@ -520,6 +538,14 @@ msgstr "行をクリア"
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "ターミナルをクリア"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing cache"
+msgstr "キャッシュを削除しています"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing…"
+msgstr "削除しています…"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -635,6 +661,10 @@ msgstr "コミットしてプッシュ"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "コンパクト"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm clear cache"
+msgstr "キャッシュの削除を確認"
 
 #: src/app/explore.tsx
 msgid "Confirm pairing"
@@ -1464,6 +1494,7 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "問題が続く場合は、アプリを再起動するか、インストール状態を確認してください"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Images"
 msgstr "画像"
 
@@ -1567,6 +1598,10 @@ msgstr "たった今"
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "{label} を残す"
+
+#: src/components/settings-storage.tsx
+msgid "Keep cached files"
+msgstr "キャッシュを残す"
 
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
@@ -2168,6 +2203,10 @@ msgstr "このエージェントのターミナルを開きます"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} のオプション"
+
+#: src/components/settings-storage.tsx
+msgid "Other"
+msgstr "その他"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2963,6 +3002,10 @@ msgstr "シミュレータの操作"
 msgid "Size"
 msgstr "サイズ"
 
+#: src/components/settings-storage.tsx
+msgid "Some files could not be removed · {clearable}"
+msgstr "一部のファイルを削除できませんでした · {clearable}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "一部のファイルをアップロードできませんでした"
@@ -3076,6 +3119,10 @@ msgstr "タスクの割り当てをやめる"
 msgid "Stop this agent"
 msgstr "このエージェントを停止"
 
+#: src/app/settings.tsx
+msgid "Storage"
+msgstr "ストレージ"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "進捗を要約"
@@ -3146,6 +3193,10 @@ msgstr "{assignmentLabel} へのタスク"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "新しい {0} へのタスク"
+
+#: src/components/settings-storage.tsx
+msgid "Temporary files"
+msgstr "一時ファイル"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
