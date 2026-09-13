@@ -71,22 +71,38 @@ export function CandidateThemeProvider({
 }
 
 /**
- * The custom theme this component should draw, and its installed files.
+ * The custom theme the app is *wearing*, whatever is being previewed around it.
  *
- * Outside a preview this is exactly the store read every artwork consumer
- * carried its own copy of, so nothing about the running app changes. Inside
- * one, it is the candidate. Consumers that need only one of the two still take
- * the pair: a manifest without its assets resolves an asset id to nothing.
+ * The store read every artwork consumer used to carry its own copy of, named
+ * once so that the surfaces which must ignore a candidate share it with the
+ * surfaces which must not. The launch overlay and the lock screen are the
+ * first kind: they render above the router, before any route exists, so they
+ * can never be inside `CandidateThemeProvider` -- and "cannot be today" is a
+ * weaker guarantee than asking for the applied theme by name, which is what
+ * they do.
  */
-export function useEffectiveCustomTheme(): EffectiveCustomTheme {
-  const candidate = useContext(CandidateThemeContext);
+export function useAppliedCustomTheme(): EffectiveCustomTheme {
   const active = useThemeLibrary((state) => state.active);
   const assets = useThemeLibrary(
     (state) =>
       state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
   );
+  return useMemo(() => ({ theme: active, assets }), [active, assets]);
+}
+
+/**
+ * The custom theme this component should draw, and its installed files.
+ *
+ * Outside a preview this is exactly the applied theme above, so nothing about
+ * the running app changes. Inside one, it is the candidate. Consumers that
+ * need only one of the two still take the pair: a manifest without its assets
+ * resolves an asset id to nothing.
+ */
+export function useEffectiveCustomTheme(): EffectiveCustomTheme {
+  const candidate = useContext(CandidateThemeContext);
+  const applied = useAppliedCustomTheme();
   return useMemo(
-    () => selectEffectiveCustomTheme(candidate, active, assets),
-    [candidate, active, assets]
+    () => selectEffectiveCustomTheme(candidate, applied.theme, applied.assets),
+    [candidate, applied]
   );
 }
