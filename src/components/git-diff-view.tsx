@@ -22,6 +22,7 @@ import Animated, {
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { SettingsSegmented } from '@/components/settings-segmented';
 import { usePaneChatColors, type PaneChatColors } from '@/components/pane-chat-blocks';
 import { gitFileStatusWord } from '@/i18n/labels';
 import {
@@ -31,13 +32,17 @@ import {
   closeFile,
   emptyFilePatchState,
   fileHeaderIndices,
+  filterFilesBySide,
   flattenDiffRows,
   loadGitFileDiff,
   loadGitStatus,
   openFile,
   shouldAutoExpand,
+  sideOfFile,
+  stagedParamForSide,
   widestRow,
   type GitDiffRow,
+  type GitDiffSide,
   type GitDiffRowType,
   type GitFileChange,
   type GitFilePatchState,
@@ -115,6 +120,7 @@ export function GitDiffView({
    * under it moves until the pill is tapped.
    */
   const [pending, setPending] = useState<GitStatus | null>(null);
+  const [side, setSide] = useState<GitDiffSide>('all');
 
   /** Which files are open, oldest first: see `openFile` for the eviction rule. */
   const [expandedOrder, setExpandedOrder] = useState<string[]>([]);
@@ -241,6 +247,7 @@ export function GitDiffView({
           from,
           lines: FILE_PATCH_MAX_LINES,
           context: DIFF_CONTEXT_LINES,
+          staged: stagedParamForSide(side),
           // Both ends of a rename, or git renders the move as a brand-new file
           // and the reader is shown a thousand added lines for a move.
           oldPath: file?.oldPath ?? null,
@@ -269,7 +276,7 @@ export function GitDiffView({
           });
         });
     },
-    [paneId, sessionId, status, t]
+    [paneId, sessionId, side, status, t]
   );
 
   /**
@@ -314,7 +321,29 @@ export function GitDiffView({
     [fetchPage, pages]
   );
 
-  const files: readonly GitFileChange[] = status?.files ?? EMPTY_FILES;
+  const files: readonly GitFileChange[] = useMemo(
+    () => filterFilesBySide(status?.files ?? EMPTY_FILES, side),
+    [side, status]
+  );
+
+  /**
+   * Switching sides drops every open patch: a file's staged half and its
+   * unstaged half are different text, and a page of one under the header of
+   * the other is exactly the kind of lie a diff must never tell. The list
+   * starts collapsed again, which is also the honest reading position.
+   */
+  const changeSide = useCallback(
+    (next: string) => {
+      if (next !== 'all' && next !== 'staged' && next !== 'unstaged') return;
+      if (next === side) return;
+      for (const controller of patchRequests.current.values()) controller.abort();
+      patchRequests.current.clear();
+      setPages(new Map());
+      setExpandedOrder([]);
+      setSide(next);
+    },
+    [side]
+  );
   const expanded = useMemo(() => new Set(expandedOrder), [expandedOrder]);
   const rows = useMemo(() => flattenDiffRows(files, expanded, pages), [expanded, files, pages]);
   const stickyIndices = useMemo(() => fileHeaderIndices(rows), [rows]);
@@ -400,9 +429,10 @@ export function GitDiffView({
         scrollX={scrollX}
         onToggle={toggleFile}
         onShowMore={showMore}
+        showSide={side === 'all'}
       />
     ),
-    [colors, contentWidth, gutterFill, headerFill, pinnedWidth, scrollX, showMore, toggleFile]
+    [colors, contentWidth, gutterFill, headerFill, pinnedWidth, scrollX, showMore, side, toggleFile]
   );
 
   const notARepository = Boolean(status && status.repo === null);
@@ -452,6 +482,19 @@ export function GitDiffView({
             </PressableScale>
           </GlassChrome>
         </View>
+
+        {(status?.files.length ?? 0) > 0 ? (
+          <SettingsSegmented
+            options={[
+              { value: 'all', label: t`All` },
+              { value: 'staged', label: t`Staged` },
+              { value: 'unstaged', label: t`Unstaged` },
+            ]}
+            value={side}
+            onChange={changeSide}
+            testID="git-diff-side"
+          />
+        ) : null}
 
         {pending ? (
           <PressableScale
@@ -598,6 +641,7 @@ const DiffListRow = memo(function DiffListRow({
   scrollX,
   onToggle,
   onShowMore,
+  showSide,
 }: {
   row: GitDiffRow;
   /** The laid-out width of every row: the panning content. */
@@ -610,6 +654,8 @@ const DiffListRow = memo(function DiffListRow({
   scrollX: SharedValue<number>;
   onToggle: (path: string) => void;
   onShowMore: (path: string) => void;
+  /** In the `all` view a file says which side it is on; in a half it need not. */
+  showSide: boolean;
 }) {
   // One per mounted row rather than one object shared by all of them: a
   // recycled list mounts about forty rows and keeps them, so the hook is paid
@@ -626,6 +672,7 @@ const DiffListRow = memo(function DiffListRow({
         fill={headerFill}
         pinned={pinned}
         onToggle={onToggle}
+        showSide={showSide}
       />
     );
   }
@@ -712,6 +759,7 @@ const FileRow = memo(function FileRow({
   fill,
   pinned,
   onToggle,
+  showSide,
 }: {
   row: Extract<GitDiffRow, { type: 'file' }>;
   width: number;
@@ -720,10 +768,18 @@ const FileRow = memo(function FileRow({
   fill: string;
   pinned: PinnedStyle;
   onToggle: (path: string) => void;
+  showSide: boolean;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const Chevron = row.expanded ? ChevronDown : ChevronRight;
+  const fileSide = sideOfFile(row.file);
+  // Letters, not words: a phone's file row has room for "+1000 −1000" and one
+  // more glyph, and S and U are read the same way in every catalog. The words
+  // are on the accessibility label, which is where a screen reader looks.
+  const sideMark = fileSide === 'both' ? 'S U' : fileSide === 'staged' ? 'S' : 'U';
+  const sideLabel =
+    fileSide === 'both' ? t`Staged and unstaged` : fileSide === 'staged' ? t`Staged` : t`Unstaged`;
   const word = _(gitFileStatusWord[row.file.status] ?? gitFileStatusWord.unknown);
 
   return (
@@ -767,6 +823,15 @@ const FileRow = memo(function FileRow({
             {row.file.removed ? (
               <Text variant="caption" color={colors.removed}>
                 −{row.file.removed}
+              </Text>
+            ) : null}
+            {showSide ? (
+              <Text
+                variant="caption"
+                color={colors.subtle}
+                accessibilityLabel={sideLabel}
+                style={styles.sideMark}>
+                {sideMark}
               </Text>
             ) : null}
             {row.note === 'binary' ? (
@@ -1020,6 +1085,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     overflow: 'hidden',
+  },
+  sideMark: {
+    fontFamily: MONO_FONT,
+    letterSpacing: 1,
   },
   hunkRow: {
     height: HUNK_ROW_HEIGHT,

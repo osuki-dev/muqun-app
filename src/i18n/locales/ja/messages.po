@@ -231,6 +231,7 @@ msgstr "アラート"
 msgid "Align the QR inside the frame"
 msgstr "QR コードを枠に合わせてください"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "すべて"
@@ -3005,6 +3006,14 @@ msgstr "SSH ホスト"
 msgid "SSH tunnel through {host} is down"
 msgstr "{host} 経由の SSH トンネルが切断されています"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "ステージ済み"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "ステージ済みと未ステージ"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "古い情報 · {age}"
@@ -3556,6 +3565,10 @@ msgstr "{label} のペアリングを解除しています"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "解除しています…"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "未ステージ"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

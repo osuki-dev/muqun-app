@@ -30,6 +30,9 @@ import {
   openFile,
   paneContextFromResponse,
   parseUnifiedPatch,
+  filterFilesBySide,
+  sideOfFile,
+  stagedParamForSide,
   shouldAutoExpand,
   widestRow,
   type GitFileChange,
@@ -852,5 +855,30 @@ describe('badgeCount', () => {
     expect(badgeCount(99)).toBe('99');
     expect(badgeCount(100)).toBe('99+');
     expect(badgeCount(-2)).toBe('0');
+  });
+});
+
+describe('sides of the index', () => {
+  const staged = { ...FILES[0], path: 'a', staged: true, unstaged: false };
+  const unstaged = { ...FILES[0], path: 'b', staged: false, unstaged: true };
+  const both = { ...FILES[0], path: 'c', staged: true, unstaged: true };
+  const all = [staged, unstaged, both];
+
+  test('all is the union, each half is its half, both is in both', () => {
+    expect(filterFilesBySide(all, 'all')).toBe(all);
+    expect(filterFilesBySide(all, 'staged').map((file) => file.path)).toEqual(['a', 'c']);
+    expect(filterFilesBySide(all, 'unstaged').map((file) => file.path)).toEqual(['b', 'c']);
+  });
+
+  test('the mark says which side a file is on', () => {
+    expect(sideOfFile(staged)).toBe('staged');
+    expect(sideOfFile(unstaged)).toBe('unstaged');
+    expect(sideOfFile(both)).toBe('both');
+  });
+
+  test('the union sends no staged parameter at all', () => {
+    expect(stagedParamForSide('all')).toBeUndefined();
+    expect(stagedParamForSide('staged')).toBe(true);
+    expect(stagedParamForSide('unstaged')).toBe(false);
   });
 });

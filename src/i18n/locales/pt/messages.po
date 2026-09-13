@@ -231,6 +231,7 @@ msgstr "Alertas"
 msgid "Align the QR inside the frame"
 msgstr "Alinhe o código QR dentro da moldura"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "Todos"
@@ -3005,6 +3006,14 @@ msgstr "Hosts SSH"
 msgid "SSH tunnel through {host} is down"
 msgstr "O túnel SSH por {host} caiu"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "Preparado"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "Preparado e não preparado"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "desatualizado · {age}"
@@ -3556,6 +3565,10 @@ msgstr "A desemparelhar {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "A desemparelhar…"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "Não preparado"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

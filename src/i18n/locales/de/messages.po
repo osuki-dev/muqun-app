@@ -231,6 +231,7 @@ msgstr "Mitteilungen"
 msgid "Align the QR inside the frame"
 msgstr "Richte den QR-Code im Rahmen aus"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "Alle"
@@ -3005,6 +3006,14 @@ msgstr "SSH-Hosts"
 msgid "SSH tunnel through {host} is down"
 msgstr "SSH-Tunnel über {host} ist unterbrochen"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "Vorgemerkt"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "Vorgemerkt und nicht vorgemerkt"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "veraltet · {age}"
@@ -3556,6 +3565,10 @@ msgstr "{label} wird entkoppelt"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Wird entkoppelt …"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "Nicht vorgemerkt"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

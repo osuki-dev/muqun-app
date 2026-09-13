@@ -104,7 +104,11 @@ export function GitDiffButton({
         compact && styles.compactButton,
         { backgroundColor: surfaceBackground(background) },
       ]}>
-      <GitCompare size={compact ? 15 : 16} color={theme.colors.primary} />
+      <GitCompare
+        size={compact ? 15 : 16}
+        color={theme.colors.primary}
+        style={repo.changedFiles > 0 ? styles.iconNudged : undefined}
+      />
       {repo.changedFiles > 0 ? (
         // Not announced separately: the label above already says what the
         // control does, and a screen reader reading "Open changes, 3" as two
@@ -115,7 +119,7 @@ export function GitDiffButton({
           style={[
             styles.badge,
             compact && styles.compactBadge,
-            { backgroundColor: theme.colors.primary, borderColor: background },
+            { backgroundColor: theme.colors.primary },
           ]}>
           <Text variant="caption" color={theme.colors.onPrimary} style={styles.badgeText}>
             {count}
@@ -147,28 +151,35 @@ const styles = StyleSheet.create({
   // box, so a badge that stayed within the bounds would either cover the icon
   // or be too small to read.
   badge: {
+    // Inside the button, not hung off its corner: the key row is a horizontal
+    // scroll view and every ancestor between it and the sheet clips, so a
+    // badge that crossed the button's edge lost its top and right on the
+    // device. The icon steps down and left by the same amount to make room.
     position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    top: 3,
+    right: 3,
+    minWidth: 14,
+    height: 14,
+    borderRadius: 7,
     borderCurve: 'continuous',
-    borderWidth: 1.5,
     paddingHorizontal: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
   compactBadge: {
-    top: -3,
-    right: -3,
-    minWidth: 15,
-    height: 15,
-    borderRadius: 7.5,
+    top: 2,
+    right: 2,
+    minWidth: 13,
+    height: 13,
+    borderRadius: 6.5,
+  },
+  iconNudged: {
+    marginTop: 3,
+    marginRight: 3,
   },
   badgeText: {
-    fontSize: 9.5,
-    lineHeight: 12,
+    fontSize: 9,
+    lineHeight: 11,
     includeFontPadding: false,
     fontVariant: ['tabular-nums'],
   },

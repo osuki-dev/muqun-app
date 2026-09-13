@@ -231,6 +231,7 @@ msgstr "알림"
 msgid "Align the QR inside the frame"
 msgstr "QR 코드를 테두리 안에 맞춰 주세요"
 
+#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
 msgstr "전체"
@@ -3005,6 +3006,14 @@ msgstr "SSH 호스트"
 msgid "SSH tunnel through {host} is down"
 msgstr "{host}을(를) 통한 SSH 터널이 끊어졌습니다"
 
+#: src/components/git-diff-view.tsx
+msgid "Staged"
+msgstr "스테이징됨"
+
+#: src/components/git-diff-view.tsx
+msgid "Staged and unstaged"
+msgstr "스테이징됨 및 안 됨"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "오래됨 · {age}"
@@ -3556,6 +3565,10 @@ msgstr "{label} 페어링 해제 중"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "해제하는 중…"
+
+#: src/components/git-diff-view.tsx
+msgid "Unstaged"
+msgstr "스테이징 안 됨"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
