@@ -54,6 +54,12 @@ msgstr "{0, plural, other {# 分}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {残り # 行}}"
 
+#. placeholder {0}: unused.count
+#. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
+#: src/components/settings-storage.tsx
+msgid "{0, plural, one {# theme} other {# themes}} · {1}"
+msgstr "{0, plural, other {# 件のテーマ}} · {1}"
+
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
@@ -669,6 +675,10 @@ msgstr "キャッシュの削除を確認"
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "ペアリングの確認"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm remove unused themes"
+msgstr "未使用のテーマの削除を確認"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-host-form.tsx
@@ -1603,6 +1613,10 @@ msgstr "{label} を残す"
 msgid "Keep cached files"
 msgstr "キャッシュを残す"
 
+#: src/components/settings-storage.tsx
+msgid "Keep saved themes"
+msgstr "テーマを残す"
+
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "エージェントの作業中、見ているターミナルをロック画面に表示し続けます"
@@ -2477,6 +2491,7 @@ msgstr "出力を更新"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-storage.tsx
 msgid "Remove"
 msgstr "削除"
 
@@ -2500,6 +2515,18 @@ msgstr "ホストを削除"
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
 msgstr "このテーマを削除しますか？"
+
+#: src/components/settings-storage.tsx
+msgid "Remove unused themes"
+msgstr "未使用のテーマを削除"
+
+#: src/components/settings-storage.tsx
+msgid "Removing unused themes"
+msgstr "未使用のテーマを削除しています"
+
+#: src/components/settings-storage.tsx
+msgid "Removing…"
+msgstr "削除しています…"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"

@@ -54,6 +54,12 @@ msgstr "{0, plural, other {# phút}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {còn # dòng nữa}}"
 
+#. placeholder {0}: unused.count
+#. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
+#: src/components/settings-storage.tsx
+msgid "{0, plural, one {# theme} other {# themes}} · {1}"
+msgstr "{0, plural, other {# giao diện}} · {1}"
+
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
@@ -669,6 +675,10 @@ msgstr "Xác nhận xóa bộ nhớ đệm"
 #: src/app/explore.tsx
 msgid "Confirm pairing"
 msgstr "Xác nhận ghép nối"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm remove unused themes"
+msgstr "Xác nhận xóa giao diện không dùng đến"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-host-form.tsx
@@ -1603,6 +1613,10 @@ msgstr "Giữ {label}"
 msgid "Keep cached files"
 msgstr "Giữ lại tệp trong bộ nhớ đệm"
 
+#: src/components/settings-storage.tsx
+msgid "Keep saved themes"
+msgstr "Giữ lại giao diện đã lưu"
+
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "Giữ terminal bạn đang xem trên Màn hình khóa trong khi tác tử của nó làm việc"
@@ -2477,6 +2491,7 @@ msgstr "Làm mới đầu ra"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/settings-storage.tsx
 msgid "Remove"
 msgstr "Xóa"
 
@@ -2500,6 +2515,18 @@ msgstr "Gỡ host"
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
 msgstr "Xóa giao diện này?"
+
+#: src/components/settings-storage.tsx
+msgid "Remove unused themes"
+msgstr "Xóa giao diện không dùng đến"
+
+#: src/components/settings-storage.tsx
+msgid "Removing unused themes"
+msgstr "Đang xóa giao diện không dùng đến"
+
+#: src/components/settings-storage.tsx
+msgid "Removing…"
+msgstr "Đang xóa…"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
