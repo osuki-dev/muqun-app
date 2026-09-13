@@ -1,5 +1,7 @@
-import { useThemeMode } from '@osuki-dev/ui';
+import { useThemeMode, type ThemeOverride } from '@osuki-dev/ui';
+import { useMemo } from 'react';
 
+import { buildTheme } from '@/constants/theme';
 import { resolveThemePack, type ThemeAppearance } from '@/constants/theme-packs';
 import { createTerminalTheme, type TerminalTheme } from '@/terminal/palette';
 import { useAppSettings } from '@/stores/app-settings';
@@ -18,6 +20,23 @@ export function useThemePack(): ThemeAppearance {
   const custom = useThemeLibrary((state) => state.active);
   const selection = useThemeLibrary((state) => state.library.selection);
   return custom ?? resolveThemePack(selection?.kind === 'builtin' ? selection.id : themePack);
+}
+
+/**
+ * The palette a pack hands the kit's `ThemeProvider`.
+ *
+ * Two providers need this now: the root one in `app/_layout.tsx`, whose pack is
+ * whatever the app is wearing, and the nested one in the theme preview route,
+ * whose pack is the theme being looked at. Both are the same sentence --
+ * `buildTheme` over a `ThemeAppearance` -- and a second copy of it is a second
+ * place for the preview to stop matching the app it is previewing.
+ *
+ * Memoised on the pack itself, which the registry and `compileTheme` both keep
+ * referentially stable, so the provider rebuilds its tokens exactly when the
+ * theme changes and not once more.
+ */
+export function useThemePalette(pack: ThemeAppearance): ThemeOverride {
+  return useMemo(() => buildTheme(pack), [pack]);
 }
 
 /**
