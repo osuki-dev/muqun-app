@@ -3004,7 +3004,14 @@
         "run": "flows/settings.ad#s7"
       },
       {
+        "target": { "id": "settings-selection:(on|off):theme-osuki" },
+        "mode": "press",
         "run": "flows/settings.ad#reset-theme"
+      },
+      {
+        "target": { "text": "Theme, Osuki" },
+        "mode": "press",
+        "run": "flows/settings.ad#confirm-reset"
       },
       {
         "target": {
@@ -3631,16 +3638,27 @@
         "run": "flows/settings.ad#s88"
       },
       {
-        "run": "flows/settings.ad#s89"
-      },
-      {
         "when": {
           "env": "PLATFORM",
           "equals": "ios"
         },
         "steps": [
           {
+            "run": "flows/settings.ad#s89"
+          },
+          {
             "run": "flows/settings.ad#clear-native-header"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "PLATFORM",
+          "equals": "android"
+        },
+        "steps": [
+          {
+            "run": "flows/settings.ad#s89-android"
           }
         ]
       },

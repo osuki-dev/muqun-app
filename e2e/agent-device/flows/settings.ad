@@ -29,12 +29,18 @@ press "${TARGET}"
 scroll up --pixels 320
 
 # section reset-theme
-# The tile declares `accessibilityRole="radio"`, which this runtime reports as
-# a cell, so `role=radiobutton` never matches. The bare label matches the text
-# inside the tile as well as the tile, so the role is what separates them.
-press "role=cell label=\"Osuki\""
+# Selected by testID, not by role. The tile declares
+# `accessibilityRole="radio"`, and the two runtimes report that differently:
+# iOS surfaces it as a cell, Android as `android.widget.RadioButton`. A flow
+# that names either one passes on that platform and fails on the other, which
+# is exactly what `role=cell` did here -- green on iOS for as long as nobody
+# ran it on Android. The id carries the selection state, so the manifest
+# matches it with the same `(on|off)` pattern the scroll steps already use.
+press "${TARGET}"
 wait stable 400 5000
-press "label=\"Theme, Osuki\""
+
+# section confirm-reset
+press "${TARGET}"
 
 # section s9
 is visible "${TARGET}"
@@ -333,6 +339,23 @@ is visible "${TARGET}"
 scroll bottom
 wait stable 400 5000
 scroll up --pixels 60
+
+# section s89-android
+# Android's own calibration of the step above, kept apart rather than merged.
+# `scroll up --pixels 60` is a flick, and its magnitude does not mean the same
+# thing on both runtimes: on iOS it lands the row at y=414, on Android it leaves
+# it at y=32..198 -- overlapping the app's floating header (y=158..279) and
+# hard against the status bar, so the tap that follows opens nothing and the
+# flow fails two steps later looking for a sheet that never came.
+#
+# `gesture pan` is a drag rather than a flick, so its delta is the delta.
+# Measured here on a Pixel 8 emulator at 1080x2400: from the bottom of
+# Settings, panning down 400 moves the row from y=32..198 to y=403..569, which
+# clears the header with room to spare.
+scroll bottom
+wait stable 400 5000
+gesture pan 540 800 0 400 400
+wait stable 400 5000
 
 # section clear-native-header
 # Settle only. This used to scroll up to lift the row clear of the native
