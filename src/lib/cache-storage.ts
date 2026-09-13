@@ -93,7 +93,11 @@ export const IMAGE_CACHE_DIRECTORIES = [
  * made of something the reader already has in their photo library or their
  * files app.
  */
-export const TEMPORARY_CACHE_DIRECTORIES = ['ImagePicker', 'ImageManipulator', 'DocumentPicker'] as const;
+export const TEMPORARY_CACHE_DIRECTORIES = [
+  'ImagePicker',
+  'ImageManipulator',
+  'DocumentPicker',
+] as const;
 
 /**
  * Temporary directories whose names carry a random suffix, matched by prefix.
