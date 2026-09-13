@@ -174,7 +174,10 @@
     ],
     "flows/custom-themes": [
       {
-        "include": "subflows/launch-home"
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/custom-themes.ad#install"
       },
       {
         "target": {
@@ -210,54 +213,7 @@
         "run": "flows/custom-themes.ad#link-import"
       },
       {
-        "target": {
-          "id": "theme-paste-json"
-        },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#press"
-      },
-      {
-        "run": "flows/custom-themes.ad#input"
-      },
-      {
-        "run": "flows/custom-themes.ad#format-json"
-      },
-      {
-        "target": {
-          "id": "theme-undo-format"
-        },
-        "mode": "hidden",
-        "run": "flows/custom-themes.ad#hidden"
-      },
-      {
-        "target": {
-          "id": "theme-preview-json"
-        },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#press"
-      },
-      {
-        "target": {
-          "id": "custom-theme-preview"
-        },
-        "mode": "visible",
-        "run": "flows/custom-themes.ad#visible"
-      },
-      {
-        "target": {
-          "id": "custom-theme-done"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 10000,
-        "run": "flows/custom-themes.ad#scroll"
-      },
-      {
-        "target": {
-          "id": "custom-theme-done"
-        },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#press"
+        "run": "flows/custom-themes.ad#browse-entry"
       },
       {
         "run": "flows/custom-themes.ad#settle"

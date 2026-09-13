@@ -382,6 +382,10 @@ msgstr "Branch und Designdatei stammen aus dem Link. Ein Branch kann sich späte
 msgid "Branch or commit (optional)"
 msgstr "Branch oder Commit (optional)"
 
+#: src/components/custom-theme-library.tsx
+msgid "Browse themes"
+msgstr "Themes durchsuchen"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "Browser"
@@ -491,6 +495,7 @@ msgstr "Terminal leeren"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Schließen"
 
@@ -1124,6 +1129,7 @@ msgid "Downloading · {0} of {1}"
 msgstr "Wird geladen · {0} von {1}"
 
 #: src/components/asset-viewer.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "Theme wird geladen"
 
@@ -1246,24 +1252,12 @@ msgid "FIRST PROMPT"
 msgstr "ERSTER PROMPT"
 
 #: src/components/custom-theme-library.tsx
-msgid "Fix invalid JSON before formatting"
-msgstr "Ungültiges JSON vor dem Formatieren korrigieren"
-
-#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Vor dem Anwenden dieses Designs den Textkontrast korrigieren"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Tool-Schritte einklappen"
-
-#: src/components/custom-theme-library.tsx
-msgid "Format JSON"
-msgstr "JSON formatieren"
-
-#: src/components/custom-theme-library.tsx
-msgid "Formatted JSON exceeds the theme size limit"
-msgstr "Formatiertes JSON überschreitet die Größenbegrenzung für Themes"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1650,6 +1644,10 @@ msgstr "Terminal wird geladen"
 msgid "Loading the transcript"
 msgstr "Transkript wird geladen"
 
+#: src/components/theme-gallery.tsx
+msgid "Loading themes…"
+msgstr "Themes werden geladen …"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Logs"
@@ -1906,6 +1904,10 @@ msgstr "Noch keine SSH-Hosts. Füge einen hinzu, um eine Shell auf jedem erreich
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "Keine Einzelbilder"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "Es sind noch keine Themes veröffentlicht"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2171,10 +2173,6 @@ msgstr "Einfügen"
 msgid "Paste a public theme link or GitHub repository"
 msgstr "Öffentlichen Theme-Link oder GitHub-Repository-URL einfügen"
 
-#: src/components/custom-theme-library.tsx
-msgid "Paste JSON"
-msgstr "JSON einfügen"
-
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2198,6 +2196,7 @@ msgstr "Port"
 msgid "PORT"
 msgstr "PORT"
 
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Bilder werden vorbereitet"
@@ -2211,7 +2210,6 @@ msgid "Press Escape to dismiss this request"
 msgstr "Escape drücken, um diese Anfrage zu verwerfen"
 
 #: src/components/asset-viewer.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
 msgstr "Vorschau"
@@ -2880,6 +2878,7 @@ msgstr "Einige Theme-Farben benötigen mehr Kontrast"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Etwas ist schiefgelaufen"
@@ -3217,10 +3216,6 @@ msgid "Theme file (optional)"
 msgstr "Theme-Datei (optional)"
 
 #: src/components/custom-theme-library.tsx
-msgid "Theme JSON"
-msgstr "Design-JSON"
-
-#: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "Design gespeichert"
 
@@ -3233,9 +3228,17 @@ msgstr "Theme-URL"
 msgid "Theme, {0}"
 msgstr "Theme, {0}"
 
+#: src/components/theme-gallery.tsx
+msgid "Themes published at muqun.dev. Nothing downloads until you open one."
+msgstr "Auf muqun.dev veröffentlichte Themes. Es wird nichts geladen, bis du eines öffnest"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Dieser Agent hat diese Antwort nicht angeboten"
+
+#: src/components/theme-gallery.tsx
+msgid "This app build cannot reach the theme catalogue"
+msgstr "Dieser App-Build kann den Theme-Katalog nicht erreichen"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3401,10 +3404,6 @@ msgstr "Auf dem Simulator tippen"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Rückgängig"
-
-#: src/components/custom-theme-library.tsx
-msgid "Undo formatting"
-msgstr "Formatierung rückgängig machen"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

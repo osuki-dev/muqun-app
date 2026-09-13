@@ -382,6 +382,10 @@ msgstr "ブランチとテーマファイルはリンクから取得しました
 msgid "Branch or commit (optional)"
 msgstr "ブランチまたはコミット（任意）"
 
+#: src/components/custom-theme-library.tsx
+msgid "Browse themes"
+msgstr "テーマを探す"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "ブラウザー"
@@ -491,6 +495,7 @@ msgstr "ターミナルをクリア"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "閉じる"
 
@@ -1124,6 +1129,7 @@ msgid "Downloading · {0} of {1}"
 msgstr "ダウンロード中 · {0} / {1}"
 
 #: src/components/asset-viewer.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "テーマをダウンロード中"
 
@@ -1246,24 +1252,12 @@ msgid "FIRST PROMPT"
 msgstr "最初のプロンプト"
 
 #: src/components/custom-theme-library.tsx
-msgid "Fix invalid JSON before formatting"
-msgstr "整形する前にJSONの構文エラーを修正してください"
-
-#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "このテーマを適用する前に文字のコントラストを修正してください"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "ツールの手順を折りたたむ"
-
-#: src/components/custom-theme-library.tsx
-msgid "Format JSON"
-msgstr "JSONを整形"
-
-#: src/components/custom-theme-library.tsx
-msgid "Formatted JSON exceeds the theme size limit"
-msgstr "整形後のJSONがテーマのサイズ上限を超えています"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1650,6 +1644,10 @@ msgstr "ターミナルを読み込み中"
 msgid "Loading the transcript"
 msgstr "トランスクリプトを読み込み中"
 
+#: src/components/theme-gallery.tsx
+msgid "Loading themes…"
+msgstr "テーマを読み込んでいます…"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "ログ"
@@ -1906,6 +1904,10 @@ msgstr "SSH ホストはまだありません。追加すると、届く範囲�
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "静止画に非対応"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "公開されているテーマはまだありません"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2171,10 +2173,6 @@ msgstr "ペースト"
 msgid "Paste a public theme link or GitHub repository"
 msgstr "公開テーマのリンクまたは GitHub リポジトリの URL を貼り付けてください"
 
-#: src/components/custom-theme-library.tsx
-msgid "Paste JSON"
-msgstr "JSON を貼り付け"
-
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2198,6 +2196,7 @@ msgstr "ポート"
 msgid "PORT"
 msgstr "ポート"
 
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "画像を準備中"
@@ -2211,7 +2210,6 @@ msgid "Press Escape to dismiss this request"
 msgstr "エスケープを送ってこのリクエストを閉じる"
 
 #: src/components/asset-viewer.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
 msgstr "プレビュー"
@@ -2880,6 +2878,7 @@ msgstr "一部のテーマカラーはコントラストを高める必要があ
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "問題が発生しました"
@@ -3217,10 +3216,6 @@ msgid "Theme file (optional)"
 msgstr "テーマファイル（任意）"
 
 #: src/components/custom-theme-library.tsx
-msgid "Theme JSON"
-msgstr "テーマの JSON"
-
-#: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "テーマを保存しました"
 
@@ -3233,9 +3228,17 @@ msgstr "テーマの URL"
 msgid "Theme, {0}"
 msgstr "テーマ、{0}"
 
+#: src/components/theme-gallery.tsx
+msgid "Themes published at muqun.dev. Nothing downloads until you open one."
+msgstr "muqun.dev で公開されているテーマです。開くまで何もダウンロードしません"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "このエージェントはその選択肢を提示していません"
+
+#: src/components/theme-gallery.tsx
+msgid "This app build cannot reach the theme catalogue"
+msgstr "このアプリのビルドはテーマカタログに接続できません"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3401,10 +3404,6 @@ msgstr "シミュレータに入力する"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "取り消し"
-
-#: src/components/custom-theme-library.tsx
-msgid "Undo formatting"
-msgstr "整形を元に戻す"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

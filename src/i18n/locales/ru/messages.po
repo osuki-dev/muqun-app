@@ -382,6 +382,10 @@ msgstr "Ветка и файл темы взяты из ссылки. Ветка
 msgid "Branch or commit (optional)"
 msgstr "Ветка или коммит (необязательно)"
 
+#: src/components/custom-theme-library.tsx
+msgid "Browse themes"
+msgstr "Обзор тем"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "Браузер"
@@ -491,6 +495,7 @@ msgstr "Очистить терминал"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Закрыть"
 
@@ -1124,6 +1129,7 @@ msgid "Downloading · {0} of {1}"
 msgstr "Загрузка · {0} из {1}"
 
 #: src/components/asset-viewer.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "Загрузка темы"
 
@@ -1246,24 +1252,12 @@ msgid "FIRST PROMPT"
 msgstr "ПЕРВЫЙ ПРОМПТ"
 
 #: src/components/custom-theme-library.tsx
-msgid "Fix invalid JSON before formatting"
-msgstr "Исправьте ошибки JSON перед форматированием"
-
-#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Исправьте контраст текста перед применением этой темы"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Свернуть шаги инструментов"
-
-#: src/components/custom-theme-library.tsx
-msgid "Format JSON"
-msgstr "Форматировать JSON"
-
-#: src/components/custom-theme-library.tsx
-msgid "Formatted JSON exceeds the theme size limit"
-msgstr "После форматирования JSON превышает допустимый размер темы"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1650,6 +1644,10 @@ msgstr "Загружаем терминал"
 msgid "Loading the transcript"
 msgstr "Загружаем транскрипт"
 
+#: src/components/theme-gallery.tsx
+msgid "Loading themes…"
+msgstr "Загрузка тем…"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Логи"
@@ -1906,6 +1904,10 @@ msgstr "Пока нет SSH-хостов. Добавьте один, чтобы 
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "Нет стоп-кадров"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "Пока нет опубликованных тем"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2171,10 +2173,6 @@ msgstr "Вставить"
 msgid "Paste a public theme link or GitHub repository"
 msgstr "Вставьте публичную ссылку на тему или URL репозитория GitHub"
 
-#: src/components/custom-theme-library.tsx
-msgid "Paste JSON"
-msgstr "Вставить JSON"
-
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2198,6 +2196,7 @@ msgstr "Порт"
 msgid "PORT"
 msgstr "ПОРТ"
 
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Подготовка изображений"
@@ -2211,7 +2210,6 @@ msgid "Press Escape to dismiss this request"
 msgstr "Нажмите Escape, чтобы отклонить этот запрос"
 
 #: src/components/asset-viewer.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
 msgstr "Предпросмотр"
@@ -2880,6 +2878,7 @@ msgstr "Некоторым цветам темы требуется больше
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
@@ -3217,10 +3216,6 @@ msgid "Theme file (optional)"
 msgstr "Файл темы (необязательно)"
 
 #: src/components/custom-theme-library.tsx
-msgid "Theme JSON"
-msgstr "JSON темы"
-
-#: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "Тема сохранена"
 
@@ -3233,9 +3228,17 @@ msgstr "URL темы"
 msgid "Theme, {0}"
 msgstr "Тема, {0}"
 
+#: src/components/theme-gallery.tsx
+msgid "Themes published at muqun.dev. Nothing downloads until you open one."
+msgstr "Темы, опубликованные на muqun.dev. Ничего не загружается, пока вы не откроете тему"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Этот агент не предлагал такой ответ"
+
+#: src/components/theme-gallery.tsx
+msgid "This app build cannot reach the theme catalogue"
+msgstr "Эта сборка приложения не может обратиться к каталогу тем"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3401,10 +3404,6 @@ msgstr "Ввод на симуляторе"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Отменить"
-
-#: src/components/custom-theme-library.tsx
-msgid "Undo formatting"
-msgstr "Отменить форматирование"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"
