@@ -34,6 +34,11 @@ msgstr "[PR 번호]"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {#일}}"
 
+#. placeholder {0}: pending.files.length
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# file changed} other {# files changed}}"
+msgstr "{0, plural, other {파일 #개 변경됨}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -43,6 +48,11 @@ msgstr "{0, plural, other {#시간}}"
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {#분}}"
+
+#. placeholder {0}: row.remaining
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# more line} other {# more lines}}"
+msgstr "{0, plural, other {#줄 더 있음}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -180,6 +190,11 @@ msgstr "먼저 추가하세요"
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "이 줄을 서버의 ~/.ssh/authorized_keys에 추가하세요:"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Added"
+msgstr "추가됨"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -366,6 +381,10 @@ msgstr "백스페이스"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% 아래에서는 글자의 가독성이 보장되지 않습니다"
 
+#: src/components/git-diff-view.tsx
+msgid "Binary file"
+msgstr "바이너리 파일"
+
 #: src/lib/local-authentication.ts
 msgid "biometrics"
 msgstr "생체 인식"
@@ -427,6 +446,15 @@ msgstr "{0} 편집 취소"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "취소됨"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Changed"
+msgstr "변경됨"
+
+#: src/components/git-diff-view.tsx
+msgid "Changes"
+msgstr "변경 사항"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes colored backgrounds, not text, icons or artwork"
@@ -498,6 +526,10 @@ msgstr "터미널 지우기"
 #: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "닫기"
+
+#: src/components/git-diff-view.tsx
+msgid "Close changes"
+msgstr "변경 사항 닫기"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -628,6 +660,11 @@ msgstr "{label} 페어링 해제 확인"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "확인: {removeLabel} {label}"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Conflicted"
+msgstr "충돌"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -788,6 +825,11 @@ msgstr "컨트롤 Y, 붙여넣기"
 msgid "Control Z, suspend"
 msgstr "컨트롤 Z, 일시 중단"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Copied"
+msgstr "복사됨"
+
 #: src/components/skia-terminal.tsx
 msgid "Copied to clipboard"
 msgstr "클립보드에 복사됨"
@@ -907,10 +949,18 @@ msgstr "이 서버에 연결하지 못했습니다"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "저장된 서버를 읽을 수 없습니다. 저장된 데이터는 변경되지 않았습니다. 기기 잠금을 해제하고 다시 시도하세요"
 
+#: src/components/git-diff-view.tsx
+msgid "Could not read the changes."
+msgstr "변경 사항을 읽을 수 없습니다"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "터미널을 읽지 못했습니다"
+
+#: src/components/git-diff-view.tsx
+msgid "Could not read this file."
+msgstr "이 파일을 읽을 수 없습니다"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1028,6 +1078,11 @@ msgstr "{name} 삭제"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "이 줄 삭제"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Deleted"
+msgstr "삭제됨"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1351,6 +1406,8 @@ msgid "Haptic feedback"
 msgstr "햅틱 피드백"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "{0} 숨기기"
@@ -1698,6 +1755,11 @@ msgstr "{0} 멘션"
 msgid "Modified"
 msgstr "수정일"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Modified"
+msgstr "수정됨"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "추가 작업"
@@ -1844,6 +1906,10 @@ msgstr "스캔할 카메라가 없습니다"
 msgid "No camera was found on this device."
 msgstr "이 기기에서 카메라를 찾지 못했습니다"
 
+#: src/components/git-diff-view.tsx
+msgid "No changes. The working tree matches HEAD."
+msgstr "변경 사항이 없습니다. 작업 트리가 HEAD와 같습니다"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "일치하는 파일이 없습니다"
@@ -1908,6 +1974,9 @@ msgstr "정지 화면 없음"
 #: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "아직 공개된 테마가 없습니다"
+#: src/components/git-diff-view.tsx
+msgid "No textual change"
+msgstr "텍스트 변경 없음"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2000,6 +2069,10 @@ msgstr "{title} 열기. 길게 눌러 닫기"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "그래도 열기"
+
+#: src/components/git-diff-button.tsx
+msgid "Open changes"
+msgstr "변경 사항 열기"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -2349,6 +2422,10 @@ msgstr "다시 연결 중 · {0}"
 msgid "Refresh"
 msgstr "새로고침"
 
+#: src/components/git-diff-view.tsx
+msgid "Refresh changes"
+msgstr "변경 사항 새로 고침"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "파일 새로 고침"
@@ -2398,6 +2475,11 @@ msgstr "터미널 이름 변경"
 #: src/components/session-map.tsx
 msgid "Rename workspace"
 msgstr "워크스페이스 이름 변경"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Renamed"
+msgstr "이름 바뀜"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
@@ -2686,6 +2768,7 @@ msgid "Sending to"
 msgstr "보내는 대상"
 
 #: src/app/artifacts.tsx
+#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2770,6 +2853,8 @@ msgid "Shift Tab, cycle mode"
 msgstr "시프트 탭, 모드 전환"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "{0} 표시"
@@ -2814,6 +2899,10 @@ msgstr "홈 텍스트 표시"
 msgid "Show images"
 msgstr "이미지 표시"
 
+#: src/components/git-diff-view.tsx
+msgid "Show more"
+msgstr "더 보기"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "터미널 텍스트 뒤에 앱 배경 표시"
@@ -2821,6 +2910,10 @@ msgstr "터미널 텍스트 뒤에 앱 배경 표시"
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "편집기 키보드 표시"
+
+#: src/components/git-diff-view.tsx
+msgid "Show the newer list of changes"
+msgstr "최신 변경 목록 보기"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3288,6 +3381,10 @@ msgstr "이것은 번들된 기록이며 실제 서버가 아닙니다"
 msgid "This link goes nowhere"
 msgstr "이 링크는 아무 데도 연결되지 않습니다"
 
+#: src/components/git-diff-view.tsx
+msgid "This pane is not working inside a git repository, so there is nothing to compare."
+msgstr "이 패널은 git 저장소 안에서 작업하고 있지 않아 비교할 것이 없습니다"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "이 QR 코드는 올바르지 않습니다"
@@ -3358,12 +3455,17 @@ msgstr "{host} 경유"
 msgid "Today"
 msgstr "오늘"
 
+#: src/components/git-diff-view.tsx
+msgid "Too many changes to list. This is the start of them, not all of them."
+msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
 msgstr "신뢰"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/git-diff-view.tsx
 msgid "Try again"
 msgstr "다시 시도"
 
@@ -3386,6 +3488,11 @@ msgstr "종류"
 #: src/lib/demo-ssh.ts
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "한 줄을 입력하고 Enter를 누르면 그대로 돌려줍니다"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Type changed"
+msgstr "형식 변경됨"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3449,6 +3556,11 @@ msgstr "{label} 페어링 해제 중"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "해제하는 중…"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Untracked"
+msgstr "추적되지 않음"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts

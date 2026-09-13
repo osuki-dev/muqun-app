@@ -145,17 +145,23 @@ export const artifactGroupLabel: Record<'today' | 'yesterday' | 'unknown', Messa
  * macro. `unknown` is a real key and not a fallback nobody reaches: a gateway
  * newer than this build can report a status this one has never heard of, and a
  * blank where a word should be is worse than an honest one.
+ *
+ * Every one of them carries a `context`, which is not decoration: `Modified`
+ * already exists in these catalogs as the asset viewer's *field label*, and
+ * several locales translate it as "modification date". A file's git status and
+ * a column heading are two different sentences that happen to be one word in
+ * English, and a shared id would put the wrong one in a diff row.
  */
 export const gitFileStatusWord: Record<GitFileStatus, MessageDescriptor> = {
-  added: msg`Added`,
-  modified: msg`Modified`,
-  deleted: msg`Deleted`,
-  renamed: msg`Renamed`,
-  copied: msg`Copied`,
-  untracked: msg`Untracked`,
-  conflicted: msg`Conflicted`,
-  type_changed: msg`Type changed`,
-  unknown: msg`Changed`,
+  added: msg({ message: 'Added', context: 'git file status' }),
+  modified: msg({ message: 'Modified', context: 'git file status' }),
+  deleted: msg({ message: 'Deleted', context: 'git file status' }),
+  renamed: msg({ message: 'Renamed', context: 'git file status' }),
+  copied: msg({ message: 'Copied', context: 'git file status' }),
+  untracked: msg({ message: 'Untracked', context: 'git file status' }),
+  conflicted: msg({ message: 'Conflicted', context: 'git file status' }),
+  type_changed: msg({ message: 'Type changed', context: 'git file status' }),
+  unknown: msg({ message: 'Changed', context: 'git file status' }),
 };
 
 /**

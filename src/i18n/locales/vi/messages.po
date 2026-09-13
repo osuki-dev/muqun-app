@@ -34,6 +34,11 @@ msgstr "[số pr]"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# ngày}}"
 
+#. placeholder {0}: pending.files.length
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# file changed} other {# files changed}}"
+msgstr "{0, plural, other {# tệp đã thay đổi}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -43,6 +48,11 @@ msgstr "{0, plural, other {# giờ}}"
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# phút}}"
+
+#. placeholder {0}: row.remaining
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# more line} other {# more lines}}"
+msgstr "{0, plural, other {còn # dòng nữa}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -180,6 +190,11 @@ msgstr "Thêm một cái trước đã"
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Thêm dòng này vào ~/.ssh/authorized_keys trên máy chủ:"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Added"
+msgstr "Đã thêm"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -366,6 +381,10 @@ msgstr "Backspace"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ đọc"
 
+#: src/components/git-diff-view.tsx
+msgid "Binary file"
+msgstr "Tệp nhị phân"
+
 #: src/lib/local-authentication.ts
 msgid "biometrics"
 msgstr "sinh trắc học"
@@ -427,6 +446,15 @@ msgstr "Hủy chỉnh sửa {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "Đã hủy"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Changed"
+msgstr "Đã thay đổi"
+
+#: src/components/git-diff-view.tsx
+msgid "Changes"
+msgstr "Thay đổi"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes colored backgrounds, not text, icons or artwork"
@@ -498,6 +526,10 @@ msgstr "Xóa màn hình terminal"
 #: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Đóng"
+
+#: src/components/git-diff-view.tsx
+msgid "Close changes"
+msgstr "Đóng thay đổi"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -628,6 +660,11 @@ msgstr "Xác nhận hủy ghép nối {label}"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "Xác nhận: {removeLabel} {label}"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Conflicted"
+msgstr "Xung đột"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -788,6 +825,11 @@ msgstr "Ctrl Y, dán"
 msgid "Control Z, suspend"
 msgstr "Ctrl Z, tạm dừng"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Copied"
+msgstr "Đã sao chép"
+
 #: src/components/skia-terminal.tsx
 msgid "Copied to clipboard"
 msgstr "Đã sao chép vào bảng nhớ tạm"
@@ -907,10 +949,18 @@ msgstr "Không thể kết nối đến máy chủ này"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Không thể đọc các máy chủ đã lưu. Dữ liệu đã lưu không bị thay đổi. Hãy mở khóa thiết bị rồi thử lại"
 
+#: src/components/git-diff-view.tsx
+msgid "Could not read the changes."
+msgstr "Không đọc được các thay đổi"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "Không thể đọc terminal"
+
+#: src/components/git-diff-view.tsx
+msgid "Could not read this file."
+msgstr "Không đọc được tệp này"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1028,6 +1078,11 @@ msgstr "Xóa {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Xóa dòng này"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Deleted"
+msgstr "Đã xoá"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1351,6 +1406,8 @@ msgid "Haptic feedback"
 msgstr "Phản hồi rung"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "Ẩn {0}"
@@ -1698,6 +1755,11 @@ msgstr "Nhắc đến {0}"
 msgid "Modified"
 msgstr "Đã sửa đổi"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Modified"
+msgstr "Đã sửa"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "Thao tác khác"
@@ -1844,6 +1906,10 @@ msgstr "Không có camera để quét"
 msgid "No camera was found on this device."
 msgstr "Không tìm thấy camera trên thiết bị này"
 
+#: src/components/git-diff-view.tsx
+msgid "No changes. The working tree matches HEAD."
+msgstr "Không có thay đổi. Cây làm việc trùng với HEAD"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Không có tệp nào khớp"
@@ -1908,6 +1974,9 @@ msgstr "Không có khung hình tĩnh"
 #: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "Chưa có giao diện nào được công bố"
+#: src/components/git-diff-view.tsx
+msgid "No textual change"
+msgstr "Không có thay đổi văn bản"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2000,6 +2069,10 @@ msgstr "Mở {title}. Nhấn giữ để đóng"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "Vẫn mở"
+
+#: src/components/git-diff-button.tsx
+msgid "Open changes"
+msgstr "Mở thay đổi"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -2349,6 +2422,10 @@ msgstr "Đang kết nối lại · {0}"
 msgid "Refresh"
 msgstr "Làm mới"
 
+#: src/components/git-diff-view.tsx
+msgid "Refresh changes"
+msgstr "Làm mới thay đổi"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "Làm mới tệp"
@@ -2398,6 +2475,11 @@ msgstr "Đổi tên terminal"
 #: src/components/session-map.tsx
 msgid "Rename workspace"
 msgstr "Đổi tên không gian làm việc"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Renamed"
+msgstr "Đã đổi tên"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
@@ -2686,6 +2768,7 @@ msgid "Sending to"
 msgstr "Đang gửi đến"
 
 #: src/app/artifacts.tsx
+#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2770,6 +2853,8 @@ msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab, chuyển chế độ"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "Hiện {0}"
@@ -2814,6 +2899,10 @@ msgstr "Hiển thị chữ trên trang chủ"
 msgid "Show images"
 msgstr "Hiện hình ảnh"
 
+#: src/components/git-diff-view.tsx
+msgid "Show more"
+msgstr "Hiện thêm"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "Hiển thị nền ứng dụng phía sau văn bản terminal"
@@ -2821,6 +2910,10 @@ msgstr "Hiển thị nền ứng dụng phía sau văn bản terminal"
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Hiện bàn phím soạn thảo"
+
+#: src/components/git-diff-view.tsx
+msgid "Show the newer list of changes"
+msgstr "Hiện danh sách thay đổi mới hơn"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3288,6 +3381,10 @@ msgstr "Đây là bản ghi đi kèm, không phải máy chủ thật"
 msgid "This link goes nowhere"
 msgstr "Liên kết này không dẫn đến đâu cả"
 
+#: src/components/git-diff-view.tsx
+msgid "This pane is not working inside a git repository, so there is nothing to compare."
+msgstr "Ngăn này không làm việc trong một kho git, nên không có gì để so sánh"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "Mã QR này không hợp lệ"
@@ -3358,12 +3455,17 @@ msgstr "Qua {host}"
 msgid "Today"
 msgstr "Hôm nay"
 
+#: src/components/git-diff-view.tsx
+msgid "Too many changes to list. This is the start of them, not all of them."
+msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
 msgstr "Tin cậy"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/git-diff-view.tsx
 msgid "Try again"
 msgstr "Thử lại"
 
@@ -3386,6 +3488,11 @@ msgstr "Loại"
 #: src/lib/demo-ssh.ts
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "Gõ một dòng và nhấn Enter; nó sẽ được trả lại nguyên văn"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Type changed"
+msgstr "Đã đổi kiểu"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3449,6 +3556,11 @@ msgstr "Đang hủy ghép nối {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Đang hủy ghép nối…"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Untracked"
+msgstr "Chưa theo dõi"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
