@@ -14,7 +14,8 @@ import {
   AUTO_EXPAND_MAX_LINES,
   GIT_DIFF_CAPABILITY,
   MAX_OPEN_FILES,
-  appendPatchPage,
+  NO_PATCH_CARRY,
+  applyPatchPage,
   badgeCount,
   closeFile,
   emptyFilePatchState,
@@ -132,7 +133,7 @@ describe('parseUnifiedPatch', () => {
       'rename to src/new.ts',
       '',
     ].join('\n');
-    expect(parseUnifiedPatch(patch)).toEqual({ hunks: [], binary: false });
+    expect(parseUnifiedPatch(patch)).toMatchObject({ hunks: [], binary: false });
   });
 
   test('a rename that also changed keeps its hunk', () => {
@@ -223,7 +224,7 @@ describe('parseUnifiedPatch', () => {
       'Binary files a/assets/logo.png and b/assets/logo.png differ',
       '',
     ].join('\n');
-    expect(parseUnifiedPatch(patch)).toEqual({ hunks: [], binary: true });
+    expect(parseUnifiedPatch(patch)).toMatchObject({ hunks: [], binary: true });
   });
 
   test('a GIT binary patch is binary too', () => {
@@ -232,12 +233,13 @@ describe('parseUnifiedPatch', () => {
   });
 
   test('an empty patch is no rows, not a throw', () => {
-    expect(parseUnifiedPatch('')).toEqual({ hunks: [], binary: false });
-    expect(parseUnifiedPatch('\n')).toEqual({ hunks: [], binary: false });
+    expect(parseUnifiedPatch('')).toEqual({ hunks: [], binary: false, carry: NO_PATCH_CARRY });
+    expect(parseUnifiedPatch('\n')).toMatchObject({ hunks: [], binary: false });
     // The signature says string; the wire says whatever it says.
     expect(parseUnifiedPatch(undefined as unknown as string)).toEqual({
       hunks: [],
       binary: false,
+      carry: NO_PATCH_CARRY,
     });
   });
 
@@ -621,12 +623,16 @@ describe('widestRow', () => {
 // Paging and expansion bookkeeping
 // ---------------------------------------------------------------------------
 
-describe('appendPatchPage', () => {
+function page(data: Record<string, unknown>) {
+  return gitDiffPageFromResponse({ data });
+}
+
+describe('applyPatchPage', () => {
   test('the first page replaces whatever was there', () => {
-    const page = gitDiffPageFromResponse({
-      data: { from: 0, end: 11, total_lines: 24, patch: MODIFIED },
-    });
-    const next = appendPatchPage(undefined, page, parseUnifiedPatch(page.patch));
+    const next = applyPatchPage(
+      undefined,
+      page({ from: 0, end: 11, total_lines: 24, patch: MODIFIED })
+    );
     expect(next.hunks).toHaveLength(1);
     expect(next.loadedLines).toBe(11);
     expect(next.totalLines).toBe(24);
@@ -634,38 +640,118 @@ describe('appendPatchPage', () => {
   });
 
   test('a following page appends', () => {
-    const first = appendPatchPage(
+    const first = applyPatchPage(
       undefined,
-      gitDiffPageFromResponse({ data: { from: 0, end: 11, total_lines: 24, patch: MODIFIED } }),
-      parseUnifiedPatch(MODIFIED)
+      page({ from: 0, end: 11, total_lines: 24, patch: MODIFIED })
     );
-    const second = '@@ -20,1 +20,2 @@\n a\n+b\n';
-    const next = appendPatchPage(
+    const next = applyPatchPage(
       first,
-      gitDiffPageFromResponse({ data: { from: 11, end: 24, total_lines: 24, patch: second } }),
-      parseUnifiedPatch(second)
+      page({ from: 11, end: 24, total_lines: 24, patch: '@@ -20,1 +20,2 @@\n a\n+b\n' })
     );
     expect(next.hunks).toHaveLength(2);
     expect(next.loadedLines).toBe(24);
   });
 
   test('a re-read of the same range replaces rather than duplicating', () => {
-    const first = appendPatchPage(
+    const first = applyPatchPage(
       undefined,
-      gitDiffPageFromResponse({ data: { from: 0, end: 11, total_lines: 24, patch: MODIFIED } }),
-      parseUnifiedPatch(MODIFIED)
+      page({ from: 0, end: 11, total_lines: 24, patch: MODIFIED })
     );
-    const again = appendPatchPage(
+    const again = applyPatchPage(
       first,
-      gitDiffPageFromResponse({ data: { from: 0, end: 11, total_lines: 24, patch: MODIFIED } }),
-      parseUnifiedPatch(MODIFIED)
+      page({ from: 0, end: 11, total_lines: 24, patch: MODIFIED })
     );
     expect(again.hunks).toHaveLength(1);
   });
 
   test('a binary page stays binary however it was flagged', () => {
-    const page = gitDiffPageFromResponse({ data: { binary: true, patch: '' } });
-    expect(appendPatchPage(undefined, page, parseUnifiedPatch('')).binary).toBe(true);
+    expect(applyPatchPage(undefined, page({ binary: true, patch: '' })).binary).toBe(true);
+  });
+
+  /**
+   * The case the gateway found against a real repository: one hunk longer than
+   * a page. It is cut raw, so the second page opens with no header at all and
+   * the only thing that can number its lines is the carry from the first.
+   */
+  test('a single hunk split across two pages numbers continuously', () => {
+    const head = [
+      'diff --git a/src/big.ts b/src/big.ts',
+      'index aaaaaaa..bbbbbbb 100644',
+      '--- a/src/big.ts',
+      '+++ b/src/big.ts',
+      '@@ -1,50 +1,50 @@',
+    ];
+    const body: string[] = [];
+    for (let index = 0; index < 50; index += 1) body.push(` line ${index}`);
+
+    const firstPatch = [...head, ...body.slice(0, 10)].join('\n') + '\n';
+    const first = applyPatchPage(
+      undefined,
+      page({ from: 0, end: 15, total_lines: 55, patch: firstPatch })
+    );
+    expect(first.hunks).toHaveLength(1);
+    expect(first.hunks[0].lines).toHaveLength(10);
+    expect(first.carry).toEqual({ oldLine: 11, newLine: 11, inHunk: true });
+
+    const secondPatch = body.slice(10).join('\n') + '\n';
+    const second = applyPatchPage(
+      first,
+      page({ from: 15, end: 55, total_lines: 55, patch: secondPatch })
+    );
+    // One hunk still, not two, and no headerless hunk anywhere.
+    expect(second.hunks).toHaveLength(1);
+    expect(second.hunks[0].header).toBe('@@ -1,50 +1,50 @@');
+    expect(second.hunks[0].lines).toHaveLength(50);
+    expect(second.hunks[0].lines.map((line) => line.oldLine)).toEqual(
+      Array.from({ length: 50 }, (_unused, index) => index + 1)
+    );
+    expect(second.hunks[0].lines.map((line) => line.newLine)).toEqual(
+      Array.from({ length: 50 }, (_unused, index) => index + 1)
+    );
+
+    // And the rows the sheet draws are one hunk header and fifty lines.
+    const files = [change({ path: 'src/big.ts' })];
+    const rows = flattenDiffRows(files, new Set(['src/big.ts']), new Map([['src/big.ts', second]]));
+    expect(rows.filter((row) => row.type === 'hunk')).toHaveLength(1);
+    expect(rows.filter((row) => row.type === 'line')).toHaveLength(50);
+    expect(new Set(rows.map((row) => row.key)).size).toBe(rows.length);
+  });
+
+  test('a page that opens mid-hunk and then starts a new one keeps both', () => {
+    const first = applyPatchPage(
+      undefined,
+      page({ from: 0, end: 3, total_lines: 9, patch: '@@ -1,4 +1,4 @@\n a\n b\n' })
+    );
+    const second = applyPatchPage(
+      first,
+      page({ from: 3, end: 9, total_lines: 9, patch: ' c\n d\n@@ -40,1 +40,1 @@\n-x\n+y\n' })
+    );
+    expect(second.hunks).toHaveLength(2);
+    expect(second.hunks[0].lines.map((line) => line.text)).toEqual(['a', 'b', 'c', 'd']);
+    expect(second.hunks[0].lines[3].oldLine).toBe(4);
+    expect(second.hunks[1].lines[0].oldLine).toBe(40);
+  });
+
+  test('continuation lines on a first page are metadata, and are dropped', () => {
+    const only = applyPatchPage(
+      undefined,
+      page({ from: 0, end: 2, total_lines: 2, patch: ' a\n b\n' })
+    );
+    expect(only.hunks).toEqual([]);
+  });
+
+  test('a carry that catches nothing leaves no headerless hunk behind', () => {
+    const first = applyPatchPage(
+      undefined,
+      page({ from: 0, end: 3, total_lines: 6, patch: '@@ -1,2 +1,2 @@\n a\n b\n' })
+    );
+    expect(first.carry.inHunk).toBe(true);
+    const second = applyPatchPage(
+      first,
+      page({ from: 3, end: 6, total_lines: 6, patch: '@@ -9,1 +9,1 @@\n-x\n+y\n' })
+    );
+    expect(second.hunks).toHaveLength(2);
+    expect(second.hunks.every((hunk) => hunk.header !== '')).toBe(true);
   });
 });
 

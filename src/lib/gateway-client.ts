@@ -87,6 +87,18 @@ import {
   type PaneApprovalState,
 } from './pane-approval';
 import { agentEventsFromResponse, type AgentEvent } from './away-digest';
+// Re-exported further down as well; `export … from` binds nothing in this
+// module, and the three loaders below parse their answers with these.
+import {
+  DIFF_CONTEXT_LINES,
+  FILE_PATCH_MAX_LINES,
+  gitDiffPageFromResponse,
+  gitStatusFromResponse,
+  paneContextFromResponse,
+  type GitFilePatchPage,
+  type GitStatus,
+  type PaneContext,
+} from './git-diff';
 import {
   agentProfilesFromResponse,
   recentCwdsFromResponse,
@@ -99,11 +111,14 @@ import {
   demoAgentEvents,
   demoAgentProfiles,
   demoAgents,
+  demoGitDiff,
+  demoGitStatus,
   demoSendAgentText,
   demoAssetContentUri,
   demoAssetText,
   demoHealth,
   demoPanes,
+  demoPaneContext,
   demoPaneFiles,
   demoPaneOutput,
   demoPaneRange,
@@ -1394,6 +1409,168 @@ export async function listAgentEvents(sessionId: string): Promise<AgentEvent[]> 
   if (response.status === 404 || response.status === 501) return [];
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   return agentEventsFromResponse(await response.json());
+}
+
+/**
+ * The diff viewer's vocabulary, re-exported for the same reason the part,
+ * mention and away ones are: a screen reaches for the gateway through a single
+ * module.
+ */
+export {
+  AUTO_EXPAND_MAX_LINES,
+  DIFF_CONTEXT_LINES,
+  FILE_PATCH_MAX_LINES,
+  GIT_DIFF_CAPABILITY,
+  MAX_OPEN_FILES,
+  PANE_CONTEXT_CAPABILITY,
+  applyPatchPage,
+  badgeCount,
+  closeFile,
+  emptyFilePatchState,
+  fileHeaderIndices,
+  flattenDiffRows,
+  gatewaySupportsGitDiff,
+  gatewaySupportsPaneContext,
+  gitDiffPageFromResponse,
+  gitStatusFromResponse,
+  openFile,
+  paneContextFromResponse,
+  NO_PATCH_CARRY,
+  parseUnifiedPatch,
+  shouldAutoExpand,
+  widestRow,
+  type GitDiffHunk,
+  type GitDiffLine,
+  type GitDiffLineKind,
+  type GitDiffRow,
+  type GitDiffRowType,
+  type GitFileChange,
+  type GitFilePatchPage,
+  type GitFilePatchState,
+  type GitFileStatus,
+  type GitRepoSummary,
+  type GitStatus,
+  type PaneAgentContext,
+  type PaneContext,
+  type ParsedPatch,
+  type PatchCarry,
+} from './git-diff';
+
+/**
+ * What this pane is: where it is working, whether that is a checkout, and what
+ * is running in it.
+ *
+ * One request rather than four. The app could stitch this from `get_pane`,
+ * `recent-cwds`, `shortcuts` and the parts descriptor, three of which repeat
+ * work the gateway already did to answer the first -- so the gateway assembles
+ * it instead, and `pane_context` is the capability that says it can.
+ *
+ * A pane outside the session's fence, or one whose directory is not a
+ * repository, answers `git: null`. That is the ordinary answer and not an
+ * error: a failure here would be a host-probing oracle, which is why
+ * `pane_files` already answers the same way.
+ */
+export async function loadPaneContext(
+  sessionId: string,
+  paneId: string,
+  signal?: AbortSignal
+): Promise<PaneContext> {
+  if (isDemoActive()) return paneContextFromResponse(demoPaneContext(paneId));
+
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/context`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  return paneContextFromResponse(await response.json());
+}
+
+/**
+ * Which files in this pane's checkout have changed, and by how much.
+ *
+ * The union of the index and the working tree, one entry per path: v1 shows
+ * what is different from `HEAD`, not a three-way split of where each change is
+ * staged. `truncated` is the gateway saying it stopped counting, and the sheet
+ * has to say so rather than present a cut list as the whole answer.
+ *
+ * No patch text comes back here. The list is O(changed files) and the patch is
+ * fetched per file on expand, which is the whole reason this cannot freeze on a
+ * large repository -- there is no "the whole diff" request in the API at all.
+ */
+export async function loadGitStatus(
+  sessionId: string,
+  paneId: string,
+  signal?: AbortSignal
+): Promise<GitStatus> {
+  if (isDemoActive()) return gitStatusFromResponse(demoGitStatus(paneId));
+
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(
+        paneId
+      )}/git/status`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  return gitStatusFromResponse(await response.json());
+}
+
+/**
+ * One page of one file's unified patch.
+ *
+ * `from` is a line offset into the file's whole patch and `lines` is how much
+ * of it to send; the gateway cuts the page at a hunk boundary, so every page
+ * starts at a `diff --git` or an `@@` line and parses on its own. That is what
+ * lets "show more" append hunks instead of re-reading the file from the top.
+ *
+ * Everything is clamped on the way out as well as on the way in. The gateway
+ * clamps too -- it has to, it is the one running `git` -- but asking within the
+ * range keeps the echoed `end` equal to what was requested, which makes a
+ * mismatch a real signal rather than a rounding difference.
+ */
+export async function loadGitFileDiff(
+  sessionId: string,
+  paneId: string,
+  path: string,
+  options: { from?: number; lines?: number; context?: number; oldPath?: string | null } = {},
+  signal?: AbortSignal
+): Promise<GitFilePatchPage> {
+  const from = Math.max(0, Math.round(options.from ?? 0));
+  const lines = Math.max(
+    1,
+    Math.min(FILE_PATCH_MAX_LINES, Math.round(options.lines ?? FILE_PATCH_MAX_LINES))
+  );
+  const context = Math.max(0, Math.min(25, Math.round(options.context ?? DIFF_CONTEXT_LINES)));
+
+  if (isDemoActive()) {
+    return gitDiffPageFromResponse(demoGitDiff(paneId, path, from, lines), path);
+  }
+
+  // Assembled by hand rather than through URLSearchParams, whose React Native
+  // shim is only a partial one. `staged` exists on the route and v1 never sends
+  // it: the list is the union, so there is nothing to select between.
+  const query = [
+    `path=${encodeURIComponent(path)}`,
+    `context=${context}`,
+    `from=${from}`,
+    `lines=${lines}`,
+  ];
+  // Both ends of a rename, or git renders the move as a brand-new file and the
+  // reader is shown a thousand added lines where one line actually changed.
+  if (options.oldPath) query.push(`old_path=${encodeURIComponent(options.oldPath)}`);
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(
+        paneId
+      )}/git/diff?${query.join('&')}`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  return gitDiffPageFromResponse(await response.json(), path);
 }
 
 /**
