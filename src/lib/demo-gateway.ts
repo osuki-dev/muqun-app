@@ -1356,6 +1356,8 @@ function demoPatchLines(path: string): string[] {
  * the demo would exercise a parser path the wire never produces, and miss the
  * one it does.
  */
+const DEMO_DIFF_PAGE_LINES = 240;
+
 function demoPageEnd(lines: string[], from: number, count: number): number {
   const end = Math.min(lines.length, from + count);
   if (end >= lines.length) return lines.length;
@@ -1431,7 +1433,11 @@ export function demoGitDiff(
 
   const all = demoPatchLines(path);
   const start = Math.max(0, Math.min(from, all.length));
-  const end = demoPageEnd(all, start, Math.max(1, lines));
+  // The demo pages shorter than the Gateway's 4000 lines. A page is allowed to
+  // end early -- the Gateway cuts on hunk boundaries -- so the App handles it,
+  // and it is what makes the "show more" row reachable by a bounded scroll in
+  // the offline suite: agent-device cannot see the edge of a recycled list.
+  const end = demoPageEnd(all, start, Math.max(1, Math.min(lines, DEMO_DIFF_PAGE_LINES)));
   return demoContentEnvelope({
     session_id: SESSION_ID,
     pane_id: paneId,
