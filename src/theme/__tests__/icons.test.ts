@@ -31,12 +31,19 @@ test('a glyph explicitly turned off is allowed', () => {
   expect(() => parseThemeManifest(withIcons({ 'chrome.back': null }))).not.toThrow();
 });
 
-test('the rest of the manifest stays strict', () => {
-  // Tolerance is scoped to icon names and nothing else: a typo in a colour is a
-  // mistake, and it must still fail.
+test('tolerance stops at the shape of an entry', () => {
+  // The names a pack may use are open -- icons, slots, material surfaces -- for
+  // the reason argued in `iconsSchema`: an app older than the pack cannot tell
+  // "a name I do not know" from "not supplied", and both have the same right
+  // answer. A slot name this build does not draw is therefore accepted and
+  // ignored rather than fatal.
   expect(() =>
     parseThemeManifest(JSON.stringify({ ...base, decoration: { 'shell.backgrund': null } }))
-  ).toThrow();
+  ).not.toThrow();
+  // What stays strict is the *inside* of an entry. `rendre` is not a name this
+  // build might grow into; it is a misspelling of a key that decides how the
+  // glyph is drawn, and there is no sensible fallback for a value that was
+  // never read.
   expect(() =>
     parseThemeManifest(withIcons({ 'chrome.back': { asset: 'a', rendre: 'template' } }))
   ).toThrow();
