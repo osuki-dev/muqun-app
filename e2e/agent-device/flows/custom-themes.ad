@@ -57,22 +57,15 @@ screenshot dist/theme-applied-status.png
 
 # section reopen-applied
 # The old flow arrived here on Home, because applying from the detail route
-# unwinds the root stack. This one applied from the file viewer and walked to
-# Settings itself, so it is already in the picker and the way into the detail
-# route is the row the install added. The property under test is unchanged: a
-# theme that has just been applied is still reachable from the list it joined.
+# unwinds the root stack, and had to walk back in through Settings and the
+# picker. This one applied from the file viewer and walked to Settings itself,
+# so it is already in the picker: the way into the detail route is the row the
+# install added, and nothing before it. The property under test is unchanged --
+# a theme that has just been applied is still reachable from the list it joined.
+#
+# By testID, because the row and its remove button both carry the theme's name,
+# so neither the name nor the name plus a role identifies the row.
 press "id=theme-row-my-theme"
-wait stable 400 5000
-# No scroll. `scroll --pixels` is a flick and carries about seven times the
-# momentum it is given, so a 300 here landed at the foot of the page with the
-# row far above the viewport -- the failure shot for that attempt was ABOUT and
-# the version line. Appearance is the second section and the row is on the
-# first screen of Settings.
-press "id=settings-theme-row"
-wait stable 400 5000
-# The row and its remove button both carry the theme's name, so neither the
-# name nor the name plus a role identifies the row. Its testID does.
-press "id=theme-row-theme-qa"
 wait stable 400 5000
 is visible "id=\"custom-theme-preview\""
 
