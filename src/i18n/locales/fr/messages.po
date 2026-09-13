@@ -59,6 +59,11 @@ msgstr "{0, plural, one {# ligne de plus} other {# lignes de plus}}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, one {et # agent de plus} other {et # agents de plus}}"
 
+#. placeholder {0}: formatCacheSize(totals.other)
+#: src/components/settings-storage.tsx
+msgid "{0} · Managed by the system. Clear cache leaves it alone."
+msgstr "{0} · Géré par le système, et le vidage du cache n’y touche pas"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -414,6 +419,10 @@ msgstr "Navigateur"
 msgid "Built-in themes"
 msgstr "Thèmes intégrés"
 
+#: src/components/settings-storage.tsx
+msgid "Calculating…"
+msgstr "Calcul en cours…"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "L’accès à la caméra est désactivé. Activez-le dans Réglages pour prendre une photo"
@@ -426,6 +435,7 @@ msgstr "Accès à la caméra requis"
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -513,6 +523,14 @@ msgstr "Choisissez où travailler"
 msgid "Choose which simulator to show"
 msgstr "Choisir le simulateur à afficher"
 
+#: src/components/settings-storage.tsx
+msgid "Clear"
+msgstr "Vider"
+
+#: src/components/settings-storage.tsx
+msgid "Clear cache"
+msgstr "Vider le cache"
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "Effacer la ligne"
@@ -520,6 +538,14 @@ msgstr "Effacer la ligne"
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Effacer le terminal"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing cache"
+msgstr "Vidage du cache en cours"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing…"
+msgstr "Vidage…"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -635,6 +661,10 @@ msgstr "Commit et push"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Compact"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm clear cache"
+msgstr "Confirmer le vidage du cache"
 
 #: src/app/explore.tsx
 msgid "Confirm pairing"
@@ -1464,6 +1494,7 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "Si le problème persiste, redémarre l’app ou vérifie son installation"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Images"
 msgstr "Images"
 
@@ -1567,6 +1598,10 @@ msgstr "à l’instant"
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Conserver {label}"
+
+#: src/components/settings-storage.tsx
+msgid "Keep cached files"
+msgstr "Conserver les fichiers en cache"
 
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
@@ -2168,6 +2203,10 @@ msgstr "Ouvre le terminal de cet agent"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Options pour {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other"
+msgstr "Autres"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2963,6 +3002,10 @@ msgstr "Commandes du simulateur"
 msgid "Size"
 msgstr "Taille"
 
+#: src/components/settings-storage.tsx
+msgid "Some files could not be removed · {clearable}"
+msgstr "Certains fichiers n’ont pas pu être supprimés · {clearable}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Certains fichiers n’ont pas été envoyés"
@@ -3076,6 +3119,10 @@ msgstr "Arrêter d'attribuer une tâche"
 msgid "Stop this agent"
 msgstr "Arrêter cet agent"
 
+#: src/app/settings.tsx
+msgid "Storage"
+msgstr "Stockage"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "Résumer la progression"
@@ -3146,6 +3193,10 @@ msgstr "Tâche pour {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Tâche pour un nouvel {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Temporary files"
+msgstr "Fichiers temporaires"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx

@@ -59,6 +59,11 @@ msgstr "{0, plural, other {#줄 더 있음}}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {외 #개 에이전트}}"
 
+#. placeholder {0}: formatCacheSize(totals.other)
+#: src/components/settings-storage.tsx
+msgid "{0} · Managed by the system. Clear cache leaves it alone."
+msgstr "{0} · 시스템이 관리하므로 캐시를 비워도 지워지지 않습니다"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -414,6 +419,10 @@ msgstr "브라우저"
 msgid "Built-in themes"
 msgstr "기본 테마"
 
+#: src/components/settings-storage.tsx
+msgid "Calculating…"
+msgstr "계산 중…"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "카메라 접근이 꺼져 있습니다. 사진을 찍으려면 설정에서 켜 주세요"
@@ -426,6 +435,7 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -513,6 +523,14 @@ msgstr "작업할 위치 선택"
 msgid "Choose which simulator to show"
 msgstr "표시할 시뮬레이터 선택"
 
+#: src/components/settings-storage.tsx
+msgid "Clear"
+msgstr "비우기"
+
+#: src/components/settings-storage.tsx
+msgid "Clear cache"
+msgstr "캐시 비우기"
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "줄 지우기"
@@ -520,6 +538,14 @@ msgstr "줄 지우기"
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "터미널 지우기"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing cache"
+msgstr "캐시를 비우는 중"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing…"
+msgstr "비우는 중…"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -635,6 +661,10 @@ msgstr "커밋 후 푸시"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "작게"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm clear cache"
+msgstr "캐시 비우기 확인"
 
 #: src/app/explore.tsx
 msgid "Confirm pairing"
@@ -1464,6 +1494,7 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "문제가 계속되면 앱을 다시 시작하거나 앱 설치 상태를 확인하세요"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Images"
 msgstr "이미지"
 
@@ -1567,6 +1598,10 @@ msgstr "방금"
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "{label} 유지"
+
+#: src/components/settings-storage.tsx
+msgid "Keep cached files"
+msgstr "캐시 파일 유지"
 
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
@@ -2168,6 +2203,10 @@ msgstr "이 에이전트의 터미널을 엽니다"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 옵션"
+
+#: src/components/settings-storage.tsx
+msgid "Other"
+msgstr "기타"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2963,6 +3002,10 @@ msgstr "시뮬레이터 컨트롤"
 msgid "Size"
 msgstr "크기"
 
+#: src/components/settings-storage.tsx
+msgid "Some files could not be removed · {clearable}"
+msgstr "일부 파일을 지우지 못했습니다 · {clearable}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "일부 파일을 업로드하지 못했습니다"
@@ -3076,6 +3119,10 @@ msgstr "작업 할당 중지"
 msgid "Stop this agent"
 msgstr "이 에이전트 중지"
 
+#: src/app/settings.tsx
+msgid "Storage"
+msgstr "저장 공간"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "진행 상황 요약"
@@ -3146,6 +3193,10 @@ msgstr "{assignmentLabel}에게 줄 작업"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "새 {0}에게 줄 작업"
+
+#: src/components/settings-storage.tsx
+msgid "Temporary files"
+msgstr "임시 파일"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
