@@ -273,6 +273,25 @@ scroll down --pixels 320
 # section storage-visible
 is visible "${TARGET}"
 
+# section storage-anchor
+# Where the two taps below are made from, and never the position the flick
+# above happened to stop at.
+#
+# `scroll until the row is in the tree` stops the moment the row is *barely* in
+# it. That is the right amount for an assertion and the wrong amount for a tap:
+# measured here, the flick that first brought `settings-clear-cache-row` into
+# view left it against the bottom edge, and the press that followed landed at
+# y=2398 -- on the navigation bar. Nothing armed, and the step after it waited
+# out its timeout for a confirm button that was never asked for.
+#
+# `scroll bottom` is the same anchor the Quick actions steps use, for the same
+# reason: it is a position the list always has, whatever is in it. The Storage
+# card is the last card before ABOUT, so from the bottom the whole of it sits at
+# y=416..1185 on a 1080x2400 device -- ABOUT, the footer line and the version
+# mark underneath are what hold it clear of both edges.
+scroll bottom
+wait stable 400 5000
+
 # section storage-press
 press "${TARGET}"
 
