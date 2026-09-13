@@ -1,6 +1,7 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { View } from 'react-native';
 
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
 
 /**
@@ -24,6 +25,7 @@ export function ThemeImportProgress({
   testID?: string;
 }) {
   const { colors } = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const measured = typeof completed === 'number' && typeof total === 'number' && total > 0;
   const fraction = measured ? Math.min(1, Math.max(0, completed / total)) : 0;
   const transferred = receivedBytes ? formatAssetSize(receivedBytes) : '';
@@ -50,7 +52,12 @@ export function ThemeImportProgress({
             height: 4,
             borderRadius: 2,
             overflow: 'hidden',
-            backgroundColor: colors.surfaceRaised,
+            // The track is a surface and follows the reader's slider; the bar
+            // that travels along it stays opaque, so the one thing this widget
+            // exists to show reads at full strength against a translucent
+            // groove. `update-status-banner.tsx` and `terminal-theme-drop.tsx`
+            // split their track and fill the same way.
+            backgroundColor: surfaceBackground(colors.surfaceRaised),
           }}>
           <View
             style={{
