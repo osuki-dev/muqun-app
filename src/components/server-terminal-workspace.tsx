@@ -1,3 +1,4 @@
+import { ThemeIcon } from '@/components/theme-icon';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
@@ -3910,7 +3911,12 @@ export function ServerTerminalWorkspace({
                 ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
                 : null,
             ]}>
-            <Paperclip size={17} color={theme.colors.primary} />
+            <ThemeIcon
+              name="chrome.attach"
+              fallback={Paperclip}
+              size={17}
+              color={theme.colors.primary}
+            />
           </PressableScale>
         ) : null
       }
