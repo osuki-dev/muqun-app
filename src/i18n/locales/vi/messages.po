@@ -59,6 +59,11 @@ msgstr "{0, plural, other {còn # dòng nữa}}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {và # tác tử nữa}}"
 
+#. placeholder {0}: formatCacheSize(totals.other)
+#: src/components/settings-storage.tsx
+msgid "{0} · Managed by the system. Clear cache leaves it alone."
+msgstr "{0} · Do hệ thống quản lý, xóa bộ nhớ đệm không đụng tới phần này"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -414,6 +419,10 @@ msgstr "Trình duyệt"
 msgid "Built-in themes"
 msgstr "Giao diện tích hợp"
 
+#: src/components/settings-storage.tsx
+msgid "Calculating…"
+msgstr "Đang tính…"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt để chụp ảnh"
@@ -426,6 +435,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -513,6 +523,14 @@ msgstr "Chọn nơi làm việc"
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
 
+#: src/components/settings-storage.tsx
+msgid "Clear"
+msgstr "Xóa"
+
+#: src/components/settings-storage.tsx
+msgid "Clear cache"
+msgstr "Xóa bộ nhớ đệm"
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "Xóa dòng"
@@ -520,6 +538,14 @@ msgstr "Xóa dòng"
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Xóa màn hình terminal"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing cache"
+msgstr "Đang xóa bộ nhớ đệm"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing…"
+msgstr "Đang xóa…"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -635,6 +661,10 @@ msgstr "Commit và push"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Gọn"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm clear cache"
+msgstr "Xác nhận xóa bộ nhớ đệm"
 
 #: src/app/explore.tsx
 msgid "Confirm pairing"
@@ -1464,6 +1494,7 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng dụng hoặc kiểm tra bản cài đặt"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Images"
 msgstr "Hình ảnh"
 
@@ -1567,6 +1598,10 @@ msgstr "vừa xong"
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Giữ {label}"
+
+#: src/components/settings-storage.tsx
+msgid "Keep cached files"
+msgstr "Giữ lại tệp trong bộ nhớ đệm"
 
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
@@ -2168,6 +2203,10 @@ msgstr "Mở terminal của tác tử này"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Tùy chọn cho {0}"
+
+#: src/components/settings-storage.tsx
+msgid "Other"
+msgstr "Khác"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2963,6 +3002,10 @@ msgstr "Điều khiển trình giả lập"
 msgid "Size"
 msgstr "Kích thước"
 
+#: src/components/settings-storage.tsx
+msgid "Some files could not be removed · {clearable}"
+msgstr "Không thể xóa một số tệp · {clearable}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "Một số tệp không tải lên được"
@@ -3076,6 +3119,10 @@ msgstr "Ngừng giao tác vụ"
 msgid "Stop this agent"
 msgstr "Dừng tác tử này"
 
+#: src/app/settings.tsx
+msgid "Storage"
+msgstr "Bộ nhớ"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "Tóm tắt tiến độ"
@@ -3146,6 +3193,10 @@ msgstr "Tác vụ cho {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "Tác vụ cho một {0} mới"
+
+#: src/components/settings-storage.tsx
+msgid "Temporary files"
+msgstr "Tệp tạm"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx

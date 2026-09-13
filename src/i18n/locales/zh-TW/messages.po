@@ -59,6 +59,11 @@ msgstr "{0, plural, other {還有 # 行}}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {另有 # 個代理程式}}"
 
+#. placeholder {0}: formatCacheSize(totals.other)
+#: src/components/settings-storage.tsx
+msgid "{0} · Managed by the system. Clear cache leaves it alone."
+msgstr "{0} · 由系統管理，清除快取不會動到它"
+
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -414,6 +419,10 @@ msgstr "瀏覽器"
 msgid "Built-in themes"
 msgstr "內建主題"
 
+#: src/components/settings-storage.tsx
+msgid "Calculating…"
+msgstr "計算中…"
+
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
 msgstr "相機存取已關閉。請到「設定」開啟後再拍照"
@@ -426,6 +435,7 @@ msgstr "需要相機存取權"
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
+#: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -513,6 +523,14 @@ msgstr "選擇要工作的機器與工作階段"
 msgid "Choose which simulator to show"
 msgstr "選擇要顯示的模擬器"
 
+#: src/components/settings-storage.tsx
+msgid "Clear"
+msgstr "清除"
+
+#: src/components/settings-storage.tsx
+msgid "Clear cache"
+msgstr "清除快取"
+
 #: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "清除目前行"
@@ -520,6 +538,14 @@ msgstr "清除目前行"
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "清除終端機"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing cache"
+msgstr "正在清除快取"
+
+#: src/components/settings-storage.tsx
+msgid "Clearing…"
+msgstr "正在清除…"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -635,6 +661,10 @@ msgstr "提交並推送"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "緊湊"
+
+#: src/components/settings-storage.tsx
+msgid "Confirm clear cache"
+msgstr "確認清除快取"
 
 #: src/app/explore.tsx
 msgid "Confirm pairing"
@@ -1464,6 +1494,7 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "如果問題仍然存在，請重新啟動 App 或檢查 App 安裝"
 
 #: src/components/session-artifacts.tsx
+#: src/components/settings-storage.tsx
 msgid "Images"
 msgstr "圖片"
 
@@ -1567,6 +1598,10 @@ msgstr "剛剛"
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "保留 {label}"
+
+#: src/components/settings-storage.tsx
+msgid "Keep cached files"
+msgstr "保留快取檔案"
 
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
@@ -2168,6 +2203,10 @@ msgstr "開啟這個代理程式的終端機"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 的選項"
+
+#: src/components/settings-storage.tsx
+msgid "Other"
+msgstr "其他"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2963,6 +3002,10 @@ msgstr "模擬器控制項"
 msgid "Size"
 msgstr "大小"
 
+#: src/components/settings-storage.tsx
+msgid "Some files could not be removed · {clearable}"
+msgstr "部分檔案無法清除 · {clearable}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
 msgstr "有些檔案沒有上傳成功"
@@ -3076,6 +3119,10 @@ msgstr "取消指派任務"
 msgid "Stop this agent"
 msgstr "停止這個代理程式"
 
+#: src/app/settings.tsx
+msgid "Storage"
+msgstr "儲存空間"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "總結進度"
@@ -3146,6 +3193,10 @@ msgstr "給 {assignmentLabel} 的任務"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "給新的 {0} 的任務"
+
+#: src/components/settings-storage.tsx
+msgid "Temporary files"
+msgstr "暫存檔案"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
