@@ -250,6 +250,17 @@ and recycling is what bounds the view pool. Paired with:
 - `maintainVisibleContentPosition={{ data: true, size: true }}`, matching
   `pane-chat-view.tsx:320`. Expanding a file inserts rows; the viewport must not move.
 - `stickyHeaderIndices` on file headers, so the file being read is always named.
+  Sticky headers need the list's own Reanimated integration
+  (`AnimatedLegendList` from `@legendapp/list/reanimated`): the core list
+  drives its scroll view with React Native's `Animated.event`, an object, and
+  handing that to a Reanimated `ScrollView` through `renderScrollComponent`
+  crashed the first fling on a device with "Object is not a function".
+- Two more rules the device run added. While a later page loads, every row
+  already on screen stays -- dropping them collapses the list and clamps the
+  offset to the top, throwing a reader at line 3000 back to line 1. And
+  collapsing a file from deep inside it lands on that file's header, because
+  nothing above the viewport moved and the old offset is past the end of the
+  shorter content.
 
 ### 3.3 Horizontal scrolling: one outer scroller, not one per row
 
