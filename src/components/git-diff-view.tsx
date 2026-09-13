@@ -270,20 +270,20 @@ export function GitDiffView({
 
   const toggleFile = useCallback(
     (path: string) => {
-      setExpandedOrder((order) => {
-        if (order.includes(path)) {
-          // A collapsed file drops its rows. `MAX_OPEN_FILES` bounds what is
-          // held; a collapsed file that kept its patch would be outside that
-          // bound and would never be released.
-          dropPatches([path]);
-          return closeFile(order, path);
-        }
-        const next = openFile(order, path);
-        dropPatches(order.filter((entry) => !next.includes(entry)));
-        return next;
-      });
+      if (expandedOrder.includes(path)) {
+        // A collapsed file drops its rows. `MAX_OPEN_FILES` bounds what is
+        // held open; a collapsed file that kept its patch would sit outside
+        // that bound and never be released.
+        setExpandedOrder(closeFile(expandedOrder, path));
+        dropPatches([path]);
+        return;
+      }
+      const next = openFile(expandedOrder, path);
+      setExpandedOrder(next);
+      // Past the cap, the least recently expanded file goes with it.
+      dropPatches(expandedOrder.filter((entry) => !next.includes(entry)));
     },
-    [dropPatches]
+    [dropPatches, expandedOrder]
   );
 
   const showMore = useCallback(
@@ -332,7 +332,15 @@ export function GitDiffView({
    * answer is one number for the whole list and it only grows as pages arrive.
    */
   const contentWidth = useMemo(
-    () => Math.max(viewportWidth, GUTTER_WIDTH + widestRow(rows) * advance + LINE_PADDING * 2),
+    () =>
+      Math.max(
+        viewportWidth,
+        // Two cells of slack. The advance is measured rather than exact, and a
+        // content width a hair under the true one puts an ellipsis on the
+        // single longest line in the file -- which is reliably the line the
+        // reader scrolled right to see.
+        GUTTER_WIDTH + (widestRow(rows) + 2) * advance + LINE_PADDING * 2
+      ),
     [advance, rows, viewportWidth]
   );
 

@@ -91,6 +91,32 @@ export const AUTO_EXPAND_MAX_LINES = 400;
 /** `git diff -U<n>`. Three is git's own default and the one a reader expects. */
 export const DIFF_CONTEXT_LINES = 3;
 
+/**
+ * How wide a tab is drawn, in character cells.
+ *
+ * A diff row is a fixed-advance monospace strip, and `<Text>` draws `\t` as a
+ * single space on one platform and as something else on the other -- so a
+ * tab-indented file would come out with its columns out of line, which is the
+ * one thing a diff must not do. Tabs are expanded to their tab stop as the
+ * patch is parsed, once, rather than per row per recycle.
+ *
+ * Four, not eight: this is a phone, and an eight-column tab spends a quarter of
+ * a narrow screen before the first character of a deeply indented line.
+ */
+export const DIFF_TAB_WIDTH = 4;
+
+/** Tabs to their next tab stop. Returns the same string when there are none. */
+export function expandTabs(text: string): string {
+  if (text.indexOf('\t') < 0) return text;
+  let out = '';
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (character === '\t') out += ' '.repeat(DIFF_TAB_WIDTH - (out.length % DIFF_TAB_WIDTH));
+    else out += character;
+  }
+  return out;
+}
+
 /** The badge stops counting here and says so. */
 export const MAX_BADGE_COUNT = 99;
 
@@ -567,7 +593,7 @@ export function parseUnifiedPatch(patch: string, carry?: PatchCarry | null): Par
     if (first === CHAR_PLUS) {
       current.lines.push({
         kind: 'added',
-        text: line.slice(1),
+        text: expandTabs(line.slice(1)),
         oldLine: null,
         newLine: newLine || null,
         noNewline: false,
@@ -579,7 +605,7 @@ export function parseUnifiedPatch(patch: string, carry?: PatchCarry | null): Par
     if (first === CHAR_MINUS) {
       current.lines.push({
         kind: 'removed',
-        text: line.slice(1),
+        text: expandTabs(line.slice(1)),
         oldLine: oldLine || null,
         newLine: null,
         noNewline: false,
@@ -593,7 +619,7 @@ export function parseUnifiedPatch(patch: string, carry?: PatchCarry | null): Par
     if (first === CHAR_SPACE || line.length === 0) {
       current.lines.push({
         kind: 'context',
-        text: line.length === 0 ? '' : line.slice(1),
+        text: line.length === 0 ? '' : expandTabs(line.slice(1)),
         oldLine: oldLine || null,
         newLine: newLine || null,
         noNewline: false,

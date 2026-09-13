@@ -12,10 +12,12 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   AUTO_EXPAND_MAX_LINES,
+  DIFF_TAB_WIDTH,
   GIT_DIFF_CAPABILITY,
   MAX_OPEN_FILES,
   NO_PATCH_CARRY,
   applyPatchPage,
+  expandTabs,
   badgeCount,
   closeFile,
   emptyFilePatchState,
@@ -286,6 +288,12 @@ describe('parseUnifiedPatch', () => {
       ['context', ''],
       ['added', 'b'],
     ]);
+  });
+
+  test('tabs are expanded to their tab stop, so columns line up', () => {
+    const patch = ['@@ -1,2 +1,2 @@', '-\tif (a) {', '+\t\tif (b) {', ''].join('\n');
+    const { hunks } = parseUnifiedPatch(patch);
+    expect(hunks[0].lines.map((line) => line.text)).toEqual(['    if (a) {', '        if (b) {']);
   });
 
   test('a large patch parses without stack growth', () => {
@@ -798,6 +806,23 @@ describe('shouldAutoExpand', () => {
       null
     );
     expect(shouldAutoExpand([change({ path: 'a.ts', added: null, removed: null })])).toBeNull();
+  });
+});
+
+describe('expandTabs', () => {
+  test('a string with no tab is handed straight back', () => {
+    const text = 'const a = 1;';
+    expect(expandTabs(text)).toBe(text);
+  });
+
+  test('a tab fills to the next stop, not a fixed number of spaces', () => {
+    expect(expandTabs('\tx')).toBe(`${' '.repeat(DIFF_TAB_WIDTH)}x`);
+    expect(expandTabs('ab\tx')).toBe('ab  x');
+    expect(expandTabs('abcd\tx')).toBe(`abcd${' '.repeat(DIFF_TAB_WIDTH)}x`);
+  });
+
+  test('several tabs in a row each reach their own stop', () => {
+    expect(expandTabs('\t\tx')).toBe(`${' '.repeat(DIFF_TAB_WIDTH * 2)}x`);
   });
 });
 
