@@ -49,6 +49,23 @@ export function setThemeAssetReferences(themes: readonly InstalledTheme[] | null
   }
 }
 
+/**
+ * Where installed theme images live, for a caller that walks them itself.
+ *
+ * The listing stays outside. Settings measures this directory the way it
+ * measures the cache root -- its own loop, deferred off the frame it is pushed
+ * on -- and the one thing it must not spell for itself is the path, which is
+ * this module's to name and nobody else's. `null` where there is no such
+ * directory to walk.
+ */
+export function themeAssetDirectoryUri(): string | null {
+  try {
+    return assetDirectory().uri;
+  } catch {
+    return null;
+  }
+}
+
 /** Resolve only content-addressed resources inside the theme-owned directory. */
 export function isOwnedThemeAsset(uri: string): boolean {
   const prefix = assetDirectory().uri.replace(/\/$/, '') + '/';
