@@ -58,6 +58,26 @@ LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web impleme
 SplashScreen.preventAutoHideAsync();
 
 /**
+ * The theme library is read here, at module scope, and not in an effect.
+ *
+ * It used to run in `RootLayout`'s mount effect, which meant the first frame
+ * was always the default pack and the reader's theme arrived a tick later --
+ * harmless while the only thing above the router was a splash overlay pinned
+ * to the default colours anyway. It stopped being harmless when the overlay
+ * and the lock screen started wearing the pack: both of them render on that
+ * first frame, so a theme that lands after it is a theme they cannot see.
+ *
+ * Affordable because the read is not asynchronous in the first place.
+ * `hydrate` is a synchronous MMKV `getString` and a parse, on a value bounded
+ * at 16 MiB and in practice a few kilobytes; there is no await to hoist and no
+ * network to wait for. It is also safe to call where nothing can catch it: the
+ * store's `hydrate` swallows its own failures and publishes an empty library,
+ * which is what a platform without MMKV -- web -- gets, and it is idempotent,
+ * because the repository behind it is constructed once and memoised.
+ */
+useThemeLibrary.getState().hydrate();
+
+/**
  * Listens for a theme file handed to the app from outside it.
  *
  * A component rather than a call in `RootLayout` so the listener mounts with
@@ -107,15 +127,17 @@ export default function RootLayout() {
     };
   }, []);
   // The pack has to be resolved above the provider, since it *is* the provider's
-  // palette. Until settings hydrate this is the default, so the first frame is
-  // Osuki and the chosen theme lands a tick later -- behind the splash overlay,
-  // which is why the splash colours stay pinned to the default pack.
+  // palette. A custom pack is already here -- the library hydrated at module
+  // scope, above -- so the first frame carries it, and the splash overlay and
+  // the lock screen can be dressed in it rather than in the default. A built-in
+  // choice still arrives with `useAppSettings`, a tick later and behind the
+  // overlay, since it only ever changes colours that the overlay resolves for
+  // itself.
   const pack = useThemePack();
   const theme = useThemePalette(pack);
 
   useEffect(() => {
     void hydrateSettings();
-    useThemeLibrary.getState().hydrate();
   }, [hydrateSettings]);
 
   return (
