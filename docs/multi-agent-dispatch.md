@@ -14,14 +14,40 @@ is contradicted by an unreleased page.
 
 ---
 
-## 1. The question
+## 1. The question, and the short answers
 
-> What can official Herdr actually be told to do, in one sentence or one command,
-> that results in several different agents being assigned different pieces of
-> work, with panes created for them automatically?
+Someone tells a coding agent that is already running inside a Herdr pane, in one
+sentence, to create several panes and put a different agent in each. Two things
+were asked about that.
 
-**Nothing.** That command does not exist, and the documentation is explicit that
-it deliberately does not exist.
+**Is the pane creation a capability of Herdr itself, or does it come from the
+skill file?**
+
+It is Herdr's, entirely. The skill file adds no capability whatsoever. An agent
+inside a Herdr pane can already run `herdr pane split` and `herdr agent start`
+the moment it is launched, with nothing installed, because the pane process
+inherits `HERDR_ENV=1` and a `herdr` binary on `PATH` that is already bound to
+that session's socket. The skill is a Markdown instruction file: it tells the
+agent which commands exist, in what order, and which mistakes to avoid. Remove
+the skill and the agent retains every ability and loses only the knowledge. §2.3
+settles this line by line.
+
+**Does our app already show the panes and agents that this produces?**
+
+Partly, and better than expected. If the reader is looking at the terminal
+workspace, in the foreground, at the tab that was split, three new panes appear
+as three new chips in the pane strip about 250 ms later, and the three agents
+enter the assignment roster automatically. The visible terminal does not move,
+which is correct. What is missing is everything outside that narrow case: panes
+in another tab or workspace get no chip, the panels sheet is a one-shot load, the
+home-screen mirror can be hours stale, nothing announces any of it, and the app
+never represents the layout — three side-by-side panes are indistinguishable from
+three unrelated ones. §4 is the full accounting.
+
+The original framing of this research — whether one Herdr command could fan work
+out to several agents — is answered in §2.2, and the answer is no. But that was
+the wrong question to lead with, because nobody needs our app to issue such a
+command. The sentence goes to an agent, and the agent runs the loop.
 
 ---
 
@@ -81,35 +107,181 @@ an orchestrator ([Agents](https://herdr.dev/docs/agents/)):
 Herdr's contribution to multi-agent work is **aggregation and navigation**, not
 dispatch.
 
-### 2.3 The nearest thing to "one sentence": the agent skill file
+### 2.3 The boundary: Herdr capability versus skill file
 
-There is one path where a sentence really does produce several agents in several
-panes, and it is worth being precise about who executes it.
+This is the section the rest of the document rests on. The claim is that the
+skill is prompting, not plumbing, and the docs settle it four ways.
 
-[Agent skill file](https://herdr.dev/docs/agent-skill/) documents
-`skills/herdr/SKILL.md`, installed with `npx skills add herdrdev/herdr --skill
-herdr -g`. With it installed, the page says an agent can:
+#### 2.3.1 What an agent inside a pane has before anything is installed
 
-> - split panes and run commands without stealing focus
-> - wait for servers, tests, or another agent to finish
-> - start helper agents in sibling panes
+Herdr injects its own variables into every managed pane process. The
+[CLI reference](https://herdr.dev/docs/cli-reference/) environment table:
 
-That is the mechanism. The sentence is addressed to **a coding agent already
-running inside a Herdr pane**, and that agent runs the loop from §2.2. Herdr is
-the substrate; the orchestrator is whichever agent you gave the skill to. The
-skill's own frontmatter is unusually defensive about this:
+> | `HERDR_ENV` | Set to `1` inside Herdr-managed pane processes. |
+> | `HERDR_PANE_ID` | Public pane id for the running pane process. |
+> | `HERDR_TAB_ID` | Public tab id for the running pane process. |
+> | `HERDR_WORKSPACE_ID` | Public workspace id for the running pane process. |
+> | `HERDR_SOCKET_PATH` | Low-level socket path override. |
+
+[Integrations](https://herdr.dev/docs/integrations/) says the same from the other
+direction, and adds the binary path:
+
+> An agent running in a Herdr pane inherits `HERDR_ENV`, `HERDR_PANE_ID`,
+> `HERDR_BIN_PATH`, and `HERDR_SOCKET_PATH`.
+
+The same page notes these are not advisory hints the process can be tricked out
+of ([CLI reference](https://herdr.dev/docs/cli-reference/) on `--env`):
+
+> Herdr-managed variables such as `HERDR_SOCKET_PATH`, `HERDR_BIN_PATH`,
+> `HERDR_ENV`, `HERDR_WORKSPACE_ID`, `HERDR_TAB_ID`, `HERDR_PANE_ID` [...] stay
+> authoritative when they conflict with caller-provided env.
+
+And the `herdr` binary in that environment is already bound to the right session.
+`SKILL.md` itself, describing the ambient situation rather than anything it
+provides:
+
+> When the check passes, the `herdr` binary in `PATH` talks to the current
+> session. Use it to inspect neighboring work, create terminal layout, start
+> agents and commands, read output, and wait for state changes.
+
+So: **`pane split` and `agent start` are reachable to any process in a Herdr pane
+purely because it is in a Herdr pane.** Nothing has to be installed. Nothing has
+to be enabled. Both are ordinary subcommands of a binary on `PATH`, documented in
+the public [CLI reference](https://herdr.dev/docs/cli-reference/) with no
+precondition beyond a running server and a pane at its shell prompt.
+
+The one install step that does exist — `herdr integration install <agent>` — is
+about detection, not control. [Agents](https://herdr.dev/docs/agents/): "Install
+the integration for each agent you use to give Herdr hook or plugin reports
+instead of screen detection alone." It improves the accuracy of the agent's
+*status*; it grants nothing.
+
+#### 2.3.2 What the skill file adds
+
+Instructions. The [Agent skill file](https://herdr.dev/docs/agent-skill/) page
+says so in as many words:
+
+> Install that file into any coding agent that supports reusable skills or custom
+> instructions. **The skill teaches the agent how to control Herdr from inside a
+> Herdr pane.**
+
+> The skill **tells** an agent to use the `herdr` CLI when `HERDR_ENV=1` is set.
+> That means the agent is running inside a Herdr-managed pane and can safely talk
+> to the local Herdr socket.
+
+> **The skill is a Markdown instruction file for agents.** If Herdr is already
+> installed, run `herdr --skill` to print the release-matched copy bundled with
+> that binary.
+
+Note what the second quotation actually asserts: the agent "can safely talk to
+the local Herdr socket" *because it is in a pane*, and the skill's contribution is
+to tell it so. The capability is stated as a property of the location; the skill
+is the messenger.
+
+The page's bullet list — "split panes and run commands without stealing focus",
+"start helper agents in sibling panes" — is a list of things the agent will now
+*know to do*, not things it becomes *able* to do. The
+[Socket API](https://herdr.dev/docs/socket-api/) makes the layering explicit:
+
+> | Agent skill | Teaching a coding agent how to use Herdr from inside a pane. |
+> | CLI wrappers | Shell scripts, simple orchestration, and human debugging. |
+> | Raw socket API | Custom tools, protocol clients, and event subscribers. |
+>
+> **The layers share the same control surface.**
+
+Three layers, one surface. The skill is not a fourth capability sitting above the
+CLI; it is a way of reaching the same surface. And it ships no runtime: it is
+installed by `npx skills add herdrdev/herdr --skill herdr -g` into the agent's own
+instruction system, or, for "agents without a skill system", by pasting "the file
+into the agent's project or user instructions."
+
+What the skill genuinely does change is **behaviour quality**, and that is not
+nothing. Without it, an agent has to discover `herdr --help`, guess at pane
+geometry, and will probably steal the reader's focus, predict ids instead of
+parsing them from JSON, retry an ambiguous prompt, or answer an approval dialog
+it should have escalated. `SKILL.md` spends most of its length on exactly those
+failure modes — "Use `--no-focus` for background work unless the user asked to
+switch context", "Parse IDs from JSON responses. Do not derive them from sidebar
+order", "A timeout or stalled response does not prove the prompt was never
+delivered; do not blindly submit it again". The skill is a competence and safety
+upgrade. It is not an authorisation or an API.
+
+It also *narrows* what the agent will do. The frontmatter is a restriction, not a
+grant:
 
 > Use only when the user explicitly mentions Herdr or asks to use Herdr to
 > inspect or control panes, tabs, workspaces, commands, or another agent. Do not
 > use merely because a task could benefit from a background terminal, delegation,
 > or parallel work. Requires `HERDR_ENV=1`.
 
-and the skill's guardrail is that an agent without `HERDR_ENV=1` must stop and say
-it is not running inside a Herdr-managed pane.
+#### 2.3.3 Is there an authorisation layer?
 
-This matters to us directly: that path requires a coding agent sitting *inside*
-Herdr. Our app is a client *outside* it. We cannot borrow the skill. If we want
-fan-out, we issue the same primitive calls ourselves.
+**No authorisation layer is documented anywhere.** This is a plain reading, and
+where the docs are silent this section says so rather than inferring.
+
+The [Socket API](https://herdr.dev/docs/socket-api/) documents the transport and
+the socket paths in full and never mentions authentication, authorisation,
+tokens, capabilities-per-caller, or a permission model:
+
+> Herdr uses newline-delimited JSON over a local socket. On Unix, that socket is
+> a Unix domain socket. On Windows, it is a named pipe.
+
+> The default socket lives under your Herdr config directory. Named sessions have
+> separate sockets:
+> `~/.config/herdr/herdr.sock`
+> `~/.config/herdr/sessions/<name>/herdr.sock`
+
+The resolution order is `--session`, then `HERDR_SOCKET_PATH`, then
+`HERDR_SESSION`, then the default socket. That is addressing, not access control.
+No request example anywhere in the page carries a credential; the minimal request
+is `{"id":"req_1","method":"ping","params":{}}`.
+
+So on the evidence available: any process that can open that socket file can
+drive `pane.split` and `agent.start`. The effective boundary is filesystem
+reachability of a Unix socket under the user's own config directory — which is to
+say, the user's own account. **The docs do not state this as a security model,
+and they do not state socket file permissions either.** If that boundary matters
+for a deployment decision, it needs to be verified against the implementation,
+not read off the documentation.
+
+Two things that look like gates and are not:
+
+- **`HERDR_ENV=1`** is an indicator Herdr sets, per the CLI reference table
+  above. It is not checked by the server. The skill's guardrail is self-imposed
+  on the agent, and the [Agent skill file](https://herdr.dev/docs/agent-skill/)
+  page words it as advice: "if `HERDR_ENV=1` is not set, the agent **should** stop
+  and say it is not running inside a Herdr-managed pane." A process that ignores
+  the convention is not stopped by anything.
+- **`--trust-repository`** is real but narrow. It exists only because "Git
+  rejects repositories owned by another user by default", and it "grants
+  per-request Git trust" for worktree commands. It gates Git, not Herdr.
+
+The nearest thing to a gate in the whole control surface is a *refusal* rather
+than a permission: `agent prompt` returns `agent_blocked` and sends nothing when
+the target agent is sitting at an approval dialog
+([Agent automation](https://herdr.dev/docs/agent-automation/)). That protects the
+agent being addressed, not the session being controlled.
+
+#### 2.3.4 Summary of the boundary
+
+| | Comes from Herdr | Comes from the skill |
+| --- | --- | --- |
+| `HERDR_ENV`, `HERDR_PANE_ID`, `HERDR_TAB_ID`, `HERDR_WORKSPACE_ID`, `HERDR_SOCKET_PATH`, `HERDR_BIN_PATH` in the pane | Yes | — |
+| `herdr` on `PATH`, bound to this session | Yes | — |
+| `pane split`, `agent start`, `agent prompt`, `agent wait`, `agent read` | Yes | — |
+| Reaching the socket without a credential | Yes (no gate documented) | — |
+| Knowing those commands exist and their order | — | Yes |
+| Not stealing the reader's focus; parsing ids from JSON; not re-sending an ambiguous prompt; escalating an approval dialog | — | Yes |
+| A restriction on when to engage Herdr at all | — | Yes |
+| Any new endpoint, permission, or runtime | — | **No** |
+
+One consequence for us. Because the capability is ambient and the skill is only
+instructions, an agent our app starts through the Gateway has the same powers as
+one a human started, whether or not anyone installed a skill into it. If a reader
+dispatches "split three panes and start three agents" from the phone as ordinary
+prompt text, and the receiving agent happens to have the Herdr skill, it will
+work — and our app will find out about the result only through the pane list, with
+no record that it was asked. §4.5 covers what that looks like on screen.
 
 ### 2.4 What the operator must set up first
 
@@ -384,23 +556,172 @@ clears on a repeat tap. One task per send.
 
 ---
 
-## 4. The gap
+## 4. Does our app already show panes Herdr creates?
+
+Reporting. This is the second question, and it has a more encouraging answer than
+the first: the plumbing largely exists, because it was built for panes the reader
+creates, and it does not care who created them.
+
+The scenario throughout: an agent inside Herdr splits three panes and starts
+three agents in them, while a reader has the phone in hand.
+
+### 4.1 How panes reach the phone at all
+
+Panes are not streamed as a live model. The app fetches a flat snapshot —
+`src/lib/workspace-snapshot.ts:53-59` issues four parallel REST calls:
+
+```ts
+const [workspaces, tabs, panes, agents] = await Promise.all([
+  gatewayTransport.loadWorkspaces(sessionId),
+  gatewayTransport.loadTabs(sessionId),
+  gatewayTransport.loadPanes(sessionId),
+  gatewayTransport.loadAgents(sessionId),
+]);
+```
+
+and re-fetches it on three triggers, in `src/components/server-terminal-workspace.tsx`:
+
+| Trigger | Latency | Site |
+| --- | --- | --- |
+| A structural SSE event, debounced | ~250 ms | `:1297-1310` |
+| Slow poll, as a backstop for a missed event | 12 s | `:1263` |
+| SSE (re)connect, and screen regaining navigation focus | immediate | `:2992-3000`, `:1102-1104` |
+
+The SSE subscription is in `src/hooks/use-pane-events.ts`, and it already includes
+everything this scenario emits: `pane.created`, `pane.closed`, `pane.moved`,
+`pane.exited`, `pane.agent_detected`, `pane.agent_status_changed`, plus the tab
+and workspace lifecycle events (`:47-62`). Frames arrive under the SSE name
+`herdr` with the inner event in underscore form, and anything that is not
+`pane_updated` falls through to `onStructureChanged()` (`:161-163`).
+
+Two gates matter. Both the poll and the stream are conditioned on `appActive`
+(`:1246`, `:2945`), so a backgrounded app learns nothing until it returns. And
+`layout_updated` is **deliberately not subscribed** — the module comment at
+`use-pane-events.ts:14-22` says the raw Herdr feed "is dominated by focus and
+layout churn a phone has no use for". That decision is the direct cause of §4.4.
+
+### 4.2 What the reader sees, automatically
+
+**The pane strip grows.** `paneChips` (`server-terminal-workspace.tsx:4069-4093`)
+is derived from `tabPanes`, and the strip appears once a tab has more than one
+pane (`src/lib/dock-presentation.ts:281`: `paneChips: dockRows && !virtualKeyboard
+&& paneCount > 1`). Three splits into the visible tab produce three new chips
+about 250 ms later, with no user action.
+
+**The assignment roster grows.** `assignmentCandidates`
+(`server-terminal-workspace.tsx:2008-2041`) is a `useMemo` over `data.agents` and
+`data.panes`, so it re-derives on the same refresh. The three new agents become
+assignable as soon as the Gateway reports them **with an `instance_id`** — the
+memo ends with `candidate.instanceId ? [candidate] : []`.
+
+**The visible terminal does not move.** `src/lib/workspace-selection.ts:29-51`
+prefers what the reader already had:
+
+```ts
+const pane =
+  panes.find((item) => item.id === current.paneId) ??
+  panes.find((item) => Boolean(item.raw.focused)) ??
+  panes.find((item) => field(item, 'agent').length > 0) ??
+  panes[0];
+```
+
+Because the reader's pane still exists, the `focused` fallback — which Herdr has
+just moved to a new pane — is never consulted. This is exactly the
+`AGENTS.md` rule about not navigating the reader's terminal, and it holds. Only
+explicit acts move the selection: tapping a chip, picking in the panels sheet,
+tapping a push notification, or the workspace/tab swipe gestures.
+
+### 4.3 What the reader does not see
+
+- **Panes outside the visible tab get no chip.** `tabPanes` is
+  `data.panes.filter((item) => field(item, 'tab_id') === selection.tabId)`
+  (`:1362-1365`). An agent that splits into another tab, or creates a tab or
+  workspace of its own — which the Herdr skill explicitly permits when asked —
+  is invisible on the terminal screen.
+- **The panels sheet is a one-shot load.** `src/components/session-map.tsx` does
+  its own fetch of all four lists (`:190-219`) under
+  `useEffect(() => { void load(); }, [load, t])` (`:221-223`). No SSE, no poll.
+  It *will* list brand-new panes in every tab and workspace — but only if opened
+  or pull-to-refreshed after they exist. A sheet left open goes stale silently.
+- **The home-screen mirror lags arbitrarily.** `recordServerAgents` is written
+  only by the open workspace screen (`server-terminal-workspace.tsx:1634-1641`),
+  so new agents reach a server card only after the reader next opens that
+  server. `SERVER_AGENTS_STALE_AFTER_MS` is 5 minutes
+  (`src/lib/server-agents.ts:144`), after which rows dim and statuses stop being
+  presented as current. The module header says it outright: "this is a mirror,
+  not a query."
+- **Nothing announces any of it.** There is no toast, pill, or banner fired from
+  `onStructureChanged`. In-app notices come only from push payloads
+  (`src/lib/notifications.ts:43`), which the Gateway raises for `→ blocked` and
+  `working → idle` transitions, not for pane creation. The approval banner is
+  scoped to the selected pane only (`src/hooks/use-pane-approval.ts:52`), so an
+  agent blocking in one of the three new panes produces nothing on screen unless
+  a push arrives. `pane.agent_detected` is consumed purely as "refresh the
+  lists".
+
+### 4.4 The app has no concept of layout
+
+This is the largest structural gap, and it is a deliberate one.
+
+There is no `layout`, split, geometry, or row/column field anywhere in the
+gateway entity layer, and `layout_updated` appears nowhere in `src/`. Exactly one
+terminal is ever mounted — a single `PaneChatView` or a single
+`TerminalBoundary`/`TerminalPanel` keyed on `selection.paneId`
+(`server-terminal-workspace.tsx:4310`, `:4329-4412`). The panels sheet renders
+panes as a flat list grouped by tab, and its own module doc notes that indices are
+"positions in these lists rather than anything the gateway sends".
+
+So three panes split side by side read on the phone as three interchangeable
+chips. A reader cannot tell them from three panes stacked vertically, or — once
+they are in the panels sheet — from three panes that have nothing to do with each
+other. The app shows *membership*, never *arrangement*.
+
+For a phone this is close to the right call. A 6-inch screen cannot usefully draw
+a three-way split, and mirroring Herdr's geometry would buy nothing. But it means
+the app cannot represent "these three were spun up together for one brief", which
+is precisely the relationship a fan-out creates. §7 proposes grouping by
+assignment rather than by geometry for that reason.
+
+### 4.5 The honest summary
+
+| Surface | Shows the three new panes? | When |
+| --- | --- | --- |
+| Pane strip, same tab, screen open and foregrounded, keyboard down | Yes | ~250 ms; ≤12 s if the stream dropped |
+| Pane strip, panes in another tab or workspace | No | — |
+| Visible terminal | Unchanged, correctly | — |
+| Assignment roster | Yes, if `instance_id` is present | Same as the strip |
+| Panels sheet | Yes, all tabs and workspaces | Only on open or pull-to-refresh |
+| Home-screen server card | Only after the reader next opens that server | Up to hours; dimmed after 5 min |
+| Layout / adjacency | Never | — |
+| Any announcement | None from the app | — |
+| App backgrounded | Nothing updates | Until foreground |
+
+The one-line version: **we already show the panes and the agents; we do not show
+that anything happened.** A reader who is looking gets a live, correct list. A
+reader who is not looking finds out by scrolling a strip that silently grew.
+
+---
+
+## 5. The gap
 
 | | Herdr offers | We expose | |
 | --- | --- | --- | --- |
 | Start N agents | N × (`pane.split` → `agent.start` → `agent.prompt`), caller-driven | 1 per send, and `AGENT_SPAWN_SHIPPED = false` means the "new agent" chips never render | Gap |
 | Isolate their work | `worktree.create` per agent | Gateway wires it behind `POST /tasks`; no app surface picks a branch per agent | Gap |
-| Watch N agents | `agent.list`, `pane.agent_status_changed`, `agent.view.set` projections, sidebar rollups | `CollaborationNotice` renders `current[0]` only, plus a `· N` count | Gap |
+| See N new panes exist | `pane.created` / `pane.agent_detected` events, sidebar | Pane strip and assignment roster, live in ~250 ms — **but only for the visible tab**, and silently | Mostly there |
+| Notice that they appeared | Sidebar rollups: "A blocked agent makes its pane, tab, and workspace look blocked" | Nothing. No toast, no badge, no rollup above pane level | Gap |
+| See how they are arranged | Real split geometry in the TUI | No layout model at all; one pane mounted at a time | Deliberate, see §4.4 |
+| Watch N agents' progress | `agent.list`, `pane.agent_status_changed`, `agent.view.set` projections, sidebar rollups | `CollaborationNotice` renders `current[0]` only, plus a `· N` count | Gap |
 | Read N results | `agent.read --source recent-unwrapped`, alternate-screen history paging | One pinned snapshot for one task, via `pane.read` | Gap |
 | Assignment history | Not a Herdr concept | Ours, MMKV, offline, capped at 40 | We are ahead |
 | Durable agent identity | Reusable pane id + clearable name alias + optional `agent_session` | Synthesized `instance_id` over `terminal_id` | We are ahead |
-| Capability gating | `herdr status`; "A missing method is not permission to stop or upgrade a server" | `agent_collaboration` declared and checked — but see §5.1 | Gap |
+| Capability gating | `herdr status`; "A missing method is not permission to stop or upgrade a server" | `agent_collaboration` declared and checked — but see §6.1 | Gap |
 
 ---
 
-## 5. Where the docs contradict an assumption we make
+## 6. Where the docs contradict an assumption we make
 
-### 5.1 The capability we gate on is gating nothing
+### 6.1 The capability we gate on is gating nothing
 
 `AGENTS.md` requires capability detection and "an actionable upgrade
 explanation." Both halves exist. Neither runs.
@@ -426,10 +747,10 @@ and `gatewaySupportsAgentSpawn` returns `false` unconditionally because
 agent already happens to be in the session, and an operator on an old Gateway
 gets an empty strip rather than an upgrade explanation.
 
-This is the most important finding in this document. It should be fixed before
-any of §6 is built, because §6 assumes a working gate.
+This is the most important finding about our own code in this document. It should
+be fixed before any of §7 is built, because §7 assumes a working gate.
 
-### 5.2 "Herdr 0.9.0" means two different things
+### 6.2 "Herdr 0.9.0" means two different things
 
 Our rule says collaboration needs a connected Herdr 0.9.0+ backend. The Gateway
 does have a 0.9.0 check — `herdr_owns_prompt_submission` at `herdr.rs:1` — but it
@@ -444,7 +765,7 @@ but by different rules: the Gateway's rejects any core containing `-`; the app's
 regex `^v?(\d+)\.(\d+)\.(\d+)(?:\+.*)?$` rejects `0.9.0-rc.1` by failing to match
 and falling through to `'herdr'`. Same outcome today, two implementations.
 
-### 5.3 Opening an agent's terminal silently clears every other client's Done badge
+### 6.3 Opening an agent's terminal silently clears every other client's Done badge
 
 We call `POST /api/sessions/{sid}/agents/{target}/focus`, which is Herdr's
 `agent.focus`. Per [Agent automation](https://herdr.dev/docs/agent-automation/):
@@ -459,7 +780,7 @@ does not mark seen — but our navigation path is not. Nothing in our code
 acknowledges this. It is arguably the right behaviour (the reader did look), but
 it is a cross-client side effect we never decided on.
 
-### 5.4 We treat `instance_id` as durable across moves; Herdr's substrate is not
+### 6.4 We treat `instance_id` as durable across moves; Herdr's substrate is not
 
 Our `instance_id` is built over `terminal_id`, which is a better choice than
 `pane_id` and survives the documented `pane move` renumbering. But the launch
@@ -472,16 +793,16 @@ and they are silently unassignable. That is a correct failure, but it is invisib
 — the reader sees an agent in `SessionMap` that simply cannot be chosen in the
 assignment strip, with no explanation.
 
-### 5.5 Splits will usually be refused on a phone
+### 6.5 Splits will usually be refused on a phone
 
 `can_split_agent_pane` requires `viewport_rows >= 48`, with a fallback to creating
 a new tab. The Gateway sizes the terminal from the attached client, and a phone
 is nowhere near 48 rows. In practice the split path is dead on the target device
 and the tab path is the real one. Any fan-out design that says "split three ways"
 is describing something that will not happen on the hardware this app runs on.
-This is a constraint, not a bug, and §6 is built around it.
+This is a constraint, not a bug, and §7 is built around it.
 
-### 5.6 Our status polling is a workaround for a subscription we under-use
+### 6.6 Our status polling is a workaround for a subscription we under-use
 
 The Gateway subscribes to `pane.agent_status_changed` **per pane known at
 subscribe time**, so a pane created afterwards is not covered — and therefore also
@@ -491,7 +812,7 @@ design.
 
 ---
 
-## 6. Proposal: the mobile interaction
+## 7. Proposal: the mobile interaction
 
 Everything in this section is a proposal, not a report.
 
@@ -502,7 +823,15 @@ cannot. It is that we can make N fallible operations legible on a 6-inch screen
 without the reader holding the state in their head. The design below is therefore
 mostly about **honest partial failure** and **reading N things one at a time**.
 
-### 6.1 Principle: a brief, not a broadcast
+§4 narrows the work considerably, and reviewers should read it before costing
+any of this. The fetch-and-display plumbing already exists and already handles
+panes it did not create: the strip, the roster, and the selection rule are all
+correct today. What is missing is not data but **relationship and salience** —
+the app cannot say that three panes belong to one brief, and it cannot say that
+anything changed while the reader was elsewhere. Every proposal below should be
+read as adding one of those two, not as building a pane list we already have.
+
+### 7.1 Principle: a brief, not a broadcast
 
 The mental model should not be "send this text to three agents." It should be:
 the reader writes one **brief**, then splits it into **parts**, and each part goes
@@ -513,7 +842,7 @@ collaboration.
 This keeps the record honest: N parts produce N `CollaborationTask` records, each
 bound to its own `instance_id`, each with its own outcome.
 
-### 6.2 The composer, extended rather than replaced
+### 7.2 The composer, extended rather than replaced
 
 `src/components/agent-assignment-bar.tsx` today is a radio group. Proposal: make
 chip selection additive when the strip is in brief mode, and give
@@ -548,7 +877,7 @@ fields.
 between `AgentAssignmentBar` and `TerminalComposer` in
 `server-terminal-workspace.tsx`.
 
-### 6.3 Dispatch: sequential, visible, abandonable
+### 7.3 Dispatch: sequential, visible, abandonable
 
 N parts dispatch **sequentially**, never concurrently, and the UI shows the queue
 draining. Reasons, all from §2:
@@ -582,7 +911,7 @@ The existing `collaborationSpawnOutcome` already returns the right vocabulary
 'delivery-unconfirmed'`) and should be the source of these labels rather than a
 new enum.
 
-### 6.4 Watching several agents: fix the notice before adding to it
+### 7.4 Watching several agents: fix the notice before adding to it
 
 `CollaborationNotice` renders `current[0]` and appends `· ${current.length}`. That
 is already wrong for the two concurrent assignments the store can hold today; it
@@ -614,7 +943,7 @@ will be badly wrong for five.
    `remove` available there. This is a prerequisite for fan-out, not a nicety —
    five tasks a day with no history view is a leak.
 
-### 6.5 Reading results without lying
+### 7.5 Reading results without lying
 
 Three rules, all derived from §2.7 rather than invented.
 
@@ -639,7 +968,7 @@ pane contains such an agent. Moving the read path to `agent.read` and surfacing
 capable and more honest than a truncated `pane.read`. This is a Gateway change
 and belongs in its own card.
 
-### 6.6 One agent per worktree
+### 7.6 One agent per worktree
 
 **Proposed.** When a plan has more than one part and the session's cwd is a Git
 repo, offer one toggle — *Give each assistant its own branch* — which routes each
@@ -657,7 +986,7 @@ offer casually, `--trust-repository` must never be sent as an automatic retry
 (the Herdr skill says so explicitly), and branch naming must be the reader's,
 shown before dispatch, not generated silently.
 
-### 6.7 Write the assignment back into Herdr
+### 7.7 Write the assignment back into Herdr
 
 **Proposed, and cheap.** After a successful part, report display metadata so the
 operator's Herdr sidebar shows what the phone dispatched:
@@ -675,7 +1004,50 @@ exists for. Needs a new Gateway method and a new capability string; it must be
 capability-gated like everything else, and the app must work unchanged without
 it.
 
-### 6.8 Capability gating for all of the above
+### 7.8 Agents that appear without us asking
+
+**Proposal, and this one is new information from §2.3.** Because the capability
+is ambient, an agent inside Herdr can split panes and start agents whether or not
+our app was involved. A reader who sends "split three panes and start three
+agents on these three files" as ordinary composer text to a skill-equipped agent
+will get exactly that — and our app will have no `CollaborationTask` for any of
+it. The three agents will simply turn up in the strip and the roster.
+
+We should not try to prevent this, and we cannot detect intent. But the app
+currently cannot distinguish "an agent I dispatched" from "an agent that
+appeared", and after a fan-out that distinction is the whole story.
+
+Proposed, in `src/lib/agent-collaboration.ts`: treat an agent with no matching
+task as a first-class state — *unattributed* — rather than an absence. In the
+roster pill row from §7.4, an unattributed agent shows with a neutral glyph and
+no task card; tapping it offers "Open terminal" and nothing else. That is honest,
+costs one predicate, and stops the reader assuming the five pills they see
+correspond to the two parts they sent.
+
+The related read, per §4.3, is that an agent doing this may well split into a new
+**tab**, which the strip does not show at all. Proposed: when
+`data.panes` contains panes whose `tab_id` is not `selection.tabId` and which
+gained an agent since the last refresh, show a single quiet affordance at the end
+of the pane strip — "2 elsewhere" — that opens the panels sheet. Not a
+notification, not a navigation, and not a count of anything we cannot prove.
+
+### 7.9 Make the panels sheet live, or say that it is not
+
+**Proposal, small and independent of everything else.**
+`src/components/session-map.tsx` loads once per mount and never updates. During a
+fan-out it is the only surface that shows every new pane, and it is precisely
+then that it will be wrong. Two honest options:
+
+1. Subscribe it to the same `onStructureChanged` debounce the workspace screen
+   uses, so it tracks. Preferred.
+2. If that is too costly while the sheet is open over a live terminal, stamp it
+   with the time it was loaded and keep the pull-to-refresh, the way
+   `ServerAgentRows` already dims and labels a stale mirror.
+
+What it must not keep doing is presenting a five-minute-old list as current
+during the one operation that changes it fastest.
+
+### 7.10 Capability gating for all of the above
 
 **Proposed:** one new Gateway capability, `agent_fanout`, advertised only when
 the backend is Herdr *and* the Gateway will actually accept a multi-part
@@ -683,11 +1055,11 @@ dispatch. The app checks it through a `collaborationAvailability` that is finall
 wired to a call site. When it is absent, the strip stays single-select and the
 brief-mode affordance does not render — no dead chips, and an explicit sentence
 naming what to upgrade. Which is what `AGENTS.md` asked for in the first place,
-and what §5.1 says we do not have today.
+and what §6.1 says we do not have today.
 
 ---
 
-## 7. What this design does not propose
+## 8. What this design does not propose
 
 - **Automatic work splitting.** We do not ask a model to divide a brief into
   parts. The reader authors the parts.
@@ -699,18 +1071,27 @@ and what §5.1 says we do not have today.
   Herdr's docs and our own `AGENTS.md`.
 - **Any status rollup that implies completion.**
 
-## 8. Open questions for review
+## 9. Open questions for review
 
-1. Should §5.1 (the unwired capability gate) be its own card ahead of this work?
+1. Should §6.1 (the unwired capability gate) be its own card ahead of this work?
    This document argues yes.
-2. Is §5.3 — focusing an agent from the phone clearing the laptop's Done badge —
+2. Is §6.3 — focusing an agent from the phone clearing the laptop's Done badge —
    acceptable, or should "Open terminal" route through a read-only path?
-3. Is the worktree toggle (§6.6) in scope for a first cut, or is it the second
+3. Is the worktree toggle (§7.6) in scope for a first cut, or is it the second
    card?
-4. Does `agent.read` (§6.5) justify a Gateway change on its own, independent of
+4. Does `agent.read` (§7.5) justify a Gateway change on its own, independent of
    fan-out?
+5. Given §4, is the cheapest useful first card actually §7.9 (live panels sheet)
+   plus the "N elsewhere" affordance in §7.8 — neither of which needs any
+   dispatch work, and both of which already pay off for panes a human split?
+6. §2.3 establishes that an agent with the Herdr skill can fan out from ordinary
+   prompt text, with no involvement from us. Do we want the app to make that
+   easier — for example a documented phrasing the reader can send — or is the
+   structured plan in §7.2 the only path we support?
+7. Does the *unattributed agent* state in §7.8 belong in `CollaborationTask`
+   history at all, or should it stay purely derived and never persisted?
 
-## 9. E2E note
+## 10. E2E note
 
 Per `AGENTS.md`, any implementation of this design touches agent startup and task
 delivery, and therefore needs the paired App → Gateway → agent check on an
