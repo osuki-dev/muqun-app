@@ -47,6 +47,17 @@ export function AppLockGate({ children }: { children: ReactNode }) {
    * two screens that bracket a session cannot show different faces.
    */
   const launchArtwork = useLaunchArtwork();
+  const markKey = launchArtwork.kind === 'default' ? 'default' : launchArtwork.uri;
+  /*
+   * The mark can change while the lock is up -- a theme applied from another
+   * window, or the system crossing into dark and taking a mode override with
+   * it -- and on a screen this still it would read as a glitch. `initialMark`
+   * is what this gate first drew, so the entrance is spent only on a mark that
+   * actually replaced another one, and the lock screen's own arrival stays the
+   * single fade it already was.
+   */
+  const [initialMark] = useState(markKey);
+  const markReplaced = initialMark !== markKey;
   const hydrated = useAppSettings((state) => state.hydrated);
   const appLockEnabled = useAppSettings((state) => state.appLockEnabled);
   const [locked, setLocked] = useState(false);
@@ -208,11 +219,29 @@ export function AppLockGate({ children }: { children: ReactNode }) {
           style={[styles.lockScreen, { backgroundColor: theme.colors.background }]}>
           <Animated.View entering={fadeIn('short')} style={styles.lockContent}>
             <View style={[styles.iconFrame, { backgroundColor: theme.colors.surfaceRaised }]}>
-              <Image
-                source={launchArtwork.kind === 'default' ? brandMark : { uri: launchArtwork.uri }}
-                contentFit="contain"
-                style={styles.appIcon}
-              />
+              <View style={styles.appIcon}>
+                {/*
+                  Both marks are on screen together while one replaces the
+                  other: Reanimated holds the `exiting` view until its fade
+                  finishes, so this is a cross-fade rather than the frame
+                  emptying for a beat. `medium` is the design system's "one
+                  surface replacing another", the same window the launch
+                  overlay hands over in.
+                */}
+                <Animated.View
+                  key={markKey}
+                  entering={markReplaced ? fadeIn('medium') : undefined}
+                  exiting={fadeOut('medium')}
+                  style={StyleSheet.absoluteFill}>
+                  <Image
+                    source={
+                      launchArtwork.kind === 'default' ? brandMark : { uri: launchArtwork.uri }
+                    }
+                    contentFit="contain"
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              </View>
               <View style={[styles.lockBadge, { backgroundColor: theme.colors.primary }]}>
                 <LockKeyhole size={16} color={theme.colors.onPrimary} strokeWidth={2.4} />
               </View>
