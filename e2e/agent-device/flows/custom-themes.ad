@@ -10,19 +10,41 @@ is visible "${TARGET}"
 scroll down --pixels 300
 
 # section close-sheet
-# Removing the theme leaves the detail route, and leaving it unwinds the whole
-# root stack -- Settings is a pushed screen on that stack, not a modal over it
-# -- so what is on screen is Home, with the built-in theme back. Captured from
-# the device: the failure shot for the older reading of this step was Home
-# wearing the default pack, which is the right end state and the one worth
-# asserting. There is no picker left to close and no in-app back control to
-# find, so this checks the thing that proves the removal landed.
+# What proves the removal landed: the row is gone from `My themes`. The theme
+# this flow installs is the demo workspace's document, whose manifest is the
+# authoring starter -- so the row is `theme-row-my-theme`, not the id the old
+# hand-pasted fixture used. Asserting the row rather than the screen, because
+# where the reader ends up depends on which route removal was reached by, and
+# the row is the fact under test either way.
 wait stable 400 5000
-is visible "label=\"Settings\""
-is hidden "id=\"theme-row-theme-qa\""
+is hidden "id=\"theme-row-my-theme\""
 
-# section input
-fill "id=theme-json-input" "{\"format\":\"muqun-theme\",\"schemaVersion\":1,\"id\":\"theme-qa\",\"name\":\"Theme QA\",\"version\":\"1.0.0\",\"variants\":{\"light\":{\"colors\":{\"background\":\"#F7F3EC\",\"surface\":\"#FFFFFF\",\"surfaceRaised\":\"#ECE7DF\",\"border\":\"#E0DAD1\",\"borderStrong\":\"#C2B9AE\",\"text\":\"#050B12\",\"textMuted\":\"#5D6679\",\"textSubtle\":\"#6A7281\",\"textDisabled\":\"#A7ADB8\",\"primary\":\"#F1B7D8\",\"onPrimary\":\"#050B12\",\"primarySubtle\":\"#FF5A4A24\",\"danger\":\"#D93025\",\"dangerSubtle\":\"#D930251F\",\"success\":\"#1F9D6B\",\"warning\":\"#D98A1F\",\"info\":\"#3E63FF\"},\"terminal\":{\"background\":\"#F7F3EC\",\"foreground\":\"#050B12\",\"cursor\":\"#C54337\",\"link\":\"#3455DC\",\"selection\":\"#FF5A4A24\",\"ansi\":[\"#050B12\",\"#D93025\",\"#027A48\",\"#B54708\",\"#3538CD\",\"#6941C6\",\"#0E7090\",\"#475467\",\"#6A7281\",\"#B42318\",\"#027A48\",\"#B54708\",\"#3E63FF\",\"#7F56D9\",\"#0E7090\",\"#050B12\"]}},\"dark\":{\"colors\":{\"background\":\"#050B12\",\"surface\":\"#0B111A\",\"surfaceRaised\":\"#131B26\",\"border\":\"#1C2532\",\"borderStrong\":\"#2E3A4A\",\"text\":\"#FCFBFA\",\"textMuted\":\"#B6BDC8\",\"textSubtle\":\"#8B95A5\",\"textDisabled\":\"#6B7585\",\"primary\":\"#F1B7D8\",\"onPrimary\":\"#050B12\",\"primarySubtle\":\"#FF5A4A3D\",\"danger\":\"#F2554A\",\"dangerSubtle\":\"#F2554A29\",\"success\":\"#34C08B\",\"warning\":\"#F0A93C\",\"info\":\"#6B87FF\"},\"terminal\":{\"background\":\"#08111B\",\"foreground\":\"#D8E1EA\",\"cursor\":\"#FF5A4A\",\"link\":\"#A4BCFD\",\"selection\":\"#FF5A4A3D\",\"ansi\":[\"#0C121A\",\"#F2554A\",\"#34C08B\",\"#F0A93C\",\"#7DA2FF\",\"#C7A0FF\",\"#67E3F9\",\"#B6BDC8\",\"#6B7585\",\"#FDA29B\",\"#6CE9A6\",\"#FEC84B\",\"#A4BCFD\",\"#D6BBFB\",\"#A5F0FC\",\"#FCFBFA\"]}}},\"homeIdentity\":{\"name\":{\"mode\":\"default\"},\"logo\":{\"mode\":\"default\"}}}"
+# section install
+# Paste JSON is gone, and with it the only offline, deterministic way a custom
+# theme could reach this app: the two routes that remain are a system file
+# picker and the network gallery, and this suite is required to run with
+# neither. So the theme comes from the document the demo workspace already
+# ships -- the same file `theme-document` previews without applying -- and this
+# flow applies it, which is what puts a custom theme in the library for
+# everything below to work on.
+#
+# Raw selectors rather than manifest targets: closing the viewer is addressed by
+# accessibility label, and the manifest's target vocabulary is text and id only.
+press "text=\"Open files\""
+wait stable 400 5000
+scroll down --pixels 350
+press "text=\"Open muqun.muqun-theme.json\""
+wait "id=asset-preview-theme" 15000
+press "id=asset-preview-theme"
+wait "id=custom-theme-preview" 15000
+press "id=theme-apply"
+wait stable 400 5000
+press "label=\"Close file\""
+wait "label=\"Close files\"" 10000
+press "label=\"Close files\""
+wait stable 400 5000
+press "text=\"Back to servers\""
+wait stable 400 5000
 
 # section settle
 wait stable 400 5000
@@ -34,16 +56,12 @@ is hidden "id=\"theme-apply\""
 screenshot dist/theme-applied-status.png
 
 # section reopen-applied
-# Applying now leaves, and it leaves further than it used to. The one button at
-# the bottom of the detail route both writes the theme and closes the stack it
-# was opened on, and `dismissAll` unwinds the root stack -- Settings is a pushed
-# screen on it, not a modal over it -- so the reader lands on Home. Captured
-# from the device rather than assumed: the failure shot for this step was the
-# Home screen wearing the theme that had just been applied. So the way back to
-# the row is the way in was: Settings, then the picker. The property under test
-# is unchanged -- a theme that has just been applied is still reachable from the
-# list it was added to.
-press "label=\"Settings\""
+# The old flow arrived here on Home, because applying from the detail route
+# unwinds the root stack. This one applied from the file viewer and walked to
+# Settings itself, so it is already in the picker and the way into the detail
+# route is the row the install added. The property under test is unchanged: a
+# theme that has just been applied is still reachable from the list it joined.
+press "id=theme-row-my-theme"
 wait stable 400 5000
 # No scroll. `scroll --pixels` is a flick and carries about seven times the
 # momentum it is given, so a 300 here landed at the foot of the page with the
@@ -64,12 +82,14 @@ is visible "id=theme-link-input"
 is visible "id=theme-link-inspect"
 press "id=theme-link-cancel"
 is hidden "id=theme-link-input"
-is visible "id=theme-paste-json"
+is visible "id=theme-import-file"
 
-# section format-json
-press "id=theme-format-json"
-is visible "id=theme-undo-format"
-press "id=theme-undo-format"
+# section browse-entry
+# Present, and deliberately not pressed. Pressing it reads the catalogue over
+# the network, and this suite is required to drive offline demo mode with no
+# gateway, no network and no pairing. What is checkable offline is that the way
+# in still exists.
+is visible "id=theme-browse"
 
 # section opacity-enable
 # This theme's palette leaves a terminal floor of 97%, so the whole track spans

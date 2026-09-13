@@ -1,4 +1,3 @@
-import { Textarea } from '@/components/themed-textarea';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
@@ -7,6 +6,7 @@ import { useWindowDimensions, View } from 'react-native';
 import { Check, ChevronRight, MoreHorizontal, Trash2, X } from 'lucide-react-native';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
+import { ThemeGallery } from '@/components/theme-gallery';
 import { ThemeLinkImport } from '@/components/theme-link-import';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
@@ -25,9 +25,8 @@ import {
 } from '@/theme/local-files';
 import { exportInstalledTheme } from '@/theme/assets';
 import { useAppSettings } from '@/stores/app-settings';
-import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
+import type { ThemeManifest } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
-import { formatThemeJson, ThemeJsonFormatError } from '@/theme/format-json';
 
 /**
  * What the one primary button on a theme does, described rather than drawn.
@@ -80,13 +79,11 @@ export function CustomThemeLibrary({
   const wideDetail = detail && width >= 840;
   const library = useThemeLibrary((state) => state.library);
   const currentPack = useThemePack();
-  const [editing, setEditing] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [linkImportOpen, setLinkImportOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(detail);
   const [removing, setRemoving] = useState(false);
-  const [text, setText] = useState('');
-  const [formatUndo, setFormatUndo] = useState<{ before: string; after: string } | null>(null);
   const [candidate, setCandidate] = useState<ThemeEditorCandidate | null>(
     initialCandidate ?? (initialManifest ? { manifest: initialManifest } : null)
   );
@@ -132,7 +129,7 @@ export function CustomThemeLibrary({
   const missingImages = Object.keys(assets).length !== imageCount;
   const candidateSelected =
     library.selection?.kind === 'custom' && library.selection.id === candidate?.id;
-  const browsing = !initialManifest && !initialCandidate && !candidate && !editing;
+  const browsing = !initialManifest && !initialCandidate && !candidate;
   const installedCandidate = library.themes.find((entry) => entry.id === candidate?.id);
 
   function closePreview() {
@@ -151,18 +148,6 @@ export function CustomThemeLibrary({
       useThemeLibrary.getState().remove(id);
       closePreview();
     });
-  }
-
-  function inspect(value: string) {
-    const manifest = parseThemeManifest(value);
-    if (onOpenCandidate) onOpenCandidate({ manifest });
-    else setCandidate({ manifest });
-    setText(value);
-    setEditing(false);
-    setImportOpen(false);
-    setActionsOpen(false);
-    setError(null);
-    setNotice(null);
   }
 
   async function perform(action: () => void | Promise<void>) {
@@ -273,8 +258,19 @@ export function CustomThemeLibrary({
             <Button
               variant="secondary"
               disabled={busy}
+              testID="theme-browse"
+              onPress={() => {
+                setGalleryOpen(!galleryOpen);
+                setImportOpen(false);
+              }}>{t`Browse themes`}</Button>
+            <Button
+              variant="secondary"
+              disabled={busy}
               testID="theme-import"
-              onPress={() => setImportOpen(!importOpen)}>{t`Import`}</Button>
+              onPress={() => {
+                setImportOpen(!importOpen);
+                setGalleryOpen(false);
+              }}>{t`Import`}</Button>
             {canUndo ? (
               <Button
                 variant="ghost"
@@ -313,25 +309,23 @@ export function CustomThemeLibrary({
                       }
                       if (onOpenCandidate) onOpenCandidate(value);
                       else setCandidate(value);
-                      setEditing(false);
                       setImportOpen(false);
                       setActionsOpen(false);
-                      setText('');
                     }
                   })
                 }>{t`Import file`}</Button>
-              <Button
-                variant="secondary"
-                disabled={busy}
-                testID="theme-paste-json"
-                onPress={() => {
-                  setEditing(true);
-                  setFormatUndo(null);
-                  setImportOpen(false);
-                  setCandidate(null);
-                  setError(null);
-                }}>{t`Paste JSON`}</Button>
             </View>
+          ) : null}
+          {galleryOpen ? (
+            <ThemeGallery
+              onClose={() => setGalleryOpen(false)}
+              onReady={(value) => {
+                if (onOpenCandidate) onOpenCandidate(value);
+                else setCandidate(value);
+                setGalleryOpen(false);
+                setActionsOpen(false);
+              }}
+            />
           ) : null}
           {importOpen && linkImportOpen ? (
             <ThemeLinkImport
@@ -342,74 +336,9 @@ export function CustomThemeLibrary({
                 setLinkImportOpen(false);
                 setImportOpen(false);
                 setActionsOpen(false);
-                setText('');
               }}
             />
           ) : null}
-        </View>
-      ) : null}
-      {editing ? (
-        <View style={{ gap: 12 }}>
-          <Textarea
-            label={t`Theme JSON`}
-            accessibilityLabel={t`Theme JSON`}
-            testID="theme-json-input"
-            value={text}
-            onChangeText={(value) => {
-              setText(value);
-              setFormatUndo(null);
-              setError(null);
-            }}
-            maxLength={THEME_LIMITS.manifestBytes}
-            autoCorrect={false}
-            autoCapitalize="none"
-            minRows={4}
-            maxRows={8}
-          />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <Button
-              variant="secondary"
-              disabled={busy || !text.trim()}
-              testID="theme-format-json"
-              onPress={() => {
-                try {
-                  const formatted = formatThemeJson(text);
-                  if (formatted !== text) {
-                    setFormatUndo({ before: text, after: formatted });
-                    setText(formatted);
-                  }
-                  setError(null);
-                } catch (failure) {
-                  setError(
-                    failure instanceof ThemeJsonFormatError && failure.code === 'too-large'
-                      ? t`Formatted JSON exceeds the theme size limit`
-                      : t`Fix invalid JSON before formatting`
-                  );
-                }
-              }}>{t`Format JSON`}</Button>
-            {formatUndo && text === formatUndo.after ? (
-              <Button
-                variant="ghost"
-                disabled={busy}
-                testID="theme-undo-format"
-                onPress={() => {
-                  setText(formatUndo.before);
-                  setFormatUndo(null);
-                  setError(null);
-                }}>{t`Undo formatting`}</Button>
-            ) : null}
-            <Button
-              disabled={busy || !text.trim()}
-              testID="theme-preview-json"
-              onPress={() => void perform(() => inspect(text))}>{t`Preview`}</Button>
-            <Button
-              variant="ghost"
-              disabled={busy}
-              onPress={() => {
-                setEditing(false);
-                setFormatUndo(null);
-              }}>{t`Cancel`}</Button>
-          </View>
         </View>
       ) : null}
       {step ? (
@@ -685,7 +614,6 @@ export function CustomThemeLibrary({
                   else setCandidate(next);
                   setError(null);
                   setNotice(null);
-                  setEditing(false);
                   setActionsOpen(false);
                   setImportOpen(false);
                 }}
