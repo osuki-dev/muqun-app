@@ -34,6 +34,11 @@ msgstr "[PR 编号]"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 天}}"
 
+#. placeholder {0}: pending.files.length
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# file changed} other {# files changed}}"
+msgstr "{0, plural, other {# 个文件有改动}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -43,6 +48,11 @@ msgstr "{0, plural, other {# 小时}}"
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# 分钟}}"
+
+#. placeholder {0}: row.remaining
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# more line} other {# more lines}}"
+msgstr "{0, plural, other {还有 # 行}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -180,6 +190,11 @@ msgstr "先添加一个"
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "将这一行添加到服务器的 ~/.ssh/authorized_keys："
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Added"
+msgstr "新增"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -366,6 +381,10 @@ msgstr "退格键"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "低于 {minimumPercent}% 后,文字不再保证可读"
 
+#: src/components/git-diff-view.tsx
+msgid "Binary file"
+msgstr "二进制文件"
+
 #: src/lib/local-authentication.ts
 msgid "biometrics"
 msgstr "生物识别"
@@ -427,6 +446,15 @@ msgstr "取消编辑 {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "已取消"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Changed"
+msgstr "已更改"
+
+#: src/components/git-diff-view.tsx
+msgid "Changes"
+msgstr "改动"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes colored backgrounds, not text, icons or artwork"
@@ -498,6 +526,10 @@ msgstr "清屏"
 #: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "关闭"
+
+#: src/components/git-diff-view.tsx
+msgid "Close changes"
+msgstr "关闭改动"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -628,6 +660,11 @@ msgstr "确认取消 {label} 的配对"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "确认：{removeLabel} {label}"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Conflicted"
+msgstr "冲突"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -788,6 +825,11 @@ msgstr "Ctrl Y 键，粘贴"
 msgid "Control Z, suspend"
 msgstr "Ctrl Z 键，挂起"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Copied"
+msgstr "复制"
+
 #: src/components/skia-terminal.tsx
 msgid "Copied to clipboard"
 msgstr "已复制到剪贴板"
@@ -907,10 +949,18 @@ msgstr "无法连接到这台服务器"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "无法读取已保存的服务器，保存的数据未被修改，请解锁此设备后重试"
 
+#: src/components/git-diff-view.tsx
+msgid "Could not read the changes."
+msgstr "无法读取改动"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "无法读取终端"
+
+#: src/components/git-diff-view.tsx
+msgid "Could not read this file."
+msgstr "无法读取此文件"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1028,6 +1078,11 @@ msgstr "删除 {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "删除这一行"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Deleted"
+msgstr "删除"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1351,6 +1406,8 @@ msgid "Haptic feedback"
 msgstr "触感反馈"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "隐藏 {0}"
@@ -1698,6 +1755,11 @@ msgstr "提及 {0}"
 msgid "Modified"
 msgstr "修改时间"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Modified"
+msgstr "修改"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "更多操作"
@@ -1844,6 +1906,10 @@ msgstr "没有可用于扫描的相机"
 msgid "No camera was found on this device."
 msgstr "在本设备上找不到相机"
 
+#: src/components/git-diff-view.tsx
+msgid "No changes. The working tree matches HEAD."
+msgstr "没有改动。工作区与 HEAD 一致"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "没有匹配的文件"
@@ -1908,6 +1974,9 @@ msgstr "不支持静态画面"
 #: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "还没有已发布的主题"
+#: src/components/git-diff-view.tsx
+msgid "No textual change"
+msgstr "没有文本改动"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2000,6 +2069,10 @@ msgstr "打开 {title}。长按可关闭"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "仍要打开"
+
+#: src/components/git-diff-button.tsx
+msgid "Open changes"
+msgstr "打开改动"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -2349,6 +2422,10 @@ msgstr "重新连接中 · {0}"
 msgid "Refresh"
 msgstr "刷新"
 
+#: src/components/git-diff-view.tsx
+msgid "Refresh changes"
+msgstr "刷新改动"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "刷新文件"
@@ -2398,6 +2475,11 @@ msgstr "重命名终端"
 #: src/components/session-map.tsx
 msgid "Rename workspace"
 msgstr "重命名工作区"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Renamed"
+msgstr "重命名"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
@@ -2686,6 +2768,7 @@ msgid "Sending to"
 msgstr "发送给"
 
 #: src/app/artifacts.tsx
+#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2770,6 +2853,8 @@ msgid "Shift Tab, cycle mode"
 msgstr "Shift Tab 键，循环切换模式"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "显示 {0}"
@@ -2814,6 +2899,10 @@ msgstr "显示首页文字"
 msgid "Show images"
 msgstr "显示图片"
 
+#: src/components/git-diff-view.tsx
+msgid "Show more"
+msgstr "显示更多"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "在终端文字后显示 App 背景"
@@ -2821,6 +2910,10 @@ msgstr "在终端文字后显示 App 背景"
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "显示编辑器键盘"
+
+#: src/components/git-diff-view.tsx
+msgid "Show the newer list of changes"
+msgstr "显示最新的改动列表"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3288,6 +3381,10 @@ msgstr "这是内置的记录，不是真正的服务器"
 msgid "This link goes nowhere"
 msgstr "这个链接没有指向任何地方"
 
+#: src/components/git-diff-view.tsx
+msgid "This pane is not working inside a git repository, so there is nothing to compare."
+msgstr "此面板不在 git 仓库中工作，因此没有可比较的内容"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "这个二维码无效"
@@ -3358,12 +3455,17 @@ msgstr "通过 {host}"
 msgid "Today"
 msgstr "今天"
 
+#: src/components/git-diff-view.tsx
+msgid "Too many changes to list. This is the start of them, not all of them."
+msgstr "改动太多，无法全部列出。这只是开头，不是全部"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
 msgstr "信任"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/git-diff-view.tsx
 msgid "Try again"
 msgstr "重试"
 
@@ -3386,6 +3488,11 @@ msgstr "类型"
 #: src/lib/demo-ssh.ts
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "输入一行并按 Enter，它会被原样返回"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Type changed"
+msgstr "类型更改"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3449,6 +3556,11 @@ msgstr "正在取消 {label} 的配对"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "正在取消配对…"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Untracked"
+msgstr "未跟踪"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts

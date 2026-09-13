@@ -34,6 +34,11 @@ msgstr "[PR-Nummer]"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {# Tag} other {# Tage}}"
 
+#. placeholder {0}: pending.files.length
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# file changed} other {# files changed}}"
+msgstr "{0, plural, one {# Datei geändert} other {# Dateien geändert}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -43,6 +48,11 @@ msgstr "{0, plural, one {# Stunde} other {# Stunden}}"
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, one {# Minute} other {# Minuten}}"
+
+#. placeholder {0}: row.remaining
+#: src/components/git-diff-view.tsx
+msgid "{0, plural, one {# more line} other {# more lines}}"
+msgstr "{0, plural, one {# weitere Zeile} other {# weitere Zeilen}}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
@@ -180,6 +190,11 @@ msgstr "Zuerst einen hinzufügen"
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Füge diese Zeile auf dem Server in ~/.ssh/authorized_keys ein:"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Added"
+msgstr "Hinzugefügt"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -366,6 +381,10 @@ msgstr "Rücktaste"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Unter {minimumPercent} % ist lesbarer Text nicht mehr garantiert"
 
+#: src/components/git-diff-view.tsx
+msgid "Binary file"
+msgstr "Binärdatei"
+
 #: src/lib/local-authentication.ts
 msgid "biometrics"
 msgstr "Biometrie"
@@ -427,6 +446,15 @@ msgstr "Bearbeitung von {0} abbrechen"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "Abgebrochen"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Changed"
+msgstr "Geändert"
+
+#: src/components/git-diff-view.tsx
+msgid "Changes"
+msgstr "Änderungen"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes colored backgrounds, not text, icons or artwork"
@@ -498,6 +526,10 @@ msgstr "Terminal leeren"
 #: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Schließen"
+
+#: src/components/git-diff-view.tsx
+msgid "Close changes"
+msgstr "Änderungen schließen"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -628,6 +660,11 @@ msgstr "Entkopplung von {label} bestätigen"
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
 msgstr "Bestätigen: {removeLabel} {label}"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Conflicted"
+msgstr "Konflikt"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
@@ -788,6 +825,11 @@ msgstr "Ctrl Y, einfügen"
 msgid "Control Z, suspend"
 msgstr "Ctrl Z, anhalten"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Copied"
+msgstr "Kopiert"
+
 #: src/components/skia-terminal.tsx
 msgid "Copied to clipboard"
 msgstr "In die Zwischenablage kopiert"
@@ -907,10 +949,18 @@ msgstr "Dieser Server war nicht erreichbar"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Gespeicherte Server konnten nicht gelesen werden. Deine gespeicherten Daten wurden nicht geändert. Entsperre dieses Gerät und versuche es erneut"
 
+#: src/components/git-diff-view.tsx
+msgid "Could not read the changes."
+msgstr "Die Änderungen konnten nicht gelesen werden"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
 msgstr "Terminal konnte nicht gelesen werden"
+
+#: src/components/git-diff-view.tsx
+msgid "Could not read this file."
+msgstr "Diese Datei konnte nicht gelesen werden"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1028,6 +1078,11 @@ msgstr "{name} löschen"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Diese Zeile löschen"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Deleted"
+msgstr "Gelöscht"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1351,6 +1406,8 @@ msgid "Haptic feedback"
 msgstr "Haptisches Feedback"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "{0} ausblenden"
@@ -1698,6 +1755,11 @@ msgstr "{0} erwähnen"
 msgid "Modified"
 msgstr "Geändert"
 
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Modified"
+msgstr "Geändert"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "Weitere Aktionen"
@@ -1844,6 +1906,10 @@ msgstr "Keine Kamera zum Scannen"
 msgid "No camera was found on this device."
 msgstr "Auf diesem Gerät wurde keine Kamera gefunden"
 
+#: src/components/git-diff-view.tsx
+msgid "No changes. The working tree matches HEAD."
+msgstr "Keine Änderungen. Der Arbeitsbaum entspricht HEAD"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Keine passenden Dateien"
@@ -1908,6 +1974,9 @@ msgstr "Keine Einzelbilder"
 #: src/components/theme-gallery.tsx
 msgid "No themes are published yet"
 msgstr "Es sind noch keine Themes veröffentlicht"
+#: src/components/git-diff-view.tsx
+msgid "No textual change"
+msgstr "Keine Textänderung"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2000,6 +2069,10 @@ msgstr "{title} öffnen. Lange drücken zum Schließen"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "Trotzdem öffnen"
+
+#: src/components/git-diff-button.tsx
+msgid "Open changes"
+msgstr "Änderungen öffnen"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
@@ -2349,6 +2422,10 @@ msgstr "Neuer Verbindungsversuch · {0}"
 msgid "Refresh"
 msgstr "Aktualisieren"
 
+#: src/components/git-diff-view.tsx
+msgid "Refresh changes"
+msgstr "Änderungen aktualisieren"
+
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
 msgstr "Dateien aktualisieren"
@@ -2398,6 +2475,11 @@ msgstr "Terminal umbenennen"
 #: src/components/session-map.tsx
 msgid "Rename workspace"
 msgstr "Workspace umbenennen"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Renamed"
+msgstr "Umbenannt"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
@@ -2686,6 +2768,7 @@ msgid "Sending to"
 msgstr "Senden an"
 
 #: src/app/artifacts.tsx
+#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2770,6 +2853,8 @@ msgid "Shift Tab, cycle mode"
 msgstr "Umschalt Tab, Modus wechseln"
 
 #. placeholder {0}: item.summary
+#. placeholder {0}: row.path
+#: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "{0} anzeigen"
@@ -2814,6 +2899,10 @@ msgstr "Text auf der Startseite anzeigen"
 msgid "Show images"
 msgstr "Bilder anzeigen"
 
+#: src/components/git-diff-view.tsx
+msgid "Show more"
+msgstr "Mehr anzeigen"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "App-Hintergrund hinter dem Terminaltext anzeigen"
@@ -2821,6 +2910,10 @@ msgstr "App-Hintergrund hinter dem Terminaltext anzeigen"
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Editor-Tastatur einblenden"
+
+#: src/components/git-diff-view.tsx
+msgid "Show the newer list of changes"
+msgstr "Die neuere Liste der Änderungen anzeigen"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3288,6 +3381,10 @@ msgstr "Dies ist eine mitgelieferte Aufzeichnung, kein echter Server"
 msgid "This link goes nowhere"
 msgstr "Dieser Link führt ins Leere"
 
+#: src/components/git-diff-view.tsx
+msgid "This pane is not working inside a git repository, so there is nothing to compare."
+msgstr "Dieses Panel arbeitet nicht in einem Git-Repository, es gibt also nichts zu vergleichen"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "Dieser QR-Code ist ungültig"
@@ -3358,12 +3455,17 @@ msgstr "Über {host}"
 msgid "Today"
 msgstr "Heute"
 
+#: src/components/git-diff-view.tsx
+msgid "Too many changes to list. This is the start of them, not all of them."
+msgstr "Zu viele Änderungen für eine Liste. Dies ist der Anfang, nicht alles"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
 msgstr "Vertrauen"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/git-diff-view.tsx
 msgid "Try again"
 msgstr "Erneut versuchen"
 
@@ -3386,6 +3488,11 @@ msgstr "Typ"
 #: src/lib/demo-ssh.ts
 msgid "Type a line and press Enter; it is echoed back."
 msgstr "Tippe eine Zeile und drücke Enter; sie wird zurückgegeben"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Type changed"
+msgstr "Typ geändert"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3449,6 +3556,11 @@ msgstr "{label} wird entkoppelt"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Wird entkoppelt …"
+
+#: src/i18n/labels.ts
+msgctxt "git file status"
+msgid "Untracked"
+msgstr "Unversioniert"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
