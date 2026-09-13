@@ -223,7 +223,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   useFocusEffect(
     useCallback(() => {
       // Reachability and nothing else. This used to also warm the configured
-      // server's workspace -- six requests on every return to the list -- so
+      // server's workspace -- seven requests on every return to the list -- so
       // that opening it painted instead of saying Connecting. The list is not
       // where that belongs: it exists to say which machines are up and to get
       // out of the way. The workspace keeps its own last snapshot
@@ -259,31 +259,75 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
     opacity: interpolate(scrollY.value, [82, 112], [0, 1], Extrapolation.CLAMP),
     transform: [{ translateY: interpolate(scrollY.value, [82, 112], [5, 0], Extrapolation.CLAMP) }],
   }));
+  /**
+   * The other half of that swap, which used to be missing.
+   *
+   * The expanded block simply scrolled, and the scroll view cuts its content
+   * off at the top edge -- so for the whole 82 points before the compact title
+   * begins to appear, the reader watched the name being sliced through
+   * horizontally. Bare text got away with it; a pack that tints the block
+   * behind its name does not, because what is being guillotined is a rounded
+   * plate with an edge of its own.
+   *
+   * It is gone by 82, which is exactly where the compact one starts, so the
+   * name is never drawn twice and never drawn in half.
+   *
+   * The fade begins at the first point of scroll rather than partway, because
+   * that is where the cutting begins: the scroll view's top edge sits at the
+   * top of this block, so one point of travel already takes a slice off the
+   * name. Starting at 40 left the first forty points looking exactly like the
+   * bug this replaced.
+   */
+  const expandedBrandStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 82], [1, 0], Extrapolation.CLAMP),
+  }));
 
   function openServer(serverId: string, paneId?: string) {
     // Fetch on intent, not on sight.
     //
     // This screen used to warm the configured server's workspace on every
-    // focus -- six requests each time, for a server the reader might never
+    // focus -- seven requests each time, for a server the reader might never
     // open, and the single most expensive thing the list did. Warming on the
-    // tap instead costs the same six requests but only when they are certainly
-    // wanted, and buys *more* speed rather than less: the request is already in
-    // flight while the push animates, so the workspace screen finds a filled
-    // cache on mount (`warmWorkspace` seeds both `data` and the connection
-    // phase) instead of painting `Connecting` and asking afterwards.
+    // tap instead costs the same seven requests but only when they are
+    // certainly wanted, and buys *more* speed rather than less: the request is
+    // already in flight while the push animates, so the workspace screen finds
+    // a filled cache on mount (`warmWorkspace` seeds both `data` and the
+    // connection phase) instead of painting `Connecting` and asking afterwards.
     //
-    // Deliberately not awaited. The push has to be on this frame, and the
-    // warm's only job is to be further along than it would otherwise be by the
-    // time the screen asks.
-    if (serverId !== DEMO_SERVER_ID) {
+    // The warm hangs off the selection rather than running beside it, and that
+    // ordering is load-bearing. `gatewayTransport` is bound to one base URL and
+    // one token at a time (`configureGateway`), `selectRecord` only repoints it
+    // after a queue hop and two SecureStore reads, and `loadWorkspaceSnapshot`
+    // puts its first requests on the wire synchronously. Firing them together
+    // therefore asked the *previously* selected gateway for this server's
+    // workspace, carrying that gateway's token, and filed the reply under the
+    // tapped `serverId` -- so opening a second machine painted the first one's
+    // workspaces, tabs and panes from the cache. `warmNotificationTarget`
+    // refuses the same hazard for the notification route.
+    //
+    // The other way to refuse it -- warm only while the transport already
+    // points at this server -- was not taken, because it deletes the feature
+    // for exactly the taps that need it: the only server that would ever get a
+    // head start is the one already open. Waiting costs the two keychain reads
+    // the workspace screen's own load waits for regardless, and the request is
+    // still in flight while the push animates.
+    //
+    // `selected` is false when a later selection superseded this one, which is
+    // the only way the transport can be aimed elsewhere by the time this runs.
+    //
+    // Not awaited here: the push has to be on this frame, and the warm's only
+    // job is to be further along than it would otherwise be by the time the
+    // screen asks.
+    void selectRecord(serverId).then((selected) => {
+      if (!selected || serverId === DEMO_SERVER_ID) return;
       const server = records.find((item) => item.serverId === serverId);
       if (server && !server.sshTunnel)
         void warmConfiguredWorkspace(serverId, useServerSession.getState().byServer[serverId]);
-    }
-    // Push straight away so the slide-in is immediate; the server screen
-    // selects the record on mount. Awaiting the SecureStore write here left a
-    // dead beat that read as no transition at all.
-    void selectRecord(serverId);
+    });
+    // Pushed straight away so the slide-in is immediate, without waiting on the
+    // selection above; the server screen selects the record on mount too.
+    // Awaiting the SecureStore write here left a dead beat that read as no
+    // transition at all.
     router.navigate({
       pathname: '/servers/[serverId]',
       // The same deep link an approval notification uses. Without a pane id the
@@ -346,38 +390,52 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
               <Animated.View
                 testID="home-brand-compact"
                 pointerEvents="none"
-                style={[
-                  styles.compactTitle,
-                  compactTitleStyle,
-                  hasScene && {
-                    backgroundColor: background(theme.colors.surface),
-                    borderRadius: 12,
-                    overflow: 'hidden',
-                  },
-                ]}>
-                <ThemedSurfaceArtwork
-                  slot="navigation.background"
-                  baseColor={theme.colors.surface}
-                />
-                {identity.logo ? (
-                  <View
-                    style={[
-                      styles.compactIcon,
-                      { backgroundColor: background(theme.colors.surfaceRaised) },
-                    ]}>
-                    <Image
-                      source={logoSource}
-                      onError={() => setFailedLogo(customLogo ?? null)}
-                      contentFit="contain"
-                      style={styles.compactMark}
-                    />
-                  </View>
-                ) : null}
-                {identity.name ? (
-                  <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
-                    {identity.name}
-                  </Text>
-                ) : null}
+                style={[styles.compactTitle, compactTitleStyle]}>
+                {/* The plate hugs the name; the frame around it does not. That
+                frame is positioned against the action buttons, so its width is
+                the gap they leave rather than the width of anything drawn in
+                it -- painting the tint on the frame itself draws a pill the
+                length of the bar with the name stranded at one end. The
+                expanded block below hugs for the same reason. */}
+                <View
+                  style={[
+                    styles.compactTitlePlate,
+                    hasScene && {
+                      backgroundColor: background(theme.colors.surface),
+                      borderRadius: 12,
+                      // The tint needs room around the name, and the name has
+                      // an x it travels to. Pay the padding back on the left so
+                      // the plate grows outwards and the mark still rises
+                      // straight out of the block it came from.
+                      paddingHorizontal: COMPACT_PLATE_INSET,
+                      marginLeft: -COMPACT_PLATE_INSET,
+                      overflow: 'hidden',
+                    },
+                  ]}>
+                  <ThemedSurfaceArtwork
+                    slot="navigation.background"
+                    baseColor={theme.colors.surface}
+                  />
+                  {identity.logo ? (
+                    <View
+                      style={[
+                        styles.compactIcon,
+                        { backgroundColor: background(theme.colors.surfaceRaised) },
+                      ]}>
+                      <Image
+                        source={logoSource}
+                        onError={() => setFailedLogo(customLogo ?? null)}
+                        contentFit="contain"
+                        style={styles.compactMark}
+                      />
+                    </View>
+                  ) : null}
+                  {identity.name ? (
+                    <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
+                      {identity.name}
+                    </Text>
+                  ) : null}
+                </View>
               </Animated.View>
             ) : null}
 
@@ -452,6 +510,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
               layout={listLayout('medium')}
               style={[
                 styles.brandBlock,
+                expandedBrandStyle,
                 { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
               ]}>
               {/* The mark alone, on the page. The rounded tile it used to sit in
@@ -634,6 +693,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                     key={host.id}
                     record={host}
                     nowMs={nowMs}
+                    showAddress={false}
                     onOpen={() => openSshHost(host)}
                   />
                 ))}
@@ -1060,6 +1120,8 @@ const BRAND_BLOCK_INSET = 2;
 const HEADER_GUTTER = CONTENT_GUTTER;
 const HEADER_BUTTON_SIZE = 40;
 const HEADER_BUTTON_GAP = 8;
+/** Breathing room inside the compact brand plate, only when a pack tints it. */
+const COMPACT_PLATE_INSET = 10;
 
 const styles = StyleSheet.create({
   page: {
@@ -1109,6 +1171,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  // Sized by the mark and the name, never by the frame: a row child takes its
+  // content's width, and `flexShrink` is what stops a long name from reaching
+  // the buttons instead of truncating.
+  compactTitlePlate: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    flexShrink: 1,
+    gap: 8,
+  },
   compactIcon: {
     width: 30,
     height: 30,
@@ -1121,8 +1193,10 @@ const styles = StyleSheet.create({
     width: '72%',
     height: '72%',
   },
+  // `flexShrink`, not `flex`: filling the frame is what made the tinted plate
+  // the width of the bar. It still truncates, because it can still shrink.
   compactTitleText: {
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     fontWeight: '600',
   },

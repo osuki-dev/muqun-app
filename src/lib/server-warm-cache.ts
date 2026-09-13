@@ -22,6 +22,21 @@ export type WarmWorkspace = {
   tabs: HerdrEntity[];
   panes: HerdrEntity[];
   agents: HerdrEntity[];
+  /**
+   * The first screen of the pane the workspace is about to land on.
+   *
+   * Without it, opening a server painted everything except the thing the reader
+   * came for: the connection pill, the pane strip and the key row all arrived
+   * from this snapshot on the first frame, and the terminal underneath them sat
+   * empty until its own read came back. The chrome being instant made the wait
+   * more obvious, not less.
+   *
+   * Kept apart from the entity lists because it is the only part of this
+   * snapshot that is not a fact about the session's shape, and because it is the
+   * only part a screen may decline to use -- a pane read a different way (an
+   * editor, an agent's prose) is refused on arrival rather than painted wrong.
+   */
+  firstPane?: { paneId: string; output: string; shape: string };
 };
 
 export const WARM_WORKSPACE_TTL_MS = 45_000;
