@@ -1972,12 +1972,13 @@ msgstr "Noch keine SSH-Hosts. Füge einen hinzu, um eine Shell auf jedem erreich
 msgid "No still frames"
 msgstr "Keine Einzelbilder"
 
-#: src/components/theme-gallery.tsx
-msgid "No themes are published yet"
-msgstr "Es sind noch keine Themes veröffentlicht"
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "Keine Textänderung"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "Es sind noch keine Themes veröffentlicht"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
