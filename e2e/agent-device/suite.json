@@ -789,7 +789,7 @@
       },
       {
         "target": {
-          "text": "Staged"
+          "text": "STAGED"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s22"
@@ -811,7 +811,7 @@
       },
       {
         "target": {
-          "text": "All"
+          "text": "ALL"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s25"
