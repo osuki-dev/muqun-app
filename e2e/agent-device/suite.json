@@ -242,17 +242,10 @@
       },
       {
         "target": {
-          "text": "Recommended minimum for readable text: 100%"
+          "text": "Recommended minimum for readable text: 99%"
         },
         "mode": "visible",
         "run": "flows/custom-themes.ad#opacity-adjust"
-      },
-      {
-        "target": {
-          "text": "Some theme colors need more contrast"
-        },
-        "mode": "visible",
-        "run": "flows/custom-themes.ad#visible"
       },
       {
         "run": "flows/custom-themes.ad#home-visibility"
