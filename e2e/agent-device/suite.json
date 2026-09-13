@@ -330,6 +330,9 @@
         "run": "flows/custom-themes.ad#storage-visible"
       },
       {
+        "run": "flows/custom-themes.ad#theme-anchor"
+      },
+      {
         "target": {
           "id": "settings-theme-row"
         },
