@@ -382,6 +382,10 @@ msgstr "Nhánh và tệp chủ đề lấy từ liên kết. Một nhánh có th
 msgid "Branch or commit (optional)"
 msgstr "Nhánh hoặc commit (không bắt buộc)"
 
+#: src/components/custom-theme-library.tsx
+msgid "Browse themes"
+msgstr "Duyệt giao diện"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "Trình duyệt"
@@ -491,6 +495,7 @@ msgstr "Xóa màn hình terminal"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Đóng"
 
@@ -1124,6 +1129,7 @@ msgid "Downloading · {0} of {1}"
 msgstr "Đang tải · {0} trên {1}"
 
 #: src/components/asset-viewer.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "Đang tải chủ đề"
 
@@ -1246,24 +1252,12 @@ msgid "FIRST PROMPT"
 msgstr "PROMPT ĐẦU TIÊN"
 
 #: src/components/custom-theme-library.tsx
-msgid "Fix invalid JSON before formatting"
-msgstr "Sửa JSON không hợp lệ trước khi định dạng"
-
-#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng giao diện này"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "Thu gọn các bước công cụ"
-
-#: src/components/custom-theme-library.tsx
-msgid "Format JSON"
-msgstr "Định dạng JSON"
-
-#: src/components/custom-theme-library.tsx
-msgid "Formatted JSON exceeds the theme size limit"
-msgstr "JSON sau khi định dạng vượt quá giới hạn kích thước giao diện"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1650,6 +1644,10 @@ msgstr "Đang tải terminal"
 msgid "Loading the transcript"
 msgstr "Đang tải bản ghi"
 
+#: src/components/theme-gallery.tsx
+msgid "Loading themes…"
+msgstr "Đang tải giao diện…"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "Nhật ký"
@@ -1906,6 +1904,10 @@ msgstr "Chưa có host SSH nào. Thêm một cái để mở shell trên bất k
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "Không có khung hình tĩnh"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "Chưa có giao diện nào được công bố"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2171,10 +2173,6 @@ msgstr "Dán"
 msgid "Paste a public theme link or GitHub repository"
 msgstr "Dán liên kết giao diện công khai hoặc URL kho mã GitHub"
 
-#: src/components/custom-theme-library.tsx
-msgid "Paste JSON"
-msgstr "Dán JSON"
-
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2198,6 +2196,7 @@ msgstr "Cổng"
 msgid "PORT"
 msgstr "CỔNG"
 
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Đang chuẩn bị hình ảnh"
@@ -2211,7 +2210,6 @@ msgid "Press Escape to dismiss this request"
 msgstr "Nhấn Escape để bỏ qua yêu cầu này"
 
 #: src/components/asset-viewer.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
 msgstr "Xem trước"
@@ -2880,6 +2878,7 @@ msgstr "Một số màu giao diện cần độ tương phản cao hơn"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Đã xảy ra lỗi"
@@ -3217,10 +3216,6 @@ msgid "Theme file (optional)"
 msgstr "Tệp giao diện (không bắt buộc)"
 
 #: src/components/custom-theme-library.tsx
-msgid "Theme JSON"
-msgstr "JSON giao diện"
-
-#: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "Đã lưu giao diện"
 
@@ -3233,9 +3228,17 @@ msgstr "URL giao diện"
 msgid "Theme, {0}"
 msgstr "Chủ đề, {0}"
 
+#: src/components/theme-gallery.tsx
+msgid "Themes published at muqun.dev. Nothing downloads until you open one."
+msgstr "Giao diện được công bố tại muqun.dev. Không tải gì cho đến khi bạn mở một giao diện"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Tác tử này không đưa ra câu trả lời đó"
+
+#: src/components/theme-gallery.tsx
+msgid "This app build cannot reach the theme catalogue"
+msgstr "Bản dựng ứng dụng này không thể truy cập danh mục giao diện"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3401,10 +3404,6 @@ msgstr "Gõ trên trình giả lập"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Hoàn tác"
-
-#: src/components/custom-theme-library.tsx
-msgid "Undo formatting"
-msgstr "Hoàn tác định dạng"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

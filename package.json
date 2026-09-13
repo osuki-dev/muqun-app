@@ -39,8 +39,7 @@
     "format:check": "oxfmt --check",
     "i18n:extract": "lingui extract --clean && bun scripts/normalize-translation-punctuation.ts",
     "i18n:compile": "lingui compile --typescript",
-    "i18n": "bun run i18n:extract && bun run i18n:compile",
-    "theme": "bun scripts/muqun-theme.ts"
+    "i18n": "bun run i18n:extract && bun run i18n:compile"
   },
   "dependencies": {
     "@expo/ui": "~57.0.16",

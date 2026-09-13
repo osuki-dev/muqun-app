@@ -382,6 +382,10 @@ msgstr "分支和主題檔案來自該連結。分支之後可能會變"
 msgid "Branch or commit (optional)"
 msgstr "分支或提交（選填）"
 
+#: src/components/custom-theme-library.tsx
+msgid "Browse themes"
+msgstr "瀏覽佈景主題"
+
 #: src/app/commands.tsx
 msgid "Browser"
 msgstr "瀏覽器"
@@ -491,6 +495,7 @@ msgstr "清除終端機"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "關閉"
 
@@ -1124,6 +1129,7 @@ msgid "Downloading · {0} of {1}"
 msgstr "正在下載 · {0} / {1}"
 
 #: src/components/asset-viewer.tsx
+#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "正在下載主題"
 
@@ -1246,24 +1252,12 @@ msgid "FIRST PROMPT"
 msgstr "第一則提示詞"
 
 #: src/components/custom-theme-library.tsx
-msgid "Fix invalid JSON before formatting"
-msgstr "請先修正 JSON 語法錯誤再格式化"
-
-#: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "請先修正文字對比度再套用此主題"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
 msgstr "收合工具步驟"
-
-#: src/components/custom-theme-library.tsx
-msgid "Format JSON"
-msgstr "格式化 JSON"
-
-#: src/components/custom-theme-library.tsx
-msgid "Formatted JSON exceeds the theme size limit"
-msgstr "格式化後的 JSON 超出主題大小限制"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -1650,6 +1644,10 @@ msgstr "正在載入終端機"
 msgid "Loading the transcript"
 msgstr "正在載入對話記錄"
 
+#: src/components/theme-gallery.tsx
+msgid "Loading themes…"
+msgstr "正在載入佈景主題…"
+
 #: src/lib/demo-gateway.ts
 msgid "Logs"
 msgstr "紀錄"
@@ -1906,6 +1904,10 @@ msgstr "尚無 SSH 主機。新增一個，即可在任何連得到的機器上�
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
 msgstr "不支援靜態畫面"
+
+#: src/components/theme-gallery.tsx
+msgid "No themes are published yet"
+msgstr "尚未有已發布的佈景主題"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2171,10 +2173,6 @@ msgstr "貼上"
 msgid "Paste a public theme link or GitHub repository"
 msgstr "貼上公開的主題連結或 GitHub 儲存庫網址"
 
-#: src/components/custom-theme-library.tsx
-msgid "Paste JSON"
-msgstr "貼上 JSON"
-
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -2198,6 +2196,7 @@ msgstr "連接埠"
 msgid "PORT"
 msgstr "連接埠"
 
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "正在準備圖片"
@@ -2211,7 +2210,6 @@ msgid "Press Escape to dismiss this request"
 msgstr "按 Esc 鍵關閉這項請求"
 
 #: src/components/asset-viewer.tsx
-#: src/components/custom-theme-library.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
 msgstr "預覽"
@@ -2880,6 +2878,7 @@ msgstr "部分主題顏色需要更高的對比度"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "發生錯誤"
@@ -3217,10 +3216,6 @@ msgid "Theme file (optional)"
 msgstr "主題檔案（選填）"
 
 #: src/components/custom-theme-library.tsx
-msgid "Theme JSON"
-msgstr "主題 JSON"
-
-#: src/components/custom-theme-library.tsx
 msgid "Theme saved"
 msgstr "已儲存主題"
 
@@ -3233,9 +3228,17 @@ msgstr "主題網址"
 msgid "Theme, {0}"
 msgstr "主題，{0}"
 
+#: src/components/theme-gallery.tsx
+msgid "Themes published at muqun.dev. Nothing downloads until you open one."
+msgstr "來自 muqun.dev 的已發布佈景主題。開啟前不會下載任何內容"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "這個代理程式沒有提供那個選項"
+
+#: src/components/theme-gallery.tsx
+msgid "This app build cannot reach the theme catalogue"
+msgstr "目前的應用程式版本無法連線至佈景主題目錄"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3401,10 +3404,6 @@ msgstr "在模擬器上輸入"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "復原"
-
-#: src/components/custom-theme-library.tsx
-msgid "Undo formatting"
-msgstr "復原格式化"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"
