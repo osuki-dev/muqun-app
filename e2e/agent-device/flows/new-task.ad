@@ -1,0 +1,155 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# new-task
+
+# section s1
+is visible "${TARGET}"
+
+# section s2
+press "${TARGET}"
+
+# section s3
+is visible "${TARGET}"
+
+# section s4
+wait stable 400 5000
+
+# section s5
+is visible "${TARGET}"
+
+# section s6
+is visible "${TARGET}"
+
+# section s7
+screenshot "shots/70-quick-actions.png"
+
+# section s8
+press "${TARGET}"
+
+# section s9
+wait stable 400 5000
+
+# section s10
+is hidden "${TARGET}"
+
+# section s11
+is visible "${TARGET}"
+
+# section s12
+press "${TARGET}"
+
+# section s13
+is visible "${TARGET}"
+
+# section s14
+press "${TARGET}"
+
+# section s15
+is visible "${TARGET}"
+
+# section s16
+wait stable 400 5000
+
+# section s17
+is hidden "${TARGET}"
+
+# section s18
+is visible "${TARGET}"
+
+# section s19
+is visible "${TARGET}"
+
+# section s20
+is visible "${TARGET}"
+
+# section s21
+is visible "${TARGET}"
+
+# section s22
+is visible "${TARGET}"
+
+# section s23
+is visible "${TARGET}"
+
+# section s24
+is visible "${TARGET}"
+
+# section s25
+screenshot "shots/71-new-task.png"
+
+# section s26
+is visible "${TARGET}"
+
+# section s27
+is visible "${TARGET}"
+
+# section s28
+is visible "${TARGET}"
+
+# section s29
+press "${TARGET}"
+
+# section s30
+wait stable 400 5000
+
+# section s31
+press "${TARGET}"
+
+# section s32
+wait stable 400 5000
+
+# section s33
+press "${TARGET}"
+
+# section s34
+type "look at the failing scrollback test"
+
+# section s35
+wait stable 400 5000
+
+# section s36
+screenshot "shots/72-new-task-filled.png"
+
+# section s37
+press "${TARGET}"
+
+# section s38
+wait stable 400 5000
+
+# section s39
+press "${TARGET}"
+
+# section s40
+is hidden "${TARGET}"
+
+# section s41
+wait stable 400 5000
+
+# section s42
+is visible "${TARGET}"
+
+# section s43
+screenshot "shots/73-new-task-landed.png"
+
+# section s44
+press "${TARGET}"
+
+# section s45
+is visible "${TARGET}"
+
+# section s46
+press "${TARGET}"
+
+# section s47
+is visible "${TARGET}"
+
+# section s48
+press "${TARGET}"
+
+# section s49
+wait stable 400 5000
+
+# section s50
+is hidden "${TARGET}"
+
+# section s51
+is visible "${TARGET}"

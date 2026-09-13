@@ -107,6 +107,31 @@ describe('recent directories', () => {
 });
 
 describe('what a spawn answered with', () => {
+  test('preserves partial creation without claiming delivery', () => {
+    for (const agentStarted of [false, true]) {
+      const result = spawnedAgentFromResponse({
+        pane_id: 'partial',
+        agent_started: agentStarted,
+        prompt_submitted: false,
+      });
+      expect(result?.paneId).toBe('partial');
+      expect(result?.agentStarted).toBe(agentStarted);
+      expect(result?.promptSubmitted).toBe(false);
+    }
+    expect(
+      spawnedAgentFromResponse({
+        result: { pane_id: 'sent', agent_started: true, prompt_submitted: true },
+      })?.promptSubmitted
+    ).toBe(true);
+    expect(
+      spawnedAgentFromResponse({
+        pane_id: 'invalid',
+        agent_started: 'true',
+        prompt_submitted: 1,
+      })?.promptSubmitted
+    ).toBeUndefined();
+  });
+
   test('the pane id is taken from a nested pane', () => {
     expect(
       spawnedAgentFromResponse({
@@ -132,6 +157,39 @@ describe('what a spawn answered with', () => {
     expect(spawnedAgentFromResponse({ ok: true })).toBeNull();
     expect(spawnedAgentFromResponse({ pane: { pane_id: '' } })).toBeNull();
     expect(spawnedAgentFromResponse(null)).toBeNull();
+  });
+
+  test('retains instance identity and typed failure codes without trusting malformed steps', () => {
+    expect(
+      spawnedAgentFromResponse({
+        result: {
+          pane_id: 'pane',
+          agent_instance_id: 'instance',
+          agent_started: false,
+          steps: [null, { step: 'agent', status: 'failed', error: { code: 'agent_not_ready' } }],
+        },
+      })
+    ).toEqual({
+      paneId: 'pane',
+      tabId: null,
+      workspaceId: null,
+      agentInstanceId: 'instance',
+      agentStarted: false,
+      failure: { step: 'agent', code: 'agent_not_ready' },
+    });
+    expect(
+      spawnedAgentFromResponse({
+        pane_id: 'pane',
+        agent_instance_id: 42,
+        steps: [{ step: 'agent', status: 'ok' }],
+      })?.failure
+    ).toBeUndefined();
+    expect(
+      spawnedAgentFromResponse({
+        pane_id: 'pane',
+        steps: [{ step: 'other', status: 'failed', error: { code: 'agent_not_ready' } }],
+      })?.failure
+    ).toBeUndefined();
   });
 });
 

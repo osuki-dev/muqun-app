@@ -1,0 +1,8 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# dismiss-permission
+
+# section s1
+press "${TARGET}"
+
+# section s2
+wait stable 400 5000

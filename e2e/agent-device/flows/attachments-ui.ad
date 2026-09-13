@@ -1,0 +1,50 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# attachments-ui
+
+# section s1
+is visible "${TARGET}"
+
+# section s2
+is visible "${TARGET}"
+
+# section s3
+is hidden "${TARGET}"
+
+# section s4
+is hidden "${TARGET}"
+
+# section s5
+is hidden "${TARGET}"
+
+# section s6
+is hidden "${TARGET}"
+
+# section s7
+press "${TARGET}"
+
+# section s8
+press "${TARGET}"
+
+# section choose-agent
+press "${TARGET}"
+
+# section s9
+type "/comp"
+
+# section s10
+is visible "${TARGET}"
+
+# section s11
+is visible "${TARGET}"
+
+# section s12
+press "${TARGET}"
+
+# section s13
+wait stable 400 5000
+
+# section s14
+is hidden "${TARGET}"
+
+# section s15
+is visible "${TARGET}"

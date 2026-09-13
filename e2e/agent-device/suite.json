@@ -1,0 +1,5824 @@
+{
+  "version": 1,
+  "flows": [
+    {
+      "name": "agent-shortcuts",
+      "program": "flows/agent-shortcuts",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "machine-switcher",
+      "program": "flows/machine-switcher",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "agent-collaboration",
+      "program": "flows/agent-collaboration",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "demo-tour",
+      "program": "flows/demo-tour",
+      "tags": ["smoke", "full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "pairing-manual",
+      "program": "flows/pairing-manual",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "terminal-interactions",
+      "program": "flows/terminal-interactions",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "ssh",
+      "program": "flows/ssh",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "file-mentions",
+      "program": "flows/file-mentions",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "attachments-ui",
+      "program": "flows/attachments-ui",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "artifacts",
+      "program": "flows/artifacts",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "settings",
+      "program": "flows/settings",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "away-digest",
+      "program": "flows/away-digest",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "i18n-shots",
+      "program": "flows/i18n-shots",
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "light-shots",
+      "program": "flows/light-shots",
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "new-task",
+      "program": "flows/new-task",
+      "tags": [],
+      "platforms": ["ios", "android"],
+      "disabled": "AGENT_SPAWN_SHIPPED is false; enable full coverage when the feature ships."
+    },
+    {
+      "name": "pad-workspace",
+      "program": "flows/pad-workspace",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "slash-commands",
+      "program": "flows/slash-commands",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "store-shot-actions",
+      "program": "flows/store-shot-actions",
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "theme-shots",
+      "program": "flows/theme-shots",
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "web-theme-shots",
+      "program": "flows/web-theme-shots",
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "motion-618-close-capture",
+      "program": "subflows/motion-618-close-capture",
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "motion-p2-capture",
+      "program": "subflows/motion-p2-capture",
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
+    }
+  ],
+  "programs": {
+    "flows/agent-shortcuts": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-shortcuts.ad" }
+    ],
+    "flows/machine-switcher": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/machine-switcher.ad" }
+    ],
+    "flows/agent-collaboration": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-collaboration.ad" }
+    ],
+    "flows/artifacts": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open files"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s2"
+      },
+      {
+        "run": "flows/artifacts.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Open dark-mode.md"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s4"
+      },
+      {
+        "target": {
+          "text": "Open settings-dark.png"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s5"
+      },
+      {
+        "run": "flows/artifacts.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Open theme.diff"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s7"
+      },
+      {
+        "target": {
+          "text": "Open coverage.json"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Open design-spec.pdf"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Open dark-mode.md"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s10"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Search files"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Search files"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s12"
+      },
+      {
+        "run": "flows/artifacts.ad#s13"
+      },
+      {
+        "run": "flows/artifacts.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Open theme.diff"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s15"
+      },
+      {
+        "target": {
+          "text": "Open coverage.json"
+        },
+        "mode": "hidden",
+        "run": "flows/artifacts.ad#s16"
+      },
+      {
+        "target": {
+          "text": "Clear search"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s17"
+      },
+      {
+        "run": "flows/artifacts.ad#s18"
+      },
+      {
+        "target": {
+          "text": "Open dark-mode.md"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s19"
+      },
+      {
+        "target": {
+          "text": "Show images"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s20"
+      },
+      {
+        "run": "flows/artifacts.ad#s21"
+      },
+      {
+        "target": {
+          "text": "Open settings-dark.png"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s22"
+      },
+      {
+        "target": {
+          "text": "Open dark-mode.md"
+        },
+        "mode": "hidden",
+        "run": "flows/artifacts.ad#s23"
+      },
+      {
+        "target": {
+          "text": "Show all files"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s24"
+      },
+      {
+        "run": "flows/artifacts.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Open dark-mode.md"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s26"
+      },
+      {
+        "target": {
+          "text": "Open dark-mode.md"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s27"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s28"
+      },
+      {
+        "run": "flows/artifacts.ad#s29"
+      },
+      {
+        "target": {
+          "text": "dark-mode.md"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s30"
+      },
+      {
+        "target": {
+          "text": "Dark mode — change summary"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s31"
+      },
+      {
+        "target": {
+          "text": "Files touched"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s32"
+      },
+      {
+        "target": {
+          "text": "# Dark mode — change summary"
+        },
+        "mode": "hidden",
+        "run": "flows/artifacts.ad#s33"
+      },
+      {
+        "run": "flows/artifacts.ad#s34"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s35"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s36"
+      },
+      {
+        "target": {
+          "text": "Open theme.diff"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s37"
+      },
+      {
+        "target": {
+          "text": "Open theme.diff"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s38"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s39"
+      },
+      {
+        "run": "flows/artifacts.ad#s40"
+      },
+      {
+        "target": {
+          "text": "theme.diff"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s41"
+      },
+      {
+        "run": "flows/artifacts.ad#s42"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s43"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s44"
+      },
+      {
+        "target": {
+          "text": "Open coverage.json"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s45"
+      },
+      {
+        "target": {
+          "text": "Open coverage.json"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s46"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s47"
+      },
+      {
+        "run": "flows/artifacts.ad#s48"
+      },
+      {
+        "target": {
+          "text": "coverage.json"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s49"
+      },
+      {
+        "run": "flows/artifacts.ad#s50"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s51"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s52"
+      },
+      {
+        "target": {
+          "text": "Open design-spec.pdf"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s53"
+      },
+      {
+        "target": {
+          "text": "Open design-spec.pdf"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s54"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s55"
+      },
+      {
+        "run": "flows/artifacts.ad#s56"
+      },
+      {
+        "target": {
+          "text": "No preview for this kind of file. It stays on the server"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s57"
+      },
+      {
+        "target": {
+          "text": "Type"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s58"
+      },
+      {
+        "target": {
+          "text": "Size"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s59"
+      },
+      {
+        "target": {
+          "text": "Modified"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s60"
+      },
+      {
+        "target": {
+          "text": "Path"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s61"
+      },
+      {
+        "target": {
+          "text": "~/code/muqun/docs/design-spec.pdf"
+        },
+        "mode": "visible",
+        "run": "flows/artifacts.ad#s62"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s63"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s64"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/artifacts.ad#s65"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s66"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s67"
+      }
+    ],
+    "flows/attachments-ui": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/attachments-ui.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "visible",
+        "run": "flows/attachments-ui.ad#s2"
+      },
+      {
+        "target": {
+          "text": "Attach a file"
+        },
+        "mode": "hidden",
+        "run": "flows/attachments-ui.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Close the attachment menu"
+        },
+        "mode": "hidden",
+        "run": "flows/attachments-ui.ad#s4"
+      },
+      {
+        "target": {
+          "text": "Take photo"
+        },
+        "mode": "hidden",
+        "run": "flows/attachments-ui.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Photo library"
+        },
+        "mode": "hidden",
+        "run": "flows/attachments-ui.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "run": "flows/attachments-ui.ad#s7"
+      },
+      {
+        "target": {
+          "text": "Open Claude Code\\. Long press to close"
+        },
+        "mode": "press",
+        "run": "flows/attachments-ui.ad#choose-agent"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/attachments-ui.ad#s8"
+      },
+      {
+        "run": "flows/attachments-ui.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Insert /compact.*"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/attachments-ui.ad#s10"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/attachments-ui.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Insert /compact.*"
+        },
+        "mode": "press",
+        "run": "flows/attachments-ui.ad#s12"
+      },
+      {
+        "run": "flows/attachments-ui.ad#s13"
+      },
+      {
+        "target": {
+          "text": "Insert /compact.*"
+        },
+        "mode": "hidden",
+        "run": "flows/attachments-ui.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/attachments-ui.ad#s15"
+      }
+    ],
+    "flows/away-digest": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "flows/away-digest.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/away-digest.ad#s2"
+      },
+      {
+        "run": "flows/away-digest.ad#s3"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "(?i)While you were away"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/away-digest.ad#s4"
+      },
+      {
+        "target": {
+          "text": "claude"
+        },
+        "mode": "visible",
+        "run": "flows/away-digest.ad#s5"
+      },
+      {
+        "target": {
+          "text": "nvim"
+        },
+        "mode": "visible",
+        "run": "flows/away-digest.ad#s6"
+      },
+      {
+        "target": {
+          "text": "codex"
+        },
+        "mode": "visible",
+        "run": "flows/away-digest.ad#s7"
+      },
+      {
+        "run": "flows/away-digest.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "visible",
+        "run": "flows/away-digest.ad#s9"
+      },
+      {
+        "target": {
+          "id": "away-digest-dismiss"
+        },
+        "mode": "press",
+        "run": "flows/away-digest.ad#s10"
+      },
+      {
+        "run": "flows/away-digest.ad#s11"
+      },
+      {
+        "target": {
+          "text": "(?i)While you were away"
+        },
+        "mode": "hidden",
+        "run": "flows/away-digest.ad#s12"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/away-digest.ad#s13"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/away-digest.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/away-digest.ad#s15"
+      },
+      {
+        "target": {
+          "text": "APPEARANCE"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/away-digest.ad#s16"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/away-digest.ad#s17"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Try the demo"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Try the demo"
+            },
+            "mode": "press",
+            "run": "flows/away-digest.ad#s18"
+          }
+        ]
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/away-digest.ad#s19"
+      },
+      {
+        "run": "flows/away-digest.ad#s20"
+      },
+      {
+        "target": {
+          "text": "(?i)While you were away"
+        },
+        "mode": "hidden",
+        "run": "flows/away-digest.ad#s21"
+      }
+    ],
+    "flows/demo-tour": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "run": "flows/demo-tour.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s2"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/demo-tour.ad#s3"
+      },
+      {
+        "run": "flows/demo-tour.ad#s4"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "run": "flows/demo-tour.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/demo-tour.ad#s7"
+      },
+      {
+        "run": "flows/demo-tour.ad#s8"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/demo-tour.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s10"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "hidden",
+        "timeout": 8000
+      },
+      {
+        "run": "flows/demo-tour.ad#s11"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Close"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/demo-tour.ad#s13"
+      },
+      {
+        "run": "flows/demo-tour.ad#s14"
+      },
+      {
+        "target": {
+          "text": "What is running"
+        },
+        "mode": "visible",
+        "run": "flows/demo-tour.ad#s15"
+      },
+      {
+        "target": {
+          "text": "Open workspace .*, 5 running\\. Long press to close"
+        },
+        "mode": "visible",
+        "run": "flows/demo-tour.ad#s16"
+      },
+      {
+        "run": "flows/demo-tour.ad#s17"
+      },
+      {
+        "target": {
+          "text": "New terminal"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/demo-tour.ad#s18"
+      },
+      {
+        "target": {
+          "text": "Close"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/demo-tour.ad#s19"
+      },
+      {
+        "target": {
+          "text": "Close"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s20"
+      },
+      {
+        "run": "flows/demo-tour.ad#s21"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open files"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s22"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/demo-tour.ad#s23"
+      },
+      {
+        "run": "flows/demo-tour.ad#s24"
+      },
+      {
+        "target": {
+          "text": "Open dark-mode.md"
+        },
+        "mode": "visible",
+        "run": "flows/demo-tour.ad#s25"
+      },
+      {
+        "run": "flows/demo-tour.ad#s26"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s27"
+      },
+      {
+        "run": "flows/demo-tour.ad#s28"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Switch to nvim"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s29"
+      },
+      {
+        "run": "flows/demo-tour.ad#s30"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/demo-tour.ad#s31"
+      },
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/demo-tour.ad#s32"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/demo-tour.ad#s33"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s34"
+      },
+      {
+        "target": {
+          "text": "Color mode"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/demo-tour.ad#s35"
+      },
+      {
+        "run": "flows/demo-tour.ad#s36"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/demo-tour.ad#s37"
+      },
+      {
+        "target": {
+          "text": "Terminal key row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/demo-tour.ad#s38"
+      },
+      {
+        "target": {
+          "id": "toggle-Terminal key row"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s39"
+      },
+      {
+        "run": "flows/demo-tour.ad#s40"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s41"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Try the demo"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Try the demo"
+            },
+            "mode": "press",
+            "run": "flows/demo-tour.ad#s42"
+          }
+        ]
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/demo-tour.ad#s43"
+      },
+      {
+        "run": "flows/demo-tour.ad#s44"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "visible",
+        "run": "flows/demo-tour.ad#s45"
+      },
+      {
+        "target": {
+          "text": "Open files"
+        },
+        "mode": "visible",
+        "run": "flows/demo-tour.ad#s46"
+      },
+      {
+        "run": "flows/demo-tour.ad#s47"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s48"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/demo-tour.ad#s49"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "press",
+        "run": "flows/demo-tour.ad#s50"
+      },
+      {
+        "run": "flows/demo-tour.ad#s51"
+      },
+      {
+        "include": "subflows/restore-key-row"
+      }
+    ],
+    "flows/file-mentions": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "subflows/open-agent-pane.ad"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/file-mentions.ad#s2"
+      },
+      {
+        "run": "flows/file-mentions.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Files in this workspace"
+        },
+        "mode": "visible",
+        "timeout": 6000,
+        "run": "flows/file-mentions.ad#s4"
+      },
+      {
+        "target": {
+          "text": "Mention app.json"
+        },
+        "mode": "visible",
+        "run": "flows/file-mentions.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Mention package.json"
+        },
+        "mode": "visible",
+        "run": "flows/file-mentions.ad#s6"
+      },
+      {
+        "run": "flows/file-mentions.ad#s7"
+      },
+      {
+        "run": "flows/file-mentions.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Mention src/theme.ts"
+        },
+        "mode": "visible",
+        "run": "flows/file-mentions.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Mention docs/theming.md"
+        },
+        "mode": "visible",
+        "run": "flows/file-mentions.ad#s10"
+      },
+      {
+        "target": {
+          "text": "Files in this workspace"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Mention package.json"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Mention src/theme.ts"
+        },
+        "mode": "press",
+        "run": "flows/file-mentions.ad#s13"
+      },
+      {
+        "run": "flows/file-mentions.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Mention src/theme.ts"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s15"
+      },
+      {
+        "target": {
+          "text": "Mention docs/theming.md"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s16"
+      },
+      {
+        "target": {
+          "text": "src/theme\\.ts ?"
+        },
+        "mode": "visible",
+        "run": "flows/file-mentions.ad#s17"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/file-mentions.ad#s18"
+      },
+      {
+        "include": "subflows/restart-demo"
+      },
+      {
+        "run": "subflows/open-agent-pane.ad"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/file-mentions.ad#s20"
+      },
+      {
+        "run": "flows/file-mentions.ad#s21"
+      },
+      {
+        "run": "flows/file-mentions.ad#s22"
+      },
+      {
+        "run": "flows/file-mentions.ad#s23"
+      },
+      {
+        "run": "flows/file-mentions.ad#s24"
+      },
+      {
+        "target": {
+          "text": "Files in this workspace"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Mention app.json"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s26"
+      },
+      {
+        "include": "subflows/restart-demo"
+      },
+      {
+        "target": {
+          "text": "Switch to nvim"
+        },
+        "mode": "press",
+        "run": "flows/file-mentions.ad#s27"
+      },
+      {
+        "run": "flows/file-mentions.ad#s28"
+      },
+      {
+        "run": "subflows/open-editor-composer.ad"
+      },
+      {
+        "target": {
+          "text": "Type into this editor"
+        },
+        "mode": "press",
+        "run": "flows/file-mentions.ad#s29"
+      },
+      {
+        "run": "flows/file-mentions.ad#s30"
+      },
+      {
+        "run": "flows/file-mentions.ad#s31"
+      },
+      {
+        "target": {
+          "text": "Files in this workspace"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s32"
+      },
+      {
+        "target": {
+          "text": "Mention app.json"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s33"
+      },
+      {
+        "target": {
+          "text": "Mention src/theme.ts"
+        },
+        "mode": "hidden",
+        "run": "flows/file-mentions.ad#s34"
+      }
+    ],
+    "flows/i18n-shots": [
+      {
+        "run": "flows/i18n-shots.ad#s1"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s2"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Dismiss what's new"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Dismiss what's new"
+            },
+            "mode": "press",
+            "run": "flows/i18n-shots.ad#s3"
+          },
+          {
+            "run": "flows/i18n-shots.ad#s4"
+          }
+        ]
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "^(Settings|設定)$"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s5"
+      },
+      {
+        "target": {
+          "text": "^(Settings|設定)$"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s6"
+      },
+      {
+        "target": {
+          "text": "^(Color mode|色彩模式)$"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s7"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "(?i)^english$"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Color mode"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s9"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s10"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s11"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s13"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s14"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s15"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s16"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 25000,
+        "run": "flows/i18n-shots.ad#s17"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s18"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s19"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s20"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s21"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s22"
+      },
+      {
+        "target": {
+          "text": "Close"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s23"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s24"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s26"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s27"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s28"
+      },
+      {
+        "target": {
+          "text": "Color mode"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s29"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Language, System"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s30"
+      },
+      {
+        "target": {
+          "text": "繁體中文"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/i18n-shots.ad#s31"
+      },
+      {
+        "target": {
+          "text": "繁體中文"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s32"
+      },
+      {
+        "target": {
+          "text": "色彩模式"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s33"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s34"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s35"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "返回"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s36"
+      },
+      {
+        "target": {
+          "text": "試用示範"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s37"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s38"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s39"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "試用示範"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s40"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 25000,
+        "run": "flows/i18n-shots.ad#s41"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s42"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s43"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "target": {
+          "text": "開啟面板清單"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s44"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s45"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s46"
+      },
+      {
+        "target": {
+          "text": "關閉面板清單"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s47"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s48"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "回到伺服器列表"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s49"
+      },
+      {
+        "target": {
+          "text": "試用示範"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s50"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "開啟導覽"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s51"
+      },
+      {
+        "target": {
+          "text": "設定"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s52"
+      },
+      {
+        "target": {
+          "text": "設定"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s53"
+      },
+      {
+        "target": {
+          "text": "色彩模式"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/i18n-shots.ad#s54"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "語言.*"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s55"
+      },
+      {
+        "target": {
+          "text": "繁體中文"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/i18n-shots.ad#s56"
+      },
+      {
+        "target": {
+          "text": "系統"
+        },
+        "mode": "press",
+        "run": "flows/i18n-shots.ad#s57"
+      },
+      {
+        "run": "flows/i18n-shots.ad#s58"
+      }
+    ],
+    "flows/light-shots": [
+      {
+        "run": "flows/light-shots.ad#s1"
+      },
+      {
+        "run": "flows/light-shots.ad#s2"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Dismiss what's new"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Dismiss what's new"
+            },
+            "mode": "press",
+            "run": "flows/light-shots.ad#s3"
+          },
+          {
+            "run": "flows/light-shots.ad#s4"
+          }
+        ]
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Color mode"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/light-shots.ad#s6"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "(?i)^light$"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s7"
+      },
+      {
+        "run": "flows/light-shots.ad#s8"
+      },
+      {
+        "run": "flows/light-shots.ad#s9"
+      },
+      {
+        "run": "flows/light-shots.ad#s10"
+      },
+      {
+        "run": "flows/light-shots.ad#s11"
+      },
+      {
+        "run": "flows/light-shots.ad#s12"
+      },
+      {
+        "run": "flows/light-shots.ad#s13"
+      },
+      {
+        "run": "flows/light-shots.ad#s14"
+      },
+      {
+        "run": "flows/light-shots.ad#s15"
+      },
+      {
+        "run": "flows/light-shots.ad#s16"
+      },
+      {
+        "run": "flows/light-shots.ad#s17"
+      },
+      {
+        "run": "flows/light-shots.ad#s18"
+      },
+      {
+        "run": "flows/light-shots.ad#s19"
+      },
+      {
+        "run": "flows/light-shots.ad#s20"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s21"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/light-shots.ad#s22"
+      },
+      {
+        "run": "flows/light-shots.ad#s23"
+      },
+      {
+        "run": "flows/light-shots.ad#s24"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Demo · sample data"
+        },
+        "mode": "visible",
+        "timeout": 25000,
+        "run": "flows/light-shots.ad#s26"
+      },
+      {
+        "run": "flows/light-shots.ad#s27"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "run": "flows/light-shots.ad#s28"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s29"
+      },
+      {
+        "run": "flows/light-shots.ad#s30"
+      },
+      {
+        "run": "flows/light-shots.ad#s31"
+      },
+      {
+        "target": {
+          "text": "Close"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s32"
+      },
+      {
+        "run": "flows/light-shots.ad#s33"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open files"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s34"
+      },
+      {
+        "run": "flows/light-shots.ad#s35"
+      },
+      {
+        "run": "flows/light-shots.ad#s36"
+      },
+      {
+        "target": {
+          "text": "Close files"
+        },
+        "mode": "press",
+        "run": "flows/light-shots.ad#s37"
+      },
+      {
+        "run": "flows/light-shots.ad#s38"
+      }
+    ],
+    "flows/new-task": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s2"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/new-task.ad#s3"
+      },
+      {
+        "run": "flows/new-task.ad#s4"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "New task"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Stop this agent"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s6"
+      },
+      {
+        "run": "flows/new-task.ad#s7"
+      },
+      {
+        "target": {
+          "text": "Stop this agent"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s8"
+      },
+      {
+        "run": "flows/new-task.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "hidden",
+        "run": "flows/new-task.ad#s10"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s11"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/new-task.ad#s13"
+      },
+      {
+        "target": {
+          "text": "New task"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Close new task"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/new-task.ad#s15"
+      },
+      {
+        "run": "flows/new-task.ad#s16"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "hidden",
+        "run": "flows/new-task.ad#s17"
+      },
+      {
+        "target": {
+          "text": "AGENT"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s18"
+      },
+      {
+        "target": {
+          "text": "DIRECTORY"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s19"
+      },
+      {
+        "target": {
+          "text": "FIRST PROMPT"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s20"
+      },
+      {
+        "target": {
+          "text": "claude"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/new-task.ad#s21"
+      },
+      {
+        "target": {
+          "text": "codex"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s22"
+      },
+      {
+        "target": {
+          "text": "opencode"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s23"
+      },
+      {
+        "target": {
+          "text": "gemini, not found on this server's PATH"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s24"
+      },
+      {
+        "run": "flows/new-task.ad#s25"
+      },
+      {
+        "target": {
+          "text": "~/code/herdr-gateway"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s26"
+      },
+      {
+        "target": {
+          "text": "Leave it empty to start where the session already is"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s27"
+      },
+      {
+        "target": {
+          "text": "Type it, or use your keyboard's dictation key"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s28"
+      },
+      {
+        "target": {
+          "text": "codex"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s29"
+      },
+      {
+        "run": "flows/new-task.ad#s30"
+      },
+      {
+        "target": {
+          "text": "~/code/herdr-gateway"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s31"
+      },
+      {
+        "run": "flows/new-task.ad#s32"
+      },
+      {
+        "target": {
+          "text": "Review the failing test and fix it."
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s33"
+      },
+      {
+        "run": "flows/new-task.ad#s34"
+      },
+      {
+        "run": "flows/new-task.ad#s35"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/new-task.ad#s36"
+      },
+      {
+        "target": {
+          "text": "Done"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s37"
+      },
+      {
+        "run": "flows/new-task.ad#s38"
+      },
+      {
+        "target": {
+          "text": "Start task"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s39"
+      },
+      {
+        "target": {
+          "text": "Close new task"
+        },
+        "mode": "hidden",
+        "timeout": 12000,
+        "run": "flows/new-task.ad#s40"
+      },
+      {
+        "run": "flows/new-task.ad#s41"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/new-task.ad#s42"
+      },
+      {
+        "run": "flows/new-task.ad#s43"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s44"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/new-task.ad#s45"
+      },
+      {
+        "target": {
+          "text": "New task"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s46"
+      },
+      {
+        "target": {
+          "text": "Close new task"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/new-task.ad#s47"
+      },
+      {
+        "target": {
+          "text": "Close new task"
+        },
+        "mode": "press",
+        "run": "flows/new-task.ad#s48"
+      },
+      {
+        "run": "flows/new-task.ad#s49"
+      },
+      {
+        "target": {
+          "text": "Close new task"
+        },
+        "mode": "hidden",
+        "run": "flows/new-task.ad#s50"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "run": "flows/new-task.ad#s51"
+      }
+    ],
+    "flows/pad-workspace": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "(?i).*(don.?t allow|不允許|不允许).*"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/pad-workspace.ad#s1"
+      },
+      {
+        "run": "flows/pad-workspace.ad#s2"
+      },
+      {
+        "target": {
+          "text": "(?i).*(don.?t allow|不允許|不允许).*"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/pad-workspace.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/pad-workspace.ad#s4"
+      },
+      {
+        "target": {
+          "text": "Switch to nvim"
+        },
+        "mode": "visible",
+        "run": "flows/pad-workspace.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/pad-workspace.ad#s6"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Servers"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Demo workspace"
+            },
+            "mode": "visible",
+            "run": "flows/pad-workspace.ad#s7"
+          },
+          {
+            "target": {
+              "text": "Pair a server"
+            },
+            "mode": "visible",
+            "run": "flows/pad-workspace.ad#s8"
+          },
+          {
+            "target": {
+              "text": "Settings"
+            },
+            "mode": "visible",
+            "run": "flows/pad-workspace.ad#s9"
+          },
+          {
+            "target": {
+              "id": "server-agent-pane-1"
+            },
+            "mode": "visible",
+            "run": "flows/pad-workspace.ad#s10"
+          }
+        ]
+      },
+      {
+        "target": {
+          "text": "Switch to nvim"
+        },
+        "mode": "press",
+        "run": "flows/pad-workspace.ad#s11"
+      },
+      {
+        "run": "flows/pad-workspace.ad#s12"
+      },
+      {
+        "run": "subflows/open-editor-composer.ad"
+      },
+      {
+        "target": {
+          "text": "Type into this editor"
+        },
+        "mode": "visible",
+        "run": "flows/pad-workspace.ad#s13"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/pad-workspace.ad#s14"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Servers"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "server-agent-pane-1"
+            },
+            "mode": "press",
+            "run": "flows/pad-workspace.ad#s15"
+          },
+          {
+            "target": {
+              "text": "Send to agent"
+            },
+            "mode": "visible",
+            "timeout": 8000,
+            "run": "flows/pad-workspace.ad#s16"
+          },
+          {
+            "target": {
+              "text": "Retry drawing the panel"
+            },
+            "mode": "hidden",
+            "run": "flows/pad-workspace.ad#s17"
+          }
+        ]
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "run": "flows/pad-workspace.ad#open-editor-picker"
+      },
+      {
+        "target": {
+          "text": "Open Claude Code\\. Long press to close"
+        },
+        "mode": "press",
+        "run": "flows/pad-workspace.ad#s18"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/pad-workspace.ad#s19"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/pad-workspace.ad#s20"
+      }
+    ],
+    "flows/pairing-manual": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Pair a server"
+        },
+        "mode": "press",
+        "run": "flows/pairing-manual.ad#s1"
+      },
+      {
+        "target": {
+          "id": "pairing-scanner"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/pairing-manual.ad#s2"
+      },
+      {
+        "target": {
+          "text": "Enter URL manually"
+        },
+        "mode": "visible",
+        "run": "flows/pairing-manual.ad#s3"
+      },
+      {
+        "target": {
+          "id": "pairing-manual"
+        },
+        "mode": "hidden",
+        "run": "flows/pairing-manual.ad#s4"
+      },
+      {
+        "target": {
+          "text": "Enter URL manually"
+        },
+        "mode": "press",
+        "run": "flows/pairing-manual.ad#s5"
+      },
+      {
+        "target": {
+          "id": "pairing-manual"
+        },
+        "mode": "visible",
+        "run": "flows/pairing-manual.ad#s6"
+      },
+      {
+        "target": {
+          "text": "GATEWAY URL"
+        },
+        "mode": "visible",
+        "run": "flows/pairing-manual.ad#s7"
+      },
+      {
+        "target": {
+          "id": "pairing-scanner"
+        },
+        "mode": "hidden",
+        "run": "flows/pairing-manual.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Scan a gateway QR"
+        },
+        "mode": "press",
+        "run": "flows/pairing-manual.ad#s9"
+      },
+      {
+        "target": {
+          "id": "pairing-scanner"
+        },
+        "mode": "visible",
+        "run": "flows/pairing-manual.ad#s10"
+      },
+      {
+        "target": {
+          "id": "pairing-manual"
+        },
+        "mode": "hidden",
+        "run": "flows/pairing-manual.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Enter URL manually"
+        },
+        "mode": "press",
+        "run": "flows/pairing-manual.ad#s12"
+      },
+      {
+        "target": {
+          "text": "GATEWAY URL"
+        },
+        "mode": "visible",
+        "run": "flows/pairing-manual.ad#s13"
+      },
+      {
+        "target": {
+          "text": "Scan a gateway QR"
+        },
+        "mode": "press",
+        "run": "flows/pairing-manual.ad#s14"
+      },
+      {
+        "target": {
+          "id": "pairing-install-command"
+        },
+        "mode": "visible",
+        "run": "flows/pairing-manual.ad#s15"
+      },
+      {
+        "target": {
+          "id": "pairing-install-command"
+        },
+        "mode": "press",
+        "run": "flows/pairing-manual.ad#s16"
+      },
+      {
+        "target": {
+          "text": "Install command copied"
+        },
+        "mode": "visible",
+        "run": "flows/pairing-manual.ad#s17"
+      }
+    ],
+    "flows/settings": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s1"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s2"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "No servers paired yet"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Use the scan button on the home screen to add one"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s4"
+      },
+      {
+        "target": {
+          "text": "Panes on server cards"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s5"
+      },
+      {
+        "target": {
+          "text": "APPEARANCE"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Theme, .+"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s7"
+      },
+      {
+        "target": {
+          "text": "Theme, .+"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s8"
+      },
+      {
+        "run": "flows/settings.ad#reset-theme"
+      },
+      {
+        "target": {
+          "text": "Ayu"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Catppuccin"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s10"
+      },
+      {
+        "target": {
+          "text": "Dracula"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Osuki",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Catppuccin"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s13"
+      },
+      {
+        "run": "flows/settings.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Theme, Catppuccin"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s15"
+      },
+      {
+        "target": {
+          "text": "Color mode"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s16"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):segment-system"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#reset-color-mode-control"
+      },
+      {
+        "target": {
+          "text": "SYSTEM",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s17"
+      },
+      {
+        "target": {
+          "text": "DARK"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s18"
+      },
+      {
+        "run": "flows/settings.ad#s19"
+      },
+      {
+        "target": {
+          "text": "DARK",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s20"
+      },
+      {
+        "target": {
+          "text": "SYSTEM",
+          "selected": false
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s21"
+      },
+      {
+        "target": {
+          "text": "SYSTEM"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s22"
+      },
+      {
+        "run": "flows/settings.ad#s23"
+      },
+      {
+        "target": {
+          "text": "SYSTEM",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s24"
+      },
+      {
+        "target": {
+          "text": "DARK",
+          "selected": false
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Language, (System|English)"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s26"
+      },
+      {
+        "target": {
+          "text": "Language, (System|English)"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s27"
+      },
+      {
+        "target": {
+          "text": "繁體中文"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s28"
+      },
+      {
+        "target": {
+          "text": "日本語"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s29"
+      },
+      {
+        "target": {
+          "text": "한국어"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s30"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):language-option-en"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s31"
+      },
+      {
+        "run": "flows/settings.ad#s32"
+      },
+      {
+        "target": {
+          "text": "Language, English"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s33"
+      },
+      {
+        "target": {
+          "text": "Language, English"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s34"
+      },
+      {
+        "target": {
+          "text": "繁體中文"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s35"
+      },
+      {
+        "target": {
+          "text": "English",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s36"
+      },
+      {
+        "target": {
+          "text": "System",
+          "selected": false
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s37"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):language-option-system"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s38"
+      },
+      {
+        "run": "flows/settings.ad#s39"
+      },
+      {
+        "target": {
+          "id": "settings-language-row"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s40"
+      },
+      {
+        "target": {
+          "id": "settings-language-row"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s41"
+      },
+      {
+        "target": {
+          "id": "language-option-system-selected"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s42"
+      },
+      {
+        "target": {
+          "id": "language-option-system-selected"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s43"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):language-option-en"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s44"
+      },
+      {
+        "target": {
+          "id": "settings-language-row"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s45"
+      },
+      {
+        "target": {
+          "text": "TERMINAL"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s46"
+      },
+      {
+        "target": {
+          "text": "Terminal key row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s47"
+      },
+      {
+        "target": {
+          "text": "DEFAULT"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s48"
+      },
+      {
+        "run": "flows/settings.ad#s49"
+      },
+      {
+        "target": {
+          "text": "COMPACT"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s50"
+      },
+      {
+        "target": {
+          "text": "DEFAULT",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s51"
+      },
+      {
+        "target": {
+          "text": "COMPACT"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s52"
+      },
+      {
+        "run": "flows/settings.ad#s53"
+      },
+      {
+        "target": {
+          "text": "COMPACT",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s54"
+      },
+      {
+        "target": {
+          "text": "DEFAULT",
+          "selected": false
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s55"
+      },
+      {
+        "target": {
+          "text": "ALERTS"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s56"
+      },
+      {
+        "target": {
+          "text": "Haptic feedback"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s57"
+      },
+      {
+        "target": {
+          "text": "Gateway notifications"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#scroll-notifications"
+      },
+      {
+        "target": {
+          "id": "toggle-Haptic feedback",
+          "checked": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s59"
+      },
+      {
+        "target": {
+          "id": "toggle-Haptic feedback"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s60"
+      },
+      {
+        "run": "flows/settings.ad#s61"
+      },
+      {
+        "target": {
+          "id": "toggle-Haptic feedback",
+          "checked": false
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s62"
+      },
+      {
+        "target": {
+          "id": "toggle-Haptic feedback"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s63"
+      },
+      {
+        "run": "flows/settings.ad#s64"
+      },
+      {
+        "target": {
+          "id": "toggle-Haptic feedback",
+          "checked": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s65"
+      },
+      {
+        "target": {
+          "text": "SECURITY"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s66"
+      },
+      {
+        "target": {
+          "text": "(?i)unlock with .*"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s67"
+      },
+      {
+        "target": {
+          "text": "ABOUT"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s68"
+      },
+      {
+        "target": {
+          "text": "Report a bug or request a feature.*"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s69"
+      },
+      {
+        "target": {
+          "text": "Source code.*"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s70"
+      },
+      {
+        "target": {
+          "text": "Privacy policy"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s71"
+      },
+      {
+        "target": {
+          "text": "Muqun settings stay on this device"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s72"
+      },
+      {
+        "run": "flows/settings.ad#s73"
+      },
+      {
+        "run": "flows/settings.ad#s74"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s75"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s76"
+      },
+      {
+        "target": {
+          "text": "Theme, Catppuccin"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s77"
+      },
+      {
+        "target": {
+          "text": "Theme, Catppuccin"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s78"
+      },
+      {
+        "target": {
+          "text": "Ayu"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s79"
+      },
+      {
+        "target": {
+          "text": "Catppuccin",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s80"
+      },
+      {
+        "target": {
+          "text": "Osuki"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s81"
+      },
+      {
+        "run": "flows/settings.ad#s82"
+      },
+      {
+        "target": {
+          "text": "Theme, Osuki"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s83"
+      },
+      {
+        "target": {
+          "text": "COMPACT"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s84"
+      },
+      {
+        "target": {
+          "text": "COMPACT",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s85"
+      },
+      {
+        "target": {
+          "text": "DEFAULT"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s86"
+      },
+      {
+        "run": "flows/settings.ad#s87"
+      },
+      {
+        "target": {
+          "text": "DEFAULT",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s88"
+      },
+      {
+        "target": {
+          "text": "Quick actions, Add commands and custom key combinations"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s89"
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/settings.ad#clear-native-header" }]
+      },
+      {
+        "target": {
+          "text": "Quick actions, Add commands and custom key combinations"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s90"
+      },
+      {
+        "target": {
+          "text": "Quick action settings"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s91"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "visible",
+        "run": "flows/settings.ad#s92"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s93"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s94"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s95"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings.ad#s96"
+      }
+    ],
+    "flows/slash-commands": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Switch to Claude Code"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s2"
+      },
+      {
+        "run": "flows/slash-commands.ad#s3"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s4"
+      },
+      {
+        "run": "flows/slash-commands.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Insert /clear.*"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/slash-commands.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Insert /compact.*"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s7"
+      },
+      {
+        "target": {
+          "text": "Insert /context.*"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s9"
+      },
+      {
+        "run": "flows/slash-commands.ad#s10"
+      },
+      {
+        "run": "flows/slash-commands.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Insert /compact.*"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Insert /context.*"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s13"
+      },
+      {
+        "target": {
+          "text": "Insert /clear.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Insert /model.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s15"
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [
+          { "run": "flows/slash-commands.ad#s16" },
+          {
+            "when": { "target": { "id": "terminal-composer-input", "text": "Send a message" } },
+            "steps": [{ "run": "flows/slash-commands.ad#insert-cleared-slash" }]
+          },
+          { "run": "flows/slash-commands.ad#verify-slash" }
+        ]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/slash-commands.ad#reset-query-ios" }]
+      },
+      {
+        "run": "flows/slash-commands.ad#s18"
+      },
+      {
+        "target": {
+          "text": "Insert /clear.*"
+        },
+        "mode": "visible",
+        "timeout": 6000,
+        "run": "flows/slash-commands.ad#s19"
+      },
+      {
+        "run": "flows/slash-commands.ad#s20"
+      },
+      {
+        "run": "flows/slash-commands.ad#s21"
+      },
+      {
+        "target": {
+          "text": "Insert /release-notes.*"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s22"
+      },
+      {
+        "target": {
+          "text": "(?i)workspace"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s23"
+      },
+      {
+        "target": {
+          "text": "Insert /clear.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s24"
+      },
+      {
+        "target": {
+          "text": "Close the command list"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s25"
+      },
+      {
+        "run": "flows/slash-commands.ad#s26"
+      },
+      {
+        "target": {
+          "text": "Insert /release-notes.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s27"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s28"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s29"
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [
+          { "run": "flows/slash-commands.ad#s30" },
+          {
+            "when": { "target": { "id": "terminal-composer-input", "text": "Send a message" } },
+            "steps": [{ "run": "flows/slash-commands.ad#insert-cleared-model" }]
+          },
+          { "run": "flows/slash-commands.ad#verify-model" }
+        ]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "ios" },
+        "steps": [{ "run": "flows/slash-commands.ad#model-query-ios" }]
+      },
+      {
+        "run": "flows/slash-commands.ad#s34"
+      },
+      {
+        "target": {
+          "text": "Insert /model.*"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/slash-commands.ad#s36"
+      },
+      {
+        "target": {
+          "text": "Insert /model \\[model\\]"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s37"
+      },
+      {
+        "target": {
+          "text": "Insert /model.*"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s38"
+      },
+      {
+        "run": "flows/slash-commands.ad#s39"
+      },
+      {
+        "target": {
+          "text": "Insert /model.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s40"
+      },
+      {
+        "target": {
+          "text": "Insert /clear.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s41"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s42"
+      },
+      {
+        "run": "flows/slash-commands.ad#s43"
+      },
+      {
+        "run": "flows/slash-commands.ad#s44"
+      },
+      {
+        "target": {
+          "text": "Insert /model.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s45"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s46"
+      },
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "Switch to Claude Code"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s47"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s48"
+      },
+      {
+        "run": "flows/slash-commands.ad#s49"
+      },
+      {
+        "run": "flows/slash-commands.ad#s50"
+      },
+      {
+        "run": "flows/slash-commands.ad#s51"
+      },
+      {
+        "target": {
+          "text": "Insert /clear.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s52"
+      },
+      {
+        "target": {
+          "text": "Insert /model.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s53"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s54"
+      },
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "Switch to zsh"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s55"
+      },
+      {
+        "run": "flows/slash-commands.ad#s56"
+      },
+      {
+        "target": {
+          "text": "Run a terminal command"
+        },
+        "mode": "press",
+        "run": "flows/slash-commands.ad#s57"
+      },
+      {
+        "run": "flows/slash-commands.ad#s58"
+      },
+      {
+        "run": "flows/slash-commands.ad#s59"
+      },
+      {
+        "run": "flows/slash-commands.ad#s60"
+      },
+      {
+        "target": {
+          "text": "Insert /clear.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s61"
+      },
+      {
+        "target": {
+          "text": "Insert /compact.*"
+        },
+        "mode": "hidden",
+        "run": "flows/slash-commands.ad#s62"
+      },
+      {
+        "target": {
+          "text": "Run command"
+        },
+        "mode": "visible",
+        "run": "flows/slash-commands.ad#s63"
+      }
+    ],
+    "flows/ssh": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "SSH"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Open SSH host Demo shell"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/ssh.ad#s2"
+      },
+      {
+        "run": "flows/ssh.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Add an SSH host"
+        },
+        "mode": "visible",
+        "run": "flows/ssh.ad#s4"
+      },
+      {
+        "run": "flows/ssh.ad#s5"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open SSH host Demo shell"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Disconnect from Demo shell"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/ssh.ad#s7"
+      },
+      {
+        "target": {
+          "text": "Connected to demo@demo.invalid"
+        },
+        "mode": "visible",
+        "run": "flows/ssh.ad#s8"
+      },
+      {
+        "run": "flows/ssh.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the terminal"
+        },
+        "mode": "hidden",
+        "run": "flows/ssh.ad#s10"
+      },
+      {
+        "run": "flows/ssh.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Send Enter"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Send Control C"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s13"
+      },
+      {
+        "run": "flows/ssh.ad#s14"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the terminal"
+        },
+        "mode": "hidden",
+        "run": "flows/ssh.ad#s15"
+      },
+      {
+        "target": {
+          "text": "Disconnect from Demo shell"
+        },
+        "mode": "visible",
+        "run": "flows/ssh.ad#s16"
+      },
+      {
+        "target": {
+          "text": "Open on-screen keyboard"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s17"
+      },
+      {
+        "target": {
+          "text": "Hide keyboard"
+        },
+        "mode": "visible",
+        "timeout": 4000,
+        "run": "flows/ssh.ad#s18"
+      },
+      {
+        "run": "flows/ssh.ad#s19"
+      },
+      {
+        "target": {
+          "text": "Return"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s20"
+      },
+      {
+        "target": {
+          "text": "Hide keyboard"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s21"
+      },
+      {
+        "target": {
+          "text": "Open on-screen keyboard"
+        },
+        "mode": "visible",
+        "timeout": 4000,
+        "run": "flows/ssh.ad#s22"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the terminal"
+        },
+        "mode": "hidden",
+        "run": "flows/ssh.ad#s23"
+      },
+      {
+        "target": {
+          "text": "Disconnect from Demo shell"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s24"
+      },
+      {
+        "target": {
+          "text": "Reconnect to Demo shell"
+        },
+        "mode": "visible",
+        "timeout": 4000,
+        "run": "flows/ssh.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Reconnect"
+        },
+        "mode": "visible",
+        "run": "flows/ssh.ad#s26"
+      },
+      {
+        "target": {
+          "text": "Reconnect"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s27"
+      },
+      {
+        "target": {
+          "text": "Disconnect from Demo shell"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/ssh.ad#s28"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s29"
+      },
+      {
+        "target": {
+          "text": "Open SSH host Demo shell"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/ssh.ad#s30"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/ssh.ad#s31"
+      },
+      {
+        "target": {
+          "text": "SSH"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/ssh.ad#s32"
+      }
+    ],
+    "flows/store-shot-actions": [
+      {
+        "run": "flows/store-shot-actions.ad#s1"
+      },
+      {
+        "run": "flows/store-shot-actions.ad#s2"
+      },
+      {
+        "target": {
+          "text": "Got it"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/store-shot-actions.ad#s3"
+      },
+      {
+        "include": "subflows/dismiss-permission"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/store-shot-actions.ad#s4"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/store-shot-actions.ad#s5"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Language, System"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/store-shot-actions.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Language, System"
+        },
+        "mode": "press",
+        "run": "flows/store-shot-actions.ad#s7"
+      },
+      {
+        "target": {
+          "text": "${LANG_NAME}"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/store-shot-actions.ad#s8"
+      },
+      {
+        "target": {
+          "text": "${LANG_NAME}"
+        },
+        "mode": "press",
+        "run": "flows/store-shot-actions.ad#s9"
+      },
+      {
+        "run": "flows/store-shot-actions.ad#s10"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/store-shot-actions.ad#s11"
+      },
+      {
+        "run": "flows/store-shot-actions.ad#s12"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "${DEMO_LABEL}"
+          },
+          "absent": true
+        },
+        "steps": [
+          {
+            "run": "flows/store-shot-actions.ad#s13"
+          },
+          {
+            "run": "flows/store-shot-actions.ad#s14"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "text": "${DEMO_LABEL}"
+          },
+          "absent": true
+        },
+        "steps": [
+          {
+            "run": "flows/store-shot-actions.ad#s15"
+          },
+          {
+            "run": "flows/store-shot-actions.ad#s16"
+          }
+        ]
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "${DEMO_LABEL}"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/store-shot-actions.ad#s17"
+      },
+      {
+        "target": {
+          "text": "${DEMO_LABEL}"
+        },
+        "mode": "press",
+        "run": "flows/store-shot-actions.ad#s18"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/store-shot-actions.ad#s19"
+      },
+      {
+        "run": "flows/store-shot-actions.ad#s20"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "target": {
+          "text": "${ACTIONS_LABEL}"
+        },
+        "mode": "press",
+        "run": "flows/store-shot-actions.ad#s21"
+      },
+      {
+        "run": "flows/store-shot-actions.ad#s22"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/store-shot-actions.ad#s23"
+      }
+    ],
+    "flows/terminal-interactions": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "point": [0.8, 0.45],
+        "delta": [-0.55, 0],
+        "run": "flows/terminal-interactions.ad#s1"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s2"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s3"
+      },
+      {
+        "point": [0.25, 0.45],
+        "delta": [0.55, 0],
+        "run": "flows/terminal-interactions.ad#s4"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s5"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s6"
+      },
+      {
+        "point": [0.5, 0.3],
+        "delta": [0, 0.4],
+        "run": "flows/terminal-interactions.ad#s7"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "run": "flows/terminal-interactions.ad#s10"
+      },
+      {
+        "target": {
+          "text": "Jump to latest output"
+        },
+        "mode": "visible",
+        "run": "flows/terminal-interactions.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Pull for earlier output"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s12"
+      },
+      {
+        "point": [0.5, 0.55],
+        "run": "flows/terminal-interactions.ad#s13"
+      },
+      {
+        "target": {
+          "text": "COPY"
+        },
+        "mode": "visible",
+        "timeout": 3000,
+        "run": "flows/terminal-interactions.ad#s14"
+      },
+      {
+        "target": {
+          "text": "SELECT ALL"
+        },
+        "mode": "visible",
+        "run": "flows/terminal-interactions.ad#s15"
+      },
+      {
+        "target": {
+          "text": "CANCEL"
+        },
+        "mode": "visible",
+        "run": "flows/terminal-interactions.ad#s16"
+      },
+      {
+        "point": [0.5, 0.55],
+        "delta": [0, 0.4],
+        "run": "flows/terminal-interactions.ad#s17"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s18"
+      },
+      {
+        "target": {
+          "text": "COPY"
+        },
+        "mode": "visible",
+        "run": "flows/terminal-interactions.ad#s19"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s20"
+      },
+      {
+        "target": {
+          "text": "CANCEL"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#s21"
+      },
+      {
+        "target": {
+          "text": "COPY"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s22"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Switch to nvim"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#s23"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s24"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s25"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#open-editor-picker"
+      },
+      {
+        "target": {
+          "text": "Open zsh\\. Long press to close"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#s26"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s27"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s28"
+      },
+      {
+        "target": {
+          "text": "Switch to Claude Code"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#s29"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s30"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s31"
+      },
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/terminal-interactions.ad#s32"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/terminal-interactions.ad#s33"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#s34"
+      },
+      {
+        "target": {
+          "text": "APPEARANCE"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/terminal-interactions.ad#s35"
+      },
+      {
+        "target": {
+          "text": "Text size"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/terminal-interactions.ad#s36"
+      },
+      {
+        "target": {
+          "text": "LARGE"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/terminal-interactions.ad#s37"
+      },
+      {
+        "target": {
+          "text": "LARGE"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#s38"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s39"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/terminal-interactions.ad#s40"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Try the demo"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "include": "subflows/dismiss-logbox"
+          },
+          {
+            "target": {
+              "text": "Try the demo"
+            },
+            "mode": "press",
+            "run": "flows/terminal-interactions.ad#s41"
+          }
+        ]
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/terminal-interactions.ad#s42"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s43"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s44"
+      },
+      {
+        "point": [0.8, 0.45],
+        "delta": [-0.55, 0],
+        "run": "flows/terminal-interactions.ad#s45"
+      },
+      {
+        "run": "flows/terminal-interactions.ad#s46"
+      },
+      {
+        "target": {
+          "text": "Retry drawing the panel"
+        },
+        "mode": "hidden",
+        "run": "flows/terminal-interactions.ad#s47"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "run": "flows/terminal-interactions.ad#s48"
+      }
+    ],
+    "flows/theme-shots": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Osuki",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "osuki-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Osuki",
+          "MODE_LABEL": "DARK",
+          "SHOT": "osuki-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Ayu",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "ayu-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Ayu",
+          "MODE_LABEL": "DARK",
+          "SHOT": "ayu-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Catppuccin",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "catppuccin-latte"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Catppuccin",
+          "MODE_LABEL": "DARK",
+          "SHOT": "catppuccin-mocha"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Dracula",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "dracula-alucard"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Dracula",
+          "MODE_LABEL": "DARK",
+          "SHOT": "dracula-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Everforest",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "everforest-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Everforest",
+          "MODE_LABEL": "DARK",
+          "SHOT": "everforest-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Flexoki",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "flexoki-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Flexoki",
+          "MODE_LABEL": "DARK",
+          "SHOT": "flexoki-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "GitHub",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "github-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "GitHub",
+          "MODE_LABEL": "DARK",
+          "SHOT": "github-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Gruvbox",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "gruvbox-light-medium"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Gruvbox",
+          "MODE_LABEL": "DARK",
+          "SHOT": "gruvbox-dark-medium"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Kanagawa",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "kanagawa-lotus"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Kanagawa",
+          "MODE_LABEL": "DARK",
+          "SHOT": "kanagawa-wave"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Night Owl",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "night-owl-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Night Owl",
+          "MODE_LABEL": "DARK",
+          "SHOT": "night-owl-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Monokai Pro",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "monokai-pro-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Monokai Pro",
+          "MODE_LABEL": "DARK",
+          "SHOT": "monokai-pro-ristretto"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Rosé Pine",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "rose-pine-dawn"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Rosé Pine",
+          "MODE_LABEL": "DARK",
+          "SHOT": "rose-pine-main"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Solarized",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "solarized-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Solarized",
+          "MODE_LABEL": "DARK",
+          "SHOT": "solarized-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Tokyo Night",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "tokyo-night-day"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Tokyo Night",
+          "MODE_LABEL": "DARK",
+          "SHOT": "tokyo-night-moon"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Osaka Jade",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "osaka-jade-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Osaka Jade",
+          "MODE_LABEL": "DARK",
+          "SHOT": "osaka-jade-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Bamboo",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "bamboo-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Bamboo",
+          "MODE_LABEL": "DARK",
+          "SHOT": "bamboo-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Bluloco",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "bluloco-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Bluloco",
+          "MODE_LABEL": "DARK",
+          "SHOT": "bluloco-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Cyberdream",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "cyberdream-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Cyberdream",
+          "MODE_LABEL": "DARK",
+          "SHOT": "cyberdream-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Edge",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "edge-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Edge",
+          "MODE_LABEL": "DARK",
+          "SHOT": "edge-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Iceberg",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "iceberg-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Iceberg",
+          "MODE_LABEL": "DARK",
+          "SHOT": "iceberg-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Kanso",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "kanso-pearl"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Kanso",
+          "MODE_LABEL": "DARK",
+          "SHOT": "kanso-ink"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Material",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "material-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Material",
+          "MODE_LABEL": "DARK",
+          "SHOT": "material-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Mélange",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "melange-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Mélange",
+          "MODE_LABEL": "DARK",
+          "SHOT": "melange-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Modus",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "modus-operandi"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Modus",
+          "MODE_LABEL": "DARK",
+          "SHOT": "modus-vivendi"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Neovim",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "neovim-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Neovim",
+          "MODE_LABEL": "DARK",
+          "SHOT": "neovim-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Nightfox",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "nightfox-dayfox"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Nightfox",
+          "MODE_LABEL": "DARK",
+          "SHOT": "nightfox-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Oxocarbon",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "oxocarbon-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Oxocarbon",
+          "MODE_LABEL": "DARK",
+          "SHOT": "oxocarbon-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "PaperColor",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "papercolor-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "PaperColor",
+          "MODE_LABEL": "DARK",
+          "SHOT": "papercolor-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Selenized",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "selenized-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Selenized",
+          "MODE_LABEL": "DARK",
+          "SHOT": "selenized-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Tomorrow",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "tomorrow-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Tomorrow",
+          "MODE_LABEL": "DARK",
+          "SHOT": "tomorrow-night"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "VS Code 2026",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "vscode-2026-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "VS Code 2026",
+          "MODE_LABEL": "DARK",
+          "SHOT": "vscode-2026-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Zenwritten",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "zenwritten-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Zenwritten",
+          "MODE_LABEL": "DARK",
+          "SHOT": "zenwritten-dark"
+        }
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/theme-shots.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Color mode"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/theme-shots.ad#s2"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Theme, .*"
+        },
+        "mode": "press",
+        "run": "flows/theme-shots.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Osuki"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/theme-shots.ad#s4"
+      },
+      {
+        "target": {
+          "text": "Osuki"
+        },
+        "mode": "press",
+        "run": "flows/theme-shots.ad#s5"
+      },
+      {
+        "run": "flows/theme-shots.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Theme, Osuki"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/theme-shots.ad#s7"
+      },
+      {
+        "target": {
+          "text": "SYSTEM"
+        },
+        "mode": "press",
+        "run": "flows/theme-shots.ad#s8"
+      },
+      {
+        "run": "flows/theme-shots.ad#s9"
+      },
+      {
+        "target": {
+          "text": "SYSTEM",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/theme-shots.ad#s10"
+      }
+    ],
+    "flows/web-theme-shots": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Osuki",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "osuki-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Osuki",
+          "MODE_LABEL": "DARK",
+          "SHOT": "osuki-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Catppuccin",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "catppuccin-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Catppuccin",
+          "MODE_LABEL": "DARK",
+          "SHOT": "catppuccin-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Rosé Pine",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "rose-pine-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Rosé Pine",
+          "MODE_LABEL": "DARK",
+          "SHOT": "rose-pine-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Gruvbox",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "gruvbox-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Gruvbox",
+          "MODE_LABEL": "DARK",
+          "SHOT": "gruvbox-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Tokyo Night",
+          "MODE_LABEL": "LIGHT",
+          "SHOT": "tokyo-night-light"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Tokyo Night",
+          "MODE_LABEL": "DARK",
+          "SHOT": "tokyo-night-dark"
+        }
+      },
+      {
+        "include": "subflows/capture-theme",
+        "env": {
+          "THEME_LABEL": "Osuki",
+          "MODE_LABEL": "SYSTEM",
+          "SHOT": "reset-osuki-system"
+        }
+      }
+    ],
+    "subflows/capture-theme": [
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Color mode"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "subflows/capture-theme.ad#s2"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Theme, .*"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s3"
+      },
+      {
+        "target": {
+          "text": "${THEME_LABEL}"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "subflows/capture-theme.ad#s4"
+      },
+      {
+        "target": {
+          "text": "${THEME_LABEL}"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s5"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s6"
+      },
+      {
+        "target": {
+          "text": "Theme, ${THEME_LABEL}"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "subflows/capture-theme.ad#s7"
+      },
+      {
+        "target": {
+          "text": "${MODE_LABEL}"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s8"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s9"
+      },
+      {
+        "target": {
+          "text": "${MODE_LABEL}",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "subflows/capture-theme.ad#s10"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s11"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "subflows/capture-theme.ad#s13"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s14"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s15"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s16"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 25000,
+        "run": "subflows/capture-theme.ad#s17"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s18"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s19"
+      },
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s20"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "subflows/capture-theme.ad#s21"
+      },
+      {
+        "run": "subflows/capture-theme.ad#s22"
+      }
+    ],
+    "subflows/dismiss-away-digest": [
+      {
+        "when": {
+          "target": {
+            "id": "away-digest-dismiss"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "away-digest-dismiss"
+            },
+            "mode": "press",
+            "run": "subflows/dismiss-away-digest.ad#s1"
+          },
+          {
+            "run": "subflows/dismiss-away-digest.ad#s2"
+          }
+        ]
+      }
+    ],
+    "subflows/dismiss-logbox": [
+      {
+        "run": "subflows/dismiss-logbox.ad#s5"
+      }
+    ],
+    "subflows/dismiss-permission": [
+      {
+        "when": {
+          "target": {
+            "text": "(?i).*(don.?t allow|不允許|不允许).*"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "(?i).*(don.?t allow|不允許|不允许).*"
+            },
+            "mode": "press",
+            "run": "subflows/dismiss-permission.ad#s1"
+          },
+          {
+            "run": "subflows/dismiss-permission.ad#s2"
+          }
+        ]
+      }
+    ],
+    "subflows/launch-home": [
+      {
+        "run": "subflows/launch-home.ad#s1"
+      },
+      {
+        "run": "subflows/launch-home.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Got it"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "(?i).*don.?t allow.*"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "(?i).*don.?t allow.*"
+            },
+            "mode": "press",
+            "run": "subflows/launch-home.ad#s10"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Dismiss what's new"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Dismiss what's new"
+            },
+            "mode": "press",
+            "run": "subflows/launch-home.ad#s11"
+          }
+        ]
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 60000,
+        "run": "subflows/launch-home.ad#s12"
+      }
+    ],
+    "subflows/motion-618-close-capture": [
+      {
+        "run": "subflows/motion-618-close-capture.ad#s1"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s2"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "run": "subflows/motion-618-close-capture.ad#s3"
+      },
+      {
+        "target": {
+          "text": "(?i).*render as.*"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "subflows/motion-618-close-capture.ad#s4"
+      },
+      {
+        "target": {
+          "text": "(?i).*render as text.*"
+        },
+        "mode": "press",
+        "run": "subflows/motion-618-close-capture.ad#s5"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s6"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s7"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "run": "subflows/motion-618-close-capture.ad#s8"
+      },
+      {
+        "target": {
+          "text": "(?i).*render as.*"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "subflows/motion-618-close-capture.ad#s9"
+      },
+      {
+        "target": {
+          "text": "(?i).*render as terminal.*"
+        },
+        "mode": "press",
+        "run": "subflows/motion-618-close-capture.ad#s10"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s11"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s12"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "run": "subflows/motion-618-close-capture.ad#s13"
+      },
+      {
+        "target": {
+          "text": "(?i)open panel .*"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "subflows/motion-618-close-capture.ad#s14"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s15"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s16"
+      },
+      {
+        "target": {
+          "text": "(?i)open panel nvim.*"
+        },
+        "mode": "longpress",
+        "run": "subflows/motion-618-close-capture.ad#s17"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s18"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s19"
+      },
+      {
+        "point": [0.77, 0.69],
+        "run": "subflows/motion-618-close-capture.ad#s20"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s21"
+      },
+      {
+        "run": "subflows/motion-618-close-capture.ad#s22"
+      }
+    ],
+    "subflows/motion-p2-capture": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "subflows/motion-p2-capture.ad#s6"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s7"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s8"
+      },
+      {
+        "target": {
+          "text": "Switch to nvim"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s9"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s10"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s11"
+      },
+      {
+        "target": {
+          "text": "Switch to Claude Code"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s12"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s13"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s14"
+      },
+      {
+        "point": [0.45, 0.94],
+        "run": "subflows/motion-p2-capture.ad#s15"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s16"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s17"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s18"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s19"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s20"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s21"
+      },
+      {
+        "target": {
+          "text": "Open on-screen keyboard"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s22"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s23"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s24"
+      },
+      {
+        "target": {
+          "text": "Shift"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s25"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s26"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s27"
+      },
+      {
+        "target": {
+          "text": "Hide keyboard"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s28"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s29"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s30"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s31"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s32"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s33"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s34"
+      },
+      {
+        "target": {
+          "text": "Show what is running"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s35"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s36"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s37"
+      },
+      {
+        "target": {
+          "text": "Close"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s38"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s39"
+      },
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s40"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s41"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/motion-p2-capture.ad#s42"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s43"
+      },
+      {
+        "run": "subflows/motion-p2-capture.ad#s44"
+      }
+    ],
+    "subflows/open-demo": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "subflows/open-demo.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "subflows/open-demo.ad#s2"
+      },
+      {
+        "run": "subflows/open-demo.ad#s3"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      }
+    ],
+    "subflows/restart-demo": [
+      {
+        "run": "subflows/restart-demo.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "visible",
+        "timeout": 60000,
+        "run": "subflows/restart-demo.ad#s2"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Try the demo"
+        },
+        "mode": "press",
+        "run": "subflows/restart-demo.ad#s3"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "subflows/restart-demo.ad#s4"
+      },
+      {
+        "run": "subflows/restart-demo.ad#s5"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-away-digest"
+      }
+    ],
+    "subflows/restore-key-row": [
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/restore-key-row.ad#back"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "subflows/restore-key-row.ad#settings"
+      },
+      {
+        "target": {
+          "text": "Terminal key row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "subflows/restore-key-row.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "toggle-Terminal key row",
+          "checked": false
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/restore-key-row.ad#toggle"
+      },
+      {
+        "target": {
+          "id": "toggle-Terminal key row",
+          "checked": true
+        },
+        "mode": "visible",
+        "run": "subflows/restore-key-row.ad#verify"
+      }
+    ]
+  }
+}

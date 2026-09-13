@@ -1,0 +1,65 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# pad-workspace
+
+# section s1
+press "${TARGET}"
+
+# section s2
+wait stable 400 5000
+
+# section s3
+press "${TARGET}"
+
+# section s4
+is visible "${TARGET}"
+
+# section s5
+is visible "${TARGET}"
+
+# section s6
+is hidden "${TARGET}"
+
+# section s7
+is visible "${TARGET}"
+
+# section s8
+is visible "${TARGET}"
+
+# section s9
+is visible "${TARGET}"
+
+# section s10
+is visible "${TARGET}"
+
+# section s11
+press "${TARGET}"
+
+# section s12
+wait stable 400 5000
+
+# section s13
+is visible "${TARGET}"
+
+# section s14
+is hidden "${TARGET}"
+
+# section s15
+press "${TARGET}"
+
+# section s16
+is visible "${TARGET}"
+
+# section s17
+is hidden "${TARGET}"
+
+# section s18
+press "${TARGET}"
+
+# section open-editor-picker
+press "${TARGET}"
+
+# section s19
+is visible "${TARGET}"
+
+# section s20
+is hidden "${TARGET}"

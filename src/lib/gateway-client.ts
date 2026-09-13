@@ -1,6 +1,7 @@
 import { File } from 'expo-file-system';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
+import { assertDeliveryCurrent, deliverPasteAndEnter } from './bound-delivery';
 
 import {
   configure,
@@ -98,6 +99,7 @@ import {
   demoAgentEvents,
   demoAgentProfiles,
   demoAgents,
+  demoSendAgentText,
   demoAssetContentUri,
   demoAssetText,
   demoHealth,
@@ -118,6 +120,7 @@ import {
   setDemoActive,
 } from './demo-gateway';
 import type { GatewayRecord } from './gateway-storage';
+import { withSessionAvailability } from './session-switcher';
 import type { PairingPayload } from './pairing';
 import {
   CODE_PAIRING_CLAIM_AAD,
@@ -306,11 +309,12 @@ async function encryptedGatewayFetch(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
-  endpoint?: GatewayEndpoint
+  endpoint?: GatewayEndpoint,
+  isCurrent: () => boolean = () => true
 ): Promise<Response> {
-  const token = endpoint?.token ?? currentToken;
-  const deviceId = endpoint?.deviceId ?? currentDeviceId;
-  const transportKey = endpoint?.transportKey ?? currentTransportKey;
+  const token = endpoint ? endpoint.token : currentToken;
+  const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
+  const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
   if (!token || !deviceId || !transportKey) throw new Error('Not connected to a server.');
   if (isStreamingRequest(init)) {
     throw new Error('Encrypted event streams use the dedicated stream transport.');
@@ -322,6 +326,7 @@ async function encryptedGatewayFetch(
     ([name]) => name.toLowerCase() === 'content-type'
   )?.[1];
   const serialized = await serializeBody(init.body, contentType);
+  assertDeliveryCurrent(isCurrent);
   const plaintext: EncryptedRequestPayload = {
     token,
     ...(serialized.contentType ? { content_type: serialized.contentType } : {}),
@@ -394,7 +399,14 @@ async function encryptedGatewayFetch(
 }
 
 /** Every gateway call the generated client and this file make, on one budget. */
-const gatewayFetch: typeof globalThis.fetch = async (input, init) => {
+const gatewayFetch: typeof globalThis.fetch = (input, init) =>
+  gatewayFetchWithin(REQUEST_TIMEOUT_MS, input, init);
+
+async function gatewayFetchWithin(
+  timeoutMs: number,
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
   // The one place worth stamping the locale, because both the generated client
   // and every raw call in this file come through here. Merged underneath the
   // caller's own headers rather than over them, so a request that has a reason
@@ -403,7 +415,7 @@ const gatewayFetch: typeof globalThis.fetch = async (input, init) => {
   // next request without reconfiguring anything.
   const headers = { ...activeLocaleHeaders(), ...headerRecord(init?.headers) };
   if (shouldEncryptGatewayRequest(input)) {
-    return encryptedGatewayFetch(input, { ...init, headers });
+    return encryptedGatewayFetch(input, { ...init, headers }, timeoutMs);
   }
 
   // Exempt, and deliberately: see `isStreamingRequest`.
@@ -414,11 +426,11 @@ const gatewayFetch: typeof globalThis.fetch = async (input, init) => {
   // does not say so is filed as a plain request error: shown to the user
   // verbatim, in English, and marked not worth retrying -- which is the wrong
   // answer on all three counts for a server that simply went quiet.
-  return fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', input, {
+  return fetchWithin(timeoutMs, 'Timed out waiting for the server.', input, {
     ...init,
     headers,
   });
-};
+}
 
 export interface HealthResponse {
   ok: boolean;
@@ -463,15 +475,18 @@ export interface HealthResponse {
    * the backend that is down is tmux.
    */
   backend?: {
+    sessionId?: string;
     kind?: string;
     connected?: boolean;
     version?: string | null;
     protocol?: number | null;
   };
+  backends?: { sessionId: string; kind: string; connected: boolean; version?: string | null }[];
 }
 
 export interface SessionsResponse {
   sessions?: {
+    connected?: boolean;
     id: string;
     label: string;
     socket_path: string;
@@ -703,7 +718,7 @@ export async function setGatewayLabel(label: string): Promise<void> {
 }
 
 export interface UploadedAttachment {
-  /** Path on the gateway host, which is what a pane or agent can actually read. */
+  /** Path on this Gateway host only; remote agents need a separate transfer mechanism. */
   path: string;
   name: string;
   size: number;
@@ -736,53 +751,61 @@ function localFilePath(fileUri: string): string {
  * as well as the send.
  */
 export async function uploadAttachment(
+  record: GatewayRecord,
   fileUri: string,
   name: string,
-  mime: string
+  mime: string,
+  isCurrent: () => boolean
 ): Promise<UploadedAttachment> {
-  if (isDemoActive()) throw new Error('Attachments are not available in the demo.');
-  const baseUrl = currentBaseUrl.replace(/\/$/, '');
-  if (!baseUrl || !currentToken) throw new Error('Not connected to a server.');
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) throw new Error('Attachments are not available in the demo.');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, async (baseUrl) => {
+    assertDeliveryCurrent(isCurrent);
+    const endpoint = { ...captured, url: baseUrl };
+    if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
 
-  const form = new FormData();
-  // React Native's FormData takes a local file as this triple. nitro-fetch
-  // recognises it and assembles the multipart body natively, reading the file
-  // on its own thread, so the bytes never pass through JS.
-  form.append('file', { uri: localFilePath(fileUri), name, type: mime } as unknown as Blob);
+    const form = new FormData();
+    // React Native's FormData takes a local file as this triple. nitro-fetch
+    // recognises it and assembles the multipart body natively, reading the file
+    // on its own thread, so the bytes never pass through JS.
+    form.append('file', { uri: localFilePath(fileUri), name, type: mime } as unknown as Blob);
 
-  const uploadUrl = `${baseUrl}/api/uploads`;
-  const uploadInit: RequestInit = {
-    method: 'POST',
-    // Content-Type is deliberately unset: the multipart boundary belongs to
-    // whichever layer writes the body, and setting it here would not match.
-    headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${currentToken}` },
-    body: form,
-  };
-  const response =
-    currentTransport === GATEWAY_TRANSPORT
-      ? await encryptedGatewayFetch(uploadUrl, uploadInit, UPLOAD_TIMEOUT_MS)
-      : await fetchWithin(
-          UPLOAD_TIMEOUT_MS,
-          // "Timed out" so `describeGatewayFailure` files this as one; see `gatewayFetch`.
-          'Timed out waiting for the upload.',
-          uploadUrl,
-          uploadInit
-        );
+    const uploadUrl = `${baseUrl}/api/uploads`;
+    const uploadInit: RequestInit = {
+      method: 'POST',
+      // Content-Type is deliberately unset: the multipart boundary belongs to
+      // whichever layer writes the body, and setting it here would not match.
+      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${endpoint.token}` },
+      body: form,
+    };
+    const response =
+      endpoint.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(uploadUrl, uploadInit, UPLOAD_TIMEOUT_MS, endpoint, isCurrent)
+        : await fetchWithin(
+            UPLOAD_TIMEOUT_MS,
+            // "Timed out" so `describeGatewayFailure` files this as one; see `gatewayFetch`.
+            'Timed out waiting for the upload.',
+            uploadUrl,
+            uploadInit
+          );
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-  }
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
 
-  const value = (await response.json()) as Partial<UploadedAttachment> | null;
-  if (!value || typeof value.path !== 'string' || value.path.length === 0) {
-    throw new Error('The server did not return a file path.');
-  }
-  return {
-    path: value.path,
-    name: typeof value.name === 'string' ? value.name : name,
-    size: typeof value.size === 'number' ? value.size : 0,
-    mime: typeof value.mime === 'string' ? value.mime : mime,
-  };
+    const value = (await response.json()) as Partial<UploadedAttachment> | null;
+    assertDeliveryCurrent(isCurrent);
+    if (!value || typeof value.path !== 'string' || value.path.length === 0) {
+      throw new Error('The server did not return a file path.');
+    }
+    return {
+      path: value.path,
+      name: typeof value.name === 'string' ? value.name : name,
+      size: typeof value.size === 'number' ? value.size : 0,
+      mime: typeof value.mime === 'string' ? value.mime : mime,
+    };
+  });
 }
 
 /**
@@ -1690,7 +1713,33 @@ export async function loadHealth(): Promise<HealthResponse> {
 
 export async function loadSessions(): Promise<SessionsResponse> {
   if (isDemoActive()) return demoSessions() as SessionsResponse;
-  return getApiSessions() as Promise<SessionsResponse>;
+  const sessions = (await getApiSessions()) as SessionsResponse;
+  return sessions.sessions?.some((session) => typeof session.connected !== 'boolean')
+    ? withSessionAvailability(sessions, (await getHealth()) as HealthResponse)
+    : sessions;
+}
+
+/** Inspect a saved machine without switching the active terminal's credentials. */
+export async function loadRecordSessions(record: GatewayRecord): Promise<SessionsResponse> {
+  if (isDemoRecord(record)) return demoSessions() as SessionsResponse;
+  return withRecordBaseUrl(record, async (baseUrl) => {
+    const init = {
+      headers: { Authorization: `Bearer ${record.token}`, ...activeLocaleHeaders() },
+    };
+    async function read(path: string) {
+      const url = `${baseUrl}${path}`;
+      const response =
+        record.transport === GATEWAY_TRANSPORT
+          ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...record, url: baseUrl })
+          : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    }
+    const sessions = (await read('/api/sessions')) as SessionsResponse;
+    return sessions.sessions?.some((session) => typeof session.connected !== 'boolean')
+      ? withSessionAvailability(sessions, (await read('/health')) as HealthResponse)
+      : sessions;
+  });
 }
 
 export async function loadWorkspaces(sessionId: string): Promise<HerdrEntity[]> {
@@ -1776,6 +1825,56 @@ export async function loadRecentCwds(sessionId: string): Promise<string[]> {
  * thrown error so `describeGatewayFailure` can lift it -- the alternative is a
  * sheet that says "could not start" about three fields at once.
  */
+export async function spawnBoundAgent(
+  record: GatewayRecord,
+  sessionId: string,
+  request: AgentSpawnRequest,
+  isCurrent: () => boolean
+): Promise<SpawnedAgent> {
+  assertDeliveryCurrent(isCurrent);
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  const body = JSON.stringify(request);
+  if (isDemoRecord(captured)) {
+    const spawned = spawnedAgentFromResponse(demoSpawnedAgent({ ...request }));
+    if (!spawned) throw new Error('The server did not say which panel it made.');
+    return spawned;
+  }
+  let acknowledged: SpawnedAgent | undefined;
+  try {
+    return await withRecordBaseUrl(captured, async (baseUrl) => {
+      assertDeliveryCurrent(isCurrent);
+      const endpoint = { ...captured, url: baseUrl };
+      if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
+      const url = `${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/agents/spawn`;
+      const init: RequestInit = {
+        method: 'POST',
+        headers: {
+          ...activeLocaleHeaders(),
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${endpoint.token}`,
+        },
+        body,
+      };
+      const response =
+        endpoint.transport === GATEWAY_TRANSPORT
+          ? await encryptedGatewayFetch(url, init, 60_000, endpoint, isCurrent)
+          : await fetchWithin(60_000, 'Timed out waiting for the server.', url, init);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      const spawned = spawnedAgentFromResponse(await response.json());
+      if (!spawned) throw new Error('The server did not say which panel it made.');
+      // Once transmitted, retain the real outcome for history/recovery. The
+      // caller still owns deciding whether its current UI may be updated.
+      acknowledged = spawned;
+      return spawned;
+    });
+  } catch (failure) {
+    // A tunnel cleanup failure must not turn a known creation into an unknown
+    // outcome that invites another spawn. Never retry either kind of failure.
+    if (acknowledged) return acknowledged;
+    throw failure;
+  }
+}
+
 export async function spawnAgent(
   sessionId: string,
   request: AgentSpawnRequest
@@ -1786,7 +1885,10 @@ export async function spawnAgent(
     return spawned;
   }
 
-  const response = await gatewayFetch(
+  // Starting an interactive agent can take 30 seconds before it is ready.
+  // The ordinary 8-second read budget would abandon a successful creation.
+  const response = await gatewayFetchWithin(
+    60_000,
     gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agents/spawn`),
     {
       method: 'POST',
@@ -2108,6 +2210,60 @@ export async function sendPaneText(sessionId: string, paneId: string, text: stri
   await postApiSessionsBySessionIdPanesByPaneIdSendText({ sessionId, paneId }, { text });
 }
 
+/** One immutable host and tunnel lease for the entire composed paste/ACK/Enter operation. */
+export async function sendBoundPaneText(
+  record: GatewayRecord,
+  sessionId: string,
+  paneId: string,
+  text: string,
+  submit: boolean,
+  isCurrent: () => boolean
+): Promise<void> {
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) return;
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  await withRecordBaseUrl(captured, async (baseUrl) => {
+    const endpoint = { ...captured, url: baseUrl };
+    if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
+    const panePath = `${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}`;
+    async function post(action: string, body: object) {
+      assertDeliveryCurrent(isCurrent);
+      const init = {
+        method: 'POST',
+        headers: {
+          ...activeLocaleHeaders(),
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${endpoint.token}`,
+        },
+        body: JSON.stringify(body),
+      };
+      const response =
+        endpoint.transport === GATEWAY_TRANSPORT
+          ? await encryptedGatewayFetch(
+              `${panePath}/${action}`,
+              init,
+              REQUEST_TIMEOUT_MS,
+              endpoint,
+              isCurrent
+            )
+          : await fetchWithin(
+              REQUEST_TIMEOUT_MS,
+              'Timed out waiting for the server.',
+              `${panePath}/${action}`,
+              init
+            );
+      // Consume the ACK before the next request and before releasing the tunnel.
+      const reply = await response.text();
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${reply}`);
+    }
+    await deliverPasteAndEnter(
+      () => post('send-text', { text }),
+      submit ? () => post('send-keys', { keys: ['enter'] }) : null,
+      isCurrent
+    );
+  });
+}
+
 export async function sendPaneKeys(
   sessionId: string,
   paneId: string,
@@ -2122,7 +2278,7 @@ export async function sendAgentText(
   target: string,
   text: string
 ): Promise<void> {
-  if (isDemoActive()) return;
+  if (isDemoActive()) return demoSendAgentText(target, text);
   await postApiSessionsBySessionIdAgentsByTargetSend({ sessionId, target }, { text });
 }
 

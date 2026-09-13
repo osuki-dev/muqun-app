@@ -123,7 +123,7 @@ function LanguageRow({
       accessibilityRole="radio"
       accessibilityState={{ selected }}
       accessibilityLabel={label}
-      testID={testID}
+      testID={`settings-selection:${selected ? 'on' : 'off'}:${testID}`}
       onPress={onSelect}
       style={styles.row}>
       <Text variant="bodySmall" numberOfLines={1} style={styles.rowLabel}>
