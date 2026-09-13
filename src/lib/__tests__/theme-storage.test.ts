@@ -155,6 +155,29 @@ describe('planUnusedThemes', () => {
     expect(plan.reclaimableBytes).toBe(0);
   });
 
+  test('the removable ids do not depend on the walk, and follow the selection given', () => {
+    // What Settings relies on when it re-decides at the tap. The row's size
+    // comes from a directory walk that only runs on focus, but the theme sheet
+    // can apply a selection over that screen without it losing focus -- so the
+    // removal re-plans against the live library with no files at all, and the
+    // ids that come back must be the same ones a walk would have produced and
+    // must protect whatever is applied *now*.
+    const themes = [installed('one', [digest('a')]), installed('two', [digest('b')])];
+    const walked = planUnusedThemes(themes, { kind: 'custom', id: 'one' }, [
+      file(digest('a'), 4_000),
+      file(digest('b'), 1_000),
+    ]);
+    const unwalked = planUnusedThemes(themes, { kind: 'custom', id: 'one' }, []);
+    expect(unwalked.removable.map((theme) => theme.id)).toEqual(
+      walked.removable.map((theme) => theme.id)
+    );
+    expect(unwalked.reclaimableBytes).toBe(0);
+    // The second theme applied after that walk: the one the walk called
+    // removable is now the protected one, and the other way round.
+    const reapplied = planUnusedThemes(themes, { kind: 'custom', id: 'two' }, []);
+    expect(reapplied.removable.map((theme) => theme.id)).toEqual(['one']);
+  });
+
   test('a name matches whatever directory the walk spelled it in', () => {
     // The library's URIs were written at install time and the walk's come back
     // from the filesystem. The digest is the identity; the prefix in front of it
