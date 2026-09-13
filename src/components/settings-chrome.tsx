@@ -342,21 +342,32 @@ export function SettingsChoiceRow({
   );
 }
 
-/** A row that only states a fact -- the build number, and nothing to press. */
+/**
+ * A row that only states a fact -- the build number, and nothing to press.
+ *
+ * `testID` is optional and sits on the row rather than on either line of it.
+ * A row with nothing to press has no accessibility node of its own for a device
+ * test to name, so the only durable handle on "the Images row exists and reads
+ * a size" is an id on the container; without one a flow has to match the label
+ * text, which is a translated string and stops being true the moment the suite
+ * runs in anything but English.
+ */
 export function SettingsInfoRow({
   icon: Icon,
   label,
   detail,
+  testID,
 }: {
   icon: LucideIcon;
   label: string;
   detail: ReactNode;
+  testID?: string;
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsInfoRow');
   return (
-    <View style={styles.row}>
+    <View testID={testID} style={styles.row}>
       <View
         style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
         <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
