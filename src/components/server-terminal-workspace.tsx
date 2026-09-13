@@ -86,6 +86,13 @@ import {
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useComposerAssignment } from '@/hooks/use-composer-assignment';
+import { TerminalThemeDrop, type TerminalThemeDropState } from '@/components/terminal-theme-drop';
+import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
+import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
+import { ThemeImportRequest } from '@/theme/import-request';
+import { unpackTheme } from '@/theme/package';
+import { THEME_LIMITS } from '@/theme/schema';
+import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import type { AgentProfile } from '@/lib/agent-spawn';
 import { AgentAssignmentBar } from '@/components/agent-assignment-bar';
 import { collaborationAgents } from '@/lib/agent-collaboration';
@@ -121,6 +128,7 @@ import {
   PANE_OUTPUT_PAGE_LINES,
   loadAgentProfiles,
   loadPaneShortcuts,
+  readAssetBytes,
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
   gatewaySupportsApprovals,
@@ -230,6 +238,7 @@ import {
   shouldShowSessionSwitcher,
 } from '@/lib/session-switcher';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
+import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -264,12 +273,6 @@ import { rememberWarmWorkspace, warmWorkspace, type WarmWorkspace } from '@/lib/
 
 /** The cache and this screen describe the same snapshot, so they share a type. */
 type ServerData = WarmWorkspace;
-
-type Selection = {
-  workspaceId: string;
-  tabId: string;
-  paneId: string;
-};
 
 type ConnectionPhase = 'connecting' | 'connected' | 'reconnecting' | 'offline';
 
@@ -359,7 +362,6 @@ const initialData: ServerData = {
   agents: [],
 };
 
-const initialSelection: Selection = { workspaceId: '', tabId: '', paneId: '' };
 const MAX_RECONNECT_DELAY_MS = 8_000;
 
 /**
@@ -398,6 +400,115 @@ const PANE_PREFETCH_DELAY_MS = 400;
  * under `ansi:`, so nobody's scrollback is orphaned by this.
  */
 const PANE_OUTPUT_FORMAT = 'ansi' as const;
+
+/**
+ * Everything about a pane that decides how it is read, from the pane alone.
+ *
+ * Four questions that keep being asked of the same two fields, answered once so
+ * they cannot drift apart: whether the reader is driving an editor, whether the
+ * program has taken the whole screen, which of the gateway's two output views
+ * the pane has to be read from, and -- built from the last two -- what a window
+ * of it is a window *of*.
+ *
+ * The shape is the reason this is a function rather than four expressions
+ * scattered down the render. `PaneWindow.shape` is the key a remembered window
+ * is filed under and the one thing `recallPaneWindow` will refuse a window
+ * over, and the warm cache's prefetched first screen now carries one too
+ * (`firstPaneScreen` in `lib/workspace-snapshot`) -- which is asked about a
+ * thousand lines above the render that builds `outputShape`, on a snapshot
+ * rather than on this screen's own state. Two spellings of the same string
+ * would eventually disagree by a colon, and the symptom would be a window
+ * silently never handed back rather than anything that looks like a bug.
+ *
+ * `profile` is the gateway's resolved answer and wins where it has one; it is
+ * absent until the shortcuts request lands, which is exactly the state the
+ * first frame is in.
+ */
+function paneReading(
+  pane: HerdrEntity | undefined,
+  profile: string | null | undefined
+): { editor: boolean; ownsScreen: boolean; source: PaneOutputSource; shape: string } {
+  const editor = isFullScreenTuiPane(
+    profile,
+    field(pane, 'terminal_title_stripped'),
+    field(pane, 'foreground_command')
+  );
+  // `alternate_on` is a fact about the pane and outranks the editor heuristic;
+  // a gateway too old to send it leaves the caller with what it had before.
+  const ownsScreen = terminalOwnsScreen(pane?.raw.scroll) ?? editor;
+  const source: PaneOutputSource = editor ? 'visible' : 'recent-unwrapped';
+  return {
+    editor,
+    ownsScreen,
+    source,
+    shape: `${PANE_OUTPUT_FORMAT}:${source}:${ownsScreen ? 'alt' : 'main'}`,
+  };
+}
+
+/**
+ * The warm prefetch's first screen, as a window this screen's own cache can
+ * hand back.
+ *
+ * A cache entry rather than only a seeded `output`, because seeding the string
+ * alone did not survive the render that resolves the selection. The screen
+ * mounts with `selection` at `initialSelection` -- pane id `''` -- and
+ * `reconcileSelection` fills it in from the first snapshot; that change trips
+ * `paneSwitched`, and the switch render restores the arriving pane's window
+ * from the cache. With nothing filed there the restore was
+ * `setOutput(restored?.output ?? '')`, so the seeded screen was replaced by a
+ * blank one render after it painted and stayed blank until the screen's own
+ * read landed. Filing it means the restore finds it and the seed survives the
+ * only thing that was erasing it.
+ *
+ * Both halves are built here rather than at the two call sites, so the one
+ * decision about which pane and which shape is made once. The cache is built
+ * here too rather than from the returned window on the calling render, because
+ * `useRef`'s argument is evaluated on every render and only used on the first
+ * -- an allocation per render of a screen that renders often, for a value
+ * nobody reads.
+ *
+ * `revision: -1` deliberately. The warm read happens after the snapshot it
+ * travels with, so the snapshot's own revision is a lower bound on what this
+ * text holds and claiming it would be claiming more than is known. -1 is what
+ * the screen already used for an unseeded window, so the first poll stays the
+ * full reconciliation it is today -- this keeps the text, not the freshness.
+ *
+ * The profile is deliberately left undefined: the shortcuts request has not
+ * been made on the frame this runs, so `outputShape` in the render below is
+ * built from the same absence and the two agree.
+ */
+function warmPaneSeed(serverId: string): { output: string; cache: PaneCache } {
+  const none = { output: '', cache: emptyPaneCache };
+  const warm = warmWorkspace(serverId);
+  if (!warm?.firstPane) return none;
+  const { paneId } = reconcileSelection(warm, initialSelection);
+  if (!paneId || warm.firstPane.paneId !== paneId) return none;
+  const pane = warm.panes.find((entity) => entity.id === paneId);
+  // The shape has to match or the window is declined: a pane that has handed
+  // its tty to an editor is read another way, and painting a stale main-screen
+  // window over it would be worse than the blank it replaces. This is the same
+  // comparison `recallPaneWindow` makes of every cached window, made here
+  // against one that arrived from outside the cache.
+  if (warm.firstPane.shape !== paneReading(pane, undefined).shape) return none;
+  const output = warm.firstPane.output;
+  if (!output) return none;
+  const window: PaneWindow = {
+    shape: warm.firstPane.shape,
+    output,
+    lineLimit: INITIAL_PANE_OUTPUT_LINES,
+    revision: -1,
+    canLoadEarlier: hasEarlierTerminalOutput(
+      output,
+      INITIAL_PANE_OUTPUT_LINES,
+      MAX_PANE_OUTPUT_LINES,
+      pane?.raw.scroll
+    ),
+    earlierRows: terminalOutputLineCount(output),
+    rangeUnsupported: false,
+    lastRead: null,
+  };
+  return { output, cache: warmPaneWindow(emptyPaneCache, paneId, window) };
+}
 
 /**
  * How long a selection has to stand still before the event stream is re-opened
@@ -625,7 +736,19 @@ export function ServerTerminalWorkspace({
   // Gives the in-memory Demo mirror one stable freshness boundary for this
   // mounted workspace. Real servers continue to use their persisted mirror.
   const [demoRailCheckedAtMs] = useState(() => Date.now());
-  const [output, setOutput] = useState('');
+  // Seeded from the prefetch when it read the pane this screen is about to
+  // land on, in the shape this screen reads. Everything else about the
+  // workspace already painted from that snapshot on the first frame; without
+  // this the terminal under it stayed empty until its own read returned, which
+  // made the instant chrome advertise the one thing that was not.
+  //
+  // The decision -- which pane, which shape, and whether the warm read is
+  // usable at all -- is `warmPaneSeed`, made once and read twice: here for the
+  // frame before the selection resolves, and into `paneCacheRef` for every
+  // frame after it. The poll below corrects or confirms whatever this paints,
+  // exactly as it does for `data`.
+  const [warmSeed] = useState(() => warmPaneSeed(serverId));
+  const [output, setOutput] = useState(warmSeed.output);
   const [draft, setDraft] = useState('');
   // Where the caret is in the draft, which is half of what decides whether an
   // `@` mention is open. Tracked rather than assumed, so moving the caret back
@@ -669,7 +792,36 @@ export function ServerTerminalWorkspace({
   // both of which end the visit it belongs to.
   const [composerRevealed, setComposerRevealed] = useState(false);
   const [stickBottomNonce, setStickBottomNonce] = useState(0);
+  const openThemeEditor = useOpenThemeEditor();
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  /** A theme package arriving from the output. Null when the terminal holds none. */
+  const [themeDrop, setThemeDrop] = useState<TerminalThemeDropState | null>(null);
+  // The prepared artwork behind a ready card. Held in a ref because it is not
+  // rendered from -- the card shows a name and the editor shows the rest -- and
+  // because it has to be disposed exactly once however the card leaves.
+  const themeCandidateRef = useRef<ThemeEditorCandidate | null>(null);
+  /**
+   * The download and staging behind a card that has not become one yet.
+   *
+   * The ref above is disposed on the way out, but a download still in flight
+   * owns nothing it can see: the cleanup ran against an empty ref, and the
+   * assignment that followed landed on a screen that had gone, leaving a whole
+   * staged directory under `Paths.cache` that nothing collects. So the work is
+   * owned from the moment it starts, cancelled here, and handed to the ref only
+   * through `ThemeImportRequest.handoff` -- the same boundary `ThemeLinkImport`
+   * uses, and it throws on an aborted signal before it marks the transfer, which
+   * is what closes the gap between checking and assigning.
+   */
+  const themeRequestRef = useRef<ThemeImportRequest | null>(null);
+  useEffect(
+    () => () => {
+      themeRequestRef.current?.cancel();
+      themeRequestRef.current = null;
+      themeCandidateRef.current?.prepared?.dispose();
+      themeCandidateRef.current = null;
+    },
+    []
+  );
   /** Whether the event stream is delivering. Decides how often output is re-read. */
   const [streamUp, setStreamUp] = useState(false);
   /**
@@ -784,8 +936,15 @@ export function ServerTerminalWorkspace({
    * here to remove. The rules it obeys (the bounds, the revision ordering, the
    * refusal of a reply overtaken in flight) are `lib/pane-cache`, tested
    * without a screen.
+   *
+   * Starts holding the warm prefetch's first screen when there is one, so the
+   * render that resolves the selection restores it rather than blanking over
+   * it -- see `warmPaneSeed`, which is also what `output` above was seeded
+   * from. Filed under the landing pane's own id and shape, so it is subject to
+   * exactly the same refusal as any other window: a pane that turned into an
+   * editor before the screen opened is declined here too.
    */
-  const paneCacheRef = useRef<PaneCache>(emptyPaneCache);
+  const paneCacheRef = useRef<PaneCache>(warmSeed.cache);
   /**
    * Which pane the `output` on screen belongs to.
    *
@@ -1507,11 +1666,12 @@ export function ServerTerminalWorkspace({
   // both the title and the gateway's own title-derived `profile` still say
   // `shell` for as long as the pane lives, and only `foreground_command`
   // (`#{pane_current_command}`) tracks what the pane is actually running.
-  const fullScreenPane = isFullScreenTuiPane(
-    shortcuts?.profile,
-    selectedPane ? field(selectedPane, 'terminal_title_stripped') : null,
-    selectedPane ? field(selectedPane, 'foreground_command') : null
-  );
+  //
+  // Read off `paneReading`, which answers this and the three questions below
+  // it from the same two fields -- see its docblock for why the shape in
+  // particular has exactly one spelling in this app.
+  const selectedPaneReading = paneReading(selectedPane, shortcuts?.profile);
+  const fullScreenPane = selectedPaneReading.editor;
   /*
     An editor arrives bare.
 
@@ -1607,7 +1767,7 @@ export function ServerTerminalWorkspace({
   // same old gateway stays as it was too, which is the bug this fixes -- but
   // only a gateway that reports the field can fix it, and pretending otherwise
   // would mean guessing from the pane's name.
-  const paneOwnsScreen = terminalOwnsScreen(selectedPane?.raw.scroll) ?? fullScreenPane;
+  const paneOwnsScreen = selectedPaneReading.ownsScreen;
   // The pane's own width, as the gateway reports it -- the authoritative grid
   // size, not the widest-line guess `parseTerminalSnapshot` falls back to when
   // this is absent. `undefined` (rather than 0) for a pane the gateway did not
@@ -1845,13 +2005,40 @@ export function ServerTerminalWorkspace({
    * runs. No extra request: `data.agents` and `data.panes` are refreshed for
    * the pane strip, and this is the same join `collaborationAgents` has always made.
    */
-  const assignmentCandidates = useMemo(
-    () =>
-      collaborationAgents(data.agents, data.panes, selection.paneId, selection.workspaceId).flatMap(
-        (candidate) => (candidate.instanceId ? [candidate] : [])
-      ),
-    [data.agents, data.panes, selection.paneId, selection.workspaceId]
-  );
+  const assignmentCandidates = useMemo(() => {
+    // The assistant in front of the reader leads the row.
+    //
+    // `collaborationAgents` excludes the source pane, and that was right when
+    // this was "delegate to someone else". The strip is not that: it answers
+    // "who is this for", and the one on screen is a legitimate answer -- often
+    // the intended one. Pressing a shortcut that carries instructions while
+    // looking at codex and being offered only claude is the case that showed
+    // it. It is also the safest target of the three: sending to it is the
+    // ordinary composer send, over a pane whose output is streaming, and no
+    // instance-bound contract is needed to make it honest.
+    const others = collaborationAgents(
+      data.agents,
+      data.panes,
+      selection.paneId,
+      selection.workspaceId
+    );
+    const here = data.agents.find((agent) => field(agent, 'pane_id') === selection.paneId);
+    const current = here
+      ? [
+          {
+            paneId: selection.paneId,
+            instanceId: field(here, 'instance_id'),
+            name: panelTitle(selectedPane, here),
+            status: here.status ?? 'unknown',
+            cwd: field(selectedPane, 'cwd'),
+            sameWorkspace: true,
+          },
+        ]
+      : [];
+    return [...current, ...others].flatMap((candidate) =>
+      candidate.instanceId ? [candidate] : []
+    );
+  }, [data.agents, data.panes, selection.paneId, selection.workspaceId, selectedPane]);
   // Only images can be opened full screen, and the viewer pages between them,
   // so the tapped tile's position is resolved within that subset.
   const previewImages = useMemo<PreviewImage[]>(
@@ -1869,7 +2056,7 @@ export function ServerTerminalWorkspace({
     paneScreenRowsRef.current = selectedPaneScreenRows;
   }, [paneOwnsScreen, selectedPaneScreenRows]);
 
-  const outputSource: PaneOutputSource = fullScreenPane ? 'visible' : 'recent-unwrapped';
+  const outputSource = selectedPaneReading.source;
   // The pair that says what a window is a window *of*. A pane can change shape
   // while nobody is looking -- a shell hands its tty to nvim and the source it
   // has to be read from turns with it -- so a remembered window is only handed
@@ -1882,7 +2069,7 @@ export function ServerTerminalWorkspace({
   // boundary is crossed the way a pane switch is -- the main-screen window is
   // filed on the way in and handed back whole on the way out, which is the
   // reader's history surviving the editor.
-  const outputShape = `${PANE_OUTPUT_FORMAT}:${outputSource}:${paneOwnsScreen ? 'alt' : 'main'}`;
+  const outputShape = selectedPaneReading.shape;
   // Matches the terminal surface exactly, whichever pack is showing -- read
   // from the same palette the renderer draws with rather than restated, so the
   // chrome behind the grid can never be a shade off it.
@@ -2601,7 +2788,15 @@ export function ServerTerminalWorkspace({
             if (!paneReadIsCurrent(paneCacheRef.current, paneId, revision)) return;
             if (!value) return;
             paneCacheRef.current = warmPaneWindow(paneCacheRef.current, paneId, {
-              shape: `${PANE_OUTPUT_FORMAT}:${outputSource}`,
+              // `outputShape`, not a shape spelled out again here. The two
+              // disagreed by a component -- this filed `ansi:recent-unwrapped`
+              // while every recall asks for `ansi:recent-unwrapped:main` -- and
+              // `recallPaneWindow` refuses on any mismatch, so *every*
+              // prefetched window was thrown away on arrival and the whole
+              // warm-up spent a round trip per neighbour for nothing. Not the
+              // documented refusal below, which is a real question about a real
+              // neighbour; this was the string never matching itself.
+              shape: outputShape,
               output: value,
               // A warm-up is always the first page -- a seed for the switch,
               // never a claim about depth. `warmPaneWindow`, not
@@ -2627,7 +2822,16 @@ export function ServerTerminalWorkspace({
       }
     }, PANE_PREFETCH_DELAY_MS);
     return () => clearTimeout(timer);
-  }, [connection.phase, data.sessionId, outputSource, ready, selection.paneId, serverId, tabPanes]);
+  }, [
+    connection.phase,
+    data.sessionId,
+    outputShape,
+    outputSource,
+    ready,
+    selection.paneId,
+    serverId,
+    tabPanes,
+  ]);
 
   // The permission menu this pane may be blocked on. Everything about it --
   // the read, the answer, the 409 retry rule -- lives in the hook; the screen
@@ -3359,10 +3563,86 @@ export function ServerTerminalWorkspace({
   );
 
   /** A file path tapped in the terminal view. */
+  /**
+   * A theme package tapped in the output, handled without leaving it.
+   *
+   * A `.muqun-theme` has exactly one meaning, so the tap does not route through
+   * the file viewer and then ask the reader to press Preview: that second press
+   * asks a question the extension already answered. It downloads into the card
+   * above the Latest pill and previews from there.
+   */
+  const openThemePackage = useCallback(
+    async (path: string, name: string) => {
+      // One at a time, and the new tap owns the card: a second package dropped
+      // while the first is still arriving cancels it rather than racing it into
+      // the same ref. See `themeRequestRef` for why the work is owned at all.
+      themeRequestRef.current?.cancel();
+      const request = new ThemeImportRequest();
+      themeRequestRef.current = request;
+      setThemeDrop({ phase: 'downloading', name, received: 0, total: null });
+      let prepared: PreparedThemeAssets | undefined;
+      let transferred = false;
+      try {
+        const asset = await resolveAssetByPath(
+          data.sessionId,
+          selection.tabId,
+          path,
+          field(selectedPane, 'cwd')
+        );
+        if (!asset) throw new Error(t`This file is not among the session artifacts.`);
+        const bytes = await readAssetBytes(asset, {
+          signal: request.signal,
+          maxBytes: THEME_LIMITS.packageBytes,
+          onProgress: (received, total) => {
+            if (!request.signal.aborted)
+              setThemeDrop({ phase: 'downloading', name, received, total });
+          },
+        });
+        const unpacked = unpackTheme(bytes);
+        prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
+        const candidate = { manifest: unpacked.manifest, prepared };
+        request.handoff(() => {
+          themeCandidateRef.current?.prepared?.dispose();
+          themeCandidateRef.current = candidate;
+        });
+        transferred = true;
+        setThemeDrop({
+          phase: 'ready',
+          name,
+          themeName: unpacked.manifest.name,
+          applying: false,
+        });
+      } catch (failure) {
+        // A download this screen itself cancelled is not news, and the card it
+        // would report on has already gone with the screen.
+        if (!request.isCanceled)
+          setThemeDrop({
+            phase: 'failed',
+            name,
+            message: describeGatewayFailure(failure, t`Could not open this theme.`).message,
+          });
+      } finally {
+        if (!transferred) prepared?.dispose();
+        if (themeRequestRef.current === request) themeRequestRef.current = null;
+      }
+    },
+    [data.sessionId, selection.tabId, selectedPane, t]
+  );
+
   const openFileLink = useCallback(
-    (path: string) =>
-      openMatchingAsset((sessionId, tabId) => resolveAssetByPath(sessionId, tabId, path)),
-    [openMatchingAsset]
+    (path: string) => {
+      if (/\.muqun-theme$/i.test(path)) {
+        void openThemePackage(path, path.split('/').pop() ?? path);
+        return;
+      }
+      openMatchingAsset((sessionId, tabId) =>
+        // The pane's directory travels with the path: a relative one is
+        // relative to where that terminal is standing, and only this screen
+        // knows where that is.
+        resolveAssetByPath(sessionId, tabId, path, field(selectedPane, 'cwd'))
+      );
+    },
+    [openMatchingAsset, openThemePackage, selectedPane]
   );
 
   /** An `asset-ref` part tapped in the structured view, which names an id. */
@@ -4131,6 +4411,36 @@ export function ServerTerminalWorkspace({
                     />
                   </TerminalBoundary>
                 )}
+                {themeDrop ? (
+                  <TerminalThemeDrop
+                    state={themeDrop}
+                    bottomInset={composerVisible ? composerHeight : 0}
+                    onApply={() => {
+                      const candidate = themeCandidateRef.current;
+                      if (!candidate || themeDrop.phase !== 'ready') return;
+                      setThemeDrop({ ...themeDrop, applying: true });
+                      // The editor owns the preview from here: it is the one
+                      // surface that shows both variants, the contrast verdict
+                      // and the opacity floors, and a theme arriving from
+                      // another machine is exactly as unreviewed as one picked
+                      // by hand. The card's job was to get it here.
+                      openThemeEditor(candidate);
+                      themeCandidateRef.current = null;
+                      setThemeDrop(null);
+                    }}
+                    onDismiss={() => {
+                      // Dismissing during the download has to stop it as well as
+                      // clear the card: the staging it would otherwise finish
+                      // has nowhere left to be shown, and would sit in the cache
+                      // directory until the screen itself went away.
+                      themeRequestRef.current?.cancel();
+                      themeRequestRef.current = null;
+                      themeCandidateRef.current?.prepared?.dispose();
+                      themeCandidateRef.current = null;
+                      setThemeDrop(null);
+                    }}
+                  />
+                ) : null}
               </Animated.View>
             </View>
           </View>
@@ -4931,31 +5241,6 @@ function sameSelection(current: Selection, next: Selection): boolean {
   );
 }
 
-function reconcileSelection(data: ServerData, current: Selection): Selection {
-  const workspace =
-    data.workspaces.find((item) => item.id === current.workspaceId) ??
-    data.workspaces.find((item) => Boolean(item.raw.focused)) ??
-    data.workspaces[0];
-  if (!workspace) return initialSelection;
-
-  const tabs = data.tabs.filter((item) => field(item, 'workspace_id') === workspace.id);
-  const activeTabId = field(workspace, 'active_tab_id');
-  const tab =
-    tabs.find((item) => item.id === current.tabId) ??
-    tabs.find((item) => item.id === activeTabId) ??
-    tabs.find((item) => Boolean(item.raw.focused)) ??
-    tabs[0];
-  if (!tab) return { workspaceId: workspace.id, tabId: '', paneId: '' };
-
-  const panes = data.panes.filter((item) => field(item, 'tab_id') === tab.id);
-  const pane =
-    panes.find((item) => item.id === current.paneId) ??
-    panes.find((item) => Boolean(item.raw.focused)) ??
-    panes.find((item) => field(item, 'agent').length > 0) ??
-    panes[0];
-  return { workspaceId: workspace.id, tabId: tab.id, paneId: pane?.id ?? '' };
-}
-
 /** Kept on the switch pills for native end-to-end assertions. */
 const TAB_SWITCH_TEST_ID = 'tab-position-indicator';
 const WORKSPACE_SWITCH_TEST_ID = 'workspace-position-indicator';
@@ -5053,6 +5338,13 @@ const styles = StyleSheet.create({
   },
   connectionPillLabel: {
     flexShrink: 1,
+    // `flexShrink` alone cannot shrink this. A flex item's automatic minimum
+    // size is its content's size, so without `minWidth: 0` the wrapper keeps
+    // its full intrinsic width, the sentence never wraps to the second line it
+    // is allowed, and the pill's `overflow: hidden` takes the end of it off
+    // mid-word with no ellipsis to admit it -- which is how "Server offline ·
+    // Waiting for the network" reached a phone as "Waiting for the".
+    minWidth: 0,
   },
   connectionPillText: {
     fontWeight: '600',

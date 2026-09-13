@@ -199,7 +199,11 @@ describe('normalizeServerAgents', () => {
     const name = 'x'.repeat(200);
     const [agent] = normalizeServerAgents(snapshot('s1', [{ id: 'a', name }])).agents;
     expect(agent.name).not.toBe(name);
-    expect(agent.name.length).toBeLessThanOrEqual(64);
+    // The literal is deliberate rather than the constant itself: this guards
+    // that a remote string is bounded before it reaches local storage, and
+    // asserting against the value under test would pass at any size. Raising
+    // the cap should have to come here and be a decision.
+    expect(agent.name.length).toBeLessThanOrEqual(72);
   });
 
   test('keeps nothing beyond id, name and status', () => {

@@ -430,6 +430,18 @@ function selectionPaths() {
     ts.ScriptKind.TSX
   );
   const found: Record<string, string> = {};
+  // `reconcileSelection` moved to `lib/workspace-selection` so the warm cache
+  // could choose the same pane the screen does -- two answers to "which pane"
+  // would eventually differ, and the reader would watch one terminal be
+  // replaced by another. It is still production selection code and still has to
+  // be executed here, so it is parsed from where it now lives.
+  const selectionPath = 'src/lib/workspace-selection.ts';
+  const selectionSource = ts.createSourceFile(
+    selectionPath,
+    readFileSync(selectionPath, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true
+  );
   let route = '';
   let readiness = '';
   function visit(node: ts.Node) {
@@ -439,7 +451,11 @@ function selectionPaths() {
         node.name?.text ?? ''
       )
     )
-      found[node.name!.text] = node.getText(source);
+      // Without the `export` keyword: these are evaluated in a VM that has no
+      // module wrapper, and a transpiled `export function` becomes an
+      // assignment to an `exports` that is not there. The declaration itself is
+      // what this test runs.
+      found[node.name!.text] = node.getText(node.getSourceFile()).replace(/^export\s+/, '');
     if (
       ts.isVariableDeclaration(node) &&
       ['setSelection', 'selectTab'].includes(node.name.getText(source))
@@ -458,6 +474,7 @@ function selectionPaths() {
     ts.forEachChild(node, visit);
   }
   visit(source);
+  visit(selectionSource);
   if (!route || !readiness || Object.keys(found).length !== 6)
     throw new Error('Production selection paths missing');
   const owner = new DeliveryOwnership();

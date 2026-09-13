@@ -77,6 +77,10 @@ mock.module('@/lib/demo-gateway', () => ({
 // something another suite's code path reaches for breaks that suite, not this
 // one. See the same note in `stores/__tests__/ssh-hosts.test.ts`.
 mock.module('@/lib/gateway-client', () => ({
+  // Carried for the other suite's sake: `mock.module` is process-wide, so
+  // whichever fake registers first is the one everything gets.
+  INITIAL_PANE_OUTPUT_LINES: 240,
+  readPaneOutput: async () => '',
   gatewayTransport: {
     loadHealth: async () => ({ ok: true }),
     loadSessions: async () => ({ sessions: [] }),

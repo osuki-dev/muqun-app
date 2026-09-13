@@ -2,19 +2,37 @@ import * as bunTest from 'bun:test';
 
 const { beforeEach, expect, mock, test } = bunTest;
 
-type Call = { kind: string; sessionId?: string };
+type Call = { kind: string; sessionId?: string; paneId?: string };
 let calls: Call[] = [];
 let sessionList: { id: string; name?: string }[] = [];
 let failOn: string | null = null;
 
-function entity(id: string) {
-  return { id, type: 'pane', fields: {} };
+/**
+ * The shape `normalizeGatewayEntities` produces, `raw` included.
+ *
+ * It used to be `{ id, type, fields }` and that was enough while the loader only
+ * carried these lists around. The warm path now runs `reconcileSelection` over
+ * them to find the pane it should prefetch, and that reads `raw.focused` -- so a
+ * fake without `raw` threw inside the prefetch, the warm was abandoned, and the
+ * test saw nothing cached. Production entities always have it.
+ */
+function entity(id: string, fields: Record<string, string> = {}) {
+  return { id, type: 'pane', fields, raw: { id, ...fields } };
 }
 
 // What the loader touches, plus the handful another suite's store reaches for.
 // `mock.module` is process-wide: whichever fake registers first is the one every
 // suite gets, so each has to carry the other's surface as well as its own.
 mock.module('@/lib/gateway-client', () => ({
+  // The warm path reads the landing pane's screen so the terminal paints on the
+  // first frame. Recorded like every other call so a test can assert it was
+  // made -- and so a failure here is the prefetch's, not the fake's.
+  INITIAL_PANE_OUTPUT_LINES: 240,
+  readPaneOutput: async (sessionId: string, paneId: string) => {
+    calls.push({ kind: 'paneOutput', sessionId, paneId });
+    if (failOn === 'paneOutput') throw new Error('gateway is away');
+    return `screen of ${paneId}`;
+  },
   configureGateway: () => {},
   setGatewayLabel: async () => {},
   revokeOwnGatewayPairing: async () => {},
@@ -35,11 +53,11 @@ mock.module('@/lib/gateway-client', () => ({
     },
     loadTabs: async (sessionId: string) => {
       calls.push({ kind: 'tabs', sessionId });
-      return [entity(`t:${sessionId}`)];
+      return [entity(`t:${sessionId}`, { workspace_id: `w:${sessionId}` })];
     },
     loadPanes: async (sessionId: string) => {
       calls.push({ kind: 'panes', sessionId });
-      return [entity(`p:${sessionId}`)];
+      return [entity(`p:${sessionId}`, { tab_id: `t:${sessionId}` })];
     },
     loadAgents: async (sessionId: string) => {
       calls.push({ kind: 'agents', sessionId });
@@ -92,6 +110,20 @@ test('the choices come back alongside the snapshot, in the gateway order', async
 test('warming stores a snapshot the workspace can paint from', async () => {
   await warmConfiguredWorkspace('s1', 'beta');
   expect(warmWorkspace('s1')?.sessionId).toBe('beta');
+});
+
+test('the warmed screen records the one shape the prefetch reads it under', async () => {
+  await warmConfiguredWorkspace('s1', 'beta');
+  // Both halves of the contract the terminal screen checks on arrival: the pane
+  // `reconcileSelection` chose, and the shape that window is a window *of*. The
+  // screen builds the same string from the pane entity and declines the seed
+  // when it differs -- a pane that has since handed its tty to an editor is
+  // read another way -- so a change to either side has to be a change to both.
+  expect(warmWorkspace('s1')?.firstPane).toEqual({
+    paneId: 'p:beta',
+    output: 'screen of p:beta',
+    shape: 'ansi:recent-unwrapped:main',
+  });
 });
 
 test('warming a server that is already warm asks the gateway nothing', async () => {
