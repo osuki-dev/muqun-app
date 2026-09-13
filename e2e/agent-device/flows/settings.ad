@@ -347,19 +347,43 @@ wait stable 400 5000
 # section s88
 is visible "${TARGET}"
 
-# section s89
-# Used by the step that must leave Quick actions visible. Scrolling down toward
-# it does not work: the row enters the accessibility tree while still off-screen
-# and settles at y=-20, just above the top edge, so "scroll until visible" never
-# becomes true and a tap on its clamped centre hits the status bar -- which on
-# iOS scrolls the list to the top and loses it outright.
-#
-# Measured on this runtime: at the bottom of Settings the row is at y=-20, and
-# one `scroll up --pixels 60` puts it at y=414. `--pixels` is a gesture
-# magnitude rather than a literal delta, so 96 and above carry it straight back
-# out of the tree.
+# section quick-actions-bottom
+# The anchor the two nudges below are measured from. `scroll bottom` is a
+# position the list always has, whatever is in it, which is the only reason the
+# nudges can be a fixed number of pixels at all.
 scroll bottom
 wait stable 400 5000
+
+# section quick-actions-seek
+# Walk back up until the Quick actions row is in the tree again.
+#
+# This used to be part of the anchor: the nudges below were measured as a
+# distance from the bottom of the list, because the row happened to be one
+# screen above it. STORAGE then landed between SECURITY and ABOUT and put
+# another 832px underneath the row, and a fixed distance from the bottom
+# stopped naming it -- the flow tapped an empty part of ABOUT and failed two
+# steps later looking for a sheet that never came. A distance from the bottom
+# of a growing list is not a description of a row in the middle of it.
+#
+# So the seek is a loop rather than a number, and what it restores is the
+# *precondition* the two nudges were measured against rather than a distance:
+# the row just back inside the top edge. `scroll up --pixels 320` is the
+# flick the rest of this flow uses; measured here, each one moves the list
+# about 409px, and the first one that brings the row back lands it at
+# y=22..188 -- the y=32..198 the Android nudge was calibrated on.
+scroll up --pixels 320
+wait stable 400 5000
+
+# section s89
+# The iOS nudge, from the precondition the seek above restores.
+#
+# Tapping the row where the seek leaves it does not work: it settles at y=-20,
+# just above the top edge, and a tap on its clamped centre hits the status bar
+# -- which on iOS scrolls the list to the top and loses it outright.
+#
+# Measured on this runtime: from y=-20, one `scroll up --pixels 60` puts the
+# row at y=414. `--pixels` is a gesture magnitude rather than a literal delta,
+# so 96 and above carry it straight back out of the tree.
 scroll up --pixels 60
 
 # section s89-android
@@ -371,20 +395,18 @@ scroll up --pixels 60
 # flow fails two steps later looking for a sheet that never came.
 #
 # `gesture pan` is a drag rather than a flick, so its delta is the delta.
-# Measured here on a Pixel 8 emulator at 1080x2400: from the bottom of
-# Settings, panning down 400 moves the row from y=32..198 to y=403..569, which
-# clears the header with room to spare.
-scroll bottom
-wait stable 400 5000
+# Measured here on a Pixel 8 emulator at 1080x2400: from y=32..198, panning
+# down 400 moves the row to y=403..569, which clears the header with room to
+# spare.
 gesture pan 540 800 0 400 400
 wait stable 400 5000
 
 # section clear-native-header
 # Settle only. This used to scroll up to lift the row clear of the native
 # large-title header, back when the step above overshot and left it at y=-20.
-# That step is now a measured `scroll bottom` plus one small nudge, so the row
-# arrives where it is reachable and any further scrolling here only carries it
-# straight back out of the tree.
+# That step is now a seek plus one small measured nudge, so the row arrives
+# where it is reachable and any further scrolling here only carries it straight
+# back out of the tree.
 wait stable 400 5000
 
 # section s90

@@ -3875,6 +3875,18 @@
         "run": "flows/settings.ad#s88"
       },
       {
+        "run": "flows/settings.ad#quick-actions-bottom"
+      },
+      {
+        "target": {
+          "text": "Quick actions, Add commands and custom key combinations"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 20000,
+        "run": "flows/settings.ad#quick-actions-seek"
+      },
+      {
         "when": {
           "env": "PLATFORM",
           "equals": "ios"
