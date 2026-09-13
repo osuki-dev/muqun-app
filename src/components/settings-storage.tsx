@@ -295,13 +295,24 @@ export function SettingsStorage({ title }: { title: string }) {
    * "some of them could not be removed" line to go with the cache's, and there
    * does not need to be: a theme that stayed is still in the library, so the
    * count this row states after the recount is the answer.
+   *
+   * What is removed is re-decided here, against the library as it is on this
+   * tick, and never the `unused` the row is displaying. That one was computed
+   * when the theme directory was last walked, and the walk only runs on focus:
+   * the theme sheet two sections up applies a selection over this screen
+   * without it ever losing focus, so between the measurement and this tap the
+   * displayed plan can name the theme that is now applied. Removing it would be
+   * the single thing this action must never do, so the ids are read fresh. No
+   * files are passed, because only the id set is wanted -- the bytes are the
+   * row's business and `planUnusedThemes` computes the two independently.
    */
   async function removeUnusedThemes() {
     if (removing) return;
     setRemoving(true);
     let failed = false;
-    const { remove } = useThemeLibrary.getState();
-    for (const installed of unused?.removable ?? []) {
+    const { library, remove } = useThemeLibrary.getState();
+    const doomed = planUnusedThemes(library.themes, library.selection, []).removable;
+    for (const installed of doomed) {
       await whenIdle(100);
       try {
         remove(installed.id);
