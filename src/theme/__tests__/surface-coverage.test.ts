@@ -5,6 +5,13 @@ import { THEME_SLOTS } from '../schema';
 
 // Contract guard, not a replacement for native screenshots or interaction QA.
 // Every advertised slot must retain a real consumer rather than a schema-only promise.
+//
+// A list rather than a single file wherever a slot is drawn in more than one
+// place. `emptyState.illustration` is the slot that made that necessary: it is
+// the pack's one square, self-contained picture, so besides the "Pair your
+// first server" card it is now also what the launch overlay and the lock
+// screen show in place of the app's mark. Naming only the card would let the
+// other two be deleted without this guard noticing, which is the whole job.
 const consumers = {
   'shell.background': 'src/app/settings.tsx',
   'home.background': 'src/app/(drawer)/index.tsx',
@@ -15,7 +22,7 @@ const consumers = {
   'cards.decoration': 'src/components/settings-chrome.tsx',
   'buttons.primary.background': 'src/components/themed-button.tsx',
   'tabs.background': 'src/app/commands.tsx',
-  'emptyState.illustration': 'src/app/(drawer)/index.tsx',
+  'emptyState.illustration': ['src/app/(drawer)/index.tsx', 'src/theme/launch-artwork.ts'],
 } as const;
 
 test('every supported artwork slot has a named runtime consumer', () => {
@@ -24,13 +31,31 @@ test('every supported artwork slot has a named runtime consumer', () => {
   // written down, and it is what this test exists to hold to account.
   const slots: string[] = [...THEME_SLOTS];
   expect(slots.sort()).toEqual(Object.keys(consumers).sort());
-  for (const [slot, file] of Object.entries(consumers)) {
-    const source = readFileSync(file, 'utf8');
-    if (file.endsWith('glass-chrome.tsx')) {
-      expect(source).toContain('`${surface}.background`');
-    } else {
-      expect(source).toContain(slot);
+  for (const [slot, named] of Object.entries(consumers)) {
+    for (const file of typeof named === 'string' ? [named] : named) {
+      const source = readFileSync(file, 'utf8');
+      if (file.endsWith('glass-chrome.tsx')) {
+        expect(source).toContain('`${surface}.background`');
+      } else {
+        expect(source).toContain(slot);
+      }
     }
+  }
+});
+
+test('both launch surfaces take their mark from the shared fallback chain', () => {
+  // The slot name lives in `launch-artwork.ts` and the order it implies --
+  // illustration, then Home logo, then the bundled mark -- is tested there.
+  // What this holds is that neither screen grows a second opinion: a lock
+  // screen that resolved the slot itself could drift from the overlay, and
+  // the two are the first and last thing a reader sees in a session.
+  for (const file of ['src/components/animated-icon.tsx', 'src/components/app-lock-gate.tsx']) {
+    const source = readFileSync(file, 'utf8');
+    expect(source).toContain("from '@/hooks/use-launch-artwork'");
+    expect(source).toContain('useLaunchArtwork()');
+    // Still the bundled mark when a pack offers neither picture nor logo.
+    expect(source).toContain('loading-mark.png');
+    expect(source).toContain("kind === 'default'");
   }
 });
 
