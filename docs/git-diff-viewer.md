@@ -5,7 +5,8 @@ is a checkout gets one more icon beside the keyboard controls. It opens a
 full-height sheet listing the changed files; expanding a file fetches that file's
 patch and nothing else. Nothing parses the terminal screen, nothing holds a whole
 repository's diff in the JS heap, and a Gateway that has never heard of the
-feature makes the icon disappear rather than fail.
+feature makes the icon disappear rather than fail. §5.1 sets out the three-layer
+capability model the feature sits in, and the one per-pane context route it adds.
 
 This is the design of record and the research behind it. Numbers marked
 _measured_ were run here; numbers marked _estimated_ are extrapolations.
@@ -488,7 +489,9 @@ export function useGitRepoStatus(
 ```
 
 Backed by a module-level `Map<cwd, GitRepoStatus>` in `src/lib/git-repo-cache.ts`,
-not React state, so leaving a pane and coming back is instant. The rule against
+not React state, so leaving a pane and coming back is instant. The data behind it
+is the pane context route (§5.1): one request answers cwd, `git` and the badge
+count together, and `git: null` is the cached "not a repo" answer. The rule against
 flicker is **start hidden, never hide once shown for this cwd**: an unknown cwd
 renders nothing at all — the `FileMentionPanel` discipline
 (`file-mention-panel.tsx:59`, "with nothing to show it renders nothing") — and once
@@ -550,17 +553,99 @@ eleven catalogs under `src/i18n/locales/` pick up the new ids.
 
 ---
 
-## 5. Does the Gateway need changes? Yes — three routes and one capability
+## 5. Does the Gateway need changes? Yes — one context route, two git routes, two capabilities
+
+### 5.1 Three layers, not one
+
+The question behind this feature is bigger than diffs: should the Gateway know,
+per pane, where the work is, what is running there, and what can be done about
+it, so that a phone can tap an icon and ask? Yes — and most of the answer is
+already in the tree, in three layers that must stay distinct:
+
+| Layer                    | What it answers                                          | Where it lives today                                                                                                                                                                                        | Shape                                     |
+| ------------------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Gateway capabilities** | "Does this Gateway have this API at all?"                | `API_CAPABILITIES` (`main.rs:304-332`) on `/api/health`                                                                                                                                                     | static strings, one per feature, additive |
+| **Pane facts**           | "Where is this pane, what runs in it, is it a checkout?" | `Pane.cwd`, `foreground_command`, `agent`, `agent_status` (`backend/model.rs:125-150`); `recent_cwds` adds `git: bool` (`main.rs:7266-7292`); the parts descriptor says native / dictionary / text per pane | dynamic, per pane, read on demand         |
+| **Agent behaviour**      | "What does _this kind_ of agent respond to?"             | `agents.json` profiles: the interrupt key, the startup command, approvals — surfaced by `pane_shortcuts` (`main.rs:8136`) and `pane_approvals`                                                              | per agent kind, declared, not detected    |
+
+The discipline that keeps them apart: **a capability is a static promise about
+the API; a fact is something observed about one pane; behaviour is declared per
+agent kind.** A working directory is a fact, not a capability, so there is no
+"per-cwd capability" namespace to invent. Whether the diff icon shows is a
+decision the App makes from a capability (`git_diff` is present) and a fact (this
+pane's cwd is a checkout). Neither alone is enough, and neither is a new kind of
+thing.
+
+What is missing is not a layer but a **join**. Today the App would stitch
+`get_pane`, `recent-cwds`, `shortcuts` and the parts descriptor to answer "what is
+this pane" — four requests, three of which repeat work the Gateway already did to
+answer the first. So the one genuinely new route is a read-only per-pane context:
+
+```jsonc
+// GET /api/sessions/{session_id}/panes/{pane_id}/context
+{ "schema_version": "1.5.0", "capabilities": { … }, "data": {
+  "cwd": "/Users/x/p",
+  "cwd_in_fence": true,               // is_scannable_root + session_asset_roots
+  "git": {                            // null when cwd is not a checkout, or cwd unknown
+    "toplevel": "/Users/x/p", "branch": "feat/git-diff-viewer",
+    "upstream": "origin/main", "ahead": 2, "behind": 0, "detached": false,
+    "head": "70c8c85", "changed_files": 3 },
+  "agent": {                          // null for a plain shell
+    "kind": "claude", "instance_id": "…", "status": "idle",
+    "profile": "claude",
+    "actions": ["interrupt", "approvals", "native_parts"],
+    "usage_source": null              // see below
+  } } }
+```
+
+`git` is the `.git` stat plus one `git status --porcelain=v2 --branch` bounded the
+same way as §5.3 below; `changed_files` is what the badge shows, so the badge no
+longer needs `/git/status` at all. `agent.actions` is derived from the profile,
+not detected, which is why it can be trusted. Everything in this body is
+already computed somewhere in `main.rs`; the route only assembles it.
+
+**Agent usage is data, not a capability, and it is kept out of the context
+route on purpose.** Tokens, cost and context-window fill exist only where the
+agent leaves a machine-readable trace — Claude Code's session JSONL and
+statusline hook, and not much else today. That is a per-agent-kind adapter:
+
+- capability `agent_usage`, advertised only when at least one profile declares a
+  `usage_source` (`claude_session_jsonl` is the first and, for now, only value);
+- `GET …/panes/{pane_id}/usage`, answering `null` with a reason (`no_source`,
+  `not_yet`) when the pane's agent has no adapter or has not written anything;
+- the App shows "this agent does not report usage", never an estimate. The
+  AGENTS.md rule against fabricated progress applies to usage verbatim: a number
+  the Gateway did not read from the agent is not shown.
+
+The context route carries `usage_source` so the App knows whether tapping for
+usage is worth a request, and nothing else about usage.
+
+**Git is a fixed verb table, not a command runner.** "We can run git diff, or
+other things" is right only in the narrow sense: each verb is its own handler
+with its own fixed argument prefix, its own clamps and its own capability string
+where the verb is new API. The client never supplies an argument that reaches
+git. v1 is `status` and `diff`; v2 adds `show` and `log`. A verb is a Gateway
+capability because it is API; which verbs make sense for a pane is a fact the
+context route answers with `git: null` or not. The `create_task` fence — cwd must
+be a directory this session already works in (`main.rs:11837`) — is reused as-is.
+
+### 5.2 The routes
 
 Everything follows the `pane_files` handler (`main.rs:8014-8062`) as its template.
 
 Routes, beside the existing pane routes at `main.rs:2084`:
 
 ```
+GET /api/sessions/{session_id}/panes/{pane_id}/context
 GET /api/sessions/{session_id}/panes/{pane_id}/git/status
 GET /api/sessions/{session_id}/panes/{pane_id}/git/diff?path=&staged=&context=&from=&lines=
 GET /api/sessions/{session_id}/panes/{pane_id}/git/show?rev=          (v2)
+GET /api/sessions/{session_id}/panes/{pane_id}/usage                  (v2, agent_usage)
 ```
+
+`context` ships under a capability of its own, **`pane_context`**, because it is
+useful without git and older clients must be able to tell it apart from a Gateway
+that merely has `git_diff`.
 
 Capability `git_diff` in `API_CAPABILITIES` (`main.rs:304`). Bump
 `GATEWAY_API_VERSION` (`main.rs:205`) and `CONTENT_SCHEMA_VERSION` (`main.rs:256`)
@@ -569,7 +654,7 @@ every previous bump did, add the paths to `openapi_spec()`, and add an
 announced-and-documented test in the family of
 `the_api_version_and_capabilities_announce_task_dispatch` (`main.rs:16276`).
 
-Security, in order:
+### 5.3 Security, in order
 
 1. `require_device(&state, &headers)?` first, like every session route
    (`main.rs:10476`).
@@ -615,26 +700,26 @@ tmux backends included.**
 
 App:
 
-| File                                           | Change                                                                                                                                                          |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/git-diff.ts`                          | _new_. `GitFileChange`, `GitDiffRow`, `GIT_DIFF_CAPABILITY`, `gatewaySupportsGitDiff`, `parseUnifiedPatch`, `flattenDiffRows`. Pure — no transport, no React.   |
-| `src/lib/gateway-client.ts`                    | _new exports_ `loadGitStatus`, `loadGitFileDiff` with demo short-circuits and abort signals; re-export the vocabulary as `pane-parts` is re-exported (`:1138`). |
-| `src/lib/demo-gateway.ts`                      | `demoGitStatus`, `demoGitDiff`; `'git_diff'` into `demoHealth` (`:872`).                                                                                        |
-| `src/lib/git-repo-cache.ts`                    | _new_. cwd-keyed detection cache and invalidation.                                                                                                              |
-| `src/hooks/use-git-repo-status.ts`             | _new_.                                                                                                                                                          |
-| `src/components/git-diff-button.tsx`           | _new_, modelled on `artifacts-button.tsx`.                                                                                                                      |
-| `src/components/git-diff-view.tsx`             | _new_. The `LegendList`, the outer horizontal scroller, the row components.                                                                                     |
-| `src/components/server-terminal-workspace.tsx` | one child added to `paneEntries` (:3414).                                                                                                                       |
-| `src/app/git-diff.tsx`                         | _new_ route shim.                                                                                                                                               |
-| `src/app/_layout.tsx`                          | one `Stack.Screen`, beside `artifacts` (:257).                                                                                                                  |
+| File                                           | Change                                                                                                                                                                             |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/git-diff.ts`                          | _new_. `GitFileChange`, `GitDiffRow`, `GIT_DIFF_CAPABILITY`, `gatewaySupportsGitDiff`, `parseUnifiedPatch`, `flattenDiffRows`. Pure — no transport, no React.                      |
+| `src/lib/gateway-client.ts`                    | _new exports_ `loadPaneContext`, `loadGitStatus`, `loadGitFileDiff` with demo short-circuits and abort signals; re-export the vocabulary as `pane-parts` is re-exported (`:1138`). |
+| `src/lib/demo-gateway.ts`                      | `demoGitStatus`, `demoGitDiff`; `'git_diff'` into `demoHealth` (`:872`).                                                                                                           |
+| `src/lib/git-repo-cache.ts`                    | _new_. cwd-keyed detection cache and invalidation.                                                                                                                                 |
+| `src/hooks/use-git-repo-status.ts`             | _new_.                                                                                                                                                                             |
+| `src/components/git-diff-button.tsx`           | _new_, modelled on `artifacts-button.tsx`.                                                                                                                                         |
+| `src/components/git-diff-view.tsx`             | _new_. The `LegendList`, the outer horizontal scroller, the row components.                                                                                                        |
+| `src/components/server-terminal-workspace.tsx` | one child added to `paneEntries` (:3414).                                                                                                                                          |
+| `src/app/git-diff.tsx`                         | _new_ route shim.                                                                                                                                                                  |
+| `src/app/_layout.tsx`                          | one `Stack.Screen`, beside `artifacts` (:257).                                                                                                                                     |
 
 Gateway:
 
-| File          | Change                                                                                                                                                      |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/git.rs`  | _new_. The argument-prefix helper, `status`, `numstat`, `file_patch`, with timeout / cap / env sanitising.                                                  |
-| `src/main.rs` | two routes (~:2084), two handlers, `git_diff` in `API_CAPABILITIES` (:304), version bumps (:205, :256), openapi entries, the announced-and-documented test. |
-| `CONTEXT.md`  | one bullet for the new module.                                                                                                                              |
+| File          | Change                                                                                                                                                                                                                 |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/git.rs`  | _new_. The argument-prefix helper, `status`, `numstat`, `file_patch`, with timeout / cap / env sanitising.                                                                                                             |
+| `src/main.rs` | three routes (~:2084) and handlers — `context`, `git/status`, `git/diff`; `pane_context` and `git_diff` in `API_CAPABILITIES` (:304); version bumps (:205, :256); openapi entries; the announced-and-documented tests. |
+| `CONTEXT.md`  | one bullet for the new module.                                                                                                                                                                                         |
 
 Tests:
 
@@ -655,7 +740,8 @@ Tests:
 
 ### v2 — the niceties
 
-Word-level spans from `--word-diff=porcelain` (Gateway-side); staged / unstaged /
+`agent_usage` with the Claude Code session-JSONL adapter, shown from a tap on the
+agent row and never estimated. Word-level spans from `--word-diff=porcelain` (Gateway-side); staged / unstaged /
 untracked as three sections; `git show <sha>` behind a commit picker; side-by-side
 on a tablet, where the width exists; line-range selection feeding "ask the agent
 about these lines", which is the affordance `react-native-diffs` gets right and the
@@ -677,7 +763,10 @@ reason this viewer is more than a pretty-printer; copy-a-hunk.
    transport question, not an extension of this one.
 5. **The `-U` default.** Three lines matches `git`. A phone screen is narrow but
    not short — is a larger default worth the payload?
-6. **Is monochrome acceptable for v1?** §3.4 argues yes, and argues the honest v2
+6. **Does `pane_context` land with v1 or before it?** It is the smaller change
+   and useful on its own (the agent row, the task cards). Landing it first, on the
+   collaboration branch, lets the diff PR be purely additive.
+7. **Is monochrome acceptable for v1?** §3.4 argues yes, and argues the honest v2
    is Gateway-computed word-level spans rather than per-line tree-sitter. If full
    syntax highlighting is a requirement rather than a nicety, the only real path is
    a Nitro seam over `CodeBlockHighlighter.cpp` — its own card, with an upstream
