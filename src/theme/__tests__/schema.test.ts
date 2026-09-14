@@ -151,6 +151,9 @@ describe('theme v1 contract', () => {
       { variantDecorations: { dark: { 'shell.background': { asset: 'missing' } } } },
       { decoration: { 'shell.background': { asset: 'paper', regular: { asset: 'missing' } } } },
       { homeIdentity: { logo: { mode: 'custom', asset: 'missing' } } },
+      // The hero is an ordinary slot, so it is held to the ordinary rule: an
+      // asset it names has to be one the pack declares.
+      { decoration: { 'home.hero': { asset: 'missing', fit: 'contain' } } },
     ]) {
       expect(() =>
         parse({
@@ -160,6 +163,54 @@ describe('theme v1 contract', () => {
         })
       ).toThrow('Unknown asset');
     }
+  });
+
+  describe('the Home hero', () => {
+    const withHero = (extra: Record<string, unknown>) =>
+      parse({
+        ...createThemeStarter(),
+        assets: { crest: { path: 'assets/crest.png' } },
+        decoration: { 'home.hero': { asset: 'crest', fit: 'contain' } },
+        ...extra,
+      });
+
+    test('is a decoration slot with the same controls as every other one', () => {
+      const manifest = withHero({
+        decoration: {
+          'home.hero': {
+            asset: 'crest',
+            fit: 'contain',
+            opacity: 0.8,
+            focalPoint: { x: 0.5, y: 0.25 },
+            compact: { asset: 'crest' },
+            regular: null,
+          },
+        },
+      });
+      expect(manifest.decoration?.['home.hero']).toEqual({
+        asset: 'crest',
+        fit: 'contain',
+        opacity: 0.8,
+        focalPoint: { x: 0.5, y: 0.25 },
+        compact: { asset: 'crest' },
+        regular: null,
+      });
+    });
+
+    test('the author default speaks homeIdentity\u2019s own vocabulary', () => {
+      for (const mode of ['default', 'hidden'] as const) {
+        expect(withHero({ homeIdentity: { hero: { mode } } }).homeIdentity?.hero).toEqual({ mode });
+      }
+      // `homeIdentity` is strict, so a value from a different vocabulary is a
+      // typo with no sensible fallback and is refused rather than ignored.
+      for (const hero of ['shown', { mode: 'shown' }, { mode: 'custom', asset: 'crest' }, true]) {
+        expect(() => withHero({ homeIdentity: { hero } })).toThrow();
+      }
+    });
+
+    test('saying nothing leaves the field absent rather than inventing a default', () => {
+      expect(withHero({}).homeIdentity?.hero).toBeUndefined();
+    });
   });
 
   test('bounds resource count', () => {

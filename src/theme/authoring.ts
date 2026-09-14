@@ -2,7 +2,7 @@ import { resolveThemePack } from '@/constants/theme-packs';
 import { parseThemeManifest, themeJsonSchema, type ThemeManifest } from '@/theme/schema';
 
 export const THEME_SKILL_ID = 'muqun-theme';
-export const THEME_SKILL_VERSION = '1.4.0';
+export const THEME_SKILL_VERSION = '1.5.0';
 
 /** Bundled, English-only instructions. Never supplied by an imported theme. */
 export const THEME_AUTHORING_INSTRUCTIONS = `# Create a Muqun theme
@@ -51,6 +51,16 @@ If supplying SHA-256, compute it from the actual file bytes.
   navigation/composer/actions.background decorate their matching chrome;
   cards.decoration, buttons.primary.background, and tabs.background decorate controls without
   replacing labels or state. Use a square, contain-fit emptyState.illustration.
+  home.hero is Home's own illustration, between the header row and the server list: contain-fit,
+  roughly square, at most 1024 px, full content width and about 180 dp tall. It is content rather
+  than wallpaper, so keep it legible on its own and put no words in it. It is hidden while the
+  empty state is showing, which keeps its own picture.
+- homeIdentity.hero is that illustration's default switch, in the same vocabulary as name and logo:
+  omitted or default shows it whenever home.hero is declared, hidden ships the artwork with the
+  switch off. It has no custom mode; the asset, fit, opacity and overrides all belong to the slot.
+  The reader can force it on or off per installation, and only their explicit choice borrows
+  emptyState.illustration for a pack that declared no home.hero -- declaring hero without drawing
+  one shows nothing.
 - icons replaces a chrome glyph. Known names are chrome.back, chrome.send and
   chrome.attach -- the header's back arrow, and the composer's send and attachment
   controls, the last two drawn at 17pt in the primary colour by default. An
