@@ -1087,6 +1087,10 @@ msgstr "Die Session konnte nicht aktualisiert werden"
 msgid "Could not upload the file."
 msgstr "Datei konnte nicht hochgeladen werden"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current"
+msgstr "Aktuell"
+
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Aktueller Agent"
@@ -3257,6 +3261,10 @@ msgstr "Zum Entfernen erneut tippen"
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
 msgstr "Zum Verbinden tippen"
+
+#: src/components/custom-theme-library.tsx
+msgid "Tap to preview and adjust"
+msgstr "Zum Ansehen und Anpassen tippen"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

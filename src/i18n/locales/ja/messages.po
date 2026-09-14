@@ -1087,6 +1087,10 @@ msgstr "セッションを更新できませんでした"
 msgid "Could not upload the file."
 msgstr "ファイルをアップロードできませんでした"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current"
+msgstr "使用中"
+
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "現在のエージェント"
@@ -3257,6 +3261,10 @@ msgstr "もう一度タップで削除"
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
 msgstr "タップして接続"
+
+#: src/components/custom-theme-library.tsx
+msgid "Tap to preview and adjust"
+msgstr "タップしてプレビューと調整"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

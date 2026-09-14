@@ -1087,6 +1087,10 @@ msgstr "无法更新会话"
 msgid "Could not upload the file."
 msgstr "无法上传文件"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current"
+msgstr "当前"
+
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "当前 Agent"
@@ -3257,6 +3261,10 @@ msgstr "再点一次以移除"
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
 msgstr "点按连接"
+
+#: src/components/custom-theme-library.tsx
+msgid "Tap to preview and adjust"
+msgstr "点击预览并调整"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

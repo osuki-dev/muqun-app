@@ -1087,6 +1087,10 @@ msgstr "Не удалось обновить сеанс"
 msgid "Could not upload the file."
 msgstr "Не удалось загрузить файл"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current"
+msgstr "Текущая"
+
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Текущий агент"
@@ -3257,6 +3261,10 @@ msgstr "Коснитесь ещё раз, чтобы удалить"
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
 msgstr "Нажмите для подключения"
+
+#: src/components/custom-theme-library.tsx
+msgid "Tap to preview and adjust"
+msgstr "Нажмите, чтобы посмотреть и настроить"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
