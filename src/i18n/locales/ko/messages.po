@@ -1087,6 +1087,10 @@ msgstr "세션을 업데이트하지 못했습니다"
 msgid "Could not upload the file."
 msgstr "파일을 업로드하지 못했습니다"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current"
+msgstr "사용 중"
+
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "현재 에이전트"
@@ -3257,6 +3261,10 @@ msgstr "한 번 더 탭하면 제거"
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
 msgstr "눌러서 연결"
+
+#: src/components/custom-theme-library.tsx
+msgid "Tap to preview and adjust"
+msgstr "미리보기 및 조정하려면 탭하세요"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

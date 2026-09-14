@@ -1,4 +1,3 @@
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 /**
  * The settings page's segmented control: colour mode, terminal text size, and
  * the agent view default when its flag is on.
@@ -53,8 +52,6 @@ export function SettingsSegmented({
   testID?: string;
 }) {
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
-  const surfaceOpacity = useSurfaceBackgroundOpacity();
   useRenderTally('SettingsSegmented');
   const [trackWidth, setTrackWidth] = useState(0);
 
@@ -101,22 +98,24 @@ export function SettingsSegmented({
     <Tabs.Root value={value} onValueChange={onChange} variant="pill" size="compact">
       <Tabs.List
         testID={testID}
-        // One layer of paint per pixel -- the argument `themed-tabs.tsx` makes
-        // at length. `Tabs.List` paints the pill variant's track an opaque
-        // `surfaceRaised`, and the app's style is merged after the kit's, so
-        // that track is what the sliding pill above it lands on: the pill can
-        // ask for the reader's opacity all it likes and still show nothing but
-        // an opaque track, which is the whole control ignoring the slider.
+        // The kit's own opaque `surfaceRaised` track, kept, and this is a
+        // deliberate exception to the one-layer rule `themed-tabs.tsx` argues
+        // at length.
         //
-        // The track is not repainted through the hook either, because that
-        // only moves the problem: a track at the reader's alpha under a pill at
-        // the reader's alpha shows the wallpaper at (1 - a) in the gaps and
-        // (1 - a) squared under the pill, and the pill reads as the one part
-        // that refused the setting. So a custom theme drops the track outright
-        // and the unselected segments show the enclosing card at its own alpha,
-        // leaving the pill as the single fill this control paints. A default
-        // theme has no alpha to honour and keeps the kit's raised track.
-        style={surfaceOpacity === 1 ? undefined : { backgroundColor: 'transparent' }}
+        // The rule is about surfaces: a card, a sheet, a row -- things the
+        // reader's wallpaper is meant to show through. A control's track is
+        // not one of those. It is a *mark*: it says where the choices are and
+        // which half of them you are not on, and it has to stay legible
+        // against any wallpaper a pack ships. Dropping it (which this file did
+        // until now, whenever the surface slider was below 1) left the
+        // unselected side with no fill at all, so the control read as one pill
+        // floating on the page rather than as two segments with one chosen --
+        // "这个应该是纯色的，做个区分".
+        //
+        // The pill above it is solid for the same reason and in the same
+        // breath: a translucent pill on a solid track shows the track through
+        // itself and the selected side goes muddy, which is the legibility
+        // problem again one layer up. Two opaque fills, one mark.
         onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}>
         <Animated.View
           pointerEvents="none"
@@ -124,7 +123,7 @@ export function SettingsSegmented({
             styles.pill,
             {
               width: segment,
-              backgroundColor: surfaceBackground(theme.colors.surface),
+              backgroundColor: theme.colors.surface,
               borderRadius: theme.radius.pill,
             },
             pillStyle,

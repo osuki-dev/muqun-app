@@ -1087,6 +1087,10 @@ msgstr "Impossible de mettre à jour la session"
 msgid "Could not upload the file."
 msgstr "Impossible d’envoyer le fichier"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current"
+msgstr "Actuel"
+
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Agent actuel"
@@ -3257,6 +3261,10 @@ msgstr "Touchez à nouveau pour supprimer"
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
 msgstr "Touchez pour vous connecter"
+
+#: src/components/custom-theme-library.tsx
+msgid "Tap to preview and adjust"
+msgstr "Appuyez pour prévisualiser et ajuster"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

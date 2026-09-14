@@ -1,21 +1,22 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { LADDER } from '@/components/settings-chrome';
+import { LADDER, SettingsSeparator } from '@/components/settings-chrome';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { Button } from '@/components/themed-button';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
 import { DURATION, fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
+import { holdFor, remainingVisibleMs } from '@/lib/minimum-visible';
 import { useRenderTally } from '@/lib/render-tally';
 import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
 import { throwIfThemeAborted } from '@/theme/abort';
@@ -40,9 +41,9 @@ import { useThemeLibrary } from '@/stores/theme-library';
  *
  * This used to be an inline panel inside the theme sheet, capped at a 420pt
  * `ScrollView` under an already-long scroll. Browsing a catalogue is a whole
- * screen's worth of question, so it became one: a virtualized list, a cover per
- * row, and client-side paging so that opening it does not start sixty image
- * requests.
+ * screen's worth of question, so it became one: a virtualized list of compact
+ * rows -- a thumbnail, a name, what it costs, who wrote it -- and client-side
+ * paging so that opening it does not start sixty image requests.
  *
  * The index is read once when this opens -- from the process cache when it is
  * fresh -- and carries everything a row draws, so the list itself costs one
@@ -71,11 +72,16 @@ const THEME_BROWSE_PAGE = 20;
  */
 const THEME_BROWSE_STAGGER_CAP = 8;
 
-/** 8:5, the shape `skills/muqun-theme` asks every cover to be published in. */
-const PREVIEW_ASPECT = 1.6;
+/**
+ * The cover, as a thumbnail rather than a poster: 8:5, the shape
+ * `skills/muqun-theme` asks every cover to be published in, at the size a list
+ * row can carry without becoming a card.
+ */
+const COVER_WIDTH = 112;
+const COVER_HEIGHT = 70;
 
-/** Name, author, description, size: four capped lines plus the row's padding. */
-const ROW_TEXT_HEIGHT = 96;
+/** The thumbnail plus the row's own padding; three capped lines fit inside it. */
+const ROW_MIN_HEIGHT = 96;
 
 type BrowseRowType = 'preview' | 'plain';
 
@@ -90,7 +96,6 @@ export function ThemeBrowseSheet({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('ThemeBrowseSheet');
-  const { width: windowWidth } = useWindowDimensions();
   const installed = useThemeLibrary((state) => state.library.themes);
 
   const [entries, setEntries] = useState<ThemeIndexEntry[] | null>(() => cachedThemeIndex());
@@ -100,19 +105,19 @@ export function ThemeBrowseSheet({
   // Where the page in view began, so an appended page starts its own sequence
   // at zero rather than continuing from twenty and arriving half a second late.
   const [pageStart, setPageStart] = useState(0);
-  // Which row is downloading. A row, not a boolean: the progress belongs under
-  // the theme it is for, and a second press elsewhere must not look like it did
-  // something.
+  const [appending, setAppending] = useState(false);
+  // Which row is downloading. A row, not a boolean: the acknowledgement belongs
+  // on the theme it is for, and a second press elsewhere must not look like it
+  // did something.
   const [pending, setPending] = useState<string | null>(null);
   const [progress, setProgress] = useState<ThemeAssetProgress | null>(null);
   // Covers that screened, were requested, and did not paint. A row keeps its
-  // placeholder and its plain height bucket rather than a broken picture.
+  // placeholder rather than a broken picture.
   const [brokenCovers, setBrokenCovers] = useState<readonly string[]>([]);
   // Ids whose arrival has already been spent. Not a ref: a ref may not be read
   // during render, and the row that decides whether to animate is a render.
   // Mutated only from the row's mount effect.
   const [revealed] = useState(() => new Set<string>());
-  const [contentWidth, setContentWidth] = useState(0);
 
   const active = useRef<ThemeImportRequest | null>(null);
   const mounted = useRef(true);
@@ -149,6 +154,15 @@ export function ThemeBrowseSheet({
     // re-read of a catalogue already in hand.
   }, [attempt, entries]);
 
+  // The appended page is on screen once the commit carrying it has run, which
+  // is what ends the footer's spinner. Real work, not a timer pretending to be
+  // one: the rows are laid out and their covers requested in that commit.
+  useEffect(() => {
+    if (appending) setAppending(false);
+    // Only the arrival of a new page ends it.
+    // oxlint-disable-next-line react/exhaustive-deps -- `appending` is the flag being cleared, not an input
+  }, [shown]);
+
   function retry() {
     clearThemeIndex();
     setFailed(false);
@@ -162,13 +176,33 @@ export function ThemeBrowseSheet({
     if (!publicThemeTransport || active.current) return;
     const owned = new ThemeImportRequest();
     active.current = owned;
+    // Synchronously, before anything is awaited, so the render that shows the
+    // acknowledgement is already scheduled when this function returns.
     setPending(entry.id);
     setFailed(false);
+    const pressedAt = Date.now();
     void (async () => {
       const { signal } = owned;
       let prepared: PreparedThemeAssets | undefined;
       let transferred = false;
       try {
+        /*
+         * Let the pending render paint before the JS thread is taken.
+         *
+         * Everything below this line holds the thread: `inspectRemoteTheme`
+         * resolves the download and then runs `unpackTheme`, which is a
+         * synchronous pure-JS inflate and CRC32 over the whole archive. Without
+         * this hold, React had the pending state but never got a frame to
+         * commit it in, and on a fast connection the whole install finished
+         * before anything was drawn -- the reader pressed a row and saw
+         * nothing at all, which is what the device review found.
+         *
+         * `DURATION.short` rather than a bare yield: it is the length of the
+         * cross-fade that brings the spinner in, so the hold covers the
+         * transition rather than just the commit.
+         */
+        await holdFor(DURATION.short);
+        throwIfThemeAborted(signal);
         // `format: 'package'` because a catalogue entry is always a packed
         // `.muqun-theme`. Its assets come out of the archive rather than off
         // the network, so there are no third-party domains for a reader to
@@ -184,6 +218,11 @@ export function ThemeBrowseSheet({
             if (mounted.current && !signal.aborted) setProgress(value);
           },
         });
+        throwIfThemeAborted(signal);
+        // And the other half of the floor: a download that beat its own
+        // announcement leaves the announcement up for the rest of its welcome
+        // rather than flashing through it on the way to another screen.
+        await holdFor(remainingVisibleMs(pressedAt, MINIMUM_PENDING_VISIBLE_MS));
         throwIfThemeAborted(signal);
         if (!mounted.current) return;
         const candidate = { manifest: inspection.manifest, prepared };
@@ -207,14 +246,30 @@ export function ThemeBrowseSheet({
   const rows = entries ? entries.slice(0, shown) : [];
   const installedIds = new Set(installed.map((entry) => entry.manifest.id));
   const broken = new Set(brokenCovers);
-  const measured =
-    contentWidth ||
-    Math.min(THEME_PICKER_MAX_CONTENT_WIDTH, Math.max(0, windowWidth)) - LADDER.gutter * 2;
 
   function coverOf(entry: ThemeIndexEntry): string | null {
     if (broken.has(entry.id)) return null;
     return themePreviewUrl(entry);
   }
+
+  /**
+   * Everything a row draws that is not the row's own entry.
+   *
+   * Legend List memoises a rendered row on `[itemKey, data, extraData]`, and
+   * `itemsAreEqual` deliberately reports that a stable index entry never
+   * changes -- so without this the pressed row would keep the markup it was
+   * first rendered with and the spinner could never appear. The device review
+   * found exactly that. A string rather than an object, so it compares by
+   * value and a render that changed nothing re-renders nothing.
+   */
+  const rowState = [
+    pending ?? '',
+    progress?.completedAssets ?? '',
+    progress?.totalAssets ?? '',
+    brokenCovers.length,
+    installedIds.size,
+    pageStart,
+  ].join('|');
 
   /**
    * The one failure this screen has, said once.
@@ -229,7 +284,7 @@ export function ThemeBrowseSheet({
   const failure = (
     <Animated.View
       key="failed"
-      entering={fadeIn('short')}
+      entering={fadeIn('medium')}
       testID="theme-browse-empty"
       style={styles.stateBlock}>
       <Text variant="bodySmall">{t`Could not reach the theme catalogue`}</Text>
@@ -246,40 +301,6 @@ export function ThemeBrowseSheet({
     </Animated.View>
   );
 
-  const header = (
-    <View style={styles.headerBlock}>
-      {/* iOS draws the grabber itself; Android's form sheet does not, and a
-          sheet with no handle reads as a screen that arrived from the wrong
-          direction. The same two lines the settings sheet carries. */}
-      {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
-      <View style={styles.header}>
-        <View style={styles.flexOne}>
-          <Text variant="bodySmall" style={styles.headerTitle}>
-            {t`Browse themes`}
-          </Text>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {t`Themes published at muqun.dev. Nothing downloads until you open one.`}
-          </Text>
-        </View>
-        <GlassChrome face="sheet" style={styles.closeButton}>
-          <PressableScale
-            accessibilityLabel={t`Close theme catalogue`}
-            disabled={pending !== null}
-            onPress={onClose}
-            style={styles.closeHit}>
-            <X size={18} color={theme.colors.text} />
-          </PressableScale>
-        </GlassChrome>
-      </View>
-      {/* A download that failed with a list already on screen. The empty
-          component below never renders in that case, and a press that ends in
-          nothing at all is the app looking like it ignored it. */}
-      {failed && rows.length ? (
-        <Animated.View layout={listLayout('short')}>{failure}</Animated.View>
-      ) : null}
-    </View>
-  );
-
   const empty = (
     <Animated.View layout={listLayout('short')} style={styles.state}>
       {failed ? (
@@ -287,7 +308,7 @@ export function ThemeBrowseSheet({
       ) : entries === null ? (
         <Animated.View
           key="loading"
-          entering={fadeIn('micro')}
+          entering={fadeIn('medium')}
           exiting={fadeOut('micro')}
           testID="theme-browse-loading"
           style={styles.loading}>
@@ -297,7 +318,7 @@ export function ThemeBrowseSheet({
       ) : (
         <Animated.View
           key="none"
-          entering={fadeIn('short')}
+          entering={fadeIn('medium')}
           testID="theme-browse-none"
           style={styles.stateBlock}>
           <Text color={theme.colors.textMuted}>{t`No themes are published yet`}</Text>
@@ -316,13 +337,22 @@ export function ThemeBrowseSheet({
           accessibilityRole="button"
           accessibilityLabel={t`Load more`}
           testID="theme-browse-more"
-          disabled={pending !== null}
+          disabled={pending !== null || appending}
           onPress={() => {
+            setAppending(true);
             setPageStart(shown);
             setShown((value) => value + THEME_BROWSE_PAGE);
           }}
           style={[styles.more, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
-          <Text variant="bodySmall">{t`Load more`}</Text>
+          {appending ? (
+            <Animated.View key="appending" entering={fadeIn('short')} exiting={fadeOut('short')}>
+              <Spinner size="sm" color={theme.colors.textMuted} />
+            </Animated.View>
+          ) : (
+            <Animated.View key="idle" entering={fadeIn('short')} exiting={fadeOut('short')}>
+              <Text variant="bodySmall">{t`Load more`}</Text>
+            </Animated.View>
+          )}
           <Text variant="caption" color={theme.colors.textMuted}>
             {t`Showing ${shown} of ${total}`}
           </Text>
@@ -350,56 +380,112 @@ export function ThemeBrowseSheet({
           ]}
         />
       </View>
-      <LegendList
-        testID="theme-browse-list"
-        data={rows}
-        keyExtractor={keyOfEntry}
-        // Entries are stable objects straight out of the parsed index and are
-        // never rebuilt per render, so the strictest comparison is both the
-        // correct one and the cheapest.
-        itemsAreEqual={entriesAreEqual}
-        // Never. A row owns a preview image, and recycling would hand one
-        // theme's cover to another.
-        recycleItems={false}
-        getItemType={(entry: ThemeIndexEntry): BrowseRowType =>
-          coverOf(entry) ? 'preview' : 'plain'
-        }
-        // Legend List takes one hint and then learns a real average per type,
-        // which is what `getItemType` is for. The hint is the tall bucket,
-        // computed off the measured width rather than guessed, so a Pad does
-        // not start out with a phone's idea of a row.
-        estimatedItemSize={Math.round(measured / PREVIEW_ASPECT) + ROW_TEXT_HEIGHT}
-        renderItem={({ item, index }) => (
-          <ThemeBrowseRow
-            entry={item}
-            cover={coverOf(item)}
-            installed={installedIds.has(item.id)}
-            pending={pending === item.id}
-            dimmed={pending !== null && pending !== item.id}
-            disabled={pending !== null}
-            progress={pending === item.id ? progress : null}
-            revealed={revealed}
-            delay={Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row}
-            onPress={() => open(item)}
-            onCoverError={() =>
-              setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
-            }
-          />
-        )}
-        ListHeaderComponent={header}
-        ListHeaderComponentStyle={styles.listHeader}
-        ListEmptyComponent={empty}
-        ListFooterComponent={footer}
-        onLayout={(event: LayoutChangeEvent) =>
-          setContentWidth(Math.max(0, event.nativeEvent.layout.width - LADDER.gutter * 2))
-        }
-        style={styles.sheet}
-        // `flexGrow` is what makes this a full-height sheet: the route asks for
-        // a single detent, and react-native-screens answers a single detent
-        // with a sheet as tall as the content laid out to. Without it a short
-        // catalogue gives a short sheet and an empty one gives a stub.
-        contentContainerStyle={styles.listContent}
-      />
+      {/*
+        Exactly two subviews, which is the most a native form sheet lays out
+        around a scroll view -- the ground above, and this column. The header is
+        inside the column rather than inside the list, because a way out that
+        scrolls away is one the reader has to go looking for: after two screens
+        of catalogue there was no close button anywhere. `collapsable={false}`
+        so the column is not flattened into its parent, which would put the
+        scroller back at index 0 and hand it the whole sheet's height.
+      */}
+      <View collapsable={false} style={styles.column}>
+        <View style={styles.headerBlock}>
+          {/* iOS draws the grabber itself; Android's form sheet does not, and a
+              sheet with no handle reads as a screen that arrived from the wrong
+              direction. The same two lines the settings sheet carries. */}
+          {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+          <View style={styles.header}>
+            <View style={styles.flexOne}>
+              <Text variant="bodySmall" style={styles.headerTitle}>
+                {t`Browse themes`}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`Themes published at muqun.dev. Nothing downloads until you open one.`}
+              </Text>
+            </View>
+            <GlassChrome face="sheet" style={styles.closeButton}>
+              <PressableScale
+                accessibilityLabel={t`Close theme catalogue`}
+                disabled={pending !== null}
+                onPress={onClose}
+                style={styles.closeHit}>
+                <X size={18} color={theme.colors.text} />
+              </PressableScale>
+            </GlassChrome>
+          </View>
+          {/*
+            The status line: what the install is doing, and what went wrong.
+            It lives in the pinned header rather than under the pressed row so
+            that it cannot scroll out of sight mid-download, and it carries
+            `listLayout` so the list below slides down to make room instead of
+            jumping. The failure only appears here when there are rows -- with
+            none, the empty component below is already saying it.
+          */}
+          <Animated.View layout={listLayout('short')}>
+            {pending ? (
+              <Animated.View
+                key="progress"
+                entering={fadeIn('medium')}
+                exiting={fadeOut('short')}
+                style={styles.status}>
+                <ThemeImportProgress
+                  testID="theme-browse-progress"
+                  label={progress ? t`Preparing images` : t`Downloading…`}
+                  completed={progress?.completedAssets}
+                  total={progress?.totalAssets}
+                  receivedBytes={progress?.receivedBytes}
+                />
+              </Animated.View>
+            ) : failed && rows.length ? (
+              <View style={styles.status}>{failure}</View>
+            ) : null}
+          </Animated.View>
+        </View>
+        <LegendList
+          testID="theme-browse-list"
+          data={rows}
+          keyExtractor={keyOfEntry}
+          // Entries are stable objects straight out of the parsed index and are
+          // never rebuilt per render, so the strictest comparison is both the
+          // correct one and the cheapest. Everything a row draws that is *not*
+          // the entry travels in `extraData`; see `rowState`.
+          itemsAreEqual={entriesAreEqual}
+          extraData={rowState}
+          // Never. A row owns a preview image, and recycling would hand one
+          // theme's cover to another.
+          recycleItems={false}
+          getItemType={(entry: ThemeIndexEntry): BrowseRowType =>
+            coverOf(entry) ? 'preview' : 'plain'
+          }
+          // The thumbnail is a fixed box and the text is capped at three lines,
+          // so every row is about the same height whichever bucket it is in.
+          estimatedItemSize={ROW_MIN_HEIGHT}
+          ItemSeparatorComponent={SettingsSeparator}
+          renderItem={({ item, index }) => (
+            <ThemeBrowseRow
+              entry={item}
+              cover={coverOf(item)}
+              installed={installedIds.has(item.id)}
+              pending={pending === item.id}
+              dimmed={pending !== null && pending !== item.id}
+              disabled={pending !== null}
+              revealed={revealed}
+              delay={
+                Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row
+              }
+              onPress={() => open(item)}
+              onCoverError={() =>
+                setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
+              }
+            />
+          )}
+          ListEmptyComponent={empty}
+          ListFooterComponent={footer}
+          style={styles.sheet}
+          contentContainerStyle={styles.listContent}
+        />
+      </View>
     </>
   );
 }
@@ -413,7 +499,22 @@ function entriesAreEqual(previous: ThemeIndexEntry, next: ThemeIndexEntry): bool
 }
 
 /**
+ * How long the pressed state stays up, however fast the work behind it was.
+ *
+ * Twice `short`: one for the cross-fade that brings the spinner in, one for it
+ * to be a thing the reader saw rather than a frame they can only find in a
+ * recording. Composed from the token rather than written out, so the tuning
+ * pass the tokens exist for reaches it.
+ */
+const MINIMUM_PENDING_VISIBLE_MS = DURATION.short * 2;
+
+/**
  * One catalogue entry: its cover, its name, what it costs, and who wrote it.
+ *
+ * A list row rather than a poster. The cover is a left thumbnail at the 8:5 it
+ * is published in, and the three lines beside it are capped, so a long
+ * description costs an ellipsis instead of half the screen -- which is what
+ * decides how many themes a reader can compare without scrolling.
  *
  * The `Installed` badge is a hint rather than a guarantee. Installation
  * identity is local and content-hashed while the manifest `id` is
@@ -428,7 +529,6 @@ function ThemeBrowseRow({
   pending,
   dimmed,
   disabled,
-  progress,
   revealed,
   delay,
   onPress,
@@ -440,7 +540,6 @@ function ThemeBrowseRow({
   pending: boolean;
   dimmed: boolean;
   disabled: boolean;
-  progress: ThemeAssetProgress | null;
   revealed: Set<string>;
   delay: number;
   onPress: () => void;
@@ -449,6 +548,7 @@ function ThemeBrowseRow({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
 
   // Spent once. Legend List mounts and unmounts rows as they cross the
   // viewport even with recycling off, so without this the whole list
@@ -459,8 +559,8 @@ function ThemeBrowseRow({
     revealed.add(entry.id);
   }, [revealed, entry.id]);
 
-  // Twenty rows changing on one frame reads as a flash. Eased, they read as
-  // the list settling around the one that was pressed.
+  // The rows that are not the pressed one settle back rather than flashing.
+  // The pressed row is never dimmed: it is the one the reader is waiting on.
   const dim = useSharedValue(dimmed ? 0.5 : 1);
   useEffect(() => {
     dim.value = withTiming(dimmed ? 0.5 : 1, timing('short'));
@@ -468,105 +568,139 @@ function ThemeBrowseRow({
   const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
 
   return (
-    <Animated.View entering={entering} layout={listLayout('short')} style={dimStyle}>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={entry.name}
-        accessibilityState={{ disabled }}
-        testID={`theme-browse-item:${entry.id}`}
-        disabled={disabled}
-        onPress={onPress}
-        style={[styles.row, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
-        <View style={styles.cover}>
-          {/* The placeholder is always underneath, so the image's own fade is
-              a cross-fade onto a surface that is already the right colour --
-              no flash of sheet background, and no extra code. The index
-              carries no palette of its own, so the two swatches are the
-              sheet's rather than the theme's. */}
+    // Two views, and the split is not cosmetic: a layout animation and an
+    // animated `opacity` on one view make Reanimated warn that the layout
+    // animation may overwrite the style, and on device it did -- the pressed
+    // row's own contents could be left at zero. The outer view owns arrival
+    // and reflow, the inner one owns the dim.
+    <Animated.View entering={entering} layout={listLayout('short')}>
+      <Animated.View style={dimStyle}>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={entry.name}
+          accessibilityState={{ disabled, busy: pending }}
+          testID={`theme-browse-item:${entry.id}`}
+          disabled={disabled}
+          onPress={onPress}
+          style={styles.row}>
           <View
-            accessible={false}
             style={[
-              StyleSheet.absoluteFill,
-              styles.placeholder,
-              { backgroundColor: surfaceBackground(theme.colors.background) },
+              styles.cover,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
             ]}>
-            <View style={[styles.swatch, { backgroundColor: theme.colors.surfaceRaised }]} />
-            <View style={[styles.swatch, { backgroundColor: theme.colors.primary }]} />
-          </View>
-          {cover ? (
-            <Animated.View exiting={fadeOut('micro')} style={StyleSheet.absoluteFill}>
-              <Image
-                accessible={false}
-                testID={`theme-browse-preview:${entry.id}`}
-                source={{ uri: cover }}
-                cachePolicy="memory-disk"
-                recyclingKey={entry.id}
-                contentFit="cover"
-                transition={DURATION.micro}
-                onError={onCoverError}
-                style={StyleSheet.absoluteFill}
-              />
-            </Animated.View>
-          ) : null}
-        </View>
-        <View style={styles.titleRow}>
-          <Text style={styles.flexOne} numberOfLines={1}>
-            {entry.name}
-          </Text>
-          {installed ? (
-            <Text variant="caption" color={theme.colors.primary}>
-              {t`Installed`}
-            </Text>
-          ) : null}
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {formatAssetSize(entry.bytes)}
-          </Text>
-        </View>
-        {entry.author ? (
-          <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
-            {entry.author}
-          </Text>
-        ) : null}
-        {entry.description ? (
-          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-            {entry.description}
-          </Text>
-        ) : null}
-        {pending ? (
-          <Animated.View
-            entering={fadeIn('micro')}
-            exiting={fadeOut('micro')}
-            style={styles.pendingRow}>
-            <Spinner size="sm" color={theme.colors.primary} />
-            <View style={styles.flexOne}>
-              <ThemeImportProgress
-                testID="theme-browse-progress"
-                label={progress ? t`Preparing images` : t`Downloading…`}
-                completed={progress?.completedAssets}
-                total={progress?.totalAssets}
-                receivedBytes={progress?.receivedBytes}
-              />
+            {/* The placeholder is always underneath, so the image's own fade is
+                a cross-fade onto a surface that is already the right colour --
+                no flash of sheet background, and no extra code. The index
+                carries no palette of its own, so the two swatches are the
+                sheet's rather than the theme's. */}
+            <View accessible={false} style={[StyleSheet.absoluteFill, styles.placeholder]}>
+              <View style={[styles.swatch, { backgroundColor: theme.colors.background }]} />
+              <View style={[styles.swatch, { backgroundColor: theme.colors.primary }]} />
             </View>
-          </Animated.View>
-        ) : null}
-      </PressableScale>
+            {cover ? (
+              <Animated.View exiting={fadeOut('micro')} style={StyleSheet.absoluteFill}>
+                <Image
+                  accessible={false}
+                  testID={`theme-browse-preview:${entry.id}`}
+                  source={{ uri: cover }}
+                  cachePolicy="memory-disk"
+                  recyclingKey={entry.id}
+                  contentFit="cover"
+                  transition={DURATION.medium}
+                  onError={onCoverError}
+                  style={StyleSheet.absoluteFill}
+                />
+              </Animated.View>
+            ) : null}
+          </View>
+          <View style={styles.body}>
+            <View style={styles.titleRow}>
+              <Text variant="bodySmall" numberOfLines={1} style={styles.flexOne}>
+                {entry.name}
+              </Text>
+              {installed ? (
+                <Animated.View entering={fadeIn('medium')}>
+                  <Tag
+                    // One layer of paint per pixel: under a custom theme the
+                    // kit's opaque chip would be the one thing on the row that
+                    // refused the reader's surface slider, so it drops its fill
+                    // and the row behind it shows through at its own alpha. A
+                    // default theme has no alpha to honour and keeps the kit's.
+                    style={surfaceOpacity === 1 ? undefined : styles.badgeTransparent}>
+                    {t`Installed`}
+                  </Tag>
+                </Animated.View>
+              ) : null}
+              {/* The trailing slot is one thing or the other, never both and
+                  never a jump: the size cross-fades out as the spinner comes
+                  in, which is the row acknowledging the tap. */}
+              <View style={styles.trailing}>
+                {pending ? (
+                  <Animated.View
+                    key="busy"
+                    entering={fadeIn('short')}
+                    exiting={fadeOut('short')}
+                    style={styles.trailingSlot}>
+                    <Spinner size="sm" color={theme.colors.primary} />
+                  </Animated.View>
+                ) : (
+                  <Animated.View
+                    key="size"
+                    entering={fadeIn('short')}
+                    exiting={fadeOut('short')}
+                    style={styles.trailingSlot}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {formatAssetSize(entry.bytes)}
+                    </Text>
+                  </Animated.View>
+                )}
+              </View>
+            </View>
+            {entry.author ? (
+              <Text
+                variant="caption"
+                color={theme.colors.textSubtle}
+                numberOfLines={1}
+                ellipsizeMode="tail">
+                {entry.author}
+              </Text>
+            ) : null}
+            {entry.description ? (
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                numberOfLines={2}
+                ellipsizeMode="tail">
+                {entry.description}
+              </Text>
+            ) : null}
+          </View>
+        </PressableScale>
+      </Animated.View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  column: { flex: 1 },
   sheet: { flex: 1 },
   listContent: {
-    // See the call site for why `flexGrow` is here.
+    // A short catalogue still fills the sheet rather than leaving a stub.
     flexGrow: 1,
     width: '100%',
     maxWidth: THEME_PICKER_MAX_CONTENT_WIDTH,
     alignSelf: 'center',
-    paddingHorizontal: LADDER.gutter,
     paddingBottom: LADDER.gutter,
-    gap: LADDER.gap,
   },
-  headerBlock: { paddingTop: 10, gap: LADDER.snug },
+  headerBlock: {
+    width: '100%',
+    maxWidth: THEME_PICKER_MAX_CONTENT_WIDTH,
+    alignSelf: 'center',
+    paddingTop: 10,
+    paddingBottom: LADDER.gap,
+    paddingHorizontal: LADDER.gutter,
+    gap: LADDER.snug,
+  },
   handle: {
     width: 38,
     height: 4,
@@ -577,6 +711,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: LADDER.snug },
   // The settings sheet's title size, so the two announce themselves the same.
   headerTitle: { fontSize: 20, lineHeight: 25, includeFontPadding: false },
+  status: { paddingTop: LADDER.tight },
   closeButton: {
     width: 44,
     height: 44,
@@ -587,26 +722,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeHit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  listHeader: { paddingBottom: LADDER.gap },
   flexOne: { flex: 1, minWidth: 0 },
-  row: { gap: LADDER.tight + 2, padding: LADDER.snug, borderRadius: 16, borderCurve: 'continuous' },
+  row: {
+    minHeight: ROW_MIN_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LADDER.gap,
+    paddingHorizontal: LADDER.gutter,
+    paddingVertical: LADDER.snug,
+  },
   cover: {
-    width: '100%',
-    aspectRatio: PREVIEW_ASPECT,
-    maxWidth: '100%',
+    width: COVER_WIDTH,
+    height: COVER_HEIGHT,
     borderRadius: 12,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  placeholder: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  swatch: { width: 38, height: 28, borderRadius: 8, borderCurve: 'continuous' },
+  placeholder: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  swatch: { width: 28, height: 20, borderRadius: 6, borderCurve: 'continuous' },
+  body: { flex: 1, minWidth: 0, gap: LADDER.tight / 2 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
-  pendingRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.snug },
-  state: { paddingTop: LADDER.section, gap: LADDER.gap },
+  badgeTransparent: { backgroundColor: 'transparent' },
+  trailing: { minWidth: 56, alignItems: 'flex-end', justifyContent: 'center' },
+  trailingSlot: { alignItems: 'flex-end', justifyContent: 'center' },
+  state: { paddingHorizontal: LADDER.gutter, paddingTop: LADDER.section, gap: LADDER.gap },
   stateBlock: { gap: LADDER.gap },
   stateAction: { flexDirection: 'row' },
   loading: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
-  footer: { paddingTop: LADDER.gap },
+  footer: { paddingHorizontal: LADDER.gutter, paddingTop: LADDER.snug },
   more: {
     alignItems: 'center',
     gap: LADDER.tight,

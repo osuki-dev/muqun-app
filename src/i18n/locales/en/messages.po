@@ -1087,6 +1087,10 @@ msgstr "Could not update the session"
 msgid "Could not upload the file."
 msgstr "Could not upload the file"
 
+#: src/components/custom-theme-library.tsx
+msgid "Current"
+msgstr "Current"
+
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Current agent"
@@ -3257,6 +3261,10 @@ msgstr "Tap again to remove"
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
 msgstr "Tap to connect"
+
+#: src/components/custom-theme-library.tsx
+msgid "Tap to preview and adjust"
+msgstr "Tap to preview and adjust"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
