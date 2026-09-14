@@ -1,6 +1,9 @@
 import { expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { stageThemeAssetStream, type ThemeAssetStagePort } from '@/theme/asset-stream';
 import { createThemeStarter } from '@/theme/authoring';
+import { assetInstallProgress, type ThemeInstallProgress } from '@/theme/install-progress';
 import { packTheme } from '@/theme/package';
 import {
   inspectRemoteTheme,
@@ -226,4 +229,83 @@ test('editing preview domains cannot authorize new streaming redirect destinatio
   inspected.manifest.assets!.paper = { url: 'https://other.example.com/image' };
   await expect(inspected.assets().next()).rejects.toThrow('unapproved');
   expect(calls).toEqual(['https://example.com/theme.json', 'https://images.example.com/paper.png']);
+});
+
+/** Enough of a stage to run the real streaming validator. Nothing is decoded
+ * here: the point of these two tests is what happens before that. */
+function memoryStage(): ThemeAssetStagePort {
+  return {
+    hash: (bytes) => createHash('sha256').update(bytes).digest('hex'),
+    async writeAndDecode(name) {
+      return `file:///stage/${name}`;
+    },
+    rollback() {},
+  };
+}
+
+function packageOf(asset: Uint8Array) {
+  const manifest = createThemeStarter();
+  manifest.assets = { paper: { path: 'assets/paper.png' } };
+  manifest.decoration = { 'shell.background': { asset: 'paper' } };
+  return { manifest, archive: packTheme({ manifest, assets: { paper: asset } }) };
+}
+
+test('a malformed image still fails, from the one inspection that was kept', async () => {
+  // `inspectRemoteTheme`'s generator used to inspect every chunk and throw the
+  // result away, which cost an 8 MiB PNG a second full CRC32 for a guarantee
+  // its only consumer was already providing. The call is gone; this is the
+  // test that the guarantee is not.
+  const { archive } = packageOf(new Uint8Array([1, 2, 3]));
+  const inspected = await inspectRemoteTheme(
+    { get: async () => ok(archive) },
+    'https://example.com/theme.muqun-theme',
+    { format: 'package' }
+  );
+  // The generator hands the bytes over without looking at them...
+  expect((await inspected.assets().next()).value).toEqual({
+    id: 'paper',
+    bytes: new Uint8Array([1, 2, 3]),
+  });
+  // ...and staging is where they are refused, before any hash or write.
+  await expect(
+    stageThemeAssetStream(inspected.manifest, inspected.assets(), memoryStage())
+  ).rejects.toThrow();
+});
+
+test('a packaged install reports unpacking then assets, each monotonic', async () => {
+  const png = new Uint8Array(readFileSync('assets/images/favicon.png'));
+  const { archive } = packageOf(png);
+  const phases: ThemeInstallProgress[] = [];
+  // `downloading` is the caller's own opening state -- the transport resolves
+  // one `Uint8Array` and has no progress to report -- so the pipeline's own
+  // reports start at the unpack.
+  const inspected = await inspectRemoteTheme(
+    { get: async () => ok(archive) },
+    'https://example.com/theme.muqun-theme',
+    { format: 'package', onProgress: (value) => phases.push(value) }
+  );
+  await stageThemeAssetStream(inspected.manifest, inspected.assets(), memoryStage(), {
+    onProgress: (value) => phases.push(assetInstallProgress(value)),
+  });
+  // Every unpacking report comes before every assets report.
+  const names = phases.map((value) => value.phase);
+  expect(new Set(names)).toEqual(new Set(['unpacking', 'assets']));
+  expect(names.indexOf('assets')).toBeGreaterThan(names.lastIndexOf('unpacking'));
+  // And neither phase counts down, changes its total half way through, or
+  // stops short of it.
+  const counts = (phase: ThemeInstallProgress['phase']) =>
+    phases.flatMap((value) =>
+      value.phase === phase && value.phase !== 'downloading'
+        ? [{ completed: value.completed, total: value.total }]
+        : []
+    );
+  for (const phase of ['unpacking', 'assets'] as const) {
+    const counted = counts(phase);
+    expect(counted.length).toBeGreaterThan(0);
+    expect(counted.map((value) => value.completed)).toEqual(
+      [...counted.map((value) => value.completed)].sort((a, b) => a - b)
+    );
+    expect(new Set(counted.map((value) => value.total)).size).toBe(1);
+    expect(counted.at(-1)!.completed).toBe(counted.at(-1)!.total);
+  }
 });
