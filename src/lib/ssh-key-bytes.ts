@@ -253,6 +253,20 @@ export function encodeTerminalKey(
   return shifted ?? null;
 }
 
+/** Encode a whole shortcut before writing, so an invalid suffix sends nothing. */
+export function encodeTerminalKeySequence(
+  keys: readonly string[],
+  encoding: TerminalKeyEncoding = {}
+): Uint8Array | null {
+  const bytes: number[] = [];
+  for (const key of keys) {
+    const encoded = encodeTerminalKey(key, encoding);
+    if (encoded === null) return null;
+    bytes.push(...encoded);
+  }
+  return Uint8Array.from(bytes);
+}
+
 /**
  * Typed text as UTF-8.
  *

@@ -263,6 +263,26 @@ msgstr "允許相機"
 msgid "Allow the camera, or enter the address instead."
 msgstr "允許使用相機，或改為輸入位址"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Alt"
+msgstr "Alt"
+
+#: src/i18n/labels.ts
+msgid "Alt Down arrow"
+msgstr "Alt 下箭頭"
+
+#: src/i18n/labels.ts
+msgid "Alt Left arrow"
+msgstr "Alt 左箭頭"
+
+#: src/i18n/labels.ts
+msgid "Alt Right arrow"
+msgstr "Alt 右箭頭"
+
+#: src/i18n/labels.ts
+msgid "Alt Up arrow"
+msgstr "Alt 上箭頭"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "回答"
@@ -1317,6 +1337,10 @@ msgstr "手動輸入網址"
 #: src/i18n/labels.ts
 msgid "Escape"
 msgstr "Esc 鍵"
+
+#: src/i18n/labels.ts
+msgid "Escape twice"
+msgstr "按兩次 Escape"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
