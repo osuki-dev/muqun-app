@@ -126,9 +126,14 @@ is visible "${TARGET}"
 is hidden "${TARGET}"
 
 # section opacity-reset
+is visible "id=theme-appearance-reset"
 press "id=theme-appearance-reset"
 wait stable 400 5000
-is visible "text=100%"
+
+# section terminal-opacity-reset-value
+# Interface opacity may already be 100%; verify the terminal value specifically
+# after the manifest scrolls that control back into the visible viewport.
+is visible "id=\"theme-terminal-opacity-value\" label=\"100%\""
 
 # section home-visibility
 press "id=theme-show-home-logo"
@@ -140,7 +145,6 @@ gesture pan 200 620 0 -150 400
 wait stable 400 5000
 press "id=theme-show-home-text"
 wait stable 400 5000
-is visible "id=theme-appearance-reset"
 
 # section home-hero-row
 # The row only, not a round trip through it. The demo document declares no

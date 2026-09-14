@@ -277,3 +277,8 @@ export const terminalKeyDescription: Record<string, MessageDescriptor> = {
 export function paneViewModeFallback(mode: PaneViewMode): PaneViewMode {
   return mode in paneViewModeLabel ? mode : 'terminal';
 }
+
+/** Authored offline result copy; actual remote assistant summaries are not translated here. */
+export const demoWorkSummary: Record<string, MessageDescriptor> = {
+  'Fictional prior result retained after simulated exit.': msg`Fictional prior result retained after simulated exit.`,
+};

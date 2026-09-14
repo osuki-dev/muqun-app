@@ -53,6 +53,9 @@ export type AttachmentUploadStatus = 'pending' | 'uploading' | 'done' | 'error';
  */
 export interface PendingAttachment {
   id: string;
+  /** Monotonic draft edit version, independent of upload status. */
+  revision?: number;
+  uploadVersion?: number;
   localUri: string;
   name: string;
   mime: string;
@@ -242,7 +245,7 @@ export function markUploading(queue: PendingAttachment[], id: string): PendingAt
 export function markUploaded(
   queue: PendingAttachment[],
   id: string,
-  uploaded: { path: string; name?: string }
+  uploaded: { path?: string; name?: string }
 ): PendingAttachment[] {
   const entry = queue.find((item) => item.id === id);
   if (!entry) return queue;
@@ -293,7 +296,9 @@ export function annotateEntry(
   id: string,
   annotation: { caption?: string; use?: AttachmentUse }
 ): PendingAttachment[] {
-  return queue.map((entry) => (entry.id === id ? { ...entry, ...annotation } : entry));
+  return queue.map((entry) =>
+    entry.id === id ? { ...entry, ...annotation, revision: (entry.revision ?? 0) + 1 } : entry
+  );
 }
 
 /** Still queued or in flight, which is what Send has to wait out. */
@@ -316,7 +321,8 @@ export function uploadedPaths(queue: PendingAttachment[]): string[] | null {
   if (hasFailures(queue)) return null;
   const paths: string[] = [];
   for (const entry of queue) {
-    if (entry.status === 'done' && entry.remotePath) paths.push(entry.remotePath);
+    if (entry.status !== 'done' || !entry.remotePath) return null;
+    paths.push(entry.remotePath);
   }
   return paths;
 }

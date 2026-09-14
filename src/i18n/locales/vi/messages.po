@@ -145,6 +145,10 @@ msgstr "Một Gateway trên máy bạn có thể SSH vào, kể cả máy chỉ 
 msgid "a new {0}"
 msgstr "một {0} mới"
 
+#: src/components/work-task-workspace.tsx
+msgid "A replacement starts separately. Previous instructions are not sent again; address any new instruction explicitly."
+msgstr "Trợ lý thay thế được khởi chạy riêng. Các hướng dẫn trước không được gửi lại; hãy chỉ định rõ người nhận cho mọi hướng dẫn mới"
+
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
 msgstr "Khóa của máy chủ được ghi nhớ lần đầu và kiểm tra mọi lần sau, và một khóa đã thay đổi sẽ chặn kết nối cho đến khi bạn quyết định khác"
@@ -161,6 +165,14 @@ msgstr "Trình giả lập có thể được điều khiển chứ không chỉ
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "Trình giả lập đã tắt có thể mất một phút để khởi động"
 
+#: src/components/work-task-detail.tsx
+msgid "A submitted file changed. Ask for a new result submission."
+msgstr "Tệp đã nộp đã thay đổi. Hãy yêu cầu nộp kết quả mới"
+
+#: src/components/work-task-detail.tsx
+msgid "A submitted file is unavailable. Ask for a new result submission."
+msgstr "Tệp đã nộp không khả dụng. Hãy yêu cầu nộp kết quả mới"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "Một terminal đã được tạo. Hãy kiểm tra trước khi gửi lại — tác vụ của bạn vẫn còn đây"
@@ -169,6 +181,18 @@ msgstr "Một terminal đã được tạo. Hãy kiểm tra trước khi gửi l
 msgid "About"
 msgstr "Giới thiệu"
 
+#: src/components/work-task-detail.tsx
+msgid "Accept this result"
+msgstr "Chấp nhận kết quả này"
+
+#: src/components/work-task-detail.tsx
+msgid "Accepting records a review of this submission. It does not merge, publish, or stop assistants."
+msgstr "Chấp nhận sẽ ghi lại đánh giá cho lần nộp này. Thao tác này không hợp nhất, xuất bản hay dừng trợ lý"
+
+#: src/components/work-task-detail.tsx
+msgid "Acknowledged, not proof of completion"
+msgstr "Đã xác nhận nhận, không có nghĩa là hoàn tất"
+
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command."
 msgstr "Thao tác trên terminal này, hoặc gửi cho nó một lệnh"
@@ -176,6 +200,10 @@ msgstr "Thao tác trên terminal này, hoặc gửi cho nó một lệnh"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "Thao tác trên terminal này, hoặc gửi cho tác tử của nó một prompt"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Activity recorded"
+msgstr "Đã ghi nhận hoạt động"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -186,9 +214,17 @@ msgstr "Thêm host"
 msgid "Add an SSH host"
 msgstr "Thêm host SSH"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Add attachment"
+msgstr "Thêm tệp đính kèm"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Thêm lệnh và tổ hợp phím tùy chỉnh"
+
+#: src/components/work-task-workspace.tsx
+msgid "Add instructions…"
+msgstr "Thêm hướng dẫn…"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Add machine"
@@ -198,6 +234,10 @@ msgstr "Thêm máy"
 msgid "Add one first"
 msgstr "Thêm một cái trước đã"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Add prerequisite without a result version"
+msgstr "Thêm điều kiện tiên quyết không có phiên bản kết quả"
+
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Thêm dòng này vào ~/.ssh/authorized_keys trên máy chủ:"
@@ -206,6 +246,10 @@ msgstr "Thêm dòng này vào ~/.ssh/authorized_keys trên máy chủ:"
 msgctxt "git file status"
 msgid "Added"
 msgstr "Đã thêm"
+
+#: src/components/work-task-workspace.tsx
+msgid "Additional assistants"
+msgstr "Trợ lý bổ sung"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -263,6 +307,19 @@ msgstr "Cho phép camera"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Cho phép camera, hoặc nhập địa chỉ thay thế"
 
+#: src/components/work-task-detail.tsx
+msgid "An attached input has expired. Select and upload the file again before sending."
+msgstr "Một tệp đầu vào đính kèm đã hết hạn. Chọn và tải tệp lên lại trước khi gửi"
+
+#: src/components/work-task-workspace.tsx
+msgid "An attachment expired. Explicitly upload it again before sending."
+msgstr "Một tệp đính kèm đã hết hạn. Chủ động tải tệp lên lại trước khi gửi"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "An earlier operation may already have reached the assistant. Check status before taking another action."
+msgstr "Thao tác trước có thể đã đến trợ lý. Hãy kiểm tra trạng thái trước khi thực hiện thao tác khác"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Trả lời"
@@ -296,6 +353,10 @@ msgstr "Giao diện"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "Giao diện, terminal, bảo mật"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Apply delegation settings"
+msgstr "Áp dụng cài đặt ủy quyền"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
@@ -334,13 +395,53 @@ msgstr "Giao việc này cho một trợ lý"
 msgid "Assigning a task is unavailable"
 msgstr "Không thể giao việc"
 
+#: src/components/collaboration-notice.tsx
+msgid "Assignment history"
+msgstr "Lịch sử phân công"
+
+#: src/components/work-task-workspace.tsx
+msgid "Assistant"
+msgstr "Trợ lý"
+
+#: src/components/work-task-workspace.tsx
+msgid "Assistant changed"
+msgstr "Trợ lý đã thay đổi"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant did not start"
+msgstr "Trợ lý chưa khởi động"
+
+#: src/components/work-task-detail.tsx
+msgid "Assistant instance"
+msgstr "Phiên bản đang chạy của trợ lý"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant needs attention"
+msgstr "Trợ lý cần được xử lý"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant start not confirmed"
+msgstr "Chưa xác nhận trợ lý đã khởi động"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Đã khởi động trợ lý"
 
+#: src/components/work-task-workspace.tsx
+msgid "Assistant still running"
+msgstr "Trợ lý vẫn đang chạy"
+
+#: src/components/work-task-detail.tsx
+msgid "Assistants"
+msgstr "Trợ lý"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
 msgstr "Đính kèm tệp"
+
+#: src/components/work-task-detail.tsx
+msgid "Attempt ID"
+msgstr "ID lần thử"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
@@ -368,6 +469,7 @@ msgstr "Không thể xác thực. Hãy thử lại hoặc kiểm tra cài đặt
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Back"
 msgstr "Quay lại"
 
@@ -486,21 +588,60 @@ msgstr "Thay đổi"
 msgid "Changes colored backgrounds, not text, icons or artwork"
 msgstr "Chỉ thay đổi nền màu, không ảnh hưởng đến chữ, biểu tượng hay hình trang trí"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Changes requested for latest result"
+msgstr "Đã yêu cầu thay đổi kết quả mới nhất"
+
+#: src/components/work-task-detail.tsx
+msgid "Changes were requested for this submission."
+msgstr "Đã yêu cầu sửa đổi lần nộp này"
+
 #: src/i18n/labels.ts
 msgid "Chat"
 msgstr "Trò chuyện"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check assistant lifecycle"
+msgstr "Kiểm tra vòng đời trợ lý"
 
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại"
 
+#: src/components/work-task-workspace.tsx
+msgid "Check interruption status"
+msgstr "Kiểm tra trạng thái ngắt"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check status"
+msgstr "Kiểm tra trạng thái"
+
+#: src/components/work-task-workspace.tsx
+msgid "Check status before taking another action. Reopening this screen does not resend the request."
+msgstr "Kiểm tra trạng thái trước khi thực hiện thao tác khác. Mở lại màn hình này sẽ không gửi lại yêu cầu"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Check the assistant before sending again — your instruction may already have arrived. Your draft is still here."
+msgstr "Kiểm tra trợ lý trước khi gửi lại — chỉ dẫn có thể đã đến nơi. Bản nháp vẫn còn ở đây"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "Kiểm tra trợ lý trước khi gửi lại; trợ lý có thể đã nhận được yêu cầu"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Check the pending operation before changing delegation."
+msgstr "Kiểm tra thao tác đang chờ trước khi thay đổi ủy quyền"
+
 #: src/components/theme-link-import.tsx
 msgid "Check the repository URL, branch and theme file"
 msgstr "Kiểm tra URL kho mã, nhánh và tệp giao diện"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check the task details before continuing."
+msgstr "Kiểm tra chi tiết nhiệm vụ trước khi tiếp tục"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
@@ -514,6 +655,10 @@ msgstr "Đang kiểm tra xác thực hệ thống…"
 msgid "Checking…"
 msgstr "Đang kiểm tra…"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Choose a confirmed lead assistant explicitly."
+msgstr "Chọn rõ ràng một trợ lý chính đã được xác nhận"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
 msgstr "Chọn trình giả lập"
@@ -523,8 +668,13 @@ msgid "Choose a simulator from the menu."
 msgstr "Chọn một trình giả lập từ menu"
 
 #: src/components/agent-assignment-bar.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Choose an assistant"
 msgstr "Chọn một trợ lý"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Choose an exact result version. A missing version stays blocked. Saving dependencies never starts an assistant or sends an instruction."
+msgstr "Chọn chính xác một phiên bản kết quả. Nếu thiếu phiên bản, quan hệ phụ thuộc vẫn bị chặn. Lưu quan hệ phụ thuộc không khởi chạy trợ lý hay gửi chỉ dẫn"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -566,9 +716,12 @@ msgstr "Đang xóa bộ nhớ đệm"
 msgid "Clearing…"
 msgstr "Đang xóa…"
 
+#: src/app/work-tasks.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/task-input-details.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Close"
 msgstr "Đóng"
 
@@ -599,6 +752,7 @@ msgstr "Đóng ghép nối"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Close preview"
 msgstr "Đóng bản xem trước"
 
@@ -683,6 +837,10 @@ msgstr "Commit và push"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Gọn"
+
+#: src/components/work-task-detail.tsx
+msgid "Configure delegation"
+msgstr "Cấu hình ủy quyền"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1031,6 +1189,10 @@ msgstr "Không thể gỡ host"
 msgid "Could not revoke device"
 msgstr "Không thể thu hồi thiết bị"
 
+#: src/components/work-task-workspace.tsx
+msgid "Could not safely save the operation on this device. No further action will be sent. Check device storage and try checking status again."
+msgstr "Không thể lưu thao tác một cách an toàn trên thiết bị này. Sẽ không gửi thêm thao tác nào. Kiểm tra bộ nhớ thiết bị rồi thử kiểm tra lại trạng thái"
+
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "Không thể lưu thay đổi"
@@ -1038,6 +1200,10 @@ msgstr "Không thể lưu thay đổi"
 #: src/components/ssh-host-form.tsx
 msgid "Could not save host"
 msgstr "Không thể lưu host"
+
+#: src/components/work-task-workspace.tsx
+msgid "Could not save interruption recovery information. Nothing was sent."
+msgstr "Không thể lưu thông tin khôi phục yêu cầu ngắt. Chưa gửi gì"
 
 #: src/app/commands.tsx
 msgid "Could not save shortcut"
@@ -1087,9 +1253,22 @@ msgstr "Không thể hủy ghép nối máy chủ"
 msgid "Could not update the session."
 msgstr "Không thể cập nhật phiên"
 
+#: src/components/work-task-workspace.tsx
+msgid "Could not update this task. Check status before continuing."
+msgstr "Không thể cập nhật tác vụ này. Kiểm tra trạng thái trước khi tiếp tục"
+
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "Không thể tải tệp lên"
+
+#: src/components/work-task-workspace.tsx
+msgid "Could not verify assistant exit"
+msgstr "Không thể xác minh trợ lý đã thoát"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Create task"
+msgstr "Tạo nhiệm vụ"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -1098,6 +1277,14 @@ msgstr "Đang dùng"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Agent hiện tại"
+
+#: src/components/collaboration-notice.tsx
+msgid "Current assignments"
+msgstr "Phân công hiện tại"
+
+#: src/components/work-task-detail.tsx
+msgid "Current assistant"
+msgstr "Trợ lý hiện tại"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Current machine"
@@ -1132,6 +1319,22 @@ msgstr "MẶC ĐỊNH"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Delegation configuration recorded"
+msgstr "Đã ghi nhận cấu hình ủy quyền"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation draft"
+msgstr "Bản nháp ủy quyền"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation permits direct child tasks within the existing task policy and assistant budget. Enabling it does not start an assistant or send an instruction."
+msgstr "Ủy quyền cho phép các tác vụ con trực tiếp trong phạm vi chính sách tác vụ và ngân sách trợ lý hiện có. Bật tính năng này không khởi chạy trợ lý hay gửi chỉ dẫn"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation was not confirmed. Check status before trying again."
+msgstr "Chưa xác nhận được việc ủy quyền. Kiểm tra trạng thái trước khi thử lại"
+
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Xóa"
@@ -1153,6 +1356,10 @@ msgstr "Đã xoá"
 msgid "Delivery not confirmed"
 msgstr "Chưa xác nhận được việc gửi"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Demo files are simulated. No system picker or upload runs."
+msgstr "Các tệp demo được mô phỏng. Không mở trình chọn tệp hệ thống hoặc tải tệp lên"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Shell demo"
@@ -1164,6 +1371,14 @@ msgstr "Không gian làm việc demo"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Từ chối"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Dependency details changed or could not be saved. Inspect the task again before continuing."
+msgstr "Chi tiết quan hệ phụ thuộc đã thay đổi hoặc không lưu được. Kiểm tra lại tác vụ trước khi tiếp tục"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Dependency draft"
+msgstr "Bản nháp quan hệ phụ thuộc"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -1178,9 +1393,21 @@ msgstr "xác thực thiết bị"
 msgid "Diff summary"
 msgstr "Tóm tắt diff"
 
+#: src/components/work-task-workspace.tsx
+msgid "Direct child tasks"
+msgstr "Tác vụ con trực tiếp"
+
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "THƯ MỤC"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Disable delegation"
+msgstr "Tắt ủy quyền"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Disabling delegation removes coordinator authority. Existing child assistants keep running."
+msgstr "Tắt ủy quyền sẽ thu hồi quyền của điều phối viên. Các trợ lý con hiện có vẫn tiếp tục chạy"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1260,10 +1487,23 @@ msgstr "Đang tải xuống…"
 msgid "Draft the notes for the next build"
 msgstr "Soạn ghi chú cho bản dựng tiếp theo"
 
+#: src/components/work-task-workspace.tsx
+msgid "Each child task has its own lead assistant. Opening it does not start work or change the parent coordinator."
+msgstr "Mỗi tác vụ con có trợ lý chính riêng. Mở tác vụ đó không bắt đầu công việc hay thay đổi điều phối viên của tác vụ cha"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
 msgstr "Mỗi thiết bị giữ token riêng cho {0}"
+
+#: src/components/collaboration-notice.tsx
+msgid "Earlier assignment"
+msgstr "Phân công trước"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Earlier or unavailable assistant · read only"
+msgstr "Trợ lý trước đây hoặc không khả dụng · chỉ đọc"
 
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
@@ -1284,9 +1524,17 @@ msgstr "Sửa host SSH"
 msgid "Edit this server"
 msgstr "Sửa máy chủ này"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Enable delegation"
+msgstr "Bật ủy quyền"
+
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Enter a child task limit from 0 to 64."
+msgstr "Nhập giới hạn tác vụ con từ 0 đến 64"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
@@ -1342,6 +1590,10 @@ msgstr "Xuất giao diện"
 msgid "Failed · {0}"
 msgstr "Thất bại · {0}"
 
+#: src/i18n/labels.ts
+msgid "Fictional prior result retained after simulated exit."
+msgstr "Kết quả trước đó hư cấu được giữ lại sau khi mô phỏng tiến trình thoát"
+
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
 msgstr "Nhắc đến tệp"
@@ -1382,6 +1634,10 @@ msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng 
 msgid "Fold the tool steps away"
 msgstr "Thu gọn các bước công cụ"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Follow this assignment in Agent collaboration. Delivery does not mean the task is complete."
+msgstr "Theo dõi phân công này trong Cộng tác tác nhân. Đã gửi không có nghĩa là nhiệm vụ hoàn tất"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "Tiến một từ"
@@ -1405,6 +1661,10 @@ msgstr "Gateway"
 #: src/lib/network-error.ts
 msgid "Gateway did not respond in time."
 msgstr "Gateway không phản hồi kịp thời"
+
+#: src/components/work-task-workspace.tsx
+msgid "Gateway evidence confirms startup was never dispatched."
+msgstr "Bằng chứng từ Gateway xác nhận rằng yêu cầu khởi chạy chưa từng được chuyển đi"
 
 #: src/lib/network-error.ts
 msgid "Gateway is temporarily unavailable."
@@ -1555,6 +1815,10 @@ msgstr "Nhập tệp"
 msgid "Import link"
 msgstr "Nhập từ liên kết"
 
+#: src/components/work-task-detail.tsx
+msgid "In progress"
+msgstr "Đang thực hiện"
+
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
@@ -1570,6 +1834,10 @@ msgstr "Chèn {0} {1}"
 msgid "Insert mode"
 msgstr "Chế độ chèn"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Inspect prerequisite"
+msgstr "Kiểm tra điều kiện tiên quyết"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
@@ -1583,6 +1851,10 @@ msgstr "Đã cài đặt"
 msgid "Installing images"
 msgstr "Đang cài đặt hình ảnh"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Instruction sent"
+msgstr "Đã gửi chỉ dẫn"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "Độ mờ đục của nền giao diện"
@@ -1591,13 +1863,31 @@ msgstr "Độ mờ đục của nền giao diện"
 msgid "Interrupt"
 msgstr "Ngắt"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Interrupt assistant"
+msgstr "Ngắt trợ lý"
+
 #: src/app/commands.tsx
 msgid "Interrupt process"
 msgstr "Ngắt tiến trình"
 
+#: src/components/work-task-workspace.tsx
+msgid "Interrupt requested"
+msgstr "Đã yêu cầu ngắt"
+
 #: src/app/commands.tsx
 msgid "Interrupt what this agent is doing."
 msgstr "Ngắt việc tác tử này đang làm"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Interruption not confirmed"
+msgstr "Chưa xác nhận việc ngắt"
+
+#: src/components/work-task-workspace.tsx
+msgid "Interruption requests do not prove the assistant stopped or the task finished. Check its output and lifecycle separately."
+msgstr "Yêu cầu ngắt không chứng minh trợ lý đã dừng hoặc tác vụ đã hoàn thành. Kiểm tra riêng đầu ra và vòng đời của trợ lý"
 
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
@@ -1610,10 +1900,6 @@ msgstr "Nó có thể đã lỗi thời, hoặc dành cho một ứng dụng kh�
 #: src/components/pairing-camera.tsx
 msgid "It was found, but never showed a picture. Another app may be holding it."
 msgstr "Đã tìm thấy camera nhưng nó không bao giờ hiện hình. Có thể một ứng dụng khác đang giữ nó"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "It works on its own. Follow it in Agent collaboration."
-msgstr "Nó làm việc độc lập. Theo dõi trong phần Cộng tác với trợ lý"
 
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
@@ -1717,6 +2003,20 @@ msgstr "Thấy lần cuối vừa xong"
 msgid "Latest"
 msgstr "Mới nhất"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Latest result accepted"
+msgstr "Đã chấp nhận kết quả mới nhất"
+
+#: src/components/work-delegation-controls.tsx
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Lead"
+msgstr "Trợ lý chính"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Lead delegation"
+msgstr "Ủy quyền của trợ lý chính"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "Để trống để bắt đầu từ nơi phiên đang ở"
@@ -1752,8 +2052,38 @@ msgid "Live Activity"
 msgstr "Live Activity"
 
 #: src/components/theme-browse-sheet.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Load more"
 msgstr "Tải thêm"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more assistants"
+msgstr "Tải thêm trợ lý"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more operations"
+msgstr "Tải thêm thao tác"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more related tasks"
+msgstr "Tải thêm tác vụ liên quan"
+
+#: src/components/work-dependency-controls.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Load more results"
+msgstr "Tải thêm kết quả"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more reviews"
+msgstr "Tải thêm đánh giá"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load remaining history before starting or messaging an assistant."
+msgstr "Tải phần lịch sử còn lại trước khi khởi chạy hoặc nhắn tin cho trợ lý"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Load the remaining assistant history before choosing a coordinator."
+msgstr "Tải phần lịch sử trợ lý còn lại trước khi chọn điều phối viên"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
@@ -1782,6 +2112,10 @@ msgstr "Đang tải máy chủ"
 msgid "Loading settings"
 msgstr "Đang tải cài đặt"
 
+#: src/components/work-task-list.tsx
+msgid "Loading tasks…"
+msgstr "Đang tải nhiệm vụ…"
+
 #: src/components/skia-terminal.tsx
 msgid "Loading terminal"
 msgstr "Đang tải terminal"
@@ -1793,6 +2127,10 @@ msgstr "Đang tải bản ghi"
 #: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Đang tải giao diện…"
+
+#: src/components/work-task-workspace.tsx
+msgid "Loading…"
+msgstr "Đang tải…"
 
 #: src/lib/demo-gateway.ts
 msgid "Logs"
@@ -1835,10 +2173,26 @@ msgstr "Quản lý host SSH"
 msgid "Mark reviewed"
 msgstr "Đánh dấu đã xem"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Maximum direct child tasks"
+msgstr "Số tác vụ con trực tiếp tối đa"
+
+#: src/components/work-task-workspace.tsx
+msgid "May include in output"
+msgstr "Có thể đưa vào đầu ra"
+
+#: src/components/task-input-details.tsx
+msgid "May include in the result"
+msgstr "Có thể đưa vào kết quả"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "Nhắc đến {0}"
+
+#: src/components/work-task-workspace.tsx
+msgid "Message this assistant"
+msgstr "Nhắn tin cho trợ lý này"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1929,6 +2283,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Đặt tên cho nó, rồi nhập mã mà Gateway hiển thị"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-detail.tsx
 msgid "Needs your attention"
 msgstr "Cần bạn xử lý"
 
@@ -1941,6 +2296,14 @@ msgstr "Chưa từng kết nối"
 msgid "Never seen"
 msgstr "Chưa từng thấy"
 
+#: src/components/work-task-list.tsx
+msgid "New delegation paused"
+msgstr "Đã tạm dừng phân công mới"
+
+#: src/components/work-task-detail.tsx
+msgid "New delegation paused. Existing assistants may continue."
+msgstr "Đã tạm dừng phân công mới. Các trợ lý hiện có vẫn có thể tiếp tục"
+
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "Nhóm mới"
@@ -1948,6 +2311,10 @@ msgstr "Nhóm mới"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "Khóa host mới"
+
+#: src/components/work-task-workspace.tsx
+msgid "New output available"
+msgstr "Có đầu ra mới"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -1963,6 +2330,8 @@ msgstr "Host SSH mới"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
 msgid "New task"
 msgstr "Tác vụ mới"
 
@@ -1987,6 +2356,10 @@ msgstr "Không có tác tử nào đang chạy"
 msgid "No app on this phone opens web pages."
 msgstr "Không có ứng dụng nào trên điện thoại này mở được trang web"
 
+#: src/components/work-task-detail.tsx
+msgid "No assistant has been started for this task."
+msgstr "Chưa có trợ lý nào được khởi động cho nhiệm vụ này"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "Không có camera để quét"
@@ -2006,6 +2379,10 @@ msgstr "Không có tệp nào khớp"
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "Chưa có Gateway?"
+
+#: src/components/work-task-workspace.tsx
+msgid "No interruption requested"
+msgstr "Chưa yêu cầu ngắt"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
@@ -2034,6 +2411,14 @@ msgstr "Không có bản xem trước cho loại tệp này. Nó vẫn ở trên
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
 msgstr "Không có bản xem trước trên kết nối này"
+
+#: src/components/work-task-detail.tsx
+msgid "No result submitted yet. An idle assistant does not mean the task is complete."
+msgstr "Chưa có kết quả được nộp. Trợ lý đang rảnh không có nghĩa là nhiệm vụ đã hoàn tất"
+
+#: src/components/work-dependency-controls.tsx
+msgid "No result version selected · blocked"
+msgstr "Chưa chọn phiên bản kết quả · bị chặn"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -2064,6 +2449,10 @@ msgstr "Chưa có host SSH nào. Thêm một cái để mở shell trên bất k
 msgid "No still frames"
 msgstr "Không có khung hình tĩnh"
 
+#: src/components/work-task-list.tsx
+msgid "No tasks loaded. Start with a goal, such as updating a homepage and checking the mobile layout."
+msgstr "Chưa tải nhiệm vụ nào. Hãy bắt đầu với một mục tiêu, chẳng hạn cập nhật trang chủ và kiểm tra bố cục trên di động"
+
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "Không có thay đổi văn bản"
@@ -2072,9 +2461,17 @@ msgstr "Không có thay đổi văn bản"
 msgid "No themes are published yet"
 msgstr "Chưa có giao diện nào được công bố"
 
+#: src/components/work-task-detail.tsx
+msgid "No verification evidence supplied."
+msgstr "Chưa cung cấp bằng chứng kiểm chứng"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
+
+#: src/components/work-task-detail.tsx
+msgid "Not confirmed"
+msgstr "Chưa xác nhận"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
@@ -2129,6 +2526,18 @@ msgstr "NGOẠI TUYẾN"
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "Ngoại tuyến, không phản hồi"
+
+#: src/components/work-task-list.tsx
+msgid "Offline. Showing previously loaded tasks."
+msgstr "Ngoại tuyến. Đang hiển thị các nhiệm vụ đã tải trước đó"
+
+#: src/components/work-task-detail.tsx
+msgid "Offline. Showing the last loaded task. Instructions are not sent automatically on reconnect."
+msgstr "Ngoại tuyến. Đang hiển thị nhiệm vụ được tải lần cuối. Chỉ dẫn không tự động gửi khi kết nối lại"
+
+#: src/components/work-task-workspace.tsx
+msgid "Offline. Your draft has not been sent."
+msgstr "Ngoại tuyến. Bản nháp của bạn chưa được gửi"
 
 #: src/components/toggle.tsx
 msgid "On"
@@ -2210,6 +2619,7 @@ msgid "Open SSH host {0}"
 msgstr "Mở host SSH {0}"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-detail.tsx
 msgid "Open terminal"
 msgstr "Mở terminal"
 
@@ -2255,6 +2665,24 @@ msgstr "Mở menu của trình giả lập: thiết bị, các phím, bàn phím
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Mở terminal của tác tử này"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Operation in progress"
+msgstr "Thao tác đang thực hiện"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Operation needs checking"
+msgstr "Cần kiểm tra thao tác"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Operation not confirmed"
+msgstr "Thao tác chưa được xác nhận"
+
+#: src/components/work-task-detail.tsx
+msgid "Operations"
+msgstr "Lịch sử thao tác"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2349,6 +2777,19 @@ msgstr "Dán liên kết giao diện công khai hoặc URL kho mã GitHub"
 msgid "Path"
 msgstr "Đường dẫn"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Pause delegation"
+msgstr "Tạm dừng phân công"
+
+#: src/components/work-task-workspace.tsx
+msgid "Pausing applies to new assistants started through Muqun. Existing assistants and independent shell commands may continue."
+msgstr "Tạm dừng áp dụng cho các trợ lý mới được khởi chạy qua Muqun. Các trợ lý hiện có và lệnh shell độc lập có thể tiếp tục chạy"
+
+#: src/components/task-input-details.tsx
+msgid "Permission to include a reference does not authorize publishing or uploading it elsewhere."
+msgstr "Quyền đưa tài liệu tham khảo vào kết quả không cho phép xuất bản hoặc tải tài liệu đó lên nơi khác"
+
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
 msgstr "Thư viện ảnh"
@@ -2367,6 +2808,14 @@ msgstr "Cổng"
 msgid "PORT"
 msgstr "CỔNG"
 
+#: src/components/work-task-workspace.tsx
+msgid "Prepare follow-up for lead assistant"
+msgstr "Chuẩn bị tin nhắn tiếp theo cho trợ lý chính"
+
+#: src/components/work-task-detail.tsx
+msgid "Prepared"
+msgstr "Đã chuẩn bị"
+
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -2382,6 +2831,7 @@ msgstr "Nhấn Escape để bỏ qua yêu cầu này"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-preview.tsx
+#: src/components/work-task-detail.tsx
 msgid "Preview"
 msgstr "Xem trước"
 
@@ -2402,6 +2852,10 @@ msgstr "Xem trước trình giả lập, không khả dụng qua đường hầm
 msgid "Preview and apply"
 msgstr "Xem trước và áp dụng"
 
+#: src/components/task-input-details.tsx
+msgid "Preview file"
+msgstr "Xem trước tệp"
+
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
@@ -2417,6 +2871,10 @@ msgstr "Khóa riêng"
 #: src/components/ssh-host-form.tsx
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "Khóa riêng (để trống để giữ khóa đã lưu)"
+
+#: src/components/work-task-workspace.tsx
+msgid "Project directory"
+msgstr "Thư mục dự án"
 
 #: src/app/commands.tsx
 msgid "Prompt"
@@ -2455,6 +2913,10 @@ msgstr "Thao tác nhanh"
 #: src/lib/demo-gateway.ts
 msgid "Quit"
 msgstr "Thoát"
+
+#: src/components/task-input-details.tsx
+msgid "Re-upload file"
+msgstr "Tải tệp lên lại"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -2502,6 +2964,10 @@ msgstr "Mức tối thiểu khuyến nghị để chữ dễ đọc: {minimumPer
 msgid "Reconnect"
 msgstr "Kết nối lại"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Reconnect before changing delegation."
+msgstr "Kết nối lại trước khi thay đổi ủy quyền"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reconnect the SSH tunnel"
 msgstr "Kết nối lại đường hầm SSH"
@@ -2511,14 +2977,31 @@ msgstr "Kết nối lại đường hầm SSH"
 msgid "Reconnect to {0}"
 msgstr "Kết nối lại đến {0}"
 
+#: src/components/work-task-workspace.tsx
+msgid "Reconnect to check or interrupt this assistant."
+msgstr "Kết nối lại để kiểm tra hoặc ngắt trợ lý này"
+
 #. placeholder {0}: status.attempt
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Đang kết nối lại · {0}"
 
+#: src/components/task-input-details.tsx
+msgid "Reference description"
+msgstr "Mô tả tài liệu tham khảo"
+
+#: src/components/task-input-details.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Reference only"
+msgstr "Chỉ để tham khảo"
+
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Làm mới"
+
+#: src/components/work-task-workspace.tsx
+msgid "Refresh assistants"
+msgstr "Làm mới danh sách trợ lý"
 
 #: src/components/git-diff-view.tsx
 msgid "Refresh changes"
@@ -2529,8 +3012,17 @@ msgid "Refresh files"
 msgstr "Làm mới tệp"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Refresh output"
 msgstr "Làm mới đầu ra"
+
+#: src/components/work-task-list.tsx
+msgid "Refresh tasks"
+msgstr "Làm mới nhiệm vụ"
+
+#: src/components/work-task-detail.tsx
+msgid "Refused"
+msgstr "Đã từ chối"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -2546,6 +3038,10 @@ msgstr "Xóa"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Gỡ {0}"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Remove dependency from draft"
+msgstr "Xóa quan hệ phụ thuộc khỏi bản nháp"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -2596,13 +3092,37 @@ msgstr "Đã đổi tên"
 msgid "Replace key"
 msgstr "Thay khóa"
 
+#: src/components/work-task-workspace.tsx
+msgid "Replacement remains blocked until lifecycle is verified"
+msgstr "Việc thay thế vẫn bị chặn cho đến khi xác minh vòng đời"
+
+#: src/components/work-task-workspace.tsx
+msgid "Replacement reservation released"
+msgstr "Đã giải phóng chỗ dành cho trợ lý thay thế"
+
 #: src/app/settings.tsx
 msgid "Report a bug or request a feature"
 msgstr "Báo lỗi hoặc đề xuất tính năng"
 
+#: src/components/work-task-detail.tsx
+msgid "Request changes"
+msgstr "Yêu cầu sửa đổi"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "Yêu cầu thất bại"
+
+#: src/components/work-task-workspace.tsx
+msgid "Requested changes are saved as a review. Preparing a follow-up keeps it as a draft until you explicitly send it."
+msgstr "Các thay đổi được yêu cầu đã được lưu dưới dạng đánh giá. Tin nhắn tiếp theo được chuẩn bị vẫn là bản nháp cho đến khi bạn chủ động gửi"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Require a submitted result"
+msgstr "Yêu cầu kết quả đã nộp"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Require human acceptance"
+msgstr "Yêu cầu con người chấp nhận"
 
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
@@ -2627,6 +3147,22 @@ msgstr "Khôi phục các lệnh mặc định đã ẩn"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Khôi phục mặc định đã ẩn"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Result awaiting review"
+msgstr "Kết quả đang chờ xem xét"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Result submitted"
+msgstr "Đã nộp kết quả"
+
+#: src/components/work-task-detail.tsx
+msgid "Results"
+msgstr "Kết quả"
+
+#: src/components/work-task-workspace.tsx
+msgid "Resume delegation"
+msgstr "Tiếp tục ủy nhiệm"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2659,6 +3195,12 @@ msgstr "Return"
 msgid "Return to the server list and pair again."
 msgstr "Quay lại danh sách máy chủ và ghép nối lại"
 
+#: src/app/work-tasks.tsx
+#: src/components/work-task-detail.tsx
+msgid "Return to the task's original server and session."
+msgstr "Quay lại máy chủ và phiên ban đầu của nhiệm vụ"
+
+#: src/app/work-tasks.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
@@ -2689,6 +3231,18 @@ msgstr "Đã rà soát xong. Cơ chế dự phòng giao diện có kiểm thử.
 msgid "Review link"
 msgstr "Kiểm tra liên kết"
 
+#: src/components/work-task-workspace.tsx
+msgid "Review note"
+msgstr "Ghi chú đánh giá"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Review recorded"
+msgstr "Đã ghi nhận đánh giá"
+
+#: src/components/work-task-detail.tsx
+msgid "Review result"
+msgstr "Đánh giá kết quả"
+
 #: src/app/commands.tsx
 msgid "Review the current changes."
 msgstr "Xem xét các thay đổi hiện tại"
@@ -2696,6 +3250,10 @@ msgstr "Xem xét các thay đổi hiện tại"
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "Xem bài kiểm thử đang lỗi và sửa nó"
+
+#: src/components/collaboration-notice.tsx
+msgid "Reviewed"
+msgstr "Đã xem xét"
 
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
@@ -2758,6 +3316,10 @@ msgstr "Lưu một prompt bạn hay gửi cho tác tử này"
 msgid "Save changes to {0}"
 msgstr "Lưu thay đổi vào {0}"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Save dependency versions"
+msgstr "Lưu phiên bản của các quan hệ phụ thuộc"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "Lưu host"
@@ -2774,13 +3336,45 @@ msgstr "Lưu giao diện"
 msgid "Saved"
 msgstr "Đã lưu"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Saved child task limit"
+msgstr "Giới hạn tác vụ con đã lưu"
+
 #: src/app/commands.tsx
 msgid "SAVED COMMANDS"
 msgstr "LỆNH ĐÃ LƯU"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Saved configuration does not prove the coordinator is currently authorized. Reconfirm the lead after a Gateway restart."
+msgstr "Cấu hình đã lưu không chứng minh điều phối viên hiện có quyền. Xác nhận lại trợ lý chính sau khi Gateway khởi động lại"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved coordinator"
+msgstr "Điều phối viên đã lưu"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Saved dependencies"
+msgstr "Quan hệ phụ thuộc đã lưu"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved policy: delegation disabled"
+msgstr "Chính sách đã lưu: tắt ủy quyền"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved policy: delegation enabled"
+msgstr "Chính sách đã lưu: bật ủy quyền"
+
 #: src/app/commands.tsx
 msgid "SAVED PROMPTS"
 msgstr "PROMPT ĐÃ LƯU"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved requirement: human acceptance"
+msgstr "Yêu cầu đã lưu: con người chấp nhận"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved requirement: result available"
+msgstr "Yêu cầu đã lưu: có kết quả"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -2862,6 +3456,11 @@ msgstr "Gửi {spoken}"
 msgid "Send a message"
 msgstr "Gửi tin nhắn"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Send instruction"
+msgstr "Gửi chỉ dẫn"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Gửi văn bản"
@@ -2917,6 +3516,10 @@ msgstr "Đặt mật mã thiết bị trước khi dùng Khóa ứng dụng"
 msgid "Set one up on your computer"
 msgstr "Cài một cái trên máy tính của bạn"
 
+#: src/components/work-task-detail.tsx
+msgid "Set task dependencies"
+msgstr "Thiết lập quan hệ phụ thuộc của tác vụ"
+
 #: src/lib/demo-gateway.ts
 msgid "Set the AI model for Claude Code"
 msgstr "Đặt mô hình AI cho Claude Code"
@@ -2946,6 +3549,10 @@ msgstr "Cài Gateway trên máy tính của bạn"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Cài đặt"
+
+#: src/components/work-task-detail.tsx
+msgid "SHA-256 checksum"
+msgstr "Giá trị kiểm tra SHA-256"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
@@ -3157,7 +3764,21 @@ msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Khởi động một tác tử và giao cho nó việc đầu tiên"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Start assistant"
+msgstr "Khởi động trợ lý"
+
+#: src/components/work-task-detail.tsx
+msgid "Start not confirmed"
+msgstr "Chưa xác nhận khởi động"
+
+#: src/components/work-task-workspace.tsx
+msgid "Start replacement"
+msgstr "Khởi chạy trợ lý thay thế"
+
 #: src/components/new-task-sheet.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Start task"
 msgstr "Bắt đầu tác vụ"
 
@@ -3203,6 +3824,18 @@ msgstr "Dừng tác tử này"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Bộ nhớ"
+
+#: src/components/work-task-detail.tsx
+msgid "Submission"
+msgstr "Lần nộp"
+
+#: src/components/work-task-detail.tsx
+msgid "Submit result"
+msgstr "Nộp kết quả"
+
+#: src/components/work-task-detail.tsx
+msgid "Submitted by"
+msgstr "Người nộp"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -3270,6 +3903,14 @@ msgstr "Nhấn để kết nối"
 msgid "Tap to preview and adjust"
 msgstr "Chạm để xem trước và điều chỉnh"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Task created"
+msgstr "Đã tạo tác vụ"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Task dependencies"
+msgstr "Quan hệ phụ thuộc của tác vụ"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
 msgstr "Tác vụ cho {assignmentLabel}"
@@ -3279,12 +3920,32 @@ msgstr "Tác vụ cho {assignmentLabel}"
 msgid "Task for a new {0}"
 msgstr "Tác vụ cho một {0} mới"
 
+#: src/components/work-task-workspace.tsx
+msgid "Task reference files"
+msgstr "Tệp tham khảo của tác vụ"
+
+#: src/components/work-task-workspace.tsx
+msgid "Task saved. Open the existing task before continuing."
+msgstr "Đã lưu tác vụ. Mở tác vụ hiện có trước khi tiếp tục"
+
+#: src/app/work-tasks.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Tasks"
+msgstr "Tác vụ"
+
+#: src/components/work-task-list.tsx
+msgid "Tasks will appear here when this session supports task management."
+msgstr "Các tác vụ sẽ xuất hiện ở đây khi phiên này hỗ trợ quản lý tác vụ"
+
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "Tệp tạm"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/work-task-detail.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"
@@ -3358,6 +4019,18 @@ msgstr "Tác tử giờ đang hỏi điều khác"
 msgid "The agent is no longer waiting."
 msgstr "Tác tử không còn chờ nữa"
 
+#: src/components/work-task-detail.tsx
+msgid "The assistant is not ready for another instruction."
+msgstr "Trợ lý chưa sẵn sàng nhận chỉ dẫn tiếp theo"
+
+#: src/components/work-task-detail.tsx
+msgid "The assistant needs a decision. Inspect its terminal."
+msgstr "Trợ lý cần một quyết định. Hãy kiểm tra terminal của trợ lý"
+
+#: src/components/work-task-detail.tsx
+msgid "The assistant was replaced. Choose a current assistant."
+msgstr "Trợ lý đã được thay thế. Hãy chọn trợ lý hiện tại"
+
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "Camera không khởi động"
@@ -3365,6 +4038,10 @@ msgstr "Camera không khởi động"
 #: src/components/pairing-camera.tsx
 msgid "The camera reported an error."
 msgstr "Camera báo lỗi"
+
+#: src/components/work-delegation-controls.tsx
+msgid "The chosen lead changed. Choose its current instance again."
+msgstr "Trợ lý chính đã chọn đã thay đổi. Hãy chọn lại phiên bản đang chạy hiện tại của trợ lý đó"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -3374,10 +4051,34 @@ msgstr "Kết nối đã rớt"
 msgid "The connection to the simulator stopped."
 msgstr "Kết nối đến trình giả lập đã dừng"
 
+#: src/components/work-task-detail.tsx
+msgid "The Gateway could not save task state. Check its storage and reconnect."
+msgstr "Gateway không thể lưu trạng thái nhiệm vụ. Hãy kiểm tra bộ nhớ và kết nối lại"
+
+#: src/components/work-task-workspace.tsx
+msgid "The Gateway resolved a different project directory. Confirm it and select the attachments again."
+msgstr "Gateway đã phân giải sang một thư mục dự án khác. Xác nhận thư mục và chọn lại các tệp đính kèm"
+
+#: src/components/work-task-detail.tsx
+msgid "The instruction may already have arrived. Check status before sending again."
+msgstr "Chỉ dẫn có thể đã đến nơi. Hãy kiểm tra trạng thái trước khi gửi lại"
+
+#: src/components/work-task-workspace.tsx
+msgid "The interruption request was refused. Check the assistant before trying again."
+msgstr "Yêu cầu ngắt bị từ chối. Kiểm tra trợ lý trước khi thử lại"
+
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Không thể đọc khóa ({0}). Hãy kiểm tra khóa và cụm mật khẩu của nó"
+
+#: src/components/work-task-workspace.tsx
+msgid "The native owner confirmed that startup created no assistant process."
+msgstr "Trình quản lý tiến trình gốc xác nhận rằng lần khởi chạy không tạo tiến trình trợ lý nào"
+
+#: src/components/work-task-workspace.tsx
+msgid "The native owner recorded this assistant's process exit. This does not prove task completion."
+msgstr "Trình quản lý tiến trình gốc đã ghi nhận tiến trình của trợ lý này thoát. Điều này không chứng minh tác vụ đã hoàn thành"
 
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
@@ -3386,6 +4087,10 @@ msgstr "Ngăn nguyên bản, trên lưới của nó và với màu sắc riêng
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
 msgstr "Màn hình gặp lỗi. Hãy thử lại — các máy chủ của bạn vẫn được ghép nối"
+
+#: src/components/work-task-workspace.tsx
+msgid "The selected assistant is unavailable. Refresh assistants and choose an installed assistant. Your draft is preserved."
+msgstr "Trợ lý đã chọn không khả dụng. Làm mới danh sách và chọn một trợ lý đã cài đặt. Bản nháp của bạn được giữ nguyên"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
@@ -3435,6 +4140,19 @@ msgstr "Trình giả lập không tắt kịp thời"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
 
+#: src/components/work-task-workspace.tsx
+msgid "The task changed. Check status before requesting interruption."
+msgstr "Tác vụ đã thay đổi. Kiểm tra trạng thái trước khi yêu cầu ngắt"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "The task changed. Refresh and review the latest state."
+msgstr "Nhiệm vụ đã thay đổi. Hãy làm mới và xem trạng thái mới nhất"
+
+#: src/components/work-task-detail.tsx
+msgid "The task has reached its configured resource limit."
+msgstr "Nhiệm vụ đã đạt giới hạn tài nguyên được cấu hình"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
@@ -3479,9 +4197,25 @@ msgstr "Giao diện được công bố tại muqun.dev. Không tải gì cho đ
 msgid "This agent did not offer that answer."
 msgstr "Tác tử này không đưa ra câu trả lời đó"
 
+#: src/components/work-task-workspace.tsx
+msgid "This checks whether a replacement can safely start. It does not stop the assistant or delete its resources."
+msgstr "Thao tác này kiểm tra liệu có thể khởi chạy trợ lý thay thế an toàn hay không. Nó không dừng trợ lý hoặc xóa tài nguyên của trợ lý"
+
+#: src/components/work-delegation-controls.tsx
+msgid "This child task's lead runs its own work. Only the root task's coordinator can delegate."
+msgstr "Trợ lý chính của tác vụ con này thực hiện công việc riêng. Chỉ điều phối viên của tác vụ gốc mới có thể ủy quyền"
+
+#: src/components/task-input-details.tsx
+msgid "This description is too long. Shorten it before continuing."
+msgstr "Mô tả này quá dài. Rút ngắn trước khi tiếp tục"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "Thiết bị này không có camera khả dụng"
+
+#: src/components/work-task-workspace.tsx
+msgid "This file cannot be previewed safely in the app."
+msgstr "Không thể xem trước tệp này một cách an toàn trong ứng dụng"
 
 #: src/components/asset-viewer.tsx
 msgid "This file is empty."
@@ -3535,6 +4269,15 @@ msgstr "Ngăn này không làm việc trong một kho git, nên không có gì �
 msgid "This QR code is not valid."
 msgstr "Mã QR này không hợp lệ"
 
+#: src/components/work-task-detail.tsx
+msgid "This request conflicts with an earlier operation. Check status."
+msgstr "Yêu cầu này xung đột với thao tác trước. Hãy kiểm tra trạng thái"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "This result version is unavailable or changed. Refresh the task and review its submission details."
+msgstr "Phiên bản kết quả này không khả dụng hoặc đã thay đổi. Làm mới tác vụ và xem lại chi tiết kết quả đã gửi"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
 msgstr "Máy chủ này chưa chạy được lệnh đó"
@@ -3577,6 +4320,43 @@ msgstr "Máy chủ này không còn nhận ra thiết bị này. Hãy ghép nố
 msgid "This server refused the request."
 msgstr "Máy chủ này đã từ chối yêu cầu"
 
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot accept task attachments. Update its Gateway and refresh. Your draft is preserved."
+msgstr "Phiên này không thể nhận tệp đính kèm tác vụ. Cập nhật Gateway của phiên rồi làm mới. Bản nháp của bạn được giữ nguyên"
+
+#: src/components/work-task-detail.tsx
+msgid "This session cannot manage tasks yet. Update or reconnect its Gateway, then check status."
+msgstr "Phiên này chưa thể quản lý tác vụ. Cập nhật hoặc kết nối lại Gateway của phiên, rồi kiểm tra trạng thái"
+
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot manage tasks yet. Update or reconnect its Gateway, then refresh."
+msgstr "Phiên này chưa thể quản lý tác vụ. Cập nhật hoặc kết nối lại Gateway của phiên, rồi làm mới"
+
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot safely check assistant lifecycle yet. Update its Gateway and backend, then check status."
+msgstr "Phiên này chưa thể kiểm tra vòng đời trợ lý một cách an toàn. Cập nhật Gateway và backend của phiên, rồi kiểm tra trạng thái"
+
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot safely start or message managed assistants yet. Update its Gateway and backend, then check status. Ordinary terminal collaboration remains available."
+msgstr "Phiên này chưa thể khởi chạy hoặc nhắn tin cho các trợ lý được quản lý một cách an toàn. Cập nhật Gateway và backend của phiên, rồi kiểm tra trạng thái. Tính năng cộng tác thông thường trong terminal vẫn khả dụng"
+
+#: src/components/work-task-detail.tsx
+msgid "This session does not support this action. Check its Gateway capabilities."
+msgstr "Phiên này không hỗ trợ thao tác này. Hãy kiểm tra các khả năng của Gateway"
+
+#: src/components/work-task-detail.tsx
+msgid "This submission is awaiting review."
+msgstr "Lần nộp này đang chờ đánh giá"
+
+#: src/components/work-task-detail.tsx
+msgid "This submission was accepted."
+msgstr "Lần nộp này đã được chấp nhận"
+
+#: src/components/work-task-detail.tsx
+msgid "This task or assistant is no longer available."
+msgstr "Nhiệm vụ hoặc trợ lý này không còn khả dụng"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "Không thể vẽ terminal này"
@@ -3589,6 +4369,10 @@ msgstr "Terminal này không còn khả dụng"
 msgid "This theme contains images that must be installed before applying"
 msgstr "Giao diện này chứa hình ảnh cần được cài đặt trước khi áp dụng"
 
+#: src/components/task-input-details.tsx
+msgid "This upload expired. Re-upload it explicitly before sending."
+msgstr "Lần tải lên này đã hết hạn. Chủ động tải tệp lên lại trước khi gửi"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Không gian làm việc này chưa có nhóm nào"
@@ -3596,6 +4380,14 @@ msgstr "Không gian làm việc này chưa có nhóm nào"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "Qua {host}"
+
+#: src/components/work-task-workspace.tsx
+msgid "Title"
+msgstr "Tiêu đề"
+
+#: src/components/work-task-workspace.tsx
+msgid "To"
+msgstr "Đến"
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -3738,6 +4530,27 @@ msgstr "Bản cập nhật đã sẵn sàng · đang khởi động lại…"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Update this Gateway and backend to configure delegation."
+msgstr "Cập nhật Gateway này và backend để cấu hình ủy quyền"
+
+#: src/components/work-task-workspace.tsx
+msgid "Update this Gateway and backend to interrupt the exact assistant safely."
+msgstr "Cập nhật Gateway này và backend để ngắt đúng trợ lý này một cách an toàn"
+
+#: src/components/task-attachment-composer.tsx
+msgid "Update this Gateway to attach files to managed tasks."
+msgstr "Cập nhật Gateway này để đính kèm tệp vào các tác vụ được quản lý"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Update this Gateway to edit task dependencies."
+msgstr "Cập nhật Gateway này để chỉnh sửa quan hệ phụ thuộc của tác vụ"
+
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Updates available · refresh"
+msgstr "Có cập nhật · làm mới"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Đang cập nhật Muqun…"
@@ -3754,6 +4567,10 @@ msgstr "đã tải lên"
 msgid "uploading"
 msgstr "đang tải lên"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Uploading attachments…"
+msgstr "Đang tải tệp đính kèm lên…"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Use {0}"
@@ -3762,6 +4579,10 @@ msgstr "Dùng {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Dùng mật mã thiết bị"
+
+#: src/components/work-task-workspace.tsx
+msgid "Use resolved project"
+msgstr "Dùng dự án đã phân giải"
 
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
@@ -3775,6 +4596,10 @@ msgstr "Dùng nút quét trên màn hình chính để thêm"
 msgid "Use theme defaults"
 msgstr "Dùng thiết lập mặc định của giao diện"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Use this exact result version"
+msgstr "Sử dụng đúng phiên bản kết quả này"
+
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "Dùng máy chủ này"
@@ -3786,6 +4611,10 @@ msgstr "Tên người dùng"
 #: src/components/settings-servers.tsx
 msgid "USING"
 msgstr "ĐANG DÙNG"
+
+#: src/components/work-task-detail.tsx
+msgid "Verification reported by the assistant"
+msgstr "Kiểm chứng do trợ lý báo cáo"
 
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
@@ -3816,6 +4645,10 @@ msgstr "Đang chờ tải lên xong…"
 msgid "What is running"
 msgstr "Những gì đang chạy"
 
+#: src/components/work-task-workspace.tsx
+msgid "What would you like done?"
+msgstr "Bạn muốn thực hiện việc gì?"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Có gì mới"
@@ -3823,6 +4656,11 @@ msgstr "Có gì mới"
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Worker"
+msgstr "Trợ lý thực hiện"
 
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
@@ -3868,3 +4706,7 @@ msgstr "Các tác tử của bạn, ở bất cứ đâu"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "Các gateway đã ghép nối của bạn"
+
+#: src/components/work-task-workspace.tsx
+msgid "Zero keeps this task with one assistant. The limit does not grant approvals or broader permissions."
+msgstr "Giá trị không giữ tác vụ này với một trợ lý duy nhất. Giới hạn này không cấp phê duyệt hoặc quyền hạn rộng hơn"

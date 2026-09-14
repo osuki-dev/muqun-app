@@ -145,6 +145,10 @@ msgstr "你能以 SSH 登入的機器上的 Gateway，即使它只在自己的 l
 msgid "a new {0}"
 msgstr "新的 {0}"
 
+#: src/components/work-task-workspace.tsx
+msgid "A replacement starts separately. Previous instructions are not sent again; address any new instruction explicitly."
+msgstr "替代助理將單獨啟動。先前的指示不會再次傳送；請明確指定每則新指示的接收對象"
+
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
 msgstr "伺服器的金鑰第一次就記住，之後每次都會核對；金鑰變了就中止連線，除非你另行確認"
@@ -161,6 +165,14 @@ msgstr "模擬器不只是看，還能操作，因此預覽只在 Tailscale 或 
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "已關機的模擬器可能需要一分鐘才能啟動"
 
+#: src/components/work-task-detail.tsx
+msgid "A submitted file changed. Ask for a new result submission."
+msgstr "提交的檔案已變更。請要求重新提交成果"
+
+#: src/components/work-task-detail.tsx
+msgid "A submitted file is unavailable. Ask for a new result submission."
+msgstr "提交的檔案無法使用。請要求重新提交成果"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "已經建立了一個終端機。再次傳送前先查看一下——你的任務還在"
@@ -169,6 +181,18 @@ msgstr "已經建立了一個終端機。再次傳送前先查看一下——你
 msgid "About"
 msgstr "關於"
 
+#: src/components/work-task-detail.tsx
+msgid "Accept this result"
+msgstr "驗收此成果"
+
+#: src/components/work-task-detail.tsx
+msgid "Accepting records a review of this submission. It does not merge, publish, or stop assistants."
+msgstr "驗收會記錄對此次提交的審核，不會合併、發佈或停止助手"
+
+#: src/components/work-task-detail.tsx
+msgid "Acknowledged, not proof of completion"
+msgstr "已確認收到，不代表完成"
+
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command."
 msgstr "操作這個終端機，或送一個指令給它"
@@ -176,6 +200,10 @@ msgstr "操作這個終端機，或送一個指令給它"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "操作這個終端機，或送一段提示給它的代理程式"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Activity recorded"
+msgstr "已記錄活動"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -186,9 +214,17 @@ msgstr "新增主機"
 msgid "Add an SSH host"
 msgstr "新增 SSH 主機"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Add attachment"
+msgstr "新增附件"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "新增指令與自訂組合鍵"
+
+#: src/components/work-task-workspace.tsx
+msgid "Add instructions…"
+msgstr "新增指示…"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Add machine"
@@ -198,6 +234,10 @@ msgstr "新增機器"
 msgid "Add one first"
 msgstr "先新增一個"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Add prerequisite without a result version"
+msgstr "新增未指定結果版本的前置任務"
+
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "將這一行加到伺服器的 ~/.ssh/authorized_keys："
@@ -206,6 +246,10 @@ msgstr "將這一行加到伺服器的 ~/.ssh/authorized_keys："
 msgctxt "git file status"
 msgid "Added"
 msgstr "新增"
+
+#: src/components/work-task-workspace.tsx
+msgid "Additional assistants"
+msgstr "額外助理"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -263,6 +307,19 @@ msgstr "允許相機"
 msgid "Allow the camera, or enter the address instead."
 msgstr "允許使用相機，或改為輸入位址"
 
+#: src/components/work-task-detail.tsx
+msgid "An attached input has expired. Select and upload the file again before sending."
+msgstr "附加的輸入檔案已過期。傳送前請重新選取並上傳檔案"
+
+#: src/components/work-task-workspace.tsx
+msgid "An attachment expired. Explicitly upload it again before sending."
+msgstr "附件已過期。傳送前請明確操作重新上傳"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "An earlier operation may already have reached the assistant. Check status before taking another action."
+msgstr "先前的操作可能已送達助手。執行其他操作前請先檢查狀態"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "回答"
@@ -296,6 +353,10 @@ msgstr "外觀"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "外觀、終端機、安全性"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Apply delegation settings"
+msgstr "套用委派設定"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
@@ -334,13 +395,53 @@ msgstr "交給一個助理去做"
 msgid "Assigning a task is unavailable"
 msgstr "無法交給其他助手"
 
+#: src/components/collaboration-notice.tsx
+msgid "Assignment history"
+msgstr "指派紀錄"
+
+#: src/components/work-task-workspace.tsx
+msgid "Assistant"
+msgstr "助理"
+
+#: src/components/work-task-workspace.tsx
+msgid "Assistant changed"
+msgstr "助理已變更"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant did not start"
+msgstr "助手未啟動"
+
+#: src/components/work-task-detail.tsx
+msgid "Assistant instance"
+msgstr "助理執行個體"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant needs attention"
+msgstr "助手需要處理"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant start not confirmed"
+msgstr "助手啟動尚未確認"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "助理已啟動"
 
+#: src/components/work-task-workspace.tsx
+msgid "Assistant still running"
+msgstr "助理仍在執行"
+
+#: src/components/work-task-detail.tsx
+msgid "Assistants"
+msgstr "助手"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
 msgstr "附加檔案"
+
+#: src/components/work-task-detail.tsx
+msgid "Attempt ID"
+msgstr "嘗試ID"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
@@ -368,6 +469,7 @@ msgstr "目前無法驗證。請再試一次，或檢查系統設定"
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Back"
 msgstr "返回"
 
@@ -486,21 +588,60 @@ msgstr "變更"
 msgid "Changes colored backgrounds, not text, icons or artwork"
 msgstr "只調整背景顏色，不影響文字、圖示或裝飾圖片"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Changes requested for latest result"
+msgstr "已要求修改最新結果"
+
+#: src/components/work-task-detail.tsx
+msgid "Changes were requested for this submission."
+msgstr "此次提交已被要求修改"
+
 #: src/i18n/labels.ts
 msgid "Chat"
 msgstr "對話"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check assistant lifecycle"
+msgstr "檢查助理生命週期"
 
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "請檢查裝置的驗證設定後再試一次"
 
+#: src/components/work-task-workspace.tsx
+msgid "Check interruption status"
+msgstr "檢查中斷狀態"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check status"
+msgstr "檢查狀態"
+
+#: src/components/work-task-workspace.tsx
+msgid "Check status before taking another action. Reopening this screen does not resend the request."
+msgstr "執行其他操作前請先檢查狀態。重新開啟此畫面不會再次傳送請求"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Check the assistant before sending again — your instruction may already have arrived. Your draft is still here."
+msgstr "再次傳送前請先檢查助手——指令可能已經送達。草稿仍保留在這裡"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "再次傳送前請先查看助手，它可能已經收到了請求"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Check the pending operation before changing delegation."
+msgstr "變更委派前，請檢查待處理的操作"
+
 #: src/components/theme-link-import.tsx
 msgid "Check the repository URL, branch and theme file"
 msgstr "請檢查儲存庫網址、分支和主題檔案"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check the task details before continuing."
+msgstr "繼續前請檢查任務詳細資訊"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
@@ -514,6 +655,10 @@ msgstr "正在檢查系統驗證…"
 msgid "Checking…"
 msgstr "檢查中…"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Choose a confirmed lead assistant explicitly."
+msgstr "請明確選擇已確認的主助理"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
 msgstr "選擇模擬器"
@@ -523,8 +668,13 @@ msgid "Choose a simulator from the menu."
 msgstr "請從選單選擇模擬器"
 
 #: src/components/agent-assignment-bar.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Choose an assistant"
 msgstr "選擇助理"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Choose an exact result version. A missing version stays blocked. Saving dependencies never starts an assistant or sends an instruction."
+msgstr "請選擇確切的結果版本。缺少版本時將維持封鎖。儲存相依關係不會啟動助理或傳送指令"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -566,9 +716,12 @@ msgstr "正在清除快取"
 msgid "Clearing…"
 msgstr "正在清除…"
 
+#: src/app/work-tasks.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/task-input-details.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Close"
 msgstr "關閉"
 
@@ -599,6 +752,7 @@ msgstr "關閉配對"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Close preview"
 msgstr "關閉預覽"
 
@@ -683,6 +837,10 @@ msgstr "提交並推送"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "緊湊"
+
+#: src/components/work-task-detail.tsx
+msgid "Configure delegation"
+msgstr "設定委派"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1031,6 +1189,10 @@ msgstr "無法移除主機"
 msgid "Could not revoke device"
 msgstr "無法撤銷裝置"
 
+#: src/components/work-task-workspace.tsx
+msgid "Could not safely save the operation on this device. No further action will be sent. Check device storage and try checking status again."
+msgstr "無法在此裝置上安全儲存操作。不會傳送任何後續操作。請檢查裝置儲存空間，然後嘗試再次檢查狀態"
+
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "無法儲存變更"
@@ -1038,6 +1200,10 @@ msgstr "無法儲存變更"
 #: src/components/ssh-host-form.tsx
 msgid "Could not save host"
 msgstr "無法儲存主機"
+
+#: src/components/work-task-workspace.tsx
+msgid "Could not save interruption recovery information. Nothing was sent."
+msgstr "無法儲存中斷復原資訊。未傳送任何內容"
 
 #: src/app/commands.tsx
 msgid "Could not save shortcut"
@@ -1087,9 +1253,22 @@ msgstr "無法解除伺服器配對"
 msgid "Could not update the session."
 msgstr "無法更新工作階段"
 
+#: src/components/work-task-workspace.tsx
+msgid "Could not update this task. Check status before continuing."
+msgstr "無法更新此任務。繼續前請先檢查狀態"
+
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "無法上傳檔案"
+
+#: src/components/work-task-workspace.tsx
+msgid "Could not verify assistant exit"
+msgstr "無法確認助理已結束"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Create task"
+msgstr "建立任務"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -1098,6 +1277,14 @@ msgstr "目前"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "目前的 Agent"
+
+#: src/components/collaboration-notice.tsx
+msgid "Current assignments"
+msgstr "目前指派"
+
+#: src/components/work-task-detail.tsx
+msgid "Current assistant"
+msgstr "目前助手"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Current machine"
@@ -1132,6 +1319,22 @@ msgstr "預設"
 msgid "Defaults to theme.json at the repository root"
 msgstr "預設為儲存庫根目錄下的 theme.json"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Delegation configuration recorded"
+msgstr "已記錄委派設定"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation draft"
+msgstr "委派草稿"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation permits direct child tasks within the existing task policy and assistant budget. Enabling it does not start an assistant or send an instruction."
+msgstr "委派允許在現有任務原則和助理預算範圍內建立直屬子任務。啟用後不會啟動助理或傳送指令"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation was not confirmed. Check status before trying again."
+msgstr "委派未獲確認。請檢查狀態後再試"
+
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "刪除"
@@ -1153,6 +1356,10 @@ msgstr "刪除"
 msgid "Delivery not confirmed"
 msgstr "傳送未確認"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Demo files are simulated. No system picker or upload runs."
+msgstr "示範檔案為模擬資料。不會開啟系統檔案選擇器或上傳檔案"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "示範 Shell"
@@ -1164,6 +1371,14 @@ msgstr "示範工作區"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒絕"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Dependency details changed or could not be saved. Inspect the task again before continuing."
+msgstr "相依詳細資料已變更或無法儲存。繼續前請重新檢查任務"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Dependency draft"
+msgstr "相依關係草稿"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -1178,9 +1393,21 @@ msgstr "裝置驗證"
 msgid "Diff summary"
 msgstr "Diff 摘要"
 
+#: src/components/work-task-workspace.tsx
+msgid "Direct child tasks"
+msgstr "直屬子任務"
+
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "目錄"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Disable delegation"
+msgstr "停用委派"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Disabling delegation removes coordinator authority. Existing child assistants keep running."
+msgstr "停用委派會撤銷協調者權限。現有子助理將繼續執行"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1260,10 +1487,23 @@ msgstr "正在下載…"
 msgid "Draft the notes for the next build"
 msgstr "草擬下一版的發行說明"
 
+#: src/components/work-task-workspace.tsx
+msgid "Each child task has its own lead assistant. Opening it does not start work or change the parent coordinator."
+msgstr "每個子任務都有自己的主助理。開啟子任務不會開始工作或變更父層協調者"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
 msgstr "每台裝置各自持有 {0} 的權杖"
+
+#: src/components/collaboration-notice.tsx
+msgid "Earlier assignment"
+msgstr "先前的指派"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Earlier or unavailable assistant · read only"
+msgstr "先前或無法使用的助手 · 唯讀"
 
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
@@ -1284,9 +1524,17 @@ msgstr "編輯 SSH 主機"
 msgid "Edit this server"
 msgstr "編輯這台伺服器"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Enable delegation"
+msgstr "啟用委派"
+
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter 鍵"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Enter a child task limit from 0 to 64."
+msgstr "請輸入0到64之間的子任務上限"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
@@ -1342,6 +1590,10 @@ msgstr "匯出主題"
 msgid "Failed · {0}"
 msgstr "失敗 · {0}"
 
+#: src/i18n/labels.ts
+msgid "Fictional prior result retained after simulated exit."
+msgstr "模擬結束後保留的虛構先前結果"
+
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
 msgstr "檔案提及"
@@ -1382,6 +1634,10 @@ msgstr "請先修正文字對比度再套用此主題"
 msgid "Fold the tool steps away"
 msgstr "收合工具步驟"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Follow this assignment in Agent collaboration. Delivery does not mean the task is complete."
+msgstr "可在「助手協作」中追蹤此次指派。送達不代表任務完成"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "往前一個字詞"
@@ -1405,6 +1661,10 @@ msgstr "Gateway"
 #: src/lib/network-error.ts
 msgid "Gateway did not respond in time."
 msgstr "Gateway 未在時間內回應"
+
+#: src/components/work-task-workspace.tsx
+msgid "Gateway evidence confirms startup was never dispatched."
+msgstr "Gateway 紀錄已確認，啟動請求從未發出"
 
 #: src/lib/network-error.ts
 msgid "Gateway is temporarily unavailable."
@@ -1555,6 +1815,10 @@ msgstr "匯入檔案"
 msgid "Import link"
 msgstr "從連結匯入"
 
+#: src/components/work-task-detail.tsx
+msgid "In progress"
+msgstr "進行中"
+
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
@@ -1570,6 +1834,10 @@ msgstr "插入 {0} {1}"
 msgid "Insert mode"
 msgstr "插入模式"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Inspect prerequisite"
+msgstr "檢查前置任務"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "已複製安裝指令"
@@ -1583,6 +1851,10 @@ msgstr "已安裝"
 msgid "Installing images"
 msgstr "正在安裝圖片"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Instruction sent"
+msgstr "指令已傳送"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "介面背景不透明度"
@@ -1591,13 +1863,31 @@ msgstr "介面背景不透明度"
 msgid "Interrupt"
 msgstr "中斷"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Interrupt assistant"
+msgstr "中斷助理"
+
 #: src/app/commands.tsx
 msgid "Interrupt process"
 msgstr "中斷程序"
 
+#: src/components/work-task-workspace.tsx
+msgid "Interrupt requested"
+msgstr "已要求中斷"
+
 #: src/app/commands.tsx
 msgid "Interrupt what this agent is doing."
 msgstr "中斷這個代理程式正在做的事"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Interruption not confirmed"
+msgstr "中斷尚未確認"
+
+#: src/components/work-task-workspace.tsx
+msgid "Interruption requests do not prove the assistant stopped or the task finished. Check its output and lifecycle separately."
+msgstr "中斷要求並不代表助理已停止或任務已完成。請分別檢查其輸出和生命週期"
 
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
@@ -1610,10 +1900,6 @@ msgstr "它可能已經過期，或本來就不是給這個 app 的。沒有開�
 #: src/components/pairing-camera.tsx
 msgid "It was found, but never showed a picture. Another app may be holding it."
 msgstr "找到了相機，但它始終沒有畫面。可能有其他 app 正在使用它"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "It works on its own. Follow it in Agent collaboration."
-msgstr "它會獨立工作。可以在「Agent 協作」裡追蹤"
 
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
@@ -1717,6 +2003,20 @@ msgstr "剛剛連線過"
 msgid "Latest"
 msgstr "最新"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Latest result accepted"
+msgstr "最新結果已驗收"
+
+#: src/components/work-delegation-controls.tsx
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Lead"
+msgstr "主助手"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Lead delegation"
+msgstr "主助理委派"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "留空就從工作階段目前所在的位置開始"
@@ -1752,8 +2052,38 @@ msgid "Live Activity"
 msgstr "即時動態"
 
 #: src/components/theme-browse-sheet.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Load more"
 msgstr "載入更多"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more assistants"
+msgstr "載入更多助理"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more operations"
+msgstr "載入更多操作"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more related tasks"
+msgstr "載入更多相關任務"
+
+#: src/components/work-dependency-controls.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Load more results"
+msgstr "載入更多結果"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more reviews"
+msgstr "載入更多審查"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load remaining history before starting or messaging an assistant."
+msgstr "啟動助理或向其傳送訊息前，請先載入剩餘歷史紀錄"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Load the remaining assistant history before choosing a coordinator."
+msgstr "選擇協調者前，請載入其餘的助理歷程記錄"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
@@ -1782,6 +2112,10 @@ msgstr "正在載入伺服器"
 msgid "Loading settings"
 msgstr "正在載入設定"
 
+#: src/components/work-task-list.tsx
+msgid "Loading tasks…"
+msgstr "正在載入任務…"
+
 #: src/components/skia-terminal.tsx
 msgid "Loading terminal"
 msgstr "正在載入終端機"
@@ -1793,6 +2127,10 @@ msgstr "正在載入對話記錄"
 #: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "正在載入佈景主題…"
+
+#: src/components/work-task-workspace.tsx
+msgid "Loading…"
+msgstr "載入中…"
 
 #: src/lib/demo-gateway.ts
 msgid "Logs"
@@ -1835,10 +2173,26 @@ msgstr "管理 SSH 主機"
 msgid "Mark reviewed"
 msgstr "標記已查看"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Maximum direct child tasks"
+msgstr "直屬子任務最大數量"
+
+#: src/components/work-task-workspace.tsx
+msgid "May include in output"
+msgstr "可包含在輸出中"
+
+#: src/components/task-input-details.tsx
+msgid "May include in the result"
+msgstr "可包含在結果中"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "提及 {0}"
+
+#: src/components/work-task-workspace.tsx
+msgid "Message this assistant"
+msgstr "傳送訊息給此助理"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1929,6 +2283,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "為它命名，然後輸入 Gateway 顯示的代碼"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-detail.tsx
 msgid "Needs your attention"
 msgstr "需要你處理"
 
@@ -1941,6 +2296,14 @@ msgstr "從未連接過"
 msgid "Never seen"
 msgstr "從未連線"
 
+#: src/components/work-task-list.tsx
+msgid "New delegation paused"
+msgstr "已暫停新委派"
+
+#: src/components/work-task-detail.tsx
+msgid "New delegation paused. Existing assistants may continue."
+msgstr "已暫停新委派。現有助手可能仍在繼續工作"
+
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "新增群組"
@@ -1948,6 +2311,10 @@ msgstr "新增群組"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "新的主機金鑰"
+
+#: src/components/work-task-workspace.tsx
+msgid "New output available"
+msgstr "有新輸出"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -1963,6 +2330,8 @@ msgstr "新增 SSH 主機"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
 msgid "New task"
 msgstr "新增任務"
 
@@ -1987,6 +2356,10 @@ msgstr "沒有執行中的代理程式"
 msgid "No app on this phone opens web pages."
 msgstr "這支手機上沒有可以開啟網頁的應用程式"
 
+#: src/components/work-task-detail.tsx
+msgid "No assistant has been started for this task."
+msgstr "此任務尚未啟動助手"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "沒有可掃描的相機"
@@ -2006,6 +2379,10 @@ msgstr "沒有符合的檔案"
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "還沒有 Gateway？"
+
+#: src/components/work-task-workspace.tsx
+msgid "No interruption requested"
+msgstr "尚未要求中斷"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
@@ -2034,6 +2411,14 @@ msgstr "這種檔案無法預覽，它會留在伺服器上"
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
 msgstr "這條連線不提供預覽"
+
+#: src/components/work-task-detail.tsx
+msgid "No result submitted yet. An idle assistant does not mean the task is complete."
+msgstr "尚未提交成果。助手閒置不代表任務完成"
+
+#: src/components/work-dependency-controls.tsx
+msgid "No result version selected · blocked"
+msgstr "未選擇結果版本 · 已封鎖"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -2064,6 +2449,10 @@ msgstr "尚無 SSH 主機。新增一個，即可在任何連得到的機器上�
 msgid "No still frames"
 msgstr "不支援靜態畫面"
 
+#: src/components/work-task-list.tsx
+msgid "No tasks loaded. Start with a goal, such as updating a homepage and checking the mobile layout."
+msgstr "尚未載入任務。可以先提出目標，例如更新首頁並檢查行動版面配置"
+
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "沒有文字變更"
@@ -2072,9 +2461,17 @@ msgstr "沒有文字變更"
 msgid "No themes are published yet"
 msgstr "尚未有已發布的佈景主題"
 
+#: src/components/work-task-detail.tsx
+msgid "No verification evidence supplied."
+msgstr "未提供驗證依據"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "無法使用"
+
+#: src/components/work-task-detail.tsx
+msgid "Not confirmed"
+msgstr "尚未確認"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
@@ -2129,6 +2526,18 @@ msgstr "離線"
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "離線，沒有回應"
+
+#: src/components/work-task-list.tsx
+msgid "Offline. Showing previously loaded tasks."
+msgstr "離線。正在顯示先前載入的任務"
+
+#: src/components/work-task-detail.tsx
+msgid "Offline. Showing the last loaded task. Instructions are not sent automatically on reconnect."
+msgstr "離線。正在顯示上次載入的任務。重新連線時不會自動傳送指令"
+
+#: src/components/work-task-workspace.tsx
+msgid "Offline. Your draft has not been sent."
+msgstr "目前離線。你的草稿尚未傳送"
 
 #: src/components/toggle.tsx
 msgid "On"
@@ -2210,6 +2619,7 @@ msgid "Open SSH host {0}"
 msgstr "開啟 SSH 主機 {0}"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-detail.tsx
 msgid "Open terminal"
 msgstr "查看終端"
 
@@ -2255,6 +2665,24 @@ msgstr "開啟模擬器選單：裝置、按鍵、鍵盤與關閉。拖曳即可
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "開啟這個代理程式的終端機"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Operation in progress"
+msgstr "操作進行中"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Operation needs checking"
+msgstr "操作需要檢查"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Operation not confirmed"
+msgstr "操作尚未確認"
+
+#: src/components/work-task-detail.tsx
+msgid "Operations"
+msgstr "操作紀錄"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2349,6 +2777,19 @@ msgstr "貼上公開的主題連結或 GitHub 儲存庫網址"
 msgid "Path"
 msgstr "路徑"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Pause delegation"
+msgstr "暫停委派"
+
+#: src/components/work-task-workspace.tsx
+msgid "Pausing applies to new assistants started through Muqun. Existing assistants and independent shell commands may continue."
+msgstr "暫停僅適用於透過 Muqun 新啟動的助理。現有助理和獨立的 shell 指令可能繼續執行"
+
+#: src/components/task-input-details.tsx
+msgid "Permission to include a reference does not authorize publishing or uploading it elsewhere."
+msgstr "允許將參考資料納入結果，並不代表允許發布或上傳到其他位置"
+
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
 msgstr "照片圖庫"
@@ -2367,6 +2808,14 @@ msgstr "連接埠"
 msgid "PORT"
 msgstr "連接埠"
 
+#: src/components/work-task-workspace.tsx
+msgid "Prepare follow-up for lead assistant"
+msgstr "為主助理準備後續訊息"
+
+#: src/components/work-task-detail.tsx
+msgid "Prepared"
+msgstr "已準備"
+
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -2382,6 +2831,7 @@ msgstr "按 Esc 鍵關閉這項請求"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-preview.tsx
+#: src/components/work-task-detail.tsx
 msgid "Preview"
 msgstr "預覽"
 
@@ -2402,6 +2852,10 @@ msgstr "預覽模擬器，透過 SSH 通道時無法使用"
 msgid "Preview and apply"
 msgstr "預覽並套用"
 
+#: src/components/task-input-details.tsx
+msgid "Preview file"
+msgstr "預覽檔案"
+
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先預覽，目前的主題保持不變"
@@ -2417,6 +2871,10 @@ msgstr "私密金鑰"
 #: src/components/ssh-host-form.tsx
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "私密金鑰（留空以保留已儲存的金鑰）"
+
+#: src/components/work-task-workspace.tsx
+msgid "Project directory"
+msgstr "專案目錄"
 
 #: src/app/commands.tsx
 msgid "Prompt"
@@ -2455,6 +2913,10 @@ msgstr "快速動作"
 #: src/lib/demo-gateway.ts
 msgid "Quit"
 msgstr "離開"
+
+#: src/components/task-input-details.tsx
+msgid "Re-upload file"
+msgstr "重新上傳檔案"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -2502,6 +2964,10 @@ msgstr "文字清晰的建議最低值:{minimumPercent}%"
 msgid "Reconnect"
 msgstr "重新連線"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Reconnect before changing delegation."
+msgstr "變更委派前，請重新連線"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reconnect the SSH tunnel"
 msgstr "重新連線 SSH 通道"
@@ -2511,14 +2977,31 @@ msgstr "重新連線 SSH 通道"
 msgid "Reconnect to {0}"
 msgstr "重新連線至 {0}"
 
+#: src/components/work-task-workspace.tsx
+msgid "Reconnect to check or interrupt this assistant."
+msgstr "請重新連線，以檢查或中斷此助理"
+
 #. placeholder {0}: status.attempt
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "重新連線中 · {0}"
 
+#: src/components/task-input-details.tsx
+msgid "Reference description"
+msgstr "參考資料說明"
+
+#: src/components/task-input-details.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Reference only"
+msgstr "僅供參考"
+
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "重新整理"
+
+#: src/components/work-task-workspace.tsx
+msgid "Refresh assistants"
+msgstr "重新整理助理"
 
 #: src/components/git-diff-view.tsx
 msgid "Refresh changes"
@@ -2529,8 +3012,17 @@ msgid "Refresh files"
 msgstr "重新整理檔案"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Refresh output"
 msgstr "重新整理輸出"
+
+#: src/components/work-task-list.tsx
+msgid "Refresh tasks"
+msgstr "重新整理任務"
+
+#: src/components/work-task-detail.tsx
+msgid "Refused"
+msgstr "已拒絕"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -2546,6 +3038,10 @@ msgstr "移除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Remove dependency from draft"
+msgstr "從草稿移除相依關係"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -2596,13 +3092,37 @@ msgstr "重新命名"
 msgid "Replace key"
 msgstr "取代金鑰"
 
+#: src/components/work-task-workspace.tsx
+msgid "Replacement remains blocked until lifecycle is verified"
+msgstr "驗證生命週期前，仍無法啟動替代助理"
+
+#: src/components/work-task-workspace.tsx
+msgid "Replacement reservation released"
+msgstr "替代啟動預留已釋放"
+
 #: src/app/settings.tsx
 msgid "Report a bug or request a feature"
 msgstr "回報問題或提出功能建議"
 
+#: src/components/work-task-detail.tsx
+msgid "Request changes"
+msgstr "要求修改"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "請求失敗"
+
+#: src/components/work-task-workspace.tsx
+msgid "Requested changes are saved as a review. Preparing a follow-up keeps it as a draft until you explicitly send it."
+msgstr "要求的修改已儲存為審查。準備後續訊息時，它會保留為草稿，直到你明確傳送"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Require a submitted result"
+msgstr "要求已提交的結果"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Require human acceptance"
+msgstr "要求人工驗收"
 
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
@@ -2627,6 +3147,22 @@ msgstr "還原隱藏的預設指令"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "還原隱藏的預設"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Result awaiting review"
+msgstr "結果待審核"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Result submitted"
+msgstr "結果已提交"
+
+#: src/components/work-task-detail.tsx
+msgid "Results"
+msgstr "成果"
+
+#: src/components/work-task-workspace.tsx
+msgid "Resume delegation"
+msgstr "恢復委派"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2659,6 +3195,12 @@ msgstr "Enter 鍵"
 msgid "Return to the server list and pair again."
 msgstr "請回到伺服器列表重新配對"
 
+#: src/app/work-tasks.tsx
+#: src/components/work-task-detail.tsx
+msgid "Return to the task's original server and session."
+msgstr "請返回任務原來的伺服器和工作階段"
+
+#: src/app/work-tasks.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
@@ -2689,6 +3231,18 @@ msgstr "審查結束。主題備援邏輯已有測試涵蓋，未修改任何檔
 msgid "Review link"
 msgstr "查看連結"
 
+#: src/components/work-task-workspace.tsx
+msgid "Review note"
+msgstr "審查備註"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Review recorded"
+msgstr "已記錄審核"
+
+#: src/components/work-task-detail.tsx
+msgid "Review result"
+msgstr "審核成果"
+
 #: src/app/commands.tsx
 msgid "Review the current changes."
 msgstr "檢視目前的變更"
@@ -2696,6 +3250,10 @@ msgstr "檢視目前的變更"
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "看一下失敗的測試，然後修好它"
+
+#: src/components/collaboration-notice.tsx
+msgid "Reviewed"
+msgstr "已審核"
 
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
@@ -2758,6 +3316,10 @@ msgstr "儲存你常傳給這個代理程式的提示詞"
 msgid "Save changes to {0}"
 msgstr "儲存對 {0} 的變更"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Save dependency versions"
+msgstr "儲存相依版本"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "儲存主機"
@@ -2774,13 +3336,45 @@ msgstr "儲存主題"
 msgid "Saved"
 msgstr "已儲存"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Saved child task limit"
+msgstr "已儲存的子任務上限"
+
 #: src/app/commands.tsx
 msgid "SAVED COMMANDS"
 msgstr "已儲存的指令"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Saved configuration does not prove the coordinator is currently authorized. Reconfirm the lead after a Gateway restart."
+msgstr "已儲存的設定不能證明協調者目前已獲授權。Gateway重新啟動後，請重新確認主助理"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved coordinator"
+msgstr "已儲存的協調者"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Saved dependencies"
+msgstr "已儲存的相依關係"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved policy: delegation disabled"
+msgstr "已儲存的原則：委派已停用"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved policy: delegation enabled"
+msgstr "已儲存的原則：委派已啟用"
+
 #: src/app/commands.tsx
 msgid "SAVED PROMPTS"
 msgstr "已儲存的提示"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved requirement: human acceptance"
+msgstr "已儲存的要求：人工驗收"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved requirement: result available"
+msgstr "已儲存的要求：結果可用"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -2862,6 +3456,11 @@ msgstr "送出 {spoken}"
 msgid "Send a message"
 msgstr "傳送訊息"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Send instruction"
+msgstr "傳送指令"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "送出文字"
@@ -2917,6 +3516,10 @@ msgstr "使用應用程式鎖之前，請先設定裝置密碼"
 msgid "Set one up on your computer"
 msgstr "在你的電腦上裝一個"
 
+#: src/components/work-task-detail.tsx
+msgid "Set task dependencies"
+msgstr "設定任務相依關係"
+
 #: src/lib/demo-gateway.ts
 msgid "Set the AI model for Claude Code"
 msgstr "設定 Claude Code 使用的 AI 模型"
@@ -2946,6 +3549,10 @@ msgstr "在你的電腦上裝一個 Gateway"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "設定"
+
+#: src/components/work-task-detail.tsx
+msgid "SHA-256 checksum"
+msgstr "SHA-256 檢查碼"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
@@ -3157,7 +3764,21 @@ msgstr "以空白脈絡開始新的工作階段"
 msgid "Start an agent and send it the first thing to do."
 msgstr "啟動一個代理程式，並交代它第一件要做的事"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Start assistant"
+msgstr "啟動助手"
+
+#: src/components/work-task-detail.tsx
+msgid "Start not confirmed"
+msgstr "啟動尚未確認"
+
+#: src/components/work-task-workspace.tsx
+msgid "Start replacement"
+msgstr "啟動替代助理"
+
 #: src/components/new-task-sheet.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Start task"
 msgstr "開始任務"
 
@@ -3203,6 +3824,18 @@ msgstr "停止這個代理程式"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "儲存空間"
+
+#: src/components/work-task-detail.tsx
+msgid "Submission"
+msgstr "提交"
+
+#: src/components/work-task-detail.tsx
+msgid "Submit result"
+msgstr "提交成果"
+
+#: src/components/work-task-detail.tsx
+msgid "Submitted by"
+msgstr "提交者"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -3270,6 +3903,14 @@ msgstr "點按連線"
 msgid "Tap to preview and adjust"
 msgstr "點擊預覽並調整"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Task created"
+msgstr "任務已建立"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Task dependencies"
+msgstr "任務相依關係"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
 msgstr "給 {assignmentLabel} 的任務"
@@ -3279,12 +3920,32 @@ msgstr "給 {assignmentLabel} 的任務"
 msgid "Task for a new {0}"
 msgstr "給新的 {0} 的任務"
 
+#: src/components/work-task-workspace.tsx
+msgid "Task reference files"
+msgstr "任務參考檔案"
+
+#: src/components/work-task-workspace.tsx
+msgid "Task saved. Open the existing task before continuing."
+msgstr "任務已儲存。繼續前請開啟現有任務"
+
+#: src/app/work-tasks.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Tasks"
+msgstr "任務"
+
+#: src/components/work-task-list.tsx
+msgid "Tasks will appear here when this session supports task management."
+msgstr "此工作階段支援任務管理後，任務將顯示在這裡"
+
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "暫存檔案"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/work-task-detail.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "終端機"
@@ -3358,6 +4019,18 @@ msgstr "代理程式現在問的是別的問題"
 msgid "The agent is no longer waiting."
 msgstr "代理程式已經不再等待了"
 
+#: src/components/work-task-detail.tsx
+msgid "The assistant is not ready for another instruction."
+msgstr "助手尚未準備好接收下一條指令"
+
+#: src/components/work-task-detail.tsx
+msgid "The assistant needs a decision. Inspect its terminal."
+msgstr "助手需要你做決定。請查看其終端"
+
+#: src/components/work-task-detail.tsx
+msgid "The assistant was replaced. Choose a current assistant."
+msgstr "助手已被取代。請選擇目前助手"
+
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "相機沒有啟動"
@@ -3365,6 +4038,10 @@ msgstr "相機沒有啟動"
 #: src/components/pairing-camera.tsx
 msgid "The camera reported an error."
 msgstr "相機回報了錯誤"
+
+#: src/components/work-delegation-controls.tsx
+msgid "The chosen lead changed. Choose its current instance again."
+msgstr "所選主助理已變更。請重新選擇其目前執行個體"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -3374,10 +4051,34 @@ msgstr "連線已中斷"
 msgid "The connection to the simulator stopped."
 msgstr "與模擬器的連線中斷了"
 
+#: src/components/work-task-detail.tsx
+msgid "The Gateway could not save task state. Check its storage and reconnect."
+msgstr "Gateway 無法儲存任務狀態。請檢查其儲存空間並重新連線"
+
+#: src/components/work-task-workspace.tsx
+msgid "The Gateway resolved a different project directory. Confirm it and select the attachments again."
+msgstr "Gateway 解析出不同的專案目錄。請確認該目錄並重新選取附件"
+
+#: src/components/work-task-detail.tsx
+msgid "The instruction may already have arrived. Check status before sending again."
+msgstr "指令可能已經送達。再次傳送前請先檢查狀態"
+
+#: src/components/work-task-workspace.tsx
+msgid "The interruption request was refused. Check the assistant before trying again."
+msgstr "中斷要求已遭拒絕。重試前請檢查助理"
+
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語"
+
+#: src/components/work-task-workspace.tsx
+msgid "The native owner confirmed that startup created no assistant process."
+msgstr "原生程序管理方已確認，此次啟動沒有建立助理程序"
+
+#: src/components/work-task-workspace.tsx
+msgid "The native owner recorded this assistant's process exit. This does not prove task completion."
+msgstr "原生程序管理方已記錄此助理程序結束。這並不代表任務已完成"
 
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
@@ -3386,6 +4087,10 @@ msgstr "原始面板，保留它的字元格線與色彩"
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
 msgstr "這個畫面發生錯誤。請再試一次，你配對的伺服器不受影響"
+
+#: src/components/work-task-workspace.tsx
+msgid "The selected assistant is unavailable. Refresh assistants and choose an installed assistant. Your draft is preserved."
+msgstr "所選助理無法使用。請重新整理助理清單並選擇已安裝的助理。你的草稿已保留"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
@@ -3435,6 +4140,19 @@ msgstr "模擬器未在時間內關閉"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 通道只帶 Gateway 這一個連接埠，不含其他，所以從這裡碰不到模擬器和瀏覽器。改用區域網路或 Tailscale 連線"
 
+#: src/components/work-task-workspace.tsx
+msgid "The task changed. Check status before requesting interruption."
+msgstr "任務已變更。要求中斷前請檢查狀態"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "The task changed. Refresh and review the latest state."
+msgstr "任務已變更。請重新整理並查看最新狀態"
+
+#: src/components/work-task-detail.tsx
+msgid "The task has reached its configured resource limit."
+msgstr "任務已達到設定的資源限制"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "此主題將從目前裝置移除"
@@ -3479,9 +4197,25 @@ msgstr "來自 muqun.dev 的已發布佈景主題。開啟前不會下載任何�
 msgid "This agent did not offer that answer."
 msgstr "這個代理程式沒有提供那個選項"
 
+#: src/components/work-task-workspace.tsx
+msgid "This checks whether a replacement can safely start. It does not stop the assistant or delete its resources."
+msgstr "此操作檢查是否可以安全啟動替代助理，不會停止助理或刪除其資源"
+
+#: src/components/work-delegation-controls.tsx
+msgid "This child task's lead runs its own work. Only the root task's coordinator can delegate."
+msgstr "此子任務的主助理執行自己的工作。只有根任務的協調者可以委派"
+
+#: src/components/task-input-details.tsx
+msgid "This description is too long. Shorten it before continuing."
+msgstr "說明過長。繼續前請縮短內容"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "這台裝置沒有可用的相機"
+
+#: src/components/work-task-workspace.tsx
+msgid "This file cannot be previewed safely in the app."
+msgstr "無法在應用程式中安全預覽此檔案"
 
 #: src/components/asset-viewer.tsx
 msgid "This file is empty."
@@ -3535,6 +4269,15 @@ msgstr "這個面板不是在 git 儲存庫中工作，因此沒有可比較的�
 msgid "This QR code is not valid."
 msgstr "這個 QR code 無效"
 
+#: src/components/work-task-detail.tsx
+msgid "This request conflicts with an earlier operation. Check status."
+msgstr "此請求與先前的操作衝突。請檢查狀態"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "This result version is unavailable or changed. Refresh the task and review its submission details."
+msgstr "此結果版本無法使用或已變更。請重新整理任務並查看提交詳情"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
 msgstr "這台伺服器還不能執行該指令"
@@ -3577,6 +4320,43 @@ msgstr "這台伺服器已經不認得這台裝置了。請重新配對以恢復
 msgid "This server refused the request."
 msgstr "這台伺服器拒絕了這個請求"
 
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot accept task attachments. Update its Gateway and refresh. Your draft is preserved."
+msgstr "此工作階段無法接收任務附件。請更新其 Gateway 並重新整理。你的草稿已保留"
+
+#: src/components/work-task-detail.tsx
+msgid "This session cannot manage tasks yet. Update or reconnect its Gateway, then check status."
+msgstr "此工作階段尚不支援任務管理。請更新或重新連線其 Gateway，然後檢查狀態"
+
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot manage tasks yet. Update or reconnect its Gateway, then refresh."
+msgstr "此工作階段尚不支援任務管理。請更新或重新連線其 Gateway，然後重新整理"
+
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot safely check assistant lifecycle yet. Update its Gateway and backend, then check status."
+msgstr "此工作階段暫時無法安全檢查助理生命週期。請更新其 Gateway 和後端，然後檢查狀態"
+
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot safely start or message managed assistants yet. Update its Gateway and backend, then check status. Ordinary terminal collaboration remains available."
+msgstr "此工作階段暫時無法安全啟動受管助理或向其傳送訊息。請更新其 Gateway 和後端，然後檢查狀態。一般終端機協作仍然可用"
+
+#: src/components/work-task-detail.tsx
+msgid "This session does not support this action. Check its Gateway capabilities."
+msgstr "此工作階段不支援該操作。請檢查其 Gateway 能力"
+
+#: src/components/work-task-detail.tsx
+msgid "This submission is awaiting review."
+msgstr "此次提交正在等待審核"
+
+#: src/components/work-task-detail.tsx
+msgid "This submission was accepted."
+msgstr "此次提交已驗收"
+
+#: src/components/work-task-detail.tsx
+msgid "This task or assistant is no longer available."
+msgstr "此任務或助手已無法使用"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "無法繪製這個終端機"
@@ -3589,6 +4369,10 @@ msgstr "這個終端機已經不存在"
 msgid "This theme contains images that must be installed before applying"
 msgstr "此主題包含圖片，套用前需要先安裝圖片"
 
+#: src/components/task-input-details.tsx
+msgid "This upload expired. Re-upload it explicitly before sending."
+msgstr "此上傳已過期。傳送前請明確操作重新上傳"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "這個工作區還沒有群組"
@@ -3596,6 +4380,14 @@ msgstr "這個工作區還沒有群組"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "透過 {host}"
+
+#: src/components/work-task-workspace.tsx
+msgid "Title"
+msgstr "標題"
+
+#: src/components/work-task-workspace.tsx
+msgid "To"
+msgstr "傳送給"
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -3738,6 +4530,27 @@ msgstr "更新已就緒 · 正在重新啟動…"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 後即可從公開連結匯入主題，你仍然可以從檔案匯入"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Update this Gateway and backend to configure delegation."
+msgstr "請更新此Gateway和後端以設定委派"
+
+#: src/components/work-task-workspace.tsx
+msgid "Update this Gateway and backend to interrupt the exact assistant safely."
+msgstr "請更新此 Gateway 和後端，以安全中斷指定的助理實例"
+
+#: src/components/task-attachment-composer.tsx
+msgid "Update this Gateway to attach files to managed tasks."
+msgstr "請更新此 Gateway，以便向受管任務新增檔案附件"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Update this Gateway to edit task dependencies."
+msgstr "請更新此Gateway以編輯任務相依關係"
+
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Updates available · refresh"
+msgstr "有更新 · 重新整理"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "正在更新牧群…"
@@ -3754,6 +4567,10 @@ msgstr "已上傳"
 msgid "uploading"
 msgstr "上傳中"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Uploading attachments…"
+msgstr "正在上傳附件…"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Use {0}"
@@ -3762,6 +4579,10 @@ msgstr "使用 {0}"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "使用裝置密碼"
+
+#: src/components/work-task-workspace.tsx
+msgid "Use resolved project"
+msgstr "使用解析後的專案"
 
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
@@ -3775,6 +4596,10 @@ msgstr "使用主畫面上的掃描按鈕來新增"
 msgid "Use theme defaults"
 msgstr "使用主題預設值"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Use this exact result version"
+msgstr "使用此確切結果版本"
+
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "使用這台伺服器"
@@ -3786,6 +4611,10 @@ msgstr "使用者名稱"
 #: src/components/settings-servers.tsx
 msgid "USING"
 msgstr "使用中"
+
+#: src/components/work-task-detail.tsx
+msgid "Verification reported by the assistant"
+msgstr "助手回報的驗證結果"
 
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
@@ -3816,6 +4645,10 @@ msgstr "正在等待上傳完成…"
 msgid "What is running"
 msgstr "正在執行的項目"
 
+#: src/components/work-task-workspace.tsx
+msgid "What would you like done?"
+msgstr "你希望完成什麼？"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "新功能"
@@ -3823,6 +4656,11 @@ msgstr "新功能"
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離開期間"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Worker"
+msgstr "執行助手"
 
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
@@ -3868,3 +4706,7 @@ msgstr "你的代理程式，隨時隨地"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "你已配對的 Gateway"
+
+#: src/components/work-task-workspace.tsx
+msgid "Zero keeps this task with one assistant. The limit does not grant approvals or broader permissions."
+msgstr "設為零時，此任務只由一名助理處理。此限制不會授予核准或擴大權限"

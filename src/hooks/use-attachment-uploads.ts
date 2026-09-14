@@ -5,6 +5,7 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
 import {
+  annotateEntry,
   isBusy,
   markFailed,
   markUploaded,
@@ -24,6 +25,23 @@ import {
 } from '@/lib/attachments';
 import { uploadAttachment } from '@/lib/gateway-client';
 
+export type AttachmentUploadResult = { path?: string; name?: string };
+export type CapturedAttachmentUpload = {
+  isCurrent: () => boolean;
+  upload: (
+    record: GatewayRecord,
+    source: PickedFile,
+    entryId: string,
+    isCurrent: () => boolean
+  ) => Promise<AttachmentUploadResult>;
+};
+export interface AttachmentUploadOptions {
+  /** Capture custom scope before a native picker opens, never when it returns. */
+  captureUpload: () => CapturedAttachmentUpload;
+  maxAttachments?: number;
+  /** Task callers may ignore presentation-only record changes. Legacy callers stay strict. */
+  sameRecord?: (a: GatewayRecord | null, b: GatewayRecord | null) => boolean;
+}
 export interface AttachmentUploads {
   attachments: PendingAttachment[];
   /** Stage files and start uploading them straight away. */
@@ -32,7 +50,16 @@ export interface AttachmentUploads {
   /** Re-send one file that failed, from its own tile. */
   retryUpload: (id: string) => void;
   removeAttachment: (id: string) => void;
+  annotateAttachment: (
+    id: string,
+    caption: string,
+    use: import('@/lib/attachment-queue').AttachmentUse
+  ) => void;
   clearAttachments: () => void;
+  /** Settled entries for opaque receipt callers; no fabricated filesystem paths. */
+  captureEntries: () => PendingAttachment[];
+  awaitEntries: (ids?: readonly string[]) => Promise<PendingAttachment[] | null>;
+  restartUpload: (id: string) => void;
   /** Something is still queued or in flight, which Send has to wait out. */
   uploading: boolean;
   /**
@@ -69,31 +96,37 @@ export function useAttachmentUploads(
    * Omitting it leaves entries unbound, and an unbound entry is refused by that
    * check rather than treated as bindable anywhere.
    */
-  destination?: () => AttachmentDestination | undefined
+  destination?: () => AttachmentDestination | undefined,
+  options?: AttachmentUploadOptions
 ): AttachmentUploads {
+  const sameRecord = options?.sameRecord;
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
   const mountedRef = useRef(true);
   const [ownership] = useState(() => new DeliveryOwnership());
   const destinations = useRef(
-    new Map<string, { record: GatewayRecord; isCurrent: () => boolean }>()
+    new Map<
+      string,
+      {
+        record: GatewayRecord;
+        isCurrent: () => boolean;
+        upload?: CapturedAttachmentUpload['upload'];
+      }
+    >()
   );
   // Sends parked until the queue drains. They are resolved by whichever upload
   // finishes last, so Send never polls.
-  const waitingRef = useRef<(() => void)[]>([]);
+  const waitingRef = useRef<((force?: boolean) => boolean)[]>([]);
 
-  const releaseWaiters = useCallback(() => {
-    const waiting = waitingRef.current;
-    if (waiting.length === 0) return;
-    waitingRef.current = [];
-    for (const resume of waiting) resume();
+  const releaseWaiters = useCallback((force = false) => {
+    waitingRef.current = waitingRef.current.filter((resume) => !resume(force));
   }, []);
 
   const commit = useCallback(
     (next: PendingAttachment[]) => {
       attachmentsRef.current = next;
       if (mountedRef.current) setAttachments(next);
-      if (!isBusy(next)) releaseWaiters();
+      releaseWaiters();
     },
     [releaseWaiters]
   );
@@ -125,13 +158,15 @@ export function useAttachmentUploads(
           height: entry.height,
         });
         if (!isCurrent()) return;
-        const uploaded = await uploadAttachment(
-          destination.record,
-          source.uri,
-          source.name,
-          source.mime,
-          isCurrent
-        );
+        const uploaded = destination.upload
+          ? await destination.upload(destination.record, source, id, isCurrent)
+          : await uploadAttachment(
+              destination.record,
+              source.uri,
+              source.name,
+              source.mime,
+              isCurrent
+            );
         if (isCurrent()) commit(markUploaded(attachmentsRef.current, id, uploaded));
       } catch (failure) {
         if (isCurrent())
@@ -160,17 +195,23 @@ export function useAttachmentUploads(
       ownedDestinations.clear();
       // The screen is gone and nothing will resolve these otherwise, so a send
       // that was waiting on the queue is let go rather than left hanging.
-      releaseWaiters();
+      releaseWaiters(true);
     };
   }, [releaseWaiters, ownership]);
 
   const capturePicker = useCallback(() => {
     const currentRecord = record;
+    const selectedDestination = destination?.();
+    const capturedDestination = selectedDestination ? { ...selectedDestination } : undefined;
+    const capturedUpload = options?.captureUpload();
     const isCurrent = ownership.capture(
       () =>
         mountedRef.current &&
         currentRecord !== null &&
-        useGatewayConnectionStore.getState().record === currentRecord
+        (capturedUpload?.isCurrent() ?? true) &&
+        (sameRecord
+          ? sameRecord(useGatewayConnectionStore.getState().record, currentRecord)
+          : useGatewayConnectionStore.getState().record === currentRecord)
     );
     const captured = currentRecord
       ? {
@@ -183,14 +224,23 @@ export function useAttachmentUploads(
       addFiles: (files: PickedFile[]) => {
         if (!captured || !isCurrent() || files.length === 0) return;
         const previous = attachmentsRef.current;
-        const next = stageFiles(previous, files, destination?.());
+        if (
+          options?.maxAttachments !== undefined &&
+          previous.length + files.length > options.maxAttachments
+        )
+          throw new Error('Too many attachments.');
+        const next = stageFiles(previous, files, capturedDestination);
         for (const entry of next.slice(previous.length))
-          destinations.current.set(entry.id, { record: captured, isCurrent });
+          destinations.current.set(entry.id, {
+            record: captured,
+            isCurrent,
+            upload: capturedUpload?.upload,
+          });
         commit(next);
         pump();
       },
     };
-  }, [record, ownership, commit, pump, destination]);
+  }, [record, ownership, commit, pump, destination, options, sameRecord]);
   const addFiles = useCallback(
     (files: PickedFile[]) => capturePicker().addFiles(files),
     [capturePicker]
@@ -225,30 +275,85 @@ export function useAttachmentUploads(
   useEffect(
     () =>
       useGatewayConnectionStore.subscribe((next, previous) => {
-        if (next.record !== previous.record) clearAttachments();
+        if (
+          sameRecord ? !sameRecord(next.record, previous.record) : next.record !== previous.record
+        )
+          clearAttachments();
       }),
-    [clearAttachments]
+    [clearAttachments, sameRecord]
   );
 
   const awaitUploads = useCallback(
     () =>
       new Promise<string[] | null>((resolve) => {
-        const settle = () => resolve(uploadedPaths(attachmentsRef.current));
-        if (!isBusy(attachmentsRef.current)) {
-          settle();
-          return;
-        }
-        waitingRef.current.push(settle);
+        const settle = (force = false) => {
+          if (!force && isBusy(attachmentsRef.current)) return false;
+          resolve(uploadedPaths(attachmentsRef.current));
+          return true;
+        };
+        if (!settle()) waitingRef.current.push(settle);
       }),
     []
+  );
+  const awaitEntries = useCallback(
+    (ids?: readonly string[]) =>
+      new Promise<PendingAttachment[] | null>((resolve) => {
+        const selected = ids ? [...ids] : attachmentsRef.current.map((entry) => entry.id);
+        const settle = (force = false) => {
+          const entries = selected.map((id) =>
+            attachmentsRef.current.find((entry) => entry.id === id)
+          );
+          if (entries.some((entry) => !entry || entry.status === 'error')) {
+            resolve(null);
+            return true;
+          }
+          const found = entries as PendingAttachment[];
+          if (!force && isBusy(found)) return false;
+          resolve(
+            found.every((entry) => entry.status === 'done')
+              ? found.map((entry) => ({ ...entry }))
+              : null
+          );
+          return true;
+        };
+        if (!settle()) waitingRef.current.push(settle);
+      }),
+    []
+  );
+  const restartUpload = useCallback(
+    (id: string) => {
+      const entry = attachmentsRef.current.find((item) => item.id === id);
+      if (!entry || entry.status === 'uploading' || entry.status === 'pending') return;
+      commit(
+        attachmentsRef.current.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                status: 'pending' as const,
+                remotePath: undefined,
+                error: undefined,
+                revision: (item.revision ?? 0) + 1,
+                uploadVersion: (item.uploadVersion ?? 0) + 1,
+              }
+            : item
+        )
+      );
+      pump();
+    },
+    [commit, pump]
   );
 
   return {
     attachments,
+    awaitEntries,
+    captureEntries: () => attachmentsRef.current.map((entry) => ({ ...entry })),
+    restartUpload,
     addFiles,
     capturePicker,
     retryUpload,
     removeAttachment,
+    annotateAttachment: (id, caption, use) =>
+      commit(annotateEntry(attachmentsRef.current, id, { caption, use })),
     clearAttachments,
     uploading: isBusy(attachments),
     awaitUploads,

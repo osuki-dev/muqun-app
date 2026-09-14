@@ -400,6 +400,16 @@ function RootContent() {
               does not have to leave room for it.
             */}
             <Stack.Screen
+              name="work-tasks"
+              options={{
+                // Android formSheet unconditionally enables bottom-sheet dragging;
+                // a long downward reading gesture can dismiss the entire task.
+                presentation: 'fullScreenModal',
+                animation: 'slide_from_bottom',
+                gestureEnabled: false,
+              }}
+            />
+            <Stack.Screen
               name="new-task"
               options={{
                 presentation: 'formSheet',

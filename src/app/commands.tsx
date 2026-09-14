@@ -334,6 +334,7 @@ export default function QuickCommandsScreen() {
         // already had.
         useComposerAssignmentStore.getState().request_({
           serverId: params.serverId,
+          sessionId: params.sessionId,
           paneId: params.paneId,
           prompt: draft.prompt,
           command: draft.command,

@@ -1,3 +1,4 @@
+import { ProjectDirectoryPicker } from '@/components/project-directory-picker';
 import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
@@ -27,7 +28,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { KeyboardToolbar, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Bot, Check, FolderOpen, X } from 'lucide-react-native';
+import { Bot, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -249,34 +250,11 @@ export function NewTaskSheet({
 
             <View style={styles.section}>
               <SectionLabel title={<Trans>DIRECTORY</Trans>} color={theme.colors.textMuted} />
-              {recentCwds.length > 0 ? (
-                <View style={styles.recentList}>
-                  {recentCwds.map((path, index) => (
-                    <Animated.View
-                      key={path}
-                      entering={riseIn(index * STAGGER.row)}
-                      layout={listLayout('short')}>
-                      <RecentCwdRow
-                        path={path}
-                        selected={path === cwd.trim()}
-                        onSelect={() => setCwd(path)}
-                      />
-                    </Animated.View>
-                  ))}
-                </View>
-              ) : null}
-              {/* Under the list, not instead of it, and always present: the recent
-                answers are a shortcut, and a shortcut that hides the long way
-                round is a trap the first time it does not have the place you
-                meant. */}
-              <Input
-                label={t`Path`}
+              <ProjectDirectoryPicker
+                recentDirectories={recentCwds}
                 value={cwd}
-                onChangeText={setCwd}
-                autoCapitalize="none"
-                autoCorrect={false}
-                // Not translated: a path is typed as it exists on the machine, and a
-                // localized example would teach the wrong thing.
+                onChange={setCwd}
+                label={t`Path`}
                 placeholder="~/code/muqun"
                 variant="outline"
                 helper={t`Leave it empty to start where the session already is.`}
@@ -390,50 +368,6 @@ function AgentPill({
   );
 }
 
-/** One directory this session has worked in lately. */
-function RecentCwdRow({
-  path,
-  selected,
-  onSelect,
-}: {
-  path: string;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
-
-  return (
-    <PressableScale
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      accessibilityLabel={path}
-      onPress={onSelect}
-      style={[
-        styles.recentRow,
-        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-      ]}>
-      <FolderOpen
-        size={16}
-        color={selected ? theme.colors.primary : theme.colors.textMuted}
-        strokeWidth={2}
-      />
-      {/* The head is what gets dropped, so the end of the path always survives.
-          Two checkouts under the same parent differ in their last segment, and
-          `~/code/mu…` distinguishes nothing at all. */}
-      <Text
-        variant="bodySmall"
-        numberOfLines={1}
-        ellipsizeMode="head"
-        style={styles.recentPath}
-        color={selected ? theme.colors.primary : theme.colors.text}>
-        {path}
-      </Text>
-      {selected ? <Check size={16} color={theme.colors.primary} strokeWidth={2.5} /> : null}
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   // `flex: 1`, not `height: '100%'`: inside a native form sheet the container's
   // height is not resolved when a percentage is measured and the sheet renders
@@ -495,15 +429,4 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderWidth: 1,
   },
-  recentList: { gap: 6 },
-  recentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LADDER.gap,
-    minHeight: 42,
-    paddingHorizontal: LADDER.snug,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-  },
-  recentPath: { flex: 1, minWidth: 0, includeFontPadding: false },
 });

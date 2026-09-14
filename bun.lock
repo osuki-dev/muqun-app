@@ -91,6 +91,9 @@
     "@shopify/react-native-skia",
     "react-native-enriched-markdown",
   ],
+  "patchedDependencies": {
+    "react-native-nitro-fetch@1.6.3": "patches/react-native-nitro-fetch@1.6.3.patch",
+  },
   "overrides": {
     "react-native-screens": "4.27.0",
   },

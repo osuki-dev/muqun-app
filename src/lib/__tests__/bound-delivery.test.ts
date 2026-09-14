@@ -1,3 +1,4 @@
+import { sameTaskInputPairing } from '../task-inputs';
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
@@ -300,7 +301,10 @@ test('encrypted serialization rechecks ownership before any network transmission
   await expect(result).rejects.toThrow('no longer active');
 });
 
-function uploads() {
+function uploads(
+  options?: import('@/hooks/use-attachment-uploads').AttachmentUploadOptions,
+  destination?: () => queue.AttachmentDestination | undefined
+) {
   let uploadingId = '';
   let record: GatewayRecord | null = a;
   let listener:
@@ -313,13 +317,15 @@ function uploads() {
   let blur: (() => void) | undefined;
   const source = declaration('src/hooks/use-attachment-uploads.ts', 'useAttachmentUploads');
   const hook = runInNewContext(
-    ts.transpileModule(`${source}\nuseAttachmentUploads(record)`, {
+    ts.transpileModule(`${source}\nuseAttachmentUploads(record, destination, options)`, {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
     }).outputText,
     {
       ...queue,
       DeliveryOwnership,
       record,
+      options,
+      destination,
       markUploading: (entries: queue.PendingAttachment[], id: string) => {
         uploadingId = id;
         return queue.markUploading(entries, id);
@@ -618,4 +624,110 @@ test('actual readiness layout cleanup prevents tunnel reconnect or session chang
     await expect(pending).rejects.toThrow('no longer active');
     expect(enters).toBe(0);
   }
+});
+
+test('picker captures a copy of legacy destination before the picker returns', async () => {
+  const destination = {
+    serverId: 'a',
+    sessionId: 's',
+    sourcePaneId: 'pane-a',
+    connectionGeneration: 0,
+  };
+  const h = uploads(undefined, () => destination);
+  const picker = h.hook.capturePicker();
+  destination.sourcePaneId = 'pane-b';
+  picker.addFiles([file]);
+  h.compression.resolve(file);
+  await turn();
+  h.upload.resolve({ path: '/uploaded' });
+  await turn();
+  expect((await h.hook.awaitEntries())?.[0].destination?.sourcePaneId).toBe('pane-a');
+});
+
+test('injected task uploads refuse stale scope and never manufacture a path', async () => {
+  const owner = new DeliveryOwnership();
+  const calls: string[] = [];
+  const options = {
+    maxAttachments: 9,
+    captureUpload: () => ({
+      isCurrent: owner.capture(),
+      upload: async (_record: GatewayRecord, _file: queue.PickedFile, id: string) => {
+        calls.push(id);
+        return { name: 'opaque-input.png' };
+      },
+    }),
+  };
+  const stale = uploads(options);
+  const picker = stale.hook.capturePicker();
+  owner.invalidate();
+  picker.addFiles([file]);
+  expect(calls).toHaveLength(0);
+  const current = uploads(options);
+  current.hook.addFiles([file]);
+  current.compression.resolve(file);
+  await turn();
+  expect(calls).toHaveLength(1);
+  const entries = await current.hook.awaitEntries();
+  expect(entries?.[0]).toMatchObject({ status: 'done', name: 'opaque-input.png' });
+  expect(entries?.[0].remotePath).toBeUndefined();
+  expect(await current.hook.awaitUploads()).toBeNull();
+});
+
+test('task limit applies across picker invocations without changing the legacy pool', () => {
+  const h = uploads({
+    maxAttachments: 9,
+    captureUpload: () => ({ isCurrent: () => true, upload: async () => ({ name: 'input' }) }),
+  });
+  h.hook.addFiles(Array.from({ length: 8 }, () => file));
+  expect(() => h.hook.addFiles([file, file])).toThrow('Too many attachments');
+});
+
+test('captured queue settles only selected IDs while a later file is still uploading', async () => {
+  let count = 0;
+  const h = uploads({
+    captureUpload: () => ({
+      isCurrent: () => true,
+      upload: async () => {
+        count++;
+        if (count > 1) return new Promise<{ name: string }>(() => {});
+        return { name: 'first-input' };
+      },
+    }),
+  });
+  h.hook.addFiles([file]);
+  const captured = h.hook.captureEntries();
+  const pending = h.hook.awaitEntries(captured.map((entry) => entry.id));
+  h.hook.addFiles([file]);
+  h.compression.resolve(file);
+  await turn();
+  const completed = await pending;
+  expect(completed?.map((entry) => entry.id)).toEqual(captured.map((entry) => entry.id));
+  expect(h.hook.captureEntries()).toHaveLength(2);
+  h.hook.clearAttachments();
+});
+
+test('task upload survives a display-name update but not credential replacement or A/B/A', async () => {
+  const calls: string[] = [];
+  const h = uploads({
+    sameRecord: sameTaskInputPairing,
+    captureUpload: () => ({
+      isCurrent: () => true,
+      upload: async () => {
+        calls.push('upload');
+        return { name: 'input' };
+      },
+    }),
+  });
+  const picker = h.hook.capturePicker();
+  h.switchRecord({ ...a, label: 'Renamed server' });
+  expect(picker.isCurrent()).toBe(true);
+  picker.addFiles([file]);
+  h.compression.resolve(file);
+  await turn();
+  expect(calls).toEqual(['upload']);
+  expect(await h.hook.awaitEntries()).toHaveLength(1);
+  h.switchRecord({ ...a, token: 'replacement-token' });
+  h.switchRecord(a);
+  expect(picker.isCurrent()).toBe(false);
+  expect(await h.hook.awaitEntries()).toEqual([]);
 });

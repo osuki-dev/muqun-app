@@ -150,6 +150,12 @@ const TRANSLATION_ELEMENTS = new Set(['Trans', 'Plural', 'Select', 'SelectOrdina
  */
 const DESCRIPTOR_BACKED: { file: string; sinks: string[]; provenBy: string }[] = [
   {
+    file: 'src/lib/demo-work.ts',
+    sinks: ['summary'],
+    provenBy:
+      'every authored demo result summary has a descriptor and the demo transport applies it',
+  },
+  {
     file: 'src/lib/terminal-keys.ts',
     sinks: ['accessibilityLabel', 'label'],
     provenBy: 'every terminal key has a translated description',

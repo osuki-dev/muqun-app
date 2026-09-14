@@ -1,7 +1,27 @@
+import { demoWorkInputs } from './demo-work-inputs';
+import {
+  taskInputPath,
+  taskInputScopeKey,
+  taskInputReceiptPath,
+  parseTaskInputReceipt,
+} from './task-inputs';
+import { MAX_UPLOAD_BYTES as MAX_INPUT_UPLOAD_BYTES } from './attachment-queue';
+import { demoWorkArtifact, demoWorkRequest } from './demo-work';
+import { localizeDemoWorkResponse } from './demo-work-localization';
+import { demoWorkSummary } from '@/i18n/labels';
+import { i18n } from '@lingui/core';
 import { File } from 'expo-file-system';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
+import { TextDecoder } from 'react-native-nitro-text-decoder';
+import { consumeWorkEventStream, type WorkEventObserver } from './work-events';
+import { EncryptedEventStreamDecryptor } from './sse-record';
 import { assertDeliveryCurrent, deliverPasteAndEnter } from './bound-delivery';
+import {
+  loadWorkArtifactPreview,
+  MAX_WORK_ARTIFACT_BYTES,
+  readBoundedArtifactBody,
+} from './work-artifacts';
 
 import {
   configure,
@@ -144,6 +164,7 @@ import {
   encryptJson,
   pairingKeyMaterial,
   transportKeyMaterial,
+  streamRecordCrypto,
   type EncryptedEnvelope,
 } from './gateway-transport';
 import { assertSupportedHerdr } from './herdr-compatibility';
@@ -325,7 +346,8 @@ async function encryptedGatewayFetch(
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
   endpoint?: GatewayEndpoint,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  maxResponseBytes?: number
 ): Promise<Response> {
   const token = endpoint ? endpoint.token : currentToken;
   const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
@@ -382,7 +404,15 @@ async function encryptedGatewayFetch(
     // `describeGatewayFailure`, which decides what that reason means.
     throw new GatewayTransportRefusalError(response.status, await response.text().catch(() => ''));
   }
-  const sealed = (await response.json()) as EncryptedEnvelope;
+  const sealed = (
+    maxResponseBytes === undefined
+      ? await response.json()
+      : JSON.parse(
+          QuickCrypto.Buffer.from(
+            await readBoundedArtifactBody(response, maxResponseBytes * 2 + 65_536, isCurrent)
+          ).toString('utf8')
+        )
+  ) as EncryptedEnvelope;
   const payload = decryptJson<EncryptedResponsePayload>(
     material,
     'response',
@@ -401,6 +431,8 @@ async function encryptedGatewayFetch(
     throw new Error('Gateway returned an invalid encrypted response.');
   }
   const bytes = fromBase64Url(payload.body);
+  if (maxResponseBytes !== undefined && bytes.length > maxResponseBytes)
+    throw new Error('Artifact exceeds the supported size.');
   const noBody = answerHasNoBody(method, payload.status);
   // Use the same response implementation as the request transport. React
   // Native's global Response treats a QuickCrypto Buffer as a string-like body
@@ -1812,25 +1844,41 @@ export interface EncryptedStreamRequest {
  * null when the connected gateway does not use the encrypted transport.
  */
 export function encryptedEventStreamRequest(url: string): EncryptedStreamRequest | null {
+  return encryptedEndpointEventStreamRequest(
+    {
+      url,
+      token: currentToken ?? '',
+      deviceId: currentDeviceId ?? undefined,
+      transportKey: currentTransportKey ?? undefined,
+      transport: currentTransport ?? undefined,
+    },
+    url
+  );
+}
+
+function encryptedEndpointEventStreamRequest(
+  endpoint: GatewayEndpoint,
+  url: string
+): EncryptedStreamRequest | null {
   if (
-    !currentToken ||
-    !currentDeviceId ||
-    !currentTransportKey ||
-    currentTransport !== GATEWAY_TRANSPORT
+    !endpoint.token ||
+    !endpoint.deviceId ||
+    !endpoint.transportKey ||
+    endpoint.transport !== GATEWAY_TRANSPORT
   ) {
     return null;
   }
   const aad = requestAad(url, 'GET');
-  const material = transportKeyMaterial(currentTransportKey);
+  const material = transportKeyMaterial(endpoint.transportKey);
   const plaintext: EncryptedRequestPayload = {
-    token: currentToken,
+    token: endpoint.token,
     body: base64Url(QuickCrypto.Buffer.alloc(0)),
   };
   const envelope = encryptJson(material, 'request', aad, plaintext);
   return {
     headers: {
       'X-Muqun-Transport': '1',
-      'X-Muqun-Device': currentDeviceId,
+      'X-Muqun-Device': endpoint.deviceId,
       'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(JSON.stringify(envelope), 'utf8')),
     },
     requestAad: aad,
@@ -2583,6 +2631,25 @@ export async function sendAgentText(
   await postApiSessionsBySessionIdAgentsByTargetSend({ sessionId, target }, { text });
 }
 
+/** Capture the server for collaboration; native instance enforcement is a separate contract. */
+export async function sendBoundAgentText(
+  record: GatewayRecord,
+  sessionId: string,
+  target: string,
+  text: string,
+  isCurrent: () => boolean
+): Promise<void> {
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) return demoSendAgentText(target, text);
+  const response = await sendBoundWorkRequest(
+    record,
+    `/api/sessions/${encodeURIComponent(sessionId)}/agents/${encodeURIComponent(target)}/send`,
+    { method: 'POST', body: JSON.stringify({ text }), isCurrent }
+  );
+  if (response.status < 200 || response.status >= 300)
+    throw new GatewayTransportRefusalError(response.status, JSON.stringify(response.body));
+}
+
 export interface PairedDevice {
   id: string;
   name: string;
@@ -2662,3 +2729,341 @@ export const gatewayTransport: GatewayTransport = {
   loadPanes,
   loadAgents,
 };
+
+/** Managed-work transport: use the captured pairing through the existing tunnel/encryption path. */
+export const sendBoundWorkRequest: import('./work-api').WorkTransport = async (
+  record,
+  path,
+  request
+) => {
+  if (!path.startsWith('/api/sessions/') || path.includes('#') || /[\r\n]/.test(path))
+    throw new Error('Invalid scoped request path.');
+  const isCurrent = () => request.isCurrent() && !request.signal?.aborted;
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) {
+    return localizeDemoWorkResponse(await demoWorkRequest(record, path, request), (source) => {
+      const descriptor = demoWorkSummary[source];
+      return descriptor ? i18n._(descriptor) : source;
+    });
+  }
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  let acknowledged: { status: number; body: unknown } | undefined;
+  try {
+    return await withRecordBaseUrl(captured, async (baseUrl) => {
+      assertDeliveryCurrent(isCurrent);
+      const endpoint = { ...captured, url: baseUrl };
+      if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
+      const init: RequestInit = {
+        method: request.method,
+        signal: request.signal,
+        headers: {
+          ...activeLocaleHeaders(),
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${endpoint.token}`,
+        },
+        body: request.body,
+      };
+      const response =
+        endpoint.transport === GATEWAY_TRANSPORT
+          ? await encryptedGatewayFetch(`${baseUrl}${path}`, init, 60_000, endpoint, isCurrent)
+          : await fetchWithin(
+              60_000,
+              'Timed out waiting for the server.',
+              `${baseUrl}${path}`,
+              init
+            );
+      const text = await response.text();
+      if (text.length > 16 * 1024 * 1024)
+        throw new Error('Task response exceeds the supported size.');
+      let body: unknown;
+      try {
+        body = JSON.parse(text);
+      } catch {
+        if (response.ok) throw new Error('The Gateway returned invalid task JSON.');
+        body = null;
+      }
+      acknowledged = { status: response.status, body };
+      return acknowledged;
+    });
+  } catch (error) {
+    // A lease cleanup error must not erase a received mutation acknowledgement.
+    if (acknowledged) return acknowledged;
+    throw error;
+  }
+};
+
+/** Binary artifact reads are scoped to immutable submissions and a captured pairing. */
+export const readBoundWorkArtifactBytes: import('./work-artifacts').WorkArtifactTransport = async (
+  record,
+  path,
+  expectedBytes,
+  context
+) => {
+  if (
+    !/^\/api\/sessions\/[^/]+\/work\/tasks\/[^/]+\/results\/[^/]+\/artifacts\/\d+$/.test(path) ||
+    /[?#\r\n]/.test(path)
+  )
+    throw new Error('Invalid artifact scope.');
+  if (
+    !Number.isSafeInteger(expectedBytes) ||
+    expectedBytes < 0 ||
+    expectedBytes > MAX_WORK_ARTIFACT_BYTES
+  )
+    throw new Error('Artifact exceeds the supported size.');
+  const isCurrent = () => context.isCurrent() && !context.signal?.aborted;
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) return demoWorkArtifact(record, path, expectedBytes, context);
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, async (baseUrl) => {
+    assertDeliveryCurrent(isCurrent);
+    const endpoint = { ...captured, url: baseUrl };
+    if (!baseUrl || !endpoint.token) throw new Error('Not connected to a server.');
+    const init: RequestInit = {
+      method: 'GET',
+      signal: context.signal,
+      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${endpoint.token}` },
+    };
+    const response =
+      endpoint.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(
+            `${baseUrl}${path}`,
+            init,
+            60_000,
+            endpoint,
+            isCurrent,
+            expectedBytes
+          )
+        : await fetchWithin(60_000, 'Timed out reading the file.', `${baseUrl}${path}`, init);
+    assertDeliveryCurrent(isCurrent);
+    if (!response.ok) throw new Error(`Artifact request failed (HTTP ${response.status}).`);
+    const bytes = await readBoundedArtifactBody(response, expectedBytes, isCurrent);
+    assertDeliveryCurrent(isCurrent);
+    if (bytes.length !== expectedBytes)
+      throw new Error('The artifact does not match its saved result.');
+    return bytes;
+  });
+};
+
+/** Explicit preview of an immutable result using its captured pairing and saved metadata. */
+export function readBoundWorkArtifactPreview(
+  record: GatewayRecord,
+  sessionId: string,
+  taskId: string,
+  submissionId: string,
+  index: number,
+  artifact: import('./work-api').WorkArtifact,
+  context: import('./work-artifacts').WorkArtifactReadContext
+): Promise<import('./work-artifacts').WorkArtifactPreview> {
+  return loadWorkArtifactPreview(
+    record,
+    sessionId,
+    taskId,
+    submissionId,
+    index,
+    artifact,
+    context,
+    {
+      transport: readBoundWorkArtifactBytes,
+      sha256: (bytes) =>
+        QuickCrypto.createHash('sha256').update(QuickCrypto.Buffer.from(bytes)).digest('hex'),
+      base64: (bytes) => QuickCrypto.Buffer.from(bytes).toString('base64'),
+    }
+  );
+}
+
+/** Capability reads for managed tasks remain bound to their named pairing. */
+async function readRecordWorkMetadata(
+  record: GatewayRecord,
+  context: import('./work-api').WorkRequestContext,
+  path: '/health' | '/api/agents/catalog'
+): Promise<unknown> {
+  const isCurrent = () => context.isCurrent() && !context.signal?.aborted;
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record)) return path === '/health' ? demoHealth() : demoAgentProfiles();
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, async (baseUrl) => {
+    assertDeliveryCurrent(isCurrent);
+    const endpoint = { ...captured, url: baseUrl };
+    const init: RequestInit = {
+      signal: context.signal,
+      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${endpoint.token}` },
+    };
+    const response =
+      endpoint.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(
+            `${baseUrl}${path}`,
+            init,
+            REQUEST_TIMEOUT_MS,
+            endpoint,
+            isCurrent
+          )
+        : await fetchWithin(
+            REQUEST_TIMEOUT_MS,
+            'Timed out waiting for the server.',
+            `${baseUrl}${path}`,
+            init
+          );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const value: unknown = await response.json();
+    assertDeliveryCurrent(isCurrent);
+    return value;
+  });
+}
+
+export function loadRecordWorkHealth(
+  record: GatewayRecord,
+  context: import('./work-api').WorkRequestContext
+) {
+  return readRecordWorkMetadata(record, context, '/health');
+}
+
+export async function loadRecordAgentProfiles(
+  record: GatewayRecord,
+  context: import('./work-api').WorkRequestContext
+) {
+  return agentProfilesFromResponse(
+    await readRecordWorkMetadata(record, context, '/api/agents/catalog'),
+    { requireAvailable: true }
+  );
+}
+
+/** Captured pairing and tunnel lease live exactly as long as this one SSE connection. */
+export async function watchBoundWorkChanges(
+  record: GatewayRecord,
+  sessionId: string,
+  afterCursor: number,
+  observer: WorkEventObserver
+): Promise<void> {
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  const isCurrent = () => observer.isCurrent() && !observer.signal?.aborted;
+  if (!isCurrent()) return;
+  if (!sessionId || sessionId.includes('\0')) throw new Error('Invalid work event session.');
+  await withRecordBaseUrl(captured, async (baseUrl) => {
+    if (!isCurrent()) return;
+    const url = `${baseUrl}/api/sessions/${encodeURIComponent(sessionId)}/work/events?after_cursor=${afterCursor}`;
+    const endpoint = { ...captured, url: baseUrl };
+    const sealed = encryptedEndpointEventStreamRequest(endpoint, url);
+    if (endpoint.transport === GATEWAY_TRANSPORT && !sealed)
+      throw new Error('The pairing is missing its encrypted transport credentials.');
+    await consumeWorkEventStream({
+      ...observer,
+      isCurrent,
+      afterCursor,
+      decoder: new TextDecoder(),
+      decryptor: sealed
+        ? new EncryptedEventStreamDecryptor({
+            crypto: streamRecordCrypto,
+            material: sealed.material,
+            requestAad: sealed.requestAad,
+            requestNonce: sealed.requestNonce,
+          })
+        : undefined,
+      open: (signal) =>
+        nitroFetch(url, {
+          signal,
+          stream: true,
+          headers: {
+            ...activeLocaleHeaders(),
+            Accept: 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            ...(sealed ? sealed.headers : { Authorization: `Bearer ${captured.token}` }),
+          },
+        }),
+    });
+  });
+}
+
+/** Native multipart body, captured pairing and upload budget; never the work JSON adapter. */
+export const uploadBoundTaskInput: import('./task-inputs').TaskInputUpload = async (
+  record,
+  scope,
+  requestKey,
+  file,
+  context
+) => {
+  const destination = { ...scope };
+  taskInputScopeKey(destination);
+  taskInputReceiptPath(destination.sessionId, requestKey);
+  if (file.size !== undefined && file.size > MAX_INPUT_UPLOAD_BYTES)
+    throw new Error('File too large (10MB max)');
+  const isCurrent = () => context.isCurrent() && !context.signal?.aborted;
+  assertDeliveryCurrent(isCurrent);
+  if (isDemoRecord(record))
+    return demoWorkInputs.upload(record, destination, requestKey, file, context);
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, async (baseUrl) => {
+    assertDeliveryCurrent(isCurrent);
+    if (!baseUrl || !captured.token) throw new Error('Not connected to a server.');
+    const form = new FormData();
+    form.append('request_key', requestKey);
+    form.append('repo_path', destination.project);
+    form.append('file', {
+      uri: localFilePath(file.uri),
+      name: file.name,
+      type: file.mime,
+    } as unknown as Blob);
+    const url = `${baseUrl}${taskInputPath(destination.sessionId)}`;
+    const init: RequestInit = {
+      method: 'POST',
+      signal: context.signal,
+      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${captured.token}` },
+      body: form,
+    };
+    const response =
+      captured.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(
+            url,
+            init,
+            UPLOAD_TIMEOUT_MS,
+            { ...captured, url: baseUrl },
+            isCurrent
+          )
+        : await fetchWithin(UPLOAD_TIMEOUT_MS, 'Timed out waiting for the upload.', url, init);
+    assertDeliveryCurrent(isCurrent);
+    if (response.status === 413) throw new Error('File too large (10MB max)');
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Input upload refused.`);
+    const body = await readBoundedArtifactBody(response, 16 * 1024, isCurrent);
+    assertDeliveryCurrent(isCurrent);
+    return parseTaskInputReceipt(JSON.parse(new TextDecoder().decode(body)), destination);
+  });
+};
+
+export async function readBoundTaskInputReceipt(
+  record: GatewayRecord,
+  scope: import('./task-inputs').TaskInputScope,
+  requestKey: string,
+  context: import('./task-inputs').TaskInputContext
+): Promise<import('./task-inputs').TaskInputReceipt | null> {
+  const destination = { ...scope };
+  taskInputScopeKey(destination);
+  if (isDemoRecord(record)) return demoWorkInputs.read(record, destination, requestKey, context);
+  const response = await sendBoundWorkRequest(
+    record,
+    taskInputReceiptPath(destination.sessionId, requestKey),
+    {
+      method: 'GET',
+      ...context,
+    }
+  );
+  if (response.status === 404) return null;
+  if (response.status !== 200) throw new Error('Could not read the input receipt.');
+  return parseTaskInputReceipt(response.body, destination);
+}
+
+export async function loadBoundRecentCwds(
+  record: GatewayRecord,
+  sessionId: string,
+  context: import('./task-inputs').TaskInputContext
+): Promise<string[]> {
+  const response = await sendBoundWorkRequest(
+    record,
+    `/api/sessions/${encodeURIComponent(sessionId)}/recent-cwds`,
+    {
+      method: 'GET',
+      ...context,
+    }
+  );
+  if (response.status === 404 || response.status === 501) return [];
+  if (response.status !== 200) throw new Error('Could not list project directories.');
+  return recentCwdsFromResponse(response.body);
+}
