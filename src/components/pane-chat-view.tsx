@@ -1,7 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react-native';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
@@ -16,6 +16,7 @@ import {
   usePaneChatMarkdownStyle,
 } from '@/components/pane-chat-blocks';
 import { PressableScale } from '@/components/pressable-scale';
+import { Skeleton } from '@/components/themed-skeleton';
 import { buildPaneChatItems, type PaneChatDetail, type PaneChatItem } from '@/lib/pane-chat';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import type { PanePart } from '@/lib/pane-parts';

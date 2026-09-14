@@ -1,8 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
+import { Skeleton } from '@/components/themed-skeleton';
 import { Check, Copy, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';

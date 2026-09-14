@@ -24,6 +24,7 @@ import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
@@ -175,6 +176,7 @@ export default function RootLayout() {
 function RootContent() {
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const { record } = useGatewayRecord();
   useNotificationObserver();
   useGatewayPushRegistration(record);
@@ -209,7 +211,18 @@ function RootContent() {
           notification: colors.danger,
         },
       }}>
-      <ToastProvider maxWidth={480}>
+      {/*
+        The toast card is a colored plane over whatever screen raised it, so it
+        answers the pack's background opacity like every other surface. Stated
+        once here rather than per call: kit 1.1.0 fills all four variants with
+        the `surface` token and separates them by icon and accent instead, so a
+        single `toastStyle` changes no variant's colour. The reader's slider is
+        the applied theme's, not a candidate's -- this sits above the router and
+        outside `CandidateThemeProvider`, which is where a toast belongs.
+      */}
+      <ToastProvider
+        maxWidth={480}
+        toastStyle={{ backgroundColor: surfaceBackground(colors.surface) }}>
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
         <AnimatedSplashOverlay />
         <ThemeFileOpener />
