@@ -554,6 +554,10 @@ msgstr "SSH ホストを選んでください"
 msgid "Choose files"
 msgstr "ファイルを選択"
 
+#: src/components/launch-intro.tsx
+msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
+msgstr "美しく描かれた公式テーマのコレクションから選ぶと、紙面、ターミナル、アートワークがまとめて塗り替わります。自分だけのテーマを作ることもできます"
+
 #: src/components/machine-switcher-sheet.tsx
 msgid "Choose where to work"
 msgstr "作業する場所を選択"
@@ -1468,6 +1472,10 @@ msgstr "Ed25519 鍵を生成"
 msgid "Generating…"
 msgstr "生成中…"
 
+#: src/components/launch-intro.tsx
+msgid "Get started"
+msgstr "はじめる"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git ステータス"
@@ -1843,6 +1851,10 @@ msgstr "Mac mini · オフィス"
 msgid "Machines and sessions"
 msgstr "マシンとセッション"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "自分だけのアプリに"
+
 #: src/app/(drawer)/index.tsx
 msgid "Manage"
 msgstr "管理"
@@ -2002,6 +2014,10 @@ msgstr "新しいターミナル"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "新規ワークスペース"
+
+#: src/components/launch-intro.tsx
+msgid "Next"
+msgstr "次へ"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -2288,6 +2304,10 @@ msgstr "{0} のオプション"
 #: src/components/settings-storage.tsx
 msgid "Other"
 msgstr "その他"
+
+#: src/components/launch-intro.tsx
+msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
+msgstr "出力はプログラム本来の色でターミナルのグリッドに描かれ、キー列は押した瞬間に送信されます。nvim、less、REPL もそのまま動きます"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2826,6 +2846,10 @@ msgstr "もう一度スキャン"
 msgid "Scan the Gateway QR."
 msgstr "Gateway の QR コードをスキャンしてください"
 
+#: src/components/launch-intro.tsx
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
+msgstr "自分のコンピューターで動く Gateway の QR コードを読み取ります。アカウントも中継サーバーもなく、あなたのデータが私たちのサーバーを通ることはありません"
+
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "スキャンにはカメラが必要ですが、このブラウザでは使えません"
@@ -3107,6 +3131,10 @@ msgstr "シミュレータの操作"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "サイズ"
+
+#: src/components/launch-intro.tsx
+msgid "Skip intro"
+msgstr "紹介をスキップ"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -3403,9 +3431,17 @@ msgstr "シミュレータとの接続が切れました"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズを確認してください"
 
+#: src/components/launch-intro.tsx
+msgid "The question comes to you"
+msgstr "質問はあなたのもとへ"
+
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "素のパネルを、文字グリッドと本来の色のまま表示します"
+
+#: src/components/launch-intro.tsx
+msgid "The real terminal"
+msgstr "本物のターミナル"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
@@ -3844,6 +3880,10 @@ msgstr "実行中のもの"
 msgid "What's new"
 msgstr "新着情報"
 
+#: src/components/launch-intro.tsx
+msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
+msgstr "エージェントが許可を求めて止まると、その確認はプッシュ通知で届きます。ロック画面から承認、常に承認、または拒否できます"
+
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離席中の変化"
@@ -3888,6 +3928,10 @@ msgstr "昨日"
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "どこでも、エージェントと"
+
+#: src/components/launch-intro.tsx
+msgid "Your machine, your rules"
+msgstr "あなたのマシン、あなたのルール"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

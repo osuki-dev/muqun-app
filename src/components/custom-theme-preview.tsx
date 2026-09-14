@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import type { ThemeManifest } from '@/theme/schema';
 import { resolveHomeIdentity } from '@/theme/resolve';
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
+import { brandMark } from '@/components/brand-mark';
 import { resolveArtworkOpacity, safeArtworkOpacity } from '@/theme/artwork-contrast';
 import { terminalBackgroundFill } from '@/terminal/background';
 import { surfaceBackgroundFill, surfaceBackgroundOpacity } from '@/theme/surface-background';
@@ -22,9 +23,11 @@ export function CustomThemePreview({
   const { t } = useLingui();
   const manifest = clampThemeOpacity(authoredManifest);
   const identity = resolveHomeIdentity(manifest);
-  const logo =
+  // Per previewed mode, because the two tiles sit side by side and the
+  // mascot has a cut for each ground.
+  const logoFor = (mode: 'light' | 'dark') =>
     identity.logo?.mode === 'default'
-      ? require('../../assets/images/loading-mark.png')
+      ? brandMark(mode)
       : identity.logo?.mode === 'custom' && assets[identity.logo.asset]?.startsWith('file:///')
         ? { uri: assets[identity.logo.asset] }
         : null;
@@ -87,9 +90,9 @@ export function CustomThemePreview({
                   mode={mode}
                   opacityLimit={jointArtworkOpacity(resolveArtworkOpacity(colors), opacity)}
                 />
-                {logo ? (
+                {logoFor(mode) ? (
                   <Image
-                    source={logo}
+                    source={logoFor(mode) ?? undefined}
                     contentFit="contain"
                     accessible={false}
                     style={{ width: 28, height: 28 }}

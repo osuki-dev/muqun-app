@@ -1,5 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import { brandMark } from '@/components/brand-mark';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
@@ -266,11 +267,7 @@ export default function SettingsScreen() {
                   // because the dark master is lit for a dark ground and its
                   // rim would fringe on a light one. `resolvedMode` rather than
                   // the system scheme, so a theme chosen in Appearance counts.
-                  source={
-                    resolvedMode === 'dark'
-                      ? require('@/assets/images/brand-mark-3d-dark.png')
-                      : require('@/assets/images/brand-mark-3d.png')
-                  }
+                  source={brandMark(resolvedMode)}
                   style={styles.brandMark}
                   contentFit="contain"
                   // Decorative: the version beneath it already names the app,

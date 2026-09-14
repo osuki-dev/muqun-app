@@ -1,5 +1,4 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { StatusBar } from 'expo-status-bar';
@@ -16,7 +15,9 @@ import { AppState, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { SplashScreen } from '@osuki-dev/react-native-splash';
+
+import { LaunchOverlay } from '@/components/launch-overlay';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { AppLockGate } from '@/components/app-lock-gate';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
@@ -24,6 +25,7 @@ import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -56,7 +58,12 @@ import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
  */
 LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web implementation.']);
 
-SplashScreen.preventAutoHideAsync();
+/*
+ * Keep the native launch screen up until `LaunchOverlay` has painted its copy
+ * of it. Module scope, because React content can appear -- and the native
+ * side would auto-hide on it -- before any effect runs.
+ */
+SplashScreen.preventAutoHide();
 
 /**
  * The theme library is read here, at module scope, and not in an effect.
@@ -180,6 +187,9 @@ function RootContent() {
   const { record } = useGatewayRecord();
   useNotificationObserver();
   useGatewayPushRegistration(record);
+  // The applied pack's picture becomes the native launch screen's, from the
+  // next cold start on. See the hook for why this is not JavaScript's job.
+  useLaunchImageSync();
 
   // A backgrounded app with an idle gateway session has its SSH tunnel
   // forwards closed, shrinking the window the loopback port exists in; coming
@@ -224,7 +234,7 @@ function RootContent() {
         maxWidth={480}
         toastStyle={{ backgroundColor: surfaceBackground(colors.surface) }}>
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
-        <AnimatedSplashOverlay />
+        <LaunchOverlay />
         <ThemeFileOpener />
         <AppLockGate>
           <Stack
