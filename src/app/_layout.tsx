@@ -364,6 +364,22 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            {/*
+              The catalogue, opened from the theme sheet and presented over it.
+              The same options, because it is the same place as far as a reader
+              is concerned; full height for the reason `artifacts` and
+              `git-diff` are, which is that a list read by scrolling is halved
+              by a partial detent.
+            */}
+            <Stack.Screen
+              name="settings-theme-browse"
+              options={{
+                presentation: 'formSheet',
+                sheetAllowedDetents: [1],
+                sheetGrabberVisible: true,
+                contentStyle: { backgroundColor: 'transparent' },
+              }}
+            />
             <Stack.Screen name="custom-theme" options={{ presentation: 'fullScreenModal' }} />
             <Stack.Screen
               name="settings-language"
