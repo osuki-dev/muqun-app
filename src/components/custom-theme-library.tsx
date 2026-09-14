@@ -150,6 +150,9 @@ export function CustomThemeLibrary({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   // The plate a label takes when the pack draws a wallpaper behind this sheet.
+  // Bare, because this component is always somebody else's child: inside the
+  // theme sheet it takes that sheet's `surface`, and on the full-screen editor
+  // it takes the screen's `background`. Both are the ground it is actually on.
   const plate = useSheetGroundPlate();
   const background = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();

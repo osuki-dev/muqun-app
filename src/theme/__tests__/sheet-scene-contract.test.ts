@@ -109,18 +109,37 @@ test('the settings sheet keeps the native scroll root a form sheet needs', () =>
 
 test('text drawn straight onto a sheet ground takes the plate the shell gives it', () => {
   const ground = readFileSync('src/components/sheet-ground.tsx', 'utf8');
-  // Same question, same answer, same file to change: `SettingsSection` plates a
-  // label over `shell.background` on the settings page, and the plate is only
-  // there when there is a picture to be protected from.
+  // The plate is only there when there is a picture to be protected from.
   expect(ground).toContain("useHasThemeArtwork('shell.background')");
+
+  // One plate, and this is the file that decides what it is. `SettingsSection`
+  // used to mix its own from `colors.background`, which is right on the
+  // settings page and a visibly different grey on a `surface`-tinted sheet --
+  // two mechanisms plating the same labels. The settings label now asks here.
   const chrome = readFileSync('src/components/settings-chrome.tsx', 'utf8');
-  expect(chrome).toContain("useHasThemeArtwork('shell.background')");
+  expect(chrome).toContain("import { useSheetGroundPlate } from '@/components/sheet-ground'");
+  expect(chrome).toContain('const plate = useSheetGroundPlate();');
+  expect(chrome).not.toContain("useHasThemeArtwork('shell.background')");
+
+  // And the geometry is the settings page's, which is the one that was already
+  // shipping: `LADDER.gap` across, `LADDER.tight` down, radius 8.
+  expect(ground).toContain('export const SHEET_GROUND_PLATE_RADIUS = 8;');
+  expect(ground).toContain('export const SHEET_GROUND_PLATE_PADDING_HORIZONTAL = 8;');
+  expect(ground).toContain('export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;');
+
+  // The tint is the ground's, taken from the frame rather than defaulted to
+  // `surface` wherever the hook happens to be called.
+  expect(ground).toContain('createContext<SheetGroundTint>');
+  expect(ground).toContain('<SheetGroundTintContext.Provider value={tint ?? ');
+  expect(ground).toContain('sheetGroundTintColor(theme.colors, tint ?? ground)');
 
   // Every sheet has at least one label with nothing under it: a header, a
-  // section eyebrow, or a day heading.
+  // section eyebrow, or a day heading. It takes the plate directly, or it is a
+  // `SectionLabel`, which takes the same plate from the same frame.
   for (const file of SHEET_FRAMES) {
     const text = readFileSync(file, 'utf8');
-    expect(text).toContain('useSheetGroundPlate(');
-    expect(text).toContain(', plate]');
+    const direct = text.includes('useSheetGroundPlate(') && text.includes(', plate]');
+    const viaLabel = text.includes('<SectionLabel');
+    expect({ file, plated: direct || viaLabel }).toEqual({ file, plated: true });
   }
 });

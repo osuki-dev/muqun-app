@@ -39,7 +39,7 @@
  * That is `useSheetGroundPlate` below.
  */
 import { useThemeTokens } from '@osuki-dev/ui';
-import { type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
@@ -54,6 +54,23 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * one surface too many.
  */
 export type SheetGroundTint = 'surface' | 'background';
+
+/**
+ * The tint of the ground the subtree is standing on.
+ *
+ * `background` outside any sheet, because that is what a full screen paints:
+ * the settings page, the home screen and the pad rail all sit on
+ * `colors.background`. A `SheetFrame` overrides it for everything inside it.
+ *
+ * This exists so a plate never has to be told where it is. A label deep inside
+ * a sheet -- a section eyebrow, a day heading -- asks for a plate and gets one
+ * mixed from the ground it is actually on. Before it, `SettingsSection`'s label
+ * hardcoded `colors.background` and every sheet plate defaulted to `surface`,
+ * so a plate on a `surface`-tinted sheet was rgb(242,244,245) over a
+ * rgb(249,251,252) ground: visibly a different grey, and the reason two PRs
+ * plating the same labels disagreed about what a plate is.
+ */
+const SheetGroundTintContext = createContext<SheetGroundTint>('background');
 
 export function SheetGround({
   testID,
@@ -130,11 +147,21 @@ export function SheetFrame({
   children: ReactNode;
 }) {
   return (
-    <>
+    <SheetGroundTintContext.Provider value={tint ?? 'surface'}>
       <SheetGround testID={testID} tint={tint} />
       {children}
-    </>
+    </SheetGroundTintContext.Provider>
   );
+}
+
+/**
+ * The tint of the ground under this subtree.
+ *
+ * A component that draws its own surface over the ground -- and has to look
+ * like it belongs on it -- asks here rather than deciding for itself.
+ */
+export function useSheetGroundTint(): SheetGroundTint {
+  return useContext(SheetGroundTintContext);
 }
 
 /** Frozen and shared, so a plateless render commits the same object every time. */
@@ -149,9 +176,25 @@ function sheetGroundTintColor(
 }
 
 /**
+ * The one plate geometry, which is the settings page's.
+ *
+ * `SettingsSection` has shipped a radius of 8 with 8 across and 4 down since
+ * the plate was invented, and the whole point of the exercise is that a reader
+ * moving between Settings and a sheet sees one kind of heading. So the sheets
+ * take the settings numbers rather than the other way round: Settings does not
+ * change, and nothing else has a plate old enough to defend a second set.
+ *
+ * The numbers are `LADDER.gap` and `LADDER.tight` from `settings-chrome`,
+ * written out rather than imported -- that module imports this one, and a cycle
+ * between the app's two pieces of furniture is not worth two constants.
+ */
+export const SHEET_GROUND_PLATE_RADIUS = 8;
+export const SHEET_GROUND_PLATE_PADDING_HORIZONTAL = 8;
+export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;
+
+/**
  * The plate for text drawn straight onto the ground, or nothing where there is
  * no picture to protect it from.
- *
  *
  * Same idea, same shape and the same reason as `SettingsSection`'s label on the
  * settings page: `textMuted` is proven against the theme's surfaces and never
@@ -161,20 +204,30 @@ function sheetGroundTintColor(
  * `shell.background` keeps exactly the padding and spacing it has today, and
  * the result drops straight into a `Text`'s style array, whose members the kit
  * types as styles rather than as styles-or-nothing.
+ *
+ * The tint now comes from the frame by default rather than from a guess. It
+ * used to default to `surface` wherever it was called, which is right inside
+ * most sheets and wrong in the two places that matter: the commands sheet,
+ * whose ground is `background`, and every screen that is not a sheet at all.
+ * A plate one token off its ground is a visibly different grey -- measured at
+ * rgb(242,244,245) on a rgb(249,251,252) ground -- which is a plate announcing
+ * itself rather than protecting a label. Pass `tint` only to override the
+ * frame, which nothing needs to do now that the frame publishes it.
  */
-export function useSheetGroundPlate(tint: SheetGroundTint = 'surface'): SheetGroundPlate {
+export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const hasShell = useHasThemeArtwork('shell.background');
+  const ground = useSheetGroundTint();
   if (!hasShell) return EMPTY_PLATE;
   return {
     // Shrink-to-fit on the cross axis, so a plate beside a 44pt close button is
     // as tall as its own two lines rather than as tall as the button.
     alignSelf: 'flex-start',
-    backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)),
-    borderRadius: 12,
+    backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint ?? ground)),
+    borderRadius: SHEET_GROUND_PLATE_RADIUS,
     borderCurve: 'continuous',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: SHEET_GROUND_PLATE_PADDING_HORIZONTAL,
+    paddingVertical: SHEET_GROUND_PLATE_PADDING_VERTICAL,
   };
 }

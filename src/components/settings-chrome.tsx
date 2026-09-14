@@ -19,12 +19,12 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, type TextStyle, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
 import { ThemedSurface } from '@/components/themed-surface';
-import { useHasThemeArtwork } from '@/components/theme-artwork';
+import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { appChrome } from '@/constants/appearance';
 import { useRenderTally } from '@/lib/render-tally';
 
@@ -67,39 +67,104 @@ const ROW_MIN_HEIGHT = 60;
 const CHIP_SIZE = 36;
 
 /**
- * One group of rows, with its instrument label above it.
+ * The instrument label that names a group of rows -- the one this app draws
+ * over every section it has, on every screen.
  *
- * The label is `variant="label"` -- the design system's 11pt all-caps
- * instrument style, the same one the segmented controls' own labels use. It
- * used to be a `caption` with `title.toUpperCase()` applied in JavaScript,
- * which is the mistake `i18n/labels.ts` is written to prevent: case is a
- * language's business, `toUpperCase()` on Japanese does nothing and on some
- * scripts does something wrong. `textTransform` is a rendering instruction the
- * platform applies per script, and it costs no catalog churn.
+ * The look is the hugging plate `SettingsSection` invented: a compact pill
+ * exactly as wide as the word inside it, never a bar across the content. That
+ * was the settings page's private style, and the price of keeping it private
+ * was eight other headings that each re-decided what a heading is -- a
+ * `caption` here, a `label` there, a `toUpperCase()` call in JavaScript on the
+ * artifacts screen, and the panels sheet's tab headings stretched across the
+ * whole sheet by a `flex: 1` on the text itself. The last of those is what a
+ * reader sees as a full-width plate under a heading where every other section
+ * on the same screen gets a small one.
+ *
+ * `variant="label"` -- the design system's 11pt all-caps instrument style --
+ * rather than a caption with `title.toUpperCase()` applied in JavaScript, which
+ * is the mistake `i18n/labels.ts` is written to prevent: case is a language's
+ * business, `toUpperCase()` on Japanese does nothing and on some scripts does
+ * something wrong. `textTransform` is a rendering instruction the platform
+ * applies per script, and it costs no catalog churn.
+ *
+ * The plate comes from `useSheetGroundPlate`, which is where every plate in the
+ * app now comes from, and it is drawn only when a pack supplies
+ * `shell.background`. On a flat ground the label is read against the ground
+ * either way and a plate there is a box nobody asked for; over an author's
+ * photograph it is the only thing keeping an 11pt muted label legible.
+ *
+ * The colour is the *ground's*, read from the frame rather than hardcoded. This
+ * label used to mix its plate from `colors.background` wherever it was drawn,
+ * which is right on the settings page and wrong on a sheet tinted from
+ * `surface`: measured, a rgb(242,244,245) plate on a rgb(249,251,252) ground,
+ * a plate announcing itself instead of protecting a label.
+ *
+ * `alignSelf: 'flex-start'` is what makes it hug, and it is right for the
+ * column a section normally lives in. A heading that is a *row* -- a label with
+ * a count or an action opposite it -- passes `style` to put the pill back on
+ * the row's centre line. The pill itself does not change.
+ *
+ * `bleed` is why the word does not move when a pack is installed. The plate
+ * sets `paddingHorizontal` to 8 where the bare label has 4, which used to push
+ * every heading in the app 4pt right of the card it names the moment a
+ * wallpaper appeared. The plate keeps its padding and gives back the
+ * difference as a negative margin, so the *text* starts where it always did and
+ * the plate grows outward around it.
+ *
+ * Where this is deliberately *not* used: a heading that already sits inside
+ * something painted -- the file-mention popover's "Files in this workspace",
+ * the pairing aperture's SSH-host label -- because a plate on a panel that
+ * carries its own fill is the second layer of paint this component exists to
+ * avoid. Those two are also sentences rather than instrument labels, and an
+ * uppercased sentence is a different thing to read.
+ */
+export function SectionLabel({
+  title,
+  color,
+  numberOfLines,
+  testID,
+  style,
+}: {
+  title: ReactNode;
+  /** Defaults to the design system's own label ink. */
+  color?: string;
+  numberOfLines?: number;
+  testID?: string;
+  /** Applied last, so a row-shaped heading can re-align the pill it hugs with. */
+  style?: TextStyle | TextStyle[];
+}) {
+  const plate = useSheetGroundPlate();
+  return (
+    <Text
+      variant="label"
+      color={color}
+      numberOfLines={numberOfLines}
+      testID={testID}
+      style={[
+        styles.sectionTitle,
+        plate,
+        // Only when there is a plate, and only ever a negative number: the
+        // plate's own padding, less the indent the bare label already carries.
+        plate.paddingHorizontal === undefined
+          ? {}
+          : { marginHorizontal: LADDER.tight - plate.paddingHorizontal },
+        // Spread rather than nested, because the kit's `Text` takes a flat
+        // `TextStyle[]` and nothing narrower.
+        ...(style ? (Array.isArray(style) ? style : [style]) : []),
+      ]}>
+      {title}
+    </Text>
+  );
+}
+
+/**
+ * One group of rows, with its instrument label above it.
  */
 export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   useRenderTally('SettingsSection');
-  const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
-  const hasShell = useHasThemeArtwork('shell.background');
   return (
     <View style={styles.section}>
-      <Text
-        variant="label"
-        style={[
-          styles.sectionTitle,
-          hasShell
-            ? {
-                alignSelf: 'flex-start',
-                backgroundColor: surfaceBackground(theme.colors.background),
-                paddingHorizontal: LADDER.gap,
-                paddingVertical: LADDER.tight,
-                borderRadius: 8,
-              }
-            : {},
-        ]}>
-        {title}
-      </Text>
+      <SectionLabel title={title} />
       <SettingsCard>{children}</SettingsCard>
     </View>
   );
@@ -412,7 +477,13 @@ export function SettingsBlock({
 
 const styles = StyleSheet.create({
   section: { gap: LADDER.gap },
-  sectionTitle: { paddingHorizontal: LADDER.tight, letterSpacing: 0.8 },
+  // `alignSelf` is the hug. Without it the label stretches to its column's
+  // width and the plate under it becomes a bar.
+  sectionTitle: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: LADDER.tight,
+    letterSpacing: 0.8,
+  },
   sectionBody: {
     borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
