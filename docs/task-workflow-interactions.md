@@ -1,6 +1,7 @@
 # Task workflow interaction specification
 
-Status: proposed, not implemented or usability-tested. Read the
+Status: target interaction contract, partially implemented and under Android
+validation. See `task-workflow-validation.md` for measured coverage. Read the
 [architecture and implementation handoff](./task-workflow-design.md) first.
 This specification defines the App interaction contract; the Gateway companion
 `docs/task-workflow-interaction-contract.md` owns server enforcement.
@@ -10,6 +11,13 @@ The design goal is to make three questions easy to answer at every step: **What 
 ## UI-01 — Navigation and information architecture
 
 On a phone, add a Tasks entry within the existing project/server experience. Do not replace the terminal or require a new global navigation system in the first increment.
+
+Implementation uses a full-screen task workspace with explicit Close and Tasks
+actions. An Android device run showed that the native draggable sheet could
+dismiss the workspace while scrolling back toward its header. Full-screen
+presentation gives the content ownership of vertical scrolling and retains
+safe-area spacing without a misleading drag handle. Its native regression
+assertions remain unchanged; iOS runtime validation is still pending.
 
 ```text
 Project / machine

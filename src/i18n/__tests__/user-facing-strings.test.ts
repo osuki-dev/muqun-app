@@ -61,6 +61,19 @@ function descriptorKeys(table: string): Set<string> {
   return new Set(keys);
 }
 
+test('every authored demo result summary has a descriptor and the demo transport applies it', () => {
+  const source = readFileSync(join(SRC, 'lib', 'demo-work.ts'), 'utf8');
+  const descriptors = descriptorKeys('demoWorkSummary');
+  const summaries = [...source.matchAll(/summary:\s*'([^']+)'/g)].map((match) => match[1]);
+  expect(summaries.length).toBeGreaterThan(0);
+  expect(summaries.filter((summary) => !descriptors.has(summary))).toEqual([]);
+  const transport = readFileSync(join(SRC, 'lib', 'gateway-client.ts'), 'utf8');
+  expect(transport).toContain(
+    'localizeDemoWorkResponse(await demoWorkRequest(record, path, request)'
+  );
+  expect(transport).toContain('const descriptor = demoWorkSummary[source]');
+});
+
 describe('no user-facing string is written as a raw literal', () => {
   test('the scan reaches the whole tree, or it is not proving anything', () => {
     // A walk that silently stopped finding files would report zero findings and

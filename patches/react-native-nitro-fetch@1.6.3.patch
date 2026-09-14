@@ -1,0 +1,301 @@
+diff --git a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroCronet.kt b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroCronet.kt
+index 49443e89c50b57a7d8eec05923bd787ae7fbe15e..9dc588533153a823159af0789e68d9531637ddc8 100644
+--- a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroCronet.kt
++++ b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroCronet.kt
+@@ -65,6 +65,7 @@ class HybridNitroCronet : HybridNitroCronetSpec() {
+         )
+ 
+         val engine = builder.build()
++        NitroLogger.i("MuqunTransport", "mutation-policy-v1 engine=${engine.javaClass.name} version=${engine.versionString}")
+         engineRef = engine
+         return engine
+       }
+diff --git a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetch.kt b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetch.kt
+index 1e5e0ff412d2cf59fb24f5bea3f7e04d18fbc30b..4aeee303b746b4e59d0df0b5ec582008cf5fe7ef 100644
+--- a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetch.kt
++++ b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetch.kt
+@@ -60,6 +60,7 @@ class HybridNitroFetch : HybridNitroFetchSpec() {
+         // builder.setExperimentalOptions("""{"HostResolverRules":{"host_resolver_rules":"MAP httpbin.org 54.167.17.38"}}""")
+ 
+         val engine = builder.build()
++        NitroLogger.i("MuqunTransport", "mutation-policy-v1 engine=${engine.javaClass.name} version=${engine.versionString}")
+         NitroLogger.i("NitroFetch", "CronetEngine initialized. Provider=${nativeProvider?.name ?: "Default"} Cache=${cacheDir.absolutePath}")
+         engineRef = engine
+         return engine
+diff --git a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetchClient.kt b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetchClient.kt
+index 7d4a1a3372d0af98cef45286540f683dcf886bc0..c2c379eebef28698790190f9f8e5ee17bc67ceaa 100644
+--- a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetchClient.kt
++++ b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridNitroFetchClient.kt
+@@ -107,7 +107,8 @@ class HybridNitroFetchClient(private val engine: CronetEngine, private val execu
+       onFail: (Throwable) -> Unit
+     ): UrlRequest {
+       val url = req.url
+-      val shouldFollowRedirects = req.followRedirects ?: true
++      val method = req.method?.name ?: "GET"
++      val shouldFollowRedirects = MutationUploadPolicy.allowsReplay(method) && (req.followRedirects ?: true)
+       val omitCredentials = req.credentials == NitroRequestCredentials.OMIT
+       val traceLabel = if (BuildConfig.NITRO_FETCH_TRACING) {
+         "NitroFetch ${req.method?.name ?: "GET"} ${Uri.parse(url).path ?: url}"
+@@ -277,8 +278,8 @@ class HybridNitroFetchClient(private val engine: CronetEngine, private val execu
+       }
+ 
+       val builder = engine.newUrlRequestBuilder(url, callback, executor)
+-      val method = req.method?.name ?: "GET"
+       builder.setHttpMethod(method)
++      MutationUploadPolicy.configure(builder, method)
+       // prefetchKey is an internal cache key, never sent on the server
+       req.headers?.forEach { (k, v) ->
+         if (k.equals("prefetchKey", ignoreCase = true)) return@forEach
+@@ -296,12 +297,12 @@ class HybridNitroFetchClient(private val engine: CronetEngine, private val execu
+       if (formParts != null && formParts.isNotEmpty()) {
+         val (multipartBody, contentType) = buildMultipartBody(formParts)
+         builder.addHeader("Content-Type", contentType)
+-        val provider = createUploadProvider(multipartBody)
++        val provider = MutationUploadPolicy.body(multipartBody, method)
+         builder.setUploadDataProvider(provider, executor)
+       } else {
+         val body = uploadBytes(req)
+         if (body != null) {
+-          val provider = createUploadProvider(body)
++          val provider = MutationUploadPolicy.body(body, method)
+           builder.setUploadDataProvider(provider, executor)
+         }
+       }
+@@ -336,24 +337,6 @@ class HybridNitroFetchClient(private val engine: CronetEngine, private val execu
+       return req.bodyString?.takeIf { it.isNotEmpty() }?.toByteArray(Charsets.UTF_8)
+     }
+ 
+-    private fun createUploadProvider(body: ByteArray): org.chromium.net.UploadDataProvider {
+-      return object : org.chromium.net.UploadDataProvider() {
+-        private var pos = 0
+-        override fun getLength(): Long = body.size.toLong()
+-        override fun read(uploadDataSink: org.chromium.net.UploadDataSink, byteBuffer: ByteBuffer) {
+-          val remaining = body.size - pos
+-          val toWrite = minOf(byteBuffer.remaining(), remaining)
+-          byteBuffer.put(body, pos, toWrite)
+-          pos += toWrite
+-          uploadDataSink.onReadSucceeded(false)
+-        }
+-        override fun rewind(uploadDataSink: org.chromium.net.UploadDataSink) {
+-          pos = 0
+-          uploadDataSink.onRewindSucceeded()
+-        }
+-      }
+-    }
+-
+     private fun buildMultipartBody(parts: Array<NitroFormDataPart>): Pair<ByteArray, String> {
+       val boundary = "NitroFetch-${UUID.randomUUID()}"
+       val out = ByteArrayOutputStream()
+diff --git a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequest.kt b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequest.kt
+index 85cd7ef5228de605bbc702e18b0d3d233774e1d9..e4f0f6e107b58b55b08d87ff5861021fb888e752 100644
+--- a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequest.kt
++++ b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequest.kt
+@@ -7,7 +7,8 @@ import java.nio.ByteBuffer
+ @DoNotStrip
+ class HybridUrlRequest(
+   private val cronetRequest: CronetUrlRequest,
+-  private val byteBuffer: ByteBuffer
++  private val byteBuffer: ByteBuffer,
++  private val allowRedirects: Boolean
+ ) : HybridUrlRequestSpec() {
+ 
+   override fun start() {
+@@ -15,6 +16,7 @@ class HybridUrlRequest(
+   }
+ 
+   override fun followRedirect() {
++    check(allowRedirects) { "Mutation redirect refused" }
+     cronetRequest.followRedirect()
+   }
+ 
+diff --git a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequestBuilder.kt b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequestBuilder.kt
+index 190b1e93d2451e289dd7d4a88f40b862e97a531f..2b0c7e19d4e0903662e029d4645f8c6dc9d79231 100644
+--- a/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequestBuilder.kt
++++ b/android/src/main/java/com/margelo/nitro/nitrofetch/HybridUrlRequestBuilder.kt
+@@ -38,6 +38,8 @@ class HybridUrlRequestBuilder(
+   private var devToolsBytes: Int = 0
+   private var devToolsTextual: Boolean = false
+   private var httpMethod: String = "GET"
++  private var built = false
++  private var uploadBytes: ByteArray? = null
+   private val requestHeaders: LinkedHashMap<String, String> = LinkedHashMap()
+   private var uploadBodyString: String = ""
+   private var uploadBodyLength: Long = 0L
+@@ -54,6 +56,11 @@ class HybridUrlRequestBuilder(
+         info: CronetUrlResponseInfo,
+         newLocationUrl: String
+       ) {
++        if (!MutationUploadPolicy.allowsReplay(httpMethod)) {
++          request.cancel()
++          onFailedCallback?.invoke(info.toNitro(), RequestException(message = "Mutation redirect refused"))
++          return
++        }
+         onRedirectReceivedCallback?.let { callback ->
+           val nitroInfo = info.toNitro()
+           callback(nitroInfo, newLocationUrl)
+@@ -152,6 +159,7 @@ class HybridUrlRequestBuilder(
+   }
+ 
+   override fun setHttpMethod(httpMethod: String) {
++    check(!built) { "Cannot change a built request method" }
+     this.httpMethod = httpMethod
+     builder.setHttpMethod(httpMethod)
+   }
+@@ -176,28 +184,7 @@ class HybridUrlRequestBuilder(
+     }
+     uploadBodyLength = bodyBytes.size.toLong()
+ 
+-    val provider = object : org.chromium.net.UploadDataProvider() {
+-      private var position = 0
+-
+-      override fun getLength(): Long = bodyBytes.size.toLong()
+-
+-      override fun read(uploadDataSink: org.chromium.net.UploadDataSink, byteBuffer: ByteBuffer) {
+-        val remaining = bodyBytes.size - position
+-        val toWrite = minOf(byteBuffer.remaining(), remaining)
+-        if (toWrite > 0) {
+-          byteBuffer.put(bodyBytes, position, toWrite)
+-          position += toWrite
+-        }
+-        uploadDataSink.onReadSucceeded(false)
+-      }
+-
+-      override fun rewind(uploadDataSink: org.chromium.net.UploadDataSink) {
+-        position = 0
+-        uploadDataSink.onRewindSucceeded()
+-      }
+-    }
+-
+-    builder.setUploadDataProvider(provider, executor)
++    uploadBytes = bodyBytes
+   }
+ 
+   override fun disableCache() {
+@@ -233,6 +220,10 @@ class HybridUrlRequestBuilder(
+   }
+ 
+   override fun build(): HybridUrlRequestSpec {
++    check(!built) { "Request builder is single use" }
++    built = true
++    MutationUploadPolicy.configure(builder, httpMethod)
++    uploadBytes?.let { builder.setUploadDataProvider(MutationUploadPolicy.body(it, httpMethod), executor) }
+     val cronetRequest = builder.build()
+     if (devToolsEnabled) {
+       DevToolsReporter.reportRequestStart(
+@@ -244,6 +235,6 @@ class HybridUrlRequestBuilder(
+         uploadBodyLength
+       )
+     }
+-    return HybridUrlRequest(cronetRequest, byteBuffer)
++    return HybridUrlRequest(cronetRequest, byteBuffer, MutationUploadPolicy.allowsReplay(httpMethod))
+   }
+ }
+diff --git a/node_modules/react-native-nitro-fetch/android/src/main/java/com/margelo/nitro/nitrofetch/MutationUploadPolicy.java b/android/src/main/java/com/margelo/nitro/nitrofetch/MutationUploadPolicy.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..59eedfc82aaf1ede7f1b6f9cbc786a9832639093
+--- /dev/null
++++ b/android/src/main/java/com/margelo/nitro/nitrofetch/MutationUploadPolicy.java
+@@ -0,0 +1,59 @@
++package com.margelo.nitro.nitrofetch;
++
++import java.io.IOException;
++import java.nio.ByteBuffer;
++import java.util.Locale;
++import org.chromium.net.ExperimentalUrlRequest;
++import org.chromium.net.UploadDataProvider;
++import org.chromium.net.UploadDataSink;
++import org.chromium.net.UrlRequest;
++
++/** Muqun: mutations are one transport attempt; ambiguous outcomes require receipt lookup. */
++public final class MutationUploadPolicy {
++  private MutationUploadPolicy() {}
++
++  public static boolean allowsReplay(String method) {
++    String normalized = method.toUpperCase(Locale.ROOT);
++    return normalized.equals("GET") || normalized.equals("HEAD") || normalized.equals("OPTIONS");
++  }
++
++  public static void configure(UrlRequest.Builder builder, String method) {
++    if (allowsReplay(method)) return;
++    if (!(builder instanceof ExperimentalUrlRequest.Builder)) {
++      throw new IllegalStateException("Mutation transport requires Cronet idempotency support");
++    }
++    ((ExperimentalUrlRequest.Builder) builder)
++        .setIdempotency(ExperimentalUrlRequest.Builder.NOT_IDEMPOTENT);
++  }
++
++  public static UploadDataProvider body(byte[] bytes, String method) {
++    final boolean replayAllowed = allowsReplay(method);
++    return new UploadDataProvider() {
++      private int position;
++      private boolean refused;
++
++      @Override public long getLength() { return bytes.length; }
++
++      @Override public void read(UploadDataSink sink, ByteBuffer buffer) {
++        if (refused) {
++          sink.onReadError(new IOException("Mutation upload replay refused"));
++          return;
++        }
++        int count = Math.min(buffer.remaining(), bytes.length - position);
++        buffer.put(bytes, position, count);
++        position += count;
++        sink.onReadSucceeded(false);
++      }
++
++      @Override public void rewind(UploadDataSink sink) {
++        if (!replayAllowed) {
++          refused = true;
++          sink.onRewindError(new IOException("Mutation upload replay refused; reconcile its receipt"));
++          return;
++        }
++        position = 0;
++        sink.onRewindSucceeded();
++      }
++    };
++  }
++}
+diff --git a/lib/module/fetch.js b/lib/module/fetch.js
+index 2f4dfb02324f31c173d44052f9769e99c2ffa125..67870fd48ad690c6c41ebe5def6213a8ae7aa198 100644
+--- a/lib/module/fetch.js
++++ b/lib/module/fetch.js
+@@ -608,6 +608,17 @@ async function nitroFetchRaw(input, init) {
+   init = await resolveBlobBody(init);
+   const hasNative = typeof NitroFetchHybrid?.createClient === 'function';
+   if (!hasNative) {
++    // Native mutations cannot silently downgrade to a transport with replayable bodies.
++    // The package's separate browser entry intentionally retains ordinary web fetch.
++    const fallbackMethod = String(
++      init?.method ??
++        (typeof input === 'object' && input !== null && 'method' in input
++          ? input.method
++          : 'GET')
++    ).toUpperCase();
++    if (!['GET', 'HEAD', 'OPTIONS'].includes(fallbackMethod)) {
++      throw new TypeError('Native mutation transport unavailable; request was not sent');
++    }
+     // Fallback path not supported for raw; use global fetch and synthesize minimal shape
+     // @ts-ignore: global fetch exists in RN
+     const res = await fetch(input, init);
+diff --git a/src/fetch.ts b/src/fetch.ts
+index 89d93042f01d9eea5e7407b855c73c2b997d1c28..514c5b759d85e9f35534c44e7326c27e642d7931 100644
+--- a/src/fetch.ts
++++ b/src/fetch.ts
+@@ -671,6 +671,17 @@ async function nitroFetchRaw(
+   const hasNative =
+     typeof (NitroFetchHybrid as any)?.createClient === 'function';
+   if (!hasNative) {
++    // Native mutations cannot silently downgrade to a transport with replayable bodies.
++    // The package's separate browser entry intentionally retains ordinary web fetch.
++    const fallbackMethod = String(
++      init?.method ??
++        (typeof input === 'object' && input !== null && 'method' in input
++          ? input.method
++          : 'GET')
++    ).toUpperCase();
++    if (!['GET', 'HEAD', 'OPTIONS'].includes(fallbackMethod)) {
++      throw new TypeError('Native mutation transport unavailable; request was not sent');
++    }
+     // Fallback path not supported for raw; use global fetch and synthesize minimal shape
+     // @ts-ignore: global fetch exists in RN
+     const res = await fetch(input as any, init);

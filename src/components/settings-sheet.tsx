@@ -22,6 +22,7 @@ import { ScrollScreen, Text, useThemeTokens } from '@osuki-dev/ui';
 import { X } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
@@ -38,6 +39,7 @@ export function SettingsSheet({
   closeLabel,
   onClose,
   contentMaxWidth = SETTINGS_SHEET_CONTENT_MAX_WIDTH,
+  fullScreen = false,
   children,
 }: {
   title: string;
@@ -47,6 +49,8 @@ export function SettingsSheet({
   onClose: () => void;
   /** Lets dense grids use the Pad canvas while list-based sheets stay narrow. */
   contentMaxWidth?: number;
+  /** Long editing surfaces own vertical gestures and need their own top inset. */
+  fullScreen?: boolean;
   children: ReactNode;
 }) {
   const theme = useThemeTokens();
@@ -55,10 +59,10 @@ export function SettingsSheet({
   // the frame and calls this with no argument.
   const plate = useSheetGroundPlate('surface');
   useRenderTally('SettingsSheet');
-  return (
+  const content = (
     <ScrollScreen
       variant="surface"
-      safeArea="bottom"
+      safeArea={fullScreen ? 'none' : 'bottom'}
       style={[styles.sheet, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={styles.canvas}>
       {/* A sheet is a new scene, not a transparent window onto the previous
@@ -70,7 +74,7 @@ export function SettingsSheet({
           {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. The panels sheet carries the same two lines. */}
-          {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+          {process.env.EXPO_OS === 'android' && !fullScreen ? <View style={styles.handle} /> : null}
 
           <View style={styles.header}>
             {/* The title and the line under it are the only text on this sheet
@@ -98,6 +102,18 @@ export function SettingsSheet({
         </View>
       </SheetFrame>
     </ScrollScreen>
+  );
+  // ScrollScreen applies safe-area padding to its moving content. A full-screen
+  // route instead needs a fixed viewport below the status bar so scrolled rows
+  // cannot remain accessibility-visible behind an untappable system overlay.
+  return fullScreen ? (
+    <SafeAreaView
+      edges={['top', 'bottom']}
+      style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
+      {content}
+    </SafeAreaView>
+  ) : (
+    content
   );
 }
 

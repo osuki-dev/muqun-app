@@ -161,6 +161,9 @@
       ]
     }
   },
+  "patchedDependencies": {
+    "react-native-nitro-fetch@1.6.3": "patches/react-native-nitro-fetch@1.6.3.patch"
+  },
   "trustedDependencies": [
     "@shopify/react-native-skia",
     "react-native-enriched-markdown"

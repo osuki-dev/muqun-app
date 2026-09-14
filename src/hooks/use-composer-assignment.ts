@@ -5,9 +5,10 @@ import {
   collaborationSpawnOutcome,
   type CollaborationTask,
 } from '@/lib/agent-collaboration';
+import { assignmentScopeKey, verifyAssignmentCapability } from '@/lib/composer-assignment-guard';
 import { attachmentCommandText } from '@/lib/agent-command-references';
 import type { AttachmentDestination, PendingAttachment } from '@/lib/attachment-queue';
-import { loadAgents, sendAgentText, spawnBoundAgent } from '@/lib/gateway-client';
+import { loadAgents, loadHealth, sendBoundAgentText, spawnBoundAgent } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { field } from '@/lib/herdr-entity';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
@@ -39,7 +40,7 @@ import { useAgentCollaboration } from '@/stores/agent-collaboration';
  * a second assistant (AGENTS.md).
  *
  * Status is never taken as proof of anything. `outcome === 'sent'` means the
- * Gateway confirmed the agent started *and* the prompt was submitted; everything
+ * Gateway confirmed delivery (and startup for a new assistant); everything
  * else is surfaced as the doubt it is, with the reader's text kept.
  */
 export type AssignmentTarget =
@@ -51,7 +52,7 @@ export type AssignmentTarget =
 export type AssignmentCommand = { name: string; description?: string; instructions?: string };
 
 export type AssignmentOutcome =
-  | { status: 'sent'; task: CollaborationTask }
+  | { status: 'sent'; started: boolean; task: CollaborationTask }
   /** The write happened but nothing confirmed it. Never retried automatically. */
   | { status: 'unconfirmed'; paneId: string; reason: string };
 
@@ -71,7 +72,16 @@ export function useComposerAssignment(context: {
   const [target, setTarget] = useState<AssignmentTarget | null>(null);
   /** A bundled instruction set, e.g. theme authoring, appended at send. */
   const [command, setCommand] = useState<AssignmentCommand | null>(null);
-  const active = open && target !== null;
+  const scope = assignmentScopeKey(context);
+  const [owner, setOwner] = useState(scope);
+  // Reset during render so children cannot commit an old armed target in a new scope.
+  if (owner !== scope) {
+    setOwner(scope);
+    setOpen(false);
+    setTarget(null);
+    setCommand(null);
+  }
+  const active = owner === scope && open && target !== null;
 
   const close = useCallback(() => {
     setOpen(false);
@@ -105,6 +115,7 @@ export function useComposerAssignment(context: {
         destination
       );
       if (!isCurrent()) throw new Error('Destination changed');
+      await verifyAssignmentCapability(sessionId, loadHealth, isCurrent);
 
       if (target.type === 'new') {
         const created = await spawnBoundAgent(
@@ -118,6 +129,7 @@ export function useComposerAssignment(context: {
           return { status: 'unconfirmed', paneId: created.paneId, reason: outcome };
         return {
           status: 'sent',
+          started: true,
           task: record_(
             serverId,
             sessionId,
@@ -130,9 +142,8 @@ export function useComposerAssignment(context: {
         };
       }
 
-      // A fresh read, and the instance it reports has to be the instance that
-      // was chosen. An assistant that exited, restarted, or was replaced in its
-      // pane fails here and the task is not sent to whoever took its place.
+      // Reject a replacement detected during preflight. Legacy backends still
+      // lack an atomic instance precondition at the native input boundary.
       const live = await loadAgents(sessionId);
       if (!isCurrent()) throw new Error('Destination changed');
       const agent = live.find((item) => (field(item, 'pane_id') || item.id) === target.paneId);
@@ -141,12 +152,19 @@ export function useComposerAssignment(context: {
       if (!canAssignToAgent(agent.status ?? 'unknown')) throw new Error('That assistant is busy');
       try {
         // The opaque target from the fresh read, never the captured one.
-        await sendAgentText(sessionId, field(agent, 'target') || target.paneId, text);
+        await sendBoundAgentText(
+          record,
+          sessionId,
+          field(agent, 'target') || target.paneId,
+          text,
+          isCurrent
+        );
       } catch {
         return { status: 'unconfirmed', paneId: target.paneId, reason: 'delivery-unconfirmed' };
       }
       return {
         status: 'sent',
+        started: false,
         task: record_(
           serverId,
           sessionId,
@@ -174,7 +192,10 @@ export function sameTarget(a: AssignmentTarget, b: AssignmentTarget): boolean {
   if (a.type !== b.type) return false;
   return a.type === 'new' && b.type === 'new'
     ? a.kind === b.kind
-    : a.type === 'agent' && b.type === 'agent' && a.paneId === b.paneId;
+    : a.type === 'agent' &&
+        b.type === 'agent' &&
+        a.paneId === b.paneId &&
+        a.instanceId === b.instanceId;
 }
 
 /**

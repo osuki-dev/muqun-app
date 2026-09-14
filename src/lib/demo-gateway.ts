@@ -923,6 +923,14 @@ export function demoHealth() {
     // is the whole reason the large fixture exists.
     capabilities: [
       'agent_events',
+      // These two are fictional protocol fixtures, not Herdr 0.9.0 support.
+      'work_tasks_v1',
+      'work_inputs_v1',
+      'work_interrupt_v1',
+      'work_delegation_v1',
+      'work_task_summaries_v1',
+      'work_attempt_reconciliation_v1',
+      'work_execution_v1',
       AGENT_SPAWN_CAPABILITY,
       'agent_collaboration',
       PANE_CONTEXT_CAPABILITY,
@@ -938,7 +946,16 @@ export function demoHealth() {
         kind: 'herdr',
         connected: true,
         version: '0.9.0',
-        capabilities: ['agent_collaboration'],
+        capabilities: [
+          'agent_collaboration',
+          'work_tasks_v1',
+          'work_inputs_v1',
+          'work_interrupt_v1',
+          'work_delegation_v1',
+          'work_task_summaries_v1',
+          'work_execution_v1',
+          'work_attempt_reconciliation_v1',
+        ],
       },
     ],
     serverId: DEMO_SERVER_ID,

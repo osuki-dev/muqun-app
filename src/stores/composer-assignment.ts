@@ -12,6 +12,7 @@ import { create } from 'zustand';
  */
 export type ComposerAssignmentRequest = {
   serverId: string;
+  sessionId: string;
   paneId: string;
   /** Pre-choose a new assistant of this kind; otherwise the reader picks. */
   kind?: string;

@@ -151,6 +151,18 @@
       "program": "flows/machine-switcher",
       "tags": ["full"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "task-workflow",
+      "program": "flows/task-workflow",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "task-layout",
+      "program": "flows/task-layout",
+      "tags": ["full"],
+      "platforms": ["android"]
     }
   ],
   "programs": {
@@ -290,6 +302,18 @@
       },
       {
         "target": {
+          "id": "theme-terminal-opacity-value"
+        },
+        "mode": "scroll",
+        "direction": "up",
+        "timeout": 10000,
+        "run": "flows/custom-themes.ad#scroll-up"
+      },
+      {
+        "run": "flows/custom-themes.ad#terminal-opacity-reset-value"
+      },
+      {
+        "target": {
           "id": "theme-remove-previewed"
         },
         "mode": "scroll",
@@ -343,7 +367,7 @@
       },
       {
         "target": {
-          "text": "Remove unused themes, 0 themes · 0 B"
+          "text": "Remove unused themes, 0 themes \u00b7 0 B"
         },
         "mode": "visible",
         "timeout": 20000,
@@ -422,7 +446,7 @@
       },
       {
         "target": {
-          "text": "Remove unused themes, 1 theme · .*"
+          "text": "Remove unused themes, 1 theme \u00b7 .*"
         },
         "mode": "visible",
         "timeout": 20000,
@@ -465,7 +489,7 @@
       },
       {
         "target": {
-          "text": "Remove unused themes, 0 themes · 0 B"
+          "text": "Remove unused themes, 0 themes \u00b7 0 B"
         },
         "mode": "visible",
         "timeout": 20000,
@@ -691,7 +715,7 @@
       },
       {
         "target": {
-          "text": "Dark mode — change summary"
+          "text": "Dark mode \u2014 change summary"
         },
         "mode": "visible",
         "run": "flows/artifacts.ad#s31"
@@ -705,7 +729,7 @@
       },
       {
         "target": {
-          "text": "# Dark mode — change summary"
+          "text": "# Dark mode \u2014 change summary"
         },
         "mode": "hidden",
         "run": "flows/artifacts.ad#s33"
@@ -968,7 +992,7 @@
       },
       {
         "target": {
-          "text": "feat/git-diff · Demo workspace"
+          "text": "feat/git-diff \u00b7 Demo workspace"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -2005,7 +2029,7 @@
       },
       {
         "target": {
-          "text": "^(Settings|設定)$"
+          "text": "^(Settings|\u8a2d\u5b9a)$"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2013,14 +2037,14 @@
       },
       {
         "target": {
-          "text": "^(Settings|設定)$"
+          "text": "^(Settings|\u8a2d\u5b9a)$"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s6"
       },
       {
         "target": {
-          "text": "^(Color mode|色彩模式)$"
+          "text": "^(Color mode|\u8272\u5f69\u6a21\u5f0f)$"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2207,7 +2231,7 @@
       },
       {
         "target": {
-          "text": "繁體中文"
+          "text": "\u7e41\u9ad4\u4e2d\u6587"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -2215,14 +2239,14 @@
       },
       {
         "target": {
-          "text": "繁體中文"
+          "text": "\u7e41\u9ad4\u4e2d\u6587"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s32"
       },
       {
         "target": {
-          "text": "色彩模式"
+          "text": "\u8272\u5f69\u6a21\u5f0f"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2242,14 +2266,14 @@
       },
       {
         "target": {
-          "text": "返回"
+          "text": "\u8fd4\u56de"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s36"
       },
       {
         "target": {
-          "text": "試用示範"
+          "text": "\u8a66\u7528\u793a\u7bc4"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2269,7 +2293,7 @@
       },
       {
         "target": {
-          "text": "試用示範"
+          "text": "\u8a66\u7528\u793a\u7bc4"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s40"
@@ -2299,7 +2323,7 @@
       },
       {
         "target": {
-          "text": "開啟面板清單"
+          "text": "\u958b\u555f\u9762\u677f\u6e05\u55ae"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s44"
@@ -2312,7 +2336,7 @@
       },
       {
         "target": {
-          "text": "關閉面板清單"
+          "text": "\u95dc\u9589\u9762\u677f\u6e05\u55ae"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s47"
@@ -2328,14 +2352,14 @@
       },
       {
         "target": {
-          "text": "回到伺服器列表"
+          "text": "\u56de\u5230\u4f3a\u670d\u5668\u5217\u8868"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s49"
       },
       {
         "target": {
-          "text": "試用示範"
+          "text": "\u8a66\u7528\u793a\u7bc4"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2349,14 +2373,14 @@
       },
       {
         "target": {
-          "text": "開啟導覽"
+          "text": "\u958b\u555f\u5c0e\u89bd"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s51"
       },
       {
         "target": {
-          "text": "設定"
+          "text": "\u8a2d\u5b9a"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2364,14 +2388,14 @@
       },
       {
         "target": {
-          "text": "設定"
+          "text": "\u8a2d\u5b9a"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s53"
       },
       {
         "target": {
-          "text": "色彩模式"
+          "text": "\u8272\u5f69\u6a21\u5f0f"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2385,14 +2409,14 @@
       },
       {
         "target": {
-          "text": "語言.*"
+          "text": "\u8a9e\u8a00.*"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s55"
       },
       {
         "target": {
-          "text": "繁體中文"
+          "text": "\u7e41\u9ad4\u4e2d\u6587"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -2400,7 +2424,7 @@
       },
       {
         "target": {
-          "text": "系統"
+          "text": "\u7cfb\u7d71"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s57"
@@ -2542,7 +2566,7 @@
       },
       {
         "target": {
-          "text": "Demo · sample data"
+          "text": "Demo \u00b7 sample data"
         },
         "mode": "visible",
         "timeout": 25000,
@@ -2945,7 +2969,7 @@
       },
       {
         "target": {
-          "text": "(?i).*(don.?t allow|不允許|不允许).*"
+          "text": "(?i).*(don.?t allow|\u4e0d\u5141\u8a31|\u4e0d\u5141\u8bb8).*"
         },
         "mode": "press",
         "optional": true,
@@ -2956,7 +2980,7 @@
       },
       {
         "target": {
-          "text": "(?i).*(don.?t allow|不允許|不允许).*"
+          "text": "(?i).*(don.?t allow|\u4e0d\u5141\u8a31|\u4e0d\u5141\u8bb8).*"
         },
         "mode": "press",
         "optional": true,
@@ -3499,7 +3523,7 @@
       },
       {
         "target": {
-          "text": "繁體中文"
+          "text": "\u7e41\u9ad4\u4e2d\u6587"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -3507,14 +3531,14 @@
       },
       {
         "target": {
-          "text": "日本語"
+          "text": "\u65e5\u672c\u8a9e"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s29"
       },
       {
         "target": {
-          "text": "한국어"
+          "text": "\ud55c\uad6d\uc5b4"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s30"
@@ -3546,7 +3570,7 @@
       },
       {
         "target": {
-          "text": "繁體中文"
+          "text": "\u7e41\u9ad4\u4e2d\u6587"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5468,7 +5492,7 @@
       {
         "include": "subflows/capture-theme",
         "env": {
-          "THEME_LABEL": "Rosé Pine",
+          "THEME_LABEL": "Ros\u00e9 Pine",
           "MODE_LABEL": "LIGHT",
           "SHOT": "rose-pine-dawn"
         }
@@ -5476,7 +5500,7 @@
       {
         "include": "subflows/capture-theme",
         "env": {
-          "THEME_LABEL": "Rosé Pine",
+          "THEME_LABEL": "Ros\u00e9 Pine",
           "MODE_LABEL": "DARK",
           "SHOT": "rose-pine-main"
         }
@@ -5644,7 +5668,7 @@
       {
         "include": "subflows/capture-theme",
         "env": {
-          "THEME_LABEL": "Mélange",
+          "THEME_LABEL": "M\u00e9lange",
           "MODE_LABEL": "LIGHT",
           "SHOT": "melange-light"
         }
@@ -5652,7 +5676,7 @@
       {
         "include": "subflows/capture-theme",
         "env": {
-          "THEME_LABEL": "Mélange",
+          "THEME_LABEL": "M\u00e9lange",
           "MODE_LABEL": "DARK",
           "SHOT": "melange-dark"
         }
@@ -5917,7 +5941,7 @@
       {
         "include": "subflows/capture-theme",
         "env": {
-          "THEME_LABEL": "Rosé Pine",
+          "THEME_LABEL": "Ros\u00e9 Pine",
           "MODE_LABEL": "LIGHT",
           "SHOT": "rose-pine-light"
         }
@@ -5925,7 +5949,7 @@
       {
         "include": "subflows/capture-theme",
         "env": {
-          "THEME_LABEL": "Rosé Pine",
+          "THEME_LABEL": "Ros\u00e9 Pine",
           "MODE_LABEL": "DARK",
           "SHOT": "rose-pine-dark"
         }
@@ -6156,14 +6180,14 @@
       {
         "when": {
           "target": {
-            "text": "(?i).*(don.?t allow|不允許|不允许).*"
+            "text": "(?i).*(don.?t allow|\u4e0d\u5141\u8a31|\u4e0d\u5141\u8bb8).*"
           },
           "absent": false
         },
         "steps": [
           {
             "target": {
-              "text": "(?i).*(don.?t allow|不允許|不允许).*"
+              "text": "(?i).*(don.?t allow|\u4e0d\u5141\u8a31|\u4e0d\u5141\u8bb8).*"
             },
             "mode": "press",
             "run": "subflows/dismiss-permission.ad#s1"
@@ -6661,6 +6685,1900 @@
       },
       {
         "run": "flows/machine-switcher.ad"
+      }
+    ],
+    "flows/task-workflow": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "id": "managed-tasks-open"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "work-task-list"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-create"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-title"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#create-fields"
+      },
+      {
+        "target": {
+          "id": "task-input-add"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-input-add"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Photo library"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Preview fictional-reference.gif, uploaded"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Remove fictional-reference.gif"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Preview fictional-reference.gif, uploaded"
+        },
+        "mode": "hidden",
+        "run": "flows/task-workflow.ad#hidden",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-add"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Choose files"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Retry uploading fictional-expired-reference.gif"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Retry uploading fictional-expired-reference.gif"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-details"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-reupload"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-input-reupload"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-caption"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#input-caption"
+      },
+      {
+        "target": {
+          "id": "task-input-use-may-include"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-input-use-reference-only",
+          "text": "\u2713 Reference only"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-use-may-include",
+          "text": "May include in the result"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-use-may-include"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-use-may-include",
+          "text": "\u2713 May include in the result"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-use-reference-only",
+          "text": "Reference only"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-input-close"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-input-close"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Preview fictional-expired-reference.gif, uploaded"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Preview fictional-expired-reference.gif, uploaded"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#inputs-shot"
+      },
+      {
+        "target": {
+          "text": "Start task"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Start task"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "work-task-detail"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "fictional-expired-reference.gif"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "fictional-expired-reference.gif"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "QA fictional spacing reference"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "May include in output"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-no-result"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-no-result"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Start assistant \u00b7 Acknowledged, not proof of completion"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Start assistant \u00b7 Acknowledged, not proof of completion"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Send instruction \u00b7 Acknowledged, not proof of completion"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Send instruction \u00b7 Acknowledged, not proof of completion"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#receipt-shot"
+      },
+      {
+        "target": {
+          "id": "task-recipient"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-recipient"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000012"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000012"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-recipient"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-recipient"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "To: Lead \u00b7 claude"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-message-worker"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "To: Worker \u00b7 codex"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000021"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000021"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-result-accept"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-accept"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-result-review"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-review"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "This submission was accepted"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#review-shot"
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000022"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000022"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "This submission is awaiting review"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "This submission is awaiting review"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-artifact-preview-0"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-artifact-preview-0"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-artifact-text"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-artifact-text"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000002"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000002"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-recovery"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-operation-check"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-recovery"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#uncertainty-shot"
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000003"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000003"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "This session does not support this action. Check its Gateway capabilities"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "This session does not support this action. Check its Gateway capabilities"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000004"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000004"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "work-task-detail"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000023"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000023"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000023",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-output-refresh"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-output-refresh"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Fictional prior assistant output. No real assistant ran."
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-lifecycle-check"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-lifecycle-check"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Assistant still running"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-start-replacement"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#replacement-disabled"
+      },
+      {
+        "target": {
+          "id": "task-lifecycle-check"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-lifecycle-check"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Could not verify assistant exit"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-start-replacement"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#replacement-disabled"
+      },
+      {
+        "target": {
+          "id": "task-lifecycle-check"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-lifecycle-check"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Replacement reservation released"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-start-replacement"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#replacement-enabled"
+      },
+      {
+        "target": {
+          "id": "task-start-replacement"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000014"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000014",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000023"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000023",
+          "selected": true
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-output-snapshot"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Fictional prior assistant output. No real assistant ran."
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#lifecycle-shot"
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000012"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000012"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000021"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000021"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-review-message"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#first-review-note"
+      },
+      {
+        "target": {
+          "id": "task-result-request-changes"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-request-changes"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-instruction"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-instruction",
+          "text": "Please address the requested changes for submission 00000000-0000-4000-8000-000000000021 \\(review [a-f0-9-]+\\)\\.[\\s\\S]*QA revise only the first submission"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "To: Lead \u00b7 claude"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#review-draft-shot"
+      },
+      {
+        "target": {
+          "id": "task-output-refresh"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-output-refresh"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Offline demo: this assistant has not received an instruction."
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-instruction"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#preserved-instruction"
+      },
+      {
+        "target": {
+          "id": "task-review-message"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#second-review-note"
+      },
+      {
+        "target": {
+          "id": "task-result-request-changes"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-request-changes"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-prepare-review-followup"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#review-followup-disabled"
+      },
+      {
+        "target": {
+          "id": "task-instruction"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-instruction",
+          "text": "QA preserve my existing instruction"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-output-snapshot"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Offline demo: this assistant has not received an instruction."
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-delegation-lead-00000000-0000-4000-8000-000000000011"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-delegation-lead-00000000-0000-4000-8000-000000000011"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-delegation-limit"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#delegation-limit"
+      },
+      {
+        "target": {
+          "id": "task-delegation-requirement-human_accepted"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-delegation-requirement-human_accepted"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-delegation-enable"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-delegation-enable"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-delegation-committed"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Saved policy: delegation enabled"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#delegation-shot"
+      },
+      {
+        "target": {
+          "id": "task-delegation-disable"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-delegation-disable"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-delegation-committed"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "text": "Saved policy: delegation disabled"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-child-00000000-0000-4000-8000-000000000006"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-child-00000000-0000-4000-8000-000000000006"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-dependency-controls"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-dependency-saved-00000000-0000-4000-8000-000000000005",
+          "text": "No result version selected \u00b7 blocked"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-dependency-inspect-00000000-0000-4000-8000-000000000005"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-dependency-inspect-00000000-0000-4000-8000-000000000005"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-dependency-result-00000000-0000-4000-8000-000000000024"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-dependency-result-00000000-0000-4000-8000-000000000024"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-dependency-save"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-dependency-save"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-dependency-controls"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-dependency-saved-00000000-0000-4000-8000-000000000005",
+          "text": "00000000-0000-4000-8000-000000000024"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#dependency-shot"
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000012"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-attempt-00000000-0000-4000-8000-000000000012"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-instruction"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-instruction",
+          "text": "QA preserve my existing instruction"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-output-refresh"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-output-refresh"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-output-snapshot",
+          "text": "Offline demo: this assistant has not received an instruction."
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interruption-controls"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-interruption-target",
+          "text": ".* \u00b7 Worker \u00b7 codex"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interrupt-assistant"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-interrupt-assistant"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interruption-status",
+          "text": "Interrupt requested"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-output-snapshot"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-output-snapshot",
+          "text": "Offline demo: this assistant has not received an instruction."
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-instruction"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-instruction",
+          "text": "QA preserve my existing instruction"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000002"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000002"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-recovery"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interruption-controls"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-interruption-target",
+          "text": ".* \u00b7 Lead \u00b7 claude"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interrupt-assistant"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-interrupt-assistant"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interruption-status",
+          "text": "Interruption not confirmed"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interrupt-assistant"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-workflow.ad#interruption-disabled"
+      },
+      {
+        "target": {
+          "id": "task-interruption-check"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-interruption-check"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-interruption-status"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-interruption-status",
+          "text": "Interruption not confirmed"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "task-recovery"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-recovery"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "text": "Operation not confirmed \u00b7 00000000-0000-4000-8000-000000000013"
+        },
+        "mode": "visible",
+        "run": "flows/task-workflow.ad#visible",
+        "timeout": 15000
+      },
+      {
+        "run": "flows/task-workflow.ad#interruption-shot"
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-workflow.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-workflow.ad#press",
+        "timeout": 15000
+      }
+    ],
+    "flows/task-layout": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "id": "managed-tasks-open"
+        },
+        "mode": "press",
+        "run": "flows/task-layout.ad#press",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "work-task-list"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-summary-00000000-0000-4000-8000-000000000001-result_unreviewed"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "press",
+        "run": "flows/task-layout.ad#press",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-composer-dock"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-recipient"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-layout.ad#draft"
+      },
+      {
+        "target": {
+          "text": "Send instruction"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-layout.ad#keyboard-back"
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000021"
+        },
+        "mode": "scroll",
+        "run": "flows/task-layout.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-result-00000000-0000-4000-8000-000000000021"
+        },
+        "mode": "press",
+        "run": "flows/task-layout.ad#press",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-instruction",
+          "text": "QA retained layout draft; do not send"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "scroll",
+        "run": "flows/task-layout.ad#up",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-back-list"
+        },
+        "mode": "press",
+        "run": "flows/task-layout.ad#press",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "work-task-list"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-open-00000000-0000-4000-8000-000000000001"
+        },
+        "mode": "press",
+        "run": "flows/task-layout.ad#press",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-instruction",
+          "text": "QA retained layout draft; do not send"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-selected-result"
+        },
+        "mode": "scroll",
+        "run": "flows/task-layout.ad#down",
+        "timeout": 20000
+      },
+      {
+        "target": {
+          "id": "task-selected-submission-id",
+          "text": "Submission: 00000000-0000-4000-8000-000000000021"
+        },
+        "mode": "visible",
+        "run": "flows/task-layout.ad#visible",
+        "timeout": 20000
+      },
+      {
+        "run": "flows/task-layout.ad#screenshot"
       }
     ]
   }

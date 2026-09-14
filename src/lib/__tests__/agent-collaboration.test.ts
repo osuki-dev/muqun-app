@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
+import * as ts from 'typescript';
 import {
   assignmentStripState,
   collaborationSpawnOutcome,
@@ -118,7 +119,40 @@ describe('collaboration compatibility', () => {
     // source because importing `demo-gateway` pulls in the Lingui macro, which
     // this suite does not run a Babel pass for.
     const source = readFileSync(new URL('../demo-gateway.ts', import.meta.url), 'utf8');
-    expect(source).toContain("capabilities: ['agent_collaboration']");
+    const ast = ts.createSourceFile('demo-gateway.ts', source, ts.ScriptTarget.Latest, true);
+    const demoHealth = ast.statements.find(
+      (node) => ts.isFunctionDeclaration(node) && node.name?.text === 'demoHealth'
+    );
+    if (!demoHealth) throw new Error('The demo health fixture must exist');
+    const perSessionCapabilities: string[][] = [];
+    function visit(node: ts.Node) {
+      if (
+        ts.isPropertyAssignment(node) &&
+        ts.isIdentifier(node.name) &&
+        node.name.text === 'backends' &&
+        ts.isArrayLiteralExpression(node.initializer)
+      ) {
+        for (const backend of node.initializer.elements) {
+          if (!ts.isObjectLiteralExpression(backend)) continue;
+          for (const property of backend.properties) {
+            if (
+              ts.isPropertyAssignment(property) &&
+              ts.isIdentifier(property.name) &&
+              property.name.text === 'capabilities' &&
+              ts.isArrayLiteralExpression(property.initializer)
+            ) {
+              perSessionCapabilities.push(
+                property.initializer.elements.filter(ts.isStringLiteral).map((item) => item.text)
+              );
+            }
+          }
+        }
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(demoHealth);
+    expect(perSessionCapabilities).toHaveLength(1);
+    expect(perSessionCapabilities[0]).toContain('agent_collaboration');
   });
   test('does not enable a disconnected or mismatched backend', () => {
     for (const backend of [

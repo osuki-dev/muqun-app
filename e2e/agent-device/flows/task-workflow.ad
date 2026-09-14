@@ -1,0 +1,82 @@
+# Offline managed-work regression. All receipts are explicitly fictional demo
+# transport data passed through the production work API/controller. This flow
+# cannot prove native agent delivery; the paired integration gate is separate.
+
+# section press
+press "${TARGET}"
+
+# section visible
+is visible "${TARGET}"
+
+# section fill
+fill "${TARGET}" "${VALUE}"
+
+# section down
+scroll down
+
+# section up
+scroll up
+
+# section create-fields
+fill "id=\"task-title\"" "QA managed task"
+fill "id=\"task-project\"" "/demo/homepage"
+press "id=\"assignment-new-codex\""
+fill "id=\"task-goal\"" "QA managed goal"
+
+# section receipt-shot
+screenshot "shots/task-workflow-receipts.png"
+
+# section review-shot
+screenshot "shots/task-workflow-exact-review.png"
+
+# section uncertainty-shot
+screenshot "shots/task-workflow-unconfirmed.png"
+
+
+# section replacement-disabled
+is exists "id=\"task-start-replacement\" enabled=false"
+
+# section replacement-enabled
+is exists "id=\"task-start-replacement\" enabled=true"
+
+# section lifecycle-shot
+screenshot "shots/task-workflow-simulated-lifecycle.png"
+
+# section hidden
+is hidden "${TARGET}"
+
+# section input-caption
+fill "id=\"task-input-caption\"" "QA fictional spacing reference"
+
+# section first-review-note
+fill "id=\"task-review-message\"" "QA revise only the first submission"
+
+# section preserved-instruction
+fill "id=\"task-instruction\"" "QA preserve my existing instruction"
+
+# section second-review-note
+fill "id=\"task-review-message\"" "QA second review must not overwrite"
+
+# section review-followup-disabled
+is exists "id=\"task-prepare-review-followup\" enabled=false"
+
+# section inputs-shot
+screenshot "shots/task-workflow-fictional-inputs.png"
+
+# section review-draft-shot
+screenshot "shots/task-workflow-review-draft.png"
+
+# section interruption-disabled
+is exists "id=\"task-interrupt-assistant\" enabled=false"
+
+# section interruption-shot
+screenshot "shots/task-workflow-interruption.png"
+
+# section delegation-limit
+fill "id=\"task-delegation-limit\"" "4"
+
+# section delegation-shot
+screenshot "shots/task-workflow-delegation-policy.png"
+
+# section dependency-shot
+screenshot "shots/task-workflow-exact-dependency.png"
