@@ -554,6 +554,10 @@ msgstr "SSH 호스트를 선택하세요"
 msgid "Choose files"
 msgstr "파일 선택"
 
+#: src/components/launch-intro.tsx
+msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
+msgstr "아름답게 그려진 공식 테마 컬렉션에서 골라 종이, 터미널, 아트워크를 한 번에 다시 칠하거나, 나만의 테마를 직접 만들어 보세요"
+
 #: src/components/machine-switcher-sheet.tsx
 msgid "Choose where to work"
 msgstr "작업할 위치 선택"
@@ -1468,6 +1472,10 @@ msgstr "Ed25519 키 생성"
 msgid "Generating…"
 msgstr "생성 중…"
 
+#: src/components/launch-intro.tsx
+msgid "Get started"
+msgstr "시작하기"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git 상태"
@@ -1843,6 +1851,10 @@ msgstr "Mac mini · 사무실"
 msgid "Machines and sessions"
 msgstr "머신 및 세션"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "나만의 앱으로"
+
 #: src/app/(drawer)/index.tsx
 msgid "Manage"
 msgstr "관리"
@@ -2002,6 +2014,10 @@ msgstr "새 터미널"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "새 워크스페이스"
+
+#: src/components/launch-intro.tsx
+msgid "Next"
+msgstr "다음"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -2288,6 +2304,10 @@ msgstr "{0} 옵션"
 #: src/components/settings-storage.tsx
 msgid "Other"
 msgstr "기타"
+
+#: src/components/launch-intro.tsx
+msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
+msgstr "출력은 프로그램 본연의 색으로 터미널 그리드에 그려지고, 키 줄은 누르는 순간 전송됩니다. nvim, less, REPL 모두 그대로 동작합니다"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2826,6 +2846,10 @@ msgstr "다시 스캔"
 msgid "Scan the Gateway QR."
 msgstr "Gateway QR 코드를 스캔하세요"
 
+#: src/components/launch-intro.tsx
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
+msgstr "내 컴퓨터에서 실행 중인 Gateway의 QR 코드를 스캔하세요. 계정도 중계 서버도 없고, 당신의 데이터는 저희 서버를 거치지 않습니다"
+
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "스캔하려면 카메라가 필요하지만 이 브라우저에서는 쓸 수 없습니다"
@@ -3107,6 +3131,10 @@ msgstr "시뮬레이터 컨트롤"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "크기"
+
+#: src/components/launch-intro.tsx
+msgid "Skip intro"
+msgstr "소개 건너뛰기"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -3403,9 +3431,17 @@ msgstr "시뮬레이터 연결이 끊겼습니다"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "키를 읽을 수 없습니다({0}). 키와 암호 문구를 확인하세요"
 
+#: src/components/launch-intro.tsx
+msgid "The question comes to you"
+msgstr "질문이 당신을 찾아옵니다"
+
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "원본 패널 그대로, 문자 격자와 고유 색상을 유지합니다"
+
+#: src/components/launch-intro.tsx
+msgid "The real terminal"
+msgstr "진짜 터미널"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
@@ -3844,6 +3880,10 @@ msgstr "실행 중인 것"
 msgid "What's new"
 msgstr "새로운 기능"
 
+#: src/components/launch-intro.tsx
+msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
+msgstr "에이전트가 권한을 묻기 위해 멈추면 그 요청이 푸시로 도착합니다. 잠금 화면에서 바로 승인, 항상 승인 또는 거부하세요"
+
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "자리를 비운 사이"
@@ -3888,6 +3928,10 @@ msgstr "어제"
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "어디서나, 내 에이전트와 함께"
+
+#: src/components/launch-intro.tsx
+msgid "Your machine, your rules"
+msgstr "내 컴퓨터, 내 규칙"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

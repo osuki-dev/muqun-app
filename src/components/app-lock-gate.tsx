@@ -7,6 +7,7 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { AppState, type AppStateStatus, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useBrandMark } from '@/components/brand-mark';
 import { useLaunchArtwork } from '@/hooks/use-launch-artwork';
 import { feedback } from '@/lib/feedback';
 import { fadeIn, fadeOut } from '@/lib/motion';
@@ -23,9 +24,9 @@ import { PressableScale } from './pressable-scale';
 
 const APP_LOCK_CAPTURE_KEY = 'muqun-app-lock';
 const RELOCK_AFTER_BACKGROUND_MS = 30_000;
-const brandMark = require('../../assets/images/loading-mark.png');
 
 export function AppLockGate({ children }: { children: ReactNode }) {
+  const brandMark = useBrandMark();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose

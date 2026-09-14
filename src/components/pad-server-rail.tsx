@@ -33,8 +33,7 @@ import { type ServerAgent, type ServerAgentsSnapshot } from '@/lib/server-agents
 import { type ServerReachability } from '@/lib/server-reachability';
 import { sshHomeAge, sshHomeSubtitle } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
-
-const brandMark = require('../../assets/images/loading-mark.png');
+import { useBrandMark } from '@/components/brand-mark';
 
 export type PadServerRailProps = {
   /** Paired servers in the order the rail should display them. */
@@ -119,6 +118,7 @@ export function PadServerRail({
       state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
   );
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  const brandMark = useBrandMark();
   // The caller's answer when it has one, the pack's otherwise. Resolved here so
   // the workspace rail cannot differ from the home rail by omission.
   const brand = useMemo(() => {
@@ -131,7 +131,7 @@ export function PadServerRail({
       logo: identity.logo ? (custom && custom !== failedLogo ? { uri: custom } : brandMark) : null,
       visible: identity.showBrand,
     };
-  }, [homeBrand, activeTheme, themeAssets, failedLogo]);
+  }, [homeBrand, activeTheme, themeAssets, failedLogo, brandMark]);
   const duplicateLabels = duplicatePadServerRailLabels(servers.map((server) => server.label));
   const showsSshHosts = Boolean(sshHosts && sshHosts.length > 0 && onSelectSshHost);
 

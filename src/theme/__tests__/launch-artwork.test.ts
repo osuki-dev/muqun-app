@@ -129,3 +129,49 @@ test("the launch floor is the pack's own background, and nothing without a pack"
   expect(resolveLaunchBackground(pack, 'dark')).toBe(pack.dark.colors.background);
   expect(pack.light.colors.background).not.toBe(pack.dark.colors.background);
 });
+
+test('the launch overlay asks for the home hero first, and only the launch overlay', () => {
+  const pack = theme((manifest) => {
+    manifest.decoration = {
+      'home.hero': { asset: 'wide' },
+      'emptyState.illustration': { asset: 'picture' },
+    };
+    manifest.homeIdentity = { logo: { mode: 'custom', asset: 'mark' } };
+  });
+  expect(resolveLaunchArtwork(pack, FILES, 'light', 'compact', { hero: true })).toEqual({
+    kind: 'hero',
+    uri: FILES.wide,
+  });
+  // The lock screen never sees the hero.
+  expect(resolveLaunchArtwork(pack, FILES, 'light', 'compact')).toEqual({
+    kind: 'illustration',
+    uri: FILES.picture,
+  });
+  // No hero drawn: the launch overlay falls through to the same chain.
+  const noHero = theme((manifest) => {
+    manifest.decoration = { 'emptyState.illustration': { asset: 'picture' } };
+  });
+  expect(resolveLaunchArtwork(noHero, FILES, 'light', 'compact', { hero: true })).toEqual({
+    kind: 'illustration',
+    uri: FILES.picture,
+  });
+});
+
+test('an author who hid the hero keeps it off the launch screen too', () => {
+  const pack = theme((manifest) => {
+    manifest.decoration = { 'home.hero': { asset: 'wide' } };
+    manifest.homeIdentity = { hero: { mode: 'hidden' } };
+  });
+  expect(resolveLaunchArtwork(pack, FILES, 'light', 'compact', { hero: true })).toEqual({
+    kind: 'default',
+  });
+  // And a hero whose file never installed is no hero.
+  const installed = theme((manifest) => {
+    manifest.decoration = { 'home.hero': { asset: 'wide' } };
+  });
+  expect(
+    resolveLaunchArtwork(installed, { mark: FILES.mark }, 'light', 'compact', { hero: true })
+  ).toEqual({
+    kind: 'default',
+  });
+});

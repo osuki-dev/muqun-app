@@ -554,6 +554,10 @@ msgstr "Wähle einen SSH-Host"
 msgid "Choose files"
 msgstr "Dateien auswählen"
 
+#: src/components/launch-intro.tsx
+msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
+msgstr "Wähle aus einer Sammlung liebevoll illustrierter offizieller Themes, die Papier, Terminal und Artwork gemeinsam neu einfärben, oder erstelle ein eigenes"
+
 #: src/components/machine-switcher-sheet.tsx
 msgid "Choose where to work"
 msgstr "Arbeitsumgebung wählen"
@@ -1468,6 +1472,10 @@ msgstr "Ed25519-Schlüssel erzeugen"
 msgid "Generating…"
 msgstr "Wird erzeugt…"
 
+#: src/components/launch-intro.tsx
+msgid "Get started"
+msgstr "Los geht's"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git-Status"
@@ -1843,6 +1851,10 @@ msgstr "Mac mini · Büro"
 msgid "Machines and sessions"
 msgstr "Rechner und Sitzungen"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "Mach sie zu deiner"
+
 #: src/app/(drawer)/index.tsx
 msgid "Manage"
 msgstr "Verwalten"
@@ -2002,6 +2014,10 @@ msgstr "Neues Terminal"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "Neuer Workspace"
+
+#: src/components/launch-intro.tsx
+msgid "Next"
+msgstr "Weiter"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -2288,6 +2304,10 @@ msgstr "Optionen für {0}"
 #: src/components/settings-storage.tsx
 msgid "Other"
 msgstr "Sonstiges"
+
+#: src/components/launch-intro.tsx
+msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
+msgstr "Die Ausgabe landet in den Farben des Programms auf einem Terminal-Raster, und die Tastenzeile sendet, sobald du drückst. nvim, less und REPLs verhalten sich wie gewohnt"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2826,6 +2846,10 @@ msgstr "Erneut scannen"
 msgid "Scan the Gateway QR."
 msgstr "Scanne den Gateway-QR-Code"
 
+#: src/components/launch-intro.tsx
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
+msgstr "Scanne den QR-Code eines Gateways, das auf deinem eigenen Rechner läuft. Kein Konto, kein Relay, und nichts von dir läuft über einen Server von uns"
+
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Zum Scannen braucht es eine Kamera, die dieser Browser nicht bietet"
@@ -3107,6 +3131,10 @@ msgstr "Simulator-Bedienelemente"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "Größe"
+
+#: src/components/launch-intro.tsx
+msgid "Skip intro"
+msgstr "Einführung überspringen"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -3403,9 +3431,17 @@ msgstr "Die Verbindung zum Simulator ist abgebrochen"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Der Schlüssel konnte nicht gelesen werden ({0}). Prüfe den Schlüssel und seine Passphrase"
 
+#: src/components/launch-intro.tsx
+msgid "The question comes to you"
+msgstr "Die Frage kommt zu dir"
+
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Das rohe Panel, auf seinem Raster und in seinen eigenen Farben"
+
+#: src/components/launch-intro.tsx
+msgid "The real terminal"
+msgstr "Das echte Terminal"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
@@ -3844,6 +3880,10 @@ msgstr "Was gerade läuft"
 msgid "What's new"
 msgstr "Neuigkeiten"
 
+#: src/components/launch-intro.tsx
+msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
+msgstr "Wenn ein Agent anhält, um nach Erlaubnis zu fragen, kommt die Anfrage als Push. Genehmigen, immer genehmigen oder ablehnen, direkt vom Sperrbildschirm"
+
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Während du weg warst"
@@ -3888,6 +3928,10 @@ msgstr "Gestern"
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "Deine Agenten, überall dabei"
+
+#: src/components/launch-intro.tsx
+msgid "Your machine, your rules"
+msgstr "Dein Rechner, deine Regeln"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

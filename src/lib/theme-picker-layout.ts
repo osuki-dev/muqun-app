@@ -24,7 +24,14 @@ export function themePickerGridLayout(availableWidth: number): ThemePickerGridLa
         : safeWidth >= THEME_PICKER_TWO_COLUMN_MIN_WIDTH
           ? 2
           : 1;
-  const itemWidth = Math.max(0, (safeWidth - THEME_PICKER_GRID_GAP * (columns - 1)) / columns);
+  // Whole points, rounded down. The container's measured width is fractional
+  // on Android, and a row of tiles that adds up to exactly that width lands a
+  // pixel over once each tile is snapped to the pixel grid, so the last tile
+  // wraps and a two-column grid renders as one.
+  const itemWidth = Math.max(
+    0,
+    Math.floor((safeWidth - THEME_PICKER_GRID_GAP * (columns - 1)) / columns)
+  );
 
   return { columns, itemWidth };
 }

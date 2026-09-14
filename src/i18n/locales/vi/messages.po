@@ -554,6 +554,10 @@ msgstr "Chọn một host SSH"
 msgid "Choose files"
 msgstr "Chọn tệp"
 
+#: src/components/launch-intro.tsx
+msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
+msgstr "Chọn từ bộ sưu tập chủ đề chính thức được minh họa đẹp mắt, tô lại nền, terminal và tranh vẽ cùng lúc, hoặc tự tạo chủ đề của riêng bạn"
+
 #: src/components/machine-switcher-sheet.tsx
 msgid "Choose where to work"
 msgstr "Chọn nơi làm việc"
@@ -1468,6 +1472,10 @@ msgstr "Tạo khóa Ed25519"
 msgid "Generating…"
 msgstr "Đang tạo…"
 
+#: src/components/launch-intro.tsx
+msgid "Get started"
+msgstr "Bắt đầu"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Trạng thái Git"
@@ -1843,6 +1851,10 @@ msgstr "Mac mini · Văn phòng"
 msgid "Machines and sessions"
 msgstr "Máy và phiên"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "Biến nó thành của bạn"
+
 #: src/app/(drawer)/index.tsx
 msgid "Manage"
 msgstr "Quản lý"
@@ -2002,6 +2014,10 @@ msgstr "Terminal mới"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "Không gian làm việc mới"
+
+#: src/components/launch-intro.tsx
+msgid "Next"
+msgstr "Tiếp theo"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -2288,6 +2304,10 @@ msgstr "Tùy chọn cho {0}"
 #: src/components/settings-storage.tsx
 msgid "Other"
 msgstr "Khác"
+
+#: src/components/launch-intro.tsx
+msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
+msgstr "Kết quả hiển thị trên lưới terminal với đúng màu của chương trình, cùng hàng phím gửi ngay khi bạn bấm. nvim, less và REPL hoạt động như thường"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2826,6 +2846,10 @@ msgstr "Quét lại"
 msgid "Scan the Gateway QR."
 msgstr "Quét mã QR của Gateway"
 
+#: src/components/launch-intro.tsx
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
+msgstr "Quét mã QR của Gateway đang chạy trên chính máy tính của bạn. Không tài khoản, không trung gian, và không dữ liệu nào của bạn đi qua máy chủ của chúng tôi"
+
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Quét cần camera, mà trình duyệt này không cung cấp"
@@ -3107,6 +3131,10 @@ msgstr "Điều khiển trình giả lập"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "Kích thước"
+
+#: src/components/launch-intro.tsx
+msgid "Skip intro"
+msgstr "Bỏ qua phần giới thiệu"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -3403,9 +3431,17 @@ msgstr "Kết nối đến trình giả lập đã dừng"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Không thể đọc khóa ({0}). Hãy kiểm tra khóa và cụm mật khẩu của nó"
 
+#: src/components/launch-intro.tsx
+msgid "The question comes to you"
+msgstr "Câu hỏi sẽ tìm đến bạn"
+
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Ngăn nguyên bản, trên lưới của nó và với màu sắc riêng"
+
+#: src/components/launch-intro.tsx
+msgid "The real terminal"
+msgstr "Terminal thật sự"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
@@ -3844,6 +3880,10 @@ msgstr "Những gì đang chạy"
 msgid "What's new"
 msgstr "Có gì mới"
 
+#: src/components/launch-intro.tsx
+msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
+msgstr "Khi tác tử dừng lại để xin phép, lời nhắc sẽ đến dưới dạng thông báo đẩy. Chấp thuận, luôn chấp thuận hoặc từ chối ngay từ màn hình khóa"
+
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
@@ -3888,6 +3928,10 @@ msgstr "Hôm qua"
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "Các tác tử của bạn, ở bất cứ đâu"
+
+#: src/components/launch-intro.tsx
+msgid "Your machine, your rules"
+msgstr "Máy của bạn, luật của bạn"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
