@@ -1,16 +1,20 @@
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Check, ChevronRight, MoreHorizontal, Trash2, X } from 'lucide-react-native';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
-import { ThemeGallery } from '@/components/theme-gallery';
+import { SettingsSegmented } from '@/components/settings-segmented';
 import { ThemeLinkImport } from '@/components/theme-link-import';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { fadeInLeft, fadeInRight, fadeOutLeft, fadeOutRight, listLayout } from '@/lib/motion';
+import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
 import { effectiveThemeManifest } from '@/theme/repository';
 import { PressableScale } from '@/components/pressable-scale';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
@@ -47,6 +51,7 @@ export function CustomThemeLibrary({
   ownsPreparedAssets = true,
   onClosePreview,
   onPrimaryActionChange,
+  tabs = false,
   children,
 }: {
   initialManifest?: ThemeManifest;
@@ -70,6 +75,14 @@ export function CustomThemeLibrary({
    * `null` means there is no candidate on screen and so nothing to confirm.
    */
   onPrimaryActionChange?: (action: ThemePrimaryAction | null) => void;
+  /**
+   * Split `children` and the personal library into two tabs.
+   *
+   * Only the picker sheet passes this. The detail route and the file viewer see
+   * one theme at a time and have no second collection to switch to, so they get
+   * today's single column and this prop never reaches them.
+   */
+  tabs?: boolean;
   children?: ReactNode;
 } = {}) {
   const { t } = useLingui();
@@ -79,7 +92,18 @@ export function CustomThemeLibrary({
   const wideDetail = detail && width >= 840;
   const library = useThemeLibrary((state) => state.library);
   const currentPack = useThemePack();
-  const [galleryOpen, setGalleryOpen] = useState(false);
+  const router = useRouter();
+  /**
+   * Which half of the sheet is on screen, remembered across launches.
+   *
+   * The default is computed at mount and only at mount: a reader who removes
+   * their last theme while looking at the list should not have the tab move
+   * out from under them, and a reader who has installed nothing has nothing to
+   * look at on `mine`.
+   */
+  const [tab, setTab] = useState<ThemeTab>(
+    () => loadThemeTab() ?? (library.themes.length > 0 ? 'mine' : 'builtin')
+  );
   const [importOpen, setImportOpen] = useState(false);
   const [linkImportOpen, setLinkImportOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(detail);
@@ -241,6 +265,173 @@ export function CustomThemeLibrary({
   // for a screen that has gone.
   useEffect(() => () => onPrimaryActionChange?.(null), [onPrimaryActionChange]);
 
+  function chooseTab(next: ThemeTab) {
+    setTab(next);
+    saveThemeTab(next);
+  }
+
+  /**
+   * Which way the strip slides.
+   *
+   * Two tabs, so the direction belongs to the panel rather than to the change:
+   * `builtin` is the higher index, so it always arrives from the right and
+   * always leaves back to the right, and `mine` always does the mirror. Which
+   * is also the only form that works -- a panel's `exiting` is read off the
+   * render before it was removed, and that render cannot know which tab was
+   * chosen next.
+   */
+  const forward = tab === 'builtin';
+
+  const importPanel =
+    importOpen && !linkImportOpen ? (
+      <View
+        style={{
+          gap: 8,
+          padding: 12,
+          borderRadius: 16,
+          backgroundColor: background(colors.surfaceRaised),
+        }}>
+        <Button
+          variant="secondary"
+          disabled={busy}
+          testID="theme-import-link"
+          onPress={() => setLinkImportOpen(true)}>{t`Import link`}</Button>
+        <Button
+          variant="secondary"
+          disabled={busy}
+          testID="theme-import-file"
+          onPress={() =>
+            void perform(async () => {
+              const value = await pickThemeManifest(setReadStage).finally(() => setReadStage(null));
+              if (value !== null) {
+                if (!mounted.current) {
+                  value.prepared?.dispose();
+                  return;
+                }
+                if (onOpenCandidate) onOpenCandidate(value);
+                else setCandidate(value);
+                setImportOpen(false);
+                setActionsOpen(false);
+              }
+            })
+          }>{t`Import file`}</Button>
+      </View>
+    ) : null;
+
+  const linkPanel =
+    importOpen && linkImportOpen ? (
+      <ThemeLinkImport
+        onClose={() => setLinkImportOpen(false)}
+        onReady={(value) => {
+          if (onOpenCandidate) onOpenCandidate(value);
+          else setCandidate(value);
+          setLinkImportOpen(false);
+          setImportOpen(false);
+          setActionsOpen(false);
+        }}
+      />
+    ) : null;
+
+  /**
+   * The personal library.
+   *
+   * Under a tab it loses its heading: the tab names the collection, and a
+   * heading under it that repeats the word is the word twice.
+   */
+  const mineList = (
+    <View style={{ gap: 8 }}>
+      {tabs ? null : <Text variant="bodySmall">{t`My themes`}</Text>}
+      {library.themes.map((installed) => (
+        <View key={installed.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={installed.manifest.name}
+            // The row and its remove button both carry the theme's name, so
+            // the name alone cannot name the row. The manifest id is the
+            // stable handle a test can hold.
+            testID={`theme-row-${installed.manifest.id}`}
+            disabled={busy}
+            onPress={() => {
+              const next = {
+                manifest: installed.manifest,
+                id: installed.id,
+                assets: installed.assets,
+              };
+              if (onOpenCandidate) onOpenCandidate(next);
+              else setCandidate(next);
+              setError(null);
+              setNotice(null);
+              setActionsOpen(false);
+              setImportOpen(false);
+            }}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: background(colors.surfaceRaised),
+            }}>
+            <ThemePaletteStrip pack={installed.manifest.variants} />
+            <Text variant="bodySmall" numberOfLines={1} style={{ flex: 1, minWidth: 0 }}>
+              {installed.manifest.name}
+            </Text>
+            {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
+              <Check size={18} color={colors.primary} />
+            ) : (
+              <ChevronRight size={18} color={colors.textMuted} />
+            )}
+          </PressableScale>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t`Remove ${installed.manifest.name}`}
+            testID={`theme-remove-${installed.id}`}
+            disabled={busy}
+            onPress={() => {
+              setPendingRemoval(installed.id);
+              setError(null);
+              setNotice(null);
+            }}
+            style={{ padding: 12 }}>
+            <Trash2 size={18} color={colors.textMuted} />
+          </PressableScale>
+        </View>
+      ))}
+      {pendingRemoval ? (
+        <View
+          testID="theme-list-remove-confirm"
+          style={{
+            gap: 8,
+            padding: 12,
+            borderRadius: 16,
+            backgroundColor: background(colors.surfaceRaised),
+          }}>
+          <Text>{t`Remove this theme?`}</Text>
+          <Text
+            variant="bodySmall"
+            color={colors.textMuted}>{t`The theme will be removed from this device`}</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Button
+              disabled={busy}
+              testID="theme-list-confirm-remove"
+              onPress={() =>
+                void perform(() => {
+                  useThemeLibrary.getState().remove(pendingRemoval);
+                  setPendingRemoval(null);
+                })
+              }>{t`Remove`}</Button>
+            <Button
+              disabled={busy}
+              variant="ghost"
+              onPress={() => setPendingRemoval(null)}>{t`Cancel`}</Button>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+
   return (
     <View testID="custom-theme-library" style={{ gap: 16 }}>
       {browsing ? (
@@ -260,16 +451,20 @@ export function CustomThemeLibrary({
               disabled={busy}
               testID="theme-browse"
               onPress={() => {
-                setGalleryOpen(!galleryOpen);
                 setImportOpen(false);
+                router.push('/settings-theme-browse');
               }}>{t`Browse themes`}</Button>
             <Button
               variant="secondary"
               disabled={busy}
               testID="theme-import"
               onPress={() => {
+                // The panel a reader has just asked for must not open on the
+                // tab they are not looking at, so Import picks its tab first.
+                // It is also what keeps `theme-import` -> `theme-import-link`
+                // working whatever tab was persisted.
+                if (tabs) chooseTab('mine');
                 setImportOpen(!importOpen);
-                setGalleryOpen(false);
               }}>{t`Import`}</Button>
             {canUndo ? (
               <Button
@@ -280,65 +475,25 @@ export function CustomThemeLibrary({
                 }>{t`Undo`}</Button>
             ) : null}
           </View>
-          {importOpen && !linkImportOpen ? (
-            <View
-              style={{
-                gap: 8,
-                padding: 12,
-                borderRadius: 16,
-                backgroundColor: background(colors.surfaceRaised),
-              }}>
-              <Button
-                variant="secondary"
-                disabled={busy}
-                testID="theme-import-link"
-                onPress={() => setLinkImportOpen(true)}>{t`Import link`}</Button>
-              <Button
-                variant="secondary"
-                disabled={busy}
-                testID="theme-import-file"
-                onPress={() =>
-                  void perform(async () => {
-                    const value = await pickThemeManifest(setReadStage).finally(() =>
-                      setReadStage(null)
-                    );
-                    if (value !== null) {
-                      if (!mounted.current) {
-                        value.prepared?.dispose();
-                        return;
-                      }
-                      if (onOpenCandidate) onOpenCandidate(value);
-                      else setCandidate(value);
-                      setImportOpen(false);
-                      setActionsOpen(false);
-                    }
-                  })
-                }>{t`Import file`}</Button>
-            </View>
-          ) : null}
-          {galleryOpen ? (
-            <ThemeGallery
-              onClose={() => setGalleryOpen(false)}
-              onReady={(value) => {
-                if (onOpenCandidate) onOpenCandidate(value);
-                else setCandidate(value);
-                setGalleryOpen(false);
-                setActionsOpen(false);
-              }}
+          {tabs ? (
+            <SettingsSegmented
+              testID="theme-tab"
+              value={tab}
+              onChange={(value) => chooseTab(value as ThemeTab)}
+              options={[
+                { label: t`My themes`, value: 'mine' },
+                { label: t`Built-in`, value: 'builtin' },
+              ]}
             />
           ) : null}
-          {importOpen && linkImportOpen ? (
-            <ThemeLinkImport
-              onClose={() => setLinkImportOpen(false)}
-              onReady={(value) => {
-                if (onOpenCandidate) onOpenCandidate(value);
-                else setCandidate(value);
-                setLinkImportOpen(false);
-                setImportOpen(false);
-                setActionsOpen(false);
-              }}
-            />
-          ) : null}
+          {/* Under tabs these two live on `mine`, with the list they belong
+              to. Without tabs they stay exactly where they were. */}
+          {tabs ? null : (
+            <>
+              {importPanel}
+              {linkPanel}
+            </>
+          )}
         </View>
       ) : null}
       {step ? (
@@ -596,100 +751,50 @@ export function CustomThemeLibrary({
           ) : null}
         </View>
       ) : null}
-      {browsing && library.themes.length ? (
-        <View style={{ gap: 8 }}>
-          <Text variant="bodySmall">{t`My themes`}</Text>
-          {library.themes.map((installed) => (
-            <View key={installed.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={installed.manifest.name}
-                // The row and its remove button both carry the theme's name, so
-                // the name alone cannot name the row. The manifest id is the
-                // stable handle a test can hold.
-                testID={`theme-row-${installed.manifest.id}`}
-                disabled={busy}
-                onPress={() => {
-                  const next = {
-                    manifest: installed.manifest,
-                    id: installed.id,
-                    assets: installed.assets,
-                  };
-                  if (onOpenCandidate) onOpenCandidate(next);
-                  else setCandidate(next);
-                  setError(null);
-                  setNotice(null);
-                  setActionsOpen(false);
-                  setImportOpen(false);
-                }}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: 12,
-                  borderRadius: 12,
-                  backgroundColor: background(colors.surfaceRaised),
-                }}>
-                <ThemePaletteStrip pack={installed.manifest.variants} />
-                <Text variant="bodySmall" numberOfLines={1} style={{ flex: 1, minWidth: 0 }}>
-                  {installed.manifest.name}
-                </Text>
-                {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
-                  <Check size={18} color={colors.primary} />
+      {browsing && tabs ? (
+        // One wrapper whose height settles, because going from a 24-tile grid
+        // to a three-row list is a large delta and the sheet's scroll position
+        // would otherwise land somewhere the reader did not put it.
+        <Animated.View layout={listLayout('short')}>
+          {/*
+            A conditional render with a key, never two panels toggling
+            `display`: React has to unmount one and mount the other for
+            Reanimated's entering/exiting to fire at all, and the other spelling
+            would also keep 24 tiles mounted behind a list.
+          */}
+          <Animated.View
+            key={tab}
+            entering={forward ? fadeInRight('short') : fadeInLeft('short')}
+            exiting={forward ? fadeOutRight('short') : fadeOutLeft('short')}
+            style={{ gap: 16 }}>
+            {tab === 'mine' ? (
+              <>
+                {importPanel}
+                {linkPanel}
+                {library.themes.length ? (
+                  mineList
                 ) : (
-                  <ChevronRight size={18} color={colors.textMuted} />
+                  // Under a tab the old "skip the whole block" would be a blank
+                  // screen, so it gets one muted line and nothing else.
+                  <Text
+                    testID="theme-mine-empty"
+                    variant="bodySmall"
+                    color={
+                      colors.textMuted
+                    }>{t`No personal themes yet. Import one, or browse the published themes.`}</Text>
                 )}
-              </PressableScale>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Remove ${installed.manifest.name}`}
-                testID={`theme-remove-${installed.id}`}
-                disabled={busy}
-                onPress={() => {
-                  setPendingRemoval(installed.id);
-                  setError(null);
-                  setNotice(null);
-                }}
-                style={{ padding: 12 }}>
-                <Trash2 size={18} color={colors.textMuted} />
-              </PressableScale>
-            </View>
-          ))}
-          {pendingRemoval ? (
-            <View
-              testID="theme-list-remove-confirm"
-              style={{
-                gap: 8,
-                padding: 12,
-                borderRadius: 16,
-                backgroundColor: background(colors.surfaceRaised),
-              }}>
-              <Text>{t`Remove this theme?`}</Text>
-              <Text
-                variant="bodySmall"
-                color={colors.textMuted}>{t`The theme will be removed from this device`}</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Button
-                  disabled={busy}
-                  testID="theme-list-confirm-remove"
-                  onPress={() =>
-                    void perform(() => {
-                      useThemeLibrary.getState().remove(pendingRemoval);
-                      setPendingRemoval(null);
-                    })
-                  }>{t`Remove`}</Button>
-                <Button
-                  disabled={busy}
-                  variant="ghost"
-                  onPress={() => setPendingRemoval(null)}>{t`Cancel`}</Button>
-              </View>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
-      {browsing ? children : null}
+              </>
+            ) : (
+              children
+            )}
+          </Animated.View>
+        </Animated.View>
+      ) : (
+        <>
+          {browsing && library.themes.length ? mineList : null}
+          {browsing ? children : null}
+        </>
+      )}
     </View>
   );
 }
