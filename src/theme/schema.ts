@@ -179,6 +179,7 @@ export const THEME_SLOTS = [
   'buttons.primary.background',
   'tabs.background',
   'emptyState.illustration',
+  'home.hero',
 ] as const;
 export type ThemeSlot = (typeof THEME_SLOTS)[number];
 
@@ -292,6 +293,22 @@ export const themeManifestSchema = z.object({
       logo: z
         .union([visibilitySchema, z.strictObject({ mode: z.literal('custom'), asset: identifier })])
         .optional(),
+      /**
+       * Whether Home shows the pack's own illustration above the server list.
+       *
+       * The picture itself is the `home.hero` decoration slot, like every other
+       * image a pack ships; this is only the author's answer to "on or off by
+       * default", and it is written in the same `default`/`hidden` vocabulary
+       * `name` and `logo` already use rather than in a third one. `default`
+       * means "show it if I declared the slot", which is also what saying
+       * nothing means -- so an author turns the hero on by drawing it, and
+       * reaches for `hidden` only to ship the artwork with the switch off.
+       *
+       * There is no `custom` member because there is nothing to customise here
+       * that the slot does not already own: the asset, its fit, its opacity and
+       * its per-mode and per-width overrides are all the slot's.
+       */
+      hero: visibilitySchema.optional(),
     })
     .optional(),
 });
