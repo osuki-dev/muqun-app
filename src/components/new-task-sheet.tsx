@@ -35,6 +35,7 @@ import Animated from 'react-native-reanimated';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { LADDER } from '@/components/settings-chrome';
 import {
   agentSpawnRequest,
@@ -88,7 +89,9 @@ export function NewTaskSheet({
   // has no way to know the result also depends on the active locale.
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
+  // The plate the settings page gives a label drawn straight onto the shell's
+  // wallpaper; `null` on every theme that has no picture there.
+  const plate = useSheetGroundPlate();
   useRenderTally('NewTaskSheet');
 
   const [profiles, setProfiles] = useState<AgentProfile[]>([]);
@@ -177,131 +180,152 @@ export function NewTaskSheet({
         // the Done button.
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardShouldPersistTaps="handled"
-        style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
-        contentContainerStyle={styles.content}>
-        {/* iOS draws the grabber itself; Android's form sheet does not, and a
+        // Transparent: the ground below paints this sheet's floor, its surface
+        // tint and the shell's wallpaper, in that order.
+        style={[styles.sheet, styles.transparent]}
+        contentContainerStyle={styles.canvas}>
+        {/* The ground and the padded column are the scroller's two children,
+            which is the shape `SettingsSheet` uses -- the content container
+            carries no padding of its own, so the ground's `absoluteFill` covers
+            the sheet's edges instead of stopping at the form's gutter. The
+            sheet's own two subviews are still the scroller and the keyboard
+            toolbar. */}
+        <SheetFrame>
+          <View style={styles.column}>
+            {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. Every sheet in this app carries the same two lines. */}
-        {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+            {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
 
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text variant="bodySmall" style={styles.title}>
-              <Trans>New task</Trans>
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>Start an agent and send it the first thing to do.</Trans>
-            </Text>
-          </View>
-          <GlassChrome face="sheet" style={styles.closeButton}>
-            <PressableScale
-              accessibilityLabel={t`Close new task`}
-              onPress={onClose}
-              style={styles.closeHit}>
-              <X size={18} color={theme.colors.text} />
-            </PressableScale>
-          </GlassChrome>
-        </View>
+            <View style={styles.header}>
+              <View style={[styles.headerCopy, plate]}>
+                <Text variant="bodySmall" style={styles.title}>
+                  <Trans>New task</Trans>
+                </Text>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  <Trans>Start an agent and send it the first thing to do.</Trans>
+                </Text>
+              </View>
+              <GlassChrome face="sheet" style={styles.closeButton}>
+                <PressableScale
+                  accessibilityLabel={t`Close new task`}
+                  onPress={onClose}
+                  style={styles.closeHit}>
+                  <X size={18} color={theme.colors.text} />
+                </PressableScale>
+              </GlassChrome>
+            </View>
 
-        <View style={styles.section}>
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
-            <Trans>AGENT</Trans>
-          </Text>
-          {loadingProfiles ? (
-            <View style={styles.loadingRow}>
-              <Spinner size="sm" color={theme.colors.primary} />
-              <Text variant="caption" color={theme.colors.textMuted}>
-                <Trans>Asking the server what it can run…</Trans>
+            <View style={styles.section}>
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={[styles.sectionLabel, plate]}>
+                <Trans>AGENT</Trans>
               </Text>
+              {loadingProfiles ? (
+                <View style={styles.loadingRow}>
+                  <Spinner size="sm" color={theme.colors.primary} />
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    <Trans>Asking the server what it can run…</Trans>
+                  </Text>
+                </View>
+              ) : profiles.length === 0 ? (
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  <Trans>This server did not name any agents it can start.</Trans>
+                </Text>
+              ) : (
+                <View style={styles.pills}>
+                  {profiles.map((profile, index) => (
+                    <Animated.View key={profile.kind} entering={riseIn(index * STAGGER.row)}>
+                      <AgentPill
+                        profile={profile}
+                        selected={profile.kind === agent}
+                        onSelect={() => setAgent(profile.kind)}
+                      />
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
             </View>
-          ) : profiles.length === 0 ? (
-            <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>This server did not name any agents it can start.</Trans>
-            </Text>
-          ) : (
-            <View style={styles.pills}>
-              {profiles.map((profile, index) => (
-                <Animated.View key={profile.kind} entering={riseIn(index * STAGGER.row)}>
-                  <AgentPill
-                    profile={profile}
-                    selected={profile.kind === agent}
-                    onSelect={() => setAgent(profile.kind)}
-                  />
-                </Animated.View>
-              ))}
-            </View>
-          )}
-        </View>
 
-        <View style={styles.section}>
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
-            <Trans>DIRECTORY</Trans>
-          </Text>
-          {recentCwds.length > 0 ? (
-            <View style={styles.recentList}>
-              {recentCwds.map((path, index) => (
-                <Animated.View
-                  key={path}
-                  entering={riseIn(index * STAGGER.row)}
-                  layout={listLayout('short')}>
-                  <RecentCwdRow
-                    path={path}
-                    selected={path === cwd.trim()}
-                    onSelect={() => setCwd(path)}
-                  />
-                </Animated.View>
-              ))}
-            </View>
-          ) : null}
-          {/* Under the list, not instead of it, and always present: the recent
+            <View style={styles.section}>
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={[styles.sectionLabel, plate]}>
+                <Trans>DIRECTORY</Trans>
+              </Text>
+              {recentCwds.length > 0 ? (
+                <View style={styles.recentList}>
+                  {recentCwds.map((path, index) => (
+                    <Animated.View
+                      key={path}
+                      entering={riseIn(index * STAGGER.row)}
+                      layout={listLayout('short')}>
+                      <RecentCwdRow
+                        path={path}
+                        selected={path === cwd.trim()}
+                        onSelect={() => setCwd(path)}
+                      />
+                    </Animated.View>
+                  ))}
+                </View>
+              ) : null}
+              {/* Under the list, not instead of it, and always present: the recent
             answers are a shortcut, and a shortcut that hides the long way round
             is a trap the first time it does not have the place you meant. */}
-          <Input
-            label={t`Path`}
-            value={cwd}
-            onChangeText={setCwd}
-            autoCapitalize="none"
-            autoCorrect={false}
-            // Not translated: a path is typed as it exists on the machine, and a
-            // localized example would teach the wrong thing.
-            placeholder="~/code/muqun"
-            variant="outline"
-            helper={t`Leave it empty to start where the session already is.`}
-          />
-        </View>
+              <Input
+                label={t`Path`}
+                value={cwd}
+                onChangeText={setCwd}
+                autoCapitalize="none"
+                autoCorrect={false}
+                // Not translated: a path is typed as it exists on the machine, and a
+                // localized example would teach the wrong thing.
+                placeholder="~/code/muqun"
+                variant="outline"
+                helper={t`Leave it empty to start where the session already is.`}
+              />
+            </View>
 
-        <View style={styles.section}>
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.sectionLabel}>
-            <Trans>FIRST PROMPT</Trans>
-          </Text>
-          <Input
-            value={prompt}
-            onChangeText={setPrompt}
-            multiline
-            numberOfLines={3}
-            placeholder={t`Review the failing test and fix it.`}
-            variant="outline"
-            // The keyboard's own dictation is the answer to "I do not want to
-            // type this on a phone", on both platforms. Said once, here, instead
-            // of drawn as a button this app would have to own.
-            helper={t`Type it, or use your keyboard's dictation key.`}
-          />
-        </View>
+            <View style={styles.section}>
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={[styles.sectionLabel, plate]}>
+                <Trans>FIRST PROMPT</Trans>
+              </Text>
+              <Input
+                value={prompt}
+                onChangeText={setPrompt}
+                multiline
+                numberOfLines={3}
+                placeholder={t`Review the failing test and fix it.`}
+                variant="outline"
+                // The keyboard's own dictation is the answer to "I do not want to
+                // type this on a phone", on both platforms. Said once, here, instead
+                // of drawn as a button this app would have to own.
+                helper={t`Type it, or use your keyboard's dictation key.`}
+              />
+            </View>
 
-        <Button onPress={() => void start()} disabled={starting || !canSpawnAgent({ agent })}>
-          {starting ? t`Starting…` : t`Start task`}
-        </Button>
+            <Button onPress={() => void start()} disabled={starting || !canSpawnAgent({ agent })}>
+              {starting ? t`Starting…` : t`Start task`}
+            </Button>
 
-        {error ? (
-          <Animated.View
-            entering={fadeIn('micro')}
-            exiting={fadeOut('micro')}
-            layout={listLayout('short')}>
-            <Text selectable variant="caption" color={theme.colors.danger}>
-              {error}
-            </Text>
-          </Animated.View>
-        ) : null}
+            {error ? (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOut('micro')}
+                layout={listLayout('short')}>
+                <Text selectable variant="caption" color={theme.colors.danger}>
+                  {error}
+                </Text>
+              </Animated.View>
+            ) : null}
+          </View>
+        </SheetFrame>
       </KeyboardAwareScrollView>
       {/* One field at a time here, so the arrows would only ever point at
         themselves.
@@ -426,7 +450,12 @@ const styles = StyleSheet.create({
   // height is not resolved when a percentage is measured and the sheet renders
   // empty. Every other sheet in this app fills the same way.
   sheet: { flex: 1 },
-  content: {
+  transparent: { backgroundColor: 'transparent' },
+  // No padding here: the ground is laid out against this box, and a padded
+  // content container would inset it away from the sheet's own edges.
+  canvas: { flexGrow: 1, width: '100%' },
+  column: {
+    flexGrow: 1,
     paddingHorizontal: LADDER.gutter,
     paddingTop: LADDER.gap,
     paddingBottom: LADDER.section,
