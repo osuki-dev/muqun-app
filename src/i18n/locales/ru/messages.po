@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "Ветка или коммит (необязательно)"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "Обзор тем"
 
@@ -425,9 +426,9 @@ msgstr "Обзор тем"
 msgid "Browser"
 msgstr "Браузер"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "Встроенные темы"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "Встроенные"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "Перед повторной отправкой проверьте по
 msgid "Check the repository URL, branch and theme file"
 msgstr "Проверьте URL репозитория, ветку и файл темы"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "Проверьте подключение и попробуйте ещё раз"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Проверяем системную аутентификацию…"
@@ -560,7 +565,6 @@ msgstr "Очищаем…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Закрыть"
 
@@ -622,6 +626,10 @@ msgstr "Закрыть меню"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Закрыть симулятор"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "Закрыть каталог тем"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "Не удалось связаться с Gateway"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "Не удалось связаться с Gateway. Убедитесь, что он запущен, затем обновите QR-код и отсканируйте снова"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "Не удалось связаться с каталогом тем"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "Не удалось связаться с этим сервером"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "Загрузка · {0} из {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "Загрузка темы"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "Загрузка…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "Режим вставки"
 msgid "Install command copied"
 msgstr "Команда установки скопирована"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "Установлена"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "Показать ещё"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "Загружаем терминал"
 msgid "Loading the transcript"
 msgstr "Загружаем транскрипт"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Загрузка тем…"
 
@@ -1992,6 +2015,10 @@ msgstr "Нет вывода"
 msgid "No password or key is saved for this host."
 msgstr "Для этого хоста не сохранён ни пароль, ни ключ"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "Своих тем пока нет. Импортируйте тему или посмотрите опубликованные"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "Для файлов этого типа нет предпросмотра. Он остаётся на сервере"
@@ -2033,7 +2060,7 @@ msgstr "Нет стоп-кадров"
 msgid "No textual change"
 msgstr "Текст не изменился"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Пока нет опубликованных тем"
 
@@ -2332,7 +2359,7 @@ msgstr "Порт"
 msgid "PORT"
 msgstr "ПОРТ"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Подготовка изображений"
@@ -3003,6 +3030,10 @@ msgstr "Показать список серверов"
 msgid "Show what is running"
 msgstr "Показать, что запущено"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "Показано {shown} из {total}"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "Показывать"
@@ -3059,7 +3090,6 @@ msgstr "Некоторым цветам темы требуется больше
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Что-то пошло не так"
@@ -3429,17 +3459,13 @@ msgstr "URL темы"
 msgid "Theme, {0}"
 msgstr "Тема, {0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Темы, опубликованные на muqun.dev. Ничего не загружается, пока вы не откроете тему"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Этот агент не предлагал такой ответ"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "Эта сборка приложения не может обратиться к каталогу тем"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "Доверять"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "Попробовать ещё раз"
 

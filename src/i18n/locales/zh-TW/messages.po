@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "分支或提交（選填）"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "瀏覽佈景主題"
 
@@ -425,9 +426,9 @@ msgstr "瀏覽佈景主題"
 msgid "Browser"
 msgstr "瀏覽器"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "內建主題"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "內建"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "再次傳送前請先查看助手，它可能已經收到了請求"
 msgid "Check the repository URL, branch and theme file"
 msgstr "請檢查儲存庫網址、分支和主題檔案"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "請檢查網路連線後再試一次"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "正在檢查系統驗證…"
@@ -560,7 +565,6 @@ msgstr "正在清除…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "關閉"
 
@@ -622,6 +626,10 @@ msgstr "關閉選單"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "關閉模擬器"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "關閉佈景主題目錄"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "無法連上 Gateway"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "無法連上 Gateway。請確定它正在執行，然後重新整理 QR code 再掃描一次"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "無法連線至佈景主題目錄"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "無法連線到這台伺服器"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "正在下載 · {0} / {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "正在下載主題"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "正在下載…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "插入模式"
 msgid "Install command copied"
 msgstr "已複製安裝指令"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "已安裝"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "只列出正在執行可辨識代理程式的面板"
 msgid "Live Activity"
 msgstr "即時動態"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "載入更多"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "正在載入終端機"
 msgid "Loading the transcript"
 msgstr "正在載入對話記錄"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "正在載入佈景主題…"
 
@@ -1992,6 +2015,10 @@ msgstr "沒有輸出"
 msgid "No password or key is saved for this host."
 msgstr "此主機沒有儲存密碼或金鑰"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "還沒有自己的佈景主題。可以匯入一個，或瀏覽已發布的佈景主題"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "這種檔案無法預覽，它會留在伺服器上"
@@ -2033,7 +2060,7 @@ msgstr "不支援靜態畫面"
 msgid "No textual change"
 msgstr "沒有文字變更"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "尚未有已發布的佈景主題"
 
@@ -2332,7 +2359,7 @@ msgstr "連接埠"
 msgid "PORT"
 msgstr "連接埠"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "正在準備圖片"
@@ -3003,6 +3030,10 @@ msgstr "顯示伺服器清單"
 msgid "Show what is running"
 msgstr "查看正在執行的項目"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "已顯示 {shown} / {total}"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "顯示"
@@ -3059,7 +3090,6 @@ msgstr "部分主題顏色需要更高的對比度"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "發生錯誤"
@@ -3429,17 +3459,13 @@ msgstr "主題網址"
 msgid "Theme, {0}"
 msgstr "主題，{0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "來自 muqun.dev 的已發布佈景主題。開啟前不會下載任何內容"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "這個代理程式沒有提供那個選項"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "目前的應用程式版本無法連線至佈景主題目錄"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "信任"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "再試一次"
 

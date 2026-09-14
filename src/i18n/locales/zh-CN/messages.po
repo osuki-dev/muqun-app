@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "分支或提交（可选）"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "浏览主题"
 
@@ -425,9 +426,9 @@ msgstr "浏览主题"
 msgid "Browser"
 msgstr "浏览器"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "内置主题"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "内置"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "再次发送前请先查看助手，它可能已经收到了请求"
 msgid "Check the repository URL, branch and theme file"
 msgstr "请检查仓库链接、分支和主题文件"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "请检查网络连接后重试"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "正在检查系统验证…"
@@ -560,7 +565,6 @@ msgstr "正在清除…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "关闭"
 
@@ -622,6 +626,10 @@ msgstr "关闭菜单"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "关闭模拟器"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "关闭主题目录"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "无法连接到 Gateway"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "无法连接到 Gateway。请确认它正在运行，然后刷新二维码再扫描一次"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "无法连接主题目录"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "无法连接到这台服务器"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "正在下载 · {0} / {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "正在下载主题"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "正在下载…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "插入模式"
 msgid "Install command copied"
 msgstr "已复制安装命令"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "已安装"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "只列出正在运行可识别代理的面板"
 msgid "Live Activity"
 msgstr "实时活动"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "加载更多"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "正在加载终端"
 msgid "Loading the transcript"
 msgstr "正在加载对话记录"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "正在加载主题…"
 
@@ -1992,6 +2015,10 @@ msgstr "没有输出"
 msgid "No password or key is saved for this host."
 msgstr "此主机没有保存密码或密钥"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "还没有自己的主题。可以导入一个，或浏览已发布的主题"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "这种文件无法预览，它会留在服务器上"
@@ -2033,7 +2060,7 @@ msgstr "不支持静态画面"
 msgid "No textual change"
 msgstr "没有文本改动"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "还没有已发布的主题"
 
@@ -2332,7 +2359,7 @@ msgstr "端口"
 msgid "PORT"
 msgstr "端口"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "正在准备图片"
@@ -3003,6 +3030,10 @@ msgstr "显示服务器列表"
 msgid "Show what is running"
 msgstr "查看正在运行的项目"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "已显示 {shown} / {total}"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "显示"
@@ -3059,7 +3090,6 @@ msgstr "部分主题颜色需要更高的对比度"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "出了点问题"
@@ -3429,17 +3459,13 @@ msgstr "主题链接"
 msgid "Theme, {0}"
 msgstr "主题，{0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "来自 muqun.dev 的已发布主题。打开某个主题前不会下载任何内容"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "这个代理没有提供那个选项"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "当前应用版本无法访问主题目录"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "信任"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "重试"
 

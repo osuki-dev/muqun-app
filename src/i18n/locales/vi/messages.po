@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "Nhánh hoặc commit (không bắt buộc)"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "Duyệt giao diện"
 
@@ -425,9 +426,9 @@ msgstr "Duyệt giao diện"
 msgid "Browser"
 msgstr "Trình duyệt"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "Giao diện tích hợp"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "Có sẵn"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "Kiểm tra trợ lý trước khi gửi lại; trợ lý có thể đã 
 msgid "Check the repository URL, branch and theme file"
 msgstr "Kiểm tra URL kho mã, nhánh và tệp giao diện"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "Kiểm tra kết nối và thử lại"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Đang kiểm tra xác thực hệ thống…"
@@ -560,7 +565,6 @@ msgstr "Đang xóa…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Đóng"
 
@@ -622,6 +626,10 @@ msgstr "Đóng menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Đóng trình giả lập"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "Đóng danh mục giao diện"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "Không thể kết nối đến gateway"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "Không thể kết nối đến gateway. Hãy đảm bảo nó đang chạy, rồi làm mới mã QR và quét lại"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "Không thể kết nối tới danh mục giao diện"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "Không thể kết nối đến máy chủ này"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "Đang tải · {0} trên {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "Đang tải chủ đề"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "Đang tải xuống…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "Chế độ chèn"
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "Đã cài đặt"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "Tải thêm"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "Đang tải terminal"
 msgid "Loading the transcript"
 msgstr "Đang tải bản ghi"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Đang tải giao diện…"
 
@@ -1992,6 +2015,10 @@ msgstr "Không có đầu ra"
 msgid "No password or key is saved for this host."
 msgstr "Chưa lưu mật khẩu hay khóa nào cho host này"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "Chưa có giao diện riêng nào. Hãy nhập một giao diện hoặc duyệt các giao diện đã công bố"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "Không có bản xem trước cho loại tệp này. Nó vẫn ở trên máy chủ"
@@ -2033,7 +2060,7 @@ msgstr "Không có khung hình tĩnh"
 msgid "No textual change"
 msgstr "Không có thay đổi văn bản"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Chưa có giao diện nào được công bố"
 
@@ -2332,7 +2359,7 @@ msgstr "Cổng"
 msgid "PORT"
 msgstr "CỔNG"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Đang chuẩn bị hình ảnh"
@@ -3003,6 +3030,10 @@ msgstr "Hiện danh sách máy chủ"
 msgid "Show what is running"
 msgstr "Xem những gì đang chạy"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "Đang hiển thị {shown} trên {total}"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "Hiển thị"
@@ -3059,7 +3090,6 @@ msgstr "Một số màu giao diện cần độ tương phản cao hơn"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Đã xảy ra lỗi"
@@ -3429,17 +3459,13 @@ msgstr "URL giao diện"
 msgid "Theme, {0}"
 msgstr "Chủ đề, {0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Giao diện được công bố tại muqun.dev. Không tải gì cho đến khi bạn mở một giao diện"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Tác tử này không đưa ra câu trả lời đó"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "Bản dựng ứng dụng này không thể truy cập danh mục giao diện"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "Tin cậy"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "Thử lại"
 
