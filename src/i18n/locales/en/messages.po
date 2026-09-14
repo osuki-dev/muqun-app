@@ -263,6 +263,26 @@ msgstr "Allow camera"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Allow the camera, or enter the address instead"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Alt"
+msgstr "Alt"
+
+#: src/i18n/labels.ts
+msgid "Alt Down arrow"
+msgstr "Alt Down arrow"
+
+#: src/i18n/labels.ts
+msgid "Alt Left arrow"
+msgstr "Alt Left arrow"
+
+#: src/i18n/labels.ts
+msgid "Alt Right arrow"
+msgstr "Alt Right arrow"
+
+#: src/i18n/labels.ts
+msgid "Alt Up arrow"
+msgstr "Alt Up arrow"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Answer"
@@ -1317,6 +1337,10 @@ msgstr "Enter URL manually"
 #: src/i18n/labels.ts
 msgid "Escape"
 msgstr "Escape"
+
+#: src/i18n/labels.ts
+msgid "Escape twice"
+msgstr "Escape twice"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx

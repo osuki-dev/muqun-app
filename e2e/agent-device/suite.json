@@ -151,6 +151,12 @@
       "program": "flows/machine-switcher",
       "tags": ["full"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "soft-keyboard",
+      "program": "flows/soft-keyboard",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
@@ -6661,6 +6667,14 @@
       },
       {
         "run": "flows/machine-switcher.ad"
+      }
+    ],
+    "flows/soft-keyboard": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/soft-keyboard.ad"
       }
     ]
   }
