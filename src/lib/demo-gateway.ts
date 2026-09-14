@@ -1,6 +1,6 @@
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
-import { Asset } from 'expo-asset';
+import { Image } from 'react-native';
 import { createThemeStarter } from '@/theme/authoring';
 
 import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
@@ -56,8 +56,9 @@ import {
  * Re-exported rather than declared, so the demo's identity has one home.
  *
  * It moved to `pairing.ts` when the scanner learned to recognise it: those
- * rules are pure and unit-tested, and this module reaches for `expo-asset`,
- * which a pure module must not have to import to know one string.
+ * rules are pure and unit-tested, and this module reaches for React Native's
+ * asset resolver, which a pure module must not have to import to know one
+ * string.
  */
 export const DEMO_SERVER_ID = DEMO_PAIRING_SERVER_ID;
 
@@ -629,6 +630,10 @@ export function demoSessionAssets(): SessionAsset[] {
       previewable: true,
     },
     {
+      // The name, mime and size describe the file the fictional agent wrote.
+      // The bytes behind it are `assets/images/demo-artifact-shot.webp`, a
+      // 1.3 KB stand-in: the demo only needs a picture to appear in the row's
+      // thumbnail and in the viewer, and the artifacts flow asserts this name.
       id: 'as-demo-shot',
       path: '~/code/muqun/out/settings-dark.png',
       name: 'settings-dark.png',
@@ -867,10 +872,36 @@ export function demoAssetText(assetId: string): string {
 /**
  * The demo image is a bundled asset, so opening it stays entirely offline --
  * demo mode never makes a request.
+ *
+ * `Image.resolveAssetSource` rather than `Asset.fromModule(...).uri`, because
+ * the latter has never produced a loadable URI in an Android release build.
+ * With `expo-updates` installed, the `Asset` constructor looks the module's
+ * hash up in the embedded asset map and, when that answer starts with
+ * `file:///android_res/`, overwrites `uri` with it and clears `localUri`
+ * (`expo-asset/build/Asset.js`). `expo-image` then sees a `file:` scheme,
+ * treats the URI as a filesystem path (`SourceMap.kt`, `isLocalFileUri`), and
+ * logs `FileNotFoundException` -- `/android_res/...` is a resource-table name,
+ * not a file, and `enableShrinkResourcesInReleaseBuilds` has renamed the
+ * packaged file to something like `res/W3.png` anyway. `downloadAsync()` is no
+ * escape: the same file then sets `localUri = uri` and `downloaded = true` for
+ * any Android image module, so the call returns immediately over the same
+ * broken path.
+ *
+ * The resolver instead yields the bare drawable identifier
+ * (`resourceIdentifierWithoutScale`), which `expo-image` resolves through
+ * `Resources.getIdentifier` (`ResourceIdHelper.kt`) -- an entry name the
+ * shrinker keeps even as it renames the file behind it. That is the same
+ * detour `expo-asset`'s own `Asset.fx` transformer makes React Native's
+ * `<Image source={require(...)}>` take for exactly this case.
  */
 export function demoAssetContentUri(assetId: string): string {
   if (assetId !== 'as-demo-shot') return '';
-  return Asset.fromModule(require('../../assets/images/muqun-hero.png')).uri;
+  // The `?.` is not belt-and-braces: React Native's `.d.ts` declares a
+  // non-nullable return, but the implementation returns `null` for a module id
+  // the asset registry does not know, and `assetImageSource` wants a string.
+  return (
+    Image.resolveAssetSource(require('../../assets/images/demo-artifact-shot.webp'))?.uri ?? ''
+  );
 }
 
 export const demoSessionId = SESSION_ID;
