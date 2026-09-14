@@ -393,6 +393,10 @@ msgstr "Rücktaste"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Unter {minimumPercent} % ist lesbarer Text nicht mehr garantiert"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "Zwischen der Kopfzeile und deinen Servern. „Sichtbar“ übernimmt außerdem das Leerzustandsbild des Themes, wenn es keine eigene Startseiten-Illustration hat"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "Binärdatei"
@@ -1445,6 +1449,10 @@ msgstr "Gruppe {0}. Lange drücken für Aktionen"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Haptisches Feedback"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "Ausgeblendet"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "Logo auf der Startseite anzeigen"
 msgid "Show Home text"
 msgstr "Text auf der Startseite anzeigen"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "Illustration auf der Startseite anzeigen"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Bilder anzeigen"
@@ -2990,6 +3002,10 @@ msgstr "Serverliste einblenden"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Zeigen, was gerade läuft"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "Sichtbar"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "Das Protokoll als Unterhaltung, mit eingeklappten Tool-Schritten"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Theme"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "Theme-Standard"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

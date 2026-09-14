@@ -393,6 +393,10 @@ msgstr "Backspace"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Ниже {minimumPercent}% читаемость текста не гарантируется"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "Между шапкой и списком серверов. «Показывать» также берёт картинку пустого состояния темы, если у неё нет собственной иллюстрации для главной"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "Двоичный файл"
@@ -1445,6 +1449,10 @@ msgstr "Группа {0}. Удерживайте для действий"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Тактильный отклик"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "Скрыть"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "Показывать логотип на главной"
 msgid "Show Home text"
 msgstr "Показывать текст на главной"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "Показывать иллюстрацию на главной"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Показать изображения"
@@ -2990,6 +3002,10 @@ msgstr "Показать список серверов"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Показать, что запущено"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "Показывать"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "Транскрипт в виде беседы, шаги инструме
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Тема"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "Как в теме"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

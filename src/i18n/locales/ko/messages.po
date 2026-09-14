@@ -393,6 +393,10 @@ msgstr "백스페이스"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% 아래에서는 글자의 가독성이 보장되지 않습니다"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "헤더와 서버 목록 사이에 표시됩니다. ‘표시’를 선택하면 테마에 홈 일러스트가 없을 때 빈 상태 이미지를 대신 사용합니다"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "바이너리 파일"
@@ -1445,6 +1449,10 @@ msgstr "그룹 {0}. 길게 눌러 작업 보기"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "햅틱 피드백"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "숨김"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "홈 로고 표시"
 msgid "Show Home text"
 msgstr "홈 텍스트 표시"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "홈에 일러스트 표시"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "이미지 표시"
@@ -2990,6 +3002,10 @@ msgstr "서버 목록 표시"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "실행 중인 것 보기"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "표시"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니�
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "테마"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "테마 기본값"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

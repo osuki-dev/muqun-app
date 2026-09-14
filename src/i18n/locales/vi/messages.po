@@ -393,6 +393,10 @@ msgstr "Backspace"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ đọc"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "Nằm giữa phần đầu trang và danh sách máy chủ. Chọn “Hiển thị” cũng sẽ mượn ảnh trạng thái trống của chủ đề khi chủ đề không có hình minh hoạ riêng cho trang chủ"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "Tệp nhị phân"
@@ -1445,6 +1449,10 @@ msgstr "Nhóm {0}. Nhấn giữ để xem thao tác"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Phản hồi rung"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "Ẩn"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "Hiển thị logo trên trang chủ"
 msgid "Show Home text"
 msgstr "Hiển thị chữ trên trang chủ"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "Hiển thị hình minh hoạ trên trang chủ"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Hiện hình ảnh"
@@ -2990,6 +3002,10 @@ msgstr "Hiện danh sách máy chủ"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Xem những gì đang chạy"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "Hiển thị"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công 
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Chủ đề"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "Theo chủ đề"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

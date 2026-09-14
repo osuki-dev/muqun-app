@@ -393,6 +393,10 @@ msgstr "退格鍵"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "低於 {minimumPercent}% 後,文字不再保證可讀"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "位於標題列與伺服器之間。選擇「顯示」時，若主題沒有自己的首頁插圖，也會借用它的空狀態圖片"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "二進位檔案"
@@ -1445,6 +1449,10 @@ msgstr "群組 {0}。長按顯示操作"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "觸覺回饋"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "隱藏"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "顯示首頁 Logo"
 msgid "Show Home text"
 msgstr "顯示首頁文字"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "在首頁顯示插圖"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "顯示圖片"
@@ -2990,6 +3002,10 @@ msgstr "顯示伺服器清單"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "查看正在執行的項目"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "顯示"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "把逐字記錄當成對話呈現，並收合工具步驟"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "主題"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "依主題預設"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

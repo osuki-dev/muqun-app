@@ -454,6 +454,11 @@ export function CustomThemeLibrary({
                       useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
                     )
                   }
+                  onHeroChange={(value) =>
+                    void perform(() =>
+                      useThemeLibrary.getState().setHomeHero(installedCandidate.id, value)
+                    )
+                  }
                   onReset={() =>
                     void perform(() =>
                       useThemeLibrary.getState().resetAppearancePreferences(installedCandidate.id)

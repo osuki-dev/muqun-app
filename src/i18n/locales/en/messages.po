@@ -393,6 +393,10 @@ msgstr "Backspace"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "Binary file"
@@ -1445,6 +1449,10 @@ msgstr "Group {0}. Long press for actions"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Haptic feedback"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "Hidden"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "Show Home logo"
 msgid "Show Home text"
 msgstr "Show Home text"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "Show illustration on Home"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Show images"
@@ -2990,6 +3002,10 @@ msgstr "Show the server list"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Show what is running"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "Shown"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "The transcript as a conversation, with tool steps folded away"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Theme"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "Theme default"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

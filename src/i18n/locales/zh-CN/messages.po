@@ -393,6 +393,10 @@ msgstr "退格键"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "低于 {minimumPercent}% 后,文字不再保证可读"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "位于标题栏与服务器之间。选择“显示”时，若主题没有自己的首页插图，也会借用它的空状态图片"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "二进制文件"
@@ -1445,6 +1449,10 @@ msgstr "分组 {0}。长按显示操作"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "触感反馈"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "隐藏"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "显示首页 Logo"
 msgid "Show Home text"
 msgstr "显示首页文字"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "在首页显示插图"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "显示图片"
@@ -2990,6 +3002,10 @@ msgstr "显示服务器列表"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "查看正在运行的项目"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "显示"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "把对话记录当成聊天呈现，并收起工具步骤"
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "主题"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "跟随主题"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
