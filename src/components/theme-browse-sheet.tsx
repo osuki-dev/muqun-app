@@ -20,7 +20,6 @@ import { holdFor, remainingVisibleMs } from '@/lib/minimum-visible';
 import { useRenderTally } from '@/lib/render-tally';
 import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
 import { throwIfThemeAborted } from '@/theme/abort';
-import type { ThemeAssetProgress } from '@/theme/asset-stream';
 import { prepareThemeAssetStream, type PreparedThemeAssets } from '@/theme/assets';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import {
@@ -31,6 +30,7 @@ import {
 } from '@/theme/gallery';
 import { cachedThemeIndex, clearThemeIndex, putThemeIndex } from '@/theme/gallery-cache';
 import { ThemeImportRequest } from '@/theme/import-request';
+import { assetInstallProgress, type ThemeInstallProgress } from '@/theme/install-progress';
 import { publicThemeTransport } from '@/theme/public-transport';
 import { inspectRemoteTheme } from '@/theme/remote-import';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -110,7 +110,9 @@ export function ThemeBrowseSheet({
   // on the theme it is for, and a second press elsewhere must not look like it
   // did something.
   const [pending, setPending] = useState<string | null>(null);
-  const [progress, setProgress] = useState<ThemeAssetProgress | null>(null);
+  // One value for the whole install rather than one per stage. The phases have
+  // different things to count and the same place to say them.
+  const [progress, setProgress] = useState<ThemeInstallProgress | null>(null);
   // Covers that screened, were requested, and did not paint. A row keeps its
   // placeholder rather than a broken picture.
   const [brokenCovers, setBrokenCovers] = useState<readonly string[]>([]);
@@ -179,6 +181,7 @@ export function ThemeBrowseSheet({
     // Synchronously, before anything is awaited, so the render that shows the
     // acknowledgement is already scheduled when this function returns.
     setPending(entry.id);
+    setProgress({ phase: 'downloading' });
     setFailed(false);
     const pressedAt = Date.now();
     void (async () => {
@@ -187,22 +190,26 @@ export function ThemeBrowseSheet({
       let transferred = false;
       try {
         /*
-         * Let the pending render paint before the JS thread is taken.
+         * There used to be a hold here, and the pipeline having learned to
+         * yield is what removed it.
          *
-         * Everything below this line holds the thread: `inspectRemoteTheme`
-         * resolves the download and then runs `unpackTheme`, which is a
-         * synchronous pure-JS inflate and CRC32 over the whole archive. Without
-         * this hold, React had the pending state but never got a frame to
-         * commit it in, and on a fast connection the whole install finished
-         * before anything was drawn -- the reader pressed a row and saw
-         * nothing at all, which is what the device review found.
+         * The device review found a press that looked ignored: React had the
+         * pending state but never got a frame to commit it in, because
+         * everything after the call below took the JS thread and kept it --
+         * the download resolved, then the whole archive was inflated and
+         * CRC32'd synchronously. A `DURATION.short` hold in front of the work
+         * bought the commit a frame, which fixed the symptom by delaying the
+         * install.
          *
-         * `DURATION.short` rather than a bare yield: it is the length of the
-         * cross-fade that brings the spinner in, so the hold covers the
-         * transition rather than just the commit.
+         * The phases do it properly now. The download is a real await on the
+         * native transport, the unpack yields between every ZIP entry and
+         * every 256 KiB inside one, and staging yields before each image, so
+         * the acknowledgement paints as part of the work starting rather than
+         * instead of it. Two mechanisms for one frame would be one too many,
+         * so only the floor below survives -- and that one is not about
+         * painting at all, it is about a state that did paint staying up long
+         * enough to have been seen.
          */
-        await holdFor(DURATION.short);
-        throwIfThemeAborted(signal);
         // `format: 'package'` because a catalogue entry is always a packed
         // `.muqun-theme`. Its assets come out of the archive rather than off
         // the network, so there are no third-party domains for a reader to
@@ -210,16 +217,21 @@ export function ThemeBrowseSheet({
         const inspection = await inspectRemoteTheme(publicThemeTransport, themePackageUrl(entry), {
           signal,
           format: 'package',
-        });
-        throwIfThemeAborted(signal);
-        prepared = await prepareThemeAssetStream(inspection.manifest, inspection.assets(signal), {
-          signal,
           onProgress(value) {
             if (mounted.current && !signal.aborted) setProgress(value);
           },
         });
         throwIfThemeAborted(signal);
-        // And the other half of the floor: a download that beat its own
+        prepared = await prepareThemeAssetStream(inspection.manifest, inspection.assets(signal), {
+          signal,
+          onProgress(value) {
+            // The stream counts images in its own vocabulary; the phase model
+            // is where the two meet.
+            if (mounted.current && !signal.aborted) setProgress(assetInstallProgress(value));
+          },
+        });
+        throwIfThemeAborted(signal);
+        // The floor, and the whole of it: a download that beat its own
         // announcement leaves the announcement up for the rest of its welcome
         // rather than flashing through it on the way to another screen.
         await holdFor(remainingVisibleMs(pressedAt, MINIMUM_PENDING_VISIBLE_MS));
@@ -262,10 +274,12 @@ export function ThemeBrowseSheet({
    * found exactly that. A string rather than an object, so it compares by
    * value and a render that changed nothing re-renders nothing.
    */
+  const counted = progress && progress.phase !== 'downloading' ? progress : null;
   const rowState = [
     pending ?? '',
-    progress?.completedAssets ?? '',
-    progress?.totalAssets ?? '',
+    progress?.phase ?? '',
+    counted?.completed ?? '',
+    counted?.total ?? '',
     brokenCovers.length,
     installedIds.size,
     pageStart,
@@ -429,12 +443,21 @@ export function ThemeBrowseSheet({
                 entering={fadeIn('medium')}
                 exiting={fadeOut('short')}
                 style={styles.status}>
+                {/* Three waits, three names, one bar. `downloading` has
+                    nothing to count and says so by not drawing one. */}
                 <ThemeImportProgress
                   testID="theme-browse-progress"
-                  label={progress ? t`Preparing images` : t`Downloading…`}
-                  completed={progress?.completedAssets}
-                  total={progress?.totalAssets}
-                  receivedBytes={progress?.receivedBytes}
+                  label={
+                    progress?.phase === 'unpacking'
+                      ? t`Unpacking…`
+                      : progress?.phase === 'assets'
+                        ? t`Preparing images`
+                        : t`Downloading…`
+                  }
+                  phase={progress?.phase}
+                  completed={counted?.completed}
+                  total={counted?.total}
+                  receivedBytes={progress?.phase === 'assets' ? progress.receivedBytes : undefined}
                 />
               </Animated.View>
             ) : failed && rows.length ? (
