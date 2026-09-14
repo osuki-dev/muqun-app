@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 import {
+  assignmentStripState,
   collaborationSpawnOutcome,
   collaborationAvailability,
   collaborationAgents,
@@ -42,6 +44,81 @@ describe('collaboration compatibility', () => {
     expect(collaborationAvailability({ ...health, capabilities: [] }, 'herdr', 'herdr')).toBe(
       'gateway'
     );
+  });
+  test('an old Herdr is never blamed on the Gateway', () => {
+    // A current gateway withholds `agent_collaboration` when no session has a
+    // Herdr 0.9.0+ behind it, so the gateway-wide array is missing for exactly
+    // the machine whose problem is Herdr. Reading that array first answered
+    // `gateway` there -- the one upgrade guaranteed not to help, which is the
+    // failure this feature was fixed for once already.
+    expect(collaborationAvailability({ ...health, capabilities: [] }, 'old', 'herdr')).toBe(
+      'herdr'
+    );
+  });
+  test('a per-session answer is the one that counts', () => {
+    // The precise answer, from the gateway that actually pinged that backend.
+    // It is preferred over both the version regex here and the gateway-wide
+    // array, and an empty list for a connected Herdr means its version -- a
+    // gateway too old for the feature sends no per-session key at all.
+    const perSession = (capabilities: string[] | undefined, version: string | null) => ({
+      ...health,
+      capabilities: [],
+      backends: [
+        {
+          sessionId: 'herdr',
+          kind: 'herdr',
+          connected: true,
+          version,
+          ...(capabilities ? { capabilities } : {}),
+        },
+      ],
+    });
+    expect(
+      collaborationAvailability(perSession(['agent_collaboration'], '0.9.2'), 'herdr', 'herdr')
+    ).toBe('ready');
+    // The gateway-wide array says nothing, and the session's own list still
+    // wins -- which is the whole point of sending it.
+    expect(collaborationAvailability(perSession([], '0.9.2'), 'herdr', 'herdr')).toBe('herdr');
+    // A gateway that reports no version at all still gets a verdict from its
+    // own per-session answer rather than falling through to `unavailable`.
+    expect(
+      collaborationAvailability(perSession(['agent_collaboration'], null), 'herdr', 'herdr')
+    ).toBe('ready');
+  });
+  test('the strip appears only where there is something to offer or to explain', () => {
+    const offering = { canSpawn: true, candidates: 1 };
+    const nothing = { canSpawn: false, candidates: 0 };
+
+    expect(assignmentStripState('ready', offering)).toEqual({ toggle: true });
+    // Ready, but this session has one terminal in it and a gateway that cannot
+    // spawn. An empty row is not an answer, so there is no control to open one.
+    expect(assignmentStripState('ready', nothing)).toEqual({ toggle: false });
+
+    // The two upgrades, which open the strip even with nothing to offer --
+    // because what it holds there is the sentence naming what to update.
+    expect(assignmentStripState('gateway', nothing)).toEqual({
+      toggle: true,
+      upgrade: 'gateway',
+    });
+    expect(assignmentStripState('herdr', nothing)).toEqual({ toggle: true, upgrade: 'herdr' });
+
+    // tmux, and a backend that is not answering. No toggle and no sentence: an
+    // upgrade is not advice anybody can act on here, and ordinary terminal use
+    // is untouched. A session with candidates cannot happen on tmux -- the join
+    // drops an agent with no instance id -- but the rule does not depend on it.
+    for (const availability of ['backend', 'unavailable'] as const) {
+      expect(assignmentStripState(availability, offering)).toEqual({ toggle: false });
+      expect(assignmentStripState(availability, nothing)).toEqual({ toggle: false });
+    }
+  });
+  test('the demo gateway answers the way a current one does', () => {
+    // The offline e2e flow drives the strip, so the fixture has to satisfy the
+    // same gate a real gateway does -- and satisfy it by the same route, with a
+    // per-session list rather than only the gateway-wide array. Read from the
+    // source because importing `demo-gateway` pulls in the Lingui macro, which
+    // this suite does not run a Babel pass for.
+    const source = readFileSync(new URL('../demo-gateway.ts', import.meta.url), 'utf8');
+    expect(source).toContain("capabilities: ['agent_collaboration']");
   });
   test('does not enable a disconnected or mismatched backend', () => {
     for (const backend of [

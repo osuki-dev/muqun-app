@@ -330,6 +330,10 @@ msgstr "正在詢問伺服器可以執行哪些代理程式…"
 msgid "Assign this to an assistant"
 msgstr "交給一個助理去做"
 
+#: src/components/agent-assignment-bar.tsx
+msgid "Assigning a task is unavailable"
+msgstr "無法交給其他助手"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "助理已啟動"
@@ -3717,6 +3721,14 @@ msgstr "未追蹤"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "向上鍵"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "請將伺服器上的 Herdr 更新到 0.9.0 或更新版本並重新啟動工作階段，才能把任務交給其他助手"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
+msgstr "請更新伺服器上的 Muqun Gateway 並重新啟動，才能把任務交給其他助手"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

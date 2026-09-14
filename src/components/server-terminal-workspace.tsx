@@ -97,7 +97,11 @@ import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import type { AgentProfile } from '@/lib/agent-spawn';
 import { AgentAssignmentBar } from '@/components/agent-assignment-bar';
-import { collaborationAgents } from '@/lib/agent-collaboration';
+import {
+  assignmentStripState,
+  collaborationAgents,
+  collaborationAvailability,
+} from '@/lib/agent-collaboration';
 import { useAwayDigest } from '@/hooks/use-away-digest';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
@@ -1980,6 +1984,31 @@ export function ServerTerminalWorkspace({
         : undefined;
   }, [serverId, data.sessionId, selection.paneId]);
   /**
+   * Whether a task can be assigned in this session, and if not, what would fix
+   * it -- the Gateway's own answer about *this* session, never a constant.
+   *
+   * It replaces `AGENT_SPAWN_SHIPPED`, which answered "no" to every gateway on
+   * every machine and so made the strip unreachable in a shipped build. The
+   * capability answer is the switch now, and `collaborationAvailability` turns
+   * it into one of five words rather than a boolean, because a `no` has to name
+   * the upgrade that would help: Herdr's, the Gateway's, or neither.
+   *
+   * `backendKind` comes from the session list rather than from `/health`,
+   * because that is what the reader actually switched to; a legacy gateway that
+   * names no backend means Herdr, which is what `SessionChoice` fills in.
+   */
+  const collaborationReason = useMemo(
+    () =>
+      data.health
+        ? collaborationAvailability(
+            data.health,
+            data.sessionId,
+            sessions.find((session) => session.id === data.sessionId)?.kind ?? ''
+          )
+        : ('unavailable' as const),
+    [data.health, data.sessionId, sessions]
+  );
+  /**
    * Fetch the agent catalog once, the first time the reader opens the menu that
    * shows it. It describes the host rather than this pane, so one fetch per
    * mount is enough; a failure leaves the list empty and the menu is exactly
@@ -1988,13 +2017,14 @@ export function ServerTerminalWorkspace({
   const loadAssistantKinds = useCallback(async () => {
     if (assistantKinds.length > 0) return;
     if (!gatewaySupportsAgentSpawn(data.health?.capabilities)) return;
+    if (collaborationReason !== 'ready') return;
     try {
       const profiles = await loadAgentProfiles();
       setAssistantKinds(profiles);
     } catch {
       // Silent: the menu still attaches files, which is what it was opened for.
     }
-  }, [assistantKinds.length, data.health?.capabilities]);
+  }, [assistantKinds.length, collaborationReason, data.health?.capabilities]);
   const assignment = useComposerAssignment({
     serverId,
     sessionId: data.sessionId,
@@ -3781,41 +3811,45 @@ export function ServerTerminalWorkspace({
 
   // Shown on capability, not on loaded data: the catalog is fetched when the
   // strip opens, so gating the toggle on `assistantKinds` would hide the only
-  // control that loads them. A gateway that can spawn, or a session with
-  // another assistant in it, has something to offer; anything else has not.
-  const assignmentToggle =
-    gatewaySupportsAgentSpawn(data.health?.capabilities) || assignmentCandidates.length > 0 ? (
-      <PressableScale
-        testID="assignment-toggle"
-        accessibilityRole="button"
-        accessibilityState={{ expanded: assignment.open }}
-        accessibilityLabel={
-          assignment.open ? t`Stop assigning a task` : t`Assign this to an assistant`
+  // control that loads them. `assignmentStripState` holds the rest of the rule,
+  // including the one a tmux session hits -- no toggle, no sentence, an ordinary
+  // composer, exactly as before.
+  const assignmentStrip = assignmentStripState(collaborationReason, {
+    canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities),
+    candidates: assignmentCandidates.length,
+  });
+  const assignmentToggle = assignmentStrip.toggle ? (
+    <PressableScale
+      testID="assignment-toggle"
+      accessibilityRole="button"
+      accessibilityState={{ expanded: assignment.open }}
+      accessibilityLabel={
+        assignment.open ? t`Stop assigning a task` : t`Assign this to an assistant`
+      }
+      feedback="selection"
+      pressedScale={0.9}
+      disabled={!selectedPane || sending}
+      onPress={() => {
+        if (assignment.open) {
+          assignment.close();
+          return;
         }
-        feedback="selection"
-        pressedScale={0.9}
-        disabled={!selectedPane || sending}
-        onPress={() => {
-          if (assignment.open) {
-            assignment.close();
-            return;
-          }
-          assignment.setOpen(true);
-          // Fetched when the row that shows them is opened, not on mount: most
-          // sessions never open it, and the catalog is a request.
-          void loadAssistantKinds();
-        }}
-        style={[
-          styles.keyRowToggle,
-          {
-            backgroundColor: surfaceBackground(
-              assignment.open ? theme.colors.primarySubtle : chromeGlass
-            ),
-          },
-        ]}>
-        <Bot size={16} color={theme.colors.primary} />
-      </PressableScale>
-    ) : null;
+        assignment.setOpen(true);
+        // Fetched when the row that shows them is opened, not on mount: most
+        // sessions never open it, and the catalog is a request.
+        void loadAssistantKinds();
+      }}
+      style={[
+        styles.keyRowToggle,
+        {
+          backgroundColor: surfaceBackground(
+            assignment.open ? theme.colors.primarySubtle : chromeGlass
+          ),
+        },
+      ]}>
+      <Bot size={16} color={theme.colors.primary} />
+    </PressableScale>
+  ) : null;
 
   const composerEntry = (
     <PressableScale
@@ -3868,13 +3902,14 @@ export function ServerTerminalWorkspace({
   const assignmentBar =
     dock.composer && assignment.open ? (
       <AgentAssignmentBar
-        candidates={assignmentCandidates}
-        kinds={assistantKinds}
+        candidates={assignmentStrip.upgrade ? [] : assignmentCandidates}
+        kinds={assignmentStrip.upgrade ? [] : assistantKinds}
         target={assignment.target}
         onChoose={assignment.choose}
         onClose={assignment.close}
         disabled={sending}
         commandName={assignment.command?.name}
+        upgrade={assignmentStrip.upgrade}
       />
     ) : null;
 
