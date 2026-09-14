@@ -3680,6 +3680,10 @@ msgstr "Mit {0} entsperren"
 msgid "Unlock with {authLabel}"
 msgstr "Mit {authLabel} entsperren"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "Wird entpackt …"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "Kopplung aufheben"

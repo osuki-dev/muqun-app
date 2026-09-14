@@ -3680,6 +3680,10 @@ msgstr "使用 {0} 解锁"
 msgid "Unlock with {authLabel}"
 msgstr "使用 {authLabel} 解锁"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "正在解压…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "取消配对"

@@ -3680,6 +3680,10 @@ msgstr "Desbloquear com {0}"
 msgid "Unlock with {authLabel}"
 msgstr "Desbloquear com {authLabel}"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "Descompactando…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "Desemparelhar"

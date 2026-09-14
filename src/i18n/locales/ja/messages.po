@@ -3680,6 +3680,10 @@ msgstr "{0} でロック解除"
 msgid "Unlock with {authLabel}"
 msgstr "{authLabel} でロック解除"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "展開しています…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "ペアリングを解除"

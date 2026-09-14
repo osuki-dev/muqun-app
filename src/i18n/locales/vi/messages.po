@@ -3680,6 +3680,10 @@ msgstr "Mở khóa bằng {0}"
 msgid "Unlock with {authLabel}"
 msgstr "Mở khóa bằng {authLabel}"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "Đang giải nén…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "Hủy ghép nối"
