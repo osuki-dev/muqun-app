@@ -78,11 +78,36 @@ is hidden "id=theme-link-input"
 is visible "id=theme-import-file"
 
 # section browse-entry
-# Present, and deliberately not pressed. Pressing it reads the catalogue over
-# the network, and this suite is required to drive offline demo mode with no
-# gateway, no network and no pairing. What is checkable offline is that the way
-# in still exists.
+# Present, and deliberately not pressed *here*. The manifest drives the press
+# that follows, so this file never spells it -- see `browse-offline` below for
+# what the press is for.
 is visible "id=theme-browse"
+
+# section browse-offline
+# The one place this suite lets a network read happen, and it happens so the
+# failure can be asserted: with no network the catalogue read fails and the
+# sheet must say so and offer a way back, rather than spinning forever. The
+# native client's own timeout is 30s, but an offline emulator fails DNS in
+# well under a second; the wait is generous for the case where it does not.
+wait "id=theme-browse-empty" 40000
+is visible "id=theme-browse-retry"
+screenshot dist/theme-browse-offline.png
+press "label=\"Close theme catalogue\""
+wait stable 400 5000
+is visible "id=theme-browse"
+
+# section mine-tab
+# The tab persists, and the suite relaunches without erasing data -- so a flow
+# that relies on the default lands wherever the previous flow left it. Every
+# assertion below names the tab it needs first.
+wait stable 400 5000
+is visible "id=theme-tab"
+is visible "id=\"settings-selection:on:theme-tab-mine\""
+is visible "id=theme-row-my-theme"
+
+# section builtin-tab
+wait stable 400 5000
+is visible "id=\"settings-selection:on:theme-tab-builtin\""
 
 # section opacity-enable
 # This theme's palette leaves a terminal floor of 97%, so the whole track spans

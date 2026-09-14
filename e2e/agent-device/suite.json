@@ -222,6 +222,16 @@
         "run": "flows/custom-themes.ad#browse-entry"
       },
       {
+        "target": {
+          "id": "theme-browse"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#browse-offline"
+      },
+      {
         "run": "flows/custom-themes.ad#settle"
       },
       {
@@ -230,6 +240,16 @@
         },
         "mode": "hidden",
         "run": "flows/custom-themes.ad#applied-status"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-tab-mine"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#mine-tab"
       },
       {
         "run": "flows/custom-themes.ad#reopen-applied"
@@ -347,6 +367,16 @@
         },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-tab-builtin"
+        },
+        "mode": "press",
+        "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "run": "flows/custom-themes.ad#builtin-tab"
       },
       {
         "target": {
@@ -3275,6 +3305,13 @@
       },
       {
         "target": {
+          "id": "settings-selection:(on|off):theme-tab-builtin"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s8"
+      },
+      {
+        "target": {
           "id": "settings-selection:(on|off):theme-osuki"
         },
         "mode": "scroll",
@@ -3944,6 +3981,13 @@
       {
         "target": {
           "text": "Theme, Catppuccin"
+        },
+        "mode": "press",
+        "run": "flows/settings.ad#s78"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-tab-builtin"
         },
         "mode": "press",
         "run": "flows/settings.ad#s78"
@@ -5784,6 +5828,13 @@
       },
       {
         "target": {
+          "id": "settings-selection:(on|off):theme-tab-builtin"
+        },
+        "mode": "press",
+        "run": "flows/theme-shots.ad#s3"
+      },
+      {
+        "target": {
           "text": "Osuki"
         },
         "mode": "visible",
@@ -5942,6 +5993,13 @@
       {
         "target": {
           "text": "Theme, .*"
+        },
+        "mode": "press",
+        "run": "subflows/capture-theme.ad#s3"
+      },
+      {
+        "target": {
+          "id": "settings-selection:(on|off):theme-tab-builtin"
         },
         "mode": "press",
         "run": "subflows/capture-theme.ad#s3"
