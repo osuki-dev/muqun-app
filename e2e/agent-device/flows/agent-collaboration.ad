@@ -54,3 +54,22 @@ is hidden "role=button text=\"Assign a task\""
 press "role=button label=\"Close quick actions\" || label=\"Close\""
 wait "role=button text=\"Open quick actions\"" 10000
 is visible "id=\"terminal-composer-input\""
+# The same collaboration surface retains reviewed history. This is a demo UI
+# assertion only; real agent delivery has its own paired integration gate.
+press "id=\"assignment-toggle\""
+press "id=\"assignment-new-claude\""
+fill "id=\"terminal-composer-input\"" "QA assignment history"
+press "label=\"Send this task to a new claude\""
+wait "id=\"collaboration-notice-expand\"" 15000
+press "id=\"collaboration-notice-expand\""
+wait "id=\"collaboration-notice-review\"" 10000
+press "id=\"collaboration-notice-review\""
+wait text "Assignment history" 10000
+is visible "id=\"collaboration-notice-remove\""
+screenshot "shots/collaboration-reviewed-history.png"
+# Removing this history is local bookkeeping. It leaves the terminal and its
+# composer available and does not stop the demo assistant.
+press "id=\"collaboration-notice-remove\""
+press "id=\"collaboration-notice-remove\""
+wait "id=\"terminal-composer-input\"" 10000
+is hidden "id=\"collaboration-notice\""

@@ -1,4 +1,5 @@
 import { ThemeIcon } from '@/components/theme-icon';
+import { Button } from '@/components/themed-button';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
@@ -2010,17 +2011,29 @@ export function ServerTerminalWorkspace({
   );
   /**
    * Fetch the agent catalog once, the first time the reader opens the menu that
-   * shows it. It describes the host rather than this pane, so one fetch per
-   * mount is enough; a failure leaves the list empty and the menu is exactly
+   * shows it. Cache it within the current connection and selected session; a failure leaves the list empty and the menu is exactly
    * what it was before assistants could be started from it.
    */
+  const collaborationReadyRef = useRef(false);
+  useLayoutEffect(() => {
+    collaborationReadyRef.current = collaborationReason === 'ready';
+  }, [collaborationReason]);
+  const catalogueGeneration = useRef(0);
+  useLayoutEffect(() => {
+    catalogueGeneration.current += 1;
+    setAssistantKinds([]);
+    return () => {
+      catalogueGeneration.current += 1;
+    };
+  }, [record, serverId, data.sessionId, collaborationReason]);
   const loadAssistantKinds = useCallback(async () => {
     if (assistantKinds.length > 0) return;
     if (!gatewaySupportsAgentSpawn(data.health?.capabilities)) return;
     if (collaborationReason !== 'ready') return;
     try {
+      const generation = catalogueGeneration.current;
       const profiles = await loadAgentProfiles();
-      setAssistantKinds(profiles);
+      if (generation === catalogueGeneration.current) setAssistantKinds(profiles);
     } catch {
       // Silent: the menu still attaches files, which is what it was opened for.
     }
@@ -2394,7 +2407,11 @@ export function ServerTerminalWorkspace({
   // left behind for the next one.
   useEffect(() => {
     if (!assignmentRequest) return;
-    if (assignmentRequest.serverId !== serverId || assignmentRequest.paneId !== selection.paneId)
+    if (
+      assignmentRequest.serverId !== serverId ||
+      assignmentRequest.sessionId !== data.sessionId ||
+      assignmentRequest.paneId !== selection.paneId
+    )
       return;
     assignment.setOpen(true);
     assignment.setCommand(assignmentRequest.command ?? null);
@@ -2408,6 +2425,7 @@ export function ServerTerminalWorkspace({
   }, [
     assignment,
     assignmentRequest,
+    data.sessionId,
     clearAssignmentRequest,
     loadAssistantKinds,
     selection.paneId,
@@ -3290,6 +3308,7 @@ export function ServerTerminalWorkspace({
     if (!draft.trim() && !hasAttachments && !assignment.command) return;
     const sendToken = composerSendGuard.acquire();
     if (sendToken === null) return;
+    const trackedSend = assignment.active;
     const ownsDelivery = deliveryOwnership.capture();
     const isCurrentSend = () =>
       composerSendGuard.owns(sendToken) &&
@@ -3325,11 +3344,15 @@ export function ServerTerminalWorkspace({
         attachmentPaths.length > 0
           ? [draft.trim(), ...attachmentPaths].filter((part) => part.length > 0).join(' ')
           : draft;
-      if (!value.trim()) return;
+      if (!value.trim() && !(trackedSend && assignment.command?.instructions)) return;
 
-      if (assignment.active) {
-        // The task goes to an assistant that does not exist yet, so this neither
-        // types into the pane nor folds attachment paths into the line: the
+      if (trackedSend) {
+        if (!collaborationReadyRef.current)
+          throw new Error(
+            'Agent collaboration is unavailable for this session. Your draft has not been sent.'
+          );
+        // Tracked assignments use the chosen assistant, so this does not
+        // fall through into ordinary pane input. The
         // references travel as their own block (`attachmentCommandText`), and a
         // bundled instruction set rides with them rather than in the field.
         if (!record) throw new Error('Not connected to a server.');
@@ -3343,15 +3366,15 @@ export function ServerTerminalWorkspace({
             sourcePaneId: requestPaneId,
             connectionGeneration: ATTACHMENT_CONNECTION_GENERATION,
           },
-          isCurrentSend
+          () => isCurrentSend() && collaborationReadyRef.current
         );
         if (!isCurrentSend()) return;
         if (outcome.status === 'sent') {
           assignment.close();
           showToast({
             variant: 'success',
-            title: t`Assistant started`,
-            message: t`It works on its own. Follow it in Agent collaboration.`,
+            title: outcome.started ? t`Assistant started` : t`Instruction sent`,
+            message: t`Follow this assignment in Agent collaboration. Delivery does not mean the task is complete.`,
           });
         } else {
           // Never retried automatically: a second attempt would be a second
@@ -3360,8 +3383,18 @@ export function ServerTerminalWorkspace({
           // reader decides, after checking the terminal that was created.
           showToast({
             variant: 'danger',
-            title: t`Delivery not confirmed`,
-            message: t`A terminal was created. Check it before sending again — your task is still here.`,
+            title:
+              outcome.reason === 'attention'
+                ? t`Assistant needs attention`
+                : outcome.reason === 'start-failed'
+                  ? t`Assistant did not start`
+                  : outcome.reason === 'start-unconfirmed'
+                    ? t`Assistant start not confirmed`
+                    : t`Delivery not confirmed`,
+            message:
+              assignment.target?.type === 'new'
+                ? t`A terminal was created. Check it before sending again — your task is still here.`
+                : t`Check the assistant before sending again — your instruction may already have arrived. Your draft is still here.`,
           });
           return;
         }
@@ -4329,6 +4362,16 @@ export function ServerTerminalWorkspace({
             {featureFlags.terminalAwayDigest && away.digest ? (
               <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
             ) : null}
+            <Button
+              testID="managed-tasks-open"
+              variant="ghost"
+              disabled={!data.sessionId}
+              onPress={() =>
+                router.push({
+                  pathname: '/work-tasks',
+                  params: { serverId, sessionId: data.sessionId, cwd: field(selectedPane, 'cwd') },
+                } as Href)
+              }>{t`Tasks`}</Button>
             <CollaborationNotice
               context={{
                 serverId,

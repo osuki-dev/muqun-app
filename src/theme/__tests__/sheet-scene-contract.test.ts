@@ -76,21 +76,91 @@ test('the settings sheet keeps the native scroll root a form sheet needs', () =>
     true,
     ts.ScriptKind.TSX
   );
-  const returns: ts.JsxElement[] = [];
-  function visit(node: ts.Node) {
-    if (
-      ts.isReturnStatement(node) &&
-      node.expression &&
-      ts.isParenthesizedExpression(node.expression) &&
-      ts.isJsxElement(node.expression.expression)
-    )
-      returns.push(node.expression.expression);
-    ts.forEachChild(node, visit);
+  function unwrap(expression: ts.Expression): ts.Expression {
+    return ts.isParenthesizedExpression(expression) ? unwrap(expression.expression) : expression;
   }
-  visit(source);
+  const component = source.statements.find(
+    (node): node is ts.FunctionDeclaration =>
+      ts.isFunctionDeclaration(node) && node.name?.text === 'SettingsSheet'
+  );
+  if (!component?.body) throw new Error('SettingsSheet must remain an inspectable component');
+  const parameter = component.parameters[0].name;
+  if (!ts.isObjectBindingPattern(parameter)) throw new Error('Expected named frame options');
+  const fullScreen = parameter.elements.find(
+    (element) => element.name.getText(source) === 'fullScreen'
+  );
+  expect(fullScreen?.initializer?.kind).toBe(ts.SyntaxKind.FalseKeyword);
+
+  const declarations = component.body.statements.flatMap((statement) =>
+    ts.isVariableStatement(statement) ? [...statement.declarationList.declarations] : []
+  );
+  const content = declarations.find(
+    (declaration) => declaration.name.getText(source) === 'content'
+  );
+  if (!content?.initializer) throw new Error('Expected the shared scroll content');
+  const root = unwrap(content.initializer);
+  if (!ts.isJsxElement(root)) throw new Error('Shared content must have one JSX root');
+  const returns = component.body.statements.filter(ts.isReturnStatement);
   expect(returns.length).toBe(1);
-  const root = returns[0];
+  if (!returns[0].expression) throw new Error('Frame must return content');
+  const branches = unwrap(returns[0].expression);
+  if (!ts.isConditionalExpression(branches))
+    throw new Error('Expected explicit presentation branches');
+  expect(branches.condition.getText(source)).toBe('fullScreen');
+  // The default native form sheet receives the scroll view itself, with no
+  // SafeAreaView or sibling introduced above its required native root.
+  expect(unwrap(branches.whenFalse).getText(source)).toBe('content');
+  const fullScreenRoot = unwrap(branches.whenTrue);
+  if (!ts.isJsxElement(fullScreenRoot)) throw new Error('Full-screen frame must have one root');
+  expect(fullScreenRoot.openingElement.tagName.getText(source)).toBe('SafeAreaView');
+  const renderedChildren = fullScreenRoot.children.filter(
+    (child) => !ts.isJsxText(child) || child.text.trim().length > 0
+  );
+  expect(renderedChildren.length).toBe(1);
+  const child = renderedChildren[0];
+  if (!ts.isJsxExpression(child))
+    throw new Error('Only shared content belongs inside the safe viewport');
+  expect(child.expression?.getText(source)).toBe('content');
+  const edges = fullScreenRoot.openingElement.attributes.properties.find(
+    (attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'edges'
+  );
+  if (
+    !edges ||
+    !ts.isJsxAttribute(edges) ||
+    !edges.initializer ||
+    !ts.isJsxExpression(edges.initializer) ||
+    !edges.initializer.expression
+  )
+    throw new Error('Full-screen viewport must inset both system edges');
+  const edgeValues = unwrap(edges.initializer.expression);
+  if (!ts.isArrayLiteralExpression(edgeValues))
+    throw new Error('Expected explicit safe-area edges');
+  expect(edgeValues.elements.map((edge) => (ts.isStringLiteral(edge) ? edge.text : null))).toEqual([
+    'top',
+    'bottom',
+  ]);
   expect(root.openingElement.tagName.getText(source)).toBe('ScrollScreen');
+  const safeArea = root.openingElement.attributes.properties.find(
+    (attribute) => ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'safeArea'
+  );
+  if (
+    !safeArea ||
+    !ts.isJsxAttribute(safeArea) ||
+    !safeArea.initializer ||
+    !ts.isJsxExpression(safeArea.initializer) ||
+    !safeArea.initializer.expression
+  )
+    throw new Error('Scroll safe-area policy must be explicit');
+  const scrollInsets = unwrap(safeArea.initializer.expression);
+  if (!ts.isConditionalExpression(scrollInsets))
+    throw new Error('Scroll insets depend on presentation');
+  expect(scrollInsets.condition.getText(source)).toBe('fullScreen');
+  expect(ts.isStringLiteral(scrollInsets.whenTrue) ? scrollInsets.whenTrue.text : null).toBe(
+    'none'
+  );
+  expect(ts.isStringLiteral(scrollInsets.whenFalse) ? scrollInsets.whenFalse.text : null).toBe(
+    'bottom'
+  );
   // Opaque, and not the slider's business: a sheet is a new scene rather than a
   // window onto the route it was opened from.
   expect(root.openingElement.getText(source)).toContain('backgroundColor: theme.colors.background');

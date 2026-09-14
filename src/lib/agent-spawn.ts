@@ -105,7 +105,10 @@ export interface AgentSpawnRequest {
  * blank row in it offers a choice that cannot be made. A kind is the one field
  * with no fallback, since it is what the spawn sends back.
  */
-export function agentProfilesFromResponse(value: unknown): AgentProfile[] {
+export function agentProfilesFromResponse(
+  value: unknown,
+  options: { requireAvailable?: boolean } = {}
+): AgentProfile[] {
   const entries = arrayField(value, 'agents') ?? arrayField(value, 'items');
   if (!entries) return [];
 
@@ -120,9 +123,13 @@ export function agentProfilesFromResponse(value: unknown): AgentProfile[] {
     profiles.push({
       kind,
       command: stringField(raw.command) ?? kind,
-      // Absent means "the gateway did not probe", which is not the same as "not
-      // there". Only an explicit `false` dims a row.
-      available: raw.available === undefined ? true : raw.available === true,
+      // Legacy spawning treats an absent probe as unknown. Managed task selection
+      // explicitly requires a successful installation probe instead.
+      available: options.requireAvailable
+        ? raw.available === true
+        : raw.available === undefined
+          ? true
+          : raw.available === true,
     });
   }
   return profiles;

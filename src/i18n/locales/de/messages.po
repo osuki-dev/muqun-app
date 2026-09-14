@@ -145,6 +145,10 @@ msgstr "Ein Gateway auf einem Rechner, den du per SSH erreichst – auch eines, 
 msgid "a new {0}"
 msgstr "ein neuer {0}"
 
+#: src/components/work-task-workspace.tsx
+msgid "A replacement starts separately. Previous instructions are not sent again; address any new instruction explicitly."
+msgstr "Ein Ersatz wird separat gestartet. Frühere Anweisungen werden nicht erneut gesendet; adressiere jede neue Anweisung ausdrücklich"
+
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
 msgstr "Der Schlüssel eines Servers wird beim ersten Mal gemerkt und danach jedes Mal geprüft. Ein geänderter Schlüssel stoppt die Verbindung, bis du es anders entscheidest"
@@ -161,6 +165,14 @@ msgstr "Ein Simulator lässt sich bedienen und nicht nur ansehen, deshalb gibt e
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "Ein heruntergefahrener Simulator kann eine Minute brauchen, bis er läuft"
 
+#: src/components/work-task-detail.tsx
+msgid "A submitted file changed. Ask for a new result submission."
+msgstr "Eine eingereichte Datei wurde geändert. Bitte um eine neue Ergebniseinreichung"
+
+#: src/components/work-task-detail.tsx
+msgid "A submitted file is unavailable. Ask for a new result submission."
+msgstr "Eine eingereichte Datei ist nicht verfügbar. Bitte um eine neue Ergebniseinreichung"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "Ein Terminal wurde erstellt. Prüfe es, bevor du erneut sendest – deine Aufgabe ist noch hier"
@@ -169,6 +181,18 @@ msgstr "Ein Terminal wurde erstellt. Prüfe es, bevor du erneut sendest – dein
 msgid "About"
 msgstr "Über"
 
+#: src/components/work-task-detail.tsx
+msgid "Accept this result"
+msgstr "Dieses Ergebnis annehmen"
+
+#: src/components/work-task-detail.tsx
+msgid "Accepting records a review of this submission. It does not merge, publish, or stop assistants."
+msgstr "Die Annahme dokumentiert die Prüfung dieser Einreichung. Sie führt weder Code zusammen noch veröffentlicht sie etwas oder stoppt Assistenten"
+
+#: src/components/work-task-detail.tsx
+msgid "Acknowledged, not proof of completion"
+msgstr "Bestätigt, kein Nachweis für den Abschluss"
+
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command."
 msgstr "Auf dieses Terminal wirken oder ihm einen Befehl senden"
@@ -176,6 +200,10 @@ msgstr "Auf dieses Terminal wirken oder ihm einen Befehl senden"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "Auf dieses Terminal wirken oder seinem Agenten einen Prompt senden"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Activity recorded"
+msgstr "Aktivität erfasst"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -186,9 +214,17 @@ msgstr "Host hinzufügen"
 msgid "Add an SSH host"
 msgstr "SSH-Host hinzufügen"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Add attachment"
+msgstr "Anhang hinzufügen"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Befehle und eigene Tastenkombinationen hinzufügen"
+
+#: src/components/work-task-workspace.tsx
+msgid "Add instructions…"
+msgstr "Anweisungen hinzufügen…"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Add machine"
@@ -198,6 +234,10 @@ msgstr "Rechner hinzufügen"
 msgid "Add one first"
 msgstr "Zuerst einen hinzufügen"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Add prerequisite without a result version"
+msgstr "Voraussetzung ohne Ergebnisversion hinzufügen"
+
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
 msgstr "Füge diese Zeile auf dem Server in ~/.ssh/authorized_keys ein:"
@@ -206,6 +246,10 @@ msgstr "Füge diese Zeile auf dem Server in ~/.ssh/authorized_keys ein:"
 msgctxt "git file status"
 msgid "Added"
 msgstr "Hinzugefügt"
+
+#: src/components/work-task-workspace.tsx
+msgid "Additional assistants"
+msgstr "Weitere Assistenten"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
@@ -263,6 +307,19 @@ msgstr "Kamera erlauben"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Kamera erlauben oder stattdessen die Adresse eingeben"
 
+#: src/components/work-task-detail.tsx
+msgid "An attached input has expired. Select and upload the file again before sending."
+msgstr "Eine angehängte Eingabe ist abgelaufen. Wähle die Datei erneut aus und lade sie vor dem Senden hoch"
+
+#: src/components/work-task-workspace.tsx
+msgid "An attachment expired. Explicitly upload it again before sending."
+msgstr "Ein Anhang ist abgelaufen. Lade ihn vor dem Senden ausdrücklich erneut hoch"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "An earlier operation may already have reached the assistant. Check status before taking another action."
+msgstr "Ein früherer Vorgang hat den Assistenten möglicherweise bereits erreicht. Prüfe den Status, bevor du eine weitere Aktion ausführst"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "Antwort"
@@ -296,6 +353,10 @@ msgstr "Aussehen"
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
 msgstr "Aussehen, Terminal, Sicherheit"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Apply delegation settings"
+msgstr "Delegierungseinstellungen anwenden"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
@@ -334,13 +395,53 @@ msgstr "Einem Assistenten zuweisen"
 msgid "Assigning a task is unavailable"
 msgstr "Aufgaben zuweisen ist nicht verfügbar"
 
+#: src/components/collaboration-notice.tsx
+msgid "Assignment history"
+msgstr "Auftragsverlauf"
+
+#: src/components/work-task-workspace.tsx
+msgid "Assistant"
+msgstr "Assistent"
+
+#: src/components/work-task-workspace.tsx
+msgid "Assistant changed"
+msgstr "Assistent geändert"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant did not start"
+msgstr "Assistent wurde nicht gestartet"
+
+#: src/components/work-task-detail.tsx
+msgid "Assistant instance"
+msgstr "Assistenteninstanz"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant needs attention"
+msgstr "Assistent benötigt Aufmerksamkeit"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Assistant start not confirmed"
+msgstr "Start des Assistenten nicht bestätigt"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Assistent gestartet"
 
+#: src/components/work-task-workspace.tsx
+msgid "Assistant still running"
+msgstr "Assistent läuft noch"
+
+#: src/components/work-task-detail.tsx
+msgid "Assistants"
+msgstr "Assistenten"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
 msgstr "Datei anhängen"
+
+#: src/components/work-task-detail.tsx
+msgid "Attempt ID"
+msgstr "Versuchs-ID"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
@@ -368,6 +469,7 @@ msgstr "Authentifizierung ist nicht verfügbar. Versuche es erneut oder prüfe d
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Back"
 msgstr "Zurück"
 
@@ -486,21 +588,60 @@ msgstr "Änderungen"
 msgid "Changes colored backgrounds, not text, icons or artwork"
 msgstr "Ändert farbige Hintergründe, nicht Text, Symbole oder Grafiken"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Changes requested for latest result"
+msgstr "Änderungen am neuesten Ergebnis angefordert"
+
+#: src/components/work-task-detail.tsx
+msgid "Changes were requested for this submission."
+msgstr "Für diese Einreichung wurden Änderungen angefordert"
+
 #: src/i18n/labels.ts
 msgid "Chat"
 msgstr "Chat"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check assistant lifecycle"
+msgstr "Assistentenlebenszyklus prüfen"
 
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "Prüfe die Authentifizierungseinstellungen des Geräts und versuche es erneut"
 
+#: src/components/work-task-workspace.tsx
+msgid "Check interruption status"
+msgstr "Unterbrechungsstatus prüfen"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check status"
+msgstr "Status prüfen"
+
+#: src/components/work-task-workspace.tsx
+msgid "Check status before taking another action. Reopening this screen does not resend the request."
+msgstr "Prüfe den Status, bevor du eine weitere Aktion ausführst. Beim erneuten Öffnen dieses Bildschirms wird die Anfrage nicht erneut gesendet"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Check the assistant before sending again — your instruction may already have arrived. Your draft is still here."
+msgstr "Prüfe den Assistenten vor dem erneuten Senden — deine Anweisung ist möglicherweise bereits angekommen. Dein Entwurf ist weiterhin vorhanden"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
 msgstr "Prüfe den Assistenten vor dem erneuten Senden. Die Anfrage könnte bereits angekommen sein"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Check the pending operation before changing delegation."
+msgstr "Prüfe den ausstehenden Vorgang, bevor du die Delegierung änderst"
+
 #: src/components/theme-link-import.tsx
 msgid "Check the repository URL, branch and theme file"
 msgstr "Repository-URL, Branch und Theme-Datei prüfen"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Check the task details before continuing."
+msgstr "Prüfe die Aufgabendetails, bevor du fortfährst"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
@@ -514,6 +655,10 @@ msgstr "Systemauthentifizierung wird geprüft…"
 msgid "Checking…"
 msgstr "Wird geprüft…"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Choose a confirmed lead assistant explicitly."
+msgstr "Wähle ausdrücklich einen bestätigten leitenden Assistenten aus"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
 msgstr "Simulator wählen"
@@ -523,8 +668,13 @@ msgid "Choose a simulator from the menu."
 msgstr "Einen Simulator im Menü auswählen"
 
 #: src/components/agent-assignment-bar.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Choose an assistant"
 msgstr "Assistenten wählen"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Choose an exact result version. A missing version stays blocked. Saving dependencies never starts an assistant or sends an instruction."
+msgstr "Wähle eine genaue Ergebnisversion. Ohne Version bleibt die Abhängigkeit blockiert. Das Speichern von Abhängigkeiten startet keinen Assistenten und sendet keine Anweisung"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -566,9 +716,12 @@ msgstr "Cache wird geleert"
 msgid "Clearing…"
 msgstr "Wird geleert…"
 
+#: src/app/work-tasks.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
+#: src/components/task-input-details.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Close"
 msgstr "Schließen"
 
@@ -599,6 +752,7 @@ msgstr "Kopplung schließen"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Close preview"
 msgstr "Vorschau schließen"
 
@@ -683,6 +837,10 @@ msgstr "Commit & Push"
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Kompakt"
+
+#: src/components/work-task-detail.tsx
+msgid "Configure delegation"
+msgstr "Delegierung konfigurieren"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1031,6 +1189,10 @@ msgstr "Host konnte nicht entfernt werden"
 msgid "Could not revoke device"
 msgstr "Gerät konnte nicht widerrufen werden"
 
+#: src/components/work-task-workspace.tsx
+msgid "Could not safely save the operation on this device. No further action will be sent. Check device storage and try checking status again."
+msgstr "Der Vorgang konnte auf diesem Gerät nicht sicher gespeichert werden. Es wird keine weitere Aktion gesendet. Prüfe den Gerätespeicher und versuche erneut, den Status zu prüfen"
+
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "Änderungen konnten nicht gespeichert werden"
@@ -1038,6 +1200,10 @@ msgstr "Änderungen konnten nicht gespeichert werden"
 #: src/components/ssh-host-form.tsx
 msgid "Could not save host"
 msgstr "Host konnte nicht gespeichert werden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Could not save interruption recovery information. Nothing was sent."
+msgstr "Informationen zur Wiederherstellung der Unterbrechung konnten nicht gespeichert werden. Es wurde nichts gesendet"
 
 #: src/app/commands.tsx
 msgid "Could not save shortcut"
@@ -1087,9 +1253,22 @@ msgstr "Kopplung konnte nicht aufgehoben werden"
 msgid "Could not update the session."
 msgstr "Die Session konnte nicht aktualisiert werden"
 
+#: src/components/work-task-workspace.tsx
+msgid "Could not update this task. Check status before continuing."
+msgstr "Diese Aufgabe konnte nicht aktualisiert werden. Prüfe den Status, bevor du fortfährst"
+
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "Datei konnte nicht hochgeladen werden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Could not verify assistant exit"
+msgstr "Das Ende des Assistenten konnte nicht bestätigt werden"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Create task"
+msgstr "Aufgabe erstellen"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -1098,6 +1277,14 @@ msgstr "Aktuell"
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
 msgstr "Aktueller Agent"
+
+#: src/components/collaboration-notice.tsx
+msgid "Current assignments"
+msgstr "Aktuelle Aufträge"
+
+#: src/components/work-task-detail.tsx
+msgid "Current assistant"
+msgstr "Aktueller Assistent"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Current machine"
@@ -1132,6 +1319,22 @@ msgstr "STANDARD"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Standardmäßig theme.json im Stammverzeichnis des Repositorys"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Delegation configuration recorded"
+msgstr "Delegierungskonfiguration erfasst"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation draft"
+msgstr "Delegierungsentwurf"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation permits direct child tasks within the existing task policy and assistant budget. Enabling it does not start an assistant or send an instruction."
+msgstr "Die Delegierung erlaubt direkte Unteraufgaben innerhalb der bestehenden Aufgabenrichtlinie und des Assistentenbudgets. Das Aktivieren startet keinen Assistenten und sendet keine Anweisung"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Delegation was not confirmed. Check status before trying again."
+msgstr "Die Delegierung wurde nicht bestätigt. Prüfe den Status, bevor du es erneut versuchst"
+
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Löschen"
@@ -1153,6 +1356,10 @@ msgstr "Gelöscht"
 msgid "Delivery not confirmed"
 msgstr "Zustellung nicht bestätigt"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Demo files are simulated. No system picker or upload runs."
+msgstr "Demo-Dateien sind simuliert. Es wird weder eine System-Dateiauswahl geöffnet noch eine Datei hochgeladen"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Demo-Shell"
@@ -1164,6 +1371,14 @@ msgstr "Demo-Workspace"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Ablehnen"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Dependency details changed or could not be saved. Inspect the task again before continuing."
+msgstr "Die Abhängigkeitsdetails wurden geändert oder konnten nicht gespeichert werden. Prüfe die Aufgabe erneut, bevor du fortfährst"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Dependency draft"
+msgstr "Abhängigkeitsentwurf"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -1178,9 +1393,21 @@ msgstr "Geräteauthentifizierung"
 msgid "Diff summary"
 msgstr "Diff-Übersicht"
 
+#: src/components/work-task-workspace.tsx
+msgid "Direct child tasks"
+msgstr "Direkte Unteraufgaben"
+
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "VERZEICHNIS"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Disable delegation"
+msgstr "Delegierung deaktivieren"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Disabling delegation removes coordinator authority. Existing child assistants keep running."
+msgstr "Das Deaktivieren der Delegierung entzieht die Koordinatorberechtigung. Bestehende untergeordnete Assistenten laufen weiter"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1260,10 +1487,23 @@ msgstr "Wird heruntergeladen …"
 msgid "Draft the notes for the next build"
 msgstr "Entwirft die Notizen für den nächsten Build"
 
+#: src/components/work-task-workspace.tsx
+msgid "Each child task has its own lead assistant. Opening it does not start work or change the parent coordinator."
+msgstr "Jede Unteraufgabe hat einen eigenen leitenden Assistenten. Das Öffnen startet keine Arbeit und ändert nicht den übergeordneten Koordinator"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
 msgstr "Jedes Gerät hält seinen eigenen Token für {0}"
+
+#: src/components/collaboration-notice.tsx
+msgid "Earlier assignment"
+msgstr "Früherer Auftrag"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Earlier or unavailable assistant · read only"
+msgstr "Früherer oder nicht verfügbarer Assistent · schreibgeschützt"
 
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
@@ -1284,9 +1524,17 @@ msgstr "SSH-Host bearbeiten"
 msgid "Edit this server"
 msgstr "Diesen Server bearbeiten"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Enable delegation"
+msgstr "Delegierung aktivieren"
+
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Eingabetaste"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Enter a child task limit from 0 to 64."
+msgstr "Gib eine Grenze für Unteraufgaben von 0 bis 64 ein"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
@@ -1342,6 +1590,10 @@ msgstr "Design exportieren"
 msgid "Failed · {0}"
 msgstr "Fehlgeschlagen · {0}"
 
+#: src/i18n/labels.ts
+msgid "Fictional prior result retained after simulated exit."
+msgstr "Fiktives früheres Ergebnis, das nach einem simulierten Ende erhalten bleibt"
+
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
 msgstr "Dateierwähnungen"
@@ -1382,6 +1634,10 @@ msgstr "Vor dem Anwenden dieses Designs den Textkontrast korrigieren"
 msgid "Fold the tool steps away"
 msgstr "Tool-Schritte einklappen"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Follow this assignment in Agent collaboration. Delivery does not mean the task is complete."
+msgstr "Verfolge diesen Auftrag in der Agentenzusammenarbeit. Die Zustellung bedeutet nicht, dass die Aufgabe abgeschlossen ist"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "Ein Wort vor"
@@ -1405,6 +1661,10 @@ msgstr "Gateway"
 #: src/lib/network-error.ts
 msgid "Gateway did not respond in time."
 msgstr "Das Gateway hat nicht rechtzeitig geantwortet"
+
+#: src/components/work-task-workspace.tsx
+msgid "Gateway evidence confirms startup was never dispatched."
+msgstr "Gateway-Nachweise bestätigen, dass der Start nie ausgelöst wurde"
 
 #: src/lib/network-error.ts
 msgid "Gateway is temporarily unavailable."
@@ -1555,6 +1815,10 @@ msgstr "Datei importieren"
 msgid "Import link"
 msgstr "Link importieren"
 
+#: src/components/work-task-detail.tsx
+msgid "In progress"
+msgstr "In Bearbeitung"
+
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
@@ -1570,6 +1834,10 @@ msgstr "{0} {1} einfügen"
 msgid "Insert mode"
 msgstr "Einfügemodus"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Inspect prerequisite"
+msgstr "Voraussetzung prüfen"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Installationsbefehl kopiert"
@@ -1583,6 +1851,10 @@ msgstr "Installiert"
 msgid "Installing images"
 msgstr "Bilder werden installiert"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Instruction sent"
+msgstr "Anweisung gesendet"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
 msgstr "Deckkraft des Oberflächenhintergrunds"
@@ -1591,13 +1863,31 @@ msgstr "Deckkraft des Oberflächenhintergrunds"
 msgid "Interrupt"
 msgstr "Unterbrechen"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Interrupt assistant"
+msgstr "Assistenten unterbrechen"
+
 #: src/app/commands.tsx
 msgid "Interrupt process"
 msgstr "Prozess unterbrechen"
 
+#: src/components/work-task-workspace.tsx
+msgid "Interrupt requested"
+msgstr "Unterbrechung angefordert"
+
 #: src/app/commands.tsx
 msgid "Interrupt what this agent is doing."
 msgstr "Unterbricht, woran dieser Agent gerade arbeitet"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Interruption not confirmed"
+msgstr "Unterbrechung nicht bestätigt"
+
+#: src/components/work-task-workspace.tsx
+msgid "Interruption requests do not prove the assistant stopped or the task finished. Check its output and lifecycle separately."
+msgstr "Unterbrechungsanfragen belegen weder, dass der Assistent gestoppt wurde, noch dass die Aufgabe abgeschlossen ist. Prüfe Ausgabe und Lebenszyklus separat"
 
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
@@ -1610,10 +1900,6 @@ msgstr "Er ist vielleicht veraltet oder für eine andere App gedacht. Es wurde n
 #: src/components/pairing-camera.tsx
 msgid "It was found, but never showed a picture. Another app may be holding it."
 msgstr "Sie wurde gefunden, zeigte aber nie ein Bild. Vielleicht belegt sie eine andere App"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "It works on its own. Follow it in Agent collaboration."
-msgstr "Er arbeitet eigenständig. Verfolge ihn unter Agent-Zusammenarbeit"
 
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
@@ -1717,6 +2003,20 @@ msgstr "Zuletzt gesehen: gerade eben"
 msgid "Latest"
 msgstr "Neueste"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Latest result accepted"
+msgstr "Neuestes Ergebnis abgenommen"
+
+#: src/components/work-delegation-controls.tsx
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Lead"
+msgstr "Leitender Assistent"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Lead delegation"
+msgstr "Delegierung durch den leitenden Assistenten"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "Leer lassen, um dort zu starten, wo die Session schon ist"
@@ -1752,8 +2052,38 @@ msgid "Live Activity"
 msgstr "Live-Aktivität"
 
 #: src/components/theme-browse-sheet.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Load more"
 msgstr "Mehr laden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more assistants"
+msgstr "Weitere Assistenten laden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more operations"
+msgstr "Weitere Vorgänge laden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more related tasks"
+msgstr "Weitere zugehörige Aufgaben laden"
+
+#: src/components/work-dependency-controls.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Load more results"
+msgstr "Weitere Ergebnisse laden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load more reviews"
+msgstr "Weitere Prüfungen laden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Load remaining history before starting or messaging an assistant."
+msgstr "Lade den restlichen Verlauf, bevor du einen Assistenten startest oder ihm eine Nachricht sendest"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Load the remaining assistant history before choosing a coordinator."
+msgstr "Lade den restlichen Assistentenverlauf, bevor du einen Koordinator auswählst"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
@@ -1782,6 +2112,10 @@ msgstr "Server werden geladen"
 msgid "Loading settings"
 msgstr "Einstellungen werden geladen"
 
+#: src/components/work-task-list.tsx
+msgid "Loading tasks…"
+msgstr "Aufgaben werden geladen…"
+
 #: src/components/skia-terminal.tsx
 msgid "Loading terminal"
 msgstr "Terminal wird geladen"
@@ -1793,6 +2127,10 @@ msgstr "Transkript wird geladen"
 #: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Themes werden geladen …"
+
+#: src/components/work-task-workspace.tsx
+msgid "Loading…"
+msgstr "Wird geladen…"
 
 #: src/lib/demo-gateway.ts
 msgid "Logs"
@@ -1835,10 +2173,26 @@ msgstr "SSH-Hosts verwalten"
 msgid "Mark reviewed"
 msgstr "Als geprüft markieren"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Maximum direct child tasks"
+msgstr "Maximale Anzahl direkter Unteraufgaben"
+
+#: src/components/work-task-workspace.tsx
+msgid "May include in output"
+msgstr "Darf in der Ausgabe enthalten sein"
+
+#: src/components/task-input-details.tsx
+msgid "May include in the result"
+msgstr "Darf im Ergebnis enthalten sein"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "{0} erwähnen"
+
+#: src/components/work-task-workspace.tsx
+msgid "Message this assistant"
+msgstr "Diesem Assistenten schreiben"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -1929,6 +2283,7 @@ msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Gib ihm einen Namen und dann den Code ein, den das Gateway anzeigt"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-detail.tsx
 msgid "Needs your attention"
 msgstr "Deine Hilfe ist nötig"
 
@@ -1941,6 +2296,14 @@ msgstr "Nie verbunden"
 msgid "Never seen"
 msgstr "Nie gesehen"
 
+#: src/components/work-task-list.tsx
+msgid "New delegation paused"
+msgstr "Neue Delegierungen pausiert"
+
+#: src/components/work-task-detail.tsx
+msgid "New delegation paused. Existing assistants may continue."
+msgstr "Neue Delegierungen sind pausiert. Bestehende Assistenten können weiterarbeiten"
+
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "Neue Gruppe"
@@ -1948,6 +2311,10 @@ msgstr "Neue Gruppe"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
 msgstr "Neuer Host-Schlüssel"
+
+#: src/components/work-task-workspace.tsx
+msgid "New output available"
+msgstr "Neue Ausgabe verfügbar"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
@@ -1963,6 +2330,8 @@ msgstr "Neuer SSH-Host"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
 msgid "New task"
 msgstr "Neue Aufgabe"
 
@@ -1987,6 +2356,10 @@ msgstr "Keine Agenten aktiv"
 msgid "No app on this phone opens web pages."
 msgstr "Auf diesem Telefon öffnet keine App Webseiten"
 
+#: src/components/work-task-detail.tsx
+msgid "No assistant has been started for this task."
+msgstr "Für diese Aufgabe wurde noch kein Assistent gestartet"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "Keine Kamera zum Scannen"
@@ -2006,6 +2379,10 @@ msgstr "Keine passenden Dateien"
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "Noch kein Gateway?"
+
+#: src/components/work-task-workspace.tsx
+msgid "No interruption requested"
+msgstr "Keine Unterbrechung angefordert"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
@@ -2034,6 +2411,14 @@ msgstr "Für diesen Dateityp gibt es keine Vorschau. Sie bleibt auf dem Server"
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
 msgstr "Keine Vorschau über diese Verbindung"
+
+#: src/components/work-task-detail.tsx
+msgid "No result submitted yet. An idle assistant does not mean the task is complete."
+msgstr "Noch kein Ergebnis eingereicht. Ein untätiger Assistent bedeutet nicht, dass die Aufgabe abgeschlossen ist"
+
+#: src/components/work-dependency-controls.tsx
+msgid "No result version selected · blocked"
+msgstr "Keine Ergebnisversion ausgewählt · blockiert"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -2064,6 +2449,10 @@ msgstr "Noch keine SSH-Hosts. Füge einen hinzu, um eine Shell auf jedem erreich
 msgid "No still frames"
 msgstr "Keine Einzelbilder"
 
+#: src/components/work-task-list.tsx
+msgid "No tasks loaded. Start with a goal, such as updating a homepage and checking the mobile layout."
+msgstr "Keine Aufgaben geladen. Beginne mit einem Ziel, zum Beispiel eine Startseite zu aktualisieren und das mobile Layout zu prüfen"
+
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
 msgstr "Keine Textänderung"
@@ -2072,9 +2461,17 @@ msgstr "Keine Textänderung"
 msgid "No themes are published yet"
 msgstr "Es sind noch keine Themes veröffentlicht"
 
+#: src/components/work-task-detail.tsx
+msgid "No verification evidence supplied."
+msgstr "Keine Prüfnachweise angegeben"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Nicht verfügbar"
+
+#: src/components/work-task-detail.tsx
+msgid "Not confirmed"
+msgstr "Nicht bestätigt"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
@@ -2129,6 +2526,18 @@ msgstr "OFFLINE"
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
 msgstr "Offline, antwortet nicht"
+
+#: src/components/work-task-list.tsx
+msgid "Offline. Showing previously loaded tasks."
+msgstr "Offline. Zuvor geladene Aufgaben werden angezeigt"
+
+#: src/components/work-task-detail.tsx
+msgid "Offline. Showing the last loaded task. Instructions are not sent automatically on reconnect."
+msgstr "Offline. Die zuletzt geladene Aufgabe wird angezeigt. Anweisungen werden beim erneuten Verbinden nicht automatisch gesendet"
+
+#: src/components/work-task-workspace.tsx
+msgid "Offline. Your draft has not been sent."
+msgstr "Offline. Dein Entwurf wurde nicht gesendet"
 
 #: src/components/toggle.tsx
 msgid "On"
@@ -2210,6 +2619,7 @@ msgid "Open SSH host {0}"
 msgstr "SSH-Host {0} öffnen"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-detail.tsx
 msgid "Open terminal"
 msgstr "Terminal öffnen"
 
@@ -2255,6 +2665,24 @@ msgstr "Öffnet das Simulator-Menü: Gerät, Tasten, Tastatur und Schließen. Zu
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
 msgstr "Öffnet das Terminal dieses Agenten"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Operation in progress"
+msgstr "Vorgang läuft"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Operation needs checking"
+msgstr "Vorgang muss geprüft werden"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Operation not confirmed"
+msgstr "Vorgang nicht bestätigt"
+
+#: src/components/work-task-detail.tsx
+msgid "Operations"
+msgstr "Vorgänge"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2349,6 +2777,19 @@ msgstr "Öffentlichen Theme-Link oder GitHub-Repository-URL einfügen"
 msgid "Path"
 msgstr "Pfad"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Pause delegation"
+msgstr "Delegierung pausieren"
+
+#: src/components/work-task-workspace.tsx
+msgid "Pausing applies to new assistants started through Muqun. Existing assistants and independent shell commands may continue."
+msgstr "Das Pausieren gilt für neue Assistenten, die über Muqun gestartet werden. Bestehende Assistenten und unabhängige Shell-Befehle können weiterlaufen"
+
+#: src/components/task-input-details.tsx
+msgid "Permission to include a reference does not authorize publishing or uploading it elsewhere."
+msgstr "Die Erlaubnis, eine Referenz einzubinden, gestattet weder ihre Veröffentlichung noch das Hochladen an anderer Stelle"
+
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
 msgstr "Fotomediathek"
@@ -2367,6 +2808,14 @@ msgstr "Port"
 msgid "PORT"
 msgstr "PORT"
 
+#: src/components/work-task-workspace.tsx
+msgid "Prepare follow-up for lead assistant"
+msgstr "Folgenachricht für den leitenden Assistenten vorbereiten"
+
+#: src/components/work-task-detail.tsx
+msgid "Prepared"
+msgstr "Vorbereitet"
+
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -2382,6 +2831,7 @@ msgstr "Escape drücken, um diese Anfrage zu verwerfen"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-preview.tsx
+#: src/components/work-task-detail.tsx
 msgid "Preview"
 msgstr "Vorschau"
 
@@ -2402,6 +2852,10 @@ msgstr "Simulator ansehen – über den SSH-Tunnel nicht verfügbar"
 msgid "Preview and apply"
 msgstr "Ansehen und anwenden"
 
+#: src/components/task-input-details.tsx
+msgid "Preview file"
+msgstr "Dateivorschau"
+
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Zuerst die Vorschau ansehen. Dein aktuelles Theme bleibt unverändert"
@@ -2417,6 +2871,10 @@ msgstr "Privater Schlüssel"
 #: src/components/ssh-host-form.tsx
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "Privater Schlüssel (leer lassen, um den gespeicherten zu behalten)"
+
+#: src/components/work-task-workspace.tsx
+msgid "Project directory"
+msgstr "Projektverzeichnis"
 
 #: src/app/commands.tsx
 msgid "Prompt"
@@ -2455,6 +2913,10 @@ msgstr "Schnellaktionen"
 #: src/lib/demo-gateway.ts
 msgid "Quit"
 msgstr "Beenden"
+
+#: src/components/task-input-details.tsx
+msgid "Re-upload file"
+msgstr "Datei erneut hochladen"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -2502,6 +2964,10 @@ msgstr "Empfohlenes Minimum für lesbaren Text: {minimumPercent} %"
 msgid "Reconnect"
 msgstr "Neu verbinden"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Reconnect before changing delegation."
+msgstr "Stelle die Verbindung wieder her, bevor du die Delegierung änderst"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reconnect the SSH tunnel"
 msgstr "SSH-Tunnel neu verbinden"
@@ -2511,14 +2977,31 @@ msgstr "SSH-Tunnel neu verbinden"
 msgid "Reconnect to {0}"
 msgstr "Neu mit {0} verbinden"
 
+#: src/components/work-task-workspace.tsx
+msgid "Reconnect to check or interrupt this assistant."
+msgstr "Verbinde dich erneut, um diesen Assistenten zu prüfen oder zu unterbrechen"
+
 #. placeholder {0}: status.attempt
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Neuer Verbindungsversuch · {0}"
 
+#: src/components/task-input-details.tsx
+msgid "Reference description"
+msgstr "Beschreibung der Referenz"
+
+#: src/components/task-input-details.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Reference only"
+msgstr "Nur als Referenz"
+
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Aktualisieren"
+
+#: src/components/work-task-workspace.tsx
+msgid "Refresh assistants"
+msgstr "Assistenten aktualisieren"
 
 #: src/components/git-diff-view.tsx
 msgid "Refresh changes"
@@ -2529,8 +3012,17 @@ msgid "Refresh files"
 msgstr "Dateien aktualisieren"
 
 #: src/components/collaboration-notice.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Refresh output"
 msgstr "Ausgabe aktualisieren"
+
+#: src/components/work-task-list.tsx
+msgid "Refresh tasks"
+msgstr "Aufgaben aktualisieren"
+
+#: src/components/work-task-detail.tsx
+msgid "Refused"
+msgstr "Abgelehnt"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -2546,6 +3038,10 @@ msgstr "Entfernen"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} entfernen"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Remove dependency from draft"
+msgstr "Abhängigkeit aus dem Entwurf entfernen"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -2596,13 +3092,37 @@ msgstr "Umbenannt"
 msgid "Replace key"
 msgstr "Schlüssel ersetzen"
 
+#: src/components/work-task-workspace.tsx
+msgid "Replacement remains blocked until lifecycle is verified"
+msgstr "Ein Ersatz bleibt blockiert, bis der Lebenszyklus geprüft wurde"
+
+#: src/components/work-task-workspace.tsx
+msgid "Replacement reservation released"
+msgstr "Ersatzreservierung freigegeben"
+
 #: src/app/settings.tsx
 msgid "Report a bug or request a feature"
 msgstr "Fehler melden oder Funktion vorschlagen"
 
+#: src/components/work-task-detail.tsx
+msgid "Request changes"
+msgstr "Änderungen anfordern"
+
 #: src/lib/network-error.ts
 msgid "Request failed."
 msgstr "Anfrage fehlgeschlagen"
+
+#: src/components/work-task-workspace.tsx
+msgid "Requested changes are saved as a review. Preparing a follow-up keeps it as a draft until you explicitly send it."
+msgstr "Die angeforderten Änderungen sind als Prüfung gespeichert. Eine vorbereitete Folgenachricht bleibt ein Entwurf, bis du sie ausdrücklich sendest"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Require a submitted result"
+msgstr "Eingereichtes Ergebnis verlangen"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Require human acceptance"
+msgstr "Menschliche Abnahme verlangen"
 
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
@@ -2627,6 +3147,22 @@ msgstr "Ausgeblendete Standardbefehle wiederherstellen"
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
 msgstr "Ausgeblendete Standards wiederherstellen"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Result awaiting review"
+msgstr "Ergebnis wartet auf Prüfung"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Result submitted"
+msgstr "Ergebnis eingereicht"
+
+#: src/components/work-task-detail.tsx
+msgid "Results"
+msgstr "Ergebnisse"
+
+#: src/components/work-task-workspace.tsx
+msgid "Resume delegation"
+msgstr "Delegierung fortsetzen"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2659,6 +3195,12 @@ msgstr "Eingabetaste"
 msgid "Return to the server list and pair again."
 msgstr "Zurück zur Serverliste und erneut koppeln"
 
+#: src/app/work-tasks.tsx
+#: src/components/work-task-detail.tsx
+msgid "Return to the task's original server and session."
+msgstr "Kehre zum ursprünglichen Server und zur ursprünglichen Sitzung der Aufgabe zurück"
+
+#: src/app/work-tasks.tsx
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
@@ -2689,6 +3231,18 @@ msgstr "Prüfung beendet. Der Theme-Fallback ist durch Tests abgedeckt. Keine Da
 msgid "Review link"
 msgstr "Link prüfen"
 
+#: src/components/work-task-workspace.tsx
+msgid "Review note"
+msgstr "Prüfnotiz"
+
+#: src/components/work-task-summary-facts.tsx
+msgid "Review recorded"
+msgstr "Prüfung erfasst"
+
+#: src/components/work-task-detail.tsx
+msgid "Review result"
+msgstr "Ergebnis prüfen"
+
 #: src/app/commands.tsx
 msgid "Review the current changes."
 msgstr "Prüfe die aktuellen Änderungen"
@@ -2696,6 +3250,10 @@ msgstr "Prüfe die aktuellen Änderungen"
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
 msgstr "Sieh dir den fehlschlagenden Test an und behebe ihn"
+
+#: src/components/collaboration-notice.tsx
+msgid "Reviewed"
+msgstr "Geprüft"
 
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
@@ -2758,6 +3316,10 @@ msgstr "Speichere einen Prompt, den du diesem Agent oft schickst"
 msgid "Save changes to {0}"
 msgstr "Änderungen an {0} speichern"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Save dependency versions"
+msgstr "Abhängigkeitsversionen speichern"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "Host speichern"
@@ -2774,13 +3336,45 @@ msgstr "Design speichern"
 msgid "Saved"
 msgstr "Gespeichert"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Saved child task limit"
+msgstr "Gespeicherte Grenze für Unteraufgaben"
+
 #: src/app/commands.tsx
 msgid "SAVED COMMANDS"
 msgstr "GESPEICHERTE BEFEHLE"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Saved configuration does not prove the coordinator is currently authorized. Reconfirm the lead after a Gateway restart."
+msgstr "Die gespeicherte Konfiguration beweist nicht, dass der Koordinator aktuell berechtigt ist. Bestätige den leitenden Assistenten nach einem Gateway-Neustart erneut"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved coordinator"
+msgstr "Gespeicherter Koordinator"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Saved dependencies"
+msgstr "Gespeicherte Abhängigkeiten"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved policy: delegation disabled"
+msgstr "Gespeicherte Richtlinie: Delegierung deaktiviert"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved policy: delegation enabled"
+msgstr "Gespeicherte Richtlinie: Delegierung aktiviert"
+
 #: src/app/commands.tsx
 msgid "SAVED PROMPTS"
 msgstr "GESPEICHERTE PROMPTS"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved requirement: human acceptance"
+msgstr "Gespeicherte Anforderung: menschliche Abnahme"
+
+#: src/components/work-delegation-controls.tsx
+msgid "Saved requirement: result available"
+msgstr "Gespeicherte Anforderung: Ergebnis verfügbar"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -2862,6 +3456,11 @@ msgstr "{spoken} senden"
 msgid "Send a message"
 msgstr "Nachricht senden"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Send instruction"
+msgstr "Anweisung senden"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Text senden"
@@ -2917,6 +3516,10 @@ msgstr "Richte einen Gerätecode ein, bevor du die App-Sperre nutzt"
 msgid "Set one up on your computer"
 msgstr "Auf deinem Rechner einrichten"
 
+#: src/components/work-task-detail.tsx
+msgid "Set task dependencies"
+msgstr "Aufgabenabhängigkeiten festlegen"
+
 #: src/lib/demo-gateway.ts
 msgid "Set the AI model for Claude Code"
 msgstr "Legt das KI-Modell für Claude Code fest"
@@ -2946,6 +3549,10 @@ msgstr "Ein Gateway auf deinem Rechner einrichten"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Einstellungen"
+
+#: src/components/work-task-detail.tsx
+msgid "SHA-256 checksum"
+msgstr "SHA-256-Prüfsumme"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
@@ -3157,7 +3764,21 @@ msgstr "Startet eine neue Session mit leerem Kontext"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Starte einen Agent und gib ihm das Erste zu tun"
 
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Start assistant"
+msgstr "Assistent starten"
+
+#: src/components/work-task-detail.tsx
+msgid "Start not confirmed"
+msgstr "Start nicht bestätigt"
+
+#: src/components/work-task-workspace.tsx
+msgid "Start replacement"
+msgstr "Ersatz starten"
+
 #: src/components/new-task-sheet.tsx
+#: src/components/work-task-workspace.tsx
 msgid "Start task"
 msgstr "Aufgabe starten"
 
@@ -3203,6 +3824,18 @@ msgstr "Diesen Agent stoppen"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Speicher"
+
+#: src/components/work-task-detail.tsx
+msgid "Submission"
+msgstr "Einreichung"
+
+#: src/components/work-task-detail.tsx
+msgid "Submit result"
+msgstr "Ergebnis einreichen"
+
+#: src/components/work-task-detail.tsx
+msgid "Submitted by"
+msgstr "Eingereicht von"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -3270,6 +3903,14 @@ msgstr "Zum Verbinden tippen"
 msgid "Tap to preview and adjust"
 msgstr "Zum Ansehen und Anpassen tippen"
 
+#: src/components/work-task-summary-facts.tsx
+msgid "Task created"
+msgstr "Aufgabe erstellt"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Task dependencies"
+msgstr "Aufgabenabhängigkeiten"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
 msgstr "Aufgabe für {assignmentLabel}"
@@ -3279,12 +3920,32 @@ msgstr "Aufgabe für {assignmentLabel}"
 msgid "Task for a new {0}"
 msgstr "Aufgabe für einen neuen {0}"
 
+#: src/components/work-task-workspace.tsx
+msgid "Task reference files"
+msgstr "Referenzdateien der Aufgabe"
+
+#: src/components/work-task-workspace.tsx
+msgid "Task saved. Open the existing task before continuing."
+msgstr "Aufgabe gespeichert. Öffne die bestehende Aufgabe, bevor du fortfährst"
+
+#: src/app/work-tasks.tsx
+#: src/components/server-terminal-workspace.tsx
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Tasks"
+msgstr "Aufgaben"
+
+#: src/components/work-task-list.tsx
+msgid "Tasks will appear here when this session supports task management."
+msgstr "Aufgaben erscheinen hier, sobald diese Sitzung die Aufgabenverwaltung unterstützt"
+
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "Temporäre Dateien"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/work-task-detail.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"
@@ -3358,6 +4019,18 @@ msgstr "Der Agent fragt inzwischen etwas anderes"
 msgid "The agent is no longer waiting."
 msgstr "Der Agent wartet nicht mehr"
 
+#: src/components/work-task-detail.tsx
+msgid "The assistant is not ready for another instruction."
+msgstr "Der Assistent ist noch nicht bereit für eine weitere Anweisung"
+
+#: src/components/work-task-detail.tsx
+msgid "The assistant needs a decision. Inspect its terminal."
+msgstr "Der Assistent benötigt eine Entscheidung. Sieh in seinem Terminal nach"
+
+#: src/components/work-task-detail.tsx
+msgid "The assistant was replaced. Choose a current assistant."
+msgstr "Der Assistent wurde ersetzt. Wähle einen aktuellen Assistenten"
+
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "Die Kamera ist nicht gestartet"
@@ -3365,6 +4038,10 @@ msgstr "Die Kamera ist nicht gestartet"
 #: src/components/pairing-camera.tsx
 msgid "The camera reported an error."
 msgstr "Die Kamera hat einen Fehler gemeldet"
+
+#: src/components/work-delegation-controls.tsx
+msgid "The chosen lead changed. Choose its current instance again."
+msgstr "Der gewählte leitende Assistent hat sich geändert. Wähle seine aktuelle Instanz erneut aus"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
@@ -3374,10 +4051,34 @@ msgstr "Die Verbindung ist abgebrochen"
 msgid "The connection to the simulator stopped."
 msgstr "Die Verbindung zum Simulator ist abgebrochen"
 
+#: src/components/work-task-detail.tsx
+msgid "The Gateway could not save task state. Check its storage and reconnect."
+msgstr "Der Gateway konnte den Aufgabenstatus nicht speichern. Prüfe seinen Speicher und verbinde dich erneut"
+
+#: src/components/work-task-workspace.tsx
+msgid "The Gateway resolved a different project directory. Confirm it and select the attachments again."
+msgstr "Der Gateway hat ein anderes Projektverzeichnis ermittelt. Bestätige es und wähle die Anhänge erneut aus"
+
+#: src/components/work-task-detail.tsx
+msgid "The instruction may already have arrived. Check status before sending again."
+msgstr "Die Anweisung ist möglicherweise bereits angekommen. Prüfe den Status vor dem erneuten Senden"
+
+#: src/components/work-task-workspace.tsx
+msgid "The interruption request was refused. Check the assistant before trying again."
+msgstr "Die Unterbrechungsanfrage wurde abgelehnt. Prüfe den Assistenten, bevor du es erneut versuchst"
+
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Der Schlüssel konnte nicht gelesen werden ({0}). Prüfe den Schlüssel und seine Passphrase"
+
+#: src/components/work-task-workspace.tsx
+msgid "The native owner confirmed that startup created no assistant process."
+msgstr "Der native Prozessverwalter hat bestätigt, dass beim Start kein Assistentenprozess erstellt wurde"
+
+#: src/components/work-task-workspace.tsx
+msgid "The native owner recorded this assistant's process exit. This does not prove task completion."
+msgstr "Der native Prozessverwalter hat das Ende dieses Assistentenprozesses erfasst. Dies belegt nicht den Abschluss der Aufgabe"
 
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
@@ -3386,6 +4087,10 @@ msgstr "Das rohe Panel, auf seinem Raster und in seinen eigenen Farben"
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
 msgstr "Auf diesem Bildschirm ist ein Fehler aufgetreten. Versuche es erneut — deine Server bleiben gekoppelt"
+
+#: src/components/work-task-workspace.tsx
+msgid "The selected assistant is unavailable. Refresh assistants and choose an installed assistant. Your draft is preserved."
+msgstr "Der ausgewählte Assistent ist nicht verfügbar. Aktualisiere die Assistenten und wähle einen installierten Assistenten. Dein Entwurf bleibt erhalten"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
@@ -3435,6 +4140,19 @@ msgstr "Der Simulator wurde nicht rechtzeitig heruntergefahren"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Der SSH-Tunnel trägt den Port des Gateways und keinen anderen, der Simulator und der Browser sind von hier also nicht erreichbar. Verbinde dich über das lokale Netz oder Tailscale"
 
+#: src/components/work-task-workspace.tsx
+msgid "The task changed. Check status before requesting interruption."
+msgstr "Die Aufgabe hat sich geändert. Prüfe den Status, bevor du eine Unterbrechung anforderst"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "The task changed. Refresh and review the latest state."
+msgstr "Die Aufgabe wurde geändert. Aktualisiere die Ansicht und prüfe den neuesten Stand"
+
+#: src/components/work-task-detail.tsx
+msgid "The task has reached its configured resource limit."
+msgstr "Die Aufgabe hat ihr konfiguriertes Ressourcenlimit erreicht"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "Das Design wird von diesem Gerät entfernt"
@@ -3479,9 +4197,25 @@ msgstr "Auf muqun.dev veröffentlichte Themes. Es wird nichts geladen, bis du ei
 msgid "This agent did not offer that answer."
 msgstr "Dieser Agent hat diese Antwort nicht angeboten"
 
+#: src/components/work-task-workspace.tsx
+msgid "This checks whether a replacement can safely start. It does not stop the assistant or delete its resources."
+msgstr "Hiermit wird geprüft, ob ein Ersatz sicher gestartet werden kann. Der Assistent wird weder gestoppt noch werden seine Ressourcen gelöscht"
+
+#: src/components/work-delegation-controls.tsx
+msgid "This child task's lead runs its own work. Only the root task's coordinator can delegate."
+msgstr "Der leitende Assistent dieser Unteraufgabe erledigt seine eigene Arbeit. Nur der Koordinator der Hauptaufgabe kann delegieren"
+
+#: src/components/task-input-details.tsx
+msgid "This description is too long. Shorten it before continuing."
+msgstr "Diese Beschreibung ist zu lang. Kürze sie, bevor du fortfährst"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "Dieses Gerät hat keine verfügbare Kamera"
+
+#: src/components/work-task-workspace.tsx
+msgid "This file cannot be previewed safely in the app."
+msgstr "Diese Datei kann in der App nicht sicher in der Vorschau angezeigt werden"
 
 #: src/components/asset-viewer.tsx
 msgid "This file is empty."
@@ -3535,6 +4269,15 @@ msgstr "Dieses Panel arbeitet nicht in einem Git-Repository, es gibt also nichts
 msgid "This QR code is not valid."
 msgstr "Dieser QR-Code ist ungültig"
 
+#: src/components/work-task-detail.tsx
+msgid "This request conflicts with an earlier operation. Check status."
+msgstr "Diese Anfrage steht im Konflikt mit einem früheren Vorgang. Prüfe den Status"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "This result version is unavailable or changed. Refresh the task and review its submission details."
+msgstr "Diese Ergebnisversion ist nicht verfügbar oder wurde geändert. Aktualisiere die Aufgabe und prüfe die Details der Einreichung"
+
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
 msgstr "Dieser Server kann diesen Befehl noch nicht ausführen"
@@ -3577,6 +4320,43 @@ msgstr "Dieser Server kennt dieses Gerät nicht mehr. Koppel es erneut, um die V
 msgid "This server refused the request."
 msgstr "Dieser Server hat die Anfrage abgelehnt"
 
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot accept task attachments. Update its Gateway and refresh. Your draft is preserved."
+msgstr "Diese Sitzung kann keine Aufgabenanhänge annehmen. Aktualisiere ihren Gateway und lade neu. Dein Entwurf bleibt erhalten"
+
+#: src/components/work-task-detail.tsx
+msgid "This session cannot manage tasks yet. Update or reconnect its Gateway, then check status."
+msgstr "Diese Sitzung kann noch keine Aufgaben verwalten. Aktualisiere ihren Gateway oder verbinde ihn erneut und prüfe dann den Status"
+
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot manage tasks yet. Update or reconnect its Gateway, then refresh."
+msgstr "Diese Sitzung kann noch keine Aufgaben verwalten. Aktualisiere ihren Gateway oder verbinde ihn erneut und lade dann neu"
+
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot safely check assistant lifecycle yet. Update its Gateway and backend, then check status."
+msgstr "Diese Sitzung kann den Assistentenlebenszyklus noch nicht sicher prüfen. Aktualisiere ihren Gateway und ihr Backend und prüfe dann den Status"
+
+#: src/components/work-task-workspace.tsx
+msgid "This session cannot safely start or message managed assistants yet. Update its Gateway and backend, then check status. Ordinary terminal collaboration remains available."
+msgstr "Diese Sitzung kann verwaltete Assistenten noch nicht sicher starten oder ihnen Nachrichten senden. Aktualisiere ihren Gateway und ihr Backend und prüfe dann den Status. Die normale Zusammenarbeit im Terminal bleibt verfügbar"
+
+#: src/components/work-task-detail.tsx
+msgid "This session does not support this action. Check its Gateway capabilities."
+msgstr "Diese Sitzung unterstützt diese Aktion nicht. Prüfe die Funktionen ihres Gateways"
+
+#: src/components/work-task-detail.tsx
+msgid "This submission is awaiting review."
+msgstr "Diese Einreichung wartet auf Prüfung"
+
+#: src/components/work-task-detail.tsx
+msgid "This submission was accepted."
+msgstr "Diese Einreichung wurde angenommen"
+
+#: src/components/work-task-detail.tsx
+msgid "This task or assistant is no longer available."
+msgstr "Diese Aufgabe oder dieser Assistent ist nicht mehr verfügbar"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "Dieses Terminal konnte nicht gezeichnet werden"
@@ -3589,6 +4369,10 @@ msgstr "Dieses Terminal ist nicht mehr verfügbar"
 msgid "This theme contains images that must be installed before applying"
 msgstr "Dieses Design enthält Bilder, die vor dem Anwenden installiert werden müssen"
 
+#: src/components/task-input-details.tsx
+msgid "This upload expired. Re-upload it explicitly before sending."
+msgstr "Dieser Upload ist abgelaufen. Lade ihn vor dem Senden ausdrücklich erneut hoch"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Dieser Arbeitsbereich hat noch keine Gruppen"
@@ -3596,6 +4380,14 @@ msgstr "Dieser Arbeitsbereich hat noch keine Gruppen"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "Über {host}"
+
+#: src/components/work-task-workspace.tsx
+msgid "Title"
+msgstr "Titel"
+
+#: src/components/work-task-workspace.tsx
+msgid "To"
+msgstr "An"
 
 #: src/i18n/labels.ts
 msgid "Today"
@@ -3738,6 +4530,27 @@ msgstr "Update bereit · Neustart…"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Aktualisiere die App, um öffentliche Theme-Links zu importieren. Dateien kannst du weiterhin importieren"
 
+#: src/components/work-delegation-controls.tsx
+msgid "Update this Gateway and backend to configure delegation."
+msgstr "Aktualisiere dieses Gateway und das Backend, um die Delegierung zu konfigurieren"
+
+#: src/components/work-task-workspace.tsx
+msgid "Update this Gateway and backend to interrupt the exact assistant safely."
+msgstr "Aktualisiere diesen Gateway und das Backend, um genau diesen Assistenten sicher zu unterbrechen"
+
+#: src/components/task-attachment-composer.tsx
+msgid "Update this Gateway to attach files to managed tasks."
+msgstr "Aktualisiere diesen Gateway, um Dateien an verwaltete Aufgaben anzuhängen"
+
+#: src/components/work-dependency-controls.tsx
+msgid "Update this Gateway to edit task dependencies."
+msgstr "Aktualisiere dieses Gateway, um Aufgabenabhängigkeiten zu bearbeiten"
+
+#: src/components/work-task-list.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Updates available · refresh"
+msgstr "Aktualisierungen verfügbar · neu laden"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Muqun wird aktualisiert…"
@@ -3754,6 +4567,10 @@ msgstr "hochgeladen"
 msgid "uploading"
 msgstr "wird hochgeladen"
 
+#: src/components/task-attachment-composer.tsx
+msgid "Uploading attachments…"
+msgstr "Anhänge werden hochgeladen…"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Use {0}"
@@ -3762,6 +4579,10 @@ msgstr "{0} verwenden"
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
 msgstr "Gerätecode verwenden"
+
+#: src/components/work-task-workspace.tsx
+msgid "Use resolved project"
+msgstr "Ermitteltes Projekt verwenden"
 
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
@@ -3775,6 +4596,10 @@ msgstr "Füge einen über die Scan-Taste auf dem Startbildschirm hinzu"
 msgid "Use theme defaults"
 msgstr "Theme-Standardwerte verwenden"
 
+#: src/components/work-dependency-controls.tsx
+msgid "Use this exact result version"
+msgstr "Genau diese Ergebnisversion verwenden"
+
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "Diesen Server verwenden"
@@ -3786,6 +4611,10 @@ msgstr "Benutzername"
 #: src/components/settings-servers.tsx
 msgid "USING"
 msgstr "IN VERWENDUNG"
+
+#: src/components/work-task-detail.tsx
+msgid "Verification reported by the assistant"
+msgstr "Vom Assistenten gemeldete Prüfung"
 
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
@@ -3816,6 +4645,10 @@ msgstr "Warten auf den Abschluss der Uploads…"
 msgid "What is running"
 msgstr "Was gerade läuft"
 
+#: src/components/work-task-workspace.tsx
+msgid "What would you like done?"
+msgstr "Was möchtest du erledigen lassen?"
+
 #: src/lib/release-notes.ts
 msgid "What's new"
 msgstr "Neuigkeiten"
@@ -3823,6 +4656,11 @@ msgstr "Neuigkeiten"
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Während du weg warst"
+
+#: src/components/work-task-detail.tsx
+#: src/components/work-task-workspace.tsx
+msgid "Worker"
+msgstr "Ausführender Assistent"
 
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
@@ -3868,3 +4706,7 @@ msgstr "Deine Agenten, überall dabei"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "Deine gekoppelten Gateways"
+
+#: src/components/work-task-workspace.tsx
+msgid "Zero keeps this task with one assistant. The limit does not grant approvals or broader permissions."
+msgstr "Bei null bleibt diese Aufgabe bei einem Assistenten. Das Limit erteilt weder Freigaben noch weitergehende Berechtigungen"

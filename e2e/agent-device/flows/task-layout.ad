@@ -1,0 +1,17 @@
+# Offline presentation regression only: no delivery or native execution proof.
+# Phone history return and anchored composer. Wide/font geometry is covered by
+# direct component tests; real resizing and accessibility require parent QA.
+# section press
+press "${TARGET}"
+# section visible
+is visible "${TARGET}"
+# section down
+scroll down
+# section up
+scroll up
+# section draft
+fill "id=\"task-instruction\"" "QA retained layout draft; do not send"
+# section keyboard-back
+back
+# section screenshot
+screenshot "shots/task-layout-history-dock.png"
