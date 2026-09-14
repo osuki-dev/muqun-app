@@ -288,7 +288,9 @@ export function OpenWebServiceSheet({
           </Animated.View>
         ) : null}
       </KeyboardAwareScrollView>
-      {/* One field here, so the arrows would only ever point at themselves. */}
+      {/* One field here, so the arrows would only ever point at themselves.
+        Opaque on purpose: see the same toolbar in `new-task-sheet.tsx` for why
+        kit 1.1.0's `backgroundColor` is not the pack's surface opacity here. */}
       <KeyboardToolbar showArrows={false} doneText={t`Done`} />
     </>
   );

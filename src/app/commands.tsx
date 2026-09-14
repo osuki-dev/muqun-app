@@ -62,9 +62,10 @@ import { ThemedSurface } from '@/components/themed-surface';
  * whole reading it switched to, because this sheet was the only way in. See
  * `src/lib/pane-view-mode.ts`.
  */
-import { Skeleton, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Tabs } from '@/components/themed-tabs';
 import { Button } from '@/components/themed-button';
+import { Skeleton } from '@/components/themed-skeleton';
 // Two hooks of the same name and they are not interchangeable: the macro one
 // expands `t` at build time, and only the runtime one hands back the `_` that
 // turns a `msg` descriptor into a sentence in the active locale.
