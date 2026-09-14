@@ -466,26 +466,39 @@ export function CustomThemeLibrary({
               size={ROW_COVER}
             />
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              {/* The name has the line to itself: a marker beside it cost the
+                  name a third of its width, and naming the theme is the row's
+                  one job. */}
               <Text variant="bodySmall" numberOfLines={1}>
                 {installed.manifest.name}
               </Text>
               {/* A row that says only a name reads as a label. The second line
                   is what the pack itself offers, and when it offers nothing it
                   is what the row does -- which is the thing the chevron was
-                  failing to say on its own. */}
-              <Text variant="caption" color={colors.textMuted} numberOfLines={1}>
-                {installed.manifest.author ?? t`Tap to preview and adjust`}
-              </Text>
+                  failing to say on its own. The marker leads it: "this is the
+                  one you are wearing" belongs with who made it, not in front of
+                  what it is called.
+
+                  The applied theme used to swap its chevron for a check, which
+                  took the one affordance saying "this opens" off the row a
+                  reader is most likely to want to open. Every row keeps the
+                  chevron now. */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
+                  <Animated.View entering={fadeIn('medium')}>
+                    <Tag
+                      style={surfaceOpacity === 1 ? undefined : transparentFill}>{t`Current`}</Tag>
+                  </Animated.View>
+                ) : null}
+                <Text
+                  variant="caption"
+                  color={colors.textMuted}
+                  numberOfLines={1}
+                  style={{ flex: 1, minWidth: 0 }}>
+                  {installed.manifest.author ?? t`Tap to preview and adjust`}
+                </Text>
+              </View>
             </View>
-            {/* The applied theme used to swap its chevron for a check, which
-                took the one affordance saying "this opens" off the row a
-                reader is most likely to want to open. It keeps the chevron and
-                gains a marker instead. */}
-            {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
-              <Animated.View entering={fadeIn('medium')}>
-                <Tag style={surfaceOpacity === 1 ? undefined : transparentFill}>{t`Current`}</Tag>
-              </Animated.View>
-            ) : null}
             <ChevronRight size={18} color={colors.textMuted} />
           </PressableScale>
           <PressableScale
