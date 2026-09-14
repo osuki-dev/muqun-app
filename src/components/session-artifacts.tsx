@@ -29,6 +29,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AssetViewer } from '@/components/asset-viewer';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { formatAssetSize } from '@/lib/asset-display';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { artifactGroupLabel } from '@/i18n/labels';
@@ -245,6 +246,7 @@ export function SessionArtifacts({
 
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const plate = useSheetGroundPlate();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
@@ -518,7 +520,9 @@ export function SessionArtifacts({
           system grabber. */}
       {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
       <View style={styles.header}>
-        <View style={styles.flexOne}>
+        {/* The only text on this sheet that is not already on a card or a
+            chip, so over a wallpaper it takes the settings page's plate. */}
+        <View style={[styles.flexOne, plate]}>
           <Text variant="bodySmall" style={styles.headerTitle}>
             <Trans>Files</Trans>
           </Text>
@@ -603,82 +607,93 @@ export function SessionArtifacts({
 
   return (
     <RenderTally id="files">
-      <LegendList
-        data={listRows}
-        keyExtractor={keyOfRow}
-        renderItem={renderRow}
-        numColumns={fileColumns}
-        overrideItemLayout={filesGridItemLayout}
-        columnWrapperStyle={isPadLayout ? styles.fileGrid : undefined}
-        // The other half of the identity deal, stated to the list: a row whose
-        // object has not changed has not changed. `groupByDay` is handed the
-        // previous rows and guarantees exactly that, so the strictest possible
-        // comparison is both the correct one and the cheapest.
-        itemsAreEqual={rowsAreEqual}
-        // Never. The argument above is stable row objects plus `React.memo`;
-        // recycling a row into another row's props is the one thing that would
-        // undo it -- and it would hand a file's thumbnail to a day heading.
-        recycleItems={false}
-        // A day heading and a file card are half an inch apart in height, and a
-        // single average across both is what makes a virtualized list jump when
-        // a page of older files lands. The kind is already the right bucket.
-        getItemType={rowTypeOf}
-        estimatedItemSize={ESTIMATED_ROW_HEIGHT}
-        // The reader's place across a change of data. Off by default, and the
-        // reason this list is Legend List: see MAINTAIN_POSITION.
-        maintainVisibleContentPosition={MAINTAIN_POSITION}
-        onEndReached={loadMore}
-        onEndReachedThreshold={LOAD_MORE_THRESHOLD}
-        onLayout={onListLayout}
-        style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
-        // `flexGrow` is what makes this a full-height sheet, and it is not
-        // decoration. The route asks for a single detent, and react-native-
-        // screens answers a single detent with `isFitToContents` -- the sheet
-        // is as tall as the content laid out to, with the detent only a cap.
-        // Without it a short listing gave a short sheet and an empty one gave a
-        // stub. The panels sheet is full height for an unrelated reason: two
-        // detents pin a 0.65 peek. This is the frame `ScrollScreen` would have
-        // supplied, written out because the list has to be the sheet's own root.
-        contentContainerStyle={[
-          styles.listContent,
-          isPadLayout && styles.padListContent,
-          { paddingBottom: listBottomPadding },
-        ]}
-        ListHeaderComponent={header}
-        // The gap the content container used to leave here.
-        //
-        // Legend List cannot keep `gap` on the content container -- its rows are
-        // positioned rather than laid out in flow -- so it lifts the value off
-        // and re-applies it as trailing padding on each row. That reproduces the
-        // space between rows exactly and loses the one between the header and
-        // the first row, which is the only place the gap was doing something a
-        // row's own padding does not. Eight, because that is the gap; checked
-        // by putting the e2e flow's screenshot of the sheet beside the one the
-        // FlatList version took, where the first day heading now lands on the
-        // same pixel row it did.
-        ListHeaderComponentStyle={styles.listHeader}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => void refresh()}
-            tintColor={theme.colors.textMuted}
-            colors={[theme.colors.primary]}
-          />
-        }
-        // The page in flight, said where it is being waited for. The header's
-        // refresh control already spins for a re-read of the same window; this
-        // is the one at the bottom, under the oldest file in hand, and it
-        // carries no words of its own -- a spinner where the next rows will
-        // appear says what it is doing without a string to translate.
-        ListFooterComponent={
-          loadingMore ? (
-            <View style={styles.footer}>
-              <ActivityIndicator size="small" color={theme.colors.textMuted} />
-            </View>
-          ) : null
-        }
-      />
+      {/* The ground the theme and quick-action sheets carry, which this sheet
+          used to answer with a flat surface. Two subviews, which is the most a
+          native form sheet lays out around a scroll view, and the ground costs
+          no layout because it is absolutely positioned -- the list is still the
+          thing the sheet measures. */}
+      <SheetFrame>
+        <LegendList
+          data={listRows}
+          keyExtractor={keyOfRow}
+          renderItem={renderRow}
+          numColumns={fileColumns}
+          overrideItemLayout={filesGridItemLayout}
+          columnWrapperStyle={isPadLayout ? styles.fileGrid : undefined}
+          // The other half of the identity deal, stated to the list: a row whose
+          // object has not changed has not changed. `groupByDay` is handed the
+          // previous rows and guarantees exactly that, so the strictest possible
+          // comparison is both the correct one and the cheapest.
+          itemsAreEqual={rowsAreEqual}
+          // Never. The argument above is stable row objects plus `React.memo`;
+          // recycling a row into another row's props is the one thing that would
+          // undo it -- and it would hand a file's thumbnail to a day heading.
+          recycleItems={false}
+          // A day heading and a file card are half an inch apart in height, and a
+          // single average across both is what makes a virtualized list jump when
+          // a page of older files lands. The kind is already the right bucket.
+          getItemType={rowTypeOf}
+          estimatedItemSize={ESTIMATED_ROW_HEIGHT}
+          // The reader's place across a change of data. Off by default, and the
+          // reason this list is Legend List: see MAINTAIN_POSITION.
+          maintainVisibleContentPosition={MAINTAIN_POSITION}
+          onEndReached={loadMore}
+          onEndReachedThreshold={LOAD_MORE_THRESHOLD}
+          onLayout={onListLayout}
+          // Transparent: the ground behind it already paints this sheet's floor,
+          // its surface tint and its wallpaper, and a second fill here would put
+          // the surface back over the picture.
+          style={[styles.sheet, styles.transparent]}
+          // `flexGrow` is what makes this a full-height sheet, and it is not
+          // decoration. The route asks for a single detent, and react-native-
+          // screens answers a single detent with `isFitToContents` -- the sheet
+          // is as tall as the content laid out to, with the detent only a cap.
+          // Without it a short listing gave a short sheet and an empty one gave a
+          // stub. The panels sheet is full height for an unrelated reason: two
+          // detents pin a 0.65 peek. This is the frame `ScrollScreen` would have
+          // supplied, written out because the list has to be the sheet's own root.
+          contentContainerStyle={[
+            styles.listContent,
+            isPadLayout && styles.padListContent,
+            { paddingBottom: listBottomPadding },
+          ]}
+          ListHeaderComponent={header}
+          // The gap the content container used to leave here.
+          //
+          // Legend List cannot keep `gap` on the content container -- its rows are
+          // positioned rather than laid out in flow -- so it lifts the value off
+          // and re-applies it as trailing padding on each row. That reproduces the
+          // space between rows exactly and loses the one between the header and
+          // the first row, which is the only place the gap was doing something a
+          // row's own padding does not. Eight, because that is the gap; checked
+          // by putting the e2e flow's screenshot of the sheet beside the one the
+          // FlatList version took, where the first day heading now lands on the
+          // same pixel row it did.
+          ListHeaderComponentStyle={styles.listHeader}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void refresh()}
+              tintColor={theme.colors.textMuted}
+              colors={[theme.colors.primary]}
+            />
+          }
+          // The page in flight, said where it is being waited for. The header's
+          // refresh control already spins for a re-read of the same window; this
+          // is the one at the bottom, under the oldest file in hand, and it
+          // carries no words of its own -- a spinner where the next rows will
+          // appear says what it is doing without a string to translate.
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={styles.footer}>
+                <ActivityIndicator size="small" color={theme.colors.textMuted} />
+              </View>
+            ) : null
+          }
+        />
+      </SheetFrame>
+      {/* A `Modal`, so it is never a third subview of the sheet's own layout. */}
       {openAsset ? <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} /> : null}
     </RenderTally>
   );
@@ -761,16 +776,20 @@ const DAY_BUCKET_LABEL = {
 const DayHeading = memo(function DayHeading({ label, count }: { label: string; count: number }) {
   const theme = useThemeTokens();
   const { _ } = useLinguiRuntime();
+  // The day is the one label on this list that is not on a card. Over a
+  // wallpaper it takes the same plate the settings page gives a section label,
+  // which is why the chip stays around the word and not around the whole rule.
+  const plate = useSheetGroundPlate();
   useRenderTally('ArtifactDayHeading');
   const bucket = DAY_BUCKET_LABEL[label as keyof typeof DAY_BUCKET_LABEL];
   const spoken = bucket ? _(bucket) : label;
   return (
     <View style={styles.dayHeading}>
-      <Text variant="caption" color={theme.colors.textMuted} style={styles.eyebrow}>
+      <Text variant="caption" color={theme.colors.textMuted} style={[styles.eyebrow, plate]}>
         {spoken.toUpperCase()}
       </Text>
       <View style={[styles.rule, { backgroundColor: theme.colors.border }]} />
-      <Text variant="caption" color={theme.colors.textMuted}>
+      <Text variant="caption" color={theme.colors.textMuted} style={plate}>
         {count}
       </Text>
     </View>
@@ -856,6 +875,7 @@ function isMissingEndpoint(failure: unknown): boolean {
 }
 
 const styles = StyleSheet.create({
+  transparent: { backgroundColor: 'transparent' },
   sheet: {
     flex: 1,
   },

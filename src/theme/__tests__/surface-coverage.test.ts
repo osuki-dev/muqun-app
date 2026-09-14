@@ -13,7 +13,14 @@ import { THEME_SLOTS } from '../schema';
 // screen show in place of the app's mark. Naming only the card would let the
 // other two be deleted without this guard noticing, which is the whole job.
 const consumers = {
-  'shell.background': 'src/app/settings.tsx',
+  'shell.background': [
+    'src/app/settings.tsx',
+    // The same wallpaper under every form sheet, from the component that owns
+    // the order of its layers. Named here so it cannot be deleted back to a
+    // flat surface without this guard noticing, which is how the sheets lost
+    // the picture in the first place.
+    'src/components/sheet-ground.tsx',
+  ],
   'home.background': 'src/app/(drawer)/index.tsx',
   'home.decoration': 'src/app/(drawer)/index.tsx',
   'navigation.background': 'src/components/glass-chrome.tsx',

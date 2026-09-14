@@ -8,9 +8,9 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { GlassChrome } from '@/components/glass-chrome';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsSeparator } from '@/components/settings-chrome';
-import { ThemeArtwork } from '@/components/theme-artwork';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { Button } from '@/components/themed-button';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
@@ -95,6 +95,7 @@ export function ThemeBrowseSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const plate = useSheetGroundPlate();
   useRenderTally('ThemeBrowseSheet');
   const installed = useThemeLibrary((state) => state.library.themes);
 
@@ -374,26 +375,11 @@ export function ThemeBrowseSheet({
       </Animated.View>
     ) : null;
 
+  // The ground the theme sheet has, because to a reader these two are one
+  // place -- and now the ground every other form sheet has too, from the one
+  // frame they all share.
   return (
-    <>
-      {/* The ground the theme sheet has, because to a reader these two are one
-          place. `SessionArtifacts` paints a flat surface instead; that is the
-          Files sheet's answer to the same question, and a designer may yet
-          want it changed rather than this one matching it. */}
-      <View
-        testID="settings-sheet-scene"
-        pointerEvents="none"
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
-        style={StyleSheet.absoluteFill}>
-        <ThemeArtwork slot="shell.background" />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: surfaceBackground(theme.colors.surface) },
-          ]}
-        />
-      </View>
+    <SheetFrame testID="settings-sheet-scene">
       {/*
         Exactly two subviews, which is the most a native form sheet lays out
         around a scroll view -- the ground above, and this column. The header is
@@ -410,7 +396,10 @@ export function ThemeBrowseSheet({
               direction. The same two lines the settings sheet carries. */}
           {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
           <View style={styles.header}>
-            <View style={styles.flexOne}>
+            {/* The two lines a reader reads before any row exists, and the only
+                text on this sheet not already on a row. Over a wallpaper they
+                take the settings page's plate. */}
+            <View style={[styles.flexOne, plate]}>
               <Text variant="bodySmall" style={styles.headerTitle}>
                 {t`Browse themes`}
               </Text>
@@ -506,10 +495,20 @@ export function ThemeBrowseSheet({
           ListEmptyComponent={empty}
           ListFooterComponent={footer}
           style={styles.sheet}
-          contentContainerStyle={styles.listContent}
+          // The rows are a plain list with hairlines between them rather than a
+          // stack of cards, so the column they sit in is what carries their
+          // fill. Without it every row was three lines of type straight on the
+          // pack's wallpaper, and the ones over the busy half of the picture
+          // were unreadable. The header above stays on the ground, which is
+          // where the sheet's own two lines belong -- the same division the
+          // settings page makes between a section label and its card.
+          contentContainerStyle={[
+            styles.listContent,
+            { backgroundColor: surfaceBackground(theme.colors.surface) },
+          ]}
         />
       </View>
-    </>
+    </SheetFrame>
   );
 }
 

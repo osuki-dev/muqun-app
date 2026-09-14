@@ -19,13 +19,12 @@
  * renders empty.
  */
 import { ScrollScreen, Text, useThemeTokens } from '@osuki-dev/ui';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { X } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER } from '@/components/settings-chrome';
 import { useRenderTally } from '@/lib/render-tally';
@@ -51,7 +50,7 @@ export function SettingsSheet({
   children: ReactNode;
 }) {
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
+  const plate = useSheetGroundPlate();
   useRenderTally('SettingsSheet');
   return (
     <ScrollScreen
@@ -60,49 +59,41 @@ export function SettingsSheet({
       style={[styles.sheet, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={styles.canvas}>
       {/* A sheet is a new scene, not a transparent window onto the previous
-          route's labels. Keep the native scroll root and its opaque floor;
-          only the paint above the local wallpaper follows surface opacity. */}
-      <View
-        testID="settings-sheet-scene"
-        pointerEvents="none"
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
-        style={StyleSheet.absoluteFill}>
-        <ThemeArtwork slot="shell.background" />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: surfaceBackground(theme.colors.surface) },
-          ]}
-        />
-      </View>
-      <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
-        {/* iOS draws the grabber itself; Android's form sheet does not, and a
+          route's labels. The native scroll root keeps its opaque floor; the
+          ground above it carries the shell's wallpaper, and the tint under
+          that wallpaper is the one layer the opacity slider moves. */}
+      <SheetFrame testID="settings-sheet-scene">
+        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+          {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. The panels sheet carries the same two lines. */}
-        {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+          {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
 
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text variant="bodySmall" style={styles.title}>
-              {title}
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {caption}
-            </Text>
+          <View style={styles.header}>
+            {/* The title and the line under it are the only text on this sheet
+              that is not already on a card, so over a wallpaper they take the
+              plate the settings page gives its section labels. */}
+            <View style={[styles.headerCopy, plate]}>
+              <Text variant="bodySmall" style={styles.title}>
+                {title}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {caption}
+              </Text>
+            </View>
+            <GlassChrome face="sheet" style={styles.closeButton}>
+              <PressableScale
+                accessibilityLabel={closeLabel}
+                onPress={onClose}
+                style={styles.closeHit}>
+                <X size={18} color={theme.colors.text} />
+              </PressableScale>
+            </GlassChrome>
           </View>
-          <GlassChrome face="sheet" style={styles.closeButton}>
-            <PressableScale
-              accessibilityLabel={closeLabel}
-              onPress={onClose}
-              style={styles.closeHit}>
-              <X size={18} color={theme.colors.text} />
-            </PressableScale>
-          </GlassChrome>
-        </View>
 
-        {children}
-      </View>
+          {children}
+        </View>
+      </SheetFrame>
     </ScrollScreen>
   );
 }
