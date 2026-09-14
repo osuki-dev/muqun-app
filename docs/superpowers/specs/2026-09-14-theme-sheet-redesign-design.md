@@ -758,17 +758,29 @@ export interface ThemeIndexEntry {
    * anything. Optional, and a row without one is a row with a palette
    * placeholder -- never an error and never a gap.
    *
+   * Relative to `THEME_GALLERY_BASE`, exactly as `package` is, and already
+   * written by `muqun-theme build`: `dist/previews/<id>.webp` beside
+   * `dist/<id>.muqun-theme`.
+   *
    * This is NOT the manifest's `preview`. That one is an asset id naming a
    * file *inside* the pack (1024x640, light left / dark right, skill 1.4.0),
    * which a catalogue cannot reach without the 25 MiB the catalogue exists to
-   * avoid. The index generator extracts that same image and republishes it
-   * beside the package; this field addresses the copy. Same picture, same
-   * 1024x640, same 8:5 -- one is in the pack for the installer, one is on the
-   * site for the list.
+   * avoid. The build extracts that same image and publishes it beside the
+   * package; this field addresses the copy. Same picture, same 1024x640, same
+   * 8:5 -- one is in the pack for the installer, one is on the site for the
+   * list.
    */
   preview?: string;
 }
 ```
+
+**Corrected after the design was written.** The field is not a change waiting
+on the server: `muqun-theme build` (osuki-dev/muqun-cli) already emits it, and
+it emits a _repository-relative path_ in the shape `package` uses, not an
+absolute URL. Everything below stands with that substitution -- the screening
+function is unchanged, because resolving against `THEME_GALLERY_BASE` is what
+makes a relative path the ordinary case and an absolute one on the same base a
+free extra.
 
 Parsing, in `parseThemeIndex` (`gallery.ts:93-111`), follows every other
 optional field: `preview: text_(entry.preview, 2048)`. **Not resolved to a URL
@@ -790,12 +802,12 @@ export function themePreviewUrl(entry: Pick<ThemeIndexEntry, 'preview'>): string
 }
 ```
 
-Two differences from `themePackageUrl` and both are deliberate: it returns
-`null` instead of throwing, because a cover that does not screen must cost the
-reader a placeholder and not a row; and because it resolves against
-`THEME_GALLERY_BASE`, an absolute `https://muqun.dev/api/themes/previews/x.webp`
-and a relative `previews/x.webp` both pass with no extra code. The generator
-writes absolute; the app accepts either.
+One difference from `themePackageUrl` and it is deliberate: it returns `null`
+instead of throwing, because a cover that does not screen must cost the reader a
+placeholder and not a row. Resolving against `THEME_GALLERY_BASE` then means
+that the relative `dist/previews/x.webp` the build actually writes and an
+absolute `https://muqun.dev/api/themes/dist/previews/x.webp` both pass, with no
+extra code and no extra trust.
 
 **The preview is the one new request that does not go through the native
 transport.** `expo-image` fetches it with ordinary platform networking — no
@@ -821,27 +833,33 @@ them:
 > ## The published catalogue
 >
 > The index at `https://muqun.dev/api/themes/index.json` is not a pack and is
-> not covered by `schemaVersion`. It is a document our own generator writes and
+> not covered by `schemaVersion`. It is a document our own build writes and
 > our own readers parse, so it may gain fields whenever it is useful — an app
 > that does not know a field ignores it, which is the whole of its compatibility
 > story.
 >
 > One field is worth writing down because it looks like a pack field and is not.
-> **`preview` in an index entry is a URL; `preview` in a manifest is an asset
-> id.** The manifest's names an image inside the pack, which is where the cover
-> belongs: it travels with the theme, it is covered by the package's own limits
-> and hashes, and it is what an offline install has. The index's addresses a
-> copy of that same image, published beside the package by the generator, so a
-> list can show a theme before downloading 25 MiB of it. Same picture, same
-> 1024x640, same 8:5.
+> **`preview` in an index entry is an address; `preview` in a manifest is an
+> asset id.** The manifest's names an image inside the pack, which is where the
+> cover belongs: it travels with the theme, it is covered by the package's own
+> limits and hashes, and it is what an offline install has. The index's
+> addresses a copy of that same image, published beside the package by
+> `muqun-theme build`, so a list can show a theme before downloading 25 MiB of
+> it. Same picture, same 1024x640, same 8:5, in whatever format the pack ships
+> it.
 >
-> The index entry's `preview` must resolve, against the catalogue's own base, to
-> a URL on that base — the rule `package` already follows, and for the same
+> The index entry's `preview` is written relative to the catalogue's own base,
+> exactly as `package` is — `dist/previews/<id>.webp` beside
+> `dist/<id>.muqun-theme` — and it must resolve, against that base, to a URL on
+> that base. That is the rule `package` already follows, and for the same
 > reason: an entry naming another host would be the catalogue asking the app to
-> fetch from a place the reader never chose. It is optional in both places. A
-> pack without a cover still installs; a row without one draws its palette
-> instead. Only the themes repository's own checks require it, because a gallery
-> with nothing to show is not a gallery.
+> fetch from a place the reader never chose. An absolute address on the base
+> resolves to itself and passes; anything else does not, and the row draws its
+> palette instead of an error. The field is optional in both places, and when it
+> is absent it is absent — never an empty string, never a null. A pack without a
+> cover still installs; a row without one draws its palette. Only the themes
+> repository's own checks require it, because a gallery with nothing to show is
+> not a gallery.
 
 ### Cache
 
@@ -1237,13 +1255,12 @@ The two other tests in that file (`:27`, `:36`) are unchanged.
 
 **Open questions — not resolvable from the code.**
 
-1. **Does the index generator exist, and who owns it?** The server-side half of
-   this work is a change to muqun.dev's index generator: extract the manifest's `preview` asset from
-   each pack, republish it beside the package, and emit its URL as the index's
-   `preview`. That repository is not in this tree. The app change is safe without
-   it — `preview` is optional and every row falls back to a palette placeholder —
-   so the two can land in either order, but the field is decorative until the
-   generator ships.
+1. **Does the index generator exist, and who owns it?** ~~Open.~~ **Answered:**
+   `muqun-theme build` in osuki-dev/muqun-cli already extracts the manifest's
+   `preview` asset from each pack, publishes it beside the package, and emits
+   its repository-relative path as the index's `preview`. Nothing server-side is
+   waiting on this work. The app change would have been safe either way —
+   `preview` is optional and every row falls back to a palette placeholder.
 2. **Should the cover be re-encoded server-side?** The manifest cover is 1024x640
    PNG or WebP with no byte ceiling beyond `THEME_LIMITS.assetBytes` (8 MiB).
    The recommendation here is ≤ ~100 KB WebP for the index copy, which implies
