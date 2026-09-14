@@ -42,6 +42,24 @@ export interface ThemeIndexEntry {
   bytes: number;
   sha256?: string;
   assets?: number;
+  /**
+   * The pack's cover, as something a list can draw before downloading
+   * anything. Optional, and a row without one is a row with a palette
+   * placeholder -- never an error and never a gap.
+   *
+   * Relative to {@link THEME_GALLERY_BASE}, exactly as `package` is, and
+   * written by `muqun-theme build` in the same shape:
+   * `dist/previews/<id>.webp` beside `dist/<id>.muqun-theme`.
+   *
+   * This is NOT the manifest's `preview`. That one is an asset id naming a
+   * file *inside* the pack (1024x640, light left / dark right, skill 1.4.0),
+   * which a catalogue cannot reach without the 25 MiB the catalogue exists to
+   * avoid. The build extracts that same image and publishes it beside the
+   * package; this field addresses the copy. Same picture, same 1024x640, same
+   * 8:5 -- one is in the pack for the installer, one is on the site for the
+   * list.
+   */
+  preview?: string;
 }
 
 /**
@@ -108,6 +126,10 @@ export function parseThemeIndex(text: string): ThemeIndexEntry[] {
         typeof entry.assets === 'number' && Number.isInteger(entry.assets)
           ? entry.assets
           : undefined,
+      // Kept as written, exactly as `package` is: a cover screened only where
+      // it is drawn cannot smuggle a host by sitting in a field nobody
+      // re-checks. `themePreviewUrl` is that one door.
+      preview: text_(entry.preview, 2048),
     });
   }
   return entries;
@@ -127,6 +149,31 @@ export function themePackageUrl(entry: Pick<ThemeIndexEntry, 'package'>): string
   const url = publicThemeUrl(entry.package, THEME_GALLERY_BASE);
   if (!url.startsWith(THEME_GALLERY_BASE)) throw new Error('Theme is not on the catalogue');
   return url;
+}
+
+/**
+ * A cover's address, screened exactly the way a package's is, except that it
+ * answers `null` rather than throwing.
+ *
+ * The one difference from {@link themePackageUrl} is deliberate: a cover that
+ * does not screen must cost the reader a placeholder and not a row, because
+ * the picture is decoration and the row is the theme. Everything else is the
+ * same door -- `publicThemeUrl` refuses anything that is not a public HTTPS
+ * host, and the result then has to stay on the catalogue's own origin.
+ *
+ * `muqun-theme build` writes this relative, like `package`
+ * (`dist/previews/<id>.webp`). Resolving against {@link THEME_GALLERY_BASE}
+ * means an absolute address on that same base also passes, with no extra code
+ * and no extra trust: an entry naming another host still gets `null`.
+ */
+export function themePreviewUrl(entry: Pick<ThemeIndexEntry, 'preview'>): string | null {
+  if (!entry.preview) return null;
+  try {
+    const url = publicThemeUrl(entry.preview, THEME_GALLERY_BASE);
+    return url.startsWith(THEME_GALLERY_BASE) ? url : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Read the catalogue. The transport is the caller's, for the reason in its docblock. */

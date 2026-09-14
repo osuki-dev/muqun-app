@@ -180,3 +180,31 @@ honoured when declared; and a pack whose remote asset is gone still installs
 with that slot empty rather than failing wholesale. A gallery should prefer
 self-contained `.muqun-theme` packages and treat URL assets as the exception —
 they are the one part of a pack that can change meaning after publication.
+
+## The published catalogue
+
+The index at `https://muqun.dev/api/themes/index.json` is not a pack and is not
+covered by `schemaVersion`. It is a document our own build writes and our own
+readers parse, so it may gain fields whenever it is useful — an app that does
+not know a field ignores it, which is the whole of its compatibility story.
+
+One field is worth writing down because it looks like a pack field and is not.
+**`preview` in an index entry is an address; `preview` in a manifest is an asset
+id.** The manifest's names an image inside the pack, which is where the cover
+belongs: it travels with the theme, it is covered by the package's own limits
+and hashes, and it is what an offline install has. The index's addresses a copy
+of that same image, published beside the package by `muqun-theme build`, so a
+list can show a theme before downloading 25 MiB of it. Same picture, same
+1024x640, same 8:5, in whatever format the pack ships it.
+
+The index entry's `preview` is written relative to the catalogue's own base,
+exactly as `package` is — `dist/previews/<id>.webp` beside
+`dist/<id>.muqun-theme` — and it must resolve, against that base, to a URL on
+that base. That is the rule `package` already follows, and for the same reason:
+an entry naming another host would be the catalogue asking the app to fetch from
+a place the reader never chose. An absolute address on the base resolves to
+itself and passes; anything else does not, and the row draws its palette instead
+of an error. The field is optional in both places, and when it is absent it is
+absent — never an empty string, never a null. A pack without a cover still
+installs; a row without one draws its palette. Only the themes repository's own
+checks require it, because a gallery with nothing to show is not a gallery.
