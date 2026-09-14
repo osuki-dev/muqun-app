@@ -272,3 +272,34 @@ export function homeServerListLayout(
     brand: homeBrandWeight(serverCount),
   };
 }
+
+/**
+ * Where a theme's Home illustration stops growing, by window width.
+ *
+ * A band rather than a picture with a size of its own: it is `contain`-fit, so
+ * this is the height it is allowed to occupy and the artwork sits inside it at
+ * whatever aspect ratio the author drew. The number is a ceiling on how much of
+ * the first screen a decoration may take before the reader has to scroll to
+ * reach the thing they opened the app for.
+ *
+ * The regular figure is the smaller of the two, which is the opposite of how a
+ * decoration usually scales, and deliberately. A wide window is short: an iPad
+ * in landscape has less vertical room than a phone has, and the list beside the
+ * hero is the same list. Growing the picture with the width would spend the
+ * scarce axis to celebrate the plentiful one.
+ *
+ * The breakpoint is `resolveThemeImage`'s own -- the width at which a pack's
+ * `regular` override takes over -- so the size the app reserves and the image
+ * the author drew for it change on the same edge.
+ */
+export const HOME_HERO_MAX_HEIGHT = { compact: 180, regular: 132 } as const;
+
+/** The artwork width class, shared with `useHasThemeArtwork` and `ThemeArtworkLayer`. */
+export const THEME_ARTWORK_REGULAR_MIN_WIDTH = 768;
+
+export function homeHeroMaxHeight(availableWidth: number): number {
+  const safeWidth = Number.isFinite(availableWidth) ? Math.max(0, availableWidth) : 0;
+  return safeWidth >= THEME_ARTWORK_REGULAR_MIN_WIDTH
+    ? HOME_HERO_MAX_HEIGHT.regular
+    : HOME_HERO_MAX_HEIGHT.compact;
+}
