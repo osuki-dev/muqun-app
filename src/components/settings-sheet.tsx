@@ -50,7 +50,10 @@ export function SettingsSheet({
   children: ReactNode;
 }) {
   const theme = useThemeTokens();
-  const plate = useSheetGroundPlate();
+  // Explicit: this is the component that renders the frame, so it sits above
+  // its own tint provider. Everything *inside* the sheet reads the tint from
+  // the frame and calls this with no argument.
+  const plate = useSheetGroundPlate('surface');
   useRenderTally('SettingsSheet');
   return (
     <ScrollScreen

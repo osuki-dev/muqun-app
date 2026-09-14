@@ -23,8 +23,9 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { agentStatusWord } from '@/i18n/labels';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetFrame } from '@/components/sheet-ground';
 import { RowActionMenu } from '@/components/row-action-menu';
+import { SectionLabel } from '@/components/settings-chrome';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
 import {
   createTab,
@@ -114,8 +115,9 @@ export function SessionMap({
   onClose: () => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
-  // The plate a label takes when the pack draws a wallpaper behind the sheet.
-  const plate = useSheetGroundPlate();
+  // No `useSheetGroundPlate()` here any more. The one label on this sheet drawn
+  // straight onto the ground is the tab heading, and it is a `SectionLabel`,
+  // which takes the plate from the frame itself.
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -589,13 +591,22 @@ export function SessionMap({
                   reader can act on: you cannot type `2` at this sheet, and the
                   heading beside it already carries the name its owner gave it.
                   A number that cannot be used is a number being read for
-                  nothing, so the name starts at the edge instead. */}
-                {/* The tab's name is the one label on this sheet drawn
-                  straight onto the ground, so over a wallpaper it takes the
-                  plate the settings page gives a section label. */}
-                <Text variant="label" numberOfLines={1} style={[styles.flexOne, plate]}>
-                  {group.tab.title}
-                </Text>
+                  nothing, so the name starts at the edge instead.
+
+                  The tab's name is the one label on this sheet drawn straight
+                  onto the ground, so over a wallpaper it takes a plate -- and
+                  it takes it as `SectionLabel`, the same component the settings
+                  page draws over TERMINAL, which reads this sheet's own ground
+                  tint out of the frame rather than guessing at one.
+
+                  The `flex: 1` moves to a wrapper. On the text it grew the
+                  label, and with it the plate, to the width of the sheet: the
+                  one heading in the app that read as a full-width bar. The
+                  wrapper still holds the long-press menu at the trailing edge
+                  while the pill hugs the name. */}
+                <View style={styles.flexOne}>
+                  <SectionLabel title={group.tab.title} numberOfLines={1} />
+                </View>
                 {/* No count here. The panels it counted are the next thing on the
                   screen, in a card with a visible edge, so the heading was
                   reporting the length of a list the reader was already looking
@@ -1068,9 +1079,6 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
     minWidth: 0,
-  },
-  eyebrow: {
-    letterSpacing: 0.8,
   },
   rail: {
     gap: 8,

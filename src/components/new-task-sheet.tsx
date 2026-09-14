@@ -36,7 +36,7 @@ import Animated from 'react-native-reanimated';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { LADDER } from '@/components/settings-chrome';
+import { LADDER, SectionLabel } from '@/components/settings-chrome';
 import {
   agentSpawnRequest,
   canSpawnAgent,
@@ -89,9 +89,12 @@ export function NewTaskSheet({
   // has no way to know the result also depends on the active locale.
   const { t } = useLingui();
   const theme = useThemeTokens();
-  // The plate the settings page gives a label drawn straight onto the shell's
-  // wallpaper; `null` on every theme that has no picture there.
-  const plate = useSheetGroundPlate();
+  // The plate any text drawn straight onto the shell's wallpaper takes; empty
+  // on every theme that has no picture there. Explicit, because this is the
+  // component that renders the frame and so sits above its own tint provider:
+  // everything *inside* the sheet reads the tint from the frame and calls this
+  // with no argument at all.
+  const plate = useSheetGroundPlate('surface');
   useRenderTally('NewTaskSheet');
 
   const [profiles, setProfiles] = useState<AgentProfile[]>([]);
@@ -217,12 +220,7 @@ export function NewTaskSheet({
             </View>
 
             <View style={styles.section}>
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                style={[styles.sectionLabel, plate]}>
-                <Trans>AGENT</Trans>
-              </Text>
+              <SectionLabel title={<Trans>AGENT</Trans>} color={theme.colors.textMuted} />
               {loadingProfiles ? (
                 <View style={styles.loadingRow}>
                   <Spinner size="sm" color={theme.colors.primary} />
@@ -250,12 +248,7 @@ export function NewTaskSheet({
             </View>
 
             <View style={styles.section}>
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                style={[styles.sectionLabel, plate]}>
-                <Trans>DIRECTORY</Trans>
-              </Text>
+              <SectionLabel title={<Trans>DIRECTORY</Trans>} color={theme.colors.textMuted} />
               {recentCwds.length > 0 ? (
                 <View style={styles.recentList}>
                   {recentCwds.map((path, index) => (
@@ -273,8 +266,9 @@ export function NewTaskSheet({
                 </View>
               ) : null}
               {/* Under the list, not instead of it, and always present: the recent
-            answers are a shortcut, and a shortcut that hides the long way round
-            is a trap the first time it does not have the place you meant. */}
+                answers are a shortcut, and a shortcut that hides the long way
+                round is a trap the first time it does not have the place you
+                meant. */}
               <Input
                 label={t`Path`}
                 value={cwd}
@@ -290,12 +284,7 @@ export function NewTaskSheet({
             </View>
 
             <View style={styles.section}>
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                style={[styles.sectionLabel, plate]}>
-                <Trans>FIRST PROMPT</Trans>
-              </Text>
+              <SectionLabel title={<Trans>FIRST PROMPT</Trans>} color={theme.colors.textMuted} />
               <Input
                 value={prompt}
                 onChangeText={setPrompt}
@@ -494,7 +483,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   section: { gap: LADDER.gap },
-  sectionLabel: { marginLeft: LADDER.tight },
   loadingRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: LADDER.gap },
   pill: {
