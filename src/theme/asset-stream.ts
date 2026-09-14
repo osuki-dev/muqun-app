@@ -1,4 +1,5 @@
 import { throwIfThemeAborted } from '@/theme/abort';
+import { yieldFrame as defaultYieldFrame, type YieldFrame } from '@/theme/yield';
 import { inspectThemeImage } from './image-inspection';
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from './schema';
 
@@ -12,6 +13,8 @@ export type ThemeAssetProgress = {
 export type ThemeAssetStreamOptions = {
   signal?: AbortSignal;
   onProgress?: (progress: ThemeAssetProgress) => void;
+  /** Test seam. The real one is a macrotask; see `@/theme/yield`. */
+  yieldFrame?: YieldFrame;
 };
 export type ThemeAssetStagePort = {
   hash: (bytes: Uint8Array) => string | Promise<string>;
@@ -62,6 +65,27 @@ export async function stageThemeAssetStream(
       receivedBytes += chunk.bytes.length;
       if (legacyByteLimit !== undefined && receivedBytes > legacyByteLimit)
         throw new Error('Theme images exceed the package limit');
+      /*
+       * The frame the previous iteration's `progress('staging')` needs.
+       *
+       * `port.writeAndDecode` awaits a native decode and is a real yield, so
+       * this loop already hands the thread back once per asset -- but it does
+       * it *after* the inspection, and the inspection is the expensive half.
+       * `inspectThemeImage` is a container parser rather than a pixel decoder,
+       * which is cheap for JPEG and WebP and is not cheap for PNG: it CRC32s
+       * every chunk's full payload with a per-bit inner loop, so an 8 MiB PNG
+       * stalled here for longer than the decode that followed it, and the
+       * counter that had just moved was drawn after the stall rather than
+       * before it.
+       *
+       * One yield here, rather than splitting the inspection. It is a pure
+       * validator on a trust boundary with several callers, and an async twin
+       * would fork that boundary for a saving this already gets most of. What
+       * remains uninterrupted is one image's inspection, bounded by
+       * `THEME_LIMITS.assetBytes`.
+       */
+      await (options.yieldFrame ?? defaultYieldFrame)();
+      throwIfThemeAborted(options.signal);
       const info = inspectThemeImage(chunk.bytes);
       const digest = await port.hash(chunk.bytes);
       throwIfThemeAborted(options.signal);
