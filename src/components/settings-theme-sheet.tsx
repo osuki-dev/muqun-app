@@ -93,8 +93,10 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
       closeLabel={t`Close theme picker`}
       onClose={onClose}
       contentMaxWidth={THEME_PICKER_MAX_CONTENT_WIDTH}>
-      <CustomThemeLibrary onOpenCandidate={openEditor}>
-        <Text variant="caption">{t`Built-in themes`}</Text>
+      {/* `tabs`, and with it no caption of its own: the segmented control
+          names the collection now, and a heading under the tab that repeats
+          the word is the same word twice. */}
+      <CustomThemeLibrary tabs onOpenCandidate={openEditor}>
         {error ? <Text accessibilityRole="alert">{error}</Text> : null}
         <View
           accessibilityRole="radiogroup"
