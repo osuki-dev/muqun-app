@@ -2,8 +2,24 @@ import { throwIfThemeAborted } from '@/theme/abort';
 import { Inflate, strToU8, zipSync } from 'fflate';
 
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
+import { yieldFrame as defaultYieldFrame, type YieldFrame } from '@/theme/yield';
 
 export type ThemePackage = { manifest: ThemeManifest; assets: Record<string, Uint8Array> };
+/** ZIP entries done and ZIP entries there are. Monotonic, and never restated. */
+export type ThemeUnpackProgress = { completed: number; total: number };
+
+/**
+ * How much uninterrupted work one block of the unpack is allowed to be.
+ *
+ * A starting point, not a measured optimum. The intent is that one block lands
+ * on the order of a frame rather than a fraction of one, which for the
+ * table-driven CRC loop below is an assumption about JS throughput on the
+ * target phones. A 25 MiB package is then roughly a hundred yields, which is
+ * nothing against the inflate itself. If a block measures tens of
+ * milliseconds on device, halve it; if the yields show up in the total,
+ * double it.
+ */
+const YIELD_BYTES = 256 * 1024;
 type Entry = {
   name: string;
   size: number;
@@ -18,10 +34,14 @@ const crcTable = Uint32Array.from({ length: 256 }, (_, value) => {
   for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
   return crc >>> 0;
 });
-function crc32(bytes: Uint8Array) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) crc = crcTable[(crc ^ byte) & 255] ^ (crc >>> 8);
-  return (crc ^ 0xffffffff) >>> 0;
+/** One slice of a CRC32, carrying the register in and out so the whole checksum
+ * can be computed across several blocks with a yield between them. `0xffffffff`
+ * in and `^ 0xffffffff` out are the same pre- and post-conditioning a
+ * single-shot CRC does; splitting the loop changes nothing about the result. */
+function crc32Slice(crc: number, bytes: Uint8Array, start: number, end: number) {
+  for (let index = start; index < end; index++)
+    crc = crcTable[(crc ^ bytes[index]) & 255] ^ (crc >>> 8);
+  return crc;
 }
 function invalid(message: string): never {
   throw new Error(`Invalid theme package: ${message}`);
@@ -103,12 +123,37 @@ function entries(bytes: Uint8Array): { entries: Entry[]; directory: number } {
   return { entries: result, directory };
 }
 
-/** Bounded incremental DEFLATE: dishonest declared sizes cannot allocate an unbounded result. */
-export function unpackTheme(bytes: Uint8Array, signal?: AbortSignal): ThemePackage {
+/**
+ * The unpack itself, once, as a generator that can be stopped.
+ *
+ * There is one body and two ways to drive it: `unpackTheme` runs it straight
+ * through, `unpackThemeAsync` hands the frame back at every point it pauses.
+ * Two implementations would have been the wrong answer -- this is a security
+ * boundary, and every bound, every checksum and every structural check in here
+ * must exist exactly once or the two copies will drift and one of them will be
+ * the lenient one.
+ *
+ * A `yield` is a place the work may be interrupted, nothing more. A yielded
+ * `ThemeUnpackProgress` additionally says an entry finished; a yielded `null`
+ * is a pause in the middle of one, which is where the long stretches are.
+ *
+ * Bounded incremental DEFLATE throughout: dishonest declared sizes cannot
+ * allocate an unbounded result.
+ */
+function* unpackThemeSteps(
+  bytes: Uint8Array,
+  signal?: AbortSignal
+): Generator<ThemeUnpackProgress | null, ThemePackage> {
   const archive = entries(bytes);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const files = new Map<string, Uint8Array>();
   let expectedOffset = 0;
+  // An archive holds at most `THEME_LIMITS.assets + 2` entries, so a report
+  // between each one is cheap and is what makes the counter move. Said once
+  // before any work, so the bar exists before it has anything to show.
+  const total = archive.entries.length;
+  let completed = 0;
+  yield { completed, total };
   for (const entry of archive.entries) {
     throwIfThemeAborted(signal);
     const offset = entry.offset;
@@ -162,13 +207,35 @@ export function unpackTheme(bytes: Uint8Array, signal?: AbortSignal): ThemePacka
     else {
       const inflater = new Inflate((chunk) => accept(chunk));
       // Limit temporary decoder output even when the ZIP lies about original size.
+      let sinceYield = 0;
       for (let cursor = start; cursor < end; cursor += 1024) {
         throwIfThemeAborted(signal);
         inflater.push(bytes.subarray(cursor, Math.min(cursor + 1024, end)), cursor + 1024 >= end);
+        // The 1 KiB slices are the decoder's memory bound, not a yield
+        // granularity: a yield every kilobyte would be more scheduling than
+        // inflating. One every `YIELD_BYTES` of compressed input instead, and
+        // never on the last slice, where the entry's own pause is next anyway.
+        sinceYield += 1024;
+        if (sinceYield >= YIELD_BYTES && cursor + 1024 < end) {
+          sinceYield = 0;
+          yield null;
+        }
       }
     }
-    if (written !== entry.size || crc32(output) !== entry.crc) invalid('size or checksum mismatch');
+    if (written !== entry.size) invalid('size or checksum mismatch');
+    // The single largest uninterrupted block in the old path: one pass of a
+    // byte-at-a-time table loop over the whole expanded entry, which for an
+    // 8 MiB image is eight million iterations with no way in for a frame.
+    let crc = 0xffffffff;
+    for (let cursor = 0; cursor < output.length; cursor += YIELD_BYTES) {
+      throwIfThemeAborted(signal);
+      crc = crc32Slice(crc, output, cursor, Math.min(cursor + YIELD_BYTES, output.length));
+      if (cursor + YIELD_BYTES < output.length) yield null;
+    }
+    if ((crc ^ 0xffffffff) >>> 0 !== entry.crc) invalid('size or checksum mismatch');
     files.set(name, output);
+    completed++;
+    yield { completed, total };
   }
   if (expectedOffset !== archive.directory) invalid('unreferenced bytes');
   const manifest = parseThemeManifest(
@@ -185,6 +252,58 @@ export function unpackTheme(bytes: Uint8Array, signal?: AbortSignal): ThemePacka
   }
   if ([...files.keys()].some((name) => !declared.has(name))) invalid('undeclared files');
   return { manifest, assets };
+}
+
+/**
+ * The whole unpack, on this thread, without stopping.
+ *
+ * Still the export for every caller that is not drawing progress while it
+ * waits -- the file viewer, the terminal's theme drop, the local file read.
+ * Those already run behind a screen that says what it is doing, and a
+ * synchronous call that cannot be interleaved is the simpler thing for them to
+ * reason about.
+ */
+export function unpackTheme(bytes: Uint8Array, signal?: AbortSignal): ThemePackage {
+  const steps = unpackThemeSteps(bytes, signal);
+  let step = steps.next();
+  while (!step.done) step = steps.next();
+  return step.value;
+}
+
+/**
+ * The same unpack, handing the frame back at every pause.
+ *
+ * This is what a download installs through, because that is the path with a
+ * reader watching it: between the end of the download and the first asset
+ * landing, the old synchronous call held the JS thread for the entire archive
+ * and the app drew nothing at all.
+ *
+ * `throwIfThemeAborted` runs immediately after every yield as well as inside
+ * the generator, because a cancellation that arrives *during* the yield is
+ * exactly the one this is for -- the reader swiped the sheet away while the
+ * inflate was running.
+ */
+export async function unpackThemeAsync(
+  bytes: Uint8Array,
+  options: {
+    signal?: AbortSignal;
+    onProgress?: (progress: ThemeUnpackProgress) => void;
+    /** Test seam. The real one is a macrotask; see `@/theme/yield`. */
+    yieldFrame?: YieldFrame;
+  } = {}
+): Promise<ThemePackage> {
+  const hand = options.yieldFrame ?? defaultYieldFrame;
+  const steps = unpackThemeSteps(bytes, options.signal);
+  let step = steps.next();
+  while (!step.done) {
+    // Reported before the yield, so the value the frame paints is this one and
+    // not the previous one.
+    if (step.value) options.onProgress?.(step.value);
+    await hand();
+    throwIfThemeAborted(options.signal);
+    step = steps.next();
+  }
+  return step.value;
 }
 
 /** Call after image verification. Package contains no device paths or connection data. */

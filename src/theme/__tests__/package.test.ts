@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { strToU8, zipSync } from 'fflate';
 
 import { createThemeStarter } from '@/theme/authoring';
-import { packTheme, unpackTheme } from '@/theme/package';
+import { packTheme, unpackTheme, unpackThemeAsync } from '@/theme/package';
 
 function files() {
   return { 'theme.json': strToU8(JSON.stringify(createThemeStarter())) };
@@ -118,4 +118,108 @@ test('export rejects case-insensitive path collisions before producing an unusab
   expect(() =>
     packTheme({ manifest, assets: { first: new Uint8Array([1]), second: new Uint8Array([1]) } })
   ).toThrow('case-insensitive');
+});
+
+/**
+ * Bytes that do not compress, so an archive built from them actually exercises
+ * the inflate path and is long enough to be interrupted. Deterministic, because
+ * a test that pauses a different number of times per run is not a test.
+ */
+function noisy(length: number) {
+  const bytes = new Uint8Array(length);
+  let state = 0x2f6e2b1;
+  for (let index = 0; index < length; index++) {
+    state = (state * 1103515245 + 12345) >>> 0;
+    bytes[index] = state >>> 24;
+  }
+  return bytes;
+}
+
+/** A two-entry archive: the manifest, and one large compressed image. */
+function packaged(asset: Uint8Array) {
+  const manifest = createThemeStarter();
+  manifest.assets = { paper: { path: 'assets/paper.png' } };
+  manifest.decoration = { 'shell.background': { asset: 'paper' } };
+  return {
+    manifest,
+    archive: zipSync(
+      { 'theme.json': strToU8(JSON.stringify(manifest)), 'assets/paper.png': asset },
+      { level: 6 }
+    ),
+  };
+}
+
+test('the cooperative unpack produces exactly what the synchronous one does', async () => {
+  const asset = noisy(700 * 1024);
+  const { manifest, archive } = packaged(asset);
+  const straight = unpackTheme(archive);
+  const cooperative = await unpackThemeAsync(archive);
+  expect(cooperative.manifest).toEqual(manifest);
+  expect(cooperative.manifest).toEqual(straight.manifest);
+  expect(cooperative.assets.paper).toEqual(asset);
+  expect(cooperative.assets.paper).toEqual(straight.assets.paper);
+  // And the stored path, which skips the inflater and goes straight to the CRC.
+  const stored = packTheme({ manifest, assets: { paper: asset } });
+  expect((await unpackThemeAsync(stored)).assets.paper).toEqual(asset);
+});
+
+test('the unpack hands the frame back inside an entry, not only between entries', async () => {
+  const { archive } = packaged(noisy(700 * 1024));
+  const progress: { completed: number; total: number }[] = [];
+  let handed = 0;
+  await unpackThemeAsync(archive, {
+    onProgress: (value) => progress.push(value),
+    yieldFrame: async () => {
+      handed++;
+    },
+  });
+  // One report before any work and one per entry: nothing is restated,
+  // `completed` only ever goes up, and `total` never moves under it.
+  expect(progress).toEqual([
+    { completed: 0, total: 2 },
+    { completed: 1, total: 2 },
+    { completed: 2, total: 2 },
+  ]);
+  // More pauses than reports is the whole point. A report per entry alone
+  // would leave the inflate and the CRC of one large image uninterrupted,
+  // which is exactly the block that used to hold the frame.
+  expect(handed).toBeGreaterThan(progress.length);
+});
+
+test('the cooperative unpack rejects everything the synchronous one rejects', async () => {
+  const corrupt = zipSync(files(), { level: 0 });
+  corrupt[45] ^= 1;
+  await expect(unpackThemeAsync(corrupt)).rejects.toThrow('checksum');
+  await expect(unpackThemeAsync(corrupt.subarray(0, 10))).rejects.toThrow();
+  await expect(
+    unpackThemeAsync(zipSync({ ...files(), '../theme.json': new Uint8Array([1]) }))
+  ).rejects.toThrow();
+  await expect(
+    unpackThemeAsync(zipSync({ ...files(), 'assets/a.png': new Uint8Array([1]) }))
+  ).rejects.toThrow('undeclared');
+  const aborted = new AbortController();
+  aborted.abort();
+  await expect(unpackThemeAsync(zipSync(files()), { signal: aborted.signal })).rejects.toThrow();
+});
+
+test('cancellation raised while the unpack is paused stops it mid-entry', async () => {
+  const { archive } = packaged(noisy(700 * 1024));
+  const controller = new AbortController();
+  let handed = 0;
+  let reports = 0;
+  await expect(
+    unpackThemeAsync(archive, {
+      onProgress: () => reports++,
+      yieldFrame: async () => {
+        // The fourth pause is inside the large entry: the first is the opening
+        // report, the second follows the manifest entry, and everything after
+        // that is the image's own inflate and CRC blocks.
+        if (++handed === 4) controller.abort(new Error('Canceled by user'));
+      },
+      signal: controller.signal,
+    })
+  ).rejects.toThrow('Canceled by user');
+  expect(handed).toBe(4);
+  // Stopped before the second entry could be reported as done.
+  expect(reports).toBe(2);
 });
