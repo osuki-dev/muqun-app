@@ -3,8 +3,9 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { ScrollScreen, Skeleton, Text, useThemeTokens } from '@osuki-dev/ui';
+import { ScrollScreen, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
+import { Skeleton } from '@/components/themed-skeleton';
 import { Bot, Plus, RefreshCw, SquareTerminal, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {

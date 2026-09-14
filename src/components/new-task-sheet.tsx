@@ -304,7 +304,15 @@ export function NewTaskSheet({
         ) : null}
       </KeyboardAwareScrollView>
       {/* One field at a time here, so the arrows would only ever point at
-        themselves. */}
+        themselves.
+
+        No `backgroundColor`, though kit 1.1.0 now offers one. The toolbar is a
+        sticky view offset by its own height when the keyboard is closed, so the
+        only time it is on screen it is riding the keyboard's top edge -- with
+        the system keyboard below it and the form's own fields behind it, and no
+        artwork layer anywhere near. Thinning that fill would show the field it
+        covers, not the reader's picture, which is the opposite of what the
+        slider is for. */}
       <KeyboardToolbar showArrows={false} doneText={t`Done`} />
     </>
   );

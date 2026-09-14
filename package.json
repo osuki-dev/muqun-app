@@ -50,7 +50,7 @@
     "@lingui/core": "^6.6.0",
     "@lingui/react": "^6.6.0",
     "@osuki-dev/react-native-ssh": "0.2.0",
-    "@osuki-dev/ui": "^1.0.1",
+    "@osuki-dev/ui": "^1.1.0",
     "@shopify/react-native-skia": "2.11.2",
     "expo": "~57.0.20",
     "expo-application": "~57.0.2",
