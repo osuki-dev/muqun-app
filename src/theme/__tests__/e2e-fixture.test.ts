@@ -40,8 +40,14 @@ test('the flow still installs it, rather than testing the built-in theme', () =>
   expect(flow).toContain('press "id=theme-row-my-theme"');
 });
 
-test('the flow does not reach the network, which is the suite’s whole premise', () => {
-  // The gallery entry may be asserted present; opening it would read muqun.dev.
+test('the flow reads no theme package, which is the suite’s whole premise', () => {
+  // The premise moved, and pretending otherwise would be worse than saying so.
+  // The catalogue sheet *is* opened now, on purpose: with no network its index
+  // read fails, and the empty state is the thing under test. What must never
+  // happen is a row press, which is the 25 MiB download.
   expect(flow).toContain('is visible "id=theme-browse"');
+  expect(flow).toContain('wait "id=theme-browse-empty" 40000');
+  expect(flow).not.toContain('theme-browse-item');
+  // Still never spelled in the .ad: the manifest drives the press.
   expect(flow).not.toContain('press "id=theme-browse"');
 });
