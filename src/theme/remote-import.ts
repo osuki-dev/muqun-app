@@ -2,7 +2,8 @@ import { throwIfThemeAborted, themeAbortReason, abortThemeOperation } from '@/th
 import { cloneThemeData } from '@/theme/clone';
 import type { ThemeAssetChunk } from '@/theme/asset-stream';
 import { inspectThemeImage } from '@/theme/image-inspection';
-import { unpackTheme, type ThemePackage } from '@/theme/package';
+import type { ThemeInstallProgress } from '@/theme/install-progress';
+import { unpackThemeAsync, type ThemePackage } from '@/theme/package';
 import { parseThemeManifest, THEME_LIMITS, type ThemeManifest } from '@/theme/schema';
 
 export const REMOTE_THEME_LIMITS = Object.freeze({ redirects: 5, timeoutMs: 30_000 });
@@ -119,7 +120,15 @@ export type RemoteThemeInspection = {
   manifest: ThemeManifest;
   /** Review domains first, then pass this iterator and the manifest to native
    * staging. Only one bounded image is fetched per consumer request; no aggregate
-   * quota or retained image collection. ZIP input is still a bounded archive. */
+   * quota or retained image collection. ZIP input is still a bounded archive.
+   *
+   * Image inspection is the consumer's, and `stageThemeAssetStream` is the
+   * consumer that does it: it calls `inspectThemeImage` on every chunk before
+   * hashing, writing or decoding a single byte, so nothing reaches storage
+   * uninspected. This generator deliberately does not inspect as well --
+   * that was a second parse of the same bytes whose result was discarded,
+   * which cost an 8 MiB PNG a full CRC32 and bought no guarantee the
+   * consumer was not already providing. */
   assets: (signal?: AbortSignal) => AsyncGenerator<ThemeAssetChunk>;
   /** Does not fetch images until the user has reviewed the resource domains.
    * The returned package still requires prepareThemeAssets native decode/hash
@@ -132,7 +141,20 @@ export type RemoteThemeInspection = {
 export async function inspectRemoteTheme(
   transport: PublicThemeTransport,
   input: string,
-  options: { signal?: AbortSignal; format?: 'manifest' | 'package' } = {}
+  options: {
+    signal?: AbortSignal;
+    format?: 'manifest' | 'package';
+    /**
+     * How far the unpack has got, for a caller with somewhere to say it.
+     *
+     * Only ever the `unpacking` phase: the download before it resolves one
+     * `Uint8Array` off a native transport with no streaming callback, and the
+     * images after it belong to whoever consumes `assets`. Typed as the whole
+     * union anyway so a screen keeps one progress value with one setter rather
+     * than three states it has to reconcile.
+     */
+    onProgress?: (progress: ThemeInstallProgress) => void;
+  } = {}
 ): Promise<RemoteThemeInspection> {
   const packaged = options.format === 'package';
   const result = await download(
@@ -141,7 +163,15 @@ export async function inspectRemoteTheme(
     packaged ? THEME_LIMITS.packageBytes : THEME_LIMITS.manifestBytes,
     options.signal
   );
-  const archive = packaged ? unpackTheme(result.bytes, options.signal) : undefined;
+  // Awaited, and cooperative: the inflate and the CRC32 inside it are pure JS
+  // on the JS thread, and running them straight through is what used to stop
+  // the app drawing between the end of the download and the first asset.
+  const archive = packaged
+    ? await unpackThemeAsync(result.bytes, {
+        signal: options.signal,
+        onProgress: (progress) => options.onProgress?.({ phase: 'unpacking', ...progress }),
+      })
+    : undefined;
   const manifest =
     archive?.manifest ??
     parseThemeManifest(new TextDecoder('utf-8', { fatal: true }).decode(result.bytes));
@@ -173,9 +203,10 @@ export async function inspectRemoteTheme(
               )
             ).bytes;
         throwIfThemeAborted(signal);
-        inspectThemeImage(bytes);
         // Native staging still owns full decoding, checksum verification,
-        // disk-space checks and rollback. No library writes happen here.
+        // disk-space checks and rollback. No library writes happen here, and
+        // no bytes leave without `stageThemeAssetStream` inspecting them --
+        // see the note on `assets` above.
         yield { id: resource.id, bytes };
       }
     },
