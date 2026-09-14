@@ -615,22 +615,13 @@ function ThemeBrowseRow({
           </View>
           <View style={styles.body}>
             <View style={styles.titleRow}>
+              {/* The name gets the line to itself, beside the size and
+                  nothing else. The badge used to sit here and cost the name a
+                  third of its width, so "Aegean Paperlight" was read as
+                  "Aegean Paperl…" -- a row whose one job is to name a theme. */}
               <Text variant="bodySmall" numberOfLines={1} style={styles.flexOne}>
                 {entry.name}
               </Text>
-              {installed ? (
-                <Animated.View entering={fadeIn('medium')}>
-                  <Tag
-                    // One layer of paint per pixel: under a custom theme the
-                    // kit's opaque chip would be the one thing on the row that
-                    // refused the reader's surface slider, so it drops its fill
-                    // and the row behind it shows through at its own alpha. A
-                    // default theme has no alpha to honour and keeps the kit's.
-                    style={surfaceOpacity === 1 ? undefined : styles.badgeTransparent}>
-                    {t`Installed`}
-                  </Tag>
-                </Animated.View>
-              ) : null}
               {/* The trailing slot is one thing or the other, never both and
                   never a jump: the size cross-fades out as the spinner comes
                   in, which is the row acknowledging the tap. */}
@@ -656,14 +647,37 @@ function ThemeBrowseRow({
                 )}
               </View>
             </View>
-            {entry.author ? (
-              <Text
-                variant="caption"
-                color={theme.colors.textSubtle}
-                numberOfLines={1}
-                ellipsizeMode="tail">
-                {entry.author}
-              </Text>
+            {/* The badge leads the author line rather than the name line: it
+                is about this row's relationship to the library, which is the
+                same register as who wrote the theme, and down here it costs a
+                name nothing. */}
+            {installed || entry.author ? (
+              <View style={styles.metaRow}>
+                {installed ? (
+                  <Animated.View entering={fadeIn('medium')}>
+                    <Tag
+                      // One layer of paint per pixel: under a custom theme the
+                      // kit's opaque chip would be the one thing on the row
+                      // refusing the reader's surface slider, so it drops its
+                      // fill and the row behind shows through at its own alpha.
+                      // A default theme has no alpha to honour and keeps the
+                      // kit's.
+                      style={surfaceOpacity === 1 ? undefined : styles.badgeTransparent}>
+                      {t`Installed`}
+                    </Tag>
+                  </Animated.View>
+                ) : null}
+                {entry.author ? (
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textSubtle}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={styles.flexOne}>
+                    {entry.author}
+                  </Text>
+                ) : null}
+              </View>
             ) : null}
             {entry.description ? (
               <Text
@@ -742,6 +756,7 @@ const styles = StyleSheet.create({
   swatch: { width: 28, height: 20, borderRadius: 6, borderCurve: 'continuous' },
   body: { flex: 1, minWidth: 0, gap: LADDER.tight / 2 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
   badgeTransparent: { backgroundColor: 'transparent' },
   trailing: { minWidth: 56, alignItems: 'flex-end', justifyContent: 'center' },
   trailingSlot: { alignItems: 'flex-end', justifyContent: 'center' },
