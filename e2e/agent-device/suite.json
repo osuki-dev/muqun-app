@@ -6189,6 +6189,14 @@
       },
       {
         "target": {
+          "text": "(?i)skip intro"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
+        "target": {
           "text": "Got it"
         },
         "mode": "press",

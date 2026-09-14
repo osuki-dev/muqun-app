@@ -14,7 +14,13 @@ import {
   SquareTerminal,
 } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshControl, StyleSheet, useWindowDimensions, View } from 'react-native';
+import {
+  RefreshControl,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, {
   Extrapolation,
@@ -22,6 +28,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -44,7 +51,7 @@ import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID, isDemoRecord } from '@/lib/demo-gateway';
 import { demoSshHost } from '@/lib/demo-ssh';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
+import { fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
 import {
   homeServerListLayout,
   responsiveWorkspaceLayout,
@@ -71,8 +78,7 @@ import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveHomeIdentity } from '@/theme/resolve';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
-
-const brandMark = require('../../../assets/images/loading-mark.png');
+import { useBrandMark } from '@/components/brand-mark';
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
@@ -112,6 +118,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
       state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
   );
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  const brandMark = useBrandMark();
   const customLogo =
     identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
@@ -253,11 +260,64 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
     }
   }, [probeTargets, refreshReachabilityMany]);
 
+  /*
+   * The bar gives way to the list.
+   *
+   * Scrolling down through the servers folds the three controls into the
+   * corner and takes the bar's row with them, so a card on its way up is not
+   * sliced off behind a strip of controls; it gets the whole screen. The first
+   * gesture back up brings the bar straight back, controls and (past 82pt)
+   * the compact brand with it, and inside the first few points of the list it
+   * is always there. Direction rather than offset, because the fold answers
+   * what the reader is doing right now: a long list scrolled to its middle
+   * should still hand the controls back on the first upward pull, and a
+   * threshold on the delta keeps a finger resting on the screen from flapping
+   * it.
+   */
+  const lastScrollY = useSharedValue(0);
+  const foldTarget = useSharedValue(0);
+  const travel = useSharedValue(0);
+  const fold = useSharedValue(0);
+  const barRowHeight = useSharedValue(HEADER_ROW_HEIGHT);
   const onScroll = useAnimatedScrollHandler({
     onScroll(event) {
-      scrollY.value = event.contentOffset.y;
+      const y = event.contentOffset.y;
+      const delta = y - lastScrollY.value;
+      lastScrollY.value = y;
+      scrollY.value = y;
+      let target = foldTarget.value;
+      if (y <= HEADER_FOLD_FREE_ZONE) {
+        target = 0;
+        travel.value = 0;
+      } else {
+        // Travel accumulates while the direction holds and resets when it
+        // turns, so a slow drag folds the bar as surely as a flick and a
+        // finger resting on the screen does not flap it.
+        travel.value = Math.sign(delta) === Math.sign(travel.value) ? travel.value + delta : delta;
+        if (travel.value > HEADER_FOLD_TRAVEL) target = 1;
+        else if (travel.value < -HEADER_FOLD_TRAVEL) target = 0;
+      }
+      // Start the animation only on a change of mind: restarting it on every
+      // scroll event would hold the bar half-folded for as long as the finger
+      // keeps moving.
+      if (target !== foldTarget.value) {
+        foldTarget.value = target;
+        fold.value = withTiming(target, timing('medium'));
+      }
     },
   });
+  const barFoldStyle = useAnimatedStyle(() => ({
+    height: barRowHeight.value * (1 - fold.value),
+  }));
+  // The controls shrink towards the corner they live in as the row closes
+  // over them, so they read as folding away rather than as being cut off.
+  const headerActionsStyle = useAnimatedStyle(() => ({
+    opacity: 1 - fold.value,
+    transform: [
+      { translateX: fold.value * HEADER_FOLD_SLIDE },
+      { scale: 1 - fold.value * HEADER_FOLD_SHRINK },
+    ],
+  }));
   const compactTitleStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [82, 112], [0, 1], Extrapolation.CLAMP),
     transform: [{ translateY: interpolate(scrollY.value, [82, 112], [5, 0], Extrapolation.CLAMP) }],
@@ -389,60 +449,66 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           so the only thing that changes is where the brand is. */}
         {!isPad ? (
           <SafeAreaView edges={['top']} style={styles.topBar}>
-            {identity.showBrand ? (
-              <Animated.View
-                testID="home-brand-compact"
-                pointerEvents="none"
-                style={[styles.compactTitle, compactTitleStyle]}>
-                {/* The plate hugs the name; the frame around it does not. That
+            <Animated.View style={[styles.topBarFold, barFoldStyle]}>
+              <View
+                style={styles.topBarRow}
+                onLayout={(event: LayoutChangeEvent) => {
+                  barRowHeight.value = event.nativeEvent.layout.height;
+                }}>
+                {identity.showBrand ? (
+                  <Animated.View
+                    testID="home-brand-compact"
+                    pointerEvents="none"
+                    style={[styles.compactTitle, compactTitleStyle]}>
+                    {/* The plate hugs the name; the frame around it does not. That
                 frame is positioned against the action buttons, so its width is
                 the gap they leave rather than the width of anything drawn in
                 it -- painting the tint on the frame itself draws a pill the
                 length of the bar with the name stranded at one end. The
                 expanded block below hugs for the same reason. */}
-                <View
-                  style={[
-                    styles.compactTitlePlate,
-                    hasScene && {
-                      backgroundColor: background(theme.colors.surface),
-                      borderRadius: 12,
-                      // The tint needs room around the name, and the name has
-                      // an x it travels to. Pay the padding back on the left so
-                      // the plate grows outwards and the mark still rises
-                      // straight out of the block it came from.
-                      paddingHorizontal: COMPACT_PLATE_INSET,
-                      marginLeft: -COMPACT_PLATE_INSET,
-                      overflow: 'hidden',
-                    },
-                  ]}>
-                  <ThemedSurfaceArtwork
-                    slot="navigation.background"
-                    baseColor={theme.colors.surface}
-                  />
-                  {identity.logo ? (
                     <View
                       style={[
-                        styles.compactIcon,
-                        { backgroundColor: background(theme.colors.surfaceRaised) },
+                        styles.compactTitlePlate,
+                        hasScene && {
+                          backgroundColor: background(theme.colors.surface),
+                          borderRadius: 12,
+                          // The tint needs room around the name, and the name has
+                          // an x it travels to. Pay the padding back on the left so
+                          // the plate grows outwards and the mark still rises
+                          // straight out of the block it came from.
+                          paddingHorizontal: COMPACT_PLATE_INSET,
+                          marginLeft: -COMPACT_PLATE_INSET,
+                          overflow: 'hidden',
+                        },
                       ]}>
-                      <Image
-                        source={logoSource}
-                        onError={() => setFailedLogo(customLogo ?? null)}
-                        contentFit="contain"
-                        style={styles.compactMark}
+                      <ThemedSurfaceArtwork
+                        slot="navigation.background"
+                        baseColor={theme.colors.surface}
                       />
+                      {identity.logo ? (
+                        <View
+                          style={[
+                            styles.compactIcon,
+                            { backgroundColor: background(theme.colors.surfaceRaised) },
+                          ]}>
+                          <Image
+                            source={logoSource}
+                            onError={() => setFailedLogo(customLogo ?? null)}
+                            contentFit="contain"
+                            style={styles.compactMark}
+                          />
+                        </View>
+                      ) : null}
+                      {identity.name ? (
+                        <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
+                          {identity.name}
+                        </Text>
+                      ) : null}
                     </View>
-                  ) : null}
-                  {identity.name ? (
-                    <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
-                      {identity.name}
-                    </Text>
-                  ) : null}
-                </View>
-              </Animated.View>
-            ) : null}
+                  </Animated.View>
+                ) : null}
 
-            {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
+                {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
             the app's front door to everything that is not a server -- so it
             takes the corner. Pairing sits beside the list it adds to, and it
             already has a full-width button in the empty state, so the header
@@ -453,24 +519,28 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             selected server's avatar and loom (card #629) and to the empty
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
-            <View style={styles.headerActions}>
-              {/* A plain shell on any machine with sshd, beside the gateway
+                <Animated.View style={[styles.headerActions, headerActionsStyle]}>
+                  {/* A plain shell on any machine with sshd, beside the gateway
               entries rather than among them: it pairs nothing and needs no
               herdr, so it is the one door here that is not about a gateway. */}
-              <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
-                <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
-              </HeaderButton>
-              <HeaderButton label={t`Scan a gateway QR`} onPress={() => router.push('/explore')}>
-                {/* The same mark as the empty card's corner brackets, at a fifth of
+                  <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
+                    <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                  </HeaderButton>
+                  <HeaderButton
+                    label={t`Scan a gateway QR`}
+                    onPress={() => router.push('/explore')}>
+                    {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
                 same whether it is a 64pt viewfinder in the middle of an empty
                 screen or a 20pt glyph in the corner of a full one. */}
-                <ScanLine size={20} color={theme.colors.textMuted} strokeWidth={2} />
-              </HeaderButton>
-              <HeaderButton label={t`Settings`} onPress={() => router.push('/settings')}>
-                <Settings size={20} color={theme.colors.textMuted} strokeWidth={2} />
-              </HeaderButton>
-            </View>
+                    <ScanLine size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                  </HeaderButton>
+                  <HeaderButton label={t`Settings`} onPress={() => router.push('/settings')}>
+                    <Settings size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                  </HeaderButton>
+                </Animated.View>
+              </View>
+            </Animated.View>
           </SafeAreaView>
         ) : null}
 
@@ -1143,6 +1213,15 @@ const HEADER_BUTTON_SIZE = 40;
 const HEADER_BUTTON_GAP = 8;
 /** Breathing room inside the compact brand plate, only when a pack tints it. */
 const COMPACT_PLATE_INSET = 10;
+/** The bar's row at rest: its controls plus the gaps above and below them. */
+const HEADER_ROW_HEIGHT = 54 + NAV_HEADER_TOP_GAP + 8;
+/** Within this much of the top the bar never folds. */
+const HEADER_FOLD_FREE_ZONE = 24;
+/** Scroll travel in one direction, in points, before the bar answers it. */
+const HEADER_FOLD_TRAVEL = 8;
+/** How far the controls travel into the corner, and how much they shrink, folded. */
+const HEADER_FOLD_SLIDE = 12;
+const HEADER_FOLD_SHRINK = 0.4;
 
 const styles = StyleSheet.create({
   page: {
@@ -1151,6 +1230,15 @@ const styles = StyleSheet.create({
   },
   topBar: {
     zIndex: 10,
+  },
+  // The part of the bar that folds: it clips, and anchors the row to its
+  // bottom edge so closing it slides the controls up under the inset rather
+  // than cutting them off from below.
+  topBarFold: {
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  topBarRow: {
     minHeight: 54,
     // 18, not 16: the gear's right edge lands on the server cards' right edge
     // rather than two points outside their column, so the bar reads as part of

@@ -81,19 +81,26 @@ test('Home mounts the hero above its list and the empty card keeps its own pictu
 });
 
 test('both launch surfaces take their mark from the shared fallback chain', () => {
-  // The slot name lives in `launch-artwork.ts` and the order it implies --
-  // illustration, then Home logo, then the bundled mark -- is tested there.
-  // What this holds is that neither screen grows a second opinion: a lock
-  // screen that resolved the slot itself could drift from the overlay, and
-  // the two are the first and last thing a reader sees in a session.
-  for (const file of ['src/components/animated-icon.tsx', 'src/components/app-lock-gate.tsx']) {
-    const source = readFileSync(file, 'utf8');
-    expect(source).toContain("from '@/hooks/use-launch-artwork'");
-    expect(source).toContain('useLaunchArtwork()');
-    // Still the bundled mark when a pack offers neither picture nor logo.
-    expect(source).toContain('loading-mark.png');
-    expect(source).toContain("kind === 'default'");
-  }
+  // The slot names live in `launch-artwork.ts` and the order they imply --
+  // the hero for the launch overlay only, then illustration, then Home logo,
+  // then the bundled mark -- is tested there. What this holds is that neither
+  // screen grows a second opinion: a lock screen that resolved the slot itself
+  // could drift from the overlay, and the two are the first and last thing a
+  // reader sees in a session.
+  const launch = readFileSync('src/components/launch-brand.tsx', 'utf8');
+  expect(launch).toContain("from '@/hooks/use-launch-artwork'");
+  expect(launch).toContain('useLaunchHeroArtwork()');
+  // The bundled mascot when a pack offers neither picture nor logo is the
+  // compiled launch asset itself, so the launch takes it from the mirror.
+  expect(launch).toContain('useSplashMirror()');
+  expect(launch).toContain("kind === 'default'");
+
+  const lock = readFileSync('src/components/app-lock-gate.tsx', 'utf8');
+  expect(lock).toContain("from '@/hooks/use-launch-artwork'");
+  expect(lock).toContain('useLaunchArtwork()');
+  // Still the bundled mascot when a pack offers neither picture nor logo.
+  expect(lock).toContain("from '@/components/brand-mark'");
+  expect(lock).toContain("kind === 'default'");
 
   // The applied theme, never a previewed one. Both surfaces draw the app
   // itself rather than a route -- the overlay covers everything while the

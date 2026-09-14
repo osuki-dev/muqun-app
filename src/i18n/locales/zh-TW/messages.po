@@ -554,6 +554,10 @@ msgstr "請選擇 SSH 主機"
 msgid "Choose files"
 msgstr "選擇檔案"
 
+#: src/components/launch-intro.tsx
+msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
+msgstr "從一系列精美的官方插畫主題中挑選，紙面、終端機和插圖一起重繪；也可以建立一套自己的主題"
+
 #: src/components/machine-switcher-sheet.tsx
 msgid "Choose where to work"
 msgstr "選擇要工作的機器與工作階段"
@@ -1468,6 +1472,10 @@ msgstr "產生 Ed25519 金鑰"
 msgid "Generating…"
 msgstr "產生中…"
 
+#: src/components/launch-intro.tsx
+msgid "Get started"
+msgstr "開始使用"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Git 狀態"
@@ -1843,6 +1851,10 @@ msgstr "Mac mini · 辦公室"
 msgid "Machines and sessions"
 msgstr "機器與工作階段"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "打造專屬於你的 App"
+
 #: src/app/(drawer)/index.tsx
 msgid "Manage"
 msgstr "管理"
@@ -2002,6 +2014,10 @@ msgstr "新增終端機"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "新增工作區"
+
+#: src/components/launch-intro.tsx
+msgid "Next"
+msgstr "下一步"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -2288,6 +2304,10 @@ msgstr "{0} 的選項"
 #: src/components/settings-storage.tsx
 msgid "Other"
 msgstr "其他"
+
+#: src/components/launch-intro.tsx
+msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
+msgstr "輸出以程式自己的顏色落在終端機格線上，按鍵列一按即送出。nvim、less 和 REPL 都表現如常"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2826,6 +2846,10 @@ msgstr "重新掃描"
 msgid "Scan the Gateway QR."
 msgstr "掃描 Gateway 的 QR code"
 
+#: src/components/launch-intro.tsx
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
+msgstr "掃描在你自己電腦上執行的 Gateway 的 QR Code。沒有帳號，沒有中繼，你的任何資料都不會經過我們的伺服器"
+
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "掃描需要相機，這個瀏覽器沒有提供"
@@ -3107,6 +3131,10 @@ msgstr "模擬器控制項"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "大小"
+
+#: src/components/launch-intro.tsx
+msgid "Skip intro"
+msgstr "略過介紹"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -3403,9 +3431,17 @@ msgstr "與模擬器的連線中斷了"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語"
 
+#: src/components/launch-intro.tsx
+msgid "The question comes to you"
+msgstr "問題會來找你"
+
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "原始面板，保留它的字元格線與色彩"
+
+#: src/components/launch-intro.tsx
+msgid "The real terminal"
+msgstr "真正的終端機"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
@@ -3844,6 +3880,10 @@ msgstr "正在執行的項目"
 msgid "What's new"
 msgstr "新功能"
 
+#: src/components/launch-intro.tsx
+msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
+msgstr "當代理程式停下來請求權限時，提示會以推播送達。在鎖定畫面上就能核准、一律核准或拒絕"
+
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離開期間"
@@ -3888,6 +3928,10 @@ msgstr "昨天"
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "你的代理程式，隨時隨地"
+
+#: src/components/launch-intro.tsx
+msgid "Your machine, your rules"
+msgstr "你的電腦，你說了算"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

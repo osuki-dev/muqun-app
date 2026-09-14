@@ -554,6 +554,10 @@ msgstr "Выберите SSH-хост"
 msgid "Choose files"
 msgstr "Выбрать файлы"
 
+#: src/components/launch-intro.tsx
+msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
+msgstr "Выберите из коллекции красиво иллюстрированных официальных тем, которые разом перекрашивают фон, терминал и графику, или создайте свою"
+
 #: src/components/machine-switcher-sheet.tsx
 msgid "Choose where to work"
 msgstr "Выберите место работы"
@@ -1468,6 +1472,10 @@ msgstr "Создать ключ Ed25519"
 msgid "Generating…"
 msgstr "Создаём…"
 
+#: src/components/launch-intro.tsx
+msgid "Get started"
+msgstr "Начать"
+
 #: src/i18n/labels.ts
 msgid "Git status"
 msgstr "Статус Git"
@@ -1843,6 +1851,10 @@ msgstr "Mac mini · Офис"
 msgid "Machines and sessions"
 msgstr "Компьютеры и сеансы"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "Сделайте его своим"
+
 #: src/app/(drawer)/index.tsx
 msgid "Manage"
 msgstr "Управлять"
@@ -2002,6 +2014,10 @@ msgstr "Новый терминал"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "Новое пространство"
+
+#: src/components/launch-intro.tsx
+msgid "Next"
+msgstr "Далее"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -2288,6 +2304,10 @@ msgstr "Параметры {0}"
 #: src/components/settings-storage.tsx
 msgid "Other"
 msgstr "Другое"
+
+#: src/components/launch-intro.tsx
+msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
+msgstr "Вывод ложится на сетку терминала в цветах самой программы, а ряд клавиш отправляет нажатие мгновенно. nvim, less и REPL работают как обычно"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -2826,6 +2846,10 @@ msgstr "Сканировать снова"
 msgid "Scan the Gateway QR."
 msgstr "Отсканируйте QR-код Gateway"
 
+#: src/components/launch-intro.tsx
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
+msgstr "Отсканируйте QR-код Gateway, запущенного на вашем собственном компьютере. Без аккаунта, без ретранслятора, и ничего вашего не проходит через наш сервер"
+
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Для сканирования нужна камера, а этот браузер её не даёт"
@@ -3107,6 +3131,10 @@ msgstr "Кнопки симулятора"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "Размер"
+
+#: src/components/launch-intro.tsx
+msgid "Skip intro"
+msgstr "Пропустить знакомство"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
@@ -3403,9 +3431,17 @@ msgstr "Соединение с симулятором прервалось"
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Не удалось прочитать ключ ({0}). Проверьте ключ и его парольную фразу"
 
+#: src/components/launch-intro.tsx
+msgid "The question comes to you"
+msgstr "Вопрос приходит к вам"
+
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
 msgstr "Панель как есть, на своей сетке и в своих цветах"
+
+#: src/components/launch-intro.tsx
+msgid "The real terminal"
+msgstr "Настоящий терминал"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
@@ -3844,6 +3880,10 @@ msgstr "Что запущено"
 msgid "What's new"
 msgstr "Что нового"
 
+#: src/components/launch-intro.tsx
+msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
+msgstr "Когда агент останавливается и просит разрешение, запрос приходит push-уведомлением. Разрешить, разрешать всегда или отклонить можно прямо с экрана блокировки"
+
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Пока вас не было"
@@ -3888,6 +3928,10 @@ msgstr "Вчера"
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "Ваши агенты, где угодно"
+
+#: src/components/launch-intro.tsx
+msgid "Your machine, your rules"
+msgstr "Ваш компьютер, ваши правила"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

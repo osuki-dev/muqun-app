@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
-import logo from '../../assets/images/loading-mark.png';
+import { useBrandMark } from '@/components/brand-mark';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -33,6 +33,7 @@ export function LogoLoader({
   accessibilityLabel?: string;
   compact?: boolean;
 }) {
+  const logo = useBrandMark();
   const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
 

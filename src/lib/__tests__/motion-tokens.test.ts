@@ -30,8 +30,6 @@ const ALLOWED: Record<string, string> = {
     'BREATH_MS is the period of a loop, not a transition between two states',
   'components/update-status-banner.tsx':
     'DOWNLOAD_RAMP_MS stands in for a download of unknown length',
-  'components/animated-icon.tsx': 'splash keyframes, which run before the app is interactive',
-  'components/animated-icon.web.tsx': 'splash keyframes, which run before the app is interactive',
   // `skia-terminal.tsx`, `approval-banner.tsx` and `attachment-strip.tsx` were
   // here through the P1 batch, held by branches that were in flight at the
   // time. All three are on tokens now and the entries are gone, which is what

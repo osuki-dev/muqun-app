@@ -101,7 +101,7 @@
         "android.permission.READ_MEDIA_VIDEO"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#FCFBFA",
+        "backgroundColor": "#FDF7E8",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -161,14 +161,14 @@
         }
       ],
       [
-        "expo-splash-screen",
+        "@osuki-dev/react-native-splash",
         {
           "backgroundColor": "#F7F3EC",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 128,
+          "image": "./assets/images/brand-mark-3d.png",
+          "imageWidth": 176,
           "dark": {
             "backgroundColor": "#050B12",
-            "image": "./assets/images/splash-icon-dark.png"
+            "image": "./assets/images/brand-mark-3d-dark.png"
           }
         }
       ],

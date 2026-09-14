@@ -4,12 +4,13 @@ import { resolveHomeIdentity, resolveThemeImage } from '@/theme/resolve';
 /**
  * What the launch overlay and the lock screen draw in place of the app's mark.
  *
- * `default` means the bundled `loading-mark.png`, which is the only answer the
+ * `default` means the bundled mascot (`brand-mark.ts`), which is the only answer the
  * two screens had before: they are the app's own furniture, drawn before any
  * screen exists, so they were pinned to the app's identity even while every
  * surface behind them wore someone's pack.
  */
 export type LaunchArtwork =
+  | { kind: 'hero'; uri: string }
   | { kind: 'illustration'; uri: string }
   | { kind: 'logo'; uri: string }
   | { kind: 'default' };
@@ -50,9 +51,27 @@ export function resolveLaunchArtwork(
   theme: ResolvedCustomTheme | null | undefined,
   assets: Record<string, string> | undefined,
   mode: 'light' | 'dark',
-  width: 'compact' | 'regular' = 'compact'
+  width: 'compact' | 'regular' = 'compact',
+  options: { hero?: boolean } = {}
 ): LaunchArtwork {
   if (!theme || !assets) return { kind: 'default' };
+
+  /*
+   * The launch overlay, and only the launch overlay, asks for the pack's
+   * `home.hero` first (`options.hero`). A hero is the one picture an author
+   * composed to head a page on the pack's own paper, which is what a launch
+   * screen is; the lock frame is a square badge and keeps the chain below.
+   *
+   * The reader's Home hero switch is deliberately not consulted: it decides
+   * whether Home shows the picture between its header and its list, and a
+   * launch screen is not Home. An authored `hero: hidden` is respected, since
+   * that is the author saying the picture is not for headings at all.
+   */
+  if (options.hero && theme.manifest.homeIdentity?.hero?.mode !== 'hidden') {
+    const hero = resolveThemeImage(theme.manifest, 'home.hero', mode, width, true);
+    const heroUri = hero ? ownedAsset(assets, hero.asset) : undefined;
+    if (heroUri) return { kind: 'hero', uri: heroUri };
+  }
 
   const illustration = resolveThemeImage(
     theme.manifest,
