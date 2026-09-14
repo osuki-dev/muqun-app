@@ -1,6 +1,12 @@
 import { expect, test } from 'bun:test';
 
-import { loadThemeIndex, parseThemeIndex, THEME_GALLERY_BASE, themePackageUrl } from '../gallery';
+import {
+  loadThemeIndex,
+  parseThemeIndex,
+  THEME_GALLERY_BASE,
+  themePackageUrl,
+  themePreviewUrl,
+} from '../gallery';
 
 /** The catalogue as muqun.dev actually serves it, reduced to one entry. */
 const live = {
@@ -138,4 +144,50 @@ test('an already-aborted read never reaches the network', async () => {
   };
   await expect(loadThemeIndex(transport, controller.signal)).rejects.toThrow();
   expect(called).toBe(false);
+});
+
+test('a cover is carried when it is a string within bounds, and never at the row’s cost', () => {
+  const entries = parseThemeIndex(
+    JSON.stringify({
+      format: 'muqun-themes-index',
+      themes: [
+        { ...live.themes[0], id: 'has-cover', preview: 'dist/previews/grand-voyage.webp' },
+        { ...live.themes[0], id: 'cover-not-a-string', preview: 42 },
+        { ...live.themes[0], id: 'cover-too-long', preview: `dist/${'a'.repeat(2100)}.webp` },
+        { ...live.themes[0], id: 'no-cover' },
+      ],
+    })
+  );
+  // Kept as written, exactly as `package` is: resolving here would put an
+  // address in a field nothing re-screens afterwards.
+  expect(entries[0]?.preview).toBe('dist/previews/grand-voyage.webp');
+  expect(entries[1]?.preview).toBeUndefined();
+  expect(entries[2]?.preview).toBeUndefined();
+  expect(entries[3]?.preview).toBeUndefined();
+  // A cover that is not one costs a placeholder, never the row.
+  expect(entries.map((entry) => entry.id)).toEqual([
+    'has-cover',
+    'cover-not-a-string',
+    'cover-too-long',
+    'no-cover',
+  ]);
+});
+
+test('a cover address is screened like a package, and answers null instead of throwing', () => {
+  // The shape `muqun-theme build` writes: relative, beside the package.
+  expect(themePreviewUrl({ preview: 'dist/previews/grand-voyage.webp' })).toBe(
+    `${THEME_GALLERY_BASE}dist/previews/grand-voyage.webp`
+  );
+  // An absolute address on the same base resolves to itself and passes too.
+  expect(themePreviewUrl({ preview: `${THEME_GALLERY_BASE}previews/grand-voyage.webp` })).toBe(
+    `${THEME_GALLERY_BASE}previews/grand-voyage.webp`
+  );
+  // Everything else draws the palette: not an error, and not a row lost.
+  expect(themePreviewUrl({ preview: 'https://example.invalid/cover.webp' })).toBeNull();
+  expect(themePreviewUrl({ preview: 'http://muqun.dev/api/themes/cover.webp' })).toBeNull();
+  expect(themePreviewUrl({ preview: 'https://muqun.dev/elsewhere/cover.webp' })).toBeNull();
+  expect(themePreviewUrl({ preview: '../../evil.webp' })).toBeNull();
+  expect(themePreviewUrl({ preview: 'not a url at all' })).toBeNull();
+  expect(themePreviewUrl({})).toBeNull();
+  expect(themePreviewUrl({ preview: '' })).toBeNull();
 });
