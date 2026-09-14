@@ -81,6 +81,22 @@ test('writes each asset before requesting the next and deduplicates content-addr
   });
 });
 
+test('staging hands the frame back before each image inspection', async () => {
+  const stage = diskStage();
+  const order: string[] = [];
+  await stageThemeAssetStream(manifest(), chunks(), stage.port, {
+    onProgress: (value) => order.push(`progress:${value.completedAssets}`),
+    yieldFrame: async () => {
+      order.push('yield');
+    },
+  });
+  // One pause per asset, and each one *after* the report it lets through and
+  // *before* the inspection it is protecting the frame from. The counter that
+  // has just moved is drawn before the next image's CRC starts rather than
+  // after it, which is the whole of the difference on an 8 MiB PNG.
+  expect(order).toEqual(['progress:0', 'yield', 'progress:1', 'yield', 'progress:2', 'progress:2']);
+});
+
 test('real isolated Git object import stages verified image bytes on disk without a ThemePackage buffer', async () => {
   const git = createGitFixture();
   const stage = diskStage();
