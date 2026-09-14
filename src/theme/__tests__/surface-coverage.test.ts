@@ -52,6 +52,27 @@ test('every supported artwork slot has a named runtime consumer', () => {
   }
 });
 
+test('Home mounts the hero above its list and the empty card keeps its own picture', () => {
+  const home = readFileSync('src/app/(drawer)/index.tsx', 'utf8');
+  // Mounted, and mounted where the contract says: after the brand block and the
+  // `home.decoration` banner, before anything that draws a server.
+  expect(home).toContain('<HomeHero ');
+  const heroAt = home.indexOf('<HomeHero ');
+  expect(heroAt).toBeGreaterThan(home.indexOf('slot="home.decoration"'));
+  expect(heroAt).toBeLessThan(home.indexOf('<ServerCard'));
+  // And not while the empty state is up. Both pictures on one otherwise empty
+  // screen is a gallery rather than an invitation, and the card's illustration
+  // was composed for the card.
+  expect(/records\.length > 0 \? \(\s*<HomeHero/.test(home)).toBe(true);
+  expect(home).toContain('<ThemeArtwork slot="emptyState.illustration" />');
+
+  // The iPad rail deliberately does not draw it. The rail is a persistent index
+  // of machines beside a live terminal, not the top of a page, and a decoration
+  // that cannot scroll away would sit there for the whole session.
+  const rail = readFileSync('src/components/pad-server-rail.tsx', 'utf8');
+  expect(rail).not.toContain('HomeHero');
+});
+
 test('both launch surfaces take their mark from the shared fallback chain', () => {
   // The slot name lives in `launch-artwork.ts` and the order it implies --
   // illustration, then Home logo, then the bundled mark -- is tested there.
