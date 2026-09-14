@@ -26,6 +26,7 @@ import {
 import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
 import { effectiveThemeManifest } from '@/theme/repository';
 import { PressableScale } from '@/components/pressable-scale';
+import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -148,6 +149,8 @@ export function CustomThemeLibrary({
 } = {}) {
   const { t } = useLingui();
   const { colors } = useThemeTokens();
+  // The plate a label takes when the pack draws a wallpaper behind this sheet.
+  const plate = useSheetGroundPlate();
   const background = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { width } = useWindowDimensions();
@@ -556,7 +559,10 @@ export function CustomThemeLibrary({
           <View
             testID="theme-current-summary"
             style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+            {/* Which pack is on, drawn straight onto the sheet's ground -- the
+                one block here that is not a row on a card. Over a wallpaper it
+                takes the plate the settings page gives a section label. */}
+            <View style={[{ flex: 1, minWidth: 0, gap: 4 }, plate]}>
               <Text variant="caption" color={colors.textMuted}>{t`Current theme`}</Text>
               <Text numberOfLines={1}>{currentPack.label}</Text>
             </View>

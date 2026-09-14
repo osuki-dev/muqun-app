@@ -22,6 +22,7 @@ import Animated, {
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { usePaneChatColors, type PaneChatColors } from '@/components/pane-chat-blocks';
 import { gitFileStatusWord } from '@/i18n/labels';
@@ -107,6 +108,8 @@ export function GitDiffView({
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
+  // The plate a label takes when the pack draws a wallpaper behind the sheet.
+  const plate = useSheetGroundPlate();
 
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -438,185 +441,191 @@ export function GitDiffView({
   const notARepository = Boolean(status && status.repo === null);
   const subtitle = [branch || status?.repo?.branch || '', label].filter(Boolean).join(' · ');
 
+  // The two subviews a native form sheet lays out around a scroll view are the
+  // ground and the column below; the header and the patch are inside that
+  // column, which is the shape the theme catalogue uses. `collapsable={false}`
+  // on both so neither is flattened away -- that would leave the scroller at
+  // index 0, where react-native-screens gives it the whole sheet's height and
+  // draws it under the header.
   return (
-    // Exactly two subviews, which is the most a native form sheet lays out
-    // around a scroll view, and `collapsable={false}` on the header so it is
-    // not flattened away -- that would leave the scroller at index 0, where
-    // react-native-screens gives it the whole sheet's height and draws it under
-    // the header.
-    <>
-      {/* Painted, not inherited: on Android the form sheet itself is
-          transparent (the route asks for it, so the corner radius survives),
-          and a header with no fill of its own let the terminal show through
-          behind the title and the segmented control. iOS hid this with the
-          sheet's own white. */}
-      <View
-        collapsable={false}
-        style={[styles.headerBlock, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
-        {/* Android only: iOS has the system grabber. The panels and files
+    <SheetFrame>
+      <View collapsable={false} style={styles.column}>
+        {/* No fill of its own any more. It had one because the route is
+            transparent so the native sheet keeps its corners, and a bare header
+            let the terminal show through behind the title and the segmented
+            control -- which is exactly what the ground now stops, for every
+            sheet at once. Dropping it is what lets the pack's wallpaper reach
+            the top of this sheet the way it reaches the top of the others. */}
+        <View collapsable={false} style={styles.headerBlock}>
+          {/* Android only: iOS has the system grabber. The panels and files
             sheets both draw this, and a third that did not would read as a
             different app. */}
-        {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
-        <View style={styles.header}>
-          <View style={styles.flexOne}>
-            <Text variant="bodySmall" style={styles.headerTitle}>
-              <Trans>Changes</Trans>
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {subtitle}
-            </Text>
+          {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+          <View style={styles.header}>
+            {/* The two lines a sheet announces itself with, drawn straight onto
+              the ground, so over a wallpaper they take the plate the settings
+              page gives a section label. */}
+            <View style={[styles.flexOne, plate]}>
+              <Text variant="bodySmall" style={styles.headerTitle}>
+                <Trans>Changes</Trans>
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            </View>
+            <GlassChrome face="sheet" style={styles.iconButton}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Refresh changes`}
+                onPress={() => load('refresh')}
+                style={styles.iconButtonHit}>
+                {loading ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                  <RefreshCw size={17} color={theme.colors.textMuted} />
+                )}
+              </PressableScale>
+            </GlassChrome>
+            <GlassChrome face="sheet" style={styles.iconButton}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Close changes`}
+                onPress={onClose}
+                style={styles.iconButtonHit}>
+                <X size={18} color={theme.colors.text} />
+              </PressableScale>
+            </GlassChrome>
           </View>
-          <GlassChrome face="sheet" style={styles.iconButton}>
+
+          {(status?.files.length ?? 0) > 0 ? (
+            <SettingsSegmented
+              options={[
+                { value: 'all', label: t`All` },
+                { value: 'staged', label: t`Staged` },
+                { value: 'unstaged', label: t`Unstaged` },
+              ]}
+              value={side}
+              onChange={changeSide}
+              testID="git-diff-side"
+            />
+          ) : null}
+
+          {pending ? (
             <PressableScale
               accessibilityRole="button"
-              accessibilityLabel={t`Refresh changes`}
-              onPress={() => load('refresh')}
-              style={styles.iconButtonHit}>
-              {loading ? (
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              ) : (
-                <RefreshCw size={17} color={theme.colors.textMuted} />
-              )}
+              accessibilityLabel={t`Show the newer list of changes`}
+              onPress={() => applyStatus(pending)}
+              style={[
+                styles.pill,
+                { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+              ]}>
+              <Text variant="caption" color={theme.colors.primary}>
+                <Plural value={pending.files.length} one="# file changed" other="# files changed" />
+              </Text>
+              <RefreshCw size={13} color={theme.colors.primary} />
             </PressableScale>
-          </GlassChrome>
-          <GlassChrome face="sheet" style={styles.iconButton}>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t`Close changes`}
-              onPress={onClose}
-              style={styles.iconButtonHit}>
-              <X size={18} color={theme.colors.text} />
-            </PressableScale>
-          </GlassChrome>
+          ) : null}
+
+          {status?.truncated ? (
+            <Text variant="caption" color={theme.colors.warning}>
+              <Trans>Too many changes to list. This is the start of them, not all of them.</Trans>
+            </Text>
+          ) : null}
+
+          {/* The ruler. Absolutely positioned and invisible, so it costs one
+            layout pass and no space at all. See `advance`. */}
+          <Text
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            numberOfLines={1}
+            onLayout={onRulerLayout}
+            style={[styles.lineText, styles.ruler]}>
+            {RULER}
+          </Text>
         </View>
 
-        {(status?.files.length ?? 0) > 0 ? (
-          <SettingsSegmented
-            options={[
-              { value: 'all', label: t`All` },
-              { value: 'staged', label: t`Staged` },
-              { value: 'unstaged', label: t`Unstaged` },
-            ]}
-            value={side}
-            onChange={changeSide}
-            testID="git-diff-side"
-          />
-        ) : null}
-
-        {pending ? (
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t`Show the newer list of changes`}
-            onPress={() => applyStatus(pending)}
-            style={[
-              styles.pill,
-              { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-            ]}>
-            <Text variant="caption" color={theme.colors.primary}>
-              <Plural value={pending.files.length} one="# file changed" other="# files changed" />
-            </Text>
-            <RefreshCw size={13} color={theme.colors.primary} />
-          </PressableScale>
-        ) : null}
-
-        {status?.truncated ? (
-          <Text variant="caption" color={theme.colors.warning}>
-            <Trans>Too many changes to list. This is the start of them, not all of them.</Trans>
-          </Text>
-        ) : null}
-
-        {/* The ruler. Absolutely positioned and invisible, so it costs one
-            layout pass and no space at all. See `advance`. */}
-        <Text
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          numberOfLines={1}
-          onLayout={onRulerLayout}
-          style={[styles.lineText, styles.ruler]}>
-          {RULER}
-        </Text>
-      </View>
-
-      {/*
+        {/*
         The scroll view is the sheet's second subview and stays one whatever is
         on screen: react-native-screens finds it by class among the wrapper's
         direct children and gives it the sheet's height less the header's. Swap
         it for a plain `View` while loading and there is no scroll view to find,
         and the sheet sizes itself to its contents instead.
       */}
-      <Animated.ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={rows.length > 0}
-        onScroll={onHorizontalScroll}
-        scrollEventThrottle={16}
-        onLayout={onViewportLayout}
-        style={[styles.scroller, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
-        contentContainerStyle={styles.scrollerContent}>
-        {rows.length > 0 ? (
-          <AnimatedLegendList
-            ref={listRef}
-            data={rows}
-            keyExtractor={keyOfRow}
-            renderItem={renderRow}
-            // The whole point of a monospaced one-line row: an exact height per
-            // kind, so the list never re-measures and never jumps.
-            getFixedItemSize={sizeOfRow}
-            // So the pool never hands a file card's view to a code line.
-            getItemType={typeOfRow}
-            estimatedItemSize={LINE_ROW_HEIGHT}
-            // See the note at the top of this file: this is the one list in the
-            // app that wants recycling.
-            recycleItems
-            // Expanding a file inserts rows; the reader's viewport must not
-            // move because of it.
-            maintainVisibleContentPosition={MAINTAIN_POSITION}
-            // The file being read is always named, however deep into its patch
-            // the reader has scrolled. Sticky headers need the list's Reanimated
-            // integration: the core list drives its scroll view with React
-            // Native's `Animated.event`, an object, and handing that to a
-            // Reanimated `ScrollView` through `renderScrollComponent` crashed the
-            // first fling with "Object is not a function".
-            stickyHeaderIndices={stickyIndices}
-            style={{ width: contentWidth }}
-            contentContainerStyle={styles.listContent}
-          />
-        ) : (
-          <View style={[styles.state, { width: pinnedWidth }]}>
-            {loading ? (
-              <ActivityIndicator size="small" color={theme.colors.textMuted} />
-            ) : error ? (
-              <>
-                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
-                  {error}
-                </Text>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Try again`}
-                  onPress={() => load('initial')}
-                  style={[
-                    styles.retry,
-                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                  ]}>
-                  <Text variant="caption" color={theme.colors.primary}>
-                    <Trans>Try again</Trans>
+        <Animated.ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={rows.length > 0}
+          onScroll={onHorizontalScroll}
+          scrollEventThrottle={16}
+          onLayout={onViewportLayout}
+          style={[styles.scroller, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
+          contentContainerStyle={styles.scrollerContent}>
+          {rows.length > 0 ? (
+            <AnimatedLegendList
+              ref={listRef}
+              data={rows}
+              keyExtractor={keyOfRow}
+              renderItem={renderRow}
+              // The whole point of a monospaced one-line row: an exact height per
+              // kind, so the list never re-measures and never jumps.
+              getFixedItemSize={sizeOfRow}
+              // So the pool never hands a file card's view to a code line.
+              getItemType={typeOfRow}
+              estimatedItemSize={LINE_ROW_HEIGHT}
+              // See the note at the top of this file: this is the one list in the
+              // app that wants recycling.
+              recycleItems
+              // Expanding a file inserts rows; the reader's viewport must not
+              // move because of it.
+              maintainVisibleContentPosition={MAINTAIN_POSITION}
+              // The file being read is always named, however deep into its patch
+              // the reader has scrolled. Sticky headers need the list's Reanimated
+              // integration: the core list drives its scroll view with React
+              // Native's `Animated.event`, an object, and handing that to a
+              // Reanimated `ScrollView` through `renderScrollComponent` crashed the
+              // first fling with "Object is not a function".
+              stickyHeaderIndices={stickyIndices}
+              style={{ width: contentWidth }}
+              contentContainerStyle={styles.listContent}
+            />
+          ) : (
+            <View style={[styles.state, { width: pinnedWidth }]}>
+              {loading ? (
+                <ActivityIndicator size="small" color={theme.colors.textMuted} />
+              ) : error ? (
+                <>
+                  <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
+                    {error}
                   </Text>
-                </PressableScale>
-              </>
-            ) : notARepository ? (
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
-                <Trans>
-                  This pane is not working inside a git repository, so there is nothing to compare.
-                </Trans>
-              </Text>
-            ) : (
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
-                <Trans>No changes. The working tree matches HEAD.</Trans>
-              </Text>
-            )}
-          </View>
-        )}
-      </Animated.ScrollView>
-    </>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Try again`}
+                    onPress={() => load('initial')}
+                    style={[
+                      styles.retry,
+                      { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                    ]}>
+                    <Text variant="caption" color={theme.colors.primary}>
+                      <Trans>Try again</Trans>
+                    </Text>
+                  </PressableScale>
+                </>
+              ) : notARepository ? (
+                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
+                  <Trans>
+                    This pane is not working inside a git repository, so there is nothing to
+                    compare.
+                  </Trans>
+                </Text>
+              ) : (
+                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
+                  <Trans>No changes. The working tree matches HEAD.</Trans>
+                </Text>
+              )}
+            </View>
+          )}
+        </Animated.ScrollView>
+      </View>
+    </SheetFrame>
   );
 }
 
@@ -985,6 +994,7 @@ function sameChangeSet(previous: GitStatus, next: GitStatus): boolean {
 }
 
 const styles = StyleSheet.create({
+  column: { flex: 1 },
   headerBlock: {
     paddingTop: 10,
     paddingBottom: 8,

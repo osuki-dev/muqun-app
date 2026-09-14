@@ -1,7 +1,7 @@
 import { Input } from '@/components/themed-input';
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork } from '@/components/theme-artwork';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { ThemedSurface } from '@/components/themed-surface';
 /**
  * Quick actions: one thing done to the pane in front of you.
@@ -159,6 +159,7 @@ const MONO_TEXT = {
 
 export default function QuickCommandsScreen() {
   const surfaceBackground = useSurfaceBackground();
+  const plate = useSheetGroundPlate('background');
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
@@ -581,45 +582,36 @@ export default function QuickCommandsScreen() {
     // ScrollView left both inputs under the keyboard, with the save button out
     // of reach entirely.
     <View style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
-      {/* Wallpaper under a surface, not a surface under wallpaper.
-          The fill used to sit on the line above and the picture on top of it,
-          which paints the picture at full strength over the thing meant to
-          calm it: the sheet's ground *became* the wallpaper, every block on it
-          drew its own pale panel, and the gaps between the blocks stayed raw
-          picture -- a panel with holes in it. `SettingsSheet` had already
-          solved this the other way round, and this is the same two layers in
-          the same order. A page is entitled to the picture at full strength; a
-          sheet is a surface. */}
-      <View
-        pointerEvents="none"
-        accessible={false}
-        importantForAccessibility="no-hide-descendants"
-        style={StyleSheet.absoluteFill}>
-        <ThemeArtwork slot="shell.background" />
-        <View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: surfaceBackground(theme.colors.background) },
-          ]}
-        />
-      </View>
-      <KeyboardAwareScrollView
-        bottomOffset={24}
-        keyboardShouldPersistTaps="handled"
-        // The tiles are the sheet's own verbs, and a sheet whose verbs scroll
-        // away is a sheet you have to scroll back up to use. Against a real
-        // gateway the two lists below run to thirty-odd rows, so that is the
-        // ordinary case rather than the edge one. The panels sheet solved the
-        // same problem the same way in card #633, so this is the app's existing
-        // idiom rather than a new one -- a constant index, with the
-        // platform-only grabber inside the node for exactly that reason.
-        stickyHeaderIndices={[0]}
-        contentContainerStyle={[
-          styles.content,
-          isPadLayout && styles.padContent,
-          { paddingBottom: LADDER.section + bottomInset },
-        ]}>
-        {/* No surface of its own.
+      {/* The shell's ground, from the component every form sheet now shares.
+          `tint="background"` and not `surface`: every block on this sheet draws
+          its own panel, so a surface underneath them would be one surface too
+          many -- the slab the note below this describes.
+
+          This used to paint the picture first and the fill over it, on the
+          argument that a page is entitled to the picture at full strength and a
+          sheet is a surface. The argument is fine and the arrangement did not
+          serve it: `surfaceBackgroundFill` returns its colour unchanged at
+          alpha 1, so at the default slider the fill was opaque and the picture
+          was not a calmed wallpaper but no wallpaper at all. Calming it is the
+          tint's job; being visible is the picture's. See `sheet-ground.tsx`. */}
+      <SheetFrame tint="background">
+        <KeyboardAwareScrollView
+          bottomOffset={24}
+          keyboardShouldPersistTaps="handled"
+          // The tiles are the sheet's own verbs, and a sheet whose verbs scroll
+          // away is a sheet you have to scroll back up to use. Against a real
+          // gateway the two lists below run to thirty-odd rows, so that is the
+          // ordinary case rather than the edge one. The panels sheet solved the
+          // same problem the same way in card #633, so this is the app's existing
+          // idiom rather than a new one -- a constant index, with the
+          // platform-only grabber inside the node for exactly that reason.
+          stickyHeaderIndices={[0]}
+          contentContainerStyle={[
+            styles.content,
+            isPadLayout && styles.padContent,
+            { paddingBottom: LADDER.section + bottomInset },
+          ]}>
+          {/* No surface of its own.
 
             Everything below this on the sheet -- the tabs, the search field,
             the command list -- is a rounded panel floating straight on the
@@ -641,56 +633,60 @@ export default function QuickCommandsScreen() {
             two lines of type is legible rather than confusing -- but if that
             ever stops being true, the answer is to give the *ground* more
             opacity, not to put the slab back. */}
-        <View style={[styles.stickyTop, isPadLayout && styles.padStickyTop]}>
-          {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+          <View style={[styles.stickyTop, isPadLayout && styles.padStickyTop]}>
+            {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
-          {/* No glyph beside the title. The reader arrived here by pressing the
+            {/* No glyph beside the title. The reader arrived here by pressing the
               lightning button, so a lightning chip repeats the gesture back at
               them -- and it was the first of the forty places this screen spent
               the accent. */}
-          <View style={styles.header}>
-            <View style={styles.headerCopy}>
-              <Text variant="subheading" style={styles.headerTitle}>
-                {manageOnly ? t`Quick action settings` : t`Quick actions`}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {manageOnly
-                  ? t`Customize terminal commands and key combinations.`
-                  : mode === 'agent'
-                    ? t`Act on this terminal, or send its agent a prompt.`
-                    : t`Act on this terminal, or send it a command.`}
-              </Text>
-            </View>
-            {/* Settings' entry is the editor, so it has no state to toggle and
+            <View style={styles.header}>
+              {/* The plate the settings page gives a label drawn straight onto
+                the wallpaper. Not the slab described above -- it is two lines
+                of type, not a lid over the tiles -- and it is `null` on a theme
+                with no `shell.background`, which is every built-in one. */}
+              <View style={[styles.headerCopy, plate]}>
+                <Text variant="subheading" style={styles.headerTitle}>
+                  {manageOnly ? t`Quick action settings` : t`Quick actions`}
+                </Text>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {manageOnly
+                    ? t`Customize terminal commands and key combinations.`
+                    : mode === 'agent'
+                      ? t`Act on this terminal, or send its agent a prompt.`
+                      : t`Act on this terminal, or send it a command.`}
+                </Text>
+              </View>
+              {/* Settings' entry is the editor, so it has no state to toggle and
                 offers no way to leave a mode that is the whole screen. */}
-            {manageOnly ? null : (
+              {manageOnly ? null : (
+                <GlassChrome face="sheet" style={styles.headerButton}>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel={editing ? t`Done editing shortcuts` : t`Edit shortcuts`}
+                    accessibilityState={{ selected: editing }}
+                    onPress={() => setEditRequested((was) => !was)}
+                    style={styles.headerButtonHit}>
+                    {editing ? (
+                      <Check size={19} color={theme.colors.text} strokeWidth={2} />
+                    ) : (
+                      <Pencil size={18} color={theme.colors.text} strokeWidth={2} />
+                    )}
+                  </PressableScale>
+                </GlassChrome>
+              )}
               <GlassChrome face="sheet" style={styles.headerButton}>
                 <PressableScale
                   accessibilityRole="button"
-                  accessibilityLabel={editing ? t`Done editing shortcuts` : t`Edit shortcuts`}
-                  accessibilityState={{ selected: editing }}
-                  onPress={() => setEditRequested((was) => !was)}
+                  accessibilityLabel={t`Close quick actions`}
+                  onPress={() => router.back()}
                   style={styles.headerButtonHit}>
-                  {editing ? (
-                    <Check size={19} color={theme.colors.text} strokeWidth={2} />
-                  ) : (
-                    <Pencil size={18} color={theme.colors.text} strokeWidth={2} />
-                  )}
+                  <X size={19} color={theme.colors.text} strokeWidth={2} />
                 </PressableScale>
               </GlassChrome>
-            )}
-            <GlassChrome face="sheet" style={styles.headerButton}>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Close quick actions`}
-                onPress={() => router.back()}
-                style={styles.headerButtonHit}>
-                <X size={19} color={theme.colors.text} strokeWidth={2} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
+            </View>
 
-          {/* The sheet's own verbs. Ordered by how far each one takes you from
+            {/* The sheet's own verbs. Ordered by how far each one takes you from
               the pane you are looking at: two that make somewhere to work, then
               the machine underneath it. Nothing here is titled -- the sheet's
               own name is already the heading for its own verbs.
@@ -700,84 +696,86 @@ export default function QuickCommandsScreen() {
               measure needs anyway. A connection that offers neither
               machine-scoped tile draws the two it has at half width apiece,
               which reads as the row it is rather than as a row with holes. */}
-          {available.hasTiles ? (
-            <View style={styles.tiles}>
-              {available.canCreate ? (
-                <ActionTile
-                  icon={SquareTerminal}
-                  label={t`Terminal`}
-                  accessibilityLabel={t`New terminal`}
-                  busy={creating === 'panel'}
-                  disabled={creating !== null}
-                  onPress={() => void create(false)}
-                />
-              ) : null}
-              {available.canCreate ? (
-                <ActionTile
-                  icon={PanelsTopLeft}
-                  label={t`Group`}
-                  accessibilityLabel={t`New group`}
-                  busy={creating === 'tab'}
-                  disabled={creating !== null}
-                  onPress={() => void create(true)}
-                />
-              ) : null}
-              {available.canPreviewSimulator ? (
-                <ActionTile
-                  icon={MonitorSmartphone}
-                  // One word on the tile and the whole verb in the label the
-                  // screen reader hears. "Ouvrir dans le navigateur" is three
-                  // lines in a quarter of a 390-point phone; "Navigateur" is
-                  // one, and the tile is a button whose icon has already said
-                  // what kind of thing it opens.
-                  label={t`Simulator`}
-                  accessibilityLabel={
-                    isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
-                  }
-                  selected={isPadLayout && simfarmSplitOpen}
-                  onPress={openSimulatorPreview}
-                />
-              ) : available.webServiceBlockedByTunnel ? (
-                <ActionTile
-                  icon={MonitorSmartphone}
-                  label={t`Simulator`}
-                  accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
-                  disabled
-                />
-              ) : null}
-              {available.canOpenWebService ? (
-                <ActionTile
-                  icon={Globe}
-                  label={t`Browser`}
-                  accessibilityLabel={t`Open in your browser`}
-                  onPress={openWebService}
-                />
-              ) : available.webServiceBlockedByTunnel ? (
-                <ActionTile
-                  icon={Globe}
-                  label={t`Browser`}
-                  accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
-                  disabled
-                />
-              ) : null}
-            </View>
-          ) : null}
+            {available.hasTiles ? (
+              <View style={styles.tiles}>
+                {available.canCreate ? (
+                  <ActionTile
+                    icon={SquareTerminal}
+                    label={t`Terminal`}
+                    accessibilityLabel={t`New terminal`}
+                    busy={creating === 'panel'}
+                    disabled={creating !== null}
+                    onPress={() => void create(false)}
+                  />
+                ) : null}
+                {available.canCreate ? (
+                  <ActionTile
+                    icon={PanelsTopLeft}
+                    label={t`Group`}
+                    accessibilityLabel={t`New group`}
+                    busy={creating === 'tab'}
+                    disabled={creating !== null}
+                    onPress={() => void create(true)}
+                  />
+                ) : null}
+                {available.canPreviewSimulator ? (
+                  <ActionTile
+                    icon={MonitorSmartphone}
+                    // One word on the tile and the whole verb in the label the
+                    // screen reader hears. "Ouvrir dans le navigateur" is three
+                    // lines in a quarter of a 390-point phone; "Navigateur" is
+                    // one, and the tile is a button whose icon has already said
+                    // what kind of thing it opens.
+                    label={t`Simulator`}
+                    accessibilityLabel={
+                      isPadLayout && simfarmSplitOpen
+                        ? t`Hide the simulator`
+                        : t`Preview a simulator`
+                    }
+                    selected={isPadLayout && simfarmSplitOpen}
+                    onPress={openSimulatorPreview}
+                  />
+                ) : available.webServiceBlockedByTunnel ? (
+                  <ActionTile
+                    icon={MonitorSmartphone}
+                    label={t`Simulator`}
+                    accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
+                    disabled
+                  />
+                ) : null}
+                {available.canOpenWebService ? (
+                  <ActionTile
+                    icon={Globe}
+                    label={t`Browser`}
+                    accessibilityLabel={t`Open in your browser`}
+                    onPress={openWebService}
+                  />
+                ) : available.webServiceBlockedByTunnel ? (
+                  <ActionTile
+                    icon={Globe}
+                    label={t`Browser`}
+                    accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
+                    disabled
+                  />
+                ) : null}
+              </View>
+            ) : null}
 
-          {/* Why the two dimmed tiles are dimmed, said once under the row
+            {/* Why the two dimmed tiles are dimmed, said once under the row
               rather than twice inside it. A tile is a word wide, so the reason
               cannot live on it -- and a dimmed control with no reason anywhere
               is the state this sheet has always refused to draw (see
               `webServiceBlockedByTunnel` in `quick-actions.ts`). Each tile also
               carries the short form in its own accessibility label, because a
               screen reader arrives at the tile and not at the caption. */}
-          {available.webServiceBlockedByTunnel ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.tilesNote}>
-              {t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`}
-            </Text>
-          ) : null}
-        </View>
+            {available.webServiceBlockedByTunnel ? (
+              <Text variant="caption" color={theme.colors.textSubtle} style={styles.tilesNote}>
+                {t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`}
+              </Text>
+            ) : null}
+          </View>
 
-        {/* Alone on its own surface rather than first in the list below, which
+          {/* Alone on its own surface rather than first in the list below, which
             is the point: while an agent is working this row exists, and while
             it does not, it does not. A row that came and went inside the list
             would slide New task under whatever the thumb had learned, on the
@@ -785,29 +783,29 @@ export default function QuickCommandsScreen() {
             tiles rather than over them for the same reason, now that the tiles
             do not move: a surface that comes and goes must not be above the
             things that stay. */}
-        {available.canStopAgent ? (
-          <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
-            <View
-              style={[
-                styles.group,
-                { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
-              ]}>
-              <ActionRow
-                accessibilityLabel={t`Stop this agent`}
-                name={t`Stop`}
-                nameColor={theme.colors.danger}
-                detail={t`Interrupt what this agent is doing.`}
-                detailColor={theme.colors.textMuted}
-                busy={stopping}
-                busyColor={theme.colors.danger}
-                disabled={stopping}
-                onPress={() => void stopAgent()}
-              />
-            </View>
-          </Animated.View>
-        ) : null}
+          {available.canStopAgent ? (
+            <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
+              <View
+                style={[
+                  styles.group,
+                  { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+                ]}>
+                <ActionRow
+                  accessibilityLabel={t`Stop this agent`}
+                  name={t`Stop`}
+                  nameColor={theme.colors.danger}
+                  detail={t`Interrupt what this agent is doing.`}
+                  detailColor={theme.colors.textMuted}
+                  busy={stopping}
+                  busyColor={theme.colors.danger}
+                  disabled={stopping}
+                  onPress={() => void stopAgent()}
+                />
+              </View>
+            </Animated.View>
+          ) : null}
 
-        {/* Assigning a task is not a row here any more.
+          {/* Assigning a task is not a row here any more.
             
             It was, back when it opened a form of its own. Now it opens the
             assistant strip over the terminal's composer -- and the control that
@@ -819,330 +817,334 @@ export default function QuickCommandsScreen() {
             Shortcuts that deliver through collaboration still live in the list
             below: those carry instructions of their own, which is a different
             thing from choosing an assistant. */}
-        {available.canStartTask ? (
-          <SettingsCard>
-            <ActionRow
-              accessibilityLabel={t`New task`}
-              name={t`New task`}
-              detail={t`Start an agent and send it the first thing to do.`}
-              detailColor={theme.colors.textMuted}
-              disabled={creating !== null}
-              onPress={startTask}
-            />
-          </SettingsCard>
-        ) : null}
-
-        {!editing ? (
-          <View style={styles.section}>
-            <ThemedSurface
-              slot="tabs.background"
-              baseColor={theme.colors.surface}
-              style={[styles.commandTabs, { overflow: 'hidden' }]}>
-              {(['saved', 'catalog'] as const).map((tab) => (
-                <PressableScale
-                  key={tab}
-                  testID={`quick-actions-tab-${tab}`}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: commandTab === tab }}
-                  onPress={() => {
-                    setCommandTab(tab);
-                    setSearch('');
-                  }}
-                  style={[
-                    styles.commandTab,
-                    {
-                      backgroundColor: surfaceBackground(
-                        commandTab === tab ? theme.colors.primarySubtle : 'transparent'
-                      ),
-                    },
-                  ]}>
-                  <Text
-                    variant="bodySmall"
-                    color={commandTab === tab ? theme.colors.primary : theme.colors.textMuted}>
-                    {tab === 'saved' ? t`Frequent` : t`All commands`}
-                  </Text>
-                </PressableScale>
-              ))}
-            </ThemedSurface>
-            <Input
-              accessibilityLabel={t`Search actions and commands`}
-              placeholder={t`Search actions and commands`}
-              value={search}
-              onChangeText={setSearch}
-              variant="outline"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {query && visibleCommands.length === 0 && visibleAgentCommands.length === 0 ? (
-              <Text
-                variant="bodySmall"
-                color={theme.colors.textMuted}>{t`No matching commands. Try another word.`}</Text>
-            ) : null}
-          </View>
-        ) : null}
-
-        {showSaved ? (
-          <View style={styles.section}>
-            <SectionHeading title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`} />
+          {available.canStartTask ? (
             <SettingsCard>
-              {visibleCommands.map((command, index) => {
-                // A default's name is ours to translate; a custom one is the
-                // user's own word, shown exactly as they typed it.
-                const descriptor = command.custom ? undefined : quickCommandName[command.id];
-                const name = descriptor ? _(descriptor) : command.label;
-                return (
-                  // Adding, deleting and restoring all rewrite this list, and each
-                  // of them used to pop a row in or snap the rest up into the gap.
-                  // The stagger is on the entrance only, so a first open reads as
-                  // a list arriving and a single delete is just the one row
-                  // leaving.
+              <ActionRow
+                accessibilityLabel={t`New task`}
+                name={t`New task`}
+                detail={t`Start an agent and send it the first thing to do.`}
+                detailColor={theme.colors.textMuted}
+                disabled={creating !== null}
+                onPress={startTask}
+              />
+            </SettingsCard>
+          ) : null}
+
+          {!editing ? (
+            <View style={styles.section}>
+              <ThemedSurface
+                slot="tabs.background"
+                baseColor={theme.colors.surface}
+                style={[styles.commandTabs, { overflow: 'hidden' }]}>
+                {(['saved', 'catalog'] as const).map((tab) => (
+                  <PressableScale
+                    key={tab}
+                    testID={`quick-actions-tab-${tab}`}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: commandTab === tab }}
+                    onPress={() => {
+                      setCommandTab(tab);
+                      setSearch('');
+                    }}
+                    style={[
+                      styles.commandTab,
+                      {
+                        backgroundColor: surfaceBackground(
+                          commandTab === tab ? theme.colors.primarySubtle : 'transparent'
+                        ),
+                      },
+                    ]}>
+                    <Text
+                      variant="bodySmall"
+                      color={commandTab === tab ? theme.colors.primary : theme.colors.textMuted}>
+                      {tab === 'saved' ? t`Frequent` : t`All commands`}
+                    </Text>
+                  </PressableScale>
+                ))}
+              </ThemedSurface>
+              <Input
+                accessibilityLabel={t`Search actions and commands`}
+                placeholder={t`Search actions and commands`}
+                value={search}
+                onChangeText={setSearch}
+                variant="outline"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {query && visibleCommands.length === 0 && visibleAgentCommands.length === 0 ? (
+                <Text
+                  variant="bodySmall"
+                  color={theme.colors.textMuted}>{t`No matching commands. Try another word.`}</Text>
+              ) : null}
+            </View>
+          ) : null}
+
+          {showSaved ? (
+            <View style={styles.section}>
+              <SectionHeading title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`} />
+              <SettingsCard>
+                {visibleCommands.map((command, index) => {
+                  // A default's name is ours to translate; a custom one is the
+                  // user's own word, shown exactly as they typed it.
+                  const descriptor = command.custom ? undefined : quickCommandName[command.id];
+                  const name = descriptor ? _(descriptor) : command.label;
+                  return (
+                    // Adding, deleting and restoring all rewrite this list, and each
+                    // of them used to pop a row in or snap the rest up into the gap.
+                    // The stagger is on the entrance only, so a first open reads as
+                    // a list arriving and a single delete is just the one row
+                    // leaving.
+                    <Animated.View
+                      key={command.id}
+                      entering={riseIn(index * STAGGER.row)}
+                      exiting={fadeOut('micro')}
+                      layout={listLayout('short')}>
+                      <ActionRow
+                        accessibilityLabel={name}
+                        name={name}
+                        // A key combo is keys and a command is characters; they
+                        // leave by different calls, so they are drawn differently.
+                        //
+                        // An agent prompt is neither: it is prose the reader wrote
+                        // and then named, so its second line was the title again at
+                        // greater length. It is shown only under Edit, which is the
+                        // one moment its exact wording is what is being decided
+                        // about -- see decision 2 at the top of this file.
+                        value={
+                          command.kind === 'keys' || (mode === 'agent' && !editing)
+                            ? undefined
+                            : command.value
+                        }
+                        keys={command.kind === 'keys' ? quickCommandKeys(command) : undefined}
+                        detailColor={theme.colors.textMuted}
+                        detail={
+                          command.delivery === 'collaboration' ? t`Agent collaboration` : undefined
+                        }
+                        busy={sendingId === command.id}
+                        busyColor={theme.colors.primary}
+                        // In edit mode a row is what is being edited, not what is
+                        // being sent: it stops firing so that reaching for its
+                        // delete cannot send it to a live pane instead.
+                        disabled={editing || Boolean(sendingId)}
+                        onPress={editing ? undefined : () => void run(command)}
+                        trailing={
+                          editing ? (
+                            // Every command can be removed -- custom ones are
+                            // deleted, built-in defaults are hidden and can be
+                            // restored below -- so the defaults are never forced on
+                            // anyone.
+                            <PressableScale
+                              accessibilityLabel={
+                                command.custom ? t`Delete ${name}` : t`Hide ${name}`
+                              }
+                              onPress={() => void remove(command.id)}
+                              style={styles.deleteButton}>
+                              <Trash2 size={16} color={theme.colors.danger} />
+                            </PressableScale>
+                          ) : null
+                        }
+                      />
+                      {editing && command.custom && command.mode === 'agent' ? (
+                        <AgentCommandDeliveryPicker
+                          value={command.delivery ?? 'current-agent'}
+                          onChange={(next) => void changeDelivery(command.id, next)}
+                        />
+                      ) : null}
+                    </Animated.View>
+                  );
+                })}
+                {editing && canRestore ? (
                   <Animated.View
-                    key={command.id}
+                    entering={fadeIn('short')}
+                    exiting={fadeOut('micro')}
+                    layout={listLayout('short')}>
+                    <ActionRow
+                      accessibilityLabel={t`Restore hidden default commands`}
+                      name={t`Restore hidden defaults`}
+                      nameColor={theme.colors.textMuted}
+                      onPress={() => void restore()}
+                    />
+                  </Animated.View>
+                ) : null}
+              </SettingsCard>
+            </View>
+          ) : null}
+
+          {!manageOnly && showCatalog && loadingAgentCommands ? (
+            // The section's own shape while the gateway is being asked for it. It
+            // is the same height as the rows that replace it, so the sheet does
+            // not move when the answer lands -- which was the other half of the
+            // pop.
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOut('short')}
+              style={styles.section}
+              accessibilityLabel={t`Loading commands`}>
+              <Skeleton variant="text" width={110} height={11} style={styles.headingSkeleton} />
+              <SettingsCard>
+                {[0, 1].map((row) => (
+                  <View key={row} style={styles.row}>
+                    <View style={styles.rowCopy}>
+                      <Skeleton variant="text" width="42%" height={14} />
+                      <Skeleton
+                        variant="text"
+                        width="68%"
+                        height={12}
+                        style={styles.skeletonDetail}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </SettingsCard>
+            </Animated.View>
+          ) : null}
+
+          {!manageOnly &&
+          showCatalog &&
+          !loadingAgentCommands &&
+          visibleAgentCommands.length > 0 ? (
+            <Animated.View entering={fadeIn('short')} style={styles.section}>
+              <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`TERMINAL COMMANDS`} />
+              <SettingsCard>
+                {visibleAgentCommands.map((entry, index) => (
+                  <Animated.View
+                    key={entry.command}
                     entering={riseIn(index * STAGGER.row)}
                     exiting={fadeOut('micro')}
                     layout={listLayout('short')}>
                     <ActionRow
-                      accessibilityLabel={name}
-                      name={name}
-                      // A key combo is keys and a command is characters; they
-                      // leave by different calls, so they are drawn differently.
-                      //
-                      // An agent prompt is neither: it is prose the reader wrote
-                      // and then named, so its second line was the title again at
-                      // greater length. It is shown only under Edit, which is the
-                      // one moment its exact wording is what is being decided
-                      // about -- see decision 2 at the top of this file.
-                      value={
-                        command.kind === 'keys' || (mode === 'agent' && !editing)
-                          ? undefined
-                          : command.value
-                      }
-                      keys={command.kind === 'keys' ? quickCommandKeys(command) : undefined}
+                      accessibilityLabel={entry.command}
+                      // The command is the row's name here, and it is set in the
+                      // terminal's face because that is exactly what gets typed.
+                      // Its description is the prose underneath, which is the
+                      // same arrangement every other row on the sheet uses.
+                      name={entry.command}
+                      nameMono
+                      // What the reader still has to type, never what is sent --
+                      // so it is drawn as the placeholder it is, beside the name.
+                      nameSuffix={entry.argument_hint ?? undefined}
+                      detail={entry.description}
+                      // One line, never two. A real agent answers with thirty-odd
+                      // of these, and a description that wrapped bought a second
+                      // 17-point line on every one of them for the tail of a
+                      // sentence whose first half had already said it.
+                      detailLines={1}
                       detailColor={theme.colors.textMuted}
-                      detail={
-                        command.delivery === 'collaboration' ? t`Agent collaboration` : undefined
-                      }
-                      busy={sendingId === command.id}
+                      busy={sendingId === entry.command}
                       busyColor={theme.colors.primary}
-                      // In edit mode a row is what is being edited, not what is
-                      // being sent: it stops firing so that reaching for its
-                      // delete cannot send it to a live pane instead.
-                      disabled={editing || Boolean(sendingId)}
-                      onPress={editing ? undefined : () => void run(command)}
+                      disabled={Boolean(sendingId)}
+                      onPress={() => void runSlashCommand(entry)}
                       trailing={
-                        editing ? (
-                          // Every command can be removed -- custom ones are
-                          // deleted, built-in defaults are hidden and can be
-                          // restored below -- so the defaults are never forced on
-                          // anyone.
-                          <PressableScale
-                            accessibilityLabel={
-                              command.custom ? t`Delete ${name}` : t`Hide ${name}`
-                            }
-                            onPress={() => void remove(command.id)}
-                            style={styles.deleteButton}>
-                            <Trash2 size={16} color={theme.colors.danger} />
-                          </PressableScale>
+                        // A command the developer wrote themselves, found on disk
+                        // by the gateway rather than listed in its built-in table.
+                        // An annotation, not a badge: the pill it used to sit in
+                        // was tinted with the accent, which on this sheet now
+                        // means only "in flight".
+                        entry.source && entry.source !== 'builtin' ? (
+                          <Text variant="label" color={theme.colors.textSubtle}>
+                            {entry.source}
+                          </Text>
                         ) : null
                       }
                     />
-                    {editing && command.custom && command.mode === 'agent' ? (
-                      <AgentCommandDeliveryPicker
-                        value={command.delivery ?? 'current-agent'}
-                        onChange={(next) => void changeDelivery(command.id, next)}
-                      />
-                    ) : null}
                   </Animated.View>
-                );
-              })}
-              {editing && canRestore ? (
-                <Animated.View
-                  entering={fadeIn('short')}
-                  exiting={fadeOut('micro')}
-                  layout={listLayout('short')}>
-                  <ActionRow
-                    accessibilityLabel={t`Restore hidden default commands`}
-                    name={t`Restore hidden defaults`}
-                    nameColor={theme.colors.textMuted}
-                    onPress={() => void restore()}
+                ))}
+              </SettingsCard>
+            </Animated.View>
+          ) : null}
+
+          {editing ? (
+            <Animated.View
+              entering={fadeIn('short')}
+              exiting={fadeOut('micro')}
+              layout={listLayout('short')}
+              style={styles.section}>
+              <SectionHeading title={t`NEW SHORTCUT`} />
+              <Card variant="flat" padding="md" style={styles.addCard}>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {mode === 'agent'
+                    ? t`Save a prompt you send this agent often.`
+                    : t`Save a command or key combo you reach for.`}
+                </Text>
+
+                {mode === 'terminal' ? (
+                  <Tabs
+                    options={[
+                      { label: t`Command`, value: 'command' },
+                      { label: t`Keys`, value: 'keys' },
+                    ]}
+                    value={kind}
+                    variant="pill"
+                    size="compact"
+                    onChange={(next) => setKind(next as QuickCommandKind)}
                   />
-                </Animated.View>
-              ) : null}
-            </SettingsCard>
-          </View>
-        ) : null}
+                ) : null}
 
-        {!manageOnly && showCatalog && loadingAgentCommands ? (
-          // The section's own shape while the gateway is being asked for it. It
-          // is the same height as the rows that replace it, so the sheet does
-          // not move when the answer lands -- which was the other half of the
-          // pop.
-          <Animated.View
-            entering={fadeIn('micro')}
-            exiting={fadeOut('short')}
-            style={styles.section}
-            accessibilityLabel={t`Loading commands`}>
-            <Skeleton variant="text" width={110} height={11} style={styles.headingSkeleton} />
-            <SettingsCard>
-              {[0, 1].map((row) => (
-                <View key={row} style={styles.row}>
-                  <View style={styles.rowCopy}>
-                    <Skeleton variant="text" width="42%" height={14} />
-                    <Skeleton
-                      variant="text"
-                      width="68%"
-                      height={12}
-                      style={styles.skeletonDetail}
-                    />
-                  </View>
-                </View>
-              ))}
-            </SettingsCard>
-          </Animated.View>
-        ) : null}
+                {mode === 'agent' ? (
+                  <AgentCommandDeliveryPicker
+                    testID="quick-command-delivery"
+                    value={delivery}
+                    onChange={setDelivery}
+                  />
+                ) : null}
 
-        {!manageOnly && showCatalog && !loadingAgentCommands && visibleAgentCommands.length > 0 ? (
-          <Animated.View entering={fadeIn('short')} style={styles.section}>
-            <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`TERMINAL COMMANDS`} />
-            <SettingsCard>
-              {visibleAgentCommands.map((entry, index) => (
-                <Animated.View
-                  key={entry.command}
-                  entering={riseIn(index * STAGGER.row)}
-                  exiting={fadeOut('micro')}
-                  layout={listLayout('short')}>
-                  <ActionRow
-                    accessibilityLabel={entry.command}
-                    // The command is the row's name here, and it is set in the
-                    // terminal's face because that is exactly what gets typed.
-                    // Its description is the prose underneath, which is the
-                    // same arrangement every other row on the sheet uses.
-                    name={entry.command}
-                    nameMono
-                    // What the reader still has to type, never what is sent --
-                    // so it is drawn as the placeholder it is, beside the name.
-                    nameSuffix={entry.argument_hint ?? undefined}
-                    detail={entry.description}
-                    // One line, never two. A real agent answers with thirty-odd
-                    // of these, and a description that wrapped bought a second
-                    // 17-point line on every one of them for the tail of a
-                    // sentence whose first half had already said it.
-                    detailLines={1}
-                    detailColor={theme.colors.textMuted}
-                    busy={sendingId === entry.command}
-                    busyColor={theme.colors.primary}
-                    disabled={Boolean(sendingId)}
-                    onPress={() => void runSlashCommand(entry)}
-                    trailing={
-                      // A command the developer wrote themselves, found on disk
-                      // by the gateway rather than listed in its built-in table.
-                      // An annotation, not a badge: the pill it used to sit in
-                      // was tinted with the accent, which on this sheet now
-                      // means only "in flight".
-                      entry.source && entry.source !== 'builtin' ? (
-                        <Text variant="label" color={theme.colors.textSubtle}>
-                          {entry.source}
-                        </Text>
-                      ) : null
+                <View style={styles.addFields}>
+                  <Input
+                    testID="quick-command-name"
+                    label={t`Name`}
+                    value={label}
+                    onChangeText={setLabel}
+                    placeholder={
+                      mode === 'agent'
+                        ? t`Review changes`
+                        : kind === 'keys'
+                          ? t`Interrupt process`
+                          : t`List branches`
                     }
+                    variant="outline"
                   />
-                </Animated.View>
-              ))}
-            </SettingsCard>
-          </Animated.View>
-        ) : null}
+                  <Input
+                    testID="quick-command-value"
+                    label={mode === 'agent' ? t`Prompt` : kind === 'keys' ? t`Keys` : t`Command`}
+                    value={value}
+                    onChangeText={setValue}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    // The examples for the *value* stay as they are typed: key
+                    // names and a git command are the pane's vocabulary, not copy.
+                    placeholder={
+                      mode === 'agent'
+                        ? t`Review the current changes.`
+                        : kind === 'keys'
+                          ? 'ctrl+c, esc'
+                          : 'git branch --show-current'
+                    }
+                    variant="outline"
+                  />
+                </View>
 
-        {editing ? (
-          <Animated.View
-            entering={fadeIn('short')}
-            exiting={fadeOut('micro')}
-            layout={listLayout('short')}
-            style={styles.section}>
-            <SectionHeading title={t`NEW SHORTCUT`} />
-            <Card variant="flat" padding="md" style={styles.addCard}>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {mode === 'agent'
-                  ? t`Save a prompt you send this agent often.`
-                  : t`Save a command or key combo you reach for.`}
+                <Button
+                  testID="quick-command-save"
+                  onPress={() => void add()}
+                  disabled={!label.trim() || !value.trim()}>
+                  {t`Save shortcut`}
+                </Button>
+              </Card>
+            </Animated.View>
+          ) : null}
+
+          {error ? (
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOut('micro')}
+              layout={listLayout('short')}>
+              <Text selectable variant="caption" color={theme.colors.danger}>
+                {error}
               </Text>
-
-              {mode === 'terminal' ? (
-                <Tabs
-                  options={[
-                    { label: t`Command`, value: 'command' },
-                    { label: t`Keys`, value: 'keys' },
-                  ]}
-                  value={kind}
-                  variant="pill"
-                  size="compact"
-                  onChange={(next) => setKind(next as QuickCommandKind)}
-                />
-              ) : null}
-
-              {mode === 'agent' ? (
-                <AgentCommandDeliveryPicker
-                  testID="quick-command-delivery"
-                  value={delivery}
-                  onChange={setDelivery}
-                />
-              ) : null}
-
-              <View style={styles.addFields}>
-                <Input
-                  testID="quick-command-name"
-                  label={t`Name`}
-                  value={label}
-                  onChangeText={setLabel}
-                  placeholder={
-                    mode === 'agent'
-                      ? t`Review changes`
-                      : kind === 'keys'
-                        ? t`Interrupt process`
-                        : t`List branches`
-                  }
-                  variant="outline"
-                />
-                <Input
-                  testID="quick-command-value"
-                  label={mode === 'agent' ? t`Prompt` : kind === 'keys' ? t`Keys` : t`Command`}
-                  value={value}
-                  onChangeText={setValue}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  // The examples for the *value* stay as they are typed: key
-                  // names and a git command are the pane's vocabulary, not copy.
-                  placeholder={
-                    mode === 'agent'
-                      ? t`Review the current changes.`
-                      : kind === 'keys'
-                        ? 'ctrl+c, esc'
-                        : 'git branch --show-current'
-                  }
-                  variant="outline"
-                />
-              </View>
-
-              <Button
-                testID="quick-command-save"
-                onPress={() => void add()}
-                disabled={!label.trim() || !value.trim()}>
-                {t`Save shortcut`}
-              </Button>
-            </Card>
-          </Animated.View>
-        ) : null}
-
-        {error ? (
-          <Animated.View
-            entering={fadeIn('micro')}
-            exiting={fadeOut('micro')}
-            layout={listLayout('short')}>
-            <Text selectable variant="caption" color={theme.colors.danger}>
-              {error}
-            </Text>
-          </Animated.View>
-        ) : null}
-      </KeyboardAwareScrollView>
+            </Animated.View>
+          ) : null}
+        </KeyboardAwareScrollView>
+      </SheetFrame>
     </View>
   );
 }

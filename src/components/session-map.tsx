@@ -23,6 +23,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { agentStatusWord } from '@/i18n/labels';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { RowActionMenu } from '@/components/row-action-menu';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
 import {
@@ -113,6 +114,8 @@ export function SessionMap({
   onClose: () => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
+  // The plate a label takes when the pack draws a wallpaper behind the sheet.
+  const plate = useSheetGroundPlate();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -377,299 +380,310 @@ export function SessionMap({
   const showSkeleton = loading && workspaces.length === 0;
 
   return (
-    // The scroller is the sheet's root, with nothing wrapped around it:
-    // react-native-screens lays a form sheet out specially when its content is a
-    // scroll view, and warns "FormSheet with ScrollView expects at most 2
-    // subviews" the moment anything else shares the container -- after which the
-    // sheet renders empty.
-    <ScrollScreen
-      variant="surface"
-      safeArea="bottom"
-      style={[styles.sheet, { backgroundColor: surfaceBackground(theme.colors.surface) }]}
-      contentContainerStyle={styles.content}
-      onLayout={(event: LayoutChangeEvent) => {
-        const nextWidth = Math.floor(event.nativeEvent.layout.width);
-        setMeasuredWidth((current) => (current === nextWidth ? current : nextWidth));
-      }}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => void refresh()}
-          tintColor={theme.colors.textMuted}
-          colors={[theme.colors.primary]}
-        />
-      }>
-      {/* Handle and header as one sticky node: a sheet with more panels than
+    // Exactly two subviews, which is the most a native form sheet lays out
+    // around a scroll view -- it warns "FormSheet with ScrollView expects at
+    // most 2 subviews" and then renders empty. The ground is one of them, and
+    // it costs no layout: it is absolutely positioned, so the scroller is still
+    // the thing the sheet measures. The theme catalogue is arranged the same
+    // way for the same reason.
+    <SheetFrame>
+      <ScrollScreen
+        variant="surface"
+        safeArea="bottom"
+        // Transparent, because the ground behind it is already painting the
+        // sheet's floor and its wallpaper. `styles.sheet` still fills the height
+        // so the route's own transparency never shows as a strip.
+        style={[styles.sheet, styles.transparent]}
+        contentContainerStyle={styles.content}
+        onLayout={(event: LayoutChangeEvent) => {
+          const nextWidth = Math.floor(event.nativeEvent.layout.width);
+          setMeasuredWidth((current) => (current === nextWidth ? current : nextWidth));
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void refresh()}
+            tintColor={theme.colors.textMuted}
+            colors={[theme.colors.primary]}
+          />
+        }>
+        {/* Handle and header as one sticky node: a sheet with more panels than
           fit used to scroll its own title away and then clip the first row
           against the sheet's top edge, so the reader lost both the close
           button and the row they were reaching for. `stickyHeaderIndices`
           needs a constant index, which is why the platform-only handle lives
           inside this node rather than beside it. */}
-      <View
-        style={[styles.stickyTop, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
-        {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+        <View
+          style={[styles.stickyTop, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
+          {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
 
-        <View style={styles.header}>
-          <View style={styles.flexOne}>
-            <Text variant="bodySmall" style={styles.headerTitle}>
-              <Trans>What is running</Trans>
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {activeWorkspace ? `${label} · ${activeWorkspace.title}` : label}
-            </Text>
-          </View>
-          {/* The sheet's chrome, in the same material as the server page's --
+          <View style={styles.header}>
+            <View style={styles.flexOne}>
+              <Text variant="bodySmall" style={styles.headerTitle}>
+                <Trans>What is running</Trans>
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                {activeWorkspace ? `${label} · ${activeWorkspace.title}` : label}
+              </Text>
+            </View>
+            {/* The sheet's chrome, in the same material as the server page's --
             `sheet` rather than `floating` because this sits on an opaque sheet,
             where the thick material would only read as a grey disc. */}
-          <GlassChrome face="sheet" style={styles.iconButton}>
-            <PressableScale
-              accessibilityLabel={t`Refresh`}
-              onPress={() => void load()}
-              style={styles.iconButtonHit}>
-              {loading ? (
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              ) : (
-                <RefreshCw size={17} color={theme.colors.textMuted} />
-              )}
-            </PressableScale>
-          </GlassChrome>
-          <GlassChrome face="sheet" style={styles.iconButton}>
-            <PressableScale
-              accessibilityLabel={t`Close`}
-              onPress={onClose}
-              style={styles.iconButtonHit}>
-              <X size={18} color={theme.colors.text} />
-            </PressableScale>
-          </GlassChrome>
-        </View>
-      </View>
-
-      {renaming ? (
-        <View style={styles.renameBlock}>
-          <Input
-            label={renameFieldLabel(renaming.kind)}
-            value={renameDraft}
-            onChangeText={setRenameDraft}
-            autoFocus
-            variant="outline"
-            returnKeyType="done"
-            onSubmitEditing={() => void applyRename()}
-          />
-          <View style={styles.renameActions}>
-            <Button variant="ghost" onPress={() => setRenaming(null)}>
-              {t`Cancel`}
-            </Button>
-            <Button onPress={() => void applyRename()} disabled={!renameDraft.trim() || busy}>
-              {t`Save`}
-            </Button>
+            <GlassChrome face="sheet" style={styles.iconButton}>
+              <PressableScale
+                accessibilityLabel={t`Refresh`}
+                onPress={() => void load()}
+                style={styles.iconButtonHit}>
+                {loading ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                  <RefreshCw size={17} color={theme.colors.textMuted} />
+                )}
+              </PressableScale>
+            </GlassChrome>
+            <GlassChrome face="sheet" style={styles.iconButton}>
+              <PressableScale
+                accessibilityLabel={t`Close`}
+                onPress={onClose}
+                style={styles.iconButtonHit}>
+                <X size={18} color={theme.colors.text} />
+              </PressableScale>
+            </GlassChrome>
           </View>
         </View>
-      ) : null}
 
-      {error ? (
-        <Text selectable variant="caption" color={theme.colors.danger}>
-          {error}
-        </Text>
-      ) : null}
+        {renaming ? (
+          <View style={styles.renameBlock}>
+            <Input
+              label={renameFieldLabel(renaming.kind)}
+              value={renameDraft}
+              onChangeText={setRenameDraft}
+              autoFocus
+              variant="outline"
+              returnKeyType="done"
+              onSubmitEditing={() => void applyRename()}
+            />
+            <View style={styles.renameActions}>
+              <Button variant="ghost" onPress={() => setRenaming(null)}>
+                {t`Cancel`}
+              </Button>
+              <Button onPress={() => void applyRename()} disabled={!renameDraft.trim() || busy}>
+                {t`Save`}
+              </Button>
+            </View>
+          </View>
+        ) : null}
 
-      {/*
+        {error ? (
+          <Text selectable variant="caption" color={theme.colors.danger}>
+            {error}
+          </Text>
+        ) : null}
+
+        {/*
         The workspace rail is the sheet's scope, not a peer of the groups below
         it: the title pill's swipe already switches workspaces, so what this
         adds is the inventory -- how many there are, which one you are in, and
         the only way to make another.
       */}
-      <View style={styles.rail}>
-        {/* The eyebrow alone. The total that used to sit opposite it counted the
+        <View style={styles.rail}>
+          {/* The eyebrow alone. The total that used to sit opposite it counted the
             selected workspace, in a row that is about all of them, and the rows
             it counted begin two lines below -- so it was answering a question
             the reader was not asking in the one place it could be misread as
             being about the rail. */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.railList}>
-          {orderedWorkspaces.map((workspace) => {
-            const inventory = inventories.get(workspace.id) ?? EMPTY_WORKSPACE_INVENTORY;
-            return (
-              <WorkspaceChip
-                key={workspace.id}
-                title={workspace.title}
-                // The count is spelled into the label rather than left to the
-                // caption inside the chip. A Pressable that carries a label is
-                // one accessibility element on iOS, and everything drawn inside
-                // it -- the name, the `N panels` caption -- stops existing as
-                // far as VoiceOver, or a test, is concerned. Android happens to
-                // expose the children anyway, which is why the count read as
-                // present until this ran on a phone that does not.
-                accessibilityLabel={t`Open workspace ${workspace.title}, ${plural(inventory.panels, { one: '# running', other: '# running' })}. Long press to close.`}
-                panelCount={inventory.panels}
-                selected={workspace.id === workspaceId}
-                statusColor={statusColor(inventory.status)}
-                onPress={() => setWorkspaceId(workspace.id)}
-                onLongPress={() =>
-                  setMenuFor({ kind: 'workspace', id: workspace.id, label: workspace.title })
-                }
-              />
-            );
-          })}
-          <PressableScale
-            accessibilityLabel={t`New workspace`}
-            disabled={busy}
-            onPress={() => void createAndSelect(() => createWorkspace(sessionId, { focus: false }))}
-            style={[
-              styles.createChip,
-              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-            ]}>
-            <Plus size={16} color={theme.colors.textMuted} />
-            <Text variant="caption" color={theme.colors.text}>
-              <Trans>Workspace</Trans>
-            </Text>
-          </PressableScale>
-        </ScrollView>
-        {menuFor?.kind === 'workspace' ? (
-          <Animated.View
-            entering={fadeIn('micro')}
-            exiting={fadeOut('micro')}
-            layout={listLayout('short')}
-            style={styles.menuRow}>
-            <Text
-              variant="caption"
-              color={theme.colors.textMuted}
-              numberOfLines={1}
-              style={styles.flexOne}>
-              {menuFor.label}
-            </Text>
-            {actionMenu('workspace', menuFor.id)}
-          </Animated.View>
-        ) : null}
-      </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.railList}>
+            {orderedWorkspaces.map((workspace) => {
+              const inventory = inventories.get(workspace.id) ?? EMPTY_WORKSPACE_INVENTORY;
+              return (
+                <WorkspaceChip
+                  key={workspace.id}
+                  title={workspace.title}
+                  // The count is spelled into the label rather than left to the
+                  // caption inside the chip. A Pressable that carries a label is
+                  // one accessibility element on iOS, and everything drawn inside
+                  // it -- the name, the `N panels` caption -- stops existing as
+                  // far as VoiceOver, or a test, is concerned. Android happens to
+                  // expose the children anyway, which is why the count read as
+                  // present until this ran on a phone that does not.
+                  accessibilityLabel={t`Open workspace ${workspace.title}, ${plural(inventory.panels, { one: '# running', other: '# running' })}. Long press to close.`}
+                  panelCount={inventory.panels}
+                  selected={workspace.id === workspaceId}
+                  statusColor={statusColor(inventory.status)}
+                  onPress={() => setWorkspaceId(workspace.id)}
+                  onLongPress={() =>
+                    setMenuFor({ kind: 'workspace', id: workspace.id, label: workspace.title })
+                  }
+                />
+              );
+            })}
+            <PressableScale
+              accessibilityLabel={t`New workspace`}
+              disabled={busy}
+              onPress={() =>
+                void createAndSelect(() => createWorkspace(sessionId, { focus: false }))
+              }
+              style={[
+                styles.createChip,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              ]}>
+              <Plus size={16} color={theme.colors.textMuted} />
+              <Text variant="caption" color={theme.colors.text}>
+                <Trans>Workspace</Trans>
+              </Text>
+            </PressableScale>
+          </ScrollView>
+          {menuFor?.kind === 'workspace' ? (
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOut('micro')}
+              layout={listLayout('short')}
+              style={styles.menuRow}>
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                numberOfLines={1}
+                style={styles.flexOne}>
+                {menuFor.label}
+              </Text>
+              {actionMenu('workspace', menuFor.id)}
+            </Animated.View>
+          ) : null}
+        </View>
 
-      <View style={[styles.groups, gridLayout.columns > 1 ? styles.groupGrid : null]}>
-        {showSkeleton
-          ? Array.from({ length: gridLayout.columns }, (_, index) => (
-              <SessionMapSkeleton key={index} width={gridLayout.itemWidth} />
-            ))
-          : null}
+        <View style={[styles.groups, gridLayout.columns > 1 ? styles.groupGrid : null]}>
+          {showSkeleton
+            ? Array.from({ length: gridLayout.columns }, (_, index) => (
+                <SessionMapSkeleton key={index} width={gridLayout.itemWidth} />
+              ))
+            : null}
 
-        {groups.map((group, groupIndex) => (
-          // A tab created or closed used to pop a whole group in, or snap every
-          // group below it up into the space. `riseIn` staggers the groups on a
-          // first load so the sheet arrives as a list rather than all at once,
-          // and `listLayout` is what makes a delete read as the rest closing the
-          // gap.
-          <Animated.View
-            key={group.tab.id}
-            entering={riseIn(groupIndex * STAGGER.card)}
-            exiting={fadeOut('micro')}
-            layout={listLayout('short')}
-            style={[styles.group, { width: gridLayout.itemWidth }]}>
-            {/*
+          {groups.map((group, groupIndex) => (
+            // A tab created or closed used to pop a whole group in, or snap every
+            // group below it up into the space. `riseIn` staggers the groups on a
+            // first load so the sheet arrives as a list rather than all at once,
+            // and `listLayout` is what makes a delete read as the rest closing the
+            // gap.
+            <Animated.View
+              key={group.tab.id}
+              entering={riseIn(groupIndex * STAGGER.card)}
+              exiting={fadeOut('micro')}
+              layout={listLayout('short')}
+              style={[styles.group, { width: gridLayout.itemWidth }]}>
+              {/*
               The tab is a header, not a filter. Long press is where its rename
               and close live, the same long press every other row in the app uses.
             */}
-            <PressableScale
-              accessibilityLabel={t`Group ${group.tab.title}. Long press for actions.`}
-              feedback={false}
-              onLongPress={() =>
-                setMenuFor({ kind: 'tab', id: group.tab.id, label: group.tab.title })
-              }
-              style={styles.groupHeader}>
-              {/* The tmux window number used to sit here, in the leftmost and
+              <PressableScale
+                accessibilityLabel={t`Group ${group.tab.title}. Long press for actions.`}
+                feedback={false}
+                onLongPress={() =>
+                  setMenuFor({ kind: 'tab', id: group.tab.id, label: group.tab.title })
+                }
+                style={styles.groupHeader}>
+                {/* The tmux window number used to sit here, in the leftmost and
                   most-scanned column of every heading. It addresses nothing the
                   reader can act on: you cannot type `2` at this sheet, and the
                   heading beside it already carries the name its owner gave it.
                   A number that cannot be used is a number being read for
                   nothing, so the name starts at the edge instead. */}
-              <Text variant="label" numberOfLines={1} style={styles.flexOne}>
-                {group.tab.title}
-              </Text>
-              {/* No count here. The panels it counted are the next thing on the
+                {/* The tab's name is the one label on this sheet drawn
+                  straight onto the ground, so over a wallpaper it takes the
+                  plate the settings page gives a section label. */}
+                <Text variant="label" numberOfLines={1} style={[styles.flexOne, plate]}>
+                  {group.tab.title}
+                </Text>
+                {/* No count here. The panels it counted are the next thing on the
                   screen, in a card with a visible edge, so the heading was
                   reporting the length of a list the reader was already looking
                   at. What the heading is for is naming the tab. */}
-              {actionMenu('tab', group.tab.id)}
-            </PressableScale>
+                {actionMenu('tab', group.tab.id)}
+              </PressableScale>
 
-            {/*
+              {/*
               One card with hairline dividers rather than a card per panel: two
               levels of nesting read as "header plus grouped block", and the group
               boundary becomes something you can actually see.
             */}
-            <View
-              style={[
-                styles.groupCard,
-                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              {group.panes.map((pane) => {
-                const agent = agents.find((item) => field(item, 'pane_id') === pane.id);
-                const title = panelTitle(pane, agent);
-                const status = agent?.status ?? pane.status;
-                const armed = menuFor?.kind === 'panel' && menuFor.id === pane.id;
-                return (
-                  <PanelRow
-                    key={pane.id}
-                    accessibilityLabel={t`Open ${title}. Long press to close.`}
-                    title={title}
-                    detail={pane.cwd ?? pane.id}
-                    status={status}
-                    hasAgent={Boolean(agent)}
-                    selected={pane.id === activePaneId}
-                    trailing={armed ? actionMenu('panel', pane.id) : null}
-                    onPress={() => onChoosePane(pane.id)}
-                    onLongPress={() => setMenuFor({ kind: 'panel', id: pane.id, label: title })}
-                  />
-                );
-              })}
-              {group.panes.length === 0 ? (
-                <Animated.View
-                  entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
-                  layout={listLayout('short')}
-                  style={styles.panelRow}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>This group has no terminals.</Trans>
-                  </Text>
-                </Animated.View>
-              ) : null}
-            </View>
+              <View
+                style={[
+                  styles.groupCard,
+                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                ]}>
+                {group.panes.map((pane) => {
+                  const agent = agents.find((item) => field(item, 'pane_id') === pane.id);
+                  const title = panelTitle(pane, agent);
+                  const status = agent?.status ?? pane.status;
+                  const armed = menuFor?.kind === 'panel' && menuFor.id === pane.id;
+                  return (
+                    <PanelRow
+                      key={pane.id}
+                      accessibilityLabel={t`Open ${title}. Long press to close.`}
+                      title={title}
+                      detail={pane.cwd ?? pane.id}
+                      status={status}
+                      hasAgent={Boolean(agent)}
+                      selected={pane.id === activePaneId}
+                      trailing={armed ? actionMenu('panel', pane.id) : null}
+                      onPress={() => onChoosePane(pane.id)}
+                      onLongPress={() => setMenuFor({ kind: 'panel', id: pane.id, label: title })}
+                    />
+                  );
+                })}
+                {group.panes.length === 0 ? (
+                  <Animated.View
+                    entering={fadeIn('micro')}
+                    exiting={fadeOut('micro')}
+                    layout={listLayout('short')}
+                    style={styles.panelRow}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      <Trans>This group has no terminals.</Trans>
+                    </Text>
+                  </Animated.View>
+                ) : null}
+              </View>
+            </Animated.View>
+          ))}
+        </View>
+
+        {!loading && groups.length === 0 ? (
+          <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
+            <Text variant="bodySmall" color={theme.colors.textMuted}>
+              <Trans>This workspace has no groups yet.</Trans>
+            </Text>
           </Animated.View>
-        ))}
-      </View>
+        ) : null}
 
-      {!loading && groups.length === 0 ? (
-        <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
-          <Text variant="bodySmall" color={theme.colors.textMuted}>
-            <Trans>This workspace has no groups yet.</Trans>
-          </Text>
-        </Animated.View>
-      ) : null}
-
-      {/* A new full panel (a new tab), not a split -- two panes sharing one
+        {/* A new full panel (a new tab), not a split -- two panes sharing one
           small phone screen is unreadable, and the pane strip already lets you
           flip between panels. */}
-      <PressableScale
-        accessibilityLabel={t`New terminal`}
-        disabled={busy || !workspaceId}
-        onPress={() =>
-          void createAndSelect(() =>
-            createTab(sessionId, { workspace_id: workspaceId, focus: false })
-          )
-        }
-        style={[
-          styles.createRow,
-          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-          gridLayout.columns > 1 ? { width: gridLayout.itemWidth } : null,
-        ]}>
-        {/* Plain text on a raised fill, not accent. This sheet is for picking,
+        <PressableScale
+          accessibilityLabel={t`New terminal`}
+          disabled={busy || !workspaceId}
+          onPress={() =>
+            void createAndSelect(() =>
+              createTab(sessionId, { workspace_id: workspaceId, focus: false })
+            )
+          }
+          style={[
+            styles.createRow,
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            gridLayout.columns > 1 ? { width: gridLayout.itemWidth } : null,
+          ]}>
+          {/* Plain text on a raised fill, not accent. This sheet is for picking,
             not for creating, and a full-width row at the end of the list is
             already the most findable thing on it -- it does not also need the
             one colour that now means "you are here". */}
-        <Plus size={17} color={theme.colors.textMuted} />
-        <Text variant="bodySmall" color={theme.colors.text}>
-          <Trans>New terminal</Trans>
-        </Text>
-      </PressableScale>
-    </ScrollScreen>
+          <Plus size={17} color={theme.colors.textMuted} />
+          <Text variant="bodySmall" color={theme.colors.text}>
+            <Trans>New terminal</Trans>
+          </Text>
+        </PressableScale>
+      </ScrollScreen>
+    </SheetFrame>
   );
 }
 
@@ -985,6 +999,7 @@ function SessionMapSkeleton({ width }: { width: number }) {
 }
 
 const styles = StyleSheet.create({
+  transparent: { backgroundColor: 'transparent' },
   sheet: {
     // The stack renders form sheets over a transparent background so the native
     // sheet keeps its own corners; without filling the height, that transparency
