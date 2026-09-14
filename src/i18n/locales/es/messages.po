@@ -393,6 +393,10 @@ msgstr "Retroceso"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Por debajo del {minimumPercent}%, ya no se garantiza que el texto siga siendo legible"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "Entre la cabecera y tus servidores. «Mostrada» también toma prestada la imagen de estado vacío del tema cuando este no tiene su propia ilustración de Inicio"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "Archivo binario"
@@ -1445,6 +1449,10 @@ msgstr "Grupo {0}. Mantén pulsado para ver acciones"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Respuesta háptica"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "Oculta"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "Mostrar el logo en Inicio"
 msgid "Show Home text"
 msgstr "Mostrar el texto en Inicio"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "Mostrar la ilustración en Inicio"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Mostrar imágenes"
@@ -2990,6 +3002,10 @@ msgstr "Mostrar la lista de servidores"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Ver lo que se está ejecutando"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "Mostrada"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "La transcripción como conversación, con los pasos de herramientas pleg
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Tema"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "Según el tema"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

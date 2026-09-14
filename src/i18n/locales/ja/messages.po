@@ -393,6 +393,10 @@ msgstr "バックスペース"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% を下回ると、文字が読めることは保証されません"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "ヘッダーとサーバーの間に表示します。「表示」を選ぶと、テーマ専用のホームイラストがない場合は空状態の画像を借用します"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "バイナリファイル"
@@ -1445,6 +1449,10 @@ msgstr "グループ {0}。長押しで操作"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "触覚フィードバック"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "非表示"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "ホームのロゴを表示"
 msgid "Show Home text"
 msgstr "ホームのテキストを表示"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "ホームにイラストを表示"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "画像を表示"
@@ -2990,6 +3002,10 @@ msgstr "サーバー一覧を表示"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "実行中のものを表示"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "表示"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "やり取りを会話として表示し、ツールの手順は折りた
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "テーマ"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "テーマの既定"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"

@@ -393,6 +393,10 @@ msgstr "Retrocesso"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Abaixo de {minimumPercent}%, a legibilidade do texto deixa de ser garantida"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "Entre o cabeçalho e os seus servidores. «Visível» usa também a imagem de estado vazio do tema quando este não tem uma ilustração própria para o início"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "Arquivo binário"
@@ -1445,6 +1449,10 @@ msgstr "Grupo {0}. Prima sem soltar para ver ações"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Feedback háptico"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "Oculta"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "Mostrar o logótipo no início"
 msgid "Show Home text"
 msgstr "Mostrar o texto no início"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "Mostrar a ilustração no início"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Mostrar imagens"
@@ -2990,6 +3002,10 @@ msgstr "Mostrar a lista de servidores"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Ver o que está a correr"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "Visível"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "A transcrição como uma conversa, com os passos das ferramentas recolhi
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Tema"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "Predefinição do tema"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
