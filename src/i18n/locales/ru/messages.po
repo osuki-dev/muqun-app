@@ -3680,6 +3680,10 @@ msgstr "Разблокировать через {0}"
 msgid "Unlock with {authLabel}"
 msgstr "Разблокировать через {authLabel}"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "Распаковка…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "Отвязать"

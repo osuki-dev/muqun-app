@@ -3680,6 +3680,10 @@ msgstr "Déverrouiller avec {0}"
 msgid "Unlock with {authLabel}"
 msgstr "Déverrouiller avec {authLabel}"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "Décompression…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "Dissocier"

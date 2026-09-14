@@ -3680,6 +3680,10 @@ msgstr "Unlock with {0}"
 msgid "Unlock with {authLabel}"
 msgstr "Unlock with {authLabel}"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "Unpacking…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "Unpair"
