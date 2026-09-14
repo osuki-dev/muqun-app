@@ -95,7 +95,10 @@ export function ThemeBrowseSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const plate = useSheetGroundPlate();
+  // Explicit: this is the component that renders the frame, so it sits above
+  // its own tint provider. Everything *inside* the sheet reads the tint from
+  // the frame and calls this with no argument.
+  const plate = useSheetGroundPlate('surface');
   useRenderTally('ThemeBrowseSheet');
   const installed = useThemeLibrary((state) => state.library.themes);
 
@@ -326,7 +329,9 @@ export function ThemeBrowseSheet({
           entering={fadeIn('medium')}
           exiting={fadeOut('micro')}
           testID="theme-browse-loading"
-          style={styles.loading}>
+          // On the ground now that the list no longer paints a column behind
+          // it, so it takes the same plate the header's two lines take.
+          style={[styles.loading, plate]}>
           <Spinner size="sm" color={theme.colors.textMuted} />
           <Text color={theme.colors.textMuted}>{t`Loading themes…`}</Text>
         </Animated.View>
@@ -335,7 +340,7 @@ export function ThemeBrowseSheet({
           key="none"
           entering={fadeIn('medium')}
           testID="theme-browse-none"
-          style={styles.stateBlock}>
+          style={[styles.stateBlock, plate]}>
           <Text color={theme.colors.textMuted}>{t`No themes are published yet`}</Text>
         </Animated.View>
       )}
@@ -495,17 +500,13 @@ export function ThemeBrowseSheet({
           ListEmptyComponent={empty}
           ListFooterComponent={footer}
           style={styles.sheet}
-          // The rows are a plain list with hairlines between them rather than a
-          // stack of cards, so the column they sit in is what carries their
-          // fill. Without it every row was three lines of type straight on the
-          // pack's wallpaper, and the ones over the busy half of the picture
-          // were unreadable. The header above stays on the ground, which is
-          // where the sheet's own two lines belong -- the same division the
-          // settings page makes between a section label and its card.
-          contentContainerStyle={[
-            styles.listContent,
-            { backgroundColor: surfaceBackground(theme.colors.surface) },
-          ]}
+          // No fill here. The rows carry their own, in `surfaceRaised`, the
+          // way every other list in this app does; painting the whole content
+          // container in the ground's own `surface` put a second coat of the
+          // same tint over the picture and ended it in a straight line under
+          // the header. What is left on the ground is what should be: the
+          // header's two lines (plated), the empty state, and the footer.
+          contentContainerStyle={styles.listContent}
         />
       </View>
     </SheetFrame>
@@ -604,7 +605,16 @@ function ThemeBrowseRow({
           testID={`theme-browse-item:${entry.id}`}
           disabled={disabled}
           onPress={onPress}
-          style={styles.row}>
+          // The row carries its own fill, and it is the only thing on this
+          // sheet that does. The column used to be painted by the list's
+          // content container, in the ground's own token -- so under the
+          // header the wallpaper came through `surface` once and below it
+          // through `surface` twice, which is the hard seam a reader sees
+          // across the sheet and the reason this one did not look like the
+          // others. `surfaceRaised` is what a row sits on everywhere else in
+          // the app (the panels sheet's card, the files list's rows), and
+          // adjacent rows in the same fill read as the column they replace.
+          style={[styles.row, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
           <View
             style={[
               styles.cover,

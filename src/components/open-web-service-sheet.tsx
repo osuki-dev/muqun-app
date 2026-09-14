@@ -35,7 +35,7 @@ import Animated from 'react-native-reanimated';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { LADDER } from '@/components/settings-chrome';
+import { LADDER, SectionLabel } from '@/components/settings-chrome';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { describeWebServiceUrl, parsePort, webServiceUrl } from '@/lib/web-service';
@@ -71,9 +71,12 @@ export function OpenWebServiceSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  // The plate the settings page gives a label drawn straight onto the shell's
-  // wallpaper; `null` on every theme that has no picture there.
-  const plate = useSheetGroundPlate();
+  // The plate any text drawn straight onto the shell's wallpaper takes; empty
+  // on every theme that has no picture there. Explicit, because this is the
+  // component that renders the frame and so sits above its own tint provider:
+  // everything *inside* the sheet reads the tint from the frame and calls this
+  // with no argument at all.
+  const plate = useSheetGroundPlate('surface');
   useRenderTally('OpenWebServiceSheet');
 
   const hydrate = useServerWebPorts((state) => state.hydrate);
@@ -190,12 +193,7 @@ export function OpenWebServiceSheet({
             </View>
 
             <View style={styles.section}>
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                style={[styles.sectionLabel, plate]}>
-                <Trans>PORT</Trans>
-              </Text>
+              <SectionLabel title={<Trans>PORT</Trans>} color={theme.colors.textMuted} />
 
               {recentPorts && recentPorts.length > 0 ? (
                 <View style={styles.chips}>
@@ -367,7 +365,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   section: { gap: LADDER.gap },
-  sectionLabel: { marginLeft: LADDER.tight },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: LADDER.gap },
   chip: {
     minHeight: 36,

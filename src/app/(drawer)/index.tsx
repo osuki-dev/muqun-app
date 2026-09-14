@@ -32,6 +32,7 @@ import AppDrawer from '@/components/app-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { PressableScale } from '@/components/pressable-scale';
+import { SectionLabel } from '@/components/settings-chrome';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -684,9 +685,15 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
               style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
               testID="home-ssh-hosts">
               <View style={styles.sshHeading}>
-                <Text variant="label" color={theme.colors.textMuted}>
-                  <Trans>SSH hosts</Trans>
-                </Text>
+                {/* The same pill the settings page draws over TERMINAL. This
+                  screen's whole point is the wallpaper behind it, so the one
+                  heading it has is the one that most needs the plate. The row
+                  keeps its `Manage` opposite; only the label hugs. */}
+                <SectionLabel
+                  title={<Trans>SSH hosts</Trans>}
+                  color={theme.colors.textMuted}
+                  style={styles.sshHeadingLabel}
+                />
                 {/* The way to the list this section is a view of: adding,
                   editing and forgetting a host happen there, not here. */}
                 <PressableScale
@@ -1424,7 +1431,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    // `SectionLabel` carries the 4pt indent itself, so the row only insets the
+    // action opposite it. Keeping both would have moved the heading 4pt right
+    // of every card below it -- and a pack's plate does not move it either,
+    // because the plate's padding is cancelled by its own negative margin.
+    paddingRight: 4,
+  },
+  // A row's cross axis is vertical, so the pill's own `flex-start` would hang
+  // it off the top of the `Manage` button beside it.
+  sshHeadingLabel: {
+    alignSelf: 'center',
   },
   sshManage: {
     minHeight: 28,

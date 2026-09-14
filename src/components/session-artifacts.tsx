@@ -30,6 +30,7 @@ import { AssetViewer } from '@/components/asset-viewer';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SectionLabel } from '@/components/settings-chrome';
 import { formatAssetSize } from '@/lib/asset-display';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { artifactGroupLabel } from '@/i18n/labels';
@@ -246,7 +247,10 @@ export function SessionArtifacts({
 
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const plate = useSheetGroundPlate();
+  // Explicit: this is the component that renders the frame, so it sits above
+  // its own tint provider. Everything *inside* the sheet -- the day headings,
+  // their counts -- reads the tint from the frame and calls this bare.
+  const plate = useSheetGroundPlate('surface');
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
@@ -772,6 +776,19 @@ const DAY_BUCKET_LABEL = {
 /**
  * The day is a rule across the list rather than another chip: it separates, it
  * is not something you press.
+ *
+ * This is the app's one deliberately full-width heading -- the rule and the
+ * count are what make a day a separator instead of a title -- so the row stays,
+ * and only the label inside it becomes the pill every other section wears.
+ * `alignSelf: 'center'` puts it back on the row's centre line, which is where
+ * the rule and the count already sit; the base style's `flex-start` is for the
+ * column a section usually lives in.
+ *
+ * `spoken.toUpperCase()` is gone with it. `variant="label"` carries
+ * `textTransform: 'uppercase'`, which the platform applies per script; the
+ * JavaScript call did nothing on Japanese and the wrong thing on a few others,
+ * and this heading's text is a translated bucket name -- `Today`, `Yesterday`
+ * -- not an English constant.
  */
 const DayHeading = memo(function DayHeading({ label, count }: { label: string; count: number }) {
   const theme = useThemeTokens();
@@ -785,9 +802,11 @@ const DayHeading = memo(function DayHeading({ label, count }: { label: string; c
   const spoken = bucket ? _(bucket) : label;
   return (
     <View style={styles.dayHeading}>
-      <Text variant="caption" color={theme.colors.textMuted} style={[styles.eyebrow, plate]}>
-        {spoken.toUpperCase()}
-      </Text>
+      <SectionLabel
+        title={spoken}
+        color={theme.colors.textMuted}
+        style={styles.daySeparatorLabel}
+      />
       <View style={[styles.rule, { backgroundColor: theme.colors.border }]} />
       <Text variant="caption" color={theme.colors.textMuted} style={plate}>
         {count}
@@ -968,8 +987,10 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 2,
   },
-  eyebrow: {
-    letterSpacing: 0.8,
+  // The pill's own `flex-start` is a column instruction; in this row it would
+  // hang the plate off the top of the rule it sits beside.
+  daySeparatorLabel: {
+    alignSelf: 'center',
   },
   rule: {
     flex: 1,

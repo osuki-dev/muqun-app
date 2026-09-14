@@ -19,6 +19,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SectionLabel } from '@/components/settings-chrome';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { useSshHostAgeLabel } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
@@ -172,9 +173,7 @@ export function PadServerRail({
       ) : null}
 
       <View style={styles.heading}>
-        <Text variant="label" color={theme.colors.textMuted}>
-          <Trans>Servers</Trans>
-        </Text>
+        <SectionLabel title={<Trans>Servers</Trans>} color={theme.colors.textMuted} />
       </View>
 
       <ScrollView
@@ -216,9 +215,7 @@ export function PadServerRail({
         {showsSshHosts && sshHosts && onSelectSshHost ? (
           <View style={styles.group} testID={`${testID}-ssh`}>
             <View style={styles.groupHeading}>
-              <Text variant="label" color={theme.colors.textMuted}>
-                <Trans>SSH hosts</Trans>
-              </Text>
+              <SectionLabel title={<Trans>SSH hosts</Trans>} color={theme.colors.textMuted} />
             </View>
             {sshHosts.map((host) => (
               <SshHostPill
@@ -528,8 +525,12 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderCurve: 'continuous',
   },
+  // 12, not 16: `SectionLabel` carries the remaining 4 itself, so the rail's
+  // eyebrow starts on the same x it always did -- and starts there with a
+  // wallpaper as well as without one, because the plate gives its extra
+  // padding back as a negative margin rather than moving the word.
   heading: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 16,
     paddingBottom: 8,
   },
@@ -623,9 +624,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   // Inset to the pill's own text edge, so the eyebrow sits over the names
-  // rather than over the icons.
+  // rather than over the icons. 2 here plus `SectionLabel`'s own 4 is the 6 it
+  // was before the label started carrying its own indent, and a pack's plate
+  // does not add to it: the plate's padding is cancelled by its own margin.
   groupHeading: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 2,
     paddingBottom: 2,
   },
   // The pill insets its own icon by `serverPill.paddingHorizontal`, so the pane

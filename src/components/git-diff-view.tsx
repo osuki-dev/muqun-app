@@ -109,7 +109,9 @@ export function GitDiffView({
   const colors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
   // The plate a label takes when the pack draws a wallpaper behind the sheet.
-  const plate = useSheetGroundPlate();
+  // Explicit, because this is the component that renders the frame and so sits
+  // above its own tint provider; everything inside the sheet calls this bare.
+  const plate = useSheetGroundPlate('surface');
 
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [loading, setLoading] = useState(true);

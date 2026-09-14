@@ -91,7 +91,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlassChrome } from '@/components/glass-chrome';
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { PressableScale } from '@/components/pressable-scale';
-import { LADDER, SettingsCard } from '@/components/settings-chrome';
+import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
 import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
@@ -159,6 +159,10 @@ const MONO_TEXT = {
 
 export default function QuickCommandsScreen() {
   const surfaceBackground = useSurfaceBackground();
+  // `background`, which is also what this screen gives `SheetFrame` below: the
+  // commands sheet's blocks each draw their own panel, so a second surface
+  // under them is one too many. Explicit because this component sits above its
+  // own tint provider; `SectionHeading` inside the frame calls the hook bare.
   const plate = useSheetGroundPlate('background');
   const router = useRouter();
   const theme = useThemeTokens();
@@ -1152,27 +1156,26 @@ export default function QuickCommandsScreen() {
 /**
  * A group's instrument label.
  *
- * `variant="label"` rather than a caption with `toUpperCase()` applied in
- * JavaScript: case is a language's business, and `toUpperCase()` on Japanese does
- * nothing while on some scripts it does the wrong thing. `textTransform` is a
- * rendering instruction the platform applies per script.
+ * `SectionLabel` rather than this sheet's own copy of it: the label was already
+ * `variant="label"` with the same 0.8 letterspacing and the same `LADDER.tight`
+ * indent, and the only thing it did not share with the settings page was the
+ * plate that keeps an 11pt muted label legible over a pack's wallpaper.
  *
- * It used to carry an `action` slot as well, which held exactly one thing --
- * Edit, over the saved shortcuts. That moved to the sheet's header, where this
- * app keeps a sheet's own actions and where the mode it opens (a second field
- * under every row, a delete beside each one, and a form at the foot of the
- * sheet) is honestly scoped. A heading with a button in it was claiming the
- * mode belonged to one section.
+ * `textSubtle` stays, because it is the one thing about this heading that is
+ * deliberately not the settings page: three of them can be on screen at once in
+ * a sheet whose rows are the point.
+ *
+ * The row wrapper went with it. It used to carry an `action` slot as well,
+ * which held exactly one thing -- Edit, over the saved shortcuts. That moved to
+ * the sheet's header, where this app keeps a sheet's own actions and where the
+ * mode it opens (a second field under every row, a delete beside each one, and
+ * a form at the foot of the sheet) is honestly scoped. A heading with a button
+ * in it was claiming the mode belonged to one section. What was left was a
+ * `space-between` row with a single child.
  */
 function SectionHeading({ title }: { title: string }) {
   const theme = useThemeTokens();
-  return (
-    <View style={styles.heading}>
-      <Text variant="label" color={theme.colors.textSubtle} style={styles.headingTitle}>
-        {title}
-      </Text>
-    </View>
-  );
+  return <SectionLabel title={title} color={theme.colors.textSubtle} />;
 }
 
 /**
@@ -1541,13 +1544,6 @@ const styles = StyleSheet.create({
   },
   tilesNote: { paddingHorizontal: LADDER.tight, lineHeight: 16 },
   section: { gap: LADDER.gap },
-  heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 20,
-  },
-  headingTitle: { paddingHorizontal: LADDER.tight, letterSpacing: 0.8 },
   headingSkeleton: { marginHorizontal: LADDER.tight },
   // The surface Stop sits on. `SettingsCard` draws its own, and this one has to
   // be tinted, so it repeats that card's geometry rather than taking it.
