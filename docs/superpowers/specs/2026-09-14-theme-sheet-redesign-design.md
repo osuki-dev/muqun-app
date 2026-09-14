@@ -413,19 +413,43 @@ rather than a constant that is wrong on a Pad.
 **The row.** `testID="theme-browse-item:<id>"`, `accessibilityRole="button"`,
 `accessibilityLabel={entry.name}`.
 
+**Revised on device.** The poster shape this section first described was built,
+looked at on the emulator, and rejected: a full-width 8:5 cover per row fits
+three themes on a phone screen, which is a gallery you scroll rather than a list
+you compare. The row is a compact list row instead -- the cover as a left
+thumbnail, three capped lines beside it, hairline separators -- and the numbers
+below are the ones that shipped.
+
 ```
-+--------------------------------------------------+
-|  [ preview, 8:5, or palette placeholder ]         |
-|  Name                            Installed  3.8 MB|
-|  Author                                           |
-|  One line of description, truncated.              |
-+--------------------------------------------------+
++----------------------------------------------------------+
+| [cover  ]  Name                    Installed      3.8 MB  |
+| [112x70 ]  Author, one line, tail-ellipsis                |
+| [ 8:5   ]  Description, at most two lines, tail-ellipsis  |
++----------------------------------------------------------+
 ```
+
+- Thumbnail 112x70 (8:5 kept), radius 12; the palette placeholder keeps the same
+  box. Row `minHeight` 96, `paddingVertical: LADDER.snug`,
+  `paddingHorizontal: LADDER.gutter`, `gap: LADDER.gap`.
+- Separators are `SettingsSeparator`, through `ItemSeparatorComponent` -- the
+  rows are a list on the sheet's own ground, not a stack of raised cards.
+- The size sits right-aligned on the name's line, in `textMuted`, and is what
+  the pressed row's spinner cross-fades in over.
+- The `Installed` badge is `@osuki-dev/ui`'s `Tag`, after the name. Under a
+  custom theme it drops its fill, per the one-layer rule.
+- Wide layouts keep the same row at the sheet's max content width. No grid.
+- Both height buckets are the same height now, so `estimatedItemSize` is the
+  row's own metric rather than a number computed from the measured width;
+  `getItemType` stays, for pooling.
+- The header -- title, caption, close, and the status line -- is **pinned above
+  the list**, not `ListHeaderComponent`. Two subviews still: the ground, and one
+  `collapsable={false}` column holding the header and the list.
 
 - **Preview** — `expo-image`'s `<Image>` with `cachePolicy="memory-disk"` (the
   policy `session-artifacts.tsx:824` already uses for thumbnails),
-  `contentFit="cover"`, `recyclingKey={entry.id}`, in a box with
-  `aspectRatio: 1.6` and `width: '100%'`. `testID="theme-browse-preview:<id>"`.
+  `contentFit="cover"`, `recyclingKey={entry.id}`,
+  `transition={DURATION.medium}`, in the 112x70 thumbnail box.
+  `testID="theme-browse-preview:<id>"`.
   When `preview` is absent, fails screening, or fails to load (`onError`), the
   box falls back to a palette placeholder — the same two-swatch treatment
   `ThemePaletteStrip` gives a My-themes row — and the row's height bucket
@@ -439,9 +463,10 @@ rather than a constant that is wrong on a Pad.
   untrusted (`docs/theme-contract.md:131-133`), so two different packs can claim
   one id. It therefore never disables the row; pressing still opens the preview,
   which is where the duplicate is resolved.
-- **Description** — `numberOfLines={1}` (today's inline panel allows two,
-  `theme-gallery.tsx:194`). One line, because the cover is now carrying the
-  impression and two lines of prose per row halves how many themes fit.
+- **Description** — `numberOfLines={2}` with tail ellipsis. The one-line rule
+  this section first carried was written for the poster row, where the cover
+  carried the impression; beside a thumbnail the prose is what distinguishes two
+  themes, and two lines is what the 96pt row already has room for.
 - `tags` and `license` are parsed and not drawn. No room, no need.
 
 **Paging.** Client-side only; the server has no cursor and the whole index is
@@ -492,7 +517,24 @@ empty state would show English to a Japanese reader. Copy:
 `Try again` re-runs the index read, bypassing the cache.
 
 **Tap feedback and the frozen frame.** On press the row enters its pressed state
-on the same frame:
+on the same frame -- and, since the device review, is _guaranteed a frame to do
+it in_. `open()` holds for `DURATION.short` after setting the pending state and
+before the first network call, because everything after that call holds the JS
+thread (the download resolves, then `unpackTheme` inflates the whole archive
+synchronously) and React never got a commit to paint in. On a fast connection
+the install finished before anything was drawn and the press looked ignored,
+which is what the device review found. A matching floor after the work keeps the
+acknowledgement up for at least `MINIMUM_PENDING_VISIBLE_MS`; the arithmetic is
+`src/lib/minimum-visible.ts`, pure and unit-tested.
+
+Legend List memoises a row on `[itemKey, data, extraData]`, so the pressed row
+also needs the pending state in `extraData` -- with `itemsAreEqual` reporting
+that a stable index entry never changes, nothing else would re-render it.
+
+The status line lives in the **pinned header**, not under the pressed row: the
+header cannot scroll away mid-download, and a growing progress block inside a
+virtualized row is a layout animation fighting the list. The row's own
+acknowledgement is its trailing slot, where the size cross-fades to a spinner:
 
 - the row is a `PressableScale` (as every other pressable in this app is) rather
   than the bare `Pressable` at `theme-gallery.tsx:170`, so the press has the

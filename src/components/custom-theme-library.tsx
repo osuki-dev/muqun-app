@@ -1,19 +1,28 @@
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { Tag, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { Check, ChevronRight, MoreHorizontal, Trash2, X } from 'lucide-react-native';
+import { ChevronRight, MoreHorizontal, Trash2, X } from 'lucide-react-native';
 
 import { CustomThemePreview } from '@/components/custom-theme-preview';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { ThemeLinkImport } from '@/components/theme-link-import';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { fadeInLeft, fadeInRight, fadeOutLeft, fadeOutRight, listLayout } from '@/lib/motion';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import {
+  DURATION,
+  fadeIn,
+  fadeInLeft,
+  fadeInRight,
+  fadeOutLeft,
+  fadeOutRight,
+  listLayout,
+} from '@/lib/motion';
 import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
 import { effectiveThemeManifest } from '@/theme/repository';
 import { PressableScale } from '@/components/pressable-scale';
@@ -29,8 +38,60 @@ import {
 } from '@/theme/local-files';
 import { exportInstalledTheme } from '@/theme/assets';
 import { useAppSettings } from '@/stores/app-settings';
+import type { ThemeAppearance } from '@/constants/theme-packs';
 import type { ThemeManifest } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
+
+/**
+ * One layer of paint per pixel: under a custom theme the kit's opaque chip
+ * would be the one thing on a row that refused the reader's surface slider, so
+ * it drops its fill and the row behind it shows through at its own alpha.
+ */
+const transparentFill = { backgroundColor: 'transparent' } as const;
+
+/** The pack cover, as a row thumbnail and as the summary's larger one. Both 8:5. */
+const ROW_COVER = { width: 56, height: 35 } as const;
+const SUMMARY_COVER = { width: 96, height: 60 } as const;
+
+/**
+ * An installed theme's own cover, when it published one.
+ *
+ * The manifest's `preview` is an asset id naming a file *inside* the pack, so
+ * an installed theme already has it on disk and `assets[preview]` is the
+ * `file:///` it was written to. App-owned files only -- the same rule every
+ * other artwork consumer applies, so a manifest cannot point this at an
+ * arbitrary path or a remote URL.
+ *
+ * A pack without one falls back to the swatch pair, which is what every row
+ * showed before: never a gap, and never a broken picture.
+ */
+function ThemeCover({
+  manifest,
+  assets,
+  pack,
+  size,
+}: {
+  manifest: ThemeManifest;
+  assets?: Record<string, string>;
+  pack: Pick<ThemeAppearance, 'light' | 'dark'>;
+  size: { width: number; height: number };
+}) {
+  const uri = manifest.preview ? assets?.[manifest.preview] : undefined;
+  if (!uri?.startsWith('file:///')) return <ThemePaletteStrip pack={pack} />;
+  return (
+    <Image
+      source={{ uri }}
+      contentFit="cover"
+      // `memory` rather than `memory-disk`: the file is already on this
+      // device's disk, and a second copy of it in the image cache is the same
+      // bytes twice.
+      cachePolicy="memory"
+      transition={DURATION.medium}
+      accessible={false}
+      style={{ ...size, borderRadius: 8 }}
+    />
+  );
+}
 
 /**
  * What the one primary button on a theme does, described rather than drawn.
@@ -88,6 +149,7 @@ export function CustomThemeLibrary({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const background = useSurfaceBackground();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { width } = useWindowDimensions();
   const wideDetail = detail && width >= 840;
   const library = useThemeLibrary((state) => state.library);
@@ -155,6 +217,12 @@ export function CustomThemeLibrary({
     library.selection?.kind === 'custom' && library.selection.id === candidate?.id;
   const browsing = !initialManifest && !initialCandidate && !candidate;
   const installedCandidate = library.themes.find((entry) => entry.id === candidate?.id);
+  // The applied theme, when it is one of the reader's rather than a built-in
+  // pack -- which is the only case that has a manifest, and so a cover.
+  const currentInstalled =
+    library.selection?.kind === 'custom'
+      ? library.themes.find((entry) => entry.id === library.selection?.id)
+      : undefined;
 
   function closePreview() {
     setRemoving(false);
@@ -282,6 +350,23 @@ export function CustomThemeLibrary({
    */
   const forward = tab === 'builtin';
 
+  /**
+   * Whether the actions card has anything to put in itself.
+   *
+   * Every button in it is conditional, and on the detail route all four
+   * conditions can be false at once: a candidate that is not installed yet has
+   * no id, so Export, Export colors and Remove are all out, and the host draws
+   * the primary action, so Save is out too. The card then rendered as a bare
+   * `surfaceRaised` box with its own padding and nothing inside -- an empty
+   * pill under the preview, with no content and no accessibility node, which is
+   * what the device review found on every theme opened from the catalogue.
+   * Pre-existing rather than new: the same four conditions and the same
+   * container are on `main` at `custom-theme-library.tsx:537-554`, reachable
+   * there from a link or file import, which is simply a rarer way in than the
+   * browse sheet this branch adds.
+   */
+  const candidateHasActions = Boolean(candidate?.id) || !hostDrivesPrimaryAction;
+
   const importPanel =
     importOpen && !linkImportOpen ? (
       <View
@@ -374,15 +459,34 @@ export function CustomThemeLibrary({
               borderRadius: 12,
               backgroundColor: background(colors.surfaceRaised),
             }}>
-            <ThemePaletteStrip pack={installed.manifest.variants} />
-            <Text variant="bodySmall" numberOfLines={1} style={{ flex: 1, minWidth: 0 }}>
-              {installed.manifest.name}
-            </Text>
+            <ThemeCover
+              manifest={installed.manifest}
+              assets={installed.assets}
+              pack={installed.manifest.variants}
+              size={ROW_COVER}
+            />
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              <Text variant="bodySmall" numberOfLines={1}>
+                {installed.manifest.name}
+              </Text>
+              {/* A row that says only a name reads as a label. The second line
+                  is what the pack itself offers, and when it offers nothing it
+                  is what the row does -- which is the thing the chevron was
+                  failing to say on its own. */}
+              <Text variant="caption" color={colors.textMuted} numberOfLines={1}>
+                {installed.manifest.author ?? t`Tap to preview and adjust`}
+              </Text>
+            </View>
+            {/* The applied theme used to swap its chevron for a check, which
+                took the one affordance saying "this opens" off the row a
+                reader is most likely to want to open. It keeps the chevron and
+                gains a marker instead. */}
             {library.selection?.kind === 'custom' && library.selection.id === installed.id ? (
-              <Check size={18} color={colors.primary} />
-            ) : (
-              <ChevronRight size={18} color={colors.textMuted} />
-            )}
+              <Animated.View entering={fadeIn('medium')}>
+                <Tag style={surfaceOpacity === 1 ? undefined : transparentFill}>{t`Current`}</Tag>
+              </Animated.View>
+            ) : null}
+            <ChevronRight size={18} color={colors.textMuted} />
           </PressableScale>
           <PressableScale
             accessibilityRole="button"
@@ -443,7 +547,20 @@ export function CustomThemeLibrary({
               <Text variant="caption" color={colors.textMuted}>{t`Current theme`}</Text>
               <Text numberOfLines={1}>{currentPack.label}</Text>
             </View>
-            <ThemePaletteStrip pack={currentPack} />
+            {/* The applied theme's own cover when it has one, at the size a
+                summary can carry: the same picture the row below shows, so the
+                two agree about which theme is on. A built-in pack has no
+                manifest and keeps the swatch pair. */}
+            {currentInstalled ? (
+              <ThemeCover
+                manifest={currentInstalled.manifest}
+                assets={currentInstalled.assets}
+                pack={currentPack}
+                size={SUMMARY_COVER}
+              />
+            ) : (
+              <ThemePaletteStrip pack={currentPack} />
+            )}
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <Button
@@ -689,7 +806,7 @@ export function CustomThemeLibrary({
                   onPress={() => setRemoving(false)}>{t`Cancel`}</Button>
               </View>
             </View>
-          ) : actionsOpen || detail ? (
+          ) : (actionsOpen || detail) && candidateHasActions ? (
             <View
               style={{
                 gap: 4,
