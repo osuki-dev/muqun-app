@@ -6,11 +6,17 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { OpacitySlider } from '@/components/opacity-slider';
+import { SettingsSegmented } from '@/components/settings-segmented';
 import { Button } from '@/components/themed-button';
 import { Toggle } from '@/components/toggle';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { terminalBackgroundOpacity } from '@/terminal/background';
-import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
+import { type HomeHeroPreference } from '@/theme/home-hero';
+import {
+  effectiveThemeManifest,
+  homeHeroPreference,
+  type InstalledTheme,
+} from '@/theme/repository';
 import { surfaceBackgroundOpacity } from '@/theme/surface-background';
 import { themeOpacityPolicy } from '@/theme/opacity-policy';
 
@@ -22,6 +28,7 @@ export function ThemeAppearanceSettings({
   onSurfaceChange,
   onLogoChange,
   onTextChange,
+  onHeroChange,
   onReset,
 }: {
   installed: InstalledTheme;
@@ -30,6 +37,7 @@ export function ThemeAppearanceSettings({
   onSurfaceChange: (value: number) => void;
   onLogoChange: (hidden: boolean) => void;
   onTextChange: (hidden: boolean) => void;
+  onHeroChange: (value: HomeHeroPreference) => void;
   onReset: () => void;
 }) {
   const { t } = useLingui();
@@ -49,7 +57,9 @@ export function ThemeAppearanceSettings({
     installed.surfaceBackgroundOpacity,
     installed.hideHomeLogo,
     installed.hideHomeText,
+    installed.homeHero,
   ].some((value) => value !== undefined);
+  const hero = homeHeroPreference(installed);
   return (
     <View
       testID="theme-appearance-settings"
@@ -105,6 +115,34 @@ export function ThemeAppearanceSettings({
           value={resolveHomeIdentity(effective).name !== null}
           disabled={disabled}
           onValueChange={(visible) => onTextChange(!visible)}
+        />
+      </View>
+      {/* Three answers rather than a switch, because "follow the theme" is a
+          real third state here and not the absence of a decision: a pack can
+          ship a Home illustration and turn it off, and a reader who has never
+          touched this row should stay on whatever the next version of the pack
+          decides. The caption says what `Shown` does beyond flipping a switch
+          -- it is the only way to reach the empty-state picture, and a reader
+          who turns it on for a theme that drew no hero deserves to know why
+          something appeared. */}
+      <View style={{ gap: 6 }}>
+        <Text>{t`Show illustration on Home`}</Text>
+        <Text
+          variant="caption"
+          color={
+            colors.textMuted
+          }>{t`Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own.`}</Text>
+        <SettingsSegmented
+          testID="theme-home-hero"
+          options={[
+            { label: t`Theme default`, value: 'theme' },
+            { label: t`Shown`, value: 'shown' },
+            { label: t`Hidden`, value: 'hidden' },
+          ]}
+          value={hero}
+          onChange={(value) => {
+            if (!disabled) onHeroChange(value as HomeHeroPreference);
+          }}
         />
       </View>
       {custom ? (

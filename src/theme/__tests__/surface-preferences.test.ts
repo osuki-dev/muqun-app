@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test';
 import { createThemeStarter } from '../authoring';
-import { effectiveThemeManifest, ThemeRepository, type InstalledTheme } from '../repository';
+import {
+  effectiveThemeManifest,
+  homeHeroPreference,
+  ThemeRepository,
+  type InstalledTheme,
+} from '../repository';
 import { parseThemeManifest } from '../schema';
 import { packTheme, unpackTheme } from '../package';
 import { clampThemeOpacity, themeOpacityPolicy } from '../opacity-policy';
@@ -52,6 +57,7 @@ test('reset is one durable write, restores author modes, and preserves every pre
   repo.setSurfaceBackgroundOpacity('theme', 0);
   repo.setHideHomeLogo('theme', false);
   repo.setHideHomeText('theme', true);
+  repo.setHomeHero('theme', 'shown');
   const before = repo.snapshot();
   const cached = repo.active();
   const stored = durable;
@@ -73,6 +79,7 @@ test('reset is one durable write, restores author modes, and preserves every pre
     'surfaceBackgroundOpacity',
     'hideHomeLogo',
     'hideHomeText',
+    'homeHero',
   ])
     expect(Object.hasOwn(installed, key)).toBe(false);
   repo.resetAppearancePreferences('theme');
@@ -180,6 +187,7 @@ test('malformed persisted preferences recover without discarding valid installat
     surfaceBackgroundOpacity: -1,
     hideHomeLogo: 'yes',
     hideHomeText: 1,
+    homeHero: 'maybe',
   });
   const reopened = new ThemeRepository(
     { read: () => JSON.stringify(raw), write: () => {} },
@@ -190,7 +198,48 @@ test('malformed persisted preferences recover without discarding valid installat
   expect(reopened.snapshot().themes[0].surfaceBackgroundOpacity).toBeUndefined();
   expect(reopened.snapshot().themes[0].hideHomeLogo).toBeUndefined();
   expect(reopened.snapshot().themes[0].hideHomeText).toBeUndefined();
+  expect(reopened.snapshot().themes[0].homeHero).toBeUndefined();
   expect(reopened.hasAuthoritativeAssetReferences()).toBe(true);
+});
+
+test('the Home hero preference stores two answers and spells the third as none at all', () => {
+  const { repo } = setup();
+  repo.save(JSON.stringify(createThemeStarter()));
+  repo.apply({ kind: 'custom', id: 'theme' });
+  const stored = () => repo.snapshot().themes[0];
+
+  expect(homeHeroPreference(stored())).toBe('theme');
+  for (const value of ['shown', 'hidden'] as const) {
+    repo.setHomeHero('theme', value);
+    expect(stored().homeHero).toBe(value);
+    expect(homeHeroPreference(stored())).toBe(value);
+  }
+
+  // Back to following the author is the key going away, not a third stored
+  // value, so a reset and a deliberate return to `theme` leave the same record.
+  const active = repo.active();
+  repo.setHomeHero('theme', 'theme');
+  expect(Object.hasOwn(stored(), 'homeHero')).toBe(false);
+  // It is a preference like any other, so it also drops the compiled theme.
+  expect(repo.active()).not.toBe(active);
+
+  expect(() => repo.setHomeHero('theme', 'maybe' as never)).toThrow('home illustration');
+  expect(() => repo.setHomeHero('missing', 'shown')).toThrow();
+});
+
+test('the Home hero preference never leaks into the manifest a pack exports', () => {
+  // The two Home switches are folded into `homeIdentity` by
+  // `effectiveThemeManifest`; this one deliberately is not, because `shown`
+  // means more than the manifest can say. What that must not become is a
+  // reader's private choice travelling inside a theme they share.
+  const { repo } = setup();
+  const manifest = createThemeStarter();
+  manifest.homeIdentity = { hero: { mode: 'hidden' } };
+  repo.save(JSON.stringify(manifest));
+  repo.setHomeHero('theme', 'shown');
+  expect(effectiveThemeManifest(repo.snapshot().themes[0]).homeIdentity?.hero).toEqual({
+    mode: 'hidden',
+  });
 });
 
 test('package export resolves all preferences; colors-only export still excludes identity', () => {

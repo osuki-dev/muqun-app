@@ -117,6 +117,14 @@ press "id=theme-show-home-text"
 wait stable 400 5000
 is visible "id=theme-appearance-reset"
 
+# section home-hero-row
+# The row only, not a round trip through it. The demo document declares no
+# `home.hero`, so every one of the three answers draws the same Home -- pressing
+# them here would assert a tap landed, not that the app did anything. What is
+# worth holding offline is that the control the reader needs in order to reach
+# the illustration is on this page at all.
+is visible "id=theme-home-hero"
+
 # section confirm-remove
 press "id=theme-confirm-remove"
 

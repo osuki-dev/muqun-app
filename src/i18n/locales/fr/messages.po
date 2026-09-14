@@ -393,6 +393,10 @@ msgstr "Retour arrière"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "En dessous de {minimumPercent} %, la lisibilité du texte n’est plus garantie"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
+msgstr "Entre l’en-tête et vos serveurs. « Affichée » emprunte aussi l’image d’état vide du thème lorsqu’il n’a pas d’illustration d’accueil"
+
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
 msgstr "Fichier binaire"
@@ -1445,6 +1449,10 @@ msgstr "Groupe {0}. Appui long pour les actions"
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Retour haptique"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Hidden"
+msgstr "Masquée"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
@@ -2963,6 +2971,10 @@ msgstr "Afficher le logo sur l’accueil"
 msgid "Show Home text"
 msgstr "Afficher le texte sur l’accueil"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show illustration on Home"
+msgstr "Afficher l’illustration sur l’accueil"
+
 #: src/components/session-artifacts.tsx
 msgid "Show images"
 msgstr "Afficher les images"
@@ -2990,6 +3002,10 @@ msgstr "Afficher la liste des serveurs"
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "Voir ce qui tourne"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Shown"
+msgstr "Affichée"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
@@ -3391,6 +3407,10 @@ msgstr "La transcription sous forme de conversation, avec les étapes d’outils
 #: src/lib/demo-gateway.ts
 msgid "Theme"
 msgstr "Thème"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Theme default"
+msgstr "Défaut du thème"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
