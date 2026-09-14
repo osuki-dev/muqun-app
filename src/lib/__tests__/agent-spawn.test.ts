@@ -6,7 +6,6 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   AGENT_SPAWN_CAPABILITY,
-  AGENT_SPAWN_SHIPPED,
   agentIsInterruptible,
   agentProfilesFromResponse,
   agentSpawnRequest,
@@ -19,12 +18,12 @@ import {
 
 describe('the capability gate', () => {
   test('a gateway that declares it can spawn is offered the entries', () => {
-    // Only once the feature ships. New Task is held back from 1.2.0
-    // (`AGENT_SPAWN_SHIPPED`), and the gate answers no to everything while it
-    // is -- which is the whole point of one switch hiding every entry.
-    expect(gatewaySupportsAgentSpawn(['pane_approvals', AGENT_SPAWN_CAPABILITY])).toBe(
-      AGENT_SPAWN_SHIPPED
-    );
+    // The gateway's own answer, and nothing else. It used to be ANDed with an
+    // `AGENT_SPAWN_SHIPPED` constant pinned to `false`, so this returned `false`
+    // for every gateway on every machine and the entries were unreachable in a
+    // shipped build. Asserting the capability answer directly is what keeps a
+    // build-time switch from quietly growing back.
+    expect(gatewaySupportsAgentSpawn(['pane_approvals', AGENT_SPAWN_CAPABILITY])).toBe(true);
   });
 
   test('a gateway that predates spawning is not', () => {

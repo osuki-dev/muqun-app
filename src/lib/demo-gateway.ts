@@ -928,7 +928,19 @@ export function demoHealth() {
       PANE_CONTEXT_CAPABILITY,
       GIT_DIFF_CAPABILITY,
     ],
-    backends: [{ sessionId: SESSION_ID, kind: 'herdr', connected: true, version: '0.9.0' }],
+    // The per-session capability list a current gateway answers with. The demo
+    // session is a Herdr 0.9.0, so it carries collaboration; a demo that only
+    // set the gateway-wide array would exercise the fallback path rather than
+    // the one every real gateway now takes.
+    backends: [
+      {
+        sessionId: SESSION_ID,
+        kind: 'herdr',
+        connected: true,
+        version: '0.9.0',
+        capabilities: ['agent_collaboration'],
+      },
+    ],
     serverId: DEMO_SERVER_ID,
     label: demoRecord.label,
     herdr: {

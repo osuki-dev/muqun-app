@@ -1,32 +1,56 @@
-# Native regression: the composer does not offer a task it cannot deliver.
+# Native regression: the composer offers exactly the targets it can deliver to.
 # suite.json enters an English offline demo before this script.
 #
-# The demo session has exactly one agent, and it is the pane the reader is in.
-# Starting a new assistant is held back by `AGENT_SPAWN_SHIPPED`, and the only
-# other target -- an assistant already running elsewhere in the session -- does
-# not exist here. So there is nowhere to send a task, and the control that
-# would open the assistant strip is absent rather than opening an empty row.
+# The demo gateway answers /health the way a current one does -- the session's
+# own entry in `backends[]` carries `capabilities: ['agent_collaboration']` over
+# a connected Herdr 0.9.0 -- so `collaborationAvailability` says `ready` and the
+# strip is reachable.
 #
-# This is the same rule the old task screen broke for a year: it offered
-# "Existing assistant" as the default target and only said the target was
-# unavailable after the whole task had been written. The strip is built from
-# the targets that can actually be delivered to, so when there are none there
-# is no strip and no toggle.
+# It used to be unreachable here, for a reason that had nothing to do with any
+# gateway: `AGENT_SPAWN_SHIPPED` was a constant pinned to false, so the app
+# refused to start an assistant whatever a gateway said, and the demo session's
+# one agent carries no instance id, so there was no existing target either. This
+# flow asserted that absence. The constant is gone and the capability is the
+# switch, so what it asserts now is the offer.
 wait "role=button text=\"Open quick actions\"" 15000
-is hidden "id=\"assignment-toggle\""
-is hidden "id=\"assignment-bar-close\""
-is hidden "id=\"composer-assignment-chip\""
-# The composer is an ordinary composer, addressed to the agent on screen.
+# The control that opens the strip lives in the key row, beside the keyboard
+# toggle, because it changes what typing does.
+is visible "id=\"assignment-toggle\""
+press "id=\"assignment-toggle\""
+wait text "Choose an assistant" 10000
+is visible "id=\"assignment-bar-close\""
+# One "start a new ..." chip per kind the demo catalog offers, including the
+# one it reports as not on PATH -- shown as a hint, never obeyed as a veto.
+is visible "id=\"assignment-new-claude\""
+is visible "id=\"assignment-new-codex\""
+is visible "id=\"assignment-new-gemini\""
+screenshot "shots/collaboration-composer.png"
+# Nothing is chosen by default, so an open strip is still an ordinary composer
+# addressed to the agent on screen. Opening it can never hijack a message.
 is visible "id=\"terminal-composer-input\""
 is visible "label=\"Send to agent\""
-# Quick actions no longer carries its own entry for this. The control that
-# opens the assistant strip lives in the key row, a few points below the sheet
-# and visible whenever the composer is, so a second one behind a sheet was a
-# choice about which button to press rather than about what to do.
+# Choosing a destination is what changes the composer, and the strip says so in
+# words rather than only in the highlighted chip.
+press "id=\"assignment-new-claude\""
+wait text "Sending to" 10000
+screenshot "shots/collaboration-chosen.png"
+# Tapping the chosen assistant again clears it, rather than being a no-op, and
+# the composer is an ordinary composer again.
+press "id=\"assignment-new-claude\""
+wait text "Choose an assistant" 10000
+is visible "label=\"Send to agent\""
+# Closing puts it back exactly as it was.
+press "id=\"assignment-bar-close\""
+wait "role=button text=\"Open quick actions\"" 10000
+is hidden "id=\"assignment-bar-close\""
+is visible "label=\"Send to agent\""
+# Quick actions carries no entry for this. The control that opens the strip is
+# a few points below the sheet and visible whenever the composer is, so a second
+# one behind a sheet was a choice about which button to press rather than about
+# what to do.
 press "role=button text=\"Open quick actions\""
 wait text "Quick actions" 10000
 is hidden "role=button text=\"Assign a task\""
 press "role=button label=\"Close quick actions\" || label=\"Close\""
 wait "role=button text=\"Open quick actions\"" 10000
 is visible "id=\"terminal-composer-input\""
-screenshot "shots/collaboration-composer.png"

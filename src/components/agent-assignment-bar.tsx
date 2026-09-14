@@ -48,6 +48,7 @@ export function AgentAssignmentBar({
   onClose,
   disabled,
   commandName,
+  upgrade,
 }: {
   candidates: readonly AssignmentCandidate[];
   /** Agent kinds this gateway will start, from its catalog. */
@@ -58,6 +59,18 @@ export function AgentAssignmentBar({
   disabled?: boolean;
   /** A bundled instruction set riding with the task, named so the reader knows. */
   commandName?: string;
+  /**
+   * Set when this session cannot receive a task and somebody's upgrade would
+   * change that: `gateway` for a Gateway without `agent_collaboration`, `herdr`
+   * for a Herdr below 0.9.0. The strip then holds one sentence naming the thing
+   * to update, and no chips -- offering a target that is guaranteed to be
+   * refused, and only saying why after the task is written, is the failure this
+   * feature has already had once.
+   *
+   * A session that simply is not Herdr is not one of these. It gets no strip at
+   * all, because "upgrade" is not advice anybody can act on there.
+   */
+  upgrade?: 'gateway' | 'herdr';
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
@@ -84,13 +97,15 @@ export function AgentAssignmentBar({
           color={theme.colors.textMuted}
           numberOfLines={1}
           style={styles.title}>
-          {commandName
-            ? target
-              ? t`${commandName} · sending to`
-              : commandName
-            : target
-              ? t`Sending to`
-              : t`Choose an assistant`}
+          {upgrade
+            ? t`Assigning a task is unavailable`
+            : commandName
+              ? target
+                ? t`${commandName} · sending to`
+                : commandName
+              : target
+                ? t`Sending to`
+                : t`Choose an assistant`}
         </Text>
         <PressableScale
           testID="assignment-bar-close"
@@ -164,7 +179,19 @@ export function AgentAssignmentBar({
             </PressableScale>
           );
         })}
-        {candidates.length === 0 && kinds.length === 0 ? (
+        {upgrade ? (
+          <View style={styles.empty}>
+            <Bot size={15} color={theme.colors.textMuted} />
+            {/* Named separately, because they are different machines to go and
+                update and a reader told to update the wrong one learns only
+                that the message is not to be trusted. */}
+            <Text variant="caption" color={theme.colors.textMuted}>
+              {upgrade === 'gateway'
+                ? t`Update Muqun Gateway on the server, then restart it, to assign a task to another assistant`
+                : t`Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant`}
+            </Text>
+          </View>
+        ) : candidates.length === 0 && kinds.length === 0 ? (
           <View style={styles.empty}>
             <Bot size={15} color={theme.colors.textMuted} />
             <Text variant="caption" color={theme.colors.textMuted}>
@@ -196,5 +223,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipLabel: { flexShrink: 1 },
-  empty: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 34 },
+  // `flexShrink` and a width cap so an upgrade sentence wraps inside the strip
+  // rather than scrolling off the right edge the way a chip row is meant to.
+  empty: { flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 34, flexShrink: 1 },
 });

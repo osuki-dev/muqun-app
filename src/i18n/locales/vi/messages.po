@@ -330,6 +330,10 @@ msgstr "Đang hỏi máy chủ xem nó có thể chạy gì…"
 msgid "Assign this to an assistant"
 msgstr "Giao việc này cho một trợ lý"
 
+#: src/components/agent-assignment-bar.tsx
+msgid "Assigning a task is unavailable"
+msgstr "Không thể giao việc"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Đã khởi động trợ lý"
@@ -3717,6 +3721,14 @@ msgstr "Chưa theo dõi"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "Mũi tên lên"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "Cập nhật Herdr trên máy chủ lên 0.9.0 trở lên rồi khởi động lại phiên để giao việc cho một trợ lý khác"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
+msgstr "Cập nhật Muqun Gateway trên máy chủ rồi khởi động lại để giao việc cho một trợ lý khác"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

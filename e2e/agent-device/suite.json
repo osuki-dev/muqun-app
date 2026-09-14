@@ -96,7 +96,7 @@
       "program": "flows/new-task",
       "tags": [],
       "platforms": ["ios", "android"],
-      "disabled": "AGENT_SPAWN_SHIPPED is false; enable full coverage when the feature ships."
+      "disabled": "flows/new-task.ad is an unconverted stub: every step still targets ${TARGET} and no section table supplies it. Rewrite it against real selectors, then give it the full tag."
     },
     {
       "name": "pad-workspace",
