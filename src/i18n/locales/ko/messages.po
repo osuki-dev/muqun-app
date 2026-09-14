@@ -3680,6 +3680,10 @@ msgstr "{0}(으)로 잠금 해제"
 msgid "Unlock with {authLabel}"
 msgstr "{authLabel}(으)로 잠금 해제"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Unpacking…"
+msgstr "압축 푸는 중…"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair"
 msgstr "페어링 해제"
