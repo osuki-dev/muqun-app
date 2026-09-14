@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "Branch ou commit (opcional)"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "Explorar temas"
 
@@ -425,9 +426,9 @@ msgstr "Explorar temas"
 msgid "Browser"
 msgstr "Navegador"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "Temas integrados"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "Integrados"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "Verifique o assistente antes de reenviar: ele pode já ter recebido a so
 msgid "Check the repository URL, branch and theme file"
 msgstr "Confira a URL do repositório, a branch e o arquivo do tema"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "Verifique sua conexão e tente novamente"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "A verificar a autenticação do sistema…"
@@ -560,7 +565,6 @@ msgstr "A limpar…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Fechar"
 
@@ -622,6 +626,10 @@ msgstr "Fechar o menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Fechar o simulador"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "Fechar o catálogo de temas"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "Não foi possível contactar o Gateway"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "Não foi possível contactar o Gateway. Confirme que está em execução, atualize o código QR e volte a lê-lo"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "Não foi possível acessar o catálogo de temas"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "Não foi possível contactar este servidor"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "Baixando · {0} de {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "Baixando o tema"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "Baixando…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "Modo de inserção"
 msgid "Install command copied"
 msgstr "Comando de instalação copiado"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "Instalado"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "Lista apenas os painéis com um agente reconhecido"
 msgid "Live Activity"
 msgstr "Atividade ao vivo"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "Carregar mais"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "A carregar o terminal"
 msgid "Loading the transcript"
 msgstr "A carregar a transcrição"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Carregando temas…"
 
@@ -1992,6 +2015,10 @@ msgstr "Sem saída"
 msgid "No password or key is saved for this host."
 msgstr "Não há senha nem chave guardada para este host"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "Ainda não há temas seus. Importe um ou explore os temas publicados"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "Sem pré-visualização para este tipo de ficheiro. Fica no servidor"
@@ -2033,7 +2060,7 @@ msgstr "Sem imagens fixas"
 msgid "No textual change"
 msgstr "Sem alteração de texto"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Ainda não há temas publicados"
 
@@ -2332,7 +2359,7 @@ msgstr "Porta"
 msgid "PORT"
 msgstr "PORTA"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Preparando imagens"
@@ -3003,6 +3030,10 @@ msgstr "Mostrar a lista de servidores"
 msgid "Show what is running"
 msgstr "Ver o que está a correr"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "Mostrando {shown} de {total}"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "Visível"
@@ -3059,7 +3090,6 @@ msgstr "Algumas cores do tema precisam de mais contraste"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Algo correu mal"
@@ -3429,17 +3459,13 @@ msgstr "URL do tema"
 msgid "Theme, {0}"
 msgstr "Tema, {0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Temas publicados em muqun.dev. Nada é baixado até você abrir um"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Este agente não ofereceu essa resposta"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "Esta versão do app não consegue acessar o catálogo de temas"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "Confiar"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "Tentar novamente"
 

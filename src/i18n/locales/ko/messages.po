@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "브랜치 또는 커밋 (선택 사항)"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "테마 둘러보기"
 
@@ -425,9 +426,9 @@ msgstr "테마 둘러보기"
 msgid "Browser"
 msgstr "브라우저"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "기본 테마"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "기본 제공"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "다시 보내기 전에 도우미를 확인하세요. 이미 요청을 �
 msgid "Check the repository URL, branch and theme file"
 msgstr "저장소 URL, 브랜치와 테마 파일을 확인하세요"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "연결을 확인하고 다시 시도하세요"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "시스템 인증 확인 중…"
@@ -560,7 +565,6 @@ msgstr "비우는 중…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "닫기"
 
@@ -622,6 +626,10 @@ msgstr "메뉴 닫기"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "시뮬레이터 닫기"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "테마 카탈로그 닫기"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "Gateway에 연결하지 못했습니다"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "Gateway에 연결하지 못했습니다. 실행 중인지 확인한 뒤 QR 코드를 새로 고쳐 다시 스캔하세요"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "테마 카탈로그에 연결할 수 없습니다"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "이 서버에 연결하지 못했습니다"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "다운로드 중 · {0} / {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "테마 다운로드 중"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "다운로드 중…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "입력 모드"
 msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "설치됨"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "더 보기"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "터미널 불러오는 중"
 msgid "Loading the transcript"
 msgstr "대화 기록 불러오는 중"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "테마를 불러오는 중…"
 
@@ -1992,6 +2015,10 @@ msgstr "출력이 없습니다"
 msgid "No password or key is saved for this host."
 msgstr "이 호스트에 저장된 비밀번호나 키가 없습니다"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "아직 내 테마가 없습니다. 하나 가져오거나 공개된 테마를 둘러보세요"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "이 형식의 파일은 미리 볼 수 없습니다. 파일은 서버에 그대로 있습니다"
@@ -2033,7 +2060,7 @@ msgstr "정지 화면 없음"
 msgid "No textual change"
 msgstr "텍스트 변경 없음"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "아직 공개된 테마가 없습니다"
 
@@ -2332,7 +2359,7 @@ msgstr "포트"
 msgid "PORT"
 msgstr "포트"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "이미지 준비 중"
@@ -3003,6 +3030,10 @@ msgstr "서버 목록 표시"
 msgid "Show what is running"
 msgstr "실행 중인 것 보기"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "{total}개 중 {shown}개 표시 중"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "표시"
@@ -3059,7 +3090,6 @@ msgstr "일부 테마 색상은 대비를 높여야 합니다"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "문제가 발생했습니다"
@@ -3429,17 +3459,13 @@ msgstr "테마 URL"
 msgid "Theme, {0}"
 msgstr "테마, {0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "muqun.dev에 공개된 테마입니다. 열기 전까지는 아무것도 내려받지 않습니다"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "이 에이전트는 그 답변을 제시하지 않았습니다"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "이 앱 빌드는 테마 카탈로그에 연결할 수 없습니다"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "신뢰"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "다시 시도"
 

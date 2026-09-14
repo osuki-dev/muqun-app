@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "Branche ou commit (facultatif)"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "Parcourir les thèmes"
 
@@ -425,9 +426,9 @@ msgstr "Parcourir les thèmes"
 msgid "Browser"
 msgstr "Navigateur"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "Thèmes intégrés"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "Intégrés"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "Vérifiez l’assistant avant de renvoyer la demande : il l’a peut-êt
 msgid "Check the repository URL, branch and theme file"
 msgstr "Vérifiez l’URL du dépôt, la branche et le fichier du thème"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "Vérifiez votre connexion et réessayez"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "Vérification de l’authentification système…"
@@ -560,7 +565,6 @@ msgstr "Vidage…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "Fermer"
 
@@ -622,6 +626,10 @@ msgstr "Fermer le menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Fermer le simulateur"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "Fermer le catalogue de thèmes"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "Impossible de joindre le Gateway"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "Impossible de joindre le Gateway. Vérifiez qu’il tourne, actualisez le QR code, puis scannez à nouveau"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "Impossible d’accéder au catalogue de thèmes"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "Impossible de joindre ce serveur"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "Téléchargement · {0} sur {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "Téléchargement du thème"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "Téléchargement…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "Mode insertion"
 msgid "Install command copied"
 msgstr "Commande d'installation copiée"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "Installé"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "Répertorie uniquement les panneaux exécutant un agent reconnu"
 msgid "Live Activity"
 msgstr "Activité en direct"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "Charger plus"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "Chargement du terminal"
 msgid "Loading the transcript"
 msgstr "Chargement de la transcription"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Chargement des thèmes…"
 
@@ -1992,6 +2015,10 @@ msgstr "Aucune sortie"
 msgid "No password or key is saved for this host."
 msgstr "Aucun mot de passe ni clé n’est enregistré pour cet hôte"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "Aucun thème personnel pour l’instant. Importez-en un ou parcourez les thèmes publiés"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "Aucun aperçu pour ce type de fichier. Il reste sur le serveur"
@@ -2033,7 +2060,7 @@ msgstr "Pas d'images fixes"
 msgid "No textual change"
 msgstr "Aucune modification textuelle"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Aucun thème n’est encore publié"
 
@@ -2332,7 +2359,7 @@ msgstr "Port"
 msgid "PORT"
 msgstr "PORT"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Préparation des images"
@@ -3003,6 +3030,10 @@ msgstr "Afficher la liste des serveurs"
 msgid "Show what is running"
 msgstr "Voir ce qui tourne"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "Affichage de {shown} sur {total}"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "Affichée"
@@ -3059,7 +3090,6 @@ msgstr "Certaines couleurs du thème nécessitent plus de contraste"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Une erreur s’est produite"
@@ -3429,17 +3459,13 @@ msgstr "URL du thème"
 msgid "Theme, {0}"
 msgstr "Thème, {0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Thèmes publiés sur muqun.dev. Rien n’est téléchargé tant que vous n’en ouvrez pas un"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Cet agent n’a pas proposé cette réponse"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "Cette version de l’app ne peut pas atteindre le catalogue de thèmes"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "Faire confiance"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "Réessayer"
 
