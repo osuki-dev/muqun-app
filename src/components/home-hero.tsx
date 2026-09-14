@@ -1,7 +1,14 @@
 import { useThemeMode } from '@osuki-dev/ui';
-import { Image } from 'expo-image';
-import { useState } from 'react';
-import { StyleSheet, useWindowDimensions } from 'react-native';
+import {
+  Blur,
+  Canvas,
+  Mask,
+  RoundedRect,
+  useImage,
+  Image as SkiaImage,
+} from '@shopify/react-native-skia';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -10,6 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { heroFeatherGeometry } from '@/lib/hero-feather';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import { homeHeroMaxHeight, THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveHomeHero } from '@/theme/home-hero';
@@ -40,6 +48,42 @@ import { useThemeLibrary } from '@/stores/theme-library';
  * already rides -- rather than a listener of this component's own. The fade
  * lives here rather than at the call site because its travel is the band's
  * height, and the band's height is this component's answer.
+ *
+ * ## Why this draws through Skia rather than `expo-image`
+ *
+ * The picture sits directly on the pack's wallpaper, and shipped as a plain
+ * `<Image>` it read as a rounded rectangle stuck on top of one: a hard edge
+ * where a printed illustration would have none. Softening that needs an
+ * **alpha mask**, not an overlay -- what is behind the hero is the author's own
+ * artwork, so any colour painted over the edges is a guess that will be wrong
+ * on the next pack.
+ *
+ * React Native has no alpha-mask primitive, and the two ways to get one are
+ * `@react-native-masked-view/masked-view` plus a gradient, or Skia. Skia wins
+ * on three counts and not on taste:
+ *
+ * - It is already a hard dependency here (`skia-terminal`, `simfarm-stage`),
+ *   and the masked view is not. A new native dependency for an edge treatment
+ *   is a bad trade.
+ * - `MaskedView` is two native layers -- the masked content and the mask -- that
+ *   the platform composites every frame. This is one `Canvas`, and inside it one
+ *   `Mask` node whose geometry is memoised and only recomputed when the band, the
+ *   picture or the focal point actually changes.
+ * - The mask has to follow the *drawn* image, not the band, and the drawn rect
+ *   needs the picture's intrinsic size. `useImage` hands it over (`width()` /
+ *   `height()`) on the object it already decoded; with a masked view the size
+ *   would have to come back out of a separate `onLoad`.
+ *
+ * The decode is not duplicated and does not repeat per render: `useImage` loads
+ * once per URI and keeps the `SkImage` in state, so this is the same single
+ * decode `expo-image`'s memory cache was providing. Nothing is fetched either
+ * way -- `resolveHomeHero` only ever yields a `file:///` path the theme
+ * installer already wrote to disk, so the file cache this replaces was never
+ * doing any work for a hero.
+ *
+ * Everything above the Canvas is unchanged: the entrance, the exit, the layout
+ * animation and the scroll fade are all still ordinary Reanimated style on the
+ * wrapper, so the mask composes with them rather than competing.
  */
 export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
   const { resolvedMode } = useThemeMode();
@@ -55,6 +99,11 @@ export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
     return installed ? homeHeroPreference(installed) : 'theme';
   });
   const [failed, setFailed] = useState<string | null>(null);
+  // The hero's own box, measured rather than assumed. The band's height is
+  // known up front but its width is the content column's, which carries the
+  // screen's gutter and its pad max-width -- and the feather is computed in the
+  // same coordinates the Canvas draws in, so a guess would misplace it.
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
 
   const resolved = resolveHomeHero({
     manifest: theme?.manifest,
@@ -63,7 +112,35 @@ export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
     preference,
   });
   const uri = resolved ? assets?.[resolved.image.asset] : undefined;
-  if (!resolved || !uri?.startsWith('file:///') || failed === uri) return null;
+  const source = uri?.startsWith('file:///') && failed !== uri ? uri : undefined;
+  const focalX = resolved?.image.focalPoint?.x;
+  const focalY = resolved?.image.focalPoint?.y;
+
+  const onError = useCallback(() => setFailed(source ?? null), [source]);
+  const image = useImage(source, onError);
+  const onLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width: measuredWidth, height: measuredHeight } = event.nativeEvent.layout;
+    setBox((previous) =>
+      previous?.width === measuredWidth && previous.height === measuredHeight
+        ? previous
+        : { width: measuredWidth, height: measuredHeight }
+    );
+  }, []);
+
+  const geometry = useMemo(() => {
+    if (!box || !image) return null;
+    return heroFeatherGeometry({
+      container: box,
+      // `SkImage` reports the decoded pixel dimensions, which is the aspect
+      // ratio `contain` is fitting. A picture that somehow reports nothing
+      // falls back to feathering the container -- see `containedImageRect`.
+      intrinsic: { width: image.width(), height: image.height() },
+      focalPoint:
+        focalX === undefined || focalY === undefined ? undefined : { x: focalX, y: focalY },
+    });
+  }, [box, image, focalX, focalY]);
+
+  if (!resolved || !source) return null;
 
   return (
     <Animated.View
@@ -74,28 +151,51 @@ export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
       entering={fadeIn('medium')}
       exiting={fadeOut('medium')}
       layout={listLayout('medium')}
+      onLayout={onLayout}
       style={[styles.hero, { height: band }, scrollStyle]}>
-      <Image
-        source={{ uri }}
-        // Always `contain`, whatever the slot says. The band is a ceiling on how
-        // much of the first screen a decoration may take, and `cover` would fill
-        // it by cropping the author's drawing to a letterbox -- which is a
-        // different picture from the one they approved.
-        contentFit="contain"
-        contentPosition={
-          resolved.image.focalPoint
-            ? {
-                left: `${resolved.image.focalPoint.x * 100}%`,
-                top: `${resolved.image.focalPoint.y * 100}%`,
-              }
-            : 'center'
-        }
-        cachePolicy="memory"
-        autoplay={false}
-        accessible={false}
-        style={[StyleSheet.absoluteFill, { opacity: resolved.image.opacity ?? 1 }]}
-        onError={() => setFailed(uri)}
-      />
+      {image && geometry ? (
+        <Canvas style={StyleSheet.absoluteFill}>
+          <Mask
+            mode="alpha"
+            mask={
+              // One blurred rounded rectangle, not four edge gradients and four
+              // corner ones: gradients meeting at a corner either double up into
+              // a dark notch or leave a square one, while a rounded rect has
+              // already turned away from the corner before either side begins to
+              // fade. `heroFeatherGeometry` owns every number here -- the inset
+              // is already in the rect, and the sigmas are what make each blurred
+              // edge exactly as wide as its axis asked for.
+              //
+              // An image-filter `Blur` rather than a `BlurMask`: only this one
+              // takes a vector, and the top and bottom are softened harder than
+              // the left and right. `decal` so the blur falls to nothing outside
+              // the shape instead of smearing its edge outwards.
+              <RoundedRect
+                x={geometry.mask.x}
+                y={geometry.mask.y}
+                width={geometry.mask.width}
+                height={geometry.mask.height}
+                r={geometry.radius}
+                color="white">
+                <Blur blur={geometry.blur} mode="decal" />
+              </RoundedRect>
+            }>
+            <SkiaImage
+              image={image}
+              x={geometry.image.x}
+              y={geometry.image.y}
+              width={geometry.image.width}
+              height={geometry.image.height}
+              // The rect already *is* the contain-fit result, focal point and
+              // all, so there is nothing left to fit. Letting Skia fit it again
+              // would be a second opinion about the same rectangle, and the
+              // mask is aligned to this one.
+              fit="fill"
+              opacity={resolved.image.opacity ?? 1}
+            />
+          </Mask>
+        </Canvas>
+      ) : null}
     </Animated.View>
   );
 }
