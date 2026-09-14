@@ -4,6 +4,15 @@ Design for review. Nothing here is implemented. Sections marked **Reporting**
 describe what exists today in Herdr, the Gateway, or the app; sections marked
 **Proposal** are arguments for work we have not done.
 
+**Read _Direction (2026-09-14)_ first.** It records the maintainer's decision
+about what is actually going to be built, and it re-tiers §7 against that
+decision. §1–§6 are the research the decision was made from and are unchanged.
+
+Per-agent facts are cited to the companion document,
+[`agent-capability-matrix.md`](./agent-capability-matrix.md) — a dated snapshot
+of what the Gateway supports and what each of twelve coding agents can uniquely
+do.
+
 Herdr documentation is cited by page. Every quotation was read from the pinned
 source for the stable release, `v0.9.0`, which the documentation index at
 <https://herdr.dev/llms.txt> resolves to
@@ -11,6 +20,349 @@ source for the stable release, `v0.9.0`, which the documentation index at
 The preview index (<https://herdr.dev/llms-preview.txt>, build
 `2026-09-08-62431dbd033b`) carries the same page set, so nothing in this document
 is contradicted by an unreleased page.
+
+---
+
+## Direction (2026-09-14)
+
+**Decided, after review of everything below.** §1–§6 were written as research
+under an open question: what would an orchestrator inside the app look like?
+The maintainer's answer is that there is not going to be one.
+
+Nothing in §1–§6 is retracted. §7 is re-tiered against this direction, at the
+end of this section, and three of its proposals are deferred.
+
+### The decision
+
+**The app does not build an orchestrator.** Orchestration is a job for an agent.
+It is done by an **architect agent** running in an ordinary Herdr pane, driven
+by a skill in the cross-agent `.agents/skills/` convention, named
+`muqun-architect`.
+
+§2.3 already established why this costs nothing to reach: pane creation and
+agent start are Herdr's ambient capability, inherited by every process in a
+pane, and a skill file adds knowledge rather than authorisation. The architect
+agent is that finding turned into a plan. It needs no new Herdr primitive, no
+new backend concept, and nothing from the app beyond a way to reach it and a way
+to read what it produced.
+
+`.agents/skills/` is the right home, not `.claude/skills/`. It is the one skill
+directory that is genuinely cross-vendor — Codex, Gemini, Qwen, Droid, Amp,
+opencode, Crush, Copilot and Cursor all read it — and it is already one of the
+directories the Gateway scans per agent, where the comment calls it "the
+cross-agent convention" (`src/composer.rs:445-466`). An architect skill written
+into one vendor's directory would be routing work to agents that cannot read the
+skill they were routed by. Details in
+[`agent-capability-matrix.md`](./agent-capability-matrix.md) §1.4 and Part 3 B.
+
+### What the architect agent does
+
+1. **Splits a brief into parts.** The reader writes one brief. The architect —
+   not the app, and not a template — decides how many parts it has. §7.1's
+   principle that the reader authors every part is what this replaces: it was
+   the right rule for a composer that fans out, and it is the wrong rule for a
+   reader who wanted a result rather than a work-breakdown exercise.
+2. **Routes each part to the agent whose _agent-specific_ capability fits it.**
+   Agent-specific means the thing another agent cannot acquire through MCP or a
+   skill. Worked examples, all from the matrix:
+   - **Image generation** → Codex (`$imagegen`), Amp (Painter), or Cursor's
+     image tool. Not Claude Code, which has none.
+   - **Long-context multi-file refactors** → Claude Code, for the 1M-context
+     models, `EnterWorktree`, and subagent `isolation: worktree`.
+   - **Sandboxed destructive experiments** → an agent with a real OS sandbox:
+     Codex (`--sandbox`), Droid (graded `--auto low|medium|high`, which fails
+     fast when a run exceeds its level), Claude Code, Gemini, Qwen or Cursor.
+     Not opencode, Crush, Aider or Kimi, which have none documented.
+   - **Anything needing a machine-readable tool inventory first** → Droid
+     (`droid exec --list-tools`), Amp (`amp tools list`) or opencode
+     (`GET /experimental/tool/ids`).
+3. **Starts one pane and one worktree per part**, named `<brief>/<part>`.
+4. **Collects one `RESULT.md` per part** and writes a summary.
+
+### The `<brief>/<part>` name, and the `RESULT.md` contract
+
+Both exist so that the app can show a group without learning what a group is.
+
+**Naming.** A part's workspace label and its branch are both `<brief>/<part>` —
+for example `hero-art/generate-images`, `hero-art/wire-asset-loader`,
+`hero-art/write-release-note`. The prefix before the first `/` is the group.
+`POST /tasks` already validates a branch name to letters, digits and `._-/` with
+no `..`, no leading `-` and no `.lock` (`src/tasks.rs:190-240`), so the shape is
+legal today and needs no schema change. The app groups on the prefix; it does
+not need a group record, a delegation graph, or a server-side parent id — none
+of which exist (§3.1).
+
+**`RESULT.md`.** Each worker writes exactly one file at the root of its own
+worktree, named `RESULT.md`. The skill defines its shape; the app never parses
+it. It reaches the reader through the existing artifacts view — the Gateway's
+asset model already sniffs `markdown` as a kind and marks it previewable
+(`src/lib/session-assets.ts`), so a `RESULT.md` needs no new viewer, and a
+generated PNG lands in the same list as an `image`.
+
+This is also the only communication channel the architecture actually has. See
+the _Capability catalogue_ section: the Gateway never builds a command line, and
+prompt delivery is a TTY paste. Architect and worker therefore talk in text and
+files, by construction, not by choice.
+
+### What the app builds
+
+Four things, and nothing that resembles a scheduler.
+
+1. **A one-tap "Architect" composer target.** One more entry in the existing
+   assignment strip, alongside the per-kind "start a new …" chips. Choosing it
+   sends the brief through `POST /api/sessions/{sid}/tasks` with the
+   **capability catalogue injected as a JSON block** appended to the prompt:
+
+   ```json
+   {
+     "muqun_capability_catalogue": {
+       "version": 1,
+       "verified_on": "2026-09-14",
+       "installed": ["claude", "codex", "opencode"],
+       "agents": {
+         "codex": {
+           "specific": ["image-generation:$imagegen", "os-sandbox", "structured-output:json"],
+           "approval_prompt": "numbered-menu",
+           "detectable_in_tmux": true,
+           "verified_against": "codex-cli 0.145.0"
+         }
+       }
+     }
+   }
+   ```
+
+   The architect reads the block rather than guessing which agents this host
+   has. `installed` is the live half and comes from `GET /api/agents/catalog`;
+   everything else is static and comes from the Gateway.
+
+2. **A task-group view, grouped by the naming prefix.** The roster and the
+   assignment history group on the text before the first `/`. That is the whole
+   mechanism. It is what turns §7.4's flat pill row into something that can say
+   _these five belong to one brief_ — the relationship the app has never been
+   able to express (§4.4).
+
+3. **Per-agent observation, approval and interrupt exactly as today.** No new
+   control surface. The reader watches one agent at a time, answers one approval
+   at a time, and interrupts one agent at a time, through the paths that already
+   exist. Fan-out changes what is on the screen, not how any single agent is
+   driven.
+
+4. **Results through the existing artifacts view.** `src/app/artifacts.tsx` and
+   `src/components/session-artifacts.tsx` already list a session's assets. A
+   `RESULT.md` per part is an entry there.
+
+### What the app must not do
+
+Unchanged from `AGENTS.md`, and worth restating because a group view is exactly
+where these rules erode.
+
+- **No progress percentages.** There is no denominator. A part is sent or not
+  sent; an agent is working, blocked, idle/done or unclassifiable.
+- **No "completed" claims.** `done` means _idle and not yet marked seen_, and
+  `unknown` does not mean success. "3 ready for input" is a true sentence;
+  "3 of 5 done" is not. §7.5 argues this at length and still stands.
+- **No automatic retry of an ambiguous delivery**, and no answering an approval
+  prompt on the reader's behalf.
+- **No moving the reader's viewport** when a worker produces output.
+
+A group of five agents makes each of these more tempting, not less.
+
+### Phases
+
+§7 was written before this direction and is re-tiered here. Section numbers
+below refer to §7 unless stated.
+
+**P0 — prerequisites.** None of this is architect work; all of it is
+load-bearing for the architect.
+
+- **Wire the `agent_collaboration` capability gate on both sides** (§6.1). The
+  Gateway advertises it from a static array that no handler branches on
+  (`src/main.rs:309`); the app's `collaborationAvailability`
+  (`src/lib/agent-collaboration.ts:74`) is the only place the capability _and_
+  the Herdr 0.9.0+ floor are checked, and it has no call site outside its own
+  test. **A fix PR is in progress.** Everything after this assumes a real gate.
+- **Unify `AGENT_KINDS` and `HERDR_AGENTS`.** 21 kinds in `src/tasks.rs:66-87`,
+  14 in `src/shortcuts.rs:581-595`, and `gemini` is in the first and missing
+  from the second. Two lists that disagree answer different questions about the
+  same agent, and a router needs to know which one is the routing authority.
+- **`POST /spawn` must accept `agent_args`.** `POST /tasks` takes it
+  (`src/main.rs:6702`, validated at ≤32 entries × ≤512 characters,
+  `src/main.rs:10894-10910`); `SpawnBody` (`src/main.rs:6977`) does not.
+  `agent_args` is the only channel any agent-specific flag has — `codex -i`,
+  `claude --permission-mode`, `droid --auto low` — so without it `/spawn` can
+  only ever start an agent in its default posture.
+- **Close, or at least name, the two approval-detector blind spots.**
+  `approvals.rs` matches the _shape_ of a drawn menu: contiguous options
+  numbered `1..n` with `n >= 2` (`src/approvals.rs:44-77`). Aider's TTY
+  confirmation is an inline y/n, not a numbered menu, so it is never detected;
+  Amp never asks for approval at all, so an Amp pane can never be `Blocked`.
+  Neither is a bug in `approvals.rs` — its shape-matching is why approvals work
+  on unprofiled agents at all — but a router that reads "not `Blocked`" as "not
+  waiting for a human" is wrong on exactly those two, and the catalogue has to
+  say so per agent.
+
+**P1 — visibility.** Everything here pays off for panes a human split, with or
+without an architect, which is why it comes before the architect itself.
+
+- §7.4, the roster fix. `CollaborationNotice` renders `current[0]` and appends
+  `· N`, which is already wrong for the two tasks the store can hold today.
+- §7.8, unattributed agents and the "N elsewhere" affordance.
+- §7.9, a live panels sheet.
+- The task-group view by prefix, described above. It belongs with §7.4 rather
+  than with the architect, because the grouping is a rendering rule over data
+  the app already has.
+
+**P2 — the architect.**
+
+- The `muqun-architect` skill in `.agents/skills/`.
+- The "Architect" composer target and the injected catalogue block.
+- The `RESULT.md` contract.
+- The artifacts entry for a part's `RESULT.md`.
+- **An image-generation end-to-end demo**, as the proof the routing is real: a
+  brief whose image part goes to Codex `$imagegen` and whose wiring part goes to
+  Claude Code, ending with a PNG and a `RESULT.md` visible in the artifacts
+  view. It is the cheapest demonstration that routing on an _agent-specific_
+  capability does something a single agent could not, and it exercises the one
+  vendor fact in this document most likely to be misremembered.
+
+**P3 — nice, once the above works.**
+
+- §7.6, the one-agent-per-worktree toggle. Under this direction the architect
+  creates the worktrees, so the toggle is a reader override rather than the
+  mechanism.
+- §7.7, writing the assignment back into Herdr's sidebar via
+  `pane.report_metadata`. Still display-only, still a new Gateway method and a
+  new capability string.
+
+**Deferred — unvalidated need; superseded by the architect agent.**
+
+- §7.1, hand-authored brief parts.
+- §7.2, the multi-select strip and `AssignmentPlan`.
+- §7.3, the sequential dispatch sheet.
+
+These three describe a human doing the architect's job through a 6-inch
+composer. Nobody has asked for that, and the architect makes the work-breakdown
+step unnecessary. The arguments in them remain good arguments — particularly
+§7.3's refusal vocabulary and its ban on automatic retry — and should be re-read
+if the architect direction is ever abandoned.
+
+**Cross-cutting, not a phase.** §7.5 (reading results without lying) and the
+gating discipline in §7.10 apply in every phase. §7.10's proposed `agent_fanout`
+capability is superseded: the app no longer dispatches a multi-part plan, so the
+only gate it needs is `agent_collaboration`, which is P0.
+
+---
+
+## Capability catalogue
+
+How the architect learns which agent is good at what, without asking any agent.
+
+### Where it lives, and what is in it
+
+**Static, maintained in the Gateway, in the shape `agents.json` already has.**
+The Gateway's config directory already overlays built-in agent profiles from a
+JSON file — `match`, `keys`, `interrupt`, `commands`, `commandDirs` — re-read on
+every request, with the explicit goal that "supporting a new agent is an edit to
+a JSON file — no rebuild of the gateway, and certainly no release of any client"
+(`src/shortcuts.rs:17-38`, `AGENTS_FILE` at `src/shortcuts.rs:60`). The
+capability catalogue is the same idea for the same reason. Per kind:
+
+| Field                | What it carries                                                                                                                                                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `specific`           | The agent-specific capabilities only — the ones another agent cannot acquire through MCP or a skill: image generation, an OS sandbox, built-in worktrees, structured output on the wire, a local control surface, plan gating |
+| `approval_prompt`    | The shape of its approval prompt — `numbered-menu`, `inline-yn`, or `never` — which is what decides whether `Blocked` will ever be true for it                                                                                |
+| `detectable_in_tmux` | Whether the compiled-in 8-name detection list can see it at all (`src/backend/tmux.rs:1492-1494`); 13 of the 21 kinds cannot be                                                                                               |
+| `verified_against`   | The binary version the row was read from, so that a stale row is visibly stale                                                                                                                                                |
+
+**Runtime, one field: installed kinds.** `GET /api/agents/catalog`
+(`src/main.rs:2027`) probes `PATH` per kind and returns `{kind, command,
+available, path, source}`. That is the only part of the catalogue that must be
+answered live, and it already is. `available: false` stays "a hint for the
+picker, not a veto" (`src/tasks.rs:107-109`), because Herdr can still resolve a
+kind the Gateway could not find.
+
+The split is deliberate: **what is installed changes per host and per hour; what
+an agent is good at changes per release.** Only the first needs a probe.
+
+### Why runtime "what can you do" queries are not viable
+
+The obvious alternative — ask each agent what it can do, at dispatch time — does
+not survive contact with the vendors.
+
+- **Almost nothing is introspectable.** Of the twelve agents surveyed, three
+  answer cheaply and machine-readably: `droid exec --list-tools`,
+  `amp tools list`, and opencode's `GET /experimental/tool/ids`. Claude Code
+  answers only inside the `system/init` event of a `stream-json` run. Codex
+  needs `codex debug models --json` plus `codex mcp list --json`. **Copilot CLI
+  and Aider emit no machine-readable introspection at all.** Matrix Part 3 C.
+- **The Gateway has nowhere to run such a query from.** It never builds an agent
+  command line beyond `argv[0]` plus caller-supplied args (matrix §1.1): the
+  Herdr backend delegates command resolution entirely, and the tmux backend
+  types the literal command into a pane. There is no headless invocation path,
+  no `--resume`, and no JSON-output parsing anywhere in its tree (matrix §1.10).
+- **Asking costs a pane and a turn.** A runtime query means starting the agent
+  in order to ask it what it can do. On Codex, whose `$imagegen` burns plan
+  limits 3–5× faster than an ordinary turn, that cost is not theoretical.
+- **The Gateway already made this call once.** Its slash-command tables were
+  captured by hand from installed binaries rather than queried, with the reason
+  written down: "`claude --help` does not list slash commands and there is no
+  non-interactive way to ask for them" (`src/composer.rs:12-31`).
+
+So: static, versioned, honest about its date, and edited rather than rebuilt.
+The companion document is the evidence for each row, and the thing to re-read
+when a row is about to be relied on.
+
+### Agent-specific versus commodity
+
+The split that makes routing meaningful. Condensed from matrix Part 3 A and B;
+read there for the per-agent detail and the citations.
+
+| Property                          | Route on it?              | Where it stood on 2026-09-14                                                                                                                                                                                                                                        |
+| --------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OS sandbox and the approval model | **Yes**                   | Claude Code, Codex, Gemini, Qwen, Cursor and Droid have one; Copilot behind `--experimental`; opencode, Crush, Aider and Kimi have none. Droid alone is graded and fails fast past its level. Amp inverts the question: it never prompts, and restriction is opt-in |
+| Built-in git worktrees            | **Yes**                   | Claude Code, Cursor, Droid, Gemini (experimental). This overlaps `POST /tasks`'s own `branch_name` worktree — two mechanisms that must not both run                                                                                                                 |
+| Structured output on the wire     | **Yes**                   | Rich: Droid, Claude Code, Kimi, Amp, Cursor, Gemini, Qwen. Thin: Codex, opencode. None: Copilot CLI, Crush's `run`, Aider                                                                                                                                           |
+| A local HTTP/RPC control surface  | **Yes**                   | opencode (the basis of `src/native.rs`), Crush, Qwen, Codex's `app-server`, Kimi's `acp`. Everything else is glyph-scraping                                                                                                                                         |
+| Native image generation           | **Yes**                   | Codex `$imagegen`, Amp's Painter, Cursor's image tool, Gemini via the `nanobanana` extension. Not Claude Code, Copilot, Droid, opencode, Crush, Aider or Kimi                                                                                                       |
+| Vendor-gated browser control      | **Yes**                   | Claude Code's `--chrome` needs the extension _and_ a direct Anthropic plan; Codex has no CLI browser at all; everyone else is MCP-only                                                                                                                              |
+| Plan and seat gating              | **Yes**                   | Copilot requires a subscription and shares the IDE's credit pool; Codex image generation depends on plan and workspace settings; Amp has no `--model` flag, so "route this to a cheap model on Amp" is not expressible                                              |
+| Aider's git behaviour             | **Yes**                   | `--auto-commits` and `--dirty-commits` both default to true: it commits every edit, and commits pre-existing dirty changes first                                                                                                                                    |
+| Headless invocation               | No                        | Every agent surveyed                                                                                                                                                                                                                                                |
+| Session resume by id              | No                        | Every agent but Aider                                                                                                                                                                                                                                               |
+| MCP _tools_                       | No                        | Every agent but Aider. MCP _resources_ and _prompts_ are **not** commodity — assume tools only                                                                                                                                                                      |
+| Image _input_                     | No                        | Every agent                                                                                                                                                                                                                                                         |
+| Some form of auto-approve         | No                        | Every agent                                                                                                                                                                                                                                                         |
+| `SKILL.md` in `.agents/skills/`   | No                        | Every agent but Aider — which is precisely why the architect skill lives there                                                                                                                                                                                      |
+| `AGENTS.md` as memory             | No, with three exceptions | **Claude Code reads `CLAUDE.md`, not `AGENTS.md`**; Gemini reads `GEMINI.md` unless reconfigured; Aider reads neither                                                                                                                                               |
+
+Routing on a commodity row is noise. Routing on an agent-specific row is the
+entire value of having twelve agents installed.
+
+### Corrected facts
+
+Three things to carry correctly, two of which are easy to misremember.
+
+- **Codex's image skill is `$imagegen`.** It is a built-in skill, invoked by
+  putting the token in the prompt. The model is fixed at **`gpt-image-2`**. It
+  is **plan-gated** — availability and limits depend on plan and workspace
+  settings — and it **burns included limits 3–5× faster** on average than a
+  comparable turn without it; for batches the vendor's own advice is to set
+  `OPENAI_API_KEY` and go through the API instead. An architect that routes
+  every image to Codex without saying what it costs is not being honest with the
+  reader.
+- **Claude Code has no image generation.** Its complete built-in tool list
+  contains no image-generation tool. It is the right target for long-context
+  multi-file work and the wrong target for a hero image.
+- **The Gateway never builds a command line, and delivers prompts by TTY
+  paste.** The paste is followed by a _separate_ `Enter` sent after the pane
+  stops redrawing, because a newline arriving in the same PTY write is treated
+  as pasted content and leaves the prompt sitting unsubmitted
+  (`src/main.rs:6508`, reproduced on camera, card #571). Two consequences the
+  architect design is built on rather than around: there is no structured
+  channel between architect and worker, so **their communication is text and
+  files by construction**; and delivery is best-effort, confirmed only by a 207
+  step log, which is why nothing here reports a part as delivered on the
+  strength of a timeout.
 
 ---
 
@@ -154,7 +506,7 @@ The one install step that does exist — `herdr integration install <agent>` —
 about detection, not control. [Agents](https://herdr.dev/docs/agents/): "Install
 the integration for each agent you use to give Herdr hook or plugin reports
 instead of screen detection alone." It improves the accuracy of the agent's
-*status*; it grants nothing.
+_status_; it grants nothing.
 
 #### 2.3.2 What the skill file adds
 
@@ -174,13 +526,13 @@ says so in as many words:
 > that binary.
 
 Note what the second quotation actually asserts: the agent "can safely talk to
-the local Herdr socket" *because it is in a pane*, and the skill's contribution is
+the local Herdr socket" _because it is in a pane_, and the skill's contribution is
 to tell it so. The capability is stated as a property of the location; the skill
 is the messenger.
 
 The page's bullet list — "split panes and run commands without stealing focus",
 "start helper agents in sibling panes" — is a list of things the agent will now
-*know to do*, not things it becomes *able* to do. The
+_know to do_, not things it becomes _able_ to do. The
 [Socket API](https://herdr.dev/docs/socket-api/) makes the layering explicit:
 
 > | Agent skill | Teaching a coding agent how to use Herdr from inside a pane. |
@@ -206,7 +558,7 @@ order", "A timeout or stalled response does not prove the prompt was never
 delivered; do not blindly submit it again". The skill is a competence and safety
 upgrade. It is not an authorisation or an API.
 
-It also *narrows* what the agent will do. The frontmatter is a restriction, not a
+It also _narrows_ what the agent will do. The frontmatter is a restriction, not a
 grant:
 
 > Use only when the user explicitly mentions Herdr or asks to use Herdr to
@@ -256,7 +608,7 @@ Two things that look like gates and are not:
   rejects repositories owned by another user by default", and it "grants
   per-request Git trust" for worktree commands. It gates Git, not Herdr.
 
-The nearest thing to a gate in the whole control surface is a *refusal* rather
+The nearest thing to a gate in the whole control surface is a _refusal_ rather
 than a permission: `agent prompt` returns `agent_blocked` and sends nothing when
 the target agent is sitting at an approval dialog
 ([Agent automation](https://herdr.dev/docs/agent-automation/)). That protects the
@@ -264,16 +616,16 @@ agent being addressed, not the session being controlled.
 
 #### 2.3.4 Summary of the boundary
 
-| | Comes from Herdr | Comes from the skill |
-| --- | --- | --- |
-| `HERDR_ENV`, `HERDR_PANE_ID`, `HERDR_TAB_ID`, `HERDR_WORKSPACE_ID`, `HERDR_SOCKET_PATH`, `HERDR_BIN_PATH` in the pane | Yes | — |
-| `herdr` on `PATH`, bound to this session | Yes | — |
-| `pane split`, `agent start`, `agent prompt`, `agent wait`, `agent read` | Yes | — |
-| Reaching the socket without a credential | Yes (no gate documented) | — |
-| Knowing those commands exist and their order | — | Yes |
-| Not stealing the reader's focus; parsing ids from JSON; not re-sending an ambiguous prompt; escalating an approval dialog | — | Yes |
-| A restriction on when to engage Herdr at all | — | Yes |
-| Any new endpoint, permission, or runtime | — | **No** |
+|                                                                                                                           | Comes from Herdr         | Comes from the skill |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------------------- |
+| `HERDR_ENV`, `HERDR_PANE_ID`, `HERDR_TAB_ID`, `HERDR_WORKSPACE_ID`, `HERDR_SOCKET_PATH`, `HERDR_BIN_PATH` in the pane     | Yes                      | —                    |
+| `herdr` on `PATH`, bound to this session                                                                                  | Yes                      | —                    |
+| `pane split`, `agent start`, `agent prompt`, `agent wait`, `agent read`                                                   | Yes                      | —                    |
+| Reaching the socket without a credential                                                                                  | Yes (no gate documented) | —                    |
+| Knowing those commands exist and their order                                                                              | —                        | Yes                  |
+| Not stealing the reader's focus; parsing ids from JSON; not re-sending an ambiguous prompt; escalating an approval dialog | —                        | Yes                  |
+| A restriction on when to engage Herdr at all                                                                              | —                        | Yes                  |
+| Any new endpoint, permission, or runtime                                                                                  | —                        | **No**               |
 
 One consequence for us. Because the capability is ambient and the skill is only
 instructions, an agent our app starts through the Gateway has the same powers as
@@ -287,15 +639,15 @@ no record that it was asked. §4.5 covers what that looks like on screen.
 
 Reporting, from the docs, in the order an operator hits them.
 
-| Prerequisite | Source |
-| --- | --- |
-| A Herdr server running on the machine where the work happens. | [Concepts](https://herdr.dev/docs/concepts/) — "The server owns panes and process state." |
-| The agent executables installed and on `PATH`. `--kind` only selects "Herdr's canonical interactive executable"; Herdr does not install agents. | [CLI reference](https://herdr.dev/docs/cli-reference/) |
-| A shell pane per agent, at its prompt, created beforehand. | [Agent automation](https://herdr.dev/docs/agent-automation/) |
-| Per-agent integrations, if you want state to be trustworthy rather than screen-guessed. `herdr integration install <agent>`. | [Agents](https://herdr.dev/docs/agents/), [Integrations](https://herdr.dev/docs/integrations/) |
-| For a remote machine: normal SSH access verified first, then `herdr machine add <host> --label "..."`, run **in an interactive terminal** so Herdr can ask before installing or replacing a server. | [Connecting machines](https://herdr.dev/docs/connecting-machines/) |
-| For saved-machine federation specifically: the remote server must advertise the `surface_interest` and `health_check` capabilities, or the machine shows Attention. | [Connecting machines](https://herdr.dev/docs/connecting-machines/) |
-| `HERDR_AGENT=<agent>` on any sandbox/VM wrapper command, or detection misses the agent entirely. | [Agents](https://herdr.dev/docs/agents/) |
+| Prerequisite                                                                                                                                                                                        | Source                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| A Herdr server running on the machine where the work happens.                                                                                                                                       | [Concepts](https://herdr.dev/docs/concepts/) — "The server owns panes and process state."      |
+| The agent executables installed and on `PATH`. `--kind` only selects "Herdr's canonical interactive executable"; Herdr does not install agents.                                                     | [CLI reference](https://herdr.dev/docs/cli-reference/)                                         |
+| A shell pane per agent, at its prompt, created beforehand.                                                                                                                                          | [Agent automation](https://herdr.dev/docs/agent-automation/)                                   |
+| Per-agent integrations, if you want state to be trustworthy rather than screen-guessed. `herdr integration install <agent>`.                                                                        | [Agents](https://herdr.dev/docs/agents/), [Integrations](https://herdr.dev/docs/integrations/) |
+| For a remote machine: normal SSH access verified first, then `herdr machine add <host> --label "..."`, run **in an interactive terminal** so Herdr can ask before installing or replacing a server. | [Connecting machines](https://herdr.dev/docs/connecting-machines/)                             |
+| For saved-machine federation specifically: the remote server must advertise the `surface_interest` and `health_check` capabilities, or the machine shows Attention.                                 | [Connecting machines](https://herdr.dev/docs/connecting-machines/)                             |
+| `HERDR_AGENT=<agent>` on any sandbox/VM wrapper command, or detection misses the agent entirely.                                                                                                    | [Agents](https://herdr.dev/docs/agents/)                                                       |
 
 On permissions, the docs are blunt that approval is not automatable:
 
@@ -363,7 +715,7 @@ And neither is globally unique once more than one machine is connected
 
 **There is no `instance_id` in Herdr.** The term does not appear in the socket
 API, the CLI reference, or the agents pages. The closest durable thing Herdr
-exposes is `agent_session`, a *read-only* projection of what an official
+exposes is `agent_session`, a _read-only_ projection of what an official
 integration reported ([Socket API](https://herdr.dev/docs/socket-api/)):
 
 ```json
@@ -400,7 +752,7 @@ must not lie.
 
 > `idle` and `done` both mean the agent is ready for input. The CLI/API uses the
 > server's seen state: `done` is idle but not yet marked seen, **explicit `pane
-> focus` / `agent focus` commands mark the target seen, and reads do not.** Each
+focus` / `agent focus` commands mark the target seen, and reads do not.** Each
 > TUI client tracks viewed completions independently, so a client's Done badge can
 > differ from the CLI or another client's badge.
 
@@ -449,7 +801,7 @@ colliding in one checkout. It is one call per agent, not a fan-out, but it is th
 right unit.
 
 **Display metadata we are allowed to write.** `pane.report_metadata` is
-explicitly display-only and explicitly *not* a lifecycle authority
+explicitly display-only and explicitly _not_ a lifecycle authority
 ([Socket API](https://herdr.dev/docs/socket-api/)):
 
 > Metadata reports are display-only. Valid metadata can override the pane title,
@@ -530,7 +882,7 @@ The collaboration screen was deleted; the feature lives in the composer
   scroll of agent chips plus one "start a new …" chip per catalog kind.
 - `src/hooks/use-composer-assignment.ts` — the write path. `assign` re-reads
   agents, verifies the chosen `instance_id` is still in that pane, and writes to
-  the *fresh* target from that read. Never retries.
+  the _fresh_ target from that read. Never retries.
 - `src/components/collaboration-notice.tsx` — the read path, in the terminal's
   notification column.
 - `src/hooks/use-collaboration-output.ts` — the pinned snapshot. A 6 s poll flips
@@ -581,10 +933,10 @@ const [workspaces, tabs, panes, agents] = await Promise.all([
 
 and re-fetches it on three triggers, in `src/components/server-terminal-workspace.tsx`:
 
-| Trigger | Latency | Site |
-| --- | --- | --- |
-| A structural SSE event, debounced | ~250 ms | `:1297-1310` |
-| Slow poll, as a backstop for a missed event | 12 s | `:1263` |
+| Trigger                                                | Latency   | Site                       |
+| ------------------------------------------------------ | --------- | -------------------------- |
+| A structural SSE event, debounced                      | ~250 ms   | `:1297-1310`               |
+| Slow poll, as a backstop for a missed event            | 12 s      | `:1263`                    |
 | SSE (re)connect, and screen regaining navigation focus | immediate | `:2992-3000`, `:1102-1104` |
 
 The SSE subscription is in `src/hooks/use-pane-events.ts`, and it already includes
@@ -641,7 +993,7 @@ tapping a push notification, or the workspace/tab swipe gestures.
 - **The panels sheet is a one-shot load.** `src/components/session-map.tsx` does
   its own fetch of all four lists (`:190-219`) under
   `useEffect(() => { void load(); }, [load, t])` (`:221-223`). No SSE, no poll.
-  It *will* list brand-new panes in every tab and workspace — but only if opened
+  It _will_ list brand-new panes in every tab and workspace — but only if opened
   or pull-to-refreshed after they exist. A sheet left open goes stale silently.
 - **The home-screen mirror lags arbitrarily.** `recordServerAgents` is written
   only by the open workspace screen (`server-terminal-workspace.tsx:1634-1641`),
@@ -674,7 +1026,7 @@ panes as a flat list grouped by tab, and its own module doc notes that indices a
 So three panes split side by side read on the phone as three interchangeable
 chips. A reader cannot tell them from three panes stacked vertically, or — once
 they are in the panels sheet — from three panes that have nothing to do with each
-other. The app shows *membership*, never *arrangement*.
+other. The app shows _membership_, never _arrangement_.
 
 For a phone this is close to the right call. A 6-inch screen cannot usefully draw
 a three-way split, and mirroring Herdr's geometry would buy nothing. But it means
@@ -684,17 +1036,17 @@ assignment rather than by geometry for that reason.
 
 ### 4.5 The honest summary
 
-| Surface | Shows the three new panes? | When |
-| --- | --- | --- |
-| Pane strip, same tab, screen open and foregrounded, keyboard down | Yes | ~250 ms; ≤12 s if the stream dropped |
-| Pane strip, panes in another tab or workspace | No | — |
-| Visible terminal | Unchanged, correctly | — |
-| Assignment roster | Yes, if `instance_id` is present | Same as the strip |
-| Panels sheet | Yes, all tabs and workspaces | Only on open or pull-to-refresh |
-| Home-screen server card | Only after the reader next opens that server | Up to hours; dimmed after 5 min |
-| Layout / adjacency | Never | — |
-| Any announcement | None from the app | — |
-| App backgrounded | Nothing updates | Until foreground |
+| Surface                                                           | Shows the three new panes?                   | When                                 |
+| ----------------------------------------------------------------- | -------------------------------------------- | ------------------------------------ |
+| Pane strip, same tab, screen open and foregrounded, keyboard down | Yes                                          | ~250 ms; ≤12 s if the stream dropped |
+| Pane strip, panes in another tab or workspace                     | No                                           | —                                    |
+| Visible terminal                                                  | Unchanged, correctly                         | —                                    |
+| Assignment roster                                                 | Yes, if `instance_id` is present             | Same as the strip                    |
+| Panels sheet                                                      | Yes, all tabs and workspaces                 | Only on open or pull-to-refresh      |
+| Home-screen server card                                           | Only after the reader next opens that server | Up to hours; dimmed after 5 min      |
+| Layout / adjacency                                                | Never                                        | —                                    |
+| Any announcement                                                  | None from the app                            | —                                    |
+| App backgrounded                                                  | Nothing updates                              | Until foreground                     |
 
 The one-line version: **we already show the panes and the agents; we do not show
 that anything happened.** A reader who is looking gets a live, correct list. A
@@ -704,18 +1056,18 @@ reader who is not looking finds out by scrolling a strip that silently grew.
 
 ## 5. The gap
 
-| | Herdr offers | We expose | |
-| --- | --- | --- | --- |
-| Start N agents | N × (`pane.split` → `agent.start` → `agent.prompt`), caller-driven | 1 per send, and `AGENT_SPAWN_SHIPPED = false` means the "new agent" chips never render | Gap |
-| Isolate their work | `worktree.create` per agent | Gateway wires it behind `POST /tasks`; no app surface picks a branch per agent | Gap |
-| See N new panes exist | `pane.created` / `pane.agent_detected` events, sidebar | Pane strip and assignment roster, live in ~250 ms — **but only for the visible tab**, and silently | Mostly there |
-| Notice that they appeared | Sidebar rollups: "A blocked agent makes its pane, tab, and workspace look blocked" | Nothing. No toast, no badge, no rollup above pane level | Gap |
-| See how they are arranged | Real split geometry in the TUI | No layout model at all; one pane mounted at a time | Deliberate, see §4.4 |
-| Watch N agents' progress | `agent.list`, `pane.agent_status_changed`, `agent.view.set` projections, sidebar rollups | `CollaborationNotice` renders `current[0]` only, plus a `· N` count | Gap |
-| Read N results | `agent.read --source recent-unwrapped`, alternate-screen history paging | One pinned snapshot for one task, via `pane.read` | Gap |
-| Assignment history | Not a Herdr concept | Ours, MMKV, offline, capped at 40 | We are ahead |
-| Durable agent identity | Reusable pane id + clearable name alias + optional `agent_session` | Synthesized `instance_id` over `terminal_id` | We are ahead |
-| Capability gating | `herdr status`; "A missing method is not permission to stop or upgrade a server" | `agent_collaboration` declared and checked — but see §6.1 | Gap |
+|                           | Herdr offers                                                                             | We expose                                                                                          |                      |
+| ------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------- |
+| Start N agents            | N × (`pane.split` → `agent.start` → `agent.prompt`), caller-driven                       | 1 per send, and `AGENT_SPAWN_SHIPPED = false` means the "new agent" chips never render             | Gap                  |
+| Isolate their work        | `worktree.create` per agent                                                              | Gateway wires it behind `POST /tasks`; no app surface picks a branch per agent                     | Gap                  |
+| See N new panes exist     | `pane.created` / `pane.agent_detected` events, sidebar                                   | Pane strip and assignment roster, live in ~250 ms — **but only for the visible tab**, and silently | Mostly there         |
+| Notice that they appeared | Sidebar rollups: "A blocked agent makes its pane, tab, and workspace look blocked"       | Nothing. No toast, no badge, no rollup above pane level                                            | Gap                  |
+| See how they are arranged | Real split geometry in the TUI                                                           | No layout model at all; one pane mounted at a time                                                 | Deliberate, see §4.4 |
+| Watch N agents' progress  | `agent.list`, `pane.agent_status_changed`, `agent.view.set` projections, sidebar rollups | `CollaborationNotice` renders `current[0]` only, plus a `· N` count                                | Gap                  |
+| Read N results            | `agent.read --source recent-unwrapped`, alternate-screen history paging                  | One pinned snapshot for one task, via `pane.read`                                                  | Gap                  |
+| Assignment history        | Not a Herdr concept                                                                      | Ours, MMKV, offline, capped at 40                                                                  | We are ahead         |
+| Durable agent identity    | Reusable pane id + clearable name alias + optional `agent_session`                       | Synthesized `instance_id` over `terminal_id`                                                       | We are ahead         |
+| Capability gating         | `herdr status`; "A missing method is not permission to stop or upgrade a server"         | `agent_collaboration` declared and checked — but see §6.1                                          | Gap                  |
 
 ---
 
@@ -816,6 +1168,13 @@ design.
 
 Everything in this section is a proposal, not a report.
 
+**This section predates the decision in _Direction (2026-09-14)_, and is kept
+whole rather than rewritten.** Its phasing now lives in _Phases_ there: §7.4,
+§7.8 and §7.9 are P1; §7.6 and §7.7 are P3; and **§7.1, §7.2 and §7.3 are
+deferred — unvalidated need, superseded by the architect agent.** §7.5 and
+§7.10 are rules that apply in every phase. Read the _Phases_ list before costing
+anything here.
+
 The framing that matters: Herdr's fan-out is N sequential, individually
 fallible, individually approvable operations, and Herdr's own mobile story is a
 64-column TUI over SSH. Our advantage is not that we can do something Herdr
@@ -833,6 +1192,9 @@ read as adding one of those two, not as building a pane list we already have.
 
 ### 7.1 Principle: a brief, not a broadcast
 
+**Deferred** — unvalidated need; superseded by the architect agent (see
+_Direction (2026-09-14)_ → _Phases_).
+
 The mental model should not be "send this text to three agents." It should be:
 the reader writes one **brief**, then splits it into **parts**, and each part goes
 to one agent. Parts are authored, not derived. We never ask a model to split the
@@ -844,6 +1206,9 @@ bound to its own `instance_id`, each with its own outcome.
 
 ### 7.2 The composer, extended rather than replaced
 
+**Deferred** — unvalidated need; superseded by the architect agent (see
+_Direction (2026-09-14)_ → _Phases_).
+
 `src/components/agent-assignment-bar.tsx` today is a radio group. Proposal: make
 chip selection additive when the strip is in brief mode, and give
 `use-composer-assignment.ts` a second target shape.
@@ -852,11 +1217,11 @@ chip selection additive when the strip is in brief mode, and give
 // proposed, src/hooks/use-composer-assignment.ts
 export type AssignmentPart = {
   readonly id: string;
-  readonly target: AssignmentTarget;   // unchanged union
+  readonly target: AssignmentTarget; // unchanged union
   readonly text: string;
 };
 export type AssignmentPlan = {
-  readonly shared: string;             // the brief, prepended to every part
+  readonly shared: string; // the brief, prepended to every part
   readonly parts: readonly AssignmentPart[];
 };
 ```
@@ -879,6 +1244,9 @@ between `AgentAssignmentBar` and `TerminalComposer` in
 
 ### 7.3 Dispatch: sequential, visible, abandonable
 
+**Deferred** — unvalidated need; superseded by the architect agent (see
+_Direction (2026-09-14)_ → _Phases_).
+
 N parts dispatch **sequentially**, never concurrently, and the UI shows the queue
 draining. Reasons, all from §2:
 
@@ -897,8 +1265,8 @@ exactly four terminal states, no percentages and no spinner-as-progress:
 - `Queued`
 - `Sending` (the only animated row, and it animates because we are actively
   awaiting a call, not because we are guessing at progress)
-- `Sent` — the Gateway acknowledged the write. The label must say *sent*, never
-  *started* or *done*.
+- `Sent` — the Gateway acknowledged the write. The label must say _sent_, never
+  _started_ or _done_.
 - `Not confirmed` — plus the refusal code's human sentence, plus a single
   **Retry this part** button the reader presses deliberately.
 
@@ -912,6 +1280,8 @@ The existing `collaborationSpawnOutcome` already returns the right vocabulary
 new enum.
 
 ### 7.4 Watching several agents: fix the notice before adding to it
+
+**P1.**
 
 `CollaborationNotice` renders `current[0]` and appends `· ${current.length}`. That
 is already wrong for the two concurrent assignments the store can hold today; it
@@ -937,7 +1307,7 @@ will be badly wrong for five.
    the temptation is a "refresh all" button; it should refresh only the visible
    card and clear the unread dots it can prove the reader saw — which is one.
 4. **Surface `history`.** `partitionCollaborationTasks` returns `{ current,
-   history }` and `collaboration-notice.tsx:40` destructures `history` away.
+history }` and `collaboration-notice.tsx:40` destructures `history` away.
    "Mark reviewed" currently moves a task somewhere with no UI. Proposal: a
    `Reviewed` section behind a disclosure in the same card, offline, with
    `remove` available there. This is a prerequisite for fan-out, not a nicety —
@@ -945,11 +1315,13 @@ will be badly wrong for five.
 
 ### 7.5 Reading results without lying
 
+**Cross-cutting** — applies in every phase.
+
 Three rules, all derived from §2.7 rather than invented.
 
 - **Never write "completed".** The card's status line already avoids it. With N
   agents the pressure to summarize ("3 of 5 done") is much stronger, and it must
-  be refused: `done` means *idle and not yet looked at*, and `unknown` explicitly
+  be refused: `done` means _idle and not yet looked at_, and `unknown` explicitly
   does not mean success. A count of agents currently idle is a true sentence only
   if it says so: "3 ready for input" — not "3 done".
 - **No aggregate progress, ever.** There is no denominator. A part is sent or
@@ -970,14 +1342,17 @@ and belongs in its own card.
 
 ### 7.6 One agent per worktree
 
+**P3.** Under the architect direction the architect cuts the worktrees, so this
+toggle becomes a reader override rather than the mechanism.
+
 **Proposed.** When a plan has more than one part and the session's cwd is a Git
-repo, offer one toggle — *Give each assistant its own branch* — which routes each
+repo, offer one toggle — _Give each assistant its own branch_ — which routes each
 part through `POST /api/sessions/{sid}/tasks` with a derived `branch_name` instead
 of `POST /spawn`. The Gateway already wires `worktree.create` and already returns
 a step log with a 207 for partial success, so the failure surface exists; the app
 has no UI for it.
 
-This is the single change that most changes what the feature is *for*. Three
+This is the single change that most changes what the feature is _for_. Three
 agents editing one checkout is a merge conflict with extra steps; three agents in
 three worktrees is the thing Herdr's `worktree create` was built for.
 
@@ -987,6 +1362,8 @@ offer casually, `--trust-repository` must never be sent as an automatic retry
 shown before dispatch, not generated silently.
 
 ### 7.7 Write the assignment back into Herdr
+
+**P3.**
 
 **Proposed, and cheap.** After a successful part, report display metadata so the
 operator's Herdr sidebar shows what the phone dispatched:
@@ -1006,6 +1383,8 @@ it.
 
 ### 7.8 Agents that appear without us asking
 
+**P1.**
+
 **Proposal, and this one is new information from §2.3.** Because the capability
 is ambient, an agent inside Herdr can split panes and start agents whether or not
 our app was involved. A reader who sends "split three panes and start three
@@ -1018,7 +1397,7 @@ currently cannot distinguish "an agent I dispatched" from "an agent that
 appeared", and after a fan-out that distinction is the whole story.
 
 Proposed, in `src/lib/agent-collaboration.ts`: treat an agent with no matching
-task as a first-class state — *unattributed* — rather than an absence. In the
+task as a first-class state — _unattributed_ — rather than an absence. In the
 roster pill row from §7.4, an unattributed agent shows with a neutral glyph and
 no task card; tapping it offers "Open terminal" and nothing else. That is honest,
 costs one predicate, and stops the reader assuming the five pills they see
@@ -1032,6 +1411,8 @@ of the pane strip — "2 elsewhere" — that opens the panels sheet. Not a
 notification, not a navigation, and not a count of anything we cannot prove.
 
 ### 7.9 Make the panels sheet live, or say that it is not
+
+**P1.**
 
 **Proposal, small and independent of everything else.**
 `src/components/session-map.tsx` loads once per mount and never updates. During a
@@ -1049,8 +1430,12 @@ during the one operation that changes it fastest.
 
 ### 7.10 Capability gating for all of the above
 
+**Cross-cutting**, but the proposed `agent_fanout` capability is superseded: the
+app no longer dispatches a multi-part plan, so the gate that matters is
+`agent_collaboration` (§6.1), which is P0.
+
 **Proposed:** one new Gateway capability, `agent_fanout`, advertised only when
-the backend is Herdr *and* the Gateway will actually accept a multi-part
+the backend is Herdr _and_ the Gateway will actually accept a multi-part
 dispatch. The app checks it through a `collaborationAvailability` that is finally
 wired to a call site. When it is absent, the strip stays single-select and the
 brief-mode affordance does not render — no dead chips, and an explicit sentence
@@ -1073,6 +1458,12 @@ and what §6.1 says we do not have today.
 
 ## 9. Open questions for review
 
+_Direction (2026-09-14)_ answers four of these: 1 yes (§6.1 is P0, and a fix PR
+is in progress), 3 no (the worktree toggle is P3), 5 yes (§7.9 plus §7.8 are P1,
+ahead of any dispatch work), and 6 — the architect skill is the answer, and the
+structured plan of §7.2 is deferred rather than supported. Questions 2, 4 and 7
+are still open. The list is kept as it was asked.
+
 1. Should §6.1 (the unwired capability gate) be its own card ahead of this work?
    This document argues yes.
 2. Is §6.3 — focusing an agent from the phone clearing the laptop's Done badge —
@@ -1088,7 +1479,7 @@ and what §6.1 says we do not have today.
    prompt text, with no involvement from us. Do we want the app to make that
    easier — for example a documented phrasing the reader can send — or is the
    structured plan in §7.2 the only path we support?
-7. Does the *unattributed agent* state in §7.8 belong in `CollaborationTask`
+7. Does the _unattributed agent_ state in §7.8 belong in `CollaborationTask`
    history at all, or should it stay purely derived and never persisted?
 
 ## 10. E2E note
