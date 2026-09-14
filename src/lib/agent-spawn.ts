@@ -39,19 +39,27 @@ export const AGENT_SPAWN_CAPABILITY = 'agent_spawn';
  * A gateway that predates spawning never gets asked to spawn. The capability
  * list is the gateway's own answer; guessing from a version string would make
  * every future build a special case.
+ *
+ * This used to answer `false` to everything, whatever the gateway said, on a
+ * `AGENT_SPAWN_SHIPPED` constant held back from 1.2.0 so that a store debut was
+ * not where the next defect got found. What that actually bought, once the
+ * collaboration composer arrived, was a feature nobody could reach in a shipped
+ * build and a gate that no longer answered a question about the gateway at all.
+ * The switch is gone; the capability is the switch.
+ *
+ * Two things changed underneath it and are worth writing down, because they are
+ * why a constant is no longer doing anything a constant was needed for:
+ *
+ *  - The gateway stopped over-promising. `agent_collaboration` used to be
+ *    announced by every gateway, tmux-only ones included; it is now earned per
+ *    session by a connected Herdr 0.9.0+ (muqun-gateway
+ *    `fix/collaboration-capability`). So a capability answer is now evidence
+ *    about the machine rather than about the gateway's build date.
+ *  - Nothing here spawns on the capability alone. The composer's strip is gated
+ *    on `collaborationAvailability`, which has a reason to give when the answer
+ *    is no, and this predicate is one input to that.
  */
-/**
- * Held back from 1.2.0 (Ellen, 2026-07-29). The feature works -- the last
- * defect in it, a path both halves spelled differently, was found and fixed
- * the night before submission -- but a store debut is the wrong place to
- * discover the next one. Flip this to restore every entry point at once: the
- * sheet, the quick-actions row, the home menu and the Stop control are all
- * gated on the capability answer below.
- */
-export const AGENT_SPAWN_SHIPPED = false;
-
 export function gatewaySupportsAgentSpawn(capabilities: string[] | undefined | null): boolean {
-  if (!AGENT_SPAWN_SHIPPED) return false;
   return Array.isArray(capabilities) && capabilities.includes(AGENT_SPAWN_CAPABILITY);
 }
 

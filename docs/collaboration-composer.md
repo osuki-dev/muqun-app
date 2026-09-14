@@ -29,6 +29,40 @@ longer open a page. They write a `ComposerAssignmentRequest`
 the reader's text in the field and the bundled instructions carried separately:
 named in the strip's header, appended at send, never shown in the field.
 
+## What decides whether the strip exists
+
+`collaborationAvailability(health, sessionId, backendKind)` in
+`lib/agent-collaboration`, and nothing else. It answers one of five words, and
+`assignmentStripState` turns that into "toggle, and what is in the strip":
+
+| answer        | strip                            | why                                                                                    |
+| ------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
+| `ready`       | the targets, if there are any    | go                                                                                     |
+| `gateway`     | one sentence: update the Gateway | Herdr is new enough; the Gateway does not offer `agent_collaboration`                  |
+| `herdr`       | one sentence: update Herdr       | the session's Herdr is below 0.9.0                                                     |
+| `backend`     | nothing, not even the toggle     | tmux. No agent instance identity to bind an assignment to, and no upgrade to recommend |
+| `unavailable` | nothing                          | the session's backend is not answering                                                 |
+
+Two things about the order it asks in.
+
+**The backend before the capability.** Gateways used to announce
+`agent_collaboration` unconditionally, so reading the gateway-wide list first
+was safe. They no longer do -- it is earned per session by a connected Herdr
+0.9.0+ -- so asking that first would answer `gateway` on a machine whose Gateway
+is current and whose _Herdr_ is old, naming the one upgrade guaranteed not to
+help. That is the failure this feature has already had once, and the ordering is
+what stops it coming back.
+
+**The per-session list before the version.** A current gateway sends
+`backends[].capabilities`, having pinged that backend itself. When the key is
+there it is the answer. When it is absent -- a gateway older than the field --
+the version in `backends[].version` is read here instead, as it always was.
+
+`AGENT_SPAWN_SHIPPED` used to sit in front of all of this: a constant pinned to
+`false`, which made the answer `no` for every gateway on every machine and the
+whole feature unreachable in a shipped build. It is gone. The capability is the
+switch, and the Gateway now only claims what it can do.
+
 ## Why existing-agent delivery is on
 
 `supportsExistingAgentDelivery` returned `false` for a long time, on the strength

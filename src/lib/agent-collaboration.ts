@@ -71,19 +71,103 @@ export function supportsCollaboration(kind: string | undefined): boolean {
   return kind === 'herdr';
 }
 
+/** What a Gateway calls the ability to hand a task to another assistant. */
+export const AGENT_COLLABORATION_CAPABILITY = 'agent_collaboration';
+
+/**
+ * Whether a task can be assigned in this session, and if not, what would fix it.
+ *
+ * The reason matters as much as the verdict, because AGENTS.md asks for an
+ * *actionable* explanation and there are two different upgrades behind a no:
+ *
+ * - `backend` -- this session is not Herdr. Nothing to upgrade; an assignment
+ *   binds to an opaque agent instance id and tmux has none. Ordinary terminal
+ *   use is unaffected, and the composer says nothing at all.
+ * - `unavailable` -- the session's backend is not answering, or `/health` does
+ *   not describe it. A transient state, not an upgrade.
+ * - `herdr` -- Herdr is there and too old. Update Herdr.
+ * - `gateway` -- Herdr is new enough and the Gateway does not offer the
+ *   capability. Update the Gateway.
+ * - `ready` -- go.
+ *
+ * ## Why the backend is inspected before the capability
+ *
+ * It used to read the gateway-wide capability list first, and that was safe
+ * only while every gateway announced `agent_collaboration` unconditionally.
+ * Gateways now withhold it when no session has a Herdr 0.9.0+ behind it
+ * (muqun-gateway `fix/collaboration-capability`), so asking that question first
+ * would answer `gateway` for a machine whose Gateway is perfectly current and
+ * whose *Herdr* is old -- naming the one upgrade guaranteed not to help, which
+ * is the exact failure the composer was fixed for once already.
+ *
+ * So the session's own backend is settled first, and `gateway` is only reached
+ * once Herdr has been found new enough.
+ *
+ * ## Two gateways, two answers
+ *
+ * A current gateway answers per session, in `backends[].capabilities`. That is
+ * the precise answer and it is preferred whenever the key is present -- the
+ * Gateway parsed its own backend's version and is better placed to than a
+ * regex here. Its absence is not a `false`: it means a gateway older than the
+ * field, and then the version carried in `backends[].version` is read here, as
+ * it always was.
+ */
 export function collaborationAvailability(health: HealthResponse, sessionId: string, kind: string) {
   if (kind !== 'herdr') return 'backend' as const;
-  if (!health.capabilities?.includes('agent_collaboration')) return 'gateway' as const;
   const backend =
     health.backends?.find((item) => item.sessionId === sessionId) ??
     (health.backend?.sessionId === sessionId ? health.backend : undefined);
-  if (!backend?.connected || backend.kind !== 'herdr' || !backend.version)
-    return 'unavailable' as const;
+  if (!backend?.connected || backend.kind !== 'herdr') return 'unavailable' as const;
+
+  // A gateway that answers per session has already done this comparison against
+  // the backend it is actually attached to. Withholding it for a session whose
+  // backend is a connected Herdr can only mean the version, so the reason is
+  // Herdr's -- a gateway too old for the feature has no per-session key to send.
+  if (Array.isArray(backend.capabilities))
+    return backend.capabilities.includes(AGENT_COLLABORATION_CAPABILITY)
+      ? ('ready' as const)
+      : ('herdr' as const);
+
+  if (!backend.version) return 'unavailable' as const;
   const version = /^v?(\d+)\.(\d+)\.(\d+)(?:\+.*)?$/.exec(backend.version);
   if (!version) return 'herdr' as const;
-  return Number(version[1]) > 0 || Number(version[2]) >= 9
+  if (!(Number(version[1]) > 0 || Number(version[2]) >= 9)) return 'herdr' as const;
+  return health.capabilities?.includes(AGENT_COLLABORATION_CAPABILITY)
     ? ('ready' as const)
-    : ('herdr' as const);
+    : ('gateway' as const);
+}
+
+export type CollaborationAvailability = ReturnType<typeof collaborationAvailability>;
+
+/**
+ * What the composer's assignment strip does in this session: whether the toggle
+ * that opens it exists at all, and whether opening it shows targets or one
+ * sentence naming an upgrade.
+ *
+ * Pure and here rather than inline in the workspace, because it is the decision
+ * the whole feature turns on and it used to be made by a constant. Four cases:
+ *
+ *  - **Ready, with something to offer.** A gateway that can spawn, or another
+ *    assistant already running in this session. The toggle opens the strip.
+ *  - **Ready, with nothing to offer.** No toggle: an empty row is not an answer,
+ *    and the reader is not owed an explanation for a session that simply has one
+ *    terminal in it.
+ *  - **Somebody's upgrade** (`gateway`, `herdr`). The toggle opens the strip on a
+ *    sentence naming what to update. AGENTS.md asks for an actionable
+ *    explanation, and these are the two answers where one exists.
+ *  - **Neither** (`backend`, `unavailable`). No toggle and no sentence. tmux has
+ *    no agent instance identity to bind an assignment to, so there is nothing to
+ *    upgrade and nothing the reader did wrong; ordinary terminal use is
+ *    untouched, which is the rule AGENTS.md states for it.
+ */
+export function assignmentStripState(
+  availability: CollaborationAvailability,
+  session: { canSpawn: boolean; candidates: number }
+): { toggle: boolean; upgrade?: 'gateway' | 'herdr' } {
+  if (availability === 'gateway' || availability === 'herdr')
+    return { toggle: true, upgrade: availability };
+  if (availability !== 'ready') return { toggle: false };
+  return { toggle: session.canSpawn || session.candidates > 0 };
 }
 
 export function collaborationAgents(

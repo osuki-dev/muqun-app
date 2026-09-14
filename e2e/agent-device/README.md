@@ -81,8 +81,12 @@ Capture-only flows retain their `capture` tag and run only when requested:
 and motion evidence. Some target older labels and may need updating before a new
 marketing capture. `store-shot-actions` takes `--env LANG_NAME=...`,
 `--env DEMO_LABEL=...`, and `--env ACTIONS_LABEL=...`.
-The New Task flow remains disabled while `AGENT_SPAWN_SHIPPED` is false; enable its
-`full` tag when the feature ships. Disabled coverage is never reported as passed.
+The New Task flow remains disabled, but no longer because the feature is held
+back: `AGENT_SPAWN_SHIPPED` is gone and spawning is gated on the gateway's
+`agent_spawn` capability, which the demo announces. `flows/new-task.ad` is an
+unconverted stub -- every step targets `${TARGET}` and nothing supplies it --
+so it has to be rewritten against real selectors before it can carry the `full`
+tag. Disabled coverage is never reported as passed.
 
 The suite relaunches the process instead of clearing app storage. It restores
 persistent preferences explicitly and never unpairs real servers. The terminal

@@ -330,6 +330,10 @@ msgstr "このサーバーで実行できるものを問い合わせています
 msgid "Assign this to an assistant"
 msgstr "アシスタントに任せる"
 
+#: src/components/agent-assignment-bar.tsx
+msgid "Assigning a task is unavailable"
+msgstr "タスクの割り当ては利用できません"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "アシスタントを起動しました"
@@ -3717,6 +3721,14 @@ msgstr "未追跡"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "上矢印"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "他のアシスタントにタスクを任せるには、サーバーの Herdr を 0.9.0 以降に更新し、セッションを再起動してください"
+
+#: src/components/agent-assignment-bar.tsx
+msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
+msgstr "他のアシスタントにタスクを任せるには、サーバーの Muqun Gateway を更新して再起動してください"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

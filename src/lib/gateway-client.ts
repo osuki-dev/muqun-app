@@ -495,8 +495,26 @@ export interface HealthResponse {
     connected?: boolean;
     version?: string | null;
     protocol?: number | null;
+    /** See `backends[].capabilities`; this is the same key for this session. */
+    capabilities?: string[];
   };
-  backends?: { sessionId: string; kind: string; connected: boolean; version?: string | null }[];
+  backends?: {
+    sessionId: string;
+    kind: string;
+    connected: boolean;
+    version?: string | null;
+    /**
+     * What this *session* offers, as opposed to what the gateway build
+     * implements. A capability that depends on the terminal on the other side
+     * lives here -- `agent_collaboration` is the only one so far.
+     *
+     * Optional because it is not optional on the gateway: a gateway that has
+     * the field always sends it, empty included, so `undefined` means a gateway
+     * older than the field and never "this session offers nothing". Readers
+     * must tell those two apart; see `collaborationAvailability`.
+     */
+    capabilities?: string[];
+  }[];
 }
 
 export interface SessionsResponse {
