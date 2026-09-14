@@ -418,6 +418,7 @@ msgid "Branch or commit (optional)"
 msgstr "ブランチまたはコミット（任意）"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
 msgstr "テーマを探す"
 
@@ -425,9 +426,9 @@ msgstr "テーマを探す"
 msgid "Browser"
 msgstr "ブラウザー"
 
-#: src/components/settings-theme-sheet.tsx
-msgid "Built-in themes"
-msgstr "内蔵テーマ"
+#: src/components/custom-theme-library.tsx
+msgid "Built-in"
+msgstr "標準"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -497,6 +498,10 @@ msgstr "再送する前に助手を確認してください。すでに届いて
 msgid "Check the repository URL, branch and theme file"
 msgstr "リポジトリの URL、ブランチ、テーマファイルを確認してください"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Check your connection and try again."
+msgstr "接続を確認してもう一度お試しください"
+
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
 msgstr "システム認証を確認中…"
@@ -560,7 +565,6 @@ msgstr "削除しています…"
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
-#: src/components/theme-gallery.tsx
 msgid "Close"
 msgstr "閉じる"
 
@@ -622,6 +626,10 @@ msgstr "メニューを閉じる"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "シミュレータを閉じる"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Close theme catalogue"
+msgstr "テーマカタログを閉じる"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
@@ -986,6 +994,10 @@ msgstr "Gateway に到達できませんでした"
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
 msgstr "Gateway に到達できませんでした。起動していることを確かめて、QR コードを更新してからもう一度スキャンしてください"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Could not reach the theme catalogue"
+msgstr "テーマカタログに接続できませんでした"
+
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
 msgstr "このサーバーに接続できませんでした"
@@ -1229,9 +1241,12 @@ msgid "Downloading · {0} of {1}"
 msgstr "ダウンロード中 · {0} / {1}"
 
 #: src/components/asset-viewer.tsx
-#: src/components/theme-gallery.tsx
 msgid "Downloading theme"
 msgstr "テーマをダウンロード中"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Downloading…"
+msgstr "ダウンロードしています…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
@@ -1551,6 +1566,10 @@ msgstr "挿入モード"
 msgid "Install command copied"
 msgstr "インストールコマンドをコピーしました"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Installed"
+msgstr "インストール済み"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
@@ -1724,6 +1743,10 @@ msgstr "認識済みのエージェントが動作しているパネルのみを
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "さらに読み込む"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -1759,7 +1782,7 @@ msgstr "ターミナルを読み込み中"
 msgid "Loading the transcript"
 msgstr "トランスクリプトを読み込み中"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "テーマを読み込んでいます…"
 
@@ -1992,6 +2015,10 @@ msgstr "出力はありません"
 msgid "No password or key is saved for this host."
 msgstr "このホストにはパスワードも鍵も保存されていません"
 
+#: src/components/custom-theme-library.tsx
+msgid "No personal themes yet. Import one, or browse the published themes."
+msgstr "まだ自分のテーマがありません。インポートするか、公開されているテーマを探してください"
+
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
 msgstr "この種類のファイルはプレビューできません。ファイルはサーバー上に残ります"
@@ -2033,7 +2060,7 @@ msgstr "静止画に非対応"
 msgid "No textual change"
 msgstr "テキストの変更なし"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "公開されているテーマはまだありません"
 
@@ -2332,7 +2359,7 @@ msgstr "ポート"
 msgid "PORT"
 msgstr "ポート"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "画像を準備中"
@@ -3003,6 +3030,10 @@ msgstr "サーバー一覧を表示"
 msgid "Show what is running"
 msgstr "実行中のものを表示"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Showing {shown} of {total}"
+msgstr "{total} 件中 {shown} 件を表示"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
 msgstr "表示"
@@ -3059,7 +3090,6 @@ msgstr "一部のテーマカラーはコントラストを高める必要があ
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/theme-gallery.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "問題が発生しました"
@@ -3429,17 +3459,13 @@ msgstr "テーマの URL"
 msgid "Theme, {0}"
 msgstr "テーマ、{0}"
 
-#: src/components/theme-gallery.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "muqun.dev で公開されているテーマです。開くまで何もダウンロードしません"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "このエージェントはその選択肢を提示していません"
-
-#: src/components/theme-gallery.tsx
-msgid "This app build cannot reach the theme catalogue"
-msgstr "このアプリのビルドはテーマカタログに接続できません"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -3574,6 +3600,7 @@ msgstr "信頼する"
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "もう一度試す"
 
