@@ -22,7 +22,16 @@ const consumers = {
   'cards.decoration': 'src/components/settings-chrome.tsx',
   'buttons.primary.background': 'src/components/themed-button.tsx',
   'tabs.background': 'src/app/commands.tsx',
-  'emptyState.illustration': ['src/app/(drawer)/index.tsx', 'src/theme/launch-artwork.ts'],
+  'emptyState.illustration': [
+    'src/app/(drawer)/index.tsx',
+    'src/theme/launch-artwork.ts',
+    // Reachable from Home as well, but only through an explicit reader choice.
+    'src/theme/home-hero.ts',
+  ],
+  // The resolver rather than the screen: the hero is the one slot whose
+  // visibility is a decision rather than a presence, and `home-hero.ts` is where
+  // that decision is made. The test below holds the screen to mounting it.
+  'home.hero': 'src/theme/home-hero.ts',
 } as const;
 
 test('every supported artwork slot has a named runtime consumer', () => {

@@ -128,15 +128,31 @@ reader's decoration opt-out and readability protection. `undefined` inherits,
 **`homeIdentity`'s three modes.** `default` / `hidden` / `custom`, name and logo
 independent, and a pack that says nothing gets nothing.
 
+That vocabulary is why `homeIdentity.hero`, added after v1 opened, is written as
+`{ mode: 'default' | 'hidden' }` and not as a `'shown' | 'hidden'` string. It has
+nothing to customise — the picture, its fit, its opacity and its per-mode and
+per-width overrides all belong to the `home.hero` slot — so it has no `custom`
+member, but inventing a fourth spelling for "on" inside the one object that has
+already frozen three would leave `homeIdentity` speaking two languages. Its
+`default` means what `default` means everywhere else here: the app's own
+behaviour, which for a hero is "show it if the slot is declared".
+
 **Identity.** The manifest `id` is author-provided and untrusted. Installation
 identity is local and content-hashed; a duplicate author id never silently
 overwrites.
 
 ## Growable without a version bump
 
-- **Decoration slots.** 10 today. New ones are additive once `decoration` is
-  open; a pack that uses one an app does not know simply does not decorate
-  there.
+- **Decoration slots.** 11 today, `home.hero` being the first one added since the
+  root was opened and the proof that opening it was worth doing: an app that
+  predates it ignores the slot and draws no hero, which is exactly what a pack
+  that never declared one gets. New ones are additive once `decoration` is open;
+  a pack that uses one an app does not know simply does not decorate there.
+- **`homeIdentity` members.** Additive for the same reason, with one condition
+  worth stating: a member an older app ignores must be _safe_ to ignore. `hero`
+  is, because ignoring it means not drawing a picture the older app has no slot
+  for anyway. A member whose absence would change what an app already draws
+  belongs with a `schemaVersion` bump instead.
 - **Icon names.** 3 today (`chrome.back`, `chrome.send`, `chrome.attach`). Already
   growable.
 - **Materials.** `auto` / `solid` / `glass` over 4 surfaces.
