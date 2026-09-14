@@ -83,3 +83,10 @@ This repository holds the app and nothing else. The store listing copy, the App 
 - The native suite uses process relaunches and restores persistent preferences explicitly. Run it only on dedicated, unpaired test devices; it never erases user data.
 - OTA code can reach binaries that do not contain newly added native modules; guarded imports are intentional.
 - Work on a branch, pass the local checks, then open a pull request. No external tracker or branch tool is required; do not merge protected branches manually.
+
+## Terminal keyboard
+
+The shared `VirtualKeyboard` emits characters or validated named keys; Gateway and
+SSH workspaces own dispatch. Contextual combinations and nvim actions share one
+shortcut strip. See [Terminal soft keyboard](docs/terminal-soft-keyboard.md) for
+modifier state, exact sequence semantics and device validation.

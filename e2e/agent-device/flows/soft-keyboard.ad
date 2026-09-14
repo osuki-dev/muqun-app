@@ -1,0 +1,58 @@
+# Complete combinations share one row with contextual editor actions.
+wait "label=\"Open on-screen keyboard\"" 10000
+press "label=\"Open on-screen keyboard\""
+wait "label=\"Hide keyboard\"" 10000
+is visible "label=\"Control\""
+is visible "label=\"Alt\""
+is visible "label=\"Return\""
+is hidden "label=\"Send Enter\""
+is hidden "label=\"Send Escape\""
+is visible "label=\"Send Shift Tab\""
+# Shift is explicit and one-shot, with no automatic capitalization afterward.
+press "label=\"Shift\""
+is visible "id=\"virtual-key-q\" label=\"Q\""
+press "id=\"virtual-key-q\""
+is visible "id=\"virtual-key-q\" label=\"q\""
+# A modifier changes the next actual key instead of inserting its label.
+press "label=\"Control\""
+is visible "label=\"Control ✓\""
+press "id=\"virtual-key-a\""
+is hidden "label=\"Control ✓\""
+press "label=\"Alt\""
+is visible "label=\"Alt ✓\""
+press "label=\"Left arrow\""
+is hidden "label=\"Alt ✓\""
+# All three modifiers survive until the named navigation key consumes them.
+press "id=\"virtual-key-ctrl\""
+press "label=\"Shift\""
+press "id=\"virtual-key-alt\""
+is visible "label=\"Control ✓\""
+is visible "label=\"Alt ✓\""
+is visible "id=\"virtual-key-q\" label=\"Q\""
+press "label=\"Right arrow\""
+is hidden "label=\"Control ✓\""
+is hidden "label=\"Alt ✓\""
+is visible "id=\"virtual-key-q\" label=\"q\""
+# Both symbol pages and the return to letters keep the keyboard open.
+press "label=\"Symbols\""
+is visible "id=\"virtual-key-1\""
+press "label=\"More symbols\""
+is visible "id=\"virtual-key-[\""
+press "id=\"virtual-key-[\""
+press "label=\"Letters\""
+is visible "id=\"virtual-key-q\""
+screenshot "shots/soft-keyboard-qwerty.png"
+press "label=\"Hide keyboard\""
+wait "label=\"Open on-screen keyboard\"" 10000
+
+# The editor uses the same first row, with its contextual macros at the front.
+press "label=\"Switch to nvim\""
+wait "label=\"Show the editor keyboard\"" 10000
+press "label=\"Show the editor keyboard\""
+wait "label=\"Hide keyboard\"" 10000
+is visible "label=\"Send Search\""
+is visible "label=\"Send Command mode\""
+is visible "label=\"Send Write the file\""
+is hidden "label=\"Send Enter\""
+is visible "id=\"virtual-key-q\""
+screenshot "shots/soft-keyboard-nvim.png"

@@ -32,6 +32,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   EDITOR_ACTIONS,
+  keyboardCombinationKeys,
   terminalKeysForPane,
   withEditorActions,
   type TerminalKey,
@@ -112,6 +113,7 @@ describe('every key the terminal row can show says what it does', () => {
     ...terminalKeysForPane(null, 'nvim'),
     ...withEditorActions([]),
     ...EDITOR_ACTIONS,
+    ...keyboardCombinationKeys(withEditorActions(terminalKeysForPane(null, 'nvim'))),
   ];
 
   test('the sweep found the real tables, not an empty list', () => {
