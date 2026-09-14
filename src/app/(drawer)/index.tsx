@@ -35,6 +35,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
+import { HomeHero } from '@/components/home-hero';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -572,6 +573,18 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           ) : null}
 
           <ThemeArtwork slot="home.decoration" banner />
+
+          {/* The pack's own illustration, between the header and the machines.
+            Absent while the "Pair your first server" card is up: that card
+            already carries `emptyState.illustration`, and two pictures stacked
+            on an otherwise empty screen is a gallery rather than an invitation.
+            It is also independent of the logo pill above -- a reader can keep
+            the mark and drop the picture, or the other way round -- because the
+            two answer different questions: what the app is called, and what the
+            theme looks like. */}
+          {!loading && !hydrationError && records.length > 0 ? (
+            <HomeHero scrollY={scrollY} />
+          ) : null}
 
           {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
           {loading && !hydrationError ? (
