@@ -258,6 +258,7 @@ import {
   keyCap,
   parseNvimMode,
   terminalKeysForPane,
+  keyboardCombinationKeys,
   terminalKeysFromGateway,
   withEditorActions,
 } from '@/lib/terminal-keys';
@@ -3466,7 +3467,7 @@ export function ServerTerminalWorkspace({
     if (keyScope) recordUsage(keyScope, item.key);
     try {
       if (item.text === undefined) {
-        await sendPaneKeys(data.sessionId, requestPaneId, [item.key]);
+        await sendPaneKeys(data.sessionId, requestPaneId, item.keys ?? [item.key]);
       } else {
         // A cap made of characters is still a key the reader pressed, so it
         // goes as keys: `:` has to open nvim's command line rather than arrive
@@ -3755,30 +3756,22 @@ export function ServerTerminalWorkspace({
   // inside the keyboard panel when that is up. Opening the keyboard used to
   // take this row away, which on an editor meant losing `esc`, `:w` and the
   // Ctrl chords at the moment the reader started typing.
-  const terminalKeyButtons = terminalKeys.map((item) => (
-    <TerminalKeyButton
-      key={item.key}
-      item={item}
-      sending={sendingKey === item.key}
-      disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
-      onPress={() => void sendTerminalKey(item)}
-      textColor={chromeText}
-      background={chromeGlass}
-      activeBackground={theme.colors.primary}
-      activeText={theme.colors.onPrimary}
-    />
-  ));
+  const renderTerminalKeyButtons = (keys: TerminalKey[]) =>
+    keys.map((item) => (
+      <TerminalKeyButton
+        key={item.key}
+        item={item}
+        sending={sendingKey === item.key}
+        disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
+        onPress={() => void sendTerminalKey(item)}
+        textColor={chromeText}
+        background={chromeGlass}
+        activeBackground={theme.colors.primary}
+        activeText={theme.colors.onPrimary}
+      />
+    ));
 
-  const terminalKeyStrip = (
-    <ScrollView
-      horizontal
-      keyboardShouldPersistTaps="always"
-      showsHorizontalScrollIndicator={false}
-      style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
-      contentContainerStyle={styles.terminalKeyList}>
-      {terminalKeyButtons}
-    </ScrollView>
-  );
+  const terminalKeyButtons = renderTerminalKeyButtons(terminalKeys);
 
   /**
    * The way back to a composer the app's keyboard stood down.
@@ -3872,7 +3865,14 @@ export function ServerTerminalWorkspace({
    */
   const keyboardShortcuts = dock.keysInKeyboard ? (
     <View style={styles.keyRowWrap}>
-      {terminalKeyStrip}
+      <ScrollView
+        horizontal
+        keyboardShouldPersistTaps="always"
+        showsHorizontalScrollIndicator={false}
+        style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
+        contentContainerStyle={styles.terminalKeyList}>
+        {renderTerminalKeyButtons(keyboardCombinationKeys(terminalKeys))}
+      </ScrollView>
       {dock.composerEntry ? composerEntry : null}
     </View>
   ) : undefined;
@@ -4030,6 +4030,7 @@ export function ServerTerminalWorkspace({
     <>
       {dock.virtualKeyboard ? (
         <VirtualKeyboard
+          key={`${serverId}:${data.sessionId}:${selection.paneId}`}
           disabled={connection.phase !== 'connected' || !selectedPane}
           onText={typeText}
           onKey={typeKey}
@@ -4716,6 +4717,7 @@ export function ServerTerminalWorkspace({
                     // this large appearing between two frames read as a glitch.
                     <Animated.View entering={riseIn()} exiting={fadeOutDown('short')}>
                       <VirtualKeyboard
+                        key={`${serverId}:${data.sessionId}:${selection.paneId}`}
                         disabled={connection.phase !== 'connected' || !selectedPane}
                         onText={typeText}
                         onKey={typeKey}

@@ -15,6 +15,8 @@ export type TerminalKey = {
    * through the text endpoint, which is the same one the composer uses.
    */
   text?: string;
+  /** An ordered sequence sent in one key request, never a synthetic key name. */
+  keys?: string[];
   /** Press Enter after `text`, because a `:` command line has to be run. */
   submit?: boolean;
   /**
@@ -347,6 +349,36 @@ export function terminalKeysForPane(
     return [...BASE, ...EDITOR, ...NAVIGATION];
   }
   return [...BASE, ...SHELL, ...NAVIGATION];
+}
+
+/** Full keyboard shortcuts never duplicate the single keys on the keyboard. */
+export function keyboardCombinationKeys(keys: TerminalKey[]): TerminalKey[] {
+  const required: TerminalKey[] = [
+    { label: 'Shift Tab', key: 'shift+tab', accessibilityLabel: 'Shift Tab' },
+    { label: 'Ctrl C', key: 'ctrl+c', accessibilityLabel: 'Control C' },
+    {
+      label: 'Esc Esc',
+      key: 'sequence:escape',
+      cap: 'Esc Esc',
+      accessibilityLabel: 'Escape twice',
+      keys: ['esc', 'esc'],
+    },
+    ...['left', 'down', 'up', 'right'].map((direction) => ({
+      label: `Alt ${direction}`,
+      key: `alt+${direction}`,
+      accessibilityLabel: `Alt ${direction}`,
+    })),
+  ];
+  const seen = new Set<string>();
+  return [
+    ...keys.filter((item) => item.text !== undefined),
+    ...required,
+    ...keys.filter((item) => item.text === undefined && item.key.includes('+')),
+  ].filter((item) => {
+    if (seen.has(item.key)) return false;
+    seen.add(item.key);
+    return true;
+  });
 }
 
 /**

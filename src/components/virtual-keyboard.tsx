@@ -23,6 +23,7 @@ import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { feedback } from '@/lib/feedback';
 import { timing } from '@/lib/motion';
+import { changeKeyboardLayout, resolveKeyboardInput } from '@/lib/virtual-keyboard-input';
 
 /**
  * A full on-screen keyboard that types straight into the pane.
@@ -79,7 +80,7 @@ const SYMBOL_ROWS = [
 const SHIFTED_SYMBOL_ROWS = [
   ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
   ['_', '\\', '=', '+', '[', ']', '{', '}', '#', '%'],
-  ['<', '>', '`', '^', '*', '“', '”'],
+  ['<', '>', '`', '^', '*', '/', '-'],
 ];
 
 /** Every row is this many key widths across. */
@@ -128,8 +129,8 @@ export function VirtualKeyboard({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const [shift, setShift] = useState(false);
-  const [symbols, setSymbols] = useState(false);
+  const [layout, setLayout] = useState({ symbols: false, moreSymbols: false, shift: false });
+  const { symbols, moreSymbols, shift } = layout;
   /**
    * Ctrl is held for one key, the way Shift is.
    *
@@ -141,6 +142,15 @@ export function VirtualKeyboard({
    * behalf.
    */
   const [ctrl, setCtrl] = useState(false);
+  const [alt, setAlt] = useState(false);
+
+  useEffect(() => {
+    if (disabled) {
+      setCtrl(false);
+      setAlt(false);
+      setLayout((value) => changeKeyboardLayout(value, 'consume'));
+    }
+  }, [disabled]);
 
   const keyText = theme.colors.text;
   const keyFill = surfaceBackground(withAlpha(theme.colors.text, appChrome.opacity.chromeControl));
@@ -150,24 +160,21 @@ export function VirtualKeyboard({
   const activeFill = surfaceBackground(theme.colors.primary);
   const activeText = theme.colors.onPrimary;
 
-  const rows = symbols ? (shift ? SHIFTED_SYMBOL_ROWS : SYMBOL_ROWS) : LETTER_ROWS;
+  const rows = symbols ? (moreSymbols ? SHIFTED_SYMBOL_ROWS : SYMBOL_ROWS) : LETTER_ROWS;
 
-  function pressChar(char: string) {
-    // A chord is a key name, not text: `ctrl+w` goes through the key endpoint
-    // the way `esc` does, because what it sends is a control byte and not a
-    // character the pane could have received by typing. Ctrl wins over Shift,
-    // since `⌃W` and `⌃⇧W` are the same byte and only one of them is a name
-    // the gateway takes.
-    if (ctrl) {
-      onKey(`ctrl+${char.toLowerCase()}`);
-      setCtrl(false);
-      if (shift) setShift(false);
-      return;
-    }
-    const value = !symbols && shift ? char.toUpperCase() : char;
-    onText(value);
-    // Shift is one-shot for letters, the way a phone keyboard behaves.
-    if (shift && !symbols) setShift(false);
+  function inputFor(value: string, kind: 'character' | 'key') {
+    return resolveKeyboardInput(value, kind, { ctrl, alt, shift });
+  }
+
+  function pressInput(value: string, kind: 'character' | 'key') {
+    if (disabled) return;
+    const input = inputFor(value, kind);
+    if (!input) return;
+    if ('text' in input) onText(input.text);
+    else onKey(input.key);
+    setCtrl(false);
+    setAlt(false);
+    setLayout((value) => changeKeyboardLayout(value, 'consume'));
   }
 
   return (
@@ -186,14 +193,14 @@ export function VirtualKeyboard({
           color={keyText}
           fill={fnFill}
           disabled={disabled}
-          onPress={() => onKey('esc')}
+          onPress={() => pressInput('esc', 'key')}
         />
         <FunctionKey
           label="tab"
           color={keyText}
           fill={fnFill}
           disabled={disabled}
-          onPress={() => onKey('tab')}
+          onPress={() => pressInput('tab', 'key')}
         />
         {/* Spelled, not `⌃`. Its two neighbours are words, and the glyph is a
             thin chevron that reads as the `^` character sitting one page away
@@ -207,6 +214,15 @@ export function VirtualKeyboard({
           accessibilityLabel={t`Control`}
           selected={ctrl}
           onPress={() => setCtrl((value) => !value)}
+        />
+        <FunctionKey
+          label="alt"
+          color={alt ? activeText : keyText}
+          fill={alt ? activeFill : fnFill}
+          disabled={disabled}
+          accessibilityLabel={t`Alt`}
+          selected={alt}
+          onPress={() => setAlt((value) => !value)}
         />
         <VirtualKey
           accessibilityLabel={t`Hide keyboard`}
@@ -230,21 +246,22 @@ export function VirtualKeyboard({
             {last ? (
               <ShiftKey
                 symbols={symbols}
-                shift={shift}
+                shift={symbols ? moreSymbols : shift}
                 keyFill={keyFill}
                 keyText={keyText}
                 activeFill={activeFill}
                 activeText={activeText}
-                onPress={() => setShift((value) => !value)}
+                onPress={() => setLayout((value) => changeKeyboardLayout(value, 'shift'))}
               />
             ) : null}
 
             {row.map((char) => (
               <VirtualKey
                 key={char}
-                accessibilityLabel={char}
-                disabled={disabled}
-                onPress={() => pressChar(char)}
+                testID={`virtual-key-${char}`}
+                accessibilityLabel={!symbols && shift ? char.toUpperCase() : char}
+                disabled={disabled || inputFor(char, 'character') === null}
+                onPress={() => pressInput(char, 'character')}
                 style={[styles.key, styles.unitKey, { backgroundColor: keyFill }]}>
                 {({ pressed }) => (
                   <Text
@@ -261,7 +278,7 @@ export function VirtualKeyboard({
               <VirtualKey
                 accessibilityLabel={t`Backspace`}
                 disabled={disabled}
-                onPress={() => onKey('backspace')}
+                onPress={() => pressInput('backspace', 'key')}
                 style={[styles.key, styles.shiftKey, { backgroundColor: keyFill }]}>
                 {({ pressed }) => <Delete size={18} color={pressed ? activeText : keyText} />}
               </VirtualKey>
@@ -277,10 +294,7 @@ export function VirtualKeyboard({
         <VirtualKey
           accessibilityLabel={symbols ? t`Letters` : t`Symbols`}
           commit="up"
-          onPress={() => {
-            setSymbols((value) => !value);
-            setShift(false);
-          }}
+          onPress={() => setLayout((value) => changeKeyboardLayout(value, 'symbols'))}
           style={[styles.key, styles.pageKey, { backgroundColor: keyFill }]}>
           {({ pressed }) => (
             <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
@@ -291,7 +305,7 @@ export function VirtualKeyboard({
         <VirtualKey
           accessibilityLabel={t`Space`}
           disabled={disabled}
-          onPress={() => onText(' ')}
+          onPress={() => pressInput(' ', 'character')}
           style={[styles.key, styles.spaceKey, { backgroundColor: keyFill }]}>
           {({ pressed }) => (
             <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
@@ -309,7 +323,7 @@ export function VirtualKeyboard({
               accessibilityLabel={_(arrow.accessibilityLabel)}
               disabled={disabled}
               hitSlop={{ top: 6, bottom: 6 }}
-              onPress={() => onKey(arrow.key)}
+              onPress={() => pressInput(arrow.key, 'key')}
               style={[styles.key, styles.unitKey, { backgroundColor: fnFill }]}>
               {({ pressed }) => (
                 <Text
@@ -325,7 +339,7 @@ export function VirtualKeyboard({
         <VirtualKey
           accessibilityLabel={t`Return`}
           disabled={disabled}
-          onPress={() => onKey('enter')}
+          onPress={() => pressInput('enter', 'key')}
           style={[styles.key, styles.returnKey, { backgroundColor: keyFill }]}>
           {({ pressed }) => (
             <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
@@ -339,12 +353,7 @@ export function VirtualKeyboard({
 }
 
 /**
- * Shift, which is the one key on this keyboard that holds a state.
- *
- * Every other key is momentary: it is pressed, it sends, and there is nothing
- * to remember. Shift is sticky, so it is the only key whose look is a *fact*
- * rather than a touch -- and it used to change that look between two frames,
- * which on a keyboard reads as a repaint rather than as a mode.
+ * Shift animates its one-shot state without adding worklets to every letter.
  *
  * The documented reason the other keys stay on plain `Pressable` -- forty-odd
  * shared values blocking frames on mount, see `VirtualKey` below -- does not
@@ -380,7 +389,8 @@ function ShiftKey({
   return (
     <VirtualKey
       accessibilityLabel={symbols ? t`More symbols` : t`Shift`}
-      accessibilityState={{ selected: shift }}
+      accessibilityRole="togglebutton"
+      accessibilityState={{ selected: shift, checked: shift }}
       onPress={onPress}
       style={[styles.key, styles.shiftKey, { backgroundColor: keyFill }]}>
       {({ pressed }) => (
@@ -445,8 +455,10 @@ function FunctionKey({
   const theme = useThemeTokens();
   return (
     <VirtualKey
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={selected === undefined ? undefined : { selected }}
+      testID={`virtual-key-${label}`}
+      accessibilityLabel={`${accessibilityLabel ?? label}${selected ? ' ✓' : ''}`}
+      accessibilityRole={selected === undefined ? 'button' : 'togglebutton'}
+      accessibilityState={selected === undefined ? undefined : { selected, checked: selected }}
       disabled={disabled}
       onPress={onPress}
       style={[styles.key, styles.functionWide, { backgroundColor: fill }]}>
@@ -455,7 +467,7 @@ function FunctionKey({
           variant="caption"
           color={pressed ? theme.colors.onPrimary : color}
           style={styles.keyText}>
-          {label}
+          {`${label}${selected ? ' ✓' : ''}`}
         </Text>
       )}
     </VirtualKey>
@@ -498,6 +510,8 @@ function VirtualKey({
   return (
     <Pressable
       {...props}
+      accessibilityRole={props.accessibilityRole ?? 'button'}
+      accessibilityState={{ ...props.accessibilityState, disabled: Boolean(disabled) }}
       disabled={disabled}
       onPressIn={(event) => {
         if (!disabled) {
@@ -541,39 +555,11 @@ const KEY_GAP = 5;
 const ARROW_GAP = 3;
 /** Keeps ten-unit rows comfortably key-sized instead of stretching across a Pad pane. */
 const VIRTUAL_KEYBOARD_MAX_WIDTH = 640;
-/**
- * The height of every key, letter and function alike.
- *
- * Measured against what the reader has just had under their thumb rather than
- * against a guideline. An iPhone's own letter keys are about 42 points tall on
- * a 390-wide phone and Gboard is within a point of that; the terminal keyboards
- * this one is judged beside -- Blink, Termius -- run 36 to 40. This sits inside
- * that band.
- *
- * What it is *not* allowed below is the touch target, and the target is this
- * plus `KEY_GAP`: the gap between two keys is dead space that belongs to
- * whichever of them the finger is nearer, so the reachable area of a key is its
- * height plus one gap. 38 + 5 is 43, which clears the 44-point guideline within
- * a point and clears the 40 this app holds itself to outright. The test below
- * asserts the sum rather than the height, because the height on its own is not
- * the number that decides whether a key can be hit.
- *
- * It was 44, which put the pitch at 49 and cost five rows 30 points of the
- * file -- close to two terminal rows on a phone, taken from the one surface
- * where the whole argument was that the program owns every row.
- *
- * One value, and deliberately not a density prop: the dock's keyboard and the
- * editor panel's are the same keyboard, and a reader who learns where `g` is
- * with the dock up must find it in the same place when nvim opens.
- */
-const KEY_HEIGHT = 38;
+/** A real 44-point hit target; gaps between keys are not touch targets. */
+const KEY_HEIGHT = 44;
 
-// Every weight below is in key widths, and every row adds up to ROW_UNITS
-// exactly -- 1.5 + 3.2 + 3.8 + 1.5 on the bottom row, 4.25 + 4.25 + 1.5 on the
-// function row. That sum is the whole layout, and it is asserted in
-// `virtual-keyboard-layout.test.ts` because a row that quietly adds up to 10.05
-// still renders: flex normalises it, and every key on the row comes out half a
-// percent narrow instead.
+// Every row totals ten units: four 2.125u utility keys and a 1.5u hide key;
+// or 1.5u symbols, 3.2u space, 3.8u arrows and 1.5u Return.
 const styles = StyleSheet.create({
   keyboard: {
     width: '100%',
@@ -614,9 +600,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /** esc and tab, in key widths: two of these and the toggle make the row. */
+  /** Four utility keys plus the hide key fill one ten-unit row. */
   functionWide: {
-    flex: 4.25,
+    flex: 2.125,
   },
   shiftKey: {
     flex: SHIFT_UNITS,

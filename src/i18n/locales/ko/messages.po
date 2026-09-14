@@ -263,6 +263,26 @@ msgstr "카메라 허용"
 msgid "Allow the camera, or enter the address instead."
 msgstr "카메라를 허용하거나 주소를 입력하세요"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Alt"
+msgstr "Alt"
+
+#: src/i18n/labels.ts
+msgid "Alt Down arrow"
+msgstr "Alt 아래쪽 화살표"
+
+#: src/i18n/labels.ts
+msgid "Alt Left arrow"
+msgstr "Alt 왼쪽 화살표"
+
+#: src/i18n/labels.ts
+msgid "Alt Right arrow"
+msgstr "Alt 오른쪽 화살표"
+
+#: src/i18n/labels.ts
+msgid "Alt Up arrow"
+msgstr "Alt 위쪽 화살표"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "답변"
@@ -1317,6 +1337,10 @@ msgstr "URL 직접 입력"
 #: src/i18n/labels.ts
 msgid "Escape"
 msgstr "이스케이프"
+
+#: src/i18n/labels.ts
+msgid "Escape twice"
+msgstr "Escape 두 번"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx

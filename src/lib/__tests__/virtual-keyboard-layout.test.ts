@@ -53,7 +53,7 @@ const SHIFT_UNITS = Number(source.match(/const SHIFT_UNITS = ([0-9.]+)/)?.[1]);
 const KEY_HEIGHT = Number(source.match(/const KEY_HEIGHT = ([0-9.]+)/)?.[1]);
 const KEY_GAP = Number(source.match(/const KEY_GAP = ([0-9.]+)/)?.[1]);
 /** The smallest hit area, key plus gap, this keyboard is allowed to ship. */
-const MINIMUM_TOUCH_TARGET = 40;
+const MINIMUM_TOUCH_TARGET = 44;
 const VIRTUAL_KEYBOARD_MAX_WIDTH = Number(
   source.match(/const VIRTUAL_KEYBOARD_MAX_WIDTH = ([0-9.]+)/)?.[1]
 );
@@ -130,7 +130,7 @@ describe('the bottom row is a row like the others', () => {
     expect(functionRow).toContain('tab');
     expect(functionRow).toContain('KeyboardIcon');
     expect(functionRow).not.toContain('ARROWS');
-    expect(weight('functionWide') * 2 + weight('closeKey')).toBeCloseTo(ROW_UNITS, 5);
+    expect(weight('functionWide') * 4 + weight('closeKey')).toBeCloseTo(ROW_UNITS, 5);
   });
 
   test('the arrows read left, down, up, right', () => {
@@ -159,14 +159,9 @@ describe('the keyboard adapts without stretching its keys', () => {
   });
 
   test('a key is still comfortably hittable at the height it was cut to', () => {
-    // The hit area is the key plus one gap -- the space between two keys
-    // belongs to whichever of them the finger is nearer -- so that sum is what
-    // the floor applies to, not the height on its own. Shrinking the keyboard
-    // to give the file back its rows is only allowed to go this far.
-    expect(KEY_HEIGHT + KEY_GAP).toBeGreaterThanOrEqual(MINIMUM_TOUCH_TARGET);
-    // And not so far that it stops reading as a keyboard: the terminal
-    // keyboards this one is measured against run 36 to 40.
-    expect(KEY_HEIGHT).toBeGreaterThanOrEqual(36);
+    // Empty gaps are not hit targets. The actual key height must meet the floor.
+    expect(KEY_HEIGHT).toBeGreaterThanOrEqual(MINIMUM_TOUCH_TARGET);
+    expect(KEY_GAP).toBeGreaterThan(0);
     expect(styleBody('key')).toContain('height: KEY_HEIGHT');
     expect(source.match(/\bfunctionKey:\s*\{[^}]*\bheight:/s)).toBeNull();
   });

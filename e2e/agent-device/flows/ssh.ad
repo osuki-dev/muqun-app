@@ -50,6 +50,9 @@ is hidden "${TARGET}"
 is visible "${TARGET}"
 
 # section s17
+# Sending a terminal key can raise a development warning over the compact dock.
+# Clear the overlay before tapping the keyboard toggle underneath it.
+react-native dismiss-overlay
 press "${TARGET}"
 
 # section s18

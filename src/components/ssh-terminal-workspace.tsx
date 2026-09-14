@@ -65,13 +65,18 @@ import {
   type SshHostRecord,
   type SshTrustedHostKey,
 } from '@/lib/ssh-hosts';
-import { encodeTerminalKey, encodeTerminalText } from '@/lib/ssh-key-bytes';
+import {
+  encodeTerminalKey,
+  encodeTerminalKeySequence,
+  encodeTerminalText,
+} from '@/lib/ssh-key-bytes';
 import { sanitizeServerText, SERVER_LINE_LIMIT, sshFailureLine } from '@/lib/ssh-server-text';
 import { SshTerminalSession } from '@/lib/ssh-terminal-session';
 import {
   INSERT_MODE_KEYS,
   keyCap,
   terminalKeysForPane,
+  keyboardCombinationKeys,
   withEditorActions,
   type TerminalKey,
 } from '@/lib/terminal-keys';
@@ -860,6 +865,13 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       if (item.submit) typeKey('enter');
       return;
     }
+    if (item.keys) {
+      const bytes = encodeTerminalKeySequence(item.keys, {
+        applicationCursorKeys: terminalRef.current.modes.applicationCursorKeys,
+      });
+      if (bytes) send(bytes);
+      return;
+    }
     typeKey(item.key);
   }
 
@@ -938,13 +950,13 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     </PressableScale>
   );
 
-  const keyStrip = (
+  const renderKeyStrip = (keys: TerminalKey[]) => (
     <ScrollView
       horizontal
       keyboardShouldPersistTaps="always"
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.keyList}>
-      {terminalKeys.map((item) => (
+      {keys.map((item) => (
         <TerminalKeyChip
           key={item.key}
           item={item}
@@ -957,6 +969,8 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       ))}
     </ScrollView>
   );
+
+  const keyStrip = renderKeyStrip(terminalKeys);
 
   /**
    * The way to the composer from a surface that has stood it down.
@@ -981,6 +995,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   /** The app's own keyboard, wherever it is standing: in the dock, or floating. */
   const virtualKeyboard = (
     <VirtualKeyboard
+      key={hostId}
       disabled={!connected}
       onText={typeText}
       onKey={typeKey}
@@ -988,7 +1003,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
       shortcuts={
         dock.keysInKeyboard ? (
           <View style={styles.keyRow}>
-            {keyStrip}
+            {renderKeyStrip(keyboardCombinationKeys(terminalKeys))}
             {dock.composerEntry ? composerEntry : null}
           </View>
         ) : undefined

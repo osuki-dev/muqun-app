@@ -240,6 +240,11 @@ export const terminalKeyDescription: Record<string, MessageDescriptor> = {
   'Control R, reverse search': msg`Control R, reverse search`,
   'Control Z, suspend': msg`Control Z, suspend`,
   'Control L, clear screen': msg`Control L, clear screen`,
+  'Escape twice': msg`Escape twice`,
+  'Alt left': msg`Alt Left arrow`,
+  'Alt down': msg`Alt Down arrow`,
+  'Alt up': msg`Alt Up arrow`,
+  'Alt right': msg`Alt Right arrow`,
   // Moving around.
   'Left arrow': msg`Left arrow`,
   'Down arrow': msg`Down arrow`,
