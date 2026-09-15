@@ -13,6 +13,7 @@ import { ScreenHeader } from '@/components/screen-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { CandidateThemeProvider } from '@/components/theme-candidate';
 import { themeDraftSessions, type ThemeEditorCandidate } from '@/theme/draft-session';
+import type { InstalledTheme } from '@/theme/repository';
 
 /**
  * The theme being looked at, worn by the screen looking at it.
@@ -34,6 +35,7 @@ import { themeDraftSessions, type ThemeEditorCandidate } from '@/theme/draft-ses
 export default function CustomThemeScreen() {
   const { draft } = useLocalSearchParams<{ draft?: string }>();
   const candidate = typeof draft === 'string' ? themeDraftSessions.get(draft) : undefined;
+  const [appearance, setAppearance] = useState<InstalledTheme | undefined>();
   useEffect(() => {
     if (typeof draft === 'string') return themeDraftSessions.hold(draft);
   }, [draft]);
@@ -42,13 +44,30 @@ export default function CustomThemeScreen() {
     <CandidateThemeProvider
       manifest={candidate.manifest}
       assets={candidate.assets ?? candidate.prepared?.assets}
+      appearance={
+        appearance?.manifest === candidate.manifest
+          ? appearance
+          : {
+              id: 'candidate',
+              manifest: candidate.manifest,
+              assets: candidate.assets ?? candidate.prepared?.assets ?? {},
+              hideHomeLogo: true,
+              hideHomeText: true,
+            }
+      }
       installationId={candidate.id}>
-      <CustomThemeScene candidate={candidate} />
+      <CustomThemeScene candidate={candidate} onPreviewAppearanceChange={setAppearance} />
     </CandidateThemeProvider>
   );
 }
 
-function CustomThemeScene({ candidate }: { candidate?: ThemeEditorCandidate }) {
+function CustomThemeScene({
+  candidate,
+  onPreviewAppearanceChange,
+}: {
+  candidate?: ThemeEditorCandidate;
+  onPreviewAppearanceChange?: (appearance: InstalledTheme) => void;
+}) {
   const { t } = useLingui();
   const router = useRouter();
   const theme = useThemeTokens();
@@ -96,6 +115,8 @@ function CustomThemeScene({ candidate }: { candidate?: ThemeEditorCandidate }) {
           {candidate ? (
             <CustomThemeLibrary
               initialCandidate={candidate}
+              mode={candidate.id ? 'manage' : 'preview'}
+              onPreviewAppearanceChange={onPreviewAppearanceChange}
               detail
               ownsPreparedAssets={false}
               onClosePreview={close}

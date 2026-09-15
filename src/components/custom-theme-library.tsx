@@ -24,7 +24,7 @@ import {
   listLayout,
 } from '@/lib/motion';
 import { loadThemeTab, saveThemeTab, type ThemeTab } from '@/lib/theme-tab-preference';
-import { effectiveThemeManifest } from '@/theme/repository';
+import { effectiveThemeManifest, type InstalledTheme } from '@/theme/repository';
 import { PressableScale } from '@/components/pressable-scale';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
@@ -104,6 +104,14 @@ function ThemeCover({
  * including the leave that follows an apply.
  */
 export type ThemePrimaryAction = { applies: boolean; disabled: boolean; run: () => void };
+type DraftAppearance = Pick<
+  InstalledTheme,
+  | 'terminalBackgroundOpacity'
+  | 'surfaceBackgroundOpacity'
+  | 'hideHomeLogo'
+  | 'hideHomeText'
+  | 'homeHero'
+>;
 
 export function CustomThemeLibrary({
   initialManifest,
@@ -113,6 +121,8 @@ export function CustomThemeLibrary({
   ownsPreparedAssets = true,
   onClosePreview,
   onPrimaryActionChange,
+  mode = 'manage',
+  onPreviewAppearanceChange,
   tabs = false,
   children,
 }: {
@@ -120,6 +130,8 @@ export function CustomThemeLibrary({
   initialCandidate?: ThemeEditorCandidate;
   onOpenCandidate?: (candidate: ThemeEditorCandidate) => void;
   detail?: boolean;
+  mode?: 'preview' | 'manage';
+  onPreviewAppearanceChange?: (appearance: InstalledTheme) => void;
   ownsPreparedAssets?: boolean;
   onClosePreview?: () => void;
   /**
@@ -180,6 +192,10 @@ export function CustomThemeLibrary({
     initialCandidate ?? (initialManifest ? { manifest: initialManifest } : null)
   );
   const [error, setError] = useState<string | null>(null);
+  const [draftAppearance, setDraftAppearance] = useState<DraftAppearance>({
+    hideHomeLogo: true,
+    hideHomeText: true,
+  });
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Copying a dozen images into permanent storage reports nothing on its own.
@@ -223,6 +239,26 @@ export function CustomThemeLibrary({
     library.selection?.kind === 'custom' && library.selection.id === candidate?.id;
   const browsing = !initialManifest && !initialCandidate && !candidate;
   const installedCandidate = library.themes.find((entry) => entry.id === candidate?.id);
+  const appearance =
+    installedCandidate ??
+    (candidate
+      ? {
+          id: 'candidate',
+          manifest: candidate.manifest,
+          assets,
+          ...draftAppearance,
+        }
+      : undefined);
+  useEffect(() => {
+    if (candidate && !installedCandidate) {
+      onPreviewAppearanceChange?.({
+        id: 'candidate',
+        manifest: candidate.manifest,
+        assets: candidate.assets ?? candidate.prepared?.assets ?? {},
+        ...draftAppearance,
+      });
+    }
+  }, [candidate, installedCandidate, draftAppearance, onPreviewAppearanceChange]);
   // The applied theme, when it is one of the reader's rather than a built-in
   // pack -- which is the only case that has a manifest, and so a cover.
   const currentInstalled =
@@ -280,6 +316,17 @@ export function CustomThemeLibrary({
     const id = candidate.id ?? store.save(JSON.stringify(candidate.manifest), installedAssets).id;
     // Retain the installed identity even if a subsequent activation write fails.
     setCandidate({ ...candidate, id });
+    if (!installedCandidate) {
+      if (draftAppearance.terminalBackgroundOpacity !== undefined)
+        store.setTerminalBackgroundOpacity(id, draftAppearance.terminalBackgroundOpacity);
+      if (draftAppearance.surfaceBackgroundOpacity !== undefined)
+        store.setSurfaceBackgroundOpacity(id, draftAppearance.surfaceBackgroundOpacity);
+      if (draftAppearance.hideHomeLogo !== undefined)
+        store.setHideHomeLogo(id, draftAppearance.hideHomeLogo);
+      if (draftAppearance.hideHomeText !== undefined)
+        store.setHideHomeText(id, draftAppearance.hideHomeText);
+      if (draftAppearance.homeHero !== undefined) store.setHomeHero(id, draftAppearance.homeHero);
+    }
     if (apply) {
       store.apply({ kind: 'custom', id });
       // Applying is a confirmation, exactly as choosing a built-in pack is:
@@ -371,7 +418,8 @@ export function CustomThemeLibrary({
    * there from a link or file import, which is simply a rarer way in than the
    * browse sheet this branch adds.
    */
-  const candidateHasActions = Boolean(candidate?.id) || !hostDrivesPrimaryAction;
+  const candidateHasActions =
+    mode === 'manage' && (Boolean(candidate?.id) || !hostDrivesPrimaryAction);
 
   const importPanel =
     importOpen && !linkImportOpen ? (
@@ -705,12 +753,9 @@ export function CustomThemeLibrary({
                 minWidth: 0,
               }}>
               <CustomThemePreview
-                manifest={
-                  installedCandidate
-                    ? effectiveThemeManifest(installedCandidate)
-                    : candidate.manifest
-                }
+                manifest={appearance ? effectiveThemeManifest(appearance) : candidate.manifest}
                 assets={assets}
+                preferencesApplied
               />
             </View>
             <View
@@ -719,44 +764,67 @@ export function CustomThemeLibrary({
                 width: wideDetail ? undefined : '100%',
                 minWidth: 0,
               }}>
-              {installedCandidate ? (
+              {appearance ? (
                 <ThemeAppearanceSettings
-                  key={installedCandidate.id}
-                  installed={installedCandidate}
+                  key={appearance.id}
+                  installed={appearance}
                   disabled={busy}
                   onTerminalChange={(value) =>
-                    void perform(() =>
-                      useThemeLibrary
-                        .getState()
-                        .setTerminalBackgroundOpacity(installedCandidate.id, value)
-                    )
+                    !installedCandidate
+                      ? setDraftAppearance((current) => ({
+                          ...current,
+                          terminalBackgroundOpacity: value,
+                        }))
+                      : void perform(() =>
+                          useThemeLibrary
+                            .getState()
+                            .setTerminalBackgroundOpacity(installedCandidate.id, value)
+                        )
                   }
                   onSurfaceChange={(value) =>
-                    void perform(() =>
-                      useThemeLibrary
-                        .getState()
-                        .setSurfaceBackgroundOpacity(installedCandidate.id, value)
-                    )
+                    !installedCandidate
+                      ? setDraftAppearance((current) => ({
+                          ...current,
+                          surfaceBackgroundOpacity: value,
+                        }))
+                      : void perform(() =>
+                          useThemeLibrary
+                            .getState()
+                            .setSurfaceBackgroundOpacity(installedCandidate.id, value)
+                        )
                   }
                   onLogoChange={(value) =>
-                    void perform(() =>
-                      useThemeLibrary.getState().setHideHomeLogo(installedCandidate.id, value)
-                    )
+                    !installedCandidate
+                      ? setDraftAppearance((current) => ({ ...current, hideHomeLogo: value }))
+                      : void perform(() =>
+                          useThemeLibrary.getState().setHideHomeLogo(installedCandidate.id, value)
+                        )
                   }
                   onTextChange={(value) =>
-                    void perform(() =>
-                      useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
-                    )
+                    !installedCandidate
+                      ? setDraftAppearance((current) => ({ ...current, hideHomeText: value }))
+                      : void perform(() =>
+                          useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
+                        )
                   }
                   onHeroChange={(value) =>
-                    void perform(() =>
-                      useThemeLibrary.getState().setHomeHero(installedCandidate.id, value)
-                    )
+                    !installedCandidate
+                      ? setDraftAppearance((current) => ({
+                          ...current,
+                          homeHero: value === 'theme' ? undefined : value,
+                        }))
+                      : void perform(() =>
+                          useThemeLibrary.getState().setHomeHero(installedCandidate.id, value)
+                        )
                   }
                   onReset={() =>
-                    void perform(() =>
-                      useThemeLibrary.getState().resetAppearancePreferences(installedCandidate.id)
-                    )
+                    !installedCandidate
+                      ? setDraftAppearance({})
+                      : void perform(() =>
+                          useThemeLibrary
+                            .getState()
+                            .resetAppearancePreferences(installedCandidate.id)
+                        )
                   }
                 />
               ) : null}
@@ -792,7 +860,7 @@ export function CustomThemeLibrary({
             ) : detail ? null : (
               <Button disabled={busy} onPress={closePreview}>{t`Done`}</Button>
             )}
-            {!detail ? (
+            {!detail && mode === 'manage' ? (
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={t`More actions`}
