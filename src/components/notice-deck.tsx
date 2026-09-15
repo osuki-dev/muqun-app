@@ -16,6 +16,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
   const { colors } = useThemeTokens();
   const { t } = useLingui();
   const [heights, setHeights] = useState<Record<string, number>>({});
+  const [widths, setWidths] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const pages = Children.toArray(children);
   const keys = pages.map((page, index) =>
@@ -36,6 +37,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
               styles.page,
               styles.back,
               {
+                width: front ? widths[front] : undefined,
                 backgroundColor: colors.surfaceRaised,
                 borderColor: colors.border,
                 transform: [
@@ -58,11 +60,17 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
             accessibilityElementsHidden={!active}
             importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
             style={
-              active ? [styles.page, { backgroundColor: colors.surfaceRaised }] : styles.measuring
+              active
+                ? [styles.page, styles.front, { backgroundColor: colors.surfaceRaised }]
+                : styles.measuring
             }>
             <View
+              style={styles.front}
               onLayout={(event) => {
-                const height = event.nativeEvent.layout.height;
+                const { height, width } = event.nativeEvent.layout;
+                setWidths((current) =>
+                  current[key] === width ? current : { ...current, [key]: width }
+                );
                 setHeights((current) =>
                   current[key] === height ? current : { ...current, [key]: height }
                 );
@@ -96,7 +104,8 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  back: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderWidth: 1 },
+  front: { alignSelf: 'center', maxWidth: '100%' },
+  back: { position: 'absolute', top: 0, alignSelf: 'center', bottom: 0, borderWidth: 1 },
   measuring: { position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 },
   next: {
     alignSelf: 'flex-end',

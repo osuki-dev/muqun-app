@@ -65,12 +65,13 @@ export function StatusDot({
   // that changes neither -- a parent list re-sorting, a clock tick -- does not
   // set the dot off again.
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion || !appActive) return;
     pop.value = withSequence(
       withTiming(STATE_POP_SCALE, timing('micro')),
       withTiming(1, timing('short'))
     );
-  }, [color, filled, pop, reduceMotion]);
+    return () => cancelAnimation(pop);
+  }, [appActive, color, filled, pop, reduceMotion]);
 
   useEffect(() => {
     // A ripple nobody can see is still a worklet on the UI thread every frame,
@@ -82,7 +83,9 @@ export function StatusDot({
       return;
     }
     ripple.value = 0;
-    ripple.value = withRepeat(withTiming(1, timing(PULSE_PERIOD)), -1, false);
+    // Confirm a new live state, then become still. A row remaining online
+    // must not keep the display compositor awake indefinitely.
+    ripple.value = withRepeat(withTiming(1, timing(PULSE_PERIOD)), 2, false);
     return () => cancelAnimation(ripple);
   }, [appActive, pulse, reduceMotion, ripple]);
 

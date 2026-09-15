@@ -22,8 +22,9 @@ import { SheetHeading } from '@/components/sheet-heading';
  */
 import { ScrollScreen, useThemeTokens } from '@osuki-dev/ui';
 import { X } from 'lucide-react-native';
-import { type ReactNode } from 'react';
+import { createElement, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { FullscreenSettingsSheet } from '@/components/fullscreen-settings-sheet';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { SheetFrame, useSheetGroundProvided } from '@/components/sheet-ground';
@@ -57,6 +58,32 @@ export function SettingsSheet({
   // its own tint provider. Everything *inside* the sheet reads the tint from
   // the frame and calls this with no argument.
   useRenderTally('SettingsSheet');
+  const header = (
+    <View style={styles.header}>
+      {/* The title and the line under it are the only text on this sheet
+              that is not already on a card, so over a wallpaper they take the
+              plate the settings page gives its section labels. */}
+      <SheetHeading title={title} caption={caption} />
+      <GlassChrome face="sheet" style={styles.closeButton}>
+        <PressableScale accessibilityLabel={closeLabel} onPress={onClose} style={styles.closeHit}>
+          <X size={18} color={theme.colors.text} />
+        </PressableScale>
+      </GlassChrome>
+    </View>
+  );
+  if (groundProvided) {
+    // FullscreenSheetFrame owns the safe edges. Keep the close control outside
+    // the scroll viewport so bounce and automatic insets cannot move it into
+    // the status bar, or let content pass over it.
+    return createElement(
+      FullscreenSettingsSheet,
+      {
+        header,
+        contentStyle: [styles.content, { maxWidth: contentMaxWidth }],
+      },
+      children
+    );
+  }
   return (
     <ScrollScreen
       variant="surface"
@@ -78,20 +105,7 @@ export function SettingsSheet({
           direction. The panels sheet carries the same two lines. */}
           <SheetHandle style={styles.handle} />
 
-          <View style={styles.header}>
-            {/* The title and the line under it are the only text on this sheet
-              that is not already on a card, so over a wallpaper they take the
-              plate the settings page gives its section labels. */}
-            <SheetHeading title={title} caption={caption} />
-            <GlassChrome face="sheet" style={styles.closeButton}>
-              <PressableScale
-                accessibilityLabel={closeLabel}
-                onPress={onClose}
-                style={styles.closeHit}>
-                <X size={18} color={theme.colors.text} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
+          {header}
 
           {children}
         </View>

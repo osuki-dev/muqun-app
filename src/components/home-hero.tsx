@@ -18,7 +18,7 @@ import Animated, {
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { heroFeatherGeometry } from '@/lib/hero-feather';
-import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { fadeIn, listLayout } from '@/lib/motion';
 import { homeHeroMaxHeight, THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveHomeHero } from '@/theme/home-hero';
 import { homeHeroPreference } from '@/theme/repository';
@@ -81,30 +81,19 @@ import { useThemeLibrary } from '@/stores/theme-library';
  * installer already wrote to disk, so the file cache this replaces was never
  * doing any work for a hero.
  *
- * Everything above the Canvas is unchanged: the entrance, the exit, the layout
- * animation and the scroll fade are all still ordinary Reanimated style on the
- * wrapper, so the mask composes with them rather than competing.
+ * Entrance, layout and scroll fading use ordinary Reanimated styles. There is
+ * no exit retention: changing themes must immediately release the old picture.
  */
 export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
   const { resolvedMode } = useThemeMode();
   const { width } = useWindowDimensions();
   const band = homeHeroMaxHeight(width);
-  const scrollStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, band], [1, 0], Extrapolation.CLAMP),
-  }));
   const { theme, assets } = useEffectiveCustomTheme();
   const installationId = theme?.installationId;
   const preference = useThemeLibrary((state) => {
     const installed = state.library.themes.find((entry) => entry.id === installationId);
     return installed ? homeHeroPreference(installed) : 'theme';
   });
-  const [failed, setFailed] = useState<string | null>(null);
-  // The hero's own box, measured rather than assumed. The band's height is
-  // known up front but its width is the content column's, which carries the
-  // screen's gutter and its pad max-width -- and the feather is computed in the
-  // same coordinates the Canvas draws in, so a guess would misplace it.
-  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
-
   const resolved = resolveHomeHero({
     manifest: theme?.manifest,
     mode: resolvedMode,
@@ -112,7 +101,41 @@ export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
     preference,
   });
   const uri = resolved ? assets?.[resolved.image.asset] : undefined;
-  const source = uri?.startsWith('file:///') && failed !== uri ? uri : undefined;
+  if (!resolved || !uri?.startsWith('file:///')) return null;
+  // A theme/mode/source change owns a new decoder. Skia's asynchronous loader
+  // otherwise keeps the previous image alive until the next URI has decoded.
+  return (
+    <HomeHeroImage
+      key={`${installationId}:${resolvedMode}:${uri}`}
+      resolved={resolved}
+      source={uri}
+      band={band}
+      scrollY={scrollY}
+    />
+  );
+}
+
+function HomeHeroImage({
+  resolved,
+  source,
+  band,
+  scrollY,
+}: {
+  resolved: NonNullable<ReturnType<typeof resolveHomeHero>>;
+  source: string;
+  band: number;
+  scrollY: SharedValue<number>;
+}) {
+  const scrollStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, band], [1, 0], Extrapolation.CLAMP),
+  }));
+  const [failed, setFailed] = useState<string | null>(null);
+  // The hero's own box, measured rather than assumed. The band's height is
+  // known up front but its width is the content column's, which carries the
+  // screen's gutter and its pad max-width -- and the feather is computed in the
+  // same coordinates the Canvas draws in, so a guess would misplace it.
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
+
   const focalX = resolved?.image.focalPoint?.x;
   const focalY = resolved?.image.focalPoint?.y;
 
@@ -140,7 +163,7 @@ export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
     });
   }, [box, image, focalX, focalY]);
 
-  if (!resolved || !source) return null;
+  if (failed === source) return null;
 
   return (
     <Animated.View
@@ -149,7 +172,6 @@ export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       entering={fadeIn('medium')}
-      exiting={fadeOut('medium')}
       layout={listLayout('medium')}
       onLayout={onLayout}
       style={[styles.hero, { height: band }, scrollStyle]}>

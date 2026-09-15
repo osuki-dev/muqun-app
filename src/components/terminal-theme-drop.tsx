@@ -4,6 +4,8 @@ import { Palette, X } from 'lucide-react-native';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
+  cancelAnimation,
+  useReducedMotion,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
@@ -18,6 +20,7 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { appChrome } from '@/constants/appearance';
 import { fadeOut, INSTANT, timing } from '@/lib/motion';
+import { useAppActive } from '@/hooks/use-app-active';
 
 /** What the terminal is holding: a file arriving, or a theme waiting to be looked at. */
 export type TerminalThemeDropState =
@@ -55,6 +58,8 @@ export function TerminalThemeDrop({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
+  const appActive = useAppActive();
+  const reduceMotion = useReducedMotion();
 
   const ready = state.phase === 'ready';
   // Pulled out of the dependency array so it can be checked statically: the
@@ -68,7 +73,8 @@ export function TerminalThemeDrop({
   useEffect(() => {
     // Only while the length is unknown. A determinate bar animates from the
     // bytes themselves, and two things moving the same bar would fight.
-    if (!indeterminate) {
+    if (!indeterminate || !appActive || reduceMotion) {
+      cancelAnimation(sweep);
       sweep.value = 0;
       return;
     }
@@ -78,7 +84,8 @@ export function TerminalThemeDrop({
       -1,
       false
     );
-  }, [indeterminate, sweep]);
+    return () => cancelAnimation(sweep);
+  }, [appActive, indeterminate, reduceMotion, sweep]);
 
   const fraction = useDerivedValue(() =>
     state.phase === 'downloading' && state.total ? Math.min(1, state.received / state.total) : 0

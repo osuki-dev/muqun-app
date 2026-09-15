@@ -1,4 +1,4 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Waypoints } from 'lucide-react-native';
@@ -26,7 +26,6 @@ export function GatewayTunnelBadge({
   record: GatewayRecord | null | undefined;
   variant?: 'badge' | 'notice';
 }) {
-  const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const theme = useThemeTokens();
   // Observe, do not hold: this is a status view. The screens that need the
@@ -69,11 +68,13 @@ export function GatewayTunnelBadge({
 
   if (variant === 'notice') {
     return (
-      <View
-        accessibilityLabel={a11y}
-        style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
+      <TerminalNotice accessibilityLabel={a11y}>
         <StatusDot color={color} filled={!connecting} pulse={connecting} size={7} />
-        <Text variant="caption" color={theme.colors.textMuted} style={styles.noticeText}>
+        <Text
+          variant="caption"
+          color={theme.colors.textMuted}
+          style={terminalNoticeStyles.label}
+          numberOfLines={2}>
           {label}
         </Text>
         {down ? (
@@ -81,13 +82,14 @@ export function GatewayTunnelBadge({
             accessibilityRole="button"
             accessibilityLabel={t`Reconnect the SSH tunnel`}
             onPress={tunnel.retry}
+            style={terminalNoticeStyles.action}
             hitSlop={8}>
             <Text variant="caption" color={theme.colors.primary}>
               <Trans>Reconnect</Trans>
             </Text>
           </PressableScale>
         ) : null}
-      </View>
+      </TerminalNotice>
     );
   }
 
@@ -104,14 +106,4 @@ export function GatewayTunnelBadge({
 const styles = StyleSheet.create({
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   badgeText: { flexShrink: 1 },
-  notice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    alignSelf: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  noticeText: { flexShrink: 1 },
 });

@@ -65,7 +65,7 @@ export function LogoLoader({
         withTiming(1, { duration: BREATH_MS, easing: Easing.out(Easing.cubic) }),
         withTiming(0, { duration: BREATH_MS, easing: Easing.in(Easing.cubic) })
       ),
-      -1,
+      3,
       false
     );
     return () => cancelAnimation(progress);
