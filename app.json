@@ -4,7 +4,7 @@
     "slug": "muqun",
     "version": "2.0.0",
     "orientation": "default",
-    "icon": "./assets/icons/mascot/icon.png",
+    "icon": "./assets/icons/classic/icon.png",
     "scheme": "muqun",
     "userInterfaceStyle": "automatic",
     "updates": {
@@ -32,8 +32,9 @@
       "supportsTablet": true,
       "requireFullScreen": false,
       "icon": {
-        "light": "./assets/icons/mascot/icon.png",
-        "dark": "./assets/icons/mascot/icon-dark.png"
+        "light": "./assets/icons/classic/icon.png",
+        "dark": "./assets/icons/classic/icon-dark.png",
+        "tinted": "./assets/icons/classic/icon-tinted.png"
       },
       "infoPlist": {
         "NSCameraUsageDescription": "Muqun scans the Gateway's QR code to pair securely, and takes photos you attach to a terminal session.",
@@ -102,8 +103,8 @@
         "android.permission.READ_MEDIA_VIDEO"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#FDF7E8",
-        "foregroundImage": "./assets/icons/mascot/android-foreground.png",
+        "backgroundColor": "#FCFBFA",
+        "foregroundImage": "./assets/icons/classic/android-icon-foreground.png",
         "monochromeImage": "./assets/icons/monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -210,6 +211,18 @@
             "android": {
               "foregroundImage": "./assets/icons/classic/android-icon-foreground.png",
               "backgroundColor": "#FCFBFA",
+              "monochromeImage": "./assets/icons/monochrome.png"
+            }
+          },
+          {
+            "name": "Mascot",
+            "ios": {
+              "light": "./assets/icons/mascot/icon.png",
+              "dark": "./assets/icons/mascot/icon-dark.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/mascot/android-foreground.png",
+              "backgroundColor": "#FDF7E8",
               "monochromeImage": "./assets/icons/monochrome.png"
             }
           },

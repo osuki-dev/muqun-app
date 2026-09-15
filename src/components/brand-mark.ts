@@ -1,13 +1,13 @@
 import { useThemeMode } from '@osuki-dev/ui';
 
-/** One clean, shadow-free alpha master works on both light and dark surfaces.
+/** The original Classic mark is the default on both light and dark surfaces.
  * The launcher choice remains independent of in-app theme customisation.
  */
 export type BrandMarkMode = 'light' | 'dark';
 
 const BRAND_MARK = {
-  light: require('@/assets/icons/mascot/brand-mark.png'),
-  dark: require('@/assets/icons/mascot/brand-mark.png'),
+  light: require('@/assets/icons/classic/brand-mark.png'),
+  dark: require('@/assets/icons/classic/brand-mark.png'),
 } as const;
 
 export function brandMark(mode: BrandMarkMode) {

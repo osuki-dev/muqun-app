@@ -419,8 +419,10 @@ export function GitDiffView({
     scrollX.value = event.contentOffset.x;
   });
 
-  const gutterFill = surfaceBackground(theme.colors.surface);
-  const headerFill = surfaceBackground(theme.colors.surfaceRaised);
+  // Pinned planes cover moving code. Applying the artwork opacity here lets
+  // lines show through file headings and line numbers while scrolling.
+  const gutterFill = theme.colors.surface;
+  const headerFill = theme.colors.surfaceRaised;
   const pinnedWidth = Math.max(viewportWidth, 1);
 
   const renderRow = useCallback(
@@ -1054,6 +1056,8 @@ const styles = StyleSheet.create({
   },
   scroller: {
     flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
   },
   scrollerContent: {
     flexGrow: 1,

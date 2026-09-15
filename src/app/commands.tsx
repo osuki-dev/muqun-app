@@ -600,98 +600,60 @@ export default function QuickCommandsScreen() {
           was not a calmed wallpaper but no wallpaper at all. Calming it is the
           tint's job; being visible is the picture's. See `sheet-ground.tsx`. */}
       <SheetFrame tint="background">
-        <KeyboardAwareScrollView
-          bottomOffset={24}
-          keyboardShouldPersistTaps="handled"
-          // The tiles are the sheet's own verbs, and a sheet whose verbs scroll
-          // away is a sheet you have to scroll back up to use. Against a real
-          // gateway the two lists below run to thirty-odd rows, so that is the
-          // ordinary case rather than the edge one. The panels sheet solved the
-          // same problem the same way in card #633, so this is the app's existing
-          // idiom rather than a new one -- a constant index, with the
-          // platform-only grabber inside the node for exactly that reason.
-          stickyHeaderIndices={[0]}
-          contentContainerStyle={[
-            styles.content,
-            isPadLayout && styles.padContent,
-            { paddingBottom: LADDER.section + bottomInset },
-          ]}>
-          {/* No surface of its own.
+        <View style={[styles.fixedTop, isPadLayout && styles.padContent]}>
+          <SheetHandle style={styles.sheetHandle} />
 
-            Everything below this on the sheet -- the tabs, the search field,
-            the command list -- is a rounded panel floating straight on the
-            sheet's ground, with nothing wrapping it. This block used to be the
-            exception: a slab drawn around its title, its subtitle and its
-            tiles, so the top of the sheet was built from a different set of
-            parts than the rest of it. Against a pack that tints these surfaces
-            that reads as a lid stuck on, and no amount of matching the radius
-            or adding an edge fixes it, because the extra layer is the problem
-            rather than how it is drawn.
-
-            So the container carries nothing. The tiles keep their own panels,
-            and the title and subtitle sit on the ground exactly as the
-            `SAVED PROMPTS` label below them does.
-
-            The cost, stated because it is real: rows scrolling under a sticky
-            header with no fill are visible behind the text. The tiles cover
-            most of that band with their own surfaces, and what passes behind
-            two lines of type is legible rather than confusing -- but if that
-            ever stops being true, the answer is to give the *ground* more
-            opacity, not to put the slab back. */}
-          <View style={[styles.stickyTop, isPadLayout && styles.padStickyTop]}>
-            <SheetHandle style={styles.sheetHandle} />
-
-            {/* No glyph beside the title. The reader arrived here by pressing the
+          {/* No glyph beside the title. The reader arrived here by pressing the
               lightning button, so a lightning chip repeats the gesture back at
               them -- and it was the first of the forty places this screen spent
               the accent. */}
-            <View style={styles.header}>
-              {/* The plate the settings page gives a label drawn straight onto
+          <View style={styles.header}>
+            {/* The plate the settings page gives a label drawn straight onto
                 the wallpaper. Not the slab described above -- it is two lines
                 of type, not a lid over the tiles -- and it is `null` on a theme
                 with no `shell.background`, which is every built-in one. */}
-              <View style={[styles.headerCopy, plate]}>
-                <Text variant="subheading" style={styles.headerTitle}>
-                  {manageOnly ? t`Quick action settings` : t`Quick actions`}
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  {manageOnly
-                    ? t`Customize terminal commands and key combinations.`
-                    : mode === 'agent'
-                      ? t`Act on this terminal, or send its agent a prompt.`
-                      : t`Act on this terminal, or send it a command.`}
-                </Text>
-              </View>
-              {/* Settings' entry is the editor, so it has no state to toggle and
+            <View style={[styles.headerCopy, plate]}>
+              <Text variant="subheading" style={styles.headerTitle}>
+                {manageOnly ? t`Quick action settings` : t`Quick actions`}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {manageOnly
+                  ? t`Customize terminal commands and key combinations.`
+                  : mode === 'agent'
+                    ? t`Act on this terminal, or send its agent a prompt.`
+                    : t`Act on this terminal, or send it a command.`}
+              </Text>
+            </View>
+            {/* Settings' entry is the editor, so it has no state to toggle and
                 offers no way to leave a mode that is the whole screen. */}
-              {manageOnly ? null : (
-                <GlassChrome face="sheet" style={styles.headerButton}>
-                  <PressableScale
-                    accessibilityRole="button"
-                    accessibilityLabel={editing ? t`Done editing shortcuts` : t`Edit shortcuts`}
-                    accessibilityState={{ selected: editing }}
-                    onPress={() => setEditRequested((was) => !was)}
-                    style={styles.headerButtonHit}>
-                    {editing ? (
-                      <Check size={19} color={theme.colors.text} strokeWidth={2} />
-                    ) : (
-                      <Pencil size={18} color={theme.colors.text} strokeWidth={2} />
-                    )}
-                  </PressableScale>
-                </GlassChrome>
-              )}
+            {manageOnly ? null : (
               <GlassChrome face="sheet" style={styles.headerButton}>
                 <PressableScale
                   accessibilityRole="button"
-                  accessibilityLabel={t`Close quick actions`}
-                  onPress={() => router.back()}
+                  accessibilityLabel={editing ? t`Done editing shortcuts` : t`Edit shortcuts`}
+                  accessibilityState={{ selected: editing }}
+                  onPress={() => setEditRequested((was) => !was)}
                   style={styles.headerButtonHit}>
-                  <X size={19} color={theme.colors.text} strokeWidth={2} />
+                  {editing ? (
+                    <Check size={19} color={theme.colors.text} strokeWidth={2} />
+                  ) : (
+                    <Pencil size={18} color={theme.colors.text} strokeWidth={2} />
+                  )}
                 </PressableScale>
               </GlassChrome>
-            </View>
+            )}
+            <GlassChrome face="sheet" style={styles.headerButton}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Close quick actions`}
+                onPress={() => router.back()}
+                style={styles.headerButtonHit}>
+                <X size={19} color={theme.colors.text} strokeWidth={2} />
+              </PressableScale>
+            </GlassChrome>
+          </View>
 
-            {/* The sheet's own verbs. Ordered by how far each one takes you from
+          {/* The sheet's own verbs. Ordered by how far each one takes you from
               the pane you are looking at: two that make somewhere to work, then
               the machine underneath it. Nothing here is titled -- the sheet's
               own name is already the heading for its own verbs.
@@ -701,85 +663,92 @@ export default function QuickCommandsScreen() {
               measure needs anyway. A connection that offers neither
               machine-scoped tile draws the two it has at half width apiece,
               which reads as the row it is rather than as a row with holes. */}
-            {available.hasTiles ? (
-              <View style={styles.tiles}>
-                {available.canCreate ? (
-                  <ActionTile
-                    icon={SquareTerminal}
-                    label={t`Terminal`}
-                    accessibilityLabel={t`New terminal`}
-                    busy={creating === 'panel'}
-                    disabled={creating !== null}
-                    onPress={() => void create(false)}
-                  />
-                ) : null}
-                {available.canCreate ? (
-                  <ActionTile
-                    icon={PanelsTopLeft}
-                    label={t`Group`}
-                    accessibilityLabel={t`New group`}
-                    busy={creating === 'tab'}
-                    disabled={creating !== null}
-                    onPress={() => void create(true)}
-                  />
-                ) : null}
-                {available.canPreviewSimulator ? (
-                  <ActionTile
-                    icon={MonitorSmartphone}
-                    // One word on the tile and the whole verb in the label the
-                    // screen reader hears. "Ouvrir dans le navigateur" is three
-                    // lines in a quarter of a 390-point phone; "Navigateur" is
-                    // one, and the tile is a button whose icon has already said
-                    // what kind of thing it opens.
-                    label={t`Simulator`}
-                    accessibilityLabel={
-                      isPadLayout && simfarmSplitOpen
-                        ? t`Hide the simulator`
-                        : t`Preview a simulator`
-                    }
-                    selected={isPadLayout && simfarmSplitOpen}
-                    onPress={openSimulatorPreview}
-                  />
-                ) : available.webServiceBlockedByTunnel ? (
-                  <ActionTile
-                    icon={MonitorSmartphone}
-                    label={t`Simulator`}
-                    accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
-                    disabled
-                  />
-                ) : null}
-                {available.canOpenWebService ? (
-                  <ActionTile
-                    icon={Globe}
-                    label={t`Browser`}
-                    accessibilityLabel={t`Open in your browser`}
-                    onPress={openWebService}
-                  />
-                ) : available.webServiceBlockedByTunnel ? (
-                  <ActionTile
-                    icon={Globe}
-                    label={t`Browser`}
-                    accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
-                    disabled
-                  />
-                ) : null}
-              </View>
-            ) : null}
+          {available.hasTiles ? (
+            <View style={styles.tiles}>
+              {available.canCreate ? (
+                <ActionTile
+                  icon={SquareTerminal}
+                  label={t`Terminal`}
+                  accessibilityLabel={t`New terminal`}
+                  busy={creating === 'panel'}
+                  disabled={creating !== null}
+                  onPress={() => void create(false)}
+                />
+              ) : null}
+              {available.canCreate ? (
+                <ActionTile
+                  icon={PanelsTopLeft}
+                  label={t`Group`}
+                  accessibilityLabel={t`New group`}
+                  busy={creating === 'tab'}
+                  disabled={creating !== null}
+                  onPress={() => void create(true)}
+                />
+              ) : null}
+              {available.canPreviewSimulator ? (
+                <ActionTile
+                  icon={MonitorSmartphone}
+                  // One word on the tile and the whole verb in the label the
+                  // screen reader hears. "Ouvrir dans le navigateur" is three
+                  // lines in a quarter of a 390-point phone; "Navigateur" is
+                  // one, and the tile is a button whose icon has already said
+                  // what kind of thing it opens.
+                  label={t`Simulator`}
+                  accessibilityLabel={
+                    isPadLayout && simfarmSplitOpen ? t`Hide the simulator` : t`Preview a simulator`
+                  }
+                  selected={isPadLayout && simfarmSplitOpen}
+                  onPress={openSimulatorPreview}
+                />
+              ) : available.webServiceBlockedByTunnel ? (
+                <ActionTile
+                  icon={MonitorSmartphone}
+                  label={t`Simulator`}
+                  accessibilityLabel={t`Preview a simulator, unavailable over the SSH tunnel`}
+                  disabled
+                />
+              ) : null}
+              {available.canOpenWebService ? (
+                <ActionTile
+                  icon={Globe}
+                  label={t`Browser`}
+                  accessibilityLabel={t`Open in your browser`}
+                  onPress={openWebService}
+                />
+              ) : available.webServiceBlockedByTunnel ? (
+                <ActionTile
+                  icon={Globe}
+                  label={t`Browser`}
+                  accessibilityLabel={t`Open in your browser, unavailable over the SSH tunnel`}
+                  disabled
+                />
+              ) : null}
+            </View>
+          ) : null}
 
-            {/* Why the two dimmed tiles are dimmed, said once under the row
+          {/* Why the two dimmed tiles are dimmed, said once under the row
               rather than twice inside it. A tile is a word wide, so the reason
               cannot live on it -- and a dimmed control with no reason anywhere
               is the state this sheet has always refused to draw (see
               `webServiceBlockedByTunnel` in `quick-actions.ts`). Each tile also
               carries the short form in its own accessibility label, because a
               screen reader arrives at the tile and not at the caption. */}
-            {available.webServiceBlockedByTunnel ? (
-              <Text variant="caption" color={theme.colors.textSubtle} style={styles.tilesNote}>
-                {t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`}
-              </Text>
-            ) : null}
-          </View>
+          {available.webServiceBlockedByTunnel ? (
+            <Text variant="caption" color={theme.colors.textSubtle} style={styles.tilesNote}>
+              {t`The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale.`}
+            </Text>
+          ) : null}
+        </View>
 
+        <KeyboardAwareScrollView
+          style={styles.scrollViewport}
+          bottomOffset={24}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.content,
+            isPadLayout && styles.padContent,
+            { paddingBottom: LADDER.section + bottomInset },
+          ]}>
           {/* Alone on its own surface rather than first in the list below, which
             is the point: while an agent is working this row exists, and while
             it does not, it does not. A row that came and went inside the list
@@ -1444,43 +1413,16 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: LADDER.section,
   },
-  // The sheet's paddings live on the content container, so the sticky node
-  // reclaims them for its own edges -- otherwise rows slide through the gap
-  // beside it and under its corners on their way up. Same negative-margin trick
-  // the panels sheet uses, and it has to track `content` (and `padContent`) if
-  // either of those paddings ever moves.
-  /**
-   * A block in the same stack, not a lid across the top of it.
-   *
-   * This used to cancel the content's gutter with a negative margin and run
-   * edge to edge. Everything below it -- the tabs, the search field, the list
-   * -- is an inset rounded card floating on the sheet, so against a pack that
-   * paints this surface the top of the sheet read as a slab stuck onto a page
-   * of cards. Dropping the negative margins is the whole fix: the block then
-   * sits inside the gutter the content already has, and the radius is the one
-   * the cards below use rather than a second opinion about roundness.
-   *
-   * Nothing scrolls through the gaps it leaves at either side, because the
-   * content underneath is inset by the same gutter -- what shows there is the
-   * sheet's own ground, which is what it would show anyway.
-   */
-  /**
-   * A band, not a block. It carries no fill, no radius and no edge, because it
-   * is not a surface -- the tiles inside it are, exactly as the tabs, the
-   * search field and the list below are, and the whole sheet is then built
-   * from one kind of part. `Settings` reads the same way: an instrument label
-   * on the page's own ground, a card under it, and nothing wrapping the pair.
-   *
-   * No horizontal padding for the same reason: the content container's gutter
-   * is the sheet's one margin, so the title lands where `SAVED PROMPTS` lands
-   * and the tiles span exactly what the cards below them span.
-   */
-  stickyTop: {
-    paddingTop: LADDER.gap,
+  // A sibling of the clipped scroller: theme transparency cannot expose
+  // moving rows beneath the title or action tiles.
+  fixedTop: {
+    flexShrink: 0,
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: LADDER.gap * 2,
     paddingBottom: LADDER.gap,
     gap: LADDER.snug,
   },
-  padStickyTop: {},
+  scrollViewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
   sheetHandle: {
     width: 38,
     height: 4,
