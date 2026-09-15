@@ -164,11 +164,8 @@
         "@osuki-dev/react-native-splash",
         {
           "backgroundColor": "#F7F3EC",
-          "image": "./assets/images/brand-mark-3d.png",
-          "imageWidth": 176,
           "dark": {
-            "backgroundColor": "#050B12",
-            "image": "./assets/images/brand-mark-3d-dark.png"
+            "backgroundColor": "#050B12"
           }
         }
       ],

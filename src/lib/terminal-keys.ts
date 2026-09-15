@@ -69,6 +69,8 @@ const NAVIGATION: TerminalKey[] = [
   { label: '→', key: 'right', accessibilityLabel: 'Right arrow' },
   { label: '⌥←', key: 'alt+left', accessibilityLabel: 'Back one word' },
   { label: '⌥→', key: 'alt+right', accessibilityLabel: 'Forward one word' },
+  { label: '⌥↑', key: 'alt+up', accessibilityLabel: 'Alt up' },
+  { label: '⌥↓', key: 'alt+down', accessibilityLabel: 'Alt down' },
 ];
 
 /**
@@ -400,6 +402,8 @@ const BARE_CAPS: Record<string, string> = {
   right: '→',
   'alt+left': 'Alt ←',
   'alt+right': 'Alt →',
+  'alt+up': 'Alt ↑',
+  'alt+down': 'Alt ↓',
 };
 
 const MODIFIER_WORDS: Record<string, string> = {

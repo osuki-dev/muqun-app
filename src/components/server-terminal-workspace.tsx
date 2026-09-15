@@ -4070,6 +4070,18 @@ export function ServerTerminalWorkspace({
           named, scrollable targets -- so the two read as the same kind of
           choice rather than as two unrelated pickers. */}
       {assignmentBar}
+      {/* The keyboard's own copy of the menu: the floating layout below only
+          draws it while the keyboard is down, so a paperclip pressed on the
+          line the keyboard summoned used to open nothing. */}
+      {attachmentMenuOpen && dock.attachEntry && keyboardMode ? (
+        <View
+          style={[
+            styles.composerFloatingContent,
+            isPadLayout && styles.padComposerFloatingContent,
+          ]}>
+          <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
+        </View>
+      ) : null}
       {dock.composer ? composerField : null}
     </>
   );
