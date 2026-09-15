@@ -6,6 +6,8 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EdgeFade } from '@/components/edge-fade';
+import Animated from 'react-native-reanimated';
+import { useNavigationArrival } from '@/hooks/use-navigation-arrival';
 import {
   NavHeaderBackButton,
   NavHeaderCircle,
@@ -52,6 +54,7 @@ export function ScreenHeader({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const arrivalStyle = useNavigationArrival();
 
   const handleBack = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')));
 
@@ -68,13 +71,13 @@ export function ScreenHeader({
         color={theme.colors.background}
         style={[styles.fade, { top: -insets.top, height: insets.top + FADE_HEIGHT }]}
       />
-      <View style={navHeaderRowStyle}>
+      <Animated.View style={[navHeaderRowStyle, arrivalStyle]}>
         <NavHeaderBackButton accessibilityLabel={t`Go back`} onPress={handleBack} />
 
         <NavHeaderTitlePill title={title} />
 
         {right ? <NavHeaderCircle>{right}</NavHeaderCircle> : <NavHeaderSpacer />}
-      </View>
+      </Animated.View>
     </View>
   );
 }

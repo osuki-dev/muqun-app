@@ -1,3 +1,4 @@
+import { useAppActive } from '@/hooks/use-app-active';
 import {
   Canvas,
   Fill,
@@ -469,6 +470,7 @@ export function SkiaTerminal({
 }) {
   const fontSize = terminalFontSize(textSize);
   const theme = useThemeTokens();
+  const appActive = useAppActive();
   // Whether anything patterned sits behind this canvas. `shell.background` is
   // the only slot that reaches behind a terminal; Home's own wallpaper never
   // has one over it.
@@ -1658,9 +1660,9 @@ export function SkiaTerminal({
   // exists. The worklet returned early, but the phone still paid for every
   // frame. Auto-scroll only has work while a finger is extending a selection.
   useEffect(() => {
-    selectionAutoScrollFrame.setActive(selectionDragging);
+    selectionAutoScrollFrame.setActive(selectionDragging && screenFocused && appActive);
     return () => selectionAutoScrollFrame.setActive(false);
-  }, [selectionAutoScrollFrame, selectionDragging]);
+  }, [appActive, screenFocused, selectionAutoScrollFrame, selectionDragging]);
 
   /*
     Touch as the program's input, when the program has said it wants it.
@@ -1928,9 +1930,9 @@ export function SkiaTerminal({
     }
   );
   useEffect(() => {
-    touchInputFrame.setActive(programDragging);
+    touchInputFrame.setActive(programDragging && screenFocused && appActive);
     return () => touchInputFrame.setActive(false);
-  }, [programDragging, touchInputFrame]);
+  }, [appActive, screenFocused, programDragging, touchInputFrame]);
 
   /**
    * The end of a drag the program owned.
@@ -2646,9 +2648,9 @@ export function SkiaTerminal({
   // from a worklet corrupts it (measured -- it throws inside
   // `manageStateFrameCallback` and takes the screen down with it).
   useEffect(() => {
-    gestureCommitFrame.setActive(gestureMoving);
+    gestureCommitFrame.setActive(gestureMoving && screenFocused && appActive);
     return () => gestureCommitFrame.setActive(false);
-  }, [gestureCommitFrame, gestureMoving]);
+  }, [appActive, screenFocused, gestureCommitFrame, gestureMoving]);
   const contentTransform = useDerivedValue(() => {
     const snap = (value: number) => Math.round(value * devicePixelRatio) / devicePixelRatio;
     return [

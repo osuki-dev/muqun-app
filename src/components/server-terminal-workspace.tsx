@@ -1,3 +1,4 @@
+import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { NoticeDeck } from '@/components/notice-deck';
 import { ThemeIcon } from '@/components/theme-icon';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
@@ -971,17 +972,8 @@ export function ServerTerminalWorkspace({
   // derived from it because a workspace remembers only the tab it left on,
   // while swiping across four tabs and back has to restore all four.
   const tabPaneMemoryRef = useRef<TabPaneMemory>({});
-  // The pane switch, without remounting the terminal: tearing down and
-  // rebuilding the Skia canvas on every fast switch raced the native side and
-  // crashed, so the transition runs on the mounted view's own opacity and
-  // transform instead.
-  //
-  // Match RouteScene's depth reveal without sliding text sideways or fading
-  // through an empty canvas. Keep the native terminal mounted throughout.
-  const paneScale = useSharedValue(1);
-  const paneTransitionStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: paneScale.value }],
-  }));
+  // Pane changes keep the native canvas and its text geometry stable. The
+  // switch notice supplies the brief visual acknowledgement.
   // The pane strip scrolls, and with more panes than fit, swiping to one off
   // its right-hand end used to leave the strip highlighting nothing: the
   // active chip was simply somewhere the user could not see, so the only
@@ -2660,12 +2652,6 @@ export function ServerTerminalWorkspace({
     );
   }, [data.panes, t]);
 
-  useEffect(() => {
-    if (!selection.paneId) return;
-    paneScale.value = 1.015;
-    paneScale.value = withTiming(1, timing('medium'));
-  }, [paneScale, selection.paneId]);
-
   /**
    * Brings the active pane chip into the strip's viewport, if it is not
    * already comfortably inside it.
@@ -4330,10 +4316,8 @@ export function ServerTerminalWorkspace({
               more gesture simultaneous with its pan and pinch -- React Native's
               touches never see it. See `useTabSwipe` for the measurements. */}
             <View style={[styles.terminalSwipeArea, { overflow: 'hidden' }]}>
-              {/* The pane depth reveal, which a tab switch drives too: landing on a
-                tab lands on one of its panes. See `paneTransitionStyle` for why
-                the canvas underneath is never remounted. */}
-              <Animated.View style={[styles.terminalSwipeArea, paneTransitionStyle]}>
+              {/* Keep the canvas mounted and stationary across pane changes. */}
+              <Animated.View style={styles.terminalSwipeArea}>
                 {chatViewShown ? (
                   <PaneChatView
                     // Remounted per pane: the follow-the-latest position and which
@@ -5137,25 +5121,13 @@ function ConnectionNotice({
       : theme.colors.warning;
 
   return (
-    // Centred and sized to its text rather than stretched across the screen.
-    // This used to be a full-bleed card with a 32pt saturated disc and a heavy
-    // shadow, on a screen that otherwise speaks entirely in glass capsules --
-    // the header's title pill and the pane's own transient answers are both
-    // capsules, and this said the same kind of thing in a different language.
-    // It also sat on top of the demo bar directly below it in the same stack.
-    // The fade lives on the capsule rather than on this anchor, and the anchor
-    // keeps only the layout transition. A Reanimated fade is an opacity
-    // animation, and opacity 0 anywhere above a `GlassView` switches Liquid
-    // Glass off outright; `GlassChrome` therefore takes the fade and applies it
-    // to the fallback views only, animating the material itself on iOS 26.
+    // All connection transports use TerminalNotice. The outer anchor only
+    // positions it; the shared shell owns sizing, fill and arrival motion.
     <Animated.View
       pointerEvents="box-none"
       layout={listLayout('short')}
       style={styles.connectionAnchor}>
-      <GlassChrome
-        entering={fadeIn('micro')}
-        exiting={fadeOut('short')}
-        style={styles.connectionPill}>
+      <TerminalNotice>
         {/* Filled: the app has an answer either way, including a bad one. */}
         <StatusDot color={light} filled size={7} />
         {/* Keyed on the label, so the attempt counter ticking over and the
@@ -5176,7 +5148,7 @@ function ConnectionNotice({
               failure that explains itself was being cut off mid-sentence, and
               the half that got dropped was the half saying what to do about
               it. */}
-          <Text variant="caption" numberOfLines={2} style={styles.connectionPillText}>
+          <Text variant="caption" numberOfLines={2} style={terminalNoticeStyles.label}>
             {status.message && !connected ? `${title} · ${status.message}` : title}
           </Text>
         </Animated.View>
@@ -5189,7 +5161,8 @@ function ConnectionNotice({
           <PressableScale
             accessibilityLabel={t`Pair this server again`}
             onPress={onPairAgain}
-            style={styles.connectionRetry}>
+            style={terminalNoticeStyles.action}
+            hitSlop={8}>
             <Text variant="caption" color={theme.colors.primary}>
               <Trans>Pair again</Trans>
             </Text>
@@ -5198,13 +5171,14 @@ function ConnectionNotice({
           <PressableScale
             accessibilityLabel={t`Retry connection`}
             onPress={onRetry}
-            style={styles.connectionRetry}>
+            style={terminalNoticeStyles.action}
+            hitSlop={8}>
             <Text variant="caption" color={theme.colors.primary}>
               <Trans>Retry</Trans>
             </Text>
           </PressableScale>
         ) : null}
-      </GlassChrome>
+      </TerminalNotice>
     </Animated.View>
   );
 }
@@ -5351,20 +5325,7 @@ const styles = StyleSheet.create({
   connectionAnchor: {
     alignItems: 'center',
   },
-  connectionPill: {
-    maxWidth: '92%',
-    minHeight: 30,
-    borderRadius: 15,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    // A fraction of the shadow the block carried: this floats over the pane, it
-    // does not sit on top of the screen.
-    boxShadow: appChrome.shadow.connectionPill,
-  },
+
   connectionPillLabel: {
     flexShrink: 1,
     // `flexShrink` alone cannot shrink this. A flex item's automatic minimum
@@ -5375,17 +5336,7 @@ const styles = StyleSheet.create({
     // Waiting for the network" reached a phone as "Waiting for the".
     minWidth: 0,
   },
-  connectionPillText: {
-    fontWeight: '600',
-  },
-  connectionRetry: {
-    minHeight: 26,
-    justifyContent: 'center',
-    paddingLeft: 4,
-    // The sentence yields first; the way out of the situation is never what
-    // gets clipped.
-    flexShrink: 0,
-  },
+
   terminalArea: {
     flex: 1,
     width: '100%',

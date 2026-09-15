@@ -99,18 +99,24 @@ export const PRESS = {
  */
 export const STAGGER = {
   /** Between sibling cards in the server list. */
-  card: 55,
+  card: 28,
   /** Between pane rows filling in under one card. */
-  row: 32,
+  row: 18,
+} as const;
+
+/** Muqun navigation: stable text, a brief reveal, and a small title arrival. */
+export const NAVIGATION_MOTION = {
+  pageMs: 180,
+  headerMs: 160,
+  headerDistance: 4,
 } as const;
 
 /**
  * How far a revealing element travels, in points.
  *
- * The previous home screen used six, which is below the threshold where a rise
- * reads as a rise at all: the fade finished and the movement was never seen.
+ * A short local arrival, kept small so text does not travel across the page.
  */
-export const RISE_DISTANCE = 14;
+export const RISE_DISTANCE = 6;
 
 /**
  * One full breath of the "answering right now" ring on a live status dot.
@@ -316,8 +322,8 @@ export const zoomOut = (duration: DurationToken | PresetToken | number = 'micro'
  * `index * STAGGER.card` -- and there is no token for the seventh card.
  */
 export const riseIn = (delay = 0) =>
-  FadeInDown.duration(DURATION.medium)
-    .delay(delay)
+  FadeInDown.duration(DURATION.short)
+    .delay(Math.min(delay, 120))
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System)
     .withInitialValues({ transform: [{ translateY: RISE_DISTANCE }] });

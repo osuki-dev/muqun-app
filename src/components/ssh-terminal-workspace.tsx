@@ -1,3 +1,4 @@
+import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -1272,10 +1273,6 @@ function StatusLine({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  // This line is the only text on the screen that sits directly on the shell
-  // wallpaper: the header pills carry their own chrome and the terminal below
-  // paints its own background. `textMuted` is proven against the theme's own
-  // surfaces, never against an author's photograph, so give it one to sit on.
   const hasShell = useHasThemeArtwork('shell.background');
   // Cancelled is the reader's doing and is lit in no colour at all; the
   // others are the connection's state.
@@ -1299,28 +1296,20 @@ function StatusLine({
             : t`Failed · ${status.code}`;
 
   return (
-    <View style={styles.statusLine} accessibilityRole="text" accessibilityLabel={text}>
-      <View
-        style={[
-          styles.statusIdentity,
-          hasShell
-            ? {
-                backgroundColor: surfaceBackground(theme.colors.background),
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-                borderRadius: 8,
-              }
-            : null,
-        ]}>
-        <View style={[styles.statusDot, { backgroundColor: light }]} />
-        <Text
-          variant="caption"
-          color={theme.colors.textMuted}
-          numberOfLines={1}
-          style={styles.statusText}>
-          {text}
-        </Text>
-      </View>
+    <TerminalNotice
+      accessibilityLabel={text}
+      style={[
+        styles.statusIdentity,
+        hasShell ? { backgroundColor: surfaceBackground(theme.colors.background) } : null,
+      ]}>
+      <View style={[styles.statusDot, { backgroundColor: light }]} />
+      <Text
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={2}
+        style={terminalNoticeStyles.label}>
+        {text}
+      </Text>
       {status.phase === 'disconnected' ||
       status.phase === 'failed' ||
       status.phase === 'cancelled' ? (
@@ -1328,17 +1317,14 @@ function StatusLine({
           accessibilityRole="button"
           accessibilityLabel={t`Reconnect`}
           onPress={onReconnect}
-          style={[
-            styles.pillButton,
-            styles.statusAction,
-            { backgroundColor: surfaceBackground(theme.colors.primary) },
-          ]}>
-          <Text variant="caption" color={theme.colors.onPrimary}>
+          hitSlop={8}
+          style={terminalNoticeStyles.action}>
+          <Text variant="caption" color={theme.colors.primary}>
             <Trans>Reconnect</Trans>
           </Text>
         </PressableScale>
       ) : null}
-    </View>
+    </TerminalNotice>
   );
 }
 
@@ -1409,6 +1395,7 @@ function TerminalKeyChip({
 }
 
 const styles = StyleSheet.create({
+  statusIdentity: { maxWidth: '100%' },
   screen: {
     flex: 1,
   },
@@ -1428,32 +1415,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statusLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 6,
-    minHeight: 28,
-  },
-  statusIdentity: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 1,
-    minWidth: 0,
-  },
+
   statusDot: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
   },
-  statusText: {
-    flexShrink: 1,
-  },
-  statusAction: {
-    marginLeft: 'auto',
-  },
+
   pillButton: {
     minHeight: 30,
     paddingHorizontal: 14,

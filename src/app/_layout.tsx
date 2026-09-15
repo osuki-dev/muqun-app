@@ -17,6 +17,8 @@ import { useEffect } from 'react';
 import { AppState, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import { useReducedMotion } from 'react-native-reanimated';
+import { NAVIGATION_MOTION } from '@/lib/motion';
 
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 
@@ -184,6 +186,7 @@ export default function RootLayout() {
 }
 
 function RootContent() {
+  const reduceMotion = useReducedMotion();
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
@@ -245,7 +248,7 @@ function RootContent() {
               options.presentation === 'formSheet' ? (
                 <>{children}</>
               ) : (
-                <RouteScene>
+                <RouteScene modal={options.presentation === 'fullScreenModal'}>
                   {sheetRoutePresentations[route.name] === 'fullscreen' ? (
                     <FullscreenSheetFrame
                       tint={route.name === 'commands' ? 'background' : 'surface'}>
@@ -260,6 +263,7 @@ function RootContent() {
             screenOptions={{
               headerShown: false,
               animation: 'fade',
+              animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               contentStyle: { backgroundColor: screenBackground },
               // A screen nobody is looking at should not be rendering. Home
               // sits under the terminal for as long as the terminal is open,
