@@ -296,6 +296,15 @@ msgstr "Ответ: {0}"
 msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
 msgstr "Всё, что {label} раздаёт на каком-либо порту: dev-сервер, предпросмотр, панель мониторинга"
 
+#: src/components/settings-appearance.tsx
+msgid "App icon"
+msgstr "Значок приложения"
+
+#. placeholder {0}: labels[id]
+#: src/components/settings-appearance.tsx
+msgid "App icon, {0}"
+msgstr "Значок приложения, {0}"
+
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
 msgstr "Блокировка приложения включена"
@@ -565,6 +574,10 @@ msgstr "Выберите место работы"
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Выбрать, какой симулятор показывать"
+
+#: src/components/settings-appearance.tsx
+msgid "Classic"
+msgstr "Классический"
 
 #: src/components/settings-storage.tsx
 msgid "Clear"
@@ -1870,6 +1883,10 @@ msgstr "Управлять SSH-хостами"
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "Отметить как проверенное"
+
+#: src/components/settings-appearance.tsx
+msgid "Mascot"
+msgstr "Талисман"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3425,6 +3442,14 @@ msgstr "Соединение оборвалось"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "Соединение с симулятором прервалось"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen."
+msgstr "Значок на вашем главном экране"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen. Android closes the app to apply it."
+msgstr "Значок на вашем главном экране. Android закрывает приложение, чтобы применить его."
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

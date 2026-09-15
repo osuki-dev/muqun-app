@@ -296,6 +296,15 @@ msgstr "Réponse : {0}"
 msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
 msgstr "Tout ce que {label} sert sur un port : un serveur de dev, un aperçu, un tableau de bord"
 
+#: src/components/settings-appearance.tsx
+msgid "App icon"
+msgstr "Icône de l’app"
+
+#. placeholder {0}: labels[id]
+#: src/components/settings-appearance.tsx
+msgid "App icon, {0}"
+msgstr "Icône de l’app, {0}"
+
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
 msgstr "Verrouillage de l’app activé"
@@ -565,6 +574,10 @@ msgstr "Choisissez où travailler"
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Choisir le simulateur à afficher"
+
+#: src/components/settings-appearance.tsx
+msgid "Classic"
+msgstr "Classique"
 
 #: src/components/settings-storage.tsx
 msgid "Clear"
@@ -1870,6 +1883,10 @@ msgstr "Gérer les hôtes SSH"
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "Marquer comme vérifié"
+
+#: src/components/settings-appearance.tsx
+msgid "Mascot"
+msgstr "Mascotte"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3425,6 +3442,14 @@ msgstr "La connexion a été coupée"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "La connexion au simulateur s'est interrompue"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen."
+msgstr "L’icône sur votre écran d’accueil"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen. Android closes the app to apply it."
+msgstr "L’icône sur votre écran d’accueil. Android ferme l’app pour l’appliquer."
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

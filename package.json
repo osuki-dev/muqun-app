@@ -54,6 +54,7 @@
     "@osuki-dev/ui": "^1.1.0",
     "@shopify/react-native-skia": "2.11.2",
     "expo": "~57.0.20",
+    "expo-alternate-app-icons": "^8.0.0",
     "expo-application": "~57.0.2",
     "expo-asset": "~57.0.16",
     "expo-blur": "~57.0.2",

@@ -296,6 +296,15 @@ msgstr "回答：{0}"
 msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
 msgstr "{label} 在某個連接埠上提供的任何東西——開發伺服器、預覽、儀表板"
 
+#: src/components/settings-appearance.tsx
+msgid "App icon"
+msgstr "App 圖示"
+
+#. placeholder {0}: labels[id]
+#: src/components/settings-appearance.tsx
+msgid "App icon, {0}"
+msgstr "App 圖示，{0}"
+
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
 msgstr "已啟用 App 鎖定"
@@ -565,6 +574,10 @@ msgstr "選擇要工作的機器與工作階段"
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "選擇要顯示的模擬器"
+
+#: src/components/settings-appearance.tsx
+msgid "Classic"
+msgstr "經典"
 
 #: src/components/settings-storage.tsx
 msgid "Clear"
@@ -1870,6 +1883,10 @@ msgstr "管理 SSH 主機"
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "標記已查看"
+
+#: src/components/settings-appearance.tsx
+msgid "Mascot"
+msgstr "吉祥物"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3425,6 +3442,14 @@ msgstr "連線已中斷"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "與模擬器的連線中斷了"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen."
+msgstr "顯示在主畫面上的圖示"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen. Android closes the app to apply it."
+msgstr "顯示在主畫面上的圖示。Android 會關閉 App 以套用變更。"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
