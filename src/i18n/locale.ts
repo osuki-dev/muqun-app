@@ -1,19 +1,11 @@
 // Which languages Muqun speaks, and how a device's preference becomes one.
 //
-// The codes here are not ours to invent. They are copied from the marketing
-// site (`~/.osuki/web`, `src/lib/site-chrome.ts`), and the identical string is
-// used in four places that must agree or the feature silently degrades to
-// English: this catalog's directory name, the value persisted in app settings,
-// the `X-Muqun-Locale` request header, and the gateway's language table. So:
-// `zh-TW`, not `zh-Hant`, not `zh-Hant-TW`, not `zh_TW`; and `zh-CN`, not
-// `zh-Hans`, not `zh_CN`.
-//
-// The eight languages besides English and the two Chinese scripts carry no
-// region for the same reason: the website spells them `ja ko de fr es pt`, and
-// `ru` and `vi` follow the same shape, so one `pt` catalog serves Brazil and
-// Portugal and one `es` catalog serves Spain and Latin America. Splitting any
-// of them into regional variants here would invent a code the other two
-// surfaces have never heard of.
+// These BCP 47 codes name the catalog directories, persisted Settings values
+// and locale request headers. Keep established codes stable: `zh-TW`, not
+// `zh-Hant`, and `zh-CN`, not `zh-Hans`. Thai uses the bare language `th`,
+// so device preferences such as `th-TH` resolve to the same shipped catalog.
+// Gateway-owned messages have their own translation coverage; sending `th`
+// does not imply that an older Gateway has a Thai catalog.
 //
 // The order is the website's, and it is the order the picker renders in:
 // English, the two Chinese scripts, then the rest in the order they were
@@ -34,6 +26,7 @@ export const APP_LOCALES = [
   'pt',
   'ru',
   'vi',
+  'th',
 ] as const;
 
 export type AppLocale = (typeof APP_LOCALES)[number];
@@ -58,6 +51,7 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
   pt: 'Português',
   ru: 'Русский',
   vi: 'Tiếng Việt',
+  th: 'ไทย',
 };
 
 /**

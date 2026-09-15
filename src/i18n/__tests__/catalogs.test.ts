@@ -31,6 +31,7 @@ import { messages as frMessages } from '../locales/fr/messages';
 import { messages as esMessages } from '../locales/es/messages';
 import { messages as ptMessages } from '../locales/pt/messages';
 import { messages as ruMessages } from '../locales/ru/messages';
+import { messages as thMessages } from '../locales/th/messages';
 import { messages as viMessages } from '../locales/vi/messages';
 import { APP_LOCALES, LOCALE_LABELS, type AppLocale } from '../locale';
 import { EDITOR_ACTIONS } from '@/lib/terminal-keys';
@@ -49,6 +50,7 @@ const catalogs: Record<AppLocale, Catalog> = {
   pt: ptMessages as Catalog,
   ru: ruMessages as Catalog,
   vi: viMessages as Catalog,
+  th: thMessages as Catalog,
 };
 
 /** Every locale but the source one -- the ones that have something to translate. */
@@ -154,6 +156,18 @@ describe('the compiled catalogs', () => {
   // almost does would fail on the loanwords all six keep in English. Those are
   // held to coverage and non-emptiness here, and to a human reading the
   // screenshots.
+  test('Thai renders translated text and preserves dynamic values', () => {
+    const local = setupI18n();
+    local.load('th', thMessages);
+    local.activate('th');
+    const id = (source: string) =>
+      createHash('sha256').update(`${source}\u001f`).digest('base64').slice(0, 6);
+    expect(local._(id('Settings'))).toBe('การตั้งค่า');
+    expect(local._(id('Language, {languageName}'), { languageName: 'ไทย' })).toBe('ภาษา ไทย');
+    expect(local._(id('{0, plural, one {# day} other {# days}}'), { 0: 0 })).toBe('0 วัน');
+    expect(local._(id('{0, plural, one {# day} other {# days}}'), { 0: 12 })).toBe('12 วัน');
+  });
+
   test('the Traditional catalog contains no Simplified-only characters', () => {
     const offenders = Object.entries(zhTWMessages)
       .filter(([, value]) => SIMPLIFIED_ONLY.test(JSON.stringify(value)))
@@ -469,7 +483,7 @@ describe('the plural forms actually render', () => {
   // Vietnamese and Simplified Chinese have a single category, like Japanese
   // and Korean, so the catalog carries only `other` and the count reaches the
   // output without a branch to miss.
-  test.each(['vi', 'zh-CN'] as const)('%s renders its single plural form', (locale) => {
+  test.each(['vi', 'zh-CN', 'th'] as const)('%s renders its single plural form', (locale) => {
     const local = setupI18n();
     local.load(locale, catalogs[locale] as Messages);
     local.activate(locale);

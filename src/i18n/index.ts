@@ -46,6 +46,7 @@ import '@formatjs/intl-pluralrules/locale-data/es.js';
 import '@formatjs/intl-pluralrules/locale-data/pt.js';
 import '@formatjs/intl-pluralrules/locale-data/ru.js';
 import '@formatjs/intl-pluralrules/locale-data/vi.js';
+import '@formatjs/intl-pluralrules/locale-data/th.js';
 
 import { i18n } from '@lingui/core';
 
@@ -60,6 +61,7 @@ import { messages as frMessages } from './locales/fr/messages';
 import { messages as esMessages } from './locales/es/messages';
 import { messages as ptMessages } from './locales/pt/messages';
 import { messages as ruMessages } from './locales/ru/messages';
+import { messages as thMessages } from './locales/th/messages';
 import { messages as viMessages } from './locales/vi/messages';
 import { APP_LOCALES, SOURCE_LOCALE, type AppLocale } from './locale';
 
@@ -78,6 +80,7 @@ const catalogs: Record<AppLocale, typeof enMessages> = {
   pt: ptMessages,
   ru: ruMessages,
   vi: viMessages,
+  th: thMessages,
 };
 
 let loaded = false;
@@ -85,9 +88,8 @@ let loaded = false;
 /**
  * Make every catalog available and select one.
  *
- * Every catalog is loaded rather than fetched on demand. Eleven compiled
- * catalogs of ~700 messages are a few tens of kilobytes of strings the bundle
- * already has to ship, and a language switch that has to wait on I/O is a
+ * Every catalog is loaded rather than fetched on demand. The bundle already
+ * ships these strings, and a language switch that has to wait on I/O is a
  * language switch that flickers. `i18n.activate` is what actually re-renders
  * the tree, through the `I18nProvider` in the root layout.
  */
