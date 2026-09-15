@@ -186,6 +186,10 @@ msgstr "Добавить хост"
 msgid "Add an SSH host"
 msgstr "Добавить SSH-хост"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "Добавить вложение"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Добавьте команды и свои сочетания клавиш"
@@ -954,6 +958,7 @@ msgstr "Копировать команду установки"
 msgid "Copy the public key"
 msgstr "Копировать открытый ключ"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Не удалось добавить файл"
@@ -1796,10 +1801,6 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "Показать ещё"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -2035,6 +2036,10 @@ msgstr "Новое пространство"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Далее"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "Следующее уведомление"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3449,7 +3454,7 @@ msgstr "Значок на вашем главном экране"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen. Android closes the app to apply it."
-msgstr "Значок на вашем главном экране. Android закрывает приложение, чтобы применить его."
+msgstr "Значок на вашем главном экране. Android закрывает приложение, чтобы применить его"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

@@ -175,20 +175,8 @@ function sheetGroundTintColor(
   return tint === 'background' ? colors.background : colors.surface;
 }
 
-/**
- * The one plate geometry, which is the settings page's.
- *
- * `SettingsSection` has shipped a radius of 8 with 8 across and 4 down since
- * the plate was invented, and the whole point of the exercise is that a reader
- * moving between Settings and a sheet sees one kind of heading. So the sheets
- * take the settings numbers rather than the other way round: Settings does not
- * change, and nothing else has a plate old enough to defend a second set.
- *
- * The numbers are `LADDER.gap` and `LADDER.tight` from `settings-chrome`,
- * written out rather than imported -- that module imports this one, and a cycle
- * between the app's two pieces of furniture is not worth two constants.
- */
-export const SHEET_GROUND_PLATE_RADIUS = 8;
+/** Shared rounded geometry for labels, helper text and sheet headings. */
+export const SHEET_GROUND_PLATE_RADIUS = 18;
 export const SHEET_GROUND_PLATE_PADDING_HORIZONTAL = 8;
 export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;
 
@@ -216,7 +204,6 @@ export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;
  */
 export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const hasShell = useHasThemeArtwork('shell.background');
   const ground = useSheetGroundTint();
   if (!hasShell) return EMPTY_PLATE;
@@ -224,7 +211,9 @@ export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
     // Shrink-to-fit on the cross axis, so a plate beside a 44pt close button is
     // as tall as its own two lines rather than as tall as the button.
     alignSelf: 'flex-start',
-    backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint ?? ground)),
+    // Text protection stays opaque even when the reader makes surrounding
+    // cards translucent. Wallpaper must never become the label's contrast base.
+    backgroundColor: sheetGroundTintColor(theme.colors, tint ?? ground),
     borderRadius: SHEET_GROUND_PLATE_RADIUS,
     borderCurve: 'continuous',
     paddingHorizontal: SHEET_GROUND_PLATE_PADDING_HORIZONTAL,

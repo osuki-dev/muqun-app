@@ -123,7 +123,7 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
 
   // And the geometry is the settings page's, which is the one that was already
   // shipping: `LADDER.gap` across, `LADDER.tight` down, radius 8.
-  expect(ground).toContain('export const SHEET_GROUND_PLATE_RADIUS = 8;');
+  expect(ground).toContain('export const SHEET_GROUND_PLATE_RADIUS = 18;');
   expect(ground).toContain('export const SHEET_GROUND_PLATE_PADDING_HORIZONTAL = 8;');
   expect(ground).toContain('export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;');
 
@@ -139,7 +139,7 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
   for (const file of SHEET_FRAMES) {
     const text = readFileSync(file, 'utf8');
     const direct = text.includes('useSheetGroundPlate(') && text.includes(', plate]');
-    const viaLabel = text.includes('<SectionLabel');
+    const viaLabel = text.includes('<SectionLabel') || text.includes('<SheetHeading');
     expect({ file, plated: direct || viaLabel }).toEqual({ file, plated: true });
   }
 });

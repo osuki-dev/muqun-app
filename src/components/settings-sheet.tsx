@@ -1,3 +1,4 @@
+import { SheetHeading } from '@/components/sheet-heading';
 /**
  * The frame the two Appearance pickers share.
  *
@@ -18,13 +19,13 @@
  * 2 subviews" the moment anything shares the container -- after which the sheet
  * renders empty.
  */
-import { ScrollScreen, Text, useThemeTokens } from '@osuki-dev/ui';
+import { ScrollScreen, useThemeTokens } from '@osuki-dev/ui';
 import { X } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetFrame } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER } from '@/components/settings-chrome';
 import { useRenderTally } from '@/lib/render-tally';
@@ -53,7 +54,6 @@ export function SettingsSheet({
   // Explicit: this is the component that renders the frame, so it sits above
   // its own tint provider. Everything *inside* the sheet reads the tint from
   // the frame and calls this with no argument.
-  const plate = useSheetGroundPlate('surface');
   useRenderTally('SettingsSheet');
   return (
     <ScrollScreen
@@ -76,14 +76,7 @@ export function SettingsSheet({
             {/* The title and the line under it are the only text on this sheet
               that is not already on a card, so over a wallpaper they take the
               plate the settings page gives its section labels. */}
-            <View style={[styles.headerCopy, plate]}>
-              <Text variant="bodySmall" style={styles.title}>
-                {title}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {caption}
-              </Text>
-            </View>
+            <SheetHeading title={title} caption={caption} />
             <GlassChrome face="sheet" style={styles.closeButton}>
               <PressableScale
                 accessibilityLabel={closeLabel}

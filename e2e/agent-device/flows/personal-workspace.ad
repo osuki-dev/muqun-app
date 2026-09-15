@@ -1,0 +1,20 @@
+# Shared task composer: one field, attachment choices, and keyboard-safe close.
+press "label=\"Open quick actions\""
+wait "label=\"New task\"" 10000
+press "label=\"New task\""
+wait "label=\"Close new task\"" 10000
+is visible "id=new-task-agents"
+scroll down 0.5
+wait "id=new-task-prompt" 10000
+fill "id=new-task-prompt" "QA attachment draft"
+press "id=new-task-attach"
+wait "label=\"Choose files\"" 10000
+is visible "label=\"Photo library\""
+is visible "label=\"Take photo\""
+press "id=new-task-attach"
+is visible "id=new-task-prompt value=\"QA attachment draft\""
+is visible "label=\"Start task\""
+keyboard dismiss
+scroll top
+press "label=\"Close new task\""
+wait "id=terminal-composer-input" 10000

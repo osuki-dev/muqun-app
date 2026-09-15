@@ -21,7 +21,7 @@ age question, gender question or automatic assignment is needed.
 
 ## Interaction
 
-Settings > Appearance > App icon shows compact previews in a wrapping grid.
+Settings > Appearance > App icon shows compact previews in a single horizontal scrolling row.
 Existing `default` and `Classic` native identifiers remain stable. New identifiers
 are `Cyber`, `Anime`, and `Arcade`. The selected radio tile is announced and the
 existing native change operation disables choices while pending. Selection changes

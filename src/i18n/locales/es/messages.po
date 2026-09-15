@@ -186,6 +186,10 @@ msgstr "Añadir un host"
 msgid "Add an SSH host"
 msgstr "Añadir un host SSH"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "Añadir archivo adjunto"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Agrega comandos y combinaciones de teclas personalizadas"
@@ -954,6 +958,7 @@ msgstr "Copiar el comando de instalación"
 msgid "Copy the public key"
 msgstr "Copiar la clave pública"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "No se pudo agregar el archivo"
@@ -1796,10 +1801,6 @@ msgstr "Muestra solo los paneles con un agente reconocido"
 msgid "Live Activity"
 msgstr "Actividad en Vivo"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "Cargar más"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -2035,6 +2036,10 @@ msgstr "Nuevo espacio de trabajo"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Siguiente"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "Siguiente notificación"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3449,7 +3454,7 @@ msgstr "El icono en tu pantalla de inicio"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen. Android closes the app to apply it."
-msgstr "El icono en tu pantalla de inicio. Android cierra la app para aplicarlo."
+msgstr "El icono en tu pantalla de inicio. Android cierra la app para aplicarlo"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

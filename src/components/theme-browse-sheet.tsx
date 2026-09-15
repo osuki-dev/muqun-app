@@ -1,7 +1,10 @@
+import { SheetHeading } from '@/components/sheet-heading';
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Spinner, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LogoLoader } from '@/components/logo-loader';
 import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -59,7 +62,7 @@ import { useThemeLibrary } from '@/stores/theme-library';
  * -- a swipe dismisses a form sheet -- so none of it is rewritten here.
  */
 
-/** One page of rows. See the footer: paging is a press, never a scroll. */
+/** Reveal a bounded page near the end; the catalogue index is already cached. */
 const THEME_BROWSE_PAGE = 20;
 
 /**
@@ -93,8 +96,8 @@ export function ThemeBrowseSheet({
   onReady: (candidate: ThemeEditorCandidate) => void;
 }) {
   const { t } = useLingui();
+  const insets = useSafeAreaInsets();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   // Explicit: this is the component that renders the frame, so it sits above
   // its own tint provider. Everything *inside* the sheet reads the tint from
   // the frame and calls this with no argument.
@@ -105,11 +108,14 @@ export function ThemeBrowseSheet({
   const [entries, setEntries] = useState<ThemeIndexEntry[] | null>(() => cachedThemeIndex());
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [shown, setShown] = useState(THEME_BROWSE_PAGE);
+  const [shown, setShown] = useState(() =>
+    Math.min(THEME_BROWSE_PAGE, cachedThemeIndex()?.length ?? THEME_BROWSE_PAGE)
+  );
   // Where the page in view began, so an appended page starts its own sequence
   // at zero rather than continuing from twenty and arriving half a second late.
   const [pageStart, setPageStart] = useState(0);
   const [appending, setAppending] = useState(false);
+  const appendInFlight = useRef(false);
   // Which row is downloading. A row, not a boolean: the acknowledgement belongs
   // on the theme it is for, and a second press elsewhere must not look like it
   // did something.
@@ -149,6 +155,7 @@ export function ThemeBrowseSheet({
         if (!mounted.current || read.isCanceled) return;
         putThemeIndex(list);
         setEntries(list);
+        setShown(Math.min(THEME_BROWSE_PAGE, list.length));
       } catch {
         // The thrown message is a plain English module string and is in no
         // catalog. A full-width empty state is the last place to show one.
@@ -164,6 +171,7 @@ export function ThemeBrowseSheet({
   // is what ends the footer's spinner. Real work, not a timer pretending to be
   // one: the rows are laid out and their covers requested in that commit.
   useEffect(() => {
+    appendInFlight.current = false;
     if (appending) setAppending(false);
     // Only the arrival of a new page ends it.
     // oxlint-disable-next-line react/exhaustive-deps -- `appending` is the flag being cleared, not an input
@@ -332,7 +340,7 @@ export function ThemeBrowseSheet({
           // On the ground now that the list no longer paints a column behind
           // it, so it takes the same plate the header's two lines take.
           style={[styles.loading, plate]}>
-          <Spinner size="sm" color={theme.colors.textMuted} />
+          <LogoLoader size={56} accessibilityLabel={t`Loading themes…`} />
           <Text color={theme.colors.textMuted}>{t`Loading themes…`}</Text>
         </Animated.View>
       ) : (
@@ -347,37 +355,22 @@ export function ThemeBrowseSheet({
     </Animated.View>
   );
 
-  // A footer, not `onEndReached`: every newly shown row starts an image
-  // request, and infinite scroll would fetch covers faster than anyone reads
-  // them. The footer says what it will do before it does it.
+  function appendPage() {
+    if (!entries || shown >= total || pending !== null || failed || appendInFlight.current) return;
+    appendInFlight.current = true;
+    setAppending(true);
+    setPageStart(shown);
+    setShown(Math.min(shown + THEME_BROWSE_PAGE, total));
+  }
+
   const footer =
-    entries && shown < total ? (
-      <Animated.View layout={listLayout('short')} style={styles.footer}>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t`Load more`}
-          testID="theme-browse-more"
-          disabled={pending !== null || appending}
-          onPress={() => {
-            setAppending(true);
-            setPageStart(shown);
-            setShown((value) => value + THEME_BROWSE_PAGE);
-          }}
-          style={[styles.more, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
-          {appending ? (
-            <Animated.View key="appending" entering={fadeIn('short')} exiting={fadeOut('short')}>
-              <Spinner size="sm" color={theme.colors.textMuted} />
-            </Animated.View>
-          ) : (
-            <Animated.View key="idle" entering={fadeIn('short')} exiting={fadeOut('short')}>
-              <Text variant="bodySmall">{t`Load more`}</Text>
-            </Animated.View>
-          )}
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {t`Showing ${shown} of ${total}`}
-          </Text>
-        </PressableScale>
-      </Animated.View>
+    entries && total > 0 ? (
+      <View testID="theme-browse-page-status" style={styles.footer}>
+        {appending ? <Spinner size="sm" color={theme.colors.textMuted} /> : null}
+        <Text variant="caption" color={theme.colors.textMuted} style={plate}>
+          {t`Showing ${shown} of ${total}`}
+        </Text>
+      </View>
     ) : null;
 
   // The ground the theme sheet has, because to a reader these two are one
@@ -394,24 +387,22 @@ export function ThemeBrowseSheet({
         so the column is not flattened into its parent, which would put the
         scroller back at index 0 and hand it the whole sheet's height.
       */}
-      <View collapsable={false} style={styles.column}>
+      <View
+        collapsable={false}
+        style={[styles.column, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.headerBlock}>
           {/* iOS draws the grabber itself; Android's form sheet does not, and a
               sheet with no handle reads as a screen that arrived from the wrong
               direction. The same two lines the settings sheet carries. */}
-          {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+
           <View style={styles.header}>
             {/* The two lines a reader reads before any row exists, and the only
                 text on this sheet not already on a row. Over a wallpaper they
                 take the settings page's plate. */}
-            <View style={[styles.flexOne, plate]}>
-              <Text variant="bodySmall" style={styles.headerTitle}>
-                {t`Browse themes`}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {t`Themes published at muqun.dev. Nothing downloads until you open one.`}
-              </Text>
-            </View>
+            <SheetHeading
+              title={t`Browse themes`}
+              caption={t`Themes published at muqun.dev. Nothing downloads until you open one.`}
+            />
             <GlassChrome face="sheet" style={styles.closeButton}>
               <PressableScale
                 accessibilityLabel={t`Close theme catalogue`}
@@ -462,6 +453,8 @@ export function ThemeBrowseSheet({
         <LegendList
           testID="theme-browse-list"
           data={rows}
+          onEndReached={appendPage}
+          onEndReachedThreshold={0.4}
           keyExtractor={keyOfEntry}
           // Entries are stable objects straight out of the parsed index and are
           // never rebuilt per render, so the strictest comparison is both the

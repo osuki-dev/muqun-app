@@ -186,6 +186,10 @@ msgstr "Add a host"
 msgid "Add an SSH host"
 msgstr "Add an SSH host"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "Add attachment"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Add commands and custom key combinations"
@@ -954,6 +958,7 @@ msgstr "Copy the install command"
 msgid "Copy the public key"
 msgstr "Copy the public key"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Could not add a file"
@@ -1796,10 +1801,6 @@ msgstr "List only the panes running a recognised agent"
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "Load more"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -2035,6 +2036,10 @@ msgstr "New workspace"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Next"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "Next notification"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"

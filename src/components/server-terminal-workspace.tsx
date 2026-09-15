@@ -1,3 +1,4 @@
+import { NoticeDeck } from '@/components/notice-deck';
 import { ThemeIcon } from '@/components/theme-icon';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
@@ -4295,74 +4296,76 @@ export function ServerTerminalWorkspace({
           <View
             pointerEvents="box-none"
             style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
-            {/* A dead pairing outranks whatever action happened to fail first.
+            <NoticeDeck>
+              {/* A dead pairing outranks whatever action happened to fail first.
               Every request fails once this server has no record of this device,
               so the pane read that lost the race writes its own sentence into
               the error bar -- and the bar has no button on it, which used to
               hide the one control that can end the situation. The notice wins
               here, because it is the thing carrying the way out. */}
-            {error && !connection.needsPairing ? (
-              <Animated.View
-                entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}
-                layout={listLayout('short')}
-                style={[
-                  styles.errorBar,
-                  { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
-                ]}>
-                <Text selectable variant="caption" color={theme.colors.danger}>
-                  {error}
-                </Text>
-              </Animated.View>
-            ) : null}
-            {/* The tunnel's own status, above the gateway connection notice: a
+              {error && !connection.needsPairing ? (
+                <Animated.View
+                  entering={fadeIn('micro')}
+                  exiting={fadeOut('micro')}
+                  layout={listLayout('short')}
+                  style={[
+                    styles.errorBar,
+                    { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+                  ]}>
+                  <Text selectable variant="caption" color={theme.colors.danger}>
+                    {error}
+                  </Text>
+                </Animated.View>
+              ) : null}
+              {/* The tunnel's own status, above the gateway connection notice: a
                 tunnelled gateway cannot connect until its SSH forward is up, so
                 while it is connecting or down this is the news, and the gateway
                 notice below stays quiet (it would only say "Connecting"). */}
-            {tunnel.tunnelled && tunnel.phase !== 'open' ? (
-              <Animated.View
-                entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}
-                layout={listLayout('short')}>
-                <GatewayTunnelBadge record={record} variant="notice" />
-              </Animated.View>
-            ) : null}
-            {tunnelReady && (!error || connection.needsPairing) ? (
-              <ConnectionNotice
-                status={connection}
-                onRetry={() => setRetryNonce((value) => value + 1)}
-                onPairAgain={() => router.push('/explore')}
-              />
-            ) : null}
+              {tunnel.tunnelled && tunnel.phase !== 'open' ? (
+                <Animated.View
+                  entering={fadeIn('micro')}
+                  exiting={fadeOut('micro')}
+                  layout={listLayout('short')}>
+                  <GatewayTunnelBadge record={record} variant="notice" />
+                </Animated.View>
+              ) : null}
+              {tunnelReady && (!error || connection.needsPairing) ? (
+                <ConnectionNotice
+                  status={connection}
+                  onRetry={() => setRetryNonce((value) => value + 1)}
+                  onPairAgain={() => router.push('/explore')}
+                />
+              ) : null}
 
-            {/* What happened while nobody was looking. Above the switch pill and
+              {/* What happened while nobody was looking. Above the switch pill and
               below the standing conditions: it is news rather than a state, but
               it is news the user came back for, so a transient answer to a
               gesture queues underneath it rather than the other way round. */}
-            {featureFlags.terminalAwayDigest && away.digest ? (
-              <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
-            ) : null}
-            <CollaborationNotice
-              context={{
-                serverId,
-                sessionId: data.sessionId,
-                paneId: selection.paneId,
-                workspaceId: selection.workspaceId,
-                tabId: selection.tabId,
-                cwd: field(selectedPane, 'cwd'),
-              }}
-              agents={data.agents}
-              connected={ready && connection.phase === 'connected'}
-              active={isFocused}
-            />
+              {featureFlags.terminalAwayDigest && away.digest ? (
+                <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
+              ) : null}
+              <CollaborationNotice
+                context={{
+                  serverId,
+                  sessionId: data.sessionId,
+                  paneId: selection.paneId,
+                  workspaceId: selection.workspaceId,
+                  tabId: selection.tabId,
+                  cwd: field(selectedPane, 'cwd'),
+                }}
+                agents={data.agents}
+                connected={ready && connection.phase === 'connected'}
+                active={isFocused}
+              />
 
-            {/* Last in the stack on purpose. An error bar and a connection notice
+              {/* Last in the stack on purpose. An error bar and a connection notice
               are standing conditions and keep the top of the column; this is a
               transient answer to a gesture and clears itself, so it queues
               underneath rather than pushing a condition out of the way. */}
-            {switchPill ? (
-              <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
-            ) : null}
+              {switchPill ? (
+                <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
+              ) : null}
+            </NoticeDeck>
           </View>
 
           <View style={styles.terminalArea}>
