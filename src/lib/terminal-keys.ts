@@ -337,6 +337,19 @@ export function terminalKeysFromGateway(keys: ShortcutKey[]): TerminalKey[] {
   }));
 }
 
+/** Complete older Gateway rows without replacing agent-specific actions. */
+export function withCommonTerminalCombinations(keys: TerminalKey[]): TerminalKey[] {
+  const existing = new Set(keys.map((item) => item.key));
+  const common = [
+    ...NAVIGATION.filter((item) => item.key.startsWith('alt+')),
+    { label: '⌃B', key: 'ctrl+b', accessibilityLabel: 'Control B' },
+    ...SHELL.filter((item) =>
+      ['ctrl+a', 'ctrl+e', 'ctrl+u', 'ctrl+w', 'ctrl+r', 'ctrl+l'].includes(item.key)
+    ),
+  ];
+  return [...keys, ...common.filter((item) => !existing.has(item.key))];
+}
+
 /**
  * The key row for a pane. Agent panes get the actions that agent advertises;
  * anything else gets the shell editing set.

@@ -247,7 +247,10 @@ function RootContent() {
               ) : (
                 <RouteScene>
                   {sheetRoutePresentations[route.name] === 'fullscreen' ? (
-                    <FullscreenSheetFrame>{children}</FullscreenSheetFrame>
+                    <FullscreenSheetFrame
+                      tint={route.name === 'commands' ? 'background' : 'surface'}>
+                      {children}
+                    </FullscreenSheetFrame>
                   ) : (
                     children
                   )}
@@ -279,11 +282,11 @@ function RootContent() {
             <Stack.Screen name="ssh/[hostId]" options={{ gestureEnabled: false }} />
             <Stack.Screen
               name="commands"
-              options={sheetPresentationOptions(sheetRoutePresentations['commands'])}
+              options={sheetPresentationOptions(sheetRoutePresentations['commands'], false, true)}
             />
             <Stack.Screen
               name="panels"
-              options={sheetPresentationOptions(sheetRoutePresentations['panels'])}
+              options={sheetPresentationOptions(sheetRoutePresentations['panels'], false, true)}
             />
             {/*
               The session switcher. Content-sized like the language
@@ -304,11 +307,11 @@ function RootContent() {
             />
             <Stack.Screen
               name="artifacts"
-              options={sheetPresentationOptions(sheetRoutePresentations['artifacts'])}
+              options={sheetPresentationOptions(sheetRoutePresentations['artifacts'], false, true)}
             />
             <Stack.Screen
               name="git-diff"
-              options={sheetPresentationOptions(sheetRoutePresentations['git-diff'])}
+              options={sheetPresentationOptions(sheetRoutePresentations['git-diff'], false, true)}
             />
             <Stack.Screen
               name="settings-theme"
@@ -331,7 +334,7 @@ function RootContent() {
             {/* Full height leaves room for the composer and keyboard. */}
             <Stack.Screen
               name="new-task"
-              options={sheetPresentationOptions(sheetRoutePresentations['new-task'])}
+              options={sheetPresentationOptions(sheetRoutePresentations['new-task'], false, true)}
             />
             {/*
               Open a web service (card #829). Content-sized, and

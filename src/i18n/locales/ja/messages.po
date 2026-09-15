@@ -629,6 +629,7 @@ msgstr "ファイル一覧を閉じる"
 msgid "Close language picker"
 msgstr "言語一覧を閉じる"
 
+#: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "新規タスクを閉じる"
@@ -822,6 +823,10 @@ msgstr "Control キー"
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "コントロール A、行頭へ"
+
+#: src/i18n/labels.ts
+msgid "Control B"
+msgstr "コントロール B"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
@@ -1260,7 +1265,6 @@ msgstr "ドキュメント"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
@@ -3701,6 +3705,7 @@ msgstr "変更が多すぎて一覧にできません。これは先頭部分で
 msgid "Trust"
 msgstr "信頼する"
 
+#: src/app/new-task.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx

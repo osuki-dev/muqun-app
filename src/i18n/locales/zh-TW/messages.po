@@ -629,6 +629,7 @@ msgstr "關閉檔案清單"
 msgid "Close language picker"
 msgstr "關閉語言清單"
 
+#: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "關閉新增任務"
@@ -822,6 +823,10 @@ msgstr "Control 鍵"
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "Ctrl A 鍵，移到行首"
+
+#: src/i18n/labels.ts
+msgid "Control B"
+msgstr "Ctrl B 鍵"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
@@ -1260,7 +1265,6 @@ msgstr "文件"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
@@ -3701,6 +3705,7 @@ msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
 msgid "Trust"
 msgstr "信任"
 
+#: src/app/new-task.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx

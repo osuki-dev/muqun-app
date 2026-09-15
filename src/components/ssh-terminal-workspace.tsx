@@ -77,6 +77,7 @@ import {
   INSERT_MODE_KEYS,
   keyCap,
   terminalKeysForPane,
+  withCommonTerminalCombinations,
   keyboardCombinationKeys,
   withEditorActions,
   type TerminalKey,
@@ -429,7 +430,9 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   // usage ordering, which is keyed on a gateway profile this screen lacks.
   const terminalKeys = useMemo(() => {
     if (editorPane && nvimMode === 'insert') return INSERT_MODE_KEYS;
-    const resolved = terminalKeysForPane(null, editorPane ? frameTitle : null);
+    const resolved = withCommonTerminalCombinations(
+      terminalKeysForPane(null, editorPane ? frameTitle : null)
+    );
     return editorPane ? withEditorActions(resolved) : resolved;
   }, [editorPane, frameTitle, nvimMode]);
 

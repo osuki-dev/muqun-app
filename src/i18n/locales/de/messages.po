@@ -629,6 +629,7 @@ msgstr "Dateiliste schließen"
 msgid "Close language picker"
 msgstr "Sprachliste schließen"
 
+#: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Neue Aufgabe schließen"
@@ -822,6 +823,10 @@ msgstr "Steuerungstaste"
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "Ctrl A, Zeilenanfang"
+
+#: src/i18n/labels.ts
+msgid "Control B"
+msgstr "Ctrl B"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
@@ -1260,7 +1265,6 @@ msgstr "Dokumentation"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
@@ -3701,6 +3705,7 @@ msgstr "Zu viele Änderungen für eine Liste. Dies ist der Anfang, nicht alles"
 msgid "Trust"
 msgstr "Vertrauen"
 
+#: src/app/new-task.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx

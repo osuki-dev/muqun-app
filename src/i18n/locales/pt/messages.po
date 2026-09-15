@@ -629,6 +629,7 @@ msgstr "Fechar a lista de ficheiros"
 msgid "Close language picker"
 msgstr "Fechar a lista de idiomas"
 
+#: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Fechar a nova tarefa"
@@ -822,6 +823,10 @@ msgstr "Tecla Control"
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "Control A, início da linha"
+
+#: src/i18n/labels.ts
+msgid "Control B"
+msgstr "Control B"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
@@ -1260,7 +1265,6 @@ msgstr "Docs"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
@@ -3701,6 +3705,7 @@ msgstr "Alterações demais para listar. Este é o início delas, não o total"
 msgid "Trust"
 msgstr "Confiar"
 
+#: src/app/new-task.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
