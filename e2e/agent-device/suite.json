@@ -4,310 +4,171 @@
     {
       "name": "theme-document",
       "program": "flows/theme-document",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "custom-themes",
       "program": "flows/custom-themes",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "agent-collaboration",
       "program": "flows/agent-collaboration",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "demo-tour",
       "program": "flows/demo-tour",
-      "tags": [
-        "smoke",
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["smoke", "full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "pairing-manual",
       "program": "flows/pairing-manual",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "terminal-interactions",
       "program": "flows/terminal-interactions",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "ssh",
       "program": "flows/ssh",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "file-mentions",
       "program": "flows/file-mentions",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "attachments-ui",
       "program": "flows/attachments-ui",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "artifacts",
       "program": "flows/artifacts",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "git-diff",
       "program": "flows/git-diff",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "settings",
       "program": "flows/settings",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "away-digest",
       "program": "flows/away-digest",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "i18n-shots",
       "program": "flows/i18n-shots",
-      "tags": [
-        "capture"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "light-shots",
       "program": "flows/light-shots",
-      "tags": [
-        "capture"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "new-task",
       "program": "flows/new-task",
       "tags": [],
-      "platforms": [
-        "ios",
-        "android"
-      ],
+      "platforms": ["ios", "android"],
       "disabled": "flows/new-task.ad is an unconverted stub: every step still targets ${TARGET} and no section table supplies it. Rewrite it against real selectors, then give it the full tag."
     },
     {
       "name": "pad-workspace",
       "program": "flows/pad-workspace",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "slash-commands",
       "program": "flows/slash-commands",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "store-shot-actions",
       "program": "flows/store-shot-actions",
-      "tags": [
-        "capture"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "theme-shots",
       "program": "flows/theme-shots",
-      "tags": [
-        "capture"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "web-theme-shots",
       "program": "flows/web-theme-shots",
-      "tags": [
-        "capture"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "motion-618-close-capture",
       "program": "subflows/motion-618-close-capture",
-      "tags": [
-        "capture"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "motion-p2-capture",
       "program": "subflows/motion-p2-capture",
-      "tags": [
-        "capture"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["capture"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "agent-shortcuts",
       "program": "flows/agent-shortcuts",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "machine-switcher",
       "program": "flows/machine-switcher",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "soft-keyboard",
       "program": "flows/soft-keyboard",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "personal-workspace",
       "program": "flows/personal-workspace",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     },
     {
       "name": "thai-language",
       "program": "flows/thai-language",
-      "tags": [
-        "full"
-      ],
-      "platforms": [
-        "ios",
-        "android"
-      ]
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
@@ -5124,14 +4985,8 @@
         "include": "subflows/open-demo"
       },
       {
-        "point": [
-          0.8,
-          0.45
-        ],
-        "delta": [
-          -0.55,
-          0
-        ],
+        "point": [0.8, 0.45],
+        "delta": [-0.55, 0],
         "run": "flows/terminal-interactions.ad#s1"
       },
       {
@@ -5145,14 +5000,8 @@
         "run": "flows/terminal-interactions.ad#s3"
       },
       {
-        "point": [
-          0.25,
-          0.45
-        ],
-        "delta": [
-          0.55,
-          0
-        ],
+        "point": [0.25, 0.45],
+        "delta": [0.55, 0],
         "run": "flows/terminal-interactions.ad#s4"
       },
       {
@@ -5166,14 +5015,8 @@
         "run": "flows/terminal-interactions.ad#s6"
       },
       {
-        "point": [
-          0.5,
-          0.3
-        ],
-        "delta": [
-          0,
-          0.4
-        ],
+        "point": [0.5, 0.3],
+        "delta": [0, 0.4],
         "run": "flows/terminal-interactions.ad#s7"
       },
       {
@@ -5208,10 +5051,7 @@
         "run": "flows/terminal-interactions.ad#s12"
       },
       {
-        "point": [
-          0.5,
-          0.55
-        ],
+        "point": [0.5, 0.55],
         "run": "flows/terminal-interactions.ad#s13"
       },
       {
@@ -5237,14 +5077,8 @@
         "run": "flows/terminal-interactions.ad#s16"
       },
       {
-        "point": [
-          0.5,
-          0.55
-        ],
-        "delta": [
-          0,
-          0.4
-        ],
+        "point": [0.5, 0.55],
+        "delta": [0, 0.4],
         "run": "flows/terminal-interactions.ad#s17"
       },
       {
@@ -5447,14 +5281,8 @@
         "run": "flows/terminal-interactions.ad#s44"
       },
       {
-        "point": [
-          0.8,
-          0.45
-        ],
-        "delta": [
-          -0.55,
-          0
-        ],
+        "point": [0.8, 0.45],
+        "delta": [-0.55, 0],
         "run": "flows/terminal-interactions.ad#s45"
       },
       {
@@ -6534,10 +6362,7 @@
         "run": "subflows/motion-618-close-capture.ad#s19"
       },
       {
-        "point": [
-          0.77,
-          0.69
-        ],
+        "point": [0.77, 0.69],
         "run": "subflows/motion-618-close-capture.ad#s20"
       },
       {
@@ -6600,10 +6425,7 @@
         "run": "subflows/motion-p2-capture.ad#s14"
       },
       {
-        "point": [
-          0.45,
-          0.94
-        ],
+        "point": [0.45, 0.94],
         "run": "subflows/motion-p2-capture.ad#s15"
       },
       {

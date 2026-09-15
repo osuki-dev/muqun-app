@@ -1803,6 +1803,7 @@ msgstr "Live Activity"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
+#: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Загрузка"
@@ -1829,6 +1830,7 @@ msgid "Loading settings"
 msgstr "Загружаем настройки"
 
 #: src/components/skia-terminal.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Loading terminal"
 msgstr "Загружаем терминал"
 

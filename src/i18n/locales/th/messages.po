@@ -186,6 +186,10 @@ msgstr "เพิ่มโฮสต์"
 msgid "Add an SSH host"
 msgstr "เพิ่มโฮสต์ SSH"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "เพิ่มไฟล์แนบ"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "เพิ่มคำสั่งและชุดปุ่มลัดที่กำหนดเอง"
@@ -954,6 +958,7 @@ msgstr "คัดลอกคำสั่งติดตั้ง"
 msgid "Copy the public key"
 msgstr "คัดลอกคีย์สาธารณะ"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
@@ -1796,12 +1801,9 @@ msgstr "แสดงเฉพาะพาเนลที่กำลังเร
 msgid "Live Activity"
 msgstr "กิจกรรมสด"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "โหลดเพิ่ม"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
+#: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "กำลังโหลด"
@@ -1828,6 +1830,7 @@ msgid "Loading settings"
 msgstr "กำลังโหลดการตั้งค่า"
 
 #: src/components/skia-terminal.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Loading terminal"
 msgstr "กำลังโหลดเทอร์มินัล"
 
@@ -2035,6 +2038,10 @@ msgstr "พื้นที่ทำงานใหม่"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "ถัดไป"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "การแจ้งเตือนถัดไป"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"

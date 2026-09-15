@@ -1803,6 +1803,7 @@ msgstr "ライブアクティビティ"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
+#: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "読み込み中"
@@ -1829,6 +1830,7 @@ msgid "Loading settings"
 msgstr "設定を読み込み中"
 
 #: src/components/skia-terminal.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Loading terminal"
 msgstr "ターミナルを読み込み中"
 
