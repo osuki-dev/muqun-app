@@ -63,7 +63,11 @@ interaction flow.
 The dedicated Android `personal-workspace` flow passed: agent rail, shared
 composer, attachment choices, draft preservation and close/back behavior.
 An initial regression attempt used a stale CI-mode Metro bundle and is not
-evidence for this change; the corrected full run must pass before merge.
+evidence for this change. After restarting Metro with a fresh watched bundle,
+the full run still failed to locate `theme-appearance-reset` and
+`assignment-toggle`. The remaining run was stopped after those failures, in
+accordance with the request to prioritize feature implementation. This is not a
+passing full-suite result; those failures remain a merge blocker.
 iOS runtime checks and a real paired attachment-to-agent round trip remain
 required; offline demo checks alone do not prove delivery.
 No release, signing change, Herdr fork or skill-file modification is included.
