@@ -1,35 +1,27 @@
 import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-/**
- * Start a new agent task from the phone.
- *
- * Three questions, in the order they get answered: which agent, where, and what
- * to ask for. Then Go, and the phone lands in the pane the agent came up in --
- * the whole point of doing this from a sofa rather than walking to the desk.
- *
- * The shape is argued from what each question actually is. The agent is a small
- * closed set the host reported, so it is pills that can all be seen at once
- * rather than a menu that hides the answer behind a tap. The directory is one
- * of a handful of places this session has recently worked -- so those are rows,
- * with the field under them for the case they do not cover, not the other way
- * around: typing a path on a phone is the fallback, not the interface. The
- * prompt is the only free text, so it is the only thing here that is a box.
- *
- * There is no microphone button and there will not be one. The keyboard already
- * has dictation on both platforms, everyone already knows where it is, and a
- * second one drawn by this app would be a worse copy that also has to ask for
- * the microphone permission. The prompt field simply says so.
- *
- * The sheet is sized to its contents. Everything in it is a closed list or a
- * field; nothing scrolls forever, and a sheet that reserved a session's worth
- * of height for four questions would be lying about how long this takes.
+/** Start an agent with the shared terminal composer and attachment pipeline.
+ * The full-height sheet keeps input reachable with long host catalogs.
  */
-import { KeyboardToolbar, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
-import { Button } from '@/components/themed-button';
+import { KeyboardToolbar, Text, useThemeTokens } from '@osuki-dev/ui';
+import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
+import { AttachmentMenu } from '@/components/attachment-menu';
+import { AttachmentStrip } from '@/components/attachment-strip';
+import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { LogoLoader } from '@/components/logo-loader';
+import { SheetHeading } from '@/components/sheet-heading';
+import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import {
+  pickAttachments,
+  describePickerFailure,
+  isImageAttachment,
+  type AttachmentSource,
+} from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Bot, Check, FolderOpen, X } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Bot, Check, FolderOpen, Paperclip, X } from 'lucide-react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
@@ -105,6 +97,31 @@ export function NewTaskSheet({
   const [prompt, setPrompt] = useState('');
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const record = useGatewayConnectionStore((state) => state.record);
+  const uploads = useAttachmentUploads(record);
+  const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const sending = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const previewImages = uploads.attachments
+    .filter((item) => isImageAttachment(item.mime))
+    .map((item) => ({ id: item.id, uri: item.localUri }));
+  function chooseAttachmentSource(source: AttachmentSource) {
+    setAttachmentMenuOpen(false);
+    const picker = uploads.capturePicker();
+    if (!picker.isCurrent() || sending.current) return;
+    void pickAttachments(source)
+      .then(picker.addFiles)
+      .catch((failure: unknown) => {
+        if (picker.isCurrent()) setError(describePickerFailure(source, failure));
+      });
+  }
 
   // The catalog and the directory list are one question each, asked once when
   // the sheet opens. Neither is polled: what a host has installed and where it
@@ -152,19 +169,33 @@ export function NewTaskSheet({
   }, [sessionId]);
 
   async function start() {
-    if (starting || !canSpawnAgent({ agent })) return;
+    if (sending.current || !canSpawnAgent({ agent }) || !record) return;
+    sending.current = true;
+    const owner = record;
     setStarting(true);
     setError(null);
     try {
-      const spawned = await spawnAgent(sessionId, agentSpawnRequest({ agent, cwd, tabId, prompt }));
-      onStarted(spawned);
+      const paths = await uploads.awaitUploads();
+      if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
+      if (paths === null) throw new Error(t`Could not add a file`);
+      const firstPrompt = [prompt.trim(), ...paths].filter(Boolean).join(' ');
+      const spawned = await spawnAgent(
+        sessionId,
+        agentSpawnRequest({ agent, cwd, tabId, prompt: firstPrompt })
+      );
+      if (mounted.current && useGatewayConnectionStore.getState().record === owner) {
+        uploads.clearAttachments();
+        onStarted(spawned);
+      }
     } catch (failure) {
       // Reported in the sheet rather than by closing it. An unknown agent kind
       // and a directory outside the session's workspaces are both refusals of
       // one field, and the reader needs the other two answers still on screen
       // to fix it.
       setError(describeGatewayFailure(failure, t`Could not start the task.`).message);
-      setStarting(false);
+    } finally {
+      sending.current = false;
+      if (mounted.current) setStarting(false);
     }
   }
 
@@ -201,18 +232,15 @@ export function NewTaskSheet({
             {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
 
             <View style={styles.header}>
-              <View style={[styles.headerCopy, plate]}>
-                <Text variant="bodySmall" style={styles.title}>
-                  <Trans>New task</Trans>
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Start an agent and send it the first thing to do.</Trans>
-                </Text>
-              </View>
+              <SheetHeading
+                title={t`New task`}
+                caption={t`Start an agent and send it the first thing to do.`}
+              />
               <GlassChrome face="sheet" style={styles.closeButton}>
                 <PressableScale
                   accessibilityLabel={t`Close new task`}
                   onPress={onClose}
+                  disabled={starting}
                   style={styles.closeHit}>
                   <X size={18} color={theme.colors.text} />
                 </PressableScale>
@@ -222,8 +250,11 @@ export function NewTaskSheet({
             <View style={styles.section}>
               <SectionLabel title={<Trans>AGENT</Trans>} color={theme.colors.textMuted} />
               {loadingProfiles ? (
-                <View style={styles.loadingRow}>
-                  <Spinner size="sm" color={theme.colors.primary} />
+                <View style={[styles.loadingRow, plate]}>
+                  <LogoLoader
+                    size={36}
+                    accessibilityLabel={t`Asking the server what it can run…`}
+                  />
                   <Text variant="caption" color={theme.colors.textMuted}>
                     <Trans>Asking the server what it can run…</Trans>
                   </Text>
@@ -233,17 +264,26 @@ export function NewTaskSheet({
                   <Trans>This server did not name any agents it can start.</Trans>
                 </Text>
               ) : (
-                <View style={styles.pills}>
+                <ScrollView
+                  horizontal
+                  testID="new-task-agents"
+                  showsHorizontalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={styles.pills}>
                   {profiles.map((profile, index) => (
-                    <Animated.View key={profile.kind} entering={riseIn(index * STAGGER.row)}>
+                    <Animated.View
+                      key={profile.kind}
+                      entering={riseIn(Math.min(index, 7) * STAGGER.row)}>
                       <AgentPill
                         profile={profile}
                         selected={profile.kind === agent}
-                        onSelect={() => setAgent(profile.kind)}
+                        onSelect={() => {
+                          if (!sending.current) setAgent(profile.kind);
+                        }}
                       />
                     </Animated.View>
                   ))}
-                </View>
+                </ScrollView>
               )}
             </View>
 
@@ -259,7 +299,9 @@ export function NewTaskSheet({
                       <RecentCwdRow
                         path={path}
                         selected={path === cwd.trim()}
-                        onSelect={() => setCwd(path)}
+                        onSelect={() => {
+                          if (!sending.current) setCwd(path);
+                        }}
                       />
                     </Animated.View>
                   ))}
@@ -271,6 +313,7 @@ export function NewTaskSheet({
                 meant. */}
               <Input
                 label={t`Path`}
+                editable={!starting}
                 value={cwd}
                 onChangeText={setCwd}
                 autoCapitalize="none"
@@ -285,30 +328,65 @@ export function NewTaskSheet({
 
             <View style={styles.section}>
               <SectionLabel title={<Trans>FIRST PROMPT</Trans>} color={theme.colors.textMuted} />
-              <Input
-                value={prompt}
-                onChangeText={setPrompt}
-                multiline
-                numberOfLines={3}
-                placeholder={t`Review the failing test and fix it.`}
-                variant="outline"
-                // The keyboard's own dictation is the answer to "I do not want to
-                // type this on a phone", on both platforms. Said once, here, instead
-                // of drawn as a button this app would have to own.
-                helper={t`Type it, or use your keyboard's dictation key.`}
+              {attachmentMenuOpen && !starting ? (
+                <AttachmentMenu onSelect={chooseAttachmentSource} textColor={theme.colors.text} />
+              ) : null}
+              <View pointerEvents={starting ? 'none' : 'auto'}>
+                <AttachmentStrip
+                  attachments={uploads.attachments}
+                  onRemove={uploads.removeAttachment}
+                  onRetry={uploads.retryUpload}
+                  onPreview={setPreviewId}
+                  textColor={theme.colors.text}
+                />
+              </View>
+              <TerminalComposer
+                leading={
+                  <PressableScale
+                    testID="new-task-attach"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Add attachment`}
+                    disabled={starting || !record}
+                    onPress={() => setAttachmentMenuOpen((open) => !open)}
+                    style={composerStyles.button}>
+                    <Paperclip size={18} color={theme.colors.text} />
+                  </PressableScale>
+                }
+                inputProps={{
+                  testID: 'new-task-prompt',
+                  value: prompt,
+                  onChangeText: setPrompt,
+                  editable: !starting,
+                  placeholder: t`Review the failing test and fix it.`,
+                }}
+                send={{
+                  accessibilityLabel: starting ? t`Starting…` : t`Start task`,
+                  armed: canSpawnAgent({ agent }),
+                  sending: starting,
+                  disabled: starting || !record || !canSpawnAgent({ agent }),
+                  onPress: () => void start(),
+                }}
               />
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={plate}>{t`Type it, or use your keyboard's dictation key.`}</Text>
             </View>
 
-            <Button onPress={() => void start()} disabled={starting || !canSpawnAgent({ agent })}>
-              {starting ? t`Starting…` : t`Start task`}
-            </Button>
+            {previewId && previewImages.some((item) => item.id === previewId) ? (
+              <ImagePreviewModal
+                images={previewImages}
+                initialIndex={previewImages.findIndex((item) => item.id === previewId)}
+                onClose={() => setPreviewId(null)}
+              />
+            ) : null}
 
             {error ? (
               <Animated.View
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
                 layout={listLayout('short')}>
-                <Text selectable variant="caption" color={theme.colors.danger}>
+                <Text selectable variant="caption" color={theme.colors.danger} style={plate}>
                   {error}
                 </Text>
               </Animated.View>
@@ -484,7 +562,7 @@ const styles = StyleSheet.create({
   },
   section: { gap: LADDER.gap },
   loadingRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
-  pills: { flexDirection: 'row', flexWrap: 'wrap', gap: LADDER.gap },
+  pills: { flexDirection: 'row', gap: LADDER.gap, paddingVertical: 4 },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',

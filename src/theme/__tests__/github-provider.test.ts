@@ -8,7 +8,7 @@ import { createGitFixture } from './git-fixture';
 const fixture = createGitFixture();
 afterAll(() => fixture.dispose());
 const image = new Uint8Array(
-  readFileSync(new URL('../../../assets/images/favicon.png', import.meta.url))
+  readFileSync(new URL('../../../assets/icons/favicon.png', import.meta.url))
 );
 const manifest = createThemeStarter();
 manifest.assets = { logo: { path: 'assets/logo.png' } };

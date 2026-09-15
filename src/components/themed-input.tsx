@@ -1,3 +1,4 @@
+import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { timing, fadeInDown, listLayout } from '@/lib/motion';
 /** Adapted from @osuki-dev/ui 1.0.1: preserve input behavior; theme only control fills. */
@@ -44,6 +45,7 @@ export const Input: React.FC<InputProps> = ({
   ...textInputProps
 }) => {
   const theme = useThemeTokens();
+  const plate = useSheetGroundPlate();
   const surfaceBackground = useSurfaceBackground();
   const input = theme.components.Input;
   const hasError = !!error;
@@ -158,7 +160,7 @@ export const Input: React.FC<InputProps> = ({
       testID={textInputProps.testID ? `${textInputProps.testID}-container` : undefined}
       style={[containerStyles, containerStyle]}>
       {label && (
-        <Text variant="label" colorKey="textMuted">
+        <Text variant="label" colorKey="textMuted" style={plate}>
           {label}
         </Text>
       )}
@@ -192,7 +194,7 @@ export const Input: React.FC<InputProps> = ({
         </Animated.View>
       )}
       {hasHelper && (
-        <Text variant="caption" colorKey="textMuted">
+        <Text variant="caption" colorKey="textMuted" style={plate}>
           {helper}
         </Text>
       )}

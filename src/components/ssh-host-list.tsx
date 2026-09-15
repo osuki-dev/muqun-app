@@ -1,7 +1,8 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { LogoLoader } from '@/components/logo-loader';
 import { useRouter } from 'expo-router';
 import { Plus, SquareTerminal } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -106,7 +107,7 @@ export function SshHostList() {
           />
         ) : loading ? (
           <View style={styles.empty}>
-            <Spinner />
+            <LogoLoader size={56} accessibilityLabel={t`Loading`} />
           </View>
         ) : (
           <View style={styles.list}>

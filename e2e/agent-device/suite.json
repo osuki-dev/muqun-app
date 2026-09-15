@@ -157,6 +157,12 @@
       "program": "flows/soft-keyboard",
       "tags": ["full"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "personal-workspace",
+      "program": "flows/personal-workspace",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
@@ -6683,6 +6689,14 @@
       },
       {
         "run": "flows/soft-keyboard.ad"
+      }
+    ],
+    "flows/personal-workspace": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/personal-workspace.ad"
       }
     ]
   }

@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EditorControls } from '@/components/editor-controls';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { LogoLoader } from '@/components/logo-loader';
 import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -913,7 +914,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
         <ScreenHeader title={t`SSH`} />
         <View style={styles.missing}>
           {loading ? (
-            <Spinner />
+            <LogoLoader size={56} accessibilityLabel={t`Loading terminal`} />
           ) : (
             <>
               <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centered}>

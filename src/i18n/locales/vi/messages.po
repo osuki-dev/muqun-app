@@ -186,6 +186,10 @@ msgstr "Thêm host"
 msgid "Add an SSH host"
 msgstr "Thêm host SSH"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "Thêm tệp đính kèm"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "Thêm lệnh và tổ hợp phím tùy chỉnh"
@@ -954,6 +958,7 @@ msgstr "Sao chép lệnh cài đặt"
 msgid "Copy the public key"
 msgstr "Sao chép khóa công khai"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Không thể thêm tệp"
@@ -1796,10 +1801,6 @@ msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "Tải thêm"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -2035,6 +2036,10 @@ msgstr "Không gian làm việc mới"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Tiếp theo"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "Thông báo tiếp theo"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3449,7 +3454,7 @@ msgstr "Biểu tượng trên màn hình chính của bạn"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen. Android closes the app to apply it."
-msgstr "Biểu tượng trên màn hình chính của bạn. Android sẽ đóng ứng dụng để áp dụng."
+msgstr "Biểu tượng trên màn hình chính của bạn. Android sẽ đóng ứng dụng để áp dụng"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

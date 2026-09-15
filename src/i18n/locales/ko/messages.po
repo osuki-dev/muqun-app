@@ -186,6 +186,10 @@ msgstr "호스트 추가"
 msgid "Add an SSH host"
 msgstr "SSH 호스트 추가"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "첨부 파일 추가"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "명령과 사용자 지정 조합 키를 추가합니다"
@@ -954,6 +958,7 @@ msgstr "설치 명령어 복사"
 msgid "Copy the public key"
 msgstr "공개 키를 복사"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "파일을 추가하지 못했습니다"
@@ -1796,10 +1801,6 @@ msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "더 보기"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -2035,6 +2036,10 @@ msgstr "새 워크스페이스"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "다음"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "다음 알림"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3449,7 +3454,7 @@ msgstr "홈 화면에 표시되는 아이콘입니다"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen. Android closes the app to apply it."
-msgstr "홈 화면에 표시되는 아이콘입니다. Android에서는 적용을 위해 앱이 종료됩니다."
+msgstr "홈 화면에 표시되는 아이콘입니다. Android에서는 적용을 위해 앱이 종료됩니다"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

@@ -1,3 +1,5 @@
+import { RouteScene } from '@/components/route-scene';
+import { sheetPresentationOptions } from '@/lib/route-presentation';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -238,8 +240,16 @@ function RootContent() {
         <ThemeFileOpener />
         <AppLockGate>
           <Stack
+            screenLayout={({ children, options }) =>
+              options.presentation === 'formSheet' ? (
+                <>{children}</>
+              ) : (
+                <RouteScene>{children}</RouteScene>
+              )
+            }
             screenOptions={{
               headerShown: false,
+              animation: 'fade',
               contentStyle: { backgroundColor: screenBackground },
               // A screen nobody is looking at should not be rendering. Home
               // sits under the terminal for as long as the terminal is open,
@@ -250,25 +260,16 @@ function RootContent() {
               freezeOnBlur: true,
             }}>
             <Stack.Screen name="(drawer)" />
-            {/* Settings rises from the bottom like the terminal, over the home
-                screen rather than inside the drawer navigator: the drawer is
-                switched off, so a screen that lived in it arrived with a
-                sideways swap and no material of its own. */}
-            <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
+            {/* Pages share a depth reveal; native sheets retain their layout contract. */}
+            <Stack.Screen name="settings" options={{ animation: 'fade' }} />
             {/*
               The terminal lives on the root stack rather than in the drawer:
               drawer screens swap without a transition, and its edge-swipe
               gesture fights the terminal's own horizontal panning.
             */}
-            <Stack.Screen name="servers/[serverId]" options={{ animation: 'slide_from_bottom' }} />
-            {/*
-              SSH: the host list and one host's shell, both on the root stack
-              and both rising from the bottom for the same reasons as the
-              terminal above -- the shell screen reuses its canvas and its
-              horizontal panning, and the list is the door to it.
-            */}
-            <Stack.Screen name="ssh" options={{ animation: 'slide_from_bottom' }} />
-            <Stack.Screen name="ssh/[hostId]" options={{ animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="servers/[serverId]" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="ssh" options={{ animation: 'fade' }} />
+            <Stack.Screen name="ssh/[hostId]" options={{ gestureEnabled: false }} />
             <Stack.Screen
               name="commands"
               options={{
@@ -383,12 +384,7 @@ function RootContent() {
             */}
             <Stack.Screen
               name="settings-theme-browse"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions('fullscreen')}
             />
             <Stack.Screen name="custom-theme" options={{ presentation: 'fullScreenModal' }} />
             <Stack.Screen
@@ -400,24 +396,8 @@ function RootContent() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
-            {/*
-              New Task (card #690). Content-sized for the same reason as the
-              two above: three closed questions -- an agent, a directory, a
-              prompt -- that have to be answerable in one look. A full-height
-              sheet would put the Go button an inch above the home indicator
-              with nothing between it and the prompt, which reads as a form that
-              is still loading. The keyboard is handled inside, so the detent
-              does not have to leave room for it.
-            */}
-            <Stack.Screen
-              name="new-task"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: 'fitToContents',
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
-            />
+            {/* Full height leaves room for the composer and keyboard. */}
+            <Stack.Screen name="new-task" options={sheetPresentationOptions('sheet')} />
             {/*
               Open a web service (card #829). Content-sized like New Task, and
               for less reason than any of them: this is one field with a row of
@@ -448,18 +428,11 @@ function RootContent() {
               name="simfarm"
               options={{
                 presentation: 'fullScreenModal',
-                animation: 'slide_from_bottom',
+                animation: 'fade',
                 gestureEnabled: false,
               }}
             />
-            <Stack.Screen
-              name="explore"
-              options={{
-                presentation: 'modal',
-                animation: 'slide_from_bottom',
-                gestureEnabled: true,
-              }}
-            />
+            <Stack.Screen name="explore" options={sheetPresentationOptions('fullscreen')} />
           </Stack>
           <InAppNotificationHost />
         </AppLockGate>

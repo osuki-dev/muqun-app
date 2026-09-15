@@ -186,6 +186,10 @@ msgstr "新增主機"
 msgid "Add an SSH host"
 msgstr "新增 SSH 主機"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "新增附件"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "新增指令與自訂組合鍵"
@@ -954,6 +958,7 @@ msgstr "複製安裝指令"
 msgid "Copy the public key"
 msgstr "複製公開金鑰"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "無法加入檔案"
@@ -1796,10 +1801,6 @@ msgstr "只列出正在執行可辨識代理程式的面板"
 msgid "Live Activity"
 msgstr "即時動態"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "載入更多"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -2035,6 +2036,10 @@ msgstr "新增工作區"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "下一步"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "下一則通知"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3449,7 +3454,7 @@ msgstr "顯示在主畫面上的圖示"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen. Android closes the app to apply it."
-msgstr "顯示在主畫面上的圖示。Android 會關閉 App 以套用變更。"
+msgstr "顯示在主畫面上的圖示。Android 會關閉 App 以套用變更"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

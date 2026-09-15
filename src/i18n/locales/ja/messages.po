@@ -186,6 +186,10 @@ msgstr "ホストを追加"
 msgid "Add an SSH host"
 msgstr "SSH ホストを追加"
 
+#: src/components/new-task-sheet.tsx
+msgid "Add attachment"
+msgstr "添付ファイルを追加"
+
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
 msgstr "コマンドやカスタムのキー組み合わせを追加します"
@@ -954,6 +958,7 @@ msgstr "インストールコマンドをコピー"
 msgid "Copy the public key"
 msgstr "公開鍵をコピーする"
 
+#: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "ファイルを追加できませんでした"
@@ -1796,10 +1801,6 @@ msgstr "認識済みのエージェントが動作しているパネルのみを
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Load more"
-msgstr "さらに読み込む"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/theme-link-import.tsx
@@ -2035,6 +2036,10 @@ msgstr "新規ワークスペース"
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "次へ"
+
+#: src/components/notice-deck.tsx
+msgid "Next notification"
+msgstr "次の通知"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3449,7 +3454,7 @@ msgstr "ホーム画面に表示されるアイコンです"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen. Android closes the app to apply it."
-msgstr "ホーム画面に表示されるアイコンです。Android では適用のためにアプリが終了します。"
+msgstr "ホーム画面に表示されるアイコンです。Android では適用のためにアプリが終了します"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

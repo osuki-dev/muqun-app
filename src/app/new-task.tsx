@@ -13,7 +13,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * Firing the picker off against whichever server was selected last would ask
  * the wrong machine what it can run -- and then start an agent on it.
  */
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { LogoLoader } from '@/components/logo-loader';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -123,7 +124,7 @@ export default function NewTaskScreen() {
   if (!sessionId || needsSelect) {
     return (
       <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
-        <Spinner size="sm" color={theme.colors.primary} />
+        <LogoLoader size={56} accessibilityLabel={t`Connecting`} />
         <Text variant="caption" color={theme.colors.textMuted}>
           {/* The same word the connection banner uses, not a second one with
               an ellipsis on it: two spellings of one state is how a glossary

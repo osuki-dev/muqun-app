@@ -42,56 +42,75 @@ export function InAppNotificationHost() {
   };
   return (
     <SafeAreaView edges={['top']} pointerEvents="box-none" style={styles.overlay}>
-      <Animated.View
-        key={notice.id}
-        entering={fadeInDown('short')}
-        style={[
-          styles.card,
-          {
-            backgroundColor: surfaceBackground(colors.surfaceRaised),
-            borderColor: colors.border,
-          },
-        ]}
-        testID="in-app-notification">
-        <View style={[styles.icon, { backgroundColor: surfaceBackground(colors.primarySubtle) }]}>
-          <Bell size={18} color={colors.primary} />
-        </View>
-        <View style={styles.content} accessibilityLiveRegion="polite">
-          <Text variant="label" numberOfLines={2}>
-            {notice.title || t`Muqun`}
-          </Text>
-          {notice.body ? (
-            <Text selectable variant="bodySmall" color={colors.textMuted} numberOfLines={4}>
-              {notice.body}
+      <View pointerEvents="box-none" style={styles.deck}>
+        {[2, 1].map((depth) =>
+          items.length > depth ? (
+            <View
+              key={depth}
+              pointerEvents="none"
+              accessible={false}
+              style={[
+                styles.backPage,
+                {
+                  backgroundColor: colors.surfaceRaised,
+                  borderColor: colors.border,
+                  transform: [{ translateY: depth * 6 }, { scaleX: 1 - depth * 0.035 }],
+                },
+              ]}
+            />
+          ) : null
+        )}
+        <Animated.View
+          key={notice.id}
+          entering={fadeInDown('short')}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surfaceRaised,
+              borderColor: colors.border,
+            },
+          ]}
+          testID="in-app-notification">
+          <View style={[styles.icon, { backgroundColor: surfaceBackground(colors.primarySubtle) }]}>
+            <Bell size={18} color={colors.primary} />
+          </View>
+          <View style={styles.content} accessibilityLiveRegion="polite">
+            <Text variant="label" numberOfLines={2}>
+              {notice.title || t`Muqun`}
             </Text>
-          ) : null}
-          <View style={styles.actions}>
-            {notice.route ? (
-              <PressableScale
-                onPress={open}
-                accessibilityRole="button"
-                accessibilityLabel={t`Open`}
-                testID="in-app-notification-open"
-                style={styles.action}>
-                <Text variant="label" color={colors.primary}>{t`Open`}</Text>
-              </PressableScale>
-            ) : null}
-            {items.length > 1 ? (
-              <Text variant="caption" color={colors.textMuted} style={styles.count}>
-                {items.length}
+            {notice.body ? (
+              <Text selectable variant="bodySmall" color={colors.textMuted} numberOfLines={4}>
+                {notice.body}
               </Text>
             ) : null}
+            <View style={styles.actions}>
+              {notice.route ? (
+                <PressableScale
+                  onPress={open}
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Open`}
+                  testID="in-app-notification-open"
+                  style={styles.action}>
+                  <Text variant="label" color={colors.primary}>{t`Open`}</Text>
+                </PressableScale>
+              ) : null}
+              {items.length > 1 ? (
+                <Text variant="caption" color={colors.textMuted} style={styles.count}>
+                  {items.length}
+                </Text>
+              ) : null}
+            </View>
           </View>
-        </View>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={t`Close`}
-          onPress={dismiss}
-          testID="in-app-notification-dismiss"
-          style={styles.close}>
-          <X size={18} color={colors.textMuted} />
-        </PressableScale>
-      </Animated.View>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t`Close`}
+            onPress={dismiss}
+            testID="in-app-notification-dismiss"
+            style={styles.close}>
+            <X size={18} color={colors.textMuted} />
+          </PressableScale>
+        </Animated.View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -105,6 +124,16 @@ const styles = StyleSheet.create({
     zIndex: 90,
     alignItems: 'center',
     paddingHorizontal: 12,
+  },
+  deck: { width: '100%', maxWidth: 480 },
+  backPage: {
+    position: 'absolute',
+    top: 8,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderWidth: 1,
+    borderRadius: appChrome.radius.noticeBanner,
   },
   card: {
     width: '100%',

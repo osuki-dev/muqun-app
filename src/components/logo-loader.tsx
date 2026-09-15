@@ -1,6 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useThemeMode } from '@osuki-dev/ui';
+import { useEffectiveCustomTheme } from '@/components/theme-candidate';
+import { resolveLaunchArtwork } from '@/theme/launch-artwork';
 import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useBrandMark } from '@/components/brand-mark';
 import Animated, {
   cancelAnimation,
@@ -34,6 +37,19 @@ export function LogoLoader({
   compact?: boolean;
 }) {
   const logo = useBrandMark();
+  const { theme, assets } = useEffectiveCustomTheme();
+  const { resolvedMode } = useThemeMode();
+  const { width } = useWindowDimensions();
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const artwork = resolveLaunchArtwork(
+    theme,
+    assets,
+    resolvedMode,
+    width >= 768 ? 'regular' : 'compact',
+    { hero: true }
+  );
+  const heroUri =
+    !compact && artwork.kind === 'hero' && artwork.uri !== failedUri ? artwork.uri : null;
   const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
 
@@ -71,7 +87,7 @@ export function LogoLoader({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="progressbar"
       style={[styles.root, { width: size, height: size }]}>
-      {!compact ? (
+      {!compact && !heroUri ? (
         <Animated.View
           style={[styles.halo, { borderRadius: size / 2, backgroundColor: '#FF705E' }, haloStyle]}
         />
@@ -89,7 +105,12 @@ export function LogoLoader({
         ]}>
         <Image
           contentFit="contain"
-          source={logo}
+          source={heroUri ? { uri: heroUri } : logo}
+          onError={() => {
+            if (heroUri) setFailedUri(heroUri);
+          }}
+          autoplay={false}
+          accessible={false}
           style={[styles.logoImage, { width: logoSize, height: logoSize }]}
         />
       </Animated.View>

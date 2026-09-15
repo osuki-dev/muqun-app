@@ -16,7 +16,7 @@ const source = (commit: string, manifestPath = 'theme.json') => ({
 });
 const manifest = createThemeStarter();
 const image = new Uint8Array(
-  readFileSync(new URL('../../../assets/images/favicon.png', import.meta.url))
+  readFileSync(new URL('../../../assets/icons/favicon.png', import.meta.url))
 );
 manifest.assets = {
   logo: { path: 'assets/logo.png', sha256: createHash('sha256').update(image).digest('hex') },

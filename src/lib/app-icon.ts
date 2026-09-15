@@ -9,9 +9,9 @@
  * Pure, so the mapping between what the picker shows and what the OS reports
  * can be tested without the native module.
  */
-export type AppIconId = 'default' | 'Classic';
+export type AppIconId = 'default' | 'Classic' | 'Cyber' | 'Anime' | 'Arcade';
 
-export const APP_ICONS: readonly AppIconId[] = ['default', 'Classic'];
+export const APP_ICONS: readonly AppIconId[] = ['default', 'Classic', 'Cyber', 'Anime', 'Arcade'];
 
 /** What the native module is told: `null` restores the compiled icon. */
 export function nativeAppIconName(id: AppIconId): string | null {

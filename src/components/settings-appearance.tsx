@@ -25,7 +25,7 @@ import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { SettingsBlock, SettingsChoiceRow, SettingsSection } from '@/components/settings-chrome';
 import { PressableScale } from '@/components/pressable-scale';
@@ -98,18 +98,30 @@ export function SettingsAppearance({ title }: { title: string }) {
 
 /**
  * The icons themselves, not their names: a launcher icon is recognised, not
- * read, and a row of two pictures says what a segmented control of two words
+ * read, and a horizontally scrolling row of pictures says what a segmented control of two words
  * cannot. Each tile draws the cut for the current mode, the way the home
  * screen would.
  */
 const ICON_ART: Record<AppIconId, { light: number; dark: number }> = {
   default: {
-    light: require('@/assets/images/icon.png'),
-    dark: require('@/assets/images/icon-dark.png'),
+    light: require('@/assets/icons/mascot/preview-light.png'),
+    dark: require('@/assets/icons/mascot/preview-dark.png'),
   },
   Classic: {
-    light: require('@/assets/icons/classic/icon.png'),
-    dark: require('@/assets/icons/classic/icon-dark.png'),
+    light: require('@/assets/icons/classic/preview-light.png'),
+    dark: require('@/assets/icons/classic/preview-dark.png'),
+  },
+  Cyber: {
+    light: require('@/assets/icons/cyber/preview-light.png'),
+    dark: require('@/assets/icons/cyber/preview-light.png'),
+  },
+  Anime: {
+    light: require('@/assets/icons/anime/preview-light.png'),
+    dark: require('@/assets/icons/anime/preview-dark.png'),
+  },
+  Arcade: {
+    light: require('@/assets/icons/arcade/preview-light.png'),
+    dark: require('@/assets/icons/arcade/preview-dark.png'),
   },
 };
 
@@ -119,7 +131,13 @@ function AppIconPicker() {
   const { resolvedMode } = useThemeMode();
   const { icon, choose, busy, supported } = useAppIcon();
   if (!supported) return null;
-  const labels: Record<AppIconId, string> = { default: t`Mascot`, Classic: t`Classic` };
+  const labels: Record<AppIconId, string> = {
+    default: t`Mascot`,
+    Classic: t`Classic`,
+    Cyber: 'Cyber',
+    Anime: 'Anime',
+    Arcade: 'Arcade',
+  };
   return (
     <SettingsBlock
       label={t`App icon`}
@@ -127,46 +145,55 @@ function AppIconPicker() {
       // drops the running task with it: the app closes and reopens on the
       // next tap. Said up front rather than discovered.
       caption={
-        process.env.EXPO_OS === 'android'
-          ? t`The icon on your home screen. Android closes the app to apply it.`
-          : t`The icon on your home screen.`
+        <Text variant="caption" colorKey="textMuted">
+          {process.env.EXPO_OS === 'android'
+            ? t`The icon on your home screen. Android closes the app to apply it.`
+            : t`The icon on your home screen.`}
+        </Text>
       }>
-      <View style={iconStyles.row} accessibilityRole="radiogroup">
-        {APP_ICONS.map((id) => {
-          const selected = id === icon;
-          return (
-            <PressableScale
-              key={id}
-              accessibilityRole="radio"
-              accessibilityState={{ selected, disabled: busy }}
-              accessibilityLabel={t`App icon, ${labels[id]}`}
-              testID={`settings-app-icon-${id}`}
-              disabled={busy}
-              onPress={() => {
-                if (!selected) void choose(id);
-              }}
-              style={iconStyles.tile}>
-              <View
-                style={[
-                  iconStyles.frame,
-                  { borderColor: selected ? theme.colors.primary : 'transparent' },
-                ]}>
-                <Image
-                  source={ICON_ART[id][resolvedMode === 'dark' ? 'dark' : 'light']}
-                  contentFit="cover"
-                  accessible={false}
-                  style={iconStyles.art}
-                />
-              </View>
-              <Text
-                variant="bodySmall"
-                style={{ color: selected ? theme.colors.text : theme.colors.textMuted }}>
-                {labels[id]}
-              </Text>
-            </PressableScale>
-          );
-        })}
-      </View>
+      <ScrollView
+        horizontal
+        testID="settings-app-icons-scroll"
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={iconStyles.row}
+        keyboardShouldPersistTaps="handled">
+        <View style={iconStyles.row} accessibilityRole="radiogroup">
+          {APP_ICONS.map((id) => {
+            const selected = id === icon;
+            return (
+              <PressableScale
+                key={id}
+                accessibilityRole="radio"
+                accessibilityState={{ selected, disabled: busy }}
+                accessibilityLabel={t`App icon, ${labels[id]}`}
+                testID={`settings-app-icon-${id}`}
+                disabled={busy}
+                onPress={() => {
+                  if (!selected) void choose(id);
+                }}
+                style={iconStyles.tile}>
+                <View
+                  style={[
+                    iconStyles.frame,
+                    { borderColor: selected ? theme.colors.primary : 'transparent' },
+                  ]}>
+                  <Image
+                    source={ICON_ART[id][resolvedMode === 'dark' ? 'dark' : 'light']}
+                    contentFit="cover"
+                    accessible={false}
+                    style={iconStyles.art}
+                  />
+                </View>
+                <Text
+                  variant="bodySmall"
+                  style={{ color: selected ? theme.colors.text : theme.colors.textMuted }}>
+                  {labels[id]}
+                </Text>
+              </PressableScale>
+            );
+          })}
+        </View>
+      </ScrollView>
     </SettingsBlock>
   );
 }
