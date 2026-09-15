@@ -24,3 +24,7 @@ wait stable 400 5000
 
 # section verify-english
 wait "label=\"Language, English\"" 10000
+
+# section bottom
+scroll bottom
+wait stable 400 5000

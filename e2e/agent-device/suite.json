@@ -6888,6 +6888,9 @@
         "include": "subflows/launch-home"
       },
       {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
         "target": {
           "text": "Settings"
         },
@@ -6907,6 +6910,9 @@
         "run": "flows/thai-language.ad#scroll"
       },
       {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
         "target": {
           "id": "settings-language-row"
         },
@@ -6923,6 +6929,15 @@
         "run": "flows/thai-language.ad#scroll"
       },
       {
+        "run": "flows/thai-language.ad#bottom"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
         "target": {
           "id": "settings-selection:(on|off):language-option-th"
         },
@@ -6934,6 +6949,9 @@
       },
       {
         "run": "flows/thai-language.ad#relaunch"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
       },
       {
         "target": {
@@ -6955,11 +6973,17 @@
         "run": "flows/thai-language.ad#verify-thai"
       },
       {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
         "target": {
           "id": "settings-language-row"
         },
         "mode": "press",
         "run": "flows/thai-language.ad#press"
+      },
+      {
+        "run": "flows/thai-language.ad#bottom"
       },
       {
         "target": {
@@ -6985,6 +7009,9 @@
         "direction": "up",
         "timeout": 20000,
         "run": "flows/thai-language.ad#scroll-up"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
       },
       {
         "target": {

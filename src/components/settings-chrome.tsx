@@ -142,6 +142,8 @@ export function SectionLabel({
       testID={testID}
       style={[
         styles.sectionTitle,
+        // Android letter tracking clips Thai combining clusters in compact labels.
+        typeof title === 'string' && /[\u0e00-\u0e7f]/u.test(title) ? { letterSpacing: 0 } : {},
         plate,
         // Only when there is a plate, and only ever a negative number: the
         // plate's own padding, less the indent the bare label already carries.
