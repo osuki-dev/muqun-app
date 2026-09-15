@@ -9,6 +9,9 @@ release builds include their own JavaScript bundle.
 bash scripts/e2e.sh --check
 bash scripts/e2e.sh --device <id> --platform ios
 bash scripts/e2e.sh --smoke --device <id> --platform android
+# All four QA devices in parallel (see "Parallel gate" below):
+bash scripts/e2e-all.sh
+E2E_ALL_ONLY="android-phone android-tablet" bash scripts/e2e-all.sh --smoke
 E2E_AD_METRO_HOST=127.0.0.1 E2E_AD_METRO_PORT=8081 \
   bash scripts/e2e.sh --device <id> --platform ios
 bash scripts/e2e-agent-device.sh --flow settings --device <id> --platform ios
@@ -40,6 +43,28 @@ and continues after failures to report all affected surfaces. Smoke runs only
 screenshots, native command results, and captured view hierarchies beside them.
 Each run keeps its evidence; previous runs are not deleted. A failure returns a
 nonzero exit status. The runner's pure tests execute before device tests.
+
+## Parallel gate
+
+`scripts/e2e-all.sh` runs the gate on the iPhone, iPad, Android phone and
+Android tablet concurrently, one suite process per device. A serial run of all
+four takes over an hour wall-clock (about 18 minutes per device); parallel it
+is roughly one device run. Devices are discovered by their QA names on every
+run -- UDIDs and emulator serials are never hardcoded -- and an unbooted QA
+device is booted, never created. Each leg gets its own agent-device session
+(`muqun-e2e-<name>`) and its own report directory (`dist/e2e-reports/<name>`),
+so legs cannot steal sessions or overwrite evidence.
+
+Before starting a leg, a read-only preflight opens the app and snapshots it:
+a device that shows paired servers instead of the first-run demo entries is
+skipped, loudly, and any skip fails the gate -- the suite must never run
+against real user data, and partial coverage must never pass as full coverage.
+Android legs are taken offline with `svc wifi disable; svc data disable`,
+verified by an unreachable ping: the gate is an offline gate (custom-themes
+asserts the catalogue's offline failure UI), and a QA emulator with a working
+route would reach that assertion online. (Airplane mode alone does not sever
+the emulator's virtual route.)
+`E2E_ALL_ONLY="ipad android-tablet"` restricts a run to named legs.
 
 Visibility assertions use native `is exists` with `visible=true`: multiple
 visible copies of a heading still satisfy an exact-text visibility assertion.

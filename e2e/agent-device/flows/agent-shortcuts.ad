@@ -25,6 +25,7 @@ scroll down 1
 wait "id=\"quick-command-delivery-tab-collaboration\"" 10000
 press "id=\"quick-command-delivery-tab-collaboration\""
 press "id=\"quick-command-save\""
+wait "label=\"Delete QA review instructions\"" 10000
 press "label=\"Done editing shortcuts\""
 # Leaving edit mode already returns the saved command to the visible list.
 # A viewport-length pull from the sheet header dismisses the native sheet.
@@ -49,6 +50,7 @@ press "id=\"assignment-bar-close\""
 # the only place a task is written -- this used to assert it survived in the
 # task screen's own field, and that screen no longer exists.
 press "role=button text=\"Open quick actions\""
+wait "role=button label=\"QA review instructions\"" 10000
 press "role=button label=\"QA review instructions\""
 wait "id=\"assignment-bar-close\"" 10000
 # Re-opening the shortcut re-applies its text over whatever was in the field.
@@ -74,3 +76,27 @@ wait "label=\"Delete QA review instructions\"" 10000
 press "label=\"Delete QA review instructions\""
 is hidden "label=\"Delete QA review instructions\""
 press "label=\"Done editing shortcuts\""
+
+# Self-healing preamble sections. The run above deletes the shortcut it
+# creates, but a run that dies mid-flow leaves its fixture in SecureStore and
+# the next run's name selector then matches two rows in distinct subtrees,
+# which agent-device refuses to resolve. The manifest opens the editor before
+# the main script and clears one leftover when it finds one, so a single
+# poisoned run can never cascade into the next. (Two consecutive poisoned runs
+# still need a manual clear: duplicate rows are identical and unaddressable.)
+
+# section pre-open
+press "role=button text=\"Open quick actions\""
+
+# section pre-edit
+press "label=\"Edit shortcuts\""
+
+# section pre-delete
+press "label=\"Delete QA review instructions\""
+wait stable 400 5000
+
+# section pre-done
+press "label=\"Done editing shortcuts\""
+
+# section pre-close
+press "role=button label=\"Close quick actions\""

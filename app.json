@@ -218,7 +218,8 @@
             "name": "Mascot",
             "ios": {
               "light": "./assets/icons/mascot/icon.png",
-              "dark": "./assets/icons/mascot/icon-dark.png"
+              "dark": "./assets/icons/mascot/icon-dark.png",
+              "tinted": "./assets/icons/classic/icon-tinted.png"
             },
             "android": {
               "foregroundImage": "./assets/icons/mascot/android-foreground.png",

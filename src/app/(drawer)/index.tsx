@@ -1173,6 +1173,7 @@ function EmptyState({
           variant="primary"
           leftIcon="ScanLine"
           accessibilityLabel={t`Pair a server`}
+          testID="home-pair-server"
           onPress={onPair}
           style={isPad ? styles.padEmptyAction : styles.emptyAction}>
           {/* `t` rather than `<Trans>`: the design system's Button types its
