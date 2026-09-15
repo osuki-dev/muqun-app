@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import { createThemeStarter } from '../authoring';
+import { resolveHomeIdentity } from '../resolve';
 import {
   effectiveThemeManifest,
   homeHeroPreference,
@@ -260,4 +261,42 @@ test('package export resolves all preferences; colors-only export still excludes
   const colors = parseThemeManifest(repo.exportColors('theme'));
   expect(colors.homeIdentity).toBeUndefined();
   expect(colors.variants.light.surfaces?.backgroundOpacity).toBe(0.15);
+});
+
+test('custom themes default to no Home branding without overwriting explicit choices', () => {
+  const manifest = createThemeStarter();
+  const installed: InstalledTheme = { id: 'personal', manifest, assets: {} };
+  const identity = (value: InstalledTheme) => resolveHomeIdentity(effectiveThemeManifest(value));
+  expect(identity(installed)).toEqual({ name: null, logo: null, showBrand: false });
+  expect(identity({ ...installed, hideHomeLogo: false, hideHomeText: false })).toEqual({
+    name: 'Muqun',
+    logo: { mode: 'default' },
+    showBrand: true,
+  });
+  manifest.homeIdentity = {
+    name: { mode: 'custom', text: 'My workspace' },
+    logo: { mode: 'custom', asset: 'personal-mark' },
+  };
+  expect(identity(installed)).toEqual({
+    name: 'My workspace',
+    logo: { mode: 'custom', asset: 'personal-mark' },
+    showBrand: true,
+  });
+  expect(identity({ ...installed, hideHomeLogo: true })).toEqual({
+    name: 'My workspace',
+    logo: null,
+    showBrand: true,
+  });
+  expect(identity({ ...installed, hideHomeText: true })).toEqual({
+    name: null,
+    logo: { mode: 'custom', asset: 'personal-mark' },
+    showBrand: true,
+  });
+  manifest.homeIdentity = { logo: { mode: 'default' }, name: { mode: 'default' } };
+  expect(identity(installed)).toEqual({
+    name: 'Muqun',
+    logo: { mode: 'default' },
+    showBrand: true,
+  });
+  expect(resolveHomeIdentity().showBrand).toBe(true);
 });

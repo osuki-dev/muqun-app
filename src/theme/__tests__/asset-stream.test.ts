@@ -17,7 +17,7 @@ import { inspectGitTheme } from '../git-import';
 import { createGitFixture } from './git-fixture';
 
 const image = new Uint8Array(
-  readFileSync(new URL('../../../assets/images/favicon.png', import.meta.url))
+  readFileSync(new URL('../../../assets/icons/favicon.png', import.meta.url))
 );
 const digest = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const owned: string[] = [];

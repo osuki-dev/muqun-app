@@ -1,52 +1,113 @@
-# Pocket Muqun brand assets
+# Personal app icons
 
-The approved September 9, 2026 Pocket Muqun artwork replaces the launcher
-light/dark masters. These are brand assets, not user-customizable theme assets.
-Custom theme home identity must not rename the installed application or change
-its package identity.
+Design branch: `design/personal-app-icons`. This is an asset and configuration
+review, not a release or an App Store approval claim.
 
-## Asset mapping
+## Five choices, one identity
 
-| Asset                                  | Consumer                                 | Requirements              |
-| -------------------------------------- | ---------------------------------------- | ------------------------- |
-| `assets/images/icon.png`               | Expo fallback and iOS light icon         | 1024 × 1024 opaque PNG    |
-| `assets/images/icon-dark.png`          | iOS dark icon                            | 1024 × 1024 opaque PNG    |
-| `assets/images/favicon.png`            | Web favicon                              | 64 × 64 PNG               |
-| `assets/images/brand-mark-3d.png`      | In-app mark on light surfaces (Settings) | 512 × 512 PNG, real alpha |
-| `assets/images/brand-mark-3d-dark.png` | In-app mark on dark surfaces (Settings)  | 512 × 512 PNG, real alpha |
+| Choice  | Visual direction                                   | Intended affinity                                |
+| ------- | -------------------------------------------------- | ------------------------------------------------ |
+| Classic | Original flat coral mark                           | People who prefer the original, minimal identity |
+| Mascot  | Clean coral 3D companion                           | A friendly, tactile everyday appearance          |
+| Cyber   | Dark armour, cyan edge and magenta panels          | Cyberpunk and futuristic technology aesthetics   |
+| Anime   | Cel shading, expressive square eyes and warm blush | Anime, chibi and cute illustration aesthetics    |
+| Arcade  | Stepped pixel silhouette, violet and lime          | Retro gaming and playful digital culture         |
 
-The two in-app marks are cut from the masters, not painted: the flat plate is
-flood-filled to alpha 0 from the border, edge pixels have the plate colour
-removed by un-blending against the nearest fully opaque neighbour, and the soft
-grounding shadow becomes translucent black rather than a plate-tinted smear.
-Verify with `sips -g hasAlpha` and by compositing on a saturated colour -- both
-were checked on magenta and cyan. The dark cut keeps the dark rim the master was
-lit with, so it is only ever drawn on a dark ground; the light cut is the one to
-reach for anywhere the ground is not known.
+The three new designs evolve Classic's joined two-lobed body, single tuft, short
+feet, rectangular eyes and triangular mouth. They offer recognisably different
+visual languages, not just recolours. These are aesthetic choices available to
+everyone, not demographic classifications or inferred user profiles. No analytics,
+age question, gender question or automatic assignment is needed.
 
-The existing Expo configuration already references these paths. Preserve
-`dev.osuki.muqun`, the Expo project, and signing credentials. Native launcher
-changes require a new native build; a Metro reload does not validate them.
+## Interaction
 
-## Adaptation still pending
+Settings > Appearance > App icon shows compact previews in a wrapping grid.
+Existing `default` and `Classic` native identifiers remain stable. New identifiers
+are `Cyber`, `Anime`, and `Arcade`. The selected radio tile is announced and the
+existing native change operation disables choices while pending. Selection changes
+only the launcher icon; it does not change the application name, package identity,
+permissions or in-app theme. The existing Android restart explanation remains
+visible. Do not hide operating-system confirmation UI.
 
-Android adaptive foreground, Android monochrome, splash, and in-app loading
-marks still use the previous artwork. Do not mark the brand migration complete
-until these are replaced and visually checked on devices. In particular:
+The picker loads 192px previews, not 1024px native source files. Cyber uses the same
+artwork for light and dark appearance. Anime and Arcade have dark background
+exports; shared Classic tinted/monochrome artwork preserves recognition when the
+OS applies a user-selected tint. The in-app mascot uses one shadow-free transparent
+image on both surface modes, eliminating the old duplicated cutouts.
 
-- A painted checkerboard is not transparency. Inspect the actual alpha channel
-  before accepting generated cutouts.
-- Keep the entire mascot, including crest and feet, inside adaptive-icon safe
-  bounds and inspect round and rounded-square launcher masks.
-- Monochrome artwork needs a readable silhouette and facial negative space;
-  do not use a full opaque rectangle as its mask.
-- Check splash and loading marks against both light and dark surfaces.
-- Check light/dark iOS launcher appearance and iPad sizes in a native build.
+## Files and regeneration
 
-The imagegen transparent-cutout attempts were rejected because their output had
-no alpha channel. Neither rejected image is included in the application.
+- `assets/icons/catalog.json`: identifiers, directories and background colours.
+- `assets/icons/<style>/mark.png`: optimised transparent source for the four rendered styles.
+- `assets/icons/<style>/icon*.png`: opaque 1024px iOS/native build inputs.
+- `assets/icons/<style>/android-foreground.png`: transparent 1024px adaptive foreground.
+- `assets/icons/<style>/preview-*.png`: compact runtime picker assets.
+- `assets/icons/mascot/brand-mark.png`: 512px transparent runtime mark.
+- `assets/icons/monochrome.png`: shared Classic silhouette with facial cutouts.
+- `assets/icons/favicon.png`: 64px web icon.
+- `assets/icons/classic/`: original artwork and generated previews; preserves historical filenames.
+- `assets/images/`: demo content only; launcher art no longer lives here.
 
-Source masters remain in the Desktop `Muqun-Pocket-Logo-2026-09-09` handoff
-folder. The repository copies above are self-contained build inputs and do not
-depend on that Desktop path. Store compliance still requires normal release
-review; asset dimensions alone do not guarantee approval.
+Run `bun scripts/generate-brand-assets.ts` with ImageMagick 7 installed to regenerate
+exports from checked-in masters. This is an authoring tool, not a runtime dependency.
+Image generation is not part of builds. Generated PNGs strip metadata, use an
+optimised palette without dithering and retain alpha on foregrounds. iOS exports
+are flattened and have no transparency. Creative masters were produced with the
+built-in imagegen tool; the discarded graphite/sage studies and large original
+renders are not bundled. Prompt records are in `icon-generation-prompts.md`.
+
+The new adaptive foregrounds fit inside a 440px square on a 1024px canvas: even
+its diagonal fits inside Android's 66/108 safe circle. The full mascot stays
+visible across launcher masks. Never embed an opaque miniature icon plate into
+the foreground as the old generator did. Do not bake rounded corners into iOS
+source images; the OS provides the mask.
+
+Removed: superseded images-directory launcher/brand exports, the unused old
+monochrome SVG and the unreferenced Expo template `.icon` package. Git history
+retains previous artwork. Signing, package IDs and Expo project identity are unchanged.
+
+## Size budget
+
+The previous icon/brand/template assets occupied 3,287,498 bytes. The initial new
+five-style package occupies approximately 1.25 MB including optimised masters,
+exports and previews, a reduction of about 62%. The three new sets therefore do
+not increase the source asset footprint. Exact APK/IPA download impact must be
+measured from equivalent native builds; source PNG bytes are not an APK-size claim.
+
+Keep the complete icon directory under 1.5 MB and the JS-loaded previews small.
+Do not add full-resolution images to the picker or store duplicate identical dark
+exports. Review any palette change on light, dark and saturated backgrounds and
+at launcher size before accepting a smaller file.
+
+## Store review and native acceptance
+
+Apple's [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
+require related app/alternate icon identity (2.3.8) and permit alternate icons with
+user-initiated changes and a way to restore the original (4.6). Ship the choices in
+the reviewed native binary and use the public alternate-icon mechanism. Keep the
+original Muqun character, avoid franchise characters or third-party logos, and
+explain the Settings path in review notes. These design choices support review;
+they cannot guarantee approval.
+
+[Android adaptive icon guidance](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive)
+specifies separate foreground/background layers, the 108dp canvas and 66dp safe
+zone. Existing `expo-alternate-app-icons` 8.0.0 supports monochrome layers; its local
+plugin was inspected before wiring the shared mask. No package patch is required.
+The [Expo 57 configuration documentation](https://docs.expo.dev/versions/v57.0.0/config/app/)
+was checked for icon configuration.
+
+Before a PR is ready or a release is built:
+
+1. Run the repository's five checks, including the full dedicated-device suite.
+2. Build a fresh native binary; Metro or an OTA update cannot register new icons.
+3. On the dedicated Android QA device, select every icon, reopen the app, confirm
+   exactly one launcher entry, then restore Mascot and Classic. Inspect round,
+   squircle and themed launcher appearances and verify pairing data survives.
+4. On iPhone and iPad, test every alternate, light/dark/tinted appearance and restore
+   default. iOS runtime testing requires the owner's Apple environment.
+5. Review the icon grid with large text and screen readers; verify native failures
+   do not misleadingly change the selected state or leave controls disabled.
+6. Measure equivalent APK/IPA sizes and inspect compiled assets for alpha and masks.
+
+Current work is design/asset preparation with source validation. Native launcher
+switching, final device E2E and App Store review have not been completed for this branch.

@@ -82,7 +82,7 @@ test('resource domains are inspectable before images download; returned manifest
   };
   manifest.decoration = { 'shell.background': { asset: 'paper' } };
   const calls: string[] = [];
-  const png = new Uint8Array(readFileSync('assets/images/favicon.png'));
+  const png = new Uint8Array(readFileSync('assets/icons/favicon.png'));
   const inspected = await inspectRemoteTheme(
     {
       async get(url) {
@@ -160,7 +160,7 @@ test('image iterator waits for consumption and keeps each download budget indepe
     paper: { url: 'https://images.example.com/paper.png' },
     chrome: { url: 'https://images.example.com/chrome.png' },
   };
-  const png = new Uint8Array(readFileSync('assets/images/favicon.png'));
+  const png = new Uint8Array(readFileSync('assets/icons/favicon.png'));
   const calls: { url: string; maxBytes: number }[] = [];
   const inspected = await inspectRemoteTheme(
     {
@@ -191,7 +191,7 @@ test('stream inherits cancellation and never requests the next image after cance
     paper: { path: 'assets/paper.png' },
     chrome: { path: 'assets/chrome.png' },
   };
-  const png = new Uint8Array(readFileSync('assets/images/favicon.png'));
+  const png = new Uint8Array(readFileSync('assets/icons/favicon.png'));
   const controller = new AbortController();
   let calls = 0;
   const inspected = await inspectRemoteTheme(
@@ -273,7 +273,7 @@ test('a malformed image still fails, from the one inspection that was kept', asy
 });
 
 test('a packaged install reports unpacking then assets, each monotonic', async () => {
-  const png = new Uint8Array(readFileSync('assets/images/favicon.png'));
+  const png = new Uint8Array(readFileSync('assets/icons/favicon.png'));
   const { archive } = packageOf(png);
   const phases: ThemeInstallProgress[] = [];
   // `downloading` is the caller's own opening state -- the transport resolves

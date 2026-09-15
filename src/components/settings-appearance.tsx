@@ -98,18 +98,30 @@ export function SettingsAppearance({ title }: { title: string }) {
 
 /**
  * The icons themselves, not their names: a launcher icon is recognised, not
- * read, and a row of two pictures says what a segmented control of two words
+ * read, and a wrapping grid of pictures says what a segmented control of two words
  * cannot. Each tile draws the cut for the current mode, the way the home
  * screen would.
  */
 const ICON_ART: Record<AppIconId, { light: number; dark: number }> = {
   default: {
-    light: require('@/assets/images/icon.png'),
-    dark: require('@/assets/images/icon-dark.png'),
+    light: require('@/assets/icons/mascot/preview-light.png'),
+    dark: require('@/assets/icons/mascot/preview-dark.png'),
   },
   Classic: {
-    light: require('@/assets/icons/classic/icon.png'),
-    dark: require('@/assets/icons/classic/icon-dark.png'),
+    light: require('@/assets/icons/classic/preview-light.png'),
+    dark: require('@/assets/icons/classic/preview-dark.png'),
+  },
+  Cyber: {
+    light: require('@/assets/icons/cyber/preview-light.png'),
+    dark: require('@/assets/icons/cyber/preview-light.png'),
+  },
+  Anime: {
+    light: require('@/assets/icons/anime/preview-light.png'),
+    dark: require('@/assets/icons/anime/preview-dark.png'),
+  },
+  Arcade: {
+    light: require('@/assets/icons/arcade/preview-light.png'),
+    dark: require('@/assets/icons/arcade/preview-dark.png'),
   },
 };
 
@@ -119,7 +131,13 @@ function AppIconPicker() {
   const { resolvedMode } = useThemeMode();
   const { icon, choose, busy, supported } = useAppIcon();
   if (!supported) return null;
-  const labels: Record<AppIconId, string> = { default: t`Mascot`, Classic: t`Classic` };
+  const labels: Record<AppIconId, string> = {
+    default: t`Mascot`,
+    Classic: t`Classic`,
+    Cyber: 'Cyber',
+    Anime: 'Anime',
+    Arcade: 'Arcade',
+  };
   return (
     <SettingsBlock
       label={t`App icon`}
@@ -176,6 +194,7 @@ const ICON_SIZE = 60;
 const iconStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 20,
   },
   tile: {

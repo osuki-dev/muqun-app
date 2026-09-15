@@ -4,7 +4,7 @@
     "slug": "muqun",
     "version": "2.0.0",
     "orientation": "default",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/icons/mascot/icon.png",
     "scheme": "muqun",
     "userInterfaceStyle": "automatic",
     "updates": {
@@ -31,8 +31,8 @@
       "supportsTablet": true,
       "requireFullScreen": false,
       "icon": {
-        "light": "./assets/images/icon.png",
-        "dark": "./assets/images/icon-dark.png"
+        "light": "./assets/icons/mascot/icon.png",
+        "dark": "./assets/icons/mascot/icon-dark.png"
       },
       "infoPlist": {
         "NSCameraUsageDescription": "Muqun scans the Gateway's QR code to pair securely, and takes photos you attach to a terminal session.",
@@ -102,8 +102,8 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#FDF7E8",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/icons/mascot/android-foreground.png",
+        "monochromeImage": "./assets/icons/monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "intentFilters": [
@@ -111,37 +111,73 @@
           "action": "VIEW",
           "category": ["DEFAULT", "BROWSABLE"],
           "data": [
-            { "scheme": "content" },
-            { "scheme": "file" },
-            { "host": "*" },
-            { "mimeType": "application/zip" },
-            { "mimeType": "application/octet-stream" },
-            { "pathSuffix": ".muqun-theme" },
-            { "pathPattern": ".*\\\\.muqun-theme" },
-            { "pathPattern": ".*\\\\..*\\\\.muqun-theme" },
-            { "pathPattern": ".*\\\\..*\\\\..*\\\\.muqun-theme" }
+            {
+              "scheme": "content"
+            },
+            {
+              "scheme": "file"
+            },
+            {
+              "host": "*"
+            },
+            {
+              "mimeType": "application/zip"
+            },
+            {
+              "mimeType": "application/octet-stream"
+            },
+            {
+              "pathSuffix": ".muqun-theme"
+            },
+            {
+              "pathPattern": ".*\\\\.muqun-theme"
+            },
+            {
+              "pathPattern": ".*\\\\..*\\\\.muqun-theme"
+            },
+            {
+              "pathPattern": ".*\\\\..*\\\\..*\\\\.muqun-theme"
+            }
           ]
         },
         {
           "action": "VIEW",
           "category": ["DEFAULT", "BROWSABLE"],
           "data": [
-            { "scheme": "content" },
-            { "scheme": "file" },
-            { "host": "*" },
-            { "mimeType": "application/json" },
-            { "mimeType": "application/octet-stream" },
-            { "pathSuffix": ".muqun-theme.json" },
-            { "pathPattern": ".*\\\\.muqun-theme\\\\.json" },
-            { "pathPattern": ".*\\\\..*\\\\.muqun-theme\\\\.json" },
-            { "pathPattern": ".*\\\\..*\\\\..*\\\\.muqun-theme\\\\.json" }
+            {
+              "scheme": "content"
+            },
+            {
+              "scheme": "file"
+            },
+            {
+              "host": "*"
+            },
+            {
+              "mimeType": "application/json"
+            },
+            {
+              "mimeType": "application/octet-stream"
+            },
+            {
+              "pathSuffix": ".muqun-theme.json"
+            },
+            {
+              "pathPattern": ".*\\\\.muqun-theme\\\\.json"
+            },
+            {
+              "pathPattern": ".*\\\\..*\\\\.muqun-theme\\\\.json"
+            },
+            {
+              "pathPattern": ".*\\\\..*\\\\..*\\\\.muqun-theme\\\\.json"
+            }
           ]
         }
       ]
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/icons/favicon.png"
     },
     "plugins": [
       "./plugins/with-androidx-work-alignment.js",
@@ -172,7 +208,43 @@
             },
             "android": {
               "foregroundImage": "./assets/icons/classic/android-icon-foreground.png",
-              "backgroundColor": "#FCFBFA"
+              "backgroundColor": "#FCFBFA",
+              "monochromeImage": "./assets/icons/monochrome.png"
+            }
+          },
+          {
+            "name": "Cyber",
+            "ios": "./assets/icons/cyber/icon.png",
+            "android": {
+              "foregroundImage": "./assets/icons/cyber/android-foreground.png",
+              "backgroundColor": "#081222",
+              "monochromeImage": "./assets/icons/monochrome.png"
+            }
+          },
+          {
+            "name": "Anime",
+            "ios": {
+              "light": "./assets/icons/anime/icon.png",
+              "dark": "./assets/icons/anime/icon-dark.png",
+              "tinted": "./assets/icons/classic/icon-tinted.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/anime/android-foreground.png",
+              "backgroundColor": "#FFF0F5",
+              "monochromeImage": "./assets/icons/monochrome.png"
+            }
+          },
+          {
+            "name": "Arcade",
+            "ios": {
+              "light": "./assets/icons/arcade/icon.png",
+              "dark": "./assets/icons/arcade/icon-dark.png",
+              "tinted": "./assets/icons/classic/icon-tinted.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/arcade/android-foreground.png",
+              "backgroundColor": "#EEE8FF",
+              "monochromeImage": "./assets/icons/monochrome.png"
             }
           }
         ]
