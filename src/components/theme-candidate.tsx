@@ -9,6 +9,7 @@ import {
   type EffectiveCustomTheme,
 } from '@/theme/candidate-theme';
 import type { ThemeManifest } from '@/theme/schema';
+import type { InstalledTheme } from '@/theme/repository';
 
 /**
  * The theme being looked at, for the part of the tree that is looking at it.
@@ -42,6 +43,7 @@ export function CandidateThemeProvider({
   manifest,
   assets,
   installationId,
+  appearance,
   children,
 }: {
   manifest: ThemeManifest;
@@ -49,14 +51,16 @@ export function CandidateThemeProvider({
   assets?: Record<string, string>;
   /** Set when the candidate is already installed, so its own preferences apply. */
   installationId?: string;
+  /** Unsaved preview preferences; never written to the global library. */
+  appearance?: InstalledTheme;
   children: ReactNode;
 }) {
   const installed = useThemeLibrary((state) =>
     installationId ? state.library.themes.find((entry) => entry.id === installationId) : undefined
   );
   const theme = useMemo(
-    () => resolveCandidateTheme(manifest, assets, installed),
-    [manifest, assets, installed]
+    () => resolveCandidateTheme(manifest, assets, installed ?? appearance),
+    [manifest, assets, installed, appearance]
   );
   const value = useMemo<EffectiveCustomTheme>(() => ({ theme, assets }), [theme, assets]);
   const { mode } = useThemeMode();

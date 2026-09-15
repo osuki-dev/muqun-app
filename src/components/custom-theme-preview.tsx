@@ -16,12 +16,15 @@ import { clampThemeOpacity, jointArtworkOpacity } from '@/theme/opacity-policy';
 export function CustomThemePreview({
   manifest: authoredManifest,
   assets = {},
+  preferencesApplied = false,
 }: {
   manifest: ThemeManifest;
   assets?: Record<string, string>;
+  /** The caller already resolved authored safety floors and personal overrides. */
+  preferencesApplied?: boolean;
 }) {
   const { t } = useLingui();
-  const manifest = clampThemeOpacity(authoredManifest);
+  const manifest = preferencesApplied ? authoredManifest : clampThemeOpacity(authoredManifest);
   const identity = resolveHomeIdentity(manifest);
   // Per previewed mode, because the two tiles sit side by side and the
   // mascot has a cut for each ground.
