@@ -32,7 +32,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { appChrome } from '@/constants/appearance';
 import { useAppIcon } from '@/hooks/use-app-icon';
-import { type AppIconId, APP_ICONS } from '@/lib/app-icon';
+import { type AppIconId, APP_ICON_CHOICES, appIconIsSelected } from '@/lib/app-icon';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { LOCALE_LABELS } from '@/i18n/locale';
 import { useRenderTally } from '@/lib/render-tally';
@@ -104,6 +104,10 @@ export function SettingsAppearance({ title }: { title: string }) {
  */
 const ICON_ART: Record<AppIconId, { light: number; dark: number }> = {
   default: {
+    light: require('@/assets/icons/classic/preview-light.png'),
+    dark: require('@/assets/icons/classic/preview-dark.png'),
+  },
+  Mascot: {
     light: require('@/assets/icons/mascot/preview-light.png'),
     dark: require('@/assets/icons/mascot/preview-dark.png'),
   },
@@ -132,7 +136,8 @@ function AppIconPicker() {
   const { icon, choose, busy, supported } = useAppIcon();
   if (!supported) return null;
   const labels: Record<AppIconId, string> = {
-    default: t`Mascot`,
+    default: t`Classic`,
+    Mascot: t`Mascot`,
     Classic: t`Classic`,
     Cyber: 'Cyber',
     Anime: 'Anime',
@@ -158,8 +163,8 @@ function AppIconPicker() {
         contentContainerStyle={iconStyles.row}
         keyboardShouldPersistTaps="handled">
         <View style={iconStyles.row} accessibilityRole="radiogroup">
-          {APP_ICONS.map((id) => {
-            const selected = id === icon;
+          {APP_ICON_CHOICES.map((id) => {
+            const selected = appIconIsSelected(id, icon);
             return (
               <PressableScale
                 key={id}

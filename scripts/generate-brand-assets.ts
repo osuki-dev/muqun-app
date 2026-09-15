@@ -27,7 +27,7 @@ function magick(args: string[]) {
 
 for (const spec of specs) {
   const folder = `assets/icons/${spec.directory}`;
-  if (spec.id === 'Classic') continue; // Preserve the original artwork and its native identifier.
+  if (spec.directory === 'classic') continue; // Preserve the original artwork and its native identifier.
   const master = `${folder}/mark.png`;
   for (const [filename, background] of [
     ['icon.png', spec.light],
@@ -140,5 +140,11 @@ magick([
   ...encode,
   'assets/icons/mascot/brand-mark.png',
 ]);
-magick(['assets/icons/mascot/icon.png', '-resize', '64x64', ...encode, 'assets/icons/favicon.png']);
+magick([
+  'assets/icons/classic/icon.png',
+  '-resize',
+  '64x64',
+  ...encode,
+  'assets/icons/favicon.png',
+]);
 console.log('Launcher assets and compact previews regenerated.');

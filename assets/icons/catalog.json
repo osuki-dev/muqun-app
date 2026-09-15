@@ -1,7 +1,38 @@
 [
-  { "id": "default", "directory": "mascot", "light": "#FDF7E8", "dark": "#15202B" },
-  { "id": "Classic", "directory": "classic", "light": "#FCFBFA", "dark": "#07121C" },
-  { "id": "Cyber", "directory": "cyber", "light": "#081222", "dark": "#081222" },
-  { "id": "Anime", "directory": "anime", "light": "#FFF0F5", "dark": "#28182C" },
-  { "id": "Arcade", "directory": "arcade", "light": "#EEE8FF", "dark": "#17112B" }
+  {
+    "id": "default",
+    "directory": "classic",
+    "light": "#FCFBFA",
+    "dark": "#07121C"
+  },
+  {
+    "id": "Classic",
+    "directory": "classic",
+    "light": "#FCFBFA",
+    "dark": "#07121C"
+  },
+  {
+    "id": "Mascot",
+    "directory": "mascot",
+    "light": "#FDF7E8",
+    "dark": "#15202B"
+  },
+  {
+    "id": "Cyber",
+    "directory": "cyber",
+    "light": "#081222",
+    "dark": "#081222"
+  },
+  {
+    "id": "Anime",
+    "directory": "anime",
+    "light": "#FFF0F5",
+    "dark": "#28182C"
+  },
+  {
+    "id": "Arcade",
+    "directory": "arcade",
+    "light": "#EEE8FF",
+    "dark": "#17112B"
+  }
 ]

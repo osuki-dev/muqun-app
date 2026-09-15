@@ -724,7 +724,7 @@ function ThemeBrowseRow({
 
 const styles = StyleSheet.create({
   column: { flex: 1 },
-  sheet: { flex: 1 },
+  sheet: { flex: 1, minHeight: 0, overflow: 'hidden' },
   listContent: {
     // A short catalogue still fills the sheet rather than leaving a stub.
     flexGrow: 1,
