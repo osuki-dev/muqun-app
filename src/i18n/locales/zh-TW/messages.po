@@ -1803,6 +1803,7 @@ msgstr "即時動態"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
+#: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "載入中"
@@ -1829,6 +1830,7 @@ msgid "Loading settings"
 msgstr "正在載入設定"
 
 #: src/components/skia-terminal.tsx
+#: src/components/ssh-terminal-workspace.tsx
 msgid "Loading terminal"
 msgstr "正在載入終端機"
 

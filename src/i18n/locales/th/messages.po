@@ -1,271 +1,271 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-07-27 21:06+0800\n"
+"POT-Creation-Date: 2026-07-27 13:14+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
-"Language: ja\n"
+"Language: th\n"
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
-"Plural-Forms: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
-msgstr "…以下省略"
+msgstr "… ตัดข้อความบางส่วนแล้ว"
 
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
-msgstr "[指示]"
+msgstr "[คำสั่ง]"
 
 #: src/lib/demo-gateway.ts
 msgid "[model]"
-msgstr "[モデル]"
+msgstr "[โมเดล]"
 
 #: src/lib/demo-gateway.ts
 msgid "[pr number]"
-msgstr "[PR 番号]"
+msgstr "[หมายเลข pr]"
 
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
-msgstr "{0, plural, other {# 日}}"
+msgstr "{0, plural, other {# วัน}}"
 
 #. placeholder {0}: pending.files.length
 #: src/components/git-diff-view.tsx
 msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, other {# 件のファイルが変更されました}}"
+msgstr "{0, plural, other {เปลี่ยนแปลง # ไฟล์}}"
 
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
-msgstr "{0, plural, other {# 時間}}"
+msgstr "{0, plural, other {# ชั่วโมง}}"
 
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# minute} other {# minutes}}"
-msgstr "{0, plural, other {# 分}}"
+msgstr "{0, plural, other {# นาที}}"
 
 #. placeholder {0}: row.remaining
 #: src/components/git-diff-view.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
-msgstr "{0, plural, other {残り # 行}}"
+msgstr "{0, plural, other {อีก # บรรทัด}}"
 
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
 msgid "{0, plural, one {# theme} other {# themes}} · {1}"
-msgstr "{0, plural, other {# 件のテーマ}} · {1}"
+msgstr "{0, plural, other {# ธีม}} · {1}"
 
 #. placeholder {0}: digest.otherAgents
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
-msgstr "{0, plural, other {ほか # 件のエージェント}}"
+msgstr "{0, plural, other {และอีก # เอเจนต์}}"
 
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · システムが管理しているため、キャッシュを削除しても残ります"
+msgstr "{0} · จัดการโดยระบบ การล้างแคชจะไม่กระทบส่วนนี้"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
-msgstr "{0}（このデバイス）"
+msgstr "{0} (อุปกรณ์นี้)"
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
-msgstr "{0}、このサーバーの PATH に見つかりません"
+msgstr "{0} ไม่พบใน PATH ของเซิร์ฟเวอร์นี้"
 
 #. placeholder {0}: machine.label
 #. placeholder {1}: session.label
 #: src/components/machine-switcher-sheet.tsx
 msgid "{0}, session {1}"
-msgstr "{0}、セッション {1}"
+msgstr "{0} เซสชัน {1}"
 
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
-msgstr "{0}日前"
+msgstr "{0} วันที่แล้ว"
 
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
-msgstr "{0}時間前"
+msgstr "{0} ชั่วโมงที่แล้ว"
 
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
-msgstr "{0}分前"
+msgstr "{0} นาทีที่แล้ว"
 
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
-msgstr "{asked, plural, other {· # 回確認あり}}"
+msgstr "{asked, plural, other {· ถามแล้ว # ครั้ง}}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
-msgstr "{commandName} · 送信先"
+msgstr "{commandName} · กำลังส่งไปยัง"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
-msgstr "{host} は保存されている鍵と異なる鍵を提示しました。再インストール後に起こりますが、接続が傍受されている場合にも起こります。変わった理由が分かるまで置き換えないでください"
+msgstr "{host} แสดงคีย์ที่ต่างจากคีย์ที่บันทึกไว้ อาจเกิดจากการติดตั้งใหม่หรือการดักรับการเชื่อมต่อ อย่าแทนที่คีย์เว้นแต่คุณจะทราบสาเหตุที่เปลี่ยน"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a key this app has not seen before. Compare the fingerprint with the server before trusting it."
-msgstr "{host} はこのアプリが初めて見る鍵を提示しました。信頼する前にサーバー側のフィンガープリントと照合してください"
+msgstr "{host} แสดงคีย์ที่แอปนี้ยังไม่เคยพบ โปรดเทียบลายนิ้วมือกับเซิร์ฟเวอร์ก่อนเชื่อถือ"
 
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
-msgstr "{label} は一時的にロックされています。システムの代替認証を使うか、しばらくしてからお試しください"
+msgstr "{label} ถูกล็อกชั่วคราว ใช้วิธีสำรองของระบบหรือลองอีกครั้งภายหลัง"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
-msgstr "{panelCount, plural, one {# 実行中} other {# 実行中}}"
+msgstr "{panelCount, plural, other {กำลังทำงาน # รายการ}}"
 
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
-msgstr "{removeLabel}：{label}"
+msgstr "{removeLabel}: {label}"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
-msgstr "ほか {overflow} 件"
+msgstr "อีก +{overflow} รายการ"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
-msgstr "SSH で入れるマシン上の Gateway。自身のループバックだけで待ち受けているものでも構いません"
+msgstr "Gateway บนเครื่องที่คุณเชื่อมต่อผ่าน SSH ได้ แม้จะรับการเชื่อมต่อเฉพาะบน loopback ของเครื่องนั้น"
 
 #. placeholder {0}: assignment.target.kind
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
-msgstr "新しい {0}"
+msgstr "{0} ใหม่"
 
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
-msgstr "サーバーの鍵は初回に記憶し、以後は毎回照合します。鍵が変わったら、あなたが認めるまで接続を止めます"
+msgstr "ระบบจะจดจำคีย์ของเซิร์ฟเวอร์ในครั้งแรกและตรวจสอบทุกครั้งหลังจากนั้น หากคีย์เปลี่ยน การเชื่อมต่อจะหยุดจนกว่าคุณจะอนุญาต"
 
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
-msgstr "sshd があるどのマシンでも使えるシェル"
+msgstr "เชลล์บนเครื่องใดก็ได้ที่มี sshd"
 
 #: src/components/simfarm-preview.tsx
 msgid "A simulator can be driven and not only watched, so a preview is offered only over Tailscale or HTTPS. Pair this machine at its tailnet address, or serve its gateway over HTTPS, and the preview appears on its own."
-msgstr "シミュレータは見るだけでなく操作もできるため、プレビューは Tailscale か HTTPS の接続でのみ提供されます。このマシンを tailnet のアドレスでペアリングするか、その Gateway を HTTPS で公開すれば、プレビューは自然と現れます"
+msgstr "เครื่องจำลองสามารถควบคุมได้ ไม่ใช่แค่ดู จึงแสดงตัวอย่างได้ผ่าน Tailscale หรือ HTTPS เท่านั้น จับคู่เครื่องนี้ด้วยที่อยู่ tailnet หรือให้ Gateway ใช้ HTTPS แล้วตัวอย่างจะปรากฏเอง"
 
 #: src/components/simfarm-stage.tsx
 msgid "A simulator that was shut down can take a minute to come up."
-msgstr "終了していたシミュレータは、起動に1分ほどかかることがあります"
+msgstr "เครื่องจำลองที่ปิดไปแล้วอาจใช้เวลาประมาณหนึ่งนาทีในการเริ่ม"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
-msgstr "ターミナルが作成されました。もう一度送る前に確認してください。タスクはそのまま残っています"
+msgstr "สร้างเทอร์มินัลแล้ว ตรวจสอบก่อนส่งอีกครั้ง งานของคุณยังอยู่ที่นี่"
 
 #: src/app/settings.tsx
 msgid "About"
-msgstr "アプリについて"
+msgstr "เกี่ยวกับ"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command."
-msgstr "このターミナルを操作するか、コマンドを送ります"
+msgstr "จัดการเทอร์มินัลนี้หรือส่งคำสั่งไปยังเทอร์มินัล"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
-msgstr "このターミナルを操作するか、エージェントにプロンプトを送ります"
+msgstr "จัดการเทอร์มินัลนี้หรือส่งพรอมต์ให้เอเจนต์"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
-msgstr "ホストを追加"
+msgstr "เพิ่มโฮสต์"
 
 #: src/app/explore.tsx
 #: src/components/ssh-host-list.tsx
 msgid "Add an SSH host"
-msgstr "SSH ホストを追加"
+msgstr "เพิ่มโฮสต์ SSH"
 
 #: src/components/new-task-sheet.tsx
 msgid "Add attachment"
-msgstr "添付ファイルを追加"
+msgstr "เพิ่มไฟล์แนบ"
 
 #: src/components/settings-terminal.tsx
 msgid "Add commands and custom key combinations."
-msgstr "コマンドやカスタムのキー組み合わせを追加します"
+msgstr "เพิ่มคำสั่งและชุดปุ่มลัดที่กำหนดเอง"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Add machine"
-msgstr "マシンを追加"
+msgstr "เพิ่มเครื่อง"
 
 #: src/app/explore.tsx
 msgid "Add one first"
-msgstr "先に追加する"
+msgstr "เพิ่มก่อน"
 
 #: src/components/ssh-host-form.tsx
 msgid "Add this line to ~/.ssh/authorized_keys on the server:"
-msgstr "この行をサーバーの ~/.ssh/authorized_keys に追加してください:"
+msgstr "เพิ่มบรรทัดนี้ใน ~/.ssh/authorized_keys บนเซิร์ฟเวอร์:"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Added"
-msgstr "追加"
+msgstr "เพิ่มแล้ว"
 
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
-msgstr "エージェント"
+msgstr "เอเจนต์"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Agent collaboration"
-msgstr "エージェント連携"
+msgstr "การทำงานร่วมกันของเอเจนต์"
 
 #: src/app/commands.tsx
 msgid "AGENT COMMANDS"
-msgstr "エージェントコマンド"
+msgstr "คำสั่งเอเจนต์"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Agent no longer present"
-msgstr "エージェントは終了しました"
+msgstr "เอเจนต์ไม่อยู่แล้ว"
 
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
-msgstr "エージェントのパネルの初期表示"
+msgstr "เปิดพาเนลเอเจนต์ใน"
 
 #: src/components/settings-servers.tsx
 msgid "Agents"
-msgstr "エージェント"
+msgstr "เอเจนต์"
 
 #: src/app/settings.tsx
 msgid "Alerts"
-msgstr "アラート"
+msgstr "การแจ้งเตือน"
 
 #: src/app/explore.tsx
 msgid "Align the QR inside the frame"
-msgstr "QR コードを枠に合わせてください"
+msgstr "จัด QR ให้อยู่ในกรอบ"
 
 #: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 msgid "All"
-msgstr "すべて"
+msgstr "ทั้งหมด"
 
 #: src/app/commands.tsx
 msgid "All commands"
-msgstr "すべてのコマンド"
+msgstr "คำสั่งทั้งหมด"
 
 #: src/components/settings-servers.tsx
 msgid "All panes"
-msgstr "すべてのパネル"
+msgstr "พาเนลทั้งหมด"
 
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
-msgstr "カメラを許可"
+msgstr "อนุญาตกล้อง"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
-msgstr "カメラを許可するか、アドレスを入力してください"
+msgstr "อนุญาตให้ใช้กล้อง หรือป้อนที่อยู่แทน"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
@@ -273,211 +273,211 @@ msgstr "Alt"
 
 #: src/i18n/labels.ts
 msgid "Alt Down arrow"
-msgstr "Alt 下矢印"
+msgstr "Alt ลูกศรลง"
 
 #: src/i18n/labels.ts
 msgid "Alt Left arrow"
-msgstr "Alt 左矢印"
+msgstr "Alt ลูกศรซ้าย"
 
 #: src/i18n/labels.ts
 msgid "Alt Right arrow"
-msgstr "Alt 右矢印"
+msgstr "Alt ลูกศรขวา"
 
 #: src/i18n/labels.ts
 msgid "Alt Up arrow"
-msgstr "Alt 上矢印"
+msgstr "Alt ลูกศรขึ้น"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
-msgstr "回答"
+msgstr "คำตอบ"
 
 #. placeholder {0}: option.label
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
-msgstr "回答：{0}"
+msgstr "คำตอบ: {0}"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "{label} がポートで公開しているもの——開発サーバー、プレビュー、ダッシュボードなど"
+msgstr "สิ่งใดก็ตามที่ {label} ให้บริการผ่านพอร์ต เช่น เซิร์ฟเวอร์พัฒนา ตัวอย่าง หรือแดชบอร์ด"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
-msgstr "アプリアイコン"
+msgstr "ไอคอนแอป"
 
 #. placeholder {0}: labels[id]
 #: src/components/settings-appearance.tsx
 msgid "App icon, {0}"
-msgstr "アプリアイコン、{0}"
+msgstr "ไอคอนแอป {0}"
 
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
-msgstr "アプリロックを有効にしました"
+msgstr "เปิดใช้การล็อกแอปแล้ว"
 
 #: src/components/settings-security.tsx
 msgid "App Lock unavailable"
-msgstr "アプリロックを利用できません"
+msgstr "การล็อกแอปไม่พร้อมใช้งาน"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "App name and tagline"
-msgstr "アプリ名とキャッチコピー"
+msgstr "ชื่อแอปและคำโปรย"
 
 #: src/app/settings.tsx
 msgid "Appearance"
-msgstr "外観"
+msgstr "รูปลักษณ์"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Appearance, terminal, security"
-msgstr "外観、ターミナル、セキュリティ"
+msgstr "รูปลักษณ์ เทอร์มินัล ความปลอดภัย"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
-msgstr "テーマを適用"
+msgstr "ใช้ธีม"
 
 #: src/components/terminal-theme-drop.tsx
 msgid "Applying…"
-msgstr "適用中…"
+msgstr "กำลังใช้…"
 
 #: src/i18n/labels.ts
 msgid "Approve"
-msgstr "承認"
+msgstr "อนุมัติ"
 
 #: src/i18n/labels.ts
 msgid "Approve and don't ask again"
-msgstr "承認し、今後は確認しない"
+msgstr "อนุมัติและไม่ต้องถามอีก"
 
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
-msgstr "毎回たずねる"
+msgstr "ถามทุกครั้ง"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
-msgstr "そのコードを Gateway に確認しています"
+msgstr "กำลังสอบถาม Gateway เกี่ยวกับรหัสนี้"
 
 #: src/components/new-task-sheet.tsx
 msgid "Asking the server what it can run…"
-msgstr "このサーバーで実行できるものを問い合わせています…"
+msgstr "กำลังสอบถามเซิร์ฟเวอร์ว่าสามารถเรียกใช้อะไรได้บ้าง…"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
-msgstr "アシスタントに任せる"
+msgstr "มอบหมายงานนี้ให้ผู้ช่วย"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Assigning a task is unavailable"
-msgstr "タスクの割り当ては利用できません"
+msgstr "ยังไม่สามารถมอบหมายงานได้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
-msgstr "アシスタントを起動しました"
+msgstr "เริ่มผู้ช่วยแล้ว"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
-msgstr "ファイルを添付"
+msgstr "แนบไฟล์"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
-msgstr "続けるには {authLabel} で認証してください"
+msgstr "ยืนยันตัวตนด้วย {authLabel} เพื่อดำเนินการต่อ"
 
 #: src/lib/local-authentication.ts
 msgid "Authenticate with {method} to continue"
-msgstr "続けるには {method} で認証してください"
+msgstr "ยืนยันตัวตนด้วย {method} เพื่อดำเนินการต่อ"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating"
-msgstr "認証中"
+msgstr "กำลังยืนยันตัวตน"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticating…"
-msgstr "認証中…"
+msgstr "กำลังยืนยันตัวตน…"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authentication failed. Try again."
-msgstr "認証に失敗しました。もう一度お試しください"
+msgstr "ยืนยันตัวตนไม่สำเร็จ ลองอีกครั้ง"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
-msgstr "認証を利用できません。もう一度試すか、システム設定を確認してください"
+msgstr "การยืนยันตัวตนไม่พร้อมใช้งาน ลองอีกครั้งหรือตรวจสอบการตั้งค่าระบบ"
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
-msgstr "戻る"
+msgstr "ย้อนกลับ"
 
 #: src/i18n/labels.ts
 msgid "Back one word"
-msgstr "1 単語戻る"
+msgstr "ย้อนกลับหนึ่งคำ"
 
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
-msgstr "サーバー一覧に戻る"
+msgstr "กลับไปยังเซิร์ฟเวอร์"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to SSH hosts"
-msgstr "SSH ホスト一覧に戻る"
+msgstr "กลับไปยังโฮสต์ SSH"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to the on-screen keyboard"
-msgstr "ソフトウェアキーボードに戻る"
+msgstr "กลับไปยังแป้นพิมพ์บนหน้าจอ"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
-msgstr "バックスペース"
+msgstr "Backspace"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
-msgstr "{minimumPercent}% を下回ると、文字が読めることは保証されません"
+msgstr "ต่ำกว่า {minimumPercent}% จะไม่รับประกันว่าข้อความยังอ่านได้ชัดเจน"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
-msgstr "ヘッダーとサーバーの間に表示します。「表示」を選ぶと、テーマ専用のホームイラストがない場合は空状態の画像を借用します"
+msgstr "อยู่ระหว่างส่วนหัวกับเซิร์ฟเวอร์ของคุณ เมื่อแสดง หากธีมไม่มีภาพสำหรับหน้าแรก จะใช้ภาพหน้าว่างของธีมแทน"
 
 #: src/components/git-diff-view.tsx
 msgid "Binary file"
-msgstr "バイナリファイル"
+msgstr "ไฟล์ไบนารี"
 
 #: src/lib/local-authentication.ts
 msgid "biometrics"
-msgstr "生体認証"
+msgstr "ชีวมิติ"
 
 #: src/i18n/labels.ts
 msgid "Blocked"
-msgstr "応答待ち"
+msgstr "ถูกบล็อก"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
-msgstr "ブランチとテーマファイルはリンクから取得しました。ブランチは後で変わることがあります"
+msgstr "สาขาและไฟล์ธีมมาจากลิงก์ สาขาอาจเปลี่ยนได้ภายหลัง"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
-msgstr "ブランチまたはコミット（任意）"
+msgstr "สาขาหรือคอมมิต (ไม่บังคับ)"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Browse themes"
-msgstr "テーマを探す"
+msgstr "เลือกดูธีม"
 
 #: src/app/commands.tsx
 msgid "Browser"
-msgstr "ブラウザー"
+msgstr "เบราว์เซอร์"
 
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
-msgstr "標準"
+msgstr "มีมาให้ในแอป"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
-msgstr "計算中…"
+msgstr "กำลังคำนวณ…"
 
 #: src/lib/attachments.ts
 msgid "Camera access is off. Turn it on in Settings to take a photo."
-msgstr "カメラへのアクセスがオフです。写真を撮るには設定でオンにしてください"
+msgstr "ปิดการเข้าถึงกล้องอยู่ เปิดในหน้าการตั้งค่าเพื่อถ่ายรูป"
 
 #: src/components/pairing-camera.tsx
 msgid "Camera access needed"
-msgstr "カメラへのアクセスが必要です"
+msgstr "ต้องเข้าถึงกล้อง"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
@@ -490,773 +490,773 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/theme-link-import.tsx
 #: src/lib/local-authentication.ts
 msgid "Cancel"
-msgstr "キャンセル"
+msgstr "ยกเลิก"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancel connecting to {0}"
-msgstr "{0} への接続をキャンセル"
+msgstr "ยกเลิกการเชื่อมต่อกับ {0}"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Cancel editing {0}"
-msgstr "{0} の編集をキャンセル"
+msgstr "ยกเลิกการแก้ไข {0}"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
-msgstr "キャンセルしました"
+msgstr "ยกเลิกแล้ว"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
-msgstr "変更"
+msgstr "เปลี่ยนแล้ว"
 
 #: src/components/git-diff-view.tsx
 msgid "Changes"
-msgstr "変更点"
+msgstr "การเปลี่ยนแปลง"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes colored backgrounds, not text, icons or artwork"
-msgstr "背景色だけを変更し、文字・アイコン・画像は変更しません"
+msgstr "เปลี่ยนสีพื้นหลัง ไม่เปลี่ยนข้อความ ไอคอน หรือภาพประกอบ"
 
 #: src/i18n/labels.ts
 msgid "Chat"
-msgstr "チャット"
+msgstr "แชต"
 
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
-msgstr "デバイスの認証設定を確認して、もう一度お試しください"
+msgstr "ตรวจสอบการตั้งค่าการยืนยันตัวตนของอุปกรณ์แล้วลองอีกครั้ง"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
-msgstr "再送する前に助手を確認してください。すでに届いている可能性があります"
+msgstr "ตรวจสอบผู้ช่วยก่อนส่งอีกครั้ง เพราะอาจได้รับคำขอแล้ว"
 
 #: src/components/theme-link-import.tsx
 msgid "Check the repository URL, branch and theme file"
-msgstr "リポジトリの URL、ブランチ、テーマファイルを確認してください"
+msgstr "ตรวจสอบ URL ที่เก็บโค้ด สาขา และไฟล์ธีม"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Check your connection and try again."
-msgstr "接続を確認してもう一度お試しください"
+msgstr "ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง"
 
 #: src/components/settings-security.tsx
 msgid "Checking system authentication…"
-msgstr "システム認証を確認中…"
+msgstr "กำลังตรวจสอบการยืนยันตัวตนของระบบ…"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Checking…"
-msgstr "確認中…"
+msgstr "กำลังตรวจสอบ…"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
-msgstr "シミュレータを選ぶ"
+msgstr "เลือกเครื่องจำลอง"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator from the menu."
-msgstr "メニューからシミュレータを選んでください"
+msgstr "เลือกเครื่องจำลองจากเมนู"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Choose an assistant"
-msgstr "アシスタントを選択"
+msgstr "เลือกผู้ช่วย"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
-msgstr "SSH ホストを選んでください"
+msgstr "เลือกโฮสต์ SSH"
 
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
-msgstr "ファイルを選択"
+msgstr "เลือกไฟล์"
 
 #: src/components/launch-intro.tsx
 msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "美しく描かれた公式テーマのコレクションから選ぶと、紙面、ターミナル、アートワークがまとめて塗り替わります。自分だけのテーマを作ることもできます"
+msgstr "เลือกจากคอลเลกชันธีมทางการพร้อมภาพประกอบสวยงามที่เปลี่ยนสีพื้น เทอร์มินัล และภาพประกอบไปด้วยกัน หรือสร้างธีมของคุณเอง"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Choose where to work"
-msgstr "作業する場所を選択"
+msgstr "เลือกที่ทำงาน"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
-msgstr "表示するシミュレータを選ぶ"
+msgstr "เลือกเครื่องจำลองที่จะแสดง"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
-msgstr "クラシック"
+msgstr "คลาสสิก"
 
 #: src/components/settings-storage.tsx
 msgid "Clear"
-msgstr "削除"
+msgstr "ล้าง"
 
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
-msgstr "キャッシュを削除"
+msgstr "ล้างแคช"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
-msgstr "行をクリア"
+msgstr "ล้างบรรทัด"
 
 #: src/i18n/labels.ts
 msgid "Clear terminal"
-msgstr "ターミナルをクリア"
+msgstr "ล้างเทอร์มินัล"
 
 #: src/components/settings-storage.tsx
 msgid "Clearing cache"
-msgstr "キャッシュを削除しています"
+msgstr "กำลังล้างแคช"
 
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
-msgstr "削除しています…"
+msgstr "กำลังล้าง…"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
-msgstr "閉じる"
+msgstr "ปิด"
 
 #: src/components/git-diff-view.tsx
 msgid "Close changes"
-msgstr "変更点を閉じる"
+msgstr "ปิดการเปลี่ยนแปลง"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
-msgstr "ファイルを閉じる"
+msgstr "ปิดไฟล์"
 
 #: src/components/session-artifacts.tsx
 msgid "Close files"
-msgstr "ファイル一覧を閉じる"
+msgstr "ปิดรายการไฟล์"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Close language picker"
-msgstr "言語一覧を閉じる"
+msgstr "ปิดตัวเลือกภาษา"
 
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
-msgstr "新規タスクを閉じる"
+msgstr "ปิดงานใหม่"
 
 #: src/app/explore.tsx
 msgid "Close pairing"
-msgstr "ペアリングを閉じる"
+msgstr "ปิดการจับคู่"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
-msgstr "プレビューを閉じる"
+msgstr "ปิดตัวอย่าง"
 
 #: src/app/commands.tsx
 msgid "Close quick actions"
-msgstr "クイックアクションを閉じる"
+msgstr "ปิดการทำงานด่วน"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Close session picker"
-msgstr "セッション一覧を閉じる"
+msgstr "ปิดตัวเลือกเซสชัน"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the attachment menu"
-msgstr "添付メニューを閉じる"
+msgstr "ปิดเมนูไฟล์แนบ"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the command list"
-msgstr "コマンド一覧を閉じる"
+msgstr "ปิดรายการคำสั่ง"
 
 #: src/components/simfarm-stage.tsx
 msgid "Close the composer"
-msgstr "入力欄を閉じる"
+msgstr "ปิดช่องเขียนข้อความ"
 
 #: src/components/simfarm-stage.tsx
 msgid "Close the menu"
-msgstr "メニューを閉じる"
+msgstr "ปิดเมนู"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
-msgstr "シミュレータを閉じる"
+msgstr "ปิดเครื่องจำลอง"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Close theme catalogue"
-msgstr "テーマカタログを閉じる"
+msgstr "ปิดแค็ตตาล็อกธีม"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Close theme picker"
-msgstr "テーマ一覧を閉じる"
+msgstr "ปิดตัวเลือกธีม"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
-msgstr "コード"
+msgstr "โค้ด"
 
 #: src/app/explore.tsx
 msgid "Code expired"
-msgstr "コードの有効期限が切れました"
+msgstr "รหัสหมดอายุ"
 
 #: src/app/explore.tsx
 msgid "Code found. Reaching the Gateway."
-msgstr "コードを読み取りました。Gateway に接続しています"
+msgstr "พบรหัสแล้ว กำลังเชื่อมต่อ Gateway"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Collapse {0}"
-msgstr "{0} を折りたたむ"
+msgstr "ยุบ {0}"
 
 #: src/components/settings-appearance.tsx
 msgid "Color mode"
-msgstr "カラーモード"
+msgstr "โหมดสี"
 
 #: src/app/commands.tsx
 msgid "Command"
-msgstr "コマンド"
+msgstr "คำสั่ง"
 
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
-msgstr "コマンドをコピーしました"
+msgstr "คัดลอกคำสั่งแล้ว"
 
 #: src/i18n/labels.ts
 msgid "Command mode"
-msgstr "コマンドモード"
+msgstr "โหมดคำสั่ง"
 
 #: src/i18n/labels.ts
 msgid "Commit"
-msgstr "コミット"
+msgstr "คอมมิต"
 
 #: src/i18n/labels.ts
 msgid "Commit & push"
-msgstr "コミットしてプッシュ"
+msgstr "คอมมิตและพุช"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
-msgstr "コンパクト"
+msgstr "ย่อบริบท"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
-msgstr "キャッシュの削除を確認"
+msgstr "ยืนยันการล้างแคช"
 
 #: src/app/explore.tsx
 msgid "Confirm pairing"
-msgstr "ペアリングの確認"
+msgstr "ยืนยันการจับคู่"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm remove unused themes"
-msgstr "未使用のテーマの削除を確認"
+msgstr "ยืนยันการลบธีมที่ไม่ได้ใช้"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-host-form.tsx
 msgid "Confirm removing {0}"
-msgstr "{0} の削除を確認"
+msgstr "ยืนยันการลบ {0}"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "Confirm revoke {0}"
-msgstr "{0} の取り消しを確認"
+msgstr "ยืนยันการเพิกถอน {0}"
 
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
-msgstr "タップ、ペアリング、Gateway のイベントを触覚で知らせます"
+msgstr "ยืนยันการแตะ การจับคู่ และเหตุการณ์จาก Gateway"
 
 #: src/components/settings-servers.tsx
 msgid "Confirm unpair {label}"
-msgstr "{label} のペアリング解除を確認"
+msgstr "ยืนยันการเลิกจับคู่ {label}"
 
 #: src/components/row-action-menu.tsx
 msgid "Confirm: {removeLabel} {label}"
-msgstr "確認：{removeLabel} {label}"
+msgstr "ยืนยัน: {removeLabel} {label}"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Conflicted"
-msgstr "コンフリクト"
+msgstr "มีข้อขัดแย้ง"
 
 #: src/components/custom-theme-preview.tsx
 msgid "Connect"
-msgstr "接続"
+msgstr "เชื่อมต่อ"
 
 #. placeholder {0}: machine.label
 #: src/components/machine-switcher-sheet.tsx
 msgid "Connect to {0}"
-msgstr "{0} に接続"
+msgstr "เชื่อมต่อกับ {0}"
 
 #: src/app/explore.tsx
 #: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Connected"
-msgstr "接続済み"
+msgstr "เชื่อมต่อแล้ว"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Connected through SSH host {host}"
-msgstr "SSH ホスト {host} 経由で接続中"
+msgstr "เชื่อมต่อผ่านโฮสต์ SSH {host} แล้ว"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connected to {address}"
-msgstr "{address} に接続中"
+msgstr "เชื่อมต่อกับ {address} แล้ว"
 
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
-msgstr "接続中"
+msgstr "กำลังเชื่อมต่อ"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Connecting through SSH host {host}"
-msgstr "SSH ホスト {host} 経由で接続しています"
+msgstr "กำลังเชื่อมต่อผ่านโฮสต์ SSH {host}"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Connecting through SSH…"
-msgstr "SSH 経由で接続しています…"
+msgstr "กำลังเชื่อมต่อผ่าน SSH…"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
-msgstr "{address} に接続しています"
+msgstr "กำลังเชื่อมต่อกับ {address}"
 
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
-msgstr "続行"
+msgstr "ดำเนินการต่อ"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
-msgstr "タスクを続行"
+msgstr "ทำงานต่อ"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Control"
-msgstr "Control キー"
+msgstr "Control"
 
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
-msgstr "コントロール A、行頭へ"
+msgstr "Control A ต้นบรรทัด"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
-msgstr "コントロール B、バックグラウンドで実行"
+msgstr "Control B ทำงานในเบื้องหลัง"
 
 #: src/i18n/labels.ts
 msgid "Control C"
-msgstr "コントロール C"
+msgstr "Control C"
 
 #: src/i18n/labels.ts
 msgid "Control D"
-msgstr "コントロール D"
+msgstr "Control D"
 
 #: src/i18n/labels.ts
 msgid "Control D, half page down"
-msgstr "コントロール D、半ページ下へ"
+msgstr "Control D ลงครึ่งหน้า"
 
 #: src/i18n/labels.ts
 msgid "Control E, end of line"
-msgstr "コントロール E、行末へ"
+msgstr "Control E ท้ายบรรทัด"
 
 #: src/i18n/labels.ts
 msgid "Control E, explain"
-msgstr "コントロール E、説明"
+msgstr "Control E อธิบาย"
 
 #: src/i18n/labels.ts
 msgid "Control K, clear to end of line"
-msgstr "コントロール K、行末までクリア"
+msgstr "Control K ล้างถึงท้ายบรรทัด"
 
 #: src/i18n/labels.ts
 msgid "Control L, clear screen"
-msgstr "コントロール L、画面をクリア"
+msgstr "Control L ล้างหน้าจอ"
 
 #: src/i18n/labels.ts
 msgid "Control N, next"
-msgstr "コントロール N、次へ"
+msgstr "Control N ถัดไป"
 
 #: src/i18n/labels.ts
 msgid "Control O, expand"
-msgstr "コントロール O、展開"
+msgstr "Control O ขยาย"
 
 #: src/i18n/labels.ts
 msgid "Control O, expand rows"
-msgstr "コントロール O、行を展開"
+msgstr "Control O ขยายแถว"
 
 #: src/i18n/labels.ts
 msgid "Control O, jump back"
-msgstr "コントロール O、前の位置へ戻る"
+msgstr "Control O ย้อนกลับ"
 
 #: src/i18n/labels.ts
 msgid "Control P, previous"
-msgstr "コントロール P、前へ"
+msgstr "Control P ก่อนหน้า"
 
 #: src/i18n/labels.ts
 msgid "Control R"
-msgstr "コントロール R"
+msgstr "Control R"
 
 #: src/i18n/labels.ts
 msgid "Control R, redo"
-msgstr "コントロール R、やり直し"
+msgstr "Control R ทำซ้ำ"
 
 #: src/i18n/labels.ts
 msgid "Control R, reverse search"
-msgstr "コントロール R、逆方向に検索"
+msgstr "Control R ค้นหาย้อนหลัง"
 
 #: src/i18n/labels.ts
 msgid "Control R, transcript"
-msgstr "コントロール R、トランスクリプト"
+msgstr "Control R บันทึกการสนทนา"
 
 #: src/i18n/labels.ts
 msgid "Control T, toggle tasks"
-msgstr "コントロール T、タスク表示を切り替え"
+msgstr "Control T สลับรายการงาน"
 
 #: src/i18n/labels.ts
 msgid "Control U, clear line"
-msgstr "コントロール U、行をクリア"
+msgstr "Control U ล้างบรรทัด"
 
 #: src/i18n/labels.ts
 msgid "Control U, half page up"
-msgstr "コントロール U、半ページ上へ"
+msgstr "Control U ขึ้นครึ่งหน้า"
 
 #: src/i18n/labels.ts
 msgid "Control V, visual block"
-msgstr "コントロール V、ビジュアルブロック"
+msgstr "Control V เลือกบล็อก"
 
 #: src/i18n/labels.ts
 msgid "Control W, delete word"
-msgstr "コントロール W、単語を削除"
+msgstr "Control W ลบคำ"
 
 #: src/i18n/labels.ts
 msgid "Control W, window prefix"
-msgstr "コントロール W、ウィンドウ操作のプレフィックス"
+msgstr "Control W คำนำหน้าคำสั่งหน้าต่าง"
 
 #: src/i18n/labels.ts
 msgid "Control Y, paste"
-msgstr "コントロール Y、ペースト"
+msgstr "Control Y วาง"
 
 #: src/i18n/labels.ts
 msgid "Control Z, suspend"
-msgstr "コントロール Z、一時停止"
+msgstr "Control Z พักกระบวนการ"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Copied"
-msgstr "コピー"
+msgstr "คัดลอกแล้ว"
 
 #: src/components/skia-terminal.tsx
 msgid "Copied to clipboard"
-msgstr "クリップボードにコピーしました"
+msgstr "คัดลอกไปยังคลิปบอร์ดแล้ว"
 
 #: src/app/explore.tsx
 #: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
-msgstr "コピーします。ターミナルにそのまま貼り付けられます"
+msgstr "คัดลอกให้พร้อมวางในเทอร์มินัล"
 
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
-msgstr "コピー"
+msgstr "คัดลอก"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
-msgstr "公開鍵をコピー"
+msgstr "คัดลอกคีย์สาธารณะ"
 
 #: src/components/simfarm-preview.tsx
 msgid "Copy the command that starts simfarm"
-msgstr "simfarm を起動するコマンドをコピー"
+msgstr "คัดลอกคำสั่งเริ่ม simfarm"
 
 #: src/app/explore.tsx
 msgid "Copy the install command"
-msgstr "インストールコマンドをコピー"
+msgstr "คัดลอกคำสั่งติดตั้ง"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
-msgstr "公開鍵をコピーする"
+msgstr "คัดลอกคีย์สาธารณะ"
 
 #: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
-msgstr "ファイルを追加できませんでした"
+msgstr "เพิ่มไฟล์ไม่ได้"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
-msgstr "接続できませんでした"
+msgstr "เชื่อมต่อไม่ได้"
 
 #: src/app/sessions.tsx
 msgid "Could not connect to this machine — tap to retry"
-msgstr "このマシンに接続できません — タップして再試行"
+msgstr "เชื่อมต่อเครื่องนี้ไม่ได้ แตะเพื่อลองอีกครั้ง"
 
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
-msgstr "コピーできませんでした"
+msgstr "คัดลอกไม่ได้"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
-msgstr "アプリロックを有効にできませんでした"
+msgstr "เปิดใช้การล็อกแอปไม่ได้"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
-msgstr "鍵を生成できませんでした"
+msgstr "สร้างคีย์ไม่ได้"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
-msgstr "このサーバーのエージェント一覧を取得できませんでした"
+msgstr "แสดงรายการเอเจนต์ของเซิร์ฟเวอร์นี้ไม่ได้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not load earlier output."
-msgstr "以前の出力を読み込めませんでした"
+msgstr "โหลดเอาต์พุตก่อนหน้านี้ไม่ได้"
 
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
-msgstr "ファイルを読み込めませんでした"
+msgstr "โหลดไฟล์ไม่ได้"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
-msgstr "実行中のものを読み込めませんでした"
+msgstr "โหลดรายการที่กำลังทำงานไม่ได้"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
-msgstr "そのテーマを開けませんでした"
+msgstr "เปิดธีมนั้นไม่ได้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
-msgstr "ファイルを開けませんでした"
+msgstr "เปิดไฟล์ไม่ได้"
 
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
-msgstr "ピッカーを開けませんでした"
+msgstr "เปิดตัวเลือกไม่ได้"
 
 #: src/app/explore.tsx
 msgid "Could not open the SSH tunnel: {reason}"
-msgstr "SSH トンネルを開けませんでした: {reason}"
+msgstr "เปิดอุโมงค์ SSH ไม่ได้: {reason}"
 
 #: src/app/explore.tsx
 msgid "Could not open the SSH tunnel."
-msgstr "SSH トンネルを開けませんでした"
+msgstr "เปิดอุโมงค์ SSH ไม่ได้"
 
 #: src/components/asset-viewer.tsx
 msgid "Could not open this file."
-msgstr "このファイルを開けませんでした"
+msgstr "เปิดไฟล์นี้ไม่ได้"
 
 #: src/components/asset-viewer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open this theme."
-msgstr "このテーマを開けませんでした"
+msgstr "เปิดธีมนี้ไม่ได้"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
-msgstr "そのアドレスに到達できませんでした。アドレスを確認し、Gateway が起動していることを確かめてください"
+msgstr "ติดต่อที่อยู่นั้นไม่ได้ ตรวจสอบที่อยู่และตรวจว่า Gateway กำลังทำงาน"
 
 #: src/app/explore.tsx
 msgid "Could not reach the gateway."
-msgstr "Gateway に到達できませんでした"
+msgstr "ติดต่อ Gateway ไม่ได้"
 
 #: src/app/explore.tsx
 msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
-msgstr "Gateway に到達できませんでした。起動していることを確かめて、QR コードを更新してからもう一度スキャンしてください"
+msgstr "ติดต่อ Gateway ไม่ได้ ตรวจว่ากำลังทำงานอยู่ จากนั้นรีเฟรช QR แล้วสแกนอีกครั้ง"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Could not reach the theme catalogue"
-msgstr "テーマカタログに接続できませんでした"
+msgstr "ติดต่อแค็ตตาล็อกธีมไม่ได้"
 
 #: src/app/new-task.tsx
 msgid "Could not reach this server."
-msgstr "このサーバーに接続できませんでした"
+msgstr "ติดต่อเซิร์ฟเวอร์นี้ไม่ได้"
 
 #: src/components/gateway-storage-error.tsx
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
-msgstr "保存済みサーバーを読み取れませんでした。保存データは変更されていません。デバイスのロックを解除して再試行してください"
+msgstr "อ่านเซิร์ฟเวอร์ที่บันทึกไว้ไม่ได้ ข้อมูลที่บันทึกยังไม่เปลี่ยนแปลง ปลดล็อกอุปกรณ์นี้แล้วลองอีกครั้ง"
 
 #: src/components/git-diff-view.tsx
 msgid "Could not read the changes."
-msgstr "変更点を読み込めませんでした"
+msgstr "อ่านการเปลี่ยนแปลงไม่ได้"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/hooks/use-collaboration-output.ts
 msgid "Could not read the terminal."
-msgstr "ターミナルを読み取れませんでした"
+msgstr "อ่านเทอร์มินัลไม่ได้"
 
 #: src/components/git-diff-view.tsx
 msgid "Could not read this file."
-msgstr "このファイルを読み込めませんでした"
+msgstr "อ่านไฟล์นี้ไม่ได้"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
-msgstr "ホストを削除できませんでした"
+msgstr "ลบโฮสต์ไม่ได้"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
-msgstr "デバイスを取り消せませんでした"
+msgstr "เพิกถอนอุปกรณ์ไม่ได้"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
-msgstr "変更を保存できませんでした"
+msgstr "บันทึกการเปลี่ยนแปลงไม่ได้"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not save host"
-msgstr "ホストを保存できませんでした"
+msgstr "บันทึกโฮสต์ไม่ได้"
 
 #: src/app/commands.tsx
 msgid "Could not save shortcut"
-msgstr "ショートカットを保存できませんでした"
+msgstr "บันทึกปุ่มลัดไม่ได้"
 
 #: src/components/settings-theme-sheet.tsx
 msgid "Could not save theme"
-msgstr "テーマを保存できませんでした"
+msgstr "บันทึกธีมไม่ได้"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
-msgstr "送信できませんでした"
+msgstr "ส่งไม่ได้"
 
 #: src/app/commands.tsx
 msgid "Could not send command."
-msgstr "コマンドを送信できませんでした"
+msgstr "ส่งคำสั่งไม่ได้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send input."
-msgstr "入力を送信できませんでした"
+msgstr "ส่งอินพุตไม่ได้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not send key."
-msgstr "キーを送信できませんでした"
+msgstr "ส่งปุ่มไม่ได้"
 
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
-msgstr "ショートカットを送信できませんでした"
+msgstr "ส่งปุ่มลัดไม่ได้"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
-msgstr "ターミナルを開始できませんでした"
+msgstr "เริ่มเทอร์มินัลไม่ได้"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
-msgstr "タスクを開始できませんでした"
+msgstr "เริ่มงานไม่ได้"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
-msgstr "このエージェントを停止できませんでした"
+msgstr "หยุดเอเจนต์นี้ไม่ได้"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
-msgstr "サーバーのペアリングを解除できませんでした"
+msgstr "เลิกจับคู่เซิร์ฟเวอร์ไม่ได้"
 
 #: src/components/session-map.tsx
 msgid "Could not update the session."
-msgstr "セッションを更新できませんでした"
+msgstr "อัปเดตเซสชันไม่ได้"
 
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
-msgstr "ファイルをアップロードできませんでした"
+msgstr "อัปโหลดไฟล์ไม่ได้"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
-msgstr "使用中"
+msgstr "ปัจจุบัน"
 
 #: src/components/agent-command-delivery-picker.tsx
 msgid "Current agent"
-msgstr "現在のエージェント"
+msgstr "เอเจนต์ปัจจุบัน"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Current machine"
-msgstr "現在のマシン"
+msgstr "เครื่องปัจจุบัน"
 
 #: src/i18n/labels.ts
 msgid "Current path"
-msgstr "現在のパス"
+msgstr "พาธปัจจุบัน"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
-msgstr "現在のテーマ"
+msgstr "ธีมปัจจุบัน"
 
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
-msgstr "ターミナルのコマンドとキーの組み合わせをカスタマイズします"
+msgstr "ปรับแต่งคำสั่งเทอร์มินัลและชุดปุ่มลัด"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
-msgstr "ダーク"
+msgstr "มืด"
 
 #: src/components/settings-terminal.tsx
 msgid "Default"
-msgstr "標準"
+msgstr "ค่าเริ่มต้น"
 
 #: src/components/approval-banner.tsx
 msgid "DEFAULT"
-msgstr "標準"
+msgstr "ค่าเริ่มต้น"
 
 #: src/components/theme-link-import.tsx
 msgid "Defaults to theme.json at the repository root"
-msgstr "既定はリポジトリ直下の theme.json です"
+msgstr "ค่าเริ่มต้นคือ theme.json ที่รากของที่เก็บโค้ด"
 
 #: src/components/row-action-menu.tsx
 msgid "Delete"
-msgstr "削除"
+msgstr "ลบ"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
-msgstr "{name} を削除"
+msgstr "ลบ {name}"
 
 #: src/i18n/labels.ts
 msgid "Delete this line"
-msgstr "この行を削除"
+msgstr "ลบบรรทัดนี้"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Deleted"
-msgstr "削除"
+msgstr "ลบแล้ว"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
-msgstr "配信は未確認です"
+msgstr "ยังไม่ยืนยันการส่ง"
 
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
-msgstr "デモシェル"
+msgstr "เชลล์สาธิต"
 
 #: src/lib/demo-gateway.ts
 msgid "Demo workspace"
-msgstr "デモワークスペース"
+msgstr "พื้นที่ทำงานสาธิต"
 
 #: src/i18n/labels.ts
 msgid "Deny"
-msgstr "拒否"
+msgstr "ปฏิเสธ"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
-msgstr "開発"
+msgstr "การพัฒนา"
 
 #: src/components/settings-security.tsx
 #: src/lib/local-authentication.ts
 msgid "device authentication"
-msgstr "デバイス認証"
+msgstr "การยืนยันตัวตนของอุปกรณ์"
 
 #: src/i18n/labels.ts
 msgid "Diff summary"
-msgstr "差分の要約"
+msgstr "สรุปความแตกต่าง"
 
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
-msgstr "ディレクトリ"
+msgstr "ไดเรกทอรี"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnect from {0}"
-msgstr "{0} から切断"
+msgstr "ตัดการเชื่อมต่อจาก {0}"
 
 #. placeholder {0}: status.reason
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected · {0}"
-msgstr "切断 · {0}"
+msgstr "ตัดการเชื่อมต่อแล้ว · {0}"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected."
-msgstr "切断しました"
+msgstr "ตัดการเชื่อมต่อแล้ว"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
-msgstr "承認エラーを閉じる"
+msgstr "ปิดข้อผิดพลาดในการอนุมัติ"
 
 #: src/components/terminal-theme-drop.tsx
 msgid "Dismiss this theme"
-msgstr "このテーマを閉じる"
+msgstr "ปิดธีมนี้"
 
 #: src/components/away-digest-card.tsx
 msgid "Dismiss what happened while you were away"
-msgstr "離席中の変化を閉じる"
+msgstr "ปิดสรุปเหตุการณ์ขณะที่คุณไม่อยู่"
 
 #: src/components/whats-new-card.tsx
 msgid "Dismiss what's new"
-msgstr "新着情報を閉じる"
+msgstr "ปิดข่าวสารล่าสุด"
 
 #: src/components/session-artifacts.tsx
 msgid "Docs"
-msgstr "ドキュメント"
+msgstr "เอกสาร"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
@@ -1264,185 +1264,185 @@ msgstr "ドキュメント"
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
-msgstr "完了"
+msgstr "เสร็จสิ้น"
 
 #: src/app/commands.tsx
 msgid "Done editing shortcuts"
-msgstr "ショートカットの編集を終了"
+msgstr "แก้ไขปุ่มลัดเสร็จแล้ว"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Down arrow"
-msgstr "下矢印"
+msgstr "ลูกศรลง"
 
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
-msgstr "ダウンロードしてプレビュー"
+msgstr "ดาวน์โหลดและดูตัวอย่าง"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
 msgid "Downloading · {0}"
-msgstr "ダウンロード中 · {0}"
+msgstr "กำลังดาวน์โหลด · {0}"
 
 #. placeholder {0}: formatBytes(state.received)
 #. placeholder {1}: formatBytes(state.total)
 #: src/components/terminal-theme-drop.tsx
 msgid "Downloading · {0} of {1}"
-msgstr "ダウンロード中 · {0} / {1}"
+msgstr "กำลังดาวน์โหลด · {0} จาก {1}"
 
 #: src/components/asset-viewer.tsx
 msgid "Downloading theme"
-msgstr "テーマをダウンロード中"
+msgstr "กำลังดาวน์โหลดธีม"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Downloading…"
-msgstr "ダウンロードしています…"
+msgstr "กำลังดาวน์โหลด…"
 
 #: src/lib/demo-gateway.ts
 msgid "Draft the notes for the next build"
-msgstr "次のビルドのリリースノートを下書きします"
+msgstr "ร่างบันทึกสำหรับบิลด์ถัดไป"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
-msgstr "各デバイスは {0} 用のトークンをそれぞれ保持します"
+msgstr "แต่ละอุปกรณ์มีโทเค็นสำหรับ {0} ของตัวเอง"
 
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Edit {0}"
-msgstr "{0} を編集"
+msgstr "แก้ไข {0}"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
-msgstr "ショートカットを編集"
+msgstr "แก้ไขปุ่มลัด"
 
 #: src/components/ssh-host-list.tsx
 msgid "Edit SSH host"
-msgstr "SSH ホストを編集"
+msgstr "แก้ไขโฮสต์ SSH"
 
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
-msgstr "このサーバーを編集"
+msgstr "แก้ไขเซิร์ฟเวอร์นี้"
 
 #: src/i18n/labels.ts
 msgid "Enter"
-msgstr "エンター"
+msgstr "Enter"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Enter a gateway URL."
-msgstr "Gateway の URL を入力してください"
+msgstr "ป้อน URL ของ Gateway"
 
 #: src/components/settings-servers.tsx
 msgid "Enter a name."
-msgstr "名前を入力してください"
+msgstr "ป้อนชื่อ"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
-msgstr "{PAIRING_CODE_CHARACTER_COUNT} 文字のコードを入力してください"
+msgstr "ป้อนรหัส {PAIRING_CODE_CHARACTER_COUNT} ตัวอักษร"
 
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
-msgstr "代わりに Gateway のアドレスを入力してください"
+msgstr "ป้อนที่อยู่ Gateway แทน"
 
 #: src/app/explore.tsx
 msgid "Enter the gateway's port on that host."
-msgstr "そのホスト上の Gateway のポートを入力してください"
+msgstr "ป้อนพอร์ตของ Gateway บนโฮสต์นั้น"
 
 #: src/app/explore.tsx
 msgid "Enter URL manually"
-msgstr "URL を手動で入力"
+msgstr "ป้อน URL ด้วยตนเอง"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Escape"
-msgstr "エスケープ"
+msgstr "Escape"
 
 #: src/i18n/labels.ts
 msgid "Escape twice"
-msgstr "Escape を2回"
+msgstr "Escape สองครั้ง"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
-msgstr "{0} を展開"
+msgstr "ขยาย {0}"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
-msgstr "あと {0}:{1} で期限切れ"
+msgstr "หมดอายุใน {0}:{1}"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export colors"
-msgstr "色をエクスポート"
+msgstr "ส่งออกสี"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
-msgstr "テーマをエクスポート"
+msgstr "ส่งออกธีม"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
-msgstr "失敗 · {0}"
+msgstr "ไม่สำเร็จ · {0}"
 
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
-msgstr "ファイルメンション"
+msgstr "การอ้างถึงไฟล์"
 
 #: src/lib/attachments.ts
 msgid "File too large (25MB max)"
-msgstr "ファイルが大きすぎます（最大 25MB）"
+msgstr "ไฟล์ใหญ่เกินไป (สูงสุด 25MB)"
 
 #: src/lib/attachments.ts
 msgid "File type not allowed"
-msgstr "このファイル形式は許可されていません"
+msgstr "ไม่อนุญาตไฟล์ประเภทนี้"
 
 #: src/components/session-artifacts.tsx
 msgid "Files"
-msgstr "ファイル"
+msgstr "ไฟล์"
 
 #: src/components/file-mention-panel.tsx
 msgid "Files in this workspace"
-msgstr "このワークスペースのファイル"
+msgstr "ไฟล์ในพื้นที่ทำงานนี้"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
-msgstr "ファイル名で検索"
+msgstr "ค้นหาไฟล์ตามชื่อ"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
-msgstr "フィンガープリント"
+msgstr "ลายนิ้วมือ"
 
 #: src/components/new-task-sheet.tsx
 msgid "FIRST PROMPT"
-msgstr "最初のプロンプト"
+msgstr "พรอมต์แรก"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
-msgstr "このテーマを適用する前に文字のコントラストを修正してください"
+msgstr "แก้ไขความต่างระดับสีของข้อความก่อนใช้ธีมนี้"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
-msgstr "ツールの手順を折りたたむ"
+msgstr "ซ่อนขั้นตอนการใช้เครื่องมือ"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
-msgstr "1 単語進む"
+msgstr "ไปข้างหน้าหนึ่งคำ"
 
 #: src/lib/demo-gateway.ts
 msgid "Free up context by summarizing the conversation so far"
-msgstr "これまでの会話を要約してコンテキストを空けます"
+msgstr "เพิ่มพื้นที่บริบทโดยสรุปการสนทนาที่ผ่านมา"
 
 #: src/app/commands.tsx
 msgid "Frequent"
-msgstr "よく使う"
+msgstr "ใช้บ่อย"
 
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
-msgstr "フロントカメラです。QR コードを画面に向けてください"
+msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
 
 #: src/app/explore.tsx
 msgid "Gateway"
@@ -1450,766 +1450,766 @@ msgstr "Gateway"
 
 #: src/lib/network-error.ts
 msgid "Gateway did not respond in time."
-msgstr "Gateway が時間内に応答しませんでした"
+msgstr "Gateway ไม่ตอบกลับภายในเวลาที่กำหนด"
 
 #: src/lib/network-error.ts
 msgid "Gateway is temporarily unavailable."
-msgstr "Gateway を一時的に利用できません"
+msgstr "Gateway ไม่พร้อมใช้งานชั่วคราว"
 
 #: src/components/settings-alerts.tsx
 msgid "Gateway notifications"
-msgstr "Gateway の通知"
+msgstr "การแจ้งเตือนจาก Gateway"
 
 #: src/app/explore.tsx
 msgid "Gateway port on that host"
-msgstr "そのホスト上の Gateway のポート"
+msgstr "พอร์ต Gateway บนโฮสต์นั้น"
 
 #: src/lib/notifications.ts
 msgid "Gateway updates"
-msgstr "Gateway の更新"
+msgstr "อัปเดตจาก Gateway"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Gateway URL"
-msgstr "Gateway の URL"
+msgstr "URL ของ Gateway"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
-msgstr "Gateway の URL が正しくありません"
+msgstr "URL ของ Gateway ไม่ถูกต้อง"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
-msgstr "このホスト経由で接続する Gateway"
+msgstr "Gateway ที่เข้าถึงผ่านโฮสต์นี้"
 
 #: src/components/ssh-host-form.tsx
 msgid "Generate an Ed25519 key"
-msgstr "Ed25519 鍵を生成"
+msgstr "สร้างคีย์ Ed25519"
 
 #: src/components/ssh-host-form.tsx
 msgid "Generating…"
-msgstr "生成中…"
+msgstr "กำลังสร้าง…"
 
 #: src/components/launch-intro.tsx
 msgid "Get started"
-msgstr "はじめる"
+msgstr "เริ่มต้นใช้งาน"
 
 #: src/i18n/labels.ts
 msgid "Git status"
-msgstr "Git ステータス"
+msgstr "สถานะ Git"
 
 #: src/components/screen-header.tsx
 msgid "Go back"
-msgstr "戻る"
+msgstr "ย้อนกลับ"
 
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
-msgstr "ファイルの先頭へ移動"
+msgstr "ไปที่ต้นไฟล์"
 
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
-msgstr "サーバー一覧へ"
+msgstr "ไปยังเซิร์ฟเวอร์ของคุณ"
 
 #: src/app/commands.tsx
 msgid "Group"
-msgstr "グループ"
+msgstr "กลุ่ม"
 
 #. placeholder {0}: group.tab.title
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
-msgstr "グループ {0}。長押しで操作"
+msgstr "กลุ่ม {0} กดค้างเพื่อดูการทำงาน"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
-msgstr "触覚フィードバック"
+msgstr "การตอบสนองแบบสั่น"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Hidden"
-msgstr "非表示"
+msgstr "ซ่อนอยู่"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
 #: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
-msgstr "{0} を隠す"
+msgstr "ซ่อน {0}"
 
 #: src/app/commands.tsx
 msgid "Hide {name}"
-msgstr "{name} を隠す"
+msgstr "ซ่อน {name}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Hide keyboard"
-msgstr "キーボードを隠す"
+msgstr "ซ่อนแป้นพิมพ์"
 
 #: src/components/collaboration-notice.tsx
 msgid "Hide output"
-msgstr "出力を閉じる"
+msgstr "ซ่อนเอาต์พุต"
 
 #: src/components/app-drawer.tsx
 msgid "Hide the server list"
-msgstr "サーバー一覧を隠す"
+msgstr "ซ่อนรายการเซิร์ฟเวอร์"
 
 #: src/app/commands.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
-msgstr "シミュレータを隠す"
+msgstr "ซ่อนเครื่องจำลอง"
 
 #: src/components/simfarm-stage.tsx
 msgid "Home"
-msgstr "ホーム"
+msgstr "หน้าแรก"
 
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
-msgstr "ホーム画面ウィジェット"
+msgstr "วิดเจ็ตหน้าจอหลัก"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
-msgstr "ホスト"
+msgstr "โฮสต์"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Host key changed"
-msgstr "ホスト鍵が変わりました"
+msgstr "คีย์โฮสต์เปลี่ยนไป"
 
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
-msgstr "ホスト鍵は信頼済み"
+msgstr "เชื่อถือคีย์โฮสต์แล้ว"
 
 #: src/i18n/labels.ts
 msgid "Idle"
-msgstr "待機"
+msgstr "ว่าง"
 
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
-msgstr "問題が続く場合は、アプリを再起動するか、インストール状態を確認してください"
+msgstr "หากยังเกิดปัญหา ให้เริ่มแอปใหม่หรือตรวจสอบการติดตั้งแอป"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
 msgid "Images"
-msgstr "画像"
+msgstr "รูปภาพ"
 
 #: src/components/theme-link-import.tsx
 msgid "Images download from"
-msgstr "画像のダウンロード元"
+msgstr "ดาวน์โหลดรูปภาพจาก"
 
 #: src/components/custom-theme-library.tsx
 msgid "Import"
-msgstr "インポート"
+msgstr "นำเข้า"
 
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
-msgstr "ファイルをインポート"
+msgstr "นำเข้าไฟล์"
 
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
-msgstr "リンクからインポート"
+msgstr "นำเข้าลิงก์"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
 msgid "Insert {0}"
-msgstr "{0} を挿入"
+msgstr "แทรก {0}"
 
 #. placeholder {0}: row.label
 #. placeholder {1}: row.hint
 #: src/components/composer-popup.tsx
 msgid "Insert {0} {1}"
-msgstr "{0} {1} を挿入"
+msgstr "แทรก {0} {1}"
 
 #: src/i18n/labels.ts
 msgid "Insert mode"
-msgstr "挿入モード"
+msgstr "โหมดแทรก"
 
 #: src/app/explore.tsx
 msgid "Install command copied"
-msgstr "インストールコマンドをコピーしました"
+msgstr "คัดลอกคำสั่งติดตั้งแล้ว"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
-msgstr "インストール済み"
+msgstr "ติดตั้งแล้ว"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
-msgstr "画像をインストールしています"
+msgstr "กำลังติดตั้งรูปภาพ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
-msgstr "画面の背景の不透明度"
+msgstr "ความทึบของพื้นหลังส่วนติดต่อ"
 
 #: src/i18n/labels.ts
 msgid "Interrupt"
-msgstr "中断"
+msgstr "ขัดจังหวะ"
 
 #: src/app/commands.tsx
 msgid "Interrupt process"
-msgstr "プロセスを中断"
+msgstr "ขัดจังหวะกระบวนการ"
 
 #: src/app/commands.tsx
 msgid "Interrupt what this agent is doing."
-msgstr "このエージェントが進めている作業を中断します"
+msgstr "ขัดจังหวะสิ่งที่เอเจนต์นี้กำลังทำ"
 
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
-msgstr "虹彩認証"
+msgstr "การจดจำม่านตา"
 
 #: src/app/+not-found.tsx
 msgid "It may be out of date, or meant for a different app. Nothing was opened."
-msgstr "期限切れか、別のアプリ向けのリンクかもしれません。何も開いていません"
+msgstr "อาจเป็นข้อมูลเก่าหรือสำหรับแอปอื่น ยังไม่ได้เปิดสิ่งใด"
 
 #: src/components/pairing-camera.tsx
 msgid "It was found, but never showed a picture. Another app may be holding it."
-msgstr "カメラは見つかりましたが、映像が出ませんでした。他のアプリが使用中かもしれません"
+msgstr "พบกล้องแต่ไม่แสดงภาพ แอปอื่นอาจกำลังใช้อยู่"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "It works on its own. Follow it in Agent collaboration."
-msgstr "自律的に作業します。エージェント連携で状況を確認できます"
+msgstr "ทำงานได้เอง ติดตามได้ในหน้าการทำงานร่วมกันของเอเจนต์"
 
 #: src/components/settings-servers.tsx
 msgid "Its details are stored securely on this device; try again."
-msgstr "その情報はこのデバイスに安全に保存されています。もう一度お試しください"
+msgstr "รายละเอียดถูกเก็บอย่างปลอดภัยบนอุปกรณ์นี้ ลองอีกครั้ง"
 
 #: src/components/ssh-host-form.tsx
 msgid "Its details could not be removed from secure storage."
-msgstr "その情報を安全なストレージから削除できませんでした"
+msgstr "ลบรายละเอียดจากที่เก็บข้อมูลที่ปลอดภัยไม่ได้"
 
 #: src/components/ssh-host-form.tsx
 msgid "Its details could not be written to secure storage."
-msgstr "その情報を安全なストレージに書き込めませんでした"
+msgstr "เขียนรายละเอียดลงที่เก็บข้อมูลที่ปลอดภัยไม่ได้"
 
 #: src/components/settings-servers.tsx
 msgid "Its paired devices are listed once it is the server in use."
-msgstr "使用中のサーバーになると、ペアリング済みのデバイスが一覧に表示されます"
+msgstr "อุปกรณ์ที่จับคู่จะแสดงเมื่อเลือกใช้เซิร์ฟเวอร์นี้"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
-msgstr "最新の出力へ移動"
+msgstr "ข้ามไปยังเอาต์พุตล่าสุด"
 
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
-msgstr "たった今"
+msgstr "เมื่อสักครู่"
 
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
-msgstr "{label} を残す"
+msgstr "เก็บ {label} ไว้"
 
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
-msgstr "キャッシュを残す"
+msgstr "เก็บไฟล์แคชไว้"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
-msgstr "テーマを残す"
+msgstr "เก็บธีมที่บันทึกไว้"
 
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
-msgstr "エージェントの作業中、見ているターミナルをロック画面に表示し続けます"
+msgstr "แสดงเทอร์มินัลที่คุณกำลังดูบนหน้าจอล็อกขณะที่เอเจนต์ทำงาน"
 
 #: src/app/commands.tsx
 msgid "Keys"
-msgstr "キー"
+msgstr "ปุ่ม"
 
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
-msgstr "鍵は端末上で生成され、外に出ることはありません"
+msgstr "คีย์สร้างขึ้นบนอุปกรณ์และไม่ออกจากอุปกรณ์"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
-msgstr "言語"
+msgstr "ภาษา"
 
 #: src/components/settings-appearance.tsx
 msgid "Language, {languageName}"
-msgstr "言語、{languageName}"
+msgstr "ภาษา {languageName}"
 
 #: src/components/settings-terminal.tsx
 msgid "Large"
-msgstr "大"
+msgstr "ใหญ่"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Last connected {days}d ago"
-msgstr "最終接続: {days}日前"
+msgstr "เชื่อมต่อล่าสุด {days} วันที่แล้ว"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Last connected {hours}h ago"
-msgstr "最終接続: {hours}時間前"
+msgstr "เชื่อมต่อล่าสุด {hours} ชั่วโมงที่แล้ว"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Last connected {minutes}m ago"
-msgstr "最終接続: {minutes}分前"
+msgstr "เชื่อมต่อล่าสุด {minutes} นาทีที่แล้ว"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Last connected just now"
-msgstr "最終接続: たった今"
+msgstr "เชื่อมต่อล่าสุดเมื่อสักครู่"
 
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
-msgstr "最終確認: {days}日前"
+msgstr "พบล่าสุด {days} วันที่แล้ว"
 
 #: src/components/settings-servers.tsx
 msgid "Last seen {hours}h ago"
-msgstr "最終確認: {hours}時間前"
+msgstr "พบล่าสุด {hours} ชั่วโมงที่แล้ว"
 
 #: src/components/settings-servers.tsx
 msgid "Last seen {minutes}m ago"
-msgstr "最終確認: {minutes}分前"
+msgstr "พบล่าสุด {minutes} นาทีที่แล้ว"
 
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
-msgstr "最終確認: たった今"
+msgstr "พบล่าสุดเมื่อสักครู่"
 
 #: src/components/skia-terminal.tsx
 msgid "Latest"
-msgstr "最新"
+msgstr "ล่าสุด"
 
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
-msgstr "空のままにすると、セッションが今いる場所で開始します"
+msgstr "เว้นว่างไว้เพื่อเริ่มในตำแหน่งปัจจุบันของเซสชัน"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Left arrow"
-msgstr "左矢印"
+msgstr "ลูกศรซ้าย"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
-msgstr "英字"
+msgstr "ตัวอักษร"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
-msgstr "ライト"
+msgstr "สว่าง"
 
 #: src/app/commands.tsx
 msgid "List branches"
-msgstr "ブランチ一覧"
+msgstr "แสดงสาขา"
 
 #: src/components/settings-servers.tsx
 msgid "List every pane, agent or not."
-msgstr "エージェントの有無にかかわらず、すべてのパネルを一覧表示します"
+msgstr "แสดงทุกพาเนล ไม่ว่าจะมีเอเจนต์หรือไม่"
 
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
-msgstr "認識済みのエージェントが動作しているパネルのみを一覧表示します"
+msgstr "แสดงเฉพาะพาเนลที่กำลังเรียกใช้เอเจนต์ที่รู้จัก"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
-msgstr "ライブアクティビティ"
+msgstr "กิจกรรมสด"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
 msgid "Loading"
-msgstr "読み込み中"
+msgstr "กำลังโหลด"
 
 #: src/app/commands.tsx
 msgid "Loading commands"
-msgstr "コマンドを読み込み中"
+msgstr "กำลังโหลดคำสั่ง"
 
 #: src/components/skia-terminal.tsx
 msgid "Loading earlier output…"
-msgstr "以前の出力を読み込み中…"
+msgstr "กำลังโหลดเอาต์พุตก่อนหน้านี้…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
-msgstr "ペアリング済みデバイスを読み込み中…"
+msgstr "กำลังโหลดอุปกรณ์ที่จับคู่…"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
-msgstr "サーバーを読み込み中"
+msgstr "กำลังโหลดเซิร์ฟเวอร์"
 
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
-msgstr "設定を読み込み中"
+msgstr "กำลังโหลดการตั้งค่า"
 
 #: src/components/skia-terminal.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Loading terminal"
-msgstr "ターミナルを読み込み中"
+msgstr "กำลังโหลดเทอร์มินัล"
 
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
-msgstr "トランスクリプトを読み込み中"
+msgstr "กำลังโหลดบันทึกการสนทนา"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
-msgstr "テーマを読み込んでいます…"
+msgstr "กำลังโหลดธีม…"
 
 #: src/lib/demo-gateway.ts
 msgid "Logs"
-msgstr "ログ"
+msgstr "บันทึกเหตุการณ์"
 
 #: src/components/simfarm-preview.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Look again"
-msgstr "もう一度探す"
+msgstr "ค้นหาอีกครั้ง"
 
 #: src/components/simfarm-preview.tsx
 msgid "Looking"
-msgstr "検索中"
+msgstr "กำลังค้นหา"
 
 #: src/components/simfarm-preview.tsx
 msgid "Looking for a simulator"
-msgstr "シミュレータを探しています"
+msgstr "กำลังค้นหาเครื่องจำลอง"
 
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
-msgstr "Mac mini · オフィス"
+msgstr "Mac mini · สำนักงาน"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Machines and sessions"
-msgstr "マシンとセッション"
+msgstr "เครื่องและเซสชัน"
 
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
-msgstr "自分だけのアプリに"
+msgstr "ปรับให้เป็นของคุณ"
 
 #: src/app/(drawer)/index.tsx
 msgid "Manage"
-msgstr "管理"
+msgstr "จัดการ"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Manage machines"
-msgstr "マシンを管理"
+msgstr "จัดการเครื่อง"
 
 #: src/app/(drawer)/index.tsx
 msgid "Manage SSH hosts"
-msgstr "SSH ホストを管理"
+msgstr "จัดการโฮสต์ SSH"
 
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
-msgstr "確認済みにする"
+msgstr "ทำเครื่องหมายว่าตรวจแล้ว"
 
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
-msgstr "マスコット"
+msgstr "มาสคอต"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
-msgstr "{0} をメンション"
+msgstr "อ้างถึง {0}"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
-msgstr "更新日時"
+msgstr "แก้ไขแล้ว"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Modified"
-msgstr "変更"
+msgstr "แก้ไขแล้ว"
 
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
-msgstr "その他の操作"
+msgstr "การทำงานเพิ่มเติม"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
-msgstr "その他の記号"
+msgstr "สัญลักษณ์เพิ่มเติม"
 
 #: src/components/editor-controls.tsx
 msgid "Move the editor controls"
-msgstr "エディタの操作パネルを移動"
+msgstr "ย้ายตัวควบคุมตัวแก้ไข"
 
 #: src/components/simfarm-stage.tsx
 msgid "Move the simulator controls"
-msgstr "シミュレータの操作ボタンを移動"
+msgstr "ย้ายตัวควบคุมเครื่องจำลอง"
 
 #: src/app/(drawer)/_layout.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Muqun"
-msgstr "牧群"
+msgstr "Muqun"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "Muqun agent status"
-msgstr "牧群（ぼくぐん）のエージェントの状態"
+msgstr "สถานะเอเจนต์ Muqun"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun could not verify your identity. Try again."
-msgstr "牧群が本人確認できませんでした。もう一度お試しください"
+msgstr "Muqun ยืนยันตัวตนของคุณไม่ได้ ลองอีกครั้ง"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Muqun follows the language your phone is set to."
-msgstr "牧群（ぼくぐん）は端末の言語設定に従います"
+msgstr "Muqun ใช้ภาษาตามการตั้งค่าโทรศัพท์ของคุณ"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
-msgstr "牧群（ぼくぐん）はロックされています"
+msgstr "Muqun ถูกล็อก"
 
 #: src/app/settings.tsx
 msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun はオープンソースです。読むことも、自分でビルドすることもできます"
+msgstr "Muqun เป็นโอเพนซอร์ส อ่านโค้ดหรือสร้างแอปด้วยตัวเองได้"
 
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
-msgstr "Muqun はカメラで Gateway の QR コードを読み取ります。録画は行いません"
+msgstr "Muqun อ่าน QR ของ Gateway ผ่านกล้อง โดยไม่บันทึกภาพ"
 
 #: src/app/settings.tsx
 msgid "Muqun settings stay on this device."
-msgstr "牧群（ぼくぐん）の設定はこのデバイスの中だけに保存されます"
+msgstr "การตั้งค่า Muqun อยู่บนอุปกรณ์นี้"
 
 #: src/lib/release-notes.ts
 msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
-msgstr "Muqun が SSH を話します。ホストを保存してホーム画面でタップすれば、本物のシェルへ — パスワード、鍵、あるいは認証アプリのコードで"
+msgstr "Muqun รองรับ SSH บันทึกโฮสต์แล้วแตะที่หน้าแรกเพื่อใช้เชลล์จริง ยืนยันด้วยรหัสผ่าน คีย์ หรือรหัสจากแอปยืนยันตัวตน"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
-msgstr "端末の設定にかかわらず、牧群（ぼくぐん）はこの言語のままになります"
+msgstr "Muqun ใช้ภาษานี้ไม่ว่าโทรศัพท์จะตั้งเป็นภาษาใด"
 
 #. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
 msgid "Muqun will use {0} when the app opens."
-msgstr "アプリを開くとき、牧群は {0} を使います"
+msgstr "Muqun จะใช้ {0} เมื่อเปิดแอป"
 
 #: src/components/custom-theme-library.tsx
 msgid "My themes"
-msgstr "マイテーマ"
+msgstr "ธีมของฉัน"
 
 #: src/app/commands.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
-msgstr "名前"
+msgstr "ชื่อ"
 
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
-msgstr "名前を付けて、Gateway に表示されたコードを入力してください"
+msgstr "ตั้งชื่อแล้วป้อนรหัสที่ Gateway แสดง"
 
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
-msgstr "対応が必要です"
+msgstr "ต้องการความสนใจจากคุณ"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Never connected"
-msgstr "一度も接続されていません"
+msgstr "ยังไม่เคยเชื่อมต่อ"
 
 #: src/components/settings-servers.tsx
 msgid "Never seen"
-msgstr "一度も確認されていません"
+msgstr "ยังไม่เคยพบ"
 
 #: src/app/commands.tsx
 msgid "New group"
-msgstr "新しいグループ"
+msgstr "กลุ่มใหม่"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "New host key"
-msgstr "新しいホスト鍵"
+msgstr "คีย์โฮสต์ใหม่"
 
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
-msgstr "新しい出力があります · 更新"
+msgstr "มีเอาต์พุตใหม่ · รีเฟรช"
 
 #: src/app/commands.tsx
 msgid "NEW SHORTCUT"
-msgstr "新規ショートカット"
+msgstr "ปุ่มลัดใหม่"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
-msgstr "新しい SSH ホスト"
+msgstr "โฮสต์ SSH ใหม่"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "New task"
-msgstr "新規タスク"
+msgstr "งานใหม่"
 
 #: src/components/new-task-action.tsx
 msgid "New task on {label}"
-msgstr "{label} で新規タスク"
+msgstr "งานใหม่บน {label}"
 
 #: src/app/commands.tsx
 #: src/components/session-map.tsx
 msgid "New terminal"
-msgstr "新しいターミナル"
+msgstr "เทอร์มินัลใหม่"
 
 #: src/components/session-map.tsx
 msgid "New workspace"
-msgstr "新規ワークスペース"
+msgstr "พื้นที่ทำงานใหม่"
 
 #: src/components/launch-intro.tsx
 msgid "Next"
-msgstr "次へ"
+msgstr "ถัดไป"
 
 #: src/components/notice-deck.tsx
 msgid "Next notification"
-msgstr "次の通知"
+msgstr "การแจ้งเตือนถัดไป"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
-msgstr "実行中のエージェントはありません"
+msgstr "ไม่มีเอเจนต์กำลังทำงาน"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "No app on this phone opens web pages."
-msgstr "この端末にはウェブページを開けるアプリがありません"
+msgstr "ไม่มีแอปบนโทรศัพท์นี้ที่เปิดหน้าเว็บได้"
 
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
-msgstr "スキャンできるカメラがありません"
+msgstr "ไม่มีกล้องสำหรับสแกน"
 
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
-msgstr "このデバイスでカメラが見つかりませんでした"
+msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
 
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
-msgstr "変更はありません。作業ツリーは HEAD と一致しています"
+msgstr "ไม่มีการเปลี่ยนแปลง พื้นที่ทำงานตรงกับ HEAD"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
-msgstr "一致するファイルはありません"
+msgstr "ไม่พบไฟล์ที่ตรงกัน"
 
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
-msgstr "Gateway がまだありませんか？"
+msgstr "ยังไม่มี Gateway ใช่ไหม?"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
-msgstr "一致するコマンドがありません。別の語句で検索してください"
+msgstr "ไม่มีคำสั่งที่ตรงกัน ลองใช้คำอื่น"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
-msgstr "このセッションには他のアシスタントがまだいません"
+msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
-msgstr "出力はありません"
+msgstr "ไม่มีเอาต์พุต"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "No password or key is saved for this host."
-msgstr "このホストにはパスワードも鍵も保存されていません"
+msgstr "ไม่มีรหัสผ่านหรือคีย์ที่บันทึกไว้สำหรับโฮสต์นี้"
 
 #: src/components/custom-theme-library.tsx
 msgid "No personal themes yet. Import one, or browse the published themes."
-msgstr "まだ自分のテーマがありません。インポートするか、公開されているテーマを探してください"
+msgstr "ยังไม่มีธีมส่วนตัว นำเข้าธีมหรือเลือกดูธีมที่เผยแพร่แล้ว"
 
 #: src/components/asset-viewer.tsx
 msgid "No preview for this kind of file. It stays on the server."
-msgstr "この種類のファイルはプレビューできません。ファイルはサーバー上に残ります"
+msgstr "ไม่มีตัวอย่างสำหรับไฟล์ประเภทนี้ ไฟล์ยังอยู่บนเซิร์ฟเวอร์"
 
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
-msgstr "この接続ではプレビューできません"
+msgstr "ดูตัวอย่างผ่านการเชื่อมต่อนี้ไม่ได้"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
-msgstr "タスクを開始できるサーバーがありません"
+msgstr "ไม่มีเซิร์ฟเวอร์ให้เริ่มงาน"
 
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
-msgstr "ペアリング済みのサーバーはまだありません"
+msgstr "ยังไม่ได้จับคู่เซิร์ฟเวอร์"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
-msgstr "ポート {port} にシミュレータがありません"
+msgstr "ไม่มีเครื่องจำลองที่พอร์ต {port}"
 
 #: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
-msgstr "そのマシンにシミュレータはありません"
+msgstr "ไม่มีเครื่องจำลองบนเครื่องนั้น"
 
 #: src/app/explore.tsx
 msgid "No SSH hosts saved yet."
-msgstr "保存された SSH ホストはまだありません"
+msgstr "ยังไม่มีโฮสต์ SSH ที่บันทึกไว้"
 
 #: src/components/ssh-host-list.tsx
 msgid "No SSH hosts yet. Add one to open a shell on any machine you can reach."
-msgstr "SSH ホストはまだありません。追加すると、届く範囲のどのマシンでもシェルを開けます"
+msgstr "ยังไม่มีโฮสต์ SSH เพิ่มโฮสต์เพื่อเปิดเชลล์บนเครื่องที่คุณเข้าถึงได้"
 
 #: src/components/simfarm-stage.tsx
 msgid "No still frames"
-msgstr "静止画に非対応"
+msgstr "ไม่มีภาพนิ่ง"
 
 #: src/components/git-diff-view.tsx
 msgid "No textual change"
-msgstr "テキストの変更なし"
+msgstr "ไม่มีข้อความเปลี่ยนแปลง"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
-msgstr "公開されているテーマはまだありません"
+msgstr "ยังไม่มีธีมที่เผยแพร่"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
-msgstr "利用できません"
+msgstr "ไม่พร้อมใช้งาน"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
-msgstr "未接続"
+msgstr "ไม่ได้เชื่อมต่อ"
 
 #: src/i18n/labels.ts
 msgid "Not connected"
-msgstr "未接続"
+msgstr "ไม่ได้เชื่อมต่อ"
 
 #: src/i18n/labels.ts
 msgid "NOT CONNECTED"
-msgstr "未接続"
+msgstr "ไม่ได้เชื่อมต่อ"
 
 #: src/app/+not-found.tsx
 #: src/app/custom-theme.tsx
 msgid "Not found"
-msgstr "見つかりません"
+msgstr "ไม่พบ"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
-msgstr "起動していません"
+msgstr "ไม่ได้ทำงาน"
 
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
-msgstr "無効です"
+msgstr "ไม่ถูกต้อง"
 
 #. placeholder {0}: nextOffer.sshTunnel.remotePort
 #: src/app/explore.tsx
 msgid "Nothing answered on port {0} through the SSH host. Check the gateway's port on that machine."
-msgstr "SSH ホスト経由のポート {0} から応答がありませんでした。そのマシン上の Gateway のポートを確認してください"
+msgstr "ไม่มีการตอบกลับที่พอร์ต {0} ผ่านโฮสต์ SSH ตรวจสอบพอร์ต Gateway บนเครื่องนั้น"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Nothing answered on port {port}. Either nothing is listening, or it is bound to localhost only — restart it with --host 0.0.0.0 to reach it from here."
-msgstr "ポート {port} から応答がありませんでした。何も待ち受けていないか、localhost にのみバインドされています — --host 0.0.0.0 を付けて再起動すると、ここから接続できます"
+msgstr "ไม่มีการตอบกลับที่พอร์ต {port} อาจไม่มีบริการรอรับ หรือรับเฉพาะ localhost ให้เริ่มใหม่ด้วย --host 0.0.0.0 เพื่อเข้าถึงจากที่นี่"
 
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
-msgstr "まだ何もありません。セッションが書き出したファイルは自動的に表示されます"
+msgstr "ยังไม่มีอะไรที่นี่ ไฟล์ที่เซสชันเขียนจะแสดงเอง"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
-msgstr "まだ表示するものはありません"
+msgstr "ยังไม่มีอะไรให้แสดง"
 
 #: src/components/toggle.tsx
 msgid "Off"
-msgstr "オフ"
+msgstr "ปิด"
 
 #: src/i18n/labels.ts
 msgid "OFFLINE"
-msgstr "オフライン"
+msgstr "ออฟไลน์"
 
 #: src/i18n/labels.ts
 msgid "Offline, not answering"
-msgstr "オフライン、応答がありません"
+msgstr "ออฟไลน์ ไม่ตอบกลับ"
 
 #: src/components/toggle.tsx
 msgid "On"
-msgstr "オン"
+msgstr "เปิด"
 
 #: src/i18n/labels.ts
 msgid "Online"
-msgstr "オンラインです"
+msgstr "ออนไลน์"
 
 #: src/i18n/labels.ts
 msgid "ONLINE"
-msgstr "オンライン"
+msgstr "ออนไลน์"
 
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open"
-msgstr "開く"
+msgstr "เปิด"
 
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
@@ -2218,393 +2218,393 @@ msgstr "開く"
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
-msgstr "{0} を開く"
+msgstr "เปิด {0}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
-msgstr "{title} を開く。長押しで閉じる"
+msgstr "เปิด {title} กดค้างเพื่อปิด"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
-msgstr "それでも開く"
+msgstr "เปิดต่อไป"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
-msgstr "変更点を開く"
+msgstr "เปิดการเปลี่ยนแปลง"
 
 #: src/components/artifacts-button.tsx
 msgid "Open files"
-msgstr "ファイル一覧を開く"
+msgstr "เปิดไฟล์"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
-msgstr "ブラウザで開く"
+msgstr "เปิดในเบราว์เซอร์"
 
 #: src/app/commands.tsx
 msgid "Open in your browser, unavailable over the SSH tunnel"
-msgstr "ブラウザーで開く（SSH トンネル経由では利用できません）"
+msgstr "เปิดในเบราว์เซอร์ ไม่พร้อมใช้งานผ่านอุโมงค์ SSH"
 
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
-msgstr "Lazygit を開く"
+msgstr "เปิด Lazygit"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "Open Muqun to connect"
-msgstr "牧群を開いて接続"
+msgstr "เปิด Muqun เพื่อเชื่อมต่อ"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
-msgstr "ソフトウェアキーボードを開く"
+msgstr "เปิดแป้นพิมพ์บนหน้าจอ"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
-msgstr "ポート {recent} を開く"
+msgstr "เปิดพอร์ต {recent}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
-msgstr "クイックアクションを開く"
+msgstr "เปิดการทำงานด่วน"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
-msgstr "SSH ホスト {0} を開く"
+msgstr "เปิดโฮสต์ SSH {0}"
 
 #: src/components/collaboration-notice.tsx
 msgid "Open terminal"
-msgstr "ターミナルを見る"
+msgstr "เปิดเทอร์มินัล"
 
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
-msgstr "ファイルツリーを開く"
+msgstr "เปิดตัวสำรวจไฟล์"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "ワークスペース {0} を開く（{1, plural, one {# 実行中} other {# 実行中}}）。長押しで閉じる"
+msgstr "เปิดพื้นที่ทำงาน {0} {1, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
-msgstr "開いています"
+msgstr "กำลังเปิด"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Opening that file"
-msgstr "そのファイルを開いています"
+msgstr "กำลังเปิดไฟล์นั้น"
 
 #: src/app/explore.tsx
 msgid "Opening the server."
-msgstr "サーバーを開いています"
+msgstr "กำลังเปิดเซิร์ฟเวอร์"
 
 #: src/app/explore.tsx
 msgid "Opening tunnel"
-msgstr "トンネルを開いています"
+msgstr "กำลังเปิดอุโมงค์"
 
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
-msgstr "このエディタの上にキーボード、エディタキー、入力欄を開きます。ドラッグで移動できます"
+msgstr "เปิดแป้นพิมพ์ ปุ่มตัวแก้ไข และช่องเขียนข้อความเหนือตัวแก้ไขนี้ ลากเพื่อย้าย"
 
 #: src/app/settings.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
-msgstr "GitHub の牧群（ぼくぐん）イシュートラッカーを開きます"
+msgstr "เปิดหน้าติดตามปัญหาของ Muqun บน GitHub"
 
 #: src/components/simfarm-stage.tsx
 msgid "Opens the simulator's menu: the device, its keys, the keyboard and the way out. Drag to move."
-msgstr "シミュレータのメニュー（デバイス、ボタン、キーボード、閉じる）を開きます。ドラッグで移動できます"
+msgstr "เปิดเมนูเครื่องจำลอง ได้แก่ อุปกรณ์ ปุ่ม แป้นพิมพ์ และทางออก ลากเพื่อย้าย"
 
 #: src/components/server-agent-rows.tsx
 msgid "Opens this agent's terminal"
-msgstr "このエージェントのターミナルを開きます"
+msgstr "เปิดเทอร์มินัลของเอเจนต์นี้"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
-msgstr "{0} のオプション"
+msgstr "ตัวเลือกสำหรับ {0}"
 
 #: src/components/settings-storage.tsx
 msgid "Other"
-msgstr "その他"
+msgstr "อื่นๆ"
 
 #: src/components/launch-intro.tsx
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "出力はプログラム本来の色でターミナルのグリッドに描かれ、キー列は押した瞬間に送信されます。nvim、less、REPL もそのまま動きます"
+msgstr "เอาต์พุตแสดงบนกริดเทอร์มินัลด้วยสีของโปรแกรมเอง พร้อมแถวปุ่มที่ส่งทันทีเมื่อกด ใช้กับ nvim, less และ REPL ได้"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Pair a server"
-msgstr "サーバーをペアリング"
+msgstr "จับคู่เซิร์ฟเวอร์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
-msgstr "再ペアリング"
+msgstr "จับคู่อีกครั้ง"
 
 #: src/app/explore.tsx
 msgid "Pair server"
-msgstr "サーバーをペアリング"
+msgstr "จับคู่เซิร์ฟเวอร์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair this server again"
-msgstr "このサーバーを再ペアリング"
+msgstr "จับคู่เซิร์ฟเวอร์นี้อีกครั้ง"
 
 #: src/lib/network-error.ts
 msgid "Pair this server again."
-msgstr "このサーバーをもう一度ペアリングしてください"
+msgstr "จับคู่เซิร์ฟเวอร์นี้อีกครั้ง"
 
 #. placeholder {0}: host.label
 #: src/app/explore.tsx
 msgid "Pair through {0}"
-msgstr "{0} 経由でペアリング"
+msgstr "จับคู่ผ่าน {0}"
 
 #: src/app/explore.tsx
 msgid "Pair through an SSH host"
-msgstr "SSH ホスト経由でペアリング"
+msgstr "จับคู่ผ่านโฮสต์ SSH"
 
 #: src/app/(drawer)/index.tsx
 msgid "Pair your first server"
-msgstr "最初のサーバーをペアリング"
+msgstr "จับคู่เซิร์ฟเวอร์แรกของคุณ"
 
 #: src/app/explore.tsx
 msgid "Pairing"
-msgstr "ペアリング中"
+msgstr "กำลังจับคู่"
 
 #: src/app/explore.tsx
 msgid "Pairing code"
-msgstr "ペアリングコード"
+msgstr "รหัสจับคู่"
 
 #: src/app/explore.tsx
 msgid "Pairing code expired. Scan again for a new code."
-msgstr "ペアリングコードの有効期限が切れました。もう一度スキャンして新しいコードを取得してください"
+msgstr "รหัสจับคู่หมดอายุ สแกนอีกครั้งเพื่อรับรหัสใหม่"
 
 #: src/app/explore.tsx
 msgid "Pairing failed."
-msgstr "ペアリングに失敗しました"
+msgstr "จับคู่ไม่สำเร็จ"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
-msgstr "サーバーカードのパネル"
+msgstr "พาเนลบนการ์ดเซิร์ฟเวอร์"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
-msgstr "パスフレーズ（任意）"
+msgstr "วลีรหัสผ่าน (ไม่บังคับ)"
 
 #: src/components/ssh-host-form.tsx
 msgid "Password"
-msgstr "パスワード"
+msgstr "รหัสผ่าน"
 
 #: src/components/ssh-host-form.tsx
 msgid "Password (leave blank to keep the saved one)"
-msgstr "パスワード（空欄なら保存済みのものを維持）"
+msgstr "รหัสผ่าน (เว้นว่างเพื่อเก็บรหัสเดิม)"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passwords and keys are sealed in the keychain on this device and never leave it."
-msgstr "パスワードと鍵はこの端末のキーチェーンに封印され、端末の外には出ません"
+msgstr "รหัสผ่านและคีย์ถูกเก็บอย่างปลอดภัยในพวงกุญแจของอุปกรณ์นี้และไม่ออกจากอุปกรณ์"
 
 #: src/i18n/labels.ts
 msgid "Paste"
-msgstr "ペースト"
+msgstr "วาง"
 
 #: src/components/theme-link-import.tsx
 msgid "Paste a public theme link or GitHub repository"
-msgstr "公開テーマのリンクまたは GitHub リポジトリの URL を貼り付けてください"
+msgstr "วางลิงก์ธีมสาธารณะหรือที่เก็บโค้ด GitHub"
 
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
-msgstr "パス"
+msgstr "พาธ"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
-msgstr "フォトライブラリ"
+msgstr "คลังรูปภาพ"
 
 #: src/components/theme-link-import.tsx
 msgid "Pinned commit"
-msgstr "固定したコミット"
+msgstr "คอมมิตที่ตรึงไว้"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Port"
-msgstr "ポート"
+msgstr "พอร์ต"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "PORT"
-msgstr "ポート"
+msgstr "พอร์ต"
 
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
-msgstr "画像を準備中"
+msgstr "กำลังเตรียมรูปภาพ"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
-msgstr "今回の提示"
+msgstr "คีย์ที่แสดงตอนนี้"
 
 #: src/components/approval-banner.tsx
 msgid "Press Escape to dismiss this request"
-msgstr "エスケープを送ってこのリクエストを閉じる"
+msgstr "กด Escape เพื่อปิดคำขอนี้"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-preview.tsx
 msgid "Preview"
-msgstr "プレビュー"
+msgstr "ตัวอย่าง"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Preview {0}, {status}"
-msgstr "{0} をプレビュー、{status}"
+msgstr "ตัวอย่าง {0} {status}"
 
 #: src/app/commands.tsx
 msgid "Preview a simulator"
-msgstr "シミュレータを見る"
+msgstr "ดูตัวอย่างเครื่องจำลอง"
 
 #: src/app/commands.tsx
 msgid "Preview a simulator, unavailable over the SSH tunnel"
-msgstr "シミュレーターをプレビュー（SSH トンネル経由では利用できません）"
+msgstr "ดูตัวอย่างเครื่องจำลอง ไม่พร้อมใช้งานผ่านอุโมงค์ SSH"
 
 #: src/components/terminal-theme-drop.tsx
 msgid "Preview and apply"
-msgstr "プレビューして適用"
+msgstr "ดูตัวอย่างและใช้"
 
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
-msgstr "まずプレビューします。現在のテーマは変更されません"
+msgstr "ดูตัวอย่างก่อน ธีมปัจจุบันของคุณยังไม่เปลี่ยน"
 
 #: src/app/settings.tsx
 msgid "Privacy policy"
-msgstr "プライバシーポリシー"
+msgstr "นโยบายความเป็นส่วนตัว"
 
 #: src/components/ssh-host-form.tsx
 msgid "Private key"
-msgstr "秘密鍵"
+msgstr "คีย์ส่วนตัว"
 
 #: src/components/ssh-host-form.tsx
 msgid "Private key (leave blank to keep the saved one)"
-msgstr "秘密鍵（空欄なら保存済みのものを維持）"
+msgstr "คีย์ส่วนตัว (เว้นว่างเพื่อเก็บคีย์เดิม)"
 
 #: src/app/commands.tsx
 msgid "Prompt"
-msgstr "プロンプト"
+msgstr "พรอมต์"
 
 #: src/components/settings-security.tsx
 msgid "Protect paired servers and terminal sessions."
-msgstr "ペアリング済みのサーバーとターミナルセッションを保護します"
+msgstr "ปกป้องเซิร์ฟเวอร์ที่จับคู่และเซสชันเทอร์มินัล"
 
 #: src/components/ssh-host-form.tsx
 msgid "Public key copied"
-msgstr "公開鍵をコピーしました"
+msgstr "คัดลอกคีย์สาธารณะแล้ว"
 
 #: src/i18n/labels.ts
 msgid "Pull"
-msgstr "プル"
+msgstr "พูล"
 
 #: src/components/skia-terminal.tsx
 msgid "Pull for earlier output"
-msgstr "引っ張って以前の出力を読み込む"
+msgstr "ดึงเพื่อดูเอาต์พุตก่อนหน้า"
 
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
-msgstr "アップロード待ち"
+msgstr "รออัปโหลด"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
-msgstr "クイックアクション設定"
+msgstr "ตั้งค่าการทำงานด่วน"
 
 #: src/app/commands.tsx
 #: src/components/settings-terminal.tsx
 msgid "Quick actions"
-msgstr "クイックアクション"
+msgstr "การทำงานด่วน"
 
 #: src/i18n/labels.ts
 #: src/lib/demo-gateway.ts
 msgid "Quit"
-msgstr "終了"
+msgstr "ออก"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
-msgstr "SSH ホスト {host} 経由で到達"
+msgstr "เข้าถึงผ่านโฮสต์ SSH {host}"
 
 #: src/app/explore.tsx
 msgid "Reaching the Gateway"
-msgstr "Gateway に接続中"
+msgstr "กำลังติดต่อ Gateway"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Reading the theme"
-msgstr "テーマを読み込んでいます"
+msgstr "กำลังอ่านธีม"
 
 #: src/components/theme-link-import.tsx
 msgid "Reading the theme link"
-msgstr "テーマのリンクを読み込んでいます"
+msgstr "กำลังอ่านลิงก์ธีม"
 
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
-msgstr "入力待ち"
+msgstr "พร้อมรับอินพุต"
 
 #: src/components/terminal-theme-drop.tsx
 msgid "Ready to preview. Nothing is applied until you say so."
-msgstr "プレビューの準備ができました。あなたが決めるまで何も適用しません"
+msgstr "พร้อมดูตัวอย่าง ยังไม่ใช้จนกว่าคุณจะอนุญาต"
 
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
-msgstr "エージェントが応答待ちになった通知と Gateway の更新を受け取ります"
+msgstr "รับแจ้งเมื่อเอเจนต์ติดขัดและเมื่อ Gateway มีอัปเดต"
 
 #: src/i18n/labels.ts
 msgid "Recent commits"
-msgstr "最近のコミット"
+msgstr "คอมมิตล่าสุด"
 
 #: src/components/collaboration-notice.tsx
 msgid "Recent output"
-msgstr "最近の出力"
+msgstr "เอาต์พุตล่าสุด"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Recommended minimum for readable text: {minimumPercent}%"
-msgstr "文字が読める推奨の下限:{minimumPercent}%"
+msgstr "ค่าต่ำสุดที่แนะนำเพื่อให้อ่านข้อความได้ชัดเจน: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect"
-msgstr "再接続"
+msgstr "เชื่อมต่อใหม่"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reconnect the SSH tunnel"
-msgstr "SSH トンネルを再接続"
+msgstr "เชื่อมต่ออุโมงค์ SSH ใหม่"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Reconnect to {0}"
-msgstr "{0} に再接続"
+msgstr "เชื่อมต่อกับ {0} ใหม่"
 
 #. placeholder {0}: status.attempt
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
-msgstr "再接続中 · {0}"
+msgstr "กำลังเชื่อมต่อใหม่ · {0}"
 
 #: src/components/session-map.tsx
 msgid "Refresh"
-msgstr "更新"
+msgstr "รีเฟรช"
 
 #: src/components/git-diff-view.tsx
 msgid "Refresh changes"
-msgstr "変更点を再読み込み"
+msgstr "รีเฟรชการเปลี่ยนแปลง"
 
 #: src/components/session-artifacts.tsx
 msgid "Refresh files"
-msgstr "ファイルを再読み込み"
+msgstr "รีเฟรชไฟล์"
 
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
-msgstr "出力を更新"
+msgstr "รีเฟรชเอาต์พุต"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
 msgid "Remove"
-msgstr "削除"
+msgstr "ลบ"
 
 #. placeholder {0}: attachment.name
 #. placeholder {0}: installed.manifest.name
@@ -2613,342 +2613,342 @@ msgstr "削除"
 #: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
-msgstr "{0} を取り除く"
+msgstr "ลบ {0}"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
-msgstr "履歴から削除しますか？"
+msgstr "ลบออกจากประวัติหรือไม่?"
 
 #: src/components/ssh-host-form.tsx
 msgid "Remove host"
-msgstr "ホストを削除"
+msgstr "ลบโฮสต์"
 
 #: src/components/custom-theme-library.tsx
 msgid "Remove this theme?"
-msgstr "このテーマを削除しますか？"
+msgstr "ลบธีมนี้หรือไม่?"
 
 #: src/components/settings-storage.tsx
 msgid "Remove unused themes"
-msgstr "未使用のテーマを削除"
+msgstr "ลบธีมที่ไม่ได้ใช้"
 
 #: src/components/settings-storage.tsx
 msgid "Removing unused themes"
-msgstr "未使用のテーマを削除しています"
+msgstr "กำลังลบธีมที่ไม่ได้ใช้"
 
 #: src/components/settings-storage.tsx
 msgid "Removing…"
-msgstr "削除しています…"
+msgstr "กำลังลบ…"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
-msgstr "{label} の名前を変更"
+msgstr "เปลี่ยนชื่อ {label}"
 
 #: src/components/session-map.tsx
 msgid "Rename group"
-msgstr "グループの名前を変更"
+msgstr "เปลี่ยนชื่อกลุ่ม"
 
 #: src/components/session-map.tsx
 msgid "Rename terminal"
-msgstr "ターミナルの名前を変更"
+msgstr "เปลี่ยนชื่อเทอร์มินัล"
 
 #: src/components/session-map.tsx
 msgid "Rename workspace"
-msgstr "ワークスペース名を変更"
+msgstr "เปลี่ยนชื่อพื้นที่ทำงาน"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Renamed"
-msgstr "名前変更"
+msgstr "เปลี่ยนชื่อแล้ว"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Replace key"
-msgstr "鍵を置き換える"
+msgstr "แทนที่คีย์"
 
 #: src/app/settings.tsx
 msgid "Report a bug or request a feature"
-msgstr "不具合の報告・機能のリクエスト"
+msgstr "รายงานข้อผิดพลาดหรือเสนอฟีเจอร์"
 
 #: src/lib/network-error.ts
 msgid "Request failed."
-msgstr "リクエストに失敗しました"
+msgstr "คำขอไม่สำเร็จ"
 
 #: src/components/settings-security.tsx
 msgid "Required on launch and after 30 seconds in the background."
-msgstr "起動時と、バックグラウンドで 30 秒経過した後に認証を求めます"
+msgstr "ต้องยืนยันเมื่อเปิดแอปและหลังอยู่เบื้องหลัง 30 วินาที"
 
 #: src/components/ssh-host-form.tsx
 msgid "Required."
-msgstr "必須です"
+msgstr "จำเป็น"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
-msgstr "iOS 16.1 以降が必要です"
+msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
-msgstr "更新を完了するには牧群を再起動してください"
+msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จ"
 
 #: src/app/commands.tsx
 msgid "Restore hidden default commands"
-msgstr "非表示にした標準コマンドを元に戻す"
+msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ่อนอยู่"
 
 #: src/app/commands.tsx
 msgid "Restore hidden defaults"
-msgstr "非表示の標準を元に戻す"
+msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
 
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
 msgid "Retry"
-msgstr "再試行"
+msgstr "ลองอีกครั้ง"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry connection"
-msgstr "接続をやり直す"
+msgstr "ลองเชื่อมต่ออีกครั้ง"
 
 #: src/components/terminal-boundary.tsx
 msgid "Retry drawing the terminal"
-msgstr "ターミナルの描画をやり直す"
+msgstr "ลองแสดงเทอร์มินัลอีกครั้ง"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
-msgstr "赤で示された項目を再試行するか、削除してからもう一度送信してください"
+msgstr "ลองอัปโหลดรายการสีแดงอีกครั้งหรือลบออก แล้วส่งใหม่"
 
 #. placeholder {0}: attachment.name
 #: src/components/attachment-strip.tsx
 msgid "Retry uploading {0}"
-msgstr "{0} のアップロードを再試行"
+msgstr "ลองอัปโหลด {0} อีกครั้ง"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
-msgstr "リターンキー"
+msgstr "Return"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Return to the server list and pair again."
-msgstr "サーバー一覧に戻って、もう一度ペアリングしてください"
+msgstr "กลับไปยังรายการเซิร์ฟเวอร์แล้วจับคู่อีกครั้ง"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
-msgstr "このサーバーに戻って続けてください"
+msgstr "กลับไปยังเซิร์ฟเวอร์นี้เพื่อดำเนินการต่อ"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
-msgstr "レビュー"
+msgstr "ตรวจทาน"
 
 #: src/lib/demo-gateway.ts
 msgid "Review a GitHub pull request"
-msgstr "GitHub のプルリクエストをレビューします"
+msgstr "ตรวจทานพูลรีเควสต์ GitHub"
 
 #: src/lib/demo-gateway.ts
 msgid "Review assistant"
-msgstr "レビュー助手"
+msgstr "ตรวจสอบผู้ช่วย"
 
 #: src/app/commands.tsx
 msgid "Review changes"
-msgstr "変更をレビュー"
+msgstr "ตรวจทานการเปลี่ยนแปลง"
 
 #: src/lib/demo-gateway.ts
 msgid "Review finished. The theme fallback has test coverage. No changes were made."
-msgstr "レビュー終了。テーマのフォールバックはテスト済みです。ファイルは変更していません"
+msgstr "ตรวจทานเสร็จแล้ว มีการทดสอบการใช้ธีมสำรอง ไม่ได้เปลี่ยนแปลงสิ่งใด"
 
 #: src/components/theme-link-import.tsx
 msgid "Review link"
-msgstr "リンクを確認"
+msgstr "ตรวจสอบลิงก์"
 
 #: src/app/commands.tsx
 msgid "Review the current changes."
-msgstr "現在の変更をレビューしてください"
+msgstr "ตรวจทานการเปลี่ยนแปลงปัจจุบัน"
 
 #: src/components/new-task-sheet.tsx
 msgid "Review the failing test and fix it."
-msgstr "失敗しているテストを調べて直して"
+msgstr "ตรวจสอบการทดสอบที่ล้มเหลวและแก้ไข"
 
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
-msgstr "変更とテストを確認中…"
+msgstr "กำลังตรวจทานการเปลี่ยนแปลงและตรวจสอบการทดสอบ…"
 
 #: src/components/settings-servers.tsx
 msgid "Revoke"
-msgstr "取り消す"
+msgstr "เพิกถอน"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
-msgstr "{0} を取り消す"
+msgstr "เพิกถอน {0}"
 
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
-msgstr "取り消し中…"
+msgstr "กำลังเพิกถอน…"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Right arrow"
-msgstr "右矢印"
+msgstr "ลูกศรขวา"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
-msgstr "ターミナルコマンドを実行"
+msgstr "เรียกใช้คำสั่งเทอร์มินัล"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run command"
-msgstr "コマンドを実行"
+msgstr "เรียกใช้คำสั่ง"
 
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
-msgstr "関連するテストを実行"
+msgstr "เรียกใช้การทดสอบที่เกี่ยวข้อง"
 
 #: src/app/(drawer)/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
-msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
+msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Save"
-msgstr "保存"
+msgstr "บันทึก"
 
 #: src/app/commands.tsx
 msgid "Save a command or key combo you reach for."
-msgstr "よく使うコマンドやキーの組み合わせを保存します"
+msgstr "บันทึกคำสั่งหรือชุดปุ่มลัดที่ใช้บ่อย"
 
 #: src/app/commands.tsx
 msgid "Save a prompt you send this agent often."
-msgstr "このエージェントによく送るプロンプトを保存します"
+msgstr "บันทึกพรอมต์ที่ส่งให้เอเจนต์นี้บ่อยๆ"
 
 #. placeholder {0}: record.label
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Save changes to {0}"
-msgstr "{0} への変更を保存"
+msgstr "บันทึกการเปลี่ยนแปลงใน {0}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
-msgstr "ホストを保存"
+msgstr "บันทึกโฮสต์"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
-msgstr "ショートカットを保存"
+msgstr "บันทึกปุ่มลัด"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
-msgstr "テーマを保存"
+msgstr "บันทึกธีม"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
-msgstr "保存済み"
+msgstr "บันทึกแล้ว"
 
 #: src/app/commands.tsx
 msgid "SAVED COMMANDS"
-msgstr "保存したコマンド"
+msgstr "คำสั่งที่บันทึกไว้"
 
 #: src/app/commands.tsx
 msgid "SAVED PROMPTS"
-msgstr "保存したプロンプト"
+msgstr "พรอมต์ที่บันทึกไว้"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
-msgstr "保存中…"
+msgstr "กำลังบันทึก…"
 
 #: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
-msgstr "Gateway の QR をスキャン"
+msgstr "สแกน QR ของ Gateway"
 
 #: src/app/explore.tsx
 msgid "Scan again"
-msgstr "もう一度スキャン"
+msgstr "สแกนอีกครั้ง"
 
 #: src/app/explore.tsx
 msgid "Scan the Gateway QR."
-msgstr "Gateway の QR コードをスキャンしてください"
+msgstr "สแกน QR ของ Gateway"
 
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "自分のコンピューターで動く Gateway の QR コードを読み取ります。アカウントも中継サーバーもなく、あなたのデータが私たちのサーバーを通ることはありません"
+msgstr "สแกน QR ของ Gateway ที่ทำงานบนคอมพิวเตอร์ของคุณ ไม่ต้องมีบัญชี ไม่มีตัวกลาง และข้อมูลของคุณไม่ผ่านเซิร์ฟเวอร์ของเรา"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
-msgstr "スキャンにはカメラが必要ですが、このブラウザでは使えません"
+msgstr "การสแกนต้องใช้กล้อง ซึ่งเบราว์เซอร์นี้ไม่รองรับ"
 
 #: src/i18n/labels.ts
 msgid "Search"
-msgstr "検索"
+msgstr "ค้นหา"
 
 #: src/app/commands.tsx
 msgid "Search actions and commands"
-msgstr "操作とコマンドを検索"
+msgstr "ค้นหาการทำงานและคำสั่ง"
 
 #: src/components/session-artifacts.tsx
 msgid "Search files"
-msgstr "ファイルを検索"
+msgstr "ค้นหาไฟล์"
 
 #: src/i18n/labels.ts
 msgid "Search the whole project"
-msgstr "プロジェクト全体を検索"
+msgstr "ค้นหาทั้งโปรเจกต์"
 
 #: src/app/settings.tsx
 msgid "Security"
-msgstr "セキュリティ"
+msgstr "ความปลอดภัย"
 
 #. placeholder {0}: age.value
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
-msgstr "確認: {0}日前"
+msgstr "พบเมื่อ {0} วันที่แล้ว"
 
 #. placeholder {0}: age.value
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
-msgstr "確認: {0}時間前"
+msgstr "พบเมื่อ {0} ชั่วโมงที่แล้ว"
 
 #. placeholder {0}: age.value
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
-msgstr "確認: {0}分前"
+msgstr "พบเมื่อ {0} นาทีที่แล้ว"
 
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
-msgstr "確認: たった今"
+msgstr "พบเมื่อสักครู่"
 
 #: src/components/skia-terminal.tsx
 msgid "Select all"
-msgstr "すべて選択"
+msgstr "เลือกทั้งหมด"
 
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
-msgstr "選択中"
+msgstr "เลือกแล้ว"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Send {spoken}"
-msgstr "{spoken} を送信"
+msgstr "ส่ง {spoken}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send a message"
-msgstr "メッセージを送信"
+msgstr "ส่งข้อความ"
 
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
-msgstr "文字を送る"
+msgstr "ส่งข้อความ"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send this task to {assignmentLabel}"
-msgstr "このタスクを {assignmentLabel} に送る"
+msgstr "ส่งงานนี้ให้ {assignmentLabel}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
-msgstr "エージェントに送信"
+msgstr "ส่งให้เอเจนต์"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
-msgstr "送信先"
+msgstr "กำลังส่งไปยัง"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
@@ -2956,235 +2956,235 @@ msgstr "送信先"
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Server"
-msgstr "サーバー"
+msgstr "เซิร์ฟเวอร์"
 
 #: src/app/explore.tsx
 #: src/components/settings-servers.tsx
 msgid "Server name"
-msgstr "サーバー名"
+msgstr "ชื่อเซิร์ฟเวอร์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Server not found"
-msgstr "サーバーが見つかりません"
+msgstr "ไม่พบเซิร์ฟเวอร์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Server offline"
-msgstr "サーバーはオフライン"
+msgstr "เซิร์ฟเวอร์ออฟไลน์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Server unavailable."
-msgstr "サーバーを利用できません"
+msgstr "เซิร์ฟเวอร์ไม่พร้อมใช้งาน"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
-msgstr "サーバー"
+msgstr "เซิร์ฟเวอร์"
 
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
-msgstr "アプリロックを使う前に、デバイスのパスコードを設定してください"
+msgstr "ตั้งรหัสผ่านอุปกรณ์ก่อนใช้การล็อกแอป"
 
 #: src/app/explore.tsx
 msgid "Set one up on your computer"
-msgstr "自分のパソコンに用意する"
+msgstr "ตั้งค่าบนคอมพิวเตอร์ของคุณ"
 
 #: src/lib/demo-gateway.ts
 msgid "Set the AI model for Claude Code"
-msgstr "Claude Code が使う AI モデルを設定します"
+msgstr "ตั้งค่าโมเดล AI สำหรับ Claude Code"
 
 #. placeholder {0}: authAvailability.label
 #. placeholder {0}: availability.label
 #: src/components/settings-security.tsx
 msgid "Set up {0} in system settings first."
-msgstr "先にシステム設定で {0} を設定してください"
+msgstr "ตั้งค่า {0} ในการตั้งค่าระบบก่อน"
 
 #. placeholder {0}: availability.label
 #: src/components/app-lock-gate.tsx
 msgid "Set up {0} in system settings to unlock Muqun."
-msgstr "牧群のロックを解除するには、システム設定で {0} を設定してください"
+msgstr "ตั้งค่า {0} ในการตั้งค่าระบบเพื่อปลดล็อก Muqun"
 
 #: src/components/app-lock-gate.tsx
 msgid "Set up {label} in system settings first."
-msgstr "先にシステム設定で {label} を設定してください"
+msgstr "ตั้งค่า {label} ในการตั้งค่าระบบก่อน"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
-msgstr "自分のパソコンに Gateway を用意する"
+msgstr "ตั้งค่า Gateway บนคอมพิวเตอร์ของคุณ"
 
 #: src/app/(drawer)/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
-msgstr "設定"
+msgstr "การตั้งค่า"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
-msgstr "シフト"
+msgstr "Shift"
 
 #: src/i18n/labels.ts
 msgid "Shift Enter, newline without sending"
-msgstr "シフト エンター、送信せずに改行"
+msgstr "Shift Enter ขึ้นบรรทัดใหม่โดยไม่ส่ง"
 
 #: src/i18n/labels.ts
 msgid "Shift Tab"
-msgstr "シフト タブ"
+msgstr "Shift Tab"
 
 #: src/i18n/labels.ts
 msgid "Shift Tab, cycle mode"
-msgstr "シフト タブ、モードを切り替え"
+msgstr "Shift Tab สลับโหมด"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
 #: src/components/git-diff-view.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
-msgstr "{0} を表示"
+msgstr "แสดง {0}"
 
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
-msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます"
+msgstr "แสดงเอเจนต์และสถานะบนหน้าจอหลัก อัปเดตขณะ Muqun เปิดอยู่"
 
 #: src/components/session-artifacts.tsx
 msgid "Show all files"
-msgstr "すべてのファイルを表示"
+msgstr "แสดงไฟล์ทั้งหมด"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
-msgstr "カメラの詳細を表示"
+msgstr "แสดงรายละเอียดกล้อง"
 
 #: src/components/session-artifacts.tsx
 msgid "Show code"
-msgstr "コードを表示"
+msgstr "แสดงโค้ด"
 
 #: src/components/session-artifacts.tsx
 msgid "Show documents"
-msgstr "ドキュメントを表示"
+msgstr "แสดงเอกสาร"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
-msgstr "入力欄の上に Esc、Tab、Ctrl と方向キーを表示します"
+msgstr "แสดง Esc, Tab, Ctrl และปุ่มนำทางเหนือช่องป้อนข้อมูล"
 
 #: src/components/pane-chat-view.tsx
 msgid "Show every tool step"
-msgstr "ツールの手順をすべて表示"
+msgstr "แสดงทุกขั้นตอนการใช้เครื่องมือ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show Home logo"
-msgstr "ホームのロゴを表示"
+msgstr "แสดงโลโก้หน้าแรก"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show Home text"
-msgstr "ホームのテキストを表示"
+msgstr "แสดงข้อความหน้าแรก"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show illustration on Home"
-msgstr "ホームにイラストを表示"
+msgstr "แสดงภาพประกอบในหน้าแรก"
 
 #: src/components/session-artifacts.tsx
 msgid "Show images"
-msgstr "画像を表示"
+msgstr "แสดงรูปภาพ"
 
 #: src/components/git-diff-view.tsx
 msgid "Show more"
-msgstr "さらに表示"
+msgstr "แสดงเพิ่มเติม"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
-msgstr "ターミナルの文字の背後にアプリの背景を表示"
+msgstr "แสดงพื้นหลังแอปหลังข้อความเทอร์มินัล"
 
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
-msgstr "エディタ用キーボードを表示"
+msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
 
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
-msgstr "新しい変更一覧を表示"
+msgstr "แสดงรายการการเปลี่ยนแปลงใหม่กว่า"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
-msgstr "サーバー一覧を表示"
+msgstr "แสดงรายการเซิร์ฟเวอร์"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
-msgstr "実行中のものを表示"
+msgstr "แสดงสิ่งที่กำลังทำงาน"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
-msgstr "{total} 件中 {shown} 件を表示"
+msgstr "แสดง {shown} จาก {total}"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Shown"
-msgstr "表示"
+msgstr "แสดงอยู่"
 
 #. placeholder {0}: entry.name
 #: src/components/simfarm-stage.tsx
 msgid "Shut down {0}"
-msgstr "{0}をシャットダウン"
+msgstr "ปิดเครื่อง {0}"
 
 #: src/components/simfarm-stage.tsx
 msgid "Shutting down…"
-msgstr "シャットダウン中…"
+msgstr "กำลังปิดเครื่อง…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Sign in"
-msgstr "サインイン"
+msgstr "เข้าสู่ระบบ"
 
 #: src/components/ssh-host-form.tsx
 msgid "Sign in with"
-msgstr "サインイン方法"
+msgstr "เข้าสู่ระบบด้วย"
 
 #: src/components/simfarm-preview.tsx
 msgid "simfarm is the small program on that machine that serves this preview. Either it is not running, or it is listening on another port."
-msgstr "simfarm は、このプレビューを配信するマシン側の小さなプログラムです。起動していないか、別のポートで待ち受けています"
+msgstr "simfarm คือโปรแกรมขนาดเล็กบนเครื่องนั้นที่ให้บริการตัวอย่างนี้ อาจยังไม่ได้ทำงานหรือกำลังรับการเชื่อมต่อที่พอร์ตอื่น"
 
 #: src/components/simfarm-preview.tsx
 msgid "simfarm port"
-msgstr "simfarm のポート"
+msgstr "พอร์ต simfarm"
 
 #: src/app/commands.tsx
 #: src/components/simfarm-preview.tsx
 msgid "Simulator"
-msgstr "シミュレータ"
+msgstr "เครื่องจำลอง"
 
 #: src/components/simfarm-stage.tsx
 msgid "Simulator controls"
-msgstr "シミュレータの操作"
+msgstr "ตัวควบคุมเครื่องจำลอง"
 
 #: src/components/asset-viewer.tsx
 msgid "Size"
-msgstr "サイズ"
+msgstr "ขนาด"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
-msgstr "紹介をスキップ"
+msgstr "ข้ามคำแนะนำ"
 
 #: src/components/settings-storage.tsx
 msgid "Some files could not be removed · {clearable}"
-msgstr "一部のファイルを削除できませんでした · {clearable}"
+msgstr "ลบไฟล์บางรายการไม่ได้ · {clearable}"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Some files did not upload"
-msgstr "一部のファイルをアップロードできませんでした"
+msgstr "ไฟล์บางรายการอัปโหลดไม่สำเร็จ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Some theme colors need more contrast"
-msgstr "一部のテーマカラーはコントラストを高める必要があります"
+msgstr "สีบางสีของธีมต้องเพิ่มความต่างระดับสี"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
-msgstr "問題が発生しました"
+msgstr "เกิดข้อผิดพลาด"
 
 #: src/app/settings.tsx
 msgid "Source code"
-msgstr "ソースコード"
+msgstr "ซอร์สโค้ด"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
-msgstr "スペース"
+msgstr "Space"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/pad-server-rail.tsx
@@ -3196,775 +3196,775 @@ msgstr "SSH"
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 msgid "SSH host"
-msgstr "SSH ホスト"
+msgstr "โฮสต์ SSH"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
-msgstr "SSH ホスト"
+msgstr "โฮสต์ SSH"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "SSH tunnel through {host} is down"
-msgstr "{host} 経由の SSH トンネルが切断されています"
+msgstr "อุโมงค์ SSH ผ่าน {host} ขัดข้อง"
 
 #: src/components/git-diff-view.tsx
 msgid "Staged"
-msgstr "ステージ済み"
+msgstr "เตรียมคอมมิตแล้ว"
 
 #: src/components/git-diff-view.tsx
 msgid "Staged and unstaged"
-msgstr "ステージ済みと未ステージ"
+msgstr "เตรียมคอมมิตแล้วและยังไม่เตรียม"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
-msgstr "古い情報 · {age}"
+msgstr "ข้อมูลเก่า · {age}"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
 msgid "Start a new {0}"
-msgstr "新しい {0} を起動"
+msgstr "เริ่ม {0} ใหม่"
 
 #: src/lib/demo-gateway.ts
 msgid "Start a new session with empty context"
-msgstr "空のコンテキストで新しいセッションを開始します"
+msgstr "เริ่มเซสชันใหม่ด้วยบริบทว่าง"
 
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
-msgstr "エージェントを起動して、最初にやることを伝えます"
+msgstr "เริ่มเอเจนต์และส่งงานแรกให้ทำ"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
-msgstr "タスクを開始"
+msgstr "เริ่มงาน"
 
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
-msgstr "{name} を起動しています"
+msgstr "กำลังเริ่ม {name}"
 
 #: src/app/explore.tsx
 #: src/components/pairing-camera.tsx
 msgid "Starting the camera"
-msgstr "カメラを起動しています"
+msgstr "กำลังเริ่มกล้อง"
 
 #: src/components/new-task-sheet.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Starting…"
-msgstr "開始しています…"
+msgstr "กำลังเริ่ม…"
 
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
-msgstr "状態を取得できません"
+msgstr "สถานะไม่พร้อมใช้งาน"
 
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
-msgstr "状態不明"
+msgstr "ไม่ทราบสถานะ"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
-msgstr "実行中…"
+msgstr "ยังทำงานอยู่…"
 
 #: src/app/commands.tsx
 msgid "Stop"
-msgstr "停止"
+msgstr "หยุด"
 
 #: src/components/agent-assignment-bar.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
-msgstr "タスクの割り当てをやめる"
+msgstr "หยุดมอบหมายงาน"
 
 #: src/app/commands.tsx
 msgid "Stop this agent"
-msgstr "このエージェントを停止"
+msgstr "หยุดเอเจนต์นี้"
 
 #: src/app/settings.tsx
 msgid "Storage"
-msgstr "ストレージ"
+msgstr "พื้นที่จัดเก็บ"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
-msgstr "進捗を要約"
+msgstr "สรุปความคืบหน้า"
 
 #: src/i18n/labels.ts
 msgid "Suspend"
-msgstr "一時停止"
+msgstr "พักกระบวนการ"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
-msgstr "左右にスワイプしてワークスペースを切り替えます"
+msgstr "ปัดซ้ายหรือขวาเพื่อสลับพื้นที่ทำงาน"
 
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
-msgstr "アプリを切り替える"
+msgstr "สลับแอป"
 
 #: src/i18n/labels.ts
 msgid "Switch between open files"
-msgstr "開いているファイルを切り替え"
+msgstr "สลับระหว่างไฟล์ที่เปิดอยู่"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch machine or session"
-msgstr "マシンまたはセッションを切り替え"
+msgstr "สลับเครื่องหรือเซสชัน"
 
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
-msgstr "{0} に切り替える"
+msgstr "สลับไปยัง {0}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
-msgstr "チャット表示に切り替える"
+msgstr "สลับไปยังมุมมองแชต"
 
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
-msgstr "ターミナル表示に切り替える"
+msgstr "สลับไปยังมุมมองเทอร์มินัล"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
-msgstr "記号"
+msgstr "สัญลักษณ์"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "System"
-msgstr "システム設定"
+msgstr "ระบบ"
 
 #: src/i18n/labels.ts
 msgid "Tab"
-msgstr "タブ"
+msgstr "Tab"
 
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
-msgstr "写真を撮る"
+msgstr "ถ่ายรูป"
 
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
-msgstr "もう一度タップで削除"
+msgstr "แตะอีกครั้งเพื่อลบ"
 
 #: src/components/machine-switcher-sheet.tsx
 msgid "Tap to connect"
-msgstr "タップして接続"
+msgstr "แตะเพื่อเชื่อมต่อ"
 
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
-msgstr "タップしてプレビューと調整"
+msgstr "แตะเพื่อดูตัวอย่างและปรับแต่ง"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
-msgstr "{assignmentLabel} へのタスク"
+msgstr "งานสำหรับ {assignmentLabel}"
 
 #. placeholder {0}: assignment.target.kind
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
-msgstr "新しい {0} へのタスク"
+msgstr "งานสำหรับ {0} ใหม่"
 
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
-msgstr "一時ファイル"
+msgstr "ไฟล์ชั่วคราว"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
-msgstr "ターミナル"
+msgstr "เทอร์มินัล"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Terminal background opacity"
-msgstr "ターミナルの背景の不透明度"
+msgstr "ความทึบของพื้นหลังเทอร์มินัล"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Terminal colours follow the theme."
-msgstr "ターミナルの色はテーマに従います"
+msgstr "สีเทอร์มินัลใช้ตามธีม"
 
 #: src/app/commands.tsx
 msgid "TERMINAL COMMANDS"
-msgstr "ターミナルコマンド"
+msgstr "คำสั่งเทอร์มินัล"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
-msgstr "ターミナルキー行"
+msgstr "แถวปุ่มเทอร์มินัล"
 
 #: src/components/settings-terminal.tsx
 msgid "Text size"
-msgstr "文字サイズ"
+msgstr "ขนาดข้อความ"
 
 #: src/components/simfarm-stage.tsx
 msgid "Text to type on the simulator"
-msgstr "シミュレータに入力する文字"
+msgstr "ข้อความที่จะพิมพ์บนเครื่องจำลอง"
 
 #: src/hooks/use-pane-approval.ts
 msgid "That answer did not reach the agent."
-msgstr "この回答はエージェントに届きませんでした"
+msgstr "คำตอบนั้นส่งไปไม่ถึงเอเจนต์"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "That assistant is no longer in this terminal. Reopen it and try again."
-msgstr "そのアシスタントはこのターミナルにはもういません。開き直してからもう一度お試しください"
+msgstr "ผู้ช่วยนั้นไม่อยู่ในเทอร์มินัลนี้แล้ว เปิดใหม่แล้วลองอีกครั้ง"
 
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
-msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください"
+msgstr "รหัสนั้นถูกปฏิเสธ ถือให้นิ่งเพื่อรับรหัสใหม่"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
-msgstr "そのファイルは Muqun のテーマではありません"
+msgstr "ไฟล์นั้นไม่ใช่ธีม Muqun"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
-msgstr "これは同梱のデモシェルで、ここにある唯一のホストです。自分のホストを追加すると、届く範囲のどのマシンでもシェルを開けます"
+msgstr "นี่คือเชลล์สาธิตที่มีมาในแอป และเป็นโฮสต์เดียวที่นี่ เพิ่มโฮสต์ของคุณเพื่อเปิดเชลล์บนเครื่องที่คุณเข้าถึงได้"
 
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
-msgstr "そのシェルは見慣れたターミナルそのもの。同じキーボード、同じキー列、同じ配色。入力したいときはスマホ自身のキーボードも使えます"
+msgstr "เชลล์นั้นคือเทอร์มินัลที่คุณคุ้นเคย ใช้แป้นพิมพ์ แถวปุ่ม และสีแบบเดิม รวมถึงแป้นพิมพ์ของโทรศัพท์สำหรับสิ่งที่คุณต้องการพิมพ์"
 
 #: src/components/simfarm-stage.tsx
 msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."
-msgstr "このシミュレータはここからは起動できません。そのマシンで起動すると、一覧に表示されます"
+msgstr "เริ่มเครื่องจำลองนั้นจากที่นี่ไม่ได้ เริ่มบนเครื่องแล้วจะปรากฏในรายการ"
 
 #: src/components/settings-servers.tsx
 msgid "The address is where this paired server is reached. Changing it does not unpair the device."
-msgstr "アドレスは、このペアリング済みサーバーに接続する場所です。変更してもデバイスのペアリングは解除されません"
+msgstr "ที่อยู่นี้ใช้เข้าถึงเซิร์ฟเวอร์ที่จับคู่ การเปลี่ยนที่อยู่จะไม่ยกเลิกการจับคู่อุปกรณ์"
 
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
-msgstr "Gateway が起動時に表示するアドレスです"
+msgstr "ที่อยู่ที่ Gateway แสดงเมื่อเริ่มทำงาน"
 
 #: src/i18n/labels.ts
 msgid "The agent is asking something else now."
-msgstr "エージェントは今、別のことを尋ねています"
+msgstr "ตอนนี้เอเจนต์กำลังถามเรื่องอื่น"
 
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
-msgstr "エージェントはもう待っていません"
+msgstr "เอเจนต์ไม่ได้รอแล้ว"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
-msgstr "カメラが起動しませんでした"
+msgstr "กล้องไม่เริ่มทำงาน"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera reported an error."
-msgstr "カメラがエラーを報告しました"
+msgstr "กล้องรายงานข้อผิดพลาด"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
-msgstr "接続が切れました"
+msgstr "การเชื่อมต่อหลุด"
 
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
-msgstr "シミュレータとの接続が切れました"
+msgstr "การเชื่อมต่อกับเครื่องจำลองหยุดลง"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
-msgstr "ホーム画面に表示されるアイコンです"
+msgstr "ไอคอนบนหน้าจอหลักของคุณ"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen. Android closes the app to apply it."
-msgstr "ホーム画面に表示されるアイコンです。Android では適用のためにアプリが終了します"
+msgstr "ไอคอนบนหน้าจอหลักของคุณ Android จะปิดแอปเพื่อเปลี่ยนไอคอน"
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
-msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズを確認してください"
+msgstr "อ่านคีย์ไม่ได้ ({0}) ตรวจสอบคีย์และวลีรหัสผ่าน"
 
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
-msgstr "質問はあなたのもとへ"
+msgstr "คำถามส่งตรงถึงคุณ"
 
 #: src/i18n/labels.ts
 msgid "The raw pane, on its grid and in its own colours."
-msgstr "素のパネルを、文字グリッドと本来の色のまま表示します"
+msgstr "พาเนลดิบ บนกริดและใช้สีของตัวเอง"
 
 #: src/components/launch-intro.tsx
 msgid "The real terminal"
-msgstr "本物のターミナル"
+msgstr "เทอร์มินัลจริง"
 
 #: src/components/app-error-boundary.tsx
 msgid "The screen hit an error. Try again — your servers stay paired."
-msgstr "この画面でエラーが発生しました。もう一度お試しください。サーバーのペアリングはそのまま残ります"
+msgstr "หน้าจอเกิดข้อผิดพลาด ลองอีกครั้ง เซิร์ฟเวอร์ของคุณยังจับคู่อยู่"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
-msgstr "接続時にサーバーがパスワードやワンタイムコードなどを直接たずねます。この端末には何も保存されません"
+msgstr "เซิร์ฟเวอร์จะถามเมื่อคุณเชื่อมต่อ เช่น รหัสผ่านหรือรหัสใช้ครั้งเดียว และจะไม่เก็บข้อมูลไว้บนอุปกรณ์นี้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "The server did not return it."
-msgstr "サーバーから返ってきませんでした"
+msgstr "เซิร์ฟเวอร์ไม่ได้ส่งกลับมา"
 
 #: src/app/commands.tsx
 msgid "The server did not say which terminal it made."
-msgstr "サーバーはどのターミナルを作成したか返しませんでした"
+msgstr "เซิร์ฟเวอร์ไม่ได้ระบุว่าได้สร้างเทอร์มินัลใด"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "The server is asking for more before it lets you in."
-msgstr "サーバーは入る前にもう少し情報を求めています"
+msgstr "เซิร์ฟเวอร์ต้องการข้อมูลเพิ่มเติมก่อนให้คุณเข้าใช้งาน"
 
 #: src/components/settings-servers.tsx
 msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
-msgstr "サーバーはこのデバイスに残っています。Gateway が動いていることを確認してから、もう一度お試しください"
+msgstr "ยังเก็บเซิร์ฟเวอร์ไว้บนอุปกรณ์นี้ ตรวจว่า Gateway ทำงานอยู่แล้วลองอีกครั้ง"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
-msgstr "シェルが終了しました"
+msgstr "เชลล์สิ้นสุดการทำงาน"
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shown."
-msgstr "シミュレータを表示できませんでした"
+msgstr "แสดงเครื่องจำลองไม่ได้"
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator could not be shut down."
-msgstr "シミュレータをシャットダウンできませんでした"
+msgstr "ปิดเครื่องจำลองไม่ได้"
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator could not be started."
-msgstr "シミュレータを起動できませんでした"
+msgstr "เริ่มเครื่องจำลองไม่ได้"
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator did not come up in time."
-msgstr "シミュレータが時間内に起動しませんでした"
+msgstr "เครื่องจำลองไม่เริ่มภายในเวลาที่กำหนด"
 
 #: src/components/simfarm-stage.tsx
 msgid "The simulator did not shut down in time."
-msgstr "シミュレータが時間内にシャットダウンしませんでした"
+msgstr "เครื่องจำลองไม่ปิดภายในเวลาที่กำหนด"
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
-msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください"
+msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
 
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
-msgstr "このデバイスからテーマが削除されます"
+msgstr "ธีมจะถูกลบจากอุปกรณ์นี้"
 
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
-msgstr "やり取りを会話として表示し、ツールの手順は折りたたみます"
+msgstr "บันทึกในรูปแบบบทสนทนา โดยซ่อนขั้นตอนการใช้เครื่องมือ"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
 #: src/lib/demo-gateway.ts
 msgid "Theme"
-msgstr "テーマ"
+msgstr "ธีม"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
-msgstr "テーマの既定"
+msgstr "ค่าเริ่มต้นของธีม"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme file (optional)"
-msgstr "テーマファイル（任意）"
+msgstr "ไฟล์ธีม (ไม่บังคับ)"
 
 #: src/components/custom-theme-library.tsx
 msgid "Theme saved"
-msgstr "テーマを保存しました"
+msgstr "บันทึกธีมแล้ว"
 
 #: src/components/theme-link-import.tsx
 msgid "Theme URL"
-msgstr "テーマの URL"
+msgstr "URL ของธีม"
 
 #. placeholder {0}: pack.label
 #: src/components/settings-appearance.tsx
 msgid "Theme, {0}"
-msgstr "テーマ、{0}"
+msgstr "ธีม {0}"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
-msgstr "muqun.dev で公開されているテーマです。開くまで何もダウンロードしません"
+msgstr "ธีมที่เผยแพร่บน muqun.dev จะไม่มีการดาวน์โหลดจนกว่าคุณจะเปิดธีม"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
-msgstr "このエージェントはその選択肢を提示していません"
+msgstr "เอเจนต์นี้ไม่ได้เสนอตัวเลือกคำตอบนั้น"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
-msgstr "このデバイスには使用できるカメラがありません"
+msgstr "อุปกรณ์นี้ไม่มีกล้องที่พร้อมใช้งาน"
 
 #: src/components/asset-viewer.tsx
 msgid "This file is empty."
-msgstr "このファイルは空です"
+msgstr "ไฟล์นี้ว่างเปล่า"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
-msgstr "このファイルはセッションの成果物に含まれていません"
+msgstr "ไฟล์นี้ไม่อยู่ในไฟล์ผลงานของเซสชัน"
 
 #: src/components/asset-viewer.tsx
 msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "このファイルは大きすぎて表示できません。コピーして別の場所で読んでください"
+msgstr "ไฟล์นี้ใหญ่เกินกว่าจะแสดงได้ คัดลอกไปอ่านที่อื่น"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
-msgstr "この Gateway はそのアドレスに応答しません"
+msgstr "Gateway นี้ไม่ตอบกลับที่ที่อยู่นั้น"
 
 #: src/components/session-artifacts.tsx
 msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
-msgstr "この Gateway はまだファイルを提供していません。セッションが書き出したファイルを見るには、牧群（ぼくぐん）の Gateway プラグインを更新してください"
+msgstr "Gateway นี้ยังไม่ให้บริการไฟล์ อัปเดตปลั๊กอิน Muqun Gateway เพื่อดูไฟล์ที่เซสชันเขียน"
 
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
-msgstr "この Gateway はペアリング済みデバイスを返していません"
+msgstr "Gateway นี้ยังไม่แสดงรายการอุปกรณ์ที่จับคู่"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
-msgstr "このグループにはターミナルがありません"
+msgstr "กลุ่มนี้ไม่มีเทอร์มินัล"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "This host is no longer saved."
-msgstr "このホストはもう保存されていません"
+msgstr "โฮสต์นี้ไม่ได้บันทึกไว้อีกต่อไป"
 
 #: src/components/image-preview-modal.tsx
 msgid "This image could not be loaded."
-msgstr "この画像を読み込めませんでした"
+msgstr "โหลดรูปภาพนี้ไม่ได้"
 
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
-msgstr "これは同梱された記録で、本物のサーバーではありません"
+msgstr "นี่คือบันทึกการสนทนาที่มีมาในแอป ไม่ใช่เซิร์ฟเวอร์จริง"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
-msgstr "このリンクの先には何もありません"
+msgstr "ลิงก์นี้ไม่มีปลายทาง"
 
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "このパネルは git リポジトリの中で作業していないため、比較するものがありません"
+msgstr "พาเนลนี้ไม่ได้ทำงานอยู่ในที่เก็บโค้ด Git จึงไม่มีอะไรให้เปรียบเทียบ"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
-msgstr "この QR コードは正しくありません"
+msgstr "QR นี้ไม่ถูกต้อง"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
-msgstr "このサーバーはまだそのコマンドを実行できません"
+msgstr "เซิร์ฟเวอร์นี้ยังเรียกใช้คำสั่งนั้นไม่ได้"
 
 #: src/lib/network-error.ts
 msgid "This server cannot use this device's stored key. Pair it again to reconnect."
-msgstr "このサーバーはこのデバイスに保存された鍵を使えません。もう一度ペアリングすると再接続できます"
+msgstr "เซิร์ฟเวอร์นี้ใช้คีย์ที่เก็บไว้ของอุปกรณ์ไม่ได้ จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
 
 #: src/lib/network-error.ts
 msgid "This server could not read the request. Check this device's date and time."
-msgstr "このサーバーはリクエストを読み取れませんでした。このデバイスの日付と時刻を確認してください"
+msgstr "เซิร์ฟเวอร์นี้อ่านคำขอไม่ได้ ตรวจสอบวันที่และเวลาของอุปกรณ์นี้"
 
 #: src/components/new-task-sheet.tsx
 msgid "This server did not name any agents it can start."
-msgstr "このサーバーは起動できるエージェントを挙げませんでした"
+msgstr "เซิร์ฟเวอร์นี้ไม่ได้ระบุเอเจนต์ที่เริ่มได้"
 
 #: src/lib/network-error.ts
 msgid "This server had a problem answering."
-msgstr "このサーバーの応答中に問題が起きました"
+msgstr "เซิร์ฟเวอร์นี้มีปัญหาในการตอบกลับ"
 
 #: src/lib/network-error.ts
 msgid "This server has already handled that request."
-msgstr "このサーバーはそのリクエストをすでに処理しています"
+msgstr "เซิร์ฟเวอร์นี้จัดการคำขอนั้นไปแล้ว"
 
 #: src/app/new-task.tsx
 msgid "This server has no session to start an agent in."
-msgstr "このサーバーにはエージェントを起動できるセッションがありません"
+msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
 
 #: src/app/new-task.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
-msgstr "このサーバーはもうペアリングされていません"
+msgstr "เซิร์ฟเวอร์นี้ไม่ได้จับคู่อีกต่อไป"
 
 #: src/lib/network-error.ts
 msgid "This server no longer recognises this device. Pair it again to reconnect."
-msgstr "このサーバーはこのデバイスを認識しなくなりました。もう一度ペアリングすると再接続できます"
+msgstr "เซิร์ฟเวอร์นี้ไม่รู้จักอุปกรณ์นี้แล้ว จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
 
 #: src/lib/network-error.ts
 msgid "This server refused the request."
-msgstr "このサーバーはリクエストを拒否しました"
+msgstr "เซิร์ฟเวอร์นี้ปฏิเสธคำขอ"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
-msgstr "このターミナルは描画できませんでした"
+msgstr "แสดงเทอร์มินัลนี้ไม่ได้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."
-msgstr "このターミナルはもう利用できません"
+msgstr "เทอร์มินัลนี้ไม่พร้อมใช้งานอีกต่อไป"
 
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
-msgstr "このテーマには画像が含まれています。適用する前に画像をインストールしてください"
+msgstr "ธีมนี้มีรูปภาพที่ต้องติดตั้งก่อนใช้งาน"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
-msgstr "このワークスペースにはまだグループがありません"
+msgstr "พื้นที่ทำงานนี้ยังไม่มีกลุ่ม"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
-msgstr "{host} 経由"
+msgstr "ผ่าน {host}"
 
 #: src/i18n/labels.ts
 msgid "Today"
-msgstr "今日"
+msgstr "วันนี้"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
-msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
+msgstr "มีการเปลี่ยนแปลงมากเกินกว่าจะแสดงทั้งหมด นี่เป็นเพียงส่วนแรก"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
-msgstr "信頼する"
+msgstr "เชื่อถือ"
 
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
-msgstr "もう一度試す"
+msgstr "ลองอีกครั้ง"
 
 #: src/components/settings-servers.tsx
 msgid "Try again once the gateway responds."
-msgstr "Gateway が応答したらもう一度試してください"
+msgstr "ลองอีกครั้งเมื่อ Gateway ตอบกลับ"
 
 #: src/app/(drawer)/index.tsx
 msgid "Try the demo"
-msgstr "デモを試す"
+msgstr "ลองโหมดสาธิต"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Tunnel down"
-msgstr "トンネル切断"
+msgstr "อุโมงค์ขัดข้อง"
 
 #: src/components/asset-viewer.tsx
 msgid "Type"
-msgstr "種類"
+msgstr "พิมพ์"
 
 #: src/lib/demo-ssh.ts
 msgid "Type a line and press Enter; it is echoed back."
-msgstr "一行入力して Enter を押すと、そのまま返ってきます"
+msgstr "พิมพ์หนึ่งบรรทัดแล้วกด Enter ระบบจะแสดงข้อความกลับมา"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Type changed"
-msgstr "種類の変更"
+msgstr "ประเภทเปลี่ยนไป"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Type into this editor"
-msgstr "このエディタに入力"
+msgstr "พิมพ์ในตัวแก้ไขนี้"
 
 #: src/components/new-task-sheet.tsx
 msgid "Type it, or use your keyboard's dictation key."
-msgstr "入力するか、キーボードの音声入力キーを使ってください"
+msgstr "พิมพ์หรือใช้ปุ่มป้อนตามคำบอกบนแป้นพิมพ์"
 
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
-msgstr "シミュレータに入力する"
+msgstr "พิมพ์บนเครื่องจำลอง"
 
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
-msgstr "取り消し"
+msgstr "เลิกทำ"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"
-msgstr "不明"
+msgstr "ไม่ทราบ"
 
 #: src/i18n/labels.ts
 msgid "Unknown"
-msgstr "不明"
+msgstr "ไม่ทราบ"
 
 #: src/i18n/labels.ts
 msgid "Unknown date"
-msgstr "日付不明"
+msgstr "ไม่ทราบวันที่"
 
 #: src/lib/local-authentication.ts
 msgid "Unlock Muqun"
-msgstr "牧群（ぼくぐん）のロックを解除"
+msgstr "ปลดล็อก Muqun"
 
 #. placeholder {0}: authAvailability?.label ?? t`device authentication`
 #: src/components/settings-security.tsx
 msgid "Unlock with {0}"
-msgstr "{0} でロック解除"
+msgstr "ปลดล็อกด้วย {0}"
 
 #: src/components/app-lock-gate.tsx
 msgid "Unlock with {authLabel}"
-msgstr "{authLabel} でロック解除"
+msgstr "ปลดล็อกด้วย {authLabel}"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Unpacking…"
-msgstr "展開しています…"
+msgstr "กำลังแตกไฟล์…"
 
 #: src/components/settings-servers.tsx
 msgid "Unpair"
-msgstr "ペアリングを解除"
+msgstr "เลิกจับคู่"
 
 #: src/components/settings-servers.tsx
 msgid "Unpair {label}"
-msgstr "{label} のペアリングを解除"
+msgstr "เลิกจับคู่ {label}"
 
 #: src/components/settings-servers.tsx
 msgid "Unpair this server"
-msgstr "このサーバーのペアリングを解除"
+msgstr "เลิกจับคู่เซิร์ฟเวอร์นี้"
 
 #: src/components/settings-servers.tsx
 msgid "Unpairing {label}"
-msgstr "{label} のペアリングを解除しています"
+msgstr "กำลังเลิกจับคู่ {label}"
 
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
-msgstr "解除しています…"
+msgstr "กำลังเลิกจับคู่…"
 
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
-msgstr "未ステージ"
+msgstr "ยังไม่เตรียมคอมมิต"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Untracked"
-msgstr "未追跡"
+msgstr "ยังไม่ติดตาม"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Up arrow"
-msgstr "上矢印"
+msgstr "ลูกศรขึ้น"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
-msgstr "他のアシスタントにタスクを任せるには、サーバーの Herdr を 0.9.0 以降に更新し、セッションを再起動してください"
+msgstr "อัปเดต Herdr บนเซิร์ฟเวอร์เป็น 0.9.0 ขึ้นไป แล้วเริ่มเซสชันใหม่เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
-msgstr "他のアシスタントにタスクを任せるには、サーバーの Muqun Gateway を更新して再起動してください"
+msgstr "อัปเดต Muqun Gateway บนเซิร์ฟเวอร์แล้วเริ่มใหม่ เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
-msgstr "更新の準備完了 · 再起動中…"
+msgstr "อัปเดตพร้อมแล้ว · กำลังเริ่มใหม่…"
 
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
-msgstr "公開リンクからテーマをインポートするにはアプリを更新してください。ファイルからのインポートは引き続き利用できます"
+msgstr "อัปเดตแอปเพื่อนำเข้าลิงก์ธีมสาธารณะ คุณยังนำเข้าไฟล์ได้"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
-msgstr "牧群（ぼくぐん）を更新中…"
+msgstr "กำลังอัปเดต Muqun…"
 
 #: src/components/attachment-strip.tsx
 msgid "upload failed"
-msgstr "アップロード失敗"
+msgstr "อัปโหลดไม่สำเร็จ"
 
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
-msgstr "アップロード済み"
+msgstr "อัปโหลดแล้ว"
 
 #: src/components/attachment-strip.tsx
 msgid "uploading"
-msgstr "アップロード中"
+msgstr "กำลังอัปโหลด"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Use {0}"
-msgstr "{0} を使用"
+msgstr "ใช้ {0}"
 
 #: src/lib/local-authentication.ts
 msgid "Use device passcode"
-msgstr "デバイスのパスコードを使用"
+msgstr "ใช้รหัสผ่านอุปกรณ์"
 
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
-msgstr "リポジトリの URL を使い、そのブランチとテーマファイルを下に入力してください"
+msgstr "ใช้ URL ที่เก็บโค้ด แล้วป้อนสาขาและไฟล์ธีมด้านล่าง"
 
 #: src/components/settings-servers.tsx
 msgid "Use the scan button on the home screen to add one."
-msgstr "ホーム画面のスキャンボタンから追加してください"
+msgstr "ใช้ปุ่มสแกนที่หน้าแรกเพื่อเพิ่มเซิร์ฟเวอร์"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
-msgstr "テーマの初期設定を使用"
+msgstr "ใช้ค่าเริ่มต้นของธีม"
 
 #: src/components/settings-servers.tsx
 msgid "Use this server"
-msgstr "このサーバーを使用"
+msgstr "ใช้เซิร์ฟเวอร์นี้"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"
-msgstr "ユーザー名"
+msgstr "ชื่อผู้ใช้"
 
 #: src/components/settings-servers.tsx
 msgid "USING"
-msgstr "使用中"
+msgstr "กำลังใช้"
 
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
-msgstr "バージョン {version}{0}"
+msgstr "เวอร์ชัน {version}{0}"
 
 #: src/i18n/labels.ts
 msgid "Visual mode"
-msgstr "ビジュアルモード"
+msgstr "โหมดเลือกข้อความ"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualize current context usage as a colored grid"
-msgstr "現在のコンテキスト使用量を色分けしたグリッドで表示します"
+msgstr "แสดงการใช้บริบทปัจจุบันเป็นกริดสี"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
-msgstr "出力を待っています…"
+msgstr "กำลังรอเอาต์พุต…"
 
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
-msgstr "ネットワークを待っています"
+msgstr "กำลังรอเครือข่าย"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
-msgstr "アップロードの完了を待っています…"
+msgstr "กำลังรอให้อัปโหลดเสร็จ…"
 
 #: src/components/session-map.tsx
 msgid "What is running"
-msgstr "実行中のもの"
+msgstr "สิ่งที่กำลังทำงาน"
 
 #: src/lib/release-notes.ts
 msgid "What's new"
-msgstr "新着情報"
+msgstr "มีอะไรใหม่"
 
 #: src/components/launch-intro.tsx
 msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "エージェントが許可を求めて止まると、その確認はプッシュ通知で届きます。ロック画面から承認、常に承認、または拒否できます"
+msgstr "เมื่อเอเจนต์หยุดเพื่อขออนุญาต พรอมต์จะส่งมาเป็นการแจ้งเตือน เลือกอนุมัติ อนุมัติเสมอ หรือปฏิเสธได้จากหน้าจอล็อก"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
-msgstr "離席中の変化"
+msgstr "ขณะที่คุณไม่อยู่"
 
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
-msgstr "作業中"
+msgstr "กำลังทำงาน"
 
 #: src/components/session-map.tsx
 msgid "Workspace"
-msgstr "ワークスペース"
+msgstr "พื้นที่ทำงาน"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Write a line"
-msgstr "一行入力"
+msgstr "เขียนหนึ่งบรรทัด"
 
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"
-msgstr "書き込んで終了"
+msgstr "บันทึกและออก"
 
 #: src/i18n/labels.ts
 #: src/lib/demo-gateway.ts
 msgid "Write the file"
-msgstr "ファイルを書き込む"
+msgstr "บันทึกไฟล์"
 
 #: src/i18n/labels.ts
 msgid "Write the file and quit"
-msgstr "ファイルを書き込んで終了"
+msgstr "บันทึกไฟล์และออก"
 
 #: src/i18n/labels.ts
 msgid "Yank this line"
-msgstr "この行をヤンク"
+msgstr "คัดลอกบรรทัดนี้"
 
 #: src/i18n/labels.ts
 msgid "Yesterday"
-msgstr "昨日"
+msgstr "เมื่อวาน"
 
 #: src/app/(drawer)/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
-msgstr "どこでも、エージェントと"
+msgstr "เอเจนต์ของคุณ ใช้ได้ทุกที่"
 
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
-msgstr "あなたのマシン、あなたのルール"
+msgstr "เครื่องของคุณ กติกาของคุณ"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
-msgstr "ペアリング済みの Gateway"
+msgstr "Gateway ที่คุณจับคู่ไว้"

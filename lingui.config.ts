@@ -2,10 +2,11 @@ import { defineConfig } from '@lingui/cli';
 import { formatter } from '@lingui/format-po';
 
 /**
- * Locale codes are shared verbatim with the marketing site
+ * Established locale codes are shared verbatim with the marketing site
  * (~/.osuki/web -> src/lib/site-chrome.ts) and with the Herdr gateway's
  * language table. The literal strings are `en`, `zh-TW`, `zh-CN`, `ja`, `ko`,
- * `de`, `fr`, `es`, `pt`, `ru` and `vi`.
+ * `de`, `fr`, `es`, `pt`, `ru` and `vi`. Thai adds the BCP 47 language code `th`; Gateway-owned
+ * translations remain independently versioned.
  *
  * Do not "normalise" these to zh-Hant / zh-Hant-TW / zh_TW or zh-Hans / zh_CN,
  * and do not regionalise the ones that carry no region: one `pt` catalog
@@ -18,7 +19,7 @@ import { formatter } from '@lingui/format-po';
  */
 export default defineConfig({
   sourceLocale: 'en',
-  locales: ['en', 'zh-TW', 'zh-CN', 'ja', 'ko', 'de', 'fr', 'es', 'pt', 'ru', 'vi'],
+  locales: ['en', 'zh-TW', 'zh-CN', 'ja', 'ko', 'de', 'fr', 'es', 'pt', 'ru', 'vi', 'th'],
   // Every locale falls back to `en`, which is also the source locale, so a
   // message with no translation renders the English source text rather than a
   // blank or a raw message id. There is deliberately no chain between the
@@ -36,6 +37,7 @@ export default defineConfig({
     pt: 'en',
     ru: 'en',
     vi: 'en',
+    th: 'en',
   },
   catalogs: [
     {

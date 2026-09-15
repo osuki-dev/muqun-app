@@ -22,7 +22,7 @@
  */
 import { Tabs, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet, Text as NativeText } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { INSTANT, PRESET, timing } from '@/lib/motion';
@@ -137,7 +137,26 @@ export function SettingsSegmented({
             // state in a test identifier, without changing spoken labels.
             testID={`settings-selection:${option.value === value ? 'on' : 'off'}:${testID ?? 'segment'}-${option.value}`}
             style={styles.trigger}>
-            <Tabs.Label>{option.label}</Tabs.Label>
+            {/[\u0e00-\u0e7f]/u.test(option.label) ? (
+              // Use the system's Thai shaping and metrics rather than the
+              // compact mono label's fitting pass, which clips final clusters.
+              // No additional font is bundled and other scripts keep kit labels.
+              <NativeText
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.18}
+                style={[
+                  styles.thaiLabel,
+                  {
+                    color: option.value === value ? theme.colors.text : theme.colors.textMuted,
+                    fontSize: theme.typeStyles.label.fontSize,
+                    lineHeight: Math.ceil(theme.typeStyles.label.fontSize * 1.6),
+                  },
+                ]}>
+                {option.label}
+              </NativeText>
+            ) : (
+              <Tabs.Label>{option.label}</Tabs.Label>
+            )}
           </Tabs.Trigger>
         ))}
       </Tabs.List>
@@ -146,6 +165,14 @@ export function SettingsSegmented({
 }
 
 const styles = StyleSheet.create({
+  thaiLabel: {
+    fontFamily: Platform.OS === 'android' ? 'sans-serif' : undefined,
+    fontWeight: '400',
+    includeFontPadding: true,
+    letterSpacing: 0,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
   pill: {
     position: 'absolute',
     left: 0,

@@ -23,7 +23,7 @@ describe('the codes themselves', () => {
   // directory, the persisted setting, the request header and the gateway's
   // language table are all this literal string; if this test is ever "fixed" by
   // changing the expectation, every one of them has to move with it.
-  test('the eleven codes are the eleven the website spells, in its order', () => {
+  test('locale codes preserve their established order', () => {
     expect(APP_LOCALES).toEqual([
       'en',
       'zh-TW',
@@ -36,6 +36,7 @@ describe('the codes themselves', () => {
       'pt',
       'ru',
       'vi',
+      'th',
     ]);
   });
 
@@ -90,6 +91,7 @@ describe('the codes themselves', () => {
     expect(LOCALE_LABELS.pt).toBe('Português');
     expect(LOCALE_LABELS.ru).toBe('Русский');
     expect(LOCALE_LABELS.vi).toBe('Tiếng Việt');
+    expect(LOCALE_LABELS.th).toBe('ไทย');
   });
 
   test('the guards accept what we ship and nothing else', () => {
@@ -183,6 +185,8 @@ describe('folding a device tag onto a catalog', () => {
     expect(matchLocale('ru-RU')).toBe('ru');
     expect(matchLocale('ru-BY')).toBe('ru');
     expect(matchLocale('vi-VN')).toBe('vi');
+    expect(matchLocale('th-TH')).toBe('th');
+    expect(matchLocale('th-TH-u-nu-thai')).toBe('th');
   });
 
   test('the bare language matches too, and case still does not matter', () => {
@@ -199,7 +203,7 @@ describe('folding a device tag onto a catalog', () => {
     expect(matchLocale('ar')).toBeNull();
     expect(matchLocale('nl-NL')).toBeNull();
     expect(matchLocale('uk')).toBeNull();
-    expect(matchLocale('th-TH')).toBeNull();
+    expect(matchLocale('id-ID')).toBeNull();
   });
 
   // Portuguese and Spanish are near neighbours and Galician sits between them;
@@ -239,7 +243,7 @@ describe('negotiating against the device preference list', () => {
 
   test('a device that wants nothing we have gets the source locale', () => {
     expect(negotiateLocale(['it-IT', 'ar-EG'])).toBe('en');
-    expect(negotiateLocale(['uk-UA', 'th-TH'])).toBe('en');
+    expect(negotiateLocale(['uk-UA', 'id-ID'])).toBe('en');
     expect(negotiateLocale([])).toBe('en');
   });
 });
@@ -257,6 +261,9 @@ describe('resolving what to actually render', () => {
     expect(resolveLocale('zh-TW', ['en-US'])).toBe('zh-TW');
     expect(resolveLocale('zh-TW', ['zh-Hans-CN'])).toBe('zh-TW');
     expect(resolveLocale('ru', ['vi-VN'])).toBe('ru');
+    expect(resolveLocale('th', ['en-US'])).toBe('th');
+    expect(resolveLocale(null, ['th-TH'])).toBe('th');
+    expect(negotiateLocale(['id-ID', 'th-TH', 'en-US'])).toBe('th');
   });
 });
 

@@ -24,7 +24,8 @@
       "pt": "./native-locales/pt.json",
       "zh-CN": "./native-locales/zh-CN.json",
       "ru": "./native-locales/ru.json",
-      "vi": "./native-locales/vi.json"
+      "vi": "./native-locales/vi.json",
+      "th": "./native-locales/th.json"
     },
     "ios": {
       "bundleIdentifier": "dev.osuki.muqun",

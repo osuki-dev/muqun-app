@@ -1,0 +1,12 @@
+{
+  "ios": {
+    "CFBundleDisplayName": "Muqun",
+    "NSCameraUsageDescription": "Muqun สแกน QR ของ Gateway เพื่อจับคู่อย่างปลอดภัย และถ่ายรูปที่คุณแนบในเซสชันเทอร์มินัล",
+    "NSPhotoLibraryUsageDescription": "Muqun ส่งรูปที่คุณเลือกไปยัง Gateway ที่จับคู่ เพื่อให้เอเจนต์อ่านรูปได้",
+    "NSFaceIDUsageDescription": "Muqun ใช้ Face ID เพื่อปกป้องเซิร์ฟเวอร์ที่จับคู่และเซสชันเทอร์มินัล",
+    "NSLocalNetworkUsageDescription": "Muqun เชื่อมต่อกับ Gateway ที่ทำงานบนคอมพิวเตอร์ของคุณ ซึ่งอาจอยู่ในเครือข่ายภายในของคุณ"
+  },
+  "android": {
+    "app_name": "Muqun"
+  }
+}

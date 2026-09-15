@@ -1,0 +1,30 @@
+# Thai selection, translated UI and persistence; restore English for other flows.
+
+# section press
+press "${TARGET}"
+wait stable 400 5000
+
+# section scroll
+scroll down --pixels 240
+
+# section scroll-up
+scroll up --pixels 240
+
+# section verify-thai
+wait "label=\"ภาษา ไทย\"" 10000
+screenshot "shots/thai-settings.png"
+
+# section selected
+is visible "${TARGET}"
+screenshot "shots/thai-selected.png"
+
+# section relaunch
+open "dev.osuki.muqun" --relaunch
+wait stable 400 5000
+
+# section verify-english
+wait "label=\"Language, English\"" 10000
+
+# section bottom
+scroll bottom
+wait stable 400 5000
