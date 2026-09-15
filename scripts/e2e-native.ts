@@ -435,7 +435,25 @@ export function junit(results: { name: string; seconds: number; error?: string }
   return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="muqun-native-e2e" tests="${results.length}" failures="${results.filter((result) => result.error).length}">\n${results.map((result) => `<testcase name="${escape(result.name)}" time="${result.seconds}">${result.error ? `<failure message="${escape(result.error)}"/>` : ''}</testcase>`).join('\n')}\n</testsuite>\n`;
 }
 
+/** How long an Android "foreground clear" probe stays reusable for reads. */
+// Three seconds covers a locate poll burst (200ms spacing) while staying an
+// order of magnitude below any permission-prompt interaction: prompts wait
+// for the reader, so noticing one up to 3s late only delays its dismissal.
+const ALERT_CLEAR_TTL_MS = 3000;
+
 export class NativeRunner {
+  /**
+   * When the last Android foreground-surface probe proved clear. A native
+   * permission alert persists until it is dismissed, so observation reads
+   * (target polling, visibility assertions) may reuse a recent clear verdict
+   * instead of paying a probe per capture: at most the TTL late in noticing
+   * a delayed prompt, never acting under one. Every guarded mutation passes
+   * `forceAlertCheck` for a fresh probe, which is the actual invariant -- no
+   * press, fill, type, scroll or gesture is ever dispatched on a verdict
+   * older than its own guard.
+   */
+  private lastAlertClearMs = 0;
+
   constructor(
     readonly suite: Suite,
     readonly base: string,
@@ -449,38 +467,45 @@ export class NativeRunner {
     }
   ) {}
 
-  async readySnapshot(): Promise<Node[]> {
+  async readySnapshot(forceAlertCheck = false): Promise<Node[]> {
     let capture = await this.readCapture();
     let nodes = snapshotNodes(capture);
     if (capture.androidSnapshot) {
-      const status = await this.invoke(['alert', 'get']);
-      if (status.kind !== 'alertStatus' || status.alert === undefined)
-        throw new Error('Invalid Android alert status');
-      const alert = status.alert as {
-        title?: string;
-        source?: string;
-        packageName?: string;
-        buttons?: string[];
-      } | null;
-      if (alert) {
-        if (
-          alert.source !== 'permission' ||
-          !/^com\.(?:google\.)?android\.permissioncontroller$/.test(alert.packageName ?? '') ||
-          !/Muqun/i.test(alert.title ?? '') ||
-          !(
-            /notifications?|通知/i.test(alert.title ?? '') ||
-            (this.runtime.allowCameraDenial &&
-              /camera|相机|相機|take pictures and record video/i.test(alert.title ?? ''))
-          ) ||
-          !alert.buttons?.some((label) => /^(?:don[’']?t allow|不允许|不允許)$/i.test(label))
-        )
-          throw new Error('Unexpected Android alert blocks the test');
-        await this.invoke(['alert', 'dismiss']);
-        const after = await this.invoke(['alert', 'get']);
-        if (after.kind !== 'alertStatus' || after.alert !== null)
-          throw new Error('Notification permission alert did not dismiss');
-        capture = await this.readCapture();
-        nodes = snapshotNodes(capture);
+      const recentlyClear =
+        !forceAlertCheck && Date.now() - this.lastAlertClearMs < ALERT_CLEAR_TTL_MS;
+      if (!recentlyClear) {
+        const status = await this.invoke(['alert', 'get']);
+        if (status.kind !== 'alertStatus' || status.alert === undefined)
+          throw new Error('Invalid Android alert status');
+        const alert = status.alert as {
+          title?: string;
+          source?: string;
+          packageName?: string;
+          buttons?: string[];
+        } | null;
+        if (alert) {
+          if (
+            alert.source !== 'permission' ||
+            !/^com\.(?:google\.)?android\.permissioncontroller$/.test(alert.packageName ?? '') ||
+            !/Muqun/i.test(alert.title ?? '') ||
+            !(
+              /notifications?|通知/i.test(alert.title ?? '') ||
+              (this.runtime.allowCameraDenial &&
+                /camera|相机|相機|take pictures and record video/i.test(alert.title ?? ''))
+            ) ||
+            !alert.buttons?.some((label) => /^(?:don[’']?t allow|不允许|不允許)$/i.test(label))
+          )
+            throw new Error('Unexpected Android alert blocks the test');
+          await this.invoke(['alert', 'dismiss']);
+          const after = await this.invoke(['alert', 'get']);
+          if (after.kind !== 'alertStatus' || after.alert !== null)
+            throw new Error('Notification permission alert did not dismiss');
+          capture = await this.readCapture();
+          nodes = snapshotNodes(capture);
+        }
+        // Both paths proved the foreground clear just now: an absent alert,
+        // or a dismissed one verified gone.
+        this.lastAlertClearMs = Date.now();
       }
     }
     if (!hasAlert(nodes)) return nodes;
@@ -595,7 +620,7 @@ export class NativeRunner {
         args[1] = path.join(this.artifacts, args[1].replace(/^dist\//, ''));
         await mkdir(path.dirname(args[1]), { recursive: true });
       }
-      if (guardedMutations.has(args[0])) await this.readySnapshot();
+      if (guardedMutations.has(args[0])) await this.readySnapshot(true);
       if (args[0] === 'alert' && args[1] === 'dismiss') {
         const status = await this.invoke(['alert', 'get']);
         const alert = status.alert as { title?: string; buttons?: string[] } | null;

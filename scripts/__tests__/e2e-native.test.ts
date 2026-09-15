@@ -460,6 +460,59 @@ describe('native end-to-end gate', () => {
         expect(denied).toBe(allowCameraDenial);
       }
   });
+  test('observation reads reuse a fresh Android clear probe within the TTL', async () => {
+    const calls: string[][] = [];
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        calls.push(args);
+        if (args[0] === 'snapshot') return { nodes: [node], androidSnapshot: {} };
+        return { kind: 'alertStatus', alert: null };
+      },
+      {}
+    );
+    await runner.readySnapshot();
+    await runner.readySnapshot();
+    expect(calls.filter((args) => args[0] === 'snapshot')).toHaveLength(2);
+    expect(calls.filter((args) => args[0] === 'alert')).toHaveLength(1);
+  });
+  test('guarded mutations force a fresh Android alert probe', async () => {
+    const calls: string[][] = [];
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        calls.push(args);
+        if (args[0] === 'snapshot') return { nodes: [node], androidSnapshot: {} };
+        return { kind: 'alertStatus', alert: null };
+      },
+      {}
+    );
+    await runner.readySnapshot();
+    await runner.readySnapshot(true);
+    expect(calls.filter((args) => args[0] === 'alert')).toHaveLength(2);
+  });
+  test('an expired Android clear probe is refreshed on the next read', async () => {
+    const calls: string[][] = [];
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        calls.push(args);
+        if (args[0] === 'snapshot') return { nodes: [node], androidSnapshot: {} };
+        return { kind: 'alertStatus', alert: null };
+      },
+      {}
+    );
+    await runner.readySnapshot();
+    (runner as unknown as { lastAlertClearMs: number }).lastAlertClearMs = Date.now() - 60_000;
+    await runner.readySnapshot();
+    expect(calls.filter((args) => args[0] === 'alert')).toHaveLength(2);
+  });
   test('hidden selector absence requires a fresh readable unblocked capture', async () => {
     const base = await mkdtemp(path.join(tmpdir(), 'muqun-native-predicate-'));
     try {

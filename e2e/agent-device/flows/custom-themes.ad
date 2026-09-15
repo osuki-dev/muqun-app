@@ -43,7 +43,14 @@ press "label=\"Close file\""
 wait "label=\"Close files\"" 10000
 press "label=\"Close files\""
 wait stable 400 5000
-press "text=\"Back to servers\""
+
+# section install-back
+# The workspace stack unwinds differently per form factor: a phone pushes the
+# demo workspace over Home and offers the way back, while a pad rail keeps
+# Servers beside the workspace and offers no back button at all. The manifest
+# presses this only when it is there (optional, like demo-tour's return), so
+# the flow continues from the workspace on a rail and from Home on a phone.
+press "${TARGET}"
 wait stable 400 5000
 
 # section settle

@@ -270,6 +270,20 @@ scroll down --pixels 320
 # scroll-to-visible to come back to.
 scroll down --pixels 320
 
+# section storage-seek
+# The rows below STORAGE are sought UP from the bottom edge, never down into
+# it. A downward seek parks the row against the bottom edge as an uncomposed
+# stub -- in the tree, so the loop stops scrolling, but with no text for the
+# visibility probe -- and the list is already at its bottom stop, so further
+# downward flicks change nothing and the step times out. From `scroll bottom`
+# every row below is composed (the anchor screenshot proves it), and each
+# upward flick either reveals the target or overshoots above it, in which case
+# the next iteration re-anchors and tries again: the loop always makes
+# progress or resets, and can never wedge at the stop.
+scroll bottom
+wait stable 400 5000
+scroll up --pixels 320
+
 # section storage-visible
 is visible "${TARGET}"
 

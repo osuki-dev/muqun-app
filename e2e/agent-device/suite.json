@@ -205,6 +205,14 @@
       },
       {
         "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/custom-themes.ad#install-back"
+      },
+      {
+        "target": {
           "text": "Settings"
         },
         "mode": "press",
@@ -333,6 +341,14 @@
       },
       {
         "run": "flows/custom-themes.ad#install"
+      },
+      {
+        "target": {
+          "text": "Back to servers"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/custom-themes.ad#install-back"
       },
       {
         "target": {
@@ -488,6 +504,9 @@
         "mode": "visible",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "run": "flows/custom-themes.ad#theme-anchor"
       },
       {
         "target": {
@@ -1728,6 +1747,14 @@
         "mode": "visible",
         "timeout": 15000,
         "run": "flows/demo-tour.ad#s43"
+      },
+      {
+        "target": {
+          "id": "server-agent-pane-1"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "flows/demo-tour.ad#s29"
       },
       {
         "run": "flows/demo-tour.ad#s44"
@@ -3134,7 +3161,7 @@
       },
       {
         "target": {
-          "text": "Pair a server"
+          "id": "home-pair-server"
         },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s1"
@@ -3663,6 +3690,15 @@
         "target": {
           "text": "DEFAULT"
         },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings.ad#s47"
+      },
+      {
+        "target": {
+          "text": "DEFAULT"
+        },
         "mode": "press",
         "run": "flows/settings.ad#s48"
       },
@@ -3812,12 +3848,12 @@
       },
       {
         "target": {
-          "id": "settings-storage-images-row"
+          "text": "Images"
         },
         "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/settings.ad#storage-scroll"
+        "direction": "up",
+        "timeout": 30000,
+        "run": "flows/settings.ad#storage-seek"
       },
       {
         "target": {
@@ -3828,12 +3864,12 @@
       },
       {
         "target": {
-          "id": "settings-storage-temporary-row"
+          "text": "Temporary files"
         },
         "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/settings.ad#storage-scroll"
+        "direction": "up",
+        "timeout": 30000,
+        "run": "flows/settings.ad#storage-seek"
       },
       {
         "target": {
@@ -3844,12 +3880,12 @@
       },
       {
         "target": {
-          "id": "settings-storage-other-row"
+          "text": "Other"
         },
         "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/settings.ad#storage-scroll"
+        "direction": "up",
+        "timeout": 30000,
+        "run": "flows/settings.ad#storage-seek"
       },
       {
         "target": {
@@ -6676,6 +6712,59 @@
     "flows/agent-shortcuts": [
       {
         "include": "subflows/open-demo"
+      },
+      {
+        "target": {
+          "text": "Open quick actions"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/agent-shortcuts.ad#pre-open"
+      },
+      {
+        "target": {
+          "text": "Edit shortcuts"
+        },
+        "mode": "press",
+        "run": "flows/agent-shortcuts.ad#pre-edit"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Delete QA review instructions"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Delete QA review instructions"
+            },
+            "mode": "press",
+            "run": "flows/agent-shortcuts.ad#pre-delete"
+          },
+          {
+            "target": {
+              "text": "Delete QA review instructions"
+            },
+            "mode": "hidden",
+            "timeout": 15000
+          }
+        ]
+      },
+      {
+        "target": {
+          "text": "Done editing shortcuts"
+        },
+        "mode": "press",
+        "run": "flows/agent-shortcuts.ad#pre-done"
+      },
+      {
+        "target": {
+          "text": "Close quick actions"
+        },
+        "mode": "press",
+        "run": "flows/agent-shortcuts.ad#pre-close"
       },
       {
         "run": "flows/agent-shortcuts.ad"
