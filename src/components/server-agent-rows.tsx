@@ -5,7 +5,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight } from 'lucide-react-native';
+import { Bot, ChevronRight, SquareTerminal } from 'lucide-react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -27,16 +27,10 @@ import { useAppSettings } from '@/stores/app-settings';
 /**
  * The rows start at the card's own edge.
  *
- * They used to lead with a status light, and before that hung off a drawn tree.
- * Both are gone now (Ellen): the tree was redundant with what it connected, and
- * the column of lights that replaced it turned out to be a column of grey --
- * a pane is idle almost all of the time, so the dot was decoration on nearly
- * every row and an indent on all of them. What a reader is scanning for is the
- * name, and it now begins where the card does.
- *
- * Status has not gone anywhere: it is still in the row's caption, still in the
- * accessibility label, and still on the server's own dot above the list, which
- * is the one place a colour is worth a glance.
+ * A theme accent and bot icon identify agents; ordinary panes use neutral
+ * text and a terminal icon. These communicate kind, not live status. The
+ * caption and accessibility label retain status, and stale snapshots dim
+ * both kinds consistently. Distinct icons preserve meaning without color.
  */
 
 /**
@@ -192,6 +186,13 @@ export function ServerAgentRows({
             showsPressBackground={showsPressBackground}
             compact={compactLabels}
             onPress={() => onOpenAgent(agent)}>
+            <View style={styles.kindIcon} accessible={false} pointerEvents="none">
+              {agent.hasAgent ? (
+                <Bot size={16} color={theme.colors.primary} strokeWidth={2} />
+              ) : (
+                <SquareTerminal size={16} color={theme.colors.textMuted} strokeWidth={2} />
+              )}
+            </View>
             <View style={styles.nameColumn}>
               {/* Two lines, not one: the name is the row's most informative
                   element, and a long one clipped mid-word is the one thing
@@ -199,7 +200,7 @@ export function ServerAgentRows({
               <Text
                 variant="bodySmall"
                 weight={selected ? 'semibold' : undefined}
-                color={selected ? theme.colors.primary : theme.colors.text}
+                color={selected || agent.hasAgent ? theme.colors.primary : theme.colors.text}
                 numberOfLines={compactLabels ? 1 : 2}>
                 {agent.name}
               </Text>
@@ -346,6 +347,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  kindIcon: {
+    width: 24,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   age: {
     marginTop: 6,

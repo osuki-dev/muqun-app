@@ -2,11 +2,9 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * New Task, on a home-screen server card's `...` menu.
  *
- * Self-contained on purpose. The home screen decides nothing about this: it
- * hands over a server id, and the component answers with a button or with
- * nothing at all. That keeps the whole capability question -- which is the only
- * interesting thing here -- in one file, and keeps a busy list screen from
- * growing a third concern it has to hydrate and gate.
+ * Home mounts this only for a currently reachable server. This component then
+ * checks the advertised capability; a saved capability alone is not evidence
+ * that the server can be reached now.
  *
  * "Nothing at all" is the common case and the correct one. A gateway too old to
  * spawn, and a server this device has never opened (so has never heard the

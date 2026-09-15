@@ -11,6 +11,8 @@ export interface GatewayTunnel {
   phase: TunnelPhase;
   /** The live `http://127.0.0.1:<localPort>` for a tunnelled record, else the record's own URL. */
   baseUrl: string | null;
+  /** Sanitised SSH failure from the tunnel manager, safe to display. */
+  reason?: string;
   retry: () => void;
 }
 
@@ -54,6 +56,7 @@ export function useGatewayTunnel(
     tunnelled: true,
     phase: tunnelState?.phase ?? 'connecting',
     baseUrl: tunnelState?.baseUrl ?? null,
+    reason: tunnelState?.reason,
     retry,
   };
 }

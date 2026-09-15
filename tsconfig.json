@@ -3,6 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
+      "typescript": ["./node_modules/typescript-compiler-api"],
       "@/*": ["./src/*"],
       "@/assets/*": ["./assets/*"]
     }
