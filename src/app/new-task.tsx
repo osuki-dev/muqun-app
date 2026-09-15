@@ -21,6 +21,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { NewTaskSheet } from '@/components/new-task-sheet';
+import { Button } from '@/components/themed-button';
 import { loadSessions, type SpawnedAgent } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -53,6 +54,7 @@ export default function NewTaskScreen() {
 
   const [sessionId, setSessionId] = useState(params.sessionId ?? '');
   const [error, setError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
 
   const serverId = params.serverId;
   const needsSelect = Boolean(serverId) && connectedServerId !== serverId;
@@ -90,7 +92,7 @@ export default function NewTaskScreen() {
     return () => {
       cancelled = true;
     };
-  }, [needsSelect, selectRecord, serverId, sessionId, t]);
+  }, [needsSelect, selectRecord, serverId, sessionId, retryNonce, t]);
 
   /**
    * Straight into the pane the agent came up in -- the promise the whole flow
@@ -114,9 +116,23 @@ export default function NewTaskScreen() {
   if (error || !serverId) {
     return (
       <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
-        <Text selectable variant="bodySmall" color={theme.colors.danger}>
+        <Text
+          selectable
+          variant="bodySmall"
+          color={theme.colors.danger}
+          style={{ textAlign: 'center' }}>
           {error ?? t`No server to start a task on.`}
         </Text>
+        {serverId ? (
+          <Button
+            onPress={() => {
+              setError(null);
+              setRetryNonce((value) => value + 1);
+            }}>
+            {t`Try again`}
+          </Button>
+        ) : null}
+        <Button variant="secondary" onPress={() => router.back()}>{t`Close new task`}</Button>
       </View>
     );
   }
@@ -131,6 +147,7 @@ export default function NewTaskScreen() {
               starts drifting. */}
           {t`Connecting`}
         </Text>
+        <Button variant="secondary" onPress={() => router.back()}>{t`Close new task`}</Button>
       </View>
     );
   }
@@ -151,6 +168,7 @@ const styles = StyleSheet.create({
   // line while the server is being reached, which reads as a glitch rather than
   // as waiting.
   notice: {
+    flex: 1,
     minHeight: 132,
     alignItems: 'center',
     justifyContent: 'center',

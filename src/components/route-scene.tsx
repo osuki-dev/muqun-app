@@ -1,6 +1,5 @@
-import { useCallback, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
-import { useFocusEffect } from 'expo-router';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { timing } from '@/lib/motion';
 
@@ -10,12 +9,10 @@ import { timing } from '@/lib/motion';
  */
 export function RouteScene({ children }: { children: ReactNode }) {
   const progress = useSharedValue(0);
-  useFocusEffect(
-    useCallback(() => {
-      progress.value = 0;
-      progress.value = withTiming(1, timing('medium'));
-    }, [progress])
-  );
+  // Focus also returns when a sheet closes. Only a newly mounted route enters.
+  useEffect(() => {
+    progress.value = withTiming(1, timing('medium'));
+  }, [progress]);
   const style = useAnimatedStyle(() => ({
     opacity: progress.value,
     transform: [

@@ -341,7 +341,9 @@ export function ThemeBrowseSheet({
           // it, so it takes the same plate the header's two lines take.
           style={[styles.loading, plate]}>
           <LogoLoader size={56} accessibilityLabel={t`Loading themes…`} />
-          <Text color={theme.colors.textMuted}>{t`Loading themes…`}</Text>
+          <Text color={theme.colors.textMuted} style={{ textAlign: 'center', flexShrink: 1 }}>
+            {t`Loading themes…`}
+          </Text>
         </Animated.View>
       ) : (
         <Animated.View
@@ -788,7 +790,7 @@ const styles = StyleSheet.create({
   state: { paddingHorizontal: LADDER.gutter, paddingTop: LADDER.section, gap: LADDER.gap },
   stateBlock: { gap: LADDER.gap },
   stateAction: { flexDirection: 'row' },
-  loading: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
+  loading: { alignItems: 'center', gap: LADDER.gap, paddingVertical: LADDER.gap },
   footer: { paddingHorizontal: LADDER.gutter, paddingTop: LADDER.snug },
   more: {
     alignItems: 'center',

@@ -1,3 +1,4 @@
+import { SheetHandle } from '@/components/sheet-route-frame';
 import { SearchInput } from '@/components/themed-search-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
@@ -522,7 +523,7 @@ export function SessionArtifacts({
       {/* The panels sheet draws this and this one did not, which is the sort of
           difference that reads as two different apps. Android only: iOS has the
           system grabber. */}
-      {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+      <SheetHandle style={styles.sheetHandle} />
       <View style={styles.header}>
         {/* The only text on this sheet that is not already on a card or a
             chip, so over a wallpaper it takes the settings page's plate. */}

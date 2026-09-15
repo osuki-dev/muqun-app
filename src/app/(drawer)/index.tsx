@@ -1,10 +1,12 @@
+import { useAppActive } from '@/hooks/use-app-active';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';
 import { Image } from 'expo-image';
-import { type Href, useFocusEffect, useRouter } from 'expo-router';
+import { type Href, useFocusEffect, useIsFocused, useRouter } from 'expo-router';
 import {
   ChevronRight,
   Play,
@@ -15,6 +17,7 @@ import {
 } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AppState,
   RefreshControl,
   StyleSheet,
   useWindowDimensions,
@@ -130,6 +133,8 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
   const [refreshing, setRefreshing] = useState(false);
+  const appActive = useAppActive();
+  const isFocused = useIsFocused();
   const scrollY = useSharedValue(0);
   // Gutter, measure, card geometry and row density in one answer -- see
   // `homeServerListLayout` for why room, not server count alone, decides it.
@@ -232,15 +237,53 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   useFocusEffect(
     useCallback(() => {
-      // Reachability and nothing else. This used to also warm the configured
-      // server's workspace -- seven requests on every return to the list -- so
-      // that opening it painted instead of saying Connecting. The list is not
-      // where that belongs: it exists to say which machines are up and to get
-      // out of the way. The workspace keeps its own last snapshot
-      // (`server-warm-cache`) and paints from it on re-entry; a server not
-      // opened recently costs one honest round trip.
-      void refreshReachabilityMany(probeTargets);
-    }, [probeTargets, refreshReachabilityMany])
+      if (!appActive || loading || hydrationError) return;
+      let current = true;
+      // The initial focus runs under LaunchOverlay: hydrate cached home data
+      // and establish reachability without holding the splash for the network.
+      // Re-entry and foreground resume reuse fresh results and refresh stale ones.
+      void refreshReachabilityMany(probeTargets, {
+        shouldContinue: () => current && AppState.currentState === 'active',
+      });
+      return () => {
+        current = false;
+      };
+    }, [appActive, loading, hydrationError, probeTargets, refreshReachabilityMany])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (
+        !appActive ||
+        loading ||
+        hydrationError ||
+        !record ||
+        isDemoRecord(record) ||
+        record.sshTunnel
+      )
+        return;
+      let current = true;
+      const isCurrent = () =>
+        current &&
+        AppState.currentState === 'active' &&
+        useGatewayConnectionStore.getState().record === record;
+      // Prepare only the selected direct gateway while the home is visible.
+      // The terminal consumes this same short-lived cache on its first render.
+      void useServerSession
+        .getState()
+        .hydrate()
+        .then(() => {
+          if (isCurrent())
+            void warmConfiguredWorkspace(
+              record.serverId,
+              useServerSession.getState().byServer[record.serverId],
+              isCurrent
+            );
+        });
+      return () => {
+        current = false;
+      };
+    }, [appActive, loading, hydrationError, record])
   );
 
   // A pull is someone asking, so it overrides the store's own rate limit. The
@@ -252,13 +295,17 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   // configured server would leave the other dots showing an answer from up to
   // `REACHABILITY_FRESH_MS` ago while the control said it had just refreshed.
   const onRefresh = useCallback(async () => {
+    if (!isFocused || AppState.currentState !== 'active') return;
     setRefreshing(true);
     try {
-      await refreshReachabilityMany(probeTargets, { force: true });
+      await refreshReachabilityMany(probeTargets, {
+        force: true,
+        shouldContinue: () => AppState.currentState === 'active',
+      });
     } finally {
       setRefreshing(false);
     }
-  }, [probeTargets, refreshReachabilityMany]);
+  }, [isFocused, probeTargets, refreshReachabilityMany]);
 
   /*
    * The bar gives way to the list.
@@ -392,9 +439,15 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
     // screen asks.
     void selectRecord(serverId).then((selected) => {
       if (!selected || serverId === DEMO_SERVER_ID) return;
-      const server = records.find((item) => item.serverId === serverId);
-      if (server && !server.sshTunnel)
-        void warmConfiguredWorkspace(serverId, useServerSession.getState().byServer[serverId]);
+      const server = useGatewayConnectionStore.getState().record;
+      if (server?.serverId === serverId && !server.sshTunnel)
+        void warmConfiguredWorkspace(
+          serverId,
+          useServerSession.getState().byServer[serverId],
+          () =>
+            AppState.currentState === 'active' &&
+            useGatewayConnectionStore.getState().record === server
+        );
     });
     // Pushed straight away so the slide-in is immediate, without waiting on the
     // selection above; the server screen selects the record on mount too.

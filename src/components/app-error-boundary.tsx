@@ -1,8 +1,10 @@
 import { t } from '@lingui/core/macro';
 import { I18nProvider as LinguiProvider } from '@lingui/react';
 import { Trans } from '@lingui/react/macro';
-import { Text } from '@osuki-dev/ui';
-import { Component, type ReactNode } from 'react';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { RefreshCw, ShieldAlert } from 'lucide-react-native';
+import { Component, useEffect, type ReactNode } from 'react';
+import { SplashScreen } from '@osuki-dev/react-native-splash';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { i18n } from '@/i18n';
@@ -43,26 +45,45 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
     if (!this.state.error) return this.props.children;
     return (
       <LinguiProvider i18n={i18n}>
-        <View style={styles.shell}>
-          <Text variant="heading" style={styles.text}>
-            <Trans>Something went wrong</Trans>
-          </Text>
-          <Text variant="bodySmall" style={styles.detail}>
-            <Trans>The screen hit an error. Try again — your servers stay paired.</Trans>
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t`Try again`}
-            onPress={() => this.setState({ error: null })}
-            style={styles.button}>
-            <Text variant="label" style={styles.buttonText}>
-              <Trans>Try again</Trans>
-            </Text>
-          </Pressable>
-        </View>
+        <ErrorRecovery onRetry={() => this.setState({ error: null })} />
       </LinguiProvider>
     );
   }
+}
+
+/** Keep recovery independent of theme artwork, network and router state. */
+function ErrorRecovery({ onRetry }: { onRetry: () => void }) {
+  const { colors } = useThemeTokens();
+  useEffect(() => {
+    // A startup render failure can happen before LaunchOverlay mounts.
+    // Uncover recovery instead of leaving the native launch screen pinned.
+    void SplashScreen.hide().catch(() => undefined);
+  }, []);
+  return (
+    <View style={[styles.shell, { backgroundColor: colors.background }]}>
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={[styles.icon, { backgroundColor: colors.background }]}>
+          <ShieldAlert size={32} color={colors.text} accessible={false} />
+        </View>
+        <Text variant="heading" style={[styles.text, { color: colors.text }]}>
+          <Trans>Something went wrong</Trans>
+        </Text>
+        <Text variant="bodySmall" style={[styles.detail, { color: colors.textMuted }]}>
+          <Trans>The screen hit an error. Try again — your servers stay paired.</Trans>
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t`Try again`}
+          onPress={onRetry}
+          style={styles.button}>
+          <RefreshCw size={18} color="#FFFFFF" accessible={false} />
+          <Text variant="label" style={styles.buttonText}>
+            <Trans>Try again</Trans>
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -74,6 +95,16 @@ const styles = StyleSheet.create({
     padding: 28,
     backgroundColor: '#08111B',
   },
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    borderWidth: 1,
+    borderRadius: 24,
+    padding: 24,
+    gap: 16,
+    alignItems: 'center',
+  },
+  icon: { width: 68, height: 68, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   text: {
     color: '#F4F7FB',
     textAlign: 'center',
@@ -83,6 +114,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
+    flexDirection: 'row',
+    gap: 8,
     marginTop: 8,
     minHeight: 46,
     paddingHorizontal: 24,

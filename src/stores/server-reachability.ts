@@ -43,7 +43,10 @@ type ServerReachabilityState = {
    * pulling the list down is, and answering it with a cached probe is how a
    * refresh control comes to mean nothing.
    */
-  refresh: (endpoint: ReachabilityEndpoint, options?: { force?: boolean }) => Promise<void>;
+  refresh: (
+    endpoint: ReachabilityEndpoint,
+    options?: { force?: boolean; shouldContinue?: () => boolean }
+  ) => Promise<void>;
   /**
    * Probe several servers, one after another.
    *
@@ -58,7 +61,7 @@ type ServerReachabilityState = {
    */
   refreshMany: (
     endpoints: readonly ReachabilityEndpoint[],
-    options?: { force?: boolean }
+    options?: { force?: boolean; shouldContinue?: () => boolean }
   ) => Promise<void>;
   /** Drops results for servers this device no longer has. */
   keepOnly: (serverIds: readonly string[]) => void;
@@ -80,6 +83,7 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
   probes: {},
 
   async refresh(endpoint, options) {
+    if (options?.shouldContinue?.() === false) return;
     const { serverId } = endpoint;
     // A tunnelled record is never probed at its stored `url`: that address
     // belongs to the SSH host, and for a loopback-only gateway probing it from
@@ -110,6 +114,7 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     // the type. A rejection is impossible here -- `refresh` swallows its own --
     // but the loop is written so one bad endpoint could not strand the rest.
     for (const endpoint of endpoints) {
+      if (options?.shouldContinue?.() === false) break;
       try {
         await get().refresh(endpoint, options);
       } catch {
