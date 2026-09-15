@@ -30,7 +30,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -263,22 +263,31 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   /*
    * The bar gives way to the list.
    *
-   * Scrolling down through the servers folds the three controls into the
-   * corner and takes the bar's row with them, so a card on its way up is not
-   * sliced off behind a strip of controls; it gets the whole screen. The first
-   * gesture back up brings the bar straight back, controls and (past 82pt)
-   * the compact brand with it, and inside the first few points of the list it
-   * is always there. Direction rather than offset, because the fold answers
-   * what the reader is doing right now: a long list scrolled to its middle
-   * should still hand the controls back on the first upward pull, and a
-   * threshold on the delta keeps a finger resting on the screen from flapping
-   * it.
+   * The bar floats over the top of the list rather than sitting above it, and
+   * the list starts under it with padding to match. Scrolling down through
+   * the servers slides the bar up off the screen, controls folding into their
+   * corner as it goes, so a card on its way up is not sliced off behind a
+   * strip of controls. The first gesture back up brings it straight back,
+   * controls and (past 82pt) the compact brand with it, and inside the first
+   * few points of the list it is always there.
+   *
+   * It slides rather than shrinks on purpose: a bar that changed height would
+   * move the list under the finger by the same amount every time it folded or
+   * unfolded, which read as a bounce at the threshold. A translate moves only
+   * the bar.
+   *
+   * Direction rather than offset, because the fold answers what the reader is
+   * doing right now: a long list scrolled to its middle should still hand the
+   * controls back on the first upward pull, and travel that has to accumulate
+   * keeps a finger resting on the screen from flapping it.
    */
   const lastScrollY = useSharedValue(0);
   const foldTarget = useSharedValue(0);
   const travel = useSharedValue(0);
   const fold = useSharedValue(0);
-  const barRowHeight = useSharedValue(HEADER_ROW_HEIGHT);
+  const insets = useSafeAreaInsets();
+  const [barHeight, setBarHeight] = useState(insets.top + HEADER_ROW_HEIGHT);
+  const barHeightValue = useSharedValue(insets.top + HEADER_ROW_HEIGHT);
   const onScroll = useAnimatedScrollHandler({
     onScroll(event) {
       const y = event.contentOffset.y;
@@ -307,7 +316,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
     },
   });
   const barFoldStyle = useAnimatedStyle(() => ({
-    height: barRowHeight.value * (1 - fold.value),
+    transform: [{ translateY: -fold.value * barHeightValue.value }],
   }));
   // The controls shrink towards the corner they live in as the row closes
   // over them, so they read as folding away rather than as being cut off.
@@ -448,13 +457,15 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           into the bar and the bar earns its left half. The controls never move,
           so the only thing that changes is where the brand is. */}
         {!isPad ? (
-          <SafeAreaView edges={['top']} style={styles.topBar}>
-            <Animated.View style={[styles.topBarFold, barFoldStyle]}>
-              <View
-                style={styles.topBarRow}
-                onLayout={(event: LayoutChangeEvent) => {
-                  barRowHeight.value = event.nativeEvent.layout.height;
-                }}>
+          <Animated.View
+            style={[styles.topBar, barFoldStyle]}
+            onLayout={(event: LayoutChangeEvent) => {
+              const { height } = event.nativeEvent.layout;
+              barHeightValue.value = height;
+              setBarHeight(height);
+            }}>
+            <SafeAreaView edges={['top']}>
+              <View style={styles.topBarRow}>
                 {identity.showBrand ? (
                   <Animated.View
                     testID="home-brand-compact"
@@ -540,14 +551,15 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                   </HeaderButton>
                 </Animated.View>
               </View>
-            </Animated.View>
-          </SafeAreaView>
+            </SafeAreaView>
+          </Animated.View>
         ) : null}
 
         <KeyboardAwareScrollView
           bottomOffset={24}
           extraKeyboardSpace={12}
-          contentInsetAdjustmentBehavior="automatic"
+          contentInsetAdjustmentBehavior={isPad ? 'automatic' : 'never'}
+          scrollIndicatorInsets={isPad ? undefined : { top: barHeight }}
           contentContainerStyle={[
             styles.content,
             isPad && styles.padContent,
@@ -555,6 +567,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
               paddingHorizontal: metrics.contentGutter,
               maxWidth: metrics.contentMaxWidth,
             },
+            !isPad && { paddingTop: barHeight + styles.content.paddingTop },
           ]}
           keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
           keyboardShouldPersistTaps="handled"
@@ -1229,14 +1242,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     zIndex: 10,
-  },
-  // The part of the bar that folds: it clips, and anchors the row to its
-  // bottom edge so closing it slides the controls up under the inset rather
-  // than cutting them off from below.
-  topBarFold: {
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
   },
   topBarRow: {
     minHeight: 54,
