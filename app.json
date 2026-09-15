@@ -63,6 +63,7 @@
             }
           }
         ],
+        "LSSupportsOpeningDocumentsInPlace": false,
         "CFBundleDocumentTypes": [
           {
             "CFBundleTypeName": "Muqun theme",
