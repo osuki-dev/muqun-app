@@ -296,6 +296,15 @@ msgstr "Trả lời: {0}"
 msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
 msgstr "Bất cứ thứ gì {label} đang phục vụ trên một cổng — máy chủ dev, bản xem trước, bảng điều khiển"
 
+#: src/components/settings-appearance.tsx
+msgid "App icon"
+msgstr "Biểu tượng ứng dụng"
+
+#. placeholder {0}: labels[id]
+#: src/components/settings-appearance.tsx
+msgid "App icon, {0}"
+msgstr "Biểu tượng ứng dụng, {0}"
+
 #: src/components/settings-security.tsx
 msgid "App Lock enabled"
 msgstr "Đã bật Khóa ứng dụng"
@@ -565,6 +574,10 @@ msgstr "Chọn nơi làm việc"
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
+
+#: src/components/settings-appearance.tsx
+msgid "Classic"
+msgstr "Cổ điển"
 
 #: src/components/settings-storage.tsx
 msgid "Clear"
@@ -1870,6 +1883,10 @@ msgstr "Quản lý host SSH"
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
 msgstr "Đánh dấu đã xem"
+
+#: src/components/settings-appearance.tsx
+msgid "Mascot"
+msgstr "Linh vật"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3425,6 +3442,14 @@ msgstr "Kết nối đã rớt"
 #: src/components/simfarm-stage.tsx
 msgid "The connection to the simulator stopped."
 msgstr "Kết nối đến trình giả lập đã dừng"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen."
+msgstr "Biểu tượng trên màn hình chính của bạn"
+
+#: src/components/settings-appearance.tsx
+msgid "The icon on your home screen. Android closes the app to apply it."
+msgstr "Biểu tượng trên màn hình chính của bạn. Android sẽ đóng ứng dụng để áp dụng."
 
 #. placeholder {0}: failure.code
 #: src/components/ssh-host-form.tsx

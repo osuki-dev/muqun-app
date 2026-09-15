@@ -161,6 +161,23 @@
         }
       ],
       [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Classic",
+            "ios": {
+              "light": "./assets/icons/classic/icon.png",
+              "dark": "./assets/icons/classic/icon-dark.png",
+              "tinted": "./assets/icons/classic/icon-tinted.png"
+            },
+            "android": {
+              "foregroundImage": "./assets/icons/classic/android-icon-foreground.png",
+              "backgroundColor": "#FCFBFA"
+            }
+          }
+        ]
+      ],
+      [
         "@osuki-dev/react-native-splash",
         {
           "backgroundColor": "#F7F3EC",

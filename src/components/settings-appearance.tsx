@@ -22,11 +22,17 @@
  * picks which half of it is showing -- then the mode, then the language.
  */
 import { useLingui } from '@lingui/react/macro';
-import { useThemeMode } from '@osuki-dev/ui';
+import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 
 import { SettingsBlock, SettingsChoiceRow, SettingsSection } from '@/components/settings-chrome';
+import { PressableScale } from '@/components/pressable-scale';
 import { SettingsSegmented } from '@/components/settings-segmented';
+import { appChrome } from '@/constants/appearance';
+import { useAppIcon } from '@/hooks/use-app-icon';
+import { type AppIconId, APP_ICONS } from '@/lib/app-icon';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { LOCALE_LABELS } from '@/i18n/locale';
 import { useRenderTally } from '@/lib/render-tally';
@@ -69,6 +75,8 @@ export function SettingsAppearance({ title }: { title: string }) {
         />
       </SettingsBlock>
 
+      <AppIconPicker />
+
       {/* The caption is the sentence the sheet carries too, and it changes with
           the answer: a pinned language and a followed one are different states,
           and the row has to say which one it is in without being opened. */}
@@ -87,3 +95,105 @@ export function SettingsAppearance({ title }: { title: string }) {
     </SettingsSection>
   );
 }
+
+/**
+ * The icons themselves, not their names: a launcher icon is recognised, not
+ * read, and a row of two pictures says what a segmented control of two words
+ * cannot. Each tile draws the cut for the current mode, the way the home
+ * screen would.
+ */
+const ICON_ART: Record<AppIconId, { light: number; dark: number }> = {
+  default: {
+    light: require('@/assets/images/icon.png'),
+    dark: require('@/assets/images/icon-dark.png'),
+  },
+  Classic: {
+    light: require('@/assets/icons/classic/icon.png'),
+    dark: require('@/assets/icons/classic/icon-dark.png'),
+  },
+};
+
+function AppIconPicker() {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const { resolvedMode } = useThemeMode();
+  const { icon, choose, busy, supported } = useAppIcon();
+  if (!supported) return null;
+  const labels: Record<AppIconId, string> = { default: t`Mascot`, Classic: t`Classic` };
+  return (
+    <SettingsBlock
+      label={t`App icon`}
+      // Android swaps launcher aliases to change an icon, and the launcher
+      // drops the running task with it: the app closes and reopens on the
+      // next tap. Said up front rather than discovered.
+      caption={
+        process.env.EXPO_OS === 'android'
+          ? t`The icon on your home screen. Android closes the app to apply it.`
+          : t`The icon on your home screen.`
+      }>
+      <View style={iconStyles.row} accessibilityRole="radiogroup">
+        {APP_ICONS.map((id) => {
+          const selected = id === icon;
+          return (
+            <PressableScale
+              key={id}
+              accessibilityRole="radio"
+              accessibilityState={{ selected, disabled: busy }}
+              accessibilityLabel={t`App icon, ${labels[id]}`}
+              testID={`settings-app-icon-${id}`}
+              disabled={busy}
+              onPress={() => {
+                if (!selected) void choose(id);
+              }}
+              style={iconStyles.tile}>
+              <View
+                style={[
+                  iconStyles.frame,
+                  { borderColor: selected ? theme.colors.primary : 'transparent' },
+                ]}>
+                <Image
+                  source={ICON_ART[id][resolvedMode === 'dark' ? 'dark' : 'light']}
+                  contentFit="cover"
+                  accessible={false}
+                  style={iconStyles.art}
+                />
+              </View>
+              <Text
+                variant="bodySmall"
+                style={{ color: selected ? theme.colors.text : theme.colors.textMuted }}>
+                {labels[id]}
+              </Text>
+            </PressableScale>
+          );
+        })}
+      </View>
+    </SettingsBlock>
+  );
+}
+
+const ICON_SIZE = 60;
+
+const iconStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  tile: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  // The ring sits outside the art, so the selected icon is the same size as
+  // the others and the ring is the only thing that changes.
+  frame: {
+    padding: 3,
+    borderWidth: 2,
+    borderRadius: appChrome.radius.control + 5,
+    borderCurve: 'continuous',
+  },
+  art: {
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+  },
+});
