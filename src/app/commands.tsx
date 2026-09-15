@@ -583,23 +583,10 @@ export default function QuickCommandsScreen() {
   }
 
   return (
-    // The editor is the reason for the keyboard-aware scroller: a plain
-    // ScrollView left both inputs under the keyboard, with the save button out
-    // of reach entirely.
-    <View style={[styles.sheet, { backgroundColor: theme.colors.background }]}>
-      {/* The shell's ground, from the component every form sheet now shares.
-          `tint="background"` and not `surface`: every block on this sheet draws
-          its own panel, so a surface underneath them would be one surface too
-          many -- the slab the note below this describes.
-
-          This used to paint the picture first and the fill over it, on the
-          argument that a page is entitled to the picture at full strength and a
-          sheet is a surface. The argument is fine and the arrangement did not
-          serve it: `surfaceBackgroundFill` returns its colour unchanged at
-          alpha 1, so at the default slider the fill was opaque and the picture
-          was not a calmed wallpaper but no wallpaper at all. Calming it is the
-          tint's job; being visible is the picture's. See `sheet-ground.tsx`. */}
-      <SheetFrame tint="background">
+    // One ground and one layout column preserve native sheet measurement.
+    <SheetFrame tint="background">
+      {/* Keep the fixed header and scroller in one native layout column. */}
+      <View collapsable={false} style={styles.sheet}>
         <View style={[styles.fixedTop, isPadLayout && styles.padContent]}>
           <SheetHandle style={styles.sheetHandle} />
 
@@ -1118,8 +1105,8 @@ export default function QuickCommandsScreen() {
             </Animated.View>
           ) : null}
         </KeyboardAwareScrollView>
-      </SheetFrame>
-    </View>
+      </View>
+    </SheetFrame>
   );
 }
 

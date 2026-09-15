@@ -261,6 +261,7 @@ import {
   terminalKeysForPane,
   keyboardCombinationKeys,
   terminalKeysFromGateway,
+  withCommonTerminalCombinations,
   withEditorActions,
 } from '@/lib/terminal-keys';
 import { parseTerminalSnapshot, terminalFrameText } from '@/terminal/terminal-core';
@@ -1843,7 +1844,8 @@ export function ServerTerminalWorkspace({
     // An editor's own commands go on top of whatever was resolved rather than
     // into the table: the gateway's answer wins when there is one, so a set
     // added only to the fallback would never be seen against a real gateway.
-    const base = fullScreenPane ? withEditorActions(resolved) : resolved;
+    const completed = withCommonTerminalCombinations(resolved);
+    const base = fullScreenPane ? withEditorActions(completed) : completed;
     const scope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
     return orderByUsage(base, scope ? loadUsage()[scope] : undefined, (item) => item.key);
   }, [fullScreenPane, nvimMode, selectedAgent, selectedPane, serverId, shortcuts]);

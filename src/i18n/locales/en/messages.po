@@ -629,6 +629,7 @@ msgstr "Close files"
 msgid "Close language picker"
 msgstr "Close language picker"
 
+#: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Close new task"
@@ -822,6 +823,10 @@ msgstr "Control"
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "Control A, start of line"
+
+#: src/i18n/labels.ts
+msgid "Control B"
+msgstr "Control B"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
@@ -1260,7 +1265,6 @@ msgstr "Docs"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
@@ -3701,6 +3705,7 @@ msgstr "Too many changes to list. This is the start of them, not all of them"
 msgid "Trust"
 msgstr "Trust"
 
+#: src/app/new-task.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx

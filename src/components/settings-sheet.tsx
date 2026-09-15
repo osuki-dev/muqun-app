@@ -1,3 +1,4 @@
+import { SheetHandle } from '@/components/sheet-route-frame';
 import { SheetHeading } from '@/components/sheet-heading';
 /**
  * The frame the two Appearance pickers share.
@@ -25,7 +26,7 @@ import { type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { SheetFrame } from '@/components/sheet-ground';
+import { SheetFrame, useSheetGroundProvided } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER } from '@/components/settings-chrome';
 import { useRenderTally } from '@/lib/render-tally';
@@ -51,6 +52,7 @@ export function SettingsSheet({
   children: ReactNode;
 }) {
   const theme = useThemeTokens();
+  const groundProvided = useSheetGroundProvided();
   // Explicit: this is the component that renders the frame, so it sits above
   // its own tint provider. Everything *inside* the sheet reads the tint from
   // the frame and calls this with no argument.
@@ -59,7 +61,11 @@ export function SettingsSheet({
     <ScrollScreen
       variant="surface"
       safeArea="bottom"
-      style={[styles.sheet, { backgroundColor: theme.colors.background }]}
+      style={[
+        styles.sheet,
+        { backgroundColor: theme.colors.background },
+        groundProvided && { backgroundColor: 'transparent' },
+      ]}
       contentContainerStyle={styles.canvas}>
       {/* A sheet is a new scene, not a transparent window onto the previous
           route's labels. The native scroll root keeps its opaque floor; the
@@ -70,7 +76,7 @@ export function SettingsSheet({
           {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. The panels sheet carries the same two lines. */}
-          {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+          <SheetHandle style={styles.handle} />
 
           <View style={styles.header}>
             {/* The title and the line under it are the only text on this sheet

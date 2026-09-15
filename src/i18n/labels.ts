@@ -226,6 +226,7 @@ export const terminalKeyDescription: Record<string, MessageDescriptor> = {
   Escape: msg`Escape`,
   Tab: msg`Tab`,
   'Control C': msg`Control C`,
+  'Control B': msg`Control B`,
   Backspace: msg`Backspace`,
   // Line editing and history at a shell prompt.
   'Control D': msg`Control D`,

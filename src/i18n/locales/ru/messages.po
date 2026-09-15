@@ -629,6 +629,7 @@ msgstr "Закрыть список файлов"
 msgid "Close language picker"
 msgstr "Закрыть выбор языка"
 
+#: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Закрыть новую задачу"
@@ -822,6 +823,10 @@ msgstr "Control"
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "Ctrl A, в начало строки"
+
+#: src/i18n/labels.ts
+msgid "Control B"
+msgstr "Ctrl B"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
@@ -1260,7 +1265,6 @@ msgstr "Документы"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
@@ -3701,6 +3705,7 @@ msgstr "Слишком много изменений для списка. Это
 msgid "Trust"
 msgstr "Доверять"
 
+#: src/app/new-task.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx

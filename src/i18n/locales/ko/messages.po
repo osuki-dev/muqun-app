@@ -629,6 +629,7 @@ msgstr "파일 목록 닫기"
 msgid "Close language picker"
 msgstr "언어 목록 닫기"
 
+#: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "새 작업 닫기"
@@ -822,6 +823,10 @@ msgstr "Control 키"
 #: src/i18n/labels.ts
 msgid "Control A, start of line"
 msgstr "컨트롤 A, 줄 맨 앞으로"
+
+#: src/i18n/labels.ts
+msgid "Control B"
+msgstr "컨트롤 B"
 
 #: src/i18n/labels.ts
 msgid "Control B, run in background"
@@ -1260,7 +1265,6 @@ msgstr "문서"
 
 #: src/app/custom-theme.tsx
 #: src/components/custom-theme-library.tsx
-#: src/components/new-task-sheet.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Done"
@@ -3701,6 +3705,7 @@ msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체
 msgid "Trust"
 msgstr "신뢰"
 
+#: src/app/new-task.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
