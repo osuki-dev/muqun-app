@@ -33,15 +33,29 @@ const WARM_PANE_SOURCE: PaneOutputSource = 'recent-unwrapped';
  * function honours whatever it is told. On a cold start there is nothing to be
  * pulled away from, so the remembered preference is the answer outright.
  */
+type WorkspaceSnapshotResult = { snapshot: WarmWorkspace; choices: SessionChoice[] };
+
+export function loadWorkspaceSnapshot(
+  preference: string | undefined,
+  knownHealth?: HealthResponse | null
+): Promise<WorkspaceSnapshotResult>;
+export function loadWorkspaceSnapshot(
+  preference: string | undefined,
+  knownHealth: HealthResponse | null | undefined,
+  isCurrent: () => boolean
+): Promise<WorkspaceSnapshotResult | null>;
 export async function loadWorkspaceSnapshot(
   preference: string | undefined,
   /** Health already in hand. It costs a round trip and never changes mid-screen. */
-  knownHealth?: HealthResponse | null
-): Promise<{ snapshot: WarmWorkspace; choices: SessionChoice[] }> {
+  knownHealth?: HealthResponse | null,
+  isCurrent: () => boolean = () => true
+): Promise<WorkspaceSnapshotResult | null> {
+  if (!isCurrent()) return null;
   const [health, sessions] = await Promise.all([
     knownHealth ? Promise.resolve(knownHealth) : gatewayTransport.loadHealth(),
     gatewayTransport.loadSessions(),
   ]);
+  if (!isCurrent()) return null;
   // The gateway's order is kept as it arrived, and a preference naming a
   // session that has since gone falls through to the first rather than
   // failing -- see `lib/session-switcher`.
@@ -56,6 +70,7 @@ export async function loadWorkspaceSnapshot(
     gatewayTransport.loadPanes(sessionId),
     gatewayTransport.loadAgents(sessionId),
   ]);
+  if (!isCurrent()) return null;
   return { snapshot: { health, sessionId, workspaces, tabs, panes, agents }, choices };
 }
 
@@ -77,12 +92,19 @@ export async function loadWorkspaceSnapshot(
  */
 export async function warmConfiguredWorkspace(
   serverId: string,
-  preference: string | undefined
+  preference: string | undefined,
+  isCurrent: () => boolean = () => true
 ): Promise<void> {
-  if (!serverId || warmWorkspace(serverId)) return;
+  if (!serverId || !isCurrent() || warmWorkspace(serverId)) return;
   try {
-    const { snapshot } = await loadWorkspaceSnapshot(preference);
-    rememberWarmWorkspace(serverId, { ...snapshot, firstPane: await firstPaneScreen(snapshot) });
+    const result = await loadWorkspaceSnapshot(preference, undefined, isCurrent);
+    if (!result || !isCurrent()) return;
+    const { snapshot } = result;
+    const firstPane = await firstPaneScreen(snapshot);
+    if (!isCurrent()) return;
+    // A terminal mounted during this prefetch may already have fresher data.
+    if (warmWorkspace(serverId)) return;
+    rememberWarmWorkspace(serverId, { ...snapshot, firstPane });
   } catch {
     // Deliberately silent: see above.
   }
@@ -138,6 +160,11 @@ export async function warmNotificationTarget(
   sessionPreference?: string
 ): Promise<void> {
   const { useGatewayConnectionStore } = await import('@/stores/gateway-connection');
-  if (useGatewayConnectionStore.getState().record?.serverId !== serverId) return;
-  await warmConfiguredWorkspace(serverId, sessionPreference);
+  const record = useGatewayConnectionStore.getState().record;
+  if (record?.serverId !== serverId) return;
+  await warmConfiguredWorkspace(
+    serverId,
+    sessionPreference,
+    () => useGatewayConnectionStore.getState().record === record
+  );
 }

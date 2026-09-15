@@ -1,5 +1,6 @@
 import { RouteScene } from '@/components/route-scene';
-import { sheetPresentationOptions } from '@/lib/route-presentation';
+import { sheetPresentationOptions, sheetRoutePresentations } from '@/lib/route-presentation';
+import { FullscreenSheetFrame } from '@/components/sheet-route-frame';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -240,11 +241,17 @@ function RootContent() {
         <ThemeFileOpener />
         <AppLockGate>
           <Stack
-            screenLayout={({ children, options }) =>
+            screenLayout={({ children, options, route }) =>
               options.presentation === 'formSheet' ? (
                 <>{children}</>
               ) : (
-                <RouteScene>{children}</RouteScene>
+                <RouteScene>
+                  {sheetRoutePresentations[route.name] === 'fullscreen' ? (
+                    <FullscreenSheetFrame>{children}</FullscreenSheetFrame>
+                  ) : (
+                    children
+                  )}
+                </RouteScene>
               )
             }
             screenOptions={{
@@ -272,51 +279,11 @@ function RootContent() {
             <Stack.Screen name="ssh/[hostId]" options={{ gestureEnabled: false }} />
             <Stack.Screen
               name="commands"
-              options={{
-                presentation: 'formSheet',
-                // Quick actions carries the sheet's own verbs, the saved
-                // shortcuts and the agent's own commands -- against a real
-                // gateway the last of those alone is twenty-odd rows, which is
-                // more than a partial detent can show without constant
-                // scrolling.
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions(sheetRoutePresentations['commands'])}
             />
-            {/*
-              0.82 rather than 0.65 (card #693).
-
-              A fraction here is a fraction of the sheet's own maximum height,
-              not of the screen: measured on an iPhone 17 Pro, 0.65 put the
-              sheet's top edge at 354pt and made it 520pt tall, which puts that
-              maximum at about 800pt of the 874pt screen.
-
-              520pt could not hold what the sheet is for. Five panels under
-              three tabs -- what the demo carries, and about what a working
-              session looks like -- is nearly 380pt of groups on its own, and
-              the header, the workspace rail and `New panel` want another 270pt
-              around them. So the sheet opened already scrolled past its own
-              last group, and how many tabs a session had was something you had
-              to scroll to find out.
-
-              0.82 measures 645pt: the whole five-panel workspace and the button
-              under it in one look, 80pt still to spare below it, and the
-              terminal still visible above. Still one partial stop and one full
-              one, so the gesture is unchanged.
-            */}
             <Stack.Screen
               name="panels"
-              options={{
-                presentation: 'formSheet',
-                // Full height, like quick actions and files: three sheets that
-                // open from the same row should not each pick their own size,
-                // and a workspace with more panels than a partial detent shows
-                // is the ordinary case rather than the exception (Ellen).
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions(sheetRoutePresentations['panels'])}
             />
             {/*
               The session switcher. Content-sized like the language
@@ -337,51 +304,16 @@ function RootContent() {
             />
             <Stack.Screen
               name="artifacts"
-              options={{
-                presentation: 'formSheet',
-                // Full height only, unlike panels: this one carries a search
-                // field, and a partial detent puts the keyboard over the results
-                // it is filtering.
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions(sheetRoutePresentations['artifacts'])}
             />
             <Stack.Screen
               name="git-diff"
-              options={{
-                presentation: 'formSheet',
-                // Full height only, and for the plainest reason of the three:
-                // a diff is read a line at a time, and a partial detent would
-                // halve the number of lines on screen at once.
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions(sheetRoutePresentations['git-diff'])}
             />
-            {/*
-              The two Appearance pickers (card #683) started as content-sized
-              closed lists. Language still fits that model; themes no longer
-              do now that thirty-two paired packs are available. The theme picker
-              gets the full-height detent and scrolls, while language remains
-              exactly as tall as its nine choices.
-            */}
             <Stack.Screen
               name="settings-theme"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: [1],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions(sheetRoutePresentations['settings-theme'])}
             />
-            {/*
-              The catalogue, opened from the theme sheet and presented over it.
-              The same options, because it is the same place as far as a reader
-              is concerned; full height for the reason `artifacts` and
-              `git-diff` are, which is that a list read by scrolling is halved
-              by a partial detent.
-            */}
             <Stack.Screen
               name="settings-theme-browse"
               options={sheetPresentationOptions('fullscreen')}
@@ -397,9 +329,12 @@ function RootContent() {
               }}
             />
             {/* Full height leaves room for the composer and keyboard. */}
-            <Stack.Screen name="new-task" options={sheetPresentationOptions('sheet')} />
+            <Stack.Screen
+              name="new-task"
+              options={sheetPresentationOptions(sheetRoutePresentations['new-task'])}
+            />
             {/*
-              Open a web service (card #829). Content-sized like New Task, and
+              Open a web service (card #829). Content-sized, and
               for less reason than any of them: this is one field with a row of
               shortcuts over it. A full-height sheet for a port number would be
               the app implying the task is bigger than typing four digits.

@@ -1,3 +1,4 @@
+import { SheetHandle } from '@/components/sheet-route-frame';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { type LegendListRef, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { AnimatedLegendList } from '@legendapp/list/reanimated';
@@ -462,7 +463,7 @@ export function GitDiffView({
           {/* Android only: iOS has the system grabber. The panels and files
             sheets both draw this, and a third that did not would read as a
             different app. */}
-          {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+          <SheetHandle style={styles.sheetHandle} />
           <View style={styles.header}>
             {/* The two lines a sheet announces itself with, drawn straight onto
               the ground, so over a wallpaper they take the plate the settings

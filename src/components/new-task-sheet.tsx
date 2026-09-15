@@ -1,9 +1,10 @@
+import { SheetHandle } from '@/components/sheet-route-frame';
 import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
  * The full-height sheet keeps input reachable with long host catalogs.
  */
-import { KeyboardToolbar, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
@@ -53,8 +54,8 @@ import { useRenderTally } from '@/lib/render-tally';
  */
 const RECENT_CWD_LIMIT = 5;
 
-/** The focused field's clearance above the keyboard and its toolbar. */
-const KEYBOARD_BOTTOM_OFFSET = 88;
+/** Leave the focused field clear of the keyboard without an extra toolbar. */
+const KEYBOARD_BOTTOM_OFFSET = 24;
 
 export function NewTaskSheet({
   sessionId,
@@ -200,19 +201,11 @@ export function NewTaskSheet({
   }
 
   return (
-    // Two subviews, which is the most a native form sheet will lay out around a
-    // scroll view -- and the toolbar is worth one of them. This sheet is sized
-    // to its contents, so when the keyboard comes up there is no room left to
-    // scroll the Go button clear of it: the last field ends where the keyboard
-    // begins. A Done above the keyboard is the platform's own answer to that,
-    // it is already in the design system, and it costs nothing when the
-    // keyboard is down because it is not drawn at all.
     <>
       <KeyboardAwareScrollView
-        // Clearance for the focused field above the keyboard and the toolbar
-        // sitting on top of it, so the line being typed is never the line under
-        // the Done button.
+        // Keep the focused line visible above the system keyboard.
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         // Transparent: the ground below paints this sheet's floor, its surface
         // tint and the shell's wallpaper, in that order.
@@ -222,14 +215,13 @@ export function NewTaskSheet({
             which is the shape `SettingsSheet` uses -- the content container
             carries no padding of its own, so the ground's `absoluteFill` covers
             the sheet's edges instead of stopping at the form's gutter. The
-            sheet's own two subviews are still the scroller and the keyboard
-            toolbar. */}
+            route keeps the scroll view as its native root. */}
         <SheetFrame>
           <View style={styles.column}>
             {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. Every sheet in this app carries the same two lines. */}
-            {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+            <SheetHandle style={styles.handle} />
 
             <View style={styles.header}>
               <SheetHeading
@@ -255,7 +247,10 @@ export function NewTaskSheet({
                     size={36}
                     accessibilityLabel={t`Asking the server what it can run…`}
                   />
-                  <Text variant="caption" color={theme.colors.textMuted}>
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    style={{ textAlign: 'center' }}>
                     <Trans>Asking the server what it can run…</Trans>
                   </Text>
                 </View>
@@ -394,17 +389,6 @@ export function NewTaskSheet({
           </View>
         </SheetFrame>
       </KeyboardAwareScrollView>
-      {/* One field at a time here, so the arrows would only ever point at
-        themselves.
-
-        No `backgroundColor`, though kit 1.1.0 now offers one. The toolbar is a
-        sticky view offset by its own height when the keyboard is closed, so the
-        only time it is on screen it is riding the keyboard's top edge -- with
-        the system keyboard below it and the form's own fields behind it, and no
-        artwork layer anywhere near. Thinning that fill would show the field it
-        covers, not the reader's picture, which is the opposite of what the
-        slider is for. */}
-      <KeyboardToolbar showArrows={false} doneText={t`Done`} />
     </>
   );
 }
@@ -561,7 +545,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   section: { gap: LADDER.gap },
-  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
+  loadingRow: { alignItems: 'center', gap: LADDER.gap, paddingVertical: LADDER.gap },
   pills: { flexDirection: 'row', gap: LADDER.gap, paddingVertical: 4 },
   pill: {
     flexDirection: 'row',

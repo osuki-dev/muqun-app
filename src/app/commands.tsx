@@ -1,3 +1,4 @@
+import { SheetHandle } from '@/components/sheet-route-frame';
 import { Input } from '@/components/themed-input';
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -638,7 +639,7 @@ export default function QuickCommandsScreen() {
             ever stops being true, the answer is to give the *ground* more
             opacity, not to put the slab back. */}
           <View style={[styles.stickyTop, isPadLayout && styles.padStickyTop]}>
-            {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+            <SheetHandle style={styles.sheetHandle} />
 
             {/* No glyph beside the title. The reader arrived here by pressing the
               lightning button, so a lightning chip repeats the gesture back at

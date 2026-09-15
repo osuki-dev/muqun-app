@@ -99,14 +99,22 @@ export function LaunchBrand({ phase, finish }: SplashRenderContext) {
   }, [phase]);
 
   const sheetStyle = useAnimatedStyle(() => ({
-    opacity: 1 - exit.value,
+    // Reveal the already mounted home early, then let the image finish fading.
+    opacity: interpolate(exit.value, [0, 0.2, 1], [1, 0.92, 0]),
   }));
   const floorStyle = useAnimatedStyle(() => ({
     opacity: handover.value,
   }));
-  // The mirrored picture stays put and grows out with the exit.
+  // Start at the exact native size, breathe once after handoff, then recede.
+  // No loop or additional hold: startup never waits for decorative motion.
   const mirroredStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(exit.value, [0, 1], [1, 1.12]) }],
+    transform: [
+      {
+        scale:
+          interpolate(handover.value, [0, 0.65, 1], [1, 1.025, 1]) *
+          interpolate(exit.value, [0, 1], [1, 1.08]),
+      },
+    ],
   }));
   // Whatever the mirror drew (nothing, today) is gone by the handover's
   // midpoint and grows on the way out, so the two read as one thing changing
@@ -118,11 +126,11 @@ export function LaunchBrand({ phase, finish }: SplashRenderContext) {
   const incomingStyle = useAnimatedStyle(() => ({
     opacity: handover.value,
     transform: [
-      { translateY: interpolate(handover.value, [0, 1], [10, 0]) },
+      { translateY: interpolate(handover.value, [0, 1], [6, 0]) },
       {
         scale:
-          interpolate(handover.value, [0, 1], [0.84, 1]) *
-          interpolate(exit.value, [0, 1], [1, 1.12]),
+          interpolate(handover.value, [0, 0.7, 1], [0.94, 1.025, 1]) *
+          interpolate(exit.value, [0, 1], [1, 1.08]),
       },
     ],
   }));

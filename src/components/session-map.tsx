@@ -1,3 +1,4 @@
+import { SheetHandle } from '@/components/sheet-route-frame';
 import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { plural } from '@lingui/core/macro';
@@ -417,7 +418,7 @@ export function SessionMap({
           inside this node rather than beside it. */}
         <View
           style={[styles.stickyTop, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
-          {process.env.EXPO_OS === 'android' ? <View style={styles.sheetHandle} /> : null}
+          <SheetHandle style={styles.sheetHandle} />
 
           <View style={styles.header}>
             <View style={styles.flexOne}>

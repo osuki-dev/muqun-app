@@ -3933,6 +3933,7 @@ export function ServerTerminalWorkspace({
         // assistant, the placeholder names it, and Send names it again.
         dock.attachEntry ? (
           <PressableScale
+            testID="terminal-composer-attach"
             accessibilityLabel={
               attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
             }
@@ -4071,10 +4072,9 @@ export function ServerTerminalWorkspace({
           named, scrollable targets -- so the two read as the same kind of
           choice rather than as two unrelated pickers. */}
       {assignmentBar}
-      {/* The keyboard's own copy of the menu: the floating layout below only
-          draws it while the keyboard is down, so a paperclip pressed on the
-          line the keyboard summoned used to open nothing. */}
-      {attachmentMenuOpen && dock.attachEntry && keyboardMode ? (
+      {/* This copy belongs to the editor panel; the ordinary dock owns its
+          own menu independently of whether its virtual keyboard is open. */}
+      {attachmentMenuOpen && dock.attachEntry ? (
         <View
           style={[
             styles.composerFloatingContent,
@@ -4645,7 +4645,7 @@ export function ServerTerminalWorkspace({
                   />
                 </View>
               ) : null}
-              {attachmentMenuOpen && dock.attachEntry && !keyboardMode ? (
+              {attachmentMenuOpen && dock.attachEntry ? (
                 <View
                   style={[
                     styles.composerFloatingContent,
