@@ -205,7 +205,6 @@ import {
   fadeInDown,
   fadeOut,
   fadeOutDown,
-  INSTANT,
   listLayout,
   PRESS,
   riseIn,
@@ -372,17 +371,6 @@ const initialData: ServerData = {
 };
 
 const MAX_RECONNECT_DELAY_MS = 8_000;
-
-/**
- * Half the pane carousel: the outgoing pane travels this far before the
- * incoming one comes back from the opposite side.
- *
- * Short of a full-width push on purpose. The pane fills the screen and its
- * content is text being read, so a long throw costs more than it says; this is
- * far enough to be unmistakably a direction and near enough that the reading
- * position does not feel thrown away.
- */
-const PANE_SLIDE_DISTANCE = 36;
 
 /**
  * How long a selection has to stand still before its neighbours are warmed.
@@ -988,24 +976,12 @@ export function ServerTerminalWorkspace({
   // crashed, so the transition runs on the mounted view's own opacity and
   // transform instead.
   //
-  // It is the title switcher's carousel applied to the whole pane -- the
-  // outgoing content leaves the way the finger went, the incoming arrives from
-  // the opposite edge. Because there is only one canvas, the jump across
-  // happens at zero opacity, which is also where the new pane's output lands.
-  // The dip-to-0.35 this replaces carried no direction at all and read as a
-  // flicker rather than as a move between two things.
-  const paneFade = useSharedValue(1);
-  const paneSlide = useSharedValue(0);
+  // Match RouteScene's depth reveal without sliding text sideways or fading
+  // through an empty canvas. Keep the native terminal mounted throughout.
+  const paneScale = useSharedValue(1);
   const paneTransitionStyle = useAnimatedStyle(() => ({
-    opacity: paneFade.value,
-    transform: [{ translateX: paneSlide.value }],
+    transform: [{ scale: paneScale.value }],
   }));
-  // Which way the next switch travels: forward through the strip is +1. Set by
-  // whatever caused the switch -- a chip tap or a two-finger swipe -- and read
-  // once, because a workspace cycle or a gateway reconcile can also land on a
-  // new pane with no direction of its own, and those should not inherit the
-  // last one.
-  const paneDirectionRef = useRef<1 | -1>(1);
   // The pane strip scrolls, and with more panes than fit, swiping to one off
   // its right-hand end used to leave the strip highlighting nothing: the
   // active chip was simply somewhere the user could not see, so the only
@@ -2686,22 +2662,9 @@ export function ServerTerminalWorkspace({
 
   useEffect(() => {
     if (!selection.paneId) return;
-    // Written as one sequence per value rather than as a completion callback:
-    // assigning a shared value from inside its own callback cancels the
-    // animation that is calling it, which calls it again, and the UI thread
-    // recurses until it dies. (The title switcher learned this the hard way.)
-    const away = paneDirectionRef.current * -PANE_SLIDE_DISTANCE;
-    paneDirectionRef.current = 1;
-    const out = timing('dropdown');
-    const back = timing('short');
-    paneFade.value = withSequence(withTiming(0, out), withTiming(1, back));
-    paneSlide.value = withSequence(
-      withTiming(away, out),
-      // The jump to the far side happens while the pane is invisible.
-      withTiming(-away, INSTANT),
-      withTiming(0, back)
-    );
-  }, [paneFade, paneSlide, selection.paneId]);
+    paneScale.value = 1.015;
+    paneScale.value = withTiming(1, timing('medium'));
+  }, [paneScale, selection.paneId]);
 
   /**
    * Brings the active pane chip into the strip's viewport, if it is not
@@ -3098,9 +3061,6 @@ export function ServerTerminalWorkspace({
           paneId: recallTabPane(tabPaneMemoryRef.current, target.tabId),
         });
         if (sameSelection(current, next)) return current;
-        // Set here rather than at the swipe, because only a switch that really
-        // moves the screen should spend the animation.
-        paneDirectionRef.current = direction === 'next' ? 1 : -1;
         return next;
       });
       setError(null);
@@ -3190,11 +3150,6 @@ export function ServerTerminalWorkspace({
   });
 
   function choosePane(pane: HerdrEntity) {
-    // Read off the strip the user is looking at, so the transition travels the
-    // way the panes are laid out rather than the way the ids happen to sort.
-    const from = tabPanes.findIndex((item) => item.id === selection.paneId);
-    const to = tabPanes.findIndex((item) => item.id === pane.id);
-    if (from >= 0 && to >= 0 && to !== from) paneDirectionRef.current = to > from ? 1 : -1;
     setSelection({
       workspaceId: field(pane, 'workspace_id') || selection.workspaceId,
       tabId: field(pane, 'tab_id') || selection.tabId,
@@ -4374,8 +4329,8 @@ export function ServerTerminalWorkspace({
             {/* The two-finger tab swipe is recognised by the canvas itself, as one
               more gesture simultaneous with its pan and pinch -- React Native's
               touches never see it. See `useTabSwipe` for the measurements. */}
-            <View style={styles.terminalSwipeArea}>
-              {/* The pane carousel, which a tab switch drives too: landing on a
+            <View style={[styles.terminalSwipeArea, { overflow: 'hidden' }]}>
+              {/* The pane depth reveal, which a tab switch drives too: landing on a
                 tab lands on one of its panes. See `paneTransitionStyle` for why
                 the canvas underneath is never remounted. */}
               <Animated.View style={[styles.terminalSwipeArea, paneTransitionStyle]}>

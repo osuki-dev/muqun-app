@@ -1,4 +1,5 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 /**
  * The New Task sheet's route.
  *
@@ -48,7 +49,8 @@ export default function NewTaskScreen() {
   }>();
   const fromHome = params.origin === 'home';
 
-  const connectedServerId = useGatewayConnectionStore((state) => state.record?.serverId);
+  const record = useGatewayConnectionStore((state) => state.record);
+  const connectedServerId = record?.serverId;
   const selectRecord = useGatewayConnectionStore((state) => state.selectRecord);
   const choosePanel = usePanelPickerStore((state) => state.choosePanel);
 
@@ -58,6 +60,9 @@ export default function NewTaskScreen() {
 
   const serverId = params.serverId;
   const needsSelect = Boolean(serverId) && connectedServerId !== serverId;
+  // Selecting credentials does not open an SSH forward. Home does not hold
+  // one, so this sheet must own a lease until it closes, just like Terminal.
+  const tunnel = useGatewayTunnel(record, Boolean(serverId) && !needsSelect);
 
   useEffect(() => {
     if (!serverId) return;
@@ -69,7 +74,7 @@ export default function NewTaskScreen() {
           if (!cancelled) setError(t`This server is no longer paired.`);
           return;
         }
-        if (cancelled || sessionId) return;
+        if (cancelled || needsSelect || tunnel.phase !== 'open' || sessionId) return;
         const sessions = await loadSessions();
         // One session per gateway today, and the first is the one every other
         // screen uses. Named here rather than assumed, so a gateway that starts
@@ -92,7 +97,7 @@ export default function NewTaskScreen() {
     return () => {
       cancelled = true;
     };
-  }, [needsSelect, selectRecord, serverId, sessionId, retryNonce, t]);
+  }, [needsSelect, selectRecord, serverId, sessionId, retryNonce, tunnel.phase, t]);
 
   /**
    * Straight into the pane the agent came up in -- the promise the whole flow
@@ -113,7 +118,8 @@ export default function NewTaskScreen() {
     router.back();
   }
 
-  if (error || !serverId) {
+  const tunnelFailed = !needsSelect && tunnel.tunnelled && tunnel.phase === 'down';
+  if (error || !serverId || tunnelFailed) {
     return (
       <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <Text
@@ -121,12 +127,16 @@ export default function NewTaskScreen() {
           variant="bodySmall"
           color={theme.colors.danger}
           style={{ textAlign: 'center' }}>
-          {error ?? t`No server to start a task on.`}
+          {error ??
+            (tunnelFailed
+              ? tunnel.reason || t`Could not reach this server.`
+              : t`No server to start a task on.`)}
         </Text>
         {serverId ? (
           <Button
             onPress={() => {
               setError(null);
+              if (tunnelFailed) tunnel.retry();
               setRetryNonce((value) => value + 1);
             }}>
             {t`Try again`}
@@ -137,7 +147,7 @@ export default function NewTaskScreen() {
     );
   }
 
-  if (!sessionId || needsSelect) {
+  if (!sessionId || needsSelect || tunnel.phase !== 'open') {
     return (
       <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <LogoLoader size={56} accessibilityLabel={t`Connecting`} />

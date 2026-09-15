@@ -277,9 +277,15 @@ function RootContent() {
               drawer screens swap without a transition, and its edge-swipe
               gesture fights the terminal's own horizontal panning.
             */}
-            <Stack.Screen name="servers/[serverId]" options={{ gestureEnabled: false }} />
+            <Stack.Screen
+              name="servers/[serverId]"
+              options={{ gestureEnabled: false, animation: 'fade' }}
+            />
             <Stack.Screen name="ssh" options={{ animation: 'fade' }} />
-            <Stack.Screen name="ssh/[hostId]" options={{ gestureEnabled: false }} />
+            <Stack.Screen
+              name="ssh/[hostId]"
+              options={{ gestureEnabled: false, animation: 'fade' }}
+            />
             <Stack.Screen
               name="commands"
               options={sheetPresentationOptions(sheetRoutePresentations['commands'], false, true)}
