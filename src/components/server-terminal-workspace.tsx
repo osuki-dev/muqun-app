@@ -68,6 +68,9 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
+
+import { AgentWorkbench } from '@/components/agent-workbench';
+import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { PressableScale } from '@/components/pressable-scale';
@@ -1355,23 +1358,47 @@ export function ServerTerminalWorkspace({
     () => data.agents.find((item) => field(item, 'pane_id') === selection.paneId),
     [data.agents, selection.paneId]
   );
+  const agentKind = useMemo(() => {
+    if (!selectedAgent) return '';
+    return (
+      field(selectedAgent, 'kind') ||
+      field(selectedAgent, 'agent') ||
+      selectedAgent.title ||
+      ''
+    ).toLowerCase();
+  }, [selectedAgent]);
+  const isOpenCodeAgent = agentKind.includes('opencode') || agentKind.includes('open-code');
+
   // Which of the two readings of this pane is on screen: the conversation or
   // the raw grid. The hook owns the whole decision -- the setting, this pane's
   // own last choice, and what the pane can actually show -- so the screen only
   // has to say what each mode draws.
   const agentPane = Boolean(selectedAgent);
+  const supportsAgentSessions = gatewaySupportsAgentSessions(data.health?.capabilities);
   const partsForPane = partsState.paneId === selection.paneId ? partsState : initialPartsState;
   const paneView = usePaneViewMode({
     serverId,
     paneId: selection.paneId,
     agent: agentPane,
     parts: partsForPane.supported,
+    agentSessions: supportsAgentSessions && isOpenCodeAgent,
   });
   const chatViewChosen = paneView.mode === 'chat';
   // What the user asked for and what can actually be drawn are two different
   // things: a failed read falls back to the terminal without forgetting the
   // choice, so the view returns by itself once the gateway answers again.
-  const chatViewShown = chatViewChosen && !partsForPane.failed;
+  const chatViewShown =
+    chatViewChosen && ((supportsAgentSessions && isOpenCodeAgent) || !partsForPane.failed);
+  const hideTerminalDock = chatViewShown && supportsAgentSessions && isOpenCodeAgent;
+  if (__DEV__) {
+    console.log('[DEBUG AgentSessions]', {
+      paneViewMode: paneView.mode,
+      supportsAgentSessions,
+      chatViewShown,
+      chatViewChosen,
+      hideTerminalDock,
+    });
+  }
   // New content for this pane, however it was noticed: the gateway's revision
   // where there is one, and otherwise the output itself, which `setOutput`
   // leaves untouched when nothing changed.
@@ -4193,6 +4220,7 @@ export function ServerTerminalWorkspace({
             <Monitor size={18} color={theme.colors.text} strokeWidth={2} />
           </PressableScale>
         ) : null,
+
         simfarmSplit.previewWidth > 0 ? (
           <PressableScale
             key="simulator"
@@ -4319,24 +4347,33 @@ export function ServerTerminalWorkspace({
               {/* Keep the canvas mounted and stationary across pane changes. */}
               <Animated.View style={styles.terminalSwipeArea}>
                 {chatViewShown ? (
-                  <PaneChatView
-                    // Remounted per pane: the follow-the-latest position and which
-                    // tool runs are open belong to the transcript being read.
-                    key={selection.paneId}
-                    parts={partsForPane.parts}
-                    detail={paneView.detail}
-                    // `answered` is the gateway having said *something* about
-                    // this pane. Until it has, an empty transcript is a question
-                    // in flight rather than an empty pane.
-                    awaitingFirstParts={!partsForPane.answered}
-                    topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-                    bottomInset={composerVisible ? composerHeight : 0}
-                    canLoadEarlier={canLoadEarlierParts}
-                    loadingEarlier={loadingEarlierParts}
-                    onLoadEarlier={loadEarlierParts}
-                    onOpenAsset={openAssetById}
-                    onToggleDetail={paneView.toggleDetail}
-                  />
+                  supportsAgentSessions && isOpenCodeAgent ? (
+                    <AgentWorkbench
+                      key={selection.paneId}
+                      sessionId={data.sessionId}
+                      topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                      bottomInset={insets.bottom}
+                    />
+                  ) : (
+                    <PaneChatView
+                      // Remounted per pane: the follow-the-latest position and which
+                      // tool runs are open belong to the transcript being read.
+                      key={selection.paneId}
+                      parts={partsForPane.parts}
+                      detail={paneView.detail}
+                      // `answered` is the gateway having said *something* about
+                      // this pane. Until it has, an empty transcript is a question
+                      // in flight rather than an empty pane.
+                      awaitingFirstParts={!partsForPane.answered}
+                      topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                      bottomInset={composerVisible ? composerHeight : 0}
+                      canLoadEarlier={canLoadEarlierParts}
+                      loadingEarlier={loadingEarlierParts}
+                      onLoadEarlier={loadEarlierParts}
+                      onOpenAsset={openAssetById}
+                      onToggleDetail={paneView.toggleDetail}
+                    />
+                  )
                 ) : (
                   <TerminalBoundary
                     resetKey={selection.paneId}
@@ -4500,7 +4537,7 @@ export function ServerTerminalWorkspace({
           here should close the menu, the way a tap anywhere else on the pane
           does.
         */}
-          {composerVisible && dock.floatingActions && !isPadLayout ? (
+          {composerVisible && dock.floatingActions && !isPadLayout && !hideTerminalDock ? (
             <Animated.View
               // The band across from it belongs to the pill, and a full-width
               // invisible parent lying over it would have taken the pill's taps.
@@ -4549,7 +4586,7 @@ export function ServerTerminalWorkspace({
             </EditorControls>
           ) : null}
 
-          {composerVisible && !dock.editorMode ? (
+          {composerVisible && !dock.editorMode && !hideTerminalDock ? (
             <Animated.View
               style={[
                 styles.composerOverlay,

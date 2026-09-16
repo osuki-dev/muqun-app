@@ -70,10 +70,10 @@ export async function beginPairingTransaction(
       ...offer,
       serverId,
       verifyAdvertisedUrl: offer.serverId !== undefined,
-      // A typed address must never fall back to token-only transport. A
-      // keyless QR remains the explicit compatibility signal from a Gateway
-      // whose owner selected Disabled mode.
-      transportRequired: offer.serverId === undefined || Boolean(offer.transportKey),
+      // Follow the server's transport encryption setting: if the gateway explicitly
+      // configured 'disabled', allow plaintext pairing without forcing encryption.
+      transportRequired:
+        response.transport_encryption === 'disabled' ? false : Boolean(offer.transportKey),
     },
     requestId,
     serverLabel: response.server_label || 'Server',

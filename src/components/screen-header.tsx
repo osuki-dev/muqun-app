@@ -35,11 +35,13 @@ export function ScreenHeader({
   title,
   onBack,
   right,
+  rightPill,
 }: {
   title: string;
   /** Defaults to router back, falling back to Home when there's nothing to pop. */
   onBack?: () => void;
   right?: ReactNode;
+  rightPill?: ReactNode;
 }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -76,7 +78,13 @@ export function ScreenHeader({
 
         <NavHeaderTitlePill title={title} />
 
-        {right ? <NavHeaderCircle>{right}</NavHeaderCircle> : <NavHeaderSpacer />}
+        {rightPill ? (
+          rightPill
+        ) : right ? (
+          <NavHeaderCircle>{right}</NavHeaderCircle>
+        ) : (
+          <NavHeaderSpacer />
+        )}
       </Animated.View>
     </View>
   );

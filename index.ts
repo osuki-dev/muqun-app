@@ -5,6 +5,7 @@
 // the Android widget's headless task, which has to be registered on the JS
 // bundle's entry rather than inside a screen: Android starts that task with no
 // activity running, so nothing in `src/app` has mounted by the time it fires.
+import './src/lib/polyfills';
 import 'expo-router/entry';
 
 import { Platform } from 'react-native';

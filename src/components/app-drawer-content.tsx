@@ -3,7 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
-import { ChevronRight, LayoutGrid, ScanLine, Settings } from 'lucide-react-native';
+import { Bot, ChevronRight, LayoutGrid, ScanLine, Settings } from 'lucide-react-native';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -62,6 +62,14 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
       icon: LayoutGrid,
       href: '/' as Href,
       active: pathname === '/' || pathname.startsWith('/servers'),
+    },
+    {
+      key: 'agent',
+      label: t`OpenCode Agent`,
+      detail: t`AI coding assistant`,
+      icon: Bot,
+      href: '/agent' as Href,
+      active: pathname.startsWith('/agent'),
     },
     {
       key: 'pair',

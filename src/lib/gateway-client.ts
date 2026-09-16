@@ -237,7 +237,16 @@ function requestAad(input: RequestInfo | URL, method: string): string {
   return `${method.toUpperCase()} ${url.pathname}${url.search}`;
 }
 
+export function isGatewayEncryptionDisabled(): boolean {
+  if (!__DEV__) return false;
+  return (
+    process.env.EXPO_PUBLIC_DISABLE_GATEWAY_ENCRYPTION === 'true' ||
+    process.env.EXPO_PUBLIC_DISABLE_GATEWAY_ENCRYPTION === '1'
+  );
+}
+
 function shouldEncryptGatewayRequest(input: RequestInfo | URL): boolean {
+  if (isGatewayEncryptionDisabled()) return false;
   if (
     !currentToken ||
     !currentDeviceId ||
@@ -414,7 +423,7 @@ async function encryptedGatewayFetch(
 }
 
 /** Every gateway call the generated client and this file make, on one budget. */
-const gatewayFetch: typeof globalThis.fetch = (input, init) =>
+export const gatewayFetch: typeof globalThis.fetch = (input, init) =>
   gatewayFetchWithin(REQUEST_TIMEOUT_MS, input, init);
 
 async function gatewayFetchWithin(
@@ -428,7 +437,11 @@ async function gatewayFetchWithin(
   // to ask for a different language keeps it -- and read per call rather than
   // captured once, so switching language in Settings takes effect on the very
   // next request without reconfiguring anything.
-  const headers = { ...activeLocaleHeaders(), ...headerRecord(init?.headers) };
+  const headers = {
+    ...activeLocaleHeaders(),
+    ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+    ...headerRecord(init?.headers),
+  };
   if (shouldEncryptGatewayRequest(input)) {
     return encryptedGatewayFetch(input, { ...init, headers }, timeoutMs);
   }
@@ -596,6 +609,7 @@ export interface PairingRequestResponse {
   server_label: string;
   status: 'pending';
   expires_in_ms?: number;
+  transport_encryption?: 'required' | 'disabled';
 }
 
 // Kept alongside the generated client's config so raw requests to endpoints the
@@ -910,13 +924,13 @@ export const MAX_ASSET_TEXT_BYTES = 512 * 1024;
  */
 export const ASSET_CONTENT_TIMEOUT_MS = 15_000;
 
-function gatewayUrl(path: string): string {
+export function gatewayUrl(path: string): string {
   const baseUrl = currentBaseUrl.replace(/\/$/, '');
   if (!baseUrl) throw new Error('Not connected to a server.');
   return `${baseUrl}${path}`;
 }
 
-function gatewayAuthHeaders(): Record<string, string> {
+export function gatewayAuthHeaders(): Record<string, string> {
   // Carries the locale as well as the token, so the handful of calls that reach
   // for `nitroFetch` directly -- to get their own timeout -- are localized too
   // without each one having to remember.
@@ -1769,7 +1783,9 @@ export function configureGateway(record: GatewayRecord | null): void {
     record?.token ?? null,
     record?.deviceId ?? null,
     record?.transportKey ?? null,
-    record?.transport === GATEWAY_TRANSPORT ? record.transport : null
+    record?.transport === GATEWAY_TRANSPORT && !isGatewayEncryptionDisabled()
+      ? record.transport
+      : null
   );
 }
 
@@ -1780,6 +1796,7 @@ export function configureGateway(record: GatewayRecord | null): void {
  * and `sse-record.ts`.
  */
 export function gatewayUsesEncryptedTransport(token: string | null): boolean {
+  if (isGatewayEncryptionDisabled()) return false;
   return Boolean(
     token &&
     token === currentToken &&

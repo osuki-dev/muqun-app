@@ -1606,4 +1606,37 @@ const styles = StyleSheet.create({
   sshList: {
     gap: 10,
   },
+  openCodeCardAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginTop: 10,
+  },
+  openCodeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  openCodeIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  openCodeTitle: {
+    fontWeight: '600',
+  },
+  openCodeRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  openCodeLaunchText: {
+    fontWeight: '600',
+  },
 });

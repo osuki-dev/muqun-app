@@ -1,62 +1,31 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
-/**
- * New Task, on a home-screen server card's `...` menu.
- *
- * Home mounts this only for a currently reachable server. This component then
- * checks the advertised capability; a saved capability alone is not evidence
- * that the server can be reached now.
- *
- * "Nothing at all" is the common case and the correct one. A gateway too old to
- * spawn, and a server this device has never opened (so has never heard the
- * answer from), both get no button. A greyed one would promise a feature the
- * machine does not have; an enabled one would fail on tap.
- */
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { useRouter, type Href } from 'expo-router';
-import { Sparkles } from 'lucide-react-native';
-import { useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { gatewaySupportsAgentSpawn } from '@/lib/gateway-client';
-import { useServerCapabilities } from '@/stores/server-capabilities';
+import { OpenCodeIcon } from '@/components/opencode-icon';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
-export function NewTaskAction({ serverId, label }: { serverId: string; label: string }) {
+export function NewTaskAction({ label }: { serverId: string; label: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
 
-  // Hydrated from here rather than from the screen, so the home list does not
-  // have to know this mirror exists. The store claims the flag before it reads,
-  // so several cards mounting together still make one read.
-  const hydrate = useServerCapabilities((state) => state.hydrate);
-  const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
-  useEffect(() => {
-    void hydrate();
-  }, [hydrate]);
-
-  if (!gatewaySupportsAgentSpawn(capabilities)) return null;
-
   return (
     <PressableScale
+      testID="server-opencode-action"
       accessibilityRole="button"
-      accessibilityLabel={t`New task on ${label}`}
-      onPress={() =>
-        // No session id and no tab: the home screen knows neither, and the
-        // sheet resolves the session itself once it has selected this server.
-        router.push({ pathname: '/new-task', params: { serverId, origin: 'home' } } as Href)
-      }
+      accessibilityLabel={t`Open OpenCode Agent on ${label}`}
+      onPress={() => router.push('/agent')}
       style={[styles.button, { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }]}>
-      <Sparkles size={16} color={theme.colors.primary} strokeWidth={2} />
+      <OpenCodeIcon size={18} color={theme.colors.primary} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  // The row menu's own button chassis, so this sits in the line of three
-  // without being the odd one.
   button: {
     width: 36,
     height: 36,

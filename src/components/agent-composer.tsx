@@ -1,0 +1,843 @@
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TextInputSelectionChangeEventData,
+  View,
+} from 'react-native';
+import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Trans, useLingui } from '@lingui/react/macro';
+import {
+  Bot,
+  CheckSquare,
+  Cpu,
+  GitCommit,
+  GitFork,
+  Layers,
+  Paperclip,
+  Plus,
+  Sparkles,
+  Square,
+} from 'lucide-react-native';
+import Animated from 'react-native-reanimated';
+
+import { PressableScale } from '@/components/pressable-scale';
+import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
+import { AttachmentMenu } from '@/components/attachment-menu';
+import { AgentModeMenu } from '@/components/agent-mode-menu';
+import { AttachmentStrip } from '@/components/attachment-strip';
+import { GlassChrome } from '@/components/glass-chrome';
+import { EdgeFade } from '@/components/edge-fade';
+import { FileMentionPanel } from '@/components/file-mention-panel';
+import { ComposerPopup } from '@/components/composer-popup';
+import { useComposerPopup } from '@/hooks/use-composer-popup';
+import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
+import {
+  findFileMentionTrigger,
+  insertFileMention,
+  FILE_MENTION_LIMIT,
+  type FileMentionHit,
+  type FileMentionTrigger,
+} from '@/lib/file-mentions';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
+import { fadeIn, fadeOut, fadeOutDown } from '@/lib/motion';
+import { appChrome } from '@/constants/appearance';
+import { withAlpha } from '@/lib/color';
+import {
+  listAgentFiles,
+  type AgentInfo,
+  type AgentSessionInfo,
+  type SkillInfo,
+  type TodoItem,
+  type TokensUsage,
+} from '@/lib/agent-session';
+
+export interface AgentComposerProps {
+  running: boolean;
+  sessions?: AgentSessionInfo[];
+  availableAgents?: AgentInfo[];
+  skills?: SkillInfo[];
+  sessionId?: string;
+  activeAsid?: string;
+  selectedAgent?: string;
+  hasDiffs?: boolean;
+  bottomInset?: number;
+  tasks?: TodoItem[];
+  tokens?: TokensUsage;
+  onSend: (text: string, attachments?: string[]) => Promise<void>;
+  onAbort: () => Promise<void>;
+  onSelectSession?: (asid: string) => void;
+  onSelectAgentMode?: (agent: string) => void;
+  onCreateNewSession?: () => void;
+  onOpenModelSheet?: () => void;
+  onOpenModeSheet?: () => void;
+  onOpenDiffSheet: () => void;
+  onOpenSessionsSheet?: () => void;
+  onOpenTasksSheet?: () => void;
+  onRefresh?: () => void;
+}
+
+export const AgentComposer = memo(function AgentComposer({
+  running,
+  sessions = [],
+  availableAgents: availableAgentsProp,
+  skills = [],
+  sessionId,
+  activeAsid,
+  selectedAgent,
+  hasDiffs = false,
+  bottomInset = 0,
+  tasks,
+  tokens,
+  onSend,
+  onAbort,
+  onSelectSession,
+  onSelectAgentMode,
+  onCreateNewSession,
+  onOpenModelSheet,
+  onOpenModeSheet,
+  onOpenDiffSheet,
+  onOpenSessionsSheet,
+  onOpenTasksSheet,
+  onRefresh,
+}: AgentComposerProps) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const { showToast } = useToast();
+  const surfaceBackground = useSurfaceBackground();
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [modeMenuOpen, setModeMenuOpen] = useState(false);
+
+  const tokenDisplayStr = useMemo(() => {
+    if (!tokens) return null;
+    const total = tokens.input + tokens.output + (tokens.reasoning ?? 0);
+    if (total <= 0) return null;
+    if (total >= 1_000_000) return `${(total / 1_000_000).toFixed(1)}M tok`;
+    if (total >= 1_000) return `${(total / 1_000).toFixed(1)}k tok`;
+    return `${total} tok`;
+  }, [tokens]);
+
+  const inputRef = useRef<TextInput>(null);
+  const [caret, setCaret] = useState<number | undefined>(undefined);
+  const [mentionHits, setMentionHits] = useState<FileMentionHit[]>([]);
+
+  const chromeText = theme.colors.text;
+  const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
+
+  const record = useGatewayConnectionStore((state) => state.record);
+  const attachmentUploads = useAttachmentUploads(record);
+
+  // Slash commands and skills catalog
+  const builtinCommands: PaneSlashCommand[] = useMemo(
+    () => [
+      {
+        name: '/init',
+        description: t`Analyze project and initialize AGENTS.md`,
+        argsHint: '',
+        source: 'builtin',
+      },
+      {
+        name: '/compact',
+        description: t`Compact session history to save context`,
+        argsHint: '',
+        source: 'builtin',
+      },
+      {
+        name: '/clear',
+        description: t`Clear context and start fresh`,
+        argsHint: '',
+        source: 'builtin',
+      },
+      {
+        name: '/undo',
+        description: t`Undo last message or action`,
+        argsHint: '',
+        source: 'builtin',
+      },
+      { name: '/redo', description: t`Redo last undone step`, argsHint: '', source: 'builtin' },
+      {
+        name: '/review',
+        description: t`Review workspace changes`,
+        argsHint: '',
+        source: 'builtin',
+      },
+      { name: '/mode', description: t`Switch agent mode`, argsHint: '', source: 'builtin' },
+      { name: '/model', description: t`Switch language model`, argsHint: '', source: 'builtin' },
+      { name: '/help', description: t`Show command help`, argsHint: '', source: 'builtin' },
+    ],
+    [t]
+  );
+
+  const skillCommands: PaneSlashCommand[] = useMemo(
+    () =>
+      (skills ?? []).map((s) => ({
+        name: `/${s.id}`,
+        description: s.description || s.name,
+        argsHint: '',
+        source: 'workspace' as const,
+      })),
+    [skills]
+  );
+
+  const slashCatalog = useMemo(
+    () => [...builtinCommands, ...skillCommands],
+    [builtinCommands, skillCommands]
+  );
+  const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
+
+  const slashPopup = useComposerPopup({
+    draft: text,
+    onDraftChange: setText,
+    trigger: slashTrigger,
+  });
+
+  // File mentions (@) trigger
+  const effectiveCaret = caret ?? text.length;
+  const mentionTrigger = useMemo<FileMentionTrigger | null>(
+    () => findFileMentionTrigger(text, effectiveCaret),
+    [effectiveCaret, text]
+  );
+  const mentionQuery = mentionTrigger?.query ?? null;
+
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setMentionHits([]);
+      return;
+    }
+    let active = true;
+    listAgentFiles(sessionId, activeAsid, mentionQuery, FILE_MENTION_LIMIT)
+      .then((hits) => {
+        if (active) setMentionHits(hits);
+      })
+      .catch(() => {
+        if (active) setMentionHits([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [mentionQuery, sessionId, activeAsid]);
+
+  const chooseMention = useCallback(
+    (hit: FileMentionHit) => {
+      if (!mentionTrigger) return;
+      const next = insertFileMention(text, mentionTrigger, hit.path);
+      setText(next.text);
+      setCaret(next.caret);
+      setMentionHits([]);
+    },
+    [text, mentionTrigger]
+  );
+
+  const handleSelectionChange = useCallback(
+    (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
+      const next = event.nativeEvent.selection.start;
+      setCaret(next);
+      slashPopup.inputProps.onSelectionChange(event);
+    },
+    [slashPopup.inputProps]
+  );
+
+  const chooseAttachmentSource = useCallback(
+    (source: AttachmentSource) => {
+      setAttachmentMenuOpen(false);
+      const picker = attachmentUploads.capturePicker();
+      if (!picker.isCurrent()) return;
+      void pickAttachments(source)
+        .then(picker.addFiles)
+        .catch((failure: unknown) => {
+          if (!picker.isCurrent()) return;
+          showToast({
+            variant: 'danger',
+            title: t`Could not add a file`,
+            message: describePickerFailure(source, failure),
+          });
+        });
+    },
+    [attachmentUploads, showToast, t]
+  );
+
+  const handleSend = useCallback(async () => {
+    const trimmed = text.trim();
+    const hasAttachments = attachmentUploads.attachments.length > 0;
+    if ((!trimmed && !hasAttachments) || sending) return;
+
+    setSending(true);
+    try {
+      let uploadedFilePaths: string[] = [];
+      if (hasAttachments) {
+        const paths = await attachmentUploads.awaitUploads();
+        if (!paths) {
+          showToast({
+            variant: 'danger',
+            title: t`Upload failed`,
+            message: t`Please retry or remove failed attachments.`,
+          });
+          return;
+        }
+        uploadedFilePaths = paths;
+      }
+      await onSend(trimmed, uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined);
+      setText('');
+      attachmentUploads.clearAttachments();
+    } finally {
+      setSending(false);
+    }
+  }, [text, attachmentUploads, sending, onSend, showToast, t]);
+
+  // Resolve available agents (workspace agents + defaults)
+  const availableAgents =
+    availableAgentsProp && availableAgentsProp.length > 0
+      ? availableAgentsProp
+      : [
+          { id: 'build', name: 'build', description: t`The default agent. Executes tools.` },
+          {
+            id: 'general',
+            name: 'general',
+            description: t`General-purpose agent for researching complex tasks.`,
+          },
+          {
+            id: 'explore',
+            name: 'explore',
+            description: t`Fast agent specialized for exploring codebases.`,
+          },
+        ];
+
+  // Resolve current session family (main agent + its subagents)
+  const currentSession = sessions.find((s) => s.asid === activeAsid);
+  const rootSessionId = currentSession?.parent_id || currentSession?.asid;
+  const rootSession = sessions.find((s) => s.asid === rootSessionId) || currentSession;
+  const subagents = rootSessionId ? sessions.filter((s) => s.parent_id === rootSessionId) : [];
+
+  const rootAgentName = rootSession?.agent || selectedAgent || 'build';
+
+  const rootDisplayTitle = (() => {
+    if (!rootSession) return t`New Session`;
+    const raw = rootSession.title;
+    if (!raw || raw.startsWith('ses_') || raw === rootSession.asid) {
+      return t`New Session`;
+    }
+    return raw;
+  })();
+
+  const isRootActive = !activeAsid || activeAsid === rootSession?.asid;
+
+  return (
+    <View style={styles.dockOuter}>
+      <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
+
+      {/* Dismiss backdrop for popups */}
+      {attachmentMenuOpen || modeMenuOpen ? (
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => {
+            setAttachmentMenuOpen(false);
+            setModeMenuOpen(false);
+          }}
+        />
+      ) : null}
+
+      {/* Attachment source popup */}
+      {attachmentMenuOpen ? (
+        <View style={styles.popupWrapper}>
+          <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
+        </View>
+      ) : null}
+
+      {/* Agent mode quick switch popup */}
+      {modeMenuOpen ? (
+        <View style={styles.popupWrapper}>
+          <AgentModeMenu
+            agents={availableAgents}
+            selectedAgent={selectedAgent ?? 'build'}
+            onSelectAgent={(agId) => {
+              setModeMenuOpen(false);
+              onSelectAgentMode?.(agId);
+            }}
+            textColor={chromeText}
+          />
+        </View>
+      ) : null}
+
+      {/* File mention (@) floating list */}
+      {mentionTrigger && mentionHits.length > 0 ? (
+        <View style={styles.composerFloatingContent}>
+          <FileMentionPanel
+            hits={mentionHits}
+            query={mentionTrigger.query}
+            onSelect={chooseMention}
+          />
+        </View>
+      ) : null}
+
+      {/* Slash command and skills (/) floating list */}
+      {slashPopup.open ? (
+        <View style={styles.composerPopup}>
+          <ComposerPopup
+            rows={slashPopup.rows}
+            onPick={slashPopup.pick}
+            testIDPrefix="slash-command"
+          />
+        </View>
+      ) : null}
+
+      <GlassChrome surface="composer" style={styles.composerDock}>
+        <View style={[styles.composerInner, { paddingBottom: Math.max(10, bottomInset + 6) }]}>
+          {/* Row 1: Workspace Agents & Subagents Horizontal Strip (横向滚动不要省略，无 All Sessions 和 +) */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.sessionStripContent}
+            style={styles.sessionStripViewport}>
+            {/* Current Session Chip (Current Agent session title) */}
+            <PressableScale
+              key={rootSession?.asid || 'current-root-session'}
+              testID="agent-composer-current-session-badge"
+              onPress={() => {
+                if (rootSession?.asid && rootSession.asid !== activeAsid) {
+                  onSelectSession?.(rootSession.asid);
+                }
+              }}
+              accessibilityLabel={`${rootAgentName}: ${rootDisplayTitle}`}
+              style={[
+                styles.sessionChip,
+                isRootActive
+                  ? { backgroundColor: theme.colors.primary }
+                  : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              ]}>
+              <Bot size={13} color={isRootActive ? '#fff' : theme.colors.primary} />
+              <Text
+                variant="caption"
+                weight="bold"
+                color={isRootActive ? '#fff' : theme.colors.primary}
+                style={styles.sessionChipAgentBadge}>
+                {`@${rootAgentName}`}
+              </Text>
+              <Text
+                variant="caption"
+                color={isRootActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                style={styles.sessionChipDot}>
+                •
+              </Text>
+              <Text
+                variant="caption"
+                weight="medium"
+                color={isRootActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                style={styles.sessionChipTitle}>
+                {rootDisplayTitle}
+              </Text>
+            </PressableScale>
+
+            {/* Subagents of the current session */}
+            {subagents.map((sub) => {
+              const isSubActive = sub.asid === activeAsid;
+              const subAgentName = sub.agent || 'subagent';
+              const subDisplayTitle = (() => {
+                const raw = sub.title;
+                if (!raw || raw.startsWith('ses_') || raw === sub.asid) {
+                  return `@${subAgentName}`;
+                }
+                return raw;
+              })();
+              return (
+                <PressableScale
+                  key={sub.asid}
+                  onPress={() => onSelectSession?.(sub.asid)}
+                  accessibilityLabel={subDisplayTitle}
+                  style={[
+                    styles.sessionChip,
+                    isSubActive
+                      ? { backgroundColor: theme.colors.primary }
+                      : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
+                  <GitFork size={13} color={isSubActive ? '#fff' : theme.colors.primary} />
+                  <Text
+                    variant="caption"
+                    weight="bold"
+                    color={isSubActive ? '#fff' : theme.colors.primary}
+                    style={styles.sessionChipAgentBadge}>
+                    {`@${subAgentName}`}
+                  </Text>
+                  {subDisplayTitle !== `@${subAgentName}` ? (
+                    <>
+                      <Text
+                        variant="caption"
+                        color={isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                        style={styles.sessionChipDot}>
+                        •
+                      </Text>
+                      <Text
+                        variant="caption"
+                        weight="medium"
+                        color={isSubActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                        style={styles.sessionChipTitle}>
+                        {subDisplayTitle}
+                      </Text>
+                    </>
+                  ) : null}
+                </PressableScale>
+              );
+            })}
+          </ScrollView>
+
+          {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.actionRowContent}
+            style={styles.actionRowScroll}>
+            {/* All Sessions Button */}
+            {onOpenSessionsSheet ? (
+              <PressableScale
+                testID="agent-composer-sessions-btn"
+                onPress={onOpenSessionsSheet}
+                accessibilityLabel={t`All Sessions`}
+                style={[
+                  styles.actionBtnWithLabel,
+                  { backgroundColor: surfaceBackground(chromeGlass) },
+                ]}>
+                <Layers size={14} color={chromeText} />
+                <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                  {t`Sessions`}
+                </Text>
+              </PressableScale>
+            ) : null}
+
+            {/* New Session Button */}
+            {onCreateNewSession ? (
+              <PressableScale
+                testID="agent-composer-new-btn"
+                onPress={onCreateNewSession}
+                accessibilityLabel={t`New Session`}
+                style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
+                <Plus size={16} color={chromeText} strokeWidth={2.5} />
+              </PressableScale>
+            ) : null}
+
+            {/* Quick Agent Mode Popover Button */}
+            <PressableScale
+              testID="agent-composer-mode-btn"
+              onPress={() => {
+                setAttachmentMenuOpen(false);
+                setModeMenuOpen((prev) => !prev);
+              }}
+              accessibilityLabel={t`Select agent mode`}
+              style={[
+                styles.actionBtnWithLabel,
+                modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
+                { backgroundColor: surfaceBackground(chromeGlass) },
+              ]}>
+              <Sparkles size={14} color={theme.colors.primary} />
+              <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                {selectedAgent ?? 'build'}
+              </Text>
+            </PressableScale>
+
+            {/* OpenCode Tasks Button */}
+            {onOpenTasksSheet || (tasks && tasks.length > 0) ? (
+              <PressableScale
+                testID="agent-composer-tasks-btn"
+                onPress={onOpenTasksSheet}
+                accessibilityLabel={t`Tasks progress`}
+                style={[
+                  styles.actionBtnWithLabel,
+                  { backgroundColor: surfaceBackground(chromeGlass) },
+                ]}>
+                <CheckSquare
+                  size={14}
+                  color={
+                    tasks && tasks.length > 0 && tasks.every((t) => t.done)
+                      ? (theme.colors.success ?? '#22c55e')
+                      : theme.colors.primary
+                  }
+                />
+                <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                  {tasks && tasks.length > 0
+                    ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
+                    : t`Tasks`}
+                </Text>
+              </PressableScale>
+            ) : null}
+
+            {/* OpenCode Session Tokens Pill */}
+            {tokenDisplayStr ? (
+              <PressableScale
+                testID="agent-composer-tokens-pill"
+                onPress={() => {
+                  if (tokens) {
+                    showToast({
+                      variant: 'info',
+                      title: t`Session Tokens`,
+                      message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
+                    });
+                  }
+                }}
+                accessibilityLabel={t`Tokens usage`}
+                style={[
+                  styles.actionBtnWithLabel,
+                  { backgroundColor: surfaceBackground(chromeGlass) },
+                ]}>
+                <Cpu size={13} color={chromeText} />
+                <Text
+                  variant="caption"
+                  color={theme.colors.textMuted}
+                  style={styles.actionBtnLabel}>
+                  {tokenDisplayStr}
+                </Text>
+              </PressableScale>
+            ) : null}
+
+            {/* VCS Diff Button: only rendered when hasDiffs is true */}
+            {hasDiffs ? (
+              <PressableScale
+                onPress={onOpenDiffSheet}
+                accessibilityLabel={t`View file changes`}
+                style={[
+                  styles.actionBtn,
+                  {
+                    backgroundColor: withAlpha(theme.colors.primary, 0.18),
+                  },
+                ]}>
+                <GitCommit size={15} color={theme.colors.primary} />
+                <View style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]} />
+              </PressableScale>
+            ) : null}
+
+            {running ? (
+              <PressableScale
+                onPress={onAbort}
+                accessibilityLabel={t`Stop agent execution`}
+                style={[
+                  styles.actionBtnWithLabel,
+                  styles.stopActionBtn,
+                  { backgroundColor: theme.colors.danger },
+                ]}>
+                <Square size={12} color="#fff" />
+                <Text variant="caption" color="#fff" style={styles.actionBtnLabel}>
+                  <Trans>Stop</Trans>
+                </Text>
+              </PressableScale>
+            ) : null}
+          </ScrollView>
+
+          {/* Attachment staged preview strip */}
+          {attachmentUploads.attachments.length > 0 ? (
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOutDown('short')}
+              style={styles.stripWrapper}>
+              <AttachmentStrip
+                attachments={attachmentUploads.attachments}
+                onRemove={attachmentUploads.removeAttachment}
+                onRetry={attachmentUploads.retryUpload}
+                onPreview={() => {}}
+                textColor={chromeText}
+              />
+            </Animated.View>
+          ) : null}
+
+          {/* Uploading wait banner */}
+          {sending && attachmentUploads.uploading ? (
+            <Animated.View
+              entering={fadeIn('micro')}
+              exiting={fadeOut('micro')}
+              style={styles.uploadWait}>
+              <Spinner size="sm" color={theme.colors.textMuted} />
+              <Text variant="caption" color={theme.colors.textMuted}>
+                <Trans>Waiting for uploads to finish…</Trans>
+              </Text>
+            </Animated.View>
+          ) : null}
+
+          {/* TerminalComposer reused for agent prompt */}
+          <TerminalComposer
+            inputRef={inputRef}
+            leading={
+              <PressableScale
+                testID="agent-composer-attach"
+                accessibilityLabel={
+                  attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
+                }
+                disabled={sending}
+                onPress={() => setAttachmentMenuOpen((open) => !open)}
+                style={[
+                  composerStyles.button,
+                  { backgroundColor: surfaceBackground(chromeGlass) },
+                  attachmentMenuOpen
+                    ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
+                    : null,
+                ]}>
+                <Paperclip
+                  size={16}
+                  color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                />
+              </PressableScale>
+            }
+            inputProps={{
+              value: text,
+              onChangeText: setText,
+              placeholder: t`Send a message, type / for commands, @ for files…`,
+              editable: !sending,
+              testID: 'agent-composer-input',
+              selection: slashPopup.inputProps.selection,
+              onSelectionChange: handleSelectionChange,
+              onKeyPress: slashPopup.inputProps.onKeyPress,
+              onSubmitEditing: handleSend,
+            }}
+            send={{
+              accessibilityLabel: t`Send message`,
+              armed: (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) && !sending,
+              sending,
+              disabled: sending || (!text.trim() && attachmentUploads.attachments.length === 0),
+              onPress: handleSend,
+            }}
+          />
+        </View>
+      </GlassChrome>
+    </View>
+  );
+});
+
+const styles = StyleSheet.create({
+  dockOuter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 50,
+  },
+  composerFade: {
+    position: 'absolute',
+    top: -36,
+    left: 0,
+    right: 0,
+    height: 48,
+    pointerEvents: 'none',
+  },
+  composerDock: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  composerInner: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+  popupWrapper: {
+    paddingHorizontal: 12,
+    marginBottom: 6,
+  },
+  composerFloatingContent: {
+    width: '100%',
+    paddingHorizontal: 12,
+    marginBottom: 6,
+  },
+  composerPopup: {
+    width: '100%',
+    paddingHorizontal: 12,
+    marginBottom: 6,
+  },
+  stripWrapper: {
+    marginBottom: 6,
+  },
+  uploadWait: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    marginBottom: 4,
+  },
+  sessionStripViewport: {
+    marginBottom: 6,
+  },
+  sessionStripContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  sessionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 11,
+    borderCurve: 'continuous',
+  },
+  sessionChipAgentBadge: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sessionChipDot: {
+    fontSize: 10,
+    opacity: 0.7,
+  },
+  sessionChipTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  actionRowScroll: {
+    marginBottom: 8,
+  },
+  actionRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  actionBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    borderCurve: 'continuous',
+    position: 'relative',
+  },
+  actionKeyBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    borderCurve: 'continuous',
+  },
+  keyText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  actionBtnWithLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    height: 36,
+    paddingHorizontal: 10,
+    borderRadius: 11,
+    borderCurve: 'continuous',
+  },
+  actionBtnLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  stopActionBtn: {
+    paddingHorizontal: 10,
+  },
+  diffIndicator: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+});
