@@ -1528,7 +1528,7 @@
       },
       {
         "target": {
-          "text": "Close"
+          "text": "Refresh"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1565,7 +1565,7 @@
       },
       {
         "target": {
-          "text": "Close"
+          "text": "Refresh"
         },
         "mode": "scroll",
         "direction": "up",
@@ -1573,10 +1573,6 @@
         "run": "flows/demo-tour.ad#s19"
       },
       {
-        "target": {
-          "text": "Close"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s20"
       },
       {
@@ -6530,11 +6526,6 @@
         "run": "subflows/motion-p2-capture.ad#s37"
       },
       {
-        "target": {
-          "text": "Close"
-        },
-        "mode": "press",
-        "optional": true,
         "run": "subflows/motion-p2-capture.ad#s38"
       },
       {

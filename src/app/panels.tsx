@@ -14,6 +14,9 @@ import { usePanelPickerStore } from '@/stores/panel-picker';
  * nothing: inside a native form sheet the container's height is not resolved
  * when the percentage is measured, and `flex: 1` is what the other sheets in
  * this app use for exactly that reason.
+ *
+ * No `onClose` to hand down either: the sheet has no close button, because the
+ * grabber and the swipe are the close.
  */
 export default function PanelPickerScreen() {
   const { t } = useLingui();
@@ -35,7 +38,6 @@ export default function PanelPickerScreen() {
         choosePanel({ serverId: params.serverId, paneId });
         router.back();
       }}
-      onClose={() => router.back()}
     />
   );
 }
