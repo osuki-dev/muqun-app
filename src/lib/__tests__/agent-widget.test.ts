@@ -5,8 +5,15 @@ const { module: mockModule } = (
   bunTest as unknown as { mock: { module: (id: string, factory: () => unknown) => void } }
 ).mock;
 
+// `mock.module` is process-wide and first registration wins, so this fake has
+// to be identical to the ones `live-activity.test.ts` and
+// `markdown-style.test.ts` register -- otherwise whichever suite runs second
+// gets a React Native missing what it imports, and which suite that is depends
+// on the order bun happens to walk the files in. Nothing here reads `Platform`,
+// so the shared shape costs this suite nothing.
 mockModule('react-native', () => ({
-  Platform: { OS: 'android', Version: '34' },
+  Platform: { OS: 'ios', Version: '17.0' },
+  StyleSheet: { hairlineWidth: 0.5 },
 }));
 
 mockModule('expo-secure-store', () => ({
