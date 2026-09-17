@@ -44,9 +44,14 @@ function useModalHandoff(): boolean {
   const [ready, setReady] = useState(() => handoffRemainingMs() === 0);
   useEffect(() => {
     const remaining = handoffRemainingMs();
-    const timer = remaining > 0 ? setTimeout(() => setReady(true), remaining) : undefined;
+    if (remaining <= 0) {
+      return () => {
+        lastDialogClosedAt = Date.now();
+      };
+    }
+    const timer = setTimeout(() => setReady(true), remaining);
     return () => {
-      if (timer !== undefined) clearTimeout(timer);
+      clearTimeout(timer);
       lastDialogClosedAt = Date.now();
     };
   }, []);
@@ -155,7 +160,8 @@ export function SshKeyboardInteractiveDialog({
   }, []);
   const name = sanitizeServerText(challenge.name, 80);
   const instruction = sanitizeServerText(challenge.instruction);
-  const prompts = challenge.prompts.map((item) => ({
+  const prompts = challenge.prompts.map((item, promptIndex) => ({
+    id: `prompt-${promptIndex}-${item.prompt}`,
     label: sanitizeServerText(item.prompt, SERVER_LINE_LIMIT),
     echo: item.echo === true,
   }));
@@ -192,7 +198,7 @@ export function SshKeyboardInteractiveDialog({
       <View style={styles.prompts}>
         {prompts.map((item, index) => (
           <Input
-            key={index}
+            key={item.id}
             label={item.label || t`Answer`}
             value={answers[index] ?? ''}
             onChangeText={(value) =>

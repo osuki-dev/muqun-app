@@ -1124,7 +1124,12 @@ function EmptyState({
   const { t } = useLingui();
 
   const theme = useThemeTokens();
-  const corners = [styles.cornerTL, styles.cornerTR, styles.cornerBL, styles.cornerBR];
+  const corners = [
+    { id: 'tl', style: styles.cornerTL },
+    { id: 'tr', style: styles.cornerTR },
+    { id: 'bl', style: styles.cornerBL },
+    { id: 'br', style: styles.cornerBR },
+  ];
   const hasIllustration = useHasThemeArtwork('emptyState.illustration');
 
   return (
@@ -1152,10 +1157,10 @@ function EmptyState({
           </View>
         ) : (
           <View style={styles.scanFrame}>
-            {corners.map((corner, index) => (
+            {corners.map((corner) => (
               <View
-                key={index}
-                style={[styles.corner, corner, { borderColor: theme.colors.borderStrong }]}
+                key={corner.id}
+                style={[styles.corner, corner.style, { borderColor: theme.colors.borderStrong }]}
               />
             ))}
             <Server size={26} color={theme.colors.textMuted} strokeWidth={1.8} />

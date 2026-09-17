@@ -99,7 +99,8 @@ const defaults: QuickCommand[] = [
 
 export async function loadQuickCommands(mode: QuickCommandMode): Promise<QuickCommand[]> {
   const [custom, hidden] = await Promise.all([loadCustomCommands(), loadHiddenIds()]);
-  const visibleDefaults = defaults.filter((command) => !hidden.includes(command.id));
+  const hiddenSet = new Set(hidden);
+  const visibleDefaults = defaults.filter((command) => !hiddenSet.has(command.id));
   return [...visibleDefaults, ...custom].filter((command) => command.mode === mode);
 }
 

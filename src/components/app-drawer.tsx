@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { PanelsTopLeft } from 'lucide-react-native';
-import { useEffect, useState, type ReactNode } from 'react';
+import { isValidElement, useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -260,10 +260,17 @@ export default function AppDrawer({
                   style={styles.detailHeaderTitleMeasure}
                 />
               )}
-              {detailAccessories.map((accessory, index) => (
+              {detailAccessories.map((accessory, slot) => (
                 // Positional, because that is what the circle is: a slot in a
                 // fixed order, not one of a collection of identified things.
-                <NavHeaderCircle key={index}>{accessory}</NavHeaderCircle>
+                <NavHeaderCircle
+                  key={
+                    isValidElement(accessory) && accessory.key != null
+                      ? accessory.key
+                      : `accessory-slot-${slot}`
+                  }>
+                  {accessory}
+                </NavHeaderCircle>
               ))}
               {onDetailAction ? (
                 <NavHeaderCircle>

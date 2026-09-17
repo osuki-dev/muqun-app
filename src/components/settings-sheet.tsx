@@ -99,7 +99,7 @@ export function SettingsSheet({
           ground above it carries the shell's wallpaper, and the tint under
           that wallpaper is the one layer the opacity slider moves. */}
       <SheetFrame testID="settings-sheet-scene">
-        <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
+        <View collapsable={false} style={[styles.content, { maxWidth: contentMaxWidth }]}>
           {/* iOS draws the grabber itself; Android's form sheet does not, and a
           sheet with no handle reads as a screen that arrived from the wrong
           direction. The panels sheet carries the same two lines. */}

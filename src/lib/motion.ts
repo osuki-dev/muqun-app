@@ -107,6 +107,7 @@ export const STAGGER = {
 /** Muqun navigation: fluid transitions, depth reveals, and responsive header arrival. */
 export const NAVIGATION_MOTION = {
   pageMs: 280,
+  pageScale: 1.055,
   headerMs: 200,
   headerDistance: 6,
   modalMs: 320,

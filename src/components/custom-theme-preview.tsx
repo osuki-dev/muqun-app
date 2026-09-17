@@ -13,6 +13,25 @@ import { surfaceBackgroundFill, surfaceBackgroundOpacity } from '@/theme/surface
 import { clampThemeOpacity, jointArtworkOpacity } from '@/theme/opacity-policy';
 
 /** Fictional, noninteractive content: preview never changes global providers or connects a terminal. */
+const ANSI_SLOT_NAMES = [
+  'black',
+  'red',
+  'green',
+  'yellow',
+  'blue',
+  'magenta',
+  'cyan',
+  'white',
+  'bright-black',
+  'bright-red',
+  'bright-green',
+  'bright-yellow',
+  'bright-blue',
+  'bright-magenta',
+  'bright-cyan',
+  'bright-white',
+] as const;
+
 export function CustomThemePreview({
   manifest: authoredManifest,
   assets = {},
@@ -168,9 +187,9 @@ export function CustomThemePreview({
                 {'$ bun test'}
               </Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 3 }}>
-                {terminal.ansi.map((color, index) => (
+                {terminal.ansi.map((color, slot) => (
                   <View
-                    key={index}
+                    key={ANSI_SLOT_NAMES[slot] ?? `ansi-${slot}`}
                     style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: color }}
                   />
                 ))}

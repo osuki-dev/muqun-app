@@ -760,6 +760,7 @@ export function SkiaTerminal({
       // earlier output.
       const top = verticalPadding + (plan.startRow - plan.overhang) * lineHeight;
       return {
+        id: `chunk-${plan.index}-${plan.key}`,
         picture,
         transform: [{ translateY: top }],
         // Group clips apply after the group's own transform (saveCTM concats the
@@ -824,6 +825,12 @@ export function SkiaTerminal({
       sweepFrame.current = chunkCache.retiredCount > 0 ? requestAnimationFrame(sweep) : null;
     };
     sweepFrame.current = requestAnimationFrame(sweep);
+    return () => {
+      if (sweepFrame.current !== null) {
+        cancelAnimationFrame(sweepFrame.current);
+        sweepFrame.current = null;
+      }
+    };
   }, [chunkCache, chunkFrame, headBox]);
 
   // Same native-memory story for the font provider: a font-size change rebuilds
@@ -2927,7 +2934,7 @@ export function SkiaTerminal({
         <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
           <Fill color={canvasFill} />
           <Group transform={contentTransform}>
-            {chunkDraws.map((chunk, index) => (
+            {chunkDraws.map((chunk) => (
               // A block records its rows from its own first row down and is
               // placed by this transform, which is what lets a recording outlive
               // the rows underneath it scrolling: a streaming pane re-draws the
@@ -2939,7 +2946,7 @@ export function SkiaTerminal({
               // The key is positional on purpose: these are interchangeable
               // siblings, and keying by content would collide the moment two
               // blocks held the same rows.
-              <Group key={index} clip={chunk.clip} transform={chunk.transform}>
+              <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
                 <Picture picture={chunk.picture} />
               </Group>
             ))}
@@ -2950,9 +2957,9 @@ export function SkiaTerminal({
               the text it is describing stays readable through it -- the reader
               is checking what they grabbed.
             */}
-            {highlightRects.map((highlight, index) => (
+            {highlightRects.map((highlight) => (
               <Rect
-                key={index}
+                key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
                 x={highlight.x}
                 y={highlight.y}
                 width={highlight.width}
@@ -3133,6 +3140,7 @@ function resetTwoFingers(tracking: TwoFingerTracking) {
 }
 
 type TerminalChunkDraw = {
+  id: string;
   picture: SkPicture;
   transform: { translateY: number }[];
   clip: SkRect | undefined;

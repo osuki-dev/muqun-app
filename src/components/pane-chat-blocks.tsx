@@ -405,8 +405,8 @@ const TodoCard = memo(function TodoCard({
         styles.agentAlign,
         { backgroundColor: surfaceBackground(colors.surfaceRaised) },
       ]}>
-      {part.items.map((item, index) => (
-        <View key={`${index}-${item.text}`} style={styles.todoItem}>
+      {part.items.map((item, itemPosition) => (
+        <View key={`todo-${itemPosition}-${item.text}`} style={styles.todoItem}>
           <View
             style={[
               styles.todoBox,
@@ -456,13 +456,13 @@ const DiffRow = memo(function DiffRow({
           above it, which is the only thing a diff is read for. */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View>
-          {lines.map((line, index) => {
+          {lines.map((line, linePosition) => {
             const marker = line.charAt(0);
             const added = marker === '+';
             const removed = marker === '-';
             return (
               <Text
-                key={`${index}-${line}`}
+                key={`diff-line-${linePosition}-${line.slice(0, 16)}`}
                 selectable
                 style={[
                   styles.diffLine,

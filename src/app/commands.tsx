@@ -1357,12 +1357,12 @@ function KeyCaps({ keys }: { keys: string[] }) {
   const fill = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
   return (
     <View style={styles.keyCaps}>
-      {keys.map((key, index) => (
+      {keys.map((keyCap, position) => (
         <View
-          key={`${key}-${index}`}
+          key={`key-${position}-${keyCap}`}
           style={[styles.keyCap, { backgroundColor: surfaceBackground(fill) }]}>
           <Text variant="caption" color={theme.colors.text} style={styles.keyCapText}>
-            {key}
+            {keyCap}
           </Text>
         </View>
       ))}

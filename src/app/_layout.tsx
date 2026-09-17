@@ -333,19 +333,13 @@ function RootContent() {
               name="panels"
               options={sheetPresentationOptions(sheetRoutePresentations['panels'], false, true)}
             />
-            {/*
-              The session switcher. Content-sized like the language
-              picker, and for the same reason: it is a short closed list, one
-              row per backend the gateway runs, and a full-height sheet for two
-              rows would be the app implying the question is bigger than it is.
-              It is also only ever reachable from a gateway that has more than
-              one session to offer.
-            */}
+            {/* Machine/session results can grow asynchronously. Give the scroll
+                root a bounded viewport instead of circular fit-to-content sizing. */}
             <Stack.Screen
               name="sessions"
               options={{
                 presentation: 'formSheet',
-                sheetAllowedDetents: 'fitToContents',
+                sheetAllowedDetents: [0.65, 0.9],
                 sheetGrabberVisible: true,
                 contentStyle: { backgroundColor: 'transparent' },
               }}

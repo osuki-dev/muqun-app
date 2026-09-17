@@ -577,11 +577,15 @@ function textItem(
 
 function activityItem(steps: PaneChatActivityPart[]): PaneChatItem {
   const tools: string[] = [];
+  const toolSet = new Set<string>();
   let status: PanePartStatus = 'ok';
   let signature = `activity|${steps.length}`;
   for (const step of steps) {
     const name = activityStepName(step);
-    if (!tools.includes(name)) tools.push(name);
+    if (!toolSet.has(name)) {
+      toolSet.add(name);
+      tools.push(name);
+    }
     // Worst news wins: one failed step in a run of twenty is the thing worth
     // seeing from a collapsed row. A diff or a checklist carries no status of
     // its own -- it is the result of the call above it, which does.

@@ -188,13 +188,18 @@ function ThemePackTile({
  * one semantic outline in this grid; the preview surfaces themselves stay
  * borderless like the rest of the app.
  */
+const SWATCH_DOT_ROLES = ['primary', 'info', 'warning'] as const;
+
 function ThemePreview({ pack, mode }: { pack: ThemePack; mode: 'light' | 'dark' }) {
   const swatch = themeSwatch(pack, mode);
   return (
     <View style={[styles.preview, { backgroundColor: swatch[0] }]}>
       <View style={styles.previewDots}>
-        {swatch.slice(1).map((color, index) => (
-          <View key={`${mode}-${index}`} style={[styles.previewDot, { backgroundColor: color }]} />
+        {swatch.slice(1).map((color, dotIndex) => (
+          <View
+            key={`${mode}-${SWATCH_DOT_ROLES[dotIndex] ?? dotIndex}`}
+            style={[styles.previewDot, { backgroundColor: color }]}
+          />
         ))}
       </View>
     </View>

@@ -233,15 +233,16 @@ export function VirtualKeyboard({
         </VirtualKey>
       </View>
 
-      {rows.map((row, index) => {
-        const last = index === rows.length - 1;
+      {rows.map((row, rowIndex) => {
+        const last = rowIndex === rows.length - 1;
+        const rowId = row.slice(0, 3).join('') || `row-${rowIndex}`;
         // A middle row is centred under the row above it: half a key on each
         // side for the letters, none at all for the symbol pages, which are ten
         // wide. Stated as what the stagger *is* rather than as a padding that
         // happens to look right on one screen.
         const lead = last ? 0 : (ROW_UNITS - row.length) / 2;
         return (
-          <View key={`row-${index}`} style={styles.row}>
+          <View key={`row-${rowId}`} style={styles.row}>
             {lead > 0 ? <View style={{ flex: lead }} /> : null}
             {last ? (
               <ShiftKey

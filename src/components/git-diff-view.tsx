@@ -313,7 +313,8 @@ export function GitDiffView({
       const next = openFile(expandedOrder, path);
       setExpandedOrder(next);
       // Past the cap, the least recently expanded file goes with it.
-      dropPatches(expandedOrder.filter((entry) => !next.includes(entry)));
+      const nextSet = new Set(next);
+      dropPatches(expandedOrder.filter((entry) => !nextSet.has(entry)));
     },
     [dropPatches, expandedOrder]
   );

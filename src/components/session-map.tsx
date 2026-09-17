@@ -559,8 +559,8 @@ export function SessionMap({
 
         <View style={[styles.groups, gridLayout.columns > 1 ? styles.groupGrid : null]}>
           {showSkeleton
-            ? Array.from({ length: gridLayout.columns }, (_, index) => (
-                <SessionMapSkeleton key={index} width={gridLayout.itemWidth} />
+            ? Array.from({ length: gridLayout.columns }, (_, column) => (
+                <SessionMapSkeleton key={`skeleton-col-${column}`} width={gridLayout.itemWidth} />
               ))
             : null}
 

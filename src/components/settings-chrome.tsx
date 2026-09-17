@@ -18,7 +18,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  */
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
-import { Children, Fragment, type ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -189,9 +189,10 @@ export function SettingsCard({ children }: { children: ReactNode }) {
       slot="cards.decoration"
       baseColor={theme.colors.surface}
       style={styles.sectionBody}>
-      {rows.map((row, index) => (
-        <Fragment key={index}>
-          {index > 0 ? <SettingsSeparator /> : null}
+      {rows.map((row, position) => (
+        <Fragment
+          key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
+          {position > 0 ? <SettingsSeparator /> : null}
           {row}
         </Fragment>
       ))}

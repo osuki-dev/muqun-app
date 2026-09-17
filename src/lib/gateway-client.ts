@@ -968,9 +968,9 @@ export async function listSessionAssets(
 ): Promise<SessionAsset[]> {
   if (isDemoActive()) {
     const assets = demoSessionAssets();
-    return options.kind?.length
-      ? assets.filter((asset) => options.kind?.includes(asset.kind))
-      : assets;
+    if (!options.kind?.length) return assets;
+    const kindSet = new Set(options.kind);
+    return assets.filter((asset) => kindSet.has(asset.kind));
   }
 
   const limit = Math.max(

@@ -488,7 +488,9 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const { editRecord } = useGatewayRecord();
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- intentional initial form state for server editing.
   const [label, setLabel] = useState(server.label);
+  // react-doctor-disable-next-line react-doctor/no-derived-useState -- intentional initial form state for server editing.
   const [url, setUrl] = useState(server.url);
   const [labelError, setLabelError] = useState<string | undefined>(undefined);
   const [urlError, setUrlError] = useState<string | undefined>(undefined);
