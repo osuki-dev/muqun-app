@@ -649,6 +649,15 @@ export class NativeRunner {
       let result: Record<string, unknown>;
       try {
         result = await this.invoke(args);
+        // An atomic `fill` can race the IME: agent-device then reports the
+        // set as `unconfirmed` and the field is left with whatever the editor
+        // settled on. One more attempt after the field is stable is the same
+        // trust boundary as a dialog press -- the second result is the one
+        // that is checked.
+        if (args[0] === 'fill' && result.verification === 'unconfirmed') {
+          await this.invoke(['wait', 'stable', '300', '5000']);
+          result = await this.invoke(args);
+        }
       } catch (error) {
         const detail = error instanceof NativeCommandError ? error.details : undefined;
         if (
