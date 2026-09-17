@@ -99,7 +99,12 @@ is visible "id=theme-browse"
 wait "id=theme-browse-empty" 40000
 is visible "id=theme-browse-retry"
 screenshot dist/theme-browse-offline.png
-press "label=\"Close theme catalogue\""
+# The catalogue is a form sheet now, so there is no "Close theme catalogue" to
+# press: the grabber and the swipe are the close. System back is the same
+# gesture a reader has, and it is what the settings flow already dismisses a
+# form sheet with. What it lands on is the theme picker, which is the sheet
+# this one was opened from.
+back --system
 wait stable 400 5000
 is visible "id=theme-browse"
 

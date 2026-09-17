@@ -29,13 +29,14 @@ press "${TARGET}"
 scroll up --pixels 320
 
 # section reset-theme
-# Selected by testID, not by role. The tile declares
-# `accessibilityRole="radio"`, and the two runtimes report that differently:
-# iOS surfaces it as a cell, Android as `android.widget.RadioButton`. A flow
-# that names either one passes on that platform and fails on the other, which
+# Selected by testID, not by role. A pack used to be a tile declaring
+# `accessibilityRole="radio"`, and the two runtimes reported that differently:
+# iOS surfaced it as a cell, Android as `android.widget.RadioButton`. A flow
+# that named either one passed on that platform and failed on the other, which
 # is exactly what `role=cell` did here -- green on iOS for as long as nobody
-# ran it on Android. The id carries the selection state, so the manifest
-# matches it with the same `(on|off)` pattern the scroll steps already use.
+# ran it on Android. The picker is a column of scene rows now and a row is a
+# button on both, but the id is still what this matches: it carries the
+# selection state, with the same `(on|off)` pattern the scroll steps use.
 press "${TARGET}"
 wait stable 400 5000
 
