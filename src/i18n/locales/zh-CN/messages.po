@@ -343,7 +343,7 @@ msgid "All panes"
 msgstr "所有面板"
 
 #: src/components/agent-composer.tsx
-msgid "All Sessions"
+msgid "All sessions"
 msgstr "全部会话"
 
 #: src/components/agent-sessions-sheet.tsx

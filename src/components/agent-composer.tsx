@@ -876,12 +876,13 @@ export const AgentComposer = memo(function AgentComposer({
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.actionRowContent}
                 style={styles.actionRowScroll}>
-                {/* All Sessions Button (Icon-only) */}
+                {/* All-sessions button (icon only) */}
                 {onOpenSessionsSheet ? (
                   <PressableScale
                     testID="agent-composer-sessions-btn"
                     onPress={onOpenSessionsSheet}
-                    accessibilityLabel={t`All Sessions`}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`All sessions`}
                     style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
                     <Layers size={16} color={chromeText} />
                   </PressableScale>
@@ -899,6 +900,7 @@ export const AgentComposer = memo(function AgentComposer({
                       setModeMenuOpen((prev) => !prev);
                     }
                   }}
+                  accessibilityRole="button"
                   accessibilityLabel={t`Select agent mode`}
                   style={[
                     styles.actionBtnWithLabel,
@@ -919,6 +921,7 @@ export const AgentComposer = memo(function AgentComposer({
                   <PressableScale
                     testID="agent-composer-model-btn"
                     onPress={onOpenModelSheet}
+                    accessibilityRole="button"
                     accessibilityLabel={t`Select model: ${modelDisplayName}`}
                     style={[
                       styles.actionBtnWithLabel,
@@ -936,6 +939,7 @@ export const AgentComposer = memo(function AgentComposer({
                   <PressableScale
                     testID="agent-composer-tasks-btn"
                     onPress={onOpenTasksSheet}
+                    accessibilityRole="button"
                     accessibilityLabel={t`Tasks progress`}
                     style={[
                       styles.actionBtnWithLabel,
@@ -986,6 +990,7 @@ export const AgentComposer = memo(function AgentComposer({
                   <PressableScale
                     testID="agent-composer-background-pill"
                     onPress={onOpenBackgroundTray}
+                    accessibilityRole="button"
                     accessibilityLabel={t`${backgroundCount} running in the background`}
                     style={[
                       styles.actionBtnWithLabel,
@@ -1019,6 +1024,7 @@ export const AgentComposer = memo(function AgentComposer({
                         });
                       }
                     }}
+                    accessibilityRole="button"
                     accessibilityLabel={
                       contextPill.ratio === null
                         ? t`Tokens usage and cost`
@@ -1067,6 +1073,7 @@ export const AgentComposer = memo(function AgentComposer({
                 {hasDiffs ? (
                   <PressableScale
                     onPress={onOpenDiffSheet}
+                    accessibilityRole="button"
                     accessibilityLabel={t`View file changes`}
                     style={[
                       styles.actionBtn,
@@ -1091,6 +1098,7 @@ export const AgentComposer = memo(function AgentComposer({
                       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
                     }}
+                    accessibilityRole="button"
                     accessibilityLabel={
                       deliveryMode === 'steer'
                         ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
@@ -1139,6 +1147,7 @@ export const AgentComposer = memo(function AgentComposer({
                 {running ? (
                   <PressableScale
                     onPress={onAbort}
+                    accessibilityRole="button"
                     accessibilityLabel={t`Stop agent execution`}
                     style={[
                       styles.actionBtnWithLabel,
@@ -1195,6 +1204,8 @@ export const AgentComposer = memo(function AgentComposer({
                 leading={
                   <PressableScale
                     testID="agent-composer-attach"
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: attachmentMenuOpen }}
                     accessibilityLabel={
                       attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
                     }

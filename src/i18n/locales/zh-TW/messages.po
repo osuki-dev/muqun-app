@@ -343,8 +343,8 @@ msgid "All panes"
 msgstr "所有面板"
 
 #: src/components/agent-composer.tsx
-msgid "All Sessions"
-msgstr "所有工作階段"
+msgid "All sessions"
+msgstr "全部工作階段"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "All workspaces"

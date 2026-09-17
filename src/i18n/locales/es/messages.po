@@ -343,7 +343,7 @@ msgid "All panes"
 msgstr "Todos los paneles"
 
 #: src/components/agent-composer.tsx
-msgid "All Sessions"
+msgid "All sessions"
 msgstr "Todas las sesiones"
 
 #: src/components/agent-sessions-sheet.tsx
