@@ -62,6 +62,12 @@ describe('readSlashCommand', () => {
       name: 'export',
       args: '',
     });
+    // `/clear` is a listed command rather than a string the send path matches.
+    expect(readSlashCommand('/clear', SERVER)).toEqual({
+      kind: 'client',
+      name: 'clear',
+      args: '',
+    });
   });
 
   test('the host wins over the app for the same name', () => {
@@ -88,7 +94,7 @@ describe('readSlashCommand', () => {
     }
   });
 
-  test('the menu carries the eight the app answers', () => {
+  test('the menu carries the nine the app answers', () => {
     expect(AGENT_CLIENT_COMMANDS.map((command) => command.name)).toEqual([
       '/new',
       '/sessions',
@@ -97,6 +103,7 @@ describe('readSlashCommand', () => {
       '/undo',
       '/redo',
       '/compact',
+      '/clear',
       '/export',
     ]);
   });

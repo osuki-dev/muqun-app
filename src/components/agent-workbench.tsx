@@ -1013,18 +1013,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ) => {
-    // The two client-side commands that used to be typed at the model and
-    // hoped for. Both are real actions now, so neither reaches the prompt.
-    const command = text.trim().toLowerCase();
-    if (command === '/compact' && !attachments?.length) {
-      handleCompactContext();
-      return;
-    }
-    if (command === '/clear' && !attachments?.length) {
-      handleClearContext();
-      return;
-    }
-
     let currentAsid = activeAsid;
     if (!currentAsid) {
       try {

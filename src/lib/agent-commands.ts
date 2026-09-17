@@ -40,6 +40,7 @@ export const AGENT_CLIENT_COMMANDS: readonly AgentClientCommand[] = Object.freez
   Object.freeze({ id: 'undo' as const, name: '/undo' }),
   Object.freeze({ id: 'redo' as const, name: '/redo' }),
   Object.freeze({ id: 'compact' as const, name: '/compact' }),
+  Object.freeze({ id: 'clear' as const, name: '/clear' }),
   Object.freeze({ id: 'export' as const, name: '/export' }),
 ]);
 
