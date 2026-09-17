@@ -1080,7 +1080,7 @@ function ServerCard({
               change between "nothing" and "a button" once capabilities
               finish loading, rather than the slot popping into existence. */}
           <Animated.View style={styles.serverTrailing} layout={listLayout()}>
-            {reachability === 'live' ? (
+            {reachability === 'live' || Boolean(server.sshTunnel) ? (
               <NewTaskAction serverId={server.serverId} label={server.label} />
             ) : null}
           </Animated.View>
