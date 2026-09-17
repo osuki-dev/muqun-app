@@ -1,9 +1,9 @@
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { PressableCard, Stack, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
+import { PressableCard, Stack, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { ComposerPopupRow } from '@/lib/composer-popup';
@@ -164,24 +164,35 @@ export function ComposerPopup({
                       say: `/review` shipped with the agent and `/review` written
                       into this repo do different work. */}
                     {row.badge ? (
-                      // `Tag` paints an opaque `surfaceRaised` and the app's
-                      // style is merged after the kit's. Painting it through
-                      // the hook instead would put a second fill at the
-                      // reader's alpha directly on top of the row card's own,
+                      // The kit's `Tag` would do this, and it types its label
+                      // in capitals -- WORKSPACE beside a sentence-case name
+                      // and a sentence-case description, in an app that had
+                      // already stopped shouting everywhere else. It is the
+                      // same pill written out, in one case.
+                      //
+                      // The fill is the row card's own: painting an opaque
+                      // `surfaceRaised` through the hook instead would put a
+                      // second fill at the reader's alpha on top of the card's,
                       // and the badge would show the wallpaper at (1 - a)
                       // squared where the rest of the row shows it at (1 - a)
                       // -- the stacking `themed-tabs.tsx` takes apart. One
-                      // layer per pixel, and the row card is already that
-                      // layer, so under a custom theme the badge gives up its
-                      // fill and keeps its uppercase muted label. A default
-                      // theme has no alpha to honour and keeps the kit's pill.
-                      <Tag
-                        variant="pill"
-                        style={
-                          surfaceOpacity === 1 ? undefined : { backgroundColor: 'transparent' }
-                        }>
-                        {row.badge}
-                      </Tag>
+                      // layer per pixel, so under a custom theme the badge
+                      // gives up its fill and keeps its muted label.
+                      <View
+                        style={[
+                          styles.badge,
+                          surfaceOpacity === 1
+                            ? { backgroundColor: theme.colors.surfaceRaised }
+                            : null,
+                        ]}>
+                        <Text
+                          variant="caption"
+                          transform="none"
+                          color={theme.colors.textMuted}
+                          numberOfLines={1}>
+                          {row.badge === 'workspace' ? t`Workspace` : row.badge}
+                        </Text>
+                      </View>
                     ) : null}
                   </Stack>
                 </PressableCard>
@@ -193,3 +204,12 @@ export function ComposerPopup({
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+  },
+});

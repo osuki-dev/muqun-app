@@ -173,8 +173,8 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
       header={
         <SheetSceneSearch
           testID="agent-workspace-search-input"
-          accessibilityLabel={t`Filter projects or type a path`}
-          placeholder={t`Filter projects, or type a path`}
+          accessibilityLabel={t`Filter workspaces or type a path`}
+          placeholder={t`Filter workspaces, or type a path`}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -195,7 +195,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
               <SheetSceneRow
                 testID="agent-workspace-custom-path-btn"
                 title={typedPath}
-                caption={t`Open as a project workspace`}
+                caption={t`Open as a workspace`}
                 leading={<FolderGit2 size={17} color={theme.colors.primary} />}
                 onPress={() => choose(typedPath)}
               />
@@ -228,8 +228,8 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
               <View style={styles.empty}>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
                   {searchQuery.trim()
-                    ? t`No projects match “${searchQuery.trim()}”.`
-                    : t`No projects here yet. Type a path above to open one.`}
+                    ? t`No workspaces match “${searchQuery.trim()}”.`
+                    : t`No workspaces here yet. Type a path above to open one.`}
                 </Text>
               </View>
             ) : (

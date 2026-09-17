@@ -74,7 +74,7 @@ import {
   readSlashCommand,
   type AgentClientCommandId,
 } from '@/lib/agent-commands';
-import { agentClientCommandDescription } from '@/i18n/labels';
+import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
 import {
   contextFillRatio,
   contextTokenTotal,
@@ -413,13 +413,17 @@ export const AgentComposer = memo(function AgentComposer({
 
   const serverCommands: PaneSlashCommand[] = useMemo(
     () =>
-      commands.map((command) => ({
-        name: command.name.startsWith('/') ? command.name : `/${command.name}`,
-        description: command.description ?? command.agent ?? '',
-        argsHint: command.template ? '…' : '',
-        source: 'workspace' as const,
-      })),
-    [commands]
+      commands.map((command) => {
+        const key = command.name.replace(/^\//, '');
+        const known = agentHostCommandDescription[key];
+        return {
+          name: command.name.startsWith('/') ? command.name : `/${command.name}`,
+          description: known ? _(known) : (command.description ?? command.agent ?? ''),
+          argsHint: command.template ? '…' : '',
+          source: 'workspace' as const,
+        };
+      }),
+    [commands, _]
   );
 
   const skillCommands: PaneSlashCommand[] = useMemo(
