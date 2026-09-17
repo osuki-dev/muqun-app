@@ -121,6 +121,7 @@ const MessageAttachments = memo(function MessageAttachments({
 const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useTranscriptPlate();
 
   const [expanded, setExpanded] = useState(false);
   const notice = useMemo((): { Icon: typeof Cpu; text: string; label?: string } | null => {
@@ -175,7 +176,7 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
       accessibilityRole={foldable ? 'button' : undefined}
       accessibilityState={foldable ? { expanded } : undefined}
       onPress={foldable ? () => setExpanded((v) => !v) : undefined}
-      style={styles.noticeRow}>
+      style={[styles.noticeRow, styles.noticeBlock, plate]}>
       <Icon size={11} color={theme.colors.textMuted} style={styles.noticeIcon} />
       <View style={styles.noticeCopy}>
         {label ? (
@@ -967,6 +968,15 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
   'shell',
   'todo',
   'compaction',
+  // Notices draw their own compact plate.
+  'model_switched',
+  'agent_switched',
+  'location_switched',
+  'skill',
+  'synthetic',
+  'system',
+  'unsupported',
+  'status',
 ]);
 
 const styles = StyleSheet.create({
@@ -1041,7 +1051,16 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   noticeIcon: { marginTop: 3 },
-  noticeCopy: { flex: 1, minWidth: 0, gap: 2 },
+  // Shrinks, never grows: inside a plate that hugs its content a `flex: 1`
+  // column measures to nothing and the row collapses to its icon.
+  noticeCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
+  noticeBlock: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    marginVertical: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
   noticeRow: {
     flexDirection: 'row',
