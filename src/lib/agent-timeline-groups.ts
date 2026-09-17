@@ -68,3 +68,40 @@ export function buildTimelineGroups(
   }
   return groups;
 }
+
+/**
+ * The previous render's groups, so `buildTimelineGroups` can reuse them.
+ *
+ * A plain box rather than a React ref: a ref written while rendering is a ref
+ * React may throw away, and `react/refs` forbids it. Filling this during render
+ * is safe where a ref is not, because the operation is idempotent -- calling
+ * `buildTimelineGroupsCached` twice with the same items returns the identical
+ * group objects the second time, which is exactly what Strict Mode's double
+ * render does.
+ */
+export interface TimelineGroupCache {
+  last: readonly TimelineRenderGroup[];
+}
+
+export function createTimelineGroupCache(): TimelineGroupCache {
+  return { last: [] };
+}
+
+/**
+ * Group the timeline, reusing every group the last call produced that has not
+ * changed.
+ *
+ * This is the half of the identity deal the list's `itemsAreEqual` depends on:
+ * a group whose object is the same object has not changed, guaranteed here
+ * rather than re-derived per cell. Without it every group is a new object on
+ * every SSE tick, and a streamed reply re-renders the whole visible list
+ * instead of one cell.
+ */
+export function buildTimelineGroupsCached(
+  cache: TimelineGroupCache,
+  items: TimelineItem[]
+): TimelineRenderGroup[] {
+  const next = buildTimelineGroups(items, cache.last);
+  cache.last = next;
+  return next;
+}

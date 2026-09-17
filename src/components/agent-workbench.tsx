@@ -67,7 +67,11 @@ import {
 } from '@/stores/agent-sheet-bridge';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { AgentAssistantMessage, AgentUserMessage } from './agent-message-block';
-import { buildTimelineGroups, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
+import {
+  buildTimelineGroupsCached,
+  createTimelineGroupCache,
+  type TimelineRenderGroup,
+} from '@/lib/agent-timeline-groups';
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
 import { AgentComposer } from './agent-composer';
@@ -952,9 +956,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   // Group the window back into whole messages, the shape OpenCode's own UI
   // renders: reasoning and tool calls fold into the message they belong to.
-  // `buildTimelineGroups` reuses untouched group objects across renders, so
-  // memoised cells for other messages skip re-rendering on a stream tick.
-  const renderGroups = useMemo(() => buildTimelineGroups(visibleTimeline), [visibleTimeline]);
+  //
+  // Through the cache, so a group whose items have not changed comes back as
+  // the *same object*. That is what `itemsAreEqual` below is asserting, and
+  // it is why one message streaming costs one cell re-render rather than the
+  // whole visible list. The builder was already written to do this; nothing
+  // was passing it the previous render's groups.
+  const groupCache = useMemo(() => createTimelineGroupCache(), []);
+  const renderGroups = useMemo(
+    () => buildTimelineGroupsCached(groupCache, visibleTimeline),
+    [groupCache, visibleTimeline]
+  );
 
   // The group the reader is looking at when an earlier page is requested, so
   // the prepend can be anchored to it instead of jumping the viewport.
@@ -1332,11 +1344,48 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         <LegendList<TimelineRenderGroup>
           ref={listRef}
           data={renderGroups}
-          keyExtractor={(group) => group.key}
+          keyExtractor={keyOfGroup}
           renderItem={renderTimelineItem}
+          /*
+            Never, and this one is load-bearing rather than a preference. An
+            assistant cell renders `EnrichedMarkdownText`, whose native view
+            compares the incoming markdown against the last string it drew and
+            re-parses when they differ -- which a recycle always makes them.
+            Turning this on for "performance" would silently put a native
+            markdown parse on every cell of every scroll.
+            See docs/git-diff-viewer.md:362-380.
+          */
           recycleItems={false}
+          /*
+            The other half of the identity deal, stated to the list itself: a
+            group whose object has not changed has not changed.
+            `buildTimelineGroupsCached` guarantees exactly that, so the
+            strictest comparison is also the correct one, and the cheapest.
+          */
+          itemsAreEqual={groupsAreEqual}
+          /*
+            A user bubble, an assistant card carrying six tool shells and a diff
+            block are wildly different heights, and one flat average across all
+            of them is what makes a virtualised list jump when content lands
+            above the viewport. The role is already the right bucket, so the
+            list learns a size per kind instead.
+          */
+          getItemType={groupTypeOf}
           estimatedItemSize={70}
           initialScrollAtEnd={true}
+          /*
+            The reader's place across a change of *data* -- which is what
+            "Load earlier messages" is here: the window comes back longer at the
+            top, and the message they were reading has to stay under their eyes.
+            The default covers rows changing size and skips that case.
+          */
+          maintainVisibleContentPosition={MAINTAIN_TIMELINE_POSITION}
+          /*
+            Follow the newest message, but only for a reader already at it --
+            that is the threshold's job. New output must never move the viewport
+            of someone who has scrolled up, which is also why there is no manual
+            `scrollToEnd` on a stream tick.
+          */
           maintainScrollAtEnd={true}
           maintainScrollAtEndThreshold={0.1}
           onScroll={handleTimelineScroll}
@@ -1452,6 +1501,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     </View>
   );
 });
+
+function keyOfGroup(group: TimelineRenderGroup): string {
+  return group.key;
+}
+
+/** The role is the size bucket: see `getItemType` above. */
+function groupTypeOf(group: TimelineRenderGroup): string {
+  return group.role;
+}
+
+function groupsAreEqual(previous: TimelineRenderGroup, next: TimelineRenderGroup): boolean {
+  return previous === next;
+}
+
+/** Anchor on a change of data, not only on rows changing size. */
+const MAINTAIN_TIMELINE_POSITION = { data: true, size: true } as const;
 
 const styles = StyleSheet.create({
   root: {
