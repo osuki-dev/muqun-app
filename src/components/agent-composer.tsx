@@ -12,6 +12,7 @@ import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
+  AlertCircle,
   ArrowLeft,
   Bot,
   CheckSquare,
@@ -227,11 +228,23 @@ export interface AgentComposerProps {
   contextUsage?: AgentContextUsage | null;
   /** The session's own context window, when the engine stated one. */
   contextLimit?: number;
-  /** Non-null only while a compaction is running. */
-  compaction?: { status: 'running'; reason: CompactionReason } | null;
+  /** A compaction in flight, or one that failed and has not been read yet. */
+  compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
+  onDismissCompaction?: () => void;
   cost?: number;
   sessionTitle?: string;
-  onSend: (text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<void>;
+  /**
+   * Send it. Answers whether the engine accepted it.
+   *
+   * The draft and the staged attachments are cleared on the strength of that
+   * answer, and only on it -- a refusal used to clear both anyway, so the
+   * reader lost what they had written to a gateway that was not listening.
+   */
+  onSend: (
+    text: string,
+    attachments?: string[],
+    delivery?: 'steer' | 'queue'
+  ) => Promise<boolean | void>;
   onAbort: () => Promise<void>;
   onSelectSession?: (asid: string) => void;
   onSelectAgentMode?: (agent: string) => void;
@@ -277,6 +290,7 @@ export const AgentComposer = memo(function AgentComposer({
   contextUsage,
   contextLimit,
   compaction,
+  onDismissCompaction,
   cost,
   sessionTitle,
   onSend,
@@ -510,11 +524,14 @@ export const AgentComposer = memo(function AgentComposer({
         }
         uploadedFilePaths = paths;
       }
-      await onSend(
+      const accepted = await onSend(
         trimmed,
         uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined,
         running ? deliveryMode : undefined
       );
+      // `void` from a caller that does not report is taken as accepted, which
+      // is the behaviour every other composer in this app has.
+      if (accepted === false) return;
       setText('');
       attachmentUploads.clearAttachments();
     } finally {
@@ -662,7 +679,13 @@ export const AgentComposer = memo(function AgentComposer({
 
       {/* A compaction in flight. Transient, above the dock, and gone the
           moment the boundary lands in the timeline as a row of its own. */}
-      {compaction ? <CompactionPill reason={compaction.reason} /> : null}
+      {compaction ? (
+        <CompactionPill
+          status={compaction.status}
+          reason={compaction.reason}
+          {...(onDismissCompaction ? { onDismiss: onDismissCompaction } : {})}
+        />
+      ) : null}
 
       <GlassChrome surface="composer" style={styles.composerDock}>
         <View style={[styles.composerInner, { paddingBottom: Math.max(10, bottomInset + 6) }]}>
@@ -1079,18 +1102,29 @@ export const AgentComposer = memo(function AgentComposer({
  * running: the boundary does not reach the timeline until it finishes, so
  * without this the reader watches a quiet agent and wonders what it is doing.
  */
-const CompactionPill = memo(function CompactionPill({ reason }: { reason: CompactionReason }) {
+const CompactionPill = memo(function CompactionPill({
+  status,
+  reason,
+  onDismiss,
+}: {
+  status: 'running' | 'failed';
+  reason: CompactionReason;
+  onDismiss?: () => void;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const failed = status === 'failed';
 
-  const pulse = useSharedValue(0.4);
+  const pulse = useSharedValue(failed ? 1 : 0.4);
   useEffect(() => {
-    pulse.value = withRepeat(
-      withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
-      -1
-    );
-  }, [pulse]);
+    pulse.value = failed
+      ? withTiming(1, timing('micro'))
+      : withRepeat(
+          withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
+          -1
+        );
+  }, [failed, pulse]);
   const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
 
   return (
@@ -1098,21 +1132,37 @@ const CompactionPill = memo(function CompactionPill({ reason }: { reason: Compac
       entering={fadeIn('micro')}
       exiting={fadeOut('micro')}
       style={styles.compactionPillWrap}>
-      <View
+      <PressableScale
+        testID="agent-composer-compaction-pill"
+        accessibilityRole={failed ? 'button' : 'progressbar'}
+        accessibilityLabel={failed ? t`Compaction failed — tap to dismiss` : t`Compacting context…`}
+        disabled={!failed || !onDismiss}
+        onPress={onDismiss}
         style={[
           styles.compactionPill,
           {
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-            borderColor: theme.colors.border,
+            borderColor: failed ? theme.colors.danger : theme.colors.border,
           },
         ]}>
         <Animated.View style={pulseStyle}>
-          <Loader size={12} color={theme.colors.primary} />
+          {failed ? (
+            <AlertCircle size={12} color={theme.colors.danger} />
+          ) : (
+            <Loader size={12} color={theme.colors.primary} />
+          )}
         </Animated.View>
-        <Text variant="caption" weight="semibold" color={theme.colors.text}>
-          {reason === 'manual' ? t`Compacting context…` : t`Compacting context automatically…`}
+        <Text
+          variant="caption"
+          weight="semibold"
+          color={failed ? theme.colors.danger : theme.colors.text}>
+          {failed
+            ? t`Compaction failed`
+            : reason === 'manual'
+              ? t`Compacting context…`
+              : t`Compacting context automatically…`}
         </Text>
-      </View>
+      </PressableScale>
     </Animated.View>
   );
 });

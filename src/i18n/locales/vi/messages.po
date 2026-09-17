@@ -995,9 +995,14 @@ msgstr "Đang tự động nén ngữ cảnh…"
 msgid "Compacting context…"
 msgstr "Đang nén ngữ cảnh…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "Nén thất bại"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "Nén thất bại — chạm để bỏ qua"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "Không thể gửi phím"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Không thể gửi lệnh tắt"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "Không thể bắt đầu phiên"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "Nhắc đến {0}"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Đã sao chép tin nhắn vào khay nhớ tạm"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "Chưa gửi được tin nhắn"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

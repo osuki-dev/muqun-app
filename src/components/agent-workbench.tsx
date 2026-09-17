@@ -220,7 +220,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // A compaction in flight, which is a pill above the composer rather than a
   // row: the row lands in the timeline when the boundary is reached.
   const [compaction, setCompaction] = useState<{
-    status: 'running';
+    status: 'running' | 'failed';
     reason: CompactionReason;
   } | null>(null);
   // Highest timeline sequence seen; `after=`-style bookkeeping. A ref, never
@@ -755,12 +755,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // session's pill.
           if (!forActiveSession) break;
           setCompaction(
-            event.status === 'completed' || event.status === 'failed'
+            event.status === 'completed'
               ? null
-              : {
-                  status: event.status === 'started' ? 'running' : event.status,
-                  reason: event.reason,
-                }
+              : event.status === 'failed'
+                ? { status: 'failed', reason: event.reason }
+                : { status: 'running', reason: event.reason }
           );
           // The boundary itself arrives in the timeline; what changed here is
           // how much of the window is left.
@@ -959,6 +958,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionInfo?.status, showToast, t]
   );
 
+  /** A failed compaction stays until the reader has seen it. */
+  const dismissCompaction = useCallback(() => {
+    setCompaction((current) => (current?.status === 'failed' ? null : current));
+  }, []);
+
   const handleCancelInboxItem = useCallback(
     (inboxId: string) => {
       if (!activeAsid) return;
@@ -1005,14 +1009,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // Held in a ref so the sheet actions that use it stay stable and do not
   // re-publish the action object on every render.
   const handleSendPromptRef = useRef<
-    ((text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<void>) | null
+    | ((text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<boolean>)
+    | null
   >(null);
 
+  /**
+   * Send, and say so when it did not.
+   *
+   * Answers whether the prompt was accepted, because the composer clears the
+   * draft and the staged attachments on the strength of it. All three failure
+   * paths here used to be a `console.warn`: the draft was cleared, the
+   * attachments were dropped, and the optimistic row sat in the transcript
+   * looking exactly like a message that had been delivered. The reader waited
+   * for a reply to something the engine had never been told about.
+   */
   const handleSendPrompt = async (
     text: string,
     attachments?: string[],
     delivery?: 'steer' | 'queue'
-  ) => {
+  ): Promise<boolean> => {
     let currentAsid = activeAsid;
     if (!currentAsid) {
       try {
@@ -1026,7 +1041,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setSessionInfo(created);
       } catch (err) {
         console.warn('Failed to create session on prompt send:', err);
-        return;
+        showToast({
+          variant: 'danger',
+          title: t`Could not start a session`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+        return false;
       }
     }
 
@@ -1061,8 +1081,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         attachments,
         delivery,
       });
+      return true;
     } catch (err) {
       console.warn('Failed to send prompt:', err);
+      // The row goes with the failure. A message that was never delivered has
+      // no business sitting in the transcript, and the draft comes back so the
+      // reader can try again rather than retype it.
+      setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+      setSessionInfo((prev) => (prev ? { ...prev, status: 'idle' } : prev));
+      showToast({
+        variant: 'danger',
+        title: t`Message not sent`,
+        message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+      });
+      return false;
     }
   };
 
@@ -2175,6 +2207,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         contextUsage={contextUsage}
         contextLimit={sessionInfo?.limit?.context}
         compaction={compaction}
+        onDismissCompaction={dismissCompaction}
         cost={sessionInfo?.cost}
         sessionTitle={sessionInfo?.title}
         onSend={handleSendPrompt}

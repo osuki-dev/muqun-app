@@ -995,9 +995,14 @@ msgstr "コンテキストを自動で圧縮しています…"
 msgid "Compacting context…"
 msgstr "コンテキストを圧縮しています…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "圧縮に失敗しました"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "圧縮に失敗しました — タップで閉じる"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "キーを送信できませんでした"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "ショートカットを送信できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "セッションを開始できませんでした"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "{0} をメンション"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "メッセージをクリップボードにコピーしました"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "メッセージを送信できませんでした"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

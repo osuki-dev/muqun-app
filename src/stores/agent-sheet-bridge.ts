@@ -12,9 +12,16 @@ import type {
   TokensUsage,
 } from '@/lib/agent-session';
 
-/** A compaction the engine is running right now, as the pill reads it. */
+/**
+ * A compaction the engine is working on, or one that failed.
+ *
+ * `failed` is here because it used to be nowhere: the pill was cleared on
+ * `failed` exactly as it was on `completed`, so a compaction that did not work
+ * looked like one that did -- the pill vanished, no row arrived, and the
+ * context gauge stayed where it was with no account of why.
+ */
 export interface CompactionProgress {
-  status: 'running';
+  status: 'running' | 'failed';
   reason: CompactionReason;
 }
 

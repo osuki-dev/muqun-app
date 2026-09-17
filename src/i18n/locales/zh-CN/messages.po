@@ -995,9 +995,14 @@ msgstr "正在自动压缩上下文…"
 msgid "Compacting context…"
 msgstr "正在压缩上下文…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "压缩失败"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "压缩失败 — 点按关闭"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "无法发送按键"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "无法发送快捷命令"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "无法开始会话"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "提及 {0}"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "消息已复制到剪贴板"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "消息未发送"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

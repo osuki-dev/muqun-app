@@ -995,9 +995,14 @@ msgstr "กำลังบีบอัดบริบทโดยอัตโน
 msgid "Compacting context…"
 msgstr "กำลังบีบอัดบริบท…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "บีบอัดไม่สำเร็จ"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "บีบอัดไม่สำเร็จ — แตะเพื่อปิด"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "ส่งปุ่มไม่ได้"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "ส่งปุ่มลัดไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "เริ่มเซสชันไม่สำเร็จ"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "อ้างถึง {0}"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "คัดลอกข้อความไปยังคลิปบอร์ดแล้ว"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "ยังไม่ได้ส่งข้อความ"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

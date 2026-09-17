@@ -995,9 +995,14 @@ msgstr "Compactando o contexto automaticamente…"
 msgid "Compacting context…"
 msgstr "Compactando o contexto…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "A compactação falhou"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "A compactação falhou — toque para dispensar"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "Não foi possível enviar a tecla"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Não foi possível enviar o atalho"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "Não foi possível iniciar a sessão"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "Mencionar {0}"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Mensagem copiada para a área de transferência"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "Mensagem não enviada"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

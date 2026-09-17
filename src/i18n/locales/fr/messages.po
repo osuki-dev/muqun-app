@@ -995,9 +995,14 @@ msgstr "Compaction automatique du contexte…"
 msgid "Compacting context…"
 msgstr "Compaction du contexte…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "Échec de la compaction"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "Échec de la compaction — touchez pour masquer"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "Impossible d’envoyer la touche"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Impossible d’envoyer le raccourci"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "Impossible de démarrer la session"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "Mentionner {0}"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Message copié dans le presse-papiers"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "Message non envoyé"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

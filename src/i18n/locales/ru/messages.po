@@ -995,9 +995,14 @@ msgstr "Контекст сжимается автоматически…"
 msgid "Compacting context…"
 msgstr "Сжатие контекста…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "Сжатие не удалось"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "Сжатие не удалось — нажмите, чтобы скрыть"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "Не удалось отправить клавишу"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Не удалось отправить быструю команду"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "Не удалось начать сессию"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "Упомянуть {0}"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Сообщение скопировано в буфер обмена"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "Сообщение не отправлено"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

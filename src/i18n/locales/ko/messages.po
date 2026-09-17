@@ -995,9 +995,14 @@ msgstr "컨텍스트를 자동으로 압축하는 중…"
 msgid "Compacting context…"
 msgstr "컨텍스트를 압축하는 중…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "압축에 실패했습니다"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "압축에 실패했습니다 — 탭하여 닫기"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "키를 보내지 못했습니다"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "단축 명령을 보내지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "세션을 시작하지 못했습니다"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "{0} 멘션"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "메시지가 클립보드에 복사되었습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "메시지를 보내지 못했습니다"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx

@@ -995,9 +995,14 @@ msgstr "Kontext wird automatisch verdichtet…"
 msgid "Compacting context…"
 msgstr "Kontext wird verdichtet…"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Compaction failed"
 msgstr "Verdichtung fehlgeschlagen"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "Verdichtung fehlgeschlagen — zum Ausblenden tippen"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1450,6 +1455,10 @@ msgstr "Taste konnte nicht gesendet werden"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Shortcut konnte nicht gesendet werden"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "Sitzung konnte nicht gestartet werden"
 
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
@@ -2356,6 +2365,10 @@ msgstr "{0} erwähnen"
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Nachricht in Zwischenablage kopiert"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "Nachricht nicht gesendet"
 
 #. placeholder {0}: formatModelName(part.previous)
 #: src/components/agent-message-block.tsx
