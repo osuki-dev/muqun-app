@@ -141,6 +141,10 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
 
+#: src/components/agent-model-sheet.tsx
+msgid "⚡ Free & Unlimited (Recommended)"
+msgstr "⚡ ฟรีและไม่จำกัด (แนะนำ)"
+
 #: src/components/agent-context-sheet.tsx
 msgid "$0.00 (Free)"
 msgstr "$0.00 (ฟรี)"
@@ -185,6 +189,14 @@ msgstr "จัดการเทอร์มินัลนี้หรือส
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "จัดการเทอร์มินัลนี้หรือส่งพรอมต์ให้เอเจนต์"
+
+#: src/components/agent-context-sheet.tsx
+msgid "ACTIONS"
+msgstr "การดำเนินการ"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Active Model"
+msgstr "โมเดลที่ใช้งานอยู่"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Active Session"
@@ -250,10 +262,6 @@ msgstr "เอเจนต์ไม่อยู่แล้ว"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "เปิดพาเนลเอเจนต์ใน"
-
-#: src/app/agent.tsx
-msgid "Agent Workspace"
-msgstr "พื้นที่ทำงานของเอเจนต์"
 
 #: src/components/settings-servers.tsx
 msgid "Agents"
@@ -554,7 +562,6 @@ msgstr "ปิดการเข้าถึงกล้องอยู่ เ�
 msgid "Camera access needed"
 msgstr "ต้องเข้าถึงกล้อง"
 
-#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -577,6 +584,10 @@ msgstr "ยกเลิกการเชื่อมต่อกับ {0}"
 #: src/components/settings-servers.tsx
 msgid "Cancel editing {0}"
 msgstr "ยกเลิกการแก้ไข {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Cancel queued message"
+msgstr "ยกเลิกข้อความในคิว"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -635,6 +646,10 @@ msgstr "เลือกเครื่องจำลองจากเมนู
 msgid "Choose an assistant"
 msgstr "เลือกผู้ช่วย"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Choose an LLM model"
+msgstr "เลือกโมเดล LLM"
+
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
 msgstr "เลือกโฮสต์ SSH"
@@ -672,8 +687,8 @@ msgid "Clear cache"
 msgstr "ล้างแคช"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Clear Context (/clear)"
-msgstr "ล้างบริบท (/clear)"
+msgid "Clear Context"
+msgstr "ล้างบริบท"
 
 #: src/components/agent-composer.tsx
 msgid "Clear context and start fresh"
@@ -699,6 +714,7 @@ msgstr "กำลังล้าง…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
@@ -834,8 +850,8 @@ msgid "Compact"
 msgstr "ย่อบริบท"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Compact Context (/compact)"
-msgstr "บีบอัดบริบท (/compact)"
+msgid "Compact Context"
+msgstr "ย่อขนาดบริบท"
 
 #: src/components/agent-composer.tsx
 msgid "Compact session history to save context"
@@ -857,10 +873,6 @@ msgstr "ยืนยันการลบธีมที่ไม่ได้ใ
 #: src/components/ssh-host-form.tsx
 msgid "Confirm removing {0}"
 msgstr "ยืนยันการลบ {0}"
-
-#: src/components/agent-workbench.tsx
-msgid "Confirm Revert"
-msgstr "ยืนยันการย้อนกลับ"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
@@ -935,7 +947,7 @@ msgid "Context & Usage"
 msgstr "บริบทและการใช้งาน"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Context Window"
+msgid "CONTEXT WINDOW"
 msgstr "หน้าต่างบริบท"
 
 #: src/app/explore.tsx
@@ -1094,10 +1106,6 @@ msgstr "คัดลอกคำสั่งและผลลัพธ์"
 msgid "Copy public key"
 msgstr "คัดลอกคีย์สาธารณะ"
 
-#: src/components/agent-workbench.tsx
-msgid "Copy Text"
-msgstr "คัดลอกข้อความ"
-
 #: src/components/simfarm-preview.tsx
 msgid "Copy the command that starts simfarm"
 msgstr "คัดลอกคำสั่งเริ่ม simfarm"
@@ -1127,6 +1135,10 @@ msgstr "เชื่อมต่อเครื่องนี้ไม่ได
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
 msgstr "คัดลอกไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not create session"
+msgstr "ไม่สามารถสร้างเซสชันได้"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -1310,10 +1322,6 @@ msgstr "ธีมปัจจุบัน"
 msgid "Custom"
 msgstr "กำหนดเอง"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Custom Directory"
-msgstr "ไดเรกทอรีที่กำหนดเอง"
-
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "ปรับแต่งคำสั่งเทอร์มินัลและชุดปุ่มลัด"
@@ -1392,6 +1400,10 @@ msgstr "สรุปความแตกต่าง"
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "ไดเรกทอรี"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "DIRECTORY AUTOCOMPLETE"
+msgstr "การเติมไดเรกทอรีอัตโนมัติ"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1483,8 +1495,8 @@ msgid "Edit {0}"
 msgstr "แก้ไข {0}"
 
 #: src/components/agent-workbench.tsx
-msgid "Edit & Reprompt"
-msgstr "แก้ไขและส่งพร้อมต์ใหม่"
+msgid "Edit queued message"
+msgstr "แก้ไขข้อความในคิว"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
@@ -1549,6 +1561,10 @@ msgstr "ขยาย {0}"
 msgid "Expand reasoning"
 msgstr "ขยายการใช้เหตุผล"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Expand reasoning & thoughts"
+msgstr "ขยายกระบวนการคิดและเหตุผล"
+
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
 msgstr "ขยายงาน"
@@ -1605,8 +1621,12 @@ msgid "Files in this workspace"
 msgstr "ไฟล์ในพื้นที่ทำงานนี้"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (e.g. /home/...)"
-msgstr "กรองโปรเจกต์หรือพิมพ์เส้นทาง (เช่น /home/...)"
+msgid "Filter projects or path"
+msgstr "กรองโปรเจกต์หรือเส้นทาง"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Filter projects or type path (/home/...)"
+msgstr "กรองโปรเจกต์หรือพิมพ์เส้นทาง (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1771,10 +1791,6 @@ msgstr "ซ่อนรายการเซิร์ฟเวอร์"
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
-
-#: src/components/agent-model-sheet.tsx
-msgid "High"
-msgstr "สูง"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "High-level architectural planning, design proposals, and step-by-step implementation roadmaps."
@@ -1944,10 +1960,9 @@ msgstr "ปุ่ม"
 msgid "Keys are generated on the device and never leave it."
 msgstr "คีย์สร้างขึ้นบนอุปกรณ์และไม่ออกจากอุปกรณ์"
 
-#. placeholder {0}: filteredProjects.length
 #: src/components/agent-workspace-sheet.tsx
-msgid "Known Projects ({0})"
-msgstr "โปรเจกต์ที่รู้จัก ({0})"
+msgid "KNOWN REPOSITORIES"
+msgstr "ที่เก็บข้อมูลที่รู้จัก"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2098,10 +2113,6 @@ msgstr "กำลังค้นหา"
 msgid "Looking for a simulator"
 msgstr "กำลังค้นหาเครื่องจำลอง"
 
-#: src/components/agent-model-sheet.tsx
-msgid "Low"
-msgstr "ต่ำ"
-
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · สำนักงาน"
@@ -2134,42 +2145,14 @@ msgstr "ทำเครื่องหมายว่าตรวจแล้ว
 msgid "Mascot"
 msgstr "มาสคอต"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Matching subdirectories:"
-msgstr "ไดเรกทอรีย่อยที่ตรงกัน:"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Max"
-msgstr "สูงสุด"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Medium"
-msgstr "ปานกลาง"
-
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "อ้างถึง {0}"
 
 #: src/components/agent-workbench.tsx
-msgid "Message Actions"
-msgstr "การดำเนินการของข้อความ"
-
-#: src/components/agent-workbench.tsx
 msgid "Message copied to clipboard"
 msgstr "คัดลอกข้อความไปยังคลิปบอร์ดแล้ว"
-
-#: src/components/agent-workbench.tsx
-msgid "Message options"
-msgstr "ตัวเลือกข้อความ"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Minimal"
-msgstr "น้อยที่สุด"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Model & Reasoning"
-msgstr "โมเดลและการใช้เหตุผล"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2272,10 +2255,6 @@ msgstr "ยังไม่เคยเชื่อมต่อ"
 msgid "Never seen"
 msgstr "ยังไม่เคยพบ"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "New"
-msgstr "สร้างใหม่"
-
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "กลุ่มใหม่"
@@ -2287,6 +2266,11 @@ msgstr "คีย์โฮสต์ใหม่"
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "มีเอาต์พุตใหม่ · รีเฟรช"
+
+#: src/app/agent.tsx
+#: src/components/agent-sessions-sheet.tsx
+msgid "New session"
+msgstr "เซสชันใหม่"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
@@ -2343,6 +2327,10 @@ msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
 msgid "No changes. The working tree matches HEAD."
 msgstr "ไม่มีการเปลี่ยนแปลง พื้นที่ทำงานตรงกับ HEAD"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No diff preview available for binary or unmodified files."
+msgstr "ไม่มีการแสดงตัวอย่าง diff สำหรับไฟล์ไบนารีหรือไฟล์ที่ไม่ได้แก้ไข"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "ไม่พบไฟล์ที่ตรงกัน"
@@ -2354,10 +2342,6 @@ msgstr "ยังไม่มี Gateway ใช่ไหม?"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "ไม่มีคำสั่งที่ตรงกัน ลองใช้คำอื่น"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No matching projects found"
-msgstr "ไม่พบโปรเจกต์ที่ตรงกัน"
 
 #: src/components/agent-model-sheet.tsx
 msgid "No models found matching your search."
@@ -2386,6 +2370,10 @@ msgstr "ไม่มีตัวอย่างสำหรับไฟล์ป
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
 msgstr "ดูตัวอย่างผ่านการเชื่อมต่อนี้ไม่ได้"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects found. Enter a custom path above."
+msgstr "ไม่พบโปรเจกต์ กรุณาระบุเส้นทางด้านบน"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -2842,6 +2830,10 @@ msgstr "เข้าคิว"
 msgid "Queue message for agent"
 msgstr "จัดคิวข้อความสำหรับเอเจนต์"
 
+#: src/components/agent-workbench.tsx
+msgid "Queued"
+msgstr "อยู่ในคิว"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "รออัปโหลด"
@@ -2889,17 +2881,9 @@ msgstr "พร้อมดูตัวอย่าง ยังไม่ใช�
 msgid "Reasoning"
 msgstr "กระบวนการคิด"
 
-#: src/components/agent-model-sheet.tsx
-msgid "Reasoning:"
-msgstr "การใช้เหตุผล:"
-
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "รับแจ้งเมื่อเอเจนต์ติดขัดและเมื่อ Gateway มีอัปเดต"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Recent"
-msgstr "ล่าสุด"
 
 #: src/i18n/labels.ts
 msgid "Recent commits"
@@ -3040,6 +3024,10 @@ msgstr "จำเป็น"
 msgid "Requires iOS 16.1 or later."
 msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Reset conversation context window (/clear)"
+msgstr "รีเซ็ตหน้าต่างบริบทการสนทนา (/clear)"
+
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จ"
@@ -3088,22 +3076,6 @@ msgstr "กลับไปยังรายการเซิร์ฟเวอ
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
 msgstr "กลับไปยังเซิร์ฟเวอร์นี้เพื่อดำเนินการต่อ"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Failed"
-msgstr "การย้อนกลับล้มเหลว"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Session & Workspace?"
-msgstr "ย้อนกลับเซสชันและพื้นที่ทำงานหรือไม่?"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Session to Here"
-msgstr "ย้อนกลับเซสชันมาที่นี่"
-
-#: src/components/agent-workbench.tsx
-msgid "Reverting to this checkpoint will roll back all subsequent turns and undo code modifications in the workspace."
-msgstr "การย้อนกลับไปยังจุดตรวจสอบนี้จะยกเลิกการทำงานทั้งหมดหลังจากนี้และการแก้ไขโค้ด"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -3162,10 +3134,6 @@ msgstr "กำลังเพิกถอน…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "ลูกศรขวา"
-
-#: src/components/agent-workbench.tsx
-msgid "Rolled back to message checkpoint."
-msgstr "ย้อนกลับไปยังจุดตรวจสอบข้อความแล้ว"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3275,8 +3243,16 @@ msgid "Search files"
 msgstr "ค้นหาไฟล์"
 
 #: src/components/agent-model-sheet.tsx
-msgid "Search models or providers…"
-msgstr "ค้นหาโมเดลหรือผู้ให้บริการ…"
+msgid "Search models"
+msgstr "ค้นหาโมเดล"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Search models or providers..."
+msgstr "ค้นหาโมเดลหรือผู้ให้บริการ..."
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Search sessions"
+msgstr "ค้นหาเซสชัน"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Search sessions..."
@@ -3318,8 +3294,11 @@ msgid "Select all"
 msgstr "เลือกทั้งหมด"
 
 #: src/app/agent.tsx
-#: src/components/agent-model-sheet.tsx
 msgid "Select model"
+msgstr "เลือกโมเดล"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Select Model"
 msgstr "เลือกโมเดล"
 
 #: src/components/agent-workspace-sheet.tsx
@@ -3402,9 +3381,9 @@ msgstr "บริการกำลังรับโหลดสูง"
 msgid "session"
 msgstr "เซสชัน"
 
-#: src/components/agent-workbench.tsx
-msgid "Session Reverted"
-msgstr "ย้อนกลับเซสชันแล้ว"
+#: src/components/agent-context-sheet.tsx
+msgid "SESSION DETAILS"
+msgstr "รายละเอียดเซสชัน"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
@@ -3417,10 +3396,6 @@ msgstr "เซสชัน"
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "ตั้งรหัสผ่านอุปกรณ์ก่อนใช้การล็อกแอป"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Set as working directory for new sessions"
-msgstr "ตั้งเป็นไดเรกทอรีทำงานสำหรับเซสชันใหม่"
 
 #: src/app/explore.tsx
 msgid "Set one up on your computer"
@@ -3531,10 +3506,6 @@ msgstr "แสดงรูปภาพ"
 msgid "Show more"
 msgstr "แสดงเพิ่มเติม"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Show Reasoning Process"
-msgstr "แสดงกระบวนการคิด"
-
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "แสดงพื้นหลังแอปหลังข้อความเทอร์มินัล"
@@ -3550,6 +3521,10 @@ msgstr "แสดงรายการการเปลี่ยนแปลง
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "แสดงรายการเซิร์ฟเวอร์"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Show Thinking Process"
+msgstr "แสดงกระบวนการคิด"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
@@ -3682,6 +3657,10 @@ msgstr "เริ่มเอเจนต์และส่งงานแรก
 msgid "Start task"
 msgstr "เริ่มงาน"
 
+#: src/components/agent-workbench.tsx
+msgid "Started a new session with clean context."
+msgstr "เริ่มเซสชันใหม่พร้อมบริบทที่สะอาดแล้ว"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "กำลังเริ่ม {name}"
@@ -3746,6 +3725,10 @@ msgstr "เอเจนต์ย่อย"
 msgid "Submit Response"
 msgstr "ส่งคำตอบ"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Summarize history into compact memory (/compact)"
+msgstr "สรุปประวัติเป็นหน่วยความจำขนาดกะทัดรัด (/compact)"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "สรุปความคืบหน้า"
@@ -3799,6 +3782,7 @@ msgstr "สลับไปยังมุมมองเทอร์มินั
 msgid "Switch to Union Alpha (Fast & Free) for immediate response."
 msgstr "เปลี่ยนเป็น Union Alpha (เร็วและฟรี) เพื่อการตอบกลับทันที"
 
+#: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 msgid "Switch workspace: {displayWorkspaceName}"
 msgstr "เปลี่ยนพื้นที่ทำงาน: {displayWorkspaceName}"
@@ -4076,6 +4060,10 @@ msgstr "ธีม {0}"
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "ธีมที่เผยแพร่บน muqun.dev จะไม่มีการดาวน์โหลดจนกว่าคุณจะเปิดธีม"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Thinking:"
+msgstr "ระดับการคิด:"
+
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "กำลังคิด…"
@@ -4215,7 +4203,7 @@ msgid "Today"
 msgstr "วันนี้"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Token Breakdown"
+msgid "TOKEN BREAKDOWN"
 msgstr "รายละเอียดโทเค็น"
 
 #: src/components/agent-composer.tsx
@@ -4401,10 +4389,6 @@ msgstr "ใช้ {0}"
 msgid "Use device passcode"
 msgstr "ใช้รหัสผ่านอุปกรณ์"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Use path:"
-msgstr "ใช้เส้นทาง:"
-
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "ใช้ URL ที่เก็บโค้ด แล้วป้อนสาขาและไฟล์ธีมด้านล่าง"
@@ -4420,6 +4404,10 @@ msgstr "ใช้ค่าเริ่มต้นของธีม"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "ใช้เซิร์ฟเวอร์นี้"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Used Capacity"
+msgstr "ความจุที่ใช้ไป"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"
@@ -4488,6 +4476,7 @@ msgstr "กำลังทำงาน"
 msgid "Working Directory"
 msgstr "ไดเรกทอรีทำงาน"
 
+#: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"

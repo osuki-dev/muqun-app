@@ -33,11 +33,13 @@ const FADE_HEIGHT = 96;
  */
 export function ScreenHeader({
   title,
+  titlePill,
   onBack,
   right,
   rightPill,
 }: {
-  title: string;
+  title?: string;
+  titlePill?: ReactNode;
   /** Defaults to router back, falling back to Home when there's nothing to pop. */
   onBack?: () => void;
   right?: ReactNode;
@@ -76,7 +78,7 @@ export function ScreenHeader({
       <Animated.View style={[navHeaderRowStyle, arrivalStyle]}>
         <NavHeaderBackButton accessibilityLabel={t`Go back`} onPress={handleBack} />
 
-        <NavHeaderTitlePill title={title} />
+        {titlePill ? titlePill : <NavHeaderTitlePill title={title ?? ''} />}
 
         {rightPill ? (
           rightPill

@@ -1,9 +1,16 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable, TextInput } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Check, Folder, FolderGit2, Search, X } from 'lucide-react-native';
+import { Check, Folder, FolderGit2, X } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { GlassChrome } from '@/components/glass-chrome';
+import { Input } from '@/components/themed-input';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetHandle } from '@/components/sheet-route-frame';
+import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import {
   getAgentDirectories,
@@ -29,6 +36,8 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
 }: AgentWorkspaceSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useSheetGroundPlate();
+  const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
 
   const [projects, setProjects] = useState<AgentProject[]>([]);
@@ -100,220 +109,164 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
         <Pressable
           testID="agent-workspace-sheet"
           onPress={(e) => e.stopPropagation()}
-          style={[styles.sheetGround, { backgroundColor: theme.colors.surface }]}>
-          {/* Handle */}
-          <View style={styles.handle} />
+          style={styles.sheetContainer}>
+          <SheetFrame tint="background">
+            <View collapsable={false} style={styles.sheetLayout}>
+              {/* Pinned Top Navigation Bar */}
+              <View style={styles.fixedTop}>
+                <SheetHandle style={styles.sheetHandle} />
 
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View
-                style={[
-                  styles.headerIconBox,
-                  { backgroundColor: `${theme.colors.primary}18` },
-                ]}>
-                <FolderGit2 size={18} color={theme.colors.primary} />
-              </View>
-              <View>
-                <Text variant="heading" style={styles.headerTitle}>
-                  <Trans>Workspaces & Projects</Trans>
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Select or enter working repository</Trans>
-                </Text>
-              </View>
-            </View>
-
-            <PressableScale
-              testID="agent-workspace-close"
-              onPress={onClose}
-              accessibilityLabel={t`Close`}
-              style={[
-                styles.closeBtn,
-                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              <X size={16} color={theme.colors.text} />
-            </PressableScale>
-          </View>
-
-          {/* Search / Path Input Bar */}
-          <View
-            style={[
-              styles.searchBar,
-              {
-                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                borderColor: theme.colors.border,
-              },
-            ]}>
-            <Search size={15} color={theme.colors.textMuted} />
-            <TextInput
-              testID="agent-workspace-search-input"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder={t`Filter projects or type path (e.g. /home/...)`}
-              placeholderTextColor={theme.colors.textMuted}
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {searchQuery.length > 0 ? (
-              <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-                <X size={14} color={theme.colors.textMuted} />
-              </Pressable>
-            ) : null}
-          </View>
-
-          <ScrollView
-            style={styles.scrollList}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}>
-            {/* Custom Path Quick Pick */}
-            {searchQuery.trim().startsWith('/') ? (
-              <View style={styles.section}>
-                <Text variant="caption" weight="semibold" color={theme.colors.textMuted} style={styles.sectionTitle}>
-                  <Trans>Custom Directory</Trans>
-                </Text>
-                <PressableScale
-                  testID="agent-workspace-custom-apply"
-                  onPress={() => handleSelect(searchQuery.trim())}
-                  style={[
-                    styles.projectCard,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: theme.colors.primary,
-                    },
-                  ]}>
-                  <Folder size={18} color={theme.colors.primary} />
-                  <View style={styles.projectInfo}>
-                    <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-                      {t`Use path:`} {searchQuery.trim()}
+                <View style={styles.header}>
+                  <View style={[styles.headerCopy, plate]}>
+                    <Text variant="subheading" style={styles.headerTitle}>
+                      {t`Workspaces & Projects`}
                     </Text>
                     <Text variant="caption" color={theme.colors.textMuted}>
-                      <Trans>Set as working directory for new sessions</Trans>
+                      {t`Select or enter working repository`}
                     </Text>
                   </View>
-                </PressableScale>
 
-                {/* Subdirectory Suggestions */}
-                {suggestions.length > 0 ? (
-                  <View style={styles.suggestionsContainer}>
-                    <Text variant="caption" color={theme.colors.textMuted} style={styles.suggestionTitle}>
-                      <Trans>Matching subdirectories:</Trans>
-                    </Text>
-                    {suggestions.slice(0, 8).map((dir) => (
-                      <PressableScale
-                        key={dir.path}
-                        onPress={() => setSearchQuery(dir.path)}
-                        style={[
-                          styles.suggestionRow,
-                          { borderBottomColor: theme.colors.border },
-                        ]}>
-                        <Folder size={13} color={theme.colors.textMuted} />
-                        <Text
-                          variant="caption"
-                          color={theme.colors.text}
-                          numberOfLines={1}
-                          style={styles.suggestionText}>
-                          {dir.path}
-                        </Text>
-                      </PressableScale>
-                    ))}
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
-
-            {/* Known Projects */}
-            <View style={styles.section}>
-              <Text variant="caption" weight="semibold" color={theme.colors.textMuted} style={styles.sectionTitle}>
-                <Trans>Known Projects ({filteredProjects.length})</Trans>
-              </Text>
-
-              {filteredProjects.map((project) => {
-                const isSelected = activeDirectory === project.canonical;
-                return (
-                  <PressableScale
-                    key={project.id}
-                    testID={`agent-workspace-item-${project.name}`}
-                    onPress={() => handleSelect(project.canonical, project)}
-                    style={[
-                      styles.projectCard,
-                      {
-                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                        borderColor: isSelected ? theme.colors.primary : theme.colors.border,
-                        borderWidth: isSelected ? 1.5 : 1,
-                      },
-                    ]}>
-                    <View
-                      style={[
-                        styles.projectIconBox,
-                        {
-                          backgroundColor: isSelected
-                            ? `${theme.colors.primary}18`
-                            : `${theme.colors.textMuted}14`,
-                        },
-                      ]}>
-                      {project.vcs === 'git' ? (
-                        <FolderGit2
-                          size={18}
-                          color={isSelected ? theme.colors.primary : theme.colors.text}
-                        />
-                      ) : (
-                        <Folder
-                          size={18}
-                          color={isSelected ? theme.colors.primary : theme.colors.text}
-                        />
-                      )}
-                    </View>
-
-                    <View style={styles.projectInfo}>
-                      <View style={styles.projectNameRow}>
-                        <Text variant="bodySmall" weight="bold" color={theme.colors.text}>
-                          {project.name}
-                        </Text>
-                        {project.vcs ? (
-                          <View
-                            style={[
-                              styles.vcsBadge,
-                              { backgroundColor: `${theme.colors.primary}14` },
-                            ]}>
-                            <Text variant="caption" weight="semibold" color={theme.colors.primary} style={styles.vcsText}>
-                              {project.vcs.toUpperCase()}
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
-                      <Text
-                        variant="caption"
-                        color={theme.colors.textMuted}
-                        numberOfLines={1}
-                        style={styles.projectPath}>
-                        {project.canonical}
-                      </Text>
-                    </View>
-
-                    {isSelected ? (
-                      <View
-                        style={[
-                          styles.checkCircle,
-                          { backgroundColor: theme.colors.primary },
-                        ]}>
-                        <Check size={12} color="#fff" />
-                      </View>
-                    ) : null}
-                  </PressableScale>
-                );
-              })}
-
-              {!loading && filteredProjects.length === 0 ? (
-                <View style={styles.emptyBox}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>No matching projects found</Trans>
-                  </Text>
+                  <GlassChrome face="sheet" style={styles.headerButton}>
+                    <PressableScale
+                      testID="agent-workspace-close"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Close`}
+                      onPress={onClose}
+                      style={styles.headerButtonHit}>
+                      <X size={19} color={theme.colors.text} strokeWidth={2} />
+                    </PressableScale>
+                  </GlassChrome>
                 </View>
-              ) : null}
+
+                {/* Unified Search Input */}
+                <Input
+                  testID="agent-workspace-search-input"
+                  accessibilityLabel={t`Filter projects or path`}
+                  placeholder={t`Filter projects or type path (/home/...)`}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  variant="outline"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <Spinner size="lg" color={theme.colors.primary} />
+                </View>
+              ) : (
+                <ScrollView
+                  style={styles.scrollViewport}
+                  contentContainerStyle={[
+                    styles.content,
+                    { paddingBottom: LADDER.section + insets.bottom },
+                  ]}
+                  keyboardShouldPersistTaps="handled">
+                  {/* Suggestions for path */}
+                  {suggestions.length > 0 ? (
+                    <View style={styles.sectionBlock}>
+                      <SectionLabel
+                        title={t`DIRECTORY AUTOCOMPLETE`}
+                        color={theme.colors.textMuted}
+                      />
+                      <SettingsCard>
+                        {suggestions.map((item) => (
+                          <PressableScale
+                            key={item.path}
+                            onPress={() => handleSelect(item.path)}
+                            style={styles.itemRow}>
+                            <View style={styles.itemRowLeft}>
+                              <Folder size={16} color={theme.colors.primary} />
+                              <Text
+                                variant="bodySmall"
+                                color={theme.colors.text}
+                                numberOfLines={1}
+                                style={styles.itemTitle}>
+                                {item.name || item.path}
+                              </Text>
+                            </View>
+                            <Text
+                              variant="caption"
+                              color={theme.colors.textMuted}
+                              numberOfLines={1}
+                              style={styles.pathSubtext}>
+                              {item.path}
+                            </Text>
+                          </PressableScale>
+                        ))}
+                      </SettingsCard>
+                    </View>
+                  ) : null}
+
+                  {/* Known Projects */}
+                  <View style={styles.sectionBlock}>
+                    <SectionLabel
+                      title={t`KNOWN REPOSITORIES`}
+                      color={theme.colors.textMuted}
+                    />
+                    {filteredProjects.length === 0 ? (
+                      <View style={styles.emptyContainer}>
+                        <Text variant="caption" color={theme.colors.textMuted}>
+                          <Trans>No projects found. Enter a custom path above.</Trans>
+                        </Text>
+                      </View>
+                    ) : (
+                      <SettingsCard>
+                        {filteredProjects.map((p) => {
+                          const isSelected =
+                            activeDirectory === p.canonical ||
+                            (activeDirectory && activeDirectory.startsWith(p.canonical));
+
+                          return (
+                            <PressableScale
+                              key={p.id}
+                              accessibilityRole="button"
+                              accessibilityState={{ selected: Boolean(isSelected) }}
+                              onPress={() => handleSelect(p.canonical, p)}
+                              style={[
+                                styles.itemRow,
+                                isSelected && {
+                                  backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                                },
+                              ]}>
+                              <View style={styles.itemRowLeft}>
+                                <FolderGit2
+                                  size={18}
+                                  color={isSelected ? theme.colors.primary : theme.colors.text}
+                                />
+                                <View style={styles.itemTextCol}>
+                                  <Text
+                                    variant="bodySmall"
+                                    weight={isSelected ? 'semibold' : 'regular'}
+                                    color={isSelected ? theme.colors.primary : theme.colors.text}
+                                    numberOfLines={1}
+                                    style={styles.itemTitle}>
+                                    {p.name || p.id}
+                                  </Text>
+                                  <Text
+                                    variant="caption"
+                                    color={theme.colors.textMuted}
+                                    numberOfLines={1}
+                                    style={styles.itemSub}>
+                                    {p.canonical}
+                                  </Text>
+                                </View>
+                              </View>
+
+                              {isSelected ? (
+                                <Check size={18} color={theme.colors.primary} />
+                              ) : null}
+                            </PressableScale>
+                          );
+                        })}
+                      </SettingsCard>
+                    )}
+                  </View>
+                </ScrollView>
+              )}
             </View>
-          </ScrollView>
+          </SheetFrame>
         </Pressable>
       </Pressable>
     </Modal>
@@ -326,162 +279,103 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  sheetGround: {
+  sheetContainer: {
+    maxHeight: '88%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderCurve: 'continuous',
-    maxHeight: '85%',
-    paddingBottom: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 20,
+    overflow: 'hidden',
   },
-  handle: {
-    width: 36,
+  sheetLayout: {
+    flexShrink: 1,
+    overflow: 'hidden',
+  },
+  sheetHandle: {
+    width: 38,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(128,128,128,0.3)',
+    borderRadius: 2,
     alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 4,
+    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+  },
+  fixedTop: {
+    flexShrink: 0,
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: LADDER.gap * 1.5,
+    paddingBottom: LADDER.gap,
+    gap: LADDER.snug,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 14,
+    gap: LADDER.gap,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
+  headerCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   headerTitle: {
-    fontSize: 16,
-    letterSpacing: -0.2,
+    includeFontPadding: false,
   },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 999,
+  headerButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  headerButtonHit: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  searchBar: {
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollViewport: {
+    flexShrink: 1,
+  },
+  content: {
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: 4,
+    gap: LADDER.section,
+  },
+  sectionBlock: {
+    gap: LADDER.snug,
+  },
+  emptyContainer: {
+    paddingVertical: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    gap: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: LADDER.gutter,
+    paddingVertical: LADDER.snug,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    padding: 0,
-  },
-  scrollList: {
-    paddingHorizontal: 16,
-  },
-  scrollContent: {
-    paddingBottom: 20,
-    gap: 16,
-  },
-  section: {
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginLeft: 4,
-    marginBottom: 2,
-  },
-  projectCard: {
+  itemRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    borderWidth: 1,
     gap: 12,
+    flex: 1,
   },
-  projectIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  projectInfo: {
+  itemTextCol: {
     flex: 1,
     gap: 2,
   },
-  projectNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  itemTitle: {
+    includeFontPadding: false,
   },
-  vcsBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  vcsText: {
-    fontSize: 9,
-    letterSpacing: 0.5,
-  },
-  projectPath: {
+  itemSub: {
     fontSize: 11,
   },
-  checkCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  suggestionsContainer: {
-    marginTop: 6,
-    paddingHorizontal: 6,
-  },
-  suggestionTitle: {
+  pathSubtext: {
     fontSize: 11,
-    marginBottom: 4,
-  },
-  suggestionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 7,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  suggestionText: {
-    flex: 1,
-    fontSize: 12,
-  },
-  emptyBox: {
-    paddingVertical: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    maxWidth: 150,
   },
 });

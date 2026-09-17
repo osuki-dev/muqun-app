@@ -1,9 +1,18 @@
-import { memo, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, TextInput, Pressable } from 'react-native';
+import { Fragment, memo, useMemo, useState } from 'react';
+import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Bot, Check, GitFork, Plus, Search, X, Clock, Folder } from 'lucide-react-native';
+import { Bot, Check, GitFork, Plus, X, Clock, Folder } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { GlassChrome } from '@/components/glass-chrome';
+import { Input } from '@/components/themed-input';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetHandle } from '@/components/sheet-route-frame';
+import { ThemedSurface } from '@/components/themed-surface';
+import { LADDER, SettingsSeparator } from '@/components/settings-chrome';
+import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { AgentProject, AgentSessionInfo } from '@/lib/agent-session';
 
@@ -23,13 +32,14 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   sessions,
   activeAsid,
   knownProjects,
-  activeDirectory,
   onSelectSession,
   onCreateNewSession,
   onClose,
 }: AgentSessionsSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useSheetGroundPlate();
+  const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
@@ -102,14 +112,15 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           (p.canonical && session.directory?.startsWith(p.canonical))
       );
       if (match) return match.name;
-      return session.directory.split('/').filter(Boolean).pop() || session.directory;
+      return session.directory.split('/').filter(Boolean).pop();
     }
     return undefined;
   };
 
-  // Filtered roots based on project filter & search query
+  // Filter root sessions by project and search query
   const filteredRoots = useMemo(() => {
     let list = rootSessions;
+
     if (selectedProjectId) {
       const targetProj = projectsList.find((p) => p.id === selectedProjectId);
       list = list.filter((root) => {
@@ -163,319 +174,323 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         <Pressable
           testID="agent-sessions-sheet"
           onPress={(e) => e.stopPropagation()}
-          style={[styles.sheetGround, { backgroundColor: theme.colors.surface }]}>
-          {/* Top handle pill */}
-          <View style={styles.handle} />
+          style={styles.sheetContainer}>
+          <SheetFrame tint="background">
+            <View collapsable={false} style={styles.sheetLayout}>
+              {/* Pinned Top Navigation Bar */}
+              <View style={styles.fixedTop}>
+                <SheetHandle style={styles.sheetHandle} />
 
-          <View style={styles.header}>
-            <View style={styles.headerTitleArea}>
-              <Text variant="heading" style={styles.headerTitle}>
-                {t`All Sessions`}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} style={styles.headerSubtitle}>
-                {`${sessions.length} ${sessions.length === 1 ? t`session` : t`sessions`}`}
-              </Text>
-            </View>
+                <View style={styles.header}>
+                  <View style={[styles.headerCopy, plate]}>
+                    <Text variant="subheading" style={styles.headerTitle}>
+                      {t`All Sessions`}
+                    </Text>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {`${sessions.length} ${sessions.length === 1 ? t`session` : t`sessions`}`}
+                    </Text>
+                  </View>
 
-            <View style={styles.headerActions}>
-              {onCreateNewSession ? (
-                <PressableScale
-                  onPress={() => {
-                    onClose();
-                    onCreateNewSession();
-                  }}
-                  style={[styles.newBtn, { backgroundColor: theme.colors.primary }]}>
-                  <Plus size={14} color="#fff" strokeWidth={2.5} />
-                  <Text variant="caption" color="#fff" style={styles.newBtnText}>
-                    {t`New`}
-                  </Text>
-                </PressableScale>
-              ) : null}
+                  {onCreateNewSession ? (
+                    <GlassChrome face="sheet" style={styles.headerButton}>
+                      <PressableScale
+                        accessibilityLabel={t`New session`}
+                        accessibilityRole="button"
+                        onPress={() => {
+                          onClose();
+                          onCreateNewSession();
+                        }}
+                        style={styles.headerButtonHit}>
+                        <Plus size={19} color={theme.colors.text} strokeWidth={2} />
+                      </PressableScale>
+                    </GlassChrome>
+                  ) : null}
 
-              <PressableScale
-                testID="agent-sessions-close"
-                onPress={onClose}
-                style={styles.closeBtn}
-                accessibilityLabel={t`Close`}>
-                <X size={18} color={theme.colors.textMuted} />
-              </PressableScale>
-            </View>
-          </View>
-
-          {/* Search Input */}
-          <View
-            style={[
-              styles.searchBar,
-              {
-                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                borderColor: theme.colors.border,
-              },
-            ]}>
-            <Search size={14} color={theme.colors.textMuted} />
-            <TextInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder={t`Search sessions...`}
-              placeholderTextColor={theme.colors.textMuted}
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              clearButtonMode="while-editing"
-            />
-          </View>
-
-          {/* Project Filter Strip */}
-          {projectsList.length > 0 ? (
-            <View style={styles.projectFilterContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.projectFilterRow}>
-                <PressableScale
-                  onPress={() => setSelectedProjectId(null)}
-                  style={[
-                    styles.projectFilterPill,
-                    {
-                      borderColor: !selectedProjectId ? theme.colors.primary : theme.colors.border,
-                      backgroundColor: !selectedProjectId
-                        ? theme.colors.primary
-                        : surfaceBackground(theme.colors.surfaceRaised),
-                    },
-                  ]}>
-                  <Text
-                    variant="caption"
-                    color={!selectedProjectId ? '#fff' : theme.colors.textMuted}
-                    style={styles.projectFilterText}>
-                    {t`All Projects`}
-                  </Text>
-                </PressableScale>
-
-                {projectsList.map((p) => {
-                  const isSelected = selectedProjectId === p.id;
-                  return (
+                  <GlassChrome face="sheet" style={styles.headerButton}>
                     <PressableScale
-                      key={p.id}
-                      onPress={() => setSelectedProjectId(isSelected ? null : p.id)}
-                      style={[
-                        styles.projectFilterPill,
-                        {
-                          borderColor: isSelected ? theme.colors.primary : theme.colors.border,
-                          backgroundColor: isSelected
-                            ? theme.colors.primary
-                            : surfaceBackground(theme.colors.surfaceRaised),
-                        },
-                      ]}>
-                      <Folder
-                        size={11}
-                        color={isSelected ? '#fff' : theme.colors.textMuted}
-                      />
-                      <Text
-                        variant="caption"
-                        color={isSelected ? '#fff' : theme.colors.text}
-                        numberOfLines={1}
-                        style={styles.projectFilterText}>
-                        {p.name}
-                      </Text>
+                      testID="agent-sessions-close"
+                      accessibilityLabel={t`Close`}
+                      accessibilityRole="button"
+                      onPress={onClose}
+                      style={styles.headerButtonHit}>
+                      <X size={19} color={theme.colors.text} strokeWidth={2} />
                     </PressableScale>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          ) : null}
+                  </GlassChrome>
+                </View>
 
-          <ScrollView style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
-            {filteredRoots.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  {searchQuery ? t`No sessions found` : t`No sessions yet`}
-                </Text>
-              </View>
-            ) : (
-              filteredRoots.map((root) => {
-                const subs = subagentMap.get(root.asid) || [];
-                const isRootActive = root.asid === activeAsid;
-                const projectName = getSessionProjectName(root);
+                {/* Unified Search Input */}
+                <Input
+                  accessibilityLabel={t`Search sessions`}
+                  placeholder={t`Search sessions...`}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  variant="outline"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-                return (
-                  <View key={root.asid} style={styles.sessionGroup}>
-                    {/* Main Root Session Card */}
-                    <PressableScale
-                      onPress={() => {
-                        onSelectSession(root.asid);
-                        onClose();
-                      }}
-                      style={[
-                        styles.rootCard,
-                        {
-                          borderColor: isRootActive ? theme.colors.primary : theme.colors.border,
-                          backgroundColor: isRootActive
-                            ? `${theme.colors.primary}12`
-                            : surfaceBackground(theme.colors.surfaceRaised),
-                        },
-                      ]}>
-                      <View style={styles.cardHeader}>
-                        <View style={styles.badgeRow}>
-                          <View
-                            style={[
-                              styles.agentBadge,
-                              { backgroundColor: `${theme.colors.primary}18` },
-                            ]}>
-                            <Bot size={12} color={theme.colors.primary} />
-                            <Text
-                              variant="caption"
-                              color={theme.colors.primary}
-                              style={styles.agentBadgeText}>
-                              {root.agent || 'build'}
-                            </Text>
-                          </View>
+                {/* Project Filter Pills */}
+                {projectsList.length > 0 ? (
+                  <View style={styles.projectFilterContainer}>
+                    <ThemedSurface
+                      slot="tabs.background"
+                      baseColor={theme.colors.surface}
+                      style={styles.projectFilterStrip}>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.projectFilterRow}>
+                        <PressableScale
+                          onPress={() => setSelectedProjectId(null)}
+                          style={[
+                            styles.projectFilterPill,
+                            !selectedProjectId && {
+                              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                            },
+                          ]}>
+                          <Text
+                            variant="caption"
+                            color={!selectedProjectId ? theme.colors.primary : theme.colors.textMuted}
+                            style={styles.projectFilterText}>
+                            {t`All Projects`}
+                          </Text>
+                        </PressableScale>
 
-                          <View
-                            style={[
-                              styles.modelBadge,
-                              { backgroundColor: surfaceBackground(theme.colors.surface) },
-                            ]}>
-                            <Text
-                              variant="caption"
-                              color={theme.colors.textMuted}
-                              style={styles.modelBadgeText}>
-                              {root.model?.model_id || 'big-pickle'}
-                            </Text>
-                          </View>
-
-                          {projectName ? (
-                            <View
-                              style={[
-                                styles.projectBadge,
-                                { backgroundColor: surfaceBackground(theme.colors.surface) },
-                              ]}>
-                              <Folder size={10} color={theme.colors.textMuted} />
-                              <Text
-                                variant="caption"
-                                color={theme.colors.textMuted}
-                                numberOfLines={1}
-                                style={styles.projectBadgeText}>
-                                {projectName}
-                              </Text>
-                            </View>
-                          ) : null}
-
-                          {subs.length > 0 ? (
-                            <View
-                              style={[
-                                styles.subCountBadge,
-                                { backgroundColor: surfaceBackground(theme.colors.surface) },
-                              ]}>
-                              <GitFork size={10} color={theme.colors.textMuted} />
-                              <Text
-                                variant="caption"
-                                color={theme.colors.textMuted}
-                                style={styles.subCountText}>
-                                {subs.length}
-                              </Text>
-                            </View>
-                          ) : null}
-                        </View>
-
-                        <View style={styles.headerRight}>
-                          {root.updated_ms ? (
-                            <View style={styles.timeRow}>
-                              <Clock size={11} color={theme.colors.textMuted} />
-                              <Text
-                                variant="caption"
-                                color={theme.colors.textMuted}
-                                style={styles.timeText}>
-                                {formatTime(root.updated_ms)}
-                              </Text>
-                            </View>
-                          ) : null}
-
-                          {isRootActive ? <Check size={16} color={theme.colors.primary} /> : null}
-                        </View>
-                      </View>
-
-                      <Text
-                        variant="bodySmall"
-                        color={isRootActive ? theme.colors.primary : theme.colors.text}
-                        numberOfLines={2}
-                        style={styles.sessionTitle}>
-                        {root.title || root.asid}
-                      </Text>
-
-                      {root.directory ? (
-                        <Text
-                          variant="caption"
-                          color={theme.colors.textMuted}
-                          numberOfLines={1}
-                          style={styles.dirText}>
-                          {root.directory}
-                        </Text>
-                      ) : null}
-                    </PressableScale>
-
-                    {/* Subagents nested list */}
-                    {subs.length > 0 ? (
-                      <View style={styles.subsContainer}>
-                        {subs.map((sub) => {
-                          const isSubActive = sub.asid === activeAsid;
+                        {projectsList.map((p) => {
+                          const isSelected = selectedProjectId === p.id;
                           return (
                             <PressableScale
-                              key={sub.asid}
-                              onPress={() => {
-                                onSelectSession(sub.asid);
-                                onClose();
-                              }}
+                              key={p.id}
+                              onPress={() => setSelectedProjectId(isSelected ? null : p.id)}
                               style={[
-                                styles.subCard,
-                                {
-                                  borderColor: isSubActive
-                                    ? theme.colors.primary
-                                    : theme.colors.border,
-                                  backgroundColor: isSubActive
-                                    ? `${theme.colors.primary}12`
-                                    : surfaceBackground(theme.colors.surfaceRaised),
+                                styles.projectFilterPill,
+                                isSelected && {
+                                  backgroundColor: surfaceBackground(theme.colors.primarySubtle),
                                 },
                               ]}>
-                              <View style={styles.subRow}>
-                                <View style={styles.subLeft}>
-                                  <GitFork
-                                    size={13}
-                                    color={
-                                      isSubActive ? theme.colors.primary : theme.colors.textMuted
-                                    }
-                                  />
-                                  <View
-                                    style={[
-                                      styles.subagentBadge,
-                                      { backgroundColor: `${theme.colors.primary}14` },
-                                    ]}>
-                                    <Text
-                                      variant="caption"
-                                      color={theme.colors.primary}
-                                      style={styles.subagentBadgeText}>
-                                      {sub.agent || 'subagent'}
-                                    </Text>
-                                  </View>
-                                  <Text
-                                    variant="caption"
-                                    color={isSubActive ? theme.colors.primary : theme.colors.text}
-                                    numberOfLines={1}
-                                    style={styles.subTitle}>
-                                    {sub.title || sub.asid}
-                                  </Text>
-                                </View>
-
-                                {isSubActive ? (
-                                  <Check size={14} color={theme.colors.primary} />
-                                ) : null}
-                              </View>
+                              <Folder
+                                size={12}
+                                color={isSelected ? theme.colors.primary : theme.colors.textMuted}
+                              />
+                              <Text
+                                variant="caption"
+                                color={isSelected ? theme.colors.primary : theme.colors.textMuted}
+                                numberOfLines={1}
+                                style={styles.projectFilterText}>
+                                {p.name}
+                              </Text>
                             </PressableScale>
                           );
                         })}
-                      </View>
-                    ) : null}
+                      </ScrollView>
+                    </ThemedSurface>
                   </View>
-                );
-              })
-            )}
-          </ScrollView>
+                ) : null}
+              </View>
+
+              {/* Scrollable Sessions List */}
+              <ScrollView
+                style={styles.scrollViewport}
+                contentContainerStyle={[
+                  styles.content,
+                  { paddingBottom: LADDER.section + insets.bottom },
+                ]}
+                keyboardShouldPersistTaps="handled">
+                {filteredRoots.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {searchQuery ? t`No sessions found` : t`No sessions yet`}
+                    </Text>
+                  </View>
+                ) : (
+                  filteredRoots.map((root) => {
+                    const subs = subagentMap.get(root.asid) || [];
+                    const isRootActive = root.asid === activeAsid;
+                    const projectName = getSessionProjectName(root);
+
+                    return (
+                      <ThemedSurface
+                        key={root.asid}
+                        slot="cards.decoration"
+                        baseColor={theme.colors.surface}
+                        style={[
+                          styles.sessionCard,
+                          isRootActive && {
+                            borderColor: theme.colors.primary,
+                            borderWidth: 1.5,
+                          },
+                        ]}>
+                        <PressableScale
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: isRootActive }}
+                          onPress={() => {
+                            onSelectSession(root.asid);
+                            onClose();
+                          }}
+                          style={styles.rootPressable}>
+                          <View style={styles.cardHeader}>
+                            <View style={styles.badgeRow}>
+                              <View
+                                style={[
+                                  styles.agentBadge,
+                                  { backgroundColor: `${theme.colors.primary}18` },
+                                ]}>
+                                <Bot size={12} color={theme.colors.primary} />
+                                <Text
+                                  variant="caption"
+                                  color={theme.colors.primary}
+                                  style={styles.agentBadgeText}>
+                                  {root.agent || 'build'}
+                                </Text>
+                              </View>
+
+                              <View
+                                style={[
+                                  styles.modelBadge,
+                                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                                ]}>
+                                <Text
+                                  variant="caption"
+                                  color={theme.colors.textMuted}
+                                  style={styles.modelBadgeText}>
+                                  {root.model?.model_id || 'big-pickle'}
+                                </Text>
+                              </View>
+
+                              {projectName ? (
+                                <View
+                                  style={[
+                                    styles.projectBadge,
+                                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                                  ]}>
+                                  <Folder size={10} color={theme.colors.textMuted} />
+                                  <Text
+                                    variant="caption"
+                                    color={theme.colors.textMuted}
+                                    numberOfLines={1}
+                                    style={styles.projectBadgeText}>
+                                    {projectName}
+                                  </Text>
+                                </View>
+                              ) : null}
+
+                              {subs.length > 0 ? (
+                                <View
+                                  style={[
+                                    styles.subCountBadge,
+                                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                                  ]}>
+                                  <GitFork size={10} color={theme.colors.textMuted} />
+                                  <Text
+                                    variant="caption"
+                                    color={theme.colors.textMuted}
+                                    style={styles.subCountText}>
+                                    {subs.length}
+                                  </Text>
+                                </View>
+                              ) : null}
+                            </View>
+
+                            <View style={styles.headerRight}>
+                              {root.updated_ms ? (
+                                <View style={styles.timeRow}>
+                                  <Clock size={11} color={theme.colors.textMuted} />
+                                  <Text
+                                    variant="caption"
+                                    color={theme.colors.textMuted}
+                                    style={styles.timeText}>
+                                    {formatTime(root.updated_ms)}
+                                  </Text>
+                                </View>
+                              ) : null}
+
+                              {isRootActive ? <Check size={16} color={theme.colors.primary} /> : null}
+                            </View>
+                          </View>
+
+                          <Text
+                            variant="bodySmall"
+                            weight="semibold"
+                            color={isRootActive ? theme.colors.primary : theme.colors.text}
+                            numberOfLines={2}
+                            style={styles.sessionTitle}>
+                            {root.title || root.asid}
+                          </Text>
+
+                          {root.directory ? (
+                            <Text
+                              variant="caption"
+                              color={theme.colors.textMuted}
+                              numberOfLines={1}
+                              style={styles.dirText}>
+                              {root.directory}
+                            </Text>
+                          ) : null}
+                        </PressableScale>
+
+                        {/* Subagents */}
+                        {subs.length > 0 ? (
+                          <View style={styles.subsSection}>
+                            {subs.map((sub, idx) => {
+                              const isSubActive = sub.asid === activeAsid;
+                              return (
+                                <Fragment key={sub.asid}>
+                                  <SettingsSeparator />
+                                  <PressableScale
+                                    accessibilityRole="button"
+                                    accessibilityState={{ selected: isSubActive }}
+                                    onPress={() => {
+                                      onSelectSession(sub.asid);
+                                      onClose();
+                                    }}
+                                    style={[
+                                      styles.subagentRow,
+                                      isSubActive && {
+                                        backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                                      },
+                                    ]}>
+                                    <View style={styles.subLeft}>
+                                      <GitFork
+                                        size={13}
+                                        color={isSubActive ? theme.colors.primary : theme.colors.textMuted}
+                                      />
+                                      <View
+                                        style={[
+                                          styles.subagentBadge,
+                                          { backgroundColor: `${theme.colors.primary}14` },
+                                        ]}>
+                                        <Text
+                                          variant="caption"
+                                          color={theme.colors.primary}
+                                          style={styles.subagentBadgeText}>
+                                          {sub.agent || 'subagent'}
+                                        </Text>
+                                      </View>
+                                      <Text
+                                        variant="caption"
+                                        color={isSubActive ? theme.colors.primary : theme.colors.text}
+                                        numberOfLines={1}
+                                        style={styles.subTitle}>
+                                        {sub.title || sub.asid}
+                                      </Text>
+                                    </View>
+
+                                    {isSubActive ? (
+                                      <Check size={14} color={theme.colors.primary} />
+                                    ) : null}
+                                  </PressableScale>
+                                </Fragment>
+                              );
+                            })}
+                          </View>
+                        ) : null}
+                      </ThemedSurface>
+                    );
+                  })
+                )}
+              </ScrollView>
+            </View>
+          </SheetFrame>
         </Pressable>
       </Pressable>
     </Modal>
@@ -485,91 +500,69 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  sheetGround: {
-    maxHeight: '85%',
+  sheetContainer: {
+    maxHeight: '88%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: 'rgba(150,150,150,0.2)',
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  handle: {
+  sheetLayout: {
+    flexShrink: 1,
+    overflow: 'hidden',
+  },
+  sheetHandle: {
     width: 38,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(150,150,150,0.35)',
     alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 2,
+    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+  },
+  fixedTop: {
+    flexShrink: 0,
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: LADDER.gap * 1.5,
+    paddingBottom: LADDER.gap,
+    gap: LADDER.snug,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
+    gap: LADDER.gap,
   },
-  headerTitleArea: {
+  headerCopy: {
     flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    includeFontPadding: false,
   },
-  headerSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  newBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  newBtnText: {
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  closeBtn: {
-    padding: 6,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 6,
-    paddingHorizontal: 12,
+  headerButton: {
+    width: 38,
     height: 38,
-    borderRadius: 999,
+    borderRadius: 19,
     borderCurve: 'continuous',
-    borderWidth: 1,
-    gap: 8,
+    overflow: 'hidden',
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    paddingVertical: 0,
+  headerButtonHit: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   projectFilterContainer: {
-    marginBottom: 8,
+    marginTop: 2,
+  },
+  projectFilterStrip: {
+    padding: 4,
+    borderRadius: 14,
+    borderCurve: 'continuous',
   },
   projectFilterRow: {
-    paddingHorizontal: 16,
     gap: 6,
     flexDirection: 'row',
     alignItems: 'center',
@@ -577,38 +570,37 @@ const styles = StyleSheet.create({
   projectFilterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
+    gap: 5,
+    paddingHorizontal: 12,
+    minHeight: 32,
+    borderRadius: 10,
     borderCurve: 'continuous',
-    borderWidth: 1,
   },
   projectFilterText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
   },
-  scrollList: {
-    maxHeight: 480,
+  scrollViewport: {
+    flexShrink: 1,
   },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    gap: 12,
+  content: {
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: 4,
+    gap: LADDER.snug,
   },
   emptyState: {
-    paddingVertical: 32,
+    paddingVertical: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  sessionGroup: {
-    gap: 6,
-  },
-  rootCard: {
-    padding: 12,
-    borderRadius: 16,
+  sessionCard: {
+    borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
-    borderWidth: 1,
-    gap: 6,
+    overflow: 'hidden',
+  },
+  rootPressable: {
+    padding: 14,
+    gap: 8,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -626,8 +618,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 999,
     borderCurve: 'continuous',
   },
@@ -636,38 +628,38 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   modelBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 999,
     borderCurve: 'continuous',
   },
   modelBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
   },
   projectBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 999,
     borderCurve: 'continuous',
-    maxWidth: 120,
+    maxWidth: 140,
   },
   projectBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
   },
   subCountBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 999,
     borderCurve: 'continuous',
   },
   subCountText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '500',
   },
   headerRight: {
@@ -684,41 +676,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   sessionTitle: {
-    fontWeight: '600',
-    fontSize: 14,
     lineHeight: 19,
+    includeFontPadding: false,
   },
   dirText: {
     fontSize: 11,
   },
-  subsContainer: {
-    paddingLeft: 18,
-    borderLeftWidth: 2,
-    borderLeftColor: 'rgba(150,150,150,0.2)',
-    marginLeft: 12,
-    gap: 4,
+  subsSection: {
+    backgroundColor: 'rgba(0,0,0,0.02)',
   },
-  subCard: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-  },
-  subRow: {
+  subagentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
   },
   subLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     flex: 1,
   },
   subagentBadge: {
     paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingVertical: 2,
     borderRadius: 999,
     borderCurve: 'continuous',
   },

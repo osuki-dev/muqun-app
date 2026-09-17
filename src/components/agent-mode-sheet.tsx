@@ -1,11 +1,15 @@
 import { memo, useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, ActivityIndicator, Pressable } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Check, Sparkles, X, Bot, Compass, FileText } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetHeading } from '@/components/sheet-heading';
-import { SheetFrame } from '@/components/sheet-ground';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetHandle } from '@/components/sheet-route-frame';
+import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { getAgentCatalog, type AgentInfo } from '@/lib/agent-session';
 
@@ -24,6 +28,8 @@ export const AgentModeSheet = memo(function AgentModeSheet({
 }: AgentModeSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useSheetGroundPlate();
+  const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const [loading, setLoading] = useState(false);
   const [agents, setAgents] = useState<AgentInfo[]>([]);
@@ -87,13 +93,13 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   const getAgentIcon = (id: string, color: string) => {
     switch (id) {
       case 'build':
-        return <Bot size={16} color={color} />;
+        return <Bot size={18} color={color} />;
       case 'explore':
-        return <Compass size={16} color={color} />;
+        return <Compass size={18} color={color} />;
       case 'plan':
-        return <FileText size={16} color={color} />;
+        return <FileText size={18} color={color} />;
       default:
-        return <Sparkles size={16} color={color} />;
+        return <Sparkles size={18} color={color} />;
     }
   };
 
@@ -128,85 +134,102 @@ export const AgentModeSheet = memo(function AgentModeSheet({
         <Pressable
           testID="agent-mode-sheet"
           onPress={(e) => e.stopPropagation()}
-          style={[
-            styles.sheetGround,
-            { backgroundColor: surfaceBackground(theme.colors.surface) },
-          ]}>
-          <SheetFrame>
-            <View style={styles.header}>
-              <SheetHeading
-                title={t`Agent Mode`}
-                caption={t`Choose the specialized agent for this task`}
-              />
-              <PressableScale
-                testID="agent-mode-close"
-                onPress={onClose}
-                style={styles.closeBtn}
-                accessibilityLabel={t`Close`}>
-                <X size={18} color={theme.colors.textMuted} />
-              </PressableScale>
-            </View>
+          style={styles.sheetContainer}>
+          <SheetFrame tint="background">
+            <View collapsable={false} style={styles.sheetLayout}>
+              {/* Pinned Top Navigation Bar */}
+              <View style={styles.fixedTop}>
+                <SheetHandle style={styles.sheetHandle} />
 
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
-              </View>
-            ) : (
-              <ScrollView style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
-                <View style={styles.agentList}>
-                  {displayAgents.map((ag: AgentInfo) => {
-                    const isSelected = selectedAgent === ag.id;
-                    const meta = getAgentModeMeta(ag);
-                    const accentColor = ag.color || (isSelected ? theme.colors.primary : theme.colors.textMuted);
+                <View style={styles.header}>
+                  <View style={[styles.headerCopy, plate]}>
+                    <Text variant="subheading" style={styles.headerTitle}>
+                      {t`Agent Mode`}
+                    </Text>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {t`Choose the specialized agent for this task`}
+                    </Text>
+                  </View>
 
-                    return (
-                      <PressableScale
-                        key={ag.id}
-                        onPress={() => onSelectAgent(ag.id)}
-                        style={[
-                          styles.agentCard,
-                          {
-                            borderColor: isSelected ? theme.colors.primary : theme.colors.border,
-                            backgroundColor: isSelected
-                              ? `${theme.colors.primary}12`
-                              : surfaceBackground(theme.colors.surfaceRaised),
-                          },
-                        ]}>
-                        <View style={styles.agentCardHeader}>
-                          <View style={styles.agentTitleRow}>
-                            {getAgentIcon(ag.id, accentColor)}
-                            <Text
-                              variant="bodySmall"
-                              weight="bold"
-                              color={isSelected ? theme.colors.primary : theme.colors.text}
-                              style={styles.agentName}>
-                              {ag.name || ag.id}
-                            </Text>
-                            <View style={[styles.modeBadge, { backgroundColor: meta.bg }]}>
-                              <Text
-                                variant="caption"
-                                color={meta.textColor}
-                                style={styles.modeBadgeText}>
-                                {meta.label}
-                              </Text>
-                            </View>
-                          </View>
-                          {isSelected ? <Check size={16} color={theme.colors.primary} /> : null}
-                        </View>
-                        {ag.description ? (
-                          <Text
-                            variant="caption"
-                            color={theme.colors.textMuted}
-                            style={styles.agentDesc}>
-                            {ag.description}
-                          </Text>
-                        ) : null}
-                      </PressableScale>
-                    );
-                  })}
+                  <GlassChrome face="sheet" style={styles.headerButton}>
+                    <PressableScale
+                      testID="agent-mode-close"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Close`}
+                      onPress={onClose}
+                      style={styles.headerButtonHit}>
+                      <X size={19} color={theme.colors.text} strokeWidth={2} />
+                    </PressableScale>
+                  </GlassChrome>
                 </View>
-              </ScrollView>
-            )}
+              </View>
+
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <Spinner size="lg" color={theme.colors.primary} />
+                </View>
+              ) : (
+                <ScrollView
+                  style={styles.scrollViewport}
+                  contentContainerStyle={[
+                    styles.content,
+                    { paddingBottom: LADDER.section + insets.bottom },
+                  ]}>
+                  <SettingsCard>
+                    {displayAgents.map((ag: AgentInfo) => {
+                      const isSelected = selectedAgent === ag.id;
+                      const meta = getAgentModeMeta(ag);
+                      const accentColor =
+                        ag.color || (isSelected ? theme.colors.primary : theme.colors.text);
+
+                      return (
+                        <PressableScale
+                          key={ag.id}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: isSelected }}
+                          onPress={() => onSelectAgent(ag.id)}
+                          style={[
+                            styles.agentRow,
+                            isSelected && {
+                              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                            },
+                          ]}>
+                          <View style={styles.agentRowTop}>
+                            <View style={styles.agentTitleRow}>
+                              {getAgentIcon(ag.id, accentColor)}
+                              <Text
+                                variant="bodySmall"
+                                weight="semibold"
+                                color={isSelected ? theme.colors.primary : theme.colors.text}
+                                style={styles.agentName}>
+                                {ag.name || ag.id}
+                              </Text>
+                              <View style={[styles.modeBadge, { backgroundColor: meta.bg }]}>
+                                <Text
+                                  variant="caption"
+                                  color={meta.textColor}
+                                  style={styles.modeBadgeText}>
+                                  {meta.label}
+                                </Text>
+                              </View>
+                            </View>
+                            {isSelected ? <Check size={18} color={theme.colors.primary} /> : null}
+                          </View>
+                          {ag.description ? (
+                            <Text
+                              variant="caption"
+                              color={theme.colors.textMuted}
+                              style={styles.agentDesc}>
+                              {ag.description}
+                            </Text>
+                          ) : null}
+                        </PressableScale>
+                      );
+                    })}
+                  </SettingsCard>
+                </ScrollView>
+              )}
+            </View>
           </SheetFrame>
         </Pressable>
       </Pressable>
@@ -217,55 +240,78 @@ export const AgentModeSheet = memo(function AgentModeSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  sheetGround: {
-    maxHeight: '80%',
+  sheetContainer: {
+    maxHeight: '85%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: 'rgba(150,150,150,0.2)',
+    borderCurve: 'continuous',
     overflow: 'hidden',
+  },
+  sheetLayout: {
+    flexShrink: 1,
+    overflow: 'hidden',
+  },
+  sheetHandle: {
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+  },
+  fixedTop: {
+    flexShrink: 0,
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: LADDER.gap * 1.5,
+    paddingBottom: LADDER.gap,
+    gap: LADDER.snug,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 10,
+    alignItems: 'center',
+    gap: LADDER.gap,
   },
-  closeBtn: {
-    padding: 6,
-    borderRadius: 999,
+  headerCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  headerTitle: {
+    includeFontPadding: false,
+  },
+  headerButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  headerButtonHit: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingContainer: {
     padding: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollList: {
-    flexGrow: 0,
+  scrollViewport: {
+    flexShrink: 1,
   },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 30,
-  },
-  agentList: {
-    gap: 10,
+  content: {
+    paddingHorizontal: LADDER.gutter,
     paddingTop: 4,
   },
-  agentCard: {
-    padding: 14,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    borderWidth: 1,
+  agentRow: {
+    paddingHorizontal: LADDER.gutter,
+    paddingVertical: LADDER.snug,
     gap: 6,
   },
-  agentCardHeader: {
+  agentRowTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -277,7 +323,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   agentName: {
-    fontSize: 14,
+    includeFontPadding: false,
   },
   modeBadge: {
     paddingHorizontal: 7,
@@ -290,7 +336,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   agentDesc: {
-    fontSize: 12,
     lineHeight: 17,
   },
 });

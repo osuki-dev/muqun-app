@@ -2,8 +2,14 @@ import { memo } from 'react';
 import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Cpu, DollarSign, Folder, Layers, Sparkles, X, Zap } from 'lucide-react-native';
+import { DollarSign, Folder, Layers, Sparkles, X, Zap } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetHandle } from '@/components/sheet-route-frame';
+import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Toggle } from '@/components/toggle';
 import type { AgentSessionInfo, TokensUsage } from '@/lib/agent-session';
@@ -33,6 +39,8 @@ export const AgentContextSheet = memo(function AgentContextSheet({
 }: AgentContextSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useSheetGroundPlate();
+  const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
 
   const totalTokens = (tokens?.input ?? 0) + (tokens?.output ?? 0) + (tokens?.reasoning ?? 0);
@@ -58,287 +66,286 @@ export const AgentContextSheet = memo(function AgentContextSheet({
         <Pressable
           testID="agent-context-sheet"
           onPress={(e) => e.stopPropagation()}
-          style={[styles.sheetGround, { backgroundColor: theme.colors.surface }]}>
-          {/* Handle */}
-          <View style={styles.handle} />
+          style={styles.sheetContainer}>
+          <SheetFrame tint="background">
+            <View collapsable={false} style={styles.sheetLayout}>
+              {/* Pinned Top Navigation Bar */}
+              <View style={styles.fixedTop}>
+                <SheetHandle style={styles.sheetHandle} />
 
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <View
-                style={[
-                  styles.headerIconBox,
-                  { backgroundColor: `${theme.colors.primary}18` },
-                ]}>
-                <Cpu size={18} color={theme.colors.primary} />
-              </View>
-              <View>
-                <Text variant="heading" style={styles.headerTitle}>
-                  <Trans>Context & Usage</Trans>
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  {session?.title || t`Active Session`}
-                </Text>
-              </View>
-            </View>
-
-            <PressableScale
-              testID="agent-context-sheet-close"
-              onPress={onClose}
-              accessibilityLabel={t`Close`}
-              style={[
-                styles.closeBtn,
-                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              <X size={16} color={theme.colors.text} />
-            </PressableScale>
-          </View>
-
-          <ScrollView
-            style={styles.scrollList}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}>
-            {/* Context Window Usage Card */}
-            <View
-              style={[
-                styles.card,
-                {
-                  backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                  borderColor: theme.colors.border,
-                },
-              ]}>
-              <View style={styles.cardHeader}>
-                <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-                  <Trans>Context Window</Trans>
-                </Text>
-                <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                  {contextPct}%
-                </Text>
-              </View>
-
-              {/* Progress bar */}
-              <View
-                style={[
-                  styles.progressBarTrack,
-                  { backgroundColor: surfaceBackground(theme.colors.surface) },
-                ]}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${Math.max(2, Math.min(100, contextRatio * 100))}%`,
-                      backgroundColor: theme.colors.primary,
-                    },
-                  ]}
-                />
-              </View>
-
-              <View style={styles.cardSubtextRow}>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  {formatTokens(totalTokens)} <Trans>tokens used</Trans>
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  {contextLimit >= 1_000_000
-                    ? `${(contextLimit / 1_000_000).toFixed(1)}M`
-                    : `${(contextLimit / 1000).toFixed(0)}k`}{' '}
-                  <Trans>limit</Trans>
-                </Text>
-              </View>
-            </View>
-
-            {/* Tokens Breakdown Grid */}
-            <View
-              style={[
-                styles.card,
-                {
-                  backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                  borderColor: theme.colors.border,
-                },
-              ]}>
-              <Text
-                variant="bodySmall"
-                weight="semibold"
-                color={theme.colors.text}
-                style={styles.sectionTitle}>
-                <Trans>Token Breakdown</Trans>
-              </Text>
-
-              <View style={styles.grid}>
-                <View style={styles.gridItem}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Input</Trans>
-                  </Text>
-                  <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-                    {formatTokens(tokens?.input)}
-                  </Text>
-                </View>
-
-                <View style={styles.gridItem}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Output</Trans>
-                  </Text>
-                  <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-                    {formatTokens(tokens?.output)}
-                  </Text>
-                </View>
-
-                <View style={styles.gridItem}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Reasoning</Trans>
-                  </Text>
-                  <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-                    {formatTokens(tokens?.reasoning)}
-                  </Text>
-                </View>
-
-                <View style={styles.gridItem}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Cache Read</Trans>
-                  </Text>
-                  <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-                    {formatTokens(tokens?.cache_read)}
-                  </Text>
-                </View>
-
-                <View style={styles.gridItem}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>Cache Write</Trans>
-                  </Text>
-                  <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
-                    {formatTokens(tokens?.cache_write)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Cost & Session Meta Card */}
-            <View
-              style={[
-                styles.card,
-                {
-                  backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                  borderColor: theme.colors.border,
-                },
-              ]}>
-              {/* Cost Row */}
-              <View style={styles.metaRow}>
-                <View style={styles.metaLabelGroup}>
-                  <DollarSign size={14} color={theme.colors.primary} />
-                  <Text variant="bodySmall" color={theme.colors.text}>
-                    <Trans>Estimated Cost</Trans>
-                  </Text>
-                </View>
-                <View style={[styles.badge, { backgroundColor: `${theme.colors.primary}18` }]}>
-                  <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                    {costDisplay}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Working Directory Row */}
-              <View
-                style={[
-                  styles.metaRow,
-                  styles.metaDivider,
-                  { borderTopColor: theme.colors.border },
-                ]}>
-                <View style={styles.metaLabelGroup}>
-                  <Folder size={14} color={theme.colors.textMuted} />
-                  <Text variant="bodySmall" color={theme.colors.text}>
-                    <Trans>Working Directory</Trans>
-                  </Text>
-                </View>
-                <Text
-                  variant="caption"
-                  color={theme.colors.textMuted}
-                  numberOfLines={1}
-                  style={styles.dirValue}>
-                  {session?.directory || '~'}
-                </Text>
-              </View>
-
-              {/* Model & Reasoning Row */}
-              <View
-                style={[
-                  styles.metaRow,
-                  styles.metaDivider,
-                  { borderTopColor: theme.colors.border },
-                ]}>
-                <View style={styles.metaLabelGroup}>
-                  <Sparkles size={14} color={theme.colors.textMuted} />
-                  <Text variant="bodySmall" color={theme.colors.text}>
-                    <Trans>Model & Reasoning</Trans>
-                  </Text>
-                </View>
-                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                  {modelName} • {variantName}
-                </Text>
-              </View>
-
-              {/* Show Reasoning Process Toggle */}
-              {onToggleReasoning ? (
-                <View
-                  style={[
-                    styles.metaRow,
-                    styles.metaDivider,
-                    { borderTopColor: theme.colors.border },
-                  ]}>
-                  <View style={styles.metaLabelGroup}>
-                    <Sparkles size={14} color={theme.colors.primary} />
-                    <Text variant="bodySmall" color={theme.colors.text}>
-                      <Trans>Show Reasoning Process</Trans>
+                <View style={styles.header}>
+                  <View style={[styles.headerCopy, plate]}>
+                    <Text variant="subheading" style={styles.headerTitle}>
+                      {t`Context & Usage`}
+                    </Text>
+                    <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                      {session?.title || t`Active Session`}
                     </Text>
                   </View>
-                  <Toggle
-                    testID="agent-toggle-reasoning"
-                    value={showReasoning}
-                    onValueChange={onToggleReasoning}
-                    accessibilityLabel={t`Show Reasoning Process`}
-                  />
+
+                  <GlassChrome face="sheet" style={styles.headerButton}>
+                    <PressableScale
+                      testID="agent-context-sheet-close"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Close`}
+                      onPress={onClose}
+                      style={styles.headerButtonHit}>
+                      <X size={19} color={theme.colors.text} strokeWidth={2} />
+                    </PressableScale>
+                  </GlassChrome>
                 </View>
-              ) : null}
-            </View>
+              </View>
 
-            {/* Quick Actions */}
-            <View style={styles.actionsRow}>
-              {onCompact ? (
-                <PressableScale
-                  testID="agent-context-compact-btn"
-                  onPress={() => {
-                    onCompact();
-                    onClose();
-                  }}
-                  style={[styles.actionBtn, { backgroundColor: theme.colors.primary }]}>
-                  <Zap size={14} color="#fff" />
-                  <Text variant="caption" weight="semibold" color="#fff">
-                    <Trans>Compact Context (/compact)</Trans>
-                  </Text>
-                </PressableScale>
-              ) : null}
+              <ScrollView
+                style={styles.scrollViewport}
+                contentContainerStyle={[
+                  styles.content,
+                  { paddingBottom: LADDER.section + insets.bottom },
+                ]}
+                showsVerticalScrollIndicator={false}>
+                {/* Context Window Usage Section */}
+                <View style={styles.sectionBlock}>
+                  <SectionLabel title={t`CONTEXT WINDOW`} color={theme.colors.textMuted} />
+                  <SettingsCard>
+                    <View style={styles.cardPad}>
+                      <View style={styles.progressHeader}>
+                        <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                          <Trans>Used Capacity</Trans>
+                        </Text>
+                        <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                          {contextPct}%
+                        </Text>
+                      </View>
 
-              {onClear ? (
-                <PressableScale
-                  testID="agent-context-clear-btn"
-                  onPress={() => {
-                    onClear();
-                    onClose();
-                  }}
-                  style={[
-                    styles.actionBtn,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: theme.colors.border,
-                      borderWidth: 1,
-                    },
-                  ]}>
-                  <Layers size={14} color={theme.colors.textMuted} />
-                  <Text variant="caption" color={theme.colors.text}>
-                    <Trans>Clear Context (/clear)</Trans>
-                  </Text>
-                </PressableScale>
-              ) : null}
+                      {/* Progress bar */}
+                      <View
+                        style={[
+                          styles.progressBarTrack,
+                          { backgroundColor: surfaceBackground(theme.colors.background) },
+                        ]}>
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${Math.max(2, Math.min(100, contextRatio * 100))}%`,
+                              backgroundColor: theme.colors.primary,
+                            },
+                          ]}
+                        />
+                      </View>
+
+                      <View style={styles.cardSubtextRow}>
+                        <Text variant="caption" color={theme.colors.textMuted}>
+                          {formatTokens(totalTokens)} <Trans>tokens used</Trans>
+                        </Text>
+                        <Text variant="caption" color={theme.colors.textMuted}>
+                          {contextLimit >= 1_000_000
+                            ? `${(contextLimit / 1_000_000).toFixed(1)}M`
+                            : `${(contextLimit / 1000).toFixed(0)}k`}{' '}
+                          <Trans>limit</Trans>
+                        </Text>
+                      </View>
+                    </View>
+                  </SettingsCard>
+                </View>
+
+                {/* Tokens Breakdown Grid */}
+                <View style={styles.sectionBlock}>
+                  <SectionLabel title={t`TOKEN BREAKDOWN`} color={theme.colors.textMuted} />
+                  <SettingsCard>
+                    <View style={styles.gridPad}>
+                      <View style={styles.grid}>
+                        <View style={styles.gridItem}>
+                          <Text variant="caption" color={theme.colors.textMuted}>
+                            <Trans>Input</Trans>
+                          </Text>
+                          <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                            {formatTokens(tokens?.input)}
+                          </Text>
+                        </View>
+
+                        <View style={styles.gridItem}>
+                          <Text variant="caption" color={theme.colors.textMuted}>
+                            <Trans>Output</Trans>
+                          </Text>
+                          <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                            {formatTokens(tokens?.output)}
+                          </Text>
+                        </View>
+
+                        <View style={styles.gridItem}>
+                          <Text variant="caption" color={theme.colors.textMuted}>
+                            <Trans>Reasoning</Trans>
+                          </Text>
+                          <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                            {formatTokens(tokens?.reasoning)}
+                          </Text>
+                        </View>
+
+                        <View style={styles.gridItem}>
+                          <Text variant="caption" color={theme.colors.textMuted}>
+                            <Trans>Cache Read</Trans>
+                          </Text>
+                          <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                            {formatTokens(tokens?.cache_read)}
+                          </Text>
+                        </View>
+
+                        <View style={styles.gridItem}>
+                          <Text variant="caption" color={theme.colors.textMuted}>
+                            <Trans>Cache Write</Trans>
+                          </Text>
+                          <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                            {formatTokens(tokens?.cache_write)}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </SettingsCard>
+                </View>
+
+                {/* Cost & Session Meta */}
+                <View style={styles.sectionBlock}>
+                  <SectionLabel title={t`SESSION DETAILS`} color={theme.colors.textMuted} />
+                  <SettingsCard>
+                    {/* Cost Row */}
+                    <View style={styles.metaRow}>
+                      <View style={styles.metaLabelGroup}>
+                        <DollarSign size={15} color={theme.colors.primary} />
+                        <Text variant="bodySmall" color={theme.colors.text}>
+                          <Trans>Estimated Cost</Trans>
+                        </Text>
+                      </View>
+                      <View style={[styles.badge, { backgroundColor: `${theme.colors.primary}18` }]}>
+                        <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                          {costDisplay}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Working Directory Row */}
+                    <View style={styles.metaRow}>
+                      <View style={styles.metaLabelGroup}>
+                        <Folder size={15} color={theme.colors.textMuted} />
+                        <Text variant="bodySmall" color={theme.colors.text}>
+                          <Trans>Working Directory</Trans>
+                        </Text>
+                      </View>
+                      <Text
+                        variant="caption"
+                        color={theme.colors.textMuted}
+                        numberOfLines={1}
+                        style={styles.dirValue}>
+                        {session?.directory || '~'}
+                      </Text>
+                    </View>
+
+                    {/* Model & Reasoning Row */}
+                    <View style={styles.metaRow}>
+                      <View style={styles.metaLabelGroup}>
+                        <Layers size={15} color={theme.colors.textMuted} />
+                        <Text variant="bodySmall" color={theme.colors.text}>
+                          <Trans>Active Model</Trans>
+                        </Text>
+                      </View>
+                      <View style={styles.modelTagGroup}>
+                        <Text variant="caption" weight="medium" color={theme.colors.text}>
+                          {modelName}
+                        </Text>
+                        {variantName ? (
+                          <View
+                            style={[
+                              styles.variantBadge,
+                              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                            ]}>
+                            <Text variant="caption" color={theme.colors.textMuted}>
+                              {variantName}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
+
+                    {/* Reasoning Visibility Toggle Row */}
+                    {onToggleReasoning ? (
+                      <View style={styles.metaRow}>
+                        <View style={styles.metaLabelGroup}>
+                          <Sparkles size={15} color={theme.colors.primary} />
+                          <View>
+                            <Text variant="bodySmall" color={theme.colors.text}>
+                              <Trans>Show Thinking Process</Trans>
+                            </Text>
+                            <Text variant="caption" color={theme.colors.textMuted}>
+                              <Trans>Expand reasoning & thoughts</Trans>
+                            </Text>
+                          </View>
+                        </View>
+                        <Toggle
+                          value={showReasoning}
+                          onValueChange={onToggleReasoning}
+                          accessibilityLabel={t`Show Thinking Process`}
+                        />
+                      </View>
+                    ) : null}
+                  </SettingsCard>
+                </View>
+
+                {/* Quick Actions (Compact / Clear) */}
+                {(onCompact || onClear) ? (
+                  <View style={styles.sectionBlock}>
+                    <SectionLabel title={t`ACTIONS`} color={theme.colors.textMuted} />
+                    <SettingsCard>
+                      {onCompact ? (
+                        <PressableScale
+                          testID="agent-context-compact-btn"
+                          accessibilityRole="button"
+                          onPress={() => {
+                            onClose();
+                            onCompact();
+                          }}
+                          style={styles.actionRow}>
+                          <View style={styles.actionRowLeft}>
+                            <Zap size={16} color={theme.colors.primary} />
+                            <View>
+                              <Text variant="bodySmall" weight="medium" color={theme.colors.text}>
+                                <Trans>Compact Context</Trans>
+                              </Text>
+                              <Text variant="caption" color={theme.colors.textMuted}>
+                                <Trans>Summarize history into compact memory (/compact)</Trans>
+                              </Text>
+                            </View>
+                          </View>
+                        </PressableScale>
+                      ) : null}
+
+                      {onClear ? (
+                        <PressableScale
+                          testID="agent-context-clear-btn"
+                          accessibilityRole="button"
+                          onPress={() => {
+                            onClose();
+                            onClear();
+                          }}
+                          style={styles.actionRow}>
+                          <View style={styles.actionRowLeft}>
+                            <X size={16} color={theme.colors.danger} />
+                            <View>
+                              <Text variant="bodySmall" weight="medium" color={theme.colors.danger}>
+                                <Trans>Clear Context</Trans>
+                              </Text>
+                              <Text variant="caption" color={theme.colors.textMuted}>
+                                <Trans>Reset conversation context window (/clear)</Trans>
+                              </Text>
+                            </View>
+                          </View>
+                        </PressableScale>
+                      ) : null}
+                    </SettingsCard>
+                  </View>
+                ) : null}
+              </ScrollView>
             </View>
-          </ScrollView>
+          </SheetFrame>
         </Pressable>
       </Pressable>
     </Modal>
@@ -348,67 +355,76 @@ export const AgentContextSheet = memo(function AgentContextSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  sheetGround: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '75%',
-    paddingBottom: 24,
+  sheetContainer: {
+    maxHeight: '88%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
   },
-  handle: {
-    width: 36,
+  sheetLayout: {
+    flexShrink: 1,
+    overflow: 'hidden',
+  },
+  sheetHandle: {
+    width: 38,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(150, 150, 150, 0.4)',
     alignSelf: 'center',
-    marginTop: 8,
-    marginBottom: 8,
+    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+  },
+  fixedTop: {
+    flexShrink: 0,
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: LADDER.gap * 1.5,
+    paddingBottom: LADDER.gap,
+    gap: LADDER.snug,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    gap: LADDER.gap,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  headerIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+  headerCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   headerTitle: {
-    fontSize: 16,
+    includeFontPadding: false,
   },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  headerButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  headerButtonHit: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollList: {
-    paddingHorizontal: 16,
+  scrollViewport: {
+    flexShrink: 1,
   },
-  scrollContent: {
-    paddingBottom: 16,
-    gap: 12,
+  content: {
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: 4,
+    gap: LADDER.section,
   },
-  card: {
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
+  sectionBlock: {
+    gap: LADDER.snug,
+  },
+  cardPad: {
+    padding: LADDER.gutter,
     gap: 10,
   },
-  cardHeader: {
+  progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -427,54 +443,60 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  sectionTitle: {
-    marginBottom: 2,
+  gridPad: {
+    padding: LADDER.gutter,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 12,
   },
   gridItem: {
     width: '30%',
-    gap: 2,
+    minWidth: 80,
+    gap: 3,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  metaDivider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 10,
-    marginTop: 4,
+    paddingHorizontal: LADDER.gutter,
+    paddingVertical: LADDER.snug,
+    gap: 12,
   },
   metaLabelGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  dirValue: {
-    maxWidth: '55%',
+    gap: 10,
+    flex: 1,
   },
   badge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 4,
+  dirValue: {
+    maxWidth: 180,
   },
-  actionBtn: {
-    flex: 1,
-    height: 40,
-    borderRadius: 10,
+  modelTagGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
+  },
+  variantBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+  },
+  actionRow: {
+    paddingHorizontal: LADDER.gutter,
+    paddingVertical: LADDER.snug,
+  },
+  actionRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
 });

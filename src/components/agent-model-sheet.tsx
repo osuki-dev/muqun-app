@@ -1,19 +1,24 @@
 import { memo, useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Modal,
-  ActivityIndicator,
-  Pressable,
-  TextInput,
-} from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Check, Search, X } from 'lucide-react-native';
+import { Check, X, Sparkles } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { GlassChrome } from '@/components/glass-chrome';
+import { Input } from '@/components/themed-input';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetHandle } from '@/components/sheet-route-frame';
+import { ThemedSurface } from '@/components/themed-surface';
+import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { getAgentCatalog, type ModelInfo, type ModelRef } from '@/lib/agent-session';
+import {
+  getAgentCatalog,
+  type AgentCatalog,
+  type ModelInfo,
+  type ModelRef,
+} from '@/lib/agent-session';
 
 export interface AgentModelSheetProps {
   visible: boolean;
@@ -22,32 +27,15 @@ export interface AgentModelSheetProps {
   onClose: () => void;
 }
 
-export function formatProviderName(providerId: string): string {
-  const lower = (providerId || '').toLowerCase().trim();
-  if (lower === 'opencode') return 'OpenCode (Free)';
-  if (lower === 'github-copilot') return 'GitHub Copilot';
-  if (lower === 'opencode-go') return 'OpenCode Go';
-  if (lower === 'opencode-zen') return 'OpenCode Zen';
-  if (lower === 'openai') return 'OpenAI';
-  if (lower === 'anthropic') return 'Anthropic';
-  if (lower === 'google') return 'Google';
-  if (lower === 'deepseek') return 'DeepSeek';
-  if (lower === 'acme') return 'ACME';
-  return providerId
-    .split(/[-_]/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-}
-
 export function isFreeModel(model: ModelInfo): boolean {
   const idLower = (model.id || '').toLowerCase();
   const nameLower = (model.name || '').toLowerCase();
   const provLower = (model.provider_id || '').toLowerCase();
   return (
-    provLower === 'opencode' ||
     idLower.includes('free') ||
     nameLower.includes('free') ||
-    idLower === 'big-pickle'
+    provLower === 'opencode' ||
+    provLower.includes('free')
   );
 }
 
@@ -59,6 +47,8 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 }: AgentModelSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useSheetGroundPlate();
+  const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const [loading, setLoading] = useState(false);
   const [models, setModels] = useState<ModelInfo[]>([]);
@@ -70,11 +60,13 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     let active = true;
     setLoading(true);
     getAgentCatalog()
-      .then((cat) => {
-        if (active && cat?.models) setModels(cat.models);
+      .then((cat: AgentCatalog) => {
+        if (active && cat?.models) {
+          setModels(cat.models);
+        }
       })
-      .catch((err) => {
-        console.warn('Failed to load agent catalog:', err);
+      .catch((err: unknown) => {
+        console.warn('Failed to load model catalog:', err);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -84,45 +76,48 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     };
   }, [visible]);
 
-  // Filter models by search query and free filter
   const filteredModels = useMemo(() => {
     let list = models;
     if (filterMode === 'free') {
-      list = list.filter(isFreeModel);
+      list = list.filter((m) => isFreeModel(m));
     }
     const q = searchQuery.trim().toLowerCase();
     if (!q) return list;
-    return list.filter((m) => {
-      const name = (m.name ?? '').toLowerCase();
-      const id = (m.id ?? '').toLowerCase();
-      const prov = (m.provider_id ?? '').toLowerCase();
-      const family = (m.family ?? '').toLowerCase();
-      return name.includes(q) || id.includes(q) || prov.includes(q) || family.includes(q);
-    });
+    return list.filter(
+      (m) =>
+        m.id.toLowerCase().includes(q) ||
+        (m.name && m.name.toLowerCase().includes(q)) ||
+        m.provider_id.toLowerCase().includes(q)
+    );
   }, [models, searchQuery, filterMode]);
 
-  // Group models by section
-  const sections = useMemo(() => {
-    const q = searchQuery.trim();
-    const result: { title: string; isRecent?: boolean; models: ModelInfo[] }[] = [];
+  const formatProviderName = (prov: string): string => {
+    const known: Record<string, string> = {
+      anthropic: 'Anthropic',
+      openai: 'OpenAI',
+      google: 'Google Cloud',
+      deepseek: 'DeepSeek',
+      ollama: 'Ollama (Local)',
+      openrouter: 'OpenRouter',
+      opencode: 'OpenCode Free Gateway',
+    };
+    return (
+      known[prov.toLowerCase()] ||
+      prov.charAt(0).toUpperCase() + prov.slice(1).replace(/[-_]/g, ' ')
+    );
+  };
 
-    // If not searching and we have a selected model, show it under "Recent"
-    if (!q && selectedModel && filterMode === 'all') {
-      const active = models.find(
-        (m) =>
-          m.id === selectedModel.model_id &&
-          (!selectedModel.provider_id || m.provider_id === selectedModel.provider_id)
-      );
-      if (active) {
-        result.push({
-          title: t`Recent`,
-          isRecent: true,
-          models: [active],
-        });
-      }
+  const sections = useMemo(() => {
+    const result: { title: string; models: ModelInfo[] }[] = [];
+
+    const freeModels = models.filter((m) => isFreeModel(m));
+    if (filterMode === 'all' && !searchQuery.trim() && freeModels.length > 0) {
+      result.push({
+        title: t`⚡ Free & Unlimited (Recommended)`,
+        models: freeModels,
+      });
     }
 
-    // Group remaining models by provider
     const providerMap = new Map<string, ModelInfo[]>();
     for (const m of filteredModels) {
       const prov = m.provider_id || 'other';
@@ -131,11 +126,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       providerMap.set(prov, list);
     }
 
-    // Sort providers: opencode (Free) first, then github-copilot, opencode-go, openai, others
     const preferredOrder = [
       'opencode',
-      'github-copilot',
-      'opencode-go',
+      'deepseek',
       'openai',
       'anthropic',
       'google',
@@ -158,7 +151,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     }
 
     return result;
-  }, [filteredModels, models, searchQuery, selectedModel, filterMode, t]);
+  }, [filteredModels, models, searchQuery, filterMode, t]);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -166,291 +159,260 @@ export const AgentModelSheet = memo(function AgentModelSheet({
         <Pressable
           testID="agent-model-sheet"
           onPress={(e) => e.stopPropagation()}
-          style={[styles.sheetGround, { backgroundColor: theme.colors.surface }]}>
-          {/* Top handle pill */}
-          <View style={styles.handle} />
+          style={styles.sheetContainer}>
+          <SheetFrame tint="background">
+            <View collapsable={false} style={styles.sheetLayout}>
+              {/* Pinned Top Navigation Bar */}
+              <View style={styles.fixedTop}>
+                <SheetHandle style={styles.sheetHandle} />
 
-          {/* Header matching OpenCode reference */}
-          <View style={styles.header}>
-            <View style={styles.headerTitleWrap}>
-              <Text variant="heading" style={styles.titleText}>
-                {t`Select model`}
-              </Text>
-            </View>
-            <PressableScale
-              testID="agent-model-sheet-close"
-              onPress={onClose}
-              style={styles.closeBtn}
-              accessibilityLabel={t`Close`}>
-              <X size={18} color={theme.colors.textMuted} />
-            </PressableScale>
-          </View>
+                <View style={styles.header}>
+                  <View style={[styles.headerCopy, plate]}>
+                    <Text variant="subheading" style={styles.headerTitle}>
+                      {t`Select Model`}
+                    </Text>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {selectedModel?.model_id || t`Choose an LLM model`}
+                    </Text>
+                  </View>
 
-          {/* Search Input Bar */}
-          <View
-            style={[
-              styles.searchBar,
-              {
-                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                borderColor: theme.colors.border,
-              },
-            ]}>
-            <Search size={15} color={theme.colors.textMuted} />
-            <TextInput
-              style={[styles.searchInput, { color: theme.colors.text }]}
-              placeholder={t`Search models or providers…`}
-              placeholderTextColor={theme.colors.textMuted}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCorrect={false}
-              autoCapitalize="none"
-            />
-            {searchQuery ? (
-              <PressableScale onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
-                <X size={14} color={theme.colors.textMuted} />
-              </PressableScale>
-            ) : null}
-          </View>
+                  <GlassChrome face="sheet" style={styles.headerButton}>
+                    <PressableScale
+                      testID="agent-model-sheet-close"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Close`}
+                      onPress={onClose}
+                      style={styles.headerButtonHit}>
+                      <X size={19} color={theme.colors.text} strokeWidth={2} />
+                    </PressableScale>
+                  </GlassChrome>
+                </View>
 
-          {/* Quick Filter Bar (All / Free Only) */}
-          <View style={styles.filterRow}>
-            <PressableScale
-              testID="agent-model-filter-all"
-              onPress={() => setFilterMode('all')}
-              style={[
-                styles.filterChip,
-                filterMode === 'all'
-                  ? { backgroundColor: theme.colors.primary }
-                  : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              <Text
-                variant="caption"
-                weight={filterMode === 'all' ? 'semibold' : 'medium'}
-                color={filterMode === 'all' ? '#fff' : theme.colors.textMuted}>
-                {t`All Models`}
-              </Text>
-            </PressableScale>
+                {/* Unified Search Input */}
+                <Input
+                  accessibilityLabel={t`Search models`}
+                  placeholder={t`Search models or providers...`}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  variant="outline"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-            <PressableScale
-              testID="agent-model-filter-free"
-              onPress={() => setFilterMode('free')}
-              style={[
-                styles.filterChip,
-                filterMode === 'free'
-                  ? { backgroundColor: '#10B981' }
-                  : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              <Text
-                variant="caption"
-                weight={filterMode === 'free' ? 'semibold' : 'medium'}
-                color={filterMode === 'free' ? '#fff' : theme.colors.textMuted}>
-                {`✨ ${t`Free Only`}`}
-              </Text>
-            </PressableScale>
-          </View>
+                {/* Filter Mode Tabs */}
+                <ThemedSurface
+                  slot="tabs.background"
+                  baseColor={theme.colors.surface}
+                  style={styles.filterTabs}>
+                  <PressableScale
+                    testID="agent-model-filter-all"
+                    onPress={() => setFilterMode('all')}
+                    style={[
+                      styles.filterTab,
+                      filterMode === 'all' && {
+                        backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                      },
+                    ]}>
+                    <Text
+                      variant="caption"
+                      weight={filterMode === 'all' ? 'semibold' : 'medium'}
+                      color={filterMode === 'all' ? theme.colors.primary : theme.colors.textMuted}>
+                      {t`All Models`}
+                    </Text>
+                  </PressableScale>
 
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            </View>
-          ) : (
-            <ScrollView
-              style={styles.scrollList}
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}>
-              {sections.length === 0 || filteredModels.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    <Trans>No models found matching your search.</Trans>
-                  </Text>
+                  <PressableScale
+                    testID="agent-model-filter-free"
+                    onPress={() => setFilterMode('free')}
+                    style={[
+                      styles.filterTab,
+                      filterMode === 'free' && {
+                        backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                      },
+                    ]}>
+                    <Text
+                      variant="caption"
+                      weight={filterMode === 'free' ? 'semibold' : 'medium'}
+                      color={filterMode === 'free' ? theme.colors.primary : theme.colors.textMuted}>
+                      {`✨ ${t`Free Only`}`}
+                    </Text>
+                  </PressableScale>
+                </ThemedSurface>
+              </View>
+
+              {loading ? (
+                <View style={styles.loadingContainer}>
+                  <Spinner size="lg" color={theme.colors.primary} />
                 </View>
               ) : (
-                <View style={styles.sectionsContainer}>
-                  {sections.map((section) => (
-                    <View key={section.title} style={styles.sectionBlock}>
-                      <View style={styles.sectionHeader}>
-                        <Text
-                          variant="caption"
-                          weight="semibold"
-                          color={theme.colors.primary}
-                          style={styles.sectionHeaderText}>
-                          {section.title}
-                        </Text>
-                      </View>
+                <ScrollView
+                  style={styles.scrollViewport}
+                  contentContainerStyle={[
+                    styles.content,
+                    { paddingBottom: LADDER.section + insets.bottom },
+                  ]}
+                  showsVerticalScrollIndicator={false}>
+                  {sections.length === 0 || filteredModels.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                      <Text variant="caption" color={theme.colors.textMuted}>
+                        <Trans>No models found matching your search.</Trans>
+                      </Text>
+                    </View>
+                  ) : (
+                    sections.map((section) => (
+                      <View key={section.title} style={styles.sectionBlock}>
+                        <SectionLabel
+                          title={section.title}
+                          color={theme.colors.textMuted}
+                        />
 
-                      <View
-                        style={[
-                          styles.groupCard,
-                          {
-                            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                            borderColor: theme.colors.border,
-                          },
-                        ]}>
-                        {section.models.map((mod, index) => {
-                          const isSelected =
-                            selectedModel?.model_id === mod.id &&
-                            (!selectedModel.provider_id ||
-                              selectedModel.provider_id === mod.provider_id);
-                          const isFree = isFreeModel(mod);
-                          const isLast = index === section.models.length - 1;
+                        <SettingsCard>
+                          {section.models.map((mod) => {
+                            const isSelected =
+                              selectedModel?.model_id === mod.id &&
+                              (!selectedModel.provider_id ||
+                                selectedModel.provider_id === mod.provider_id);
+                            const isFree = isFreeModel(mod);
+                            const hasVariants = mod.variants && mod.variants.length > 0;
 
-                          const hasVariants = mod.variants && mod.variants.length > 0;
-
-                          return (
-                            <View
-                              key={`${mod.provider_id}:${mod.id}`}
-                              style={[
-                                styles.modelRowContainer,
-                                !isLast && {
-                                  borderBottomWidth: StyleSheet.hairlineWidth,
-                                  borderBottomColor: theme.colors.border,
-                                },
-                                isSelected && { backgroundColor: `${theme.colors.primary}12` },
-                              ]}>
-                              <PressableScale
-                                testID={`agent-model-row-${mod.id}`}
-                                accessibilityLabel={isFree ? `${mod.name || mod.id} ${t`Free`}` : (mod.name || mod.id)}
-                                onPress={() => {
-                                  const defaultVariant =
-                                    mod.variants?.find((v) => v.id === 'high')?.id ??
-                                    mod.variants?.[0]?.id;
-                                  onSelectModel({
-                                    provider_id: mod.provider_id,
-                                    model_id: mod.id,
-                                    variant: isSelected ? selectedModel?.variant : defaultVariant,
-                                  });
-                                }}
-                                style={styles.modelRow}>
-                                <View style={styles.modelRowLeft}>
-                                  <View
-                                    style={[
-                                      styles.indicatorDot,
-                                      {
-                                        backgroundColor: isSelected
-                                          ? theme.colors.primary
-                                          : 'transparent',
-                                      },
-                                    ]}
-                                  />
-                                  <View style={styles.modelNameCol}>
-                                    <Text
-                                      variant="bodySmall"
-                                      weight={isSelected ? 'semibold' : 'regular'}
-                                      color={isSelected ? theme.colors.primary : theme.colors.text}
-                                      numberOfLines={1}
-                                      style={styles.modelNameText}>
-                                      {mod.name || mod.id}
-                                    </Text>
-                                    {mod.limit?.context ? (
-                                      <Text variant="caption" color={theme.colors.textMuted} style={styles.limitText}>
-                                        {mod.limit.context >= 1_000_000
-                                          ? `${(mod.limit.context / 1_000_000).toFixed(1)}M context`
-                                          : `${(mod.limit.context / 1000).toFixed(0)}k context`}
-                                      </Text>
-                                    ) : null}
-                                  </View>
-                                </View>
-
-                                <View style={styles.modelRowRight}>
-                                  {isFree ? (
+                            return (
+                              <View
+                                key={`${mod.provider_id}:${mod.id}`}
+                                style={[
+                                  styles.modelRowWrap,
+                                  isSelected && {
+                                    backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                                  },
+                                ]}>
+                                <PressableScale
+                                  testID={`agent-model-row-${mod.id}`}
+                                  accessibilityLabel={
+                                    isFree ? `${mod.name || mod.id} ${t`Free`}` : mod.name || mod.id
+                                  }
+                                  onPress={() => {
+                                    const defaultVariant =
+                                      mod.variants?.find((v) => v.id === 'high')?.id ??
+                                      mod.variants?.[0]?.id;
+                                    onSelectModel({
+                                      provider_id: mod.provider_id,
+                                      model_id: mod.id,
+                                      variant: isSelected ? selectedModel?.variant : defaultVariant,
+                                    });
+                                  }}
+                                  style={styles.modelRow}>
+                                  <View style={styles.modelRowLeft}>
                                     <View
                                       style={[
-                                        styles.freeBadge,
-                                        { backgroundColor: `${theme.colors.primary}18` },
-                                      ]}>
-                                      <Text
-                                        variant="caption"
-                                        weight="semibold"
-                                        color={theme.colors.primary}
-                                        style={styles.freeBadgeText}>
-                                        {t`Free`}
-                                      </Text>
+                                        styles.indicatorDot,
+                                        {
+                                          backgroundColor: isSelected
+                                            ? theme.colors.primary
+                                            : 'transparent',
+                                          borderColor: isSelected
+                                            ? theme.colors.primary
+                                            : theme.colors.border,
+                                        },
+                                      ]}
+                                    />
+                                    <View style={styles.modelNameCol}>
+                                      <View style={styles.nameAndBadge}>
+                                        <Text
+                                          variant="bodySmall"
+                                          weight={isSelected ? 'semibold' : 'regular'}
+                                          color={isSelected ? theme.colors.primary : theme.colors.text}
+                                          numberOfLines={1}
+                                          style={styles.modelNameText}>
+                                          {mod.name || mod.id}
+                                        </Text>
+                                        {isFree ? (
+                                          <View
+                                            style={[
+                                              styles.freeBadge,
+                                              { backgroundColor: `${theme.colors.primary}18` },
+                                            ]}>
+                                            <Sparkles size={9} color={theme.colors.primary} />
+                                            <Text
+                                              variant="caption"
+                                              color={theme.colors.primary}
+                                              style={styles.freeBadgeText}>
+                                              {t`Free`}
+                                            </Text>
+                                          </View>
+                                        ) : null}
+                                      </View>
+                                      {mod.limit?.context ? (
+                                        <Text
+                                          variant="caption"
+                                          color={theme.colors.textMuted}
+                                          style={styles.limitText}>
+                                          {mod.limit.context >= 1_000_000
+                                            ? `${(mod.limit.context / 1_000_000).toFixed(1)}M context`
+                                            : `${(mod.limit.context / 1000).toFixed(0)}k context`}
+                                        </Text>
+                                      ) : null}
                                     </View>
-                                  ) : null}
+                                  </View>
 
-                                  {section.isRecent ? (
+                                  {isSelected ? (
+                                    <Check size={18} color={theme.colors.primary} />
+                                  ) : null}
+                                </PressableScale>
+
+                                {/* Variants Row (e.g. low, medium, high) */}
+                                {isSelected && hasVariants ? (
+                                  <View style={styles.variantsRow}>
                                     <Text
                                       variant="caption"
                                       color={theme.colors.textMuted}
-                                      numberOfLines={1}
-                                      style={styles.providerTagText}>
-                                      {formatProviderName(mod.provider_id)}
+                                      style={styles.thinkingLabel}>
+                                      {t`Thinking:`}
                                     </Text>
-                                  ) : null}
-
-                                  {isSelected ? (
-                                    <Check size={14} color={theme.colors.primary} strokeWidth={2.5} />
-                                  ) : null}
-                                </View>
-                              </PressableScale>
-
-                              {/* Reasoning Effort Variant Selector */}
-                              {isSelected && hasVariants ? (
-                                <View style={styles.variantSelectorBlock}>
-                                  <Text variant="caption" color={theme.colors.textMuted} style={styles.variantLabel}>
-                                    {t`Reasoning:`}
-                                  </Text>
-                                  <View style={styles.variantChipsContainer}>
-                                    {mod.variants!.map((v) => {
-                                      const activeVariant = selectedModel?.variant || 'high';
-                                      const isVarActive = activeVariant === v.id;
-                                      const label =
-                                        v.id === 'minimal'
-                                          ? t`Minimal`
-                                          : v.id === 'low'
-                                            ? t`Low`
-                                            : v.id === 'medium'
-                                              ? t`Medium`
-                                              : v.id === 'high'
-                                                ? t`High`
-                                                : v.id === 'xhigh' || v.id === 'max'
-                                                  ? t`Max`
-                                                  : v.id.charAt(0).toUpperCase() + v.id.slice(1);
-                                      return (
-                                        <PressableScale
-                                          key={v.id}
-                                          testID={`agent-model-variant-${v.id}`}
-                                          onPress={() => {
-                                            onSelectModel({
-                                              provider_id: mod.provider_id,
-                                              model_id: mod.id,
-                                              variant: v.id,
-                                            });
-                                          }}
-                                          style={[
-                                            styles.variantChip,
-                                            isVarActive
-                                              ? {
-                                                  backgroundColor: theme.colors.primary,
-                                                  borderColor: theme.colors.primary,
-                                                }
-                                              : {
-                                                  backgroundColor: surfaceBackground(theme.colors.surface),
-                                                  borderColor: theme.colors.border,
-                                                },
-                                          ]}>
-                                          <Text
-                                            variant="caption"
-                                            weight={isVarActive ? 'semibold' : 'regular'}
-                                            color={isVarActive ? '#fff' : theme.colors.text}>
-                                            {label}
-                                          </Text>
-                                        </PressableScale>
-                                      );
-                                    })}
+                                    <View style={styles.variantChips}>
+                                      {mod.variants?.map((v) => {
+                                        const isVarSelected =
+                                          (selectedModel?.variant || 'high') === v.id;
+                                        return (
+                                          <PressableScale
+                                            key={v.id}
+                                            onPress={() =>
+                                              onSelectModel({
+                                                provider_id: mod.provider_id,
+                                                model_id: mod.id,
+                                                variant: v.id,
+                                              })
+                                            }
+                                            style={[
+                                              styles.variantChip,
+                                              {
+                                                backgroundColor: isVarSelected
+                                                  ? theme.colors.primary
+                                                  : surfaceBackground(theme.colors.surfaceRaised),
+                                              },
+                                            ]}>
+                                            <Text
+                                              variant="caption"
+                                              weight={isVarSelected ? 'semibold' : 'regular'}
+                                              color={isVarSelected ? '#fff' : theme.colors.textMuted}
+                                              style={styles.variantChipText}>
+                                              {v.id}
+                                            </Text>
+                                          </PressableScale>
+                                        );
+                                      })}
+                                    </View>
                                   </View>
-                                </View>
-                              ) : null}
-                            </View>
-                          );
-                        })}
+                                ) : null}
+                              </View>
+                            );
+                          })}
+                        </SettingsCard>
                       </View>
-                    </View>
-                  ))}
-                </View>
+                    ))
+                  )}
+                </ScrollView>
               )}
-            </ScrollView>
-          )}
+            </View>
+          </SheetFrame>
         </Pressable>
       </Pressable>
     </Modal>
@@ -460,190 +422,169 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
-  sheetGround: {
-    maxHeight: '84%',
+  sheetContainer: {
+    maxHeight: '88%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: 'rgba(150,150,150,0.2)',
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
-  handle: {
+  sheetLayout: {
+    flexShrink: 1,
+    overflow: 'hidden',
+  },
+  sheetHandle: {
     width: 38,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(150,150,150,0.35)',
     alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 2,
+    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+  },
+  fixedTop: {
+    flexShrink: 0,
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: LADDER.gap * 1.5,
+    paddingBottom: LADDER.gap,
+    gap: LADDER.snug,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
+    gap: LADDER.gap,
   },
-  headerTitleWrap: {
+  headerCopy: {
     flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
-  titleText: {
-    fontSize: 17,
-    fontWeight: '700',
+  headerTitle: {
+    includeFontPadding: false,
   },
-  closeBtn: {
-    padding: 6,
-    borderRadius: 16,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginVertical: 6,
-    paddingHorizontal: 10,
+  headerButton: {
+    width: 38,
     height: 38,
-    borderRadius: 10,
-    borderWidth: 1,
-    gap: 8,
+    borderRadius: 19,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-    paddingVertical: 0,
-  },
-  clearSearchBtn: {
-    padding: 4,
-  },
-  filterRow: {
-    flexDirection: 'row',
+  headerButtonHit: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 16,
-    marginBottom: 8,
+    justifyContent: 'center',
   },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
+  filterTabs: {
+    flexDirection: 'row',
+    padding: 3,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    gap: 4,
+  },
+  filterTab: {
+    flex: 1,
+    minHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 9,
+    borderCurve: 'continuous',
   },
   loadingContainer: {
-    padding: 36,
+    padding: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  scrollViewport: {
+    flexShrink: 1,
+  },
+  content: {
+    paddingHorizontal: LADDER.gutter,
+    paddingTop: 4,
+    gap: LADDER.section,
   },
   emptyContainer: {
-    padding: 36,
+    paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollList: {
-    flexGrow: 0,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-  },
-  sectionsContainer: {
-    gap: 12,
-    paddingTop: 4,
-  },
   sectionBlock: {
-    gap: 5,
+    gap: LADDER.snug,
   },
-  sectionHeader: {
-    paddingHorizontal: 4,
-  },
-  sectionHeaderText: {
-    fontSize: 12,
-    letterSpacing: 0.3,
-  },
-  groupCard: {
-    borderRadius: 12,
-    borderWidth: 1,
+  modelRowWrap: {
     overflow: 'hidden',
   },
   modelRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    minHeight: 40,
+    paddingHorizontal: LADDER.gutter,
+    paddingVertical: LADDER.snug,
   },
   modelRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     flex: 1,
-    minWidth: 0,
   },
   indicatorDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1,
   },
-  modelNameText: {
-    fontSize: 13,
-    flexShrink: 1,
+  modelNameCol: {
+    flex: 1,
+    gap: 2,
   },
-  modelRowRight: {
+  nameAndBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginLeft: 8,
+    gap: 6,
+  },
+  modelNameText: {
+    includeFontPadding: false,
   },
   freeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+  },
+  freeBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  limitText: {
+    fontSize: 11,
+  },
+  variantsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: LADDER.gutter,
+    paddingBottom: 10,
+    paddingTop: 2,
+    gap: 8,
+  },
+  thinkingLabel: {
+    fontSize: 11,
+  },
+  variantChips: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  variantChip: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
     borderCurve: 'continuous',
   },
-  freeBadgeText: {
+  variantChipText: {
     fontSize: 10,
-    fontWeight: '600',
-  },
-  providerTagText: {
-    fontSize: 11,
-  },
-  modelRowContainer: {
-    overflow: 'hidden',
-  },
-  modelNameCol: {
-    flex: 1,
-    minWidth: 0,
-    gap: 1,
-  },
-  limitText: {
-    fontSize: 11,
-  },
-  variantSelectorBlock: {
-    paddingHorizontal: 24,
-    paddingBottom: 8,
-    paddingTop: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  variantLabel: {
-    fontSize: 11,
-  },
-  variantChipsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  variantChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    borderWidth: 1,
+    textTransform: 'capitalize',
   },
 });

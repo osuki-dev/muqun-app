@@ -84,6 +84,7 @@ export interface AgentComposerProps {
   tasks?: TodoItem[];
   tokens?: TokensUsage;
   cost?: number;
+  sessionTitle?: string;
   onSend: (text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<void>;
   onAbort: () => Promise<void>;
   onSelectSession?: (asid: string) => void;
@@ -112,6 +113,7 @@ export const AgentComposer = memo(function AgentComposer({
   tasks,
   tokens,
   cost,
+  sessionTitle,
   onSend,
   onAbort,
   onSelectSession,
@@ -356,7 +358,12 @@ export const AgentComposer = memo(function AgentComposer({
   const subagents = rootSessionId ? sessions.filter((s) => s.parent_id === rootSessionId) : [];
 
   const rootAgentName = rootSession?.agent || selectedAgent || 'build';
-  const rootDisplayTitle = resolveSessionTitle(rootSession, t`New Session`);
+  const effectiveRootTitle =
+    (!rootSession?.parent_id && sessionTitle) ? sessionTitle : rootSession?.title;
+  const rootDisplayTitle = resolveSessionTitle(
+    effectiveRootTitle ? ({ ...rootSession, title: effectiveRootTitle } as AgentSessionInfo) : rootSession,
+    t`New Session`
+  );
   const isRootActive = !activeAsid || activeAsid === rootSession?.asid;
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();

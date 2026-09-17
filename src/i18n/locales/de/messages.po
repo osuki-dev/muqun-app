@@ -141,6 +141,10 @@ msgstr "{removeLabel}: {label}"
 msgid "+{overflow} more"
 msgstr "+{overflow} weitere"
 
+#: src/components/agent-model-sheet.tsx
+msgid "⚡ Free & Unlimited (Recommended)"
+msgstr "⚡ Kostenlos & Unbegrenzt (Empfohlen)"
+
 #: src/components/agent-context-sheet.tsx
 msgid "$0.00 (Free)"
 msgstr "0,00 $ (Kostenlos)"
@@ -185,6 +189,14 @@ msgstr "Auf dieses Terminal wirken oder ihm einen Befehl senden"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "Auf dieses Terminal wirken oder seinem Agenten einen Prompt senden"
+
+#: src/components/agent-context-sheet.tsx
+msgid "ACTIONS"
+msgstr "AKTIONEN"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Active Model"
+msgstr "Aktives Modell"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Active Session"
@@ -250,10 +262,6 @@ msgstr "Agent nicht mehr vorhanden"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "Standardansicht für Agent-Panels"
-
-#: src/app/agent.tsx
-msgid "Agent Workspace"
-msgstr "Agenten-Arbeitsbereich"
 
 #: src/components/settings-servers.tsx
 msgid "Agents"
@@ -460,7 +468,7 @@ msgstr "Authentifizierung ist nicht verfügbar. Versuche es erneut oder prüfe d
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
-msgstr "Autonome Softwareentwicklung, Bearbeiten von Dateien, Ausführen von Terminalbefehlen und Tests."
+msgstr "Autonome Softwareentwicklung, Bearbeiten von Dateien, Ausführen von Terminalbefehlen und Tests"
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -554,7 +562,6 @@ msgstr "Der Kamerazugriff ist aus. Schalte ihn in den Einstellungen ein, um ein 
 msgid "Camera access needed"
 msgstr "Kamerazugriff erforderlich"
 
-#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -577,6 +584,10 @@ msgstr "Verbindung mit {0} abbrechen"
 #: src/components/settings-servers.tsx
 msgid "Cancel editing {0}"
 msgstr "Bearbeitung von {0} abbrechen"
+
+#: src/components/agent-workbench.tsx
+msgid "Cancel queued message"
+msgstr "Wartende Nachricht abbrechen"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -635,6 +646,10 @@ msgstr "Einen Simulator im Menü auswählen"
 msgid "Choose an assistant"
 msgstr "Assistenten wählen"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Choose an LLM model"
+msgstr "LLM-Modell auswählen"
+
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
 msgstr "Wähle einen SSH-Host"
@@ -672,8 +687,8 @@ msgid "Clear cache"
 msgstr "Cache leeren"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Clear Context (/clear)"
-msgstr "Kontext leeren (/clear)"
+msgid "Clear Context"
+msgstr "Kontext löschen"
 
 #: src/components/agent-composer.tsx
 msgid "Clear context and start fresh"
@@ -699,6 +714,7 @@ msgstr "Wird geleert…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
@@ -834,8 +850,8 @@ msgid "Compact"
 msgstr "Kompakt"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Compact Context (/compact)"
-msgstr "Kontext komprimieren (/compact)"
+msgid "Compact Context"
+msgstr "Kontext komprimieren"
 
 #: src/components/agent-composer.tsx
 msgid "Compact session history to save context"
@@ -857,10 +873,6 @@ msgstr "Entfernen ungenutzter Designs bestätigen"
 #: src/components/ssh-host-form.tsx
 msgid "Confirm removing {0}"
 msgstr "Entfernen von {0} bestätigen"
-
-#: src/components/agent-workbench.tsx
-msgid "Confirm Revert"
-msgstr "Zurücksetzen bestätigen"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
@@ -935,8 +947,8 @@ msgid "Context & Usage"
 msgstr "Kontext & Nutzung"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Context Window"
-msgstr "Kontextfenster"
+msgid "CONTEXT WINDOW"
+msgstr "KONTEXTFENSTER"
 
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1061,7 +1073,7 @@ msgstr "Ctrl Z, anhalten"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
-msgstr "Dialogbasierte Programmierhilfe, allgemeine Programmiertipps und Arbeitsbereich-Fragen."
+msgstr "Dialogbasierte Programmierhilfe, allgemeine Programmiertipps und Arbeitsbereich-Fragen"
 
 #: src/components/agent-workbench.tsx
 msgid "Copied"
@@ -1094,10 +1106,6 @@ msgstr "Befehl und Ausgabe kopieren"
 msgid "Copy public key"
 msgstr "Öffentlichen Schlüssel kopieren"
 
-#: src/components/agent-workbench.tsx
-msgid "Copy Text"
-msgstr "Text kopieren"
-
 #: src/components/simfarm-preview.tsx
 msgid "Copy the command that starts simfarm"
 msgstr "Befehl kopieren, der simfarm startet"
@@ -1127,6 +1135,10 @@ msgstr "Verbindung fehlgeschlagen — zum Wiederholen tippen"
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
 msgstr "Konnte nicht kopiert werden"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not create session"
+msgstr "Sitzung konnte nicht erstellt werden"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -1310,10 +1322,6 @@ msgstr "Aktuelles Design"
 msgid "Custom"
 msgstr "Benutzerdefiniert"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Custom Directory"
-msgstr "Benutzerdefiniertes Verzeichnis"
-
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Passe Terminal-Befehle und Tastenkombinationen an"
@@ -1354,11 +1362,11 @@ msgstr "Gelöscht"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
-msgstr "Sendemodus: Warteschlange. Tippen zum Umschalten auf Steer."
+msgstr "Sendemodus: Warteschlange. Tippen zum Umschalten auf Steer"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
-msgstr "Sendemodus: Steer (Echtzeit). Tippen zum Umschalten auf Warteschlange."
+msgstr "Sendemodus: Steer (Echtzeit). Tippen zum Umschalten auf Warteschlange"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1392,6 +1400,10 @@ msgstr "Diff-Übersicht"
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "VERZEICHNIS"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "DIRECTORY AUTOCOMPLETE"
+msgstr "VERZEICHNIS-AUTOVERVOLLSTÄNDIGUNG"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1483,8 +1495,8 @@ msgid "Edit {0}"
 msgstr "{0} bearbeiten"
 
 #: src/components/agent-workbench.tsx
-msgid "Edit & Reprompt"
-msgstr "Bearbeiten & neu senden"
+msgid "Edit queued message"
+msgstr "Wartende Nachricht bearbeiten"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
@@ -1549,6 +1561,10 @@ msgstr "{0} ausklappen"
 msgid "Expand reasoning"
 msgstr "Überlegungen ausklappen"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Expand reasoning & thoughts"
+msgstr "Denkprozesse erweitern"
+
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
 msgstr "Aufgaben ausklappen"
@@ -1582,7 +1598,7 @@ msgstr "Schneller Agent für Codebase-Erkundung"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Fast read-only codebase exploration, symbol search, file discovery, and dependency tracing."
-msgstr "Schnelle schreibgeschützte Code-Erkundung, Symbolsuche und Abhängigkeitsanalyse."
+msgstr "Schnelle schreibgeschützte Code-Erkundung, Symbolsuche und Abhängigkeitsanalyse"
 
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
@@ -1605,8 +1621,12 @@ msgid "Files in this workspace"
 msgstr "Dateien in diesem Workspace"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (e.g. /home/...)"
-msgstr "Projekte filtern oder Pfad eingeben (z. B. /home/...)"
+msgid "Filter projects or path"
+msgstr "Projekte oder Pfad filtern"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Filter projects or type path (/home/...)"
+msgstr "Projekte filtern oder Pfad eingeben (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1772,13 +1792,9 @@ msgstr "Serverliste ausblenden"
 msgid "Hide the simulator"
 msgstr "Simulator ausblenden"
 
-#: src/components/agent-model-sheet.tsx
-msgid "High"
-msgstr "Hoch"
-
 #: src/components/agent-mode-sheet.tsx
 msgid "High-level architectural planning, design proposals, and step-by-step implementation roadmaps."
-msgstr "Architekturplanung auf hoher Ebene, Entwurfsvorschläge und Schritt-für-Schritt-Fahrpläne."
+msgstr "Architekturplanung auf hoher Ebene, Entwurfsvorschläge und Schritt-für-Schritt-Fahrpläne"
 
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -1944,10 +1960,9 @@ msgstr "Tasten"
 msgid "Keys are generated on the device and never leave it."
 msgstr "Schlüssel entstehen auf dem Gerät und verlassen es nie"
 
-#. placeholder {0}: filteredProjects.length
 #: src/components/agent-workspace-sheet.tsx
-msgid "Known Projects ({0})"
-msgstr "Bekannte Projekte ({0})"
+msgid "KNOWN REPOSITORIES"
+msgstr "BEKANNTE REPOSITORIEN"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2098,10 +2113,6 @@ msgstr "Wird gesucht"
 msgid "Looking for a simulator"
 msgstr "Simulator wird gesucht"
 
-#: src/components/agent-model-sheet.tsx
-msgid "Low"
-msgstr "Niedrig"
-
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · Büro"
@@ -2134,42 +2145,14 @@ msgstr "Als geprüft markieren"
 msgid "Mascot"
 msgstr "Maskottchen"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Matching subdirectories:"
-msgstr "Passende Unterverzeichnisse:"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Max"
-msgstr "Max"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Medium"
-msgstr "Mittel"
-
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "{0} erwähnen"
 
 #: src/components/agent-workbench.tsx
-msgid "Message Actions"
-msgstr "Nachrichtenaktionen"
-
-#: src/components/agent-workbench.tsx
 msgid "Message copied to clipboard"
 msgstr "Nachricht in Zwischenablage kopiert"
-
-#: src/components/agent-workbench.tsx
-msgid "Message options"
-msgstr "Nachrichtenoptionen"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Minimal"
-msgstr "Minimal"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Model & Reasoning"
-msgstr "Modell & Überlegungen"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2272,10 +2255,6 @@ msgstr "Nie verbunden"
 msgid "Never seen"
 msgstr "Nie gesehen"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "New"
-msgstr "Neu"
-
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "Neue Gruppe"
@@ -2287,6 +2266,11 @@ msgstr "Neuer Host-Schlüssel"
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "Neue Ausgabe verfügbar · aktualisieren"
+
+#: src/app/agent.tsx
+#: src/components/agent-sessions-sheet.tsx
+msgid "New session"
+msgstr "Neue Sitzung"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
@@ -2343,6 +2327,10 @@ msgstr "Auf diesem Gerät wurde keine Kamera gefunden"
 msgid "No changes. The working tree matches HEAD."
 msgstr "Keine Änderungen. Der Arbeitsbaum entspricht HEAD"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No diff preview available for binary or unmodified files."
+msgstr "Keine Diff-Vorschau für binäre oder unveränderte Dateien verfügbar"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Keine passenden Dateien"
@@ -2354,10 +2342,6 @@ msgstr "Noch kein Gateway?"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "Keine passenden Befehle. Versuche einen anderen Suchbegriff"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No matching projects found"
-msgstr "Keine passenden Projekte gefunden"
 
 #: src/components/agent-model-sheet.tsx
 msgid "No models found matching your search."
@@ -2386,6 +2370,10 @@ msgstr "Für diesen Dateityp gibt es keine Vorschau. Sie bleibt auf dem Server"
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
 msgstr "Keine Vorschau über diese Verbindung"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects found. Enter a custom path above."
+msgstr "Keine Projekte gefunden. Geben Sie oben einen Pfad ein"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -2842,6 +2830,10 @@ msgstr "Warteschlange"
 msgid "Queue message for agent"
 msgstr "Nachricht für Agent in Warteschlange einreihen"
 
+#: src/components/agent-workbench.tsx
+msgid "Queued"
+msgstr "In Warteschlange"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "wartet auf Upload"
@@ -2889,17 +2881,9 @@ msgstr "Bereit zur Ansicht. Nichts wird angewendet, bevor du es sagst"
 msgid "Reasoning"
 msgstr "Gedankengang"
 
-#: src/components/agent-model-sheet.tsx
-msgid "Reasoning:"
-msgstr "Überlegungen:"
-
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "Empfange Meldungen, wenn ein Agent blockiert, und Gateway-Updates"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Recent"
-msgstr "Zuletzt"
 
 #: src/i18n/labels.ts
 msgid "Recent commits"
@@ -3040,6 +3024,10 @@ msgstr "Erforderlich"
 msgid "Requires iOS 16.1 or later."
 msgstr "Erfordert iOS 16.1 oder neuer"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Reset conversation context window (/clear)"
+msgstr "Kontextfenster zurücksetzen (/clear)"
+
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Muqun neu starten, um das Update abzuschließen"
@@ -3088,22 +3076,6 @@ msgstr "Zurück zur Serverliste und erneut koppeln"
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
 msgstr "Kehre zu diesem Server zurück, um fortzufahren"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Failed"
-msgstr "Zurücksetzen fehlgeschlagen"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Session & Workspace?"
-msgstr "Sitzung & Arbeitsbereich zurücksetzen?"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Session to Here"
-msgstr "Sitzung bis hierher zurücksetzen"
-
-#: src/components/agent-workbench.tsx
-msgid "Reverting to this checkpoint will roll back all subsequent turns and undo code modifications in the workspace."
-msgstr "Das Zurücksetzen auf diesen Checkpoint setzt alle nachfolgenden Runden und Codeänderungen zurück."
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -3162,10 +3134,6 @@ msgstr "Wird widerrufen…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "Pfeil nach rechts"
-
-#: src/components/agent-workbench.tsx
-msgid "Rolled back to message checkpoint."
-msgstr "Auf Nachrichten-Checkpoint zurückgesetzt."
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3275,8 +3243,16 @@ msgid "Search files"
 msgstr "Dateien durchsuchen"
 
 #: src/components/agent-model-sheet.tsx
-msgid "Search models or providers…"
-msgstr "Modelle oder Anbieter suchen…"
+msgid "Search models"
+msgstr "Modelle suchen"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Search models or providers..."
+msgstr "Modelle oder Anbieter suchen..."
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Search sessions"
+msgstr "Sitzungen suchen"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Search sessions..."
@@ -3318,8 +3294,11 @@ msgid "Select all"
 msgstr "Alles auswählen"
 
 #: src/app/agent.tsx
-#: src/components/agent-model-sheet.tsx
 msgid "Select model"
+msgstr "Modell auswählen"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Select Model"
 msgstr "Modell auswählen"
 
 #: src/components/agent-workspace-sheet.tsx
@@ -3396,15 +3375,15 @@ msgstr "Server"
 
 #: src/components/agent-workbench.tsx
 msgid "Service is experiencing high load."
-msgstr "Der Dienst ist derzeit stark ausgelastet."
+msgstr "Der Dienst ist derzeit stark ausgelastet"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
 msgstr "Sitzung"
 
-#: src/components/agent-workbench.tsx
-msgid "Session Reverted"
-msgstr "Sitzung zurückgesetzt"
+#: src/components/agent-context-sheet.tsx
+msgid "SESSION DETAILS"
+msgstr "SITZUNGSDETAILS"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
@@ -3417,10 +3396,6 @@ msgstr "Sitzungen"
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "Richte einen Gerätecode ein, bevor du die App-Sperre nutzt"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Set as working directory for new sessions"
-msgstr "Als Arbeitsverzeichnis für neue Sitzungen festlegen"
 
 #: src/app/explore.tsx
 msgid "Set one up on your computer"
@@ -3531,10 +3506,6 @@ msgstr "Bilder anzeigen"
 msgid "Show more"
 msgstr "Mehr anzeigen"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Show Reasoning Process"
-msgstr "Denkprozess anzeigen"
-
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "App-Hintergrund hinter dem Terminaltext anzeigen"
@@ -3550,6 +3521,10 @@ msgstr "Die neuere Liste der Änderungen anzeigen"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Serverliste einblenden"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Show Thinking Process"
+msgstr "Denkprozess anzeigen"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
@@ -3682,6 +3657,10 @@ msgstr "Starte einen Agent und gib ihm das Erste zu tun"
 msgid "Start task"
 msgstr "Aufgabe starten"
 
+#: src/components/agent-workbench.tsx
+msgid "Started a new session with clean context."
+msgstr "Neue Sitzung mit sauberem Kontext gestartet"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "{name} wird gestartet"
@@ -3746,6 +3725,10 @@ msgstr "Subagent"
 msgid "Submit Response"
 msgstr "Antwort senden"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Summarize history into compact memory (/compact)"
+msgstr "Verlauf zu kompaktem Speicher zusammenfassen (/compact)"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "Fortschritt zusammenfassen"
@@ -3797,8 +3780,9 @@ msgstr "Zur Terminal-Ansicht wechseln"
 
 #: src/components/agent-workbench.tsx
 msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "Wechseln Sie zu Union Alpha (schnell & kostenlos) für sofortige Antworten."
+msgstr "Wechseln Sie zu Union Alpha (schnell & kostenlos) für sofortige Antworten"
 
+#: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 msgid "Switch workspace: {displayWorkspaceName}"
 msgstr "Arbeitsbereich wechseln: {displayWorkspaceName}"
@@ -4076,6 +4060,10 @@ msgstr "Theme, {0}"
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Auf muqun.dev veröffentlichte Themes. Es wird nichts geladen, bis du eines öffnest"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Thinking:"
+msgstr "Nachdenken:"
+
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Denkt nach…"
@@ -4215,8 +4203,8 @@ msgid "Today"
 msgstr "Heute"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Token Breakdown"
-msgstr "Token-Aufschlüsselung"
+msgid "TOKEN BREAKDOWN"
+msgstr "TOKEN-AUFSCHLÜSSELUNG"
 
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
@@ -4401,10 +4389,6 @@ msgstr "{0} verwenden"
 msgid "Use device passcode"
 msgstr "Gerätecode verwenden"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Use path:"
-msgstr "Pfad verwenden:"
-
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Verwende die Repository-URL und gib unten den Branch und die Theme-Datei ein"
@@ -4420,6 +4404,10 @@ msgstr "Theme-Standardwerte verwenden"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "Diesen Server verwenden"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Used Capacity"
+msgstr "Genutzte Kapazität"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"
@@ -4488,6 +4476,7 @@ msgstr "Arbeitet"
 msgid "Working Directory"
 msgstr "Arbeitsverzeichnis"
 
+#: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"

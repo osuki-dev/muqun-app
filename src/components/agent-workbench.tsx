@@ -17,14 +17,13 @@ import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import {
   Bot,
   ChevronDown,
-  Copy,
+  Clock,
   Edit3,
   FileText,
   FolderGit2,
-  MoreHorizontal,
   PlusCircle,
-  RotateCcw,
   Sparkles,
+  Trash2,
   X,
   Zap,
 } from 'lucide-react-native';
@@ -47,7 +46,6 @@ import {
   listAgentSessions,
   createAgentSession,
   sendAgentPrompt,
-  revertAgentSession,
   abortAgentSession,
   switchAgentModel,
   replyAgentPermission,
@@ -94,6 +92,9 @@ export interface AgentWorkbenchProps {
   bottomInset?: number;
   onModelChange?: (model: ModelRef | undefined) => void;
   openModelSheetRef?: React.MutableRefObject<(() => void) | null>;
+  onWorkspaceChange?: (directory?: string, project?: AgentProject) => void;
+  openWorkspaceSheetRef?: React.MutableRefObject<(() => void) | null>;
+  createNewSessionRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 export const AgentWorkbench = memo(function AgentWorkbench({
@@ -103,6 +104,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   bottomInset = 0,
   onModelChange,
   openModelSheetRef,
+  onWorkspaceChange,
+  openWorkspaceSheetRef,
+  createNewSessionRef,
 }: AgentWorkbenchProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -123,9 +127,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [loading, setLoading] = useState(true);
   const [hasDiffs, setHasDiffs] = useState(false);
 
-  // Message Actions & Attachment Modals
-  const [messageActionItem, setMessageActionItem] = useState<TimelineItem | null>(null);
-  const [confirmRevertItem, setConfirmRevertItem] = useState<TimelineItem | null>(null);
+  // Attachment Image Preview Modal
   const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
 
   // Sheets
@@ -329,11 +331,34 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         const status = payload?.status;
         if (status) {
           setSessionInfo((prev) => (prev ? { ...prev, status } : prev));
+          if (status === 'idle') {
+            // Unmark queued status on timeline items as they are now delivered/executed
+            setTimeline((prev) =>
+              prev.map((it) => (it.queued ? { ...it, queued: false } : it))
+            );
+            // Refresh sessions list & active session snapshot to obtain the LLM-generated title
+            refreshSessions();
+            if (activeAsid) {
+              void getAgentSessionSnapshot(sessionId, activeAsid)
+                .then((snap) => {
+                  if (snap.info) {
+                    setSessionInfo(snap.info);
+                    setSessions((prev) =>
+                      prev.map((s) => (s.asid === snap.info.asid ? { ...s, ...snap.info } : s))
+                    );
+                  }
+                })
+                .catch(() => {});
+            }
+          }
         }
       } else if (event === 'agent.session.updated') {
         const info = payload?.info ?? payload?.update;
         if (info) {
           setSessionInfo((prev) => (prev ? { ...prev, ...info } : info));
+          setSessions((prev) =>
+            prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s))
+          );
         }
       } else if (event === 'agent.permission.pending') {
         const req = payload?.request as PermissionRequest | undefined;
@@ -365,7 +390,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         void loadSnapshot();
       }
     },
-    [loadSnapshot]
+    [loadSnapshot, activeAsid, sessionId, refreshSessions]
   );
 
   // Real-time SSE Stream subscription + gentle fallback heartbeat polling
@@ -473,6 +498,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     }
 
+    const isQueued = sessionInfo?.status === 'running' && delivery === 'queue';
+
     // Optimistically add user text item
     const tempUserItem: TimelineItem = {
       id: `temp_usr_${Date.now()}`,
@@ -482,9 +509,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       role: 'user',
       part: { type: 'text', text },
       attachments,
+      queued: isQueued,
     };
     setTimeline((prev) => [...prev, tempUserItem]);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+
+    // Optimistically update session title if current title is default/untitled
+    const optimisticTitle = text.slice(0, 30);
+    if (!sessionInfo?.title || sessionInfo.title === t`New Session` || sessionInfo.title.startsWith('ses_')) {
+      if (sessionInfo) {
+        setSessionInfo({ ...sessionInfo, title: optimisticTitle, status: 'running' });
+      }
+      setSessions((prev) =>
+        prev.map((s) => (s.asid === currentAsid ? { ...s, title: optimisticTitle } : s))
+      );
+    } else if (sessionInfo) {
+      setSessionInfo({ ...sessionInfo, status: 'running' });
+    }
 
     try {
       await sendAgentPrompt(sessionId, currentAsid, {
@@ -493,9 +534,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         attachments,
         delivery,
       });
-      if (sessionInfo) {
-        setSessionInfo({ ...sessionInfo, status: 'running' });
-      }
     } catch (err) {
       console.warn('Failed to send prompt:', err);
     }
@@ -547,10 +585,42 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setForms([]);
       setLastSeq(0);
       refreshSessions();
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showToast({
+        variant: 'info',
+        title: t`New Session`,
+        message: t`Started a new session with clean context.`,
+      });
     } catch (err) {
       console.warn('Failed to create session:', err);
+      showToast({
+        variant: 'danger',
+        title: t`Could not create session`,
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
-  }, [sessionId, selectedAgent, selectedModel, activeDirectory, sessionInfo, t, refreshSessions]);
+  }, [
+    sessionId,
+    selectedAgent,
+    selectedModel,
+    activeDirectory,
+    sessionInfo,
+    t,
+    refreshSessions,
+    showToast,
+  ]);
+
+  useEffect(() => {
+    if (openWorkspaceSheetRef) {
+      openWorkspaceSheetRef.current = () => setWorkspaceSheetVisible(true);
+    }
+  }, [openWorkspaceSheetRef]);
+
+  useEffect(() => {
+    if (createNewSessionRef) {
+      createNewSessionRef.current = handleCreateNewSession;
+    }
+  }, [createNewSessionRef, handleCreateNewSession]);
 
   const handleSelectWorkspace = useCallback(
     async (directory: string, project?: AgentProject) => {
@@ -586,9 +656,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           <View key={item.id} style={styles.userBubbleRow}>
             <Pressable
               testID={`user-bubble-${item.id}`}
-              onLongPress={() => {
-                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setMessageActionItem(item);
+              onLongPress={async () => {
+                if (!text) return;
+                void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                await Clipboard.setStringAsync(text);
+                showToast({
+                  variant: 'info',
+                  title: t`Copied`,
+                  message: t`Message copied to clipboard`,
+                });
               }}
               delayLongPress={260}
               style={[
@@ -597,7 +673,59 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.16)),
                   borderColor: withAlpha(theme.colors.primary, 0.35),
                 },
+                item.queued
+                  ? {
+                      borderStyle: 'dashed',
+                      borderWidth: 1.5,
+                      borderColor: theme.colors.primary,
+                    }
+                  : null,
               ]}>
+              {/* Queued indicator and actions: only allowed for queued messages */}
+              {item.queued ? (
+                <View style={styles.queuedBadgeRow}>
+                  <View
+                    style={[
+                      styles.queuedPill,
+                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
+                    ]}>
+                    <Clock size={11} color={theme.colors.primary} />
+                    <Text
+                      variant="caption"
+                      weight="semibold"
+                      color={theme.colors.primary}
+                      style={styles.queuedPillText}>
+                      <Trans>Queued</Trans>
+                    </Text>
+                  </View>
+                  <View style={styles.queuedActions}>
+                    <PressableScale
+                      testID={`queued-edit-${item.id}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Edit queued message`}
+                      onPress={() => {
+                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        injectDraftRef.current?.(text);
+                        setTimeline((prev) => prev.filter((it) => it.id !== item.id));
+                      }}
+                      style={styles.queuedActionBtn}>
+                      <Edit3 size={13} color={theme.colors.primary} />
+                    </PressableScale>
+                    <PressableScale
+                      testID={`queued-cancel-${item.id}`}
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Cancel queued message`}
+                      onPress={() => {
+                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setTimeline((prev) => prev.filter((it) => it.id !== item.id));
+                      }}
+                      style={styles.queuedActionBtn}>
+                      <Trash2 size={13} color={theme.colors.danger} />
+                    </PressableScale>
+                  </View>
+                </View>
+              ) : null}
+
               {/* Attachment Preview Chips / Images */}
               {attachments.length > 0 ? (
                 <View style={styles.bubbleAttachmentsGrid}>
@@ -647,17 +775,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   {text}
                 </Text>
               ) : null}
-
-              <PressableScale
-                testID={`user-bubble-more-${item.id}`}
-                onPress={() => {
-                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setMessageActionItem(item);
-                }}
-                accessibilityLabel={t`Message options`}
-                style={styles.userBubbleMoreBtn}>
-                <MoreHorizontal size={13} color={theme.colors.textMuted} />
-              </PressableScale>
             </Pressable>
           </View>
         );
@@ -756,7 +873,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           return null;
       }
     },
-    [markdownStyle, showReasoning, surfaceBackground, theme.colors, timeline, t]
+    [markdownStyle, showReasoning, surfaceBackground, theme.colors, timeline, t, showToast]
   );
 
   const isRunning = sessionInfo?.status === 'running';
@@ -790,42 +907,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     );
   }, [activeDirectory, knownProjects]);
 
+  useEffect(() => {
+    onWorkspaceChange?.(activeDirectory, activeProject);
+  }, [activeDirectory, activeProject, onWorkspaceChange]);
+
   const displayWorkspaceName =
     activeProject?.name ||
     (activeDirectory ? activeDirectory.split('/').filter(Boolean).pop() : undefined) ||
     t`Workspace`;
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
 
-  const listHeader = useMemo(() => {
-    return (
-      <View style={styles.headerPillRow}>
-        <PressableScale
-          testID="agent-workspace-pill"
-          onPress={() => setWorkspaceSheetVisible(true)}
-          accessibilityLabel={t`Switch workspace: ${displayWorkspaceName}`}
-          style={[
-            styles.workspacePill,
-            {
-              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-              borderColor: theme.colors.border,
-            },
-          ]}>
-          <FolderGit2 size={13} color={theme.colors.primary} />
-          <Text variant="caption" weight="bold" color={theme.colors.text} numberOfLines={1}>
-            {displayWorkspaceName}
-          </Text>
-          <Text
-            variant="caption"
-            color={theme.colors.textSubtle}
-            numberOfLines={1}
-            style={styles.workspacePillPath}>
-            {displayWorkspacePath}
-          </Text>
-          <ChevronDown size={12} color={theme.colors.textMuted} />
-        </PressableScale>
-      </View>
-    );
-  }, [displayWorkspaceName, displayWorkspacePath, surfaceBackground, theme.colors, t]);
 
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = permissions.length > 0 || forms.length > 0;
@@ -1015,12 +1106,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           estimatedItemSize={70}
           maintainScrollAtEnd={true}
           maintainScrollAtEndThreshold={0.1}
-          ListHeaderComponent={listHeader}
+          ListHeaderComponent={null}
           ListFooterComponent={listFooter}
           style={styles.timelineScroll}
           contentContainerStyle={[
             styles.timelineContent,
-            { paddingTop: topInset + 20, paddingBottom: bottomInset + 185 },
+            { paddingTop: topInset + 10, paddingBottom: bottomInset + 185 },
           ]}
         />
       )}
@@ -1039,6 +1130,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         tasks={activeTodos}
         tokens={activeTokens}
         cost={sessionInfo?.cost}
+        sessionTitle={sessionInfo?.title}
         onSend={handleSendPrompt}
         onAbort={handleAbort}
         onSelectSession={setActiveAsid}
@@ -1147,159 +1239,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                 <AgentTodoBlock items={activeTodos} defaultExpanded={true} />
               </ScrollView>
-            </Pressable>
-          </Pressable>
-        </Modal>
-      ) : null}
-
-      {/* Message Action Sheet */}
-      {messageActionItem ? (
-        <Modal
-          visible={Boolean(messageActionItem)}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setMessageActionItem(null)}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setMessageActionItem(null)}>
-            <Pressable
-              testID="message-action-sheet"
-              onPress={(e) => e.stopPropagation()}
-              style={[
-                styles.actionSheetContent,
-                { backgroundColor: surfaceBackground(theme.colors.surface) },
-              ]}>
-              <View style={styles.modalHandle} />
-              <Text variant="caption" weight="bold" color={theme.colors.textMuted} style={styles.actionSheetTitle}>
-                <Trans>Message Actions</Trans>
-              </Text>
-
-              {/* 1. Copy */}
-              <PressableScale
-                onPress={async () => {
-                  const copyText =
-                    messageActionItem.part.type === 'text' ? messageActionItem.part.text : '';
-                  await Clipboard.setStringAsync(copyText);
-                  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  showToast({
-                    variant: 'info',
-                    title: t`Copied`,
-                    message: t`Message copied to clipboard`,
-                  });
-                  setMessageActionItem(null);
-                }}
-                style={[styles.actionSheetRow, { borderBottomColor: theme.colors.border }]}>
-                <Copy size={16} color={theme.colors.text} />
-                <Text variant="bodySmall" color={theme.colors.text} style={styles.actionSheetRowText}>
-                  <Trans>Copy Text</Trans>
-                </Text>
-              </PressableScale>
-
-              {/* 2. Edit & Reprompt */}
-              <PressableScale
-                onPress={() => {
-                  const repromptText =
-                    messageActionItem.part.type === 'text' ? messageActionItem.part.text : '';
-                  injectDraftRef.current?.(repromptText);
-                  setMessageActionItem(null);
-                }}
-                style={[styles.actionSheetRow, { borderBottomColor: theme.colors.border }]}>
-                <Edit3 size={16} color={theme.colors.primary} />
-                <Text variant="bodySmall" color={theme.colors.primary} style={styles.actionSheetRowText}>
-                  <Trans>Edit & Reprompt</Trans>
-                </Text>
-              </PressableScale>
-
-              {/* 3. Revert to here */}
-              {activeAsid && messageActionItem.message_id ? (
-                <PressableScale
-                  onPress={() => {
-                    const target = messageActionItem;
-                    setMessageActionItem(null);
-                    setConfirmRevertItem(target);
-                  }}
-                  style={styles.actionSheetRow}>
-                  <RotateCcw size={16} color={theme.colors.danger} />
-                  <Text variant="bodySmall" color={theme.colors.danger} style={styles.actionSheetRowText}>
-                    <Trans>Revert Session to Here</Trans>
-                  </Text>
-                </PressableScale>
-              ) : null}
-            </Pressable>
-          </Pressable>
-        </Modal>
-      ) : null}
-
-      {/* Revert Confirmation Modal */}
-      {confirmRevertItem ? (
-        <Modal
-          visible={Boolean(confirmRevertItem)}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setConfirmRevertItem(null)}>
-          <Pressable style={styles.modalBackdropCenter} onPress={() => setConfirmRevertItem(null)}>
-            <Pressable
-              testID="confirm-revert-modal"
-              onPress={(e) => e.stopPropagation()}
-              style={[
-                styles.confirmModalCard,
-                {
-                  backgroundColor: surfaceBackground(theme.colors.surface),
-                  borderColor: theme.colors.border,
-                },
-              ]}>
-              <View
-                style={[
-                  styles.confirmModalIconWrap,
-                  { backgroundColor: withAlpha(theme.colors.danger, 0.15) },
-                ]}>
-                <RotateCcw size={24} color={theme.colors.danger} />
-              </View>
-              <Text variant="body" weight="bold" color={theme.colors.text} style={styles.confirmModalTitle}>
-                <Trans>Revert Session & Workspace?</Trans>
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} style={styles.confirmModalBody}>
-                <Trans>
-                  Reverting to this checkpoint will roll back all subsequent turns and undo code modifications in the workspace.
-                </Trans>
-              </Text>
-              <View style={styles.confirmModalActions}>
-                <PressableScale
-                  onPress={() => setConfirmRevertItem(null)}
-                  style={[
-                    styles.confirmBtn,
-                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                  ]}>
-                  <Text variant="caption" weight="medium" color={theme.colors.text}>
-                    <Trans>Cancel</Trans>
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  onPress={async () => {
-                    const itemToRevert = confirmRevertItem;
-                    setConfirmRevertItem(null);
-                    if (!activeAsid || !itemToRevert.message_id) return;
-                    try {
-                      await revertAgentSession(sessionId, activeAsid, itemToRevert.message_id);
-                      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                      showToast({
-                        variant: 'info',
-                        title: t`Session Reverted`,
-                        message: t`Rolled back to message checkpoint.`,
-                      });
-                      await loadSnapshot();
-                    } catch (err) {
-                      showToast({
-                        variant: 'danger',
-                        title: t`Revert Failed`,
-                        message: err instanceof Error ? err.message : String(err),
-                      });
-                    }
-                  }}
-                  style={[styles.confirmBtn, { backgroundColor: theme.colors.danger }]}>
-                  <Text variant="caption" weight="bold" color="#fff">
-                    <Trans>Confirm Revert</Trans>
-                  </Text>
-                </PressableScale>
-              </View>
             </Pressable>
           </Pressable>
         </Modal>
@@ -1567,85 +1506,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     flexShrink: 1,
   },
-  userBubbleMoreBtn: {
-    alignSelf: 'flex-end',
-    marginTop: 4,
-    padding: 2,
-    opacity: 0.7,
-  },
-  modalBackdropCenter: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  actionSheetContent: {
-    width: '100%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: 'continuous',
-    paddingTop: 10,
-    paddingBottom: 36,
-    paddingHorizontal: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  actionSheetTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    marginHorizontal: 8,
-  },
-  actionSheetRow: {
+  queuedBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
+    justifyContent: 'space-between',
+    marginBottom: 6,
+    gap: 8,
+  },
+  queuedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  actionSheetRowText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  confirmModalCard: {
-    width: '100%',
-    maxWidth: 340,
-    borderRadius: 24,
-    borderCurve: 'continuous',
-    padding: 22,
-    alignItems: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  confirmModalIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  confirmModalTitle: {
-    fontSize: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  confirmModalBody: {
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 20,
-  },
-  confirmModalActions: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-  },
-  confirmBtn: {
-    flex: 1,
-    paddingVertical: 11,
+    paddingVertical: 3,
     borderRadius: 999,
+    borderCurve: 'continuous',
+  },
+  queuedPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  queuedActions: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 6,
+  },
+  queuedActionBtn: {
+    padding: 3,
   },
   imagePreviewBackdrop: {
     flex: 1,

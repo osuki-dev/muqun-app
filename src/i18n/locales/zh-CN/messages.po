@@ -141,6 +141,10 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "还有 {overflow} 个"
 
+#: src/components/agent-model-sheet.tsx
+msgid "⚡ Free & Unlimited (Recommended)"
+msgstr "⚡ 免费无限（推荐）"
+
 #: src/components/agent-context-sheet.tsx
 msgid "$0.00 (Free)"
 msgstr "¥0.00 (免费)"
@@ -185,6 +189,14 @@ msgstr "操作这个终端，或给它发送一条命令"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "操作这个终端，或给它的代理发送一段提示词"
+
+#: src/components/agent-context-sheet.tsx
+msgid "ACTIONS"
+msgstr "操作"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Active Model"
+msgstr "当前模型"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Active Session"
@@ -250,10 +262,6 @@ msgstr "代理已退出"
 #: src/components/settings-terminal.tsx
 msgid "Agent panes open in"
 msgstr "代理面板的默认视图"
-
-#: src/app/agent.tsx
-msgid "Agent Workspace"
-msgstr "智能体工作区"
 
 #: src/components/settings-servers.tsx
 msgid "Agents"
@@ -460,7 +468,7 @@ msgstr "目前无法验证。请重试，或检查系统设置"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
-msgstr "自主软件工程，支持编辑文件、执行终端命令和运行测试。"
+msgstr "自主软件工程，支持编辑文件、执行终端命令和运行测试"
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -554,7 +562,6 @@ msgstr "相机访问已关闭。请在“设置”中开启后再拍照"
 msgid "Camera access needed"
 msgstr "需要相机访问权限"
 
-#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -577,6 +584,10 @@ msgstr "取消连接到 {0}"
 #: src/components/settings-servers.tsx
 msgid "Cancel editing {0}"
 msgstr "取消编辑 {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Cancel queued message"
+msgstr "取消排队消息"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -635,6 +646,10 @@ msgstr "请从菜单中选择模拟器"
 msgid "Choose an assistant"
 msgstr "选择助手"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Choose an LLM model"
+msgstr "选择大语言模型"
+
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
 msgstr "请选择 SSH 主机"
@@ -672,8 +687,8 @@ msgid "Clear cache"
 msgstr "清除缓存"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Clear Context (/clear)"
-msgstr "清除上下文 (/clear)"
+msgid "Clear Context"
+msgstr "清空上下文"
 
 #: src/components/agent-composer.tsx
 msgid "Clear context and start fresh"
@@ -699,6 +714,7 @@ msgstr "正在清除…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
@@ -834,8 +850,8 @@ msgid "Compact"
 msgstr "紧凑"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Compact Context (/compact)"
-msgstr "压缩上下文 (/compact)"
+msgid "Compact Context"
+msgstr "压缩上下文"
 
 #: src/components/agent-composer.tsx
 msgid "Compact session history to save context"
@@ -857,10 +873,6 @@ msgstr "确认移除未使用的主题"
 #: src/components/ssh-host-form.tsx
 msgid "Confirm removing {0}"
 msgstr "确认移除 {0}"
-
-#: src/components/agent-workbench.tsx
-msgid "Confirm Revert"
-msgstr "确认回滚"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
@@ -935,7 +947,7 @@ msgid "Context & Usage"
 msgstr "上下文与用量"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Context Window"
+msgid "CONTEXT WINDOW"
 msgstr "上下文窗口"
 
 #: src/app/explore.tsx
@@ -1061,7 +1073,7 @@ msgstr "Ctrl Z 键，挂起"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
-msgstr "对话式编程辅助、通用编程建议及开放式工作区问答。"
+msgstr "对话式编程辅助、通用编程建议及开放式工作区问答"
 
 #: src/components/agent-workbench.tsx
 msgid "Copied"
@@ -1094,10 +1106,6 @@ msgstr "复制命令和输出"
 msgid "Copy public key"
 msgstr "复制公钥"
 
-#: src/components/agent-workbench.tsx
-msgid "Copy Text"
-msgstr "复制文本"
-
 #: src/components/simfarm-preview.tsx
 msgid "Copy the command that starts simfarm"
 msgstr "复制启动 simfarm 的命令"
@@ -1127,6 +1135,10 @@ msgstr "无法连接这台机器，点按重试"
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
 msgstr "无法复制"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not create session"
+msgstr "无法创建会话"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -1310,10 +1322,6 @@ msgstr "当前主题"
 msgid "Custom"
 msgstr "自定义"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Custom Directory"
-msgstr "自定义目录"
-
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "自定义终端命令和组合键"
@@ -1354,11 +1362,11 @@ msgstr "删除"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Queue. Tap to switch to Steer."
-msgstr "发送模式：排队。点击切换为实时插话。"
+msgstr "发送模式：排队。点击切换为实时插话"
 
 #: src/components/agent-composer.tsx
 msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
-msgstr "发送模式：实时插话。点击切换为排队。"
+msgstr "发送模式：实时插话。点击切换为排队"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1392,6 +1400,10 @@ msgstr "Diff 摘要"
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "目录"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "DIRECTORY AUTOCOMPLETE"
+msgstr "目录自动补全"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1483,8 +1495,8 @@ msgid "Edit {0}"
 msgstr "编辑 {0}"
 
 #: src/components/agent-workbench.tsx
-msgid "Edit & Reprompt"
-msgstr "编辑并重新提示"
+msgid "Edit queued message"
+msgstr "编辑排队消息"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
@@ -1549,6 +1561,10 @@ msgstr "展开 {0}"
 msgid "Expand reasoning"
 msgstr "展开思考过程"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Expand reasoning & thoughts"
+msgstr "展开思考与推理过程"
+
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
 msgstr "展开任务"
@@ -1582,7 +1598,7 @@ msgstr "专用于探索代码库的高速智能体"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Fast read-only codebase exploration, symbol search, file discovery, and dependency tracing."
-msgstr "快速只读代码库探索、符号检索、文件发现与依赖追踪。"
+msgstr "快速只读代码库探索、符号检索、文件发现与依赖追踪"
 
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
@@ -1605,8 +1621,12 @@ msgid "Files in this workspace"
 msgstr "此工作区的文件"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (e.g. /home/...)"
-msgstr "过滤项目或输入路径（如 /home/...）"
+msgid "Filter projects or path"
+msgstr "过滤项目或路径"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Filter projects or type path (/home/...)"
+msgstr "过滤项目或输入路径 (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1772,13 +1792,9 @@ msgstr "隐藏服务器列表"
 msgid "Hide the simulator"
 msgstr "隐藏模拟器"
 
-#: src/components/agent-model-sheet.tsx
-msgid "High"
-msgstr "高"
-
 #: src/components/agent-mode-sheet.tsx
 msgid "High-level architectural planning, design proposals, and step-by-step implementation roadmaps."
-msgstr "高层架构规划、设计提案与分步实施路线图。"
+msgstr "高层架构规划、设计提案与分步实施路线图"
 
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -1944,10 +1960,9 @@ msgstr "按键"
 msgid "Keys are generated on the device and never leave it."
 msgstr "密钥在设备上生成，绝不外传"
 
-#. placeholder {0}: filteredProjects.length
 #: src/components/agent-workspace-sheet.tsx
-msgid "Known Projects ({0})"
-msgstr "已知项目 ({0})"
+msgid "KNOWN REPOSITORIES"
+msgstr "已知项目与代码仓库"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2098,10 +2113,6 @@ msgstr "查找中"
 msgid "Looking for a simulator"
 msgstr "正在查找模拟器"
 
-#: src/components/agent-model-sheet.tsx
-msgid "Low"
-msgstr "低"
-
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · 办公室"
@@ -2134,42 +2145,14 @@ msgstr "标记已查看"
 msgid "Mascot"
 msgstr "吉祥物"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Matching subdirectories:"
-msgstr "匹配的子目录："
-
-#: src/components/agent-model-sheet.tsx
-msgid "Max"
-msgstr "最大"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Medium"
-msgstr "中"
-
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "提及 {0}"
 
 #: src/components/agent-workbench.tsx
-msgid "Message Actions"
-msgstr "消息操作"
-
-#: src/components/agent-workbench.tsx
 msgid "Message copied to clipboard"
 msgstr "消息已复制到剪贴板"
-
-#: src/components/agent-workbench.tsx
-msgid "Message options"
-msgstr "消息选项"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Minimal"
-msgstr "极低"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Model & Reasoning"
-msgstr "模型与推理"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2272,10 +2255,6 @@ msgstr "从未连接过"
 msgid "Never seen"
 msgstr "从未在线"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "New"
-msgstr "新建"
-
 #: src/app/commands.tsx
 msgid "New group"
 msgstr "新建分组"
@@ -2287,6 +2266,11 @@ msgstr "新的主机密钥"
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "有新输出 · 点击刷新"
+
+#: src/app/agent.tsx
+#: src/components/agent-sessions-sheet.tsx
+msgid "New session"
+msgstr "新建会话"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
@@ -2343,6 +2327,10 @@ msgstr "在本设备上找不到相机"
 msgid "No changes. The working tree matches HEAD."
 msgstr "没有改动。工作区与 HEAD 一致"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No diff preview available for binary or unmodified files."
+msgstr "二进制或未修改的文件无差异预览"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "没有匹配的文件"
@@ -2354,10 +2342,6 @@ msgstr "还没有 Gateway？"
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "没有匹配的命令，换个关键词试试"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No matching projects found"
-msgstr "未找到匹配的项目"
 
 #: src/components/agent-model-sheet.tsx
 msgid "No models found matching your search."
@@ -2386,6 +2370,10 @@ msgstr "这种文件无法预览，它会留在服务器上"
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
 msgstr "此连接不提供预览"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects found. Enter a custom path above."
+msgstr "未找到项目，请在上方输入自定义路径"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -2842,6 +2830,10 @@ msgstr "排队"
 msgid "Queue message for agent"
 msgstr "为智能体加入排队消息"
 
+#: src/components/agent-workbench.tsx
+msgid "Queued"
+msgstr "排队中"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "排队等待上传"
@@ -2889,17 +2881,9 @@ msgstr "可以预览了。你不点,什么都不会被应用"
 msgid "Reasoning"
 msgstr "思考过程"
 
-#: src/components/agent-model-sheet.tsx
-msgid "Reasoning:"
-msgstr "推理:"
-
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "接收代理的等待回应事件和 Gateway 更新"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Recent"
-msgstr "最近使用"
 
 #: src/i18n/labels.ts
 msgid "Recent commits"
@@ -3040,6 +3024,10 @@ msgstr "必填"
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或更高版本"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Reset conversation context window (/clear)"
+msgstr "重置会话上下文窗口 (/clear)"
+
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "请重新启动牧群以完成更新"
@@ -3088,22 +3076,6 @@ msgstr "请回到服务器列表重新配对"
 #: src/hooks/use-collaboration-output.ts
 msgid "Return to this server to continue."
 msgstr "请返回此服务器后继续"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Failed"
-msgstr "回滚失败"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Session & Workspace?"
-msgstr "回滚会话与工作区？"
-
-#: src/components/agent-workbench.tsx
-msgid "Revert Session to Here"
-msgstr "回滚会话至此处"
-
-#: src/components/agent-workbench.tsx
-msgid "Reverting to this checkpoint will roll back all subsequent turns and undo code modifications in the workspace."
-msgstr "回滚至此检查点将撤销其后的所有轮次，并撤销工作区中的代码修改。"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -3162,10 +3134,6 @@ msgstr "吊销中…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "向右键"
-
-#: src/components/agent-workbench.tsx
-msgid "Rolled back to message checkpoint."
-msgstr "已回滚至消息检查点。"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3275,8 +3243,16 @@ msgid "Search files"
 msgstr "搜索文件"
 
 #: src/components/agent-model-sheet.tsx
-msgid "Search models or providers…"
-msgstr "搜索模型或提供商…"
+msgid "Search models"
+msgstr "搜索模型"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Search models or providers..."
+msgstr "搜索模型或服务商..."
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Search sessions"
+msgstr "搜索会话"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Search sessions..."
@@ -3318,8 +3294,11 @@ msgid "Select all"
 msgstr "全选"
 
 #: src/app/agent.tsx
-#: src/components/agent-model-sheet.tsx
 msgid "Select model"
+msgstr "选择模型"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Select Model"
 msgstr "选择模型"
 
 #: src/components/agent-workspace-sheet.tsx
@@ -3396,15 +3375,15 @@ msgstr "服务器"
 
 #: src/components/agent-workbench.tsx
 msgid "Service is experiencing high load."
-msgstr "服务负载过高。"
+msgstr "服务负载过高"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
 msgstr "个会话"
 
-#: src/components/agent-workbench.tsx
-msgid "Session Reverted"
-msgstr "会话已回滚"
+#: src/components/agent-context-sheet.tsx
+msgid "SESSION DETAILS"
+msgstr "会话详情"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
@@ -3417,10 +3396,6 @@ msgstr "个会话"
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "使用应用锁之前，请先设置设备密码"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Set as working directory for new sessions"
-msgstr "设为新会话的工作目录"
 
 #: src/app/explore.tsx
 msgid "Set one up on your computer"
@@ -3531,10 +3506,6 @@ msgstr "显示图片"
 msgid "Show more"
 msgstr "显示更多"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Show Reasoning Process"
-msgstr "显示思考过程"
-
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "在终端文字后显示 App 背景"
@@ -3550,6 +3521,10 @@ msgstr "显示最新的改动列表"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "显示服务器列表"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Show Thinking Process"
+msgstr "显示思考过程"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
@@ -3682,6 +3657,10 @@ msgstr "启动一个代理，并告诉它第一件要做的事"
 msgid "Start task"
 msgstr "开始任务"
 
+#: src/components/agent-workbench.tsx
+msgid "Started a new session with clean context."
+msgstr "已创建干净上下文的新会话"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "正在启动 {name}"
@@ -3746,6 +3725,10 @@ msgstr "子代理"
 msgid "Submit Response"
 msgstr "提交回复"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Summarize history into compact memory (/compact)"
+msgstr "将历史记录压缩为精简记忆 (/compact)"
+
 #: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "总结进度"
@@ -3797,8 +3780,9 @@ msgstr "切换到终端视图"
 
 #: src/components/agent-workbench.tsx
 msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "切换至 Union Alpha（快速免费）以立即获得响应。"
+msgstr "切换至 Union Alpha（快速免费）以立即获得响应"
 
+#: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 msgid "Switch workspace: {displayWorkspaceName}"
 msgstr "切换工作区：{displayWorkspaceName}"
@@ -4076,6 +4060,10 @@ msgstr "主题，{0}"
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "来自 muqun.dev 的已发布主题。打开某个主题前不会下载任何内容"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Thinking:"
+msgstr "思考级别："
+
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "正在思考…"
@@ -4215,8 +4203,8 @@ msgid "Today"
 msgstr "今天"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Token Breakdown"
-msgstr "Token 明细"
+msgid "TOKEN BREAKDOWN"
+msgstr "Token 用量明细"
 
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
@@ -4401,10 +4389,6 @@ msgstr "使用 {0}"
 msgid "Use device passcode"
 msgstr "使用设备密码"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Use path:"
-msgstr "使用路径："
-
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "请使用仓库链接，并在下方填写分支和主题文件"
@@ -4420,6 +4404,10 @@ msgstr "使用主题默认设置"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "使用这台服务器"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Used Capacity"
+msgstr "已用容量"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"
@@ -4488,6 +4476,7 @@ msgstr "工作中"
 msgid "Working Directory"
 msgstr "工作目录"
 
+#: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"

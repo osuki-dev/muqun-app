@@ -161,6 +161,7 @@ export interface TimelineItem {
   seq: number;
   updated_ms: number;
   attachments?: string[];
+  queued?: boolean;
 }
 
 export interface AgentSessionSnapshot {
