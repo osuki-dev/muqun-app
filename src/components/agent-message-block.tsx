@@ -810,7 +810,10 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         styles.messageBlock,
         plate,
         styles.userBlock,
-        { borderLeftColor: colors.accent },
+        // The reader's own words sit on the accent's pale tint -- the one
+        // block in the transcript that is theirs, told apart by colour, not
+        // by alignment.
+        { backgroundColor: theme.colors.primarySubtle, borderLeftColor: colors.accent },
         queued ? { borderLeftColor: theme.colors.warning } : null,
       ]}>
       <View style={styles.roleRow}>
@@ -1009,6 +1012,8 @@ const styles = StyleSheet.create({
   },
   roleStamp: {
     fontSize: AGENT_TYPE.micro.size,
+    // Never shrinks: "just now" is not allowed to become "just".
+    flexShrink: 0,
   },
   roleSpacer: {
     flex: 1,

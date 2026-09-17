@@ -110,10 +110,12 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
       gapWidth: 10,
       backgroundColor: quoteBackground,
     },
+    // Inline code reads in the body ink on a quiet chip: a file name or a
+    // command is content, not a link, and the link colour said otherwise.
     code: {
       fontFamily: 'monospace',
       fontSize: AGENT_TYPE.mono.size,
-      color: link,
+      color: text,
       backgroundColor: codeBackground,
       borderColor: border,
     },
