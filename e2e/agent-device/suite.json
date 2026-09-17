@@ -1016,7 +1016,7 @@
       },
       {
         "target": {
-          "text": "STAGED"
+          "id": "settings-selection:(on|off):git-diff-side-staged"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s22"
@@ -1038,7 +1038,7 @@
       },
       {
         "target": {
-          "text": "ALL"
+          "id": "settings-selection:(on|off):git-diff-side-all"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s25"
@@ -1496,7 +1496,7 @@
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Quick actions"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1512,15 +1512,11 @@
         "run": "flows/demo-tour.ad#s9"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s10"
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Quick actions"
         },
         "mode": "hidden",
         "timeout": 8000
@@ -1791,21 +1787,24 @@
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Quick actions"
         },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/demo-tour.ad#s49"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s50"
       },
       {
         "run": "flows/demo-tour.ad#s51"
+      },
+      {
+        "target": {
+          "text": "Quick actions"
+        },
+        "mode": "hidden",
+        "timeout": 8000
       },
       {
         "include": "subflows/restore-key-row"
@@ -3468,15 +3467,14 @@
       },
       {
         "target": {
-          "text": "SYSTEM",
-          "selected": true
+          "id": "settings-selection:on:segment-system"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s17"
       },
       {
         "target": {
-          "text": "DARK"
+          "id": "settings-selection:(on|off):segment-dark"
         },
         "mode": "press",
         "run": "flows/settings.ad#s18"
@@ -3486,23 +3484,21 @@
       },
       {
         "target": {
-          "text": "DARK",
-          "selected": true
+          "id": "settings-selection:on:segment-dark"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s20"
       },
       {
         "target": {
-          "text": "SYSTEM",
-          "selected": false
+          "id": "settings-selection:off:segment-system"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s21"
       },
       {
         "target": {
-          "text": "SYSTEM"
+          "id": "settings-selection:(on|off):segment-system"
         },
         "mode": "press",
         "run": "flows/settings.ad#s22"
@@ -3512,16 +3508,14 @@
       },
       {
         "target": {
-          "text": "SYSTEM",
-          "selected": true
+          "id": "settings-selection:on:segment-system"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s24"
       },
       {
         "target": {
-          "text": "DARK",
-          "selected": false
+          "id": "settings-selection:off:segment-dark"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s25"
@@ -3688,7 +3682,7 @@
       },
       {
         "target": {
-          "text": "DEFAULT"
+          "id": "settings-selection:(on|off):segment-default"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3697,7 +3691,7 @@
       },
       {
         "target": {
-          "text": "DEFAULT"
+          "id": "settings-selection:(on|off):segment-default"
         },
         "mode": "press",
         "run": "flows/settings.ad#s48"
@@ -3707,7 +3701,7 @@
       },
       {
         "target": {
-          "text": "COMPACT"
+          "id": "settings-selection:(on|off):segment-compact"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3716,15 +3710,14 @@
       },
       {
         "target": {
-          "text": "DEFAULT",
-          "selected": true
+          "id": "settings-selection:on:segment-default"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s51"
       },
       {
         "target": {
-          "text": "COMPACT"
+          "id": "settings-selection:(on|off):segment-compact"
         },
         "mode": "press",
         "run": "flows/settings.ad#s52"
@@ -3734,16 +3727,14 @@
       },
       {
         "target": {
-          "text": "COMPACT",
-          "selected": true
+          "id": "settings-selection:on:segment-compact"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s54"
       },
       {
         "target": {
-          "text": "DEFAULT",
-          "selected": false
+          "id": "settings-selection:off:segment-default"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s55"
@@ -4102,7 +4093,7 @@
       },
       {
         "target": {
-          "text": "COMPACT"
+          "id": "settings-selection:(on|off):segment-compact"
         },
         "mode": "scroll",
         "direction": "down",
@@ -4111,15 +4102,14 @@
       },
       {
         "target": {
-          "text": "COMPACT",
-          "selected": true
+          "id": "settings-selection:on:segment-compact"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s85"
       },
       {
         "target": {
-          "text": "DEFAULT"
+          "id": "settings-selection:(on|off):segment-default"
         },
         "mode": "press",
         "run": "flows/settings.ad#s86"
@@ -4129,8 +4119,7 @@
       },
       {
         "target": {
-          "text": "DEFAULT",
-          "selected": true
+          "id": "settings-selection:on:segment-default"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s88"
@@ -5247,7 +5236,7 @@
       },
       {
         "target": {
-          "text": "LARGE"
+          "id": "settings-selection:(on|off):segment-large"
         },
         "mode": "scroll",
         "direction": "down",
@@ -5256,7 +5245,7 @@
       },
       {
         "target": {
-          "text": "LARGE"
+          "id": "settings-selection:(on|off):segment-large"
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#s38"
@@ -6756,10 +6745,6 @@
         "run": "flows/agent-shortcuts.ad#pre-done"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/agent-shortcuts.ad#pre-close"
       },
       {

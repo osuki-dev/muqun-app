@@ -66,10 +66,6 @@ is visible "${TARGET}"
 # section s16
 scroll down --pixels 320
 
-# section reset-color-mode
-press label="SYSTEM"
-wait stable 400 5000
-
 # section reset-color-mode-control
 press "${TARGET}"
 wait stable 400 5000
