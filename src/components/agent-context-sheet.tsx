@@ -40,6 +40,13 @@ export interface AgentContextSheetProps {
   tokens?: TokensUsage;
   /** What the model can still see, from `GET …/context`. */
   contextUsage?: AgentContextUsage | null;
+  /**
+   * The window to measure against: the session's when the gateway stated one,
+   * the catalogue model's otherwise. See `agent-workbench.tsx`.
+   */
+  contextLimit?: number;
+  /** The catalogue's own name for the model, rather than its wire id. */
+  modelName?: string;
   cost?: number;
   showReasoning?: boolean;
   onToggleReasoning?: () => void;
@@ -58,6 +65,8 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   session,
   tokens,
   contextUsage,
+  contextLimit,
+  modelName,
   cost,
   showReasoning = true,
   onToggleReasoning,
@@ -83,9 +92,10 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const live = contextUsage?.tokens ?? null;
   const inContext = contextTokenTotal(live);
   const spent = contextTokenTotal(tokens);
-  // No invented window. The gateway states one when OpenCode does, and a
-  // percentage against a number nobody said is a number nobody can act on.
-  const limit = session?.limit?.context;
+  // No invented window, but no window thrown away either: the gateway states
+  // one when OpenCode does, and the model catalogue states one for every model
+  // it publishes. Only with neither is there nothing to draw a percentage in.
+  const limit = contextLimit ?? session?.limit?.context;
   const ratio = contextFillRatio(live, limit);
   const limitLabel =
     limit === undefined
@@ -106,7 +116,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
     <SheetScene
       testID="agent-context-sheet"
       title={t`Context`}
-      caption={session?.title || session?.model?.model_id}>
+      caption={session?.title || modelName || session?.model?.model_id}>
       <ScrollView
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
@@ -120,7 +130,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             </Text>
             {ratio === null ? (
               <Text variant="caption" color={theme.colors.textMuted}>
-                {t`window not reported`}
+                {t`no window reported for this model`}
               </Text>
             ) : (
               <Text variant="caption" weight="semibold" color={barTone}>
@@ -143,14 +153,16 @@ export const AgentContextSheet = memo(function AgentContextSheet({
               ]}
             />
           </View>
+          {/* What the number is, said plainly: the last turn's input, cached
+              input, reasoning and output -- which is what the model read. */}
           <Text variant="caption" color={theme.colors.textMuted}>
             {limitLabel === null
-              ? t`${compact(inContext)} tokens in context`
-              : t`${compact(inContext)} of ${limitLabel} tokens`}
+              ? t`${compact(inContext)} tokens the model last read`
+              : t`${compact(inContext)} of ${limitLabel} tokens the model can hold`}
           </Text>
           {contextUsage ? (
             <Text variant="caption" color={theme.colors.textSubtle}>
-              {t`${contextUsage.messages} messages since the last compaction`}
+              {t`${contextUsage.messages} messages in context`}
             </Text>
           ) : null}
         </View>
@@ -181,13 +193,16 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           title={t`Model`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {[session?.model?.model_id, session?.model?.variant].filter(Boolean).join(' · ') ||
-                t`Not set`}
+              {[modelName || session?.model?.model_id, session?.model?.variant]
+                .filter(Boolean)
+                .join(' · ') || t`Not set`}
             </Text>
           }
         />
+        {/* "Total spent" next to a number read as money on a sheet that also
+            states a cost. It is tokens, and it says so. */}
         <SheetSceneRow
-          title={t`Total spent`}
+          title={t`Tokens this session`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted}>
               {compact(spent)}

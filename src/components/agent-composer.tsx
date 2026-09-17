@@ -225,6 +225,15 @@ export interface AgentComposerProps {
   contextUsage?: AgentContextUsage | null;
   /** The session's own context window, when the engine stated one. */
   contextLimit?: number;
+  /**
+   * The catalogue's own name for the selected model.
+   *
+   * `formatModelName` reads a `ModelRef`'s id and can only guess at a title;
+   * its table also drops the "Free" the catalogue puts in the name, so the chip
+   * said "Nemotron 3.5 Lightning" for a model called "Nemotron 3.5 Lightning
+   * Free" in the picker the reader chose it from.
+   */
+  modelName?: string;
   /** A compaction in flight, or one that failed and has not been read yet. */
   compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
   onDismissCompaction?: () => void;
@@ -286,6 +295,7 @@ export const AgentComposer = memo(function AgentComposer({
   tokens,
   contextUsage,
   contextLimit,
+  modelName,
   compaction,
   onDismissCompaction,
   cost,
@@ -345,7 +355,10 @@ export const AgentComposer = memo(function AgentComposer({
     return { label: `${tokStr} • ${costStr}`, ratio };
   }, [contextUsage, contextLimit, tokens, cost, t]);
 
-  const modelDisplayName = useMemo(() => formatModelName(selectedModel), [selectedModel]);
+  const modelDisplayName = useMemo(
+    () => modelName || formatModelName(selectedModel),
+    [modelName, selectedModel]
+  );
 
   const inputRef = useRef<TextInput>(null);
   const [caret, setCaret] = useState<number | undefined>(undefined);

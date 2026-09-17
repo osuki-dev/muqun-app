@@ -62,6 +62,7 @@ import {
   revertAgentSession,
   sendAgentCommand,
   sortTimeline,
+  formatModelName,
   isBusyStatus,
   inboxItemText,
   type AgentContextUsage,
@@ -78,6 +79,7 @@ import {
   type ModelRef,
   type PermissionDecision,
   type AgentInfo,
+  type ModelInfo,
   type SkillInfo,
   type AgentProject,
 } from '@/lib/agent-session';
@@ -230,6 +232,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const [sessions, setSessions] = useState<AgentSessionInfo[]>([]);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
+  /**
+   * Every model the host publishes, kept for the two things a `ModelRef`
+   * cannot answer on its own: the name the catalogue gives it -- "Nemotron 3.5
+   * Lightning Free", not this app's guess at a title from the id -- and the
+   * context window, for a session the gateway stated no `limit` for.
+   */
+  const [catalogModels, setCatalogModels] = useState<readonly ModelInfo[]>([]);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
@@ -388,6 +397,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSkills(catalog.skills);
         }
         setCommands(catalog?.commands ?? []);
+        setCatalogModels(catalog?.models ?? []);
         // The host's own defaults, shown as the current selection. What was
         // here before was a guess -- the first model whose id contained "free"
         // or "spark" -- and it was then *sent* on every session create, so a
@@ -1947,6 +1957,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const activeTokens = currentSession?.tokens ?? sessionInfo?.tokens;
 
   /**
+   * The catalogue's own entry for the model this session runs on.
+   *
+   * A `ModelRef` is three strings; everything else about a model -- its name as
+   * its publisher spells it, how much it can hold -- is in the catalogue.
+   */
+  const activeModelRef = selectedModel ?? currentSession?.model ?? sessionInfo?.model ?? undefined;
+  const activeModelInfo = useMemo(() => {
+    if (!activeModelRef?.model_id) return undefined;
+    return catalogModels.find(
+      (model) =>
+        model.id === activeModelRef.model_id &&
+        (!activeModelRef.provider_id || model.provider_id === activeModelRef.provider_id)
+    );
+  }, [catalogModels, activeModelRef]);
+
+  /** The catalogue's name for it, which is the one the reader chose from. */
+  const activeModelName = activeModelInfo?.name || formatModelName(activeModelRef, '');
+
+  /**
+   * The window the context gauge measures against.
+   *
+   * The session's own `limit` when the gateway stated one, and the catalogue's
+   * entry for the model otherwise -- the window is a property of the model, and
+   * "window not reported" was this app declining to read a number it already
+   * had in hand.
+   */
+  const contextLimit = sessionInfo?.limit?.context ?? activeModelInfo?.limit?.context;
+
+  /**
    * How many things are still running out of sight.
    *
    * Running shells, plus any *other* tool the gateway marked `background` that
@@ -1996,6 +2035,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       tokens: activeTokens,
       cost: sessionInfo?.cost,
       selectedModel,
+      selectedModelName: activeModelName,
+      contextLimit,
       selectedAgent,
       showReasoning,
       yoloMode,
@@ -2015,6 +2056,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionInfo,
     activeTokens,
     selectedModel,
+    activeModelName,
+    contextLimit,
     selectedAgent,
     showReasoning,
     yoloMode,
@@ -2394,7 +2437,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         tasks={activeTodos}
         tokens={activeTokens}
         contextUsage={contextUsage}
-        contextLimit={sessionInfo?.limit?.context}
+        contextLimit={contextLimit}
+        modelName={activeModelName}
         compaction={compaction}
         onDismissCompaction={dismissCompaction}
         cost={sessionInfo?.cost}

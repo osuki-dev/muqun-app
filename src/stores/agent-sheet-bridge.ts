@@ -56,6 +56,13 @@ export interface AgentSheetSnapshot {
   tokens?: TokensUsage;
   cost?: number;
   selectedModel?: ModelRef;
+  /** The catalogue's own name for it -- "Nemotron 3.5 Lightning Free". */
+  selectedModelName?: string;
+  /**
+   * The context window to measure against: the session's when the gateway
+   * stated one, the catalogue model's otherwise.
+   */
+  contextLimit?: number;
   selectedAgent?: string;
   showReasoning: boolean;
   yoloMode: boolean;
@@ -122,6 +129,8 @@ const INITIAL: AgentSheetSnapshot = {
   tokens: undefined,
   cost: undefined,
   selectedModel: undefined,
+  selectedModelName: undefined,
+  contextLimit: undefined,
   selectedAgent: undefined,
   showReasoning: true,
   yoloMode: false,
