@@ -1809,6 +1809,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
     if (!hasFormsOrPerms && !isRunning && !statusNotice) return <KeyboardInset />;
+    /*
+      A turn blocked on a question is still `running`, and the footer said
+      "Thinking…" over a form whose only blocker was the reader. The agent is
+      not thinking; it is waiting, and saying so is what tells them the next
+      move is theirs.
+     */
+    const waitingOnReader = forms.length > 0;
     return (
       <View style={styles.footerContainer}>
         {isRunning ? (
@@ -1823,7 +1830,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ]}>
               <ThinkingIndicator size={13} color={theme.colors.primary} />
               <Text variant="caption" color={theme.colors.primary} weight="semibold">
-                <Trans>Thinking…</Trans>
+                {waitingOnReader ? (
+                  <Trans>Waiting for your answer</Trans>
+                ) : (
+                  <Trans>Thinking…</Trans>
+                )}
               </Text>
             </View>
           </View>

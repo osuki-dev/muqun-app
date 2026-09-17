@@ -14,7 +14,7 @@ import {
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { getAgentCatalog, type AgentInfo } from '@/lib/agent-session';
+import { getAgentCatalog, selectableAgents, type AgentInfo } from '@/lib/agent-session';
 
 const STAGGERED_ROWS = 8;
 
@@ -98,7 +98,18 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     getAgentCatalog(sessionId)
       .then((catalog) => {
         if (!active) return;
-        setAgents(catalog?.agents && catalog.agents.length > 0 ? catalog.agents : builtinAgents);
+        /*
+          The catalogue carries OpenCode's own machinery -- `Compaction`,
+          `Title`, `Summary` -- marked `hidden`, and its subagents marked
+          `mode: "subagent"`. Both were listed here as things to switch the
+          session to, which for the hidden three is switching the session to an
+          internal routine. `selectableAgents` is the filter the protocol
+          already states; a host whose whole catalogue is hidden still gets a
+          picker rather than an empty sheet.
+         */
+        const listed = selectableAgents(catalog?.agents ?? []);
+        const fallback = catalog?.agents && catalog.agents.length > 0 ? catalog.agents : [];
+        setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : builtinAgents);
       })
       .catch((err) => {
         console.warn('Failed to load agent catalog:', err);
