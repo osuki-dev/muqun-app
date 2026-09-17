@@ -50,7 +50,12 @@ is visible "${TARGET}"
 is hidden "${TARGET}"
 
 # section s17
-press "${TARGET}"
+# The search field is flush on the sheet's ground now, with a hairline under it
+# and nothing else -- no "Clear search" button, because a boxed field with a
+# control inside it is the card kit this sheet left behind. Four backspaces are
+# how a reader clears "diff", and it is what the slash-command flow already
+# types.
+type "\b\b\b\b"
 
 # section s18
 wait stable 400 5000
@@ -197,7 +202,9 @@ is visible "${TARGET}"
 scroll up --pixels 320
 
 # section s66
-press "${TARGET}"
+# A form sheet has no X circle any more: the grabber and the swipe are the
+# close. The manifest's next step asserts the terminal underneath is back.
+back --system
 
 # section s67
 is visible "${TARGET}"

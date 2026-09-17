@@ -110,7 +110,9 @@ wait stable 400 5000
 screenshot "shots/light/09-files.png"
 
 # section s37
-press "${TARGET}"
+# A form sheet has no X circle any more: the grabber and the swipe are the
+# close, so the flow dismisses it the way a reader does.
+back --system
 
 # section s38
 wait stable 400 5000
