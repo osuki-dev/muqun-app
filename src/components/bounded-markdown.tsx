@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
+import { plural } from '@lingui/core/macro';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -121,7 +122,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         note={
           capped.hidden >= 1024
             ? t`${hiddenKb} KB not shown`
-            : t`${capped.hidden} characters not shown`
+            : t`${plural(capped.hidden, { one: '# character not shown', other: '# characters not shown' })}`
         }
         onShowMore={() => setBudget((prev) => prev + MARKDOWN_CHUNK_CHARS)}
         showMoreLabel={t`Show more`}

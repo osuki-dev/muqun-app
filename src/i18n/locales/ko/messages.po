@@ -29,6 +29,11 @@ msgstr "[모델]"
 msgid "[pr number]"
 msgstr "[PR 번호]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, other {#자 표시되지 않음}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, other {#분}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {#줄 더 있음}}"
@@ -76,11 +82,6 @@ msgstr "{0} · 시스템이 관리하므로 캐시를 비워도 지워지지 않
 msgid "{0} (this device)"
 msgstr "{0} (이 기기)"
 
-#. placeholder {0}: capped.hidden
-#: src/components/bounded-markdown.tsx
-msgid "{0} characters not shown"
-msgstr "{0}자 표시되지 않음"
-
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -92,11 +93,6 @@ msgstr "파일 {0}개 · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages since the last compaction"
 msgstr "마지막 압축 이후 메시지 {0}개"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "{0}줄 더"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -160,8 +156,8 @@ msgid "{commandName} · sending to"
 msgstr "{commandName} · 보내는 대상"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count}개 결과"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, other {결과 #개}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx

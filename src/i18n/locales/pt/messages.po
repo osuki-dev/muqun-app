@@ -29,6 +29,11 @@ msgstr "[modelo]"
 msgid "[pr number]"
 msgstr "[número do pr]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, one {# caractere não exibido} other {# caracteres não exibidos}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, one {# minuto} other {# minutos}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# linha a mais} other {# linhas a mais}}"
@@ -76,11 +82,6 @@ msgstr "{0} · É gerido pelo sistema e limpar a cache não lhe toca"
 msgid "{0} (this device)"
 msgstr "{0} (este dispositivo)"
 
-#. placeholder {0}: capped.hidden
-#: src/components/bounded-markdown.tsx
-msgid "{0} characters not shown"
-msgstr "{0} caracteres não exibidos"
-
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -92,11 +93,6 @@ msgstr "{0} arquivos · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages since the last compaction"
 msgstr "{0} mensagens desde a última compactação"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "mais {0} linhas"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -160,8 +156,8 @@ msgid "{commandName} · sending to"
 msgstr "{commandName} · enviando para"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count} resultados"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, one {# resultado} other {# resultados}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx

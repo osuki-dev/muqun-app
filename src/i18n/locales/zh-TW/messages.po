@@ -29,6 +29,11 @@ msgstr "[模型]"
 msgid "[pr number]"
 msgstr "[PR 編號]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, other {未顯示 # 個字元}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, other {# 分鐘}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {還有 # 行}}"
@@ -76,11 +82,6 @@ msgstr "{0} · 由系統管理，清除快取不會動到它"
 msgid "{0} (this device)"
 msgstr "{0}（這台裝置）"
 
-#. placeholder {0}: capped.hidden
-#: src/components/bounded-markdown.tsx
-msgid "{0} characters not shown"
-msgstr "未顯示 {0} 個字元"
-
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -92,11 +93,6 @@ msgstr "{0} 個檔案 · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages since the last compaction"
 msgstr "自上次壓縮以來 {0} 則訊息"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "還有 {0} 行"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -160,8 +156,8 @@ msgid "{commandName} · sending to"
 msgstr "{commandName}·傳送給"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count} 個結果"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, other {# 個結果}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx

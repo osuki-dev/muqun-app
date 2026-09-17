@@ -17,7 +17,7 @@ import { AnimatedLegendList } from '@legendapp/list/reanimated';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@osuki-dev/ui';
-import { ChevronDown, ChevronRight } from 'lucide-react-native';
+import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 // A type-only import, so this module never holds a runtime reference back to
@@ -293,7 +293,9 @@ const FileRow = memo(function FileRow({
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
-  const Chevron = row.expanded ? ChevronDown : ChevronRight;
+  // Closed points down, open points up: the same chevron rule as the rest of
+  // the transcript.
+  const Chevron = row.expanded ? ChevronUp : ChevronDown;
   const fileSide = sideOfFile(row.file);
   // Letters, not words: a phone's file row has room for "+1000 −1000" and one
   // more glyph, and S and U are read the same way in every catalog. The words
@@ -815,7 +817,9 @@ const styles = StyleSheet.create({
   fileMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    // Six, not eight: at eight the status word and the count read as one
+    // string with a double space in it -- "Modified  +1".
+    gap: 6,
     overflow: 'hidden',
   },
   sideMark: {

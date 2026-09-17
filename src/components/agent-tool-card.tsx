@@ -2,6 +2,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { plural } from '@lingui/core/macro';
 import { FileText, GitFork, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
@@ -152,7 +153,7 @@ const CodeBody = memo(function CodeBody({
       />
       {capped.hidden > 0 ? (
         <TruncationFooter
-          note={t`${capped.hidden} more lines`}
+          note={t`${plural(capped.hidden, { one: '# more line', other: '# more lines' })}`}
           onShowMore={() => setBudget((prev) => prev + TOOL_BODY_MAX_LINES)}
           showMoreLabel={t`Show more`}
           extra={
@@ -210,7 +211,7 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
           }
           style={[styles.moreChip, { borderColor: colors.border }]}>
           <Text variant="caption" color={colors.accent}>
-            {t`${capped.hidden} more lines`}
+            {t`${plural(capped.hidden, { one: '# more line', other: '# more lines' })}`}
           </Text>
         </PressableScale>
       ) : null}
@@ -412,7 +413,13 @@ export const AgentToolCard = memo(function AgentToolCard({
     }
     const count = resultCountFromMetadata(part.metadata);
     if ((kind === 'glob' || kind === 'grep' || kind === 'search') && count !== undefined) {
-      nodes.push(<Chip key="count" text={t`${count} results`} color={theme.colors.textMuted} />);
+      nodes.push(
+        <Chip
+          key="count"
+          text={t`${plural(count, { one: '# result', other: '# results' })}`}
+          color={theme.colors.textMuted}
+        />
+      );
     }
     if (kind === 'subagent') {
       const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;

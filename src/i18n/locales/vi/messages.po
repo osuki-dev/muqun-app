@@ -29,6 +29,11 @@ msgstr "[mô hình]"
 msgid "[pr number]"
 msgstr "[số pr]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, other {# ký tự không hiển thị}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, other {# phút}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {còn # dòng nữa}}"
@@ -76,11 +82,6 @@ msgstr "{0} · Do hệ thống quản lý, xóa bộ nhớ đệm không đụng
 msgid "{0} (this device)"
 msgstr "{0} (thiết bị này)"
 
-#. placeholder {0}: capped.hidden
-#: src/components/bounded-markdown.tsx
-msgid "{0} characters not shown"
-msgstr "{0} ký tự không hiển thị"
-
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -92,11 +93,6 @@ msgstr "{0} tệp · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages since the last compaction"
 msgstr "{0} tin nhắn kể từ lần nén gần nhất"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "{0} dòng nữa"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -160,8 +156,8 @@ msgid "{commandName} · sending to"
 msgstr "{commandName} · đang gửi đến"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count} kết quả"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, other {# kết quả}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
