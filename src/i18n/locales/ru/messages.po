@@ -562,6 +562,10 @@ msgstr "К SSH-хостам"
 msgid "Back to the on-screen keyboard"
 msgstr "Вернуться к экранной клавиатуре"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "Назад к родительской сессии"
+
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Background"
 msgstr "Фоновый"
@@ -2447,7 +2451,6 @@ msgstr "Есть новый вывод · обновить"
 msgid "New session"
 msgstr "Новая сессия"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "Новый сеанс"
@@ -3971,6 +3974,10 @@ msgstr "Остановить этого агента"
 msgid "Storage"
 msgstr "Хранилище"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "субагент"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
 msgstr "Субагент"
@@ -4618,6 +4625,10 @@ msgstr "Отвязываем…"
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Не в индексе"
+
+#: src/components/agent-composer.tsx
+msgid "Untitled session"
+msgstr "Сессия без названия"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

@@ -562,6 +562,10 @@ msgstr "Về danh sách host SSH"
 msgid "Back to the on-screen keyboard"
 msgstr "Về bàn phím trên màn hình"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "Quay lại phiên cha"
+
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Background"
 msgstr "Nền"
@@ -2447,7 +2451,6 @@ msgstr "Có đầu ra mới · làm mới"
 msgid "New session"
 msgstr "Phiên mới"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "Phiên mới"
@@ -3971,6 +3974,10 @@ msgstr "Dừng tác tử này"
 msgid "Storage"
 msgstr "Bộ nhớ"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "tác nhân con"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
 msgstr "Tác nhân phụ"
@@ -4618,6 +4625,10 @@ msgstr "Đang hủy ghép nối…"
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Chưa staged"
+
+#: src/components/agent-composer.tsx
+msgid "Untitled session"
+msgstr "Phiên chưa có tên"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

@@ -562,6 +562,10 @@ msgstr "Zurück zu den SSH-Hosts"
 msgid "Back to the on-screen keyboard"
 msgstr "Zurück zur Bildschirmtastatur"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "Zurück zur übergeordneten Sitzung"
+
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Background"
 msgstr "Hintergrund"
@@ -2447,7 +2451,6 @@ msgstr "Neue Ausgabe verfügbar · aktualisieren"
 msgid "New session"
 msgstr "Neue Sitzung"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "Neue Sitzung"
@@ -3971,6 +3974,10 @@ msgstr "Diesen Agent stoppen"
 msgid "Storage"
 msgstr "Speicher"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "Subagent"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
 msgstr "Subagent"
@@ -4618,6 +4625,10 @@ msgstr "Wird entkoppelt …"
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Nicht vorgemerkt"
+
+#: src/components/agent-composer.tsx
+msgid "Untitled session"
+msgstr "Sitzung ohne Titel"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

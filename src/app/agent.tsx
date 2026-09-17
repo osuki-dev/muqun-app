@@ -18,17 +18,13 @@ import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAgentSessionState } from '@/stores/agent-session-state';
+import { hasRealSessionTitle } from '@/lib/agent-session';
 
 /**
  * The header's height above the content, with generous clearance so the glass pill
  * navigation never presses down on the scrolling content.
  */
 const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
-
-/** `ses_…` placeholders are engine bookkeeping, not a title worth showing. */
-function isMeaningfulSessionTitle(title: string | undefined): boolean {
-  return Boolean(title && !title.startsWith('ses_'));
-}
 
 /**
  * Dedicated OpenCode Agent Screen.
@@ -63,7 +59,17 @@ export default function AgentScreen() {
     (activeDirectory ? activeDirectory.split('/').filter(Boolean).pop() : undefined) ||
     t`Workspace`;
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
-  const showSessionTitle = sessionRunning && isMeaningfulSessionTitle(sessionTitle);
+  /**
+   * The title, whenever there is one.
+   *
+   * It used to appear only while the agent was producing output, so the
+   * auto-title that lands on the first turn was shown for a few seconds and
+   * then replaced by the workspace name the reader already knew -- and the
+   * session they were reading became anonymous the moment it went quiet. The
+   * workspace is one tap away either way; the title is what identifies what is
+   * on screen.
+   */
+  const showSessionTitle = hasRealSessionTitle({ title: sessionTitle });
 
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
   const switchWorkspaceLabel = t`Switch workspace: ${displayWorkspaceName}`;
@@ -102,6 +108,7 @@ export default function AgentScreen() {
                 style={styles.workspaceHeaderPillInner}>
                 <WorkspacePillContent
                   showSession={showSessionTitle}
+                  running={sessionRunning}
                   sessionTitle={sessionTitle}
                   workspaceName={displayWorkspaceName}
                   workspacePath={displayWorkspacePath}

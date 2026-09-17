@@ -50,6 +50,7 @@ import {
   backgroundAgentSession,
   compactAgentSession,
   getAgentContext,
+  listAgentSessionChildren,
   sendAgentCommand,
   sortTimeline,
   isBusyStatus,
@@ -70,6 +71,14 @@ import {
   type AgentProject,
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
+import {
+  buildSessionStrip,
+  indexSessions,
+  parentOf,
+  rootOf,
+  sessionsInWorkspace,
+  type ChildrenByParent,
+} from '@/lib/agent-session-tree';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import type { SessionAsset } from '@/lib/session-assets';
 import {
@@ -229,6 +238,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * gauge drawn from the spend would never come down.
    */
   const [contextUsage, setContextUsage] = useState<AgentContextUsage | null>(null);
+  /**
+   * The subagent sessions under whichever root is open, keyed by parent.
+   *
+   * The list route answers with `roots=true`, so a subagent never arrives in
+   * it; `GET …/children` is the only way to see one, and it is asked for per
+   * parent rather than for the whole workspace -- a session the reader is not
+   * looking at has no tree worth fetching.
+   */
+  const [childrenByParent, setChildrenByParent] = useState<ChildrenByParent>({});
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
   const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
 
@@ -269,7 +287,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // Load available sessions if no activeAsid
   const refreshSessions = useCallback(async () => {
     try {
-      const list = await listAgentSessions(sessionId);
+      // Roots only, and scoped to the workspace on screen: a subagent session
+      // is a row in its parent's tree, never a sibling of it in the strip.
+      const list = await listAgentSessions(sessionId, {
+        roots: true,
+        ...(activeDirectory ? { directory: activeDirectory } : {}),
+      });
       setIsOffline(false);
       if (list) {
         setSessions(list);
@@ -302,7 +325,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     } finally {
       initialCheckDoneRef.current = true;
     }
-  }, [sessionId, activeAsid, applySelectedModel]);
+  }, [sessionId, activeAsid, activeDirectory, applySelectedModel]);
 
   const handleTimelineScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -448,6 +471,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     };
   }, [sessionId]);
 
+  /**
+   * The tree under the open root: its children, and theirs one level deeper.
+   *
+   * Two levels is what the strip draws and therefore all that is fetched. The
+   * answers replace what was there rather than merging, so a subagent that has
+   * been deleted leaves the strip rather than lingering in it.
+   */
+  const refreshChildren = useCallback(async (rootAsid: string | undefined) => {
+    if (!rootAsid) {
+      setChildrenByParent({});
+      return;
+    }
+    const first = await listAgentSessionChildren(rootAsid);
+    const next: Record<string, AgentSessionInfo[]> = { [rootAsid]: first };
+    for (const child of first) {
+      const grandchildren = await listAgentSessionChildren(child.asid);
+      if (grandchildren.length > 0) next[child.asid] = grandchildren;
+    }
+    setChildrenByParent(next);
+  }, []);
+
   const handleStreamEvent = useCallback(
     (event: AgentDomainEvent) => {
       // Every frame carries the sequence the gateway is at; a reconnect asks
@@ -481,6 +525,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSessions((prev) =>
             prev.map((s) => (s.asid === event.asid ? { ...s, status: event.status } : s))
           );
+          // A subagent's chip shows the child's own dot, so the tree takes the
+          // same update the strip does.
+          setChildrenByParent((prev) => applyChildStatus(prev, event.asid, event.status));
           if (event.status === 'idle') {
             // Delivered: a queued row is now ordinary history.
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
@@ -498,8 +545,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSessions((prev) =>
             prev.some((s) => s.asid === info.asid)
               ? prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s))
-              : [...prev, info]
+              : info.parent_id
+                ? prev
+                : [...prev, info]
           );
+          // An auto-title lands here, and the chip it belongs to may be a
+          // subagent rather than a root.
+          setChildrenByParent((prev) => applyChildInfo(prev, info));
           break;
         }
 
@@ -1272,6 +1324,67 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     theme.colors,
   ]);
 
+  /**
+   * Everything the strip knows about, and the chips it draws.
+   *
+   * `sessions` is roots; `childrenByParent` is the open root's tree. Both are
+   * indexed together so "which root is this child under" and "what is above
+   * the session I am reading" are one lookup rather than two lists to search.
+   */
+  /**
+   * The roots this workspace owns.
+   *
+   * The listing is already scoped by `directory` on the way out; this is the
+   * second filter, for a gateway that ignored the parameter. With no workspace
+   * chosen yet there is nothing to filter against, so the list stands as it is
+   * rather than coming back empty.
+   */
+  const workspaceRoots = useMemo(() => {
+    if (!activeDirectory && !activeProject) return sessions;
+    return sessionsInWorkspace(sessions, {
+      ...(activeDirectory ? { directory: activeDirectory } : {}),
+      ...(activeProject?.id ? { projectId: activeProject.id } : {}),
+      ...(activeProject?.canonical ? { canonical: activeProject.canonical } : {}),
+    });
+  }, [sessions, activeDirectory, activeProject]);
+
+  const sessionIndex = useMemo(
+    () => indexSessions(workspaceRoots, childrenByParent),
+    [workspaceRoots, childrenByParent]
+  );
+  const activeRootAsid = useMemo(
+    () => rootOf(activeAsid, sessionIndex)?.asid,
+    [activeAsid, sessionIndex]
+  );
+  const sessionStrip = useMemo(
+    () => buildSessionStrip(workspaceRoots, childrenByParent, activeAsid),
+    [workspaceRoots, childrenByParent, activeAsid]
+  );
+  const activeParent = useMemo(
+    () => parentOf(activeAsid, sessionIndex),
+    [activeAsid, sessionIndex]
+  );
+
+  /**
+   * Every session in hand, for the surfaces that want one list.
+   *
+   * The list route is asked for roots only now, so the sessions sheet -- which
+   * groups by `parent_id` itself -- would otherwise never see a subagent
+   * again. Memoised because the bridge commits on reference change.
+   */
+  const allSessions = useMemo(() => [...sessionIndex.values()], [sessionIndex]);
+
+  // The open root's tree, refetched when the root changes and whenever a turn
+  // ends -- which is when a subagent has finished and a new one may exist.
+  useEffect(() => {
+    void refreshChildren(activeRootAsid).catch(() => {});
+  }, [refreshChildren, activeRootAsid]);
+
+  useEffect(() => {
+    if (isRunning) return;
+    void refreshChildren(activeRootAsid).catch(() => {});
+  }, [refreshChildren, activeRootAsid, isRunning]);
+
   const currentSession = useMemo(() => {
     return sessions.find((s) => s.asid === activeAsid) ?? sessionInfo;
   }, [sessions, activeAsid, sessionInfo]);
@@ -1302,7 +1415,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const snapshot: Partial<AgentSheetSnapshot> = {
       sessionId,
       activeAsid,
-      sessions,
+      sessions: allSessions,
       knownProjects,
       activeDirectory,
       sessionInfo: sessionInfo ?? undefined,
@@ -1322,7 +1435,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [
     sessionId,
     activeAsid,
-    sessions,
+    allSessions,
     knownProjects,
     activeDirectory,
     sessionInfo,
@@ -1634,7 +1747,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       <AgentComposer
         disabled={isOffline}
         running={isRunning}
-        sessions={sessions}
+        sessionStrip={sessionStrip}
+        parentSession={activeParent}
         availableAgents={availableAgents}
         skills={skills}
         sessionId={sessionId}
@@ -1731,6 +1845,38 @@ function upsertTimelineItems(
     dirty = true;
   }
   return dirty ? sortTimeline(next) : (previous as TimelineItem[]);
+}
+
+/** A status event, applied to whichever branch of the tree carries that id. */
+function applyChildStatus(
+  previous: ChildrenByParent,
+  asid: string,
+  status: AgentRunStatus
+): ChildrenByParent {
+  let changed = false;
+  const next: Record<string, AgentSessionInfo[]> = {};
+  for (const [parent, children] of Object.entries(previous)) {
+    next[parent] = children.map((child) => {
+      if (child.asid !== asid || child.status === status) return child;
+      changed = true;
+      return { ...child, status };
+    });
+  }
+  return changed ? next : previous;
+}
+
+/** The same, for the whole info an `agent.session.updated` carries. */
+function applyChildInfo(previous: ChildrenByParent, info: AgentSessionInfo): ChildrenByParent {
+  let changed = false;
+  const next: Record<string, AgentSessionInfo[]> = {};
+  for (const [parent, children] of Object.entries(previous)) {
+    next[parent] = children.map((child) => {
+      if (child.asid !== info.asid) return child;
+      changed = true;
+      return { ...child, ...info };
+    });
+  }
+  return changed ? next : previous;
 }
 
 function keyOfGroup(group: TimelineRenderGroup): string {

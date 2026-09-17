@@ -562,6 +562,10 @@ msgstr "返回 SSH 主機"
 msgid "Back to the on-screen keyboard"
 msgstr "回到螢幕鍵盤"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "返回上層工作階段"
+
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Background"
 msgstr "背景"
@@ -2447,7 +2451,6 @@ msgstr "有新輸出 · 點擊重新整理"
 msgid "New session"
 msgstr "新增會話"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "新增工作階段"
@@ -3971,6 +3974,10 @@ msgstr "停止這個代理程式"
 msgid "Storage"
 msgstr "儲存空間"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "子智慧體"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
 msgstr "子代理"
@@ -4618,6 +4625,10 @@ msgstr "正在解除配對…"
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "未暫存"
+
+#: src/components/agent-composer.tsx
+msgid "Untitled session"
+msgstr "未命名工作階段"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

@@ -562,6 +562,10 @@ msgstr "SSH 호스트 목록으로"
 msgid "Back to the on-screen keyboard"
 msgstr "화면 키보드로 돌아가기"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "상위 세션으로 돌아가기"
+
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Background"
 msgstr "백그라운드"
@@ -2447,7 +2451,6 @@ msgstr "새 출력 있음 · 새로 고침"
 msgid "New session"
 msgstr "새 세션"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "새 세션"
@@ -3971,6 +3974,10 @@ msgstr "이 에이전트 중지"
 msgid "Storage"
 msgstr "저장 공간"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "서브에이전트"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
 msgstr "서브에이전트"
@@ -4618,6 +4625,10 @@ msgstr "해제하는 중…"
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "스테이징 안 됨"
+
+#: src/components/agent-composer.tsx
+msgid "Untitled session"
+msgstr "제목 없는 세션"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

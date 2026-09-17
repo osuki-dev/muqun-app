@@ -101,17 +101,25 @@ export function SessionActionIcon({ running }: { running: boolean }) {
 }
 
 /**
- * The workspace pill's content: the workspace name and path while the session
- * is idle, the live session title while it is producing output, crossfading
- * between the two so the change reads as one pill changing its mind.
+ * The workspace pill's content: the session's title once it has one, the
+ * workspace name and path until then, crossfading between the two so the
+ * change reads as one pill changing its mind.
+ *
+ * The title used to be shown only while the agent was producing output. An
+ * auto-title lands on the first turn and is then the name of the thing on
+ * screen, running or not; hiding it again the moment the turn ended made every
+ * idle session anonymous.
  */
 export function WorkspacePillContent({
   showSession,
+  running = false,
   sessionTitle,
   workspaceName,
   workspacePath,
 }: {
   showSession: boolean;
+  /** Only a working session's dot pulses; an idle one is still just there. */
+  running?: boolean;
   sessionTitle?: string;
   workspaceName: string;
   workspacePath: string;
@@ -162,7 +170,12 @@ export function WorkspacePillContent({
         <ChevronDown size={13} color={theme.colors.textMuted} />
       </Animated.View>
       <Animated.View style={[styles.pillStack, sessionStyle]}>
-        <StatusDot color={theme.colors.primary} filled pulse size={7} />
+        <StatusDot
+          color={running ? theme.colors.primary : theme.colors.success}
+          filled
+          pulse={running}
+          size={7}
+        />
         <Text
           variant="bodySmall"
           weight="bold"

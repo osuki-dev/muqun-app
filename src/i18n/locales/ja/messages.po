@@ -562,6 +562,10 @@ msgstr "SSH ホスト一覧に戻る"
 msgid "Back to the on-screen keyboard"
 msgstr "ソフトウェアキーボードに戻る"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "親セッションに戻る"
+
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Background"
 msgstr "バックグラウンド"
@@ -2447,7 +2451,6 @@ msgstr "新しい出力があります · 更新"
 msgid "New session"
 msgstr "新規セッション"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "新規セッション"
@@ -3971,6 +3974,10 @@ msgstr "このエージェントを停止"
 msgid "Storage"
 msgstr "ストレージ"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "サブエージェント"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
 msgstr "サブエージェント"
@@ -4618,6 +4625,10 @@ msgstr "解除しています…"
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "未ステージ"
+
+#: src/components/agent-composer.tsx
+msgid "Untitled session"
+msgstr "タイトルなしのセッション"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"

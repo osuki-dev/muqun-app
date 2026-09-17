@@ -562,6 +562,10 @@ msgstr "กลับไปยังโฮสต์ SSH"
 msgid "Back to the on-screen keyboard"
 msgstr "กลับไปยังแป้นพิมพ์บนหน้าจอ"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "กลับไปยังเซสชันหลัก"
+
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Background"
 msgstr "เบื้องหลัง"
@@ -2447,7 +2451,6 @@ msgstr "มีเอาต์พุตใหม่ · รีเฟรช"
 msgid "New session"
 msgstr "เซสชันใหม่"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "เซสชันใหม่"
@@ -3971,6 +3974,10 @@ msgstr "หยุดเอเจนต์นี้"
 msgid "Storage"
 msgstr "พื้นที่จัดเก็บ"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "ซับเอเจนต์"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
 msgstr "เอเจนต์ย่อย"
@@ -4618,6 +4625,10 @@ msgstr "กำลังเลิกจับคู่…"
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "ยังไม่เตรียมคอมมิต"
+
+#: src/components/agent-composer.tsx
+msgid "Untitled session"
+msgstr "เซสชันไม่มีชื่อ"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
