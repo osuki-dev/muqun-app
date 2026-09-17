@@ -114,7 +114,13 @@ import {
   AgentUserMessage,
   type AgentToolActions,
 } from './agent-message-block';
-import { isAtBottom, showJumpToLatest } from '@/lib/transcript-scroll';
+import {
+  isAtBottom,
+  showJumpToLatest,
+  TRANSCRIPT_START,
+  unseenBelow,
+  type TranscriptMark,
+} from '@/lib/transcript-scroll';
 import {
   buildTimelineGroupsCached,
   createTimelineGroupCache,
@@ -1736,21 +1742,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   /**
-   * Rows that arrived while the reader was up in the history.
+   * What arrived while the reader was up in the history.
    *
-   * Counted against the last row they were level with, so scrolling up to
-   * re-read something does not by itself put a button over the transcript --
-   * and reaching the end again clears it without a tap.
+   * Measured against the transcript as it stood when they were last level with
+   * its end, so scrolling up to re-read something does not by itself put a
+   * button over the transcript -- and reaching the end again clears it without
+   * a tap. The mark carries the last row's sequence as well as the row count,
+   * because an answer streaming into a row already on screen adds no row and
+   * is still the thing the reader would want to go and see.
    */
-  const seenRowsRef = useRef(0);
+  const transcriptMark = useMemo<TranscriptMark>(
+    () => ({ rows: timeline.length, seq: timeline[timeline.length - 1]?.seq ?? 0 }),
+    [timeline]
+  );
+  const seenMarkRef = useRef<TranscriptMark>(TRANSCRIPT_START);
   useEffect(() => {
     if (isNearBottom) {
-      seenRowsRef.current = timeline.length;
+      seenMarkRef.current = transcriptMark;
       setUnseenRows(0);
       return;
     }
-    setUnseenRows(Math.max(0, timeline.length - seenRowsRef.current));
-  }, [timeline.length, isNearBottom]);
+    setUnseenRows(unseenBelow(seenMarkRef.current, transcriptMark));
+  }, [transcriptMark, isNearBottom]);
 
   // Group the window back into whole messages, the shape OpenCode's own UI
   // renders: reasoning and tool calls fold into the message they belong to.
