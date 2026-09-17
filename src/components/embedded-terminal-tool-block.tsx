@@ -157,7 +157,11 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const hasBody = Boolean(children);
 
   return (
-    <Animated.View style={[styles.container, raised]} testID={testID}>
+    <Animated.View
+      style={[styles.container, raised]}
+      testID={testID}
+      // A screen reader hears the call, not the engine's id for it.
+      accessibilityLabel={[title, caption].filter(Boolean).join(' ') || undefined}>
       {/* Header: one line naming the tool and what it is pointed at */}
       <PressableScale
         testID="agent-tool-toggle"

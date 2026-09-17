@@ -34,6 +34,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  cancelAnimation,
   withRepeat,
   withSequence,
   withTiming,
@@ -1293,6 +1294,10 @@ const CompactionPill = memo(function CompactionPill({
           withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
           -1
         );
+    // An endless repeat must not outlive the pill: a view that is gone while
+    // its animation still writes props is the SurfaceMountingManager noise
+    // in logcat, not a harmless leftover.
+    return () => cancelAnimation(pulse);
   }, [failed, pulse]);
   const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
 
