@@ -16,6 +16,7 @@ import {
 import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { diffRowsForFence, diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
 import {
@@ -107,6 +108,7 @@ const CodeBody = memo(function CodeBody({
   const fenced = useMemo(() => fencedCode(body, language), [body, language]);
   return (
     <EnrichedMarkdownText
+      key={markdownPaletteKey(markdownStyle)}
       flavor="commonmark"
       markdown={fenced.text}
       markdownStyle={markdownStyle}
@@ -673,6 +675,7 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
     case 'subagent':
       return args.subagentText ? (
         <EnrichedMarkdownText
+          key={markdownPaletteKey(markdownStyle)}
           flavor="commonmark"
           markdown={args.subagentText}
           markdownStyle={markdownStyle}
@@ -819,6 +822,7 @@ const WebResult = memo(function WebResult({
   const theme = useThemeTokens();
   return (
     <EnrichedMarkdownText
+      key={markdownPaletteKey(markdownStyle)}
       flavor="github"
       markdown={markdown}
       markdownStyle={markdownStyle}

@@ -40,6 +40,7 @@ import { useRelativeTime } from '@/hooks/use-relative-time';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, timing } from '@/lib/motion';
+import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
 import {
@@ -469,7 +470,7 @@ const MessageTextPart = memo(function MessageTextPart({
 
   const renderMarkdown = (key: string, markdown: string) => (
     <EnrichedMarkdownText
-      key={key}
+      key={`${key}:${markdownPaletteKey(markdownStyle)}`}
       flavor="commonmark"
       markdown={markdown}
       markdownStyle={markdownStyle}
