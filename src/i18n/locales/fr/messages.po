@@ -2261,14 +2261,6 @@ msgstr "Répertorie uniquement les panneaux exécutant un agent reconnu"
 msgid "Live Activity"
 msgstr "Activité en direct"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "Charger les messages antérieurs"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "Charger les messages antérieurs ({windowStart})"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "Chargement"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Chargement des commandes"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "Chargement de la sortie précédente…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "Clé publique copiée"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "Tirez pour charger la sortie précédente"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"

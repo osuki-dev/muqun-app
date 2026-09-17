@@ -2261,14 +2261,6 @@ msgstr "認識済みのエージェントが動作しているパネルのみを
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "以前のメッセージを読み込む"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "以前のメッセージを読み込む（{windowStart}）"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "読み込み中"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "コマンドを読み込み中"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "以前の出力を読み込み中…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "公開鍵をコピーしました"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "プル"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "引っ張って以前の出力を読み込む"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"

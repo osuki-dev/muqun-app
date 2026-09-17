@@ -2261,14 +2261,6 @@ msgstr "只列出正在執行可辨識代理程式的面板"
 msgid "Live Activity"
 msgstr "即時動態"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "載入較早的訊息"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "載入較早的訊息（{windowStart}）"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "載入中"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "正在載入指令"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "正在載入先前的輸出…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "已複製公開金鑰"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "下拉以載入先前的輸出"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"

@@ -24,6 +24,7 @@ import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { ChevronUp } from 'lucide-react-native';
 
 import { LogoLoader } from '@/components/logo-loader';
 import { Asset } from 'expo-asset';
@@ -3001,10 +3002,15 @@ export function SkiaTerminal({
             },
             pullIndicatorStyle,
           ]}>
-          {loadingEarlier ? <ActivityIndicator size={12} color={theme.colors.primary} /> : null}
-          <Text style={[styles.historyIndicatorText, { color: theme.colors.textMuted }]}>
-            {loadingEarlier ? t`Loading earlier output…` : t`Pull for earlier output`}
-          </Text>
+          {/* The gesture explains itself: the reader is already pulling, and
+              a pill that says "pull for earlier output" while they are pulling
+              is a caption on their own hand. What is worth showing is that the
+              pull was heard, which is the mark alone. */}
+          {loadingEarlier ? (
+            <ActivityIndicator size={12} color={theme.colors.primary} />
+          ) : (
+            <ChevronUp size={13} color={theme.colors.textMuted} />
+          )}
         </Animated.View>
       ) : null}
       {/*
@@ -3825,18 +3831,14 @@ const styles = StyleSheet.create({
   historyIndicator: {
     position: 'absolute',
     alignSelf: 'center',
-    minHeight: 28,
+    width: 28,
+    height: 28,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 14,
-    paddingHorizontal: 10,
-    flexDirection: 'row',
+    borderCurve: 'continuous',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
     boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
-  },
-  historyIndicatorText: {
-    fontFamily: terminalFontFamily,
-    fontSize: 11,
   },
   selectionBar: {
     position: 'absolute',

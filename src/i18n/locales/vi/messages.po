@@ -2261,14 +2261,6 @@ msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "Tải các tin nhắn trước đó"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "Tải các tin nhắn trước đó ({windowStart})"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "Đang tải"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Đang tải lệnh"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "Đang tải đầu ra trước đó…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "Đã sao chép khóa công khai"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "Kéo để tải đầu ra trước đó"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"

@@ -2261,14 +2261,6 @@ msgstr "Listet nur Panels mit einem erkannten Agenten"
 msgid "Live Activity"
 msgstr "Live-Aktivität"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "Ältere Nachrichten laden"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "Ältere Nachrichten laden ({windowStart})"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "Wird geladen"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Befehle werden geladen"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "Frühere Ausgabe wird geladen…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "Öffentlicher Schlüssel kopiert"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "Zum Laden früherer Ausgabe ziehen"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"

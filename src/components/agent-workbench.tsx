@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  RefreshControl,
   Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -14,7 +15,6 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import {
   Bot,
   ChevronDown,
-  ChevronUp,
   FolderGit2,
   PlusCircle,
   RefreshCw,
@@ -187,6 +187,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // Index into `timeline` where the rendered window starts; history above it is
   // paged in on demand so entering a session lands on the latest messages.
   const [windowStart, setWindowStart] = useState(0);
+  // Whether a pull for earlier history is still being answered.
+  const [loadingEarlier, setLoadingEarlier] = useState(false);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   const [forms, setForms] = useState<FormRequest[]>([]);
   // What is waiting behind the current turn, as the gateway last stated it.
@@ -1399,52 +1401,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [groupCache, visibleTimeline]
   );
 
-  // The group the reader is looking at when an earlier page is requested, so
-  // the prepend can be anchored to it instead of jumping the viewport.
-  const pendingAnchorRef = useRef<string | null>(null);
-
+  /**
+   * Earlier history is pulled for, not asked for with a button.
+   *
+   * The button said how many messages were above it, which is a number nobody
+   * acts on, and it took a row of the transcript to say it. The gesture is the
+   * one every other list in this app uses, and the viewport is held by the
+   * list's own `maintainVisibleContentPosition` -- which is what the
+   * `scrollToIndex` on a 60ms timer was approximating, one frame late and with
+   * a guess at how long the prepend would take.
+   */
   const handleLoadEarlier = useCallback(() => {
-    const anchorKey = renderGroups[0]?.key;
-    if (anchorKey) {
-      pendingAnchorRef.current = anchorKey;
-    }
+    if (windowStart <= 0) return;
+    setLoadingEarlier(true);
     setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
-  }, [renderGroups]);
+  }, [windowStart]);
 
-  // After an earlier page is prepended, restore the viewport onto the message it
-  // was showing so history loads in place.
+  // The window grew (or there was nothing left to grow into), so the pull is
+  // answered and the indicator can retract.
   useEffect(() => {
-    const anchorKey = pendingAnchorRef.current;
-    if (!anchorKey) return;
-    const anchorIndex = renderGroups.findIndex((g) => g.key === anchorKey);
-    if (anchorIndex < 0) {
-      pendingAnchorRef.current = null;
-      return;
-    }
-    if (anchorIndex === 0) return; // The window has not grown yet.
-    pendingAnchorRef.current = null;
-    const timer = setTimeout(() => {
-      listRef.current?.scrollToIndex({ index: anchorIndex, animated: false, viewPosition: 0 });
-    }, 60);
-    return () => clearTimeout(timer);
-  }, [renderGroups]);
-
-  const listHeader = useMemo(() => {
-    if (windowStart <= 0) return null;
-    return (
-      <PressableScale
-        testID="agent-load-earlier-btn"
-        onPress={handleLoadEarlier}
-        accessibilityRole="button"
-        accessibilityLabel={t`Load earlier messages`}
-        style={[styles.loadEarlierBtn, { borderColor: theme.colors.border }]}>
-        <ChevronUp size={13} color={theme.colors.textMuted} />
-        <Text variant="caption" color={theme.colors.textMuted}>
-          {t`Load earlier messages (${windowStart})`}
-        </Text>
-      </PressableScale>
-    );
-  }, [windowStart, handleLoadEarlier, theme.colors.border, theme.colors.textMuted, t]);
+    setLoadingEarlier(false);
+  }, [windowStart]);
 
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
@@ -1908,7 +1885,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           maintainScrollAtEnd={true}
           maintainScrollAtEndThreshold={0.1}
           onScroll={handleTimelineScroll}
-          ListHeaderComponent={listHeader}
+          refreshControl={
+            <RefreshControl
+              refreshing={loadingEarlier}
+              enabled={windowStart > 0}
+              onRefresh={handleLoadEarlier}
+              progressViewOffset={topInset}
+              // The same three colours the terminal transcript's own pull uses,
+              // so the two surfaces answer a pull the same way.
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.textMuted}
+              progressBackgroundColor={theme.colors.surfaceRaised}
+            />
+          }
           ListFooterComponent={listFooter}
           style={styles.timelineScroll}
           contentContainerStyle={[
@@ -2261,19 +2250,6 @@ const styles = StyleSheet.create({
   footerContainer: {
     gap: 10,
     marginTop: 4,
-  },
-  loadEarlierBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    alignSelf: 'center',
-    marginVertical: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   jumpToLatestWrap: {
     position: 'absolute',

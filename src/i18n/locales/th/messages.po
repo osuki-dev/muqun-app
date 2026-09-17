@@ -2261,14 +2261,6 @@ msgstr "แสดงเฉพาะพาเนลที่กำลังเร
 msgid "Live Activity"
 msgstr "กิจกรรมสด"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "โหลดข้อความก่อนหน้า"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "โหลดข้อความก่อนหน้า ({windowStart})"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "กำลังโหลด"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "กำลังโหลดคำสั่ง"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "กำลังโหลดเอาต์พุตก่อนหน้านี้…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "คัดลอกคีย์สาธารณะแล้ว"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "พูล"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "ดึงเพื่อดูเอาต์พุตก่อนหน้า"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"

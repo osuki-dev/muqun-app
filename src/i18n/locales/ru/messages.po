@@ -2261,14 +2261,6 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "Загрузить более ранние сообщения"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "Загрузить более ранние сообщения ({windowStart})"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "Загрузка"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Загружаем команды"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "Загружаем предыдущий вывод…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "Открытый ключ скопирован"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "Pull"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "Потяните, чтобы загрузить предыдущий вывод"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"

@@ -2261,14 +2261,6 @@ msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "이전 메시지 불러오기"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "이전 메시지 불러오기 ({windowStart})"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2279,10 +2271,6 @@ msgstr "불러오는 중"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "명령 불러오는 중"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "이전 출력 불러오는 중…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -3102,10 +3090,6 @@ msgstr "공개 키를 복사했습니다"
 #: src/i18n/labels.ts
 msgid "Pull"
 msgstr "풀"
-
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "당겨서 이전 출력 불러오기"
 
 #: src/components/agent-composer.tsx
 msgid "Queue"
