@@ -184,6 +184,10 @@ msgstr "{host}이(가) 이 앱이 처음 보는 키를 제시했습니다. 신�
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단을 쓰거나 나중에 다시 시도하세요"
 
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "{language} 코드를 클립보드에 복사했습니다"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# 실행 중} other {# 실행 중}}"
@@ -883,6 +887,10 @@ msgstr "시뮬레이터 닫기"
 msgid "Code"
 msgstr "코드"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "코드를 클립보드에 복사했습니다"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "코드가 만료되었습니다"
@@ -1194,6 +1202,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "대화형 도움말과 작업 공간에 대한 자유로운 질문"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "복사됨"

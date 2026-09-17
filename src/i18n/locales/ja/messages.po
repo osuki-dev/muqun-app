@@ -184,6 +184,10 @@ msgstr "{host} はこのアプリが初めて見る鍵を提示しました。�
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} は一時的にロックされています。システムの代替認証を使うか、しばらくしてからお試しください"
 
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "{language} のコードをクリップボードにコピーしました"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# 実行中} other {# 実行中}}"
@@ -883,6 +887,10 @@ msgstr "シミュレータを閉じる"
 msgid "Code"
 msgstr "コード"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "コードをクリップボードにコピーしました"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "コードの有効期限が切れました"
@@ -1194,6 +1202,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "対話形式の相談と、ワークスペースについての自由な質問"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "コピー完了"

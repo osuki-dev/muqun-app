@@ -7,7 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
@@ -80,6 +80,12 @@ export const TruncationFooter = memo(function TruncationFooter({
 export interface BoundedMarkdownProps {
   markdown: string;
   markdownStyle: MarkdownStyle;
+  /**
+   * GitHub by default: tables, task lists and block math, and a code block
+   * that scrolls sideways instead of clipping, with its language named and a
+   * copy button. Commonmark draws none of that -- a table under it is dropped
+   * on the floor with `RendererFactory: No renderer for: Table`.
+   */
   flavor?: 'commonmark' | 'github';
   containerStyle?: StyleProp<ViewStyle>;
   /** Links are opened by the caller's rule, never by this component's guess. */
@@ -91,7 +97,7 @@ export interface BoundedMarkdownProps {
 export const BoundedMarkdown = memo(function BoundedMarkdown({
   markdown,
   markdownStyle,
-  flavor = 'commonmark',
+  flavor = 'github',
   containerStyle,
   openLinks = true,
   latexMath = false,
@@ -99,6 +105,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
 }: BoundedMarkdownProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const { showToast } = useToast();
   const [budget, setBudget] = useState(MARKDOWN_CHUNK_CHARS);
 
   const capped = useMemo(() => capMarkdown(markdown, budget), [markdown, budget]);
@@ -147,6 +154,17 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         selectionHandleColor={theme.colors.primary}
         streamingAnimation={false}
         textBreakStrategy="simple"
+        // The copy button belongs to the renderer's own code-block header; all
+        // this adds is the confirmation the rest of the app gives.
+        onCopyPress={({ language }) =>
+          showToast({
+            variant: 'info',
+            title: t`Copied`,
+            message: language
+              ? t`${language} code copied to clipboard`
+              : t`Code copied to clipboard`,
+          })
+        }
         {...(latexMath ? { md4cFlags: { latexMath: true } } : {})}
         {...(openLinks
           ? {

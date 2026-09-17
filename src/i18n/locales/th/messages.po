@@ -184,6 +184,10 @@ msgstr "{host} แสดงคีย์ที่แอปนี้ยังไ�
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} ถูกล็อกชั่วคราว ใช้วิธีสำรองของระบบหรือลองอีกครั้งภายหลัง"
 
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "คัดลอกโค้ด {language} ไปยังคลิปบอร์ดแล้ว"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, other {กำลังทำงาน # รายการ}}"
@@ -883,6 +887,10 @@ msgstr "ปิดเครื่องจำลอง"
 msgid "Code"
 msgstr "โค้ด"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "คัดลอกโค้ดไปยังคลิปบอร์ดแล้ว"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "รหัสหมดอายุ"
@@ -1194,6 +1202,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "ช่วยเหลือแบบสนทนา และคำถามปลายเปิดเกี่ยวกับเวิร์กสเปซ"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "คัดลอกแล้ว"

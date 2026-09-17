@@ -184,6 +184,10 @@ msgstr "{host} предъявил ключ, которого это прилож
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} временно заблокирован. Используйте системный запасной способ или повторите позже"
 
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "Код {language} скопирован в буфер обмена"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# в работе} few {# в работе} many {# в работе} other {# в работе}}"
@@ -883,6 +887,10 @@ msgstr "Закрыть симулятор"
 msgid "Code"
 msgstr "Код"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "Код скопирован в буфер обмена"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "Код истёк"
@@ -1194,6 +1202,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Диалоговая помощь и свободные вопросы о рабочем пространстве"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Скопировано"

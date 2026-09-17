@@ -184,6 +184,10 @@ msgstr "{host} presented a key this app has not seen before. Compare the fingerp
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} is temporarily locked. Use the system fallback or try later"
 
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "{language} code copied to clipboard"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# running} other {# running}}"
@@ -883,6 +887,10 @@ msgstr "Close the simulator"
 msgid "Code"
 msgstr "Code"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "Code copied to clipboard"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "Code expired"
@@ -1194,6 +1202,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Conversational help and open-ended workspace questions"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Copied"
