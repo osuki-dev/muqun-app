@@ -91,6 +91,11 @@ msgstr "自上次壓縮以來 {0} 則訊息"
 msgid "{0} more lines"
 msgstr "還有 {0} 行"
 
+#. placeholder {0}: inbox.length
+#: src/components/agent-composer.tsx
+msgid "{0} queued"
+msgstr "{0} 則排隊中"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -348,6 +353,11 @@ msgstr "所有專案"
 msgid "All Sessions"
 msgstr "所有工作階段"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "All sessions on this workspace"
+msgstr "這個工作區的所有工作階段"
+
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "允許相機"
@@ -383,10 +393,6 @@ msgstr "Alt 上箭頭"
 #: src/components/agent-permission-card.tsx
 msgid "Always Allow"
 msgstr "一律允許"
-
-#: src/components/agent-composer.tsx
-msgid "Analyze project and initialize AGENTS.md"
-msgstr "分析專案並初始化 AGENTS.md"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -676,6 +682,11 @@ msgstr "需要相機存取權"
 msgid "Cancel"
 msgstr "取消"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Cancel a staged rollback"
+msgstr "取消已暫存的回復"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancel connecting to {0}"
@@ -689,6 +700,10 @@ msgstr "取消編輯 {0}"
 #: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "取消排隊訊息"
+
+#: src/components/agent-composer.tsx
+msgid "Cancel this queued message"
+msgstr "取消這則排隊的訊息"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -796,9 +811,10 @@ msgstr "清除快取"
 msgid "Clear Context"
 msgstr "清除上下文"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Clear context and start fresh"
-msgstr "清除上下文並重新開始"
+msgstr "清空脈絡，重新開始"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -969,10 +985,6 @@ msgstr "緊湊"
 #: src/components/agent-context-sheet.tsx
 msgid "Compact Context"
 msgstr "壓縮上下文"
-
-#: src/components/agent-composer.tsx
-msgid "Compact session history to save context"
-msgstr "壓縮工作階段歷程以節省上下文"
 
 #: src/components/agent-composer.tsx
 msgid "Compacting context automatically…"
@@ -1379,6 +1391,10 @@ msgstr "無法讀取終端機"
 msgid "Could not read this file."
 msgstr "無法讀取這個檔案"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not redo"
+msgstr "無法重做"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "無法移除主機"
@@ -1390,6 +1406,10 @@ msgstr "無法回覆"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "無法撤銷裝置"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that"
+msgstr "無法執行"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1442,6 +1462,10 @@ msgstr "無法停止"
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
 msgstr "無法停止這個代理程式"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not undo"
+msgstr "無法復原"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
@@ -2667,6 +2691,10 @@ msgstr "背景沒有任何工作。從工具卡片把長命令轉入背景，它
 msgid "Nothing to show yet."
 msgstr "目前還沒有內容"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing to undo"
+msgstr "沒有可復原的內容"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "關閉"
@@ -3173,10 +3201,6 @@ msgstr "重新連線至 {0}"
 msgid "Reconnecting · {0}"
 msgstr "重新連線中 · {0}"
 
-#: src/components/agent-composer.tsx
-msgid "Redo last undone step"
-msgstr "重做最後復原的步驟"
-
 #: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -3363,10 +3387,6 @@ msgstr "檢視目前的變更"
 msgid "Review the failing test and fix it."
 msgstr "看一下失敗的測試，然後修好它"
 
-#: src/components/agent-composer.tsx
-msgid "Review workspace changes"
-msgstr "審查工作區變更"
-
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
 msgstr "正在審查改動並檢查測試…"
@@ -3388,6 +3408,11 @@ msgstr "撤銷中…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "向右鍵"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Roll back to before the last message"
+msgstr "回復到上一則訊息之前"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3690,6 +3715,11 @@ msgstr "在你的電腦上裝一個 Gateway"
 msgid "Settings"
 msgstr "設定"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Share this session's transcript"
+msgstr "分享這個工作階段的記錄"
+
 #: src/components/agent-background-tray.tsx
 msgid "SHELLS"
 msgstr "SHELL"
@@ -3732,10 +3762,6 @@ msgstr "顯示相機詳細資訊"
 #: src/components/session-artifacts.tsx
 msgid "Show code"
 msgstr "顯示程式碼"
-
-#: src/components/agent-composer.tsx
-msgid "Show command help"
-msgstr "顯示指令說明"
 
 #: src/components/session-artifacts.tsx
 msgid "Show documents"
@@ -3929,6 +3955,11 @@ msgstr "以空白脈絡開始新的工作階段"
 msgid "Start a session with a clean context"
 msgstr "新開一個脈絡乾淨的工作階段"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Start a session with a clean context"
+msgstr "新開一個脈絡乾淨的工作階段"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -4019,6 +4050,11 @@ msgid "Submit Response"
 msgstr "提交回覆"
 
 #: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Summarise the history and keep working from the summary"
+msgstr "把歷史整理成摘要，並依摘要繼續工作"
+
+#: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "總結進度"
 
@@ -4034,9 +4070,10 @@ msgstr "左右滑動以切換工作區"
 msgid "Switch & Retry"
 msgstr "切換並重試"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch agent mode"
-msgstr "切換智慧體模式"
+msgstr "切換 Agent 模式"
 
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
@@ -4046,7 +4083,8 @@ msgstr "切換 App"
 msgid "Switch between open files"
 msgstr "切換開啟中的檔案"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "切換語言模型"
 
@@ -4477,6 +4515,10 @@ msgstr "這台伺服器已經不認得這台裝置了。請重新配對以恢復
 msgid "This server refused the request."
 msgstr "這台伺服器拒絕了這個請求"
 
+#: src/components/agent-workbench.tsx
+msgid "This session has no message to roll back to."
+msgstr "這個工作階段還沒有可以回復到的訊息"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "無法繪製這個終端機"
@@ -4595,10 +4637,6 @@ msgstr "在模擬器上輸入"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "復原"
-
-#: src/components/agent-composer.tsx
-msgid "Undo last message or action"
-msgstr "復原上一條訊息或操作"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

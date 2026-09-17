@@ -91,6 +91,11 @@ msgstr "{0} сообщений с момента последнего сжати
 msgid "{0} more lines"
 msgstr "ещё {0} строк"
 
+#. placeholder {0}: inbox.length
+#: src/components/agent-composer.tsx
+msgid "{0} queued"
+msgstr "{0} в очереди"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -348,6 +353,11 @@ msgstr "Все проекты"
 msgid "All Sessions"
 msgstr "Все сессии"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "All sessions on this workspace"
+msgstr "Все сессии этого рабочего пространства"
+
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "Разрешить камеру"
@@ -383,10 +393,6 @@ msgstr "Alt Стрелка вверх"
 #: src/components/agent-permission-card.tsx
 msgid "Always Allow"
 msgstr "Всегда разрешать"
-
-#: src/components/agent-composer.tsx
-msgid "Analyze project and initialize AGENTS.md"
-msgstr "Анализировать проект и инициализировать AGENTS.md"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -676,6 +682,11 @@ msgstr "Нужен доступ к камере"
 msgid "Cancel"
 msgstr "Отмена"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Cancel a staged rollback"
+msgstr "Отменить подготовленный откат"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancel connecting to {0}"
@@ -689,6 +700,10 @@ msgstr "Отменить правку {0}"
 #: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "Отменить сообщение в очереди"
+
+#: src/components/agent-composer.tsx
+msgid "Cancel this queued message"
+msgstr "Отменить это сообщение из очереди"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -796,7 +811,8 @@ msgstr "Очистить кэш"
 msgid "Clear Context"
 msgstr "Очистить контекст"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Clear context and start fresh"
 msgstr "Очистить контекст и начать заново"
 
@@ -969,10 +985,6 @@ msgstr "Компактно"
 #: src/components/agent-context-sheet.tsx
 msgid "Compact Context"
 msgstr "Сжать контекст"
-
-#: src/components/agent-composer.tsx
-msgid "Compact session history to save context"
-msgstr "Сжать историю сессии"
 
 #: src/components/agent-composer.tsx
 msgid "Compacting context automatically…"
@@ -1379,6 +1391,10 @@ msgstr "Не удалось прочитать терминал"
 msgid "Could not read this file."
 msgstr "Не удалось прочитать этот файл"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not redo"
+msgstr "Не удалось повторить"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Не удалось удалить хост"
@@ -1390,6 +1406,10 @@ msgstr "Не удалось ответить"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Не удалось отозвать устройство"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that"
+msgstr "Не удалось выполнить"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1442,6 +1462,10 @@ msgstr "Не удалось остановить"
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
 msgstr "Не удалось остановить этого агента"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not undo"
+msgstr "Не удалось отменить"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
@@ -2667,6 +2691,10 @@ msgstr "В фоне ничего не выполняется. Отсоедини
 msgid "Nothing to show yet."
 msgstr "Пока нечего показать"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing to undo"
+msgstr "Нечего отменять"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Выключено"
@@ -3173,10 +3201,6 @@ msgstr "Переподключиться к {0}"
 msgid "Reconnecting · {0}"
 msgstr "Переподключение · {0}"
 
-#: src/components/agent-composer.tsx
-msgid "Redo last undone step"
-msgstr "Повторить последнее отмененное действие"
-
 #: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -3363,10 +3387,6 @@ msgstr "Проверьте текущие изменения"
 msgid "Review the failing test and fix it."
 msgstr "Посмотрите на падающий тест и почините его"
 
-#: src/components/agent-composer.tsx
-msgid "Review workspace changes"
-msgstr "Просмотреть изменения рабочего пространства"
-
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
 msgstr "Проверяем изменения и тесты…"
@@ -3388,6 +3408,11 @@ msgstr "Отзываем…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "Стрелка вправо"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Roll back to before the last message"
+msgstr "Вернуться к состоянию до последнего сообщения"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3690,6 +3715,11 @@ msgstr "Настройте Gateway на своём компьютере"
 msgid "Settings"
 msgstr "Настройки"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Share this session's transcript"
+msgstr "Поделиться расшифровкой этой сессии"
+
 #: src/components/agent-background-tray.tsx
 msgid "SHELLS"
 msgstr "ОБОЛОЧКИ"
@@ -3732,10 +3762,6 @@ msgstr "Показать сведения о камере"
 #: src/components/session-artifacts.tsx
 msgid "Show code"
 msgstr "Показать код"
-
-#: src/components/agent-composer.tsx
-msgid "Show command help"
-msgstr "Показать справку по командам"
 
 #: src/components/session-artifacts.tsx
 msgid "Show documents"
@@ -3929,6 +3955,11 @@ msgstr "Начать новый сеанс с пустым контекстом"
 msgid "Start a session with a clean context"
 msgstr "Начать сессию с чистым контекстом"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Start a session with a clean context"
+msgstr "Начать сессию с чистым контекстом"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -4019,6 +4050,11 @@ msgid "Submit Response"
 msgstr "Отправить ответ"
 
 #: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Summarise the history and keep working from the summary"
+msgstr "Сжать историю и продолжить работу по сводке"
+
+#: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "Подвести итог"
 
@@ -4034,9 +4070,10 @@ msgstr "Смахните влево или вправо, чтобы сменит
 msgid "Switch & Retry"
 msgstr "Переключить и повторить"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch agent mode"
-msgstr "Переключить режим агента"
+msgstr "Сменить режим агента"
 
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
@@ -4046,9 +4083,10 @@ msgstr "Сменить приложение"
 msgid "Switch between open files"
 msgstr "Переключиться между открытыми файлами"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch language model"
-msgstr "Переключить языковую модель"
+msgstr "Сменить языковую модель"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch machine or session"
@@ -4477,6 +4515,10 @@ msgstr "Этот сервер больше не узнаёт это устрой
 msgid "This server refused the request."
 msgstr "Этот сервер отклонил запрос"
 
+#: src/components/agent-workbench.tsx
+msgid "This session has no message to roll back to."
+msgstr "В этой сессии нет сообщения, к которому можно вернуться"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "Не удалось отрисовать этот терминал"
@@ -4595,10 +4637,6 @@ msgstr "Ввод на симуляторе"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Отменить"
-
-#: src/components/agent-composer.tsx
-msgid "Undo last message or action"
-msgstr "Отменить последнее действие"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

@@ -91,6 +91,11 @@ msgstr "前回の圧縮以降 {0} 件のメッセージ"
 msgid "{0} more lines"
 msgstr "他 {0} 行"
 
+#. placeholder {0}: inbox.length
+#: src/components/agent-composer.tsx
+msgid "{0} queued"
+msgstr "{0} 件が待機中"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -348,6 +353,11 @@ msgstr "すべてのプロジェクト"
 msgid "All Sessions"
 msgstr "すべてのセッション"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "All sessions on this workspace"
+msgstr "このワークスペースのすべてのセッション"
+
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "カメラを許可"
@@ -383,10 +393,6 @@ msgstr "Alt 上矢印"
 #: src/components/agent-permission-card.tsx
 msgid "Always Allow"
 msgstr "常に許可"
-
-#: src/components/agent-composer.tsx
-msgid "Analyze project and initialize AGENTS.md"
-msgstr "プロジェクトを分析してAGENTS.mdを初期化"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -676,6 +682,11 @@ msgstr "カメラへのアクセスが必要です"
 msgid "Cancel"
 msgstr "キャンセル"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Cancel a staged rollback"
+msgstr "予約したロールバックを取り消す"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancel connecting to {0}"
@@ -689,6 +700,10 @@ msgstr "{0} の編集をキャンセル"
 #: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "キュー内のメッセージを取り消す"
+
+#: src/components/agent-composer.tsx
+msgid "Cancel this queued message"
+msgstr "待機中のこのメッセージを取り消す"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -796,9 +811,10 @@ msgstr "キャッシュを削除"
 msgid "Clear Context"
 msgstr "コンテキストをクリア"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Clear context and start fresh"
-msgstr "コンテキストを消去して新しく開始"
+msgstr "コンテキストを消して最初から始める"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -969,10 +985,6 @@ msgstr "コンパクト"
 #: src/components/agent-context-sheet.tsx
 msgid "Compact Context"
 msgstr "コンテキストを要約"
-
-#: src/components/agent-composer.tsx
-msgid "Compact session history to save context"
-msgstr "セッション履歴を圧縮してコンテキストを節約"
 
 #: src/components/agent-composer.tsx
 msgid "Compacting context automatically…"
@@ -1379,6 +1391,10 @@ msgstr "ターミナルを読み取れませんでした"
 msgid "Could not read this file."
 msgstr "このファイルを読み込めませんでした"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not redo"
+msgstr "やり直せませんでした"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ホストを削除できませんでした"
@@ -1390,6 +1406,10 @@ msgstr "返信できませんでした"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "デバイスを取り消せませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that"
+msgstr "実行できませんでした"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1442,6 +1462,10 @@ msgstr "停止できませんでした"
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
 msgstr "このエージェントを停止できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not undo"
+msgstr "元に戻せませんでした"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
@@ -2667,6 +2691,10 @@ msgstr "バックグラウンドでは何も動いていません。長いコマ
 msgid "Nothing to show yet."
 msgstr "まだ表示するものはありません"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing to undo"
+msgstr "元に戻せるものがありません"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "オフ"
@@ -3173,10 +3201,6 @@ msgstr "{0} に再接続"
 msgid "Reconnecting · {0}"
 msgstr "再接続中 · {0}"
 
-#: src/components/agent-composer.tsx
-msgid "Redo last undone step"
-msgstr "元に戻した最後のステップをやり直す"
-
 #: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -3363,10 +3387,6 @@ msgstr "現在の変更をレビューしてください"
 msgid "Review the failing test and fix it."
 msgstr "失敗しているテストを調べて直して"
 
-#: src/components/agent-composer.tsx
-msgid "Review workspace changes"
-msgstr "ワークスペースの変更を確認"
-
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
 msgstr "変更とテストを確認中…"
@@ -3388,6 +3408,11 @@ msgstr "取り消し中…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "右矢印"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Roll back to before the last message"
+msgstr "直前のメッセージより前の状態に戻す"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3690,6 +3715,11 @@ msgstr "自分のパソコンに Gateway を用意する"
 msgid "Settings"
 msgstr "設定"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Share this session's transcript"
+msgstr "このセッションの記録を共有"
+
 #: src/components/agent-background-tray.tsx
 msgid "SHELLS"
 msgstr "シェル"
@@ -3732,10 +3762,6 @@ msgstr "カメラの詳細を表示"
 #: src/components/session-artifacts.tsx
 msgid "Show code"
 msgstr "コードを表示"
-
-#: src/components/agent-composer.tsx
-msgid "Show command help"
-msgstr "コマンドヘルプを表示"
 
 #: src/components/session-artifacts.tsx
 msgid "Show documents"
@@ -3929,6 +3955,11 @@ msgstr "空のコンテキストで新しいセッションを開始します"
 msgid "Start a session with a clean context"
 msgstr "まっさらなコンテキストでセッションを始めます"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Start a session with a clean context"
+msgstr "まっさらなコンテキストでセッションを始めます"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -4019,6 +4050,11 @@ msgid "Submit Response"
 msgstr "回答を送信"
 
 #: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Summarise the history and keep working from the summary"
+msgstr "履歴を要約して、その要約から作業を続ける"
+
+#: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "進捗を要約"
 
@@ -4034,9 +4070,10 @@ msgstr "左右にスワイプしてワークスペースを切り替えます"
 msgid "Switch & Retry"
 msgstr "切り替えて再試行"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch agent mode"
-msgstr "エージェントモードを切り替え"
+msgstr "エージェントモードを切り替える"
 
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
@@ -4046,9 +4083,10 @@ msgstr "アプリを切り替える"
 msgid "Switch between open files"
 msgstr "開いているファイルを切り替え"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch language model"
-msgstr "言語モデルを切り替え"
+msgstr "言語モデルを切り替える"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch machine or session"
@@ -4477,6 +4515,10 @@ msgstr "このサーバーはこのデバイスを認識しなくなりました
 msgid "This server refused the request."
 msgstr "このサーバーはリクエストを拒否しました"
 
+#: src/components/agent-workbench.tsx
+msgid "This session has no message to roll back to."
+msgstr "このセッションには戻れるメッセージがありません"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "このターミナルは描画できませんでした"
@@ -4595,10 +4637,6 @@ msgstr "シミュレータに入力する"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "取り消し"
-
-#: src/components/agent-composer.tsx
-msgid "Undo last message or action"
-msgstr "最後のアクションを元に戻す"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

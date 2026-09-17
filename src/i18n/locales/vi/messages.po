@@ -91,6 +91,11 @@ msgstr "{0} tin nhắn kể từ lần nén gần nhất"
 msgid "{0} more lines"
 msgstr "{0} dòng nữa"
 
+#. placeholder {0}: inbox.length
+#: src/components/agent-composer.tsx
+msgid "{0} queued"
+msgstr "{0} đang chờ"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -348,6 +353,11 @@ msgstr "Tất cả dự án"
 msgid "All Sessions"
 msgstr "Tất cả phiên"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "All sessions on this workspace"
+msgstr "Tất cả phiên trong không gian làm việc này"
+
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "Cho phép camera"
@@ -383,10 +393,6 @@ msgstr "Alt Mũi tên lên"
 #: src/components/agent-permission-card.tsx
 msgid "Always Allow"
 msgstr "Luôn cho phép"
-
-#: src/components/agent-composer.tsx
-msgid "Analyze project and initialize AGENTS.md"
-msgstr "Phân tích dự án và khởi tạo AGENTS.md"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -676,6 +682,11 @@ msgstr "Cần quyền truy cập camera"
 msgid "Cancel"
 msgstr "Hủy"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Cancel a staged rollback"
+msgstr "Huỷ một lần hoàn tác đã chuẩn bị"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancel connecting to {0}"
@@ -689,6 +700,10 @@ msgstr "Hủy chỉnh sửa {0}"
 #: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "Hủy tin nhắn đang chờ"
+
+#: src/components/agent-composer.tsx
+msgid "Cancel this queued message"
+msgstr "Huỷ tin nhắn đang chờ này"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -796,9 +811,10 @@ msgstr "Xóa bộ nhớ đệm"
 msgid "Clear Context"
 msgstr "Xóa ngữ cảnh"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Clear context and start fresh"
-msgstr "Xóa ngữ cảnh và bắt đầu lại"
+msgstr "Xoá ngữ cảnh và bắt đầu lại"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -969,10 +985,6 @@ msgstr "Gọn"
 #: src/components/agent-context-sheet.tsx
 msgid "Compact Context"
 msgstr "Thu gọn ngữ cảnh"
-
-#: src/components/agent-composer.tsx
-msgid "Compact session history to save context"
-msgstr "Nén lịch sử phiên để tiết kiệm ngữ cảnh"
 
 #: src/components/agent-composer.tsx
 msgid "Compacting context automatically…"
@@ -1379,6 +1391,10 @@ msgstr "Không thể đọc terminal"
 msgid "Could not read this file."
 msgstr "Không đọc được tệp này"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not redo"
+msgstr "Không thể làm lại"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Không thể gỡ host"
@@ -1390,6 +1406,10 @@ msgstr "Không thể trả lời"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Không thể thu hồi thiết bị"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that"
+msgstr "Không thể chạy lệnh đó"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1442,6 +1462,10 @@ msgstr "Không thể dừng"
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
 msgstr "Không thể dừng tác tử này"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not undo"
+msgstr "Không thể hoàn tác"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
@@ -2667,6 +2691,10 @@ msgstr "Không có gì đang chạy nền. Tách một lệnh dài khỏi thẻ 
 msgid "Nothing to show yet."
 msgstr "Chưa có gì để hiển thị"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing to undo"
+msgstr "Không có gì để hoàn tác"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Tắt"
@@ -3173,10 +3201,6 @@ msgstr "Kết nối lại đến {0}"
 msgid "Reconnecting · {0}"
 msgstr "Đang kết nối lại · {0}"
 
-#: src/components/agent-composer.tsx
-msgid "Redo last undone step"
-msgstr "Làm lại bước vừa hoàn tác"
-
 #: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -3363,10 +3387,6 @@ msgstr "Xem xét các thay đổi hiện tại"
 msgid "Review the failing test and fix it."
 msgstr "Xem bài kiểm thử đang lỗi và sửa nó"
 
-#: src/components/agent-composer.tsx
-msgid "Review workspace changes"
-msgstr "Xem lại thay đổi trong không gian làm việc"
-
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
 msgstr "Đang rà soát thay đổi và kiểm tra kiểm thử…"
@@ -3388,6 +3408,11 @@ msgstr "Đang thu hồi…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "Mũi tên phải"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Roll back to before the last message"
+msgstr "Quay lại trạng thái trước tin nhắn gần nhất"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3690,6 +3715,11 @@ msgstr "Cài Gateway trên máy tính của bạn"
 msgid "Settings"
 msgstr "Cài đặt"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Share this session's transcript"
+msgstr "Chia sẻ bản ghi của phiên này"
+
 #: src/components/agent-background-tray.tsx
 msgid "SHELLS"
 msgstr "SHELL"
@@ -3732,10 +3762,6 @@ msgstr "Hiện chi tiết camera"
 #: src/components/session-artifacts.tsx
 msgid "Show code"
 msgstr "Hiện mã"
-
-#: src/components/agent-composer.tsx
-msgid "Show command help"
-msgstr "Hiển thị trợ giúp lệnh"
 
 #: src/components/session-artifacts.tsx
 msgid "Show documents"
@@ -3929,6 +3955,11 @@ msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
 msgid "Start a session with a clean context"
 msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Start a session with a clean context"
+msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -4019,6 +4050,11 @@ msgid "Submit Response"
 msgstr "Gửi phản hồi"
 
 #: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Summarise the history and keep working from the summary"
+msgstr "Tóm tắt lịch sử và làm việc tiếp từ bản tóm tắt"
+
+#: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "Tóm tắt tiến độ"
 
@@ -4034,9 +4070,10 @@ msgstr "Vuốt trái hoặc phải để chuyển không gian làm việc"
 msgid "Switch & Retry"
 msgstr "Chuyển đổi & thử lại"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch agent mode"
-msgstr "Chuyển chế độ agent"
+msgstr "Đổi chế độ tác nhân"
 
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
@@ -4046,9 +4083,10 @@ msgstr "Chuyển ứng dụng"
 msgid "Switch between open files"
 msgstr "Chuyển giữa các tệp đang mở"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch language model"
-msgstr "Chuyển mô hình ngôn ngữ"
+msgstr "Đổi mô hình ngôn ngữ"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch machine or session"
@@ -4477,6 +4515,10 @@ msgstr "Máy chủ này không còn nhận ra thiết bị này. Hãy ghép nố
 msgid "This server refused the request."
 msgstr "Máy chủ này đã từ chối yêu cầu"
 
+#: src/components/agent-workbench.tsx
+msgid "This session has no message to roll back to."
+msgstr "Phiên này không có tin nhắn nào để quay lại"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "Không thể vẽ terminal này"
@@ -4595,10 +4637,6 @@ msgstr "Gõ trên trình giả lập"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Hoàn tác"
-
-#: src/components/agent-composer.tsx
-msgid "Undo last message or action"
-msgstr "Hoàn tác hành động cuối"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

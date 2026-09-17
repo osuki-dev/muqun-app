@@ -91,6 +91,11 @@ msgstr "{0} ข้อความนับจากการบีบอัด�
 msgid "{0} more lines"
 msgstr "อีก {0} บรรทัด"
 
+#. placeholder {0}: inbox.length
+#: src/components/agent-composer.tsx
+msgid "{0} queued"
+msgstr "{0} รายการในคิว"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -348,6 +353,11 @@ msgstr "โปรเจกต์ทั้งหมด"
 msgid "All Sessions"
 msgstr "เซสชันทั้งหมด"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "All sessions on this workspace"
+msgstr "เซสชันทั้งหมดในเวิร์กสเปซนี้"
+
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "อนุญาตกล้อง"
@@ -383,10 +393,6 @@ msgstr "Alt ลูกศรขึ้น"
 #: src/components/agent-permission-card.tsx
 msgid "Always Allow"
 msgstr "อนุญาตเสมอ"
-
-#: src/components/agent-composer.tsx
-msgid "Analyze project and initialize AGENTS.md"
-msgstr "วิเคราะห์โปรเจกต์และเริ่มต้น AGENTS.md"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -676,6 +682,11 @@ msgstr "ต้องเข้าถึงกล้อง"
 msgid "Cancel"
 msgstr "ยกเลิก"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Cancel a staged rollback"
+msgstr "ยกเลิกการย้อนกลับที่เตรียมไว้"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancel connecting to {0}"
@@ -689,6 +700,10 @@ msgstr "ยกเลิกการแก้ไข {0}"
 #: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "ยกเลิกข้อความในคิว"
+
+#: src/components/agent-composer.tsx
+msgid "Cancel this queued message"
+msgstr "ยกเลิกข้อความที่อยู่ในคิวนี้"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
@@ -796,9 +811,10 @@ msgstr "ล้างแคช"
 msgid "Clear Context"
 msgstr "ล้างบริบท"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Clear context and start fresh"
-msgstr "ล้างบริบทและเริ่มต้นใหม่"
+msgstr "ล้างบริบทแล้วเริ่มใหม่"
 
 #: src/i18n/labels.ts
 msgid "Clear line"
@@ -969,10 +985,6 @@ msgstr "ย่อบริบท"
 #: src/components/agent-context-sheet.tsx
 msgid "Compact Context"
 msgstr "ย่อขนาดบริบท"
-
-#: src/components/agent-composer.tsx
-msgid "Compact session history to save context"
-msgstr "บีบอัดประวัติเซสชันเพื่อประหยัดบริบท"
 
 #: src/components/agent-composer.tsx
 msgid "Compacting context automatically…"
@@ -1379,6 +1391,10 @@ msgstr "อ่านเทอร์มินัลไม่ได้"
 msgid "Could not read this file."
 msgstr "อ่านไฟล์นี้ไม่ได้"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not redo"
+msgstr "ทำซ้ำไม่ได้"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ลบโฮสต์ไม่ได้"
@@ -1390,6 +1406,10 @@ msgstr "ไม่สามารถตอบกลับได้"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "เพิกถอนอุปกรณ์ไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that"
+msgstr "เรียกใช้ไม่ได้"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1442,6 +1462,10 @@ msgstr "หยุดไม่สำเร็จ"
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
 msgstr "หยุดเอเจนต์นี้ไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not undo"
+msgstr "ย้อนกลับไม่ได้"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
@@ -2667,6 +2691,10 @@ msgstr "ยังไม่มีอะไรทำงานเบื้องห
 msgid "Nothing to show yet."
 msgstr "ยังไม่มีอะไรให้แสดง"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing to undo"
+msgstr "ไม่มีอะไรให้ย้อนกลับ"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "ปิด"
@@ -3173,10 +3201,6 @@ msgstr "เชื่อมต่อกับ {0} ใหม่"
 msgid "Reconnecting · {0}"
 msgstr "กำลังเชื่อมต่อใหม่ · {0}"
 
-#: src/components/agent-composer.tsx
-msgid "Redo last undone step"
-msgstr "ทำซ้ำขั้นตอนที่ยกเลิก"
-
 #: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
@@ -3363,10 +3387,6 @@ msgstr "ตรวจทานการเปลี่ยนแปลงปัจ
 msgid "Review the failing test and fix it."
 msgstr "ตรวจสอบการทดสอบที่ล้มเหลวและแก้ไข"
 
-#: src/components/agent-composer.tsx
-msgid "Review workspace changes"
-msgstr "ตรวจสอบการเปลี่ยนแปลงพื้นที่ทำงาน"
-
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
 msgstr "กำลังตรวจทานการเปลี่ยนแปลงและตรวจสอบการทดสอบ…"
@@ -3388,6 +3408,11 @@ msgstr "กำลังเพิกถอน…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "ลูกศรขวา"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Roll back to before the last message"
+msgstr "ย้อนกลับไปก่อนข้อความล่าสุด"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3690,6 +3715,11 @@ msgstr "ตั้งค่า Gateway บนคอมพิวเตอร์ข
 msgid "Settings"
 msgstr "การตั้งค่า"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Share this session's transcript"
+msgstr "แชร์บันทึกของเซสชันนี้"
+
 #: src/components/agent-background-tray.tsx
 msgid "SHELLS"
 msgstr "เชลล์"
@@ -3732,10 +3762,6 @@ msgstr "แสดงรายละเอียดกล้อง"
 #: src/components/session-artifacts.tsx
 msgid "Show code"
 msgstr "แสดงโค้ด"
-
-#: src/components/agent-composer.tsx
-msgid "Show command help"
-msgstr "แสดงความช่วยเหลือคำสั่ง"
 
 #: src/components/session-artifacts.tsx
 msgid "Show documents"
@@ -3929,6 +3955,11 @@ msgstr "เริ่มเซสชันใหม่ด้วยบริบท
 msgid "Start a session with a clean context"
 msgstr "เริ่มเซสชันใหม่ด้วยบริบทที่ว่างเปล่า"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Start a session with a clean context"
+msgstr "เริ่มเซสชันใหม่ด้วยบริบทที่ว่างเปล่า"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -4019,6 +4050,11 @@ msgid "Submit Response"
 msgstr "ส่งคำตอบ"
 
 #: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Summarise the history and keep working from the summary"
+msgstr "สรุปประวัติแล้วทำงานต่อจากบทสรุป"
+
+#: src/i18n/labels.ts
 msgid "Summarize progress"
 msgstr "สรุปความคืบหน้า"
 
@@ -4034,7 +4070,8 @@ msgstr "ปัดซ้ายหรือขวาเพื่อสลับพ
 msgid "Switch & Retry"
 msgstr "เปลี่ยนและลองใหม่"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch agent mode"
 msgstr "สลับโหมดเอเจนต์"
 
@@ -4046,7 +4083,8 @@ msgstr "สลับแอป"
 msgid "Switch between open files"
 msgstr "สลับระหว่างไฟล์ที่เปิดอยู่"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "สลับโมเดลภาษา"
 
@@ -4477,6 +4515,10 @@ msgstr "เซิร์ฟเวอร์นี้ไม่รู้จักอ
 msgid "This server refused the request."
 msgstr "เซิร์ฟเวอร์นี้ปฏิเสธคำขอ"
 
+#: src/components/agent-workbench.tsx
+msgid "This session has no message to roll back to."
+msgstr "เซสชันนี้ไม่มีข้อความให้ย้อนกลับไป"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "แสดงเทอร์มินัลนี้ไม่ได้"
@@ -4595,10 +4637,6 @@ msgstr "พิมพ์บนเครื่องจำลอง"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "เลิกทำ"
-
-#: src/components/agent-composer.tsx
-msgid "Undo last message or action"
-msgstr "เลิกทำการกระทำล่าสุด"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   ArrowLeft,
@@ -66,14 +67,23 @@ import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
 import {
+  AGENT_CLIENT_COMMANDS,
+  readSlashCommand,
+  type AgentClientCommandId,
+} from '@/lib/agent-commands';
+import { agentClientCommandDescription } from '@/i18n/labels';
+import {
   contextFillRatio,
   contextTokenTotal,
   formatModelName,
   hasRealSessionTitle,
   isBusyStatus,
   listAgentFiles,
+  inboxItemText,
   type AgentContextUsage,
   type AgentInfo,
+  type CommandInfo,
+  type InboxItem,
   type AgentProject,
   type AgentSessionInfo,
   type CompactionReason,
@@ -235,6 +245,15 @@ export interface AgentComposerProps {
   /** How many detached tools and shells are still running. */
   backgroundCount?: number;
   onOpenBackgroundTray?: () => void;
+  /** The host's own slash commands, from `GET /api/agent-catalog`. */
+  commands?: readonly CommandInfo[];
+  /** A command from that catalog: `POST …/command`, never a typed prompt. */
+  onRunCommand?: (name: string, args: string) => void;
+  /** One of the app's own commands, dispatched by the screen that owns them. */
+  onClientCommand?: (name: AgentClientCommandId) => void;
+  /** What is waiting behind the current turn. */
+  inbox?: readonly InboxItem[];
+  onCancelInboxItem?: (inboxId: string) => void;
   onPressTokens?: () => void;
   onRefresh?: () => void;
   injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
@@ -274,11 +293,17 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenTasksSheet,
   backgroundCount = 0,
   onOpenBackgroundTray,
+  commands = EMPTY_COMMANDS,
+  onRunCommand,
+  onClientCommand,
+  inbox = EMPTY_INBOX,
+  onCancelInboxItem,
   onPressTokens,
   onRefresh,
   injectDraftRef,
 }: AgentComposerProps) {
   const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const { showToast } = useToast();
   const surfaceBackground = useSurfaceBackground();
@@ -287,6 +312,7 @@ export const AgentComposer = memo(function AgentComposer({
   const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
 
   /**
    * How full the model's context is, and how much the session has cost.
@@ -322,45 +348,35 @@ export const AgentComposer = memo(function AgentComposer({
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record);
 
-  // Slash commands and skills catalog
+  /**
+   * The app's own commands, and the host's.
+   *
+   * Every entry used to be a literal that was typed into the prompt and sent to
+   * the model as text -- `/init`, `/review`, `/mode`, `/model`, `/help` -- and
+   * the model read them as prose. Half of them are the app's own navigation and
+   * belong to the screen; the rest are the host's, listed by
+   * `GET /api/agent-catalog` and run by `POST …/command`. Neither is a prompt.
+   */
   const builtinCommands: PaneSlashCommand[] = useMemo(
-    () => [
-      {
-        name: '/init',
-        description: t`Analyze project and initialize AGENTS.md`,
+    () =>
+      AGENT_CLIENT_COMMANDS.map((command) => ({
+        name: command.name,
+        description: _(agentClientCommandDescription[command.id]),
         argsHint: '',
-        source: 'builtin',
-      },
-      {
-        name: '/compact',
-        description: t`Compact session history to save context`,
-        argsHint: '',
-        source: 'builtin',
-      },
-      {
-        name: '/clear',
-        description: t`Clear context and start fresh`,
-        argsHint: '',
-        source: 'builtin',
-      },
-      {
-        name: '/undo',
-        description: t`Undo last message or action`,
-        argsHint: '',
-        source: 'builtin',
-      },
-      { name: '/redo', description: t`Redo last undone step`, argsHint: '', source: 'builtin' },
-      {
-        name: '/review',
-        description: t`Review workspace changes`,
-        argsHint: '',
-        source: 'builtin',
-      },
-      { name: '/mode', description: t`Switch agent mode`, argsHint: '', source: 'builtin' },
-      { name: '/model', description: t`Switch language model`, argsHint: '', source: 'builtin' },
-      { name: '/help', description: t`Show command help`, argsHint: '', source: 'builtin' },
-    ],
-    [t]
+        source: 'builtin' as const,
+      })),
+    [_]
+  );
+
+  const serverCommands: PaneSlashCommand[] = useMemo(
+    () =>
+      commands.map((command) => ({
+        name: command.name.startsWith('/') ? command.name : `/${command.name}`,
+        description: command.description ?? command.agent ?? '',
+        argsHint: command.template ? '…' : '',
+        source: 'workspace' as const,
+      })),
+    [commands]
   );
 
   const skillCommands: PaneSlashCommand[] = useMemo(
@@ -375,8 +391,8 @@ export const AgentComposer = memo(function AgentComposer({
   );
 
   const slashCatalog = useMemo(
-    () => [...builtinCommands, ...skillCommands],
-    [builtinCommands, skillCommands]
+    () => [...builtinCommands, ...serverCommands, ...skillCommands],
+    [builtinCommands, serverCommands, skillCommands]
   );
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
 
@@ -465,6 +481,22 @@ export const AgentComposer = memo(function AgentComposer({
     const hasAttachments = attachmentUploads.attachments.length > 0;
     if ((!trimmed && !hasAttachments) || sending) return;
 
+    // A slash command is a command. It used to be sent as the literal text it
+    // was typed as, and whatever the model made of it was the result.
+    if (!hasAttachments) {
+      const parsed = readSlashCommand(trimmed, commands);
+      if (parsed?.kind === 'server' && onRunCommand) {
+        onRunCommand(parsed.name, parsed.args);
+        setText('');
+        return;
+      }
+      if (parsed?.kind === 'client' && onClientCommand) {
+        onClientCommand(parsed.name);
+        setText('');
+        return;
+      }
+    }
+
     setSending(true);
     try {
       let uploadedFilePaths: string[] = [];
@@ -490,7 +522,19 @@ export const AgentComposer = memo(function AgentComposer({
     } finally {
       setSending(false);
     }
-  }, [text, attachmentUploads, sending, onSend, showToast, t, running, deliveryMode]);
+  }, [
+    text,
+    attachmentUploads,
+    sending,
+    onSend,
+    showToast,
+    t,
+    running,
+    deliveryMode,
+    commands,
+    onRunCommand,
+    onClientCommand,
+  ]);
 
   // Resolve available agents (workspace agents + defaults)
   const availableAgents =
@@ -527,12 +571,13 @@ export const AgentComposer = memo(function AgentComposer({
       <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
 
       {/* Dismiss backdrop for popups */}
-      {attachmentMenuOpen || modeMenuOpen ? (
+      {attachmentMenuOpen || modeMenuOpen || inboxOpen ? (
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={() => {
             setAttachmentMenuOpen(false);
             setModeMenuOpen(false);
+            setInboxOpen(false);
           }}
         />
       ) : null}
@@ -542,6 +587,42 @@ export const AgentComposer = memo(function AgentComposer({
         <View style={styles.popupWrapper}>
           <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
         </View>
+      ) : null}
+
+      {/* What is queued behind the current turn, and a way to take it back */}
+      {inboxOpen && inbox.length > 0 ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOut('micro')}
+          style={styles.popupWrapper}>
+          <GlassChrome surface="composer" style={styles.inboxCard}>
+            {inbox.map((item) => (
+              <View key={item.id} style={styles.inboxRow}>
+                <Inbox size={13} color={theme.colors.primary} />
+                <Text
+                  variant="caption"
+                  numberOfLines={2}
+                  color={theme.colors.text}
+                  style={styles.inboxText}>
+                  {inboxItemText(item) || item.type}
+                </Text>
+                {onCancelInboxItem ? (
+                  <PressableScale
+                    testID={`agent-composer-inbox-cancel-${item.id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Cancel this queued message`}
+                    hitSlop={8}
+                    onPress={() => onCancelInboxItem(item.id)}
+                    style={styles.inboxCancel}>
+                    <Text variant="caption" weight="bold" color={theme.colors.danger}>
+                      ×
+                    </Text>
+                  </PressableScale>
+                ) : null}
+              </View>
+            ))}
+          </GlassChrome>
+        </Animated.View>
       ) : null}
 
       {/* Agent mode popup */}
@@ -704,6 +785,29 @@ export const AgentComposer = memo(function AgentComposer({
                   {tasks && tasks.length > 0
                     ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
                     : t`Tasks`}
+                </Text>
+              </PressableScale>
+            ) : null}
+
+            {/* The queue, as the gateway last stated it */}
+            {inbox.length > 0 ? (
+              <PressableScale
+                testID="agent-composer-inbox-pill"
+                onPress={() => setInboxOpen((open) => !open)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: inboxOpen }}
+                accessibilityLabel={t`${inbox.length} queued`}
+                style={[
+                  styles.actionBtnWithLabel,
+                  { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
+                ]}>
+                <Inbox size={13} color={theme.colors.primary} />
+                <Text
+                  variant="caption"
+                  weight="bold"
+                  color={theme.colors.primary}
+                  style={styles.actionBtnLabel}>
+                  {inbox.length}
                 </Text>
               </PressableScale>
             ) : null}
@@ -887,6 +991,7 @@ export const AgentComposer = memo(function AgentComposer({
               exiting={fadeOutDown('short')}
               style={styles.stripWrapper}>
               <AttachmentStrip
+                variant="chip"
                 attachments={attachmentUploads.attachments}
                 onRemove={attachmentUploads.removeAttachment}
                 onRetry={attachmentUploads.retryUpload}
@@ -1015,6 +1120,8 @@ const CompactionPill = memo(function CompactionPill({ reason }: { reason: Compac
 });
 
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
+const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
+const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
   dockOuter: {
@@ -1161,6 +1268,30 @@ const styles = StyleSheet.create({
   },
   stopActionBtn: {
     paddingHorizontal: 10,
+  },
+  inboxCard: {
+    borderRadius: appChrome.radius.popover,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    paddingVertical: 4,
+  },
+  inboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  inboxText: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 12,
+  },
+  inboxCancel: {
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   contextTrack: {
     width: 26,

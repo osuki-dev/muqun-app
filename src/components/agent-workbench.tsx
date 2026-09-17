@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -52,9 +53,15 @@ import {
   getAgentContext,
   listAgentSessionChildren,
   listAgentShells,
+  listAgentInbox,
+  cancelAgentInboxItem,
+  clearAgentRevert,
+  exportAgentSession,
+  revertAgentSession,
   sendAgentCommand,
   sortTimeline,
   isBusyStatus,
+  inboxItemText,
   type AgentContextUsage,
   type AgentDomainEvent,
   type AgentRunStatus,
@@ -73,7 +80,8 @@ import {
   type AgentProject,
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
-import { classifyTool } from '@/lib/agent-tool-output';
+import { classifyTool, capText } from '@/lib/agent-tool-output';
+import type { AgentClientCommandId } from '@/lib/agent-commands';
 import {
   buildSessionStrip,
   indexSessions,
@@ -388,6 +396,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setShells(await listAgentShells(activeDirectory));
   }, [activeDirectory]);
 
+  const refreshInbox = useCallback(async () => {
+    if (!activeAsid) {
+      setInbox([]);
+      return;
+    }
+    setInbox(await listAgentInbox(activeAsid));
+  }, [activeAsid]);
+
   /**
    * What the model can still see, read from the engine rather than guessed.
    *
@@ -446,6 +462,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // What the model can still see, which the snapshot does not carry.
       void refreshContext();
       void refreshShells();
+      void refreshInbox();
 
       // Check diffs
       try {
@@ -477,6 +494,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     handleAutoPermission,
     refreshContext,
     refreshShells,
+    refreshInbox,
   ]);
 
   useEffect(() => {
@@ -717,6 +735,47 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * session -- unless the host's own command catalog carries a `clear`, in
    * which case that is what the reader asked for and it goes to the engine.
    */
+  /**
+   * A command from the host's own catalog.
+   *
+   * `POST …/command {name, arguments}` -- not the literal text typed into the
+   * prompt, which is what this used to be and what the model then answered as
+   * prose.
+   */
+  const handleRunCommand = useCallback(
+    (name: string, args: string) => {
+      if (!activeAsid) return;
+      sendAgentCommand(activeAsid, {
+        name,
+        ...(args ? { arguments: args } : {}),
+        ...(isBusyStatus(sessionInfo?.status) ? { delivery: 'steer' as const } : {}),
+      }).catch((err) => {
+        console.warn('Failed to run command:', err);
+        showToast({
+          variant: 'danger',
+          title: t`Could not run that`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+      });
+    },
+    [activeAsid, sessionInfo?.status, showToast, t]
+  );
+
+  const handleCancelInboxItem = useCallback(
+    (inboxId: string) => {
+      if (!activeAsid) return;
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Optimistic, then confirmed: `agent.inbox.changed` carries the whole
+      // queue and will correct this if the engine had already delivered it.
+      setInbox((prev) => prev.filter((item) => item.id !== inboxId));
+      cancelAgentInboxItem(activeAsid, inboxId).catch((err) => {
+        console.warn('Failed to cancel queued item:', err);
+        void refreshInbox();
+      });
+    },
+    [activeAsid, refreshInbox]
+  );
+
   const handleClearContext = useCallback(() => {
     const serverCommand = commands.find((command) => command.name.replace(/^\//, '') === 'clear');
     if (activeAsid && serverCommand) {
@@ -735,6 +794,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * rendering is a ref React may throw away under Strict Mode.
    */
   const handleCreateNewSessionRef = useRef<(() => Promise<void>) | null>(null);
+  /**
+   * The three sheet openers, reachable from the command dispatcher above them.
+   *
+   * Assigned in an effect rather than during render, for the reason
+   * `react/refs` gives everywhere else in this file.
+   */
+  const openSessionsSheetRef = useRef<(() => void) | null>(null);
+  const openModelSheetRef = useRef<(() => void) | null>(null);
+  const openModeSheetRef = useRef<(() => void) | null>(null);
 
   // Held in a ref so the sheet actions that use it stay stable and do not
   // re-publish the action object on every render.
@@ -1004,6 +1072,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     router.push({ pathname: '/agent-workspace', params: { sessionId } });
   }, [router, sessionId]);
 
+  useEffect(() => {
+    openSessionsSheetRef.current = openSessionsSheet;
+    openModelSheetRef.current = openModelSheet;
+    openModeSheetRef.current = openModeSheet;
+  }, [openSessionsSheet, openModelSheet, openModeSheet]);
+
   const openContextSheet = useCallback(() => {
     router.push('/agent-context');
   }, [router]);
@@ -1028,16 +1102,113 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setShowReasoning((prev) => !prev);
   }, []);
 
+  /**
+   * The app's own commands, dispatched where the routes and the session live.
+   *
+   * `/undo` is `POST …/revert` to the last thing the reader said, and `/redo`
+   * clears the staged rollback -- which is what redo *is* in v2. Neither was
+   * reachable before: the client functions existed with no caller.
+   */
+  const handleClientCommand = useCallback(
+    (name: AgentClientCommandId) => {
+      switch (name) {
+        case 'new':
+          void handleCreateNewSessionRef.current?.();
+          return;
+        case 'sessions':
+          openSessionsSheetRef.current?.();
+          return;
+        case 'models':
+          openModelSheetRef.current?.();
+          return;
+        case 'agents':
+          openModeSheetRef.current?.();
+          return;
+        case 'compact':
+          handleCompactContext();
+          return;
+        case 'clear':
+          handleClearContext();
+          return;
+        case 'undo': {
+          if (!activeAsid) return;
+          const lastUser = [...timeline].reverse().find((item) => item.role === 'user');
+          if (!lastUser) {
+            showToast({
+              variant: 'info',
+              title: t`Nothing to undo`,
+              message: t`This session has no message to roll back to.`,
+            });
+            return;
+          }
+          revertAgentSession(sessionId, activeAsid, lastUser.message_id).catch((err) => {
+            console.warn('Failed to revert:', err);
+            showToast({
+              variant: 'danger',
+              title: t`Could not undo`,
+              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+            });
+          });
+          return;
+        }
+        case 'redo': {
+          if (!activeAsid) return;
+          clearAgentRevert(activeAsid).catch((err) => {
+            console.warn('Failed to clear revert:', err);
+            showToast({
+              variant: 'danger',
+              title: t`Could not redo`,
+              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+            });
+          });
+          return;
+        }
+        case 'export': {
+          if (!activeAsid) return;
+          void exportAgentSession(activeAsid)
+            .then((transcript) => {
+              if (!transcript) return;
+              // Capped: a long session's transcript is megabytes, and a share
+              // sheet is not a file transfer.
+              const text = capText(JSON.stringify(transcript, null, 2)).text;
+              return Share.share({ message: text });
+            })
+            .catch((err) => {
+              console.warn('Failed to export session:', err);
+            });
+          return;
+        }
+      }
+    },
+    [activeAsid, sessionId, timeline, handleCompactContext, handleClearContext, showToast, t]
+  );
+
   const handleEditQueuedItem = useCallback((itemId: string, text: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     injectDraftRef.current?.(text);
     setTimeline((prev) => prev.filter((it) => it.id !== itemId));
   }, []);
 
-  const handleCancelQueuedItem = useCallback((itemId: string) => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setTimeline((prev) => prev.filter((it) => it.id !== itemId));
-  }, []);
+  /**
+   * Cancelling a queued message cancels it on the engine too.
+   *
+   * It used to drop the local row and nothing else: the prompt stayed in the
+   * engine's inbox and ran a minute later, having been told it was cancelled.
+   * The optimistic row carries no inbox id, so the item is matched on the text
+   * it is carrying -- and the row goes either way, because a cancel that
+   * leaves the message on screen has not cancelled anything the reader can see.
+   */
+  const handleCancelQueuedItem = useCallback(
+    (itemId: string) => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const row = timeline.find((it) => it.id === itemId);
+      const text = row?.part.type === 'text' ? row.part.text.trim() : '';
+      const queued = text ? inbox.find((item) => inboxItemText(item).trim() === text) : undefined;
+      if (queued) handleCancelInboxItem(queued.id);
+      setTimeline((prev) => prev.filter((it) => it.id !== itemId));
+    },
+    [timeline, inbox, handleCancelInboxItem]
+  );
 
   /**
    * Detach the foreground tools blocking the loop -- the TUI's `ctrl+b`.
@@ -1834,6 +2005,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
         backgroundCount={backgroundCount}
         onOpenBackgroundTray={openBackgroundTray}
+        commands={commands}
+        onRunCommand={handleRunCommand}
+        onClientCommand={handleClientCommand}
+        inbox={inbox}
+        onCancelInboxItem={handleCancelInboxItem}
         onPressTokens={openContextSheet}
         onRefresh={loadSnapshot}
         injectDraftRef={injectDraftRef}
