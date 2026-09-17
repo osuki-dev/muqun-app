@@ -6,12 +6,18 @@ import { StyleSheet } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { OpenCodeIcon } from '@/components/opencode-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 
-export function NewTaskAction({ label }: { serverId: string; label: string }) {
+export function NewTaskAction({ serverId, label }: { serverId: string; label: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
+  const capabilities = useServerCapabilities((s) => s.byServer[serverId]);
+
+  if (!capabilities?.includes('agent_sessions')) {
+    return null;
+  }
 
   return (
     <PressableScale

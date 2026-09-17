@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ChevronDown, Cpu, FolderGit2, Plus } from 'lucide-react-native';
+import { ChevronDown, FolderGit2, Plus } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -17,7 +17,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import type { AgentProject, ModelRef } from '@/lib/agent-session';
+import type { AgentProject } from '@/lib/agent-session';
 
 /**
  * The header's height above the content, with generous clearance so the glass pill
@@ -25,43 +25,12 @@ import type { AgentProject, ModelRef } from '@/lib/agent-session';
  */
 const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
 
-function formatModelName(model?: ModelRef): string {
-  if (!model?.model_id) return 'Model';
-  const modelId = model.model_id;
-  const known: Record<string, string> = {
-    'gemini-3.8-flash': 'Gemini 3.8 Flash',
-    'deepseek-v4.1-flash': 'DeepSeek V4.1 Flash',
-    'deepseek-v4-flash-free': 'DeepSeek V4 Flash',
-    'gpt-5.6-sol': 'GPT-5.6 Sol',
-    'gpt-5.6-luna': 'GPT-5.6 Luna',
-    'gpt-6-astra': 'GPT-6 Astra',
-    'gpt-6-astra-fast': 'GPT-6 Astra Fast',
-    'muse-spark-1.3-contributor-free': 'Muse Spark 1.3',
-    'ling-3.0-flash-fin-free': 'Ling 3.0 Flash',
-  };
-  const baseName =
-    known[modelId] ||
-    modelId
-      .split(/[-_]/)
-      .map((w) => (w.length <= 3 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
-      .join(' ');
-
-  if (model.variant) {
-    const varLabel =
-      model.variant === 'xhigh'
-        ? 'Max'
-        : model.variant.charAt(0).toUpperCase() + model.variant.slice(1);
-    return `${baseName} • ${varLabel}`;
-  }
-  return baseName;
-}
-
 /**
  * Dedicated OpenCode Agent Screen.
  *
  * The top bar features:
  * 1. The interactive project / workspace pill in the center (touch to switch workspaces)
- * 2. Dedicated '+' New Session button and Model picker on the right.
+ * 2. Dedicated '+' New Session button on the right.
  */
 export default function AgentScreen() {
   const { t } = useLingui();
@@ -72,11 +41,9 @@ export default function AgentScreen() {
   const params = useLocalSearchParams<{ sessionId?: string; asid?: string }>();
 
   const sessionId = params.sessionId || 'herdr';
-  const [activeModel, setActiveModel] = useState<ModelRef | undefined>(undefined);
   const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
   const [activeProject, setActiveProject] = useState<AgentProject | undefined>(undefined);
 
-  const openModelSheetRef = useRef<(() => void) | null>(null);
   const openWorkspaceSheetRef = useRef<(() => void) | null>(null);
   const createNewSessionRef = useRef<(() => void) | null>(null);
 
@@ -88,7 +55,6 @@ export default function AgentScreen() {
     []
   );
 
-  const modelDisplayName = formatModelName(activeModel);
   const displayWorkspaceName =
     activeProject?.name ||
     (activeDirectory ? activeDirectory.split('/').filter(Boolean).pop() : undefined) ||
@@ -105,8 +71,6 @@ export default function AgentScreen() {
         initialAsid={params.asid}
         topInset={insets.top + HEADER_INSET}
         bottomInset={insets.bottom}
-        onModelChange={setActiveModel}
-        openModelSheetRef={openModelSheetRef}
         onWorkspaceChange={handleWorkspaceChange}
         openWorkspaceSheetRef={openWorkspaceSheetRef}
         createNewSessionRef={createNewSessionRef}
@@ -151,38 +115,16 @@ export default function AgentScreen() {
             </GlassChrome>
           }
           rightPill={
-            <View style={styles.headerRightActions}>
-              <GlassChrome surface="navigation" style={styles.newSessionCircle}>
-                <PressableScale
-                  testID="agent-header-new-session"
-                  accessibilityRole="button"
-                  accessibilityLabel={t`New session`}
-                  onPress={() => createNewSessionRef.current?.()}
-                  style={styles.newSessionCircleInner}>
-                  <Plus size={18} color={theme.colors.text} strokeWidth={2.2} />
-                </PressableScale>
-              </GlassChrome>
-
-              <GlassChrome surface="navigation" style={styles.modelHeaderPill}>
-                <PressableScale
-                  testID="agent-header-model-pill"
-                  onPress={() => openModelSheetRef.current?.()}
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Select model`}
-                  style={styles.modelHeaderPillInner}>
-                  <Cpu size={14} color={theme.colors.primary} />
-                  <Text
-                    variant="caption"
-                    weight="semibold"
-                    numberOfLines={1}
-                    color={theme.colors.text}
-                    style={styles.modelPillText}>
-                    {modelDisplayName}
-                  </Text>
-                  <ChevronDown size={12} color={theme.colors.textMuted} />
-                </PressableScale>
-              </GlassChrome>
-            </View>
+            <GlassChrome surface="navigation" style={styles.newSessionCircle}>
+              <PressableScale
+                testID="agent-header-new-session"
+                accessibilityRole="button"
+                accessibilityLabel={t`New session`}
+                onPress={() => createNewSessionRef.current?.()}
+                style={styles.newSessionCircleInner}>
+                <Plus size={18} color={theme.colors.text} strokeWidth={2.2} />
+              </PressableScale>
+            </GlassChrome>
           }
         />
       </View>
@@ -226,11 +168,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     includeFontPadding: false,
   },
-  headerRightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   newSessionCircle: {
     width: NAV_HEADER_CONTROL_SIZE,
     height: NAV_HEADER_CONTROL_SIZE,
@@ -245,24 +182,5 @@ const styles = StyleSheet.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  modelHeaderPill: {
-    height: NAV_HEADER_CONTROL_SIZE,
-    borderRadius: appChrome.radius.navigationPill,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    justifyContent: 'center',
-  },
-  modelHeaderPillInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    height: NAV_HEADER_CONTROL_SIZE,
-    gap: 5,
-    maxWidth: 135,
-  },
-  modelPillText: {
-    flexShrink: 1,
-    fontSize: 12,
   },
 });

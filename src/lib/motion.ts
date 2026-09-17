@@ -104,11 +104,12 @@ export const STAGGER = {
   row: 18,
 } as const;
 
-/** Muqun navigation: stable text, a brief reveal, and a small title arrival. */
+/** Muqun navigation: fluid transitions, depth reveals, and responsive header arrival. */
 export const NAVIGATION_MOTION = {
-  pageMs: 180,
-  headerMs: 160,
-  headerDistance: 4,
+  pageMs: 280,
+  headerMs: 200,
+  headerDistance: 6,
+  modalMs: 320,
 } as const;
 
 /**
@@ -337,3 +338,33 @@ export const listLayout = (duration: DurationToken | PresetToken | number = 'sho
   LinearTransition.duration(resolveDuration(duration))
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System);
+
+/**
+ * Route scene entrance layout animation for pushed pages.
+ * Soft vertical float from 6px and smooth opacity fade with the design system ease-out.
+ */
+export const routeSceneEnter = (delay = 0) =>
+  FadeInDown.duration(NAVIGATION_MOTION.pageMs)
+    .delay(delay)
+    .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System)
+    .withInitialValues({
+      opacity: 0.35,
+      transform: [{ translateY: 6 }],
+    });
+
+/**
+ * Modal scene entrance layout animation for fullScreenModal tools.
+ * Elegant upward slide from 24px with the design system ease-out.
+ */
+export const modalSceneEnter = (delay = 0) =>
+  FadeInDown.duration(NAVIGATION_MOTION.modalMs)
+    .delay(delay)
+    .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System)
+    .withInitialValues({
+      opacity: 0.2,
+      transform: [{ translateY: 24 }],
+    });
+
+

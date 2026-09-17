@@ -248,7 +248,9 @@ function RootContent() {
               options.presentation === 'formSheet' ? (
                 <>{children}</>
               ) : (
-                <RouteScene modal={options.presentation === 'fullScreenModal'}>
+                <RouteScene
+                  modal={options.presentation === 'fullScreenModal'}
+                  animated={route.name !== 'index'}>
                   {sheetRoutePresentations[route.name] === 'fullscreen' ? (
                     <FullscreenSheetFrame
                       tint={route.name === 'commands' ? 'background' : 'surface'}>
@@ -262,7 +264,7 @@ function RootContent() {
             }
             screenOptions={{
               headerShown: false,
-              animation: 'fade',
+              animation: 'slide_from_right',
               animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               contentStyle: { backgroundColor: screenBackground },
               // A screen nobody is looking at should not be rendering. Home
@@ -273,9 +275,28 @@ function RootContent() {
               // in a screen, so nothing here depends on rendering while hidden.
               freezeOnBlur: true,
             }}>
-            <Stack.Screen name="(drawer)" />
+            <Stack.Screen
+              name="index"
+              options={{
+                animation: 'fade',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+              }}
+            />
             {/* Pages share a depth reveal; native sheets retain their layout contract. */}
-            <Stack.Screen name="settings" options={{ animation: 'fade' }} />
+            <Stack.Screen
+              name="agent"
+              options={{
+                animation: 'slide_from_right',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+              }}
+            />
+            <Stack.Screen
+              name="settings"
+              options={{
+                animation: 'slide_from_right',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+              }}
+            />
             {/*
               The terminal lives on the root stack rather than in the drawer:
               drawer screens swap without a transition, and its edge-swipe
@@ -283,12 +304,26 @@ function RootContent() {
             */}
             <Stack.Screen
               name="servers/[serverId]"
-              options={{ gestureEnabled: false, animation: 'fade' }}
+              options={{
+                gestureEnabled: false,
+                animation: 'slide_from_right',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+              }}
             />
-            <Stack.Screen name="ssh" options={{ animation: 'fade' }} />
+            <Stack.Screen
+              name="ssh"
+              options={{
+                animation: 'slide_from_right',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+              }}
+            />
             <Stack.Screen
               name="ssh/[hostId]"
-              options={{ gestureEnabled: false, animation: 'fade' }}
+              options={{
+                gestureEnabled: false,
+                animation: 'slide_from_right',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+              }}
             />
             <Stack.Screen
               name="commands"
@@ -331,7 +366,14 @@ function RootContent() {
               name="settings-theme-browse"
               options={sheetPresentationOptions('fullscreen')}
             />
-            <Stack.Screen name="custom-theme" options={{ presentation: 'fullScreenModal' }} />
+            <Stack.Screen
+              name="custom-theme"
+              options={{
+                presentation: 'fullScreenModal',
+                animation: 'slide_from_bottom',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
+              }}
+            />
             <Stack.Screen
               name="settings-language"
               options={{
@@ -376,7 +418,8 @@ function RootContent() {
               name="simfarm"
               options={{
                 presentation: 'fullScreenModal',
-                animation: 'fade',
+                animation: 'slide_from_bottom',
+                animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
                 gestureEnabled: false,
               }}
             />

@@ -610,6 +610,10 @@ msgstr "背景色だけを変更し、文字・アイコン・画像は変更し
 msgid "Chat"
 msgstr "チャット"
 
+#: src/components/agent-workbench.tsx
+msgid "Check Again"
+msgstr "再確認"
+
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "デバイスの認証設定を確認して、もう一度お試しください"
@@ -1591,6 +1595,14 @@ msgstr "テーマをエクスポート"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
 msgstr "失敗 · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to create agent session"
+msgstr "エージェントセッションの作成に失敗しました"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to switch workspace session"
+msgstr "ワークスペースセッションの切り替えに失敗しました"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2583,6 +2595,18 @@ msgstr "ワークスペース {0} を開く（{1, plural, one {# 実行中} othe
 msgid "OpenCode Agent"
 msgstr "OpenCodeエージェント"
 
+#: src/components/agent-workbench.tsx
+msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
+msgstr "このホストでOpenCodeデーモンが実行されていません。`opencode serve --service`を実行して起動してください。"
+
+#: src/components/agent-composer.tsx
+msgid "OpenCode service offline"
+msgstr "OpenCodeサービスがオフラインです"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode Service Offline"
+msgstr "OpenCodeサービスがオフラインです"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "開いています"
@@ -2736,6 +2760,10 @@ msgstr "計画 (Plan)"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "失敗した添付ファイルを再試行または削除してください"
+
+#: src/components/agent-workbench.tsx
+msgid "Please start OpenCode on the server: opencode serve --service"
+msgstr "サーバーでOpenCodeを起動してください: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -3293,13 +3321,13 @@ msgstr "エージェントモードを選択"
 msgid "Select all"
 msgstr "すべて選択"
 
-#: src/app/agent.tsx
-msgid "Select model"
-msgstr "モデルを選択"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Select Model"
 msgstr "モデルを選択"
+
+#: src/components/agent-composer.tsx
+msgid "Select model: {modelDisplayName}"
+msgstr "モデルを選択: {modelDisplayName}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Select or enter working repository"

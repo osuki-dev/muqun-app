@@ -22,6 +22,7 @@ import {
   FileText,
   FolderGit2,
   PlusCircle,
+  RefreshCw,
   Sparkles,
   Trash2,
   X,
@@ -85,6 +86,23 @@ function isImageAttachment(uri: string): boolean {
   );
 }
 
+function formatAgentErrorMessage(err: unknown, fallback: string): string {
+  if (!err) return fallback;
+  const str = err instanceof Error ? err.message : String(err);
+  if (
+    str.includes('agent_engine_error') ||
+    str.includes('agent_unavailable') ||
+    str.includes('502') ||
+    str.includes('503') ||
+    str.includes('Connection refused') ||
+    str.includes('Network error communicating with agent engine') ||
+    str.includes('error sending request')
+  ) {
+    return 'OpenCode service is offline on the host. Please run "opencode serve --service" to start it.';
+  }
+  return str;
+}
+
 export interface AgentWorkbenchProps {
   sessionId: string;
   initialAsid?: string;
@@ -126,6 +144,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [lastSeq, setLastSeq] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [hasDiffs, setHasDiffs] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [checkingHealth, setCheckingHealth] = useState(false);
 
   // Attachment Image Preview Modal
   const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
@@ -187,6 +207,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const refreshSessions = useCallback(async () => {
     try {
       const list = await listAgentSessions(sessionId);
+      setIsOffline(false);
       if (list) {
         setSessions(list);
         if (list.length > 0 && !activeAsid) {
@@ -201,12 +222,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     } catch (err) {
       console.warn('Failed to list agent sessions:', err);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (
+        errMsg.includes('502') ||
+        errMsg.includes('503') ||
+        errMsg.includes('agent_engine_error') ||
+        errMsg.includes('agent_unavailable') ||
+        errMsg.includes('Network error')
+      ) {
+        setIsOffline(true);
+      }
     }
   }, [sessionId, activeAsid, onModelChange]);
 
   // Initial load
   useEffect(() => {
-    refreshSessions();
+    void refreshSessions().catch(() => {});
   }, [refreshSessions]);
 
   // Load full snapshot when activeAsid changes
@@ -218,9 +249,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setLoading(true);
     try {
       const snap = await getAgentSessionSnapshot(sessionId, activeAsid);
-      setSessionInfo(snap.info);
-      if (snap.info?.directory) {
-        setActiveDirectory(snap.info.directory);
+      if (snap.info) {
+        setSessionInfo(snap.info);
+        if (snap.info.directory) setActiveDirectory(snap.info.directory);
       }
       setTimeline(snap.timeline);
       setPermissions(snap.permissions);
@@ -257,7 +288,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [sessionId, activeAsid, onModelChange]);
 
   useEffect(() => {
-    loadSnapshot();
+    void loadSnapshot().catch(() => {});
   }, [loadSnapshot]);
 
   // Load known projects for workspace switcher
@@ -571,6 +602,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   const handleCreateNewSession = useCallback(async () => {
+    if (isOffline) {
+      showToast({
+        variant: 'danger',
+        title: t`OpenCode Service Offline`,
+        message: t`Please start OpenCode on the server: opencode serve --service`,
+      });
+      return;
+    }
     try {
       const created = await createAgentSession(sessionId, {
         title: t`New Session`,
@@ -593,13 +632,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       });
     } catch (err) {
       console.warn('Failed to create session:', err);
+      setIsOffline(true);
       showToast({
         variant: 'danger',
         title: t`Could not create session`,
-        message: err instanceof Error ? err.message : String(err),
+        message: formatAgentErrorMessage(err, t`Failed to create agent session`),
       });
     }
   }, [
+    isOffline,
     sessionId,
     selectedAgent,
     selectedModel,
@@ -642,9 +683,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         refreshSessions();
       } catch (err) {
         console.warn('Failed to switch workspace session:', err);
+        setIsOffline(true);
+        showToast({
+          variant: 'danger',
+          title: t`Could not create session`,
+          message: formatAgentErrorMessage(err, t`Failed to switch workspace session`),
+        });
       }
     },
-    [sessionId, selectedAgent, selectedModel, t, refreshSessions]
+    [sessionId, selectedAgent, selectedModel, t, refreshSessions, showToast]
   );
 
   const renderTimelineItem = useCallback(
@@ -1076,24 +1123,58 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               </Text>
               <ChevronDown size={12} color={theme.colors.primary} />
             </PressableScale>
-            <Bot size={44} color={theme.colors.primary} />
-            <Text variant="bodySmall" color={theme.colors.text} style={styles.emptyTitle}>
-              <Trans>Welcome to OpenCode Agent</Trans>
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
-              <Trans>Ask questions, inspect files, or run commands in your workspace.</Trans>
-            </Text>
-            <PressableScale
-              onPress={handleCreateNewSession}
-              style={[
-                styles.emptyNewBtn,
-                { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
-              ]}>
-              <PlusCircle size={14} color={theme.colors.primary} />
-              <Text variant="caption" color={theme.colors.primary} style={styles.emptyNewBtnText}>
-                <Trans>New Session</Trans>
-              </Text>
-            </PressableScale>
+            {isOffline ? (
+              <>
+                <Bot size={44} color={theme.colors.textMuted} />
+                <Text variant="bodySmall" color={theme.colors.text} style={styles.emptyTitle}>
+                  <Trans>OpenCode Service Offline</Trans>
+                </Text>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
+                  <Trans>OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it.</Trans>
+                </Text>
+                <PressableScale
+                  testID="agent-offline-retry-btn"
+                  onPress={async () => {
+                    setCheckingHealth(true);
+                    await refreshSessions();
+                    setCheckingHealth(false);
+                  }}
+                  style={[
+                    styles.emptyNewBtn,
+                    { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
+                  ]}>
+                  {checkingHealth ? (
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
+                  ) : (
+                    <RefreshCw size={14} color={theme.colors.primary} />
+                  )}
+                  <Text variant="caption" color={theme.colors.primary} style={styles.emptyNewBtnText}>
+                    <Trans>Check Again</Trans>
+                  </Text>
+                </PressableScale>
+              </>
+            ) : (
+              <>
+                <Bot size={44} color={theme.colors.primary} />
+                <Text variant="bodySmall" color={theme.colors.text} style={styles.emptyTitle}>
+                  <Trans>Welcome to OpenCode Agent</Trans>
+                </Text>
+                <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
+                  <Trans>Ask questions, inspect files, or run commands in your workspace.</Trans>
+                </Text>
+                <PressableScale
+                  onPress={handleCreateNewSession}
+                  style={[
+                    styles.emptyNewBtn,
+                    { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
+                  ]}>
+                  <PlusCircle size={14} color={theme.colors.primary} />
+                  <Text variant="caption" color={theme.colors.primary} style={styles.emptyNewBtnText}>
+                    <Trans>New Session</Trans>
+                  </Text>
+                </PressableScale>
+              </>
+            )}
           </View>
         </View>
       ) : (
@@ -1118,6 +1199,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
+        disabled={isOffline}
         running={isRunning}
         sessions={sessions}
         availableAgents={availableAgents}
@@ -1125,6 +1207,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         sessionId={sessionId}
         activeAsid={activeAsid}
         selectedAgent={selectedAgent}
+        selectedModel={selectedModel}
         hasDiffs={hasDiffs}
         bottomInset={bottomInset}
         tasks={activeTodos}
@@ -1135,7 +1218,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onAbort={handleAbort}
         onSelectSession={setActiveAsid}
         onSelectAgentMode={setSelectedAgent}
-        onCreateNewSession={handleCreateNewSession}
         onOpenModeSheet={() => setModeSheetVisible(true)}
         onOpenModelSheet={() => setModelSheetVisible(true)}
         onOpenDiffSheet={() => setDiffSheetVisible(true)}

@@ -13,6 +13,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import {
   Bot,
   CheckSquare,
+  ChevronDown,
   Cpu,
   GitCommit,
   GitFork,
@@ -54,9 +55,11 @@ import { fadeIn, fadeOut, fadeOutDown } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import {
+  formatModelName,
   listAgentFiles,
   type AgentInfo,
   type AgentSessionInfo,
+  type ModelRef,
   type SkillInfo,
   type TodoItem,
   type TokensUsage,
@@ -79,6 +82,7 @@ export interface AgentComposerProps {
   sessionId?: string;
   activeAsid?: string;
   selectedAgent?: string;
+  selectedModel?: ModelRef;
   hasDiffs?: boolean;
   bottomInset?: number;
   tasks?: TodoItem[];
@@ -93,6 +97,7 @@ export interface AgentComposerProps {
   onOpenModelSheet?: () => void;
   onOpenModeSheet?: () => void;
   onOpenDiffSheet: () => void;
+  disabled?: boolean;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
   onPressTokens?: () => void;
@@ -108,6 +113,7 @@ export const AgentComposer = memo(function AgentComposer({
   sessionId,
   activeAsid,
   selectedAgent,
+  selectedModel,
   hasDiffs = false,
   bottomInset = 0,
   tasks,
@@ -118,7 +124,7 @@ export const AgentComposer = memo(function AgentComposer({
   onAbort,
   onSelectSession,
   onSelectAgentMode,
-  onCreateNewSession,
+  disabled,
   onOpenModelSheet,
   onOpenModeSheet,
   onOpenDiffSheet,
@@ -152,6 +158,8 @@ export const AgentComposer = memo(function AgentComposer({
         : `$${cost.toFixed(2)}`;
     return `${tokStr} • ${costStr}`;
   }, [tokens, cost, t]);
+
+  const modelDisplayName = useMemo(() => formatModelName(selectedModel), [selectedModel]);
 
   const inputRef = useRef<TextInput>(null);
   const [caret, setCaret] = useState<number | undefined>(undefined);
@@ -432,96 +440,98 @@ export const AgentComposer = memo(function AgentComposer({
 
       <GlassChrome surface="composer" style={styles.composerDock}>
         <View style={[styles.composerInner, { paddingBottom: Math.max(10, bottomInset + 6) }]}>
-          {/* Row 1: Workspace Agents & Subagents Horizontal Strip (横向滚动不要省略，无 All Sessions 和 +) */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.sessionStripContent}
-            style={styles.sessionStripViewport}>
-            {/* Current Session Chip (Current Agent session title) */}
-            <PressableScale
-              key={rootSession?.asid || 'current-root-session'}
-              testID="agent-composer-current-session-badge"
-              onPress={() => {
-                if (rootSession?.asid && rootSession.asid !== activeAsid) {
-                  onSelectSession?.(rootSession.asid);
-                }
-              }}
-              accessibilityLabel={`${rootAgentName}: ${rootDisplayTitle}`}
-              style={[
-                styles.sessionChip,
-                isRootActive
-                  ? { backgroundColor: theme.colors.primary }
-                  : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              <Bot size={13} color={isRootActive ? '#fff' : theme.colors.primary} />
-              <Text
-                variant="caption"
-                weight="bold"
-                color={isRootActive ? '#fff' : theme.colors.primary}
-                style={styles.sessionChipAgentBadge}>
-                {`@${rootAgentName}`}
-              </Text>
-              <Text
-                variant="caption"
-                color={isRootActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
-                style={styles.sessionChipDot}>
-                •
-              </Text>
-              <Text
-                variant="caption"
-                weight="medium"
-                color={isRootActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
-                style={styles.sessionChipTitle}>
-                {rootDisplayTitle}
-              </Text>
-            </PressableScale>
+          {/* Row 1: Subagents Horizontal Strip (only shown when subagents exist) */}
+          {subagents.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.sessionStripContent}
+              style={styles.sessionStripViewport}>
+              {/* Current Session Chip (Current Agent session title) */}
+              <PressableScale
+                key={rootSession?.asid || 'current-root-session'}
+                testID="agent-composer-current-session-badge"
+                onPress={() => {
+                  if (rootSession?.asid && rootSession.asid !== activeAsid) {
+                    onSelectSession?.(rootSession.asid);
+                  }
+                }}
+                accessibilityLabel={`${rootAgentName}: ${rootDisplayTitle}`}
+                style={[
+                  styles.sessionChip,
+                  isRootActive
+                    ? { backgroundColor: theme.colors.primary }
+                    : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                ]}>
+                <Bot size={13} color={isRootActive ? '#fff' : theme.colors.primary} />
+                <Text
+                  variant="caption"
+                  weight="bold"
+                  color={isRootActive ? '#fff' : theme.colors.primary}
+                  style={styles.sessionChipAgentBadge}>
+                  {`@${rootAgentName}`}
+                </Text>
+                <Text
+                  variant="caption"
+                  color={isRootActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                  style={styles.sessionChipDot}>
+                  •
+                </Text>
+                <Text
+                  variant="caption"
+                  weight="medium"
+                  color={isRootActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                  style={styles.sessionChipTitle}>
+                  {rootDisplayTitle}
+                </Text>
+              </PressableScale>
 
-            {/* Subagents of the current session */}
-            {subagents.map((sub) => {
-              const isSubActive = sub.asid === activeAsid;
-              const subAgentName = sub.agent || 'subagent';
-              const subDisplayTitle = resolveSessionTitle(sub, `@${subAgentName}`);
-              return (
-                <PressableScale
-                  key={sub.asid}
-                  onPress={() => onSelectSession?.(sub.asid)}
-                  accessibilityLabel={subDisplayTitle}
-                  style={[
-                    styles.sessionChip,
-                    isSubActive
-                      ? { backgroundColor: theme.colors.primary }
-                      : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                  ]}>
-                  <GitFork size={13} color={isSubActive ? '#fff' : theme.colors.primary} />
-                  <Text
-                    variant="caption"
-                    weight="bold"
-                    color={isSubActive ? '#fff' : theme.colors.primary}
-                    style={styles.sessionChipAgentBadge}>
-                    {`@${subAgentName}`}
-                  </Text>
-                  {subDisplayTitle !== `@${subAgentName}` ? (
-                    <>
-                      <Text
-                        variant="caption"
-                        color={isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
-                        style={styles.sessionChipDot}>
-                        •
-                      </Text>
-                      <Text
-                        variant="caption"
-                        weight="medium"
-                        color={isSubActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
-                        style={styles.sessionChipTitle}>
-                        {subDisplayTitle}
-                      </Text>
-                    </>
-                  ) : null}
-                </PressableScale>
-              );
-            })}
-          </ScrollView>
+              {/* Subagents of the current session */}
+              {subagents.map((sub) => {
+                const isSubActive = sub.asid === activeAsid;
+                const subAgentName = sub.agent || 'subagent';
+                const subDisplayTitle = resolveSessionTitle(sub, `@${subAgentName}`);
+                return (
+                  <PressableScale
+                    key={sub.asid}
+                    onPress={() => onSelectSession?.(sub.asid)}
+                    accessibilityLabel={subDisplayTitle}
+                    style={[
+                      styles.sessionChip,
+                      isSubActive
+                        ? { backgroundColor: theme.colors.primary }
+                        : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                    ]}>
+                    <GitFork size={13} color={isSubActive ? '#fff' : theme.colors.primary} />
+                    <Text
+                      variant="caption"
+                      weight="bold"
+                      color={isSubActive ? '#fff' : theme.colors.primary}
+                      style={styles.sessionChipAgentBadge}>
+                      {`@${subAgentName}`}
+                    </Text>
+                    {subDisplayTitle !== `@${subAgentName}` ? (
+                      <>
+                        <Text
+                          variant="caption"
+                          color={isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                          style={styles.sessionChipDot}>
+                          •
+                        </Text>
+                        <Text
+                          variant="caption"
+                          weight="medium"
+                          color={isSubActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                          style={styles.sessionChipTitle}>
+                          {subDisplayTitle}
+                        </Text>
+                      </>
+                    ) : null}
+                  </PressableScale>
+                );
+              })}
+            </ScrollView>
+          ) : null}
 
           {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}
           <ScrollView
@@ -540,17 +550,6 @@ export const AgentComposer = memo(function AgentComposer({
                   { backgroundColor: surfaceBackground(chromeGlass) },
                 ]}>
                 <Layers size={16} color={chromeText} />
-              </PressableScale>
-            ) : null}
-
-            {/* New Session Button */}
-            {onCreateNewSession ? (
-              <PressableScale
-                testID="agent-composer-new-btn"
-                onPress={onCreateNewSession}
-                accessibilityLabel={t`New Session`}
-                style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
-                <Plus size={16} color={chromeText} strokeWidth={2.5} />
               </PressableScale>
             ) : null}
 
@@ -577,6 +576,26 @@ export const AgentComposer = memo(function AgentComposer({
                 {selectedAgent ?? 'build'}
               </Text>
             </PressableScale>
+
+            {/* Quick Model Selector Button (placed right after agent mode, displayed in full) */}
+            {onOpenModelSheet ? (
+              <PressableScale
+                testID="agent-composer-model-btn"
+                onPress={onOpenModelSheet}
+                accessibilityLabel={t`Select model: ${modelDisplayName}`}
+                style={[
+                  styles.actionBtnWithLabel,
+                  { backgroundColor: surfaceBackground(chromeGlass) },
+                ]}>
+                <Text
+                  variant="caption"
+                  color={theme.colors.text}
+                  style={styles.actionBtnLabel}>
+                  {modelDisplayName}
+                </Text>
+                <ChevronDown size={12} color={theme.colors.textMuted} />
+              </PressableScale>
+            ) : null}
 
             {/* OpenCode Tasks Button */}
             {onOpenTasksSheet || (tasks && tasks.length > 0) ? (
@@ -757,7 +776,7 @@ export const AgentComposer = memo(function AgentComposer({
                 accessibilityLabel={
                   attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
                 }
-                disabled={sending}
+                disabled={sending || disabled}
                 onPress={() => setAttachmentMenuOpen((open) => !open)}
                 style={[
                   composerStyles.button,
@@ -765,6 +784,7 @@ export const AgentComposer = memo(function AgentComposer({
                   attachmentMenuOpen
                     ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
                     : null,
+                  disabled ? { opacity: 0.5 } : null,
                 ]}>
                 <Paperclip
                   size={16}
@@ -775,8 +795,10 @@ export const AgentComposer = memo(function AgentComposer({
             inputProps={{
               value: text,
               onChangeText: setText,
-              placeholder: t`Send a message, type / for commands, @ for files…`,
-              editable: !sending,
+              placeholder: disabled
+                ? t`OpenCode service offline`
+                : t`Send a message, type / for commands, @ for files…`,
+              editable: !sending && !disabled,
               testID: 'agent-composer-input',
               selection: slashPopup.inputProps.selection,
               onSelectionChange: handleSelectionChange,
@@ -789,9 +811,9 @@ export const AgentComposer = memo(function AgentComposer({
                   ? t`Steer running agent`
                   : t`Queue message for agent`
                 : t`Send message`,
-              armed: (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) && !sending,
+              armed: (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) && !sending && !disabled,
               sending,
-              disabled: sending || (!text.trim() && attachmentUploads.attachments.length === 0),
+              disabled: sending || disabled || (!text.trim() && attachmentUploads.attachments.length === 0),
               onPress: handleSend,
             }}
           />

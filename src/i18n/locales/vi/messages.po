@@ -610,6 +610,10 @@ msgstr "Chỉ thay đổi nền màu, không ảnh hưởng đến chữ, biểu
 msgid "Chat"
 msgstr "Trò chuyện"
 
+#: src/components/agent-workbench.tsx
+msgid "Check Again"
+msgstr "Kiểm tra lại"
+
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại"
@@ -1591,6 +1595,14 @@ msgstr "Xuất giao diện"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
 msgstr "Thất bại · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to create agent session"
+msgstr "Không thể tạo phiên tác nhân"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to switch workspace session"
+msgstr "Không thể chuyển phiên không gian làm việc"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2583,6 +2595,18 @@ msgstr "Mở không gian làm việc {0}, {1, plural, other {# đang chạy}}. N
 msgid "OpenCode Agent"
 msgstr "Tác nhân OpenCode"
 
+#: src/components/agent-workbench.tsx
+msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
+msgstr "Dịch vụ OpenCode không chạy trên máy chủ này. Chạy `opencode serve --service` để khởi động."
+
+#: src/components/agent-composer.tsx
+msgid "OpenCode service offline"
+msgstr "Dịch vụ OpenCode ngoại tuyến"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode Service Offline"
+msgstr "Dịch vụ OpenCode ngoại tuyến"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "Đang mở"
@@ -2736,6 +2760,10 @@ msgstr "Kế hoạch"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "Vui lòng thử lại hoặc xóa các tệp đính kèm bị lỗi"
+
+#: src/components/agent-workbench.tsx
+msgid "Please start OpenCode on the server: opencode serve --service"
+msgstr "Vui lòng khởi động OpenCode trên máy chủ: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -3293,13 +3321,13 @@ msgstr "Chọn chế độ agent"
 msgid "Select all"
 msgstr "Chọn tất cả"
 
-#: src/app/agent.tsx
-msgid "Select model"
-msgstr "Chọn mô hình"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Select Model"
 msgstr "Chọn mô hình"
+
+#: src/components/agent-composer.tsx
+msgid "Select model: {modelDisplayName}"
+msgstr "Chọn mô hình: {modelDisplayName}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Select or enter working repository"

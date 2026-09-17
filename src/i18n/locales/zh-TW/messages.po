@@ -610,6 +610,10 @@ msgstr "只調整背景顏色，不影響文字、圖示或裝飾圖片"
 msgid "Chat"
 msgstr "對話"
 
+#: src/components/agent-workbench.tsx
+msgid "Check Again"
+msgstr "重新檢查"
+
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "請檢查裝置的驗證設定後再試一次"
@@ -1591,6 +1595,14 @@ msgstr "匯出主題"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
 msgstr "失敗 · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to create agent session"
+msgstr "建立 Agent 會話失敗"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to switch workspace session"
+msgstr "切換工作區會話失敗"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2583,6 +2595,18 @@ msgstr "開啟工作區 {0}，{1, plural, one {# 個執行中} other {# 個執�
 msgid "OpenCode Agent"
 msgstr "OpenCode 代理"
 
+#: src/components/agent-workbench.tsx
+msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
+msgstr "此主機上未執行 OpenCode 服務。請執行 `opencode serve --service` 啟動。"
+
+#: src/components/agent-composer.tsx
+msgid "OpenCode service offline"
+msgstr "OpenCode 服務離線"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode Service Offline"
+msgstr "OpenCode 服務離線"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "正在開啟"
@@ -2736,6 +2760,10 @@ msgstr "規劃 (Plan)"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "請重試或移除上傳失敗的附件"
+
+#: src/components/agent-workbench.tsx
+msgid "Please start OpenCode on the server: opencode serve --service"
+msgstr "請在伺服器上啟動 OpenCode：opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -3293,13 +3321,13 @@ msgstr "選擇智慧體模式"
 msgid "Select all"
 msgstr "全選"
 
-#: src/app/agent.tsx
-msgid "Select model"
-msgstr "選擇模型"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Select Model"
 msgstr "選擇模型"
+
+#: src/components/agent-composer.tsx
+msgid "Select model: {modelDisplayName}"
+msgstr "選擇模型：{modelDisplayName}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Select or enter working repository"

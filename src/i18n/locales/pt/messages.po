@@ -610,6 +610,10 @@ msgstr "Altera os fundos coloridos, não o texto, os ícones nem as ilustraçõe
 msgid "Chat"
 msgstr "Conversa"
 
+#: src/components/agent-workbench.tsx
+msgid "Check Again"
+msgstr "Verificar novamente"
+
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "Verifique as definições de autenticação do dispositivo e tente novamente"
@@ -1591,6 +1595,14 @@ msgstr "Exportar tema"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
 msgstr "Falhou · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to create agent session"
+msgstr "Falha ao criar sessão do agente"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to switch workspace session"
+msgstr "Falha ao alternar a sessão da área de trabalho"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2583,6 +2595,18 @@ msgstr "Abrir o espaço de trabalho {0}, {1, plural, one {# ativo} other {# ativ
 msgid "OpenCode Agent"
 msgstr "Agente OpenCode"
 
+#: src/components/agent-workbench.tsx
+msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
+msgstr "O daemon OpenCode não está em execução neste host. Execute `opencode serve --service` para iniciá-lo."
+
+#: src/components/agent-composer.tsx
+msgid "OpenCode service offline"
+msgstr "Serviço OpenCode offline"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode Service Offline"
+msgstr "Serviço OpenCode offline"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "Abrindo"
@@ -2736,6 +2760,10 @@ msgstr "Planejar"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "Tente novamente ou remova os anexos com falha"
+
+#: src/components/agent-workbench.tsx
+msgid "Please start OpenCode on the server: opencode serve --service"
+msgstr "Inicie o OpenCode no servidor: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -3293,13 +3321,13 @@ msgstr "Selecionar modo do agente"
 msgid "Select all"
 msgstr "Selecionar tudo"
 
-#: src/app/agent.tsx
-msgid "Select model"
-msgstr "Selecionar modelo"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Select Model"
 msgstr "Selecionar modelo"
+
+#: src/components/agent-composer.tsx
+msgid "Select model: {modelDisplayName}"
+msgstr "Selecionar modelo: {modelDisplayName}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Select or enter working repository"

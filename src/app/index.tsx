@@ -75,6 +75,7 @@ import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -156,9 +157,11 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   // wants exactly the same fact -- which machines this person actually uses.
   const lastViewedByServer = useServerLastViewed((state) => state.byServer);
   const hydrateLastViewed = useServerLastViewed((state) => state.hydrate);
+  const hydrateServerCapabilities = useServerCapabilities((state) => state.hydrate);
   useEffect(() => {
     void hydrateLastViewed();
-  }, [hydrateLastViewed]);
+    void hydrateServerCapabilities();
+  }, [hydrateLastViewed, hydrateServerCapabilities]);
   const padReachabilityByServer = useMemo(
     () =>
       Object.fromEntries(

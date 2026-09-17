@@ -610,6 +610,10 @@ msgstr "텍스트, 아이콘, 장식 이미지는 그대로 두고 배경색만 
 msgid "Chat"
 msgstr "대화"
 
+#: src/components/agent-workbench.tsx
+msgid "Check Again"
+msgstr "다시 확인"
+
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "기기 인증 설정을 확인한 뒤 다시 시도하세요"
@@ -1591,6 +1595,14 @@ msgstr "테마 내보내기"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
 msgstr "실패 · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to create agent session"
+msgstr "에이전트 세션 생성 실패"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to switch workspace session"
+msgstr "워크스페이스 세션 전환 실패"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2583,6 +2595,18 @@ msgstr "작업 공간 {0} 열기, {1, plural, one {# 실행 중} other {# 실행
 msgid "OpenCode Agent"
 msgstr "OpenCode 에이전트"
 
+#: src/components/agent-workbench.tsx
+msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
+msgstr "이 호스트에서 OpenCode 데몬이 실행 중이지 않습니다. `opencode serve --service`를 실행하여 시작하세요."
+
+#: src/components/agent-composer.tsx
+msgid "OpenCode service offline"
+msgstr "OpenCode 서비스 오프라인"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode Service Offline"
+msgstr "OpenCode 서비스 오프라인"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "여는 중"
@@ -2736,6 +2760,10 @@ msgstr "계획 (Plan)"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "실패한 첨부파일을 다시 시도하거나 삭제하세요"
+
+#: src/components/agent-workbench.tsx
+msgid "Please start OpenCode on the server: opencode serve --service"
+msgstr "서버에서 OpenCode를 시작하세요: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -3293,13 +3321,13 @@ msgstr "에이전트 모드 선택"
 msgid "Select all"
 msgstr "모두 선택"
 
-#: src/app/agent.tsx
-msgid "Select model"
-msgstr "모델 선택"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Select Model"
 msgstr "모델 선택"
+
+#: src/components/agent-composer.tsx
+msgid "Select model: {modelDisplayName}"
+msgstr "모델 선택: {modelDisplayName}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Select or enter working repository"

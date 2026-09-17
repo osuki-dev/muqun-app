@@ -2,7 +2,7 @@ import { Fragment, memo, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Bot, Check, GitFork, Plus, X, Clock, Folder } from 'lucide-react-native';
+import { Check, GitFork, Plus, X, Folder } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
@@ -335,7 +335,6 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                                   styles.agentBadge,
                                   { backgroundColor: `${theme.colors.primary}18` },
                                 ]}>
-                                <Bot size={12} color={theme.colors.primary} />
                                 <Text
                                   variant="caption"
                                   color={theme.colors.primary}
@@ -393,15 +392,12 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
 
                             <View style={styles.headerRight}>
                               {root.updated_ms ? (
-                                <View style={styles.timeRow}>
-                                  <Clock size={11} color={theme.colors.textMuted} />
-                                  <Text
-                                    variant="caption"
-                                    color={theme.colors.textMuted}
-                                    style={styles.timeText}>
-                                    {formatTime(root.updated_ms)}
-                                  </Text>
-                                </View>
+                                <Text
+                                  variant="caption"
+                                  color={theme.colors.textMuted}
+                                  style={styles.timeText}>
+                                  {formatTime(root.updated_ms)}
+                                </Text>
                               ) : null}
 
                               {isRootActive ? <Check size={16} color={theme.colors.primary} /> : null}
@@ -416,16 +412,6 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                             style={styles.sessionTitle}>
                             {root.title || root.asid}
                           </Text>
-
-                          {root.directory ? (
-                            <Text
-                              variant="caption"
-                              color={theme.colors.textMuted}
-                              numberOfLines={1}
-                              style={styles.dirText}>
-                              {root.directory}
-                            </Text>
-                          ) : null}
                         </PressableScale>
 
                         {/* Subagents */}

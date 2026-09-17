@@ -49,7 +49,8 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
     setLoading(true);
     try {
       const list = await getAgentProjects(sessionId);
-      setProjects(list);
+      const valid = (list || []).filter((p) => p.id !== 'global' && p.canonical !== '/');
+      setProjects(valid);
     } catch {
       // quiet fail
     } finally {
@@ -88,9 +89,10 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   }, [searchQuery, sessionId]);
 
   const filteredProjects = useMemo(() => {
+    const valid = projects.filter((p) => p.id !== 'global' && p.canonical !== '/');
     const q = searchQuery.trim().toLowerCase();
-    if (!q || q.startsWith('/')) return projects;
-    return projects.filter(
+    if (!q || q.startsWith('/')) return valid;
+    return valid.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.canonical.toLowerCase().includes(q) ||
@@ -214,9 +216,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                     ) : (
                       <SettingsCard>
                         {filteredProjects.map((p) => {
-                          const isSelected =
-                            activeDirectory === p.canonical ||
-                            (activeDirectory && activeDirectory.startsWith(p.canonical));
+                          const isSelected = activeDirectory === p.canonical;
 
                           return (
                             <PressableScale

@@ -610,6 +610,10 @@ msgstr "เปลี่ยนสีพื้นหลัง ไม่เปล�
 msgid "Chat"
 msgstr "แชต"
 
+#: src/components/agent-workbench.tsx
+msgid "Check Again"
+msgstr "ตรวจสอบอีกครั้ง"
+
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "ตรวจสอบการตั้งค่าการยืนยันตัวตนของอุปกรณ์แล้วลองอีกครั้ง"
@@ -1591,6 +1595,14 @@ msgstr "ส่งออกธีม"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
 msgstr "ไม่สำเร็จ · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to create agent session"
+msgstr "สร้างเซสชันเอเจนต์ไม่สำเร็จ"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to switch workspace session"
+msgstr "สลับเซสชันพื้นที่ทำงานไม่สำเร็จ"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2583,6 +2595,18 @@ msgstr "เปิดพื้นที่ทำงาน {0} {1, plural, other {
 msgid "OpenCode Agent"
 msgstr "เอเจนต์ OpenCode"
 
+#: src/components/agent-workbench.tsx
+msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
+msgstr "บริการ OpenCode ไม่ได้ทำงานอยู่บนโฮสต์นี้ เรียกใช้ `opencode serve --service` เพื่อเริ่มต้น"
+
+#: src/components/agent-composer.tsx
+msgid "OpenCode service offline"
+msgstr "บริการ OpenCode ออฟไลน์"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode Service Offline"
+msgstr "บริการ OpenCode ออฟไลน์"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "กำลังเปิด"
@@ -2736,6 +2760,10 @@ msgstr "วางแผน (Plan)"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "โปรดลองอีกครั้งหรือนำไฟล์แนบที่ไม่สำเร็จออก"
+
+#: src/components/agent-workbench.tsx
+msgid "Please start OpenCode on the server: opencode serve --service"
+msgstr "โปรดเริ่ม OpenCode บนเซิร์ฟเวอร์: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -3293,13 +3321,13 @@ msgstr "เลือกโหมดเอเจนต์"
 msgid "Select all"
 msgstr "เลือกทั้งหมด"
 
-#: src/app/agent.tsx
-msgid "Select model"
-msgstr "เลือกโมเดล"
-
 #: src/components/agent-model-sheet.tsx
 msgid "Select Model"
 msgstr "เลือกโมเดล"
+
+#: src/components/agent-composer.tsx
+msgid "Select model: {modelDisplayName}"
+msgstr "เลือกโมเดล: {modelDisplayName}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Select or enter working repository"

@@ -56,7 +56,7 @@ test('one unreachable server does not strand the rest', () => {
 test('the home screen asks through the bounded list, never the raw records', () => {
   // `refreshMany` has no ceiling of its own by design -- the caller picks the
   // set. So the ceiling only exists if the caller actually applies it.
-  const home = readFileSync('src/app/(drawer)/index.tsx', 'utf8');
+  const home = readFileSync('src/app/index.tsx', 'utf8');
   expect(home).toContain('serversToProbe(');
   const targets = home.match(/const probeTargets = useMemo\([\s\S]*?\n {2}\);/)?.[0] ?? '';
   expect(targets).toContain('DEMO_SERVER_ID');

@@ -1,6 +1,6 @@
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
-import { gatewayAuthHeaders, gatewayFetch, gatewayUrl } from './gateway-client';
+import { gatewayAuthHeaders, gatewayFetch, gatewayUrl, isGatewayConfigured } from './gateway-client';
 import { ServerSentEventParser } from './sse-stream';
 import type { FileMentionHit } from './file-mentions';
 
@@ -23,6 +23,37 @@ export interface ModelRef {
   provider_id: string;
   model_id: string;
   variant?: string;
+}
+
+export function formatModelName(model?: ModelRef): string {
+  if (!model?.model_id) return 'Model';
+  const modelId = model.model_id;
+  const known: Record<string, string> = {
+    'gemini-3.8-flash': 'Gemini 3.8 Flash',
+    'deepseek-v4.1-flash': 'DeepSeek V4.1 Flash',
+    'deepseek-v4-flash-free': 'DeepSeek V4 Flash',
+    'gpt-5.6-sol': 'GPT-5.6 Sol',
+    'gpt-5.6-luna': 'GPT-5.6 Luna',
+    'gpt-6-astra': 'GPT-6 Astra',
+    'gpt-6-astra-fast': 'GPT-6 Astra Fast',
+    'muse-spark-1.3-contributor-free': 'Muse Spark 1.3',
+    'ling-3.0-flash-fin-free': 'Ling 3.0 Flash',
+  };
+  const baseName =
+    known[modelId] ||
+    modelId
+      .split(/[-_]/)
+      .map((w) => (w.length <= 3 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+      .join(' ');
+
+  if (model.variant) {
+    const varLabel =
+      model.variant === 'xhigh'
+        ? 'Max'
+        : model.variant.charAt(0).toUpperCase() + model.variant.slice(1);
+    return `${baseName} • ${varLabel}`;
+  }
+  return baseName;
 }
 
 export interface TokensUsage {
@@ -231,24 +262,31 @@ export function gatewaySupportsAgentSessions(capabilities: string[] | undefined 
 // ---------------------------------------------------------------------------
 
 export async function listAgentSessions(sessionId: string): Promise<AgentSessionInfo[]> {
-  const url = gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions`);
-  const res = await gatewayFetch(url, {
-    method: 'GET',
-    headers: gatewayAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to list agent sessions: ${res.status} ${await res.text()}`);
+  try {
+    if (!isGatewayConfigured()) return [];
+    const url = gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions`);
+    const res = await gatewayFetch(url, {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) {
+      console.warn(`Failed to list agent sessions: ${res.status}`);
+      return [];
+    }
+    const json = (await res.json()) as {
+      data?: AgentSessionInfo[] | { sessions?: AgentSessionInfo[] };
+      sessions?: AgentSessionInfo[];
+    };
+    if (Array.isArray(json.data)) return json.data;
+    if (json.data && 'sessions' in json.data && Array.isArray(json.data.sessions)) {
+      return json.data.sessions;
+    }
+    if (Array.isArray(json.sessions)) return json.sessions;
+    return [];
+  } catch (err) {
+    console.warn('Failed to list agent sessions:', err);
+    return [];
   }
-  const json = (await res.json()) as {
-    data?: AgentSessionInfo[] | { sessions?: AgentSessionInfo[] };
-    sessions?: AgentSessionInfo[];
-  };
-  if (Array.isArray(json.data)) return json.data;
-  if (json.data && 'sessions' in json.data && Array.isArray(json.data.sessions)) {
-    return json.data.sessions;
-  }
-  if (Array.isArray(json.sessions)) return json.sessions;
-  return [];
 }
 
 export async function createAgentSession(
@@ -304,33 +342,38 @@ export async function getAgentTimelineDelta(
   resync?: boolean;
   latest_seq: number;
 }> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/timeline?after=${afterSeq}`
-  );
-  const res = await gatewayFetch(url, {
-    method: 'GET',
-    headers: gatewayAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to get agent timeline delta: ${res.status} ${await res.text()}`);
+  try {
+    if (!isGatewayConfigured()) return { latest_seq: afterSeq };
+    const url = gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/timeline?after=${afterSeq}`
+    );
+    const res = await gatewayFetch(url, {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) {
+      return { latest_seq: afterSeq };
+    }
+    const json = (await res.json()) as
+      | {
+          data?: {
+            items?: TimelineItem[];
+            status?: AgentSessionStatus;
+            resync?: boolean;
+            latest_seq: number;
+          };
+        }
+      | { items?: TimelineItem[]; status?: AgentSessionStatus; resync?: boolean; latest_seq: number };
+    const payload = 'data' in json && json.data ? json.data : json;
+    return payload as {
+      items?: TimelineItem[];
+      status?: AgentSessionStatus;
+      resync?: boolean;
+      latest_seq: number;
+    };
+  } catch (err) {
+    return { latest_seq: afterSeq };
   }
-  const json = (await res.json()) as
-    | {
-        data?: {
-          items?: TimelineItem[];
-          status?: AgentSessionStatus;
-          resync?: boolean;
-          latest_seq: number;
-        };
-      }
-    | { items?: TimelineItem[]; status?: AgentSessionStatus; resync?: boolean; latest_seq: number };
-  const payload = 'data' in json && json.data ? json.data : json;
-  return payload as {
-    items?: TimelineItem[];
-    status?: AgentSessionStatus;
-    resync?: boolean;
-    latest_seq: number;
-  };
 }
 
 export async function sendAgentPrompt(
@@ -460,41 +503,53 @@ export async function replyAgentForm(
 }
 
 export async function getAgentCatalog(sessionId?: string): Promise<AgentCatalog> {
-  const url = sessionId
-    ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`)
-    : gatewayUrl('/api/agent-catalog');
-  const res = await gatewayFetch(url, {
-    method: 'GET',
-    headers: gatewayAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to get agent catalog: ${res.status} ${await res.text()}`);
+  try {
+    if (!isGatewayConfigured()) return { agents: [], models: [], mcp: [] };
+    const url = sessionId
+      ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`)
+      : gatewayUrl('/api/agent-catalog');
+    const res = await gatewayFetch(url, {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) {
+      return { agents: [], models: [], mcp: [] };
+    }
+    const json = (await res.json()) as { data?: AgentCatalog } | AgentCatalog;
+    return ('data' in json && json.data ? json.data : json) as AgentCatalog;
+  } catch (err) {
+    console.warn('Failed to get agent catalog:', err);
+    return { agents: [], models: [], mcp: [] };
   }
-  const json = (await res.json()) as { data?: AgentCatalog } | AgentCatalog;
-  return ('data' in json && json.data ? json.data : json) as AgentCatalog;
 }
 
 export async function getAgentVcsDiff(sessionId: string, asid: string): Promise<FileDiffItem[]> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/vcs-diff`
-  );
-  const res = await gatewayFetch(url, {
-    method: 'GET',
-    headers: gatewayAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to get VCS diff: ${res.status} ${await res.text()}`);
+  try {
+    if (!isGatewayConfigured()) return [];
+    const url = gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/vcs-diff`
+    );
+    const res = await gatewayFetch(url, {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) {
+      return [];
+    }
+    const json = (await res.json()) as {
+      data?: FileDiffItem[] | { diff?: FileDiffItem[] };
+      diff?: FileDiffItem[];
+    };
+    if (Array.isArray(json.data)) return json.data;
+    if (json.data && 'diff' in json.data && Array.isArray(json.data.diff)) {
+      return json.data.diff;
+    }
+    if (Array.isArray(json.diff)) return json.diff;
+    return [];
+  } catch (err) {
+    console.warn('Failed to get VCS diff:', err);
+    return [];
   }
-  const json = (await res.json()) as {
-    data?: FileDiffItem[] | { diff?: FileDiffItem[] };
-    diff?: FileDiffItem[];
-  };
-  if (Array.isArray(json.data)) return json.data;
-  if (json.data && 'diff' in json.data && Array.isArray(json.data.diff)) {
-    return json.data.diff;
-  }
-  if (Array.isArray(json.diff)) return json.diff;
-  return [];
 }
 
 export async function listAgentFiles(
@@ -581,15 +636,19 @@ export function openAgentSessionStream(options: {
   const controller = new AbortController();
 
   const connect = async () => {
-    const path = options.sessionId
-      ? `/api/sessions/${encodeURIComponent(options.sessionId)}/agent-sessions/${encodeURIComponent(options.asid)}/stream`
-      : `/api/agent-sessions/${encodeURIComponent(options.asid)}/stream`;
-    const url = gatewayUrl(path);
-    const headers = gatewayAuthHeaders();
-    const decoder = new TextDecoder();
-    const parser = new ServerSentEventParser();
-
     try {
+      if (!isGatewayConfigured()) {
+        options.onError?.(new Error('Gateway not configured'));
+        return;
+      }
+      const path = options.sessionId
+        ? `/api/sessions/${encodeURIComponent(options.sessionId)}/agent-sessions/${encodeURIComponent(options.asid)}/stream`
+        : `/api/agent-sessions/${encodeURIComponent(options.asid)}/stream`;
+      const url = gatewayUrl(path);
+      const headers = gatewayAuthHeaders();
+      const decoder = new TextDecoder();
+      const parser = new ServerSentEventParser();
+
       const response = await nitroFetch(url, {
         headers: {
           ...headers,
@@ -629,7 +688,9 @@ export function openAgentSessionStream(options: {
     }
   };
 
-  void connect();
+  void connect().catch((err) => {
+    if (!cancelled) options.onError?.(err);
+  });
 
   return () => {
     cancelled = true;

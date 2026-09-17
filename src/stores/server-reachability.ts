@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { probeGatewayReachable } from '@/lib/gateway-client';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import {
   needsReachabilityProbe,
   REACHABILITY_TIMEOUT_MS,
@@ -100,7 +101,9 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
 
     inFlight.add(serverId);
     try {
-      const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS);
+      const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS, (caps) => {
+        void useServerCapabilities.getState().record(serverId, caps);
+      });
       set((state) => ({
         probes: { ...state.probes, [serverId]: { serverId, ok, checkedAtMs: Date.now() } },
       }));

@@ -21,8 +21,8 @@ const consumers = {
     // the picture in the first place.
     'src/components/sheet-ground.tsx',
   ],
-  'home.background': 'src/app/(drawer)/index.tsx',
-  'home.decoration': 'src/app/(drawer)/index.tsx',
+  'home.background': 'src/app/index.tsx',
+  'home.decoration': 'src/app/index.tsx',
   'navigation.background': 'src/components/glass-chrome.tsx',
   'composer.background': 'src/components/glass-chrome.tsx',
   'actions.background': 'src/components/glass-chrome.tsx',
@@ -30,7 +30,7 @@ const consumers = {
   'buttons.primary.background': 'src/components/themed-button.tsx',
   'tabs.background': 'src/app/commands.tsx',
   'emptyState.illustration': [
-    'src/app/(drawer)/index.tsx',
+    'src/app/index.tsx',
     'src/theme/launch-artwork.ts',
     // Reachable from Home as well, but only through an explicit reader choice.
     'src/theme/home-hero.ts',
@@ -60,7 +60,7 @@ test('every supported artwork slot has a named runtime consumer', () => {
 });
 
 test('Home mounts the hero above its list and the empty card keeps its own picture', () => {
-  const home = readFileSync('src/app/(drawer)/index.tsx', 'utf8');
+  const home = readFileSync('src/app/index.tsx', 'utf8');
   // Mounted, and mounted where the contract says: after the brand block and the
   // `home.decoration` banner, before anything that draws a server.
   expect(home).toContain('<HomeHero ');

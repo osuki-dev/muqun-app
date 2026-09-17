@@ -21,7 +21,7 @@ export function sheetPresentationOptions(
   if (presentation === 'fullscreen')
     return {
       presentation: 'fullScreenModal',
-      animation: 'fade',
+      animation: 'slide_from_bottom',
       gestureEnabled: false,
     };
   return {

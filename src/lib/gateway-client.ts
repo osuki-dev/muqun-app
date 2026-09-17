@@ -924,9 +924,15 @@ export const MAX_ASSET_TEXT_BYTES = 512 * 1024;
  */
 export const ASSET_CONTENT_TIMEOUT_MS = 15_000;
 
+export function isGatewayConfigured(): boolean {
+  return Boolean(currentBaseUrl && currentBaseUrl.trim().length > 0);
+}
+
 export function gatewayUrl(path: string): string {
   const baseUrl = currentBaseUrl.replace(/\/$/, '');
-  if (!baseUrl) throw new Error('Not connected to a server.');
+  if (!baseUrl) {
+    return path.startsWith('/') ? path : `/${path}`;
+  }
   return `${baseUrl}${path}`;
 }
 
@@ -1990,7 +1996,8 @@ export async function claimPairing(
  */
 export async function probeGatewayReachable(
   endpoint: GatewayEndpoint,
-  timeoutMs: number
+  timeoutMs: number,
+  onCapabilities?: (capabilities: unknown) => void
 ): Promise<boolean> {
   const base = endpoint.url.replace(/\/$/, '');
   if (!base) return false;
@@ -2013,6 +2020,16 @@ export async function probeGatewayReachable(
             },
             signal: controller.signal,
           });
+    if (response.ok && onCapabilities) {
+      try {
+        const data = (await response.json()) as { capabilities?: unknown };
+        if (data?.capabilities) {
+          onCapabilities(data.capabilities);
+        }
+      } catch {
+        // ignore json parse error
+      }
+    }
     return response.ok;
   } catch {
     return false;
