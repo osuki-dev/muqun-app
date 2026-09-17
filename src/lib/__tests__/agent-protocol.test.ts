@@ -26,6 +26,7 @@ import {
   parseInboxItems,
   parsePermissionRequest,
   parseRunStatus,
+  orderKeyAfter,
   parseShellList,
   parseShellOutputPage,
   parseTimelineItem,
@@ -477,6 +478,83 @@ describe('timeline', () => {
       'msg_1:t0',
       'msg_1:t1',
       'msg_2:t0',
+    ]);
+  });
+
+  test('an optimistic row keeps its place under the reply it triggered', () => {
+    // The engine's ids are time-ordered hex; a locally made `msg_<now>` sorts
+    // after all of them, which is how a reply came to render above the
+    // message that asked for it.
+    const history = [
+      parseTimelineItem({
+        id: 'msg_019a:t0',
+        message_id: 'msg_019a',
+        ordinal: 0,
+        part: { type: 'text', text: 'earlier' },
+      }),
+    ].filter((item): item is TimelineItem => item !== null);
+
+    const optimistic: TimelineItem = {
+      id: 'temp_usr_1758000000000',
+      message_id: 'msg_1758000000000',
+      role: 'user',
+      ordinal: 0,
+      part: { type: 'text', text: 'do the thing' },
+      seq: 2,
+      updated_ms: 2,
+      order: orderKeyAfter(history),
+    };
+    const reply = parseTimelineItem({
+      id: 'msg_019c:t0',
+      message_id: 'msg_019c',
+      ordinal: 0,
+      part: { type: 'text', text: 'doing it' },
+    });
+    expect(reply).not.toBeNull();
+
+    const sorted = sortTimeline([reply as TimelineItem, optimistic, ...history]);
+    expect(sorted.map((item) => item.id)).toEqual([
+      'msg_019a:t0',
+      'temp_usr_1758000000000',
+      'msg_019c:t0',
+    ]);
+
+    // And the acknowledged row, inheriting the key, lands in the same slot.
+    const acknowledged: TimelineItem = {
+      ...(parseTimelineItem({
+        id: 'msg_019b:t0',
+        message_id: 'msg_019b',
+        role: 'user',
+        ordinal: 0,
+        part: { type: 'text', text: 'do the thing' },
+      }) as TimelineItem),
+      order: optimistic.order,
+    };
+    expect(
+      sortTimeline([reply as TimelineItem, acknowledged, ...history]).map((item) => item.id)
+    ).toEqual(['msg_019a:t0', 'msg_019b:t0', 'msg_019c:t0']);
+  });
+
+  test("the first row of a session sorts before the engine's answer", () => {
+    const optimistic: TimelineItem = {
+      id: 'temp_usr_1',
+      message_id: 'msg_1758000000000',
+      role: 'user',
+      ordinal: 0,
+      part: { type: 'text', text: 'hello' },
+      seq: 1,
+      updated_ms: 1,
+      order: orderKeyAfter([]),
+    };
+    const reply = parseTimelineItem({
+      id: 'msg_019c:t0',
+      message_id: 'msg_019c',
+      ordinal: 0,
+      part: { type: 'text', text: 'hi' },
+    }) as TimelineItem;
+    expect(sortTimeline([reply, optimistic]).map((item) => item.id)).toEqual([
+      'temp_usr_1',
+      'msg_019c:t0',
     ]);
   });
 

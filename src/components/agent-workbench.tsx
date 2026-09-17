@@ -60,6 +60,7 @@ import {
   exportAgentSession,
   revertAgentSession,
   sendAgentCommand,
+  orderKeyAfter,
   sortTimeline,
   isBusyStatus,
   inboxItemText,
@@ -1081,7 +1082,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
     const isQueued = isBusyStatus(sessionInfo?.status) && delivery === 'queue';
 
-    // Optimistically add user text item
+    // Optimistically add user text item.
+    //
+    // With an order key, not on the strength of its id: a locally made
+    // `msg_1758…` sorts after the engine's `msg_019…`, so the reply to this
+    // message used to render above it and jump back into place when the turn
+    // ended. The key puts the row after everything on screen and before
+    // anything the engine makes next, and the acknowledged row inherits it.
     const tempUserItem: TimelineItem = {
       id: `temp_usr_${Date.now()}`,
       message_id: `msg_${Date.now()}`,
@@ -1092,6 +1099,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       part: { type: 'text', text },
       attachments,
       queued: isQueued,
+      order: orderKeyAfter(timeline),
     };
     setTimeline((prev) => [...prev, tempUserItem]);
     // No manual scroll. Following the newest message is the list's
@@ -2401,7 +2409,11 @@ function upsertTimelineItems(
           it.part.text.trim() === text
       );
       if (optimistic >= 0) {
-        next[optimistic] = item;
+        // The acknowledged row takes the optimistic row's place, exactly: its
+        // own id would sort it somewhere else, and the reader would watch
+        // their own message move.
+        const order = next[optimistic].order;
+        next[optimistic] = order === undefined ? item : { ...item, order };
         dirty = true;
         continue;
       }
