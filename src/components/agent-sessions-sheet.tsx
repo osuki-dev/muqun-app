@@ -18,13 +18,30 @@ import {
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { sessionTitleOr, type AgentProject, type AgentSessionInfo } from '@/lib/agent-session';
+import {
+  sessionTitleOr,
+  workspaceDisplayName,
+  type AgentProject,
+  type AgentSessionInfo,
+} from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 const STAGGERED_ROWS = 8;
 
-/** Every project the sessions fall into, plus the catch-all. */
-const ALL_PROJECTS = 'all';
+/** Every workspace the sessions fall into, plus the catch-all. */
+const ALL_WORKSPACES = 'all';
+
+/**
+ * The workspace the reader is in, whichever one that is.
+ *
+ * A literal id would be wrong for the one case this segment exists for: a
+ * directory OpenCode files under its catch-all project has the catch-all's id,
+ * which is shared with every other loose directory on the host -- so filtering
+ * by it listed sessions from all of them and the segment was named after
+ * whichever project happened to sort first. The current workspace is a
+ * *directory*, and this value says "that one" rather than naming it.
+ */
+const CURRENT_WORKSPACE = 'current';
 
 /**
  * Every agent session on this host, as a native form sheet route.
@@ -39,6 +56,8 @@ export interface AgentSessionsSheetProps {
   activeAsid?: string;
   knownProjects?: readonly AgentProject[];
   activeDirectory?: string;
+  /** The project the active directory belongs to, when it belongs to a named one. */
+  activeProject?: AgentProject;
   onSelectSession: (asid: string) => void;
   onCreateNewSession?: () => void;
   onClose: () => void;
@@ -48,6 +67,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   sessions,
   activeAsid,
   knownProjects,
+  activeDirectory,
+  activeProject,
   onSelectSession,
   onClose,
 }: AgentSessionsSheetProps) {
@@ -55,12 +76,24 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  const [projectFilter, setProjectFilter] = useState<string>(ALL_PROJECTS);
+  /**
+   * Which workspace is being listed. It opens on the reader's own, because
+   * that is what the sheet is reached from and what `/sessions` promises.
+   */
+  const [workspaceFilter, setWorkspaceFilter] = useState<string>(
+    activeDirectory ? CURRENT_WORKSPACE : ALL_WORKSPACES
+  );
 
   const { rootSessions, subagentMap } = useMemo(() => {
     const roots: AgentSessionInfo[] = [];
     const subs = new Map<string, AgentSessionInfo[]>();
+    // One session is one row. The listing and the stream both answer with the
+    // same session sometimes, and two rows reading "Untitled session · build"
+    // side by side are indistinguishable from two real sessions.
+    const seen = new Set<string>();
     for (const session of sessions) {
+      if (seen.has(session.asid)) continue;
+      seen.add(session.asid);
       if (session.parent_id) {
         const list = subs.get(session.parent_id) ?? [];
         list.push(session);
@@ -112,14 +145,22 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
 
   const filteredRoots = useMemo(() => {
     let list = rootSessions;
-    if (projectFilter !== ALL_PROJECTS) {
-      const target = projects.find((project) => project.id === projectFilter);
+    if (workspaceFilter === CURRENT_WORKSPACE && activeDirectory) {
+      // The directory, not the project id: the catch-all project is shared by
+      // every loose directory on the host.
+      list = list.filter(
+        (root) =>
+          root.directory === activeDirectory ||
+          (root.directory?.startsWith(`${activeDirectory}/`) ?? false)
+      );
+    } else if (workspaceFilter !== ALL_WORKSPACES && workspaceFilter !== CURRENT_WORKSPACE) {
+      const target = projects.find((project) => project.id === workspaceFilter);
       list = list.filter((root) => {
-        if (root.project_id && root.project_id === projectFilter) return true;
+        if (root.project_id && root.project_id === workspaceFilter) return true;
         if (target?.canonical && root.directory) {
           return root.directory === target.canonical || root.directory.startsWith(target.canonical);
         }
-        return root.directory === projectFilter;
+        return root.directory === workspaceFilter;
       });
     }
     const q = searchQuery.trim().toLowerCase();
@@ -138,7 +179,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           sub.asid.toLowerCase().includes(q)
       );
     });
-  }, [rootSessions, subagentMap, searchQuery, projectFilter, projects]);
+  }, [rootSessions, subagentMap, searchQuery, workspaceFilter, activeDirectory, projects]);
 
   const [nowMs] = useState(() => Date.now());
   const formatTime = (ms?: number) => {
@@ -151,15 +192,25 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return `${Math.round(hours / 24)}d`;
   };
 
-  // Two segments at most: Android's segmented control is a two-state pill, and
-  // a project list longer than that belongs in the workspace switcher.
+  /**
+   * Two segments at most -- Android's segmented control is a two-state pill --
+   * and the first of them is the workspace the reader is actually in.
+   *
+   * It used to be whichever project sorted first in the catalogue, which on a
+   * host with several is simply a different workspace's name over this
+   * workspace's sessions.
+   */
+  const currentWorkspaceName = workspaceDisplayName(
+    activeProject,
+    activeDirectory,
+    t`This workspace`
+  );
   const segments = useMemo(() => {
-    const options = [{ label: t`All projects`, value: ALL_PROJECTS }];
-    const current = projects.find((project) => project.id === projectFilter);
-    if (current) options.push({ label: current.name, value: current.id });
-    else if (projects[0]) options.push({ label: projects[0].name, value: projects[0].id });
+    const options: { label: string; value: string }[] = [];
+    if (activeDirectory) options.push({ label: currentWorkspaceName, value: CURRENT_WORKSPACE });
+    options.push({ label: t`All workspaces`, value: ALL_WORKSPACES });
     return options;
-  }, [projects, projectFilter, t]);
+  }, [activeDirectory, currentWorkspaceName, t]);
 
   let rowIndex = 0;
 
@@ -181,8 +232,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             <SettingsSegmented
               testID="agent-sessions-project-filter"
               options={segments}
-              value={projectFilter}
-              onChange={setProjectFilter}
+              value={workspaceFilter}
+              onChange={setWorkspaceFilter}
             />
           ) : null}
         </>
@@ -196,7 +247,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           <View style={styles.empty}>
             <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
               {searchQuery
-                ? t`No sessions match that search.`
+                ? t`No sessions match “${searchQuery}”.`
                 : t`No sessions in this workspace yet. Start one from the + button.`}
             </Text>
           </View>

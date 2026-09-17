@@ -20,6 +20,7 @@ export default function AgentSessionsScreen() {
   const activeAsid = useAgentSheetBridge((state) => state.activeAsid);
   const knownProjects = useAgentSheetBridge((state) => state.knownProjects);
   const activeDirectory = useAgentSheetBridge((state) => state.activeDirectory);
+  const activeProject = useAgentSheetBridge((state) => state.activeProject);
   const actions = useAgentSheetBridge((state) => state.actions);
 
   return (
@@ -28,6 +29,7 @@ export default function AgentSessionsScreen() {
       activeAsid={activeAsid}
       knownProjects={knownProjects}
       activeDirectory={activeDirectory}
+      activeProject={activeProject}
       onSelectSession={actions.selectSession}
       onCreateNewSession={actions.createSession}
       onClose={() => router.back()}

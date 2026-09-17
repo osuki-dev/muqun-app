@@ -52,6 +52,8 @@ export interface AgentSheetSnapshot {
   sessions: readonly AgentSessionInfo[];
   knownProjects: readonly AgentProject[];
   activeDirectory?: string;
+  /** The project that directory belongs to, when the engine knows a named one. */
+  activeProject?: AgentProject;
   sessionInfo?: AgentSessionInfo;
   tokens?: TokensUsage;
   cost?: number;
@@ -125,6 +127,7 @@ const INITIAL: AgentSheetSnapshot = {
   sessions: EMPTY_SESSIONS,
   knownProjects: EMPTY_PROJECTS,
   activeDirectory: undefined,
+  activeProject: undefined,
   sessionInfo: undefined,
   tokens: undefined,
   cost: undefined,
