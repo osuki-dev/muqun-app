@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
@@ -545,7 +546,12 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    // A `TextInput` is not a kit `Text` and cannot take a variant, so the one
+    // number it needs comes from the type scale rather than from this file: a
+    // field holds what the reader wrote, which is what `prose` sizes. It was a
+    // literal 15 here and another in `fieldInput`, which is two sizes on one
+    // sheet and neither of them on the scale.
+    fontSize: AGENT_TYPE.prose.size,
     padding: 0,
     includeFontPadding: false,
   },
@@ -587,7 +593,9 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  fieldInput: { flex: 1, fontSize: 15, padding: 0, includeFontPadding: false },
+  // The search field's face, for the same reason. No `lineHeight`: Android
+  // clips a single-line input to it and the descenders go with it.
+  fieldInput: { flex: 1, fontSize: AGENT_TYPE.prose.size, padding: 0, includeFontPadding: false },
   fieldNote: { lineHeight: 16 },
   action: {
     height: 48,
