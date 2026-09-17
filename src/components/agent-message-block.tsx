@@ -810,10 +810,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         styles.messageBlock,
         plate,
         styles.userBlock,
-        // The reader's own words sit on the accent's pale tint -- the one
-        // block in the transcript that is theirs, told apart by colour, not
-        // by alignment.
-        { backgroundColor: theme.colors.primarySubtle, borderLeftColor: colors.accent },
+        { borderLeftColor: colors.accent },
         queued ? { borderLeftColor: theme.colors.warning } : null,
       ]}>
       <View style={styles.roleRow}>
