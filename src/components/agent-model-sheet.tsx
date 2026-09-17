@@ -13,6 +13,7 @@ import { SheetHandle } from '@/components/sheet-route-frame';
 import { ThemedSurface } from '@/components/themed-surface';
 import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import {
   getAgentCatalog,
   isFreeModel,
@@ -310,7 +311,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                                     <View
                                       style={[
                                         styles.freeBadge,
-                                        { backgroundColor: `${theme.colors.primary}18` },
+                                        { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
                                       ]}>
                                       <Sparkles size={9} color={theme.colors.primary} />
                                       <Text
@@ -371,7 +372,11 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                                       <Text
                                         variant="caption"
                                         weight={isVarSelected ? 'semibold' : 'regular'}
-                                        color={isVarSelected ? '#fff' : theme.colors.textMuted}
+                                        color={
+                                          isVarSelected
+                                            ? theme.colors.onPrimary
+                                            : theme.colors.textMuted
+                                        }
                                         style={styles.variantChipText}>
                                         {v.id}
                                       </Text>

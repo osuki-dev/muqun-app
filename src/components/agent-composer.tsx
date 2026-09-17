@@ -489,17 +489,24 @@ export const AgentComposer = memo(function AgentComposer({
                               borderWidth: StyleSheet.hairlineWidth,
                             },
                       ]}>
-                      <Bot size={13} color={isSessActive ? '#fff' : theme.colors.primary} />
+                      <Bot
+                        size={13}
+                        color={isSessActive ? theme.colors.onPrimary : theme.colors.primary}
+                      />
                       <Text
                         variant="caption"
                         weight="bold"
-                        color={isSessActive ? '#fff' : theme.colors.primary}
+                        color={isSessActive ? theme.colors.onPrimary : theme.colors.primary}
                         style={styles.sessionChipAgentBadge}>
                         {agentName}
                       </Text>
                       <Text
                         variant="caption"
-                        color={isSessActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                        color={
+                          isSessActive
+                            ? withAlpha(theme.colors.onPrimary, 0.6)
+                            : theme.colors.textMuted
+                        }
                         style={styles.sessionChipDot}>
                         •
                       </Text>
@@ -507,7 +514,7 @@ export const AgentComposer = memo(function AgentComposer({
                         variant="caption"
                         weight="medium"
                         numberOfLines={1}
-                        color={isSessActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                        color={isSessActive ? theme.colors.onPrimary : theme.colors.text}
                         style={styles.sessionChipTitle}>
                         {displayTitle}
                       </Text>
@@ -536,12 +543,12 @@ export const AgentComposer = memo(function AgentComposer({
                             ]}>
                             <GitFork
                               size={13}
-                              color={isSubActive ? '#fff' : theme.colors.primary}
+                              color={isSubActive ? theme.colors.onPrimary : theme.colors.primary}
                             />
                             <Text
                               variant="caption"
                               weight="bold"
-                              color={isSubActive ? '#fff' : theme.colors.primary}
+                              color={isSubActive ? theme.colors.onPrimary : theme.colors.primary}
                               style={styles.sessionChipAgentBadge}>
                               {subAgentName}
                             </Text>
@@ -550,7 +557,9 @@ export const AgentComposer = memo(function AgentComposer({
                                 <Text
                                   variant="caption"
                                   color={
-                                    isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted
+                                    isSubActive
+                                      ? withAlpha(theme.colors.onPrimary, 0.6)
+                                      : theme.colors.textMuted
                                   }
                                   style={styles.sessionChipDot}>
                                   •
@@ -559,9 +568,7 @@ export const AgentComposer = memo(function AgentComposer({
                                   variant="caption"
                                   weight="medium"
                                   numberOfLines={1}
-                                  color={
-                                    isSessActive ? 'rgba(255,255,255,0.95)' : theme.colors.text
-                                  }
+                                  color={isSessActive ? theme.colors.onPrimary : theme.colors.text}
                                   style={styles.sessionChipTitle}>
                                   {subDisplayTitle}
                                 </Text>
@@ -648,7 +655,7 @@ export const AgentComposer = memo(function AgentComposer({
                   size={14}
                   color={
                     tasks && tasks.length > 0 && tasks.every((t) => t.done)
-                      ? (theme.colors.success ?? '#22c55e')
+                      ? theme.colors.success
                       : theme.colors.primary
                   }
                 />
@@ -767,8 +774,11 @@ export const AgentComposer = memo(function AgentComposer({
                   styles.stopActionBtn,
                   { backgroundColor: theme.colors.danger },
                 ]}>
-                <Square size={12} color="#fff" />
-                <Text variant="caption" color="#fff" style={styles.actionBtnLabel}>
+                <Square size={12} color={theme.colors.onPrimary} />
+                <Text
+                  variant="caption"
+                  color={theme.colors.onPrimary}
+                  style={styles.actionBtnLabel}>
                   <Trans>Stop</Trans>
                 </Text>
               </PressableScale>

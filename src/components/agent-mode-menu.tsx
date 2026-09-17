@@ -5,7 +5,9 @@ import { Bot, Check, Compass, Sparkles } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
 import type { AgentInfo } from '@/lib/agent-session';
 
@@ -56,7 +58,10 @@ export const AgentModeMenu = memo(function AgentModeMenu({
             testID={`agent-mode-option-${ag.id}`}
             accessibilityLabel={ag.name || ag.id}
             onPress={() => onSelectAgent(ag.id)}
-            style={[styles.option, isSelected && { backgroundColor: `${theme.colors.primary}16` }]}>
+            style={[
+              styles.option,
+              isSelected && { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+            ]}>
             <View style={styles.optionLeft}>
               {renderAgentIcon(ag.id, isSelected ? theme.colors.primary : theme.colors.textMuted)}
               <View style={styles.textWrap}>
@@ -89,9 +94,9 @@ const styles = StyleSheet.create({
     minWidth: 210,
     maxWidth: 300,
     paddingVertical: 5,
-    borderRadius: 18,
+    borderRadius: appChrome.radius.popover,
     borderWidth: 1,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.18)',
+    boxShadow: appChrome.shadow.popover,
   },
   option: {
     flexDirection: 'row',

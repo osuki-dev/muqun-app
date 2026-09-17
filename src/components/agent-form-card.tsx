@@ -5,6 +5,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { FormInput, Send, Check } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import type { FormRequest, FormField } from '@/lib/agent-session';
 
 export interface AgentFormCardProps {
@@ -78,8 +79,8 @@ export const AgentFormCard = memo(function AgentFormCard({
                         styles.optionPill,
                         {
                           backgroundColor: selected
-                            ? `${theme.colors.primary}22`
-                            : `${theme.colors.surfaceRaised}`,
+                            ? withAlpha(theme.colors.primary, 0.13)
+                            : theme.colors.surfaceRaised,
                           borderColor: selected ? theme.colors.primary : theme.colors.border,
                         },
                       ]}>
@@ -117,7 +118,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
-                  backgroundColor: `${theme.colors.surface}80`,
+                  backgroundColor: withAlpha(theme.colors.surface, 0.5),
                 },
               ]}
             />
@@ -143,7 +144,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               value={currentVal}
               onValueChange={(val) => setValue(field.key, val)}
               trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
-              thumbColor="#fff"
+              thumbColor={theme.colors.surface}
             />
           </View>
         );
@@ -165,7 +166,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
-                  backgroundColor: `${theme.colors.surface}80`,
+                  backgroundColor: withAlpha(theme.colors.surface, 0.5),
                 },
               ]}
             />
@@ -201,8 +202,8 @@ export const AgentFormCard = memo(function AgentFormCard({
                       styles.optionPill,
                       {
                         backgroundColor: selected
-                          ? `${theme.colors.primary}22`
-                          : `${theme.colors.surfaceRaised}`,
+                          ? withAlpha(theme.colors.primary, 0.13)
+                          : theme.colors.surfaceRaised,
                         borderColor: selected ? theme.colors.primary : theme.colors.border,
                       },
                     ]}>
@@ -236,7 +237,7 @@ export const AgentFormCard = memo(function AgentFormCard({
       ]}>
       {/* Title */}
       <View style={styles.header}>
-        <View style={[styles.iconBox, { backgroundColor: `${theme.colors.info}20` }]}>
+        <View style={[styles.iconBox, { backgroundColor: withAlpha(theme.colors.info, 0.13) }]}>
           <FormInput size={16} color={theme.colors.info} />
         </View>
         <Text variant="bodySmall" color={theme.colors.text} style={styles.title}>
@@ -253,11 +254,11 @@ export const AgentFormCard = memo(function AgentFormCard({
         onPress={handleSubmit}
         style={[styles.submitBtn, { backgroundColor: theme.colors.primary }]}>
         {submitting ? (
-          <ActivityIndicator size="small" color="#fff" />
+          <ActivityIndicator size="small" color={theme.colors.onPrimary} />
         ) : (
           <>
-            <Send size={14} color="#fff" />
-            <Text variant="caption" color="#fff" style={styles.submitText}>
+            <Send size={14} color={theme.colors.onPrimary} />
+            <Text variant="caption" color={theme.colors.onPrimary} style={styles.submitText}>
               <Trans>Submit Response</Trans>
             </Text>
           </>

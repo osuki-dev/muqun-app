@@ -11,6 +11,7 @@ import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import { Toggle } from '@/components/toggle';
 import type { AgentSessionInfo, TokensUsage } from '@/lib/agent-session';
 
@@ -217,7 +218,11 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                     <Trans>Estimated Cost</Trans>
                   </Text>
                 </View>
-                <View style={[styles.badge, { backgroundColor: `${theme.colors.primary}18` }]}>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+                  ]}>
                   <Text variant="caption" weight="semibold" color={theme.colors.primary}>
                     {costDisplay}
                   </Text>
@@ -333,8 +338,8 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                       style={[
                         styles.confirmRow,
                         {
-                          backgroundColor: `${theme.colors.danger}14`,
-                          borderColor: `${theme.colors.danger}45`,
+                          backgroundColor: withAlpha(theme.colors.danger, 0.08),
+                          borderColor: withAlpha(theme.colors.danger, 0.27),
                         },
                       ]}>
                       <Text variant="caption" color={theme.colors.text} style={styles.confirmText}>
@@ -352,7 +357,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                             onToggleYolo();
                           }}
                           style={[styles.confirmBtn, { backgroundColor: theme.colors.danger }]}>
-                          <Text variant="caption" weight="bold" color="#fff">
+                          <Text variant="caption" weight="bold" color={theme.colors.onPrimary}>
                             <Trans>Enable YOLO</Trans>
                           </Text>
                         </PressableScale>

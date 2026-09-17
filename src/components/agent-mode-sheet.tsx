@@ -11,6 +11,7 @@ import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import { getAgentCatalog, type AgentInfo } from '@/lib/agent-session';
 
 /**
@@ -116,21 +117,21 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     if (mode === 'subagent' || ag.id === 'explore') {
       return {
         label: t`Subagent`,
-        bg: 'rgba(150, 150, 150, 0.15)',
+        bg: withAlpha(theme.colors.textMuted, 0.15),
         textColor: theme.colors.textMuted,
       };
     }
     if (mode === 'primary' || isBuiltin) {
       return {
         label: t`Primary`,
-        bg: `${theme.colors.primary}18`,
+        bg: withAlpha(theme.colors.primary, 0.09),
         textColor: theme.colors.primary,
       };
     }
     return {
       label: t`Custom`,
-      bg: 'rgba(234, 179, 8, 0.15)',
-      textColor: '#eab308',
+      bg: withAlpha(theme.colors.warning, 0.15),
+      textColor: theme.colors.warning,
     };
   };
 

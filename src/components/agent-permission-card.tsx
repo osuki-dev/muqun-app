@@ -5,6 +5,7 @@ import { Trans } from '@lingui/react/macro';
 import { ShieldAlert, Check, ShieldCheck, XCircle } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import type { PermissionRequest, PermissionDecision } from '@/lib/agent-session';
 
 export interface AgentPermissionCardProps {
@@ -41,7 +42,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
       ]}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={[styles.iconBox, { backgroundColor: `${theme.colors.warning}22` }]}>
+        <View style={[styles.iconBox, { backgroundColor: withAlpha(theme.colors.warning, 0.13) }]}>
           <ShieldAlert size={16} color={theme.colors.warning} />
         </View>
         <View style={styles.headerText}>
@@ -55,7 +56,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
       </View>
 
       {/* Description / Resources */}
-      <View style={[styles.body, { backgroundColor: `${theme.colors.surface}99` }]}>
+      <View style={[styles.body, { backgroundColor: withAlpha(theme.colors.surface, 0.6) }]}>
         <Text variant="caption" color={theme.colors.text} style={styles.prompt}>
           {request.prompt}
         </Text>
@@ -80,11 +81,11 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
           onPress={() => handleDecision('allow')}
           style={[styles.btn, styles.allowOnceBtn, { backgroundColor: theme.colors.primary }]}>
           {submitting === 'allow' ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={theme.colors.onPrimary} />
           ) : (
             <>
-              <Check size={14} color="#fff" />
-              <Text variant="caption" color="#fff" style={styles.btnText}>
+              <Check size={14} color={theme.colors.onPrimary} />
+              <Text variant="caption" color={theme.colors.onPrimary} style={styles.btnText}>
                 <Trans>Allow Once</Trans>
               </Text>
             </>
@@ -98,7 +99,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
             styles.btn,
             styles.allowAlwaysBtn,
             {
-              backgroundColor: `${theme.colors.primary}18`,
+              backgroundColor: withAlpha(theme.colors.primary, 0.09),
               borderColor: theme.colors.primary,
             },
           ]}>
@@ -121,7 +122,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
             styles.btn,
             styles.denyBtn,
             {
-              backgroundColor: `${theme.colors.danger}14`,
+              backgroundColor: withAlpha(theme.colors.danger, 0.08),
               borderColor: theme.colors.danger,
             },
           ]}>

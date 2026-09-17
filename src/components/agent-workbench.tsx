@@ -1055,7 +1055,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 handleSelectModel(fallbackModel);
               }}
               style={[styles.overloadBannerBtn, { backgroundColor: theme.colors.primary }]}>
-              <Text variant="caption" weight="bold" color="#fff">
+              <Text variant="caption" weight="bold" color={theme.colors.onPrimary}>
                 <Trans>Switch & Retry</Trans>
               </Text>
             </PressableScale>

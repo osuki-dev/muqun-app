@@ -12,6 +12,7 @@ import { SheetHandle } from '@/components/sheet-route-frame';
 import { ThemedSurface } from '@/components/themed-surface';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import { getAgentVcsDiff, type FileDiffItem } from '@/lib/agent-session';
 import { keyedLines } from '@/lib/line-keys';
 
@@ -186,13 +187,13 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
                     let lineFg = theme.colors.text;
 
                     if (isAdd) {
-                      lineBg = `${theme.colors.success}18`;
+                      lineBg = withAlpha(theme.colors.success, 0.09);
                       lineFg = theme.colors.success;
                     } else if (isDel) {
-                      lineBg = `${theme.colors.danger}18`;
+                      lineBg = withAlpha(theme.colors.danger, 0.09);
                       lineFg = theme.colors.danger;
                     } else if (isHunk) {
-                      lineBg = `${theme.colors.primary}12`;
+                      lineBg = withAlpha(theme.colors.primary, 0.07);
                       lineFg = theme.colors.primary;
                     }
 

@@ -14,6 +14,7 @@ import { ThemedSurface } from '@/components/themed-surface';
 import { LADDER, SettingsSeparator } from '@/components/settings-chrome';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import type { AgentProject, AgentSessionInfo } from '@/lib/agent-session';
 
 /**
@@ -336,7 +337,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                         <View
                           style={[
                             styles.agentBadge,
-                            { backgroundColor: `${theme.colors.primary}18` },
+                            { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
                           ]}>
                           <Text
                             variant="caption"
@@ -458,7 +459,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                                 <View
                                   style={[
                                     styles.subagentBadge,
-                                    { backgroundColor: `${theme.colors.primary}14` },
+                                    { backgroundColor: withAlpha(theme.colors.primary, 0.08) },
                                   ]}>
                                   <Text
                                     variant="caption"

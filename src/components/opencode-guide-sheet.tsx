@@ -165,8 +165,8 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
                 ]}>
                 {copied ? (
                   <>
-                    <Check size={12} color="#fff" strokeWidth={2.5} />
-                    <Text variant="caption" weight="semibold" color="#fff">
+                    <Check size={12} color={theme.colors.onPrimary} strokeWidth={2.5} />
+                    <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
                       {t`Copied`}
                     </Text>
                   </>
@@ -214,11 +214,11 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
           onPress={handleCheckAgain}
           style={[styles.checkAgainBtn, { backgroundColor: theme.colors.primary }]}>
           {checking ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color={theme.colors.onPrimary} />
           ) : (
-            <RefreshCw size={16} color="#fff" strokeWidth={2.2} />
+            <RefreshCw size={16} color={theme.colors.onPrimary} strokeWidth={2.2} />
           )}
-          <Text variant="bodySmall" weight="bold" color="#fff">
+          <Text variant="bodySmall" weight="bold" color={theme.colors.onPrimary}>
             {t`Check Again`}
           </Text>
         </PressableScale>

@@ -22,7 +22,7 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { PressableScale } from '@/components/pressable-scale';
-import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
+import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { keyedLines } from '@/lib/line-keys';
 
@@ -292,6 +292,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   // The markdown renderer's tree-sitter grammars highlight file bodies; only
   // when the tool target reveals a known language.
   const markdownStyle = usePaneChatMarkdownStyle();
+  const paneColors = usePaneChatColors();
   const highlightLang = useMemo(
     () => (kind === 'write' || kind === 'edit' ? fenceLanguageForPath(displayCommand) : undefined),
     [kind, displayCommand]
@@ -327,8 +328,11 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       : status === 'failed'
         ? theme.colors.danger
         : theme.colors.warning;
-  const addedColor = theme.colors.success ?? '#22c55e';
-  const removedColor = theme.colors.danger;
+  // The transcript and the diff sheet paint an added line the same way,
+  // because `usePaneChatColors` prefers the terminal palette's own green and
+  // red -- so one change reads identically in the terminal and here.
+  const addedColor = paneColors.added;
+  const removedColor = paneColors.removed;
 
   const chevronProgress = useSharedValue(expanded ? 1 : 0);
   useEffect(() => {
