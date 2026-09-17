@@ -1456,6 +1456,7 @@ msgid "Could not start the task."
 msgstr "Не удалось запустить задачу"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
 msgid "Could not stop it"
 msgstr "Не удалось остановить"
 
@@ -3325,6 +3326,10 @@ msgstr "Повторите отмеченные красным или удали
 msgid "Retry uploading {0}"
 msgstr "Повторить загрузку {0}"
 
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "Повторная попытка…"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Return"
@@ -3640,10 +3645,6 @@ msgstr "Сервер недоступен"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Серверы"
-
-#: src/components/agent-workbench.tsx
-msgid "Service is experiencing high load."
-msgstr "Сервис испытывает высокую нагрузку"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
@@ -4017,6 +4018,10 @@ msgstr "Остановить этого агента"
 msgid "Stop this command"
 msgstr "Остановить эту команду"
 
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "Остановлено"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Хранилище"
@@ -4049,10 +4054,6 @@ msgstr "Приостановить"
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "Смахните влево или вправо, чтобы сменить пространство"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch & Retry"
-msgstr "Переключить и повторить"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4088,10 +4089,6 @@ msgstr "Переключиться на чат"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Переключиться на терминал"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "Переключитесь на Union Alpha (быстро и бесплатно) для мгновенного ответа"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
@@ -4347,6 +4344,10 @@ msgstr "Тема будет удалена с этого устройства"
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Транскрипт в виде беседы, шаги инструментов свёрнуты"
+
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "Ход завершился ошибкой"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx

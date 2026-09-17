@@ -1456,6 +1456,7 @@ msgid "Could not start the task."
 msgstr "无法开始这个任务"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
 msgid "Could not stop it"
 msgstr "无法停止"
 
@@ -3325,6 +3326,10 @@ msgstr "请重试标为红色的项目，或移除它们后再发送"
 msgid "Retry uploading {0}"
 msgstr "重试上传 {0}"
 
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "正在重试…"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Enter 键"
@@ -3640,10 +3645,6 @@ msgstr "服务器不可用"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "服务器"
-
-#: src/components/agent-workbench.tsx
-msgid "Service is experiencing high load."
-msgstr "服务负载过高"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
@@ -4017,6 +4018,10 @@ msgstr "停止这个代理"
 msgid "Stop this command"
 msgstr "停止这条命令"
 
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "已停止"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "存储空间"
@@ -4049,10 +4054,6 @@ msgstr "挂起"
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "左右滑动以切换工作区"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch & Retry"
-msgstr "切换并重试"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4088,10 +4089,6 @@ msgstr "切换到聊天视图"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "切换到终端视图"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "切换至 Union Alpha（快速免费）以立即获得响应"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
@@ -4347,6 +4344,10 @@ msgstr "此主题将从当前设备移除"
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "把对话记录当成聊天呈现，并收起工具步骤"
+
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "这一轮执行失败"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx

@@ -1456,6 +1456,7 @@ msgid "Could not start the task."
 msgstr "Die Aufgabe konnte nicht gestartet werden"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
 msgid "Could not stop it"
 msgstr "Konnte nicht gestoppt werden"
 
@@ -3325,6 +3326,10 @@ msgstr "Wiederhole die rot markierten oder entferne sie und sende dann erneut"
 msgid "Retry uploading {0}"
 msgstr "Upload von {0} wiederholen"
 
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "Erneuter Versuch…"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Eingabetaste"
@@ -3640,10 +3645,6 @@ msgstr "Server nicht erreichbar"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Server"
-
-#: src/components/agent-workbench.tsx
-msgid "Service is experiencing high load."
-msgstr "Der Dienst ist derzeit stark ausgelastet"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
@@ -4017,6 +4018,10 @@ msgstr "Diesen Agent stoppen"
 msgid "Stop this command"
 msgstr "Diesen Befehl stoppen"
 
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "Gestoppt"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Speicher"
@@ -4049,10 +4054,6 @@ msgstr "Anhalten"
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "Nach links oder rechts wischen, um den Workspace zu wechseln"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch & Retry"
-msgstr "Wechseln & wiederholen"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4088,10 +4089,6 @@ msgstr "Zur Chat-Ansicht wechseln"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Zur Terminal-Ansicht wechseln"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "Wechseln Sie zu Union Alpha (schnell & kostenlos) für sofortige Antworten"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
@@ -4347,6 +4344,10 @@ msgstr "Das Design wird von diesem Gerät entfernt"
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Das Protokoll als Unterhaltung, mit eingeklappten Tool-Schritten"
+
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "Der Durchlauf ist fehlgeschlagen"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx

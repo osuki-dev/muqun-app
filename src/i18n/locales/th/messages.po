@@ -1456,6 +1456,7 @@ msgid "Could not start the task."
 msgstr "เริ่มงานไม่ได้"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
 msgid "Could not stop it"
 msgstr "หยุดไม่สำเร็จ"
 
@@ -3325,6 +3326,10 @@ msgstr "ลองอัปโหลดรายการสีแดงอีก
 msgid "Retry uploading {0}"
 msgstr "ลองอัปโหลด {0} อีกครั้ง"
 
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "กำลังลองใหม่…"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Return"
@@ -3640,10 +3645,6 @@ msgstr "เซิร์ฟเวอร์ไม่พร้อมใช้งา
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "เซิร์ฟเวอร์"
-
-#: src/components/agent-workbench.tsx
-msgid "Service is experiencing high load."
-msgstr "บริการกำลังรับโหลดสูง"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
@@ -4017,6 +4018,10 @@ msgstr "หยุดเอเจนต์นี้"
 msgid "Stop this command"
 msgstr "หยุดคำสั่งนี้"
 
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "หยุดแล้ว"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "พื้นที่จัดเก็บ"
@@ -4049,10 +4054,6 @@ msgstr "พักกระบวนการ"
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "ปัดซ้ายหรือขวาเพื่อสลับพื้นที่ทำงาน"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch & Retry"
-msgstr "เปลี่ยนและลองใหม่"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4088,10 +4089,6 @@ msgstr "สลับไปยังมุมมองแชต"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "สลับไปยังมุมมองเทอร์มินัล"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "เปลี่ยนเป็น Union Alpha (เร็วและฟรี) เพื่อการตอบกลับทันที"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
@@ -4347,6 +4344,10 @@ msgstr "ธีมจะถูกลบจากอุปกรณ์นี้"
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "บันทึกในรูปแบบบทสนทนา โดยซ่อนขั้นตอนการใช้เครื่องมือ"
+
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "รอบนี้ล้มเหลว"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx

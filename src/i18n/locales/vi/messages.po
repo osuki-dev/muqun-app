@@ -1456,6 +1456,7 @@ msgid "Could not start the task."
 msgstr "Không thể bắt đầu tác vụ"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
 msgid "Could not stop it"
 msgstr "Không thể dừng"
 
@@ -3325,6 +3326,10 @@ msgstr "Thử lại những mục đánh dấu đỏ, hoặc gỡ chúng, rồi 
 msgid "Retry uploading {0}"
 msgstr "Thử tải lên lại {0}"
 
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "Đang thử lại…"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Return"
@@ -3640,10 +3645,6 @@ msgstr "Máy chủ không khả dụng"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Máy chủ"
-
-#: src/components/agent-workbench.tsx
-msgid "Service is experiencing high load."
-msgstr "Dịch vụ đang chịu tải cao"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
@@ -4017,6 +4018,10 @@ msgstr "Dừng tác tử này"
 msgid "Stop this command"
 msgstr "Dừng lệnh này"
 
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "Đã dừng"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Bộ nhớ"
@@ -4049,10 +4054,6 @@ msgstr "Tạm dừng"
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "Vuốt trái hoặc phải để chuyển không gian làm việc"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch & Retry"
-msgstr "Chuyển đổi & thử lại"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4088,10 +4089,6 @@ msgstr "Chuyển sang chế độ xem trò chuyện"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Chuyển sang chế độ xem terminal"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "Chuyển sang Union Alpha (Nhanh & Miễn phí) để nhận phản hồi ngay lập tức"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
@@ -4347,6 +4344,10 @@ msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công cụ được thu gọn"
+
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "Lượt này đã thất bại"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx

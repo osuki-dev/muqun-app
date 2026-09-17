@@ -1456,6 +1456,7 @@ msgid "Could not start the task."
 msgstr "Could not start the task"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
 msgid "Could not stop it"
 msgstr "Could not stop it"
 
@@ -3325,6 +3326,10 @@ msgstr "Retry the ones marked in red, or remove them, then send again"
 msgid "Retry uploading {0}"
 msgstr "Retry uploading {0}"
 
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "Retrying…"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
 msgstr "Return"
@@ -3640,10 +3645,6 @@ msgstr "Server unavailable"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Servers"
-
-#: src/components/agent-workbench.tsx
-msgid "Service is experiencing high load."
-msgstr "Service is experiencing high load"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
@@ -4017,6 +4018,10 @@ msgstr "Stop this agent"
 msgid "Stop this command"
 msgstr "Stop this command"
 
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "Stopped"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Storage"
@@ -4049,10 +4054,6 @@ msgstr "Suspend"
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "Swipe left or right to switch workspace"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch & Retry"
-msgstr "Switch & Retry"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4088,10 +4089,6 @@ msgstr "Switch to the chat view"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Switch to the terminal view"
-
-#: src/components/agent-workbench.tsx
-msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "Switch to Union Alpha (Fast & Free) for immediate response"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
@@ -4347,6 +4344,10 @@ msgstr "The theme will be removed from this device"
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "The transcript as a conversation, with tool steps folded away"
+
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "The turn failed"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx

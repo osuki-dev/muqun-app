@@ -19,7 +19,6 @@ import {
   PlusCircle,
   RefreshCw,
   ShieldAlert,
-  Zap,
 } from 'lucide-react-native';
 import {
   LegendList,
@@ -889,18 +888,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     handleSendPromptRef.current = handleSendPrompt;
   });
 
+  /**
+   * Stop, and then wait to be told what happened.
+   *
+   * This used to force `status: 'idle'` in a `finally`, including when the
+   * abort threw -- so a failed abort showed a stopped agent that was still
+   * running, and the reader's next prompt landed in the middle of a turn they
+   * believed was over. The engine answers an interrupt with
+   * `agent.status.changed: interrupted`; that is the status, and a refusal is
+   * said out loud rather than papered over.
+   */
   const handleAbort = useCallback(async () => {
     if (!activeAsid) return;
     try {
       await abortAgentSession(sessionId, activeAsid);
     } catch (err) {
       console.warn('Failed to abort session:', err);
-    } finally {
-      if (sessionInfo) {
-        setSessionInfo({ ...sessionInfo, status: 'idle' });
-      }
+      showToast({
+        variant: 'danger',
+        title: t`Could not stop it`,
+        message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+      });
     }
-  }, [activeAsid, sessionId, sessionInfo]);
+  }, [activeAsid, sessionId, showToast, t]);
 
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
@@ -1341,28 +1351,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     });
   }, [isRunning, sessionInfo?.title]);
 
-  const isOverloaded = useMemo(() => {
-    if (!isRunning && timeline.length > 0) {
-      const lastItem = timeline[timeline.length - 1];
-      if (lastItem && lastItem.role === 'assistant') {
-        const text = lastItem.part.type === 'text' ? lastItem.part.text : '';
-        const lower = text.toLowerCase();
-        if (
-          text.includes('负载太高') ||
-          text.includes('负载过高') ||
-          lower.includes('overload') ||
-          lower.includes('rate limit') ||
-          lower.includes('capacity') ||
-          lower.includes('service unavailable') ||
-          lower.includes('temporarily unavailable')
-        ) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }, [isRunning, timeline]);
-
   const activeProject = useMemo(() => {
     if (!activeDirectory) return undefined;
     return knownProjects.find(
@@ -1423,9 +1411,42 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setLoadingEarlier(false);
   }, [windowStart]);
 
+  /**
+   * What the engine last said about itself, when that is worth a row.
+   *
+   * `failed`, `interrupted` and `retry` are three of the six statuses the
+   * contract defines, and none of them had anywhere to appear: a turn that
+   * ended in an error simply stopped, and the only clue was the composer's
+   * Stop button going away. The sniffer this replaces read the *model's own
+   * prose* for the words "overload", "rate limit" and two Chinese phrases, and
+   * offered a switch to a model id (`opencode/union-alpha`) that appears
+   * nowhere else in this app or in any catalog it fetches.
+   */
+  const statusNotice = useMemo(() => {
+    const status = sessionInfo?.status;
+    if (status === 'failed') {
+      return {
+        tone: theme.colors.danger,
+        label: t`The turn failed`,
+        detail: sessionInfo?.error?.message ?? '',
+      };
+    }
+    if (status === 'interrupted') {
+      return { tone: theme.colors.warning, label: t`Stopped`, detail: '' };
+    }
+    if (status === 'retry') {
+      return {
+        tone: theme.colors.warning,
+        label: t`Retrying…`,
+        detail: sessionInfo?.error?.message ?? '',
+      };
+    }
+    return null;
+  }, [sessionInfo?.status, sessionInfo?.error?.message, theme.colors, t]);
+
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
-    if (!hasFormsOrPerms && !isRunning && !isOverloaded) return null;
+    if (!hasFormsOrPerms && !isRunning && !statusNotice) return null;
     return (
       <View style={styles.footerContainer}>
         {isRunning ? (
@@ -1445,40 +1466,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             </View>
           </View>
         ) : null}
-        {isOverloaded ? (
+        {statusNotice ? (
           <View
+            testID="agent-status-notice"
             style={[
-              styles.overloadBanner,
+              styles.statusNotice,
               {
-                backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
-                borderColor: withAlpha(theme.colors.warning, 0.35),
+                backgroundColor: surfaceBackground(withAlpha(statusNotice.tone, 0.1)),
+                borderColor: withAlpha(statusNotice.tone, 0.35),
               },
             ]}>
-            <View style={styles.overloadBannerContent}>
-              <Zap size={15} color={theme.colors.warning} />
-              <View style={styles.overloadBannerTextWrapper}>
-                <Text variant="caption" weight="semibold" color={theme.colors.text}>
-                  <Trans>Service is experiencing high load.</Trans>
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Switch to Union Alpha (Fast & Free) for immediate response.</Trans>
-                </Text>
-              </View>
-            </View>
-            <PressableScale
-              testID="agent-overload-fallback-btn"
-              onPress={() => {
-                const fallbackModel: ModelRef = {
-                  provider_id: 'opencode',
-                  model_id: 'union-alpha',
-                };
-                handleSelectModel(fallbackModel);
-              }}
-              style={[styles.overloadBannerBtn, { backgroundColor: theme.colors.primary }]}>
-              <Text variant="caption" weight="bold" color={theme.colors.onPrimary}>
-                <Trans>Switch & Retry</Trans>
+            <StatusDot color={statusNotice.tone} filled size={7} />
+            <View style={styles.statusNoticeText}>
+              <Text variant="caption" weight="semibold" color={theme.colors.text}>
+                {statusNotice.label}
               </Text>
-            </PressableScale>
+              {/* OpenCode's own message, said as it was said. */}
+              {statusNotice.detail ? (
+                <Text variant="caption" selectable color={theme.colors.textMuted}>
+                  {statusNotice.detail}
+                </Text>
+              ) : null}
+            </View>
           </View>
         ) : null}
         {footerPermissions.map((p) => (
@@ -1501,10 +1510,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     footerPermissions,
     forms,
     isRunning,
-    isOverloaded,
+    statusNotice,
     handlePermissionDecision,
     handleFormSubmit,
-    handleSelectModel,
     surfaceBackground,
     theme.colors,
   ]);
@@ -2219,33 +2227,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     flexShrink: 1,
   },
-  overloadBanner: {
+  statusNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    gap: 8,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 16,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
-    gap: 12,
     marginVertical: 4,
   },
-  overloadBannerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  statusNoticeText: {
     flex: 1,
-  },
-  overloadBannerTextWrapper: {
-    flex: 1,
+    minWidth: 0,
     gap: 2,
-  },
-  overloadBannerBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderCurve: 'continuous',
   },
   footerContainer: {
     gap: 10,
