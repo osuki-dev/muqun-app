@@ -76,6 +76,11 @@ msgstr "{0} · Do hệ thống quản lý, xóa bộ nhớ đệm không đụng
 msgid "{0} (this device)"
 msgstr "{0} (thiết bị này)"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "{0} ký tự không hiển thị"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count} kết quả"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "Xong {done} trên {0}"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB không hiển thị"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "Giao diện, terminal, bảo mật"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "Áp dụng giao diện"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "Đang xóa…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "Đóng"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "Đóng thay đổi"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Đóng tệp"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "Đóng danh sách tệp"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "Đóng tác vụ mới"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "Đóng ghép nối"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "Đóng menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Đóng trình giả lập"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "Đóng danh mục giao diện"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "Đóng bộ chọn chủ đề"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "Bỏ qua những gì đã xảy ra khi bạn vắng mặt"
 msgid "Dismiss what's new"
 msgstr "Bỏ qua có gì mới"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "Tài liệu"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "Mở ảnh"
 msgid "Open in changes"
 msgstr "Mở trong Thay đổi"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "Mở trong trình xem"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "Hiện {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Hiện các tác tử và trạng thái của chúng trên màn hình chính. Cập nhật khi Muqun đang mở"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "Hiện tất cả tệp"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Hiện chi tiết camera"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "Hiện mã"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "Hiện tài liệu"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "Hiển thị chữ trên trang chủ"
 msgid "Show illustration on Home"
 msgstr "Hiển thị hình minh hoạ trên trang chủ"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "Hiện hình ảnh"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Hiện thêm"
@@ -4561,6 +4537,7 @@ msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, khô
 msgid "Total spent"
 msgstr "Tổng đã dùng"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "Đã cắt bớt"

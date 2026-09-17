@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { FileText, GitFork, Play } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown';
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import {
@@ -17,7 +18,7 @@ import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
-import { isSafeExternalLink } from '@/lib/safe-link';
+import { TOOL_BODY_MAX_LINES, capToolBody } from '@/lib/markdown-cap';
 import { diffRowsForFence, diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
 import {
   basename,
@@ -96,17 +97,31 @@ const Chip = memo(function Chip({ text, color }: { text: string; color: string }
   );
 });
 
-/** Monospace body, syntax-highlighted when the renderer has a grammar for it. */
+/**
+ * Monospace body, syntax-highlighted when the renderer has a grammar for it,
+ * and never longer than one native view can measure.
+ *
+ * A `read` of a five-thousand-line file used to be inlined whole: one shadow
+ * node measuring ~70,000px, a layout Fabric could not settle, and an abort.
+ * Four hundred lines is what a card draws; the rest is a tap away, and the
+ * whole file is one tap further, in the viewer that is built to scroll it.
+ */
 const CodeBody = memo(function CodeBody({
   body,
   language,
   markdownStyle,
+  onOpenInViewer,
 }: {
   body: string;
   language?: string;
   markdownStyle: MarkdownStyle;
+  onOpenInViewer?: () => void;
 }) {
-  const fenced = useMemo(() => fencedCode(body, language), [body, language]);
+  const { t } = useLingui();
+  const colors = usePaneChatColors();
+  const [budget, setBudget] = useState(TOOL_BODY_MAX_LINES);
+  const capped = useMemo(() => capToolBody(body, budget), [body, budget]);
+  const fenced = useMemo(() => fencedCode(capped.text, language), [capped.text, language]);
   // The card is the surface; the code block inside it draws no box of its own.
   const flat = useMemo<MarkdownStyle>(
     () => ({
@@ -123,16 +138,39 @@ const CodeBody = memo(function CodeBody({
     [markdownStyle]
   );
   return (
-    <EnrichedMarkdownText
-      key={markdownPaletteKey(markdownStyle)}
-      flavor="commonmark"
-      markdown={fenced.text}
-      markdownStyle={flat}
-      containerStyle={styles.stretch}
-      selectable
-      streamingAnimation={false}
-      textBreakStrategy="simple"
-    />
+    <View style={styles.stretch}>
+      <EnrichedMarkdownText
+        key={markdownPaletteKey(markdownStyle)}
+        flavor="commonmark"
+        markdown={fenced.text}
+        markdownStyle={flat}
+        containerStyle={styles.stretch}
+        selectable
+        streamingAnimation={false}
+        textBreakStrategy="simple"
+      />
+      {capped.hidden > 0 ? (
+        <TruncationFooter
+          note={t`${capped.hidden} more lines`}
+          onShowMore={() => setBudget((prev) => prev + TOOL_BODY_MAX_LINES)}
+          showMoreLabel={t`Show more`}
+          extra={
+            onOpenInViewer ? (
+              <PressableScale
+                testID="agent-tool-open-viewer"
+                accessibilityRole="button"
+                accessibilityLabel={t`Open in viewer`}
+                onPress={onOpenInViewer}
+                style={[styles.moreChip, { borderColor: colors.border }]}>
+                <Text variant="caption" color={colors.accent}>
+                  {t`Open in viewer`}
+                </Text>
+              </PressableScale>
+            ) : null
+          }
+        />
+      ) : null}
+    </View>
   );
 });
 
@@ -147,8 +185,13 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
-  const [showAll, setShowAll] = useState(false);
-  const capped = useMemo(() => (showAll ? { text, hidden: 0 } : capLines(text)), [text, showAll]);
+  // "Show the rest" used to mean the whole 64 KiB, in one `<Text>`. It means
+  // another four hundred lines now, and says so.
+  const [budget, setBudget] = useState(0);
+  const capped = useMemo(
+    () => (budget === 0 ? capLines(text) : capToolBody(text, budget)),
+    [text, budget]
+  );
 
   if (!text) return null;
   return (
@@ -161,7 +204,9 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
           testID="agent-tool-output-expand"
           accessibilityRole="button"
           accessibilityLabel={t`Show the rest of this output`}
-          onPress={() => setShowAll(true)}
+          onPress={() =>
+            setBudget((prev) => (prev === 0 ? TOOL_BODY_MAX_LINES : prev + TOOL_BODY_MAX_LINES))
+          }
           style={[styles.moreChip, { borderColor: colors.border }]}>
           <Text variant="caption" color={colors.accent}>
             {t`${capped.hidden} more lines`}
@@ -638,7 +683,14 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       // is the content; the base64 never is.
       const body = stripDataUris(stripReadLineNumbers(outputText));
       if (!body) return null;
-      return <CodeBody body={body} language={language} markdownStyle={markdownStyle} />;
+      return (
+        <CodeBody
+          body={body}
+          language={language}
+          markdownStyle={markdownStyle}
+          {...viewerAction(target, args.onOpenFile)}
+        />
+      );
     }
 
     case 'edit': {
@@ -669,6 +721,7 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
           body={args.writeContent}
           language={fenceLanguageForPath(target)}
           markdownStyle={markdownStyle}
+          {...viewerAction(target, args.onOpenFile)}
         />
       ) : (
         <OutputLines text={outputText} />
@@ -708,15 +761,10 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
 
     case 'subagent':
       return args.subagentText ? (
-        <EnrichedMarkdownText
-          key={markdownPaletteKey(markdownStyle)}
-          flavor="commonmark"
+        <BoundedMarkdown
           markdown={args.subagentText}
           markdownStyle={markdownStyle}
-          containerStyle={styles.stretch}
-          selectable
-          streamingAnimation={false}
-          textBreakStrategy="simple"
+          openLinks={false}
         />
       ) : null;
 
@@ -745,6 +793,22 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
     default:
       return <GenericToolBody input={part.input} outputText={outputText} />;
   }
+}
+
+/**
+ * The same file, in the viewer that is built to scroll it.
+ *
+ * Offered only for a real path: a `read` of a URL or of a relative name the
+ * gateway resolved elsewhere has nothing the asset viewer could open.
+ */
+function viewerAction(
+  target: string,
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void
+): { onOpenInViewer?: () => void } {
+  if (!onOpenFile || !target.startsWith('/')) return {};
+  const name = basename(target);
+  const mime = /\.mdx?$/i.test(target) ? 'text/markdown' : 'text/plain';
+  return { onOpenInViewer: () => onOpenFile({ uri: target, mime, name }) };
 }
 
 /** A `+`/`-` patch made from a before and an after, when no real one came. */
@@ -853,23 +917,9 @@ const WebResult = memo(function WebResult({
   markdown: string;
   markdownStyle: MarkdownStyle;
 }) {
-  const theme = useThemeTokens();
-  return (
-    <EnrichedMarkdownText
-      key={markdownPaletteKey(markdownStyle)}
-      flavor="github"
-      markdown={markdown}
-      markdownStyle={markdownStyle}
-      containerStyle={styles.stretch}
-      selectable
-      selectionColor={theme.colors.primary}
-      streamingAnimation={false}
-      textBreakStrategy="simple"
-      onLinkPress={({ url }) => {
-        if (isSafeExternalLink(url)) void Linking.openURL(url);
-      }}
-    />
-  );
+  // Github flavor: a fetched page's markdown reliably has tables and task
+  // lists in it, and commonmark draws neither.
+  return <BoundedMarkdown markdown={markdown} markdownStyle={markdownStyle} flavor="github" />;
 });
 
 const SkillBody = memo(function SkillBody({ description }: { description: string }) {

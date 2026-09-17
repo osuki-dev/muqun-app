@@ -76,6 +76,11 @@ msgstr "{0} · Managed by the system. Clear cache leaves it alone"
 msgid "{0} (this device)"
 msgstr "{0} (this device)"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "{0} characters not shown"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count} results"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{done} of {0} done"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB not shown"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "Appearance, terminal, security"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "Apply theme"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "Clearing…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "Close"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "Close changes"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Close file"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "Close files"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "Close new task"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "Close pairing"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "Close the menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Close the simulator"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "Close theme catalogue"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "Close theme picker"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "Dismiss what happened while you were away"
 msgid "Dismiss what's new"
 msgstr "Dismiss what's new"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "Docs"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "Open image"
 msgid "Open in changes"
 msgstr "Open in changes"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "Open in viewer"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "Show {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Show agents and their status on the home screen. Updates while Muqun is open"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "Show all files"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Show camera details"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "Show code"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "Show documents"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "Show Home text"
 msgid "Show illustration on Home"
 msgstr "Show illustration on Home"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "Show images"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Show more"
@@ -4561,6 +4537,7 @@ msgstr "Too many changes to list. This is the start of them, not all of them"
 msgid "Total spent"
 msgstr "Total spent"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "Truncated"

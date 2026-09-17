@@ -76,6 +76,11 @@ msgstr "{0} · Géré par le système, et le vidage du cache n’y touche pas"
 msgid "{0} (this device)"
 msgstr "{0} (cet appareil)"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "{0} caractères non affichés"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count} résultats"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{done} sur {0} terminées"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} Ko non affichés"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "Apparence, terminal, sécurité"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "Appliquer le thème"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "Vidage…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "Fermer"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "Fermer les modifications"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Fermer le fichier"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "Fermer la liste des fichiers"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "Fermer la nouvelle tâche"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "Fermer l’appairage"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "Fermer le menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Fermer le simulateur"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "Fermer le catalogue de thèmes"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "Fermer la liste des thèmes"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "Masquer ce qui s’est passé pendant votre absence"
 msgid "Dismiss what's new"
 msgstr "Fermer les nouveautés"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "Docs"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "Ouvrir l'image"
 msgid "Open in changes"
 msgstr "Ouvrir dans Modifications"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "Ouvrir dans la visionneuse"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "Afficher {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Affiche les agents et leur statut sur l’écran d’accueil. Se met à jour tant que Muqun est ouvert"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "Afficher tous les fichiers"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Afficher les détails de la caméra"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "Afficher le code"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "Afficher les documents"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "Afficher le texte sur l’accueil"
 msgid "Show illustration on Home"
 msgstr "Afficher l’illustration sur l’accueil"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "Afficher les images"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Afficher plus"
@@ -4561,6 +4537,7 @@ msgstr "Trop de modifications à lister. Voici le début, pas la totalité"
 msgid "Total spent"
 msgstr "Total dépensé"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "Tronqué"

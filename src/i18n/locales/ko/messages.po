@@ -76,6 +76,11 @@ msgstr "{0} · 시스템이 관리하므로 캐시를 비워도 지워지지 않
 msgid "{0} (this device)"
 msgstr "{0} (이 기기)"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "{0}자 표시되지 않음"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count}개 결과"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB 표시되지 않음"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "외관, 터미널, 보안"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "테마 적용"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "비우는 중…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "닫기"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "변경 사항 닫기"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "파일 닫기"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "파일 목록 닫기"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "새 작업 닫기"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "페어링 닫기"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "메뉴 닫기"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "시뮬레이터 닫기"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "테마 카탈로그 닫기"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "테마 목록 닫기"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "자리를 비운 사이의 변화 닫기"
 msgid "Dismiss what's new"
 msgstr "새로운 기능 닫기"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "문서"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "이미지 열기"
 msgid "Open in changes"
 msgstr "변경 사항에서 열기"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "뷰어에서 열기"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "{0} 표시"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "홈 화면에 에이전트와 상태를 표시합니다. Muqun이 열려 있는 동안 갱신됩니다"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "모든 파일 표시"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "카메라 세부 정보 표시"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "코드 표시"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "문서 표시"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "홈 텍스트 표시"
 msgid "Show illustration on Home"
 msgstr "홈에 일러스트 표시"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "이미지 표시"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "더 보기"
@@ -4561,6 +4537,7 @@ msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체
 msgid "Total spent"
 msgstr "총 사용량"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "잘림"

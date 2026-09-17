@@ -1,5 +1,5 @@
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
@@ -20,7 +20,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
-import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
+import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -30,6 +30,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { AgentToolCard } from '@/components/agent-tool-card';
@@ -46,8 +47,6 @@ import {
   type AssetImageSource,
 } from '@/lib/gateway-client';
 import { fadeIn, timing } from '@/lib/motion';
-import { markdownPaletteKey } from '@/lib/markdown-palette';
-import { isSafeExternalLink } from '@/lib/safe-link';
 import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
 import {
   formatModelName,
@@ -394,17 +393,11 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
 
       {expanded && part.summary ? (
         <Animated.View entering={fadeIn('micro')} style={[styles.messageBlock, plate]}>
-          <EnrichedMarkdownText
-            key={markdownPaletteKey(markdownStyle)}
-            flavor="commonmark"
+          <BoundedMarkdown
             markdown={part.summary}
             markdownStyle={markdownStyle}
             containerStyle={styles.markdownContainer}
-            selectable
-            selectionColor={theme.colors.primary}
-            selectionHandleColor={theme.colors.primary}
-            streamingAnimation={false}
-            textBreakStrategy="simple"
+            openLinks={false}
           />
         </Animated.View>
       ) : null}
@@ -555,8 +548,6 @@ const MessageTextPart = memo(function MessageTextPart({
   prevTool?: TimelineItem;
   markdownStyle: MarkdownStyle;
 }) {
-  const theme = useThemeTokens();
-
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
     [text]
@@ -584,21 +575,12 @@ const MessageTextPart = memo(function MessageTextPart({
   }
 
   const renderMarkdown = (key: string, markdown: string) => (
-    <EnrichedMarkdownText
-      key={`${key}:${markdownPaletteKey(markdownStyle)}`}
-      flavor="commonmark"
+    <BoundedMarkdown
+      key={key}
       markdown={markdown}
       markdownStyle={markdownStyle}
       containerStyle={styles.markdownContainer}
-      selectable
-      selectionColor={theme.colors.primary}
-      selectionHandleColor={theme.colors.primary}
-      streamingAnimation={false}
-      textBreakStrategy="simple"
-      md4cFlags={{ latexMath: true }}
-      onLinkPress={({ url }) => {
-        if (isSafeExternalLink(url)) void Linking.openURL(url);
-      }}
+      latexMath
     />
   );
 

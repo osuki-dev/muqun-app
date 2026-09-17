@@ -76,6 +76,11 @@ msgstr "{0} · 由系統管理，清除快取不會動到它"
 msgid "{0} (this device)"
 msgstr "{0}（這台裝置）"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "未顯示 {0} 個字元"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count} 個結果"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "未顯示 {hiddenKb} KB"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "外觀、終端機、安全性"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "套用主題"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "正在清除…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "關閉"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "關閉變更"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "關閉檔案"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "關閉檔案清單"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "關閉新增任務"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "關閉配對"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "關閉選單"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "關閉模擬器"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "關閉佈景主題目錄"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "關閉主題清單"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "關閉離開期間的摘要"
 msgid "Dismiss what's new"
 msgstr "關閉新功能卡片"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "文件"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "開啟圖片"
 msgid "Open in changes"
 msgstr "在變更中開啟"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "在檢視器中開啟"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "顯示 {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "在主畫面顯示代理程式與其狀態。牧群開啟時會持續更新"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "顯示所有檔案"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "顯示相機詳細資訊"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "顯示程式碼"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "顯示文件"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "顯示首頁文字"
 msgid "Show illustration on Home"
 msgstr "在首頁顯示插圖"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "顯示圖片"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "顯示更多"
@@ -4561,6 +4537,7 @@ msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
 msgid "Total spent"
 msgstr "累計消耗"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "已截斷"

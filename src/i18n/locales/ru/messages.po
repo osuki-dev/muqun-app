@@ -76,6 +76,11 @@ msgstr "{0} · Этим управляет система, и очистка к�
 msgid "{0} (this device)"
 msgstr "{0} (это устройство)"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "{0} символов не показано"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count} результатов"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{done} из {0} готово"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} КБ не показано"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "Оформление, терминал, безопасность"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "Применить тему"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "Очищаем…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "Закрыть"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "Закрыть изменения"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Закрыть файл"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "Закрыть список файлов"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "Закрыть новую задачу"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "Закрыть привязку"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "Закрыть меню"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Закрыть симулятор"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "Закрыть каталог тем"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "Закрыть выбор темы"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "Скрыть, что произошло, пока вас не было"
 msgid "Dismiss what's new"
 msgstr "Скрыть новости"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "Документы"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "Открыть изображение"
 msgid "Open in changes"
 msgstr "Открыть в изменениях"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "Открыть в просмотрщике"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "Показать {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Показывать агентов и их статус на экране «Домой». Обновляется, пока Muqun открыт"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "Показать все файлы"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Показать сведения о камере"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "Показать код"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "Показать документы"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "Показывать текст на главной"
 msgid "Show illustration on Home"
 msgstr "Показывать иллюстрацию на главной"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "Показать изображения"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Показать ещё"
@@ -4561,6 +4537,7 @@ msgstr "Слишком много изменений для списка. Это
 msgid "Total spent"
 msgstr "Всего израсходовано"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "Обрезано"

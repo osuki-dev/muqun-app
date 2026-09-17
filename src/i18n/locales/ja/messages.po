@@ -76,6 +76,11 @@ msgstr "{0} · システムが管理しているため、キャッシュを削�
 msgid "{0} (this device)"
 msgstr "{0}（このデバイス）"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "{0} 文字は非表示"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count} 件"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{0} 件中 {done} 件完了"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB は非表示"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "外観、ターミナル、セキュリティ"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "テーマを適用"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "削除しています…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "閉じる"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "変更点を閉じる"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ファイルを閉じる"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "ファイル一覧を閉じる"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "新規タスクを閉じる"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "ペアリングを閉じる"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "メニューを閉じる"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "シミュレータを閉じる"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "テーマカタログを閉じる"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "テーマ一覧を閉じる"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "離席中の変化を閉じる"
 msgid "Dismiss what's new"
 msgstr "新着情報を閉じる"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "ドキュメント"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "画像を開く"
 msgid "Open in changes"
 msgstr "「変更」で開く"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "ビューアで開く"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "{0} を表示"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "すべてのファイルを表示"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "カメラの詳細を表示"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "コードを表示"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "ドキュメントを表示"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "ホームのテキストを表示"
 msgid "Show illustration on Home"
 msgstr "ホームにイラストを表示"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "画像を表示"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "さらに表示"
@@ -4561,6 +4537,7 @@ msgstr "変更が多すぎて一覧にできません。これは先頭部分で
 msgid "Total spent"
 msgstr "累計消費"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "途中まで"

@@ -76,6 +76,11 @@ msgstr "{0} · จัดการโดยระบบ การล้างแ�
 msgid "{0} (this device)"
 msgstr "{0} (อุปกรณ์นี้)"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0} characters not shown"
+msgstr "ไม่ได้แสดง {0} อักขระ"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -162,6 +167,10 @@ msgstr "{count} รายการ"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "ไม่ได้แสดง {hiddenKb} KB"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -435,6 +444,7 @@ msgid "Appearance, terminal, security"
 msgstr "รูปลักษณ์ เทอร์มินัล ความปลอดภัย"
 
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "ใช้ธีม"
@@ -830,29 +840,16 @@ msgid "Clearing…"
 msgstr "กำลังล้าง…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "ปิด"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "ปิดการเปลี่ยนแปลง"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "ปิดไฟล์"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "ปิดรายการไฟล์"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "ปิดงานใหม่"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "ปิดการจับคู่"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +878,6 @@ msgstr "ปิดเมนู"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "ปิดเครื่องจำลอง"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "ปิดแค็ตตาล็อกธีม"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "ปิดตัวเลือกธีม"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -1615,11 +1604,8 @@ msgstr "ปิดสรุปเหตุการณ์ขณะที่คุ
 msgid "Dismiss what's new"
 msgstr "ปิดข่าวสารล่าสุด"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "เอกสาร"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -2753,6 +2739,10 @@ msgstr "เปิดรูปภาพ"
 msgid "Open in changes"
 msgstr "เปิดในหน้าการเปลี่ยนแปลง"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "เปิดในตัวดู"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -3728,21 +3718,9 @@ msgstr "แสดง {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "แสดงเอเจนต์และสถานะบนหน้าจอหลัก อัปเดตขณะ Muqun เปิดอยู่"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "แสดงไฟล์ทั้งหมด"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "แสดงรายละเอียดกล้อง"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "แสดงโค้ด"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "แสดงเอกสาร"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3764,10 +3742,8 @@ msgstr "แสดงข้อความหน้าแรก"
 msgid "Show illustration on Home"
 msgstr "แสดงภาพประกอบในหน้าแรก"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "แสดงรูปภาพ"
-
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "แสดงเพิ่มเติม"
@@ -4561,6 +4537,7 @@ msgstr "มีการเปลี่ยนแปลงมากเกินก
 msgid "Total spent"
 msgstr "ใช้ไปทั้งหมด"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "ตัดบางส่วน"
