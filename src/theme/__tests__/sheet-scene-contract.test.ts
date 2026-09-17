@@ -90,9 +90,13 @@ test('the sheet ground paints its wallpaper above its tint, never under it', () 
 test('every form sheet is built in the one shared frame', () => {
   for (const file of SHEET_FRAMES) {
     const text = readFileSync(file, 'utf8');
-    // `SheetFrame`, not a `SheetGround` mounted by hand: one frame is what
-    // makes the ground a single place to change rather than eight.
-    expect(text).toContain('<SheetFrame');
+    // `SheetFrame`, or `SheetScene`, which is the furniture built on top of it
+    // -- never a `SheetGround` mounted by hand. One frame is what makes the
+    // ground a single place to change rather than sixteen.
+    expect({ file, framed: text.includes('<SheetFrame') || text.includes('<SheetScene') }).toEqual({
+      file,
+      framed: true,
+    });
     expect(text).not.toContain('<SheetGround');
     // And none of them paints a second surface of its own over it. The scroll
     // root keeps an opaque floor or nothing; the tint belongs to the ground.
@@ -176,7 +180,54 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
     const text = readFileSync(file, 'utf8');
     const direct = text.includes('useSheetGroundPlate(') && text.includes(', plate]');
     const viaLabel = text.includes('<SectionLabel') || text.includes('<SheetHeading');
-    expect({ file, plated: direct || viaLabel }).toEqual({ file, plated: true });
+    // `SheetScene` plates its own heading and its group headings, which is the
+    // whole reason a sheet built on it writes no plate of its own.
+    const viaScene = text.includes('<SheetScene');
+    expect({ file, plated: direct || viaLabel || viaScene }).toEqual({ file, plated: true });
+  }
+
+  // And the furniture really does plate what it draws, so `viaScene` above is a
+  // fact rather than an exemption.
+  const scene = readFileSync('src/components/sheet-scene.tsx', 'utf8');
+  expect(scene).toContain('const plate = useSheetGroundPlate();');
+  expect(scene).toContain('<SheetFrame testID={testID} tint="surface">');
+});
+
+/**
+ * The sheet system's own rules, from `sheet-design.md`.
+ *
+ * A sheet is one frosted ground with nothing boxed on it. The three things that
+ * make it the SaaS card kit again -- a second surface inside the sheet, a radio
+ * or a tick marking the selection, and an X circle repeating the grabber -- are
+ * checked here rather than left to review, because every one of them arrived by
+ * being locally reasonable.
+ */
+test('a sheet built on the scene has no cards, no radios and no close button', () => {
+  const sceneSheets = SHEET_FRAMES.filter((file) =>
+    readFileSync(file, 'utf8').includes('<SheetScene')
+  );
+  // The agent surface is what the spec calibrates against, so it is what has to
+  // be covered: if this list empties, the rules below stopped being enforced.
+  expect(sceneSheets.length).toBeGreaterThanOrEqual(6);
+
+  for (const file of sceneSheets) {
+    const text = code(readFileSync(file, 'utf8'));
+    // No second surface: the sheet's ground is the only one.
+    expect({
+      file,
+      cards: text.includes('<SettingsCard') || text.includes('<ThemedSurface'),
+    }).toEqual({ file, cards: false });
+    // The selection mark is the scene's left rule, not a control to read. Asked
+    // only of a sheet that has rows: the setup sheet's tick is a "copied"
+    // confirmation on a button, which is a different word entirely.
+    if (text.includes('<SheetSceneRow')) {
+      expect({ file, radio: /\bindicatorDot\b|<Check\b/.test(text) }).toEqual({
+        file,
+        radio: false,
+      });
+    }
+    // The grabber and the swipe are the close.
+    expect({ file, closeButton: text.includes('<X ') }).toEqual({ file, closeButton: false });
   }
 });
 
