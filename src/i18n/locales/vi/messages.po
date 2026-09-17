@@ -124,6 +124,10 @@ msgstr "{0} phút trước"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· đã hỏi # lần}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "{backgroundCount} đang chạy nền"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · đang gửi đến"
@@ -151,6 +155,11 @@ msgstr "{panelCount, plural, other {# đang chạy}}"
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
+
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{running} trong {0} đang chạy"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -570,6 +579,7 @@ msgstr "Quay lại phiên cha"
 msgid "Background"
 msgstr "Nền"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-tool-card.tsx
 msgid "Background tasks"
 msgstr "Tác vụ nền"
@@ -806,6 +816,7 @@ msgstr "Đang xóa bộ nhớ đệm"
 msgid "Clearing…"
 msgstr "Đang xóa…"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
@@ -1423,6 +1434,10 @@ msgstr "Không thể khởi động terminal"
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "Không thể bắt đầu tác vụ"
+
+#: src/components/agent-background-tray.tsx
+msgid "Could not stop it"
+msgstr "Không thể dừng"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
@@ -2525,6 +2540,10 @@ msgstr "Không tìm thấy mô hình phù hợp"
 msgid "No other assistants in this session yet."
 msgstr "Phiên này chưa có trợ lý nào khác"
 
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "Chưa có kết quả nào"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
 msgstr "Không có đầu ra"
@@ -2639,6 +2658,10 @@ msgstr "Không có gì phản hồi trên cổng {port}. Hoặc không có gì �
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "Chưa có gì ở đây. Các tệp mà phiên ghi ra sẽ tự xuất hiện"
+
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "Không có gì đang chạy nền. Tách một lệnh dài khỏi thẻ công cụ của nó và nó sẽ xuất hiện ở đây"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3154,6 +3177,7 @@ msgstr "Đang kết nối lại · {0}"
 msgid "Redo last undone step"
 msgstr "Làm lại bước vừa hoàn tác"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Làm mới"
@@ -3666,6 +3690,10 @@ msgstr "Cài Gateway trên máy tính của bạn"
 msgid "Settings"
 msgstr "Cài đặt"
 
+#: src/components/agent-background-tray.tsx
+msgid "SHELLS"
+msgstr "SHELL"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
 msgstr "Shift"
@@ -3969,6 +3997,10 @@ msgstr "Ngừng giao tác vụ"
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "Dừng tác tử này"
+
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "Dừng lệnh này"
 
 #: src/app/settings.tsx
 msgid "Storage"

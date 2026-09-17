@@ -10,8 +10,8 @@ import { surfaceBackgroundFill } from '../surface-background';
  * `src/app/_layout.tsx`, and therefore every frame that has to paint its own
  * ground: the route is transparent so the native sheet keeps its corners.
  *
- * Eighteen routes, sixteen frames -- `settings-theme`, `settings-language` and
- * `sessions` all wear `SettingsSheet`. A route added to `_layout.tsx` with
+ * Nineteen routes, seventeen frames -- `settings-theme`, `settings-language`
+ * and `sessions` all wear `SettingsSheet`. A route added to `_layout.tsx` with
  * `presentation: 'formSheet'` belongs in this list, and the assertions below
  * are what stop it being drawn some other way.
  *
@@ -37,6 +37,7 @@ const SHEET_FRAMES = [
   'src/components/agent-context-sheet.tsx',
   'src/components/agent-vcs-diff-sheet.tsx',
   'src/components/agent-tasks-sheet.tsx',
+  'src/components/agent-background-tray.tsx',
   'src/components/opencode-guide-sheet.tsx',
 ];
 

@@ -40,6 +40,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'agent-context': 'sheet',
   'agent-vcs-diff': 'sheet',
   'agent-tasks': 'sheet',
+  'agent-shells': 'sheet',
   'opencode-guide': 'sheet',
 };
 

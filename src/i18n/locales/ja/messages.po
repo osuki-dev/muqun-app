@@ -124,6 +124,10 @@ msgstr "{0}分前"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· # 回確認あり}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "バックグラウンドで {backgroundCount} 件が実行中"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · 送信先"
@@ -151,6 +155,11 @@ msgstr "{panelCount, plural, one {# 実行中} other {# 実行中}}"
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
+
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{0} 件中 {running} 件が実行中"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -570,6 +579,7 @@ msgstr "親セッションに戻る"
 msgid "Background"
 msgstr "バックグラウンド"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-tool-card.tsx
 msgid "Background tasks"
 msgstr "バックグラウンドタスク"
@@ -806,6 +816,7 @@ msgstr "キャッシュを削除しています"
 msgid "Clearing…"
 msgstr "削除しています…"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
@@ -1423,6 +1434,10 @@ msgstr "ターミナルを開始できませんでした"
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "タスクを開始できませんでした"
+
+#: src/components/agent-background-tray.tsx
+msgid "Could not stop it"
+msgstr "停止できませんでした"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
@@ -2525,6 +2540,10 @@ msgstr "条件に一致するモデルが見つかりません"
 msgid "No other assistants in this session yet."
 msgstr "このセッションには他のアシスタントがまだいません"
 
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "まだ出力はありません"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
 msgstr "出力はありません"
@@ -2639,6 +2658,10 @@ msgstr "ポート {port} から応答がありませんでした。何も待ち�
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "まだ何もありません。セッションが書き出したファイルは自動的に表示されます"
+
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "バックグラウンドでは何も動いていません。長いコマンドをツールカードから切り離すと、ここに表示されます"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3154,6 +3177,7 @@ msgstr "再接続中 · {0}"
 msgid "Redo last undone step"
 msgstr "元に戻した最後のステップをやり直す"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "更新"
@@ -3666,6 +3690,10 @@ msgstr "自分のパソコンに Gateway を用意する"
 msgid "Settings"
 msgstr "設定"
 
+#: src/components/agent-background-tray.tsx
+msgid "SHELLS"
+msgstr "シェル"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
 msgstr "シフト"
@@ -3969,6 +3997,10 @@ msgstr "タスクの割り当てをやめる"
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "このエージェントを停止"
+
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "このコマンドを停止"
 
 #: src/app/settings.tsx
 msgid "Storage"

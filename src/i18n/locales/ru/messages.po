@@ -124,6 +124,10 @@ msgstr "{0} мин. назад"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· спрашивал # раз} few {· спрашивал # раза} many {· спрашивал # раз} other {· спрашивал # раза}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "{backgroundCount} выполняется в фоне"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · отправка"
@@ -151,6 +155,11 @@ msgstr "{panelCount, plural, one {# в работе} few {# в работе} man
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
+
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{running} из {0} выполняется"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -570,6 +579,7 @@ msgstr "Назад к родительской сессии"
 msgid "Background"
 msgstr "Фоновый"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-tool-card.tsx
 msgid "Background tasks"
 msgstr "Фоновые задачи"
@@ -806,6 +816,7 @@ msgstr "Очищаем кэш"
 msgid "Clearing…"
 msgstr "Очищаем…"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
@@ -1423,6 +1434,10 @@ msgstr "Не удалось запустить терминал"
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "Не удалось запустить задачу"
+
+#: src/components/agent-background-tray.tsx
+msgid "Could not stop it"
+msgstr "Не удалось остановить"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
@@ -2525,6 +2540,10 @@ msgstr "Модели не найдены"
 msgid "No other assistants in this session yet."
 msgstr "В этой сессии пока нет других ассистентов"
 
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "Вывода пока нет"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
 msgstr "Нет вывода"
@@ -2639,6 +2658,10 @@ msgstr "На порту {port} никто не ответил. Либо там �
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "Пока пусто. Файлы, которые записывает сеанс, появятся сами"
+
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "В фоне ничего не выполняется. Отсоедините длинную команду с её карточки инструмента, и она появится здесь"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3154,6 +3177,7 @@ msgstr "Переподключение · {0}"
 msgid "Redo last undone step"
 msgstr "Повторить последнее отмененное действие"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Обновить"
@@ -3666,6 +3690,10 @@ msgstr "Настройте Gateway на своём компьютере"
 msgid "Settings"
 msgstr "Настройки"
 
+#: src/components/agent-background-tray.tsx
+msgid "SHELLS"
+msgstr "ОБОЛОЧКИ"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
 msgstr "Shift"
@@ -3969,6 +3997,10 @@ msgstr "Отменить назначение задачи"
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "Остановить этого агента"
+
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "Остановить эту команду"
 
 #: src/app/settings.tsx
 msgid "Storage"

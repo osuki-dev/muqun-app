@@ -124,6 +124,10 @@ msgstr "{0}분 전"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· #번 확인 요청}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "백그라운드에서 {backgroundCount}개 실행 중"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · 보내는 대상"
@@ -151,6 +155,11 @@ msgstr "{panelCount, plural, one {# 실행 중} other {# 실행 중}}"
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
+
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{0}개 중 {running}개 실행 중"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -570,6 +579,7 @@ msgstr "상위 세션으로 돌아가기"
 msgid "Background"
 msgstr "백그라운드"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-tool-card.tsx
 msgid "Background tasks"
 msgstr "백그라운드 작업"
@@ -806,6 +816,7 @@ msgstr "캐시를 비우는 중"
 msgid "Clearing…"
 msgstr "비우는 중…"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
@@ -1423,6 +1434,10 @@ msgstr "터미널을 시작하지 못했습니다"
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "작업을 시작하지 못했습니다"
+
+#: src/components/agent-background-tray.tsx
+msgid "Could not stop it"
+msgstr "중지하지 못했습니다"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
@@ -2525,6 +2540,10 @@ msgstr "검색 조건과 일치하는 모델이 없습니다"
 msgid "No other assistants in this session yet."
 msgstr "이 세션에 아직 다른 어시스턴트가 없습니다"
 
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "아직 출력이 없습니다"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
 msgstr "출력이 없습니다"
@@ -2639,6 +2658,10 @@ msgstr "포트 {port}에서 응답이 없습니다. 아무것도 수신 대기�
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "아직 아무것도 없습니다. 세션이 쓴 파일은 저절로 나타납니다"
+
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "백그라운드에서 실행 중인 것이 없습니다. 도구 카드에서 긴 명령을 분리하면 여기에 나타납니다"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3154,6 +3177,7 @@ msgstr "다시 연결 중 · {0}"
 msgid "Redo last undone step"
 msgstr "실행 취소한 마지막 단계 다시 실행"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "새로고침"
@@ -3666,6 +3690,10 @@ msgstr "내 컴퓨터에 Gateway 설치하기"
 msgid "Settings"
 msgstr "설정"
 
+#: src/components/agent-background-tray.tsx
+msgid "SHELLS"
+msgstr "셸"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
 msgstr "시프트"
@@ -3969,6 +3997,10 @@ msgstr "작업 할당 중지"
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "이 에이전트 중지"
+
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "이 명령 중지"
 
 #: src/app/settings.tsx
 msgid "Storage"

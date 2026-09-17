@@ -124,6 +124,10 @@ msgstr "há {0} min"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· perguntou uma vez} other {· perguntou # vezes}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "{backgroundCount} em execução em segundo plano"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · enviando para"
@@ -151,6 +155,11 @@ msgstr "{panelCount, plural, one {# ativo} other {# ativos}}"
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
+
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{running} de {0} em execução"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -570,6 +579,7 @@ msgstr "Voltar à sessão principal"
 msgid "Background"
 msgstr "Segundo plano"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-tool-card.tsx
 msgid "Background tasks"
 msgstr "Tarefas em segundo plano"
@@ -806,6 +816,7 @@ msgstr "A limpar a cache"
 msgid "Clearing…"
 msgstr "A limpar…"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
@@ -1423,6 +1434,10 @@ msgstr "Não foi possível iniciar um terminal"
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "Não foi possível iniciar a tarefa"
+
+#: src/components/agent-background-tray.tsx
+msgid "Could not stop it"
+msgstr "Não foi possível parar"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
@@ -2525,6 +2540,10 @@ msgstr "Nenhum modelo encontrado"
 msgid "No other assistants in this session yet."
 msgstr "Ainda não há outros assistentes nesta sessão"
 
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "Ainda sem saída"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
 msgstr "Sem saída"
@@ -2639,6 +2658,10 @@ msgstr "Nada respondeu na porta {port}. Ou não está nada à escuta, ou está l
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "Ainda não há nada aqui. Os ficheiros que a sessão escrever aparecem sozinhos"
+
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "Nada em execução em segundo plano. Desanexe um comando longo do cartão da ferramenta e ele aparecerá aqui"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3154,6 +3177,7 @@ msgstr "A ligar novamente · {0}"
 msgid "Redo last undone step"
 msgstr "Refazer último passo desfeito"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Atualizar"
@@ -3666,6 +3690,10 @@ msgstr "Instalar um Gateway no seu computador"
 msgid "Settings"
 msgstr "Definições"
 
+#: src/components/agent-background-tray.tsx
+msgid "SHELLS"
+msgstr "SHELLS"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
 msgstr "Shift"
@@ -3969,6 +3997,10 @@ msgstr "Parar de atribuir uma tarefa"
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "Parar este agente"
+
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "Parar este comando"
 
 #: src/app/settings.tsx
 msgid "Storage"

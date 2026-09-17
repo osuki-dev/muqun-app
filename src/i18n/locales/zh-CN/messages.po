@@ -124,6 +124,10 @@ msgstr "{0} 分钟前"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· 询问了 # 次}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "{backgroundCount} 个正在后台运行"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName}·发送给"
@@ -151,6 +155,11 @@ msgstr "{panelCount, plural, one {# 个运行中} other {# 个运行中}}"
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}：{label}"
+
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{0} 个中有 {running} 个正在运行"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -570,6 +579,7 @@ msgstr "返回上级会话"
 msgid "Background"
 msgstr "后台"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-tool-card.tsx
 msgid "Background tasks"
 msgstr "后台任务"
@@ -806,6 +816,7 @@ msgstr "正在清除缓存"
 msgid "Clearing…"
 msgstr "正在清除…"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
@@ -1423,6 +1434,10 @@ msgstr "无法启动终端"
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "无法开始这个任务"
+
+#: src/components/agent-background-tray.tsx
+msgid "Could not stop it"
+msgstr "无法停止"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
@@ -2525,6 +2540,10 @@ msgstr "未找到匹配的模型"
 msgid "No other assistants in this session yet."
 msgstr "这个会话里还没有其他助手"
 
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "还没有输出"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
 msgstr "没有输出"
@@ -2639,6 +2658,10 @@ msgstr "端口 {port} 没有响应。可能没有服务在监听，或者它只�
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "这里还是空的。会话写出的文件会自动出现"
+
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "后台没有任何任务。从工具卡片里把长命令转入后台，它就会出现在这里"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3154,6 +3177,7 @@ msgstr "重新连接中 · {0}"
 msgid "Redo last undone step"
 msgstr "重做最后撤销的步骤"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "刷新"
@@ -3666,6 +3690,10 @@ msgstr "在你的电脑上装一个 Gateway"
 msgid "Settings"
 msgstr "设置"
 
+#: src/components/agent-background-tray.tsx
+msgid "SHELLS"
+msgstr "SHELL"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
 msgstr "Shift 键"
@@ -3969,6 +3997,10 @@ msgstr "取消分配任务"
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "停止这个代理"
+
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "停止这条命令"
 
 #: src/app/settings.tsx
 msgid "Storage"

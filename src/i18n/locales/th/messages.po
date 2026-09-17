@@ -124,6 +124,10 @@ msgstr "{0} นาทีที่แล้ว"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· ถามแล้ว # ครั้ง}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "กำลังทำงานเบื้องหลัง {backgroundCount} รายการ"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · กำลังส่งไปยัง"
@@ -151,6 +155,11 @@ msgstr "{panelCount, plural, other {กำลังทำงาน # ราย�
 #: src/components/row-action-menu.tsx
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
+
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "กำลังทำงาน {running} จาก {0}"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -570,6 +579,7 @@ msgstr "กลับไปยังเซสชันหลัก"
 msgid "Background"
 msgstr "เบื้องหลัง"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-tool-card.tsx
 msgid "Background tasks"
 msgstr "งานเบื้องหลัง"
@@ -806,6 +816,7 @@ msgstr "กำลังล้างแคช"
 msgid "Clearing…"
 msgstr "กำลังล้าง…"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
@@ -1423,6 +1434,10 @@ msgstr "เริ่มเทอร์มินัลไม่ได้"
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "เริ่มงานไม่ได้"
+
+#: src/components/agent-background-tray.tsx
+msgid "Could not stop it"
+msgstr "หยุดไม่สำเร็จ"
 
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
@@ -2525,6 +2540,10 @@ msgstr "ไม่พบโมเดลที่ตรงกับการค้
 msgid "No other assistants in this session yet."
 msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
 
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "ยังไม่มีผลลัพธ์"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
 msgstr "ไม่มีเอาต์พุต"
@@ -2639,6 +2658,10 @@ msgstr "ไม่มีการตอบกลับที่พอร์ต {p
 #: src/components/session-artifacts.tsx
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "ยังไม่มีอะไรที่นี่ ไฟล์ที่เซสชันเขียนจะแสดงเอง"
+
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "ยังไม่มีอะไรทำงานเบื้องหลัง แยกคำสั่งที่ใช้เวลานานออกจากการ์ดเครื่องมือ แล้วมันจะมาอยู่ที่นี่"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3154,6 +3177,7 @@ msgstr "กำลังเชื่อมต่อใหม่ · {0}"
 msgid "Redo last undone step"
 msgstr "ทำซ้ำขั้นตอนที่ยกเลิก"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "รีเฟรช"
@@ -3666,6 +3690,10 @@ msgstr "ตั้งค่า Gateway บนคอมพิวเตอร์ข
 msgid "Settings"
 msgstr "การตั้งค่า"
 
+#: src/components/agent-background-tray.tsx
+msgid "SHELLS"
+msgstr "เชลล์"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
 msgstr "Shift"
@@ -3969,6 +3997,10 @@ msgstr "หยุดมอบหมายงาน"
 #: src/app/commands.tsx
 msgid "Stop this agent"
 msgstr "หยุดเอเจนต์นี้"
+
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "หยุดคำสั่งนี้"
 
 #: src/app/settings.tsx
 msgid "Storage"

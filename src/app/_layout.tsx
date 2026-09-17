@@ -494,6 +494,16 @@ function RootContent() {
                 [0.65, 0.9]
               )}
             />
+            {/* What is still running after the agent moved on: a short list
+                with one expandable output box, so it takes a bounded viewport
+                rather than fit-to-content sizing. */}
+            <Stack.Screen
+              name="agent-shells"
+              options={sheetPresentationOptions(
+                sheetRoutePresentations['agent-shells'],
+                [0.65, 0.9]
+              )}
+            />
             {/* One banner, one command and one button: content-sized, for the
                 reason `web-service` is. */}
             <Stack.Screen

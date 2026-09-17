@@ -23,6 +23,7 @@ import {
   Loader,
   Paperclip,
   Sparkles,
+  Terminal,
   Square,
   Zap,
 } from 'lucide-react-native';
@@ -231,6 +232,9 @@ export interface AgentComposerProps {
   disabled?: boolean;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
+  /** How many detached tools and shells are still running. */
+  backgroundCount?: number;
+  onOpenBackgroundTray?: () => void;
   onPressTokens?: () => void;
   onRefresh?: () => void;
   injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
@@ -268,6 +272,8 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenDiffSheet,
   onOpenSessionsSheet,
   onOpenTasksSheet,
+  backgroundCount = 0,
+  onOpenBackgroundTray,
   onPressTokens,
   onRefresh,
   injectDraftRef,
@@ -698,6 +704,29 @@ export const AgentComposer = memo(function AgentComposer({
                   {tasks && tasks.length > 0
                     ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
                     : t`Tasks`}
+                </Text>
+              </PressableScale>
+            ) : null}
+
+            {/* What is still running after the agent moved on */}
+            {backgroundCount > 0 && onOpenBackgroundTray ? (
+              <PressableScale
+                testID="agent-composer-background-pill"
+                onPress={onOpenBackgroundTray}
+                accessibilityLabel={t`${backgroundCount} running in the background`}
+                style={[
+                  styles.actionBtnWithLabel,
+                  {
+                    backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
+                  },
+                ]}>
+                <Terminal size={13} color={theme.colors.warning} />
+                <Text
+                  variant="caption"
+                  weight="bold"
+                  color={theme.colors.warning}
+                  style={styles.actionBtnLabel}>
+                  {backgroundCount}
                 </Text>
               </PressableScale>
             ) : null}

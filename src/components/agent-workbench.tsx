@@ -51,6 +51,7 @@ import {
   compactAgentSession,
   getAgentContext,
   listAgentSessionChildren,
+  listAgentShells,
   sendAgentCommand,
   sortTimeline,
   isBusyStatus,
@@ -59,6 +60,7 @@ import {
   type AgentRunStatus,
   type AgentSessionInfo,
   type CommandInfo,
+  type ShellInfo,
   type CompactionReason,
   type InboxItem,
   type TimelineItem,
@@ -71,6 +73,7 @@ import {
   type AgentProject,
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
+import { classifyTool } from '@/lib/agent-tool-output';
 import {
   buildSessionStrip,
   indexSessions,
@@ -103,6 +106,7 @@ import {
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
 import { AgentComposer } from './agent-composer';
+import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 
 /**
@@ -247,6 +251,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * looking at has no tree worth fetching.
    */
   const [childrenByParent, setChildrenByParent] = useState<ChildrenByParent>({});
+  /**
+   * What is still running after the agent moved on.
+   *
+   * Detached tools keep running and are readable through `/api/agent-shells`;
+   * there is no event for them, so the list is asked for at the moments it can
+   * have changed -- entering a session, a turn ending, and right after
+   * something was detached.
+   */
+  const [shells, setShells] = useState<readonly ShellInfo[]>([]);
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
   const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
 
@@ -371,6 +384,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionId, showToast, t]
   );
 
+  const refreshShells = useCallback(async () => {
+    setShells(await listAgentShells(activeDirectory));
+  }, [activeDirectory]);
+
   /**
    * What the model can still see, read from the engine rather than guessed.
    *
@@ -428,6 +445,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       // What the model can still see, which the snapshot does not carry.
       void refreshContext();
+      void refreshShells();
 
       // Check diffs
       try {
@@ -452,7 +470,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     } finally {
       setLoading(false);
     }
-  }, [sessionId, activeAsid, applySelectedModel, handleAutoPermission, refreshContext]);
+  }, [
+    sessionId,
+    activeAsid,
+    applySelectedModel,
+    handleAutoPermission,
+    refreshContext,
+    refreshShells,
+  ]);
 
   useEffect(() => {
     void loadSnapshot().catch(() => {});
@@ -533,6 +558,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
             void refreshSessions();
             void refreshContext();
+            void refreshShells();
           }
           break;
         }
@@ -603,7 +629,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
       }
     },
-    [loadSnapshot, refreshSessions, refreshContext, handleAutoPermission]
+    [loadSnapshot, refreshSessions, refreshContext, refreshShells, handleAutoPermission]
   );
 
   // Real-time SSE stream — the only sync channel. Engine output arrives over
@@ -986,6 +1012,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     router.push('/agent-tasks');
   }, [router]);
 
+  const openBackgroundTray = useCallback(() => {
+    router.push({
+      pathname: '/agent-shells',
+      ...(activeDirectory ? { params: { directory: activeDirectory } } : {}),
+    });
+  }, [router, activeDirectory]);
+
   const openDiffSheet = useCallback(() => {
     if (!activeAsid) return;
     router.push({ pathname: '/agent-vcs-diff', params: { sessionId, asid: activeAsid } });
@@ -1018,16 +1051,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (_toolCallId: string) => {
       if (!activeAsid) return;
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      backgroundAgentSession(activeAsid).catch((err) => {
-        console.warn('Failed to background tools:', err);
-        showToast({
-          variant: 'danger',
-          title: t`Could not detach`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+      backgroundAgentSession(activeAsid)
+        .then(() => refreshShells())
+        .catch((err) => {
+          console.warn('Failed to background tools:', err);
+          showToast({
+            variant: 'danger',
+            title: t`Could not detach`,
+            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          });
         });
-      });
     },
-    [activeAsid, showToast, t]
+    [activeAsid, refreshShells, showToast, t]
   );
 
   const handleOpenToolFile = useCallback(
@@ -1059,6 +1094,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onRunInBackground: handleRunInBackground,
       onPreviewImage: setPreviewImageUri,
       onOpenFile: handleOpenToolFile,
+      onOpenBackgroundTray: openBackgroundTray,
       childStatuses,
       permissions,
       onPermissionDecision: handlePermissionDecision,
@@ -1066,6 +1102,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [
       handleRunInBackground,
       handleOpenToolFile,
+      openBackgroundTray,
       childStatuses,
       permissions,
       handlePermissionDecision,
@@ -1390,6 +1427,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [sessions, activeAsid, sessionInfo]);
 
   const activeTokens = currentSession?.tokens ?? sessionInfo?.tokens;
+
+  /**
+   * How many things are still running out of sight.
+   *
+   * Running shells, plus any *other* tool the gateway marked `background` that
+   * has not finished -- a detached shell is both a shell and a tool row, and
+   * counting it twice would make the pill say two for one command.
+   */
+  const backgroundCount = useMemo(() => {
+    let detachedTools = 0;
+    for (const item of timeline) {
+      const part = item.part;
+      if (part.type !== 'tool' || !part.background) continue;
+      if (part.state === 'completed' || part.state === 'failed') continue;
+      if (classifyTool(part.name) === 'shell') continue;
+      detachedTools += 1;
+    }
+    return runningShellCount(shells) + detachedTools;
+  }, [shells, timeline]);
 
   const activeTodos = useMemo(() => {
     for (let i = timeline.length - 1; i >= 0; i--) {
@@ -1776,6 +1832,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onOpenDiffSheet={openDiffSheet}
         onOpenSessionsSheet={openSessionsSheet}
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
+        backgroundCount={backgroundCount}
+        onOpenBackgroundTray={openBackgroundTray}
         onPressTokens={openContextSheet}
         onRefresh={loadSnapshot}
         injectDraftRef={injectDraftRef}
