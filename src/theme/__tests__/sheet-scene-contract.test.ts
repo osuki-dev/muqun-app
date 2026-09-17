@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { sheetRoutePresentations } from '@/lib/route-presentation';
@@ -146,7 +146,7 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
   for (const file of SHEET_FRAMES) {
     const text = readFileSync(file, 'utf8');
     const direct = text.includes('useSheetGroundPlate(') && text.includes(', plate]');
-    const viaLabel = text.includes('<SectionLabel') || text.includes('<SheetHeading');
+    const viaLabel = text.includes('<SectionLabel');
     // A frosted ground is the other answer, and the better one: `SheetScene`
     // frosts itself, and a sheet that frosts its own frame has said the same
     // thing. Either way the reader is not asked to read text on a photograph.
@@ -352,10 +352,11 @@ test('every allowlisted modal still exists and still is one, so the list cannot 
 /**
  * Every sheet announces itself the same way.
  *
- * One heading component -- `SheetSceneHeading`, which `SheetHeading` and
- * `SheetScene` both render -- so "the app has one sheet" is a fact the gate
- * holds rather than a habit the next sheet can break. A sheet that rolls its
- * own title is how the agent surface drifted in the first place.
+ * One heading component, `SheetSceneHeading`, rendered by `SheetScene` or by
+ * itself -- so "the app has one sheet" is a fact the gate holds rather than a
+ * habit the next sheet can break. A sheet that rolls its own title is how the
+ * agent surface drifted in the first place. The `SheetHeading` alias the
+ * pre-scene sheets imported went with the last of them.
  *
  * Two exemptions, and both are inspectors whose whole surface is one
  * continuous thing rather than a heading over content.
@@ -372,17 +373,15 @@ test('every sheet frame announces itself with the one heading', () => {
   for (const file of SHEET_FRAMES) {
     if (file in HEADING_EXEMPT) continue;
     const text = code(readFileSync(file, 'utf8'));
-    const heads =
-      SCENE_ROOT.test(text) ||
-      text.includes('<SheetSceneHeading') ||
-      text.includes('<SheetHeading');
+    const heads = SCENE_ROOT.test(text) || text.includes('<SheetSceneHeading');
     if (!heads) offenders.push(file);
   }
   expect(offenders).toEqual([]);
 
-  // `SheetHeading` is the same component, not a second one that agrees today.
-  const heading = readFileSync('src/components/sheet-heading.tsx', 'utf8');
-  expect(heading).toContain("import { SheetSceneHeading } from '@/components/sheet-scene'");
+  // And one component to render it: no alias that is a second one agreeing
+  // today. `sheet-heading.tsx` re-exported the scene's heading for the four
+  // sheets that predated the scene, and there are none of those left.
+  expect(existsSync('src/components/sheet-heading.tsx')).toBe(false);
 
   for (const [file, reason] of Object.entries(HEADING_EXEMPT)) {
     expect(readFileSync(file, 'utf8').length).toBeGreaterThan(0);
