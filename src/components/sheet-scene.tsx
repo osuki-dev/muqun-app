@@ -164,13 +164,23 @@ export function SheetSceneSearch({
   );
 }
 
-/** A group's name, in sentence case. Never all-caps: this is a label, not a sign. */
+/**
+ * A group's name, in sentence case.
+ *
+ * `caption`, not the kit's `label`: `label` carries `textTransform:
+ * 'uppercase'`, and an all-caps group heading is a sign rather than a name --
+ * it also makes a provider like "OpenCode" unreadable as itself.
+ */
 export function SheetSceneGroupHeading({ title, first }: { title: string; first?: boolean }) {
   const { colors } = useThemeTokens();
   const plate = useSheetGroundPlate();
   return (
     <View style={[styles.groupHeading, first ? styles.groupHeadingFirst : null]}>
-      <Text variant="label" color={colors.textMuted} style={[styles.groupHeadingText, plate]}>
+      <Text
+        variant="caption"
+        weight="semibold"
+        color={colors.textMuted}
+        style={[styles.groupHeadingText, plate]}>
         {title}
       </Text>
     </View>
@@ -221,6 +231,12 @@ export function SheetSceneRow({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useThemeTokens();
+  // The same plate the heading takes, for the same reason: `text` and
+  // `textMuted` are proven against the theme's surfaces and never against an
+  // author's photograph. One per row and shrink-to-fit, so it reads as
+  // protected text rather than as the card this system exists to remove. Empty
+  // on a pack with no `shell.background`, which is every built-in one.
+  const plate = useSheetGroundPlate();
   const rule = useSharedValue(selected ? 1 : 0);
 
   useEffect(() => {
@@ -250,7 +266,7 @@ export function SheetSceneRow({
         onPress={onPress}
         style={styles.row}>
         {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
-        <View style={styles.rowCopy}>
+        <View style={[styles.rowCopy, plate]}>
           <Text
             variant="bodySmall"
             weight={selected ? 'semibold' : 'regular'}
@@ -266,11 +282,13 @@ export function SheetSceneRow({
           ) : null}
         </View>
         {disabled && disabledCaption ? (
-          <Text variant="caption" color={colors.textSubtle} style={styles.rowMeta}>
+          <Text variant="caption" color={colors.textSubtle} style={[styles.rowMeta, plate]}>
             {disabledCaption}
           </Text>
         ) : meta ? (
-          <View style={styles.rowMeta}>{meta}</View>
+          // Plated too: a time or a token count on the right of the row is text
+          // on the wallpaper exactly as much as the title is.
+          <View style={[styles.rowMeta, plate]}>{meta}</View>
         ) : null}
       </PressableScale>
       {trailing}
@@ -359,8 +377,10 @@ const styles = StyleSheet.create({
     paddingVertical: SHEET_LADDER.snug,
   },
   rowLeading: { alignItems: 'center', justifyContent: 'center' },
-  rowCopy: { flex: 1, minWidth: 0, gap: 2 },
+  // Shrink-to-fit rather than `flex: 1`, so the plate hugs the two lines
+  // instead of becoming a full-width slab -- which is the card again.
+  rowCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   rowTitle: { includeFontPadding: false },
-  rowMeta: { flexShrink: 0 },
+  rowMeta: { flexShrink: 0, marginLeft: 'auto' },
   groupRule: { height: StyleSheet.hairlineWidth, marginTop: SHEET_LADDER.gap },
 });

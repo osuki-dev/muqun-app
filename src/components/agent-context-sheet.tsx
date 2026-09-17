@@ -5,6 +5,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useSheetGroundPlate } from '@/components/sheet-ground';
 import {
   SheetScene,
   SheetSceneFooter,
@@ -63,6 +64,9 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
+  // The capacity block is the one thing here that is not a row, so it takes the
+  // plate for itself rather than inheriting one.
+  const plate = useSheetGroundPlate();
   const [confirmingYolo, setConfirmingYolo] = useState(false);
 
   const total = (tokens?.input ?? 0) + (tokens?.output ?? 0) + (tokens?.reasoning ?? 0);
@@ -87,10 +91,10 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             a thin primary bar on `primarySubtle`, no card around it. */}
         <View style={styles.capacity}>
           <View style={styles.capacityHeader}>
-            <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+            <Text variant="bodySmall" weight="semibold" color={theme.colors.text} style={plate}>
               {t`Context used`}
             </Text>
-            <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+            <Text variant="caption" weight="semibold" color={theme.colors.primary} style={plate}>
               {`${(ratio * 100).toFixed(1)}%`}
             </Text>
           </View>
@@ -109,7 +113,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
               ]}
             />
           </View>
-          <Text variant="caption" color={theme.colors.textMuted}>
+          <Text variant="caption" color={theme.colors.textMuted} style={plate}>
             {t`${compact(total)} of ${limitLabel} tokens`}
           </Text>
         </View>
@@ -293,9 +297,14 @@ export const AgentContextSheet = memo(function AgentContextSheet({
 });
 
 const styles = StyleSheet.create({
-  capacity: { paddingTop: SHEET_LADDER.gap, gap: SHEET_LADDER.gap },
-  capacityHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  capacityTrack: { height: 4, borderRadius: 2, overflow: 'hidden' },
+  capacity: { paddingTop: SHEET_LADDER.gap, gap: SHEET_LADDER.gap, alignItems: 'flex-start' },
+  capacityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    alignSelf: 'stretch',
+  },
+  capacityTrack: { height: 4, borderRadius: 2, overflow: 'hidden', alignSelf: 'stretch' },
   capacityFill: { height: '100%', borderRadius: 2 },
   metaWide: { maxWidth: 200 },
   confirm: { paddingBottom: SHEET_LADDER.snug, gap: SHEET_LADDER.gap },
