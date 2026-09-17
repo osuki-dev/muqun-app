@@ -2,6 +2,7 @@ import { Card } from '@/components/themed-card';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { PressableCard, Stack, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
+import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -37,10 +38,23 @@ export const COMPOSER_POPUP_VISIBLE_ROWS = 5;
  * under-estimate leaves a half row peeking out of the bottom of the panel.
  */
 const ROW_HEIGHT = 54;
+/** `Stack gap="xs"` between rows, which the cap has to count too. */
+const ROW_GAP = 4;
+/** The card's own padding above and below the scroller. */
+const CARD_PADDING = 16;
 
 export interface ComposerPopupProps {
   rows: readonly ComposerPopupRow[];
   onPick: (row: ComposerPopupRow) => void;
+  /**
+   * The most room the panel has above the dock, when the screen it is on knows.
+   *
+   * Without one the panel took its five rows wherever they landed, which with
+   * the keyboard up meant growing through the header and off the top of the
+   * screen -- and the row that ran out of screen was cut in half, which reads
+   * as a list that has been truncated rather than one that scrolls.
+   */
+  maxHeight?: number;
   /** Prefix for row test IDs, so two triggers can be told apart in a flow. */
   testIDPrefix?: string;
 }
@@ -48,15 +62,32 @@ export interface ComposerPopupProps {
 export function ComposerPopup({
   rows,
   onPick,
+  maxHeight,
   testIDPrefix = 'composer-popup',
 }: ComposerPopupProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
+  /**
+   * A row's real height, measured rather than assumed.
+   *
+   * `ROW_HEIGHT` is the estimate the cap was built from, and an estimate that
+   * is a point or two short leaves a sliver of the next row peeking out of the
+   * bottom. The first row that lays out says what a row costs, and the cap is
+   * a whole number of those.
+   */
+  const [rowHeight, setRowHeight] = useState(ROW_HEIGHT);
   if (rows.length === 0) return null;
 
-  const visibleRows = Math.min(rows.length, COMPOSER_POPUP_VISIBLE_ROWS);
+  const step = rowHeight + ROW_GAP;
+  const wanted = Math.min(rows.length, COMPOSER_POPUP_VISIBLE_ROWS) * step - ROW_GAP;
+  // Whole rows only, so the last one visible is a whole one.
+  const room =
+    maxHeight === undefined
+      ? wanted
+      : Math.max(rowHeight, Math.floor((maxHeight - CARD_PADDING) / step) * step - ROW_GAP);
+  const listHeight = Math.min(wanted, room);
 
   return (
     <Animated.View
@@ -68,7 +99,7 @@ export function ComposerPopup({
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="none"
           showsVerticalScrollIndicator={false}
-          style={{ maxHeight: visibleRows * ROW_HEIGHT }}>
+          style={{ maxHeight: listHeight }}>
           <Stack gap="xs">
             {rows.map((row) => (
               // The panel re-ranks under the caret: every character typed drops
@@ -83,7 +114,11 @@ export function ComposerPopup({
                 key={row.id}
                 layout={listLayout('micro')}
                 entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}>
+                exiting={fadeOut('micro')}
+                onLayout={(event) => {
+                  const height = event.nativeEvent.layout.height;
+                  if (height > 0) setRowHeight((current) => Math.max(current, height));
+                }}>
                 <PressableCard
                   variant="flat"
                   style={{

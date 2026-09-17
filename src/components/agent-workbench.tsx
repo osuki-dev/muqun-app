@@ -2447,6 +2447,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         selectedModel={selectedModel}
         hasDiffs={hasDiffs}
         bottomInset={bottomInset}
+        topInset={topInset}
         tasks={activeTodos}
         tokens={activeTokens}
         contextUsage={contextUsage}
