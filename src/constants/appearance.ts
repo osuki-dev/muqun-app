@@ -51,6 +51,19 @@ export const appChrome = {
     composerField: 25,
     composerDock: 26,
     workspaceRail: 28,
+    /**
+     * The top corners of a sheet, and of anything that draws a sheet-like top
+     * edge over the content behind it (the agent composer dock).
+     *
+     * One number for both platforms. `route-presentation.ts` hands it to
+     * `sheetCornerRadius`, which react-native-screens 4.28 honours on iOS
+     * (`UISheetPresentationController.preferredCornerRadius`) and on Android
+     * (`ScreenStackFragment.attachShapeToScreen` builds a
+     * `MaterialShapeDrawable` from it and the screen clips to its outline).
+     * The prop's TSDoc still says `@platform ios`; the Android code path is
+     * real and is what this token is verified against on device.
+     */
+    sheet: 24,
   },
   opacity: {
     disabled: 0.5,

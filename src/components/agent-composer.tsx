@@ -881,8 +881,10 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
   composerDock: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    // The dock is a sheet-shaped edge over the timeline, so it takes the
+    // sheet's corner rather than a number of its own.
+    borderTopLeftRadius: appChrome.radius.sheet,
+    borderTopRightRadius: appChrome.radius.sheet,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },

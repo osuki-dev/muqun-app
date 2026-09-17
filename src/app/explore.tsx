@@ -1,7 +1,6 @@
 import { Input } from '@/components/themed-input';
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
@@ -35,7 +34,6 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LogoLoader } from '@/components/logo-loader';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
@@ -556,10 +554,15 @@ export default function PairModal() {
   const stepExiting = fadeOut('short');
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.safeArea, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.background" />
+    /*
+      The ground, the safe edges and the wallpaper all belong to
+      `FullscreenSheetFrame` now -- this route is in `sheetRoutePresentations`
+      like the theme sheet, so what used to be a `SafeAreaView` painting
+      `colors.background` under its own `ThemeArtwork` is one plain column.
+      Keeping both would have insetted the top twice and drawn the picture
+      under an opaque tint, which is the bug `sheet-ground.tsx` exists to end.
+    */
+    <View style={styles.safeArea}>
       <KeyboardAwareScrollView
         bottomOffset={24}
         contentContainerStyle={styles.content}
@@ -1106,7 +1109,7 @@ export default function PairModal() {
           an SSH host asks about the host key from right here, so it mounts its
           own gate; being the innermost one, it is the one that draws. */}
       <SshConnectPromptGate />
-    </SafeAreaView>
+    </View>
   );
 }
 

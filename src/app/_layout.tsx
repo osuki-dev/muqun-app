@@ -1,6 +1,7 @@
 import { RouteScene } from '@/components/route-scene';
 import { sheetPresentationOptions, sheetRoutePresentations } from '@/lib/route-presentation';
 import { FullscreenSheetFrame } from '@/components/sheet-route-frame';
+import type { SheetGroundTint } from '@/components/sheet-ground';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -100,6 +101,18 @@ function ThemeFileOpener() {
   useThemeFileOpen();
   return null;
 }
+
+/**
+ * Which token a full-screen sheet's ground is mixed from.
+ *
+ * `surface` for a route whose content sits on cards -- the theme picker and
+ * the catalogue. `background` for pairing, whose blocks each draw their own
+ * panel, so a second surface under them is one surface too many; that is the
+ * colour it painted for itself before the shared frame took the job over.
+ */
+const fullscreenSheetTints: Readonly<Record<string, SheetGroundTint>> = {
+  explore: 'background',
+};
 
 export default function RootLayout() {
   const hydrateSettings = useAppSettings((state) => state.hydrate);
@@ -261,8 +274,7 @@ function RootContent() {
                   }
                   animated={route.name !== 'index'}>
                   {sheetRoutePresentations[route.name] === 'fullscreen' ? (
-                    <FullscreenSheetFrame
-                      tint={route.name === 'commands' ? 'background' : 'surface'}>
+                    <FullscreenSheetFrame tint={fullscreenSheetTints[route.name] ?? 'surface'}>
                       {children}
                     </FullscreenSheetFrame>
                   ) : (
@@ -336,30 +348,25 @@ function RootContent() {
             />
             <Stack.Screen
               name="commands"
-              options={sheetPresentationOptions(sheetRoutePresentations['commands'], false, true)}
+              options={sheetPresentationOptions(sheetRoutePresentations['commands'], 'expandable')}
             />
             <Stack.Screen
               name="panels"
-              options={sheetPresentationOptions(sheetRoutePresentations['panels'], false, true)}
+              options={sheetPresentationOptions(sheetRoutePresentations['panels'], 'expandable')}
             />
             {/* Machine/session results can grow asynchronously. Give the scroll
                 root a bounded viewport instead of circular fit-to-content sizing. */}
             <Stack.Screen
               name="sessions"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: [0.65, 0.9],
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions('sheet', [0.65, 0.9])}
             />
             <Stack.Screen
               name="artifacts"
-              options={sheetPresentationOptions(sheetRoutePresentations['artifacts'], false, true)}
+              options={sheetPresentationOptions(sheetRoutePresentations['artifacts'], 'expandable')}
             />
             <Stack.Screen
               name="git-diff"
-              options={sheetPresentationOptions(sheetRoutePresentations['git-diff'], false, true)}
+              options={sheetPresentationOptions(sheetRoutePresentations['git-diff'], 'expandable')}
             />
             <Stack.Screen
               name="settings-theme"
@@ -367,7 +374,7 @@ function RootContent() {
             />
             <Stack.Screen
               name="settings-theme-browse"
-              options={sheetPresentationOptions('fullscreen')}
+              options={sheetPresentationOptions(sheetRoutePresentations['settings-theme-browse'])}
             />
             <Stack.Screen
               name="custom-theme"
@@ -379,17 +386,12 @@ function RootContent() {
             />
             <Stack.Screen
               name="settings-language"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: 'fitToContents',
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions('sheet', 'fitToContents')}
             />
             {/* Full height leaves room for the composer and keyboard. */}
             <Stack.Screen
               name="new-task"
-              options={sheetPresentationOptions(sheetRoutePresentations['new-task'], false, true)}
+              options={sheetPresentationOptions(sheetRoutePresentations['new-task'], 'expandable')}
             />
             {/*
               Open a web service (card #829). Content-sized, and
@@ -399,12 +401,7 @@ function RootContent() {
             */}
             <Stack.Screen
               name="web-service"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: 'fitToContents',
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
+              options={sheetPresentationOptions('sheet', 'fitToContents')}
             />
             {/*
               A full-screen modal, not a sheet, and the route file says why at
@@ -426,7 +423,10 @@ function RootContent() {
                 gestureEnabled: false,
               }}
             />
-            <Stack.Screen name="explore" options={sheetPresentationOptions('fullscreen')} />
+            <Stack.Screen
+              name="explore"
+              options={sheetPresentationOptions(sheetRoutePresentations['explore'])}
+            />
           </Stack>
           <InAppNotificationHost />
         </AppLockGate>

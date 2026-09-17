@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetFrame, useSheetGroundPlate, useSheetGroundProvided } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsSeparator } from '@/components/settings-chrome';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
@@ -97,6 +97,11 @@ export function ThemeBrowseSheet({
 }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
+  // The catalogue is a full-screen route, so `FullscreenSheetFrame` already
+  // owns the safe edges; padding them again here would double them. It is
+  // still its own `SheetFrame` -- the nested ground no-ops and the frame is
+  // what publishes the tint its plate is mixed from.
+  const groundProvided = useSheetGroundProvided();
   const theme = useThemeTokens();
   // Explicit: this is the component that renders the frame, so it sits above
   // its own tint provider. Everything *inside* the sheet reads the tint from
@@ -391,7 +396,10 @@ export function ThemeBrowseSheet({
       */}
       <View
         collapsable={false}
-        style={[styles.column, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        style={[
+          styles.column,
+          groundProvided ? null : { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}>
         <View style={styles.headerBlock}>
           {/* iOS draws the grabber itself; Android's form sheet does not, and a
               sheet with no handle reads as a screen that arrived from the wrong
