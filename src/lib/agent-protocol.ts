@@ -1393,6 +1393,15 @@ export interface FileDiffItem {
   patch: string;
   additions: number;
   deletions: number;
+  /**
+   * What OpenCode says happened to the file, when it says anything.
+   *
+   * `FileDiff.Info` carries a `status` -- added, modified, deleted -- and it was
+   * parsed away, so every row was classified by reading the patch header
+   * instead and a modified file with a full-file patch read as "Added". Kept as
+   * the wire string; `agent-diff-rows.ts` is where it becomes a status.
+   */
+  status?: string;
 }
 
 export function parseFileDiffItem(value: unknown): FileDiffItem | null {
@@ -1400,11 +1409,13 @@ export function parseFileDiffItem(value: unknown): FileDiffItem | null {
   if (!rec) return null;
   const path = pickString(rec, ['path', 'file', 'filename', 'filePath', 'file_path']);
   if (!path) return null;
+  const status = pickString(rec, ['status', 'change', 'change_type', 'changeType']);
   return {
     path,
     patch: asString(rec.patch) ?? asString(rec.diff) ?? '',
     additions: asFiniteNumber(rec.additions) ?? asFiniteNumber(rec.added) ?? 0,
     deletions: asFiniteNumber(rec.deletions) ?? asFiniteNumber(rec.removed) ?? 0,
+    ...(status ? { status } : {}),
   };
 }
 

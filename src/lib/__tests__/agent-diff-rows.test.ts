@@ -12,6 +12,7 @@ import {
   diffTotals,
   fileChangeFromDiffItem,
   fileStatusFromPatch,
+  fileStatusFromWire,
   INLINE_DIFF_MAX_ROWS,
   oldPathFromPatch,
   patchStateFromText,
@@ -122,6 +123,32 @@ describe('fileChangeFromDiffItem', () => {
       added: 2,
       removed: 1,
     });
+  });
+
+  test("the engine's own status wins over the patch header", () => {
+    // `…/vcs/diff` answers a modified file with a full-file patch often
+    // enough that reading the header called every row "Added".
+    expect(
+      fileChangeFromDiffItem({
+        path: 'README.md',
+        patch: CREATED,
+        additions: 3,
+        deletions: 0,
+        status: 'modified',
+      }).status
+    ).toBe('modified');
+    // A status this app has never heard of is not a status; the header answers.
+    expect(
+      fileChangeFromDiffItem({
+        path: 'README.md',
+        patch: CREATED,
+        additions: 3,
+        deletions: 0,
+        status: 'whatever',
+      }).status
+    ).toBe('added');
+    expect(fileStatusFromWire(undefined)).toBeNull();
+    expect(fileStatusFromWire('DELETED')).toBe('deleted');
   });
 
   test('a binary file is marked binary', () => {
