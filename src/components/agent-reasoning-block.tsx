@@ -4,19 +4,22 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Sparkles, ChevronDown } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { fadeIn, fadeOut, timing } from '@/lib/motion';
+import { fadeIn, timing } from '@/lib/motion';
 import { withAlpha } from '@/lib/color';
 
 export interface AgentReasoningBlockProps {
   text: string;
   durationMs?: number;
   defaultExpanded?: boolean;
+  /** Called after the body mounts so a virtualised list can re-measure row heights. */
+  onSizeChange?: () => void;
 }
 
 export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   text,
   durationMs,
   defaultExpanded = false,
+  onSizeChange,
 }: AgentReasoningBlockProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -31,6 +34,15 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   }));
 
   const durationStr = durationMs ? `${(durationMs / 1000).toFixed(1)}s` : null;
+
+  // The body mounts into a virtualised row whose cached height predates it;
+  // tell the list to re-measure once the layout settled so the rows below are
+  // never painted over the expanded body.
+  useEffect(() => {
+    if (!expanded) return;
+    const timer = setTimeout(() => onSizeChange?.(), 80);
+    return () => clearTimeout(timer);
+  }, [expanded, onSizeChange]);
 
   return (
     <View style={styles.container}>
@@ -56,7 +68,6 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
       {expanded ? (
         <Animated.View
           entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
           style={[styles.body, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
           <Text
             selectable

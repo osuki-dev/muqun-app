@@ -1,5 +1,5 @@
 import { createElement, useEffect, memo, useMemo, useState, type ComponentType } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
@@ -20,8 +20,10 @@ import {
   Wrench,
 } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { PressableScale } from '@/components/pressable-scale';
-import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
+import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
+import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { keyedLines } from '@/lib/line-keys';
 
 export interface EmbeddedTerminalProps {
@@ -141,6 +143,47 @@ function asRecord(input: unknown): Record<string, unknown> | null {
     : null;
 }
 
+/** Fence language for a file path, when the markdown renderer has a grammar. */
+const LANG_BY_EXT: Record<string, string> = {
+  ts: 'typescript',
+  tsx: 'tsx',
+  js: 'javascript',
+  jsx: 'javascript',
+  mjs: 'javascript',
+  cjs: 'javascript',
+  json: 'json',
+  html: 'html',
+  htm: 'html',
+  css: 'css',
+  scss: 'css',
+  md: 'markdown',
+  markdown: 'markdown',
+  yml: 'yaml',
+  yaml: 'yaml',
+  go: 'go',
+  java: 'java',
+  py: 'python',
+  c: 'c',
+  h: 'c',
+  cpp: 'cpp',
+  cc: 'cpp',
+  hpp: 'cpp',
+  rs: 'rust',
+  sh: 'bash',
+  bash: 'bash',
+  zsh: 'bash',
+  swift: 'swift',
+  php: 'php',
+  rb: 'ruby',
+  cs: 'c-sharp',
+};
+
+function fenceLanguageForPath(path?: string): string | undefined {
+  if (!path) return undefined;
+  const ext = path.split('.').pop()?.toLowerCase();
+  return ext ? LANG_BY_EXT[ext] : undefined;
+}
+
 function pickString(rec: Record<string, unknown>, keys: string[]): string | undefined {
   for (const key of keys) {
     const value = rec[key];
@@ -246,6 +289,33 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const contentKeyed = useMemo(() => (content ? keyedLines(content) : []), [content]);
   const patchKeyed = useMemo(() => (patchText ? keyedLines(patchText) : []), [patchText]);
 
+  // The markdown renderer's tree-sitter grammars highlight file bodies; only
+  // when the tool target reveals a known language.
+  const markdownStyle = usePaneChatMarkdownStyle();
+  const highlightLang = useMemo(
+    () => (kind === 'write' || kind === 'edit' ? fenceLanguageForPath(displayCommand) : undefined),
+    [kind, displayCommand]
+  );
+  const fencedHighlight = useMemo(() => {
+    if (!highlightLang) return null;
+    const body = kind === 'write' ? content : newString;
+    if (!body) return null;
+    return `\`\`\`${highlightLang}\n${body}\n\`\`\``;
+  }, [highlightLang, kind, content, newString]);
+
+  const renderHighlighted = (key: string, fenced: string) => (
+    <EnrichedMarkdownText
+      key={key}
+      flavor="commonmark"
+      markdown={fenced}
+      markdownStyle={markdownStyle}
+      containerStyle={styles.highlightedCode}
+      selectable
+      streamingAnimation={false}
+      textBreakStrategy="simple"
+    />
+  );
+
   // Extract output text and unwrap structured JSON wrappers
   const parsedOutput = useMemo(() => parseToolOutput(output), [output]);
   const outputText = parsedOutput.stdout;
@@ -277,7 +347,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
     status === 'running';
 
   return (
-    <Animated.View layout={listLayout()} style={styles.container}>
+    <Animated.View style={styles.container}>
       {/* Header: one quiet line — tool, target, outcome */}
       <PressableScale
         testID="agent-tool-toggle"
@@ -375,7 +445,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
                 </View>
               ))
             : null}
-          {kind === 'edit' && newKeyed.length > MINI_DIFF_MAX_LINES
+          {kind === 'edit' && newKeyed.length > MINI_DIFF_MAX_LINES && !highlightLang
             ? newKeyed.slice(MINI_DIFF_MAX_LINES).map(({ line, key }) => (
                 <View key={key} style={styles.diffLineRow}>
                   <Text selectable style={[styles.codeText, { color: theme.colors.text }]}>
@@ -385,15 +455,20 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
                 </View>
               ))
             : null}
+          {kind === 'edit' && fencedHighlight ? (
+            <View style={styles.outputContent}>
+              {renderHighlighted('edit-new', fencedHighlight)}
+            </View>
+          ) : null}
 
           {/* A write's content is the change itself */}
           {kind === 'write' && contentKeyed.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.outputScroll}
-              contentContainerStyle={styles.outputContent}>
-              <View>
+            fencedHighlight ? (
+              <View style={styles.outputContent}>
+                {renderHighlighted('write-content', fencedHighlight)}
+              </View>
+            ) : (
+              <View style={styles.outputContent}>
                 {contentKeyed.map(({ line, key }) => {
                   const added = line.startsWith('+');
                   const removed = line.startsWith('-');
@@ -412,55 +487,45 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
                   );
                 })}
               </View>
-            </ScrollView>
+            )
           ) : null}
 
           {/* A patch's text, marker-coloured */}
           {kind === 'patch' && patchKeyed.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.outputScroll}
-              contentContainerStyle={styles.outputContent}>
-              <View>
-                {patchKeyed.map(({ line, key }) => {
-                  const added = line.startsWith('+');
-                  const removed = line.startsWith('-');
-                  const section = line.startsWith('***');
-                  return (
-                    <Text
-                      key={key}
-                      selectable
-                      style={[
-                        styles.codeText,
-                        {
-                          color: added
-                            ? addedColor
-                            : removed
-                              ? removedColor
-                              : section
-                                ? theme.colors.primary
-                                : theme.colors.textMuted,
-                        },
-                      ]}>
-                      {line || ' '}
-                    </Text>
-                  );
-                })}
-              </View>
-            </ScrollView>
+            <View style={styles.outputContent}>
+              {patchKeyed.map(({ line, key }) => {
+                const added = line.startsWith('+');
+                const removed = line.startsWith('-');
+                const section = line.startsWith('***');
+                return (
+                  <Text
+                    key={key}
+                    selectable
+                    style={[
+                      styles.codeText,
+                      {
+                        color: added
+                          ? addedColor
+                          : removed
+                            ? removedColor
+                            : section
+                              ? theme.colors.primary
+                              : theme.colors.textMuted,
+                      },
+                    ]}>
+                    {line || ' '}
+                  </Text>
+                );
+              })}
+            </View>
           ) : null}
 
           {outputText ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.outputScroll}
-              contentContainerStyle={styles.outputContent}>
-              <Text selectable style={[styles.codeText, { color: theme.colors.textMuted }]}>
-                {outputText}
-              </Text>
-            </ScrollView>
+            <Text
+              selectable
+              style={[styles.codeText, styles.outputWrap, { color: theme.colors.textMuted }]}>
+              {outputText}
+            </Text>
           ) : status === 'running' ? (
             <Text variant="caption" color={theme.colors.textMuted} style={styles.runningText}>
               <Trans>Running command in background…</Trans>
@@ -525,6 +590,13 @@ const styles = StyleSheet.create({
   },
   outputContent: {
     paddingVertical: 2,
+  },
+  highlightedCode: {
+    alignSelf: 'stretch',
+  },
+  outputWrap: {
+    lineHeight: 17,
+    maxWidth: '100%',
   },
   codeText: {
     fontFamily: 'monospace',

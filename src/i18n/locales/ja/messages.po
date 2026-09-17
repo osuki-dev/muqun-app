@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/agent-message-block.tsx
-msgid "… {hiddenCount} more lines"
-msgstr "… 他 {hiddenCount} 行"
-
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "… open for the full change"
 msgstr "… 完全な変更を表示するには開く"
@@ -692,10 +688,6 @@ msgstr "SSH ホストを選んでください"
 msgid "Choose files"
 msgstr "ファイルを選択"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "OpenCode 自律型コーディングを直感的に操作。推論プロセスの追跡、コード差分の確認、タスクの進捗管理を外出先から行えます"
-
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
 msgstr "プロジェクトを選択"
@@ -1276,6 +1268,10 @@ msgstr "このファイルを読み込めませんでした"
 msgid "Could not remove host"
 msgstr "ホストを削除できませんでした"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not reply"
+msgstr "返信できませんでした"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "デバイスを取り消せませんでした"
@@ -1442,6 +1438,10 @@ msgstr "デバイス認証"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "差分の要約"
+
+#: src/components/launch-intro.tsx
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "OpenCode 自律型コーディングを直感的に操作。推論プロセスの追跡、コード差分の確認、タスクの進捗管理を外出先から行えます"
 
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
@@ -2645,6 +2645,7 @@ msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long 
 msgstr "ワークスペース {0} を開く（{1, plural, one {# 実行中} other {# 実行中}}）。長押しで閉じる"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 msgid "OpenCode Agent"
 msgstr "OpenCodeエージェント"
 
@@ -2660,6 +2661,10 @@ msgstr "OpenCode に接続できません。サービスが起動しているこ
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCodeの準備が完了しました"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode service is offline"
+msgstr "OpenCode サービスがオフラインです"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"

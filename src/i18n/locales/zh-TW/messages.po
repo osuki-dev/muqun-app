@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/agent-message-block.tsx
-msgid "… {hiddenCount} more lines"
-msgstr "… 還有 {hiddenCount} 行"
-
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "… open for the full change"
 msgstr "… 展開查看完整變更"
@@ -692,10 +688,6 @@ msgstr "請選擇 SSH 主機"
 msgid "Choose files"
 msgstr "選擇檔案"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "專為 OpenCode 自主編程打造。行動端即時追蹤思考歷程、審查程式碼變更、追蹤逐步任務，隨時掌控遠端代理"
-
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
 msgstr "選擇專案"
@@ -1276,6 +1268,10 @@ msgstr "無法讀取這個檔案"
 msgid "Could not remove host"
 msgstr "無法移除主機"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not reply"
+msgstr "無法回覆"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "無法撤銷裝置"
@@ -1442,6 +1438,10 @@ msgstr "裝置驗證"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Diff 摘要"
+
+#: src/components/launch-intro.tsx
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "專為 OpenCode 自主編程打造。行動端即時追蹤思考歷程、審查程式碼變更、追蹤逐步任務，隨時掌控遠端代理"
 
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
@@ -2645,6 +2645,7 @@ msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long 
 msgstr "開啟工作區 {0}，{1, plural, one {# 個執行中} other {# 個執行中}}。長按可關閉"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 msgid "OpenCode Agent"
 msgstr "OpenCode 代理"
 
@@ -2660,6 +2661,10 @@ msgstr "OpenCode 服務仍無法連線。請確認服務正在執行"
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode 已就緒"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode service is offline"
+msgstr "OpenCode 服務目前離線"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { useLocalSearchParams } from 'expo-router';
@@ -20,19 +20,13 @@ import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { timing } from '@/lib/motion';
-import type { AgentProject } from '@/lib/agent-session';
+import { useAgentSessionState } from '@/stores/agent-session-state';
 
 /**
  * The header's height above the content, with generous clearance so the glass pill
  * navigation never presses down on the scrolling content.
  */
 const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
-
-/** The run state and title the workbench reports up to the header. */
-interface HeaderSessionState {
-  running: boolean;
-  title: string | undefined;
-}
 
 /** `ses_…` placeholders are engine bookkeeping, not a title worth showing. */
 function isMeaningfulSessionTitle(title: string | undefined): boolean {
@@ -163,32 +157,21 @@ export default function AgentScreen() {
   const params = useLocalSearchParams<{ sessionId?: string; asid?: string }>();
 
   const sessionId = params.sessionId || 'herdr';
-  const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
-  const [activeProject, setActiveProject] = useState<AgentProject | undefined>(undefined);
-  const [sessionState, setSessionState] = useState<HeaderSessionState>({
-    running: false,
-    title: undefined,
-  });
+  const sessionRunning = useAgentSessionState((s) => s.running);
+  const sessionTitle = useAgentSessionState((s) => s.title);
+  const activeDirectory = useAgentSessionState((s) => s.directory);
+  const activeProject = useAgentSessionState((s) => s.project);
 
   const openWorkspaceSheetRef = useRef<(() => void) | null>(null);
   const createNewSessionRef = useRef<(() => void) | null>(null);
   const abortSessionRef = useRef<(() => void) | null>(null);
-
-  const handleWorkspaceChange = useCallback((directory?: string, project?: AgentProject) => {
-    setActiveDirectory(directory);
-    setActiveProject(project);
-  }, []);
-
-  const handleSessionStateChange = useCallback((state: HeaderSessionState) => {
-    setSessionState(state);
-  }, []);
 
   const displayWorkspaceName =
     activeProject?.name ||
     (activeDirectory ? activeDirectory.split('/').filter(Boolean).pop() : undefined) ||
     t`Workspace`;
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
-  const showSessionTitle = sessionState.running && isMeaningfulSessionTitle(sessionState.title);
+  const showSessionTitle = sessionRunning && isMeaningfulSessionTitle(sessionTitle);
 
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
   const switchWorkspaceLabel = t`Switch workspace: ${displayWorkspaceName}`;
@@ -203,11 +186,9 @@ export default function AgentScreen() {
         initialAsid={params.asid}
         topInset={insets.top + HEADER_INSET}
         bottomInset={insets.bottom}
-        onWorkspaceChange={handleWorkspaceChange}
         openWorkspaceSheetRef={openWorkspaceSheetRef}
         createNewSessionRef={createNewSessionRef}
         abortSessionRef={abortSessionRef}
-        onSessionStateChange={handleSessionStateChange}
       />
 
       {/* Top glass fade for smooth dissolve under nav header */}
@@ -230,7 +211,7 @@ export default function AgentScreen() {
                 style={styles.workspaceHeaderPillInner}>
                 <WorkspacePillContent
                   showSession={showSessionTitle}
-                  sessionTitle={sessionState.title}
+                  sessionTitle={sessionTitle}
                   workspaceName={displayWorkspaceName}
                   workspacePath={displayWorkspacePath}
                 />
@@ -242,16 +223,16 @@ export default function AgentScreen() {
               <PressableScale
                 testID="agent-header-new-session"
                 accessibilityRole="button"
-                accessibilityLabel={sessionState.running ? t`Stop agent` : t`New session`}
+                accessibilityLabel={sessionRunning ? t`Stop agent` : t`New session`}
                 onPress={() => {
-                  if (sessionState.running) {
+                  if (sessionRunning) {
                     abortSessionRef.current?.();
                   } else {
                     createNewSessionRef.current?.();
                   }
                 }}
                 style={styles.newSessionCircleInner}>
-                <SessionActionIcon running={sessionState.running} />
+                <SessionActionIcon running={sessionRunning} />
               </PressableScale>
             </GlassChrome>
           }

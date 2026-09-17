@@ -21,7 +21,6 @@ import {
   PlusCircle,
   RefreshCw,
   ShieldAlert,
-  Sparkles,
   X,
   Zap,
 } from 'lucide-react-native';
@@ -41,7 +40,6 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { StatusDot } from '@/components/status-dot';
 import {
   getAgentSessionSnapshot,
-  getAgentTimelineDelta,
   listAgentSessions,
   createAgentSession,
   sendAgentPrompt,
@@ -64,13 +62,10 @@ import {
   type AgentProject,
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
+import { useAgentSessionState } from '@/stores/agent-session-state';
 import { AgentTodoBlock } from './agent-todo-block';
-import {
-  AgentAssistantMessage,
-  AgentUserMessage,
-  buildTimelineGroups,
-  type TimelineRenderGroup,
-} from './agent-message-block';
+import { AgentAssistantMessage, AgentUserMessage } from './agent-message-block';
+import { buildTimelineGroups, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
 import { AgentModelSheet } from './agent-model-sheet';
@@ -80,6 +75,7 @@ import { AgentSessionsSheet } from './agent-sessions-sheet';
 import { AgentContextSheet } from './agent-context-sheet';
 import { AgentWorkspaceSheet } from './agent-workspace-sheet';
 import { AgentComposer } from './agent-composer';
+import { ThinkingIndicator } from './agent-thinking-indicator';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -117,15 +113,11 @@ export interface AgentWorkbenchProps {
   initialAsid?: string;
   topInset?: number;
   bottomInset?: number;
-  onModelChange?: (model: ModelRef | undefined) => void;
   openModelSheetRef?: React.MutableRefObject<(() => void) | null>;
-  onWorkspaceChange?: (directory?: string, project?: AgentProject) => void;
   openWorkspaceSheetRef?: React.MutableRefObject<(() => void) | null>;
   createNewSessionRef?: React.MutableRefObject<(() => void) | null>;
   /** Wired to the workbench's abort call so a header can expose a Stop control. */
   abortSessionRef?: React.MutableRefObject<(() => void) | null>;
-  /** Notifies the host screen (e.g. the header) of the active session's run state. */
-  onSessionStateChange?: (state: { running: boolean; title: string | undefined }) => void;
 }
 
 export const AgentWorkbench = memo(function AgentWorkbench({
@@ -133,13 +125,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialAsid,
   topInset = 0,
   bottomInset = 0,
-  onModelChange,
   openModelSheetRef,
-  onWorkspaceChange,
   openWorkspaceSheetRef,
   createNewSessionRef,
   abortSessionRef,
-  onSessionStateChange,
 }: AgentWorkbenchProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -163,7 +152,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [windowStart, setWindowStart] = useState(0);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   const [forms, setForms] = useState<FormRequest[]>([]);
-  const [lastSeq, setLastSeq] = useState<number>(0);
+  // Highest timeline sequence seen; `after=`-style bookkeeping. A ref, never
+  // state: bumping it must not re-run the stream effect or re-render anything.
+  const lastSeqRef = useRef<number>(0);
   const [loading, setLoading] = useState(true);
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
@@ -201,14 +192,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // must never be overwritten by the catalog catch-all afterwards.
   const appliedModelRef = useRef<ModelRef | undefined>(undefined);
 
-  const applySelectedModel = useCallback(
-    (model: ModelRef | undefined) => {
-      appliedModelRef.current = model;
-      setSelectedModel(model);
-      onModelChange?.(model);
-    },
-    [onModelChange]
-  );
+  const applySelectedModel = useCallback((model: ModelRef | undefined) => {
+    appliedModelRef.current = model;
+    setSelectedModel(model);
+  }, []);
   const [showReasoning, setShowReasoning] = useState<boolean>(true);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
@@ -368,7 +355,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setPermissions(snap.permissions);
       }
       setForms(snap.forms);
-      setLastSeq(snap.seq);
+      lastSeqRef.current = snap.seq;
       if (snap.info?.model) {
         applySelectedModel(snap.info.model);
       }
@@ -461,15 +448,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             return next;
           });
           if (payload?.seq) {
-            setLastSeq((prev) => Math.max(prev, payload.seq ?? 0));
+            lastSeqRef.current = Math.max(lastSeqRef.current, payload.seq ?? 0);
           }
-          // Only keep the reader pinned to the latest message while they are
-          // at the bottom; new output must never yank them out of history.
-          setTimeout(() => {
-            if (isNearBottomRef.current) {
-              listRef.current?.scrollToEnd({ animated: true });
-            }
-          }, 60);
+          // Pinning to the latest message while the reader is at the bottom is
+          // LegendList's `maintainScrollAtEnd` job (threshold-guarded); a
+          // manual scrollToEnd here would start a new animation on every
+          // stream tick and fight the reader's own gesture.
         }
       } else if (event === 'agent.timeline.removed') {
         const removedIds = new Set(payload?.ids ?? []);
@@ -542,80 +526,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [loadSnapshot, activeAsid, sessionId, refreshSessions, handleAutoPermission]
   );
 
-  // Real-time SSE Stream subscription + gentle fallback heartbeat polling
-  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- scrollTimer is cleared on unmount in cleanup below.
+  // Real-time SSE stream — the only sync channel. Engine output arrives over
+  // it; a dropped connection reconnects with a short backoff instead of being
+  // papered over by polling. `lastSeq` intentionally lives in a ref so events
+  // never re-declare this effect and tear the connection down mid-run.
   useEffect(() => {
     if (!activeAsid) return;
     let mounted = true;
-    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
 
-    const closeStream = openAgentSessionStream({
-      asid: activeAsid,
-      sessionId,
-      onEvent: (event, rawData) => {
-        if (!mounted) return;
-        handleStreamEvent(event, rawData);
-      },
-      onError: () => {
-        // Quiet fail - fallback heartbeat will maintain synchronization
-      },
-    });
-
-    const poll = async () => {
-      try {
-        const delta = await getAgentTimelineDelta(sessionId, activeAsid, lastSeq);
-        if (!mounted) return;
-        if (delta.items && delta.items.length > 0) {
-          setTimeline((prev) => {
-            const next = [...prev];
-            for (const item of delta.items!) {
-              const existingIdx = next.findIndex((it) => it.id === item.id);
-              if (existingIdx >= 0) {
-                next[existingIdx] = item;
-              } else if (item.role === 'user' && item.part.type === 'text') {
-                const userText = item.part.text.trim();
-                const tempIdx = next.findIndex(
-                  (it) =>
-                    (it.id.startsWith('temp_') || it.id.startsWith('usr_')) &&
-                    it.role === 'user' &&
-                    it.part.type === 'text' &&
-                    it.part.text.trim() === userText
-                );
-                if (tempIdx >= 0) {
-                  next[tempIdx] = item;
-                } else {
-                  next.push(item);
-                }
-              } else {
-                next.push(item);
-              }
-            }
-            return next;
-          });
-          setLastSeq(delta.latest_seq);
-          scrollTimer = setTimeout(() => {
-            if (isNearBottomRef.current) {
-              listRef.current?.scrollToEnd({ animated: true });
-            }
-          }, 100);
-        }
-        if (delta.status) {
-          setSessionInfo((prev) => (prev ? { ...prev, status: delta.status! } : prev));
-        }
-      } catch {
-        // quiet poll fail
-      }
+    const connect = () => {
+      const closeStream = openAgentSessionStream({
+        asid: activeAsid,
+        sessionId,
+        onEvent: (event, rawData) => {
+          if (!mounted) return;
+          attempts = 0;
+          handleStreamEvent(event, rawData);
+        },
+        onError: () => {
+          if (!mounted) return;
+          // Quiet reconnect. Mobile streams drop often; keep the gap short so
+          // a dropped connection costs at most a couple of seconds, not a poll.
+          const delay = Math.min(400 * 2 ** attempts, 5000);
+          attempts += 1;
+          reconnectTimer = setTimeout(connect, delay);
+        },
+      });
+      return closeStream;
     };
 
-    const timer = setInterval(poll, 3500);
+    const closeCurrent = connect();
 
     return () => {
       mounted = false;
-      closeStream();
-      clearInterval(timer);
-      if (scrollTimer) clearTimeout(scrollTimer);
+      closeCurrent();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
     };
-  }, [sessionId, activeAsid, lastSeq, handleStreamEvent]);
+  }, [sessionId, activeAsid, handleStreamEvent]);
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
@@ -661,7 +610,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const tempUserItem: TimelineItem = {
       id: `temp_usr_${Date.now()}`,
       message_id: `msg_${Date.now()}`,
-      seq: lastSeq + 1,
+      seq: lastSeqRef.current + 1,
       updated_ms: Date.now(),
       role: 'user',
       part: { type: 'text', text },
@@ -716,10 +665,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
       if (!activeAsid) return;
-      await replyAgentPermission(sessionId, activeAsid, permId, decision);
+      try {
+        await replyAgentPermission(sessionId, activeAsid, permId, decision);
+      } catch (err) {
+        console.warn('Failed to reply permission:', err);
+        showToast({
+          variant: 'danger',
+          title: t`Could not reply`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+        return;
+      }
       setPermissions((prev) => prev.filter((p) => p.id !== permId));
     },
-    [activeAsid, sessionId]
+    [activeAsid, sessionId, showToast, t]
   );
 
   const handleToggleYoloMode = useCallback(() => {
@@ -737,10 +696,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
       if (!activeAsid) return;
-      await replyAgentForm(sessionId, activeAsid, formId, answers);
+      try {
+        await replyAgentForm(sessionId, activeAsid, formId, answers);
+      } catch (err) {
+        console.warn('Failed to reply form:', err);
+        showToast({
+          variant: 'danger',
+          title: t`Could not reply`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+        return;
+      }
       setForms((prev) => prev.filter((f) => f.id !== formId));
     },
-    [activeAsid, sessionId]
+    [activeAsid, sessionId, showToast, t]
   );
 
   const handleCreateNewSession = useCallback(async () => {
@@ -765,7 +734,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setWindowStart(0);
       setPermissions([]);
       setForms([]);
-      setLastSeq(0);
+      lastSeqRef.current = 0;
       refreshSessions();
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showToast({
@@ -794,11 +763,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     showToast,
   ]);
 
+  // Remounts the workspace sheet on every open so it starts with clean search
+  // state and a fresh project fetch (key change resets the component).
+  const [workspaceOpenCount, setWorkspaceOpenCount] = useState(0);
+
+  const openWorkspaceSheet = useCallback(() => {
+    setWorkspaceOpenCount((prev) => prev + 1);
+    setWorkspaceSheetVisible(true);
+  }, []);
+
   useEffect(() => {
     if (openWorkspaceSheetRef) {
-      openWorkspaceSheetRef.current = () => setWorkspaceSheetVisible(true);
+      openWorkspaceSheetRef.current = openWorkspaceSheet;
     }
-  }, [openWorkspaceSheetRef]);
+  }, [openWorkspaceSheetRef, openWorkspaceSheet]);
 
   useEffect(() => {
     if (createNewSessionRef) {
@@ -831,7 +809,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setWindowStart(0);
         setPermissions([]);
         setForms([]);
-        setLastSeq(0);
+        lastSeqRef.current = 0;
         refreshSessions();
       } catch (err) {
         console.warn('Failed to switch workspace session:', err);
@@ -888,12 +866,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const isRunning = sessionInfo?.status === 'running';
 
-  // Surface the active session's run state and title to the host screen so its
-  // header can react (Stop control, live session title) without owning any of
-  // the session wiring itself.
+  // Surface the active session's run state and title where the header can read
+  // it without the workbench owning the header's render. A store write, not a
+  // prop callback: both sides read the same value.
   useEffect(() => {
-    onSessionStateChange?.({ running: isRunning, title: sessionInfo?.title });
-  }, [isRunning, sessionInfo?.title, onSessionStateChange]);
+    useAgentSessionState.getState().setSessionStatus({
+      running: isRunning,
+      title: sessionInfo?.title,
+    });
+  }, [isRunning, sessionInfo?.title]);
 
   const isOverloaded = useMemo(() => {
     if (!isRunning && timeline.length > 0) {
@@ -925,8 +906,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeDirectory, knownProjects]);
 
   useEffect(() => {
-    onWorkspaceChange?.(activeDirectory, activeProject);
-  }, [activeDirectory, activeProject, onWorkspaceChange]);
+    useAgentSessionState.getState().setWorkspace(activeDirectory, activeProject);
+  }, [activeDirectory, activeProject]);
 
   const displayWorkspaceName =
     activeProject?.name ||
@@ -943,6 +924,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   // Group the window back into whole messages, the shape OpenCode's own UI
   // renders: reasoning and tool calls fold into the message they belong to.
+  // `buildTimelineGroups` reuses untouched group objects across renders, so
+  // memoised cells for other messages skip re-rendering on a stream tick.
   const renderGroups = useMemo(() => buildTimelineGroups(visibleTimeline), [visibleTimeline]);
 
   // The group the reader is looking at when an earlier page is requested, so
@@ -1007,15 +990,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   borderColor: theme.colors.border,
                 },
               ]}>
-              <Sparkles size={13} color={theme.colors.primary} />
+              <ThinkingIndicator size={13} color={theme.colors.primary} />
               <Text variant="caption" color={theme.colors.primary} weight="semibold">
                 <Trans>Thinking…</Trans>
               </Text>
-              <ActivityIndicator
-                size="small"
-                color={theme.colors.primary}
-                style={styles.thinkingSpinner}
-              />
             </View>
           </View>
         ) : null}
@@ -1129,7 +1107,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             ]}>
             <PressableScale
               testID="agent-empty-workspace-pill"
-              onPress={() => setWorkspaceSheetVisible(true)}
+              onPress={openWorkspaceSheet}
               accessibilityLabel={t`Switch workspace: ${displayWorkspaceName}`}
               style={[
                 styles.workspacePill,
@@ -1388,6 +1366,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       {/* Workspace / Multi-Project Switcher Sheet */}
       <AgentWorkspaceSheet
+        key={workspaceOpenCount}
         visible={workspaceSheetVisible}
         activeDirectory={activeDirectory}
         sessionId={sessionId}
@@ -1572,9 +1551,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
-  },
-  thinkingSpinner: {
-    transform: [{ scale: 0.75 }],
   },
   partRow: {
     marginVertical: 4,

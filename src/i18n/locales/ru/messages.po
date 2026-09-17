@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/agent-message-block.tsx
-msgid "… {hiddenCount} more lines"
-msgstr "… ещё {hiddenCount} строк"
-
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "… open for the full change"
 msgstr "… откройте, чтобы увидеть полное изменение"
@@ -692,10 +688,6 @@ msgstr "Выберите SSH-хост"
 msgid "Choose files"
 msgstr "Выбрать файлы"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "Прямое управление агентами OpenCode. Отслеживайте ход мыслей в реальном времени, проверяйте диффы кода, контролируйте шаги задач прямо с телефона"
-
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
 msgstr "Выбрать проект"
@@ -1276,6 +1268,10 @@ msgstr "Не удалось прочитать этот файл"
 msgid "Could not remove host"
 msgstr "Не удалось удалить хост"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not reply"
+msgstr "Не удалось ответить"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Не удалось отозвать устройство"
@@ -1442,6 +1438,10 @@ msgstr "аутентификация устройства"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Сводка diff"
+
+#: src/components/launch-intro.tsx
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "Прямое управление агентами OpenCode. Отслеживайте ход мыслей в реальном времени, проверяйте диффы кода, контролируйте шаги задач прямо с телефона"
 
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
@@ -2645,6 +2645,7 @@ msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long 
 msgstr "Открыть пространство {0}, {1, plural, one {# в работе} few {# в работе} many {# в работе} other {# в работе}}. Удерживайте, чтобы закрыть"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 msgid "OpenCode Agent"
 msgstr "Агент OpenCode"
 
@@ -2660,6 +2661,10 @@ msgstr "OpenCode по-прежнему недоступен. Убедитесь,
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode готов"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode service is offline"
+msgstr "Сервис OpenCode недоступен"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"

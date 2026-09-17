@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Modal, Pressable, FlatList } from 'react-native';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { GitCommit, FileCode, X } from 'lucide-react-native';
@@ -104,16 +104,18 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
                     slot="tabs.background"
                     baseColor={theme.colors.surface}
                     style={styles.fileTabsStrip}>
-                    <ScrollView
+                    <FlatList
                       horizontal
+                      data={diffs}
+                      keyExtractor={(d) => d.path}
+                      extraData={selectedFile}
                       showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.fileTabsContent}>
-                      {diffs.map((d) => {
+                      contentContainerStyle={styles.fileTabsContent}
+                      renderItem={({ item: d }) => {
                         const isSelected = selectedFile === d.path;
                         const fileName = d.path.split('/').pop() ?? d.path;
                         return (
                           <PressableScale
-                            key={d.path}
                             onPress={() => setSelectedFile(d.path)}
                             style={[
                               styles.fileTab,
@@ -151,8 +153,8 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
                             </View>
                           </PressableScale>
                         );
-                      })}
-                    </ScrollView>
+                      }}
+                    />
                   </ThemedSurface>
                 ) : null}
               </View>

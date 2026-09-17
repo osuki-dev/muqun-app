@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/components/agent-message-block.tsx
-msgid "… {hiddenCount} more lines"
-msgstr "… {hiddenCount} บรรทัดเพิ่มเติม"
-
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "… open for the full change"
 msgstr "… เปิดเพื่อดูการเปลี่ยนแปลงทั้งหมด"
@@ -692,10 +688,6 @@ msgstr "เลือกโฮสต์ SSH"
 msgid "Choose files"
 msgstr "เลือกไฟล์"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "ควบคุมเอเจนต์เขียนโค้ด OpenCode ได้โดยตรง ติดตามการคิดแบบเรียลไทม์ ตรวจสอบความเปลี่ยนแปลงของโค้ด และติดตามงานได้จากทุกที่"
-
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
 msgstr "เลือกโปรเจกต์"
@@ -1276,6 +1268,10 @@ msgstr "อ่านไฟล์นี้ไม่ได้"
 msgid "Could not remove host"
 msgstr "ลบโฮสต์ไม่ได้"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not reply"
+msgstr "ไม่สามารถตอบกลับได้"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "เพิกถอนอุปกรณ์ไม่ได้"
@@ -1442,6 +1438,10 @@ msgstr "การยืนยันตัวตนของอุปกรณ์
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "สรุปความแตกต่าง"
+
+#: src/components/launch-intro.tsx
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "ควบคุมเอเจนต์เขียนโค้ด OpenCode ได้โดยตรง ติดตามการคิดแบบเรียลไทม์ ตรวจสอบความเปลี่ยนแปลงของโค้ด และติดตามงานได้จากทุกที่"
 
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
@@ -2645,6 +2645,7 @@ msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long 
 msgstr "เปิดพื้นที่ทำงาน {0} {1, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 msgid "OpenCode Agent"
 msgstr "เอเจนต์ OpenCode"
 
@@ -2660,6 +2661,10 @@ msgstr "ยังไม่สามารถเชื่อมต่อ OpenCode
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode พร้อมแล้ว"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode service is offline"
+msgstr "บริการ OpenCode ออฟไลน์"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"

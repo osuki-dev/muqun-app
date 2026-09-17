@@ -15,45 +15,11 @@ import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { EmbeddedTerminalToolBlock } from '@/components/embedded-terminal-tool-block';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
-import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
-import { withAlpha } from '@/lib/color';
+import { fadeIn, timing } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { keyedLines, type KeyedLine } from '@/lib/line-keys';
-import type { TimelineItem, TimelineRole } from '@/lib/agent-session';
-
-/**
- * One rendered message: the timeline's flat per-part items grouped back into
- * the shape OpenCode's own UI renders — a message owns its parts, so the
- * reasoning ("thinking") and the tool calls made inside it fold into a single
- * block instead of scrolling past as separate list rows.
- */
-export interface TimelineRenderGroup {
-  key: string;
-  role: TimelineRole;
-  items: TimelineItem[];
-  /** The timeline item directly before this group, for tool-output dedup. */
-  prevItem?: TimelineItem;
-}
-
-/** Group consecutive timeline items that share a `message_id` into one message. */
-export function buildTimelineGroups(items: TimelineItem[]): TimelineRenderGroup[] {
-  const groups: TimelineRenderGroup[] = [];
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const last = groups[groups.length - 1];
-    if (last && last.items[0].message_id === item.message_id) {
-      last.items.push(item);
-    } else {
-      groups.push({
-        key: `grp_${item.id}`,
-        role: item.role,
-        items: [item],
-        prevItem: i > 0 ? items[i - 1] : undefined,
-      });
-    }
-  }
-  return groups;
-}
+import type { TimelineItem } from '@/lib/agent-session';
+import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
 function isImageAttachment(uri: string): boolean {
@@ -75,6 +41,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   const theme = useThemeTokens();
   const { showToast } = useToast();
   const surfaceBackground = useSurfaceBackground();
+  const colors = usePaneChatColors();
 
   const text = item.part.type === 'text' ? item.part.text : '';
   const attachments = item.attachments ?? [];
@@ -97,14 +64,14 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         style={[
           styles.userBubble,
           {
-            backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.16)),
-            borderColor: withAlpha(theme.colors.primary, 0.35),
+            backgroundColor: surfaceBackground(colors.bubble),
+            borderColor: colors.accent,
           },
           item.queued
             ? {
                 borderStyle: 'dashed',
                 borderWidth: 1.5,
-                borderColor: theme.colors.primary,
+                borderColor: colors.accent,
               }
             : null,
         ]}>
@@ -112,10 +79,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         {item.queued ? (
           <View style={styles.queuedBadgeRow}>
             <View
-              style={[
-                styles.queuedPill,
-                { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
-              ]}>
+              style={[styles.queuedPill, { backgroundColor: surfaceBackground(colors.bubble) }]}>
               <Clock size={11} color={theme.colors.primary} />
               <Text
                 variant="caption"
@@ -306,14 +270,12 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
     return { added, removed };
   }, [lines]);
 
-  // Long patches are truncated rather than scrolled: a diff the reader wants
-  // in full is one VCS sheet tap away, and the message stays readable.
-  const MAX_DIFF_LINES = 60;
-  const hiddenCount = Math.max(0, keyedDiffLines.length - MAX_DIFF_LINES);
-  const shown = keyedDiffLines.slice(0, MAX_DIFF_LINES);
+  // Long patches are shown whole — no silent truncation — with the patch rows'
+  // own horizontal scroll ready for over-long lines.
+  const shown = keyedDiffLines;
 
   return (
-    <Animated.View layout={listLayout()} style={styles.diffBlock}>
+    <Animated.View style={styles.diffBlock}>
       <PressableScale
         testID="agent-diff-toggle"
         accessibilityRole="button"
@@ -343,15 +305,10 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
       </PressableScale>
 
       {expanded ? (
-        <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
+        <Animated.View entering={fadeIn('micro')} style={styles.diffBodyWrap}>
           {/* Never wrapped: a re-wrapped diff line no longer lines up with the
               one above it, which is the only thing a diff is read for. */}
           <DiffPatchLines lines={shown} />
-          {hiddenCount > 0 ? (
-            <Text variant="caption" color={theme.colors.textMuted} style={styles.diffLine}>
-              <Trans>… {hiddenCount} more lines</Trans>
-            </Text>
-          ) : null}
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -451,7 +408,6 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   markdownStyle: MarkdownStyle;
 }) {
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
 
   // The parts this message actually paints, in order. `showReasoning` hides
   // the model's private reasoning the same way it did for the flat list.
@@ -477,14 +433,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   if (visibleItems.length === 0) return null;
 
   return (
-    <View
-      style={[
-        styles.messageCard,
-        {
-          backgroundColor: surfaceBackground(theme.colors.surface),
-          borderColor: theme.colors.border,
-        },
-      ]}>
+    <View style={styles.messageCard}>
       {visibleItems.map((it, index) => {
         switch (it.part.type) {
           case 'reasoning':
@@ -611,16 +560,12 @@ const styles = StyleSheet.create({
   },
   messageCard: {
     marginVertical: 4,
-    borderRadius: 18,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignSelf: 'flex-start',
-    maxWidth: '92%',
+    width: '100%',
+    alignSelf: 'stretch',
+    gap: 6,
   },
   markdownContainer: {
-    alignSelf: 'flex-start',
+    alignSelf: 'stretch',
   },
   markdownSegments: {
     gap: 6,
@@ -660,6 +605,9 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 11,
     fontStyle: 'italic',
+  },
+  diffBodyWrap: {
+    paddingVertical: 2,
   },
   diffBlock: {
     alignSelf: 'stretch',

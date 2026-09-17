@@ -1,6 +1,7 @@
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeSyntheticEvent,
+  FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -454,19 +455,22 @@ export const AgentComposer = memo(function AgentComposer({
         <View style={[styles.composerInner, { paddingBottom: Math.max(10, bottomInset + 6) }]}>
           {/* Row 1: Workspace Sessions Horizontal Strip */}
           {workspaceSessions.length > 0 ? (
-            <ScrollView
+            <FlatList
               horizontal
+              data={workspaceSessions}
+              keyExtractor={(s) => s.asid}
+              extraData={activeAsid}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.sessionStripContent}
-              style={styles.sessionStripViewport}>
-              {workspaceSessions.map((s) => {
+              style={styles.sessionStripViewport}
+              renderItem={({ item: s }) => {
                 const isSessActive = s.asid === activeAsid;
                 const agentName = s.agent || selectedAgent || 'build';
                 const displayTitle = resolveSessionTitle(s, t`New Session`);
                 const sessSubagents = sessions.filter((sub) => sub.parent_id === s.asid);
 
                 return (
-                  <Fragment key={s.asid}>
+                  <Fragment>
                     <PressableScale
                       testID={`agent-composer-session-chip-${s.asid}`}
                       onPress={() => {
@@ -568,8 +572,8 @@ export const AgentComposer = memo(function AgentComposer({
                       })}
                   </Fragment>
                 );
-              })}
-            </ScrollView>
+              }}
+            />
           ) : null}
 
           {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}

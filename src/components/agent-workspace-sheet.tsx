@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -58,35 +58,27 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<DirectoryItem[]>([]);
 
-  useEffect(() => {
-    if (initialProjects && initialProjects.length > 0) {
-      const valid = initialProjects.filter((p) => p.id !== 'global' && p.canonical !== '/');
-      setProjects((prev) => (prev.length === 0 ? valid : prev));
-    }
-  }, [initialProjects]);
-
+  // The host remounts this sheet (key) on every open, so search state starts
+  // clean and the project list is fetched once per open rather than synced to
+  // prop changes after the fact.
+  const loadedOnceRef = useRef(false);
   const loadProjects = useCallback(async () => {
-    if (projects.length === 0 && (!initialProjects || initialProjects.length === 0)) {
-      setLoading(true);
-    }
+    if (!loadedOnceRef.current) setLoading(true);
     try {
       const list = await getAgentProjects(sessionId);
       const valid = (list || []).filter((p) => p.id !== 'global' && p.canonical !== '/');
       setProjects(valid);
+      loadedOnceRef.current = true;
     } catch {
       // quiet fail
     } finally {
       setLoading(false);
     }
-  }, [sessionId, projects.length, initialProjects]);
+  }, [sessionId]);
 
   useEffect(() => {
-    if (visible) {
-      loadProjects();
-      setSearchQuery('');
-      setSuggestions([]);
-    }
-  }, [visible, loadProjects]);
+    void loadProjects().catch(() => {});
+  }, [loadProjects]);
 
   // Autocomplete suggestions when typing custom path
   useEffect(() => {

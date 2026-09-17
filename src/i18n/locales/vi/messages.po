@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/agent-message-block.tsx
-msgid "… {hiddenCount} more lines"
-msgstr "… còn {hiddenCount} dòng nữa"
-
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "… open for the full change"
 msgstr "… mở để xem toàn bộ thay đổi"
@@ -692,10 +688,6 @@ msgstr "Chọn một host SSH"
 msgid "Choose files"
 msgstr "Chọn tệp"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "Kiểm soát trực tiếp tác nhân lập trình OpenCode. Theo dõi luồng suy nghĩ theo thời gian thực, xem khác biệt mã, kiểm tra danh sách nhiệm vụ và điều hướng mọi lúc"
-
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
 msgstr "Chọn dự án"
@@ -1276,6 +1268,10 @@ msgstr "Không đọc được tệp này"
 msgid "Could not remove host"
 msgstr "Không thể gỡ host"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not reply"
+msgstr "Không thể trả lời"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Không thể thu hồi thiết bị"
@@ -1442,6 +1438,10 @@ msgstr "xác thực thiết bị"
 #: src/i18n/labels.ts
 msgid "Diff summary"
 msgstr "Tóm tắt diff"
+
+#: src/components/launch-intro.tsx
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "Kiểm soát trực tiếp tác nhân lập trình OpenCode. Theo dõi luồng suy nghĩ theo thời gian thực, xem khác biệt mã, kiểm tra danh sách nhiệm vụ và điều hướng mọi lúc"
 
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
@@ -2645,6 +2645,7 @@ msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long 
 msgstr "Mở không gian làm việc {0}, {1, plural, other {# đang chạy}}. Nhấn giữ để đóng"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 msgid "OpenCode Agent"
 msgstr "Tác nhân OpenCode"
 
@@ -2660,6 +2661,10 @@ msgstr "Vẫn không thể kết nối tới OpenCode. Vui lòng đảm bảo d�
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode đã sẵn sàng"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode service is offline"
+msgstr "Dịch vụ OpenCode đang ngoại tuyến"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"

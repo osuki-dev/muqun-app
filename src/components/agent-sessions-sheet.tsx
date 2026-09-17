@@ -1,5 +1,5 @@
 import { Fragment, memo, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Modal, Pressable, FlatList } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Check, GitFork, Plus, X, Folder } from 'lucide-react-native';
@@ -235,33 +235,36 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                       slot="tabs.background"
                       baseColor={theme.colors.surface}
                       style={styles.projectFilterStrip}>
-                      <ScrollView
+                      <FlatList
                         horizontal
+                        data={projectsList}
+                        keyExtractor={(p) => p.id}
+                        extraData={selectedProjectId}
                         showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.projectFilterRow}>
-                        <PressableScale
-                          onPress={() => setSelectedProjectId(null)}
-                          style={[
-                            styles.projectFilterPill,
-                            !selectedProjectId && {
-                              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                            },
-                          ]}>
-                          <Text
-                            variant="caption"
-                            color={
-                              !selectedProjectId ? theme.colors.primary : theme.colors.textMuted
-                            }
-                            style={styles.projectFilterText}>
-                            {t`All Projects`}
-                          </Text>
-                        </PressableScale>
-
-                        {projectsList.map((p) => {
+                        contentContainerStyle={styles.projectFilterRow}
+                        ListHeaderComponent={
+                          <PressableScale
+                            onPress={() => setSelectedProjectId(null)}
+                            style={[
+                              styles.projectFilterPill,
+                              !selectedProjectId && {
+                                backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                              },
+                            ]}>
+                            <Text
+                              variant="caption"
+                              color={
+                                !selectedProjectId ? theme.colors.primary : theme.colors.textMuted
+                              }
+                              style={styles.projectFilterText}>
+                              {t`All Projects`}
+                            </Text>
+                          </PressableScale>
+                        }
+                        renderItem={({ item: p }) => {
                           const isSelected = selectedProjectId === p.id;
                           return (
                             <PressableScale
-                              key={p.id}
                               onPress={() => setSelectedProjectId(isSelected ? null : p.id)}
                               style={[
                                 styles.projectFilterPill,
@@ -282,8 +285,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                               </Text>
                             </PressableScale>
                           );
-                        })}
-                      </ScrollView>
+                        }}
+                      />
                     </ThemedSurface>
                   </View>
                 ) : null}
