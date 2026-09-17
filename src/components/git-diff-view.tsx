@@ -466,7 +466,7 @@ export function GitDiffView({
           {/* Android only: iOS has the system grabber. The panels and files
             sheets both draw this, and a third that did not would read as a
             different app. */}
-          <SheetHandle style={styles.sheetHandle} />
+          <SheetHandle />
           <View style={styles.header}>
             {/* The two lines a sheet announces itself with, drawn straight onto
               the ground, so over a wallpaper they take the plate the settings
@@ -1006,13 +1006,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     paddingHorizontal: 16,
     gap: 8,
-  },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
   },
   header: {
     flexDirection: 'row',

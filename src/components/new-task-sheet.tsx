@@ -513,11 +513,6 @@ const styles = StyleSheet.create({
     gap: LADDER.gutter,
   },
   handle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
     marginBottom: 2,
   },
   header: {

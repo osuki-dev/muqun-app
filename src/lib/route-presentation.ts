@@ -21,8 +21,11 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
   commands: 'sheet',
   panels: 'sheet',
+  sessions: 'sheet',
   artifacts: 'sheet',
   'git-diff': 'sheet',
+  'settings-language': 'sheet',
+  'web-service': 'sheet',
   'settings-theme': 'fullscreen',
   'settings-theme-browse': 'fullscreen',
   explore: 'fullscreen',

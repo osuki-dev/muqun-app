@@ -7,6 +7,7 @@ import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { appChrome } from '@/constants/appearance';
 import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
 
 /**
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 36,
-    borderRadius: 12,
+    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',

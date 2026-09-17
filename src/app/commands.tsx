@@ -588,7 +588,7 @@ export default function QuickCommandsScreen() {
       {/* Keep the fixed header and scroller in one native layout column. */}
       <View collapsable={false} style={styles.sheet}>
         <View style={[styles.fixedTop, isPadLayout && styles.padContent]}>
-          <SheetHandle style={styles.sheetHandle} />
+          <SheetHandle />
 
           {/* No glyph beside the title. The reader arrived here by pressing the
               lightning button, so a lightning chip repeats the gesture back at
@@ -1410,13 +1410,6 @@ const styles = StyleSheet.create({
     gap: LADDER.snug,
   },
   scrollViewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

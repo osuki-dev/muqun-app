@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import ts from 'typescript';
 
 import { surfaceBackgroundFill } from '../surface-background';
@@ -50,7 +51,7 @@ const SHEET_FRAMES = [
  */
 test('a sheet frame presents itself as a route, never as a Modal', () => {
   for (const file of SHEET_FRAMES) {
-    const text = readFileSync(file, 'utf8');
+    const text = code(readFileSync(file, 'utf8'));
     expect({ file, modal: text.includes('<Modal') }).toEqual({ file, modal: false });
     // No hand-drawn scrim either: a form sheet is dimmed natively, by
     // `sheetLargestUndimmedDetentIndex`.
@@ -176,5 +177,62 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
     const direct = text.includes('useSheetGroundPlate(') && text.includes(', plate]');
     const viaLabel = text.includes('<SectionLabel') || text.includes('<SheetHeading');
     expect({ file, plated: direct || viaLabel }).toEqual({ file, plated: true });
+  }
+});
+
+/**
+ * The only surfaces in `src/app` and `src/components` allowed to mount a
+ * react-native `Modal`, and why.
+ *
+ * A `Modal` is a second window over the app's own. It gets no sheet ground, no
+ * corner radius, no detent, no grabber and no dismissal gesture, and it cannot
+ * be reached by a link or dismissed by the hardware back button unless its
+ * author remembers to wire it. Everything shaped like a sheet is a route
+ * through `sheetPresentationOptions`, which is where those all come from.
+ *
+ * Neither of these two is a sheet. Each entry is the reason it stays.
+ */
+const MODAL_ALLOWLIST: Record<string, string> = {
+  'src/components/image-preview-modal.tsx':
+    'a lightbox: full-bleed over everything, with its own pinch, pan and drag-to-dismiss',
+  'src/components/asset-viewer.tsx':
+    'opened from inside the files form sheet, where a route would be a third subview of a layout that lays out two -- see session-artifacts.tsx',
+};
+
+function sourceFiles(dir: string, found: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    if (entry === '__tests__') continue;
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) sourceFiles(full, found);
+    else if (entry.endsWith('.tsx')) found.push(full);
+  }
+  return found;
+}
+
+/**
+ * Comments in this tree say `<Modal>` all over the place, and rightly -- it is
+ * what most of these files stopped being. The question is what a file
+ * *renders*, so the prose comes out before it is asked.
+ */
+function code(text: string): string {
+  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+}
+
+test('nothing new mounts a react-native Modal without saying why', () => {
+  const offenders: string[] = [];
+  for (const dir of ['src/app', 'src/components']) {
+    for (const file of sourceFiles(dir)) {
+      if (file in MODAL_ALLOWLIST) continue;
+      if (code(readFileSync(file, 'utf8')).includes('<Modal')) offenders.push(file);
+    }
+  }
+  expect(offenders).toEqual([]);
+});
+
+test('every allowlisted modal still exists and still is one, so the list cannot rot', () => {
+  for (const [file, reason] of Object.entries(MODAL_ALLOWLIST)) {
+    const text = code(readFileSync(file, 'utf8'));
+    expect({ file, modal: text.includes('<Modal') }).toEqual({ file, modal: true });
+    expect(reason.length).toBeGreaterThan(20);
   }
 });

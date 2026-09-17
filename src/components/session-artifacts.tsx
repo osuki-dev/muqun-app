@@ -523,7 +523,7 @@ export function SessionArtifacts({
       {/* The panels sheet draws this and this one did not, which is the sort of
           difference that reads as two different apps. Android only: iOS has the
           system grabber. */}
-      <SheetHandle style={styles.sheetHandle} />
+      <SheetHandle />
       <View style={styles.header}>
         {/* The only text on this sheet that is not already on a card or a
             chip, so over a wallpaper it takes the settings page's plate. */}
@@ -903,13 +903,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 4,
     gap: 12,
-  },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
   },
   header: {
     flexDirection: 'row',

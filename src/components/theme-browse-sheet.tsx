@@ -401,10 +401,9 @@ export function ThemeBrowseSheet({
           groundProvided ? null : { paddingTop: insets.top, paddingBottom: insets.bottom },
         ]}>
         <View style={styles.headerBlock}>
-          {/* iOS draws the grabber itself; Android's form sheet does not, and a
-              sheet with no handle reads as a screen that arrived from the wrong
-              direction. The same two lines the settings sheet carries. */}
-
+          {/* No grabber: this is a full-screen route, not a sheet that can be
+              dragged away, and `SheetHandle` draws nothing inside a fullscreen
+              frame for exactly that reason. */}
           <View style={styles.header}>
             {/* The two lines a reader reads before any row exists, and the only
                 text on this sheet not already on a row. Over a wallpaper they
@@ -749,13 +748,6 @@ const styles = StyleSheet.create({
     paddingBottom: LADDER.gap,
     paddingHorizontal: LADDER.gutter,
     gap: LADDER.snug,
-  },
-  handle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: LADDER.snug },
   // The settings sheet's title size, so the two announce themselves the same.

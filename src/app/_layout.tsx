@@ -386,7 +386,10 @@ function RootContent() {
             />
             <Stack.Screen
               name="settings-language"
-              options={sheetPresentationOptions('sheet', 'fitToContents')}
+              options={sheetPresentationOptions(
+                sheetRoutePresentations['settings-language'],
+                'fitToContents'
+              )}
             />
             {/* Full height leaves room for the composer and keyboard. */}
             <Stack.Screen
@@ -401,7 +404,10 @@ function RootContent() {
             */}
             <Stack.Screen
               name="web-service"
-              options={sheetPresentationOptions('sheet', 'fitToContents')}
+              options={sheetPresentationOptions(
+                sheetRoutePresentations['web-service'],
+                'fitToContents'
+              )}
             />
             {/*
               A full-screen modal, not a sheet, and the route file says why at

@@ -35,6 +35,7 @@ import Animated from 'react-native-reanimated';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetHandle } from '@/components/sheet-route-frame';
 import { LADDER, SectionLabel } from '@/components/settings-chrome';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -168,8 +169,8 @@ export function OpenWebServiceSheet({
           <View style={styles.column}>
             {/* iOS draws the grabber itself; Android's form sheet does not, and a
             sheet with no handle reads as a screen that arrived from the wrong
-            direction. Every sheet in this app carries the same two lines. */}
-            {process.env.EXPO_OS === 'android' ? <View style={styles.handle} /> : null}
+            direction. Every sheet in this app carries the same one line. */}
+            <SheetHandle style={styles.handle} />
 
             <View style={styles.header}>
               <View style={[styles.headerCopy, plate]}>
@@ -333,11 +334,6 @@ const styles = StyleSheet.create({
     gap: LADDER.gutter,
   },
   handle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
     marginBottom: 2,
   },
   header: {
