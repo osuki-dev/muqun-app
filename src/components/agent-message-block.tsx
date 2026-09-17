@@ -22,7 +22,9 @@ import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { type MarkdownStyle } from 'react-native-enriched-markdown';
 import Animated, {
+  cancelAnimation,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withRepeat,
   withSequence,
@@ -341,17 +343,24 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
   const failed = part.status === 'failed';
   const tone = failed ? theme.colors.danger : theme.colors.textMuted;
 
-  // A slow breath while it runs, on the UI thread, honouring reduced motion --
-  // the same idea as the thinking mark rather than a second kind of progress.
+  // A slow breath while it runs, on the UI thread -- the same idea as the
+  // thinking mark rather than a second kind of progress, and stopped the same
+  // way: an endless `withRepeat` outlives the view it drives, and every frame
+  // it runs after that is a `synchronouslyUpdateUIProps failed` in the log.
+  const reduceMotion = useReducedMotion();
   const shimmer = useSharedValue(running ? 0 : 1);
   useEffect(() => {
-    shimmer.value = running
-      ? withRepeat(
-          withSequence(withTiming(1, timing('long')), withTiming(0.35, timing('long'))),
-          -1
-        )
-      : withTiming(1, timing('micro'));
-  }, [running, shimmer]);
+    if (!running || reduceMotion) {
+      cancelAnimation(shimmer);
+      shimmer.value = withTiming(1, timing('micro'));
+      return;
+    }
+    shimmer.value = withRepeat(
+      withSequence(withTiming(1, timing('long')), withTiming(0.35, timing('long'))),
+      -1
+    );
+    return () => cancelAnimation(shimmer);
+  }, [reduceMotion, running, shimmer]);
   const shimmerStyle = useAnimatedStyle(() => ({ opacity: shimmer.value }));
 
   // Closed points down, open points up -- the same as every other foldable row

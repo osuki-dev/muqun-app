@@ -646,69 +646,79 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             `listLayout` carries the one change between them, so pairing a first
             server folds the poster down rather than cutting to a smaller one. */}
           {!isPad && identity.showBrand ? (
+            /*
+              The scroll fade is a node inside the animated one, never the same
+              node: `entering` and `layout` own this view's opacity while they
+              run and the scroll position owns it the rest of the time, which
+              is what Reanimated warns about on every launch and every theme
+              change -- `Property "opacity" of AnimatedComponent(View) may be
+              overwritten by a layout animation`.
+            */
             <Animated.View
               testID="home-brand-expanded"
               entering={riseIn()}
-              layout={listLayout('medium')}
-              style={[
-                styles.brandBlock,
-                expandedBrandStyle,
-                { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
-              ]}>
-              {/* The mark alone, on the page. The rounded tile it used to sit in
+              layout={listLayout('medium')}>
+              <Animated.View
+                style={[
+                  styles.brandBlock,
+                  expandedBrandStyle,
+                  { minHeight: metrics.brand.minHeight, gap: metrics.brand.gap },
+                ]}>
+                {/* The mark alone, on the page. The rounded tile it used to sit in
               gave a shape the mark already has, and cost it 30% of its own
               footprint to draw -- so the part meant to be read was the smaller
               half of the thing drawing attention to it. */}
-              {identity.logo ? (
-                <Image
-                  source={logoSource}
-                  onError={() => setFailedLogo(customLogo ?? null)}
-                  contentFit="contain"
-                  style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
-                />
-              ) : null}
-              {identity.name ? (
-                <View
-                  style={[
-                    styles.titleCopy,
-                    hasScene && {
-                      flex: 0,
-                      flexShrink: 1,
-                      backgroundColor: background(theme.colors.background),
-                      padding: 10,
-                      borderRadius: 14,
-                      overflow: 'hidden',
-                    },
-                  ]}>
-                  {hasScene ? (
-                    <ThemedSurfaceArtwork
-                      slot="navigation.background"
-                      baseColor={theme.colors.background}
-                    />
-                  ) : null}
-                  <Text
+                {identity.logo ? (
+                  <Image
+                    source={logoSource}
+                    onError={() => setFailedLogo(customLogo ?? null)}
+                    contentFit="contain"
+                    style={{ width: metrics.brand.markSize, height: metrics.brand.markSize }}
+                  />
+                ) : null}
+                {identity.name ? (
+                  <View
                     style={[
-                      styles.brandTitle,
-                      {
-                        color: theme.colors.text,
-                        fontSize: metrics.brand.titleSize,
-                        lineHeight: metrics.brand.titleLineHeight,
-                        letterSpacing: metrics.brand.titleTracking,
+                      styles.titleCopy,
+                      hasScene && {
+                        flex: 0,
+                        flexShrink: 1,
+                        backgroundColor: background(theme.colors.background),
+                        padding: 10,
+                        borderRadius: 14,
+                        overflow: 'hidden',
                       },
                     ]}>
-                    {identity.name}
-                  </Text>
-                  {/* Only where it is the whole message. On a screen already showing
+                    {hasScene ? (
+                      <ThemedSurfaceArtwork
+                        slot="navigation.background"
+                        baseColor={theme.colors.background}
+                      />
+                    ) : null}
+                    <Text
+                      style={[
+                        styles.brandTitle,
+                        {
+                          color: theme.colors.text,
+                          fontSize: metrics.brand.titleSize,
+                          lineHeight: metrics.brand.titleLineHeight,
+                          letterSpacing: metrics.brand.titleTracking,
+                        },
+                      ]}>
+                      {identity.name}
+                    </Text>
+                    {/* Only where it is the whole message. On a screen already showing
                 a machine and what is running on it, a line about what the app
                 is for is the product introducing itself to someone who has
                 been using it for months. */}
-                  {metrics.brand.showsTagline ? (
-                    <Text variant="bodySmall" color={theme.colors.textMuted}>
-                      <Trans>Your agents, anywhere.</Trans>
-                    </Text>
-                  ) : null}
-                </View>
-              ) : null}
+                    {metrics.brand.showsTagline ? (
+                      <Text variant="bodySmall" color={theme.colors.textMuted}>
+                        <Trans>Your agents, anywhere.</Trans>
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : null}
+              </Animated.View>
             </Animated.View>
           ) : null}
 
