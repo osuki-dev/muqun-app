@@ -1,7 +1,5 @@
 import { RouteScene } from '@/components/route-scene';
 import { sheetPresentationOptions, sheetRoutePresentations } from '@/lib/route-presentation';
-import { FullscreenSheetFrame } from '@/components/sheet-route-frame';
-import type { SheetGroundTint } from '@/components/sheet-ground';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -101,18 +99,6 @@ function ThemeFileOpener() {
   useThemeFileOpen();
   return null;
 }
-
-/**
- * Which token a full-screen sheet's ground is mixed from.
- *
- * `surface` for a route whose content sits on cards -- the theme picker and
- * the catalogue. `background` for pairing, whose blocks each draw their own
- * panel, so a second surface under them is one surface too many; that is the
- * colour it painted for itself before the shared frame took the job over.
- */
-const fullscreenSheetTints: Readonly<Record<string, SheetGroundTint>> = {
-  explore: 'background',
-};
 
 export default function RootLayout() {
   const hydrateSettings = useAppSettings((state) => state.hydrate);
@@ -273,13 +259,7 @@ function RootContent() {
                           : 'plain'
                   }
                   animated={route.name !== 'index'}>
-                  {sheetRoutePresentations[route.name] === 'fullscreen' ? (
-                    <FullscreenSheetFrame tint={fullscreenSheetTints[route.name] ?? 'surface'}>
-                      {children}
-                    </FullscreenSheetFrame>
-                  ) : (
-                    children
-                  )}
+                  {children}
                 </RouteScene>
               )
             }
@@ -368,19 +348,33 @@ function RootContent() {
               name="git-diff"
               options={sheetPresentationOptions(sheetRoutePresentations['git-diff'], 'expandable')}
             />
+            {/* Both are lists the reader scrolls -- thirty-two packs, or a
+                catalogue -- so both take the expandable window every other list
+                sheet has rather than the whole screen. */}
             <Stack.Screen
               name="settings-theme"
-              options={sheetPresentationOptions(sheetRoutePresentations['settings-theme'])}
+              options={sheetPresentationOptions(
+                sheetRoutePresentations['settings-theme'],
+                'expandable'
+              )}
             />
             <Stack.Screen
               name="settings-theme-browse"
-              options={sheetPresentationOptions(sheetRoutePresentations['settings-theme-browse'])}
+              options={sheetPresentationOptions(
+                sheetRoutePresentations['settings-theme-browse'],
+                'expandable'
+              )}
             />
+            {/*
+              The one route that is a whole screen wearing a theme rather than a
+              panel over one. See `sheetRoutePresentations` for why it stays
+              full-screen; the way out is the header's back arrow and the
+              pinned Done, not a grabber.
+            */}
             <Stack.Screen
               name="custom-theme"
               options={{
-                presentation: 'fullScreenModal',
-                animation: 'slide_from_bottom',
+                ...sheetPresentationOptions(sheetRoutePresentations['custom-theme']),
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
               }}
             />
@@ -423,15 +417,15 @@ function RootContent() {
             <Stack.Screen
               name="simfarm"
               options={{
-                presentation: 'fullScreenModal',
-                animation: 'slide_from_bottom',
+                ...sheetPresentationOptions(sheetRoutePresentations['simfarm']),
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
-                gestureEnabled: false,
               }}
             />
+            {/* Pairing: a viewfinder, two fields and a way in, on the sheet
+                every other form in this app is on. */}
             <Stack.Screen
               name="explore"
-              options={sheetPresentationOptions(sheetRoutePresentations['explore'])}
+              options={sheetPresentationOptions(sheetRoutePresentations['explore'], 'expandable')}
             />
             {/*
               The agent surface's pickers. They were `<Modal transparent>`

@@ -73,12 +73,6 @@ export type SheetGroundTint = 'surface' | 'background';
  */
 const SheetGroundTintContext = createContext<SheetGroundTint>('background');
 
-/** The fullscreen route paints one continuous backdrop outside its safe area. */
-export const SheetGroundProvidedContext = createContext(false);
-export function useSheetGroundProvided() {
-  return useContext(SheetGroundProvidedContext);
-}
-
 /**
  * How much of the sheet's own surface stands between the wallpaper and a row.
  *
@@ -115,7 +109,6 @@ export function SheetGround({
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const provided = useSheetGroundProvided();
   const hasShell = useHasThemeArtwork('shell.background');
   return (
     <View
@@ -124,31 +117,27 @@ export function SheetGround({
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       style={StyleSheet.absoluteFill}>
-      {provided ? null : (
-        <>
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
-            ]}
-          />
-          <ThemeArtwork slot="shell.background" />
-          {frosted && hasShell ? (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor: withAlpha(
-                    sheetGroundTintColor(theme.colors, tint),
-                    SHEET_FROST_ALPHA
-                  ),
-                },
-              ]}
-            />
-          ) : null}
-        </>
-      )}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
+        ]}
+      />
+      <ThemeArtwork slot="shell.background" />
+      {frosted && hasShell ? (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: withAlpha(
+                sheetGroundTintColor(theme.colors, tint),
+                SHEET_FROST_ALPHA
+              ),
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }

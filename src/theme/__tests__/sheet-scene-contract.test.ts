@@ -1,7 +1,8 @@
 import { expect, test } from 'bun:test';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import ts from 'typescript';
+
+import { sheetRoutePresentations } from '@/lib/route-presentation';
 
 import { surfaceBackgroundFill } from '../surface-background';
 
@@ -10,19 +11,22 @@ import { surfaceBackgroundFill } from '../surface-background';
  * `src/app/_layout.tsx`, and therefore every frame that has to paint its own
  * ground: the route is transparent so the native sheet keeps its corners.
  *
- * Nineteen routes, seventeen frames -- `settings-theme`, `settings-language`
- * and `sessions` all wear `SettingsSheet`. A route added to `_layout.tsx` with
- * `presentation: 'formSheet'` belongs in this list, and the assertions below
- * are what stop it being drawn some other way.
+ * A route added to `_layout.tsx` with `presentation: 'formSheet'` belongs in
+ * this list, and the assertions below are what stop it being drawn some other
+ * way.
  *
- * The eight agent sheets at the end are the ones that were drawn some other
+ * The eight agent sheets in the middle are the ones that were drawn some other
  * way: `<Modal transparent>` components with their own backdrop, their own
  * hand-drawn grabber and their own corner radius, none of which this file
  * could see because none of them was a route.
+ *
+ * The theme picker and the catalogue at the end are two of the three that were
+ * the other other way: full-screen frames with a hand-drawn X circle, which is
+ * how the picker ended up with no way out at all once the X went. They are
+ * sheets now, and `SettingsSheet` -- the shared full-screen/form-sheet frame
+ * they wore -- is gone with them.
  */
 const SHEET_FRAMES = [
-  // Theme, Language, and Machines and sessions all wear this one.
-  'src/components/settings-sheet.tsx',
   'src/components/theme-browse-sheet.tsx',
   'src/app/commands.tsx',
   'src/components/session-map.tsx',
@@ -39,6 +43,7 @@ const SHEET_FRAMES = [
   'src/components/agent-tasks-sheet.tsx',
   'src/components/agent-background-tray.tsx',
   'src/components/opencode-guide-sheet.tsx',
+  'src/components/settings-theme-sheet.tsx',
 ];
 
 /**
@@ -106,46 +111,6 @@ test('every form sheet is built in the one shared frame', () => {
   // The frame is the only thing that mounts the ground.
   const ground = readFileSync('src/components/sheet-ground.tsx', 'utf8');
   expect(ground).toContain('<SheetGround testID={testID} tint={tint} frosted={frosted} />');
-});
-
-test('the settings sheet keeps the native scroll root a form sheet needs', () => {
-  const text = readFileSync('src/components/settings-sheet.tsx', 'utf8');
-  const source = ts.createSourceFile(
-    'sheet.tsx',
-    text,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  );
-  const returns: ts.JsxElement[] = [];
-  function visit(node: ts.Node) {
-    if (
-      ts.isReturnStatement(node) &&
-      node.expression &&
-      ts.isParenthesizedExpression(node.expression) &&
-      ts.isJsxElement(node.expression.expression)
-    )
-      returns.push(node.expression.expression);
-    ts.forEachChild(node, visit);
-  }
-  visit(source);
-  expect(returns.length).toBe(1);
-  const root = returns[0];
-  expect(root.openingElement.tagName.getText(source)).toBe('ScrollScreen');
-  // Opaque, and not the slider's business: a sheet is a new scene rather than a
-  // window onto the route it was opened from.
-  expect(root.openingElement.getText(source)).toContain('backgroundColor: theme.colors.background');
-  expect(root.openingElement.getText(source)).not.toContain('surfaceBackground(');
-  // The flow that opens this sheet anchors on the scene node, so it keeps the
-  // id it has always had.
-  expect(text).toContain('<SheetFrame testID="settings-sheet-scene">');
-  // The content container carries no padding, which is what lets the ground's
-  // `absoluteFill` reach the sheet's own edges instead of stopping at the
-  // form's gutter. The padding lives on the column inside it.
-  expect(text).toContain('contentContainerStyle={styles.canvas}');
-  expect(text).toContain("canvas: { flexGrow: 1, width: '100%' }");
-  expect(text).toContain('style={[styles.content, { maxWidth: contentMaxWidth }]}');
-  expect(text).not.toContain('opacity:');
 });
 
 test('text drawn straight onto a sheet ground takes the plate the shell gives it', () => {
@@ -241,6 +206,64 @@ test('a sheet built on the scene has no cards, no radios and no close button', (
     // The grabber and the swipe are the close.
     expect({ file, closeButton: text.includes('<X ') }).toEqual({ file, closeButton: false });
   }
+});
+
+/**
+ * The only routes still presented full-screen, and why each one is not a sheet.
+ *
+ * The list used to be five. `settings-theme`, `settings-theme-browse` and
+ * `explore` were full-screen frames with a hand-drawn X circle in the corner,
+ * and when the sheets went to one system the X went with it -- which left the
+ * theme picker with no way out at all, reported by the owner as "how do I close
+ * this page". A full-screen route has no grabber to inherit instead, so the
+ * answer was not to draw the button again: the three of them are form sheets,
+ * and the grabber and the swipe are the close.
+ *
+ * What remains is two routes that were never sheets. A sheet is a panel over
+ * the scene the reader is leaving, and neither of these is.
+ */
+const FULLSCREEN_ALLOWLIST: Record<string, string> = {
+  'custom-theme':
+    'a whole app screen wearing the theme being judged -- floor, wallpaper and header glass -- which a panel over the previous theme cannot be; its sliders and long editor column also pan vertically, which is the gesture a form sheet reads as dismiss',
+  simfarm: 'a Skia canvas that takes every touch on it, edge to edge',
+};
+
+test('the fullscreen allowlist is two routes, and both say why', () => {
+  const fullscreen = Object.entries(sheetRoutePresentations)
+    .filter(([, presentation]) => presentation === 'fullscreen')
+    .map(([route]) => route)
+    .sort();
+  expect(fullscreen).toEqual(Object.keys(FULLSCREEN_ALLOWLIST).sort());
+  for (const reason of Object.values(FULLSCREEN_ALLOWLIST)) {
+    expect(reason.length).toBeGreaterThan(20);
+  }
+
+  // The three that left. Named rather than merely absent from the list above,
+  // so a revert that puts one back full-screen fails here and says which.
+  for (const route of ['settings-theme', 'settings-theme-browse', 'explore']) {
+    expect({ route, presentation: sheetRoutePresentations[route] }).toEqual({
+      route,
+      presentation: 'sheet',
+    });
+  }
+});
+
+test('no route declares fullScreenModal behind the route table\'s back', () => {
+  const layout = code(readFileSync('src/app/_layout.tsx', 'utf8'));
+  // One mention per allowlisted route, and it comes from
+  // `sheetPresentationOptions` rather than a hand-written options object --
+  // which is what makes the table above the single place a presentation is
+  // decided.
+  expect(layout).not.toContain("presentation: 'fullScreenModal'");
+  for (const route of Object.keys(FULLSCREEN_ALLOWLIST)) {
+    expect({ route, wired: layout.includes(`sheetRoutePresentations['${route}']`) }).toEqual({
+      route,
+      wired: true,
+    });
+  }
+  // And nothing paints a sheet ground on a full-screen route any more: the
+  // frame that did is gone, and with it the branch that chose between the two.
+  expect(layout).not.toContain('FullscreenSheetFrame');
 });
 
 /**
