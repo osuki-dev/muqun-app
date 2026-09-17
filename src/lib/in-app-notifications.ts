@@ -58,12 +58,20 @@ export function dismissNoticeKind(queue: NoticeQueue, kind: NoticeKind): NoticeQ
 /**
  * Whether a push is the gateway asking for an approval.
  *
- * The same two markers `pane-approval.ts` answers a notification action by,
- * read here for the opposite reason: to know when the question has been
- * answered and the notice can go.
+ * Read for the opposite reason `pane-approval.ts` reads the same payload: not
+ * to answer the question but to know when it has been answered elsewhere and
+ * the notice can go. Four spellings because the gateway has sent all four --
+ * a pane approval arrives with `categoryId`, an agent permission with
+ * `category` and a bare `type: "approval"` -- and a notice that misses its own
+ * kind simply never goes away on its own.
  */
 function pushIsApproval(data: Record<string, unknown> | undefined): boolean {
-  return data?.categoryId === 'approval' || data?.type === 'approval.pending';
+  return (
+    data?.categoryId === 'approval' ||
+    data?.category === 'approval' ||
+    data?.type === 'approval' ||
+    data?.type === 'approval.pending'
+  );
 }
 
 export function noticeFromPush(

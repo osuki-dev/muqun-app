@@ -61,6 +61,12 @@ export function InAppNotificationHost() {
   useEffect(() => {
     if (!visible) useInAppNotifications.getState().setOverlayHeight(0);
   }, [visible]);
+  /*
+    How far down the screen the deck reaches, not how tall the card is: a
+    screen leaving room for it has to clear the safe-area inset and the nav
+    chrome the deck sits below as well. The outer view carries both in its
+    padding, so its own height is the answer.
+  */
   const measure = (event: LayoutChangeEvent) =>
     useInAppNotifications.getState().setOverlayHeight(Math.round(event.nativeEvent.layout.height));
   if (!visible || !notice) return null;
@@ -88,8 +94,9 @@ export function InAppNotificationHost() {
   return (
     <View
       pointerEvents="box-none"
+      onLayout={measure}
       style={[styles.overlay, { paddingTop: insets.top + NOTICE_TOP_GAP }]}>
-      <View pointerEvents="box-none" style={styles.deck} onLayout={measure}>
+      <View pointerEvents="box-none" style={styles.deck}>
         {[2, 1].map((depth) =>
           items.length > depth ? (
             <View

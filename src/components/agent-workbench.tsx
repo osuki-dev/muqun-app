@@ -256,13 +256,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     state.items.length > 0 ? state.overlayHeight : 0
   );
   const noticeReserve = useSharedValue(0);
+  // How far down the screen a notice reaches, not how tall it is: each one
+  // starts below the chrome, and the room to leave is the bottom edge.
   const reserved = Math.max(
-    screenNotice ? screenNoticeHeight + NOTICE_RESERVE_GAP : 0,
+    screenNotice ? Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) + screenNoticeHeight : 0,
     inAppNoticeHeight
   );
+  const reservedWithGap = reserved > 0 ? reserved + NOTICE_RESERVE_GAP : 0;
   useEffect(() => {
-    noticeReserve.value = withTiming(reserved, timing('dropdown'));
-  }, [reserved, noticeReserve]);
+    noticeReserve.value = withTiming(reservedWithGap, timing('dropdown'));
+  }, [reservedWithGap, noticeReserve]);
   const transcriptAreaStyle = useAnimatedStyle(() => ({ paddingTop: noticeReserve.value }));
 
   /**

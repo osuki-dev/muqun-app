@@ -197,6 +197,14 @@ describe('approval notices', () => {
     expect(
       noticeFromPush('a2', { title: 'Waiting', data: { type: 'approval.pending' } })?.kind
     ).toBe('approval');
+    // What an agent permission actually arrives as, measured on the wire.
+    expect(
+      noticeFromPush('a4', {
+        title: 'Approval Required',
+        body: 'external_directory: /etc/*',
+        data: { category: 'approval', type: 'approval', approval_id: 'per_1' },
+      })?.kind
+    ).toBe('approval');
     expect(noticeFromPush('a3', { title: 'Build finished' })?.kind).toBe('general');
   });
 
