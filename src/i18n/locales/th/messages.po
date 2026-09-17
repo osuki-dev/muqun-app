@@ -3997,6 +3997,7 @@ msgstr "กำลังเริ่ม…"
 msgid "Status unavailable"
 msgstr "สถานะไม่พร้อมใช้งาน"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "ไม่ทราบสถานะ"
@@ -4144,6 +4145,10 @@ msgstr "แตะเพื่อเชื่อมต่อ"
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
 msgstr "แตะเพื่อดูตัวอย่างและปรับแต่ง"
+
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "แตะเพื่อรีเฟรชเซสชันนี้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

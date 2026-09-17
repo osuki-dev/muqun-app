@@ -1712,6 +1712,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         detail: sessionInfo?.error?.message ?? '',
       };
     }
+    if (status === 'unknown') {
+      /**
+       * The engine has not said what this session is doing.
+       *
+       * `unknown` is one of the six statuses and it is not idle: an idle
+       * session is one the engine has told us is idle. Rendering it as idle
+       * meant the composer looked ready over a session that might have been
+       * mid-turn. Nothing is disabled -- the reader may well want to send --
+       * but the screen says it does not know, and offers the one thing that
+       * would settle it.
+       */
+      return {
+        tone: theme.colors.textMuted,
+        label: t`Status unknown`,
+        detail: t`Tap to refresh this session.`,
+        refresh: true,
+      };
+    }
     return null;
   }, [sessionInfo?.status, sessionInfo?.error?.message, theme.colors, t]);
 
@@ -1738,8 +1756,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           </View>
         ) : null}
         {statusNotice ? (
-          <View
+          <PressableScale
             testID="agent-status-notice"
+            accessibilityRole={statusNotice.refresh ? 'button' : 'text'}
+            accessibilityLabel={statusNotice.label}
+            disabled={!statusNotice.refresh}
+            onPress={() => {
+              void loadSnapshot('silent');
+            }}
             style={[
               styles.statusNotice,
               {
@@ -1759,7 +1783,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 </Text>
               ) : null}
             </View>
-          </View>
+          </PressableScale>
         ) : null}
         {footerPermissions.map((p) => (
           <AgentPermissionCard
@@ -1782,6 +1806,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     forms,
     isRunning,
     statusNotice,
+    loadSnapshot,
     handlePermissionDecision,
     handleFormSubmit,
     surfaceBackground,

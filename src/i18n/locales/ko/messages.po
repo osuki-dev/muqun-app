@@ -3997,6 +3997,7 @@ msgstr "시작하는 중…"
 msgid "Status unavailable"
 msgstr "상태를 확인할 수 없음"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "알 수 없는 상태"
@@ -4144,6 +4145,10 @@ msgstr "눌러서 연결"
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
 msgstr "미리보기 및 조정하려면 탭하세요"
+
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "탭하여 이 세션을 새로 고칩니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

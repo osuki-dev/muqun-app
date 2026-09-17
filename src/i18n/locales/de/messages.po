@@ -3997,6 +3997,7 @@ msgstr "Wird gestartet…"
 msgid "Status unavailable"
 msgstr "Status nicht verfügbar"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "Status unbekannt"
@@ -4144,6 +4145,10 @@ msgstr "Zum Verbinden tippen"
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
 msgstr "Zum Ansehen und Anpassen tippen"
+
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "Tippen, um diese Sitzung neu zu laden"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

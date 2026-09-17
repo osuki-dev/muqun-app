@@ -3997,6 +3997,7 @@ msgstr "Iniciando…"
 msgid "Status unavailable"
 msgstr "Estado no disponible"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "Estado desconocido"
@@ -4144,6 +4145,10 @@ msgstr "Toca para conectar"
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
 msgstr "Toca para ver y ajustar"
+
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "Toca para actualizar esta sesión"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

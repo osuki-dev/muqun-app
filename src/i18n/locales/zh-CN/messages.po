@@ -3997,6 +3997,7 @@ msgstr "启动中…"
 msgid "Status unavailable"
 msgstr "暂时无法获取状态"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "状态未知"
@@ -4144,6 +4145,10 @@ msgstr "点按连接"
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
 msgstr "点击预览并调整"
+
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "点按以刷新这个会话"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"

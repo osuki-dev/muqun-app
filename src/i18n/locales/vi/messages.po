@@ -3997,6 +3997,7 @@ msgstr "Đang bắt đầu…"
 msgid "Status unavailable"
 msgstr "Không lấy được trạng thái"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "Chưa rõ trạng thái"
@@ -4144,6 +4145,10 @@ msgstr "Nhấn để kết nối"
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
 msgstr "Chạm để xem trước và điều chỉnh"
+
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "Chạm để làm mới phiên này"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
