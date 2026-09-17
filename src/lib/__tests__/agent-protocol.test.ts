@@ -412,8 +412,19 @@ describe('parseAgentPart — the rest of the union', () => {
     expect(parseAgentPart({ type: 'form' })).toBeNull();
   });
 
-  test('a type this build has never seen is dropped, not rendered as junk', () => {
-    expect(parseAgentPart({ type: 'hologram', payload: 1 })).toBeNull();
+  test('a type this build has never seen keeps its row', () => {
+    // Dropping it dropped the whole `TimelineItem`, so a newer engine's output
+    // had silent holes in it. The placeholder says something was said here.
+    expect(parseAgentPart({ type: 'hologram', payload: 1 })).toEqual({
+      type: 'unsupported',
+      raw_type: 'hologram',
+    });
+  });
+
+  test('a malformed *known* part is still dropped, because it is broken not new', () => {
+    expect(parseAgentPart({ type: 'tool', id: 'x' })).toBeNull();
+    expect(parseAgentPart({ type: 'approval', request: {} })).toBeNull();
+    expect(parseAgentPart({ type: 'skill' })).toBeNull();
   });
 
   test('the quiet one-line kinds are recognisable as a group', () => {
@@ -444,7 +455,13 @@ describe('timeline', () => {
       ordinal: 0,
     });
     expect(parseTimelineItem({ part: { type: 'text', text: 'x' } })).toBeNull();
-    expect(parseTimelineItem({ id: 'a', part: { type: 'hologram' } })).toBeNull();
+    // A part kind this build has no branch for keeps its row.
+    expect(parseTimelineItem({ id: 'a', part: { type: 'hologram' } })?.part).toEqual({
+      type: 'unsupported',
+      raw_type: 'hologram',
+    });
+    // A part with no `type` at all is not a part.
+    expect(parseTimelineItem({ id: 'a', part: {} })).toBeNull();
   });
 
   test('ordinal is read and used as the second sort key', () => {

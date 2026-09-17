@@ -155,7 +155,12 @@ export function toolInputRecord(input: unknown): Record<string, unknown> | null 
 /** The one-line target a tool is pointed at: the path, the pattern, the URL… */
 export function extractTarget(kind: ToolKind, input: unknown): string {
   const rec = toolInputRecord(input);
-  if (!rec) return typeof input === 'string' ? input : '';
+  // Nothing readable yet. While a tool is `streaming`, its input is a *partial
+  // JSON string* -- `{"command": "sle` -- and returning that put the protocol's
+  // own half-written payload in the card's title for as long as the input took
+  // to arrive. The tool's name is already in the header; an empty target is the
+  // honest thing to show beside it until there is one.
+  if (!rec) return '';
   switch (kind) {
     case 'shell':
       return pickString(rec, ['command', 'cmd']) ?? '';

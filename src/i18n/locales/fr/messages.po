@@ -4702,6 +4702,11 @@ msgstr "Dissociation…"
 msgid "Unstaged"
 msgstr "Non indexé"
 
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "Élément non pris en charge ({0})"
+
 #: src/components/agent-composer.tsx
 msgid "Untitled session"
 msgstr "Session sans titre"

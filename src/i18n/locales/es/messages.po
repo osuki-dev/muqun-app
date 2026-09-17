@@ -4702,6 +4702,11 @@ msgstr "Desvinculando…"
 msgid "Unstaged"
 msgstr "Sin preparar"
 
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "Elemento no admitido ({0})"
+
 #: src/components/agent-composer.tsx
 msgid "Untitled session"
 msgstr "Sesión sin título"

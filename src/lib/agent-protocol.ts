@@ -846,7 +846,17 @@ export type AgentPart =
   | { type: 'diff'; file: string; diff: string }
   | { type: 'approval'; request: PermissionRequest }
   | { type: 'form'; request: FormRequest }
-  | { type: 'status'; text: string };
+  | { type: 'status'; text: string }
+  /**
+   * A part kind this build has never heard of.
+   *
+   * OpenCode grows part types, and a row whose part was dropped took the whole
+   * `TimelineItem` with it -- so a newer engine's output had *holes* in it,
+   * silently, with the surrounding turn reading as if nothing had happened
+   * there. A named placeholder is the honest answer: the reader can see that
+   * something was said and that this app cannot say what.
+   */
+  | { type: 'unsupported'; raw_type: string };
 
 /** The part kinds that are one quiet line rather than a block of content. */
 export type AgentNoticePartType =
@@ -1064,7 +1074,10 @@ export function parseAgentPart(value: unknown): AgentPart | null {
     case 'status':
       return { type: 'status', text: asString(rec.text) ?? '' };
     default:
-      return null;
+      // A kind this build does not know. Not a malformed payload -- those
+      // still come back `null` above, because a `tool` with no name or an
+      // `approval` with no request is broken rather than new.
+      return { type: 'unsupported', raw_type: type };
   }
 }
 

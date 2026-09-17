@@ -4702,6 +4702,11 @@ msgstr "正在解除配對…"
 msgid "Unstaged"
 msgstr "未暫存"
 
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "暫不支援的內容（{0}）"
+
 #: src/components/agent-composer.tsx
 msgid "Untitled session"
 msgstr "未命名工作階段"

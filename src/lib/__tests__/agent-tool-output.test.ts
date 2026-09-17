@@ -114,9 +114,17 @@ describe('extractTarget and extractCaption', () => {
     expect(extractCaption('mcp', { anything: 1 })).toBe('');
   });
 
-  test('a streaming input yields the partial text rather than throwing', () => {
-    expect(extractTarget('shell', '{"command": "sle')).toBe('{"command": "sle');
+  test('a partial input -- the streaming state -- has no target yet', () => {
+    // Not the half-written payload: the card shows its tool name until the
+    // input has actually arrived.
+    expect(extractTarget('shell', '{"command": "sle')).toBe('');
     expect(extractCaption('shell', '{"command": "sle')).toBe('');
+    expect(extractTarget('read', '')).toBe('');
+    expect(extractTarget('mcp', 42)).toBe('');
+  });
+
+  test('a complete input that arrived as JSON text still reads', () => {
+    expect(extractTarget('shell', '{"command":"ls -la"}')).toBe('ls -la');
   });
 });
 

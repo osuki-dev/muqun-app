@@ -10,6 +10,7 @@ import {
   Edit3,
   FileDiff,
   FileText,
+  CircleHelp,
   FolderGit2,
   Info,
   Layers,
@@ -146,6 +147,8 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
         const text = part.text ?? part.description ?? '';
         return text ? { Icon: Info, text } : null;
       }
+      case 'unsupported':
+        return { Icon: CircleHelp, text: t`Unsupported item (${part.raw_type})` };
       default:
         return null;
     }
@@ -540,6 +543,7 @@ function renderTimelinePart(
     case 'skill':
     case 'synthetic':
     case 'system':
+    case 'unsupported':
       return <AgentNoticeRow key={item.id} part={part} />;
     case 'text':
       return (

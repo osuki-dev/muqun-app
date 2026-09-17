@@ -4702,6 +4702,11 @@ msgstr "A desemparelhar…"
 msgid "Unstaged"
 msgstr "Não preparado"
 
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "Item não suportado ({0})"
+
 #: src/components/agent-composer.tsx
 msgid "Untitled session"
 msgstr "Sessão sem título"

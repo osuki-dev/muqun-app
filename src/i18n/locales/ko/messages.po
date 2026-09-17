@@ -4702,6 +4702,11 @@ msgstr "해제하는 중…"
 msgid "Unstaged"
 msgstr "스테이징 안 됨"
 
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "지원하지 않는 항목 ({0})"
+
 #: src/components/agent-composer.tsx
 msgid "Untitled session"
 msgstr "제목 없는 세션"

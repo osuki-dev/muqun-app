@@ -4702,6 +4702,11 @@ msgstr "解除しています…"
 msgid "Unstaged"
 msgstr "未ステージ"
 
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "未対応の項目 ({0})"
+
 #: src/components/agent-composer.tsx
 msgid "Untitled session"
 msgstr "タイトルなしのセッション"
