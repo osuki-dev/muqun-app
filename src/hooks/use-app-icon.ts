@@ -1,13 +1,36 @@
+import {
+  getAppIconName,
+  setAlternateAppIcon,
+  supportsAlternateIcons,
+} from 'expo-alternate-app-icons';
 import { useCallback, useState } from 'react';
 
-import type { AppIconId } from '@/lib/app-icon';
+import { type AppIconId, appIconFromNative, nativeAppIconName } from '@/lib/app-icon';
 
 /**
- * Fallback app icon hook for platforms where alternate icons are unsupported.
+ * The launcher icon in effect, and the one call that changes it.
+ *
+ * The OS is the store: the module reads the active icon back from it, so
+ * nothing is persisted here and a reinstall cannot disagree with the home
+ * screen. `supported` is false on web and on the odd launcher that refuses
+ * alternates, and the picker stays off the page there rather than offering
+ * a choice that does nothing.
  */
 export function useAppIcon() {
-  const [icon] = useState<AppIconId>('default');
-  const choose = useCallback(async (_next: AppIconId) => {}, []);
+  const [icon, setIcon] = useState<AppIconId>(() =>
+    appIconFromNative(supportsAlternateIcons ? getAppIconName() : null)
+  );
+  const [busy, setBusy] = useState(false);
 
-  return { icon, choose, busy: false, supported: false };
+  const choose = useCallback(async (next: AppIconId) => {
+    setBusy(true);
+    try {
+      const applied = await setAlternateAppIcon(nativeAppIconName(next));
+      setIcon(appIconFromNative(applied));
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
+  return { icon, choose, busy, supported: supportsAlternateIcons };
 }
