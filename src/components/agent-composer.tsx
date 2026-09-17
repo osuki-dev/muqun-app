@@ -1241,18 +1241,6 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     position: 'relative',
   },
-  actionKeyBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 36,
-    height: 36,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  keyText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
   actionBtnWithLabel: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1265,11 +1265,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const childStatuses = useMemo(() => {
     const statuses: Record<string, AgentRunStatus> = {};
-    for (const session of sessions) {
-      if (session.parent_id) statuses[session.asid] = session.status;
+    // Out of the fetched tree, not out of the session list: the list is roots
+    // only, so a subagent is never in it and this map would always be empty.
+    for (const children of Object.values(childrenByParent)) {
+      for (const child of children) statuses[child.asid] = child.status;
     }
     return statuses;
-  }, [sessions]);
+  }, [childrenByParent]);
 
   const toolActions = useMemo<AgentToolActions>(
     () => ({
