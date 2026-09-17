@@ -37,6 +37,7 @@ import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { useRelativeTime } from '@/hooks/use-relative-time';
+import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, timing } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -502,6 +503,23 @@ const MessageTextPart = memo(function MessageTextPart({
 });
 
 /**
+ * The drawn item before this one, skipping merged thinking.
+ *
+ * `prevItem` feeds the "this text merely echoes the tool above it" check, and
+ * a Thought block between them is not what that check is about.
+ */
+function previousItemAt(
+  entries: readonly TimelineEntry[],
+  index: number
+): TimelineItem | undefined {
+  for (let at = index - 1; at >= 0; at -= 1) {
+    const entry = entries[at];
+    if (entry.kind === 'item') return entry.item;
+  }
+  return undefined;
+}
+
+/**
  * One part, whichever side of the conversation it arrived on.
  *
  * Both roles go through this. A user message whose part is not `text` used to
@@ -522,9 +540,9 @@ function renderTimelinePart(
   const part = item.part;
   switch (part.type) {
     case 'reasoning':
-      return options.showReasoning ? (
-        <AgentReasoningBlock key={item.id} text={part.text} durationMs={part.duration_ms} />
-      ) : null;
+      // Never drawn from here: consecutive reasoning parts are merged into one
+      // run by `buildTimelineEntries` and drawn as a single block.
+      return null;
     case 'tool':
       return <ToolPartCard key={item.id} part={part} options={options} />;
     case 'shell':
@@ -633,6 +651,24 @@ const ToolPartCard = memo(function ToolPartCard({
   );
 });
 
+/**
+ * One message's thinking, as one block.
+ *
+ * `buildTimelineEntries` has already merged the consecutive `reasoning` parts
+ * a step-by-step engine emits, so this draws at most one Thought per run
+ * rather than one pill per step -- and a run that is still arriving counts up
+ * instead of sitting there as an empty pill.
+ */
+const ReasoningRunBlock = memo(function ReasoningRunBlock({ run }: { run: ReasoningRun }) {
+  return (
+    <AgentReasoningBlock
+      text={run.text}
+      {...(run.durationMs === undefined ? {} : { durationMs: run.durationMs })}
+      pending={run.pending}
+    />
+  );
+});
+
 const StatusPartRow = memo(function StatusPartRow({ text }: { text: string }) {
   const theme = useThemeTokens();
   return (
@@ -693,6 +729,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
     [group.items]
   );
   const queued = group.items.find((item) => item.queued);
+  const entries = useMemo(() => buildTimelineEntries(group.items), [group.items]);
   const stamp = first?.updated_ms ? relativeTime(first.updated_ms) : '';
 
   return (
@@ -759,13 +796,19 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         ) : null}
       </View>
 
-      {group.items.map((item, index) =>
-        renderTimelinePart(item, {
-          showReasoning,
-          markdownStyle,
-          prevItem: index > 0 ? group.items[index - 1] : group.prevItem,
-          actions,
-        })
+      {entries.map((entry, index) =>
+        entry.kind === 'reasoning' ? (
+          showReasoning ? (
+            <ReasoningRunBlock key={entry.key} run={entry.run} />
+          ) : null
+        ) : (
+          renderTimelinePart(entry.item, {
+            showReasoning,
+            markdownStyle,
+            prevItem: previousItemAt(entries, index) ?? group.prevItem,
+            actions,
+          })
+        )
       )}
 
       {attachments.length > 0 ? (
@@ -797,34 +840,36 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
 
   // The parts this message actually paints, in order. `showReasoning` hides
   // the model's private reasoning the same way it did for the flat list.
-  const visibleItems = useMemo(
-    () =>
-      group.items.filter((it) => {
-        switch (it.part.type) {
-          case 'reasoning':
-            return showReasoning;
-          case 'approval':
-          case 'form':
-            // Owned by the permission and form surfaces.
-            return false;
-          default:
-            return true;
-        }
-      }),
-    [group.items, showReasoning]
-  );
+  /**
+   * The parts this message paints, in order, with the thinking merged.
+   *
+   * `approval` and `form` are owned by the permission and form surfaces;
+   * `reasoning` is folded into runs by `buildTimelineEntries`, and
+   * `showReasoning` hides those runs the same way it hid the pills.
+   */
+  const entries = useMemo(() => {
+    const drawn = group.items.filter(
+      (it) => it.part.type !== 'approval' && it.part.type !== 'form'
+    );
+    const built = buildTimelineEntries(drawn);
+    return showReasoning ? built : built.filter((entry) => entry.kind !== 'reasoning');
+  }, [group.items, showReasoning]);
 
-  if (visibleItems.length === 0) return null;
+  if (entries.length === 0) return null;
 
   return (
     <View style={[styles.messageBlock, plate]}>
-      {visibleItems.map((it, index) =>
-        renderTimelinePart(it, {
-          showReasoning,
-          markdownStyle,
-          prevItem: index > 0 ? visibleItems[index - 1] : group.prevItem,
-          actions,
-        })
+      {entries.map((entry, index) =>
+        entry.kind === 'reasoning' ? (
+          <ReasoningRunBlock key={entry.key} run={entry.run} />
+        ) : (
+          renderTimelinePart(entry.item, {
+            showReasoning,
+            markdownStyle,
+            prevItem: previousItemAt(entries, index) ?? group.prevItem,
+            actions,
+          })
+        )
       )}
     </View>
   );
