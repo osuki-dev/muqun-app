@@ -2110,6 +2110,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       compaction,
       contextUsage,
       commands,
+      models: catalogModels,
     };
     useAgentSheetBridge.getState().publish(snapshot);
   }, [
@@ -2132,6 +2133,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     compaction,
     contextUsage,
     commands,
+    catalogModels,
   ]);
 
   const sheetActions = useMemo<AgentSheetActions>(
