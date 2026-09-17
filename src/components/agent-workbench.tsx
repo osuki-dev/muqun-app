@@ -437,9 +437,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   // Real-time SSE Stream subscription + gentle fallback heartbeat polling
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- scrollTimer is cleared on unmount in cleanup below.
   useEffect(() => {
     if (!activeAsid) return;
     let mounted = true;
+    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
     const closeStream = openAgentSessionStream({
       asid: activeAsid,
@@ -485,7 +487,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             return next;
           });
           setLastSeq(delta.latest_seq);
-          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+          scrollTimer = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
         }
         if (delta.status) {
           setSessionInfo((prev) => (prev ? { ...prev, status: delta.status! } : prev));
@@ -501,6 +503,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       mounted = false;
       closeStream();
       clearInterval(timer);
+      if (scrollTimer) clearTimeout(scrollTimer);
     };
   }, [sessionId, activeAsid, lastSeq, handleStreamEvent]);
 
@@ -1238,6 +1241,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         skills={skills}
         sessionId={sessionId}
         activeAsid={activeAsid}
+        activeDirectory={activeDirectory}
         selectedAgent={selectedAgent}
         selectedModel={selectedModel}
         hasDiffs={hasDiffs}
@@ -1250,6 +1254,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onAbort={handleAbort}
         onSelectSession={setActiveAsid}
         onSelectAgentMode={setSelectedAgent}
+        onCreateNewSession={handleCreateNewSession}
         onOpenModeSheet={() => setModeSheetVisible(true)}
         onOpenModelSheet={() => setModelSheetVisible(true)}
         onOpenDiffSheet={() => setDiffSheetVisible(true)}

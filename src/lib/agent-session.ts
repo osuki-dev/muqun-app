@@ -385,7 +385,7 @@ export async function getAgentTimelineDelta(
       resync?: boolean;
       latest_seq: number;
     };
-  } catch (err) {
+  } catch {
     return { latest_seq: afterSeq };
   }
 }

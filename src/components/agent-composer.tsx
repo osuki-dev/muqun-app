@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeSyntheticEvent,
   Pressable,
@@ -81,6 +81,7 @@ export interface AgentComposerProps {
   skills?: SkillInfo[];
   sessionId?: string;
   activeAsid?: string;
+  activeDirectory?: string;
   selectedAgent?: string;
   selectedModel?: ModelRef;
   hasDiffs?: boolean;
@@ -112,6 +113,7 @@ export const AgentComposer = memo(function AgentComposer({
   skills = [],
   sessionId,
   activeAsid,
+  activeDirectory,
   selectedAgent,
   selectedModel,
   hasDiffs = false,
@@ -124,6 +126,7 @@ export const AgentComposer = memo(function AgentComposer({
   onAbort,
   onSelectSession,
   onSelectAgentMode,
+  onCreateNewSession,
   disabled,
   onOpenModelSheet,
   onOpenModeSheet,
@@ -359,20 +362,21 @@ export const AgentComposer = memo(function AgentComposer({
           },
         ];
 
-  // Resolve current session family (main agent + its subagents)
-  const currentSession = sessions.find((s) => s.asid === activeAsid);
-  const rootSessionId = currentSession?.parent_id || currentSession?.asid;
-  const rootSession = sessions.find((s) => s.asid === rootSessionId) || currentSession;
-  const subagents = rootSessionId ? sessions.filter((s) => s.parent_id === rootSessionId) : [];
-
-  const rootAgentName = rootSession?.agent || selectedAgent || 'build';
-  const effectiveRootTitle =
-    (!rootSession?.parent_id && sessionTitle) ? sessionTitle : rootSession?.title;
-  const rootDisplayTitle = resolveSessionTitle(
-    effectiveRootTitle ? ({ ...rootSession, title: effectiveRootTitle } as AgentSessionInfo) : rootSession,
-    t`New Session`
-  );
-  const isRootActive = !activeAsid || activeAsid === rootSession?.asid;
+  // Resolve sessions belonging to the current workspace (root sessions)
+  const workspaceSessions = useMemo(() => {
+    if (!sessions || sessions.length === 0) return [];
+    const roots = sessions.filter((s) => !s.parent_id);
+    if (!activeDirectory) return roots;
+    const matching = roots.filter((s) => {
+      if (!s.directory) return false;
+      return (
+        s.directory === activeDirectory ||
+        activeDirectory.startsWith(s.directory) ||
+        s.directory.startsWith(activeDirectory)
+      );
+    });
+    return matching.length > 0 ? matching : roots;
+  }, [sessions, activeDirectory]);
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const composerKeyboardStyle = useAnimatedStyle(() => ({
@@ -401,12 +405,12 @@ export const AgentComposer = memo(function AgentComposer({
         </View>
       ) : null}
 
-      {/* Agent mode quick switch popup */}
+      {/* Agent mode popup */}
       {modeMenuOpen ? (
         <View style={styles.popupWrapper}>
           <AgentModeMenu
             agents={availableAgents}
-            selectedAgent={selectedAgent ?? 'build'}
+            selectedAgent={selectedAgent}
             onSelectAgent={(agId) => {
               setModeMenuOpen(false);
               onSelectAgentMode?.(agId);
@@ -440,94 +444,140 @@ export const AgentComposer = memo(function AgentComposer({
 
       <GlassChrome surface="composer" style={styles.composerDock}>
         <View style={[styles.composerInner, { paddingBottom: Math.max(10, bottomInset + 6) }]}>
-          {/* Row 1: Subagents Horizontal Strip (only shown when subagents exist) */}
-          {subagents.length > 0 ? (
+          {/* Row 1: Workspace Sessions Horizontal Strip */}
+          {workspaceSessions.length > 0 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.sessionStripContent}
               style={styles.sessionStripViewport}>
-              {/* Current Session Chip (Current Agent session title) */}
-              <PressableScale
-                key={rootSession?.asid || 'current-root-session'}
-                testID="agent-composer-current-session-badge"
-                onPress={() => {
-                  if (rootSession?.asid && rootSession.asid !== activeAsid) {
-                    onSelectSession?.(rootSession.asid);
-                  }
-                }}
-                accessibilityLabel={`${rootAgentName}: ${rootDisplayTitle}`}
-                style={[
-                  styles.sessionChip,
-                  isRootActive
-                    ? { backgroundColor: theme.colors.primary }
-                    : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                ]}>
-                <Bot size={13} color={isRootActive ? '#fff' : theme.colors.primary} />
-                <Text
-                  variant="caption"
-                  weight="bold"
-                  color={isRootActive ? '#fff' : theme.colors.primary}
-                  style={styles.sessionChipAgentBadge}>
-                  {`@${rootAgentName}`}
-                </Text>
-                <Text
-                  variant="caption"
-                  color={isRootActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
-                  style={styles.sessionChipDot}>
-                  •
-                </Text>
-                <Text
-                  variant="caption"
-                  weight="medium"
-                  color={isRootActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
-                  style={styles.sessionChipTitle}>
-                  {rootDisplayTitle}
-                </Text>
-              </PressableScale>
+              {/* Quick New Session Chip */}
+              {onCreateNewSession ? (
+                <PressableScale
+                  testID="agent-composer-new-session-chip"
+                  onPress={onCreateNewSession}
+                  accessibilityLabel={t`New Session`}
+                  style={[
+                    styles.sessionChip,
+                    styles.newSessionChip,
+                    {
+                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      borderColor: surfaceBackground(theme.colors.border),
+                      borderWidth: StyleSheet.hairlineWidth,
+                    },
+                  ]}>
+                  <Plus size={13} color={theme.colors.primary} />
+                  <Text
+                    variant="caption"
+                    weight="medium"
+                    color={theme.colors.primary}
+                    style={styles.sessionChipTitle}>
+                    {t`New Session`}
+                  </Text>
+                </PressableScale>
+              ) : null}
 
-              {/* Subagents of the current session */}
-              {subagents.map((sub) => {
-                const isSubActive = sub.asid === activeAsid;
-                const subAgentName = sub.agent || 'subagent';
-                const subDisplayTitle = resolveSessionTitle(sub, `@${subAgentName}`);
+              {workspaceSessions.map((s) => {
+                const isSessActive = s.asid === activeAsid;
+                const agentName = s.agent || selectedAgent || 'build';
+                const displayTitle = resolveSessionTitle(s, s.asid ? `${s.asid.slice(0, 8)}…` : '');
+                const sessSubagents = sessions.filter((sub) => sub.parent_id === s.asid);
+
                 return (
-                  <PressableScale
-                    key={sub.asid}
-                    onPress={() => onSelectSession?.(sub.asid)}
-                    accessibilityLabel={subDisplayTitle}
-                    style={[
-                      styles.sessionChip,
-                      isSubActive
-                        ? { backgroundColor: theme.colors.primary }
-                        : { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                    ]}>
-                    <GitFork size={13} color={isSubActive ? '#fff' : theme.colors.primary} />
-                    <Text
-                      variant="caption"
-                      weight="bold"
-                      color={isSubActive ? '#fff' : theme.colors.primary}
-                      style={styles.sessionChipAgentBadge}>
-                      {`@${subAgentName}`}
-                    </Text>
-                    {subDisplayTitle !== `@${subAgentName}` ? (
-                      <>
-                        <Text
-                          variant="caption"
-                          color={isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
-                          style={styles.sessionChipDot}>
-                          •
-                        </Text>
-                        <Text
-                          variant="caption"
-                          weight="medium"
-                          color={isSubActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
-                          style={styles.sessionChipTitle}>
-                          {subDisplayTitle}
-                        </Text>
-                      </>
-                    ) : null}
-                  </PressableScale>
+                  <Fragment key={s.asid}>
+                    <PressableScale
+                      testID={`agent-composer-session-chip-${s.asid}`}
+                      onPress={() => {
+                        if (s.asid !== activeAsid) {
+                          onSelectSession?.(s.asid);
+                        }
+                      }}
+                      accessibilityLabel={`${agentName}: ${displayTitle}`}
+                      style={[
+                        styles.sessionChip,
+                        isSessActive
+                          ? { backgroundColor: theme.colors.primary }
+                          : {
+                              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                              borderColor: surfaceBackground(theme.colors.border),
+                              borderWidth: StyleSheet.hairlineWidth,
+                            },
+                      ]}>
+                      <Bot size={13} color={isSessActive ? '#fff' : theme.colors.primary} />
+                      <Text
+                        variant="caption"
+                        weight="bold"
+                        color={isSessActive ? '#fff' : theme.colors.primary}
+                        style={styles.sessionChipAgentBadge}>
+                        {`@${agentName}`}
+                      </Text>
+                      <Text
+                        variant="caption"
+                        color={isSessActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                        style={styles.sessionChipDot}>
+                        •
+                      </Text>
+                      <Text
+                        variant="caption"
+                        weight="medium"
+                        numberOfLines={1}
+                        color={isSessActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                        style={styles.sessionChipTitle}>
+                        {displayTitle}
+                      </Text>
+                    </PressableScale>
+
+                    {/* Subagents of the active session */}
+                    {isSessActive &&
+                      sessSubagents.map((sub) => {
+                        const isSubActive = sub.asid === activeAsid;
+                        const subAgentName = sub.agent || 'subagent';
+                        const subDisplayTitle = resolveSessionTitle(sub, `@${subAgentName}`);
+                        return (
+                          <PressableScale
+                            key={sub.asid}
+                            onPress={() => onSelectSession?.(sub.asid)}
+                            accessibilityLabel={subDisplayTitle}
+                            style={[
+                              styles.sessionChip,
+                              isSubActive
+                                ? { backgroundColor: theme.colors.primary }
+                                : {
+                                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                                    borderColor: surfaceBackground(theme.colors.border),
+                                    borderWidth: StyleSheet.hairlineWidth,
+                                  },
+                            ]}>
+                            <GitFork size={13} color={isSubActive ? '#fff' : theme.colors.primary} />
+                            <Text
+                              variant="caption"
+                              weight="bold"
+                              color={isSubActive ? '#fff' : theme.colors.primary}
+                              style={styles.sessionChipAgentBadge}>
+                              {`@${subAgentName}`}
+                            </Text>
+                            {subDisplayTitle !== `@${subAgentName}` ? (
+                              <>
+                                <Text
+                                  variant="caption"
+                                  color={isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                                  style={styles.sessionChipDot}>
+                                  •
+                                </Text>
+                                <Text
+                                  variant="caption"
+                                  weight="medium"
+                                  numberOfLines={1}
+                                  color={isSubActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                                  style={styles.sessionChipTitle}>
+                                  {subDisplayTitle}
+                                </Text>
+                              </>
+                            ) : null}
+                          </PressableScale>
+                        );
+                      })}
+                  </Fragment>
                 );
               })}
             </ScrollView>
@@ -891,6 +941,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 999,
     borderCurve: 'continuous',
+  },
+  newSessionChip: {
+    paddingHorizontal: 10,
+    gap: 4,
   },
   sessionChipAgentBadge: {
     fontSize: 12,

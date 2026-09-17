@@ -61,14 +61,16 @@ export function NewTaskAction({
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- retryTimer and announcementTimer are cleared on unmount in cleanup below.
   useEffect(() => {
     if (!capabilities?.includes('agent_sessions')) {
       setIsReady(false);
-      return;
+      return () => {};
     }
 
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let announcementTimer: ReturnType<typeof setTimeout> | null = null;
 
     const checkReady = async (isRetry = false) => {
       try {
@@ -88,10 +90,12 @@ export function NewTaskAction({
           if (!announcedServers.has(serverId)) {
             announcedServers.add(serverId);
             setShowAnnouncement(true);
+            if (announcementTimer) clearTimeout(announcementTimer);
             if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
-            announcementTimerRef.current = setTimeout(() => {
+            announcementTimer = setTimeout(() => {
               setShowAnnouncement(false);
             }, READY_ANNOUNCEMENT_MS);
+            announcementTimerRef.current = announcementTimer;
           }
         } else {
           setIsReady(false);
@@ -118,6 +122,7 @@ export function NewTaskAction({
     return () => {
       cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
+      if (announcementTimer) clearTimeout(announcementTimer);
       if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
     };
   }, [capabilities, endpointUrl, endpointToken, serverId]);
