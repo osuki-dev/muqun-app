@@ -986,7 +986,7 @@
       },
       {
         "target": {
-          "text": "Close changes"
+          "text": "Refresh changes"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1119,10 +1119,6 @@
         "run": "flows/git-diff.ad#s19"
       },
       {
-        "target": {
-          "text": "Close changes"
-        },
-        "mode": "press",
         "run": "flows/git-diff.ad#s20"
       },
       {

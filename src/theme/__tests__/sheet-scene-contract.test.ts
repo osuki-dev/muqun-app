@@ -358,12 +358,16 @@ test('every allowlisted modal still exists and still is one, so the list cannot 
  * agent surface drifted in the first place. The `SheetHeading` alias the
  * pre-scene sheets imported went with the last of them.
  *
- * Two exemptions, and both are inspectors whose whole surface is one
- * continuous thing rather than a heading over content.
+ * One exemption left, and it is not a sheet at all.
+ *
+ * The other was the diff, on the grounds that its pinned bar carried the
+ * branch, the refresh and the staged/unstaged segments and so could not be a
+ * heading. It carries all three inside the scene now -- the branch is the
+ * caption, the refresh is the heading's quiet control, the segments are the
+ * scene's pinned header -- so the exemption was describing a layout rather than
+ * a reason, and it has gone with the layout.
  */
 const HEADING_EXEMPT: Record<string, string> = {
-  'src/components/git-diff-view.tsx':
-    'the diff is one measured monospace grid under a pinned bar that also carries the branch, the refresh and the staged/unstaged segments',
   'src/components/asset-viewer.tsx':
     'a full-bleed document viewer, not a sheet: it is a Modal opened from inside the files sheet and has no grabber to pair a heading with',
 };
