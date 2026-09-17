@@ -132,7 +132,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
   const { t } = useLingui();
-  const raised = useTranscriptPlate('raised');
+  const raised = useTranscriptPlate();
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const pending = isToolPending(status);
@@ -264,7 +264,10 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 
 const styles = StyleSheet.create({
   container: {
-    alignSelf: 'stretch',
+    // As wide as its content, never wider than the row: a one-line card does
+    // not stretch across the screen just because a diff card had to.
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     marginVertical: 2,
     paddingVertical: 7,
     paddingHorizontal: 9,

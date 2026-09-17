@@ -106,12 +106,27 @@ const CodeBody = memo(function CodeBody({
   markdownStyle: MarkdownStyle;
 }) {
   const fenced = useMemo(() => fencedCode(body, language), [body, language]);
+  // The card is the surface; the code block inside it draws no box of its own.
+  const flat = useMemo<MarkdownStyle>(
+    () => ({
+      ...markdownStyle,
+      codeBlock: {
+        ...markdownStyle.codeBlock,
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        padding: 0,
+        marginTop: 0,
+        marginBottom: 0,
+      },
+    }),
+    [markdownStyle]
+  );
   return (
     <EnrichedMarkdownText
       key={markdownPaletteKey(markdownStyle)}
       flavor="commonmark"
       markdown={fenced.text}
-      markdownStyle={markdownStyle}
+      markdownStyle={flat}
       containerStyle={styles.stretch}
       selectable
       streamingAnimation={false}
@@ -231,7 +246,7 @@ const PatchBody = memo(function PatchBody({
       rows={rows}
       colors={colors}
       gutterFill={theme.colors.surface}
-      headerFill={theme.colors.surfaceRaised}
+      headerFill={theme.colors.surface}
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
   );
@@ -763,7 +778,7 @@ const EditDiffs = memo(function EditDiffs({
       rows={rows}
       colors={colors}
       gutterFill={theme.colors.surface}
-      headerFill={theme.colors.surfaceRaised}
+      headerFill={theme.colors.surface}
       onToggleFile={toggle}
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />

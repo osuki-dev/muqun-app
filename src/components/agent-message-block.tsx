@@ -347,10 +347,10 @@ const InlinePatch = memo(function InlinePatch({
       rows={rows}
       colors={colors}
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
-      // Opaque on purpose: the gutter is a plane that panned code slides under,
-      // and a translucent one would let the code show through the numbers.
+      // The same fill as the plate the diff sits on, so the gutter and the hunk
+      // header are not two lighter boxes inside the card.
       gutterFill={theme.colors.surface}
-      headerFill={theme.colors.surfaceRaised}
+      headerFill={theme.colors.surface}
     />
   );
 });
@@ -918,8 +918,9 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
 const styles = StyleSheet.create({
   /** The one geometry both sides share: full width, padded, on a plate. */
   messageBlock: {
-    alignSelf: 'stretch',
-    width: '100%',
+    // Hugs its content: "OK" is a short plate, a paragraph a wide one.
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     marginVertical: 4,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -929,8 +930,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
   },
   standaloneRow: {
-    alignSelf: 'stretch',
-    width: '100%',
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     marginVertical: 4,
   },
   roleRow: {
