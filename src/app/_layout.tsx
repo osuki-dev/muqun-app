@@ -444,12 +444,14 @@ function RootContent() {
                 'expandable'
               )}
             />
+            {/* A model list is usually browsed and sometimes filtered to two
+                rows. At the expandable detent those two rows sat at the top of
+                a sheet that was 82% of the screen, and the rest was ground. It
+                opens at just over half and drags to full, which is the same
+                two shapes with far less void under a short list. */}
             <Stack.Screen
               name="agent-model"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-model'],
-                'expandable'
-              )}
+              options={sheetPresentationOptions(sheetRoutePresentations['agent-model'], [0.6, 1])}
             />
             <Stack.Screen
               name="agent-mode"

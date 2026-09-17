@@ -236,6 +236,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
           <SheetSceneSearch
             testID="agent-model-search"
             accessibilityLabel={t`Search models`}
+            clearAccessibilityLabel={t`Clear the search`}
             placeholder={t`Search models or providers`}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -264,7 +265,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
           {sections.length === 0 || filteredModels.length === 0 ? (
             <View style={styles.empty}>
               <Text variant="caption" color={theme.colors.textMuted}>
-                {t`No models match that search.`}
+                {searchQuery.trim()
+                  ? t`No models match “${searchQuery.trim()}”.`
+                  : t`No free models on this host.`}
               </Text>
             </View>
           ) : (
@@ -298,6 +301,27 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                         selected={isSelected && !unavailable}
                         disabled={unavailable}
                         disabledCaption={model.status || t`Set up on the host`}
+                        {...(!unavailable && isFreeModel(model)
+                          ? {
+                              // What the "Free only" segment filters on, said on
+                              // the row itself: a name ending in "Free" is the
+                              // publisher's word for it, not the price list's.
+                              meta: (
+                                <View
+                                  style={[
+                                    styles.freeChip,
+                                    { backgroundColor: withAlpha(theme.colors.success, 0.14) },
+                                  ]}>
+                                  <Text
+                                    variant="caption"
+                                    weight="semibold"
+                                    color={theme.colors.success}>
+                                    {t`Free`}
+                                  </Text>
+                                </View>
+                              ),
+                            }
+                          : {})}
                         onPress={() =>
                           onSelectModel({
                             provider_id: model.provider_id,
@@ -368,6 +392,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: SHEET_LADDER.gap,
     paddingBottom: SHEET_LADDER.snug,
+  },
+  freeChip: {
+    paddingHorizontal: SHEET_LADDER.gap,
+    paddingVertical: 2,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
   },
   variantChip: {
     paddingHorizontal: SHEET_LADDER.snug,

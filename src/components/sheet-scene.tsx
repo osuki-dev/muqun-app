@@ -1,5 +1,5 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Search } from 'lucide-react-native';
+import { Search, X } from 'lucide-react-native';
 import { useEffect, type ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -192,12 +192,19 @@ export function SheetSceneSearch({
   onChangeText,
   placeholder,
   accessibilityLabel,
+  clearAccessibilityLabel,
   testID,
 }: {
   value: string;
   onChangeText: (next: string) => void;
   placeholder: string;
   accessibilityLabel: string;
+  /**
+   * What the × says. Given one, the field grows a clear button while there is
+   * something to clear -- on a sheet the keyboard covers half of, selecting the
+   * text and deleting it is four gestures for one intention.
+   */
+  clearAccessibilityLabel?: string;
   testID?: string;
 }) {
   const { colors } = useThemeTokens();
@@ -215,6 +222,17 @@ export function SheetSceneSearch({
         autoCorrect={false}
         style={[styles.searchInput, { color: colors.text }]}
       />
+      {clearAccessibilityLabel && value.length > 0 ? (
+        <PressableScale
+          testID={testID ? `${testID}-clear` : undefined}
+          accessibilityRole="button"
+          accessibilityLabel={clearAccessibilityLabel}
+          hitSlop={10}
+          onPress={() => onChangeText('')}
+          style={styles.searchClear}>
+          <X size={15} color={colors.textMuted} />
+        </PressableScale>
+      ) : null}
     </View>
   );
 }
@@ -617,6 +635,12 @@ const styles = StyleSheet.create({
     paddingBottom: SHEET_LADDER.gap,
     marginTop: SHEET_LADDER.gap,
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  searchClear: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchInput: {
     flex: 1,
