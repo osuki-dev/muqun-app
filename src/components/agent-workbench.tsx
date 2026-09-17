@@ -518,6 +518,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setShells(await listAgentShells(activeDirectory));
   }, [activeDirectory]);
 
+  /**
+   * Whether there is anything to open the changes sheet on.
+   *
+   * Read when a session loads *and* whenever a turn ends: the agent writing a
+   * file is the one thing that changes this answer, and a flag read once at
+   * load meant the changes chip was missing from exactly the sessions that
+   * had written something.
+   */
+  const refreshDiffs = useCallback(async () => {
+    if (!activeAsid) {
+      setHasDiffs(false);
+      return;
+    }
+    try {
+      setHasDiffs((await getAgentVcsDiff(sessionId, activeAsid)).length > 0);
+    } catch {
+      setHasDiffs(false);
+    }
+  }, [sessionId, activeAsid]);
+
   const refreshInbox = useCallback(async () => {
     if (!activeAsid) {
       setInbox([]);
@@ -621,13 +641,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         void refreshShells();
         void refreshInbox();
 
-        // Check diffs
-        try {
-          const diffs = await getAgentVcsDiff(sessionId, activeAsid);
-          setHasDiffs(diffs.length > 0);
-        } catch {
-          setHasDiffs(false);
-        }
+        void refreshDiffs();
       } catch (err) {
         console.warn('Failed to load snapshot:', err);
         if (
@@ -662,6 +676,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       refreshContext,
       refreshShells,
       refreshInbox,
+      refreshDiffs,
       showToast,
       t,
     ]
@@ -765,6 +780,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             void refreshSessions();
             void refreshContext();
             void refreshShells();
+            void refreshDiffs();
           }
           break;
         }
@@ -867,7 +883,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
       }
     },
-    [activeAsid, loadSnapshot, refreshSessions, refreshContext, refreshShells, handleAutoPermission]
+    [
+      activeAsid,
+      loadSnapshot,
+      refreshSessions,
+      refreshContext,
+      refreshShells,
+      refreshDiffs,
+      handleAutoPermission,
+    ]
   );
 
   /**
