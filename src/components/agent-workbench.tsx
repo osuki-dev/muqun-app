@@ -120,6 +120,7 @@ import { AgentComposer } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -2018,10 +2019,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * Memoised so opening the viewer does not hand it a new array on every
    * stream tick, which would reset its pager.
    */
-  const previewImages = useMemo<PreviewImage[] | null>(
-    () => (previewImageUri ? [{ id: previewImageUri, uri: previewImageUri }] : null),
-    [previewImageUri]
-  );
+  const previewImages = useMemo<PreviewImage[] | null>(() => {
+    if (!previewImageUri) return null;
+    // A thumbnail served by the gateway was loaded with the device's token;
+    // the lightbox fetches the same URL itself and needs the same headers.
+    const fromGateway = previewImageUri.startsWith(gatewayUrl('/'));
+    return [
+      {
+        id: previewImageUri,
+        uri: previewImageUri,
+        ...(fromGateway ? { headers: gatewayAuthHeaders() } : {}),
+      },
+    ];
+  }, [previewImageUri]);
 
   return (
     <View style={styles.root}>
