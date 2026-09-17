@@ -1097,7 +1097,7 @@ describe('titles and model names', () => {
     );
     expect(
       formatModelName({ provider_id: 'x', model_id: 'some-new-model', variant: 'xhigh' })
-    ).toBe('Some NEW Model • Max');
+    ).toBe('Some NEW Model · Max');
     expect(formatModelName(null)).toBe('Model');
     expect(formatModelName(undefined, 'Pick one')).toBe('Pick one');
   });

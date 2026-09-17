@@ -17,6 +17,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { hasRealSessionTitle } from '@/lib/agent-session';
 
@@ -54,10 +55,7 @@ export default function AgentScreen() {
   const createNewSessionRef = useRef<(() => void) | null>(null);
   const abortSessionRef = useRef<(() => void) | null>(null);
 
-  const displayWorkspaceName =
-    activeProject?.name ||
-    (activeDirectory ? activeDirectory.split('/').filter(Boolean).pop() : undefined) ||
-    t`Workspace`;
+  const displayWorkspaceName = workspaceDisplayName(activeProject, activeDirectory, t`Workspace`);
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
   /**
    * The title, whenever there is one.

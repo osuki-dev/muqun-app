@@ -91,6 +91,7 @@ import {
   sessionsInWorkspace,
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
+import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { useAgentPermissionStore } from '@/stores/agent-permissions';
 import { useAppActive } from '@/hooks/use-app-active';
@@ -1648,10 +1649,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     useAgentSessionState.getState().setWorkspace(activeDirectory, activeProject);
   }, [activeDirectory, activeProject]);
 
-  const displayWorkspaceName =
-    activeProject?.name ||
-    (activeDirectory ? activeDirectory.split('/').filter(Boolean).pop() : undefined) ||
-    t`Workspace`;
+  const displayWorkspaceName = workspaceDisplayName(activeProject, activeDirectory, t`Workspace`);
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
 
   // Rendered window over the full timeline: entering a session shows the

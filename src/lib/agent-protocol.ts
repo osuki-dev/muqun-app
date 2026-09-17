@@ -1888,6 +1888,24 @@ const KNOWN_MODEL_NAMES: Readonly<Record<string, string>> = {
   'ling-3.0-flash-fin-free': 'Ling 3.0 Flash',
 };
 
+/**
+ * The name a workspace pill shows. A project the engine has a real name for
+ * keeps it; the catch-all project OpenCode files loose directories under
+ * (`id: "global"`, canonical `/`) is not a name anyone chose, so a directory
+ * that lives there is called by its own last path segment.
+ */
+export function workspaceDisplayName(
+  project: { id?: string; name?: string; canonical?: string } | null | undefined,
+  directory: string | null | undefined,
+  fallback: string
+): string {
+  const named =
+    project && project.id !== 'global' && project.canonical !== '/' ? project.name?.trim() : '';
+  if (named) return named;
+  const leaf = directory ? directory.split('/').filter(Boolean).pop() : undefined;
+  return leaf || project?.name?.trim() || fallback;
+}
+
 export function formatModelName(model?: ModelRef | null, fallback = 'Model'): string {
   if (!model?.model_id) return fallback;
   const modelId = model.model_id;
@@ -1905,7 +1923,7 @@ export function formatModelName(model?: ModelRef | null, fallback = 'Model'): st
       model.variant === 'xhigh'
         ? 'Max'
         : model.variant.charAt(0).toUpperCase() + model.variant.slice(1);
-    return `${baseName} • ${varLabel}`;
+    return `${baseName} · ${varLabel}`;
   }
   return baseName;
 }

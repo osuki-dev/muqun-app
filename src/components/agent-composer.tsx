@@ -41,7 +41,6 @@ import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller
 
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
-import { useRelativeTime } from '@/hooks/use-relative-time';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
@@ -122,17 +121,14 @@ const SessionChip = memo(function SessionChip({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const relativeTime = useRelativeTime();
 
   const session = node.session;
   const child = node.depth > 0;
   const agentName = session.agent || (child ? t`subagent` : (fallbackAgent ?? 'build'));
   const titled = hasRealSessionTitle(session);
-  const title = titled
-    ? session.title
-    : session.updated_ms
-      ? relativeTime(session.updated_ms)
-      : t`Untitled session`;
+  // Untitled reads as untitled; the time is the caption a listing shows, not
+  // the name a chip stands under.
+  const title = titled ? session.title : t`Untitled session`;
 
   const dotColor =
     session.status === 'failed'
