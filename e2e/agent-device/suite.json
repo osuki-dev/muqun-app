@@ -647,6 +647,21 @@
         "run": "flows/artifacts.ad#s17"
       },
       {
+        "target": {
+          "text": "Open files"
+        },
+        "mode": "press",
+        "run": "flows/artifacts.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s2"
+      },
+      {
         "run": "flows/artifacts.ad#s18"
       },
       {

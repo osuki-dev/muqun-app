@@ -52,10 +52,14 @@ is hidden "${TARGET}"
 # section s17
 # The search field is flush on the sheet's ground now, with a hairline under it
 # and nothing else -- no "Clear search" button, because a boxed field with a
-# control inside it is the card kit this sheet left behind. Four backspaces are
-# how a reader clears "diff", and it is what the slash-command flow already
-# types.
-type "\b\b\b\b"
+# control inside it is the card kit this sheet left behind.
+#
+# So the flow drops the query the way a reader does, by leaving: the sheet is a
+# route, and the query is its state. `type` appends rather than replaces, and
+# `fill` will not take an empty string, so neither of those can clear a field
+# that has no clear button. The manifest reopens the sheet on the next step.
+back --system
+wait stable 400 5000
 
 # section s18
 wait stable 400 5000
