@@ -265,10 +265,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
 
                   {/* Known Projects */}
                   <View style={styles.sectionBlock}>
-                    <SectionLabel
-                      title={t`KNOWN REPOSITORIES`}
-                      color={theme.colors.textMuted}
-                    />
+                    <SectionLabel title={t`KNOWN REPOSITORIES`} color={theme.colors.textMuted} />
                     {filteredProjects.length === 0 ? (
                       <View style={styles.emptyContainer}>
                         <Text variant="caption" color={theme.colors.textMuted}>
@@ -316,9 +313,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                                 </View>
                               </View>
 
-                              {isSelected ? (
-                                <Check size={18} color={theme.colors.primary} />
-                              ) : null}
+                              {isSelected ? <Check size={18} color={theme.colors.primary} /> : null}
                             </PressableScale>
                           );
                         })}

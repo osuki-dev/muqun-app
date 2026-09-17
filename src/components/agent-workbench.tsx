@@ -3,28 +3,25 @@ import {
   View,
   StyleSheet,
   ActivityIndicator,
-  Linking,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
 } from 'react-native';
 import { Image } from 'expo-image';
-import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import {
   Bot,
   ChevronDown,
-  Clock,
-  Edit3,
-  FileText,
+  ChevronUp,
   FolderGit2,
   PlusCircle,
   RefreshCw,
+  ShieldAlert,
   Sparkles,
-  Trash2,
   X,
   Zap,
 } from 'lucide-react-native';
@@ -34,12 +31,12 @@ import {
   type LegendListRef,
 } from '@legendapp/list/react-native';
 import { PressableScale } from '@/components/pressable-scale';
+import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import { isSafeExternalLink } from '@/lib/safe-link';
 import Animated from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import { DURATION, fadeIn, listLayout } from '@/lib/motion';
+import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { StatusDot } from '@/components/status-dot';
 import {
@@ -66,9 +63,14 @@ import {
   type SkillInfo,
   type AgentProject,
 } from '@/lib/agent-session';
-import { EmbeddedTerminalToolBlock } from './embedded-terminal-tool-block';
-import { AgentReasoningBlock } from './agent-reasoning-block';
+import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { AgentTodoBlock } from './agent-todo-block';
+import {
+  AgentAssistantMessage,
+  AgentUserMessage,
+  buildTimelineGroups,
+  type TimelineRenderGroup,
+} from './agent-message-block';
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
 import { AgentModelSheet } from './agent-model-sheet';
@@ -79,13 +81,19 @@ import { AgentContextSheet } from './agent-context-sheet';
 import { AgentWorkspaceSheet } from './agent-workspace-sheet';
 import { AgentComposer } from './agent-composer';
 
-const IMAGE_DATA_URI_PREFIX = 'data:image/';
-function isImageAttachment(uri: string): boolean {
-  return (
-    uri.startsWith(IMAGE_DATA_URI_PREFIX) ||
-    /\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(uri)
-  );
-}
+/**
+ * How many history timeline items the workbench reveals per page. The gateway
+ * timeline only supports forward deltas, so history is paged on the client by
+ * growing the rendered window downwards from the latest page.
+ */
+const HISTORY_PAGE_SIZE = 40;
+
+/**
+ * Distance from the bottom, in pixels, within which streaming output may keep
+ * the list pinned to the latest message. Beyond it, the reader is browsing
+ * history and new output must not move their viewport.
+ */
+const NEAR_BOTTOM_PX = 120;
 
 function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
@@ -114,6 +122,10 @@ export interface AgentWorkbenchProps {
   onWorkspaceChange?: (directory?: string, project?: AgentProject) => void;
   openWorkspaceSheetRef?: React.MutableRefObject<(() => void) | null>;
   createNewSessionRef?: React.MutableRefObject<(() => void) | null>;
+  /** Wired to the workbench's abort call so a header can expose a Stop control. */
+  abortSessionRef?: React.MutableRefObject<(() => void) | null>;
+  /** Notifies the host screen (e.g. the header) of the active session's run state. */
+  onSessionStateChange?: (state: { running: boolean; title: string | undefined }) => void;
 }
 
 export const AgentWorkbench = memo(function AgentWorkbench({
@@ -126,6 +138,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   onWorkspaceChange,
   openWorkspaceSheetRef,
   createNewSessionRef,
+  abortSessionRef,
+  onSessionStateChange,
 }: AgentWorkbenchProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -134,12 +148,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
+  // Whether the reader is currently at (or near) the bottom of the timeline.
+  // Streaming output may only re-pin the list to the latest message while this
+  // is true; once the reader scrolls up into history, their viewport stays put.
+  const isNearBottomRef = useRef(true);
 
   const [sessions, setSessions] = useState<AgentSessionInfo[]>([]);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  // Index into `timeline` where the rendered window starts; history above it is
+  // paged in on demand so entering a session lands on the latest messages.
+  const [windowStart, setWindowStart] = useState(0);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   const [forms, setForms] = useState<FormRequest[]>([]);
   const [lastSeq, setLastSeq] = useState<number>(0);
@@ -147,6 +168,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
+  // Whether the reader is browsing history, which is what shows the
+  // jump-to-latest button.
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
   // Attachment Image Preview Modal
   const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
@@ -161,6 +185,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [tasksModalVisible, setTasksModalVisible] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelRef | undefined>(undefined);
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>('build');
+  // YOLO mode: every permission request is answered automatically, `allow`
+  // except for the irreversibly dangerous commands the safety list denies.
+  // Mirrored in a ref so the stream handler sees the current value without
+  // re-subscribing the SSE connection on every toggle.
+  const yoloModeRef = useRef(false);
+  const [yoloMode, setYoloModeState] = useState(false);
+  const setYoloMode = useCallback((next: boolean) => {
+    yoloModeRef.current = next;
+    setYoloModeState(next);
+  }, []);
+  // The model the workbench has actually settled on, tracked in a ref so the
+  // catalog's async default cannot clobber the session model the server
+  // restored: whichever source writes first wins, but a session's own model
+  // must never be overwritten by the catalog catch-all afterwards.
+  const appliedModelRef = useRef<ModelRef | undefined>(undefined);
+
+  const applySelectedModel = useCallback(
+    (model: ModelRef | undefined) => {
+      appliedModelRef.current = model;
+      setSelectedModel(model);
+      onModelChange?.(model);
+    },
+    [onModelChange]
+  );
   const [showReasoning, setShowReasoning] = useState<boolean>(true);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
@@ -178,7 +226,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (catalog?.skills && catalog.skills.length > 0) {
           setSkills(catalog.skills);
         }
-        if (catalog?.models && catalog.models.length > 0 && !selectedModel) {
+        if (catalog?.models && catalog.models.length > 0 && !appliedModelRef.current) {
           const defaultModel =
             catalog.models.find((m) => m.id.includes('free') || m.id.includes('spark')) ||
             catalog.models[0];
@@ -186,8 +234,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             provider_id: defaultModel.provider_id,
             model_id: defaultModel.id,
           };
-          setSelectedModel(ref);
-          onModelChange?.(ref);
+          applySelectedModel(ref);
         }
       })
       .catch((err) => {
@@ -196,7 +243,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
     };
-  }, [sessionId, selectedModel, onModelChange]);
+  }, [sessionId, applySelectedModel]);
 
   useEffect(() => {
     if (openModelSheetRef) {
@@ -217,8 +264,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setActiveAsid(list[0].asid);
           setSessionInfo(list[0]);
           if (list[0].model) {
-            setSelectedModel(list[0].model);
-            onModelChange?.(list[0].model);
+            applySelectedModel(list[0].model);
           }
           if (list[0].agent) setSelectedAgent(list[0].agent);
         } else if (list.length === 0) {
@@ -243,12 +289,51 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     } finally {
       initialCheckDoneRef.current = true;
     }
-  }, [sessionId, activeAsid, onModelChange]);
+  }, [sessionId, activeAsid, applySelectedModel]);
+
+  const handleTimelineScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    if (contentSize.height <= 0) return;
+    const distanceFromBottom = contentOffset.y + layoutMeasurement.height - contentSize.height;
+    const nearBottom = distanceFromBottom < NEAR_BOTTOM_PX;
+    isNearBottomRef.current = nearBottom;
+    // Mirror into state for the jump-to-latest affordance; React bails out when
+    // the value is unchanged, so streaming near the bottom costs nothing.
+    setIsNearBottom(nearBottom);
+  }, []);
+
+  const handleJumpToLatest = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    isNearBottomRef.current = true;
+    listRef.current?.scrollToEnd({ animated: true });
+  }, []);
 
   // Initial load
   useEffect(() => {
     void refreshSessions().catch(() => {});
   }, [refreshSessions]);
+
+  // YOLO answers every permission request itself: `allow` for anything the
+  // safety list lets through, `deny` (with a report) for irreversibly
+  // destructive commands — this is the only honesty YOLO mode has.
+  const handleAutoPermission = useCallback(
+    (req: PermissionRequest) => {
+      if (!activeAsid) return;
+      const decision = yoloDecision(req);
+      void replyAgentPermission(sessionId, activeAsid, req.id, decision).catch((err) => {
+        console.warn('YOLO permission reply failed:', err);
+      });
+      const danger = dangerousPermissionReason(req);
+      if (danger) {
+        showToast({
+          variant: 'danger',
+          title: t`Blocked by agent safety`,
+          message: req.resources[0] ?? t`Unknown command`,
+        });
+      }
+    },
+    [activeAsid, sessionId, showToast, t]
+  );
 
   // Load full snapshot when activeAsid changes
   const loadSnapshot = useCallback(async () => {
@@ -266,12 +351,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (snap.info.directory) setActiveDirectory(snap.info.directory);
       }
       setTimeline(snap.timeline);
-      setPermissions(snap.permissions);
+      // Enter every session on its latest page: only the newest slice is
+      // rendered at first and older history loads on demand from the top.
+      setWindowStart(Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE));
+      isNearBottomRef.current = true;
+      setIsNearBottom(true);
+      if (yoloModeRef.current) {
+        // Auto-answer everything the engine raised while we were away — the
+        // safety list still denies its share.
+        for (const perm of snap.permissions) void handleAutoPermission(perm);
+        for (const item of snap.timeline) {
+          if (item.part.type === 'approval') void handleAutoPermission(item.part.request);
+        }
+        setPermissions([]);
+      } else {
+        setPermissions(snap.permissions);
+      }
       setForms(snap.forms);
       setLastSeq(snap.seq);
       if (snap.info?.model) {
-        setSelectedModel(snap.info.model);
-        onModelChange?.(snap.info.model);
+        applySelectedModel(snap.info.model);
       }
       if (snap.info?.agent) setSelectedAgent(snap.info.agent);
 
@@ -291,13 +390,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setActiveAsid(undefined);
         setSessionInfo(null);
         setTimeline([]);
+        setWindowStart(0);
         setPermissions([]);
         setForms([]);
       }
     } finally {
       setLoading(false);
     }
-  }, [sessionId, activeAsid, onModelChange]);
+  }, [sessionId, activeAsid, applySelectedModel, handleAutoPermission]);
 
   useEffect(() => {
     void loadSnapshot().catch(() => {});
@@ -363,12 +463,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (payload?.seq) {
             setLastSeq((prev) => Math.max(prev, payload.seq ?? 0));
           }
-          setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+          // Only keep the reader pinned to the latest message while they are
+          // at the bottom; new output must never yank them out of history.
+          setTimeout(() => {
+            if (isNearBottomRef.current) {
+              listRef.current?.scrollToEnd({ animated: true });
+            }
+          }, 60);
         }
       } else if (event === 'agent.timeline.removed') {
-        const ids = payload?.ids ?? [];
-        if (ids.length > 0) {
-          setTimeline((prev) => prev.filter((it) => !ids.includes(it.id)));
+        const removedIds = new Set(payload?.ids ?? []);
+        if (removedIds.size > 0) {
+          setTimeline((prev) => prev.filter((it) => !removedIds.has(it.id)));
         }
       } else if (event === 'agent.status.changed') {
         const status = payload?.status;
@@ -376,9 +482,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSessionInfo((prev) => (prev ? { ...prev, status } : prev));
           if (status === 'idle') {
             // Unmark queued status on timeline items as they are now delivered/executed
-            setTimeline((prev) =>
-              prev.map((it) => (it.queued ? { ...it, queued: false } : it))
-            );
+            setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
             // Refresh sessions list & active session snapshot to obtain the LLM-generated title
             refreshSessions();
             if (activeAsid) {
@@ -399,17 +503,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         const info = payload?.info ?? payload?.update;
         if (info) {
           setSessionInfo((prev) => (prev ? { ...prev, ...info } : info));
-          setSessions((prev) =>
-            prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s))
-          );
+          setSessions((prev) => prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s)));
         }
       } else if (event === 'agent.permission.pending') {
         const req = payload?.request as PermissionRequest | undefined;
         if (req) {
-          setPermissions((prev) => {
-            if (prev.some((p) => p.id === req.id)) return prev;
-            return [...prev, req];
-          });
+          if (yoloModeRef.current) {
+            void handleAutoPermission(req);
+          } else {
+            setPermissions((prev) => {
+              if (prev.some((p) => p.id === req.id)) return prev;
+              return [...prev, req];
+            });
+          }
         }
       } else if (event === 'agent.permission.resolved') {
         const reqId = payload?.request_id;
@@ -433,7 +539,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         void loadSnapshot();
       }
     },
-    [loadSnapshot, activeAsid, sessionId, refreshSessions]
+    [loadSnapshot, activeAsid, sessionId, refreshSessions, handleAutoPermission]
   );
 
   // Real-time SSE Stream subscription + gentle fallback heartbeat polling
@@ -487,7 +593,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             return next;
           });
           setLastSeq(delta.latest_seq);
-          scrollTimer = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+          scrollTimer = setTimeout(() => {
+            if (isNearBottomRef.current) {
+              listRef.current?.scrollToEnd({ animated: true });
+            }
+          }, 100);
         }
         if (delta.status) {
           setSessionInfo((prev) => (prev ? { ...prev, status: delta.status! } : prev));
@@ -509,16 +619,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
-      setSelectedModel(model);
+      applySelectedModel(model);
       setModelSheetVisible(false);
-      onModelChange?.(model);
+      // The server owns the per-session model via this call; on next entry the
+      // session's own model is restored from it (see loadSnapshot).
       if (activeAsid) {
         void switchAgentModel(sessionId, activeAsid, model).catch((err) => {
           console.warn('Failed to switch agent model:', err);
         });
       }
     },
-    [sessionId, activeAsid, onModelChange]
+    [applySelectedModel, sessionId, activeAsid]
   );
 
   const handleSendPrompt = async (
@@ -562,7 +673,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
     // Optimistically update session title if current title is default/untitled
     const optimisticTitle = text.slice(0, 30);
-    if (!sessionInfo?.title || sessionInfo.title === t`New Session` || sessionInfo.title.startsWith('ses_')) {
+    if (
+      !sessionInfo?.title ||
+      sessionInfo.title === t`New Session` ||
+      sessionInfo.title.startsWith('ses_')
+    ) {
       if (sessionInfo) {
         setSessionInfo({ ...sessionInfo, title: optimisticTitle, status: 'running' });
       }
@@ -585,7 +700,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   };
 
-  const handleAbort = async () => {
+  const handleAbort = useCallback(async () => {
     if (!activeAsid) return;
     try {
       await abortAgentSession(sessionId, activeAsid);
@@ -596,7 +711,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setSessionInfo({ ...sessionInfo, status: 'idle' });
       }
     }
-  };
+  }, [activeAsid, sessionId, sessionInfo]);
 
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
@@ -606,6 +721,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [activeAsid, sessionId]
   );
+
+  const handleToggleYoloMode = useCallback(() => {
+    const next = !yoloModeRef.current;
+    setYoloMode(next);
+    if (next) {
+      showToast({
+        variant: 'info',
+        title: t`YOLO mode on`,
+        message: t`Agent actions are auto-approved; dangerous commands stay blocked.`,
+      });
+    }
+  }, [setYoloMode, showToast, t]);
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
@@ -635,6 +762,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setActiveAsid(created.asid);
       setSessionInfo(created);
       setTimeline([]);
+      setWindowStart(0);
       setPermissions([]);
       setForms([]);
       setLastSeq(0);
@@ -678,6 +806,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   }, [createNewSessionRef, handleCreateNewSession]);
 
+  useEffect(() => {
+    if (abortSessionRef) {
+      abortSessionRef.current = () => {
+        void handleAbort();
+      };
+    }
+  }, [abortSessionRef, handleAbort]);
+
   const handleSelectWorkspace = useCallback(
     async (directory: string, project?: AgentProject) => {
       setActiveDirectory(directory);
@@ -692,6 +828,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setActiveAsid(created.asid);
         setSessionInfo(created);
         setTimeline([]);
+        setWindowStart(0);
         setPermissions([]);
         setForms([]);
         setLastSeq(0);
@@ -709,236 +846,54 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [sessionId, selectedAgent, selectedModel, t, refreshSessions, showToast]
   );
 
+  const handleEditQueuedItem = useCallback((itemId: string, text: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    injectDraftRef.current?.(text);
+    setTimeline((prev) => prev.filter((it) => it.id !== itemId));
+  }, []);
+
+  const handleCancelQueuedItem = useCallback((itemId: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setTimeline((prev) => prev.filter((it) => it.id !== itemId));
+  }, []);
+
   const renderTimelineItem = useCallback(
-    ({ item, index }: LegendListRenderItemProps<TimelineItem>) => {
-      if (item.role === 'user') {
-        const text = item.part.type === 'text' ? item.part.text : '';
-        const attachments = item.attachments ?? [];
+    ({ item: group }: LegendListRenderItemProps<TimelineRenderGroup>) => {
+      if (group.role === 'user') {
         return (
-          <View key={item.id} style={styles.userBubbleRow}>
-            <Pressable
-              testID={`user-bubble-${item.id}`}
-              onLongPress={async () => {
-                if (!text) return;
-                void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                await Clipboard.setStringAsync(text);
-                showToast({
-                  variant: 'info',
-                  title: t`Copied`,
-                  message: t`Message copied to clipboard`,
-                });
-              }}
-              delayLongPress={260}
-              style={[
-                styles.userBubble,
-                {
-                  backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.16)),
-                  borderColor: withAlpha(theme.colors.primary, 0.35),
-                },
-                item.queued
-                  ? {
-                      borderStyle: 'dashed',
-                      borderWidth: 1.5,
-                      borderColor: theme.colors.primary,
-                    }
-                  : null,
-              ]}>
-              {/* Queued indicator and actions: only allowed for queued messages */}
-              {item.queued ? (
-                <View style={styles.queuedBadgeRow}>
-                  <View
-                    style={[
-                      styles.queuedPill,
-                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
-                    ]}>
-                    <Clock size={11} color={theme.colors.primary} />
-                    <Text
-                      variant="caption"
-                      weight="semibold"
-                      color={theme.colors.primary}
-                      style={styles.queuedPillText}>
-                      <Trans>Queued</Trans>
-                    </Text>
-                  </View>
-                  <View style={styles.queuedActions}>
-                    <PressableScale
-                      testID={`queued-edit-${item.id}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Edit queued message`}
-                      onPress={() => {
-                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        injectDraftRef.current?.(text);
-                        setTimeline((prev) => prev.filter((it) => it.id !== item.id));
-                      }}
-                      style={styles.queuedActionBtn}>
-                      <Edit3 size={13} color={theme.colors.primary} />
-                    </PressableScale>
-                    <PressableScale
-                      testID={`queued-cancel-${item.id}`}
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Cancel queued message`}
-                      onPress={() => {
-                        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setTimeline((prev) => prev.filter((it) => it.id !== item.id));
-                      }}
-                      style={styles.queuedActionBtn}>
-                      <Trash2 size={13} color={theme.colors.danger} />
-                    </PressableScale>
-                  </View>
-                </View>
-              ) : null}
-
-              {/* Attachment Preview Chips / Images */}
-              {attachments.length > 0 ? (
-                <View style={styles.bubbleAttachmentsGrid}>
-                  {attachments.map((att, attIdx) => {
-                    if (isImageAttachment(att)) {
-                      return (
-                        <PressableScale
-                          key={`${att}-${attIdx}`}
-                          onPress={() => setPreviewImageUri(att)}
-                          style={styles.bubbleImageWrapper}>
-                          <Image
-                            source={{ uri: att }}
-                            style={styles.bubbleImageThumbnail}
-                            contentFit="cover"
-                            transition={DURATION.short}
-                          />
-                        </PressableScale>
-                      );
-                    }
-                    const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
-                    return (
-                      <View
-                        key={`${att}-${attIdx}`}
-                        style={[
-                          styles.bubbleFileChip,
-                          {
-                            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                            borderColor: theme.colors.border,
-                          },
-                        ]}>
-                        <FileText size={13} color={theme.colors.primary} />
-                        <Text
-                          variant="caption"
-                          color={theme.colors.text}
-                          numberOfLines={1}
-                          style={styles.bubbleFileName}>
-                          {fileName}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              ) : null}
-
-              {text ? (
-                <Text selectable variant="bodySmall" color={theme.colors.text}>
-                  {text}
-                </Text>
-              ) : null}
-            </Pressable>
+          <View key={group.key}>
+            {group.items.map((item) => (
+              <AgentUserMessage
+                key={item.id}
+                item={item}
+                onPreviewImage={setPreviewImageUri}
+                onEditQueued={handleEditQueuedItem}
+                onCancelQueued={handleCancelQueuedItem}
+              />
+            ))}
           </View>
         );
       }
-
-      // Assistant or System item
-      switch (item.part.type) {
-        case 'text': {
-          const prevItem = index > 0 ? timeline[index - 1] : undefined;
-          if (prevItem && prevItem.part.type === 'tool') {
-            const cleanText = item.part.text
-              .replace(/^```[\w]*\n/, '')
-              .replace(/\n```$/, '')
-              .replace(/Command exited with code \d+\.?/gi, '')
-              .trim();
-            const cleanOutput = (typeof prevItem.part.output === 'string' ? prevItem.part.output : '')
-              .replace(/Command exited with code \d+\.?/gi, '')
-              .trim();
-            if (
-              !cleanText ||
-              cleanText === cleanOutput ||
-              (cleanOutput && cleanText.includes(cleanOutput)) ||
-              (cleanOutput && cleanOutput.includes(cleanText))
-            ) {
-              return null;
-            }
-          }
-
-          return (
-            <View
-              key={item.id}
-              style={[
-                styles.assistantTextRow,
-                {
-                  backgroundColor: surfaceBackground(theme.colors.surface),
-                  borderColor: theme.colors.border,
-                },
-              ]}>
-              <EnrichedMarkdownText
-                flavor="commonmark"
-                markdown={item.part.text}
-                markdownStyle={markdownStyle}
-                containerStyle={styles.markdownContainer}
-                selectable
-                selectionColor={theme.colors.primary}
-                selectionHandleColor={theme.colors.primary}
-                streamingAnimation={false}
-                textBreakStrategy="simple"
-                md4cFlags={{ latexMath: true }}
-                onLinkPress={({ url }) => {
-                  if (isSafeExternalLink(url)) void Linking.openURL(url);
-                }}
-              />
-            </View>
-          );
-        }
-
-        case 'reasoning':
-          if (!showReasoning) return null;
-          return (
-            <View key={item.id} style={styles.partRow}>
-              <AgentReasoningBlock text={item.part.text} durationMs={item.part.duration_ms} />
-            </View>
-          );
-
-        case 'todo':
-          return (
-            <View key={item.id} style={styles.partRow}>
-              <AgentTodoBlock items={item.part.items} />
-            </View>
-          );
-
-        case 'tool':
-          return (
-            <View key={item.id} style={styles.partRow}>
-              <EmbeddedTerminalToolBlock
-                toolId={item.part.id}
-                toolName={item.part.name}
-                input={item.part.input}
-                output={item.part.output}
-                status={item.part.status}
-              />
-            </View>
-          );
-
-        case 'status':
-          return (
-            <View key={item.id} style={styles.statusRow}>
-              <Text variant="caption" color={theme.colors.textSubtle} style={styles.statusText}>
-                • {item.part.text}
-              </Text>
-            </View>
-          );
-
-        default:
-          return null;
-      }
+      return (
+        <AgentAssistantMessage
+          key={group.key}
+          group={group}
+          showReasoning={showReasoning}
+          markdownStyle={markdownStyle}
+        />
+      );
     },
-    [markdownStyle, showReasoning, surfaceBackground, theme.colors, timeline, t, showToast]
+    [showReasoning, markdownStyle, handleEditQueuedItem, handleCancelQueuedItem]
   );
 
   const isRunning = sessionInfo?.status === 'running';
+
+  // Surface the active session's run state and title to the host screen so its
+  // header can react (Stop control, live session title) without owning any of
+  // the session wiring itself.
+  useEffect(() => {
+    onSessionStateChange?.({ running: isRunning, title: sessionInfo?.title });
+  }, [isRunning, sessionInfo?.title, onSessionStateChange]);
 
   const isOverloaded = useMemo(() => {
     if (!isRunning && timeline.length > 0) {
@@ -979,6 +934,63 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     t`Workspace`;
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
 
+  // Rendered window over the full timeline: entering a session shows the
+  // latest page; earlier pages are prepended on demand.
+  const visibleTimeline = useMemo(
+    () => (windowStart > 0 ? timeline.slice(windowStart) : timeline),
+    [timeline, windowStart]
+  );
+
+  // Group the window back into whole messages, the shape OpenCode's own UI
+  // renders: reasoning and tool calls fold into the message they belong to.
+  const renderGroups = useMemo(() => buildTimelineGroups(visibleTimeline), [visibleTimeline]);
+
+  // The group the reader is looking at when an earlier page is requested, so
+  // the prepend can be anchored to it instead of jumping the viewport.
+  const pendingAnchorRef = useRef<string | null>(null);
+
+  const handleLoadEarlier = useCallback(() => {
+    const anchorKey = renderGroups[0]?.key;
+    if (anchorKey) {
+      pendingAnchorRef.current = anchorKey;
+    }
+    setWindowStart((prev) => Math.max(0, prev - HISTORY_PAGE_SIZE));
+  }, [renderGroups]);
+
+  // After an earlier page is prepended, restore the viewport onto the message it
+  // was showing so history loads in place.
+  useEffect(() => {
+    const anchorKey = pendingAnchorRef.current;
+    if (!anchorKey) return;
+    const anchorIndex = renderGroups.findIndex((g) => g.key === anchorKey);
+    if (anchorIndex < 0) {
+      pendingAnchorRef.current = null;
+      return;
+    }
+    if (anchorIndex === 0) return; // The window has not grown yet.
+    pendingAnchorRef.current = null;
+    const timer = setTimeout(() => {
+      listRef.current?.scrollToIndex({ index: anchorIndex, animated: false, viewPosition: 0 });
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [renderGroups]);
+
+  const listHeader = useMemo(() => {
+    if (windowStart <= 0) return null;
+    return (
+      <PressableScale
+        testID="agent-load-earlier-btn"
+        onPress={handleLoadEarlier}
+        accessibilityRole="button"
+        accessibilityLabel={t`Load earlier messages`}
+        style={[styles.loadEarlierBtn, { borderColor: theme.colors.border }]}>
+        <ChevronUp size={13} color={theme.colors.textMuted} />
+        <Text variant="caption" color={theme.colors.textMuted}>
+          {t`Load earlier messages (${windowStart})`}
+        </Text>
+      </PressableScale>
+    );
+  }, [windowStart, handleLoadEarlier, theme.colors.border, theme.colors.textMuted, t]);
 
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = permissions.length > 0 || forms.length > 0;
@@ -1147,7 +1159,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   <Trans>OpenCode Service Offline</Trans>
                 </Text>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
-                  <Trans>OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it.</Trans>
+                  <Trans>
+                    OpenCode agent daemon is not running on this host. Run `opencode serve
+                    --service` to start it.
+                  </Trans>
                 </Text>
                 <PressableScale
                   testID="agent-offline-retry-btn"
@@ -1188,7 +1203,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                       { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
                     ]}>
                     <PlusCircle size={14} color={theme.colors.primary} />
-                    <Text variant="label" color={theme.colors.primary} style={styles.emptyNewBtnText}>
+                    <Text
+                      variant="label"
+                      color={theme.colors.primary}
+                      style={styles.emptyNewBtnText}>
                       <Trans>New Session</Trans>
                     </Text>
                   </PressableScale>
@@ -1213,16 +1231,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           </Animated.View>
         </View>
       ) : (
-        <LegendList<TimelineItem>
+        <LegendList<TimelineRenderGroup>
           ref={listRef}
-          data={timeline}
-          keyExtractor={(item) => item.id}
+          data={renderGroups}
+          keyExtractor={(group) => group.key}
           renderItem={renderTimelineItem}
           recycleItems={false}
           estimatedItemSize={70}
+          initialScrollAtEnd={true}
           maintainScrollAtEnd={true}
           maintainScrollAtEndThreshold={0.1}
-          ListHeaderComponent={null}
+          onScroll={handleTimelineScroll}
+          ListHeaderComponent={listHeader}
           ListFooterComponent={listFooter}
           style={styles.timelineScroll}
           contentContainerStyle={[
@@ -1231,6 +1251,58 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           ]}
         />
       )}
+
+      {/* Jump back to the latest message while browsing history */}
+      {!loading && timeline.length > 0 && !isNearBottom ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOut('micro')}
+          style={[styles.jumpToLatestWrap, { bottom: bottomInset + 196 }]}>
+          <GlassChrome surface="navigation" style={styles.jumpToLatestCircle}>
+            <PressableScale
+              testID="agent-jump-to-latest-btn"
+              accessibilityRole="button"
+              accessibilityLabel={t`Scroll to latest message`}
+              onPress={handleJumpToLatest}
+              style={styles.jumpToLatestInner}>
+              <ChevronDown size={18} color={theme.colors.text} strokeWidth={2.2} />
+            </PressableScale>
+          </GlassChrome>
+        </Animated.View>
+      ) : null}
+
+      {/* YOLO mode indicator — tap to switch auto-approval off again */}
+      {!loading && yoloMode ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOut('micro')}
+          style={[styles.yoloBannerWrap, { bottom: bottomInset + 196 }]}>
+          <PressableScale
+            testID="agent-yolo-indicator"
+            accessibilityRole="button"
+            accessibilityLabel={t`YOLO mode on — tap to turn off`}
+            onPress={() => setYoloMode(false)}
+            style={[
+              styles.yoloBanner,
+              {
+                backgroundColor: surfaceBackground(withAlpha(theme.colors.danger, 0.16)),
+                borderColor: withAlpha(theme.colors.danger, 0.45),
+              },
+            ]}>
+            <ShieldAlert size={13} color={theme.colors.danger} />
+            <Text variant="caption" weight="bold" color={theme.colors.danger}>
+              YOLO
+            </Text>
+            <Text
+              variant="caption"
+              color={theme.colors.textMuted}
+              numberOfLines={1}
+              style={styles.yoloBannerHint}>
+              <Trans>auto-approving actions</Trans>
+            </Text>
+          </PressableScale>
+        </Animated.View>
+      ) : null}
 
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
@@ -1275,6 +1347,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         cost={sessionInfo?.cost}
         showReasoning={showReasoning}
         onToggleReasoning={() => setShowReasoning((prev) => !prev)}
+        yoloMode={yoloMode}
+        onToggleYolo={handleToggleYoloMode}
         onClose={() => setContextSheetVisible(false)}
         onCompact={() => handleSendPrompt('/compact')}
         onClear={() => handleSendPrompt('/clear')}
@@ -1570,6 +1644,59 @@ const styles = StyleSheet.create({
   footerContainer: {
     gap: 10,
     marginTop: 4,
+  },
+  loadEarlierBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    alignSelf: 'center',
+    marginVertical: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  jumpToLatestWrap: {
+    position: 'absolute',
+    right: 14,
+    zIndex: 5,
+  },
+  jumpToLatestCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  jumpToLatestInner: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  yoloBannerWrap: {
+    position: 'absolute',
+    left: 14,
+    zIndex: 5,
+  },
+  yoloBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    maxWidth: 220,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  yoloBannerHint: {
+    flexShrink: 1,
+    fontSize: 11,
   },
   modalBackdrop: {
     flex: 1,

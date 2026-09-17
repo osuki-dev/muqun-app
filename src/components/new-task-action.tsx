@@ -64,7 +64,6 @@ export function NewTaskAction({
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- retryTimer and announcementTimer are cleared on unmount in cleanup below.
   useEffect(() => {
     if (!capabilities?.includes('agent_sessions')) {
-      setIsReady(false);
       return () => {};
     }
 
@@ -132,6 +131,11 @@ export function NewTaskAction({
     router.push('/agent');
   }, [selectRecord, serverId, router]);
 
+  // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away
+  const openAgentLabel = t`Open OpenCode Agent on ${label}`;
+  const readyLabel = t`OpenCode ready`;
+  const actionLabel = showAnnouncement ? `${readyLabel}. ${openAgentLabel}` : openAgentLabel;
+
   if (!capabilities?.includes('agent_sessions') || !isReady) {
     return null;
   }
@@ -141,11 +145,7 @@ export function NewTaskAction({
       <PressableScale
         testID="server-opencode-action"
         accessibilityRole="button"
-        accessibilityLabel={
-          showAnnouncement
-            ? `${t`OpenCode ready`}. ${t`Open OpenCode Agent on ${label}`}`
-            : t`Open OpenCode Agent on ${label}`
-        }
+        accessibilityLabel={actionLabel}
         onPress={handlePress}
         style={[
           styles.button,

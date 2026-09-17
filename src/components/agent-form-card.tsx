@@ -175,6 +175,7 @@ export const AgentFormCard = memo(function AgentFormCard({
 
       case 'multiselect': {
         const currentVals = (values[field.key] as string[]) ?? [];
+        const selectedVals = new Set(currentVals);
         return (
           <View key={field.key} style={styles.fieldRow}>
             <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
@@ -182,7 +183,7 @@ export const AgentFormCard = memo(function AgentFormCard({
             </Text>
             <View style={styles.optionsWrap}>
               {field.options.map((opt) => {
-                const selected = currentVals.includes(opt.value);
+                const selected = selectedVals.has(opt.value);
                 return (
                   <PressableScale
                     key={opt.value}

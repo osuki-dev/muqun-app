@@ -104,13 +104,16 @@ export const STAGGER = {
   row: 18,
 } as const;
 
-/** Muqun navigation: fluid transitions, depth reveals, and responsive header arrival. */
+/** Muqun navigation: fluid cyber-mechanical transitions, depth reveals, and responsive header arrival. */
 export const NAVIGATION_MOTION = {
-  pageMs: 280,
-  pageScale: 1.055,
-  headerMs: 200,
-  headerDistance: 6,
-  modalMs: 320,
+  pageMs: 240,
+  pageScale: 1.04,
+  depthScale: 0.975,
+  terminalScale: 0.985,
+  agentScale: 0.97,
+  headerMs: 180,
+  headerDistance: 4,
+  modalMs: 260,
 } as const;
 
 /**
@@ -341,31 +344,61 @@ export const listLayout = (duration: DurationToken | PresetToken | number = 'sho
     .reduceMotion(ReduceMotion.System);
 
 /**
- * Route scene entrance layout animation for pushed pages.
- * Soft vertical float from 6px and smooth opacity fade with the design system ease-out.
+ * Route scene archetypes for targeted cyber-mechanical navigation:
+ * - 'terminal': preserves text grid geometry with micro optical depth (scale 0.985 -> 1.0, opacity 0.3 -> 1.0)
+ * - 'agent': neural telemetry aperture reveal (scale 0.97 -> 1.0, translateY 4 -> 0, opacity 0.2 -> 1.0)
+ * - 'modal': cassette tray upward dock (translateY 16 -> 0, opacity 0.2 -> 1.0)
+ * - 'plain': crisp optical aperture focus (scale 0.975 -> 1.0, opacity 0.25 -> 1.0)
  */
-export const routeSceneEnter = (delay = 0) =>
-  FadeInDown.duration(NAVIGATION_MOTION.pageMs)
-    .delay(delay)
+export type RouteSceneType = 'terminal' | 'agent' | 'modal' | 'plain';
+
+export const routeSceneEnter = (sceneType: RouteSceneType | number = 'plain', delay = 0) => {
+  const resolvedType: RouteSceneType = typeof sceneType === 'number' ? 'plain' : sceneType;
+  const resolvedDelay = typeof sceneType === 'number' ? sceneType : delay;
+
+  if (resolvedType === 'terminal') {
+    return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
+      .delay(resolvedDelay)
+      .easing(EASE_OUT)
+      .reduceMotion(ReduceMotion.System)
+      .withInitialValues({
+        transform: [{ scale: NAVIGATION_MOTION.terminalScale }],
+      });
+  }
+
+  if (resolvedType === 'agent') {
+    return FadeInDown.duration(NAVIGATION_MOTION.pageMs)
+      .delay(resolvedDelay)
+      .easing(EASE_OUT)
+      .reduceMotion(ReduceMotion.System)
+      .withInitialValues({
+        opacity: 0.2,
+        transform: [{ translateY: 4 }],
+      });
+  }
+
+  if (resolvedType === 'modal') {
+    return FadeInDown.duration(NAVIGATION_MOTION.modalMs)
+      .delay(resolvedDelay)
+      .easing(EASE_OUT)
+      .reduceMotion(ReduceMotion.System)
+      .withInitialValues({
+        opacity: 0.2,
+        transform: [{ translateY: 16 }],
+      });
+  }
+
+  return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
+    .delay(resolvedDelay)
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System)
     .withInitialValues({
-      opacity: 0.35,
-      transform: [{ translateY: 6 }],
+      transform: [{ scale: NAVIGATION_MOTION.depthScale }],
     });
+};
 
 /**
  * Modal scene entrance layout animation for fullScreenModal tools.
- * Elegant upward slide from 24px with the design system ease-out.
+ * Elegant upward slide with the design system ease-out.
  */
-export const modalSceneEnter = (delay = 0) =>
-  FadeInDown.duration(NAVIGATION_MOTION.modalMs)
-    .delay(delay)
-    .easing(EASE_OUT)
-    .reduceMotion(ReduceMotion.System)
-    .withInitialValues({
-      opacity: 0.2,
-      transform: [{ translateY: 24 }],
-    });
-
-
+export const modalSceneEnter = (delay = 0) => routeSceneEnter('modal', delay);

@@ -61,9 +61,9 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
         </Text>
         {request.resources.length > 0 ? (
           <View style={styles.resourcesBox}>
-            {request.resources.map((res, i) => (
+            {request.resources.map((res) => (
               <Text
-                key={i}
+                key={res}
                 selectable
                 style={[styles.resourceText, { color: theme.colors.textMuted }]}>
                 • {res}

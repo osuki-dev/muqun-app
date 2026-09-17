@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/agent-message-block.tsx
+msgid "… {hiddenCount} more lines"
+msgstr "… còn {hiddenCount} dòng nữa"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "… open for the full change"
+msgstr "… mở để xem toàn bộ thay đổi"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… đã cắt bớt"
@@ -240,6 +248,10 @@ msgstr "Đã thêm"
 msgid "AGENT"
 msgstr "TÁC TỬ"
 
+#: src/components/agent-workbench.tsx
+msgid "Agent actions are auto-approved; dangerous commands stay blocked."
+msgstr "Các hành động của agent được tự động phê duyệt; các lệnh nguy hiểm vẫn bị chặn"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -438,7 +450,7 @@ msgstr "Đã khởi động trợ lý"
 msgid "Attach a file"
 msgstr "Đính kèm tệp"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Attachment"
 msgstr "Tệp đính kèm"
 
@@ -465,6 +477,18 @@ msgstr "Xác thực thất bại. Hãy thử lại"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Không thể xác thực. Hãy thử lại hoặc kiểm tra cài đặt hệ thống"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approve every agent action without prompts"
+msgstr "Tự động phê duyệt mọi hành động của agent mà không hỏi"
+
+#: src/components/agent-workbench.tsx
+msgid "auto-approving actions"
+msgstr "đang tự động phê duyệt hành động"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approving agent actions"
+msgstr "Đang tự động phê duyệt hành động của agent"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
@@ -517,6 +541,10 @@ msgstr "sinh trắc học"
 msgid "Blocked"
 msgstr "Đang chờ"
 
+#: src/components/agent-workbench.tsx
+msgid "Blocked by agent safety"
+msgstr "Bị chặn bởi tính năng an toàn của agent"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "Nhánh và tệp chủ đề lấy từ liên kết. Một nhánh có thể thay đổi về sau"
@@ -562,6 +590,7 @@ msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt đ�
 msgid "Camera access needed"
 msgstr "Cần quyền truy cập camera"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -585,7 +614,7 @@ msgstr "Hủy kết nối đến {0}"
 msgid "Cancel editing {0}"
 msgstr "Hủy chỉnh sửa {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "Hủy tin nhắn đang chờ"
 
@@ -828,6 +857,10 @@ msgstr "Thu gọn suy luận"
 #: src/components/agent-todo-block.tsx
 msgid "Collapse tasks"
 msgstr "Thu gọn nhiệm vụ"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Collapse tool call"
+msgstr "Thu gọn lệnh gọi công cụ"
 
 #: src/components/settings-appearance.tsx
 msgid "Color mode"
@@ -1083,7 +1116,7 @@ msgstr "Ctrl Z, tạm dừng"
 msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
 msgstr "Hỗ trợ lập trình hội thoại, tư vấn chung và giải đáp thắc mắc về không gian làm việc"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Copied"
 msgstr "Đã sao chép"
 
@@ -1105,10 +1138,6 @@ msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Sao chép"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Copy command and output"
-msgstr "Sao chép lệnh và kết quả"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -1506,7 +1535,7 @@ msgstr "Mỗi thiết bị giữ token riêng cho {0}"
 msgid "Edit {0}"
 msgstr "Sửa {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Edit queued message"
 msgstr "Chỉnh sửa tin nhắn đang chờ"
 
@@ -1521,6 +1550,10 @@ msgstr "Sửa host SSH"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "Sửa máy chủ này"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Enable YOLO"
+msgstr "Bật YOLO"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1580,6 +1613,10 @@ msgstr "Mở rộng lý luận & suy nghĩ"
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
 msgstr "Mở rộng nhiệm vụ"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Expand tool call"
+msgstr "Mở rộng lệnh gọi công cụ"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2071,6 +2108,14 @@ msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages"
+msgstr "Tải các tin nhắn trước đó"
+
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages ({windowStart})"
+msgstr "Tải các tin nhắn trước đó ({windowStart})"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2166,7 +2211,7 @@ msgstr "Linh vật"
 msgid "Mention {0}"
 msgstr "Nhắc đến {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Đã sao chép tin nhắn vào khay nhớ tạm"
 
@@ -2869,7 +2914,7 @@ msgstr "Xếp hàng"
 msgid "Queue message for agent"
 msgstr "Xếp hàng tin nhắn cho tác nhân"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Queued"
 msgstr "Đang chờ"
 
@@ -3268,6 +3313,10 @@ msgstr "Quét mã QR của Gateway đang chạy trên chính máy tính của b�
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Quét cần camera, mà trình duyệt này không cung cấp"
+
+#: src/components/agent-workbench.tsx
+msgid "Scroll to latest message"
+msgstr "Cuộn đến tin nhắn mới nhất"
 
 #: src/i18n/labels.ts
 msgid "Search"
@@ -3738,6 +3787,10 @@ msgstr "Vẫn đang chạy…"
 #: src/components/agent-composer.tsx
 msgid "Stop"
 msgstr "Dừng"
+
+#: src/app/agent.tsx
+msgid "Stop agent"
+msgstr "Dừng agent"
 
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
@@ -4230,8 +4283,8 @@ msgid "Thought"
 msgstr "Suy nghĩ"
 
 #: src/components/agent-reasoning-block.tsx
-msgid "Thought for {durationStr}"
-msgstr "Đã suy nghĩ trong {durationStr}"
+msgid "Thought · {durationStr}"
+msgstr "Suy nghĩ · {durationStr}"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
@@ -4327,6 +4380,10 @@ msgstr "không rõ"
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "Không rõ"
+
+#: src/components/agent-workbench.tsx
+msgid "Unknown command"
+msgstr "Lệnh không xác định"
 
 #: src/i18n/labels.ts
 msgid "Unknown date"
@@ -4550,6 +4607,22 @@ msgstr "Sao chép dòng này"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Hôm qua"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO lets the agent act without asking each time. Irreversibly destructive commands (system paths, block devices, remote scripts) are still blocked."
+msgstr "YOLO cho phép agent hành động mà không hỏi mỗi lần. Các lệnh phá hủy không thể khôi phục (đường dẫn hệ thống, thiết bị khối, script từ xa) vẫn bị chặn"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO Mode"
+msgstr "Chế độ YOLO"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on"
+msgstr "Đã bật chế độ YOLO"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on — tap to turn off"
+msgstr "Đã bật chế độ YOLO — chạm để tắt"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx

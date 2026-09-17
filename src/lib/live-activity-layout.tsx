@@ -25,10 +25,15 @@ export type AgentActivityStatus = 'working' | 'idle' | 'blocked' | 'done' | 'unk
 export type AgentActivityProps = {
   agentName: string;
   status: AgentActivityStatus;
-  /** Second line under the name, usually the pane the agent is attached to. */
+  /** Second line under the name, usually the pane the agent is attached to or current action. */
   detail: string;
   /** When the current run started, as epoch milliseconds. */
   startedAtMs: number;
+  /** Step progress for task milestones, e.g. OpenCode todos. */
+  todoDone?: number;
+  todoTotal?: number;
+  /** Subsystem engine behind this entry (OpenCode AI agent, tmux session/pane, or herdr daemon). */
+  engine?: string;
 };
 
 /** Must match the name the widget extension looks up its stored layout by. */
@@ -83,6 +88,12 @@ function AgentStatusActivity(props: AgentActivityProps): LiveActivityLayout {
     />
   );
 
+  const progressDetail = props.todoTotal
+    ? `${props.todoDone ?? 0}/${props.todoTotal} steps · ${props.detail}`
+    : props.detail;
+
+  const titleWithEngine = props.engine ? `[${props.engine}] ${props.agentName}` : props.agentName;
+
   return {
     banner: (
       <HStack
@@ -96,10 +107,10 @@ function AgentStatusActivity(props: AgentActivityProps): LiveActivityLayout {
               foregroundStyle('#FCFBFA'),
               lineLimit(1),
             ]}>
-            {props.agentName}
+            {titleWithEngine}
           </Text>
           <Text modifiers={[font({ size: 12 }), foregroundStyle('#A6AFBE'), lineLimit(1)]}>
-            {props.detail}
+            {progressDetail}
           </Text>
         </VStack>
         <Spacer />
@@ -122,7 +133,7 @@ function AgentStatusActivity(props: AgentActivityProps): LiveActivityLayout {
             foregroundStyle('#FCFBFA'),
             lineLimit(1),
           ]}>
-          {props.agentName}
+          {titleWithEngine}
         </Text>
         <Text modifiers={[font({ size: 11, weight: 'medium' }), foregroundStyle(accent)]}>
           {statusLabel}
@@ -136,7 +147,7 @@ function AgentStatusActivity(props: AgentActivityProps): LiveActivityLayout {
     ),
     expandedBottom: (
       <Text modifiers={[font({ size: 12 }), foregroundStyle('#A6AFBE'), lineLimit(1)]}>
-        {props.detail}
+        {progressDetail}
       </Text>
     ),
   };

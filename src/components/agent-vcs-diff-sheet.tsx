@@ -13,6 +13,7 @@ import { ThemedSurface } from '@/components/themed-surface';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { getAgentVcsDiff, type FileDiffItem } from '@/lib/agent-session';
+import { keyedLines } from '@/lib/line-keys';
 
 export interface AgentVcsDiffSheetProps {
   visible: boolean;
@@ -177,7 +178,7 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
                   {activeDiff?.patch ? (
                     <SettingsCard>
                       <View style={styles.patchContainer}>
-                        {activeDiff.patch.split('\n').map((line, idx) => {
+                        {keyedLines(activeDiff.patch).map(({ line, key }) => {
                           const isAdd = line.startsWith('+') && !line.startsWith('+++');
                           const isDel = line.startsWith('-') && !line.startsWith('---');
                           const isHunk = line.startsWith('@@');
@@ -198,11 +199,8 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
 
                           return (
                             <View
-                              key={idx}
-                              style={[
-                                styles.patchLineRow,
-                                { backgroundColor: lineBg },
-                              ]}>
+                              key={key}
+                              style={[styles.patchLineRow, { backgroundColor: lineBg }]}>
                               <Text
                                 variant="caption"
                                 style={[styles.patchLineText, { color: lineFg }]}>

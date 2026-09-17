@@ -120,7 +120,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
             const isInProgress = !isCompleted && idx === firstPendingIdx;
 
             return (
-              <View key={`${idx}-${item.text.slice(0, 20)}`} style={styles.itemRow}>
+              <View key={item.text} style={styles.itemRow}>
                 <View style={styles.itemIcon}>
                   {isCompleted ? (
                     <CheckCircle2

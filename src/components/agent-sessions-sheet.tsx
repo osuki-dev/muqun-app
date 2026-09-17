@@ -87,8 +87,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       } else if (s.directory && !s.project_id) {
         const alreadyMatched = Array.from(map.values()).some(
           (p) =>
-            p.canonical === s.directory ||
-            (p.canonical && s.directory?.startsWith(p.canonical))
+            p.canonical === s.directory || (p.canonical && s.directory?.startsWith(p.canonical))
         );
         if (!alreadyMatched) {
           const dirName = s.directory.split('/').filter(Boolean).pop() || s.directory;
@@ -250,7 +249,9 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                           ]}>
                           <Text
                             variant="caption"
-                            color={!selectedProjectId ? theme.colors.primary : theme.colors.textMuted}
+                            color={
+                              !selectedProjectId ? theme.colors.primary : theme.colors.textMuted
+                            }
                             style={styles.projectFilterText}>
                             {t`All Projects`}
                           </Text>
@@ -346,7 +347,9 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                               <View
                                 style={[
                                   styles.modelBadge,
-                                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                                  {
+                                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                                  },
                                 ]}>
                                 <Text
                                   variant="caption"
@@ -360,7 +363,11 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                                 <View
                                   style={[
                                     styles.projectBadge,
-                                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                                    {
+                                      backgroundColor: surfaceBackground(
+                                        theme.colors.surfaceRaised
+                                      ),
+                                    },
                                   ]}>
                                   <Folder size={10} color={theme.colors.textMuted} />
                                   <Text
@@ -377,7 +384,11 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                                 <View
                                   style={[
                                     styles.subCountBadge,
-                                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                                    {
+                                      backgroundColor: surfaceBackground(
+                                        theme.colors.surfaceRaised
+                                      ),
+                                    },
                                   ]}>
                                   <GitFork size={10} color={theme.colors.textMuted} />
                                   <Text
@@ -400,7 +411,9 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                                 </Text>
                               ) : null}
 
-                              {isRootActive ? <Check size={16} color={theme.colors.primary} /> : null}
+                              {isRootActive ? (
+                                <Check size={16} color={theme.colors.primary} />
+                              ) : null}
                             </View>
                           </View>
 
@@ -432,13 +445,19 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                                     style={[
                                       styles.subagentRow,
                                       isSubActive && {
-                                        backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                                        backgroundColor: surfaceBackground(
+                                          theme.colors.primarySubtle
+                                        ),
                                       },
                                     ]}>
                                     <View style={styles.subLeft}>
                                       <GitFork
                                         size={13}
-                                        color={isSubActive ? theme.colors.primary : theme.colors.textMuted}
+                                        color={
+                                          isSubActive
+                                            ? theme.colors.primary
+                                            : theme.colors.textMuted
+                                        }
                                       />
                                       <View
                                         style={[
@@ -454,7 +473,9 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                                       </View>
                                       <Text
                                         variant="caption"
-                                        color={isSubActive ? theme.colors.primary : theme.colors.text}
+                                        color={
+                                          isSubActive ? theme.colors.primary : theme.colors.text
+                                        }
                                         numberOfLines={1}
                                         style={styles.subTitle}>
                                         {sub.title || sub.asid}

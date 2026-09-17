@@ -26,9 +26,7 @@ describe('buildAgentCacheKey', () => {
     expect(buildAgentCacheKey('catalog', 'http://127.0.0.1:8080/', 'sess-1')).toBe(
       'catalog:http://127.0.0.1:8080:sess-1'
     );
-    expect(buildAgentCacheKey('projects', undefined, null)).toBe(
-      'projects:default_gateway:global'
-    );
+    expect(buildAgentCacheKey('projects', undefined, null)).toBe('projects:default_gateway:global');
   });
 });
 
@@ -56,9 +54,7 @@ describe('agent cache storage and memory fallback', () => {
     const key = 'projects:test:global';
     expect(getCachedAgentProjectsSync(key)).toBeNull();
 
-    const mockProjects = [
-      { id: 'proj-1', name: 'App', canonical: '/home/user/app' },
-    ];
+    const mockProjects = [{ id: 'proj-1', name: 'App', canonical: '/home/user/app' }];
 
     setCachedEntry(key, mockProjects);
     expect(getCachedAgentProjectsSync(key)).toEqual(mockProjects);

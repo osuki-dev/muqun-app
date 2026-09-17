@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/agent-message-block.tsx
+msgid "… {hiddenCount} more lines"
+msgstr "… 他 {hiddenCount} 行"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "… open for the full change"
+msgstr "… 完全な変更を表示するには開く"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…以下省略"
@@ -240,6 +248,10 @@ msgstr "追加"
 msgid "AGENT"
 msgstr "エージェント"
 
+#: src/components/agent-workbench.tsx
+msgid "Agent actions are auto-approved; dangerous commands stay blocked."
+msgstr "エージェントの操作は自動承認され、危険なコマンドは引き続きブロックされます"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -438,7 +450,7 @@ msgstr "アシスタントを起動しました"
 msgid "Attach a file"
 msgstr "ファイルを添付"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Attachment"
 msgstr "添付ファイル"
 
@@ -465,6 +477,18 @@ msgstr "認証に失敗しました。もう一度お試しください"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "認証を利用できません。もう一度試すか、システム設定を確認してください"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approve every agent action without prompts"
+msgstr "すべてのエージェント操作を確認なしで自動承認"
+
+#: src/components/agent-workbench.tsx
+msgid "auto-approving actions"
+msgstr "操作を自動承認中"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approving agent actions"
+msgstr "エージェント操作を自動承認中"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
@@ -517,6 +541,10 @@ msgstr "生体認証"
 msgid "Blocked"
 msgstr "応答待ち"
 
+#: src/components/agent-workbench.tsx
+msgid "Blocked by agent safety"
+msgstr "エージェントの安全機能がブロックしました"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "ブランチとテーマファイルはリンクから取得しました。ブランチは後で変わることがあります"
@@ -562,6 +590,7 @@ msgstr "カメラへのアクセスがオフです。写真を撮るには設定
 msgid "Camera access needed"
 msgstr "カメラへのアクセスが必要です"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -585,7 +614,7 @@ msgstr "{0} への接続をキャンセル"
 msgid "Cancel editing {0}"
 msgstr "{0} の編集をキャンセル"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "キュー内のメッセージを取り消す"
 
@@ -828,6 +857,10 @@ msgstr "推論を折りたたむ"
 #: src/components/agent-todo-block.tsx
 msgid "Collapse tasks"
 msgstr "タスクを折りたたむ"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Collapse tool call"
+msgstr "ツール呼び出しを折りたたむ"
 
 #: src/components/settings-appearance.tsx
 msgid "Color mode"
@@ -1083,7 +1116,7 @@ msgstr "コントロール Z、一時停止"
 msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
 msgstr "対話形式のコーディング支援、一般的なプログラミングの助言、オープンエンドな質問対応"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Copied"
 msgstr "コピー完了"
 
@@ -1105,10 +1138,6 @@ msgstr "コピーします。ターミナルにそのまま貼り付けられま
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "コピー"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Copy command and output"
-msgstr "コマンドと出力をコピー"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -1506,7 +1535,7 @@ msgstr "各デバイスは {0} 用のトークンをそれぞれ保持します"
 msgid "Edit {0}"
 msgstr "{0} を編集"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Edit queued message"
 msgstr "キュー内のメッセージを編集"
 
@@ -1521,6 +1550,10 @@ msgstr "SSH ホストを編集"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "このサーバーを編集"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Enable YOLO"
+msgstr "YOLO を有効にする"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1580,6 +1613,10 @@ msgstr "推論・思考プロセスを展開"
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
 msgstr "タスクを展開"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Expand tool call"
+msgstr "ツール呼び出しを展開"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2071,6 +2108,14 @@ msgstr "認識済みのエージェントが動作しているパネルのみを
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages"
+msgstr "以前のメッセージを読み込む"
+
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages ({windowStart})"
+msgstr "以前のメッセージを読み込む（{windowStart}）"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2166,7 +2211,7 @@ msgstr "マスコット"
 msgid "Mention {0}"
 msgstr "{0} をメンション"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "メッセージをクリップボードにコピーしました"
 
@@ -2869,7 +2914,7 @@ msgstr "キュー"
 msgid "Queue message for agent"
 msgstr "エージェントのキューにメッセージを追加"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Queued"
 msgstr "待機中"
 
@@ -3268,6 +3313,10 @@ msgstr "自分のコンピューターで動く Gateway の QR コードを読�
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "スキャンにはカメラが必要ですが、このブラウザでは使えません"
+
+#: src/components/agent-workbench.tsx
+msgid "Scroll to latest message"
+msgstr "最新のメッセージへスクロール"
 
 #: src/i18n/labels.ts
 msgid "Search"
@@ -3738,6 +3787,10 @@ msgstr "実行中…"
 #: src/components/agent-composer.tsx
 msgid "Stop"
 msgstr "停止"
+
+#: src/app/agent.tsx
+msgid "Stop agent"
+msgstr "エージェントを停止"
 
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
@@ -4230,8 +4283,8 @@ msgid "Thought"
 msgstr "思考"
 
 #: src/components/agent-reasoning-block.tsx
-msgid "Thought for {durationStr}"
-msgstr "思考時間: {durationStr}"
+msgid "Thought · {durationStr}"
+msgstr "思考 · {durationStr}"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
@@ -4327,6 +4380,10 @@ msgstr "不明"
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "不明"
+
+#: src/components/agent-workbench.tsx
+msgid "Unknown command"
+msgstr "不明なコマンド"
 
 #: src/i18n/labels.ts
 msgid "Unknown date"
@@ -4550,6 +4607,22 @@ msgstr "この行をヤンク"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "昨日"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO lets the agent act without asking each time. Irreversibly destructive commands (system paths, block devices, remote scripts) are still blocked."
+msgstr "YOLO は毎回確認せずエージェントに行動させます。取り返しのつかない破壊的なコマンド（システムパス、ブロックデバイス、リモートスクリプト）は引き続きブロックされます"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO Mode"
+msgstr "YOLO モード"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on"
+msgstr "YOLO モード有効"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on — tap to turn off"
+msgstr "YOLO モード有効 — タップで無効化"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx

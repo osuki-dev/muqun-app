@@ -156,9 +156,7 @@ export const AgentComposer = memo(function AgentComposer({
     else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
 
     const costStr =
-      cost === undefined || cost === null || cost === 0
-        ? t`Free`
-        : `$${cost.toFixed(2)}`;
+      cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
     return `${tokStr} • ${costStr}`;
   }, [tokens, cost, t]);
 
@@ -548,7 +546,10 @@ export const AgentComposer = memo(function AgentComposer({
                                     borderWidth: StyleSheet.hairlineWidth,
                                   },
                             ]}>
-                            <GitFork size={13} color={isSubActive ? '#fff' : theme.colors.primary} />
+                            <GitFork
+                              size={13}
+                              color={isSubActive ? '#fff' : theme.colors.primary}
+                            />
                             <Text
                               variant="caption"
                               weight="bold"
@@ -560,7 +561,9 @@ export const AgentComposer = memo(function AgentComposer({
                               <>
                                 <Text
                                   variant="caption"
-                                  color={isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted}
+                                  color={
+                                    isSubActive ? 'rgba(255,255,255,0.6)' : theme.colors.textMuted
+                                  }
                                   style={styles.sessionChipDot}>
                                   •
                                 </Text>
@@ -595,10 +598,7 @@ export const AgentComposer = memo(function AgentComposer({
                 testID="agent-composer-sessions-btn"
                 onPress={onOpenSessionsSheet}
                 accessibilityLabel={t`All Sessions`}
-                style={[
-                  styles.actionBtn,
-                  { backgroundColor: surfaceBackground(chromeGlass) },
-                ]}>
+                style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
                 <Layers size={16} color={chromeText} />
               </PressableScale>
             ) : null}
@@ -637,10 +637,7 @@ export const AgentComposer = memo(function AgentComposer({
                   styles.actionBtnWithLabel,
                   { backgroundColor: surfaceBackground(chromeGlass) },
                 ]}>
-                <Text
-                  variant="caption"
-                  color={theme.colors.text}
-                  style={styles.actionBtnLabel}>
+                <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
                   {modelDisplayName}
                 </Text>
                 <ChevronDown size={12} color={theme.colors.textMuted} />
@@ -861,9 +858,13 @@ export const AgentComposer = memo(function AgentComposer({
                   ? t`Steer running agent`
                   : t`Queue message for agent`
                 : t`Send message`,
-              armed: (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) && !sending && !disabled,
+              armed:
+                (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
+                !sending &&
+                !disabled,
               sending,
-              disabled: sending || disabled || (!text.trim() && attachmentUploads.attachments.length === 0),
+              disabled:
+                sending || disabled || (!text.trim() && attachmentUploads.attachments.length === 0),
               onPress: handleSend,
             }}
           />

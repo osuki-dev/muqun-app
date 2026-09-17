@@ -1,8 +1,8 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { DollarSign, Folder, Layers, Sparkles, X, Zap } from 'lucide-react-native';
+import { DollarSign, Folder, Layers, ShieldAlert, Sparkles, X, Zap } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
@@ -21,6 +21,8 @@ export interface AgentContextSheetProps {
   cost?: number;
   showReasoning?: boolean;
   onToggleReasoning?: () => void;
+  yoloMode?: boolean;
+  onToggleYolo?: () => void;
   onClose: () => void;
   onCompact?: () => void;
   onClear?: () => void;
@@ -33,6 +35,8 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   cost,
   showReasoning = true,
   onToggleReasoning,
+  yoloMode = false,
+  onToggleYolo,
   onClose,
   onCompact,
   onClear,
@@ -42,20 +46,18 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const plate = useSheetGroundPlate();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
+  const [confirmingYolo, setConfirmingYolo] = useState(false);
 
   const totalTokens = (tokens?.input ?? 0) + (tokens?.output ?? 0) + (tokens?.reasoning ?? 0);
 
   // Extract context window limit from session or default to 1M (1,048,576)
-  const contextLimit =
-    (session?.limit as { context?: number } | undefined)?.context ?? 1_048_576;
+  const contextLimit = (session?.limit as { context?: number } | undefined)?.context ?? 1_048_576;
   const contextRatio = Math.min(1, Math.max(0, totalTokens / Math.max(1, contextLimit)));
   const contextPct = (contextRatio * 100).toFixed(1);
 
   const formatTokens = (n?: number) => (n ?? 0).toLocaleString();
   const costDisplay =
-    cost === undefined || cost === null || cost === 0
-      ? t`$0.00 (Free)`
-      : `$${cost.toFixed(4)}`;
+    cost === undefined || cost === null || cost === 0 ? t`$0.00 (Free)` : `$${cost.toFixed(4)}`;
 
   const modelName = session?.model?.model_id ?? 'muse-spark-1.3-contributor-free';
   const variantName = session?.model?.variant ?? 'high';
@@ -216,7 +218,8 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                           <Trans>Estimated Cost</Trans>
                         </Text>
                       </View>
-                      <View style={[styles.badge, { backgroundColor: `${theme.colors.primary}18` }]}>
+                      <View
+                        style={[styles.badge, { backgroundColor: `${theme.colors.primary}18` }]}>
                         <Text variant="caption" weight="semibold" color={theme.colors.primary}>
                           {costDisplay}
                         </Text>
@@ -287,11 +290,108 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                         />
                       </View>
                     ) : null}
+
+                    {/* YOLO Mode Row */}
+                    {onToggleYolo ? (
+                      <>
+                        <View style={styles.metaRow}>
+                          <View style={styles.metaLabelGroup}>
+                            <ShieldAlert
+                              size={15}
+                              color={yoloMode ? theme.colors.danger : theme.colors.textMuted}
+                            />
+                            <View style={styles.metaLabelStack}>
+                              <Text
+                                variant="bodySmall"
+                                weight="medium"
+                                color={yoloMode ? theme.colors.danger : theme.colors.text}>
+                                <Trans>YOLO Mode</Trans>
+                              </Text>
+                              <Text variant="caption" color={theme.colors.textMuted}>
+                                {yoloMode ? (
+                                  <Trans>Auto-approving agent actions</Trans>
+                                ) : (
+                                  <Trans>Auto-approve every agent action without prompts</Trans>
+                                )}
+                              </Text>
+                            </View>
+                          </View>
+                          <Toggle
+                            value={yoloMode}
+                            onValueChange={(next) => {
+                              if (next) {
+                                setConfirmingYolo(true);
+                              } else {
+                                setConfirmingYolo(false);
+                                onToggleYolo();
+                              }
+                            }}
+                            accessibilityLabel={t`YOLO Mode`}
+                          />
+                        </View>
+
+                        {confirmingYolo ? (
+                          <View
+                            style={[
+                              styles.confirmRow,
+                              {
+                                backgroundColor: `${theme.colors.danger}14`,
+                                borderColor: `${theme.colors.danger}45`,
+                              },
+                            ]}>
+                            <Text
+                              variant="caption"
+                              color={theme.colors.text}
+                              style={styles.confirmText}>
+                              <Trans>
+                                YOLO lets the agent act without asking each time. Irreversibly
+                                destructive commands (system paths, block devices, remote scripts)
+                                are still blocked.
+                              </Trans>
+                            </Text>
+                            <View style={styles.confirmButtons}>
+                              <PressableScale
+                                testID="agent-yolo-confirm-btn"
+                                accessibilityRole="button"
+                                onPress={() => {
+                                  setConfirmingYolo(false);
+                                  onToggleYolo();
+                                }}
+                                style={[
+                                  styles.confirmBtn,
+                                  { backgroundColor: theme.colors.danger },
+                                ]}>
+                                <Text variant="caption" weight="bold" color="#fff">
+                                  <Trans>Enable YOLO</Trans>
+                                </Text>
+                              </PressableScale>
+                              <PressableScale
+                                testID="agent-yolo-cancel-btn"
+                                accessibilityRole="button"
+                                onPress={() => setConfirmingYolo(false)}
+                                style={[
+                                  styles.confirmBtn,
+                                  {
+                                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                                  },
+                                ]}>
+                                <Text
+                                  variant="caption"
+                                  weight="semibold"
+                                  color={theme.colors.textMuted}>
+                                  <Trans>Cancel</Trans>
+                                </Text>
+                              </PressableScale>
+                            </View>
+                          </View>
+                        ) : null}
+                      </>
+                    ) : null}
                   </SettingsCard>
                 </View>
 
                 {/* Quick Actions (Compact / Clear) */}
-                {(onCompact || onClear) ? (
+                {onCompact || onClear ? (
                   <View style={styles.sectionBlock}>
                     <SectionLabel title={t`ACTIONS`} color={theme.colors.textMuted} />
                     <SettingsCard>
@@ -469,6 +569,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     flex: 1,
+  },
+  metaLabelStack: {
+    flex: 1,
+    gap: 2,
+  },
+  confirmRow: {
+    marginHorizontal: LADDER.gutter,
+    marginBottom: LADDER.snug,
+    padding: 12,
+    borderRadius: 14,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 10,
+  },
+  confirmText: {
+    lineHeight: 17,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  confirmBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   badge: {
     paddingHorizontal: 8,

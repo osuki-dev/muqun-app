@@ -15,6 +15,7 @@ import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import {
   getAgentCatalog,
+  isFreeModel,
   type AgentCatalog,
   type ModelInfo,
   type ModelRef,
@@ -25,18 +26,6 @@ export interface AgentModelSheetProps {
   selectedModel?: ModelRef;
   onSelectModel: (model: ModelRef) => void;
   onClose: () => void;
-}
-
-export function isFreeModel(model: ModelInfo): boolean {
-  const idLower = (model.id || '').toLowerCase();
-  const nameLower = (model.name || '').toLowerCase();
-  const provLower = (model.provider_id || '').toLowerCase();
-  return (
-    idLower.includes('free') ||
-    nameLower.includes('free') ||
-    provLower === 'opencode' ||
-    provLower.includes('free')
-  );
 }
 
 export const AgentModelSheet = memo(function AgentModelSheet({
@@ -126,13 +115,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       providerMap.set(prov, list);
     }
 
-    const preferredOrder = [
-      'opencode',
-      'deepseek',
-      'openai',
-      'anthropic',
-      'google',
-    ];
+    const preferredOrder = ['opencode', 'deepseek', 'openai', 'anthropic', 'google'];
     const sortedProviders = Array.from(providerMap.keys()).sort((a, b) => {
       const idxA = preferredOrder.indexOf(a);
       const idxB = preferredOrder.indexOf(b);
@@ -261,10 +244,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                   ) : (
                     sections.map((section) => (
                       <View key={section.title} style={styles.sectionBlock}>
-                        <SectionLabel
-                          title={section.title}
-                          color={theme.colors.textMuted}
-                        />
+                        <SectionLabel title={section.title} color={theme.colors.textMuted} />
 
                         <SettingsCard>
                           {section.models.map((mod) => {
@@ -319,7 +299,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                                         <Text
                                           variant="bodySmall"
                                           weight={isSelected ? 'semibold' : 'regular'}
-                                          color={isSelected ? theme.colors.primary : theme.colors.text}
+                                          color={
+                                            isSelected ? theme.colors.primary : theme.colors.text
+                                          }
                                           numberOfLines={1}
                                           style={styles.modelNameText}>
                                           {mod.name || mod.id}
@@ -392,7 +374,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                                             <Text
                                               variant="caption"
                                               weight={isVarSelected ? 'semibold' : 'regular'}
-                                              color={isVarSelected ? '#fff' : theme.colors.textMuted}
+                                              color={
+                                                isVarSelected ? '#fff' : theme.colors.textMuted
+                                              }
                                               style={styles.variantChipText}>
                                               {v.id}
                                             </Text>

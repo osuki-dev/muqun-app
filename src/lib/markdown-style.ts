@@ -67,9 +67,30 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
 
   return {
     paragraph: base,
-    h1: { ...base, fontSize: 21, lineHeight: 27, fontWeight: '700', marginTop: 14, marginBottom: 8 },
-    h2: { ...base, fontSize: 18, lineHeight: 24, fontWeight: '700', marginTop: 12, marginBottom: 6 },
-    h3: { ...base, fontSize: 15.5, lineHeight: 21, fontWeight: '700', marginTop: 10, marginBottom: 4 },
+    h1: {
+      ...base,
+      fontSize: 21,
+      lineHeight: 27,
+      fontWeight: '700',
+      marginTop: 14,
+      marginBottom: 8,
+    },
+    h2: {
+      ...base,
+      fontSize: 18,
+      lineHeight: 24,
+      fontWeight: '700',
+      marginTop: 12,
+      marginBottom: 6,
+    },
+    h3: {
+      ...base,
+      fontSize: 15.5,
+      lineHeight: 21,
+      fontWeight: '700',
+      marginTop: 10,
+      marginBottom: 4,
+    },
     h4: { ...base, fontWeight: '700', marginTop: 6, marginBottom: 4 },
     h5: { ...base, fontWeight: '700', marginTop: 6, marginBottom: 4 },
     h6: { ...base, color: muted, fontWeight: '700', marginTop: 6, marginBottom: 4 },

@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/agent-message-block.tsx
+msgid "… {hiddenCount} more lines"
+msgstr "… 还有 {hiddenCount} 行"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "… open for the full change"
+msgstr "… 展开查看完整改动"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…已截断"
@@ -240,6 +248,10 @@ msgstr "新增"
 msgid "AGENT"
 msgstr "代理"
 
+#: src/components/agent-workbench.tsx
+msgid "Agent actions are auto-approved; dangerous commands stay blocked."
+msgstr "智能体操作将自动批准；危险命令仍然会被拦截"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -438,7 +450,7 @@ msgstr "助手已启动"
 msgid "Attach a file"
 msgstr "附加文件"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Attachment"
 msgstr "附件"
 
@@ -465,6 +477,18 @@ msgstr "验证失败。请重试"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "目前无法验证。请重试，或检查系统设置"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approve every agent action without prompts"
+msgstr "自动批准智能体的每个操作，不再弹窗询问"
+
+#: src/components/agent-workbench.tsx
+msgid "auto-approving actions"
+msgstr "正在自动批准操作"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approving agent actions"
+msgstr "正在自动批准智能体操作"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
@@ -517,6 +541,10 @@ msgstr "生物识别"
 msgid "Blocked"
 msgstr "等待回应"
 
+#: src/components/agent-workbench.tsx
+msgid "Blocked by agent safety"
+msgstr "已被智能体安全机制拦截"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "分支和主题文件来自该链接。分支之后可能会变"
@@ -562,6 +590,7 @@ msgstr "相机访问已关闭。请在“设置”中开启后再拍照"
 msgid "Camera access needed"
 msgstr "需要相机访问权限"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -585,7 +614,7 @@ msgstr "取消连接到 {0}"
 msgid "Cancel editing {0}"
 msgstr "取消编辑 {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "取消排队消息"
 
@@ -828,6 +857,10 @@ msgstr "折叠思考过程"
 #: src/components/agent-todo-block.tsx
 msgid "Collapse tasks"
 msgstr "折叠任务"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Collapse tool call"
+msgstr "折叠工具调用"
 
 #: src/components/settings-appearance.tsx
 msgid "Color mode"
@@ -1083,7 +1116,7 @@ msgstr "Ctrl Z 键，挂起"
 msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
 msgstr "对话式编程辅助、通用编程建议及开放式工作区问答"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Copied"
 msgstr "已复制"
 
@@ -1105,10 +1138,6 @@ msgstr "复制命令，可直接粘贴到终端"
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "复制"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Copy command and output"
-msgstr "复制命令和输出"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -1506,7 +1535,7 @@ msgstr "每台设备各自持有 {0} 的令牌"
 msgid "Edit {0}"
 msgstr "编辑 {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Edit queued message"
 msgstr "编辑排队消息"
 
@@ -1521,6 +1550,10 @@ msgstr "编辑 SSH 主机"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "编辑这台服务器"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Enable YOLO"
+msgstr "开启 YOLO"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1580,6 +1613,10 @@ msgstr "展开思考与推理过程"
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
 msgstr "展开任务"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Expand tool call"
+msgstr "展开工具调用"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2071,6 +2108,14 @@ msgstr "只列出正在运行可识别代理的面板"
 msgid "Live Activity"
 msgstr "实时活动"
 
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages"
+msgstr "加载更早的消息"
+
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages ({windowStart})"
+msgstr "加载更早的消息（{windowStart}）"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2166,7 +2211,7 @@ msgstr "吉祥物"
 msgid "Mention {0}"
 msgstr "提及 {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "消息已复制到剪贴板"
 
@@ -2869,7 +2914,7 @@ msgstr "排队"
 msgid "Queue message for agent"
 msgstr "为智能体加入排队消息"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Queued"
 msgstr "排队中"
 
@@ -3268,6 +3313,10 @@ msgstr "扫描运行在你自己电脑上的 Gateway 的二维码。没有账号
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "扫描需要相机，而这个浏览器没有提供"
+
+#: src/components/agent-workbench.tsx
+msgid "Scroll to latest message"
+msgstr "滚动到最新消息"
 
 #: src/i18n/labels.ts
 msgid "Search"
@@ -3738,6 +3787,10 @@ msgstr "仍在运行…"
 #: src/components/agent-composer.tsx
 msgid "Stop"
 msgstr "停止"
+
+#: src/app/agent.tsx
+msgid "Stop agent"
+msgstr "停止智能体"
 
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
@@ -4230,8 +4283,8 @@ msgid "Thought"
 msgstr "思考过程"
 
 #: src/components/agent-reasoning-block.tsx
-msgid "Thought for {durationStr}"
-msgstr "思考用时 {durationStr}"
+msgid "Thought · {durationStr}"
+msgstr "思考 · {durationStr}"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
@@ -4327,6 +4380,10 @@ msgstr "未知"
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "未知"
+
+#: src/components/agent-workbench.tsx
+msgid "Unknown command"
+msgstr "未知命令"
 
 #: src/i18n/labels.ts
 msgid "Unknown date"
@@ -4550,6 +4607,22 @@ msgstr "复制这一行"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "昨天"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO lets the agent act without asking each time. Irreversibly destructive commands (system paths, block devices, remote scripts) are still blocked."
+msgstr "YOLO 模式让智能体无需每次询问即可行动；不可逆的破坏性命令（系统路径、块设备、远程脚本）仍会被拦截"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO Mode"
+msgstr "YOLO 模式"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on"
+msgstr "YOLO 模式已开启"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on — tap to turn off"
+msgstr "YOLO 模式已开启 — 点击关闭"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx

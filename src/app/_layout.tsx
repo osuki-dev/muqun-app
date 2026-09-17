@@ -250,6 +250,15 @@ function RootContent() {
               ) : (
                 <RouteScene
                   modal={options.presentation === 'fullScreenModal'}
+                  sceneType={
+                    options.presentation === 'fullScreenModal'
+                      ? 'modal'
+                      : route.name === 'agent'
+                        ? 'agent'
+                        : route.name.startsWith('servers') || route.name.startsWith('ssh')
+                          ? 'terminal'
+                          : 'plain'
+                  }
                   animated={route.name !== 'index'}>
                   {sheetRoutePresentations[route.name] === 'fullscreen' ? (
                     <FullscreenSheetFrame
@@ -264,7 +273,7 @@ function RootContent() {
             }
             screenOptions={{
               headerShown: false,
-              animation: 'slide_from_right',
+              animation: 'fade',
               animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               contentStyle: { backgroundColor: screenBackground },
               // A screen nobody is looking at should not be rendering. Home
@@ -286,14 +295,14 @@ function RootContent() {
             <Stack.Screen
               name="agent"
               options={{
-                animation: 'slide_from_right',
+                animation: 'fade',
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               }}
             />
             <Stack.Screen
               name="settings"
               options={{
-                animation: 'slide_from_right',
+                animation: 'fade',
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               }}
             />
@@ -306,14 +315,14 @@ function RootContent() {
               name="servers/[serverId]"
               options={{
                 gestureEnabled: false,
-                animation: 'slide_from_right',
+                animation: 'fade',
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               }}
             />
             <Stack.Screen
               name="ssh"
               options={{
-                animation: 'slide_from_right',
+                animation: 'fade',
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               }}
             />
@@ -321,7 +330,7 @@ function RootContent() {
               name="ssh/[hostId]"
               options={{
                 gestureEnabled: false,
-                animation: 'slide_from_right',
+                animation: 'fade',
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               }}
             />

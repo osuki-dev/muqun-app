@@ -1,21 +1,28 @@
-import { useState, memo, useMemo } from 'react';
+import { createElement, useEffect, memo, useMemo, useState, type ComponentType } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
-  Terminal,
+  AlertCircle,
+  Braces,
   ChevronDown,
   ChevronRight,
-  Copy,
-  Check,
-  AlertCircle,
+  FileDiff,
+  FilePen,
+  FilePlus,
+  FileText,
+  GitFork,
+  Globe,
   Loader2,
+  Search,
+  Sparkles,
+  Terminal,
+  Wrench,
 } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { PressableScale } from '@/components/pressable-scale';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
+import { keyedLines } from '@/lib/line-keys';
 
 export interface EmbeddedTerminalProps {
   toolId: string;
@@ -97,6 +104,118 @@ function parseToolOutput(raw: unknown): ParsedToolOutput {
   return { stdout: String(data) };
 }
 
+/** The tool families OpenCode ships, plus a bucket for MCP additions. */
+type ToolKind =
+  | 'shell'
+  | 'read'
+  | 'edit'
+  | 'write'
+  | 'patch'
+  | 'search'
+  | 'web'
+  | 'subagent'
+  | 'skill'
+  | 'code'
+  | 'mcp';
+
+function classifyTool(name: string): ToolKind {
+  const n = name.toLowerCase();
+  if (n === 'shell' || n === 'bash' || n === 'terminal' || n === 'run') return 'shell';
+  if (n === 'read' || n === 'list') return 'read';
+  if (n === 'edit' || n === 'multiedit' || n === 'str_replace' || n === 'str_replace_editor') {
+    return 'edit';
+  }
+  if (n === 'write' || n === 'create' || n === 'new_file') return 'write';
+  if (n === 'patch' || n === 'apply_patch') return 'patch';
+  if (n === 'grep' || n === 'glob' || n === 'search' || n === 'find') return 'search';
+  if (n === 'webfetch' || n === 'fetch' || n === 'websearch' || n === 'web_search') return 'web';
+  if (n === 'subagent' || n === 'task' || n === 'spawn' || n === 'agent') return 'subagent';
+  if (n === 'skill' || n === 'load_skill') return 'skill';
+  if (n === 'execute' || n === 'code') return 'code';
+  return 'mcp';
+}
+
+function asRecord(input: unknown): Record<string, unknown> | null {
+  return input && typeof input === 'object' && !Array.isArray(input)
+    ? (input as Record<string, unknown>)
+    : null;
+}
+
+function pickString(rec: Record<string, unknown>, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = rec[key];
+    if (typeof value === 'string' && value.length > 0) return value;
+  }
+  return undefined;
+}
+
+/** The one-line target a tool is pointed at: the path, the pattern, the URL… */
+function extractTarget(kind: ToolKind, input: unknown): string {
+  const rec = asRecord(input);
+  if (!rec) return typeof input === 'string' ? input : '';
+  switch (kind) {
+    case 'shell':
+      return pickString(rec, ['command', 'cmd']) ?? '';
+    case 'read':
+      return pickString(rec, ['path', 'filePath', 'file_path', 'file']) ?? '';
+    case 'edit':
+    case 'write':
+      return pickString(rec, ['path', 'filePath', 'file_path', 'file']) ?? '';
+    case 'patch':
+      // `*** Add File: path` / `*** Update File: path` / `*** Delete File: path`
+      return (
+        pickString(rec, ['patchText', 'patch_text', 'patch'])?.match(
+          /\*\*\* [A-Za-z]+ File: (.+)/
+        )?.[1] ??
+        pickString(rec, ['patchText', 'patch_text', 'patch'])
+          ?.split('\n')
+          .find((line) => line.startsWith('*** '))
+          ?.replace(/^\*\*\* [A-Za-z]+ File: /, '') ??
+        ''
+      );
+    case 'search':
+      return pickString(rec, ['pattern', 'query', 'literal']) ?? '';
+    case 'web':
+      return pickString(rec, ['url', 'query']) ?? '';
+    case 'subagent':
+      return (
+        pickString(rec, ['description', 'agentID', 'agent_id', 'subagent', 'agent']) ??
+        pickString(rec, ['prompt'])?.split('\n')[0] ??
+        ''
+      );
+    case 'skill':
+      return pickString(rec, ['skillID', 'skill_id', 'skillId', 'skill', 'id']) ?? '';
+    default:
+      return (
+        pickString(rec, ['command', 'cmd', 'path', 'filePath', 'query', 'url', 'pattern']) ??
+        (typeof input === 'string' ? input : '')
+      );
+  }
+}
+
+/** Static icon per tool family — component references resolve to fixed imports. */
+const TOOL_ICONS: Record<ToolKind, ComponentType<{ size?: number; color?: string }>> = {
+  shell: Terminal,
+  read: FileText,
+  edit: FilePen,
+  write: FilePlus,
+  patch: FileDiff,
+  search: Search,
+  web: Globe,
+  subagent: GitFork,
+  skill: Sparkles,
+  code: Braces,
+  mcp: Wrench,
+};
+
+const MINI_DIFF_MAX_LINES = 6;
+
+/**
+ * One tool call, as OpenCode's own output shows it: a single quiet line naming
+ * the tool and its target, with the part that matters for that tool — an edit
+ * shows its before/after, a write its content, a patch its text — and the bare
+ * command/output behind an animated expand. No card, no background, no chrome.
+ */
 export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock({
   toolName,
   command,
@@ -107,52 +226,30 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 }: EmbeddedTerminalProps) {
   const theme = useThemeTokens();
   const { t } = useLingui();
-  const surfaceBackground = useSurfaceBackground();
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const [copied, setCopied] = useState(false);
 
-  const isMcpTool = useMemo(() => {
-    const lower = toolName.toLowerCase();
-    return (
-      lower.includes('_') ||
-      lower.startsWith('mcp') ||
-      lower.includes('chrome') ||
-      lower.includes('playwright') ||
-      lower.includes('gitea')
-    );
-  }, [toolName]);
+  const kind = useMemo(() => classifyTool(toolName), [toolName]);
 
-  // Extract display command or file path
+  const rec = asRecord(input);
   const displayCommand = useMemo(() => {
     if (command) return command;
-    if (typeof input === 'string') return input;
-    if (input && typeof input === 'object') {
-      const rec = input as Record<string, unknown>;
-      if (typeof rec.command === 'string') return rec.command;
-      if (typeof rec.cmd === 'string') return rec.cmd;
-      if (typeof rec.path === 'string') return rec.path;
-      if (typeof rec.filePath === 'string') return rec.filePath;
-      if (typeof rec.file === 'string') return rec.file;
-      if (typeof rec.query === 'string') return rec.query;
-      return JSON.stringify(input, null, 2);
-    }
-    return '';
-  }, [command, input]);
+    return extractTarget(kind, input);
+  }, [command, kind, input]);
+
+  const oldString = rec ? pickString(rec, ['oldString', 'old_string']) : undefined;
+  const newString = rec ? pickString(rec, ['newString', 'new_string']) : undefined;
+  const content = rec ? pickString(rec, ['content']) : undefined;
+  const patchText = rec ? pickString(rec, ['patchText', 'patch_text', 'patch']) : undefined;
+
+  const oldKeyed = useMemo(() => (oldString ? keyedLines(oldString) : []), [oldString]);
+  const newKeyed = useMemo(() => (newString ? keyedLines(newString) : []), [newString]);
+  const contentKeyed = useMemo(() => (content ? keyedLines(content) : []), [content]);
+  const patchKeyed = useMemo(() => (patchText ? keyedLines(patchText) : []), [patchText]);
 
   // Extract output text and unwrap structured JSON wrappers
-  const parsedOutput = useMemo(() => {
-    return parseToolOutput(output);
-  }, [output]);
-
+  const parsedOutput = useMemo(() => parseToolOutput(output), [output]);
   const outputText = parsedOutput.stdout;
   const exitCode = parsedOutput.exitCode;
-
-  const handleCopy = async () => {
-    const textToCopy = displayCommand + (outputText ? `\n\n${outputText}` : '');
-    await Clipboard.setStringAsync(textToCopy);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const statusColor =
     status === 'completed'
@@ -160,102 +257,198 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       : status === 'failed'
         ? theme.colors.danger
         : theme.colors.warning;
+  const addedColor = theme.colors.success ?? '#22c55e';
+  const removedColor = theme.colors.danger;
+
+  const chevronProgress = useSharedValue(expanded ? 1 : 0);
+  useEffect(() => {
+    chevronProgress.value = withTiming(expanded ? 1 : 0, timing());
+  }, [expanded, chevronProgress]);
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
+    opacity: 1,
+  }));
+
+  const hasBody =
+    Boolean(outputText) ||
+    oldKeyed.length > 0 ||
+    Boolean(content) ||
+    Boolean(patchText) ||
+    status === 'running';
 
   return (
-    <Animated.View
-      layout={listLayout()}
-      style={[
-        styles.container,
-        {
-          backgroundColor: surfaceBackground(theme.colors.surface),
-          borderColor: theme.colors.border,
-        },
-      ]}>
-      {/* Header bar: minimal, softened, no long command dump */}
+    <Animated.View layout={listLayout()} style={styles.container}>
+      {/* Header: one quiet line — tool, target, outcome */}
       <PressableScale
+        testID="agent-tool-toggle"
+        accessibilityRole="button"
+        accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
         onPress={() => setExpanded((prev) => !prev)}
-        style={[
-          styles.header,
-          { borderBottomColor: expanded ? theme.colors.border : 'transparent' },
-        ]}>
+        style={styles.header}>
         <View style={styles.headerLeft}>
-          <Terminal size={13} color={theme.colors.textMuted} style={styles.terminalIcon} />
-          <Text variant="caption" weight="medium" color={theme.colors.text} style={styles.toolBadge}>
+          {createElement(TOOL_ICONS[kind], { size: 12, color: theme.colors.textMuted })}
+          <Text
+            variant="caption"
+            weight="medium"
+            color={theme.colors.textMuted}
+            style={styles.toolBadge}>
             {toolName}
           </Text>
-          {isMcpTool ? (
-            <View style={[styles.mcpBadge, { backgroundColor: `${theme.colors.primary}18` }]}>
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={theme.colors.primary}
-                style={styles.mcpBadgeText}>
-                MCP
-              </Text>
-            </View>
+          {displayCommand ? (
+            <Text
+              variant="caption"
+              numberOfLines={1}
+              color={theme.colors.textSubtle}
+              style={styles.commandPreview}>
+              {displayCommand}
+            </Text>
+          ) : null}
+          {content ? (
+            <Text variant="caption" color={theme.colors.textSubtle} style={styles.exitCodeText}>
+              {`+${content.split('\n').length} lines`}
+            </Text>
           ) : null}
           {status === 'running' ? (
             <Loader2 size={11} color={statusColor} />
           ) : status === 'failed' ? (
             <AlertCircle size={11} color={statusColor} />
           ) : null}
-        </View>
-
-        <View style={styles.headerRight}>
           {exitCode !== undefined ? (
-            <View
-              style={[
-                styles.exitCodeBadge,
-                {
-                  backgroundColor:
-                    exitCode === 0
-                      ? `${theme.colors.success ?? '#22c55e'}18`
-                      : `${theme.colors.danger}18`,
-                },
-              ]}>
-              <Text
-                variant="caption"
-                weight="bold"
-                color={exitCode === 0 ? (theme.colors.success ?? '#22c55e') : theme.colors.danger}
-                style={styles.exitCodeText}>
-                {`exit ${exitCode}`}
-              </Text>
-            </View>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={exitCode === 0 ? addedColor : removedColor}
+              style={styles.exitCodeText}>
+              {`exit ${exitCode}`}
+            </Text>
           ) : null}
-
-          {expanded ? (
-            <PressableScale
-              onPress={handleCopy}
-              accessibilityLabel={t`Copy command and output`}
-              style={styles.actionButton}>
-              {copied ? (
-                <Check size={13} color={theme.colors.success} />
-              ) : (
-                <Copy size={13} color={theme.colors.textMuted} />
-              )}
-            </PressableScale>
-          ) : null}
-
-          <View style={styles.chevronBox}>
-            {expanded ? (
-              <ChevronDown size={13} color={theme.colors.textMuted} />
-            ) : (
-              <ChevronRight size={13} color={theme.colors.textMuted} />
-            )}
-          </View>
         </View>
+        {hasBody ? (
+          <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
+            {expanded ? (
+              <ChevronDown size={12} color={theme.colors.textMuted} />
+            ) : (
+              <ChevronRight size={12} color={theme.colors.textMuted} />
+            )}
+          </Animated.View>
+        ) : null}
       </PressableScale>
 
-      {/* Terminal Body */}
-      {expanded ? (
-        <Animated.View entering={fadeIn()} exiting={fadeOut()} style={styles.terminalWindow}>
-          {displayCommand ? (
-            <View style={[styles.commandLineRow, { backgroundColor: `${theme.colors.surface}80` }]}>
-              <Text style={[styles.promptPrefix, { color: theme.colors.primary }]}>$ </Text>
-              <Text selectable style={[styles.codeText, { color: theme.colors.text }]}>
-                {displayCommand}
+      {/* An edit's before/after is the content — short enough to show in place */}
+      {kind === 'edit' && (oldKeyed.length > 0 || newKeyed.length > 0) ? (
+        <View style={styles.miniDiff}>
+          {oldKeyed.slice(0, MINI_DIFF_MAX_LINES).map(({ line, key }) => (
+            <View key={key} style={styles.diffLineRow}>
+              <Text selectable style={[styles.codeText, { color: removedColor }]}>
+                - {line || ' '}
               </Text>
             </View>
+          ))}
+          {newKeyed.slice(0, MINI_DIFF_MAX_LINES).map(({ line, key }) => (
+            <View key={key} style={styles.diffLineRow}>
+              <Text selectable style={[styles.codeText, { color: theme.colors.text }]}>
+                <Text style={{ color: addedColor }}>+ </Text>
+                {line || ' '}
+              </Text>
+            </View>
+          ))}
+          {oldKeyed.length > MINI_DIFF_MAX_LINES || newKeyed.length > MINI_DIFF_MAX_LINES ? (
+            <Text variant="caption" color={theme.colors.textSubtle} style={styles.runningText}>
+              <Trans>… open for the full change</Trans>
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
+      {expanded ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOut('micro')}
+          style={[styles.terminalWindow, { borderLeftColor: theme.colors.border }]}>
+          {/* The rest of the edit, beyond the in-place preview */}
+          {kind === 'edit' && oldKeyed.length > MINI_DIFF_MAX_LINES
+            ? oldKeyed.slice(MINI_DIFF_MAX_LINES).map(({ line, key }) => (
+                <View key={key} style={styles.diffLineRow}>
+                  <Text selectable style={[styles.codeText, { color: removedColor }]}>
+                    - {line || ' '}
+                  </Text>
+                </View>
+              ))
+            : null}
+          {kind === 'edit' && newKeyed.length > MINI_DIFF_MAX_LINES
+            ? newKeyed.slice(MINI_DIFF_MAX_LINES).map(({ line, key }) => (
+                <View key={key} style={styles.diffLineRow}>
+                  <Text selectable style={[styles.codeText, { color: theme.colors.text }]}>
+                    <Text style={{ color: addedColor }}>+ </Text>
+                    {line || ' '}
+                  </Text>
+                </View>
+              ))
+            : null}
+
+          {/* A write's content is the change itself */}
+          {kind === 'write' && contentKeyed.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.outputScroll}
+              contentContainerStyle={styles.outputContent}>
+              <View>
+                {contentKeyed.map(({ line, key }) => {
+                  const added = line.startsWith('+');
+                  const removed = line.startsWith('-');
+                  return (
+                    <Text
+                      key={key}
+                      selectable
+                      style={[
+                        styles.codeText,
+                        {
+                          color: added ? addedColor : removed ? removedColor : theme.colors.text,
+                        },
+                      ]}>
+                      {line || ' '}
+                    </Text>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          ) : null}
+
+          {/* A patch's text, marker-coloured */}
+          {kind === 'patch' && patchKeyed.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.outputScroll}
+              contentContainerStyle={styles.outputContent}>
+              <View>
+                {patchKeyed.map(({ line, key }) => {
+                  const added = line.startsWith('+');
+                  const removed = line.startsWith('-');
+                  const section = line.startsWith('***');
+                  return (
+                    <Text
+                      key={key}
+                      selectable
+                      style={[
+                        styles.codeText,
+                        {
+                          color: added
+                            ? addedColor
+                            : removed
+                              ? removedColor
+                              : section
+                                ? theme.colors.primary
+                                : theme.colors.textMuted,
+                        },
+                      ]}>
+                      {line || ' '}
+                    </Text>
+                  );
+                })}
+              </View>
+            </ScrollView>
           ) : null}
 
           {outputText ? (
@@ -269,11 +462,9 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               </Text>
             </ScrollView>
           ) : status === 'running' ? (
-            <View style={styles.loadingRow}>
-              <Text variant="caption" color={theme.colors.textMuted} style={styles.runningText}>
-                <Trans>Running command in background…</Trans>
-              </Text>
-            </View>
+            <Text variant="caption" color={theme.colors.textMuted} style={styles.runningText}>
+              <Trans>Running command in background…</Trans>
+            </Text>
           ) : null}
         </Animated.View>
       ) : null}
@@ -283,119 +474,65 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-    marginVertical: 3,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    marginVertical: 2,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingVertical: 2,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
     gap: 6,
-  },
-  statusIconBox: {
-    width: 22,
-    height: 22,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleColumn: {
-    flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  terminalIcon: {
-    marginRight: 2,
+    flexShrink: 1,
+    minWidth: 0,
   },
   toolBadge: {
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  mcpBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 1,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  exitCodeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  exitCodeText: {
-    fontSize: 10.5,
+    fontSize: 11.5,
   },
   commandPreview: {
     fontFamily: 'monospace',
     fontSize: 11,
-    marginTop: 2,
+    flexShrink: 1,
   },
-  headerRight: {
+  exitCodeText: {
+    fontSize: 10.5,
+  },
+  miniDiff: {
+    marginLeft: 12,
+    marginTop: 1,
+    paddingLeft: 8,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+  },
+  diffLineRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  actionButton: {
-    padding: 6,
-  },
-  chevronBox: {
-    padding: 4,
   },
   terminalWindow: {
-    padding: 8,
-    fontFamily: 'monospace',
-  },
-  commandLineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderRadius: 8,
-    borderCurve: 'continuous',
-    padding: 6,
-    marginBottom: 6,
-  },
-  promptPrefix: {
-    fontFamily: 'monospace',
-    fontWeight: '700',
-    fontSize: 12,
-    lineHeight: 16,
+    marginLeft: 12,
+    marginTop: 2,
+    marginBottom: 2,
+    paddingLeft: 8,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    gap: 4,
   },
   outputScroll: {
-    maxHeight: 260,
+    maxWidth: '100%',
   },
   outputContent: {
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   codeText: {
     fontFamily: 'monospace',
     fontSize: 11.5,
     lineHeight: 16,
   },
-  loadingRow: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
   runningText: {
     fontStyle: 'italic',
     fontSize: 11,
-  },
-  mcpBadgeText: {
-    fontSize: 9,
-    letterSpacing: 0.5,
   },
 });

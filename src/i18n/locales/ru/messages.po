@@ -13,6 +13,14 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#: src/components/agent-message-block.tsx
+msgid "… {hiddenCount} more lines"
+msgstr "… ещё {hiddenCount} строк"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "… open for the full change"
+msgstr "… откройте, чтобы увидеть полное изменение"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… обрезано"
@@ -240,6 +248,10 @@ msgstr "Добавлен"
 msgid "AGENT"
 msgstr "АГЕНТ"
 
+#: src/components/agent-workbench.tsx
+msgid "Agent actions are auto-approved; dangerous commands stay blocked."
+msgstr "Действия агента одобряются автоматически; опасные команды по-прежнему блокируются"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -438,7 +450,7 @@ msgstr "Ассистент запущен"
 msgid "Attach a file"
 msgstr "Прикрепить файл"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Attachment"
 msgstr "Вложение"
 
@@ -465,6 +477,18 @@ msgstr "Проверка не пройдена. Попробуйте ещё ра
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Проверка недоступна. Попробуйте ещё раз или проверьте системные настройки"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approve every agent action without prompts"
+msgstr "Автоматически одобрять каждое действие агента без запроса"
+
+#: src/components/agent-workbench.tsx
+msgid "auto-approving actions"
+msgstr "действия одобряются автоматически"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approving agent actions"
+msgstr "Действия агента одобряются автоматически"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
@@ -517,6 +541,10 @@ msgstr "биометрия"
 msgid "Blocked"
 msgstr "Ждёт ответа"
 
+#: src/components/agent-workbench.tsx
+msgid "Blocked by agent safety"
+msgstr "Заблокировано защитой агента"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "Ветка и файл темы взяты из ссылки. Ветка может измениться позже"
@@ -562,6 +590,7 @@ msgstr "Доступ к камере выключен. Включите его �
 msgid "Camera access needed"
 msgstr "Нужен доступ к камере"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -585,7 +614,7 @@ msgstr "Отменить подключение к {0}"
 msgid "Cancel editing {0}"
 msgstr "Отменить правку {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Cancel queued message"
 msgstr "Отменить сообщение в очереди"
 
@@ -828,6 +857,10 @@ msgstr "Свернуть рассуждения"
 #: src/components/agent-todo-block.tsx
 msgid "Collapse tasks"
 msgstr "Свернуть задачи"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Collapse tool call"
+msgstr "Свернуть вызов инструмента"
 
 #: src/components/settings-appearance.tsx
 msgid "Color mode"
@@ -1083,7 +1116,7 @@ msgstr "Ctrl Z, приостановить"
 msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
 msgstr "Диалоговая помощь по коду, общие советы по программированию и ответы на вопросы"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Copied"
 msgstr "Скопировано"
 
@@ -1105,10 +1138,6 @@ msgstr "Копирует её, чтобы вставить в терминал"
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Копировать"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Copy command and output"
-msgstr "Копировать команду и вывод"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -1506,7 +1535,7 @@ msgstr "У каждого устройства свой токен для {0}"
 msgid "Edit {0}"
 msgstr "Изменить {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Edit queued message"
 msgstr "Редактировать сообщение в очереди"
 
@@ -1521,6 +1550,10 @@ msgstr "Изменить SSH-хост"
 #: src/components/settings-servers.tsx
 msgid "Edit this server"
 msgstr "Изменить этот сервер"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Enable YOLO"
+msgstr "Включить YOLO"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -1580,6 +1613,10 @@ msgstr "Развернуть цепочку размышлений"
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
 msgstr "Развернуть задачи"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Expand tool call"
+msgstr "Развернуть вызов инструмента"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -2071,6 +2108,14 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages"
+msgstr "Загрузить более ранние сообщения"
+
+#: src/components/agent-workbench.tsx
+msgid "Load earlier messages ({windowStart})"
+msgstr "Загрузить более ранние сообщения ({windowStart})"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2166,7 +2211,7 @@ msgstr "Талисман"
 msgid "Mention {0}"
 msgstr "Упомянуть {0}"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
 msgstr "Сообщение скопировано в буфер обмена"
 
@@ -2869,7 +2914,7 @@ msgstr "Очередь"
 msgid "Queue message for agent"
 msgstr "Поставить сообщение в очередь для агента"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-message-block.tsx
 msgid "Queued"
 msgstr "В очереди"
 
@@ -3268,6 +3313,10 @@ msgstr "Отсканируйте QR-код Gateway, запущенного на 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "Для сканирования нужна камера, а этот браузер её не даёт"
+
+#: src/components/agent-workbench.tsx
+msgid "Scroll to latest message"
+msgstr "Перейти к последнему сообщению"
 
 #: src/i18n/labels.ts
 msgid "Search"
@@ -3738,6 +3787,10 @@ msgstr "Всё ещё выполняется…"
 #: src/components/agent-composer.tsx
 msgid "Stop"
 msgstr "Остановить"
+
+#: src/app/agent.tsx
+msgid "Stop agent"
+msgstr "Остановить агента"
 
 #: src/components/agent-composer.tsx
 msgid "Stop agent execution"
@@ -4230,8 +4283,8 @@ msgid "Thought"
 msgstr "Ход мыслей"
 
 #: src/components/agent-reasoning-block.tsx
-msgid "Thought for {durationStr}"
-msgstr "Думал {durationStr}"
+msgid "Thought · {durationStr}"
+msgstr "Размышление · {durationStr}"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
@@ -4327,6 +4380,10 @@ msgstr "неизвестно"
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "Неизвестно"
+
+#: src/components/agent-workbench.tsx
+msgid "Unknown command"
+msgstr "Неизвестная команда"
 
 #: src/i18n/labels.ts
 msgid "Unknown date"
@@ -4550,6 +4607,22 @@ msgstr "Скопировать эту строку"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Вчера"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO lets the agent act without asking each time. Irreversibly destructive commands (system paths, block devices, remote scripts) are still blocked."
+msgstr "YOLO позволяет агенту действовать без запроса. Необратимо разрушительные команды (системные пути, блочные устройства, удалённые скрипты) по-прежнему блокируются"
+
+#: src/components/agent-context-sheet.tsx
+msgid "YOLO Mode"
+msgstr "Режим YOLO"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on"
+msgstr "Режим YOLO включён"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode on — tap to turn off"
+msgstr "Режим YOLO включён — нажмите, чтобы выключить"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx

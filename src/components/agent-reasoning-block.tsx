@@ -1,10 +1,10 @@
-import { useState, memo } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Sparkles, ChevronDown, ChevronRight } from 'lucide-react-native';
-import Animated from 'react-native-reanimated';
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { Sparkles, ChevronDown } from 'lucide-react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { withAlpha } from '@/lib/color';
 
 export interface AgentReasoningBlockProps {
@@ -22,6 +22,14 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   const theme = useThemeTokens();
   const [expanded, setExpanded] = useState(defaultExpanded);
 
+  const chevronProgress = useSharedValue(expanded ? 1 : 0);
+  useEffect(() => {
+    chevronProgress.value = withTiming(expanded ? 1 : 0, timing('micro'));
+  }, [expanded, chevronProgress]);
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
+  }));
+
   const durationStr = durationMs ? `${(durationMs / 1000).toFixed(1)}s` : null;
 
   return (
@@ -38,13 +46,11 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
         ]}>
         <Sparkles size={12} color={theme.colors.primary} />
         <Text variant="caption" weight="medium" color={theme.colors.primary} style={styles.title}>
-          {durationStr ? t`Thought for ${durationStr}` : t`Thought`}
+          {durationStr ? t`Thought · ${durationStr}` : t`Thought`}
         </Text>
-        {expanded ? (
+        <Animated.View style={chevronStyle}>
           <ChevronDown size={12} color={theme.colors.primary} style={styles.chevron} />
-        ) : (
-          <ChevronRight size={12} color={theme.colors.primary} style={styles.chevron} />
-        )}
+        </Animated.View>
       </Pressable>
 
       {expanded ? (
@@ -100,4 +106,3 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 });
-

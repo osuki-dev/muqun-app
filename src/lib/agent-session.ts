@@ -1,6 +1,11 @@
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
-import { gatewayAuthHeaders, gatewayFetch, gatewayUrl, isGatewayConfigured } from './gateway-client';
+import {
+  gatewayAuthHeaders,
+  gatewayFetch,
+  gatewayUrl,
+  isGatewayConfigured,
+} from './gateway-client';
 import { ServerSentEventParser } from './sse-stream';
 import type { FileMentionHit } from './file-mentions';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
@@ -232,6 +237,19 @@ export interface ModelInfo {
   cost?: unknown;
 }
 
+/** Whether a catalog model sits on the free tier (opencode provider or "free" naming). */
+export function isFreeModel(model: ModelInfo): boolean {
+  const idLower = (model.id || '').toLowerCase();
+  const nameLower = (model.name || '').toLowerCase();
+  const provLower = (model.provider_id || '').toLowerCase();
+  return (
+    idLower.includes('free') ||
+    nameLower.includes('free') ||
+    provLower === 'opencode' ||
+    provLower.includes('free')
+  );
+}
+
 export interface AgentInfo {
   id: string;
   name: string;
@@ -377,7 +395,12 @@ export async function getAgentTimelineDelta(
             latest_seq: number;
           };
         }
-      | { items?: TimelineItem[]; status?: AgentSessionStatus; resync?: boolean; latest_seq: number };
+      | {
+          items?: TimelineItem[];
+          status?: AgentSessionStatus;
+          resync?: boolean;
+          latest_seq: number;
+        };
     const payload = 'data' in json && json.data ? json.data : json;
     return payload as {
       items?: TimelineItem[];
@@ -791,4 +814,3 @@ export function openAgentSessionStream(options: {
     controller.abort();
   };
 }
-
