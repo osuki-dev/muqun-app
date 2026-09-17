@@ -21,6 +21,7 @@ import {
   touchCacheEntryTimestamp,
 } from './agent-cache';
 import {
+  asRecord,
   EMPTY_CATALOG,
   parseAgentCatalog,
   parseAgentContextUsage,
@@ -694,19 +695,30 @@ export async function getAgentTimelineDelta(
   asid: string,
   afterSeq: number
 ): Promise<AgentTimelineDelta> {
-  return readJson(
-    `${sessionRoute(asid, '/timeline', sessionId, true)}?after=${afterSeq}`,
-    (value) => {
-      const rec = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-      return {
-        items: sortTimeline(parseTimelineItems(rec.items)),
-        ...(typeof rec.status === 'string' ? { status: parseRunStatus(rec.status) } : {}),
-        resync: rec.resync === true,
-        latest_seq: typeof rec.latest_seq === 'number' ? rec.latest_seq : afterSeq,
-      };
-    },
-    { items: [], resync: false, latest_seq: afterSeq }
-  );
+  const empty: AgentTimelineDelta = { items: [], resync: false, latest_seq: afterSeq };
+  try {
+    if (!isGatewayConfigured()) return empty;
+    const res = await gatewayFetch(
+      gatewayUrl(`${sessionRoute(asid, '/timeline', sessionId, true)}?after=${afterSeq}`),
+      { method: 'GET', headers: gatewayAuthHeaders() }
+    );
+    // `410 resync_required`: the point asked for has fallen out of the ring
+    // buffer, so there is no delta to be had and the snapshot is the only
+    // honest answer. This has to be read off the status -- the generic read
+    // helper turns every refusal into the empty delta, which would have been
+    // indistinguishable from "nothing happened".
+    if (res.status === 410) return { items: [], resync: true, latest_seq: afterSeq };
+    if (!res.ok) return empty;
+    const rec = asRecord(envelopeData(await res.json())) ?? {};
+    return {
+      items: sortTimeline(parseTimelineItems(rec.items)),
+      ...(typeof rec.status === 'string' ? { status: parseRunStatus(rec.status) } : {}),
+      resync: rec.resync === true,
+      latest_seq: typeof rec.latest_seq === 'number' ? rec.latest_seq : afterSeq,
+    };
+  } catch {
+    return empty;
+  }
 }
 
 /**

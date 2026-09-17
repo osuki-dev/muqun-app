@@ -47,6 +47,7 @@ import {
   getAgentCatalog,
   getAgentProjects,
   openAgentSessionStream,
+  getAgentTimelineDelta,
   backgroundAgentSession,
   compactAgentSession,
   getAgentContext,
@@ -90,6 +91,7 @@ import {
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
 import { useAgentSessionState } from '@/stores/agent-session-state';
+import { useAppActive } from '@/hooks/use-app-active';
 import type { SessionAsset } from '@/lib/session-assets';
 import {
   EMPTY_TODOS,
@@ -199,6 +201,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     windowStartRef.current = windowStart;
   }, [windowStart]);
+  /**
+   * The session on screen, for the answers that arrive later.
+   *
+   * A catch-up request started for one session can land after the reader has
+   * switched to another; the answer is then about a transcript that is no
+   * longer on screen, and applying it would splice one session's rows into
+   * another's.
+   */
+  const activeAsidRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    activeAsidRef.current = activeAsid;
+  }, [activeAsid]);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   const [forms, setForms] = useState<FormRequest[]>([]);
   // What is waiting behind the current turn, as the gateway last stated it.
@@ -712,6 +726,59 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [loadSnapshot, refreshSessions, refreshContext, refreshShells, handleAutoPermission]
   );
 
+  /**
+   * Whatever the stream missed.
+   *
+   * The sequence number was bookkept and never used: `lastSeqRef` was written
+   * on every frame and read by nothing, and the route that exists to fill a gap
+   * had no caller at all. So every event that landed during a reconnect -- the
+   * 400ms-to-5s window after a drop, or the whole time the app was in the
+   * background -- was lost for good, and the transcript silently disagreed with
+   * the engine until the reader left the screen and came back.
+   *
+   * Asked for on every (re)connect and on every return to the foreground. A
+   * `410` means the point asked for has fallen out of the gateway's ring
+   * buffer, and then the snapshot is the only honest answer -- taken silently,
+   * so a reader reading history is not thrown to the bottom by it.
+   */
+  const catchUpRef = useRef<() => void>(() => {});
+  const catchUp = useCallback(() => {
+    const asid = activeAsid;
+    // Nothing to catch up to: a session that has never synced is told to
+    // resync by the gateway anyway, and it has just been snapshotted.
+    if (!asid || lastSeqRef.current <= 0) return;
+    void getAgentTimelineDelta(sessionId, asid, lastSeqRef.current)
+      .then((delta) => {
+        if (asid !== activeAsidRef.current) return;
+        if (delta.resync) {
+          void loadSnapshot('silent');
+          return;
+        }
+        if (delta.items.length > 0) {
+          setTimeline((prev) => upsertTimelineItems(prev, delta.items));
+        }
+        // Bound out of the union rather than asserted: there is no `!` on
+        // anything that came off the wire anywhere in this surface.
+        const nextStatus = delta.status;
+        if (nextStatus) {
+          setSessionInfo((prev) => (prev ? { ...prev, status: nextStatus } : prev));
+        }
+        if (delta.latest_seq > lastSeqRef.current) lastSeqRef.current = delta.latest_seq;
+      })
+      .catch(() => {});
+  }, [sessionId, activeAsid, loadSnapshot]);
+
+  useEffect(() => {
+    catchUpRef.current = catchUp;
+  }, [catchUp]);
+
+  // Returning to the foreground is a reconnect the stream cannot see: the
+  // socket may have been held open by the OS and delivered nothing.
+  const appActive = useAppActive();
+  useEffect(() => {
+    if (appActive) catchUpRef.current();
+  }, [appActive]);
+
   // Real-time SSE stream — the only sync channel. Engine output arrives over
   // it; a dropped connection reconnects with a short backoff instead of being
   // papered over by polling. `lastSeq` intentionally lives in a ref so events
@@ -745,6 +812,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const closeStream = openAgentSessionStream({
         asid: activeAsid,
         sessionId,
+        onConnected: () => {
+          if (!mounted) return;
+          // The gap between the last frame of the old connection and the first
+          // of this one.
+          catchUpRef.current();
+        },
         onEvent: (event) => {
           if (!mounted) return;
           attempts = 0;
