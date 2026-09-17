@@ -113,6 +113,7 @@ import {
 import {
   buildTimelineGroupsCached,
   createTimelineGroupCache,
+  reconcileShellParts,
   type TimelineRenderGroup,
 } from '@/lib/agent-timeline-groups';
 import { AgentPermissionCard } from './agent-permission-card';
@@ -1654,10 +1655,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   // Rendered window over the full timeline: entering a session shows the
   // latest page; earlier pages are prepended on demand.
-  const visibleTimeline = useMemo(
-    () => (windowStart > 0 ? timeline.slice(windowStart) : timeline),
-    [timeline, windowStart]
-  );
+  //
+  // A `shell` part that is the other side of a tool call in the same session
+  // is dropped here rather than drawn a second time, and a detached one takes
+  // its running state from the shell list the tray is drawn from.
+  const visibleTimeline = useMemo(() => {
+    const window = windowStart > 0 ? timeline.slice(windowStart) : timeline;
+    return reconcileShellParts(window, shells);
+  }, [timeline, windowStart, shells]);
 
   // Group the window back into whole messages, the shape OpenCode's own UI
   // renders: reasoning and tool calls fold into the message they belong to.

@@ -456,7 +456,10 @@ export const AgentToolCard = memo(function AgentToolCard({
         </PressableScale>
       );
     }
-    if (part.background && onOpenBackgroundTray) {
+    // Only while it is still running: the tray lists what is running, and a
+    // finished command that says "Background tasks" sends the reader to an
+    // empty sheet.
+    if (part.background && pending && onOpenBackgroundTray) {
       nodes.push(
         <PressableScale
           key="tray"

@@ -5,6 +5,7 @@ import {
   buildTimelineGroups,
   buildTimelineGroupsCached,
   createTimelineGroupCache,
+  reconcileShellParts,
 } from '../agent-timeline-groups';
 
 function item(id: string, messageId: string, extra: Partial<TimelineItem> = {}): TimelineItem {
@@ -144,5 +145,74 @@ describe('buildTimelineGroupsCached', () => {
     const twice = buildTimelineGroupsCached(cache, [item('a', 'msg_1'), item('b', 'msg_1')]);
     expect(twice[0]).not.toBe(once[0]);
     expect(twice[0].items).toHaveLength(2);
+  });
+});
+
+describe('reconcileShellParts', () => {
+  function shellPart(id: string, command: string, status: 'running' | 'exited'): TimelineItem {
+    return {
+      id,
+      message_id: `msg_${id}`,
+      role: 'assistant',
+      ordinal: 0,
+      part: { type: 'shell', shell_id: id, command, status },
+      seq: 1,
+      updated_ms: 1,
+    };
+  }
+
+  function shellCall(id: string, command: string): TimelineItem {
+    return {
+      id,
+      message_id: `msg_${id}`,
+      role: 'assistant',
+      ordinal: 0,
+      part: {
+        type: 'tool',
+        id,
+        name: 'shell',
+        input: { command },
+        content: [],
+        metadata: {},
+        state: 'completed',
+      },
+      seq: 1,
+      updated_ms: 1,
+    };
+  }
+
+  test('a shell part that mirrors a tool call is dropped', () => {
+    const items = [shellCall('call1', 'ls -la'), shellPart('sh1', 'ls -la', 'exited')];
+    const next = reconcileShellParts(items, []);
+    expect(next).toHaveLength(1);
+    expect(next[0].id).toBe('call1');
+  });
+
+  test('a detached shell with no call behind it stays', () => {
+    const items = [shellCall('call1', 'ls -la'), shellPart('sh2', 'sleep 120', 'running')];
+    const next = reconcileShellParts(items, [
+      { id: 'sh2', status: 'running', command: 'sleep 120', metadata: {} },
+    ]);
+    expect(next).toHaveLength(2);
+    expect(next[1].part).toMatchObject({ type: 'shell', status: 'running' });
+  });
+
+  test('a shell the tray no longer lists has finished', () => {
+    const items = [shellPart('sh3', 'sleep 120', 'running')];
+    const next = reconcileShellParts(items, []);
+    expect(next[0].part).toMatchObject({ type: 'shell', status: 'exited' });
+  });
+
+  test('the list is the authority on status', () => {
+    const items = [shellPart('sh4', 'tail -f log', 'exited')];
+    const next = reconcileShellParts(items, [
+      { id: 'sh4', status: 'running', command: 'tail -f log', metadata: {} },
+    ]);
+    expect(next[0].part).toMatchObject({ type: 'shell', status: 'running' });
+  });
+
+  test('a timeline with no shell parts is handed back unchanged', () => {
+    const items = [shellCall('call1', 'ls -la')];
+    expect(reconcileShellParts(items, [])).toBe(items);
   });
 });
