@@ -47,7 +47,12 @@ import {
   getAgentCatalog,
   getAgentProjects,
   openAgentSessionStream,
+  sortTimeline,
+  isBusyStatus,
+  type AgentDomainEvent,
   type AgentSessionInfo,
+  type CompactionReason,
+  type InboxItem,
   type TimelineItem,
   type PermissionRequest,
   type FormRequest,
@@ -149,6 +154,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [windowStart, setWindowStart] = useState(0);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   const [forms, setForms] = useState<FormRequest[]>([]);
+  // What is waiting behind the current turn, as the gateway last stated it.
+  const [inbox, setInbox] = useState<InboxItem[]>([]);
+  // A compaction in flight, which is a pill above the composer rather than a
+  // row: the row lands in the timeline when the boundary is reached.
+  const [compaction, setCompaction] = useState<{
+    status: 'running';
+    reason: CompactionReason;
+  } | null>(null);
   // Highest timeline sequence seen; `after=`-style bookkeeping. A ref, never
   // state: bumping it must not re-run the stream effect or re-render anything.
   const lastSeqRef = useRef<number>(0);
@@ -317,10 +330,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setLoading(true);
     try {
       const snap = await getAgentSessionSnapshot(sessionId, activeAsid);
-      if (snap.info) {
-        setSessionInfo(snap.info);
-        if (snap.info.directory) setActiveDirectory(snap.info.directory);
+      const info = snap.info;
+      if (info) {
+        setSessionInfo(info);
+        if (info.directory) setActiveDirectory(info.directory);
       }
+      setInbox(snap.inbox);
       setTimeline(snap.timeline);
       // Enter every session on its latest page: only the newest slice is
       // rendered at first and older history loads on demand from the top.
@@ -340,10 +355,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
       setForms(snap.forms);
       lastSeqRef.current = snap.seq;
-      if (snap.info?.model) {
-        applySelectedModel(snap.info.model);
+      if (info?.model) {
+        applySelectedModel(info.model);
       }
-      if (snap.info?.agent) setSelectedAgent(snap.info.agent);
+      if (info?.agent) setSelectedAgent(info.agent);
 
       // Check diffs
       try {
@@ -388,126 +403,105 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [sessionId]);
 
   const handleStreamEvent = useCallback(
-    (event: string, data: unknown) => {
-      const payload = data as {
-        items?: TimelineItem[];
-        item?: TimelineItem;
-        ids?: string[];
-        status?: AgentSessionInfo['status'];
-        info?: AgentSessionInfo;
-        update?: AgentSessionInfo;
-        request?: PermissionRequest | FormRequest;
-        request_id?: string;
-        form_id?: string;
-        seq?: number;
-      };
+    (event: AgentDomainEvent) => {
+      // Every frame carries the sequence the gateway is at; a reconnect asks
+      // for whatever landed after it rather than refetching the world.
+      if (event.seq > lastSeqRef.current) lastSeqRef.current = event.seq;
 
-      if (event === 'agent.timeline.upsert') {
-        const items: TimelineItem[] = payload?.items ?? (payload?.item ? [payload.item] : []);
-        if (items.length > 0) {
-          setTimeline((prev) => {
-            const next = [...prev];
-            for (const item of items) {
-              const existingIdx = next.findIndex((it) => it.id === item.id);
-              if (existingIdx >= 0) {
-                next[existingIdx] = item;
-              } else if (item.role === 'user' && item.part.type === 'text') {
-                const userText = item.part.text.trim();
-                const tempIdx = next.findIndex(
-                  (it) =>
-                    (it.id.startsWith('temp_') || it.id.startsWith('usr_')) &&
-                    it.role === 'user' &&
-                    it.part.type === 'text' &&
-                    it.part.text.trim() === userText
-                );
-                if (tempIdx >= 0) {
-                  next[tempIdx] = item;
-                } else {
-                  next.push(item);
-                }
-              } else {
-                next.push(item);
-              }
-            }
-            return next;
-          });
-          if (payload?.seq) {
-            lastSeqRef.current = Math.max(lastSeqRef.current, payload.seq ?? 0);
-          }
+      switch (event.type) {
+        case 'agent.timeline.upsert':
+          setTimeline((prev) => upsertTimelineItems(prev, event.items));
           // Pinning to the latest message while the reader is at the bottom is
           // LegendList's `maintainScrollAtEnd` job (threshold-guarded); a
           // manual scrollToEnd here would start a new animation on every
           // stream tick and fight the reader's own gesture.
-        }
-      } else if (event === 'agent.timeline.removed') {
-        const removedIds = new Set(payload?.ids ?? []);
-        if (removedIds.size > 0) {
+          break;
+
+        case 'agent.timeline.removed': {
+          const removedIds = new Set(event.ids);
           setTimeline((prev) => prev.filter((it) => !removedIds.has(it.id)));
+          break;
         }
-      } else if (event === 'agent.status.changed') {
-        const status = payload?.status;
-        if (status) {
-          setSessionInfo((prev) => (prev ? { ...prev, status } : prev));
-          if (status === 'idle') {
-            // Unmark queued status on timeline items as they are now delivered/executed
+
+        case 'agent.status.changed': {
+          // The status the engine reports is the status shown -- `failed`
+          // keeps its error, `interrupted` says so, and nothing here forces
+          // idle on the way past.
+          setSessionInfo((prev) =>
+            prev
+              ? { ...prev, status: event.status, ...(event.error ? { error: event.error } : {}) }
+              : prev
+          );
+          setSessions((prev) =>
+            prev.map((s) => (s.asid === event.asid ? { ...s, status: event.status } : s))
+          );
+          if (event.status === 'idle') {
+            // Delivered: a queued row is now ordinary history.
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
-            // Refresh sessions list & active session snapshot to obtain the LLM-generated title
-            refreshSessions();
-            if (activeAsid) {
-              void getAgentSessionSnapshot(sessionId, activeAsid)
-                .then((snap) => {
-                  if (snap.info) {
-                    setSessionInfo(snap.info);
-                    setSessions((prev) =>
-                      prev.map((s) => (s.asid === snap.info.asid ? { ...s, ...snap.info } : s))
-                    );
-                  }
-                })
-                .catch(() => {});
-            }
+            void refreshSessions();
           }
+          break;
         }
-      } else if (event === 'agent.session.updated') {
-        const info = payload?.info ?? payload?.update;
-        if (info) {
-          setSessionInfo((prev) => (prev ? { ...prev, ...info } : info));
-          setSessions((prev) => prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s)));
+
+        case 'agent.session.updated': {
+          const info = event.info;
+          setSessionInfo((prev) =>
+            prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
+          );
+          setSessions((prev) =>
+            prev.some((s) => s.asid === info.asid)
+              ? prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s))
+              : [...prev, info]
+          );
+          break;
         }
-      } else if (event === 'agent.permission.pending') {
-        const req = payload?.request as PermissionRequest | undefined;
-        if (req) {
+
+        case 'agent.permission.pending':
           if (yoloModeRef.current) {
-            void handleAutoPermission(req);
+            handleAutoPermission(event.request);
           } else {
-            setPermissions((prev) => {
-              if (prev.some((p) => p.id === req.id)) return prev;
-              return [...prev, req];
-            });
+            setPermissions((prev) =>
+              prev.some((p) => p.id === event.request.id) ? prev : [...prev, event.request]
+            );
           }
-        }
-      } else if (event === 'agent.permission.resolved') {
-        const reqId = payload?.request_id;
-        if (reqId) {
-          setPermissions((prev) => prev.filter((p) => p.id !== reqId));
-        }
-      } else if (event === 'agent.form.pending') {
-        const form = payload?.request as FormRequest | undefined;
-        if (form) {
-          setForms((prev) => {
-            if (prev.some((f) => f.id === form.id)) return prev;
-            return [...prev, form];
-          });
-        }
-      } else if (event === 'agent.form.resolved') {
-        const formId = payload?.form_id;
-        if (formId) {
-          setForms((prev) => prev.filter((f) => f.id !== formId));
-        }
-      } else if (event === 'agent.resync') {
-        void loadSnapshot();
+          break;
+
+        case 'agent.permission.resolved':
+          setPermissions((prev) => prev.filter((p) => p.id !== event.request_id));
+          break;
+
+        case 'agent.form.pending':
+          setForms((prev) =>
+            prev.some((f) => f.id === event.request.id) ? prev : [...prev, event.request]
+          );
+          break;
+
+        case 'agent.form.resolved':
+          setForms((prev) => prev.filter((f) => f.id !== event.form_id));
+          break;
+
+        case 'agent.inbox.changed':
+          // The whole queue every time, so there is no diff to reconcile.
+          setInbox(event.items);
+          break;
+
+        case 'agent.compaction.changed':
+          setCompaction(
+            event.status === 'completed' || event.status === 'failed'
+              ? null
+              : {
+                  status: event.status === 'started' ? 'running' : event.status,
+                  reason: event.reason,
+                }
+          );
+          break;
+
+        case 'agent.resync':
+          void loadSnapshot();
+          break;
       }
     },
-    [loadSnapshot, activeAsid, sessionId, refreshSessions, handleAutoPermission]
+    [loadSnapshot, refreshSessions, handleAutoPermission]
   );
 
   // Real-time SSE stream — the only sync channel. Engine output arrives over
@@ -524,10 +518,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const closeStream = openAgentSessionStream({
         asid: activeAsid,
         sessionId,
-        onEvent: (event, rawData) => {
+        onEvent: (event) => {
           if (!mounted) return;
           attempts = 0;
-          handleStreamEvent(event, rawData);
+          handleStreamEvent(event);
         },
         onError: () => {
           if (!mounted) return;
@@ -579,7 +573,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (!currentAsid) {
       try {
         const created = await createAgentSession(sessionId, {
-          title: text.slice(0, 30) || t`New Session`,
           agent: selectedAgent,
           model: selectedModel,
           directory: activeDirectory ?? sessionInfo?.directory,
@@ -593,12 +586,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     }
 
-    const isQueued = sessionInfo?.status === 'running' && delivery === 'queue';
+    const isQueued = isBusyStatus(sessionInfo?.status) && delivery === 'queue';
 
     // Optimistically add user text item
     const tempUserItem: TimelineItem = {
       id: `temp_usr_${Date.now()}`,
       message_id: `msg_${Date.now()}`,
+      ordinal: 0,
       seq: lastSeqRef.current + 1,
       updated_ms: Date.now(),
       role: 'user',
@@ -609,27 +603,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setTimeline((prev) => [...prev, tempUserItem]);
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
 
-    // Optimistically update session title if current title is default/untitled
-    const optimisticTitle = text.slice(0, 30);
-    if (
-      !sessionInfo?.title ||
-      sessionInfo.title === t`New Session` ||
-      sessionInfo.title.startsWith('ses_')
-    ) {
-      if (sessionInfo) {
-        setSessionInfo({ ...sessionInfo, title: optimisticTitle, status: 'running' });
-      }
-      setSessions((prev) =>
-        prev.map((s) => (s.asid === currentAsid ? { ...s, title: optimisticTitle } : s))
-      );
-    } else if (sessionInfo) {
-      setSessionInfo({ ...sessionInfo, status: 'running' });
+    // No optimistic title. Auto-titling happens on the engine's first turn and
+    // arrives as `agent.session.updated`; a client-side guess made from the
+    // first thirty characters was only ever replaced a few seconds later, and
+    // it is what put a truncated prompt in the strip instead of a real title.
+    if (sessionInfo) {
+      setSessionInfo({ ...sessionInfo, status: 'busy' });
     }
 
     try {
       await sendAgentPrompt(sessionId, currentAsid, {
         text,
-        model: selectedModel,
         attachments,
         delivery,
       });
@@ -719,7 +703,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
     try {
       const created = await createAgentSession(sessionId, {
-        title: t`New Session`,
         agent: selectedAgent,
         model: selectedModel,
         directory: activeDirectory ?? sessionInfo?.directory,
@@ -778,7 +761,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setActiveDirectory(directory);
       try {
         const created = await createAgentSession(sessionId, {
-          title: project?.name || directory.split('/').filter(Boolean).pop() || t`New Session`,
           agent: selectedAgent,
           model: selectedModel,
           directory,
@@ -896,7 +878,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [showReasoning, markdownStyle, handleEditQueuedItem, handleCancelQueuedItem]
   );
 
-  const isRunning = sessionInfo?.status === 'running';
+  const isRunning = isBusyStatus(sessionInfo?.status);
 
   // Surface the active session's run state and title where the header can read
   // it without the workbench owning the header's render. A store write, not a
@@ -1142,6 +1124,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       showReasoning,
       yoloMode,
       todos: activeTodos ?? EMPTY_TODOS,
+      inbox,
+      compaction,
     };
     useAgentSheetBridge.getState().publish(snapshot);
   }, [
@@ -1157,6 +1141,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     showReasoning,
     yoloMode,
     activeTodos,
+    inbox,
+    compaction,
   ]);
 
   const sheetActions = useMemo<AgentSheetActions>(
@@ -1501,6 +1487,49 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     </View>
   );
 });
+
+/**
+ * Rows are addressed by `id` -- upsert, do not append -- and the result is put
+ * back in the timeline's own `(message_id, ordinal)` order.
+ *
+ * The one exception is the optimistic user row: it carries a `temp_` id that
+ * the server has never seen, so it is matched on its text and replaced in
+ * place. Without that the reader's own message appears twice for a moment.
+ */
+function upsertTimelineItems(
+  previous: readonly TimelineItem[],
+  incoming: readonly TimelineItem[]
+): TimelineItem[] {
+  if (incoming.length === 0) return previous as TimelineItem[];
+  const next = [...previous];
+  let dirty = false;
+  for (const item of incoming) {
+    const existing = next.findIndex((it) => it.id === item.id);
+    if (existing >= 0) {
+      next[existing] = item;
+      dirty = true;
+      continue;
+    }
+    if (item.role === 'user' && item.part.type === 'text') {
+      const text = item.part.text.trim();
+      const optimistic = next.findIndex(
+        (it) =>
+          it.id.startsWith('temp_') &&
+          it.role === 'user' &&
+          it.part.type === 'text' &&
+          it.part.text.trim() === text
+      );
+      if (optimistic >= 0) {
+        next[optimistic] = item;
+        dirty = true;
+        continue;
+      }
+    }
+    next.push(item);
+    dirty = true;
+  }
+  return dirty ? sortTimeline(next) : (previous as TimelineItem[]);
+}
 
 function keyOfGroup(group: TimelineRenderGroup): string {
   return group.key;

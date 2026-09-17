@@ -25,6 +25,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { keyedLines } from '@/lib/line-keys';
+import type { ToolCallState } from '@/lib/agent-protocol';
 
 export interface EmbeddedTerminalProps {
   toolId: string;
@@ -32,7 +33,7 @@ export interface EmbeddedTerminalProps {
   command?: string;
   input?: unknown;
   output?: unknown;
-  status: 'running' | 'completed' | 'failed';
+  status: ToolCallState;
   defaultExpanded?: boolean;
 }
 
@@ -348,7 +349,9 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
     oldKeyed.length > 0 ||
     Boolean(content) ||
     Boolean(patchText) ||
-    status === 'running';
+    status === 'running' ||
+    status === 'pending' ||
+    status === 'streaming';
 
   return (
     <Animated.View style={styles.container}>
@@ -382,7 +385,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               {`+${content.split('\n').length} lines`}
             </Text>
           ) : null}
-          {status === 'running' ? (
+          {status === 'running' || status === 'pending' || status === 'streaming' ? (
             <Loader2 size={11} color={statusColor} />
           ) : status === 'failed' ? (
             <AlertCircle size={11} color={statusColor} />

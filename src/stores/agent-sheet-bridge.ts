@@ -3,10 +3,18 @@ import { create } from 'zustand';
 import type {
   AgentProject,
   AgentSessionInfo,
+  CompactionReason,
+  InboxItem,
   ModelRef,
   TodoItem,
   TokensUsage,
 } from '@/lib/agent-session';
+
+/** A compaction the engine is running right now, as the pill reads it. */
+export interface CompactionProgress {
+  status: 'running';
+  reason: CompactionReason;
+}
 
 /**
  * What the agent's sheets read, and what they call, now that they are routes.
@@ -43,6 +51,10 @@ export interface AgentSheetSnapshot {
   showReasoning: boolean;
   yoloMode: boolean;
   todos: readonly TodoItem[];
+  /** What is waiting behind the current turn, as the gateway last stated it. */
+  inbox: readonly InboxItem[];
+  /** Non-null only while a compaction is in flight. */
+  compaction: CompactionProgress | null;
 }
 
 /**
@@ -79,6 +91,7 @@ const NO_ACTIONS: AgentSheetActions = Object.freeze({
 const EMPTY_SESSIONS: readonly AgentSessionInfo[] = Object.freeze([]);
 const EMPTY_PROJECTS: readonly AgentProject[] = Object.freeze([]);
 const EMPTY_TODOS: readonly TodoItem[] = Object.freeze([]);
+const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
 
 const INITIAL: AgentSheetSnapshot = {
   sessionId: '',
@@ -94,6 +107,8 @@ const INITIAL: AgentSheetSnapshot = {
   showReasoning: true,
   yoloMode: false,
   todos: EMPTY_TODOS,
+  inbox: EMPTY_INBOX,
+  compaction: null,
 };
 
 interface AgentSheetBridge extends AgentSheetSnapshot {
@@ -127,4 +142,4 @@ export const useAgentSheetBridge = create<AgentSheetBridge>((set, get) => ({
   reset: () => set({ ...INITIAL, actions: NO_ACTIONS }),
 }));
 
-export { EMPTY_TODOS };
+export { EMPTY_TODOS, EMPTY_INBOX };

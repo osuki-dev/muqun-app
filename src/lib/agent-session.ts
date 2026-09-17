@@ -20,10 +20,48 @@ import {
   setCachedEntry,
   touchCacheEntryTimestamp,
 } from './agent-cache';
+import {
+  EMPTY_CATALOG,
+  parseAgentCatalog,
+  parseAgentContextUsage,
+  parseAgentDomainEvent,
+  parseAgentEngineInfo,
+  parseAgentSessionInfo,
+  parseAgentSessionList,
+  parseAgentSessionSnapshot,
+  parseFileDiffItems,
+  parseInboxItems,
+  parseShellList,
+  parseShellOutputPage,
+  parseTimelineItems,
+  parseRunStatus,
+  sortTimeline,
+  type AgentCatalog,
+  type AgentContextUsage,
+  type AgentDomainEvent,
+  type AgentEngineInfo,
+  type AgentRunStatus,
+  type AgentSessionInfo,
+  type AgentSessionSnapshot,
+  type FileDiffItem,
+  type InboxItem,
+  type ModelRef,
+  type PermissionDecision,
+  type ShellInfo,
+  type ShellOutputPage,
+  type TimelineItem,
+  type VcsDiffMode,
+} from './agent-protocol';
 
 export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheKey };
 
-export type AgentSessionStatus = 'idle' | 'running' | 'paused' | 'error' | 'terminated';
+/**
+ * The wire contract lives in `agent-protocol.ts`, which has no React Native
+ * import in it and is therefore unit-testable. This module is the transport:
+ * one function per route in `docs/agent-api.md`, each one handing the response
+ * body to a parser that takes `unknown` and never throws.
+ */
+export * from './agent-protocol';
 
 export interface AgentProject {
   id: string;
@@ -38,405 +76,276 @@ export interface DirectoryItem {
   path: string;
 }
 
-export interface ModelRef {
-  provider_id: string;
-  model_id: string;
-  variant?: string;
-}
-
-export function formatModelName(model?: ModelRef): string {
-  if (!model?.model_id) return 'Model';
-  const modelId = model.model_id;
-  const known: Record<string, string> = {
-    'gemini-3.8-flash': 'Gemini 3.8 Flash',
-    'deepseek-v4.1-flash': 'DeepSeek V4.1 Flash',
-    'deepseek-v4-flash-free': 'DeepSeek V4 Flash',
-    'gpt-5.6-sol': 'GPT-5.6 Sol',
-    'gpt-5.6-luna': 'GPT-5.6 Luna',
-    'gpt-6-astra': 'GPT-6 Astra',
-    'gpt-6-astra-fast': 'GPT-6 Astra Fast',
-    'muse-spark-1.3-contributor-free': 'Muse Spark 1.3',
-    'ling-3.0-flash-fin-free': 'Ling 3.0 Flash',
-  };
-  const baseName =
-    known[modelId] ||
-    modelId
-      .split(/[-_]/)
-      .map((w) => (w.length <= 3 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
-      .join(' ');
-
-  if (model.variant) {
-    const varLabel =
-      model.variant === 'xhigh'
-        ? 'Max'
-        : model.variant.charAt(0).toUpperCase() + model.variant.slice(1);
-    return `${baseName} • ${varLabel}`;
-  }
-  return baseName;
-}
-
-export interface TokensUsage {
-  input: number;
-  output: number;
-  reasoning?: number;
-  cache_read?: number;
-  cache_write?: number;
-}
-
-export interface AgentSessionInfo {
-  asid: string;
-  backend_session_id: string;
-  title: string;
-  agent?: string;
-  model?: ModelRef;
-  status: AgentSessionStatus;
-  directory?: string;
-  cost?: number;
-  tokens?: TokensUsage;
-  limit?: { context?: number; output?: number; input?: number };
-  parent_id?: string;
-  project_id?: string;
-  updated_ms: number;
-}
-
-export type ToolCallStatus = 'running' | 'completed' | 'failed';
-
-export interface TodoItem {
-  text: string;
-  done: boolean;
-}
-
-export type PermissionDecision = 'allow' | 'allow_always' | 'deny';
-
-export interface PermissionOption {
-  index: number;
-  label: string;
-  decision: PermissionDecision;
-}
-
-export interface PermissionRequest {
-  id: string;
-  asid: string;
-  action: string;
-  resources: string[];
-  prompt: string;
-  tool?: string;
-  message?: string;
-  options: PermissionOption[];
-}
-
-export interface FormOption {
-  value: string;
-  label: string;
-  description?: string;
-}
-
-export type FormField =
-  | {
-      type: 'string';
-      key: string;
-      title: string;
-      description?: string;
-      required?: boolean;
-      placeholder?: string;
-      default?: string;
-      options?: FormOption[];
-    }
-  | {
-      type: 'number';
-      key: string;
-      title: string;
-      description?: string;
-      required?: boolean;
-      min?: number;
-      max?: number;
-      default?: number;
-    }
-  | {
-      type: 'boolean';
-      key: string;
-      title: string;
-      description?: string;
-      required?: boolean;
-      default?: boolean;
-    }
-  | {
-      type: 'multiselect';
-      key: string;
-      title: string;
-      description?: string;
-      required?: boolean;
-      default?: string[];
-      options: FormOption[];
-    }
-  | {
-      type: 'external';
-      key: string;
-      title: string;
-      description?: string;
-      url: string;
-    };
-
-export interface FormRequest {
-  id: string;
-  asid: string;
-  title: string;
-  fields: FormField[];
-}
-
-export type AgentPart =
-  | { type: 'text'; text: string }
-  | { type: 'reasoning'; text: string; duration_ms?: number }
-  | {
-      type: 'tool';
-      id: string;
-      name: string;
-      input: unknown;
-      output?: unknown;
-      status: ToolCallStatus;
-    }
-  | { type: 'diff'; file: string; diff: string }
-  | { type: 'todo'; items: TodoItem[] }
-  | { type: 'approval'; request: PermissionRequest }
-  | { type: 'form'; request: FormRequest }
-  | { type: 'status'; text: string };
-
-export type TimelineRole = 'user' | 'assistant' | 'system';
-
-export interface TimelineItem {
-  id: string;
-  message_id: string;
-  role: TimelineRole;
-  part: AgentPart;
-  seq: number;
-  updated_ms: number;
-  attachments?: string[];
-  queued?: boolean;
-}
-
-export interface AgentSessionSnapshot {
-  info: AgentSessionInfo;
-  timeline: TimelineItem[];
-  permissions: PermissionRequest[];
-  forms: FormRequest[];
-  seq: number;
-}
-
-export interface ModelVariantInfo {
-  id: string;
-  reasoning_effort?: string;
-}
-
-export interface ModelInfo {
-  id: string;
-  name: string;
-  provider_id: string;
-  family?: string;
-  limit?: { context?: number; output?: number; input?: number };
-  variants?: ModelVariantInfo[];
-  cost?: unknown;
-}
-
-/** Whether a catalog model sits on the free tier (opencode provider or "free" naming). */
-export function isFreeModel(model: ModelInfo): boolean {
-  const idLower = (model.id || '').toLowerCase();
-  const nameLower = (model.name || '').toLowerCase();
-  const provLower = (model.provider_id || '').toLowerCase();
-  return (
-    idLower.includes('free') ||
-    nameLower.includes('free') ||
-    provLower === 'opencode' ||
-    provLower.includes('free')
-  );
-}
-
-export interface AgentInfo {
-  id: string;
-  name: string;
-  description?: string;
-  mode?: string;
-  color?: string;
-}
-
-export interface McpServerInfo {
-  name: string;
-  status: string;
-  error?: string;
-}
-
-export interface SkillInfo {
-  id: string;
-  name: string;
-  description: string;
-}
-
-export interface AgentCatalog {
-  models: ModelInfo[];
-  agents: AgentInfo[];
-  mcp: McpServerInfo[];
-  skills?: SkillInfo[];
-}
-
-export interface FileDiffItem {
-  path: string;
-  patch: string;
-  additions: number;
-  deletions: number;
-}
-
 export function gatewaySupportsAgentSessions(capabilities: string[] | undefined | null): boolean {
   if (!Array.isArray(capabilities)) return false;
   return capabilities.includes('agent_sessions');
 }
 
 // ---------------------------------------------------------------------------
-// Client API Methods (using gatewayFetch with NitroFetch & Request Budget)
+// Paths
 // ---------------------------------------------------------------------------
 
-export async function listAgentSessions(sessionId: string): Promise<AgentSessionInfo[]> {
+/**
+ * `/api/agent-sessions/{asid}{tail}`, or the legacy session-scoped spelling.
+ *
+ * Every `/api/agent-*` route also exists under `/api/sessions/{id}/agent-*`
+ * for the calls that had that form before v2; the `session_id` is parsed and
+ * ignored. Routes added for v2 parity are on the global path only, so they
+ * pass `legacy: false` and never mention a gateway session.
+ */
+function sessionRoute(asid: string, tail = '', sessionId?: string, legacy = false): string {
+  const base = `/agent-sessions/${encodeURIComponent(asid)}${tail}`;
+  return legacy && sessionId
+    ? `/api/sessions/${encodeURIComponent(sessionId)}${base}`
+    : `/api${base}`;
+}
+
+function jsonHeaders(): Record<string, string> {
+  return { ...gatewayAuthHeaders(), 'Content-Type': 'application/json' };
+}
+
+/** The `data` of the gateway's envelope, or the body when it has none. */
+function envelopeData(json: unknown): unknown {
+  if (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json) {
+    return (json as { data: unknown }).data;
+  }
+  return json;
+}
+
+/**
+ * A read that answers with a value, or with `fallback`.
+ *
+ * Reads never throw: a picker with nothing in it is a worse answer than a
+ * stale one, and both are better than a red screen on a phone.
+ */
+async function readJson<T>(
+  path: string,
+  parse: (value: unknown) => T,
+  fallback: T,
+  init?: { headers?: Record<string, string>; signal?: AbortSignal }
+): Promise<T> {
   try {
-    if (!isGatewayConfigured()) return [];
-    const url = gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions`);
-    const res = await gatewayFetch(url, {
+    if (!isGatewayConfigured()) return fallback;
+    const res = await gatewayFetch(gatewayUrl(path), {
       method: 'GET',
-      headers: gatewayAuthHeaders(),
+      headers: init?.headers ?? gatewayAuthHeaders(),
+      ...(init?.signal ? { signal: init.signal } : {}),
     });
-    if (!res.ok) {
-      console.warn(`Failed to list agent sessions: ${res.status}`);
-      return [];
-    }
-    const json = (await res.json()) as {
-      data?: AgentSessionInfo[] | { sessions?: AgentSessionInfo[] };
-      sessions?: AgentSessionInfo[];
-    };
-    if (Array.isArray(json.data)) return json.data;
-    if (json.data && 'sessions' in json.data && Array.isArray(json.data.sessions)) {
-      return json.data.sessions;
-    }
-    if (Array.isArray(json.sessions)) return json.sessions;
-    return [];
-  } catch (err) {
-    console.warn('Failed to list agent sessions:', err);
-    return [];
+    if (!res.ok) return fallback;
+    return parse(envelopeData(await res.json()));
+  } catch {
+    return fallback;
   }
 }
 
+/**
+ * A write, which throws on refusal so the caller can say what went wrong.
+ *
+ * Every call site catches; that is checked by the fact that none of them is a
+ * bare `void`. The message carries the gateway's body because
+ * `formatAgentErrorMessage` reads it to recognise an offline engine.
+ */
+async function writeJson(
+  path: string,
+  what: string,
+  body?: unknown,
+  method: 'POST' | 'DELETE' = 'POST'
+): Promise<unknown> {
+  const res = await gatewayFetch(gatewayUrl(path), {
+    method,
+    headers: body === undefined ? gatewayAuthHeaders() : jsonHeaders(),
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  if (!res.ok) {
+    throw new Error(`${what}: ${res.status} ${await res.text()}`);
+  }
+  try {
+    return envelopeData(await res.json());
+  } catch {
+    // `204 No Content` is a legitimate answer to several of these.
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Session lifecycle
+// ---------------------------------------------------------------------------
+
+export interface ListAgentSessionsQuery {
+  directory?: string;
+  parent_id?: string;
+  /** `true` lists top-level sessions only — no subagent sessions. */
+  roots?: boolean;
+  limit?: number;
+  order?: 'asc' | 'desc';
+  search?: string;
+  cursor?: string;
+}
+
+function listQuery(query: ListAgentSessionsQuery | undefined): string {
+  if (!query) return '';
+  const params = new URLSearchParams();
+  if (query.directory) params.set('directory', query.directory);
+  if (query.parent_id) params.set('parent_id', query.parent_id);
+  if (query.roots) params.set('roots', 'true');
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  if (query.order) params.set('order', query.order);
+  if (query.search) params.set('search', query.search);
+  if (query.cursor) params.set('cursor', query.cursor);
+  const encoded = params.toString();
+  return encoded ? `?${encoded}` : '';
+}
+
+export async function listAgentSessions(
+  sessionId?: string,
+  query?: ListAgentSessionsQuery
+): Promise<AgentSessionInfo[]> {
+  const path = sessionId
+    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${listQuery(query)}`
+    : `/api/agent-sessions${listQuery(query)}`;
+  return readJson(path, parseAgentSessionList, []);
+}
+
+/** The children of one session, in the same shape as the list route. */
+export async function listAgentSessionChildren(
+  asid: string,
+  query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
+): Promise<AgentSessionInfo[]> {
+  if (!asid) return [];
+  return readJson(
+    `${sessionRoute(asid, '/children')}${listQuery(query)}`,
+    parseAgentSessionList,
+    []
+  );
+}
+
 export async function createAgentSession(
-  sessionId: string,
+  sessionId: string | undefined,
   params: {
-    title?: string;
     agent?: string;
     model?: ModelRef;
     directory?: string;
   }
 ): Promise<AgentSessionInfo> {
-  const url = gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions`);
-  const res = await gatewayFetch(url, {
-    method: 'POST',
-    headers: {
-      ...gatewayAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to create agent session: ${res.status} ${await res.text()}`);
-  }
-  const json = (await res.json()) as { data?: AgentSessionInfo } | AgentSessionInfo;
-  return ('data' in json && json.data ? json.data : json) as AgentSessionInfo;
+  const path = sessionId
+    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions`
+    : '/api/agent-sessions';
+  // Omitting `model` is the correct way to get the user's configured default;
+  // the gateway no longer substitutes one, and neither does this.
+  const body: Record<string, unknown> = {};
+  if (params.directory) body.directory = params.directory;
+  if (params.model) body.model = params.model;
+  if (params.agent) body.agent = params.agent;
+  const data = await writeJson(path, 'Failed to create agent session', body);
+  const info = parseAgentSessionInfo(data);
+  if (!info) throw new Error('Failed to create agent session: unreadable response');
+  return info;
 }
 
 export async function getAgentSessionSnapshot(
-  sessionId: string,
+  sessionId: string | undefined,
   asid: string
 ): Promise<AgentSessionSnapshot> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}`
-  );
-  const res = await gatewayFetch(url, {
+  const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true)), {
     method: 'GET',
     headers: gatewayAuthHeaders(),
   });
   if (!res.ok) {
     throw new Error(`Failed to get agent session: ${res.status} ${await res.text()}`);
   }
-  const json = (await res.json()) as { data?: AgentSessionSnapshot } | AgentSessionSnapshot;
-  return ('data' in json && json.data ? json.data : json) as AgentSessionSnapshot;
+  return parseAgentSessionSnapshot(envelopeData(await res.json()));
 }
 
-export async function getAgentTimelineDelta(
-  sessionId: string,
-  asid: string,
-  afterSeq: number
-): Promise<{
-  items?: TimelineItem[];
-  status?: AgentSessionStatus;
-  resync?: boolean;
-  latest_seq: number;
-}> {
-  try {
-    if (!isGatewayConfigured()) return { latest_seq: afterSeq };
-    const url = gatewayUrl(
-      `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/timeline?after=${afterSeq}`
-    );
-    const res = await gatewayFetch(url, {
-      method: 'GET',
-      headers: gatewayAuthHeaders(),
-    });
-    if (!res.ok) {
-      return { latest_seq: afterSeq };
-    }
-    const json = (await res.json()) as
-      | {
-          data?: {
-            items?: TimelineItem[];
-            status?: AgentSessionStatus;
-            resync?: boolean;
-            latest_seq: number;
-          };
-        }
-      | {
-          items?: TimelineItem[];
-          status?: AgentSessionStatus;
-          resync?: boolean;
-          latest_seq: number;
-        };
-    const payload = 'data' in json && json.data ? json.data : json;
-    return payload as {
-      items?: TimelineItem[];
-      status?: AgentSessionStatus;
-      resync?: boolean;
-      latest_seq: number;
-    };
-  } catch {
-    return { latest_seq: afterSeq };
-  }
+export async function deleteAgentSession(asid: string): Promise<void> {
+  await writeJson(sessionRoute(asid), 'Failed to delete session', undefined, 'DELETE');
 }
+
+export async function renameAgentSession(asid: string, title: string): Promise<void> {
+  await writeJson(sessionRoute(asid, '/rename'), 'Failed to rename session', { title });
+}
+
+/** Marks the session read. Unread is `time_idle > time_viewed`. */
+export async function markAgentSessionViewed(asid: string, idle?: number): Promise<void> {
+  await writeJson(
+    sessionRoute(asid, '/view'),
+    'Failed to mark session viewed',
+    idle === undefined ? {} : { idle }
+  );
+}
+
+/** The exported transcript, for a share sheet. There is no sharing in v2. */
+export async function exportAgentSession(asid: string, sanitize = true): Promise<unknown> {
+  return readJson(
+    `${sessionRoute(asid, '/export')}?sanitize=${sanitize ? 'true' : 'false'}`,
+    (value) => value,
+    null
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Prompting and control
+// ---------------------------------------------------------------------------
+
+export type AgentDelivery = 'steer' | 'queue';
 
 export async function sendAgentPrompt(
-  sessionId: string,
+  sessionId: string | undefined,
   asid: string,
   params: {
     text: string;
-    model?: ModelRef;
     attachments?: string[];
-    delivery?: 'steer' | 'queue';
+    delivery?: AgentDelivery;
   }
 ): Promise<void> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/prompt`
-  );
-  const res = await gatewayFetch(url, {
-    method: 'POST',
-    headers: {
-      ...gatewayAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(params),
+  // There is no model or agent field on a prompt: both are session state in
+  // v2. Switch first, then prompt.
+  const body: Record<string, unknown> = { text: params.text };
+  if (params.attachments && params.attachments.length > 0) body.attachments = params.attachments;
+  if (params.delivery) body.delivery = params.delivery;
+  await writeJson(sessionRoute(asid, '/prompt', sessionId, true), 'Failed to send prompt', body);
+}
+
+/** A slash command from the catalog's `commands`. */
+export async function sendAgentCommand(
+  asid: string,
+  params: { name: string; arguments?: string; delivery?: AgentDelivery }
+): Promise<void> {
+  const body: Record<string, unknown> = { name: params.name.replace(/^\//, '') };
+  if (params.arguments) body.arguments = params.arguments;
+  if (params.delivery) body.delivery = params.delivery;
+  await writeJson(sessionRoute(asid, '/command'), 'Failed to run command', body);
+}
+
+export async function abortAgentSession(
+  sessionId: string | undefined,
+  asid: string
+): Promise<void> {
+  await writeJson(sessionRoute(asid, '/abort', sessionId, true), 'Failed to abort session');
+}
+
+/**
+ * Detaches the foreground tools blocking the agent loop — a long `shell` is
+ * the usual one. They keep running and stay readable through `/api/agent-shells`.
+ */
+export async function backgroundAgentSession(asid: string): Promise<void> {
+  await writeJson(sessionRoute(asid, '/background'), 'Failed to background tools');
+}
+
+export async function switchAgentModel(
+  sessionId: string | undefined,
+  asid: string,
+  model: ModelRef
+): Promise<void> {
+  await writeJson(sessionRoute(asid, '/model', sessionId, true), 'Failed to switch agent model', {
+    model,
   });
-  if (!res.ok) {
-    throw new Error(`Failed to send prompt: ${res.status} ${await res.text()}`);
-  }
+}
+
+/** Agent ids are lowercase; OpenCode rejects a display name such as `Build`. */
+export async function switchAgentMode(asid: string, agent: string): Promise<void> {
+  await writeJson(sessionRoute(asid, '/agent'), 'Failed to switch agent', {
+    agent: agent.toLowerCase(),
+  });
 }
 
 export async function revertAgentSession(
@@ -444,99 +353,145 @@ export async function revertAgentSession(
   asid: string,
   messageId: string
 ): Promise<void> {
-  const path = sessionId
-    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/revert`
-    : `/api/agent-sessions/${encodeURIComponent(asid)}/revert`;
-  const url = gatewayUrl(path);
-  const res = await gatewayFetch(url, {
-    method: 'POST',
-    headers: {
-      ...gatewayAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ message_id: messageId }),
+  await writeJson(sessionRoute(asid, '/revert', sessionId, true), 'Failed to revert session', {
+    message_id: messageId,
   });
-  if (!res.ok) {
-    throw new Error(`Failed to revert session: ${res.status} ${await res.text()}`);
-  }
 }
 
-export async function abortAgentSession(sessionId: string, asid: string): Promise<void> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/abort`
-  );
-  const res = await gatewayFetch(url, {
-    method: 'POST',
-    headers: gatewayAuthHeaders(),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to abort session: ${res.status} ${await res.text()}`);
-  }
+/** Cancels a staged rollback — this is redo. */
+export async function clearAgentRevert(asid: string): Promise<void> {
+  await writeJson(sessionRoute(asid, '/revert/clear'), 'Failed to clear revert');
 }
 
-export async function switchAgentModel(
-  sessionId: string,
+// ---------------------------------------------------------------------------
+// Compaction and context
+// ---------------------------------------------------------------------------
+
+/**
+ * Asks for a compaction. It is admitted to the inbox and runs at the next step
+ * boundary; progress arrives as `agent.compaction.changed`, and the finished
+ * boundary lands in the timeline as a `compaction` row.
+ *
+ * This is the real route, not `/compact` typed into the composer.
+ */
+export async function compactAgentSession(
   asid: string,
-  model: ModelRef
+  delivery: AgentDelivery = 'steer'
 ): Promise<void> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/model`
-  );
-  const res = await gatewayFetch(url, {
-    method: 'POST',
-    headers: {
-      ...gatewayAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ model }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to switch agent model: ${res.status} ${await res.text()}`);
-  }
+  await writeJson(sessionRoute(asid, '/compact'), 'Failed to compact session', { delivery });
 }
+
+/** Everything still in the model's context, i.e. after the last compaction. */
+export async function getAgentContext(asid: string): Promise<AgentContextUsage> {
+  return readJson(sessionRoute(asid, '/context'), parseAgentContextUsage, {
+    messages: 0,
+    tokens: null,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Inbox
+// ---------------------------------------------------------------------------
+
+export async function listAgentInbox(asid: string): Promise<InboxItem[]> {
+  if (!asid) return [];
+  return readJson(sessionRoute(asid, '/inbox'), parseInboxItems, []);
+}
+
+export async function cancelAgentInboxItem(asid: string, inboxId: string): Promise<void> {
+  await writeJson(
+    sessionRoute(asid, `/inbox/${encodeURIComponent(inboxId)}`),
+    'Failed to cancel queued item',
+    undefined,
+    'DELETE'
+  );
+}
+
+export async function setAgentInboxDelivery(
+  asid: string,
+  inboxId: string,
+  delivery: AgentDelivery
+): Promise<void> {
+  await writeJson(
+    sessionRoute(asid, `/inbox/${encodeURIComponent(inboxId)}/${delivery}`),
+    'Failed to change delivery'
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Permissions and forms
+// ---------------------------------------------------------------------------
 
 export async function replyAgentPermission(
-  sessionId: string,
+  sessionId: string | undefined,
   asid: string,
   permissionId: string,
-  decision: PermissionDecision
+  decision: PermissionDecision,
+  message?: string
 ): Promise<void> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/permissions/${encodeURIComponent(permissionId)}/reply`
+  await writeJson(
+    sessionRoute(asid, `/permissions/${encodeURIComponent(permissionId)}/reply`, sessionId, true),
+    'Failed to reply permission',
+    message ? { decision, message } : { decision }
   );
-  const res = await gatewayFetch(url, {
-    method: 'POST',
-    headers: {
-      ...gatewayAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ decision }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to reply permission: ${res.status} ${await res.text()}`);
-  }
 }
 
 export async function replyAgentForm(
-  sessionId: string,
+  sessionId: string | undefined,
   asid: string,
   formId: string,
-  answer: Record<string, unknown>
+  answers: Record<string, unknown>
 ): Promise<void> {
-  const url = gatewayUrl(
-    `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/forms/${encodeURIComponent(formId)}/reply`
+  await writeJson(
+    sessionRoute(asid, `/forms/${encodeURIComponent(formId)}/reply`, sessionId, true),
+    'Failed to reply form',
+    { answers }
   );
-  const res = await gatewayFetch(url, {
-    method: 'POST',
-    headers: {
-      ...gatewayAuthHeaders(),
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ answer }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to reply form: ${res.status} ${await res.text()}`);
-  }
+}
+
+// ---------------------------------------------------------------------------
+// Files, diff, catalog, projects
+// ---------------------------------------------------------------------------
+
+export async function listAgentFiles(
+  sessionId?: string,
+  asid?: string,
+  query?: string,
+  limit = 20
+): Promise<FileMentionHit[]> {
+  const params = new URLSearchParams();
+  if (query) params.set('query', query);
+  params.set('limit', String(limit));
+  const q = `?${params.toString()}`;
+  const path = asid
+    ? `${sessionRoute(asid, '/files', sessionId, true)}${q}`
+    : sessionId
+      ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-files${q}`
+      : `/api/agent-files${q}`;
+  return readJson(
+    path,
+    (value) => (Array.isArray(value) ? (value as FileMentionHit[]) : []),
+    [] as FileMentionHit[]
+  );
+}
+
+/**
+ * What the agent changed on disk.
+ *
+ * `mode` is required by OpenCode — omitting it is why this used to come back
+ * empty — and is the segmented control in the diff sheet.
+ */
+export async function getAgentVcsDiff(
+  sessionId: string | undefined,
+  asid: string,
+  mode: VcsDiffMode = 'working'
+): Promise<FileDiffItem[]> {
+  if (!asid) return [];
+  return readJson(
+    `${sessionRoute(asid, '/vcs/diff', sessionId, true)}?mode=${mode}`,
+    parseFileDiffItems,
+    []
+  );
 }
 
 export async function getAgentCatalog(
@@ -556,7 +511,7 @@ export async function getAgentCatalog(
     try {
       const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
       if (!base && !isGatewayConfigured()) {
-        return cached?.data ?? { agents: [], models: [], mcp: [] };
+        return cached?.data ?? EMPTY_CATALOG;
       }
       const url = base
         ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog` : '/api/agent-catalog'}`
@@ -574,10 +529,7 @@ export async function getAgentCatalog(
         headers['If-None-Match'] = cached.etag;
       }
 
-      const res = await gatewayFetch(url, {
-        method: 'GET',
-        headers,
-      });
+      const res = await gatewayFetch(url, { method: 'GET', headers });
 
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
@@ -585,77 +537,18 @@ export async function getAgentCatalog(
       }
 
       if (!res.ok) {
-        return cached?.data ?? { agents: [], models: [], mcp: [] };
+        return cached?.data ?? EMPTY_CATALOG;
       }
 
       const etag = res.headers.get('etag') ?? undefined;
-      const json = (await res.json()) as { data?: AgentCatalog } | AgentCatalog;
-      const catalog = ('data' in json && json.data ? json.data : json) as AgentCatalog;
+      const catalog = parseAgentCatalog(envelopeData(await res.json()));
       setCachedEntry(cacheKey, catalog, etag);
       return catalog;
     } catch (err) {
       console.warn('Failed to get agent catalog:', err);
-      return cached?.data ?? { agents: [], models: [], mcp: [] };
+      return cached?.data ?? EMPTY_CATALOG;
     }
   });
-}
-
-export async function getAgentVcsDiff(sessionId: string, asid: string): Promise<FileDiffItem[]> {
-  try {
-    if (!isGatewayConfigured()) return [];
-    const url = gatewayUrl(
-      `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/vcs-diff`
-    );
-    const res = await gatewayFetch(url, {
-      method: 'GET',
-      headers: gatewayAuthHeaders(),
-    });
-    if (!res.ok) {
-      return [];
-    }
-    const json = (await res.json()) as {
-      data?: FileDiffItem[] | { diff?: FileDiffItem[] };
-      diff?: FileDiffItem[];
-    };
-    if (Array.isArray(json.data)) return json.data;
-    if (json.data && 'diff' in json.data && Array.isArray(json.data.diff)) {
-      return json.data.diff;
-    }
-    if (Array.isArray(json.diff)) return json.diff;
-    return [];
-  } catch (err) {
-    console.warn('Failed to get VCS diff:', err);
-    return [];
-  }
-}
-
-export async function listAgentFiles(
-  sessionId?: string,
-  asid?: string,
-  query?: string,
-  limit = 20
-): Promise<FileMentionHit[]> {
-  const q = query ? `?query=${encodeURIComponent(query)}&limit=${limit}` : `?limit=${limit}`;
-  const path =
-    sessionId && asid
-      ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/files${q}`
-      : asid
-        ? `/api/agent-sessions/${encodeURIComponent(asid)}/files${q}`
-        : sessionId
-          ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-files${q}`
-          : `/api/agent-files${q}`;
-  const url = gatewayUrl(path);
-  try {
-    const res = await gatewayFetch(url, {
-      method: 'GET',
-      headers: gatewayAuthHeaders(),
-    });
-    if (!res.ok) return [];
-    const json = (await res.json()) as { data?: FileMentionHit[] } | FileMentionHit[];
-    return 'data' in json && Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [];
-  } catch {
-    return [];
-  }
 }
 
 export async function getAgentProjects(
@@ -691,10 +584,7 @@ export async function getAgentProjects(
         headers['If-None-Match'] = cached.etag;
       }
 
-      const res = await gatewayFetch(url, {
-        method: 'GET',
-        headers,
-      });
+      const res = await gatewayFetch(url, { method: 'GET', headers });
 
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
@@ -706,8 +596,8 @@ export async function getAgentProjects(
       }
 
       const etag = res.headers.get('etag') ?? undefined;
-      const json = (await res.json()) as { data?: AgentProject[] };
-      const projects = json.data ?? [];
+      const data = envelopeData(await res.json());
+      const projects = Array.isArray(data) ? (data as AgentProject[]) : [];
       setCachedEntry(cacheKey, projects, etag);
       return projects;
     } catch {
@@ -728,24 +618,103 @@ export async function getAgentDirectories(
   const path = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-directories${q}`
     : `/api/agent-directories${q}`;
-  const url = gatewayUrl(path);
-  try {
-    const res = await gatewayFetch(url, {
-      method: 'GET',
-      headers: gatewayAuthHeaders(),
-    });
-    if (!res.ok) return [];
-    const json = (await res.json()) as { data?: DirectoryItem[] };
-    return json.data ?? [];
-  } catch {
-    return [];
-  }
+  return readJson(
+    path,
+    (value) => (Array.isArray(value) ? (value as DirectoryItem[]) : []),
+    [] as DirectoryItem[]
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Background shells
+// ---------------------------------------------------------------------------
+
+export async function listAgentShells(directory?: string): Promise<ShellInfo[]> {
+  const q = directory ? `?directory=${encodeURIComponent(directory)}` : '';
+  return readJson(`/api/agent-shells${q}`, parseShellList, []);
+}
+
+export async function getAgentShellOutput(
+  shellId: string,
+  options?: { cursor?: number; limit?: number }
+): Promise<ShellOutputPage> {
+  const params = new URLSearchParams();
+  if (options?.cursor !== undefined) params.set('cursor', String(options.cursor));
+  if (options?.limit !== undefined) params.set('limit', String(options.limit));
+  const q = params.toString() ? `?${params.toString()}` : '';
+  return readJson(
+    `/api/agent-shells/${encodeURIComponent(shellId)}/output${q}`,
+    parseShellOutputPage,
+    { output: '', cursor: options?.cursor ?? 0, size: 0, truncated: false }
+  );
+}
+
+export async function killAgentShell(shellId: string): Promise<void> {
+  await writeJson(
+    `/api/agent-shells/${encodeURIComponent(shellId)}`,
+    'Failed to stop shell',
+    undefined,
+    'DELETE'
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Engine status
+// ---------------------------------------------------------------------------
+
+/** The one agent route that answers 200 with no engine attached. */
+export async function getAgentEngine(): Promise<AgentEngineInfo> {
+  return readJson('/api/agent-engine', parseAgentEngineInfo, {
+    available: false,
+    origin: 'none',
+    stream_connected: false,
+    autostart: true,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Timeline delta and stream
+// ---------------------------------------------------------------------------
+
+export interface AgentTimelineDelta {
+  items: TimelineItem[];
+  status?: AgentRunStatus;
+  resync: boolean;
+  latest_seq: number;
+}
+
+/**
+ * Whatever the stream missed while it was down.
+ *
+ * The SSE connection is the live channel; this is the gap filler a reconnect
+ * asks for, and a `resync` answer is the gateway saying the requested point
+ * has fallen out of its ring buffer and the snapshot must be refetched.
+ */
+export async function getAgentTimelineDelta(
+  sessionId: string | undefined,
+  asid: string,
+  afterSeq: number
+): Promise<AgentTimelineDelta> {
+  return readJson(
+    `${sessionRoute(asid, '/timeline', sessionId, true)}?after=${afterSeq}`,
+    (value) => {
+      const rec = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+      return {
+        items: sortTimeline(parseTimelineItems(rec.items)),
+        ...(typeof rec.status === 'string' ? { status: parseRunStatus(rec.status) } : {}),
+        resync: rec.resync === true,
+        latest_seq: typeof rec.latest_seq === 'number' ? rec.latest_seq : afterSeq,
+      };
+    },
+    { items: [], resync: false, latest_seq: afterSeq }
+  );
 }
 
 export function openAgentSessionStream(options: {
   asid: string;
   sessionId?: string;
-  onEvent: (event: string, data: unknown) => void;
+  /** Already parsed and validated; an unrecognised frame never arrives here. */
+  onEvent: (event: AgentDomainEvent) => void;
   onError?: (err: unknown) => void;
   onConnected?: () => void;
 }): () => void {
@@ -758,10 +727,7 @@ export function openAgentSessionStream(options: {
         options.onError?.(new Error('Gateway not configured'));
         return;
       }
-      const path = options.sessionId
-        ? `/api/sessions/${encodeURIComponent(options.sessionId)}/agent-sessions/${encodeURIComponent(options.asid)}/stream`
-        : `/api/agent-sessions/${encodeURIComponent(options.asid)}/stream`;
-      const url = gatewayUrl(path);
+      const url = gatewayUrl(sessionRoute(options.asid, '/stream', options.sessionId, true));
       const headers = gatewayAuthHeaders();
       const decoder = new TextDecoder();
       const parser = new ServerSentEventParser();
@@ -785,17 +751,18 @@ export function openAgentSessionStream(options: {
       while (!cancelled) {
         const { done, value } = await reader.read();
         if (done || cancelled) break;
-        if (value) {
-          const text = decoder.decode(value, { stream: true });
-          const events = parser.push(text);
-          for (const ev of events) {
-            try {
-              const parsed = JSON.parse(ev.data);
-              options.onEvent(ev.event, parsed);
-            } catch {
-              options.onEvent(ev.event, ev.data);
-            }
+        if (!value) continue;
+        const text = decoder.decode(value, { stream: true });
+        for (const frame of parser.push(text)) {
+          let data: unknown = frame.data;
+          try {
+            data = JSON.parse(frame.data);
+          } catch {
+            // A frame that is not JSON is still named, and `connected` is one
+            // of those; the parser below decides whether it means anything.
           }
+          const event = parseAgentDomainEvent(frame.event, data);
+          if (event) options.onEvent(event);
         }
       }
     } catch (err) {

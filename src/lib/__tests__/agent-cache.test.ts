@@ -36,9 +36,13 @@ describe('agent cache storage and memory fallback', () => {
     expect(getCachedAgentCatalogSync(key)).toBeNull();
 
     const mockCatalog = {
-      models: [{ id: 'gemini-3.8', name: 'Gemini', provider_id: 'google' }],
+      models: [{ id: 'gemini-3.8', name: 'Gemini', provider_id: 'google', enabled: true }],
       agents: [{ id: 'build', name: 'Build' }],
       mcp: [],
+      skills: [],
+      providers: [],
+      commands: [],
+      defaults: {},
     };
 
     setCachedEntry(key, mockCatalog, '"etag-123"');
@@ -62,7 +66,15 @@ describe('agent cache storage and memory fallback', () => {
 
   test('touchCacheEntryTimestamp updates timestamp', async () => {
     const key = 'catalog:test:touch';
-    setCachedEntry(key, { models: [], agents: [], mcp: [] });
+    setCachedEntry(key, {
+      models: [],
+      agents: [],
+      mcp: [],
+      skills: [],
+      providers: [],
+      commands: [],
+      defaults: {},
+    });
     const t1 = getCachedEntry(key)?.timestamp ?? 0;
 
     await new Promise((r) => setTimeout(r, 15));

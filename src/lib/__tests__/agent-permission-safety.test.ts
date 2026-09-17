@@ -13,6 +13,7 @@ function shellRequest(resources: string[]): PermissionRequest {
     asid: 'asid-1',
     action: 'shell',
     resources,
+    save: [],
     prompt: 'run',
     options: [],
   };
@@ -86,6 +87,7 @@ describe('dangerousPermissionRequest', () => {
       asid: 'a',
       action: 'edit',
       resources: ['/src/file.ts'],
+      save: [],
       prompt: 'edit',
       options: [],
     };

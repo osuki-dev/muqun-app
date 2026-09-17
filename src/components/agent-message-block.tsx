@@ -452,7 +452,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
                 toolName={it.part.name}
                 input={it.part.input}
                 output={it.part.output}
-                status={it.part.status}
+                status={it.part.state}
               />
             );
           case 'diff':
