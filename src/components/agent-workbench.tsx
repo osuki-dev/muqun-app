@@ -1670,10 +1670,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // A `shell` part that is the other side of a tool call in the same session
   // is dropped here rather than drawn a second time, and a detached one takes
   // its running state from the shell list the tray is drawn from.
-  const visibleTimeline = useMemo(() => {
-    const window = windowStart > 0 ? timeline.slice(windowStart) : timeline;
-    return reconcileShellParts(window, shells);
-  }, [timeline, windowStart, shells]);
+  //
+  // Over the whole timeline, not the window: the tool call a `shell` part
+  // mirrors is often hundreds of rows above it, outside the page being drawn,
+  // and a window-sized search would find nothing and draw the duplicate.
+  const reconciledTimeline = useMemo(
+    () => reconcileShellParts(timeline, shells),
+    [timeline, shells]
+  );
+  const visibleTimeline = useMemo(
+    () => (windowStart > 0 ? reconciledTimeline.slice(windowStart) : reconciledTimeline),
+    [reconciledTimeline, windowStart]
+  );
 
   /**
    * Rows that arrived while the reader was up in the history.
