@@ -14,6 +14,7 @@ import {
   type FormFieldViolation,
   type FormRequest,
 } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 export interface AgentFormCardProps {
   request: FormRequest;
@@ -417,7 +418,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: AGENT_TYPE.meta.size,
   },
   fieldsContainer: {
     gap: 12,
@@ -436,17 +437,17 @@ const styles = StyleSheet.create({
   },
   fieldTitle: {
     fontWeight: '600',
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   fieldDesc: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
   textInput: {
     borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   optionsWrap: {
     flexDirection: 'row',
@@ -483,6 +484,6 @@ const styles = StyleSheet.create({
   },
   submitText: {
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
 });

@@ -24,6 +24,7 @@ import {
   type AgentSessionInfo,
   type TokensUsage,
 } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
  * The session's context and spend, as a native form sheet route.
@@ -352,7 +353,7 @@ const styles = StyleSheet.create({
   capacityFill: { height: '100%', borderRadius: 2 },
   metaWide: { maxWidth: 200 },
   confirm: { paddingBottom: SHEET_LADDER.snug, gap: SHEET_LADDER.gap },
-  confirmText: { lineHeight: 18 },
+  confirmText: { lineHeight: AGENT_TYPE.mono.lineHeight },
   confirmActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SHEET_LADDER.gap },
   action: {
     paddingHorizontal: SHEET_LADDER.gutter,

@@ -24,6 +24,7 @@ import {
   type AgentProject,
   type DirectoryItem,
 } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 const STAGGERED_ROWS = 8;
 
@@ -234,5 +235,5 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
 const styles = StyleSheet.create({
   loading: { padding: 40, alignItems: 'center', justifyContent: 'center' },
   empty: { paddingVertical: 32, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: 18 },
+  emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: AGENT_TYPE.mono.lineHeight },
 });

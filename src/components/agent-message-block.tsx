@@ -53,6 +53,7 @@ import {
 } from '@/lib/agent-session';
 import { usePermissionDecider, usePermissionForToolCall } from '@/stores/agent-permissions';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
 function isImageAttachment(uri: string): boolean {
@@ -1004,10 +1005,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   roleLabel: {
-    fontSize: 11.5,
+    fontSize: AGENT_TYPE.meta.size,
   },
   roleStamp: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
   roleSpacer: {
     flex: 1,
@@ -1018,7 +1019,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   queuedPillText: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
   queuedActionBtn: {
     padding: 3,
@@ -1047,7 +1048,7 @@ const styles = StyleSheet.create({
     maxWidth: 220,
   },
   attachmentChipName: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
     flexShrink: 1,
   },
   noticeIcon: { marginTop: 3 },
@@ -1070,7 +1071,7 @@ const styles = StyleSheet.create({
   },
   noticeText: {
     flexShrink: 1,
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
   compactionBlock: {
     alignSelf: 'stretch',
@@ -1093,8 +1094,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   summary: {
-    fontSize: 11,
-    lineHeight: 17,
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   markdownContainer: {
     alignSelf: 'stretch',
@@ -1107,7 +1108,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     fontStyle: 'italic',
   },
   diffBodyWrap: {
@@ -1124,10 +1125,10 @@ const styles = StyleSheet.create({
   },
   diffFile: {
     flexShrink: 1,
-    fontSize: 11.5,
+    fontSize: AGENT_TYPE.meta.size,
   },
   diffStat: {
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
   },
   diffChevron: {
     padding: 2,

@@ -28,6 +28,7 @@ import {
   type ShellInfo,
   type ShellStatus,
 } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
  * What is still running after the agent moved on.
@@ -300,5 +301,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderCurve: 'continuous',
   },
-  outputText: { fontFamily: 'monospace', fontSize: 11.5, lineHeight: 16 },
+  outputText: {
+    fontFamily: 'monospace',
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
+  },
 });

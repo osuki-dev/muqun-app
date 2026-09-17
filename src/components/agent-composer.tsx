@@ -93,6 +93,7 @@ import {
   type TodoItem,
   type TokensUsage,
 } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
  * One chip in Row 1: a root, or a subagent under the open one.
@@ -1260,15 +1261,15 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   sessionChipAgentBadge: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
     fontWeight: '700',
   },
   sessionChipDot: {
-    fontSize: 10,
+    fontSize: AGENT_TYPE.micro.size,
     opacity: 0.7,
   },
   sessionChipTitle: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
     fontWeight: '500',
   },
   actionRowScroll: {
@@ -1299,7 +1300,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   actionBtnLabel: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
     fontWeight: '600',
   },
   stopActionBtn: {
@@ -1321,7 +1322,7 @@ const styles = StyleSheet.create({
   inboxText: {
     flex: 1,
     minWidth: 0,
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   inboxCancel: {
     width: 22,

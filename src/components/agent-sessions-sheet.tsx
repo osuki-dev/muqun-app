@@ -19,6 +19,7 @@ import {
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { sessionTitleOr, type AgentProject, type AgentSessionInfo } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 const STAGGERED_ROWS = 8;
 
@@ -255,7 +256,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
 
 const styles = StyleSheet.create({
   empty: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: 18 },
+  emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: AGENT_TYPE.mono.lineHeight },
   // Subagents belong to the root above them, so they start one step in -- the
   // only indent in the sheet, and it is what makes the tree readable.
   subagentRow: { paddingLeft: SHEET_LADDER.section },

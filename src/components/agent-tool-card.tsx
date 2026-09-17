@@ -49,6 +49,7 @@ import {
   type AgentRunStatus,
   type ToolPart,
 } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
  * One tool call, drawn as what it actually is.
@@ -917,14 +918,14 @@ const styles = StyleSheet.create({
   },
   mono: {
     fontFamily: 'monospace',
-    fontSize: 11.5,
-    lineHeight: 16,
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   command: {
     fontWeight: '600',
   },
   chipText: {
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
     fontVariant: ['tabular-nums'],
   },
   moreChip: {
@@ -948,7 +949,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   actionText: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     fontWeight: '600',
   },
   fileRow: {
@@ -975,7 +976,7 @@ const styles = StyleSheet.create({
     maxWidth: 220,
   },
   fileChipName: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
     flexShrink: 1,
   },
   grepGroup: {
@@ -983,7 +984,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   grepFile: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
   grepLine: {
     flexDirection: 'row',
@@ -992,16 +993,16 @@ const styles = StyleSheet.create({
   },
   grepNumber: {
     fontFamily: 'monospace',
-    fontSize: 10,
+    fontSize: AGENT_TYPE.micro.size,
     width: 34,
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
   },
   grepMore: {
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
   },
   skillText: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
 });

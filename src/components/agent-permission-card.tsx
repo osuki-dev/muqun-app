@@ -13,6 +13,7 @@ import {
   type PermissionOption,
   type PermissionRequest,
 } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 export interface AgentPermissionCardProps {
   request: PermissionRequest;
@@ -219,11 +220,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: AGENT_TYPE.meta.size,
   },
   action: {
     fontFamily: 'monospace',
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
   body: {
     padding: 8,
@@ -232,11 +233,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   prompt: {
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   message: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     marginTop: 4,
   },
   resourcesBox: {
@@ -244,7 +245,7 @@ const styles = StyleSheet.create({
   },
   resourceText: {
     fontFamily: 'monospace',
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     marginTop: 2,
   },
   actions: {
@@ -270,12 +271,12 @@ const styles = StyleSheet.create({
   },
   btnText: {
     fontWeight: '600',
-    fontSize: 11.5,
+    fontSize: AGENT_TYPE.meta.size,
     flexShrink: 1,
   },
   saveText: {
     fontFamily: 'monospace',
-    fontSize: 9.5,
+    fontSize: AGENT_TYPE.micro.size,
     textAlign: 'center',
   },
 });

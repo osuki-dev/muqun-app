@@ -13,6 +13,8 @@ import type { Colors } from '@osuki-dev/ui';
 import { StyleSheet } from 'react-native';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
+import { AGENT_TYPE } from '@/constants/agent-type';
+
 /**
  * The code palette, from the app's palette.
  *
@@ -59,8 +61,8 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
   const link = colors.info;
   const base = {
     color: text,
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: AGENT_TYPE.prose.size,
+    lineHeight: AGENT_TYPE.prose.lineHeight,
     marginTop: 0,
     marginBottom: 10,
   };
@@ -115,7 +117,7 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
     },
     code: {
       fontFamily: 'monospace',
-      fontSize: 13,
+      fontSize: AGENT_TYPE.mono.size,
       color: link,
       backgroundColor: codeBackground,
       borderColor: border,
@@ -123,8 +125,8 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
     codeBlock: {
       color: text,
       fontFamily: 'monospace',
-      fontSize: 12.5,
-      lineHeight: 18,
+      fontSize: AGENT_TYPE.mono.size,
+      lineHeight: AGENT_TYPE.mono.lineHeight,
       backgroundColor: codeBackground,
       borderColor: border,
       borderWidth: StyleSheet.hairlineWidth,

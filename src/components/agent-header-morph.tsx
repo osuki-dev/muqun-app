@@ -11,6 +11,7 @@ import Animated, {
 
 import { StatusDot } from '@/components/status-dot';
 import { PRESET, timing } from '@/lib/motion';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
  * The two morphs the agent header is built from.
@@ -219,12 +220,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   workspacePillName: {
-    fontSize: 13,
+    fontSize: AGENT_TYPE.meta.size,
     fontWeight: '700',
     includeFontPadding: false,
   },
   workspacePillPath: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     flexShrink: 1,
     includeFontPadding: false,
   },

@@ -119,6 +119,7 @@ import { AgentFormCard } from './agent-form-card';
 import { AgentComposer } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -2488,10 +2489,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptySubtitle: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
     textAlign: 'center',
     maxWidth: 260,
-    lineHeight: 18,
+    lineHeight: AGENT_TYPE.mono.lineHeight,
   },
   emptyActionsRow: {
     flexDirection: 'row',
@@ -2518,7 +2519,7 @@ const styles = StyleSheet.create({
   },
   emptyNewBtnText: {
     fontWeight: '600',
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   thinkingRow: {
     alignSelf: 'flex-start',
@@ -2551,7 +2552,7 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
   },
   workspacePillPath: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     flexShrink: 1,
   },
   statusNotice: {
@@ -2612,6 +2613,6 @@ const styles = StyleSheet.create({
   },
   yoloBannerHint: {
     flexShrink: 1,
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
 });

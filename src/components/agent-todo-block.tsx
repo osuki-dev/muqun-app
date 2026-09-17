@@ -15,6 +15,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import type { TodoItem } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 export interface AgentTodoBlockProps {
   items: readonly TodoItem[];
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   title: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   countBadge: {
     paddingHorizontal: 6,
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   countText: {
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
   },
   headerRight: {
     padding: 2,
@@ -214,8 +215,8 @@ const styles = StyleSheet.create({
   },
   itemText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   itemDoneText: {
     textDecorationLine: 'line-through',

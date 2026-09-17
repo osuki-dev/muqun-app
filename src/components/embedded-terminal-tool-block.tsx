@@ -38,6 +38,7 @@ import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import type { ToolCallState } from '@/lib/agent-protocol';
 import type { ToolKind } from '@/lib/agent-tool-output';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
  * The shell every tool call is drawn in.
@@ -291,19 +292,19 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   toolName: {
-    fontSize: 11.5,
+    fontSize: AGENT_TYPE.meta.size,
   },
   target: {
     fontFamily: 'monospace',
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     flexShrink: 1,
   },
   caption: {
     fontFamily: 'monospace',
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
   },
   duration: {
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
     fontVariant: ['tabular-nums'],
   },
   chipRow: {
@@ -320,12 +321,12 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   badgeText: {
-    fontSize: 10,
+    fontSize: AGENT_TYPE.micro.size,
     fontWeight: '600',
   },
   errorText: {
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   actionRow: {
     flexDirection: 'row',

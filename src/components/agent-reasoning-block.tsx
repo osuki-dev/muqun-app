@@ -8,6 +8,7 @@ import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { fadeIn, timing } from '@/lib/motion';
 import { formatThoughtDuration } from '@/lib/agent-reasoning';
 import { withAlpha } from '@/lib/color';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 /** How often a live count updates. A tenth of a second reads as a stopwatch. */
 const TICK_MS = 100;
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   title: {
-    fontSize: 11.5,
+    fontSize: AGENT_TYPE.meta.size,
   },
   chevron: {
     opacity: 0.75,
@@ -160,8 +161,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1.5,
   },
   reasoningText: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.mono.lineHeight,
     fontStyle: 'italic',
   },
 });
