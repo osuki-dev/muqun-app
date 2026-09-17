@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { ScreenHeader } from '@/components/screen-header';
+import { EdgeFade } from '@/components/edge-fade';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import { GlassChrome } from '@/components/glass-chrome';
@@ -19,13 +20,14 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { ModelRef } from '@/lib/agent-session';
 
 /**
- * The header's height above the content, matching Settings and every other
- * pushed screen so the glass pill sits at the same altitude.
+ * The header's height above the content, with generous clearance so the glass pill
+ * navigation never presses down on the scrolling content.
  */
-const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8;
+const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
 
-function formatModelName(modelId?: string): string {
-  if (!modelId) return 'Model';
+function formatModelName(model?: ModelRef): string {
+  if (!model?.model_id) return 'Model';
+  const modelId = model.model_id;
   const known: Record<string, string> = {
     'gemini-3.8-flash': 'Gemini 3.8 Flash',
     'deepseek-v4.1-flash': 'DeepSeek V4.1 Flash',
@@ -37,11 +39,21 @@ function formatModelName(modelId?: string): string {
     'muse-spark-1.3-contributor-free': 'Muse Spark 1.3',
     'ling-3.0-flash-fin-free': 'Ling 3.0 Flash',
   };
-  if (known[modelId]) return known[modelId];
-  return modelId
-    .split(/[-_]/)
-    .map((w) => (w.length <= 3 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
-    .join(' ');
+  const baseName =
+    known[modelId] ||
+    modelId
+      .split(/[-_]/)
+      .map((w) => (w.length <= 3 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1)))
+      .join(' ');
+
+  if (model.variant) {
+    const varLabel =
+      model.variant === 'xhigh'
+        ? 'Max'
+        : model.variant.charAt(0).toUpperCase() + model.variant.slice(1);
+    return `${baseName} • ${varLabel}`;
+  }
+  return baseName;
 }
 
 /**
@@ -66,7 +78,7 @@ export default function AgentScreen() {
   const [activeModel, setActiveModel] = useState<ModelRef | undefined>(undefined);
   const openModelSheetRef = useRef<(() => void) | null>(null);
 
-  const modelDisplayName = formatModelName(activeModel?.model_id);
+  const modelDisplayName = formatModelName(activeModel);
 
   return (
     <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
@@ -80,6 +92,13 @@ export default function AgentScreen() {
         bottomInset={insets.bottom}
         onModelChange={setActiveModel}
         openModelSheetRef={openModelSheetRef}
+      />
+
+      {/* Top glass fade for smooth dissolve under nav header */}
+      <EdgeFade
+        edge="top"
+        color={theme.colors.background}
+        style={[styles.topFade, { height: insets.top + HEADER_INSET + 20 }]}
       />
 
       {/* Last and absolutely positioned so content scrolls under the glass,
@@ -115,7 +134,14 @@ export default function AgentScreen() {
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  header: { position: 'absolute', top: 0, left: 0, right: 0 },
+  topFade: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+  },
+  header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2 },
   modelHeaderPill: {
     height: NAV_HEADER_CONTROL_SIZE,
     borderRadius: appChrome.radius.navigationPill,

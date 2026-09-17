@@ -294,78 +294,154 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                           const isFree = isFreeModel(mod);
                           const isLast = index === section.models.length - 1;
 
+                          const hasVariants = mod.variants && mod.variants.length > 0;
+
                           return (
-                            <PressableScale
+                            <View
                               key={`${mod.provider_id}:${mod.id}`}
-                              testID={`agent-model-row-${mod.id}`}
-                              accessibilityLabel={`${mod.name || mod.id}${isFree ? ' Free' : ''}`}
-                              onPress={() => {
-                                onSelectModel({
-                                  provider_id: mod.provider_id,
-                                  model_id: mod.id,
-                                });
-                              }}
                               style={[
-                                styles.modelRow,
-                                isSelected && { backgroundColor: `${theme.colors.primary}14` },
+                                styles.modelRowContainer,
                                 !isLast && {
                                   borderBottomWidth: StyleSheet.hairlineWidth,
                                   borderBottomColor: theme.colors.border,
                                 },
+                                isSelected && { backgroundColor: `${theme.colors.primary}12` },
                               ]}>
-                              <View style={styles.modelRowLeft}>
-                                <View
-                                  style={[
-                                    styles.indicatorDot,
-                                    {
-                                      backgroundColor: isSelected
-                                        ? theme.colors.primary
-                                        : 'transparent',
-                                    },
-                                  ]}
-                                />
-                                <Text
-                                  variant="bodySmall"
-                                  weight={isSelected ? 'semibold' : 'regular'}
-                                  color={isSelected ? theme.colors.primary : theme.colors.text}
-                                  numberOfLines={1}
-                                  style={styles.modelNameText}>
-                                  {mod.name || mod.id}
-                                </Text>
-                              </View>
-
-                              <View style={styles.modelRowRight}>
-                                {isFree ? (
+                              <PressableScale
+                                testID={`agent-model-row-${mod.id}`}
+                                accessibilityLabel={isFree ? `${mod.name || mod.id} ${t`Free`}` : (mod.name || mod.id)}
+                                onPress={() => {
+                                  const defaultVariant =
+                                    mod.variants?.find((v) => v.id === 'high')?.id ??
+                                    mod.variants?.[0]?.id;
+                                  onSelectModel({
+                                    provider_id: mod.provider_id,
+                                    model_id: mod.id,
+                                    variant: isSelected ? selectedModel?.variant : defaultVariant,
+                                  });
+                                }}
+                                style={styles.modelRow}>
+                                <View style={styles.modelRowLeft}>
                                   <View
                                     style={[
-                                      styles.freeBadge,
-                                      { backgroundColor: `${theme.colors.primary}18` },
-                                    ]}>
+                                      styles.indicatorDot,
+                                      {
+                                        backgroundColor: isSelected
+                                          ? theme.colors.primary
+                                          : 'transparent',
+                                      },
+                                    ]}
+                                  />
+                                  <View style={styles.modelNameCol}>
+                                    <Text
+                                      variant="bodySmall"
+                                      weight={isSelected ? 'semibold' : 'regular'}
+                                      color={isSelected ? theme.colors.primary : theme.colors.text}
+                                      numberOfLines={1}
+                                      style={styles.modelNameText}>
+                                      {mod.name || mod.id}
+                                    </Text>
+                                    {mod.limit?.context ? (
+                                      <Text variant="caption" color={theme.colors.textMuted} style={styles.limitText}>
+                                        {mod.limit.context >= 1_000_000
+                                          ? `${(mod.limit.context / 1_000_000).toFixed(1)}M context`
+                                          : `${(mod.limit.context / 1000).toFixed(0)}k context`}
+                                      </Text>
+                                    ) : null}
+                                  </View>
+                                </View>
+
+                                <View style={styles.modelRowRight}>
+                                  {isFree ? (
+                                    <View
+                                      style={[
+                                        styles.freeBadge,
+                                        { backgroundColor: `${theme.colors.primary}18` },
+                                      ]}>
+                                      <Text
+                                        variant="caption"
+                                        weight="semibold"
+                                        color={theme.colors.primary}
+                                        style={styles.freeBadgeText}>
+                                        {t`Free`}
+                                      </Text>
+                                    </View>
+                                  ) : null}
+
+                                  {section.isRecent ? (
                                     <Text
                                       variant="caption"
-                                      weight="semibold"
-                                      color={theme.colors.primary}
-                                      style={styles.freeBadgeText}>
-                                      {t`Free`}
+                                      color={theme.colors.textMuted}
+                                      numberOfLines={1}
+                                      style={styles.providerTagText}>
+                                      {formatProviderName(mod.provider_id)}
                                     </Text>
-                                  </View>
-                                ) : null}
+                                  ) : null}
 
-                                {section.isRecent ? (
-                                  <Text
-                                    variant="caption"
-                                    color={theme.colors.textMuted}
-                                    numberOfLines={1}
-                                    style={styles.providerTagText}>
-                                    {formatProviderName(mod.provider_id)}
+                                  {isSelected ? (
+                                    <Check size={14} color={theme.colors.primary} strokeWidth={2.5} />
+                                  ) : null}
+                                </View>
+                              </PressableScale>
+
+                              {/* Reasoning Effort Variant Selector */}
+                              {isSelected && hasVariants ? (
+                                <View style={styles.variantSelectorBlock}>
+                                  <Text variant="caption" color={theme.colors.textMuted} style={styles.variantLabel}>
+                                    {t`Reasoning:`}
                                   </Text>
-                                ) : null}
-
-                                {isSelected ? (
-                                  <Check size={14} color={theme.colors.primary} strokeWidth={2.5} />
-                                ) : null}
-                              </View>
-                            </PressableScale>
+                                  <View style={styles.variantChipsContainer}>
+                                    {mod.variants!.map((v) => {
+                                      const activeVariant = selectedModel?.variant || 'high';
+                                      const isVarActive = activeVariant === v.id;
+                                      const label =
+                                        v.id === 'minimal'
+                                          ? t`Minimal`
+                                          : v.id === 'low'
+                                            ? t`Low`
+                                            : v.id === 'medium'
+                                              ? t`Medium`
+                                              : v.id === 'high'
+                                                ? t`High`
+                                                : v.id === 'xhigh' || v.id === 'max'
+                                                  ? t`Max`
+                                                  : v.id.charAt(0).toUpperCase() + v.id.slice(1);
+                                      return (
+                                        <PressableScale
+                                          key={v.id}
+                                          testID={`agent-model-variant-${v.id}`}
+                                          onPress={() => {
+                                            onSelectModel({
+                                              provider_id: mod.provider_id,
+                                              model_id: mod.id,
+                                              variant: v.id,
+                                            });
+                                          }}
+                                          style={[
+                                            styles.variantChip,
+                                            isVarActive
+                                              ? {
+                                                  backgroundColor: theme.colors.primary,
+                                                  borderColor: theme.colors.primary,
+                                                }
+                                              : {
+                                                  backgroundColor: surfaceBackground(theme.colors.surface),
+                                                  borderColor: theme.colors.border,
+                                                },
+                                          ]}>
+                                          <Text
+                                            variant="caption"
+                                            weight={isVarActive ? 'semibold' : 'regular'}
+                                            color={isVarActive ? '#fff' : theme.colors.text}>
+                                            {label}
+                                          </Text>
+                                        </PressableScale>
+                                      );
+                                    })}
+                                  </View>
+                                </View>
+                              ) : null}
+                            </View>
                           );
                         })}
                       </View>
@@ -523,14 +599,51 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   freeBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   freeBadgeText: {
     fontSize: 10,
+    fontWeight: '600',
   },
   providerTagText: {
     fontSize: 11,
+  },
+  modelRowContainer: {
+    overflow: 'hidden',
+  },
+  modelNameCol: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+  },
+  limitText: {
+    fontSize: 11,
+  },
+  variantSelectorBlock: {
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+    paddingTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  variantLabel: {
+    fontSize: 11,
+  },
+  variantChipsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  variantChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: 1,
   },
 });

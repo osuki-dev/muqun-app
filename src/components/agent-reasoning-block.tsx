@@ -1,11 +1,11 @@
 import { useState, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Trans } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react/macro';
 import { Sparkles, ChevronDown, ChevronRight } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeIn, fadeOut } from '@/lib/motion';
+import { withAlpha } from '@/lib/color';
 
 export interface AgentReasoningBlockProps {
   text: string;
@@ -18,52 +18,40 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   durationMs,
   defaultExpanded = false,
 }: AgentReasoningBlockProps) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const durationStr = durationMs ? `${(durationMs / 1000).toFixed(1)}s` : null;
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: surfaceBackground(theme.colors.surface),
-          borderColor: theme.colors.border,
-        },
-      ]}>
+    <View style={styles.container}>
       <Pressable
         testID="agent-reasoning-accordion"
-        accessibilityLabel={expanded ? 'Collapse reasoning' : 'Expand reasoning'}
+        accessibilityLabel={expanded ? t`Collapse reasoning` : t`Expand reasoning`}
         hitSlop={6}
         onPress={() => setExpanded((prev) => !prev)}
-        style={({ pressed }) => [styles.header, pressed && { opacity: 0.7 }]}>
-        <View style={styles.headerLeft}>
-          <Sparkles size={14} color={theme.colors.primary} />
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.title}>
-            <Trans>Reasoning</Trans>
-          </Text>
-          {durationStr ? (
-            <View style={[styles.durationBadge, { backgroundColor: `${theme.colors.primary}18` }]}>
-              <Text variant="caption" color={theme.colors.primary} style={styles.durationText}>
-                {durationStr}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.headerRight}>
-          {expanded ? (
-            <ChevronDown size={14} color={theme.colors.textMuted} />
-          ) : (
-            <ChevronRight size={14} color={theme.colors.textMuted} />
-          )}
-        </View>
+        style={({ pressed }) => [
+          styles.headerPill,
+          { backgroundColor: withAlpha(theme.colors.primary, 0.08) },
+          pressed && { opacity: 0.7 },
+        ]}>
+        <Sparkles size={12} color={theme.colors.primary} />
+        <Text variant="caption" weight="medium" color={theme.colors.primary} style={styles.title}>
+          {durationStr ? t`Thought for ${durationStr}` : t`Thought`}
+        </Text>
+        {expanded ? (
+          <ChevronDown size={12} color={theme.colors.primary} style={styles.chevron} />
+        ) : (
+          <ChevronRight size={12} color={theme.colors.primary} style={styles.chevron} />
+        )}
       </Pressable>
 
       {expanded ? (
-        <Animated.View entering={fadeIn()} exiting={fadeOut()} style={styles.body}>
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOut('micro')}
+          style={[styles.body, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
           <Text
             selectable
             variant="caption"
@@ -79,47 +67,37 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
     marginVertical: 4,
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-  },
-  headerLeft: {
+  headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    alignSelf: 'flex-start',
   },
   title: {
-    fontWeight: '600',
     fontSize: 11.5,
   },
-  durationBadge: {
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  durationText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  headerRight: {
-    padding: 2,
+  chevron: {
+    opacity: 0.75,
   },
   body: {
-    paddingHorizontal: 10,
-    paddingBottom: 8,
-    paddingTop: 2,
+    marginLeft: 10,
+    marginTop: 6,
+    marginBottom: 4,
+    paddingLeft: 12,
+    borderLeftWidth: 1.5,
   },
   reasoningText: {
-    fontSize: 11.5,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 18,
     fontStyle: 'italic',
   },
 });
+

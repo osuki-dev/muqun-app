@@ -1,7 +1,7 @@
 import { useState, useMemo, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import {
   CheckSquare,
   CheckCircle2,
@@ -26,6 +26,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
   title,
   defaultExpanded,
 }: AgentTodoBlockProps) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
 
@@ -33,10 +34,10 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
   const completedCount = useMemo(() => items.filter((it) => it.done).length, [items]);
   const allCompleted = total > 0 && completedCount === total;
 
-  // Auto-expand if not all completed, or respect defaultExpanded
+  // Respect defaultExpanded or default to collapsed
   const [expanded, setExpanded] = useState(() => {
     if (defaultExpanded !== undefined) return defaultExpanded;
-    return !allCompleted;
+    return false;
   });
 
   if (total === 0) return null;
@@ -52,11 +53,12 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
           borderColor: allCompleted ? `${theme.colors.primary}44` : theme.colors.border,
+          borderRadius: expanded ? 18 : 999,
         },
       ]}>
       <Pressable
         testID="agent-todo-accordion"
-        accessibilityLabel={expanded ? 'Collapse tasks' : 'Expand tasks'}
+        accessibilityLabel={expanded ? t`Collapse tasks` : t`Expand tasks`}
         hitSlop={6}
         onPress={() => setExpanded((prev) => !prev)}
         style={({ pressed }) => [styles.header, pressed && { opacity: 0.7 }]}>
@@ -162,6 +164,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
 const styles = StyleSheet.create({
   container: {
     borderRadius: 8,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     marginVertical: 4,

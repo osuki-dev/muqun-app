@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   AlertCircle,
-  CheckCircle2,
   Loader2,
 } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -28,13 +27,83 @@ export interface EmbeddedTerminalProps {
   defaultExpanded?: boolean;
 }
 
+interface ParsedToolOutput {
+  stdout: string;
+  exitCode?: number;
+}
+
+function parseToolOutput(raw: unknown): ParsedToolOutput {
+  if (!raw) return { stdout: '' };
+
+  let data: unknown = raw;
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (
+      (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+      (trimmed.startsWith('{') && trimmed.endsWith('}'))
+    ) {
+      try {
+        data = JSON.parse(trimmed);
+      } catch {
+        // Keep as raw string
+      }
+    }
+  }
+
+  // If data is array (OpenCode's standard tool output: [{"text": "...", "type": "text"}, {"text": "Command exited with code 0.", "type": "text"}])
+  if (Array.isArray(data)) {
+    let stdout = '';
+    let exitCode: number | undefined;
+
+    for (const item of data) {
+      const text =
+        typeof item === 'object' && item && 'text' in item
+          ? String((item as { text: unknown }).text)
+          : typeof item === 'string'
+            ? item
+            : '';
+
+      const exitMatch = text.match(/Command exited with code (\d+)/i);
+      if (exitMatch) {
+        exitCode = parseInt(exitMatch[1], 10);
+      } else if (!stdout) {
+        // First text content is command stdout!
+        stdout = text;
+      } else {
+        stdout += `\n${text}`;
+      }
+    }
+
+    return {
+      stdout: stdout || (data.length > 0 ? JSON.stringify(data, null, 2) : ''),
+      exitCode,
+    };
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    const rec = data as Record<string, unknown>;
+    if (typeof rec.stdout === 'string') {
+      return {
+        stdout: rec.stdout,
+        exitCode: typeof rec.exitCode === 'number' ? rec.exitCode : undefined,
+      };
+    }
+    if (typeof rec.output === 'string') return parseToolOutput(rec.output);
+    if (Array.isArray(rec.content)) return parseToolOutput(rec.content);
+    if (typeof rec.text === 'string') return { stdout: rec.text };
+    return { stdout: JSON.stringify(data, null, 2) };
+  }
+
+  return { stdout: String(data) };
+}
+
 export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock({
   toolName,
   command,
   input,
   output,
   status,
-  defaultExpanded = true,
+  defaultExpanded = false,
 }: EmbeddedTerminalProps) {
   const theme = useThemeTokens();
   const { t } = useLingui();
@@ -42,7 +111,18 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [copied, setCopied] = useState(false);
 
-  // Extract display command
+  const isMcpTool = useMemo(() => {
+    const lower = toolName.toLowerCase();
+    return (
+      lower.includes('_') ||
+      lower.startsWith('mcp') ||
+      lower.includes('chrome') ||
+      lower.includes('playwright') ||
+      lower.includes('gitea')
+    );
+  }, [toolName]);
+
+  // Extract display command or file path
   const displayCommand = useMemo(() => {
     if (command) return command;
     if (typeof input === 'string') return input;
@@ -50,24 +130,22 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       const rec = input as Record<string, unknown>;
       if (typeof rec.command === 'string') return rec.command;
       if (typeof rec.cmd === 'string') return rec.cmd;
+      if (typeof rec.path === 'string') return rec.path;
+      if (typeof rec.filePath === 'string') return rec.filePath;
+      if (typeof rec.file === 'string') return rec.file;
       if (typeof rec.query === 'string') return rec.query;
       return JSON.stringify(input, null, 2);
     }
     return '';
   }, [command, input]);
 
-  // Extract output text
-  const outputText = useMemo(() => {
-    if (typeof output === 'string') return output;
-    if (output && typeof output === 'object') {
-      const rec = output as Record<string, unknown>;
-      if (typeof rec.output === 'string') return rec.output;
-      if (typeof rec.stdout === 'string') return rec.stdout;
-      if (typeof rec.content === 'string') return rec.content;
-      return JSON.stringify(output, null, 2);
-    }
-    return '';
+  // Extract output text and unwrap structured JSON wrappers
+  const parsedOutput = useMemo(() => {
+    return parseToolOutput(output);
   }, [output]);
+
+  const outputText = parsedOutput.stdout;
+  const exitCode = parsedOutput.exitCode;
 
   const handleCopy = async () => {
     const textToCopy = displayCommand + (outputText ? `\n\n${outputText}` : '');
@@ -89,11 +167,11 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       style={[
         styles.container,
         {
-          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+          backgroundColor: surfaceBackground(theme.colors.surface),
           borderColor: theme.colors.border,
         },
       ]}>
-      {/* Header bar */}
+      {/* Header bar: minimal, softened, no long command dump */}
       <PressableScale
         onPress={() => setExpanded((prev) => !prev)}
         style={[
@@ -101,51 +179,68 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
           { borderBottomColor: expanded ? theme.colors.border : 'transparent' },
         ]}>
         <View style={styles.headerLeft}>
-          <View style={[styles.statusIconBox, { backgroundColor: `${statusColor}18` }]}>
-            {status === 'running' ? (
-              <Loader2 size={13} color={statusColor} />
-            ) : status === 'completed' ? (
-              <CheckCircle2 size={13} color={statusColor} />
-            ) : (
-              <AlertCircle size={13} color={statusColor} />
-            )}
-          </View>
-          <View style={styles.titleColumn}>
-            <View style={styles.titleRow}>
-              <Terminal size={13} color={theme.colors.textMuted} style={styles.terminalIcon} />
-              <Text variant="caption" color={theme.colors.text} style={styles.toolBadge}>
-                {toolName}
-              </Text>
-            </View>
-            {displayCommand ? (
+          <Terminal size={13} color={theme.colors.textMuted} style={styles.terminalIcon} />
+          <Text variant="caption" weight="medium" color={theme.colors.text} style={styles.toolBadge}>
+            {toolName}
+          </Text>
+          {isMcpTool ? (
+            <View style={[styles.mcpBadge, { backgroundColor: `${theme.colors.primary}18` }]}>
               <Text
                 variant="caption"
-                color={theme.colors.textMuted}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={styles.commandPreview}>
-                {displayCommand}
+                weight="semibold"
+                color={theme.colors.primary}
+                style={styles.mcpBadgeText}>
+                MCP
               </Text>
-            ) : null}
-          </View>
+            </View>
+          ) : null}
+          {status === 'running' ? (
+            <Loader2 size={11} color={statusColor} />
+          ) : status === 'failed' ? (
+            <AlertCircle size={11} color={statusColor} />
+          ) : null}
         </View>
 
         <View style={styles.headerRight}>
-          <PressableScale
-            onPress={handleCopy}
-            accessibilityLabel={t`Copy command and output`}
-            style={styles.actionButton}>
-            {copied ? (
-              <Check size={14} color={theme.colors.success} />
-            ) : (
-              <Copy size={14} color={theme.colors.textMuted} />
-            )}
-          </PressableScale>
+          {exitCode !== undefined ? (
+            <View
+              style={[
+                styles.exitCodeBadge,
+                {
+                  backgroundColor:
+                    exitCode === 0
+                      ? `${theme.colors.success ?? '#22c55e'}18`
+                      : `${theme.colors.danger}18`,
+                },
+              ]}>
+              <Text
+                variant="caption"
+                weight="bold"
+                color={exitCode === 0 ? (theme.colors.success ?? '#22c55e') : theme.colors.danger}
+                style={styles.exitCodeText}>
+                {`exit ${exitCode}`}
+              </Text>
+            </View>
+          ) : null}
+
+          {expanded ? (
+            <PressableScale
+              onPress={handleCopy}
+              accessibilityLabel={t`Copy command and output`}
+              style={styles.actionButton}>
+              {copied ? (
+                <Check size={13} color={theme.colors.success} />
+              ) : (
+                <Copy size={13} color={theme.colors.textMuted} />
+              )}
+            </PressableScale>
+          ) : null}
+
           <View style={styles.chevronBox}>
             {expanded ? (
-              <ChevronDown size={16} color={theme.colors.textMuted} />
+              <ChevronDown size={13} color={theme.colors.textMuted} />
             ) : (
-              <ChevronRight size={16} color={theme.colors.textMuted} />
+              <ChevronRight size={13} color={theme.colors.textMuted} />
             )}
           </View>
         </View>
@@ -188,16 +283,17 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    marginVertical: 4,
+    marginVertical: 3,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
@@ -205,12 +301,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    gap: 8,
+    gap: 6,
   },
   statusIconBox: {
     width: 22,
     height: 22,
-    borderRadius: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -228,6 +325,21 @@ const styles = StyleSheet.create({
   toolBadge: {
     fontWeight: '600',
     fontSize: 12,
+  },
+  mcpBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+  },
+  exitCodeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+  },
+  exitCodeText: {
+    fontSize: 10.5,
   },
   commandPreview: {
     fontFamily: 'monospace',
@@ -252,7 +364,8 @@ const styles = StyleSheet.create({
   commandLineRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 4,
+    borderRadius: 8,
+    borderCurve: 'continuous',
     padding: 6,
     marginBottom: 6,
   },
@@ -280,5 +393,9 @@ const styles = StyleSheet.create({
   runningText: {
     fontStyle: 'italic',
     fontSize: 11,
+  },
+  mcpBadgeText: {
+    fontSize: 9,
+    letterSpacing: 0.5,
   },
 });

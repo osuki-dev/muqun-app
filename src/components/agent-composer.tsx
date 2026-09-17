@@ -16,13 +16,17 @@ import {
   Cpu,
   GitCommit,
   GitFork,
+  Inbox,
   Layers,
   Paperclip,
   Plus,
   Sparkles,
   Square,
+  Zap,
 } from 'lucide-react-native';
-import Animated from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
@@ -58,6 +62,15 @@ import {
   type TokensUsage,
 } from '@/lib/agent-session';
 
+function resolveSessionTitle(session: AgentSessionInfo | undefined, fallback: string): string {
+  if (!session) return fallback;
+  const raw = session.title;
+  if (!raw || raw.startsWith('ses_') || raw === session.asid) {
+    return fallback;
+  }
+  return raw;
+}
+
 export interface AgentComposerProps {
   running: boolean;
   sessions?: AgentSessionInfo[];
@@ -70,7 +83,8 @@ export interface AgentComposerProps {
   bottomInset?: number;
   tasks?: TodoItem[];
   tokens?: TokensUsage;
-  onSend: (text: string, attachments?: string[]) => Promise<void>;
+  cost?: number;
+  onSend: (text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<void>;
   onAbort: () => Promise<void>;
   onSelectSession?: (asid: string) => void;
   onSelectAgentMode?: (agent: string) => void;
@@ -80,7 +94,9 @@ export interface AgentComposerProps {
   onOpenDiffSheet: () => void;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
+  onPressTokens?: () => void;
   onRefresh?: () => void;
+  injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
 }
 
 export const AgentComposer = memo(function AgentComposer({
@@ -95,6 +111,7 @@ export const AgentComposer = memo(function AgentComposer({
   bottomInset = 0,
   tasks,
   tokens,
+  cost,
   onSend,
   onAbort,
   onSelectSession,
@@ -105,7 +122,9 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenDiffSheet,
   onOpenSessionsSheet,
   onOpenTasksSheet,
+  onPressTokens,
   onRefresh,
+  injectDraftRef,
 }: AgentComposerProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -113,6 +132,7 @@ export const AgentComposer = memo(function AgentComposer({
   const surfaceBackground = useSurfaceBackground();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
 
@@ -120,10 +140,16 @@ export const AgentComposer = memo(function AgentComposer({
     if (!tokens) return null;
     const total = tokens.input + tokens.output + (tokens.reasoning ?? 0);
     if (total <= 0) return null;
-    if (total >= 1_000_000) return `${(total / 1_000_000).toFixed(1)}M tok`;
-    if (total >= 1_000) return `${(total / 1_000).toFixed(1)}k tok`;
-    return `${total} tok`;
-  }, [tokens]);
+    let tokStr = `${total}`;
+    if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
+    else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
+
+    const costStr =
+      cost === undefined || cost === null || cost === 0
+        ? t`Free`
+        : `$${cost.toFixed(2)}`;
+    return `${tokStr} • ${costStr}`;
+  }, [tokens, cost, t]);
 
   const inputRef = useRef<TextInput>(null);
   const [caret, setCaret] = useState<number | undefined>(undefined);
@@ -264,6 +290,15 @@ export const AgentComposer = memo(function AgentComposer({
     [attachmentUploads, showToast, t]
   );
 
+  useEffect(() => {
+    if (injectDraftRef) {
+      injectDraftRef.current = (draftText: string) => {
+        setText(draftText);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      };
+    }
+  }, [injectDraftRef]);
+
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();
     const hasAttachments = attachmentUploads.attachments.length > 0;
@@ -284,13 +319,17 @@ export const AgentComposer = memo(function AgentComposer({
         }
         uploadedFilePaths = paths;
       }
-      await onSend(trimmed, uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined);
+      await onSend(
+        trimmed,
+        uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined,
+        running ? deliveryMode : undefined
+      );
       setText('');
       attachmentUploads.clearAttachments();
     } finally {
       setSending(false);
     }
-  }, [text, attachmentUploads, sending, onSend, showToast, t]);
+  }, [text, attachmentUploads, sending, onSend, showToast, t, running, deliveryMode]);
 
   // Resolve available agents (workspace agents + defaults)
   const availableAgents =
@@ -317,20 +356,16 @@ export const AgentComposer = memo(function AgentComposer({
   const subagents = rootSessionId ? sessions.filter((s) => s.parent_id === rootSessionId) : [];
 
   const rootAgentName = rootSession?.agent || selectedAgent || 'build';
-
-  const rootDisplayTitle = (() => {
-    if (!rootSession) return t`New Session`;
-    const raw = rootSession.title;
-    if (!raw || raw.startsWith('ses_') || raw === rootSession.asid) {
-      return t`New Session`;
-    }
-    return raw;
-  })();
-
+  const rootDisplayTitle = resolveSessionTitle(rootSession, t`New Session`);
   const isRootActive = !activeAsid || activeAsid === rootSession?.asid;
 
+  const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const composerKeyboardStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: keyboardOffset.value }],
+  }));
+
   return (
-    <View style={styles.dockOuter}>
+    <Animated.View style={[styles.dockOuter, composerKeyboardStyle]}>
       <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
 
       {/* Dismiss backdrop for popups */}
@@ -439,13 +474,7 @@ export const AgentComposer = memo(function AgentComposer({
             {subagents.map((sub) => {
               const isSubActive = sub.asid === activeAsid;
               const subAgentName = sub.agent || 'subagent';
-              const subDisplayTitle = (() => {
-                const raw = sub.title;
-                if (!raw || raw.startsWith('ses_') || raw === sub.asid) {
-                  return `@${subAgentName}`;
-                }
-                return raw;
-              })();
+              const subDisplayTitle = resolveSessionTitle(sub, `@${subAgentName}`);
               return (
                 <PressableScale
                   key={sub.asid}
@@ -493,20 +522,17 @@ export const AgentComposer = memo(function AgentComposer({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.actionRowContent}
             style={styles.actionRowScroll}>
-            {/* All Sessions Button */}
+            {/* All Sessions Button (Icon-only) */}
             {onOpenSessionsSheet ? (
               <PressableScale
                 testID="agent-composer-sessions-btn"
                 onPress={onOpenSessionsSheet}
                 accessibilityLabel={t`All Sessions`}
                 style={[
-                  styles.actionBtnWithLabel,
+                  styles.actionBtn,
                   { backgroundColor: surfaceBackground(chromeGlass) },
                 ]}>
-                <Layers size={14} color={chromeText} />
-                <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                  {t`Sessions`}
-                </Text>
+                <Layers size={16} color={chromeText} />
               </PressableScale>
             ) : null}
 
@@ -526,7 +552,12 @@ export const AgentComposer = memo(function AgentComposer({
               testID="agent-composer-mode-btn"
               onPress={() => {
                 setAttachmentMenuOpen(false);
-                setModeMenuOpen((prev) => !prev);
+                setModeMenuOpen(false);
+                if (onOpenModeSheet) {
+                  onOpenModeSheet();
+                } else {
+                  setModeMenuOpen((prev) => !prev);
+                }
               }}
               accessibilityLabel={t`Select agent mode`}
               style={[
@@ -566,12 +597,14 @@ export const AgentComposer = memo(function AgentComposer({
               </PressableScale>
             ) : null}
 
-            {/* OpenCode Session Tokens Pill */}
+            {/* OpenCode Session Tokens & Cost Pill */}
             {tokenDisplayStr ? (
               <PressableScale
                 testID="agent-composer-tokens-pill"
                 onPress={() => {
-                  if (tokens) {
+                  if (onPressTokens) {
+                    onPressTokens();
+                  } else if (tokens) {
                     showToast({
                       variant: 'info',
                       title: t`Session Tokens`,
@@ -579,7 +612,7 @@ export const AgentComposer = memo(function AgentComposer({
                     });
                   }
                 }}
-                accessibilityLabel={t`Tokens usage`}
+                accessibilityLabel={t`Tokens usage and cost`}
                 style={[
                   styles.actionBtnWithLabel,
                   { backgroundColor: surfaceBackground(chromeGlass) },
@@ -607,6 +640,58 @@ export const AgentComposer = memo(function AgentComposer({
                 ]}>
                 <GitCommit size={15} color={theme.colors.primary} />
                 <View style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]} />
+              </PressableScale>
+            ) : null}
+
+            {running ? (
+              <PressableScale
+                testID="agent-composer-delivery-btn"
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
+                }}
+                accessibilityLabel={
+                  deliveryMode === 'steer'
+                    ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
+                    : t`Delivery mode: Queue. Tap to switch to Steer.`
+                }
+                style={[
+                  styles.actionBtnWithLabel,
+                  {
+                    backgroundColor:
+                      deliveryMode === 'steer'
+                        ? withAlpha(theme.colors.warning, 0.2)
+                        : withAlpha(theme.colors.primary, 0.2),
+                    borderColor:
+                      deliveryMode === 'steer'
+                        ? withAlpha(theme.colors.warning, 0.5)
+                        : withAlpha(theme.colors.primary, 0.5),
+                    borderWidth: 1,
+                  },
+                ]}>
+                {deliveryMode === 'steer' ? (
+                  <>
+                    <Zap size={13} color={theme.colors.warning} />
+                    <Text
+                      variant="caption"
+                      weight="bold"
+                      color={theme.colors.warning}
+                      style={styles.actionBtnLabel}>
+                      <Trans>Steer</Trans>
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Inbox size={13} color={theme.colors.primary} />
+                    <Text
+                      variant="caption"
+                      weight="bold"
+                      color={theme.colors.primary}
+                      style={styles.actionBtnLabel}>
+                      <Trans>Queue</Trans>
+                    </Text>
+                  </>
+                )}
               </PressableScale>
             ) : null}
 
@@ -692,7 +777,11 @@ export const AgentComposer = memo(function AgentComposer({
               onSubmitEditing: handleSend,
             }}
             send={{
-              accessibilityLabel: t`Send message`,
+              accessibilityLabel: running
+                ? deliveryMode === 'steer'
+                  ? t`Steer running agent`
+                  : t`Queue message for agent`
+                : t`Send message`,
               armed: (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) && !sending,
               sending,
               disabled: sending || (!text.trim() && attachmentUploads.attachments.length === 0),
@@ -701,7 +790,7 @@ export const AgentComposer = memo(function AgentComposer({
           />
         </View>
       </GlassChrome>
-    </View>
+    </Animated.View>
   );
 });
 
@@ -771,7 +860,7 @@ const styles = StyleSheet.create({
     gap: 6,
     height: 32,
     paddingHorizontal: 12,
-    borderRadius: 11,
+    borderRadius: 999,
     borderCurve: 'continuous',
   },
   sessionChipAgentBadge: {
@@ -800,7 +889,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
     height: 36,
-    borderRadius: 11,
+    borderRadius: 999,
     borderCurve: 'continuous',
     position: 'relative',
   },
@@ -809,7 +898,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
     height: 36,
-    borderRadius: 11,
+    borderRadius: 999,
     borderCurve: 'continuous',
   },
   keyText: {
@@ -821,8 +910,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     height: 36,
-    paddingHorizontal: 10,
-    borderRadius: 11,
+    paddingHorizontal: 12,
+    borderRadius: 999,
     borderCurve: 'continuous',
   },
   actionBtnLabel: {

@@ -141,6 +141,10 @@ msgstr "{removeLabel}：{label}"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
+#: src/components/agent-context-sheet.tsx
+msgid "$0.00 (Free)"
+msgstr "¥0.00 (無料)"
+
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "SSH で入れるマシン上の Gateway。自身のループバックだけで待ち受けているものでも構いません"
@@ -181,6 +185,10 @@ msgstr "このターミナルを操作するか、コマンドを送ります"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt."
 msgstr "このターミナルを操作するか、エージェントにプロンプトを送ります"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Active Session"
+msgstr "アクティブなセッション"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -279,6 +287,10 @@ msgstr "すべてのモデル"
 #: src/components/settings-servers.tsx
 msgid "All panes"
 msgstr "すべてのパネル"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "All Projects"
+msgstr "すべてのプロジェクト"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -418,6 +430,10 @@ msgstr "アシスタントを起動しました"
 msgid "Attach a file"
 msgstr "ファイルを添付"
 
+#: src/components/agent-workbench.tsx
+msgid "Attachment"
+msgstr "添付ファイル"
+
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "続けるには {authLabel} で認証してください"
@@ -441,6 +457,10 @@ msgstr "認証に失敗しました。もう一度お試しください"
 #: src/components/app-lock-gate.tsx
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "認証を利用できません。もう一度試すか、システム設定を確認してください"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
+msgstr "ファイルの編集、ターミナルコマンドの実行、テストの実行に対応した自律型ソフトウェアエンジニアリング。"
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -506,9 +526,21 @@ msgstr "テーマを探す"
 msgid "Browser"
 msgstr "ブラウザー"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Build"
+msgstr "ビルド (Build)"
+
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "標準"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Cache Read"
+msgstr "キャッシュ読み取り"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Cache Write"
+msgstr "キャッシュ書き込み"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -522,6 +554,7 @@ msgstr "カメラへのアクセスがオフです。写真を撮るには設定
 msgid "Camera access needed"
 msgstr "カメラへのアクセスが必要です"
 
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -638,6 +671,10 @@ msgstr "削除"
 msgid "Clear cache"
 msgstr "キャッシュを削除"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Clear Context (/clear)"
+msgstr "コンテキストをクリア (/clear)"
+
 #: src/components/agent-composer.tsx
 msgid "Clear context and start fresh"
 msgstr "コンテキストを消去して新しく開始"
@@ -658,9 +695,12 @@ msgstr "キャッシュを削除しています"
 msgid "Clearing…"
 msgstr "削除しています…"
 
+#: src/components/agent-context-sheet.tsx
+#: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
@@ -757,6 +797,14 @@ msgstr "コードを読み取りました。Gateway に接続しています"
 msgid "Collapse {0}"
 msgstr "{0} を折りたたむ"
 
+#: src/components/agent-reasoning-block.tsx
+msgid "Collapse reasoning"
+msgstr "推論を折りたたむ"
+
+#: src/components/agent-todo-block.tsx
+msgid "Collapse tasks"
+msgstr "タスクを折りたたむ"
+
 #: src/components/settings-appearance.tsx
 msgid "Color mode"
 msgstr "カラーモード"
@@ -785,6 +833,10 @@ msgstr "コミットしてプッシュ"
 msgid "Compact"
 msgstr "コンパクト"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Compact Context (/compact)"
+msgstr "コンテキストを圧縮 (/compact)"
+
 #: src/components/agent-composer.tsx
 msgid "Compact session history to save context"
 msgstr "セッション履歴を圧縮してコンテキストを節約"
@@ -805,6 +857,10 @@ msgstr "未使用のテーマの削除を確認"
 #: src/components/ssh-host-form.tsx
 msgid "Confirm removing {0}"
 msgstr "{0} の削除を確認"
+
+#: src/components/agent-workbench.tsx
+msgid "Confirm Revert"
+msgstr "復元を確認"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
@@ -873,6 +929,14 @@ msgstr "{address} に接続しています"
 #: src/components/agent-workbench.tsx
 msgid "Connecting to agent engine…"
 msgstr "エージェントエンジンに接続中…"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context & Usage"
+msgstr "コンテキストと使用量"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context Window"
+msgstr "コンテキストウィンドウ"
 
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -995,6 +1059,14 @@ msgstr "コントロール Y、ペースト"
 msgid "Control Z, suspend"
 msgstr "コントロール Z、一時停止"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
+msgstr "対話形式のコーディング支援、一般的なプログラミングの助言、オープンエンドな質問対応。"
+
+#: src/components/agent-workbench.tsx
+msgid "Copied"
+msgstr "コピー完了"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Copied"
@@ -1021,6 +1093,10 @@ msgstr "コマンドと出力をコピー"
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "公開鍵をコピー"
+
+#: src/components/agent-workbench.tsx
+msgid "Copy Text"
+msgstr "テキストをコピー"
 
 #: src/components/simfarm-preview.tsx
 msgid "Copy the command that starts simfarm"
@@ -1230,6 +1306,14 @@ msgstr "現在のパス"
 msgid "Current theme"
 msgstr "現在のテーマ"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Custom"
+msgstr "カスタム"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Custom Directory"
+msgstr "カスタムディレクトリ"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "ターミナルのコマンドとキーの組み合わせをカスタマイズします"
@@ -1267,6 +1351,14 @@ msgstr "この行を削除"
 msgctxt "git file status"
 msgid "Deleted"
 msgstr "削除"
+
+#: src/components/agent-composer.tsx
+msgid "Delivery mode: Queue. Tap to switch to Steer."
+msgstr "送信モード: キュー。タップしてリアルタイム割り込み (Steer) に切替。"
+
+#: src/components/agent-composer.tsx
+msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
+msgstr "送信モード: リアルタイム割り込み (Steer)。タップしてキューに切替。"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
@@ -1390,6 +1482,10 @@ msgstr "各デバイスは {0} 用のトークンをそれぞれ保持します"
 msgid "Edit {0}"
 msgstr "{0} を編集"
 
+#: src/components/agent-workbench.tsx
+msgid "Edit & Reprompt"
+msgstr "編集して再送信"
+
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
 msgstr "ショートカットを編集"
@@ -1440,16 +1536,32 @@ msgstr "エスケープ"
 msgid "Escape twice"
 msgstr "Escape を2回"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Estimated Cost"
+msgstr "推定コスト"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "{0} を展開"
+
+#: src/components/agent-reasoning-block.tsx
+msgid "Expand reasoning"
+msgstr "推論を展開"
+
+#: src/components/agent-todo-block.tsx
+msgid "Expand tasks"
+msgstr "タスクを展開"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "あと {0}:{1} で期限切れ"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Explore"
+msgstr "探索 (Explore)"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export colors"
@@ -1467,6 +1579,10 @@ msgstr "失敗 · {0}"
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
 msgstr "コードベースの探索に特化した高速エージェント"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Fast read-only codebase exploration, symbol search, file discovery, and dependency tracing."
+msgstr "高速な読み取り専用コードベース探索、シンボル検索、ファイル検出、依存関係トレース。"
 
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
@@ -1487,6 +1603,10 @@ msgstr "ファイル"
 #: src/components/file-mention-panel.tsx
 msgid "Files in this workspace"
 msgstr "このワークスペースのファイル"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Filter projects or type path (e.g. /home/...)"
+msgstr "プロジェクトを絞り込むかパスを入力 (例: /home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1512,6 +1632,7 @@ msgstr "ツールの手順を折りたたむ"
 msgid "Forward one word"
 msgstr "1 単語進む"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-model-sheet.tsx
 msgid "Free"
 msgstr "無料"
@@ -1569,6 +1690,10 @@ msgstr "Gateway の URL が正しくありません"
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
 msgstr "このホスト経由で接続する Gateway"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "General"
+msgstr "一般 (General)"
 
 #: src/components/agent-composer.tsx
 msgid "General-purpose agent for researching complex tasks."
@@ -1647,6 +1772,14 @@ msgstr "サーバー一覧を隠す"
 msgid "Hide the simulator"
 msgstr "シミュレータを隠す"
 
+#: src/components/agent-model-sheet.tsx
+msgid "High"
+msgstr "高"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "High-level architectural planning, design proposals, and step-by-step implementation roadmaps."
+msgstr "高レベルのアーキテクチャ設計、提案、段階的な実装ロードマップ。"
+
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "ホーム"
@@ -1696,6 +1829,10 @@ msgstr "ファイルをインポート"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "リンクからインポート"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Input"
+msgstr "入力"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -1807,6 +1944,11 @@ msgstr "キー"
 msgid "Keys are generated on the device and never leave it."
 msgstr "鍵は端末上で生成され、外に出ることはありません"
 
+#. placeholder {0}: filteredProjects.length
+#: src/components/agent-workspace-sheet.tsx
+msgid "Known Projects ({0})"
+msgstr "既知のプロジェクト ({0})"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -1877,6 +2019,10 @@ msgstr "英字"
 #: src/components/settings-appearance.tsx
 msgid "Light"
 msgstr "ライト"
+
+#: src/components/agent-context-sheet.tsx
+msgid "limit"
+msgstr "上限"
 
 #: src/app/commands.tsx
 msgid "List branches"
@@ -1952,6 +2098,10 @@ msgstr "検索中"
 msgid "Looking for a simulator"
 msgstr "シミュレータを探しています"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Low"
+msgstr "低"
+
 #: src/app/explore.tsx
 msgid "Mac mini · Office"
 msgstr "Mac mini · オフィス"
@@ -1984,10 +2134,42 @@ msgstr "確認済みにする"
 msgid "Mascot"
 msgstr "マスコット"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Matching subdirectories:"
+msgstr "一致するサブディレクトリ:"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Max"
+msgstr "最大"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Medium"
+msgstr "中"
+
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "{0} をメンション"
+
+#: src/components/agent-workbench.tsx
+msgid "Message Actions"
+msgstr "メッセージの操作"
+
+#: src/components/agent-workbench.tsx
+msgid "Message copied to clipboard"
+msgstr "メッセージをクリップボードにコピーしました"
+
+#: src/components/agent-workbench.tsx
+msgid "Message options"
+msgstr "メッセージオプション"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Minimal"
+msgstr "最小"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Model & Reasoning"
+msgstr "モデルと推論"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2173,9 +2355,13 @@ msgstr "Gateway がまだありませんか？"
 msgid "No matching commands. Try another word."
 msgstr "一致するコマンドがありません。別の語句で検索してください"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No matching projects found"
+msgstr "一致するプロジェクトが見つかりません"
+
 #: src/components/agent-model-sheet.tsx
 msgid "No models found matching your search."
-msgstr "条件に一致するモデルが見つかりません。"
+msgstr "条件に一致するモデルが見つかりません"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -2451,6 +2637,10 @@ msgstr "{0} のオプション"
 msgid "Other"
 msgstr "その他"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Output"
+msgstr "出力"
+
 #: src/components/launch-intro.tsx
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
 msgstr "出力はプログラム本来の色でターミナルのグリッドに描かれ、キー列は押した瞬間に送信されます。nvim、less、REPL もそのまま動きます"
@@ -2551,6 +2741,10 @@ msgstr "フォトライブラリ"
 msgid "Pinned commit"
 msgstr "固定したコミット"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Plan"
+msgstr "計画 (Plan)"
+
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "失敗した添付ファイルを再試行または削除してください"
@@ -2604,6 +2798,10 @@ msgstr "プレビューして適用"
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Primary"
+msgstr "プライマリ"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "プライバシーポリシー"
@@ -2635,6 +2833,14 @@ msgstr "プル"
 #: src/components/skia-terminal.tsx
 msgid "Pull for earlier output"
 msgstr "引っ張って以前の出力を読み込む"
+
+#: src/components/agent-composer.tsx
+msgid "Queue"
+msgstr "キュー"
+
+#: src/components/agent-composer.tsx
+msgid "Queue message for agent"
+msgstr "エージェントのキューにメッセージを追加"
 
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
@@ -2679,9 +2885,13 @@ msgstr "入力待ち"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "プレビューの準備ができました。あなたが決めるまで何も適用しません"
 
-#: src/components/agent-reasoning-block.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "推論プロセス"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Reasoning:"
+msgstr "推論:"
 
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
@@ -2879,6 +3089,22 @@ msgstr "サーバー一覧に戻って、もう一度ペアリングしてくだ
 msgid "Return to this server to continue."
 msgstr "このサーバーに戻って続けてください"
 
+#: src/components/agent-workbench.tsx
+msgid "Revert Failed"
+msgstr "復元に失敗しました"
+
+#: src/components/agent-workbench.tsx
+msgid "Revert Session & Workspace?"
+msgstr "セッションとワークスペースを復元しますか？"
+
+#: src/components/agent-workbench.tsx
+msgid "Revert Session to Here"
+msgstr "セッションをここまで復元"
+
+#: src/components/agent-workbench.tsx
+msgid "Reverting to this checkpoint will roll back all subsequent turns and undo code modifications in the workspace."
+msgstr "このチェックポイントに復元すると、以降のすべてのターンがロールバックされ、ワークスペースのコード変更が元に戻ります。"
+
 #: src/lib/demo-gateway.ts
 msgid "Review"
 msgstr "レビュー"
@@ -2936,6 +3162,10 @@ msgstr "取り消し中…"
 #: src/i18n/labels.ts
 msgid "Right arrow"
 msgstr "右矢印"
+
+#: src/components/agent-workbench.tsx
+msgid "Rolled back to message checkpoint."
+msgstr "メッセージのチェックポイントにロールバックしました。"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3092,6 +3322,10 @@ msgstr "すべて選択"
 msgid "Select model"
 msgstr "モデルを選択"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Select or enter working repository"
+msgstr "作業リポジトリを選択または入力"
+
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
 msgstr "選択中"
@@ -3160,9 +3394,17 @@ msgstr "サーバーを利用できません"
 msgid "Servers"
 msgstr "サーバー"
 
+#: src/components/agent-workbench.tsx
+msgid "Service is experiencing high load."
+msgstr "サービスの負荷が高くなっています。"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "session"
 msgstr "件のセッション"
+
+#: src/components/agent-workbench.tsx
+msgid "Session Reverted"
+msgstr "セッションが復元されました"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
@@ -3172,13 +3414,13 @@ msgstr "セッショントークン"
 msgid "sessions"
 msgstr "件のセッション"
 
-#: src/components/agent-composer.tsx
-msgid "Sessions"
-msgstr "セッション"
-
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "アプリロックを使う前に、デバイスのパスコードを設定してください"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Set as working directory for new sessions"
+msgstr "新しいセッションの作業ディレクトリに設定"
 
 #: src/app/explore.tsx
 msgid "Set one up on your computer"
@@ -3288,6 +3530,10 @@ msgstr "画像を表示"
 #: src/components/git-diff-view.tsx
 msgid "Show more"
 msgstr "さらに表示"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Show Reasoning Process"
+msgstr "思考プロセスを表示"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
@@ -3458,6 +3704,14 @@ msgstr "状態を取得できません"
 msgid "Status unknown"
 msgstr "状態不明"
 
+#: src/components/agent-composer.tsx
+msgid "Steer"
+msgstr "ステア (Steer)"
+
+#: src/components/agent-composer.tsx
+msgid "Steer running agent"
+msgstr "実行中のエージェントにリアルタイムで指示"
+
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "実行中…"
@@ -3484,6 +3738,10 @@ msgstr "このエージェントを停止"
 msgid "Storage"
 msgstr "ストレージ"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Subagent"
+msgstr "サブエージェント"
+
 #: src/components/agent-form-card.tsx
 msgid "Submit Response"
 msgstr "回答を送信"
@@ -3499,6 +3757,10 @@ msgstr "一時停止"
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "左右にスワイプしてワークスペースを切り替えます"
+
+#: src/components/agent-workbench.tsx
+msgid "Switch & Retry"
+msgstr "切り替えて再試行"
 
 #: src/components/agent-composer.tsx
 msgid "Switch agent mode"
@@ -3532,6 +3794,14 @@ msgstr "チャット表示に切り替える"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "ターミナル表示に切り替える"
+
+#: src/components/agent-workbench.tsx
+msgid "Switch to Union Alpha (Fast & Free) for immediate response."
+msgstr "迅速に応答を得るため、Union Alpha（高速・無料）に切り替えます。"
+
+#: src/components/agent-workbench.tsx
+msgid "Switch workspace: {displayWorkspaceName}"
+msgstr "ワークスペースを切り替え: {displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -3687,7 +3957,7 @@ msgstr "シミュレータとの接続が切れました"
 
 #: src/components/agent-composer.tsx
 msgid "The default agent. Executes tools."
-msgstr "デフォルトのエージェント。ツールを実行します。"
+msgstr "デフォルトのエージェント。ツールを実行します"
 
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
@@ -3805,6 +4075,10 @@ msgstr "テーマ、{0}"
 #: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "muqun.dev で公開されているテーマです。開くまで何もダウンロードしません"
+
+#: src/components/agent-workbench.tsx
+msgid "Thinking…"
+msgstr "思考中…"
 
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
@@ -3924,6 +4198,14 @@ msgstr "このテーマには画像が含まれています。適用する前に
 msgid "This workspace has no groups yet."
 msgstr "このワークスペースにはまだグループがありません"
 
+#: src/components/agent-reasoning-block.tsx
+msgid "Thought"
+msgstr "思考"
+
+#: src/components/agent-reasoning-block.tsx
+msgid "Thought for {durationStr}"
+msgstr "思考時間: {durationStr}"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "{host} 経由"
@@ -3932,9 +4214,17 @@ msgstr "{host} 経由"
 msgid "Today"
 msgstr "今日"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Token Breakdown"
+msgstr "トークンの内訳"
+
 #: src/components/agent-composer.tsx
-msgid "Tokens usage"
-msgstr "トークン使用量"
+msgid "Tokens usage and cost"
+msgstr "トークン使用量とコスト"
+
+#: src/components/agent-context-sheet.tsx
+msgid "tokens used"
+msgstr "使用済みトークン"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
@@ -4111,6 +4401,10 @@ msgstr "{0} を使用"
 msgid "Use device passcode"
 msgstr "デバイスのパスコードを使用"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Use path:"
+msgstr "パスを使用:"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "リポジトリの URL を使い、そのブランチとテーマファイルを下に入力してください"
@@ -4190,9 +4484,18 @@ msgstr "離席中の変化"
 msgid "Working"
 msgstr "作業中"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Working Directory"
+msgstr "作業ディレクトリ"
+
+#: src/components/agent-workbench.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "ワークスペース"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Workspaces & Projects"
+msgstr "ワークスペースとプロジェクト"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx

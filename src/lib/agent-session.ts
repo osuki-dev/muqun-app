@@ -1,7 +1,23 @@
+import { fetch as nitroFetch } from 'react-native-nitro-fetch';
+import { TextDecoder } from 'react-native-nitro-text-decoder';
 import { gatewayAuthHeaders, gatewayFetch, gatewayUrl } from './gateway-client';
+import { ServerSentEventParser } from './sse-stream';
 import type { FileMentionHit } from './file-mentions';
 
 export type AgentSessionStatus = 'idle' | 'running' | 'paused' | 'error' | 'terminated';
+
+export interface AgentProject {
+  id: string;
+  canonical: string;
+  name: string;
+  vcs?: string;
+  sandboxes?: string[];
+}
+
+export interface DirectoryItem {
+  name: string;
+  path: string;
+}
 
 export interface ModelRef {
   provider_id: string;
@@ -13,6 +29,8 @@ export interface TokensUsage {
   input: number;
   output: number;
   reasoning?: number;
+  cache_read?: number;
+  cache_write?: number;
 }
 
 export interface AgentSessionInfo {
@@ -25,7 +43,9 @@ export interface AgentSessionInfo {
   directory?: string;
   cost?: number;
   tokens?: TokensUsage;
+  limit?: { context?: number; output?: number; input?: number };
   parent_id?: string;
+  project_id?: string;
   updated_ms: number;
 }
 
@@ -140,6 +160,7 @@ export interface TimelineItem {
   part: AgentPart;
   seq: number;
   updated_ms: number;
+  attachments?: string[];
 }
 
 export interface AgentSessionSnapshot {
@@ -150,18 +171,27 @@ export interface AgentSessionSnapshot {
   seq: number;
 }
 
+export interface ModelVariantInfo {
+  id: string;
+  reasoning_effort?: string;
+}
+
 export interface ModelInfo {
   id: string;
   name: string;
   provider_id: string;
   family?: string;
-  limit?: unknown;
+  limit?: { context?: number; output?: number; input?: number };
+  variants?: ModelVariantInfo[];
+  cost?: unknown;
 }
 
 export interface AgentInfo {
   id: string;
   name: string;
   description?: string;
+  mode?: string;
+  color?: string;
 }
 
 export interface McpServerInfo {
@@ -226,6 +256,7 @@ export async function createAgentSession(
     title?: string;
     agent?: string;
     model?: ModelRef;
+    directory?: string;
   }
 ): Promise<AgentSessionInfo> {
   const url = gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions`);
@@ -308,6 +339,7 @@ export async function sendAgentPrompt(
     text: string;
     model?: ModelRef;
     attachments?: string[];
+    delivery?: 'steer' | 'queue';
   }
 ): Promise<void> {
   const url = gatewayUrl(
@@ -323,6 +355,28 @@ export async function sendAgentPrompt(
   });
   if (!res.ok) {
     throw new Error(`Failed to send prompt: ${res.status} ${await res.text()}`);
+  }
+}
+
+export async function revertAgentSession(
+  sessionId: string | undefined,
+  asid: string,
+  messageId: string
+): Promise<void> {
+  const path = sessionId
+    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions/${encodeURIComponent(asid)}/revert`
+    : `/api/agent-sessions/${encodeURIComponent(asid)}/revert`;
+  const url = gatewayUrl(path);
+  const res = await gatewayFetch(url, {
+    method: 'POST',
+    headers: {
+      ...gatewayAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message_id: messageId }),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to revert session: ${res.status} ${await res.text()}`);
   }
 }
 
@@ -470,3 +524,115 @@ export async function listAgentFiles(
     return [];
   }
 }
+
+export async function getAgentProjects(sessionId?: string): Promise<AgentProject[]> {
+  const path = sessionId
+    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`
+    : '/api/agent-projects';
+  const url = gatewayUrl(path);
+  try {
+    const res = await gatewayFetch(url, {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { data?: AgentProject[] };
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getAgentDirectories(
+  prefix?: string,
+  query?: string,
+  sessionId?: string
+): Promise<DirectoryItem[]> {
+  const params = new URLSearchParams();
+  if (prefix) params.set('prefix', prefix);
+  if (query) params.set('query', query);
+  const q = params.toString() ? `?${params.toString()}` : '';
+  const path = sessionId
+    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-directories${q}`
+    : `/api/agent-directories${q}`;
+  const url = gatewayUrl(path);
+  try {
+    const res = await gatewayFetch(url, {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { data?: DirectoryItem[] };
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export function openAgentSessionStream(options: {
+  asid: string;
+  sessionId?: string;
+  onEvent: (event: string, data: unknown) => void;
+  onError?: (err: unknown) => void;
+  onConnected?: () => void;
+}): () => void {
+  let cancelled = false;
+  const controller = new AbortController();
+
+  const connect = async () => {
+    const path = options.sessionId
+      ? `/api/sessions/${encodeURIComponent(options.sessionId)}/agent-sessions/${encodeURIComponent(options.asid)}/stream`
+      : `/api/agent-sessions/${encodeURIComponent(options.asid)}/stream`;
+    const url = gatewayUrl(path);
+    const headers = gatewayAuthHeaders();
+    const decoder = new TextDecoder();
+    const parser = new ServerSentEventParser();
+
+    try {
+      const response = await nitroFetch(url, {
+        headers: {
+          ...headers,
+          Accept: 'text/event-stream',
+          'Cache-Control': 'no-cache',
+        },
+        signal: controller.signal,
+        stream: true,
+      });
+
+      if (!response.ok) throw new Error(`Agent stream HTTP ${response.status}`);
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Agent stream body not readable');
+
+      options.onConnected?.();
+
+      while (!cancelled) {
+        const { done, value } = await reader.read();
+        if (done || cancelled) break;
+        if (value) {
+          const text = decoder.decode(value, { stream: true });
+          const events = parser.push(text);
+          for (const ev of events) {
+            try {
+              const parsed = JSON.parse(ev.data);
+              options.onEvent(ev.event, parsed);
+            } catch {
+              options.onEvent(ev.event, ev.data);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      if (!cancelled) {
+        options.onError?.(err);
+      }
+    }
+  };
+
+  void connect();
+
+  return () => {
+    cancelled = true;
+    controller.abort();
+  };
+}
+

@@ -2,15 +2,17 @@ import { memo, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, Modal, TextInput, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { Bot, Check, GitFork, Plus, Search, X, Clock } from 'lucide-react-native';
+import { Bot, Check, GitFork, Plus, Search, X, Clock, Folder } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import type { AgentSessionInfo } from '@/lib/agent-session';
+import type { AgentProject, AgentSessionInfo } from '@/lib/agent-session';
 
 export interface AgentSessionsSheetProps {
   visible: boolean;
   sessions: AgentSessionInfo[];
   activeAsid?: string;
+  knownProjects?: AgentProject[];
+  activeDirectory?: string;
   onSelectSession: (asid: string) => void;
   onCreateNewSession?: () => void;
   onClose: () => void;
@@ -20,6 +22,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   visible,
   sessions,
   activeAsid,
+  knownProjects,
+  activeDirectory,
   onSelectSession,
   onCreateNewSession,
   onClose,
@@ -28,6 +32,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   // Group sessions: roots and their subagents
   const { rootSessions, subagentMap } = useMemo(() => {
@@ -50,11 +55,79 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return { rootSessions: roots, subagentMap: subMap };
   }, [sessions]);
 
-  // Filtered roots based on search query
+  // Derive unique projects list from knownProjects + sessions
+  const projectsList = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; canonical?: string }>();
+    if (knownProjects) {
+      for (const p of knownProjects) {
+        map.set(p.id, { id: p.id, name: p.name || p.canonical, canonical: p.canonical });
+      }
+    }
+    // Also include any project_id or directory from sessions if not in knownProjects
+    for (const s of sessions) {
+      if (s.project_id && !map.has(s.project_id)) {
+        const name = s.directory
+          ? s.directory.split('/').filter(Boolean).pop() || s.project_id
+          : s.project_id;
+        map.set(s.project_id, {
+          id: s.project_id,
+          name,
+          canonical: s.directory,
+        });
+      } else if (s.directory && !s.project_id) {
+        const alreadyMatched = Array.from(map.values()).some(
+          (p) =>
+            p.canonical === s.directory ||
+            (p.canonical && s.directory?.startsWith(p.canonical))
+        );
+        if (!alreadyMatched) {
+          const dirName = s.directory.split('/').filter(Boolean).pop() || s.directory;
+          map.set(s.directory, { id: s.directory, name: dirName, canonical: s.directory });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [knownProjects, sessions]);
+
+  // Helper to get display project name for a session
+  const getSessionProjectName = (session: AgentSessionInfo): string | undefined => {
+    if (session.project_id) {
+      const match = projectsList.find((p) => p.id === session.project_id);
+      if (match) return match.name;
+    }
+    if (session.directory) {
+      const match = projectsList.find(
+        (p) =>
+          p.canonical === session.directory ||
+          (p.canonical && session.directory?.startsWith(p.canonical))
+      );
+      if (match) return match.name;
+      return session.directory.split('/').filter(Boolean).pop() || session.directory;
+    }
+    return undefined;
+  };
+
+  // Filtered roots based on project filter & search query
   const filteredRoots = useMemo(() => {
+    let list = rootSessions;
+    if (selectedProjectId) {
+      const targetProj = projectsList.find((p) => p.id === selectedProjectId);
+      list = list.filter((root) => {
+        if (root.project_id && root.project_id === selectedProjectId) return true;
+        if (targetProj?.canonical && root.directory) {
+          return (
+            root.directory === targetProj.canonical ||
+            root.directory.startsWith(targetProj.canonical)
+          );
+        }
+        if (root.directory && root.directory === selectedProjectId) return true;
+        return false;
+      });
+    }
+
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return rootSessions;
-    return rootSessions.filter((root) => {
+    if (!q) return list;
+    return list.filter((root) => {
       const matchRoot =
         (root.title && root.title.toLowerCase().includes(q)) ||
         (root.agent && root.agent.toLowerCase().includes(q)) ||
@@ -69,7 +142,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           sub.asid.toLowerCase().includes(q)
       );
     });
-  }, [rootSessions, subagentMap, searchQuery]);
+  }, [rootSessions, subagentMap, searchQuery, selectedProjectId, projectsList]);
 
   const [nowMs] = useState(() => Date.now());
 
@@ -149,6 +222,65 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             />
           </View>
 
+          {/* Project Filter Strip */}
+          {projectsList.length > 0 ? (
+            <View style={styles.projectFilterContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.projectFilterRow}>
+                <PressableScale
+                  onPress={() => setSelectedProjectId(null)}
+                  style={[
+                    styles.projectFilterPill,
+                    {
+                      borderColor: !selectedProjectId ? theme.colors.primary : theme.colors.border,
+                      backgroundColor: !selectedProjectId
+                        ? theme.colors.primary
+                        : surfaceBackground(theme.colors.surfaceRaised),
+                    },
+                  ]}>
+                  <Text
+                    variant="caption"
+                    color={!selectedProjectId ? '#fff' : theme.colors.textMuted}
+                    style={styles.projectFilterText}>
+                    {t`All Projects`}
+                  </Text>
+                </PressableScale>
+
+                {projectsList.map((p) => {
+                  const isSelected = selectedProjectId === p.id;
+                  return (
+                    <PressableScale
+                      key={p.id}
+                      onPress={() => setSelectedProjectId(isSelected ? null : p.id)}
+                      style={[
+                        styles.projectFilterPill,
+                        {
+                          borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+                          backgroundColor: isSelected
+                            ? theme.colors.primary
+                            : surfaceBackground(theme.colors.surfaceRaised),
+                        },
+                      ]}>
+                      <Folder
+                        size={11}
+                        color={isSelected ? '#fff' : theme.colors.textMuted}
+                      />
+                      <Text
+                        variant="caption"
+                        color={isSelected ? '#fff' : theme.colors.text}
+                        numberOfLines={1}
+                        style={styles.projectFilterText}>
+                        {p.name}
+                      </Text>
+                    </PressableScale>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ) : null}
+
           <ScrollView style={styles.scrollList} contentContainerStyle={styles.scrollContent}>
             {filteredRoots.length === 0 ? (
               <View style={styles.emptyState}>
@@ -160,6 +292,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
               filteredRoots.map((root) => {
                 const subs = subagentMap.get(root.asid) || [];
                 const isRootActive = root.asid === activeAsid;
+                const projectName = getSessionProjectName(root);
 
                 return (
                   <View key={root.asid} style={styles.sessionGroup}>
@@ -206,6 +339,23 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                               {root.model?.model_id || 'big-pickle'}
                             </Text>
                           </View>
+
+                          {projectName ? (
+                            <View
+                              style={[
+                                styles.projectBadge,
+                                { backgroundColor: surfaceBackground(theme.colors.surface) },
+                              ]}>
+                              <Folder size={10} color={theme.colors.textMuted} />
+                              <Text
+                                variant="caption"
+                                color={theme.colors.textMuted}
+                                numberOfLines={1}
+                                style={styles.projectBadgeText}>
+                                {projectName}
+                              </Text>
+                            </View>
+                          ) : null}
 
                           {subs.length > 0 ? (
                             <View
@@ -387,7 +537,8 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 14,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   newBtnText: {
     fontWeight: '600',
@@ -400,10 +551,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
-    marginVertical: 8,
+    marginTop: 8,
+    marginBottom: 6,
     paddingHorizontal: 12,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 999,
+    borderCurve: 'continuous',
     borderWidth: 1,
     gap: 8,
   },
@@ -411,6 +564,29 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     paddingVertical: 0,
+  },
+  projectFilterContainer: {
+    marginBottom: 8,
+  },
+  projectFilterRow: {
+    paddingHorizontal: 16,
+    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  projectFilterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+  },
+  projectFilterText: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   scrollList: {
     maxHeight: 480,
@@ -429,7 +605,8 @@ const styles = StyleSheet.create({
   },
   rootCard: {
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
+    borderCurve: 'continuous',
     borderWidth: 1,
     gap: 6,
   },
@@ -442,6 +619,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexWrap: 'wrap',
+    flex: 1,
   },
   agentBadge: {
     flexDirection: 'row',
@@ -449,18 +628,33 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   agentBadgeText: {
     fontWeight: '600',
     fontSize: 11,
   },
   modelBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   modelBadgeText: {
+    fontSize: 10,
+  },
+  projectBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    maxWidth: 120,
+  },
+  projectBadgeText: {
     fontSize: 10,
   },
   subCountBadge: {
@@ -469,7 +663,8 @@ const styles = StyleSheet.create({
     gap: 3,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   subCountText: {
     fontSize: 10,
@@ -506,7 +701,8 @@ const styles = StyleSheet.create({
   subCard: {
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
   },
   subRow: {
@@ -523,7 +719,8 @@ const styles = StyleSheet.create({
   subagentBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 4,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   subagentBadgeText: {
     fontSize: 10,
