@@ -50,6 +50,12 @@ press "id=\"assignment-bar-close\""
 # the only place a task is written -- this used to assert it survived in the
 # task screen's own field, and that screen no longer exists.
 press "role=button text=\"Open quick actions\""
+# A freshly opened sheet starts at the top, and the redesigned sheet spends its
+# first screen on the heading, the three tiles, the Frequent/All commands strip
+# and the search field -- so a custom shortcut, which is appended after the
+# bundled ones, starts below the fold. Measured here: one screen is enough, and
+# a second scroll is a no-op because the list is then already at its end.
+scroll down 1
 wait "role=button label=\"QA review instructions\"" 10000
 press "role=button label=\"QA review instructions\""
 wait "id=\"assignment-bar-close\"" 10000
@@ -99,4 +105,8 @@ wait stable 400 5000
 press "label=\"Done editing shortcuts\""
 
 # section pre-close
-press "role=button label=\"Close quick actions\""
+# The sheet lost its X circle when the app went to one sheet system, so the
+# preamble leaves it the way a reader does and checks the heading went with it.
+back --system
+wait stable 400 5000
+is hidden "text=\"Quick actions\""

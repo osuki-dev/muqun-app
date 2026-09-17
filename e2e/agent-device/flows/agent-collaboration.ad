@@ -51,6 +51,11 @@ is visible "label=\"Send to agent\""
 press "role=button text=\"Open quick actions\""
 wait text "Quick actions" 10000
 is hidden "role=button text=\"Assign a task\""
-press "role=button label=\"Close quick actions\" || label=\"Close\""
+# No close control on a form sheet: the grabber and the swipe are the close,
+# so this is the reader's own dismissal. The heading going away is what proves
+# the sheet closed rather than merely losing focus.
+back --system
+wait stable 400 5000
+is hidden "text=\"Quick actions\""
 wait "role=button text=\"Open quick actions\"" 10000
 is visible "id=\"terminal-composer-input\""

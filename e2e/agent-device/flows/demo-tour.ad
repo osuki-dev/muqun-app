@@ -29,7 +29,10 @@ wait stable 400 5000
 screenshot "shots/02-actions.png"
 
 # section s10
-press "${TARGET}"
+# A form sheet has no X circle any more: the grabber and the swipe are the
+# close, so the flow dismisses it the way a reader does. The manifest's next
+# step asserts the sheet's own heading is gone.
+back --system
 
 # section s11
 wait stable 400 5000
@@ -149,7 +152,8 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section s50
-press "${TARGET}"
+# Same dismissal as s10, on the second visit to the sheet.
+back --system
 
 # section s51
 wait stable 400 5000
