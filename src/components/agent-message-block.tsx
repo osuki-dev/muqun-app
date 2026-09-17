@@ -1,8 +1,20 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { ChevronDown, Clock, Edit3, FileDiff, FileText, Trash2 } from 'lucide-react-native';
+import {
+  Bot,
+  ChevronDown,
+  Clock,
+  Cpu,
+  Edit3,
+  FileDiff,
+  FileText,
+  FolderGit2,
+  Info,
+  Sparkles,
+  Trash2,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
@@ -10,15 +22,16 @@ import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { EmbeddedTerminalToolBlock } from '@/components/embedded-terminal-tool-block';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { useRelativeTime } from '@/hooks/use-relative-time';
+import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, timing } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { keyedLines, type KeyedLine } from '@/lib/line-keys';
-import type { TimelineItem } from '@/lib/agent-session';
+import { formatModelName, type AgentPart, type TimelineItem } from '@/lib/agent-session';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
@@ -26,142 +39,123 @@ function isImageAttachment(uri: string): boolean {
   return uri.startsWith(IMAGE_DATA_URI_PREFIX) || /\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(uri);
 }
 
-export const AgentUserMessage = memo(function AgentUserMessage({
-  item,
+/**
+ * What the reader attached, under what they said.
+ *
+ * A row of chips and thumbnails rather than a grid above the text: the text is
+ * the message and the files are what came with it, which is the order the
+ * composer stages them in and the order the TUI prints them.
+ */
+const MessageAttachments = memo(function MessageAttachments({
+  attachments,
   onPreviewImage,
-  onEditQueued,
-  onCancelQueued,
 }: {
-  item: TimelineItem;
+  attachments: readonly string[];
   onPreviewImage: (uri: string) => void;
-  onEditQueued: (itemId: string, text: string) => void;
-  onCancelQueued: (itemId: string) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const { showToast } = useToast();
-  const surfaceBackground = useSurfaceBackground();
-  const colors = usePaneChatColors();
-
-  const text = item.part.type === 'text' ? item.part.text : '';
-  const attachments = item.attachments ?? [];
+  const raised = useTranscriptPlate('raised');
 
   return (
-    <View style={styles.userBubbleRow}>
-      <Pressable
-        testID={`user-bubble-${item.id}`}
-        onLongPress={async () => {
-          if (!text) return;
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await Clipboard.setStringAsync(text);
-          showToast({
-            variant: 'info',
-            title: t`Copied`,
-            message: t`Message copied to clipboard`,
-          });
-        }}
-        delayLongPress={260}
-        style={[
-          styles.userBubble,
-          {
-            backgroundColor: surfaceBackground(colors.bubble),
-            borderColor: colors.accent,
-          },
-          item.queued
-            ? {
-                borderStyle: 'dashed',
-                borderWidth: 1.5,
-                borderColor: colors.accent,
-              }
-            : null,
-        ]}>
-        {/* Queued indicator and actions: only allowed for queued messages */}
-        {item.queued ? (
-          <View style={styles.queuedBadgeRow}>
-            <View
-              style={[styles.queuedPill, { backgroundColor: surfaceBackground(colors.bubble) }]}>
-              <Clock size={11} color={theme.colors.primary} />
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={theme.colors.primary}
-                style={styles.queuedPillText}>
-                <Trans>Queued</Trans>
-              </Text>
-            </View>
-            <View style={styles.queuedActions}>
-              <PressableScale
-                testID={`queued-edit-${item.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={t`Edit queued message`}
-                onPress={() => onEditQueued(item.id, text)}
-                style={styles.queuedActionBtn}>
-                <Edit3 size={13} color={theme.colors.primary} />
-              </PressableScale>
-              <PressableScale
-                testID={`queued-cancel-${item.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={t`Cancel queued message`}
-                onPress={() => onCancelQueued(item.id)}
-                style={styles.queuedActionBtn}>
-                <Trash2 size={13} color={theme.colors.danger} />
-              </PressableScale>
-            </View>
+    <View style={styles.attachmentRow}>
+      {attachments.map((att, attIdx) => {
+        if (isImageAttachment(att)) {
+          return (
+            <PressableScale
+              key={`${att}-${attIdx}`}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={t`Open attachment`}
+              onPress={() => onPreviewImage(att)}
+              style={styles.attachmentImageWrapper}>
+              <Image source={{ uri: att }} style={styles.attachmentThumbnail} contentFit="cover" />
+            </PressableScale>
+          );
+        }
+        const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
+        return (
+          <View key={`${att}-${attIdx}`} style={[styles.attachmentChip, raised]}>
+            <FileText size={13} color={theme.colors.primary} />
+            <Text
+              variant="caption"
+              color={theme.colors.text}
+              numberOfLines={1}
+              style={styles.attachmentChipName}>
+              {fileName}
+            </Text>
           </View>
-        ) : null}
-
-        {/* Attachment Preview Chips / Images */}
-        {attachments.length > 0 ? (
-          <View style={styles.bubbleAttachmentsGrid}>
-            {attachments.map((att, attIdx) => {
-              if (isImageAttachment(att)) {
-                return (
-                  <PressableScale
-                    key={`${att}-${attIdx}`}
-                    onPress={() => onPreviewImage(att)}
-                    style={styles.bubbleImageWrapper}>
-                    <Image
-                      source={{ uri: att }}
-                      style={styles.bubbleImageThumbnail}
-                      contentFit="cover"
-                    />
-                  </PressableScale>
-                );
-              }
-              const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
-              return (
-                <View
-                  key={`${att}-${attIdx}`}
-                  style={[
-                    styles.bubbleFileChip,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: theme.colors.border,
-                    },
-                  ]}>
-                  <FileText size={13} color={theme.colors.primary} />
-                  <Text
-                    variant="caption"
-                    color={theme.colors.text}
-                    numberOfLines={1}
-                    style={styles.bubbleFileName}>
-                    {fileName}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
-
-        {text ? (
-          <Text selectable variant="bodySmall" color={theme.colors.text}>
-            {text}
-          </Text>
-        ) : null}
-      </Pressable>
+        );
+      })}
     </View>
   );
 });
+
+/**
+ * A quiet single line: what the session switched to, what skill was loaded,
+ * what the engine said about itself.
+ *
+ * These are not messages and they are not tool calls. OpenCode's own output
+ * prints them as one dim line between the turns they separate, and anything
+ * louder here reads as content the model produced -- which none of it is.
+ */
+const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+
+  const notice = useMemo((): { Icon: typeof Cpu; text: string } | null => {
+    switch (part.type) {
+      case 'model_switched': {
+        const next = formatModelName(part.model, t`a default model`);
+        return {
+          Icon: Cpu,
+          text: part.previous
+            ? t`Model · ${formatModelName(part.previous)} → ${next}`
+            : t`Model · ${next}`,
+        };
+      }
+      case 'agent_switched':
+        return {
+          Icon: Bot,
+          text: part.previous
+            ? t`Agent · ${part.previous} → ${part.agent}`
+            : t`Agent · ${part.agent}`,
+        };
+      case 'location_switched':
+        return { Icon: FolderGit2, text: t`Directory · ${part.directory}` };
+      case 'skill':
+        return { Icon: Sparkles, text: t`Skill · ${part.name ?? part.skill}` };
+      case 'synthetic':
+      case 'system': {
+        const text = part.text ?? part.description ?? '';
+        return text ? { Icon: Info, text } : null;
+      }
+      default:
+        return null;
+    }
+  }, [part, t]);
+
+  if (!notice) return null;
+  const { Icon, text } = notice;
+
+  return (
+    <View style={styles.noticeRow}>
+      <Icon size={11} color={theme.colors.textMuted} />
+      <Text
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={2}
+        style={styles.noticeText}>
+        {text}
+      </Text>
+    </View>
+  );
+});
+
+/** OpenCode's shell states, in the three a tool card draws. */
+function shellCardStatus(status: 'running' | 'exited' | 'timeout' | 'killed') {
+  if (status === 'running') return 'running' as const;
+  return status === 'exited' ? ('completed' as const) : ('failed' as const);
+}
 
 /**
  * Pull ` ```diff … ``` ` fences out of assistant markdown. The enriched
@@ -393,10 +387,226 @@ const MessageTextPart = memo(function MessageTextPart({
 });
 
 /**
+ * One part, whichever side of the conversation it arrived on.
+ *
+ * Both roles go through this. A user message whose part is not `text` used to
+ * render as an empty bordered rectangle -- the bubble drew, the text was `''`
+ * because the branch only read `part.text`, and nothing else was tried. There
+ * is no reason a `diff` or a `status` on a user row should be less readable
+ * than the same part on an assistant row, so neither is any more.
+ */
+function renderTimelinePart(
+  item: TimelineItem,
+  options: {
+    showReasoning: boolean;
+    markdownStyle: MarkdownStyle;
+    prevItem?: TimelineItem;
+  }
+): ReactNode {
+  const part = item.part;
+  switch (part.type) {
+    case 'reasoning':
+      return options.showReasoning ? (
+        <AgentReasoningBlock key={item.id} text={part.text} durationMs={part.duration_ms} />
+      ) : null;
+    case 'tool':
+      return (
+        <EmbeddedTerminalToolBlock
+          key={item.id}
+          toolName={part.name}
+          input={part.input}
+          output={part.output}
+          status={part.state}
+        />
+      );
+    case 'shell':
+      // A detached shell is a tool call that outlived its turn, and it reads
+      // best as the card it was before it was detached.
+      return (
+        <EmbeddedTerminalToolBlock
+          key={item.id}
+          toolName="shell"
+          input={{ command: part.command }}
+          output={part.output}
+          status={shellCardStatus(part.status)}
+        />
+      );
+    case 'diff':
+      return <AgentDiffBlock key={item.id} file={part.file} diff={part.diff} />;
+    case 'todo':
+      return <AgentTodoBlock key={item.id} items={part.items} />;
+    case 'status':
+      return <StatusPartRow key={item.id} text={part.text} />;
+    case 'model_switched':
+    case 'agent_switched':
+    case 'location_switched':
+    case 'skill':
+    case 'synthetic':
+    case 'system':
+      return <AgentNoticeRow key={item.id} part={part} />;
+    case 'text':
+      return (
+        <MessageTextPart
+          key={item.id}
+          text={part.text}
+          prevTool={
+            options.prevItem && options.prevItem.part.type === 'tool' ? options.prevItem : undefined
+          }
+          markdownStyle={options.markdownStyle}
+        />
+      );
+    default:
+      // `approval`, `form` and `compaction` are drawn by the surfaces that own
+      // their state, not inline here.
+      return null;
+  }
+}
+
+const StatusPartRow = memo(function StatusPartRow({ text }: { text: string }) {
+  const theme = useThemeTokens();
+  return (
+    <View style={styles.statusRow}>
+      <Text variant="caption" color={theme.colors.textSubtle} style={styles.statusText}>
+        • {text}
+      </Text>
+    </View>
+  );
+});
+
+/**
+ * What the reader said, as a block rather than a bubble.
+ *
+ * The right-hand bubble is gone. It cost a `maxWidth: 85%` on every message, it
+ * re-wrapped anything monospaced the reader pasted, and on a phone it read as a
+ * different app from the assistant side directly under it. What is left is the
+ * shape the rest of this transcript already uses: a full-width block with a
+ * rule down its left edge, a role caption at the weight
+ * `EmbeddedTerminalToolBlock` puts its tool name at, and the attachments under
+ * the text.
+ */
+export const AgentUserMessage = memo(function AgentUserMessage({
+  group,
+  showReasoning,
+  markdownStyle,
+  onPreviewImage,
+  onEditQueued,
+  onCancelQueued,
+}: {
+  group: TimelineRenderGroup;
+  showReasoning: boolean;
+  markdownStyle: MarkdownStyle;
+  onPreviewImage: (uri: string) => void;
+  onEditQueued: (itemId: string, text: string) => void;
+  onCancelQueued: (itemId: string) => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const { showToast } = useToast();
+  const colors = usePaneChatColors();
+  const plate = useTranscriptPlate();
+  const relativeTime = useRelativeTime();
+
+  const first = group.items[0];
+  const text = useMemo(
+    () =>
+      group.items
+        .map((item) => (item.part.type === 'text' ? item.part.text : ''))
+        .filter(Boolean)
+        .join('\n'),
+    [group.items]
+  );
+  const attachments = useMemo(
+    () => group.items.flatMap((item) => item.attachments ?? []),
+    [group.items]
+  );
+  const queued = group.items.find((item) => item.queued);
+  const stamp = first?.updated_ms ? relativeTime(first.updated_ms) : '';
+
+  return (
+    <Pressable
+      testID={`user-message-${first?.id ?? group.key}`}
+      accessibilityLabel={t`Your message`}
+      onLongPress={async () => {
+        if (!text) return;
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Clipboard.setStringAsync(text);
+        showToast({
+          variant: 'info',
+          title: t`Copied`,
+          message: t`Message copied to clipboard`,
+        });
+      }}
+      delayLongPress={260}
+      style={[
+        styles.messageBlock,
+        plate,
+        styles.userBlock,
+        { borderLeftColor: colors.accent },
+        queued ? { borderLeftColor: theme.colors.warning } : null,
+      ]}>
+      <View style={styles.roleRow}>
+        <Text variant="caption" weight="semibold" color={colors.accent} style={styles.roleLabel}>
+          <Trans>You</Trans>
+        </Text>
+        {stamp ? (
+          <Text variant="caption" color={theme.colors.textSubtle} style={styles.roleStamp}>
+            {stamp}
+          </Text>
+        ) : null}
+        {queued ? (
+          <>
+            <View style={styles.roleSpacer} />
+            <View style={styles.queuedPill}>
+              <Clock size={11} color={theme.colors.warning} />
+              <Text
+                variant="caption"
+                weight="semibold"
+                color={theme.colors.warning}
+                style={styles.queuedPillText}>
+                <Trans>Queued</Trans>
+              </Text>
+            </View>
+            <PressableScale
+              testID={`queued-edit-${queued.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={t`Edit queued message`}
+              onPress={() => onEditQueued(queued.id, text)}
+              style={styles.queuedActionBtn}>
+              <Edit3 size={13} color={theme.colors.primary} />
+            </PressableScale>
+            <PressableScale
+              testID={`queued-cancel-${queued.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={t`Cancel queued message`}
+              onPress={() => onCancelQueued(queued.id)}
+              style={styles.queuedActionBtn}>
+              <Trash2 size={13} color={theme.colors.danger} />
+            </PressableScale>
+          </>
+        ) : null}
+      </View>
+
+      {group.items.map((item, index) =>
+        renderTimelinePart(item, {
+          showReasoning,
+          markdownStyle,
+          prevItem: index > 0 ? group.items[index - 1] : group.prevItem,
+        })
+      )}
+
+      {attachments.length > 0 ? (
+        <MessageAttachments attachments={attachments} onPreviewImage={onPreviewImage} />
+      ) : null}
+    </Pressable>
+  );
+});
+
+/**
  * One assistant or system message, laid out the way OpenCode's own output is:
- * every part in order inside a single card — the reasoning as short collapsed
- * `Thought · Xs` rows, the tool calls as quiet single-line shells, the file
- * diffs, and finally the text the thinking produced.
+ * every part in order inside a single block — the reasoning as short collapsed
+ * `Thought · Xs` rows, the tool calls as quiet shells, the file diffs, the one
+ * dim line a switch or a skill gets, and finally the text the thinking
+ * produced.
  */
 export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   group,
@@ -407,7 +617,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   showReasoning: boolean;
   markdownStyle: MarkdownStyle;
 }) {
-  const theme = useThemeTokens();
+  const plate = useTranscriptPlate();
 
   // The parts this message actually paints, in order. `showReasoning` hides
   // the model's private reasoning the same way it did for the flat list.
@@ -417,14 +627,13 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
         switch (it.part.type) {
           case 'reasoning':
             return showReasoning;
-          case 'text':
-          case 'tool':
-          case 'diff':
-          case 'todo':
-          case 'status':
-            return true;
-          default:
+          case 'approval':
+          case 'form':
+          case 'compaction':
+            // Owned by the permission, form and compaction surfaces.
             return false;
+          default:
+            return true;
         }
       }),
     [group.items, showReasoning]
@@ -433,136 +642,92 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   if (visibleItems.length === 0) return null;
 
   return (
-    <View style={styles.messageCard}>
-      {visibleItems.map((it, index) => {
-        switch (it.part.type) {
-          case 'reasoning':
-            return (
-              <AgentReasoningBlock
-                key={it.id}
-                text={it.part.text}
-                durationMs={it.part.duration_ms}
-              />
-            );
-          case 'tool':
-            return (
-              <EmbeddedTerminalToolBlock
-                key={it.id}
-                toolId={it.part.id}
-                toolName={it.part.name}
-                input={it.part.input}
-                output={it.part.output}
-                status={it.part.state}
-              />
-            );
-          case 'diff':
-            return <AgentDiffBlock key={it.id} file={it.part.file} diff={it.part.diff} />;
-          case 'todo':
-            return <AgentTodoBlock key={it.id} items={it.part.items} />;
-          case 'status':
-            return (
-              <View key={it.id} style={styles.statusRow}>
-                <Text variant="caption" color={theme.colors.textSubtle} style={styles.statusText}>
-                  • {it.part.text}
-                </Text>
-              </View>
-            );
-          case 'text': {
-            const prevItem = index > 0 ? visibleItems[index - 1] : group.prevItem;
-            return (
-              <MessageTextPart
-                key={it.id}
-                text={it.part.text}
-                prevTool={prevItem && prevItem.part.type === 'tool' ? prevItem : undefined}
-                markdownStyle={markdownStyle}
-              />
-            );
-          }
-          default:
-            return null;
-        }
-      })}
+    <View style={[styles.messageBlock, plate]}>
+      {visibleItems.map((it, index) =>
+        renderTimelinePart(it, {
+          showReasoning,
+          markdownStyle,
+          prevItem: index > 0 ? visibleItems[index - 1] : group.prevItem,
+        })
+      )}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
-  userBubbleRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  /** The one geometry both sides share: full width, padded, on a plate. */
+  messageBlock: {
+    alignSelf: 'stretch',
+    width: '100%',
     marginVertical: 4,
-  },
-  userBubble: {
-    maxWidth: '85%',
     paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    gap: 6,
   },
-  bubbleAttachmentsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
+  userBlock: {
+    borderLeftWidth: 2,
   },
-  bubbleImageWrapper: {
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  bubbleImageThumbnail: {
-    width: 160,
-    height: 110,
-    borderRadius: 14,
-  },
-  bubbleFileChip: {
+  roleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    maxWidth: 220,
   },
-  bubbleFileName: {
-    fontSize: 12,
-    flexShrink: 1,
+  roleLabel: {
+    fontSize: 11.5,
   },
-  queuedBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-    gap: 8,
+  roleStamp: {
+    fontSize: 11,
+  },
+  roleSpacer: {
+    flex: 1,
   },
   queuedPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderCurve: 'continuous',
   },
   queuedPillText: {
     fontSize: 11,
-    fontWeight: '600',
-  },
-  queuedActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   queuedActionBtn: {
     padding: 3,
   },
-  messageCard: {
-    marginVertical: 4,
-    width: '100%',
-    alignSelf: 'stretch',
+  attachmentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  attachmentImageWrapper: {
+    borderRadius: 14,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  attachmentThumbnail: {
+    width: 160,
+    height: 110,
+    borderRadius: 14,
+  },
+  attachmentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    maxWidth: 220,
+  },
+  attachmentChipName: {
+    fontSize: 12,
+    flexShrink: 1,
+  },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  noticeText: {
+    flexShrink: 1,
+    fontSize: 11,
   },
   markdownContainer: {
     alignSelf: 'stretch',
@@ -577,30 +742,8 @@ const styles = StyleSheet.create({
   inlineDiffBody: {
     paddingVertical: 2,
   },
-  activitySection: {
-    marginBottom: 6,
-  },
-  activityHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    alignSelf: 'flex-start',
-    backgroundColor: 'transparent',
-  },
-  activityChevron: {
-    opacity: 0.75,
-  },
-  activityBody: {
-    marginTop: 4,
-    gap: 2,
-  },
   statusRow: {
     paddingVertical: 2,
-    paddingHorizontal: 4,
   },
   statusText: {
     fontSize: 11,
@@ -611,7 +754,6 @@ const styles = StyleSheet.create({
   },
   diffBlock: {
     alignSelf: 'stretch',
-    marginVertical: 4,
   },
   diffHeader: {
     flexDirection: 'row',

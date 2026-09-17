@@ -153,6 +153,10 @@ msgstr "⚡ 無料・無制限（おすすめ）"
 msgid "$0.00 (Free)"
 msgstr "¥0.00 (無料)"
 
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "既定のモデル"
+
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "SSH で入れるマシン上の Gateway。自身のループバックだけで待ち受けているものでも構いません"
@@ -243,6 +247,17 @@ msgstr "追加"
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
 msgstr "エージェント"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "エージェント · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "エージェント · {0} → {1}"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -744,8 +759,8 @@ msgstr "削除しています…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1446,6 +1461,11 @@ msgstr "OpenCode 自律型コーディングを直感的に操作。推論プロ
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "ディレクトリ"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Directory · {0}"
+msgstr "ディレクトリ · {0}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "DIRECTORY AUTOCOMPLETE"
@@ -2216,6 +2236,15 @@ msgstr "{0} をメンション"
 msgid "Message copied to clipboard"
 msgstr "メッセージをクリップボードにコピーしました"
 
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "モデル · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "モデル · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "更新日時"
@@ -2580,6 +2609,10 @@ msgstr "それでも開く"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Open as Project Workspace"
 msgstr "プロジェクトワークスペースとして開く"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "添付ファイルを開く"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -3448,6 +3481,7 @@ msgstr "送信先"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3679,6 +3713,11 @@ msgstr "シミュレータの操作"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "サイズ"
+
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill · {0}"
+msgstr "スキル · {0}"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -3948,7 +3987,7 @@ msgstr "タスク ({0}/{1})"
 msgid "Tasks progress"
 msgstr "タスクの進行状況"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-tasks-sheet.tsx
 msgid "Tasks Progress"
 msgstr "タスクの進行状況"
 
@@ -4265,6 +4304,7 @@ msgid "This server has no session to start an agent in."
 msgstr "このサーバーにはエージェントを起動できるセッションがありません"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -4644,6 +4684,10 @@ msgstr "YOLO モード有効"
 msgid "YOLO mode on — tap to turn off"
 msgstr "YOLO モード有効 — タップで無効化"
 
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "あなた"
+
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -4653,6 +4697,10 @@ msgstr "どこでも、エージェントと"
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
 msgstr "あなたのマシン、あなたのルール"
+
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "あなたのメッセージ"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

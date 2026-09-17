@@ -28,9 +28,7 @@ import { keyedLines } from '@/lib/line-keys';
 import type { ToolCallState } from '@/lib/agent-protocol';
 
 export interface EmbeddedTerminalProps {
-  toolId: string;
   toolName: string;
-  command?: string;
   input?: unknown;
   output?: unknown;
   status: ToolCallState;
@@ -262,7 +260,6 @@ const MINI_DIFF_MAX_LINES = 6;
  */
 export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock({
   toolName,
-  command,
   input,
   output,
   status,
@@ -275,10 +272,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const kind = useMemo(() => classifyTool(toolName), [toolName]);
 
   const rec = asRecord(input);
-  const displayCommand = useMemo(() => {
-    if (command) return command;
-    return extractTarget(kind, input);
-  }, [command, kind, input]);
+  const displayCommand = extractTarget(kind, input);
 
   const oldString = rec ? pickString(rec, ['oldString', 'old_string']) : undefined;
   const newString = rec ? pickString(rec, ['newString', 'new_string']) : undefined;
@@ -591,9 +585,6 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     borderLeftWidth: StyleSheet.hairlineWidth,
     gap: 4,
-  },
-  outputScroll: {
-    maxWidth: '100%',
   },
   outputContent: {
     paddingVertical: 2,

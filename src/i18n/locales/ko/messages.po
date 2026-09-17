@@ -153,6 +153,10 @@ msgstr "⚡ 무료 및 무제한 (추천)"
 msgid "$0.00 (Free)"
 msgstr "$0.00 (무료)"
 
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "기본 모델"
+
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "SSH로 들어갈 수 있는 머신의 Gateway. 자기 루프백에서만 수신하는 것도 됩니다"
@@ -243,6 +247,17 @@ msgstr "추가됨"
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
 msgstr "에이전트"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "에이전트 · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "에이전트 · {0} → {1}"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -744,8 +759,8 @@ msgstr "비우는 중…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1446,6 +1461,11 @@ msgstr "OpenCode 자율 코딩 에이전트를 모바일에서 직접 제어하�
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "디렉터리"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Directory · {0}"
+msgstr "디렉터리 · {0}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "DIRECTORY AUTOCOMPLETE"
@@ -2216,6 +2236,15 @@ msgstr "{0} 멘션"
 msgid "Message copied to clipboard"
 msgstr "메시지가 클립보드에 복사되었습니다"
 
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "모델 · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "모델 · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "수정일"
@@ -2580,6 +2609,10 @@ msgstr "그래도 열기"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Open as Project Workspace"
 msgstr "프로젝트 워크스페이스로 열기"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "첨부 파일 열기"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -3448,6 +3481,7 @@ msgstr "보내는 대상"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3679,6 +3713,11 @@ msgstr "시뮬레이터 컨트롤"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "크기"
+
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill · {0}"
+msgstr "스킬 · {0}"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -3948,7 +3987,7 @@ msgstr "작업 ({0}/{1})"
 msgid "Tasks progress"
 msgstr "작업 진행률"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-tasks-sheet.tsx
 msgid "Tasks Progress"
 msgstr "작업 진행률"
 
@@ -4265,6 +4304,7 @@ msgid "This server has no session to start an agent in."
 msgstr "이 서버에는 에이전트를 시작할 세션이 없습니다"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -4644,6 +4684,10 @@ msgstr "YOLO 모드 켜짐"
 msgid "YOLO mode on — tap to turn off"
 msgstr "YOLO 모드 켜짐 — 탭하여 끄기"
 
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "나"
+
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -4653,6 +4697,10 @@ msgstr "어디서나, 내 에이전트와 함께"
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
 msgstr "내 컴퓨터, 내 규칙"
+
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "내 메시지"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

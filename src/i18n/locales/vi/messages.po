@@ -153,6 +153,10 @@ msgstr "⚡ Miễn phí & Không giới hạn (Khuyên dùng)"
 msgid "$0.00 (Free)"
 msgstr "0,00 $ (Miễn phí)"
 
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "một mô hình mặc định"
+
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "Một Gateway trên máy bạn có thể SSH vào, kể cả máy chỉ lắng nghe trên loopback của chính nó"
@@ -243,6 +247,17 @@ msgstr "Đã thêm"
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
 msgstr "TÁC TỬ"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "Tác nhân · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "Tác nhân · {0} → {1}"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -744,8 +759,8 @@ msgstr "Đang xóa…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1446,6 +1461,11 @@ msgstr "Kiểm soát trực tiếp tác nhân lập trình OpenCode. Theo dõi l
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "THƯ MỤC"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Directory · {0}"
+msgstr "Thư mục · {0}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "DIRECTORY AUTOCOMPLETE"
@@ -2216,6 +2236,15 @@ msgstr "Nhắc đến {0}"
 msgid "Message copied to clipboard"
 msgstr "Đã sao chép tin nhắn vào khay nhớ tạm"
 
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "Mô hình · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "Mô hình · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Đã sửa đổi"
@@ -2580,6 +2609,10 @@ msgstr "Vẫn mở"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Open as Project Workspace"
 msgstr "Mở dưới dạng không gian làm việc của dự án"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "Mở tệp đính kèm"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -3448,6 +3481,7 @@ msgstr "Đang gửi đến"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3679,6 +3713,11 @@ msgstr "Điều khiển trình giả lập"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "Kích thước"
+
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill · {0}"
+msgstr "Kỹ năng · {0}"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -3948,7 +3987,7 @@ msgstr "Nhiệm vụ ({0}/{1})"
 msgid "Tasks progress"
 msgstr "Tiến độ nhiệm vụ"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-tasks-sheet.tsx
 msgid "Tasks Progress"
 msgstr "Tiến độ nhiệm vụ"
 
@@ -4265,6 +4304,7 @@ msgid "This server has no session to start an agent in."
 msgstr "Máy chủ này không có phiên nào để khởi động tác tử"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -4644,6 +4684,10 @@ msgstr "Đã bật chế độ YOLO"
 msgid "YOLO mode on — tap to turn off"
 msgstr "Đã bật chế độ YOLO — chạm để tắt"
 
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "Bạn"
+
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -4653,6 +4697,10 @@ msgstr "Các tác tử của bạn, ở bất cứ đâu"
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
 msgstr "Máy của bạn, luật của bạn"
+
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "Tin nhắn của bạn"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

@@ -153,6 +153,10 @@ msgstr "⚡ 免费无限（推荐）"
 msgid "$0.00 (Free)"
 msgstr "¥0.00 (免费)"
 
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "默认模型"
+
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "你能通过 SSH 登录的机器上的 Gateway，即使它只在自己的 loopback 上监听也可以"
@@ -243,6 +247,17 @@ msgstr "新增"
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
 msgstr "代理"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "Agent · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "Agent · {0} → {1}"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -744,8 +759,8 @@ msgstr "正在清除…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1446,6 +1461,11 @@ msgstr "专为 OpenCode 自主编程打造。手机端实时跟进思考过程�
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "目录"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Directory · {0}"
+msgstr "目录 · {0}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "DIRECTORY AUTOCOMPLETE"
@@ -2216,6 +2236,15 @@ msgstr "提及 {0}"
 msgid "Message copied to clipboard"
 msgstr "消息已复制到剪贴板"
 
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "模型 · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "模型 · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "修改时间"
@@ -2580,6 +2609,10 @@ msgstr "仍要打开"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Open as Project Workspace"
 msgstr "打开为项目工作区"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "打开附件"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -3448,6 +3481,7 @@ msgstr "发送给"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3679,6 +3713,11 @@ msgstr "模拟器控件"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "大小"
+
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill · {0}"
+msgstr "技能 · {0}"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -3948,7 +3987,7 @@ msgstr "任务 ({0}/{1})"
 msgid "Tasks progress"
 msgstr "任务进度"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-tasks-sheet.tsx
 msgid "Tasks Progress"
 msgstr "任务进度"
 
@@ -4265,6 +4304,7 @@ msgid "This server has no session to start an agent in."
 msgstr "这台服务器没有可以启动代理的会话"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -4644,6 +4684,10 @@ msgstr "YOLO 模式已开启"
 msgid "YOLO mode on — tap to turn off"
 msgstr "YOLO 模式已开启 — 点击关闭"
 
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "你"
+
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -4653,6 +4697,10 @@ msgstr "你的代理，随时随地"
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
 msgstr "你的电脑，你说了算"
+
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "你的消息"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

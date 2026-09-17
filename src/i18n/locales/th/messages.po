@@ -153,6 +153,10 @@ msgstr "⚡ ฟรีและไม่จำกัด (แนะนำ)"
 msgid "$0.00 (Free)"
 msgstr "$0.00 (ฟรี)"
 
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "โมเดลเริ่มต้น"
+
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "Gateway บนเครื่องที่คุณเชื่อมต่อผ่าน SSH ได้ แม้จะรับการเชื่อมต่อเฉพาะบน loopback ของเครื่องนั้น"
@@ -243,6 +247,17 @@ msgstr "เพิ่มแล้ว"
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
 msgstr "เอเจนต์"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "เอเจนต์ · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "เอเจนต์ · {0} → {1}"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -744,8 +759,8 @@ msgstr "กำลังล้าง…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1446,6 +1461,11 @@ msgstr "ควบคุมเอเจนต์เขียนโค้ด OpenC
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "ไดเรกทอรี"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Directory · {0}"
+msgstr "ไดเรกทอรี · {0}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "DIRECTORY AUTOCOMPLETE"
@@ -2216,6 +2236,15 @@ msgstr "อ้างถึง {0}"
 msgid "Message copied to clipboard"
 msgstr "คัดลอกข้อความไปยังคลิปบอร์ดแล้ว"
 
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "โมเดล · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "โมเดล · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "แก้ไขแล้ว"
@@ -2580,6 +2609,10 @@ msgstr "เปิดต่อไป"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Open as Project Workspace"
 msgstr "เปิดเป็นพื้นที่ทำงานของโปรเจกต์"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "เปิดไฟล์แนบ"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -3448,6 +3481,7 @@ msgstr "กำลังส่งไปยัง"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3679,6 +3713,11 @@ msgstr "ตัวควบคุมเครื่องจำลอง"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "ขนาด"
+
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill · {0}"
+msgstr "ทักษะ · {0}"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -3948,7 +3987,7 @@ msgstr "งาน ({0}/{1})"
 msgid "Tasks progress"
 msgstr "ความคืบหน้าของงาน"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-tasks-sheet.tsx
 msgid "Tasks Progress"
 msgstr "ความคืบหน้าของงาน"
 
@@ -4265,6 +4304,7 @@ msgid "This server has no session to start an agent in."
 msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -4644,6 +4684,10 @@ msgstr "เปิดโหมด YOLO"
 msgid "YOLO mode on — tap to turn off"
 msgstr "เปิดโหมด YOLO — แตะเพื่อปิด"
 
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "คุณ"
+
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -4653,6 +4697,10 @@ msgstr "เอเจนต์ของคุณ ใช้ได้ทุกท�
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
 msgstr "เครื่องของคุณ กติกาของคุณ"
+
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "ข้อความของคุณ"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

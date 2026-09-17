@@ -153,6 +153,10 @@ msgstr "⚡ Kostenlos & Unbegrenzt (Empfohlen)"
 msgid "$0.00 (Free)"
 msgstr "0,00 $ (Kostenlos)"
 
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "ein Standardmodell"
+
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "Ein Gateway auf einem Rechner, den du per SSH erreichst – auch eines, das nur auf seinem eigenen Loopback lauscht"
@@ -243,6 +247,17 @@ msgstr "Hinzugefügt"
 #: src/components/new-task-sheet.tsx
 msgid "AGENT"
 msgstr "AGENT"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "Agent · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "Agent · {0} → {1}"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -744,8 +759,8 @@ msgstr "Wird geleert…"
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -1446,6 +1461,11 @@ msgstr "Direkte Steuerung für OpenCode-Coding-Agenten. Verfolgen Sie Gedankeng�
 #: src/components/new-task-sheet.tsx
 msgid "DIRECTORY"
 msgstr "VERZEICHNIS"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Directory · {0}"
+msgstr "Verzeichnis · {0}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "DIRECTORY AUTOCOMPLETE"
@@ -2216,6 +2236,15 @@ msgstr "{0} erwähnen"
 msgid "Message copied to clipboard"
 msgstr "Nachricht in Zwischenablage kopiert"
 
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "Modell · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "Modell · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Geändert"
@@ -2580,6 +2609,10 @@ msgstr "Trotzdem öffnen"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Open as Project Workspace"
 msgstr "Als Projekt-Arbeitsbereich öffnen"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "Anhang öffnen"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -3448,6 +3481,7 @@ msgstr "Senden an"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3679,6 +3713,11 @@ msgstr "Simulator-Bedienelemente"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "Größe"
+
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill · {0}"
+msgstr "Skill · {0}"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -3948,7 +3987,7 @@ msgstr "Aufgaben ({0}/{1})"
 msgid "Tasks progress"
 msgstr "Aufgabenfortschritt"
 
-#: src/components/agent-workbench.tsx
+#: src/components/agent-tasks-sheet.tsx
 msgid "Tasks Progress"
 msgstr "Aufgabenfortschritt"
 
@@ -4265,6 +4304,7 @@ msgid "This server has no session to start an agent in."
 msgstr "Dieser Server hat keine Session, in der ein Agent starten könnte"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -4644,6 +4684,10 @@ msgstr "YOLO-Modus aktiv"
 msgid "YOLO mode on — tap to turn off"
 msgstr "YOLO-Modus aktiv — zum Deaktivieren tippen"
 
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "Du"
+
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -4653,6 +4697,10 @@ msgstr "Deine Agenten, überall dabei"
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
 msgstr "Dein Rechner, deine Regeln"
+
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "Deine Nachricht"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

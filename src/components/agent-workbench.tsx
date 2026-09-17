@@ -853,17 +853,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ({ item: group }: LegendListRenderItemProps<TimelineRenderGroup>) => {
       if (group.role === 'user') {
         return (
-          <View key={group.key}>
-            {group.items.map((item) => (
-              <AgentUserMessage
-                key={item.id}
-                item={item}
-                onPreviewImage={setPreviewImageUri}
-                onEditQueued={handleEditQueuedItem}
-                onCancelQueued={handleCancelQueuedItem}
-              />
-            ))}
-          </View>
+          <AgentUserMessage
+            key={group.key}
+            group={group}
+            showReasoning={showReasoning}
+            markdownStyle={markdownStyle}
+            onPreviewImage={setPreviewImageUri}
+            onEditQueued={handleEditQueuedItem}
+            onCancelQueued={handleCancelQueuedItem}
+          />
         );
       }
       return (
@@ -1559,9 +1557,6 @@ const styles = StyleSheet.create({
     padding: 30,
     gap: 12,
   },
-  loadingText: {
-    fontSize: 12,
-  },
   timelineScroll: {
     flex: 1,
   },
@@ -1617,31 +1612,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
-  userBubbleRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginVertical: 4,
-  },
-  userBubble: {
-    maxWidth: '85%',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  assistantTextRow: {
-    marginVertical: 4,
-    borderRadius: 18,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignSelf: 'flex-start',
-    maxWidth: '92%',
-  },
-  markdownContainer: {
-    alignSelf: 'flex-start',
-  },
   thinkingRow: {
     alignSelf: 'flex-start',
     marginVertical: 4,
@@ -1656,28 +1626,10 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
-  partRow: {
-    marginVertical: 4,
-  },
-  statusRow: {
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-  },
-  statusText: {
-    fontSize: 11,
-    fontStyle: 'italic',
-  },
   emptyScrollWrapper: {
     flex: 1,
     paddingHorizontal: 14,
     justifyContent: 'center',
-  },
-  headerPillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    marginBottom: 4,
   },
   workspacePill: {
     flexDirection: 'row',
@@ -1778,64 +1730,5 @@ const styles = StyleSheet.create({
   yoloBannerHint: {
     flexShrink: 1,
     fontSize: 11,
-  },
-  bubbleAttachmentsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
-  },
-  bubbleImageWrapper: {
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  bubbleImageThumbnail: {
-    width: 160,
-    height: 110,
-    borderRadius: 14,
-  },
-  bubbleFileChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    maxWidth: 220,
-  },
-  bubbleFileName: {
-    fontSize: 12,
-    flexShrink: 1,
-  },
-  queuedBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-    gap: 8,
-  },
-  queuedPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  queuedPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  queuedActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  queuedActionBtn: {
-    padding: 3,
   },
 });

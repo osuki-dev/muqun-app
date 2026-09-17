@@ -64,6 +64,17 @@ export const appChrome = {
      * real and is what this token is verified against on device.
      */
     sheet: 24,
+    /**
+     * The plate a transcript block sits on.
+     *
+     * The agent timeline draws onto the app background, which under an
+     * image-backed theme pack is an author's photograph. `text` and
+     * `textMuted` are proven against the theme's surfaces and never against a
+     * picture, so every message block and tool card takes a surface of its own
+     * -- the same argument, and deliberately the same number, as
+     * `SHEET_GROUND_PLATE_RADIUS`.
+     */
+    transcriptPlate: 18,
   },
   opacity: {
     disabled: 0.5,
