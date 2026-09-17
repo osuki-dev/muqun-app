@@ -1,16 +1,15 @@
-import { SheetHandle } from '@/components/sheet-route-frame';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { type LegendListRef } from '@legendapp/list/react-native';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { RefreshCw, X } from 'lucide-react-native';
+import { RefreshCw } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 
-import { GlassChrome } from '@/components/glass-chrome';
+import { appChrome } from '@/constants/appearance';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { SettingsSegmented } from '@/components/settings-segmented';
+import { SHEET_LADDER, SheetScene, SheetSceneQuietControl } from '@/components/sheet-scene';
 import { DiffRowList } from '@/components/diff-rows';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import {
@@ -70,13 +69,21 @@ import { describeGatewayFailure } from '@/lib/network-error';
  * only thing a diff is read for. The colours are that component's colours,
  * taken from the same hook, so an inline diff in the transcript and this sheet
  * are visibly the same thing.
+ *
+ * The frame around all of that is `SheetScene`, like every other sheet in the
+ * app. This one used to be exempt from the shared heading, because its pinned
+ * bar carries three things at once -- the branch, the refresh, and the
+ * staged/unstaged segments -- and the exemption read as "an inspector is not a
+ * picker". It is: the branch is the caption (the current value, which is what a
+ * caption is for), the refresh is the one quiet control on the title's line, and
+ * the segments are the scene's own pinned header, in sentence case. Nothing was
+ * dropped to fit; there is simply no second way of drawing a sheet left.
  */
 export function GitDiffView({
   sessionId,
   paneId,
   label,
   branch,
-  onClose,
 }: {
   sessionId: string;
   paneId: string;
@@ -84,16 +91,11 @@ export function GitDiffView({
   label: string;
   /** The branch the entry point already knew, so the sheet opens named. */
   branch: string;
-  onClose: () => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
-  // The plate a label takes when the pack draws a wallpaper behind the sheet.
-  // Explicit, because this is the component that renders the frame and so sits
-  // above its own tint provider; everything inside the sheet calls this bare.
-  const plate = useSheetGroundPlate('surface');
 
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -352,61 +354,28 @@ export function GitDiffView({
   const subtitle = [branch || status?.repo?.branch || '', label].filter(Boolean).join(' · ');
 
   // The two subviews a native form sheet lays out around a scroll view are the
-  // ground and the column below; the header and the patch are inside that
-  // column, which is the shape the theme catalogue uses. `collapsable={false}`
-  // on both so neither is flattened away -- that would leave the scroller at
-  // index 0, where react-native-screens gives it the whole sheet's height and
-  // draws it under the header.
+  // ground and the column below; the heading, the segments and the patch are
+  // inside that column, which is what `SheetScene` builds. The list stays the
+  // one scroll view among the column's children -- react-native-screens finds
+  // it by class and gives it the sheet's height less the pinned block's.
   return (
-    <SheetFrame>
-      <View collapsable={false} style={styles.column}>
-        {/* No fill of its own any more. It had one because the route is
-            transparent so the native sheet keeps its corners, and a bare header
-            let the terminal show through behind the title and the segmented
-            control -- which is exactly what the ground now stops, for every
-            sheet at once. Dropping it is what lets the pack's wallpaper reach
-            the top of this sheet the way it reaches the top of the others. */}
-        <View collapsable={false} style={styles.headerBlock}>
-          {/* Android only: iOS has the system grabber. The panels and files
-            sheets both draw this, and a third that did not would read as a
-            different app. */}
-          <SheetHandle />
-          <View style={styles.header}>
-            {/* The two lines a sheet announces itself with, drawn straight onto
-              the ground, so over a wallpaper they take the plate the settings
-              page gives a section label. */}
-            <View style={[styles.flexOne, plate]}>
-              <Text variant="bodySmall" style={styles.headerTitle}>
-                <Trans>Changes</Trans>
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                {subtitle}
-              </Text>
-            </View>
-            <GlassChrome face="sheet" style={styles.iconButton}>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Refresh changes`}
-                onPress={() => load('refresh')}
-                style={styles.iconButtonHit}>
-                {loading ? (
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
-                ) : (
-                  <RefreshCw size={17} color={theme.colors.textMuted} />
-                )}
-              </PressableScale>
-            </GlassChrome>
-            <GlassChrome face="sheet" style={styles.iconButton}>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Close changes`}
-                onPress={onClose}
-                style={styles.iconButtonHit}>
-                <X size={18} color={theme.colors.text} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
-
+    <SheetScene
+      testID="git-diff-view"
+      title={t`Changes`}
+      // The branch, and the server it is on. A caption is the current value, and
+      // the value a reader checks before reading a diff is which branch it is.
+      caption={subtitle}
+      headingTrailing={
+        <SheetSceneQuietControl
+          testID="git-diff-refresh"
+          accessibilityLabel={t`Refresh changes`}
+          busy={loading}
+          onPress={() => load('refresh')}>
+          <RefreshCw size={17} color={theme.colors.textMuted} />
+        </SheetSceneQuietControl>
+      }
+      header={
+        <>
           {(status?.files.length ?? 0) > 0 ? (
             <SettingsSegmented
               options={[
@@ -441,62 +410,60 @@ export function GitDiffView({
               <Trans>Too many changes to list. This is the start of them, not all of them.</Trans>
             </Text>
           ) : null}
-        </View>
-
-        {/*
+        </>
+      }>
+      {/*
         The scroll view is the sheet's second subview and stays one whatever is
-        on screen: react-native-screens finds it by class among the wrapper's
-        direct children and gives it the sheet's height less the header's. Swap
-        it for a plain `View` while loading and there is no scroll view to find,
-        and the sheet sizes itself to its contents instead -- which is why the
-        empty, loading and error states are drawn *inside* `DiffRowList`.
+        on screen: swap it for a plain `View` while loading and there is no
+        scroll view to find, and the sheet sizes itself to its contents instead
+        -- which is why the empty, loading and error states are drawn *inside*
+        `DiffRowList`.
       */}
-        <DiffRowList
-          rows={rows}
-          colors={colors}
-          gutterFill={gutterFill}
-          headerFill={headerFill}
-          surfaceFill={surfaceBackground(theme.colors.surface)}
-          showSide={side === 'all'}
-          onToggleFile={toggleFile}
-          onShowMore={showMore}
-          listRef={listRef}
-          fallback={
-            loading ? (
-              <ActivityIndicator size="small" color={theme.colors.textMuted} />
-            ) : error ? (
-              <>
-                <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
-                  {error}
+      <DiffRowList
+        rows={rows}
+        colors={colors}
+        gutterFill={gutterFill}
+        headerFill={headerFill}
+        surfaceFill={surfaceBackground(theme.colors.surface)}
+        showSide={side === 'all'}
+        onToggleFile={toggleFile}
+        onShowMore={showMore}
+        listRef={listRef}
+        fallback={
+          loading ? (
+            <ActivityIndicator size="small" color={theme.colors.textMuted} />
+          ) : error ? (
+            <>
+              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
+                {error}
+              </Text>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`Try again`}
+                onPress={() => load('initial')}
+                style={[
+                  styles.retry,
+                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                ]}>
+                <Text variant="caption" color={theme.colors.primary}>
+                  <Trans>Try again</Trans>
                 </Text>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Try again`}
-                  onPress={() => load('initial')}
-                  style={[
-                    styles.retry,
-                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                  ]}>
-                  <Text variant="caption" color={theme.colors.primary}>
-                    <Trans>Try again</Trans>
-                  </Text>
-                </PressableScale>
-              </>
-            ) : notARepository ? (
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
-                <Trans>
-                  This pane is not working inside a git repository, so there is nothing to compare.
-                </Trans>
-              </Text>
-            ) : (
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
-                <Trans>No changes. The working tree matches HEAD.</Trans>
-              </Text>
-            )
-          }
-        />
-      </View>
-    </SheetFrame>
+              </PressableScale>
+            </>
+          ) : notARepository ? (
+            <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
+              <Trans>
+                This pane is not working inside a git repository, so there is nothing to compare.
+              </Trans>
+            </Text>
+          ) : (
+            <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
+              <Trans>No changes. The working tree matches HEAD.</Trans>
+            </Text>
+          )
+        }
+      />
+    </SheetScene>
   );
 }
 
@@ -527,49 +494,11 @@ function sameChangeSet(previous: GitStatus, next: GitStatus): boolean {
 }
 
 const styles = StyleSheet.create({
-  column: { flex: 1 },
-  headerBlock: {
-    paddingTop: 10,
-    paddingBottom: 8,
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  headerTitle: {
-    fontSize: 20,
-    lineHeight: 25,
-    includeFontPadding: false,
-  },
-  // Shape only; the fill comes from `GlassChrome`, as it does in the files and
-  // panels sheets.
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonHit: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flexOne: {
-    flex: 1,
-    minWidth: 0,
-  },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    gap: 8,
+    gap: SHEET_LADDER.gap,
     minHeight: 30,
     paddingHorizontal: 12,
     borderRadius: 999,
@@ -581,7 +510,7 @@ const styles = StyleSheet.create({
   retry: {
     minHeight: 32,
     paddingHorizontal: 14,
-    borderRadius: 10,
+    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',

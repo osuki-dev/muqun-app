@@ -226,18 +226,78 @@ export function SheetSceneSearch({
  * 'uppercase'`, and an all-caps group heading is a sign rather than a name --
  * it also makes a provider like "OpenCode" unreadable as itself.
  */
-export function SheetSceneGroupHeading({ title, first }: { title: string; first?: boolean }) {
+export function SheetSceneGroupHeading({
+  title,
+  first,
+  meta,
+  testID,
+}: {
+  title: string;
+  first?: boolean;
+  /**
+   * The one fact about the group, right-aligned on the heading's own line.
+   *
+   * A count belongs here rather than on a divider bar of its own. The files
+   * sheet used to draw `Today ──── 23` -- a rule across the whole width with a
+   * number at the end of it -- which is a second kind of separator on a surface
+   * that already has one, and it made a day read as a band rather than as a
+   * name. The heading says what the group is; the meta says how much of it
+   * there is.
+   */
+  meta?: ReactNode;
+  testID?: string;
+}) {
   const { colors } = useThemeTokens();
   return (
-    <View style={[styles.groupHeading, first ? styles.groupHeadingFirst : null]}>
+    <View testID={testID} style={[styles.groupHeading, first ? styles.groupHeadingFirst : null]}>
       <Text
         variant="caption"
         weight="semibold"
         color={colors.textMuted}
+        numberOfLines={1}
         style={styles.groupHeadingText}>
         {title}
       </Text>
+      {meta ? <View style={styles.groupHeadingMeta}>{meta}</View> : null}
     </View>
+  );
+}
+
+/**
+ * One quiet control on the heading's line: a glyph, and nothing around it.
+ *
+ * The refresh on the files, panels and changes sheets used to be a 38pt circle
+ * of `GlassChrome` -- next to an X circle in the same material, which is how
+ * three inspectors ended up wearing the chrome of a toolbar. A sheet has one
+ * ground and no second surface, so a control on it is its glyph plus a 44pt
+ * touch target, and the only thing that changes when it is working is the
+ * glyph.
+ */
+export function SheetSceneQuietControl({
+  accessibilityLabel,
+  onPress,
+  busy = false,
+  testID,
+  children,
+}: {
+  accessibilityLabel: string;
+  onPress: () => void;
+  /** Replaces the glyph with a spinner, without taking the control away. */
+  busy?: boolean;
+  testID?: string;
+  children: ReactNode;
+}) {
+  const { colors } = useThemeTokens();
+  return (
+    <PressableScale
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ busy }}
+      onPress={onPress}
+      style={styles.quietControl}>
+      {busy ? <ActivityIndicator size="small" color={colors.primary} /> : children}
+    </PressableScale>
   );
 }
 
@@ -264,13 +324,19 @@ export function SheetSceneRow({
   leading,
   trailing,
   onPress,
+  onLongPress,
   accessibilityLabel,
   testID,
   selectedTestID,
   style,
 }: {
   title: string;
-  caption?: string;
+  /**
+   * The second line, and a node rather than a string where one run of it is
+   * coloured -- the panels sheet puts an agent's status word in front of its
+   * path, in the status colour, on the caption's own line.
+   */
+  caption?: ReactNode;
   /** Right-aligned in the row: a time, a token count, a diff stat. */
   meta?: ReactNode;
   selected?: boolean;
@@ -281,6 +347,12 @@ export function SheetSceneRow({
   /** Under the row, and only when it is the selected one: variant chips. */
   trailing?: ReactNode;
   onPress?: () => void;
+  /**
+   * The row's own actions, where a row has any: rename and close on the panels
+   * sheet. A long press rather than a swipe or a trailing button, because it is
+   * the gesture every other list in this app already answers to.
+   */
+  onLongPress?: () => void;
   accessibilityLabel?: string;
   testID?: string;
   /**
@@ -324,8 +396,10 @@ export function SheetSceneRow({
         accessibilityRole="button"
         accessibilityState={{ selected, disabled }}
         accessibilityLabel={accessibilityLabel ?? title}
-        disabled={disabled || !onPress}
+        disabled={disabled || !(onPress || onLongPress)}
         onPress={onPress}
+        onLongPress={onLongPress}
+        delayLongPress={onLongPress ? 280 : undefined}
         style={styles.row}>
         {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
         <View style={styles.rowCopy}>
@@ -556,11 +630,21 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   groupHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SHEET_LADDER.gap,
     marginTop: SHEET_LADDER.section,
     marginBottom: SHEET_LADDER.gap,
   },
   groupHeadingFirst: { marginTop: SHEET_LADDER.gap },
-  groupHeadingText: { alignSelf: 'flex-start', includeFontPadding: false },
+  groupHeadingText: { flexShrink: 1, includeFontPadding: false },
+  groupHeadingMeta: { flexShrink: 0, marginLeft: 'auto' },
+  quietControl: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowWrap: { position: 'relative' },
   rule: {
     position: 'absolute',

@@ -113,7 +113,9 @@ wait stable 400 5000
 screenshot "dist/motion-618-p2/18-session-map.png"
 
 # section s38
-press "${TARGET}"
+# A form sheet has no X circle any more: the grabber and the swipe are the
+# close, so the flow dismisses it the way a reader does.
+back --system
 
 # section s39
 wait stable 400 5000

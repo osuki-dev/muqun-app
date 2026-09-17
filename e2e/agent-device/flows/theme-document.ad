@@ -22,5 +22,8 @@ scroll up --pixels 900
 press "id=theme-close-preview"
 wait "id=asset-preview-theme" 10000
 press "label=\"Close file\""
-wait "label=\"Close files\"" 10000
-press "label=\"Close files\""
+# The files sheet has no X circle any more -- the grabber and the swipe are the
+# close -- so the header anchor is its refresh, and the dismissal is the
+# gesture a reader has.
+wait "label=\"Refresh files\"" 10000
+back --system

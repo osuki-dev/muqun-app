@@ -1,7 +1,3 @@
-import { SheetHandle } from '@/components/sheet-route-frame';
-import { SheetSceneHeading } from '@/components/sheet-scene';
-import { SearchInput } from '@/components/themed-search-input';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -14,7 +10,6 @@ import {
   FileText,
   FileType,
   RefreshCw,
-  X,
 } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -29,10 +24,18 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AssetViewer } from '@/components/asset-viewer';
-import { GlassChrome } from '@/components/glass-chrome';
-import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { SectionLabel } from '@/components/settings-chrome';
+import { appChrome } from '@/constants/appearance';
+import { SettingsSegmented } from '@/components/settings-segmented';
+import {
+  SHEET_LADDER,
+  SheetScene,
+  SheetSceneFooter,
+  SheetSceneGroupHeading,
+  SheetSceneQuietControl,
+  SheetSceneRow,
+  SheetSceneSearch,
+  sheetSceneStyles,
+} from '@/components/sheet-scene';
 import { formatAssetSize } from '@/lib/asset-display';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { artifactGroupLabel } from '@/i18n/labels';
@@ -88,11 +91,12 @@ type KindFilter = 'all' | 'image' | 'document' | 'code';
  * window holds none of that kind and then tap back.
  *
  * The chat view mitigates the same bug by unmounting the list while there is
- * nothing to show. That is not available here: the search field and the kind
- * chips are the list's own header (see `header` below for why they have to be),
- * so unmounting the list would tear down the field mid-keystroke and take the
- * keyboard with it. So this list is simply never handed an empty array -- the
- * empty state is a row -- and the crashing branch is never reached at all.
+ * nothing to show. That would work here now that the search field is the
+ * scene's pinned header rather than the list's -- but it would also mean the
+ * sheet's one scroll view coming and going, and react-native-screens lays a
+ * form sheet out around the scroll view it finds among the frame's children.
+ * So this list is simply never handed an empty array -- the empty state is a
+ * row -- and the crashing branch is never reached at all.
  */
 type FilesRow =
   | ArtifactRow
@@ -116,11 +120,11 @@ type FilesRow =
 /**
  * The seed for a row's height, before any have been measured. `getItemType`
  * below buckets rows by kind, so the list keeps a running average per kind and
- * this is only what it starts from. A file row is a 56pt card plus the list's
- * 8pt gap; a day heading is about half that, and the empty row is measured the
- * moment it appears.
+ * this is only what it starts from. A file row is the scene's own row floor
+ * plus its padding; a day heading is about half that, and the empty row is
+ * measured the moment it appears.
  */
-const ESTIMATED_ROW_HEIGHT = 64;
+const ESTIMATED_ROW_HEIGHT = 60;
 
 /**
  * How near the end counts as "the reader has reached it", as a fraction of the
@@ -152,26 +156,12 @@ const MAINTAIN_POSITION = {
 const MIN_EMPTY_HEIGHT = 160;
 
 /**
- * File cards share Pad rows, while chronology and empty-state copy keep the
- * whole reading width. Legend List owns the placement, so spanning belongs in
- * its layout callback rather than in wrappers around individual rows.
- */
-function filesGridItemLayout(
-  layout: { span?: number },
-  row: FilesRow,
-  _index: number,
-  maxColumns: number
-): void {
-  if (row.type !== 'asset') layout.span = maxColumns;
-}
-
-/**
- * The gateway kinds behind each chip.
+ * The gateway kinds behind each segment.
  *
- * A chip is the question a person asks -- "docs" -- and a kind is what the
- * scanner sniffed off the bytes; "docs" is two of them. These go to the gateway
- * so the filtering happens where the files are. `all` sends nothing and keeps
- * the plain newest-N listing.
+ * A segment is the question a person asks -- "files" -- and a kind is what the
+ * scanner sniffed off the bytes; "files" is two of them. These go to the
+ * gateway so the filtering happens where the files are. `all` sends nothing and
+ * keeps the plain newest-N listing.
  */
 const FILTER_KINDS: Record<KindFilter, readonly AssetKind[]> = {
   all: [],
@@ -182,18 +172,22 @@ const FILTER_KINDS: Record<KindFilter, readonly AssetKind[]> = {
 
 /**
  * Applied again to what comes back, because a gateway too old to know `kind=`
- * answers with everything and the chip still has to mean something.
+ * answers with everything and the segment still has to mean something.
  */
 function matchesFilter(asset: SessionAsset, filter: KindFilter): boolean {
   const kinds = FILTER_KINDS[filter];
   return kinds.length === 0 || kinds.includes(asset.kind);
 }
 
+/** The segmented control hands back a `string`; this is the narrowing. */
+function isKindFilter(value: string): value is KindFilter {
+  return value in FILTER_KINDS;
+}
+
 export function SessionArtifacts({
   sessionId,
   tabId,
   label,
-  onClose,
 }: {
   sessionId: string;
   /**
@@ -206,7 +200,6 @@ export function SessionArtifacts({
   tabId: string;
   /** The server's name, for the line under the title. */
   label: string;
-  onClose: () => void;
 }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -219,8 +212,8 @@ export function SessionArtifacts({
   const { t } = useLingui();
   useRenderTally('SessionArtifacts');
 
-  // The chip labels are built here, in the body that holds the hook, and not in
-  // a module helper handed a `t` parameter. The Lingui babel macro rewrites
+  // The segment labels are built here, in the body that holds the hook, and not
+  // in a module helper handed a `t` parameter. The Lingui babel macro rewrites
   // ``t`...` `` only where it can walk the reference back to the very
   // `useLingui()` destructuring it came from; a `t` that arrives as a function
   // argument is a different binding, so the macro leaves the tagged template
@@ -232,27 +225,28 @@ export function SessionArtifacts({
   // is evaluated once, at import time, and would keep whichever language
   // happened to be active then.
   //
-  // Each chip carries its spoken label as its own message rather than as
-  // ``Show ${label.toLowerCase()}``. Concatenation looks like it translates --
-  // the noun is a message, after all -- but the verb around it never was, so
-  // VoiceOver in zh-TW read "Show <image>" with the noun in Chinese: an English sentence with a Chinese word
-  // dropped into it. Half a sentence per language is worse than none, because
-  // the reader cannot tell whether they misheard. Nor does `toLowerCase()` mean
-  // anything outside a cased script; it is a no-op on Chinese and wrong in the
-  // languages where the noun is capitalised for grammar rather than for style.
-  const filters: { value: KindFilter; label: string; spokenLabel: string }[] = [
-    { value: 'all', label: t`All`, spokenLabel: t`Show all files` },
-    { value: 'image', label: t`Images`, spokenLabel: t`Show images` },
-    { value: 'document', label: t`Docs`, spokenLabel: t`Show documents` },
-    { value: 'code', label: t`Code`, spokenLabel: t`Show code` },
+  // Four segments and no spoken labels beside them. The chips each carried a
+  // `Show images` sentence of their own, because a chip is a button and a
+  // button with a one-word face needs one. A segmented control is not a row of
+  // buttons: it is one control whose segments are named by what they say, and
+  // the kit reports the chosen one through `accessibilityState.selected`. A
+  // second, invented sentence on top of that is VoiceOver reading the control
+  // twice.
+  const filters: { value: KindFilter; label: string }[] = [
+    { value: 'all', label: t`All` },
+    { value: 'image', label: t`Images` },
+    { value: 'document', label: t`Files` },
+    { value: 'code', label: t`Code` },
   ];
 
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  // One column, whatever the width. A scene is one column against one gutter --
+  // the left selection rule and the day headings both belong to that edge -- so
+  // a Pad gets a wider reading measure, centred, rather than a second column of
+  // files beside the first.
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
-  const fileColumns = isPadLayout ? 2 : 1;
   const [assets, setAssets] = useState<SessionAsset[]>([]);
   /** When the listing was fetched, which is the clock the day headings use. */
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
@@ -430,31 +424,30 @@ export function SessionArtifacts({
   }
 
   /**
-   * A chip is a new question, so the window it was asked with goes back to the
-   * first page. Keeping a widened one would ask the gateway to scan for two
+   * A segment is a new question, so the window it was asked with goes back to
+   * the first page. Keeping a widened one would ask the gateway to scan for two
    * hundred images because the reader had once paged through the documents.
    */
-  function chooseFilter(value: KindFilter) {
-    if (value === filter) return;
+  function chooseFilter(value: string) {
+    if (!isKindFilter(value) || value === filter) return;
     setFilter(value);
     setWindowSize(SESSION_ASSET_PAGE_LIMIT);
     setAtEnd(false);
   }
 
   // What the empty row has to fill, measured rather than declared: see the
-  // `height` field on `FilesRow`. Both handlers write only when the number has
+  // `height` field on `FilesRow`. The handler writes only when the number has
   // actually moved, so a layout pass that reports the same size does not
-  // re-render the sheet.
+  // re-render the sheet. There is no header to subtract any more: the search
+  // field and the segments are pinned above the scroller by the scene, so the
+  // list's own viewport is exactly the room the sentence has.
   const [viewportHeight, setViewportHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const listBottomPadding = insets.bottom + 40;
+  // What the scene's footer leaves under the last row, repeated here because
+  // the empty row is sized against the viewport and has to stop short of it.
+  const listBottomPadding = insets.bottom + SHEET_LADDER.section;
   const onListLayout = useCallback((event: LayoutChangeEvent) => {
     const { height } = event.nativeEvent.layout;
     setViewportHeight((current) => (Math.abs(current - height) < 1 ? current : height));
-  }, []);
-  const onHeaderLayout = useCallback((event: LayoutChangeEvent) => {
-    const { height } = event.nativeEvent.layout;
-    setHeaderHeight((current) => (Math.abs(current - height) < 1 ? current : height));
   }, []);
 
   const emptyRow = useMemo<FilesRow>(
@@ -469,12 +462,11 @@ export function SessionArtifacts({
           : assets.length === 0
             ? t`Nothing here yet. Files the session writes show up on their own.`
             : t`No files match.`,
-      // The viewport, less the header above this row and the padding the
-      // content container keeps below it -- which together are exactly what
-      // `flex: 1` used to be given.
-      height: Math.max(MIN_EMPTY_HEIGHT, viewportHeight - headerHeight - listBottomPadding),
+      // The viewport, less the padding the content container keeps below it --
+      // which together are exactly what `flex: 1` used to be given.
+      height: Math.max(MIN_EMPTY_HEIGHT, viewportHeight - listBottomPadding),
     }),
-    [assets.length, available, error, headerHeight, listBottomPadding, t, viewportHeight]
+    [assets.length, available, error, listBottomPadding, t, viewportHeight]
   );
 
   // The list is never handed an empty array -- see `FilesRow`. While the first
@@ -496,130 +488,75 @@ export function SessionArtifacts({
   }, []);
 
   const renderRow = useCallback(
-    ({ item }: LegendListRenderItemProps<FilesRow>) => {
-      if (item.type === 'heading') return <DayHeading label={item.label} count={item.count} />;
-      if (item.type === 'asset') return <AssetRow asset={item.asset} onOpen={openRow} />;
+    ({ item, index }: LegendListRenderItemProps<FilesRow>) => {
+      if (item.type === 'heading')
+        return <DayHeading label={item.label} count={item.count} first={index === 0} />;
+      if (item.type === 'asset')
+        // The hairline runs between two files and nowhere else: not under a day
+        // heading, where the heading itself is already the break, and not under
+        // the last file, where it would be a line drawn across empty ground.
+        return (
+          <AssetRow
+            asset={item.asset}
+            onOpen={openRow}
+            separated={listRows[index - 1]?.type === 'asset'}
+          />
+        );
       return <EmptyState row={item} />;
     },
-    [openRow]
-  );
-
-  /**
-   * Everything above the list -- title, search, filters -- as the list's own
-   * header rather than as siblings above it.
-   *
-   * react-native-screens lays a form sheet out specially when its content is a
-   * scrolling view, and warns "FormSheet with ScrollView expects at most 2
-   * subviews" as soon as anything else shares the container, after which the
-   * sheet renders empty. So the list is the sheet's root and everything else
-   * rides inside it -- which also means the controls scroll away with the
-   * content instead of eating a third of a phone screen forever.
-   */
-  const header = (
-    <View style={styles.headerBlock} onLayout={onHeaderLayout}>
-      {/* The panels sheet draws this and this one did not, which is the sort of
-          difference that reads as two different apps. Android only: iOS has the
-          system grabber. */}
-      <SheetHandle />
-      {/* The one heading every sheet in the app announces itself with; the
-          refresh and the way out ride its trailing slot. */}
-      <SheetSceneHeading
-        title={t`Files`}
-        caption={label}
-        trailing={
-          <View style={styles.headerControls}>
-            {/* The same chrome as the panels sheet, from the same component: two
-            sheets whose close buttons were different materials would read as
-            two apps. `sheet`, not `floating` -- see `GlassChrome`. */}
-            <GlassChrome face="sheet" style={styles.iconButton}>
-              <PressableScale
-                accessibilityLabel={t`Refresh files`}
-                onPress={() => void load()}
-                style={styles.iconButtonHit}>
-                {loading ? (
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
-                ) : (
-                  <RefreshCw size={17} color={theme.colors.textMuted} />
-                )}
-              </PressableScale>
-            </GlassChrome>
-            <GlassChrome face="sheet" style={styles.iconButton}>
-              <PressableScale
-                accessibilityLabel={t`Close files`}
-                onPress={onClose}
-                style={styles.iconButtonHit}>
-                <X size={18} color={theme.colors.text} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
-        }
-      />
-
-      {available ? (
-        <>
-          <SearchInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t`Search files`}
-            accessibilityLabel={t`Search files`}
-            // The library input stretches itself and pins its 22pt line to the
-            // top of the taller field; centering has to be reasserted here
-            // until the kit fixes alignSelf.
-            inputStyle={{ alignSelf: 'center' }}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <View style={styles.filterRow}>
-            {filters.map((entry) => {
-              const selected = entry.value === filter;
-              // No chip greys itself out any more. It used to disable itself
-              // when the page in hand held none of its kind, which stopped
-              // being true the moment the filtering moved to the gateway: what
-              // is in hand is one page of `all`, and "no images among the
-              // newest hundred" is not "no images". The chip is the question;
-              // the answer only exists after it has been asked.
-              return (
-                <PressableScale
-                  key={entry.value}
-                  accessibilityLabel={entry.spokenLabel}
-                  onPress={() => chooseFilter(entry.value)}
-                  style={[
-                    styles.filterChip,
-                    {
-                      backgroundColor: surfaceBackground(
-                        selected ? theme.colors.primary : theme.colors.surfaceRaised
-                      ),
-                    },
-                  ]}>
-                  <Text
-                    variant="caption"
-                    color={selected ? theme.colors.onPrimary : theme.colors.text}>
-                    {entry.label}
-                  </Text>
-                </PressableScale>
-              );
-            })}
-          </View>
-        </>
-      ) : null}
-    </View>
+    [listRows, openRow]
   );
 
   return (
     <RenderTally id="files">
-      {/* The ground the theme and quick-action sheets carry, which this sheet
-          used to answer with a flat surface. Two subviews, which is the most a
-          native form sheet lays out around a scroll view, and the ground costs
-          no layout because it is absolutely positioned -- the list is still the
-          thing the sheet measures. */}
-      <SheetFrame>
+      {/* The scene every sheet in the app is built in: one frosted ground, the
+          heading, the pinned search and segments, and the listing under them.
+          Two subviews, which is the most a native form sheet lays out around a
+          scroll view -- the ground costs no layout because it is absolutely
+          positioned, so the list is still the thing the sheet measures. */}
+      <SheetScene
+        testID="session-artifacts"
+        title={t`Files`}
+        caption={label}
+        headingTrailing={
+          <SheetSceneQuietControl
+            testID="artifacts-refresh"
+            accessibilityLabel={t`Refresh files`}
+            busy={loading}
+            onPress={() => void load()}>
+            <RefreshCw size={17} color={theme.colors.textMuted} />
+          </SheetSceneQuietControl>
+        }
+        header={
+          available ? (
+            <>
+              <SheetSceneSearch
+                testID="artifacts-search"
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t`Search files`}
+                accessibilityLabel={t`Search files`}
+              />
+              {/* No segment greys itself out. A segment used to disable itself
+                  when the page in hand held none of its kind, which stopped
+                  being true the moment the filtering moved to the gateway: what
+                  is in hand is one page of `all`, and "no images among the
+                  newest hundred" is not "no images". The segment is the
+                  question; the answer only exists after it has been asked. */}
+              <SettingsSegmented
+                testID="artifact-kind"
+                options={filters.map((entry) => ({ label: entry.label, value: entry.value }))}
+                value={filter}
+                onChange={chooseFilter}
+              />
+            </>
+          ) : null
+        }>
         <LegendList
+          testID="artifacts-list"
           data={listRows}
           keyExtractor={keyOfRow}
           renderItem={renderRow}
-          numColumns={fileColumns}
-          overrideItemLayout={filesGridItemLayout}
-          columnWrapperStyle={isPadLayout ? styles.fileGrid : undefined}
           // The other half of the identity deal, stated to the list: a row whose
           // object has not changed has not changed. `groupByDay` is handed the
           // previous rows and guarantees exactly that, so the strictest possible
@@ -629,7 +566,7 @@ export function SessionArtifacts({
           // recycling a row into another row's props is the one thing that would
           // undo it -- and it would hand a file's thumbnail to a day heading.
           recycleItems={false}
-          // A day heading and a file card are half an inch apart in height, and a
+          // A day heading and a file row are half an inch apart in height, and a
           // single average across both is what makes a virtualized list jump when
           // a page of older files lands. The kind is already the right bucket.
           getItemType={rowTypeOf}
@@ -640,36 +577,14 @@ export function SessionArtifacts({
           onEndReached={loadMore}
           onEndReachedThreshold={LOAD_MORE_THRESHOLD}
           onLayout={onListLayout}
-          // Transparent: the ground behind it already paints this sheet's floor,
-          // its surface tint and its wallpaper, and a second fill here would put
-          // the surface back over the picture.
-          style={[styles.sheet, styles.transparent]}
-          // `flexGrow` is what makes this a full-height sheet, and it is not
-          // decoration. The route asks for a single detent, and react-native-
-          // screens answers a single detent with `isFitToContents` -- the sheet
-          // is as tall as the content laid out to, with the detent only a cap.
-          // Without it a short listing gave a short sheet and an empty one gave a
-          // stub. The panels sheet is full height for an unrelated reason: two
-          // detents pin a 0.65 peek. This is the frame `ScrollScreen` would have
-          // supplied, written out because the list has to be the sheet's own root.
+          style={sheetSceneStyles.scroller}
+          // The scene's gutter, and on a Pad a reading measure rather than a
+          // second column: see `isPadLayout` above.
           contentContainerStyle={[
+            sheetSceneStyles.scrollerContent,
             styles.listContent,
-            isPadLayout && styles.padListContent,
-            { paddingBottom: listBottomPadding },
+            isPadLayout ? styles.padListContent : null,
           ]}
-          ListHeaderComponent={header}
-          // The gap the content container used to leave here.
-          //
-          // Legend List cannot keep `gap` on the content container -- its rows are
-          // positioned rather than laid out in flow -- so it lifts the value off
-          // and re-applies it as trailing padding on each row. That reproduces the
-          // space between rows exactly and loses the one between the header and
-          // the first row, which is the only place the gap was doing something a
-          // row's own padding does not. Eight, because that is the gap; checked
-          // by putting the e2e flow's screenshot of the sheet beside the one the
-          // FlatList version took, where the first day heading now lands on the
-          // same pixel row it did.
-          ListHeaderComponentStyle={styles.listHeader}
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
@@ -679,20 +594,26 @@ export function SessionArtifacts({
               colors={[theme.colors.primary]}
             />
           }
-          // The page in flight, said where it is being waited for. The header's
-          // refresh control already spins for a re-read of the same window; this
-          // is the one at the bottom, under the oldest file in hand, and it
-          // carries no words of its own -- a spinner where the next rows will
-          // appear says what it is doing without a string to translate.
+          // The page in flight, said where it is being waited for. The heading's
+          // refresh already spins for a re-read of the same window; this is the
+          // one at the bottom, under the oldest file in hand, and it carries no
+          // words of its own -- a spinner where the next rows will appear says
+          // what it is doing without a string to translate. The scene's footer
+          // follows it: the sheet's own bottom room plus whatever the keyboard
+          // is standing on, so the last file stays reachable with the search
+          // field focused.
           ListFooterComponent={
-            loadingMore ? (
-              <View style={styles.footer}>
-                <ActivityIndicator size="small" color={theme.colors.textMuted} />
-              </View>
-            ) : null
+            <>
+              {loadingMore ? (
+                <View style={styles.footer}>
+                  <ActivityIndicator size="small" color={theme.colors.textMuted} />
+                </View>
+              ) : null}
+              <SheetSceneFooter bottomInset={insets.bottom} />
+            </>
           }
         />
-      </SheetFrame>
+      </SheetScene>
       {/* A `Modal`, so it is never a third subview of the sheet's own layout. */}
       {openAsset ? <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} /> : null}
     </RenderTally>
@@ -770,43 +691,46 @@ const DAY_BUCKET_LABEL = {
 } as const;
 
 /**
- * The day is a rule across the list rather than another chip: it separates, it
- * is not something you press.
+ * The day, as the group heading every other sheet in the app uses.
  *
- * This is the app's one deliberately full-width heading -- the rule and the
- * count are what make a day a separator instead of a title -- so the row stays,
- * and only the label inside it becomes the pill every other section wears.
- * `alignSelf: 'center'` puts it back on the row's centre line, which is where
- * the rule and the count already sit; the base style's `flex-start` is for the
- * column a section usually lives in.
+ * It used to be the app's one deliberately full-width heading: a pill, a
+ * hairline ruled across the rest of the sheet, and the count at the far end --
+ * `Today ──── 23`. That is a divider bar, and a scene already has a divider,
+ * the hairline it puts between one group and the next. Two kinds of separator
+ * on one surface is what made the files sheet read as a different app from the
+ * pickers beside it. So the day is a name in the heading row and the count is
+ * the meta at its trailing edge, which is where a group's one number goes.
  *
- * `spoken.toUpperCase()` is gone with it. `variant="label"` carries
+ * `spoken.toUpperCase()` went with the pill. `variant="label"` carries
  * `textTransform: 'uppercase'`, which the platform applies per script; the
  * JavaScript call did nothing on Japanese and the wrong thing on a few others,
  * and this heading's text is a translated bucket name -- `Today`, `Yesterday`
  * -- not an English constant.
  */
-const DayHeading = memo(function DayHeading({ label, count }: { label: string; count: number }) {
+const DayHeading = memo(function DayHeading({
+  label,
+  count,
+  first,
+}: {
+  label: string;
+  count: number;
+  first: boolean;
+}) {
   const theme = useThemeTokens();
-  // The count sits on the sheet's ground with nothing under it, so it takes the
-  // plate the section label beside it already has.
-  const plate = useSheetGroundPlate();
   const { _ } = useLinguiRuntime();
   useRenderTally('ArtifactDayHeading');
   const bucket = DAY_BUCKET_LABEL[label as keyof typeof DAY_BUCKET_LABEL];
   const spoken = bucket ? _(bucket) : label;
   return (
-    <View style={styles.dayHeading}>
-      <SectionLabel
-        title={spoken}
-        color={theme.colors.textMuted}
-        style={styles.daySeparatorLabel}
-      />
-      <View style={[styles.rule, { backgroundColor: theme.colors.border }]} />
-      <Text variant="caption" color={theme.colors.textMuted} style={plate}>
-        {count}
-      </Text>
-    </View>
+    <SheetSceneGroupHeading
+      title={spoken}
+      first={first}
+      meta={
+        <Text variant="caption" color={theme.colors.textSubtle}>
+          {count}
+        </Text>
+      }
+    />
   );
 });
 
@@ -818,60 +742,62 @@ const DayHeading = memo(function DayHeading({ label, count }: { label: string; c
  * only does when the file itself has changed. `onOpen` takes the asset for the
  * same reason -- a fresh `() => setOpenAsset(item.asset)` per render would be a
  * new prop on every rebuild and would undo the memo on every row.
+ *
+ * A scene row, so there is no fill and no radius under it: the thumbnail is the
+ * only rounded thing left, because a picture of a file is the one piece of a
+ * row that is genuinely an object rather than text.
  */
 const AssetRow = memo(function AssetRow({
   asset,
   onOpen,
+  separated,
 }: {
   asset: SessionAsset;
   onOpen: (asset: SessionAsset) => void;
+  /** Whether a file stands above this one, and so whether a hairline does. */
+  separated: boolean;
 }) {
   const { t } = useLingui();
   useRenderTally('ArtifactRow');
   const relativeTime = useRelativeTime();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const thumbnail = asset.kind === 'image' && asset.previewable ? assetImageSource(asset) : null;
   const detail = [formatAssetSize(asset.size), relativeTime(asset.modified_unix_ms)]
     .filter(Boolean)
-    .join(' · ');
+    .join(' \u00b7 ');
 
   return (
-    <PressableScale
+    <SheetSceneRow
+      title={asset.name}
+      caption={detail}
       accessibilityLabel={t`Open ${asset.name}`}
       onPress={() => onOpen(asset)}
-      style={[styles.assetRow, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
-      {/* A picture of the file beats a glyph that says "this is a picture". */}
-      <View
-        style={[
-          styles.assetIcon,
-          {
-            backgroundColor: thumbnail
-              ? theme.colors.background
-              : surfaceBackground(theme.colors.background),
-          },
-        ]}>
-        {thumbnail ? (
-          <Image
-            source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
-            cachePolicy="memory-disk"
-            recyclingKey={thumbnail.cacheKey}
-            contentFit="cover"
-            style={styles.thumbnail}
-          />
-        ) : (
-          <AssetKindIcon kind={asset.kind} color={theme.colors.textMuted} />
-        )}
-      </View>
-      <View style={styles.flexOne}>
-        <Text variant="bodySmall" numberOfLines={1}>
-          {asset.name}
-        </Text>
-        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-          {detail}
-        </Text>
-      </View>
-    </PressableScale>
+      style={
+        separated
+          ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }
+          : undefined
+      }
+      leading={
+        /* A picture of the file beats a glyph that says "this is a picture". */
+        <View
+          style={[
+            styles.assetIcon,
+            thumbnail ? { backgroundColor: theme.colors.background } : null,
+          ]}>
+          {thumbnail ? (
+            <Image
+              source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
+              cachePolicy="memory-disk"
+              recyclingKey={thumbnail.cacheKey}
+              contentFit="cover"
+              style={styles.thumbnail}
+            />
+          ) : (
+            <AssetKindIcon kind={asset.kind} color={theme.colors.textMuted} />
+          )}
+        </View>
+      }
+    />
   );
 });
 
@@ -889,116 +815,30 @@ function isMissingEndpoint(failure: unknown): boolean {
 }
 
 const styles = StyleSheet.create({
-  transparent: { backgroundColor: 'transparent' },
-  sheet: {
-    flex: 1,
-  },
-  headerBlock: {
-    paddingTop: 10,
-    paddingBottom: 4,
-    gap: 12,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  headerControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle: {
-    fontSize: 20,
-    lineHeight: 25,
-    includeFontPadding: false,
-  },
-  // Shape only; the fill comes from `GlassChrome`, as it does in the panels
-  // sheet and in the server page's header circles.
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonHit: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flexOne: {
-    flex: 1,
-    minWidth: 0,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  filterChip: {
-    minHeight: 32,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderCurve: 'continuous',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  // No `gap`, no fill, no radius: the scene's gutter is on the content
+  // container already and the rows sit straight on the ground. `flexGrow` is
+  // what makes this a full-height sheet, and it is not decoration. The route
+  // asks for a single detent, and react-native-screens answers a single detent
+  // with `isFitToContents` -- the sheet is as tall as the content laid out to,
+  // with the detent only a cap. Without it a short listing gave a short sheet
+  // and an empty one gave a stub.
   listContent: {
-    // See the call site for why `flexGrow` is here.
     flexGrow: 1,
-    paddingHorizontal: 16,
-    gap: 8,
   },
+  // A Pad gets a reading measure rather than a second column of files.
   padListContent: {
     width: '100%',
     maxWidth: 1040,
     alignSelf: 'center',
-    paddingHorizontal: 24,
-    // Legend List receives the Pad row/column gaps explicitly below. Keeping
-    // the compact content gap as well would double the space between grid rows.
-    gap: 0,
-  },
-  fileGrid: {
-    columnGap: 10,
-    rowGap: 8,
-  },
-  // See `ListHeaderComponentStyle` at the call site.
-  listHeader: {
-    paddingBottom: 8,
   },
   footer: {
     alignItems: 'center',
     paddingTop: 12,
   },
-  dayHeading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingTop: 10,
-    paddingBottom: 2,
-  },
-  // The pill's own `flex-start` is a column instruction; in this row it would
-  // hang the plate off the top of the rule it sits beside.
-  daySeparatorLabel: {
-    alignSelf: 'center',
-  },
-  rule: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-  },
-  assetRow: {
-    minHeight: 56,
-    borderRadius: 15,
-    borderCurve: 'continuous',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
   assetIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',

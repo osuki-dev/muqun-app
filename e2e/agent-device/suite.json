@@ -542,7 +542,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -644,11 +644,22 @@
         "run": "flows/artifacts.ad#s16"
       },
       {
+        "run": "flows/artifacts.ad#s17"
+      },
+      {
         "target": {
-          "text": "Clear search"
+          "text": "Open files"
         },
         "mode": "press",
-        "run": "flows/artifacts.ad#s17"
+        "run": "flows/artifacts.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s2"
       },
       {
         "run": "flows/artifacts.ad#s18"
@@ -662,7 +673,7 @@
       },
       {
         "target": {
-          "text": "Show images"
+          "id": "settings-selection:(on|off):artifact-kind-image"
         },
         "mode": "press",
         "run": "flows/artifacts.ad#s20"
@@ -686,7 +697,7 @@
       },
       {
         "target": {
-          "text": "Show all files"
+          "id": "settings-selection:(on|off):artifact-kind-all"
         },
         "mode": "press",
         "run": "flows/artifacts.ad#s24"
@@ -759,7 +770,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -811,7 +822,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -863,7 +874,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -947,7 +958,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -955,7 +966,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "scroll",
         "direction": "up",
@@ -963,10 +974,6 @@
         "run": "flows/artifacts.ad#s65"
       },
       {
-        "target": {
-          "text": "Close files"
-        },
-        "mode": "press",
         "run": "flows/artifacts.ad#s66"
       },
       {
@@ -994,7 +1001,7 @@
       },
       {
         "target": {
-          "text": "Close changes"
+          "text": "Refresh changes"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1127,10 +1134,6 @@
         "run": "flows/git-diff.ad#s19"
       },
       {
-        "target": {
-          "text": "Close changes"
-        },
-        "mode": "press",
         "run": "flows/git-diff.ad#s20"
       },
       {
@@ -1536,7 +1539,7 @@
       },
       {
         "target": {
-          "text": "Close"
+          "text": "Refresh"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1573,7 +1576,7 @@
       },
       {
         "target": {
-          "text": "Close"
+          "text": "Refresh"
         },
         "mode": "scroll",
         "direction": "up",
@@ -1581,10 +1584,6 @@
         "run": "flows/demo-tour.ad#s19"
       },
       {
-        "target": {
-          "text": "Close"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s20"
       },
       {
@@ -1602,7 +1601,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1622,10 +1621,6 @@
         "run": "flows/demo-tour.ad#s26"
       },
       {
-        "target": {
-          "text": "Close files"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s27"
       },
       {
@@ -2644,10 +2639,6 @@
         "run": "flows/light-shots.ad#s36"
       },
       {
-        "target": {
-          "text": "Close files"
-        },
-        "mode": "press",
         "run": "flows/light-shots.ad#s37"
       },
       {
@@ -6546,11 +6537,6 @@
         "run": "subflows/motion-p2-capture.ad#s37"
       },
       {
-        "target": {
-          "text": "Close"
-        },
-        "mode": "press",
-        "optional": true,
         "run": "subflows/motion-p2-capture.ad#s38"
       },
       {
