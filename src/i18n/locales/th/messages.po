@@ -44,6 +44,13 @@ msgstr "{0, plural, other {# วัน}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {เปลี่ยนแปลง # ไฟล์}}"
 
+#. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
+msgstr "{0, plural, other {# ไฟล์}} · +{1} −{2}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -72,6 +79,11 @@ msgstr "{0, plural, other {# ธีม}} · {1}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {และอีก # เอเจนต์}}"
 
+#. placeholder {0}: visibleFields.length
+#: src/components/agent-form-card.tsx
+msgid "{0, plural, one {Question} other {Questions}}"
+msgstr "{0, plural, other {คำถาม}}"
+
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
@@ -81,13 +93,6 @@ msgstr "{0} · จัดการโดยระบบ การล้างแ�
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (อุปกรณ์นี้)"
-
-#. placeholder {0}: diffs.length
-#. placeholder {1}: totals.additions
-#. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "{0} files · +{1} −{2}"
-msgstr "{0} ไฟล์ · +{1} −{2}"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
@@ -371,6 +376,11 @@ msgstr "อนุญาตกล้อง"
 msgid "Allow the camera, or enter the address instead."
 msgstr "อนุญาตให้ใช้กล้อง หรือป้อนที่อยู่แทน"
 
+#. placeholder {0}: request.save.join(' · ')
+#: src/components/agent-permission-card.tsx
+msgid "Also allow {0} from now on"
+msgstr "อนุญาต {0} ต่อจากนี้ด้วย"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
 msgstr "Alt"
@@ -452,6 +462,10 @@ msgstr "ใช้ธีม"
 msgid "Applying…"
 msgstr "กำลังใช้…"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Approval required"
+msgstr "ต้องการการอนุมัติ"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
 msgstr "สถาปัตยกรรม ข้อเสนอการออกแบบ และแผนงานทีละขั้น"
@@ -463,6 +477,10 @@ msgstr "ถามทุกครั้ง"
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
 msgstr "ถามคำถาม ตรวจสอบไฟล์ หรือเรียกใช้คำสั่งในพื้นที่ทำงานของคุณ"
+
+#: src/i18n/labels.ts
+msgid "Ask you a question"
+msgstr "ถามคำถามคุณ"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
@@ -1541,6 +1559,10 @@ msgstr "เชลล์สาธิต"
 msgid "Demo workspace"
 msgstr "พื้นที่ทำงานสาธิต"
 
+#: src/components/agent-tool-card.tsx
+msgid "Denied by you"
+msgstr "คุณปฏิเสธแล้ว"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "ปฏิเสธ"
@@ -1809,12 +1831,12 @@ msgid "Files in this workspace"
 msgstr "ไฟล์ในพื้นที่ทำงานนี้"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type a path"
-msgstr "กรองโปรเจกต์ หรือพิมพ์พาธ"
+msgid "Filter workspaces or type a path"
+msgstr "กรองเวิร์กสเปซ หรือพิมพ์พาธ"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects, or type a path"
-msgstr "กรองโปรเจกต์ หรือพิมพ์พาธ"
+msgid "Filter workspaces, or type a path"
+msgstr "กรองเวิร์กสเปซ หรือพิมพ์พาธ"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1952,6 +1974,11 @@ msgstr "กลุ่ม"
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
 msgstr "กลุ่ม {0} กดค้างเพื่อดูการทำงาน"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Guided AGENTS.md setup"
+msgstr "ตั้งค่า AGENTS.md แบบมีคำแนะนำ"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2571,15 +2598,6 @@ msgstr "ไม่มีตัวอย่างสำหรับไฟล์ป
 msgid "No preview on this connection"
 msgstr "ดูตัวอย่างผ่านการเชื่อมต่อนี้ไม่ได้"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects here yet. Type a path above to open one."
-msgstr "ยังไม่มีโปรเจกต์ที่นี่ พิมพ์พาธด้านบนเพื่อเปิดสักอัน"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects match “{0}”."
-msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0}”"
-
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "ไม่มีเซิร์ฟเวอร์ให้เริ่มงาน"
@@ -2632,6 +2650,15 @@ msgstr "ยังไม่มีธีมที่เผยแพร่"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "ไม่มีการระบุขนาดหน้าต่างของโมเดลนี้"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces here yet. Type a path above to open one."
+msgstr "ยังไม่มีเวิร์กสเปซที่นี่ พิมพ์พาธด้านบนเพื่อเปิดสักอัน"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces match “{0}”."
+msgstr "ไม่มีเวิร์กสเปซที่ตรงกับ “{0}”"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2743,8 +2770,8 @@ msgid "Open anyway"
 msgstr "เปิดต่อไป"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a project workspace"
-msgstr "เปิดเป็นเวิร์กสเปซของโปรเจกต์"
+msgid "Open as a workspace"
+msgstr "เปิดเป็นเวิร์กสเปซ"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -4066,8 +4093,8 @@ msgid "Subagent"
 msgstr "เอเจนต์ย่อย"
 
 #: src/components/agent-form-card.tsx
-msgid "Submit Response"
-msgstr "ส่งคำตอบ"
+msgid "Submit"
+msgstr "ส่ง"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -4897,6 +4924,7 @@ msgstr "ไดเรกทอรีทำงาน"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "พื้นที่ทำงาน"

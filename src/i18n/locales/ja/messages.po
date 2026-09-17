@@ -44,6 +44,13 @@ msgstr "{0, plural, other {# 日}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# 件のファイルが変更されました}}"
 
+#. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
+msgstr "{0, plural, other {# 件のファイル}} · +{1} −{2}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -72,6 +79,11 @@ msgstr "{0, plural, other {# 件のテーマ}} · {1}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {ほか # 件のエージェント}}"
 
+#. placeholder {0}: visibleFields.length
+#: src/components/agent-form-card.tsx
+msgid "{0, plural, one {Question} other {Questions}}"
+msgstr "{0, plural, other {質問}}"
+
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
@@ -81,13 +93,6 @@ msgstr "{0} · システムが管理しているため、キャッシュを削�
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0}（このデバイス）"
-
-#. placeholder {0}: diffs.length
-#. placeholder {1}: totals.additions
-#. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "{0} files · +{1} −{2}"
-msgstr "{0} ファイル · +{1} −{2}"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
@@ -371,6 +376,11 @@ msgstr "カメラを許可"
 msgid "Allow the camera, or enter the address instead."
 msgstr "カメラを許可するか、アドレスを入力してください"
 
+#. placeholder {0}: request.save.join(' · ')
+#: src/components/agent-permission-card.tsx
+msgid "Also allow {0} from now on"
+msgstr "今後は {0} も許可"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
 msgstr "Alt"
@@ -452,6 +462,10 @@ msgstr "テーマを適用"
 msgid "Applying…"
 msgstr "適用中…"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Approval required"
+msgstr "承認が必要です"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
 msgstr "アーキテクチャ、設計案、手順ごとのロードマップ"
@@ -463,6 +477,10 @@ msgstr "毎回たずねる"
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
 msgstr "ワークスペース内で質問したり、ファイルを確認したり、コマンドを実行できます"
+
+#: src/i18n/labels.ts
+msgid "Ask you a question"
+msgstr "あなたに質問する"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
@@ -1541,6 +1559,10 @@ msgstr "デモシェル"
 msgid "Demo workspace"
 msgstr "デモワークスペース"
 
+#: src/components/agent-tool-card.tsx
+msgid "Denied by you"
+msgstr "あなたが拒否しました"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒否"
@@ -1809,12 +1831,12 @@ msgid "Files in this workspace"
 msgstr "このワークスペースのファイル"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type a path"
-msgstr "プロジェクトを絞り込む、またはパスを入力"
+msgid "Filter workspaces or type a path"
+msgstr "ワークスペースを絞り込む、またはパスを入力"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects, or type a path"
-msgstr "プロジェクトを絞り込む、またはパスを入力"
+msgid "Filter workspaces, or type a path"
+msgstr "ワークスペースを絞り込む、またはパスを入力"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1952,6 +1974,11 @@ msgstr "グループ"
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
 msgstr "グループ {0}。長押しで操作"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Guided AGENTS.md setup"
+msgstr "AGENTS.md のガイド付きセットアップ"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2571,15 +2598,6 @@ msgstr "この種類のファイルはプレビューできません。ファイ
 msgid "No preview on this connection"
 msgstr "この接続ではプレビューできません"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects here yet. Type a path above to open one."
-msgstr "ここにはまだプロジェクトがありません。上にパスを入力すると開けます"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects match “{0}”."
-msgstr "「{0}」に一致するプロジェクトはありません"
-
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "タスクを開始できるサーバーがありません"
@@ -2632,6 +2650,15 @@ msgstr "公開されているテーマはまだありません"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "このモデルのウィンドウは不明です"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces here yet. Type a path above to open one."
+msgstr "ここにはまだワークスペースがありません。上にパスを入力すると開けます"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces match “{0}”."
+msgstr "「{0}」に一致するワークスペースはありません"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2743,8 +2770,8 @@ msgid "Open anyway"
 msgstr "それでも開く"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a project workspace"
-msgstr "プロジェクトのワークスペースとして開く"
+msgid "Open as a workspace"
+msgstr "ワークスペースとして開く"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -4066,8 +4093,8 @@ msgid "Subagent"
 msgstr "サブエージェント"
 
 #: src/components/agent-form-card.tsx
-msgid "Submit Response"
-msgstr "回答を送信"
+msgid "Submit"
+msgstr "送信"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -4897,6 +4924,7 @@ msgstr "作業ディレクトリ"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "ワークスペース"

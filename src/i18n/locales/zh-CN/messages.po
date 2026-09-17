@@ -44,6 +44,13 @@ msgstr "{0, plural, other {# 天}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# 个文件有改动}}"
 
+#. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
+msgstr "{0, plural, other {# 个文件}} · +{1} −{2}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -72,6 +79,11 @@ msgstr "{0, plural, other {# 个主题}} · {1}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {另有 # 个代理}}"
 
+#. placeholder {0}: visibleFields.length
+#: src/components/agent-form-card.tsx
+msgid "{0, plural, one {Question} other {Questions}}"
+msgstr "{0, plural, other {问题}}"
+
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
@@ -81,13 +93,6 @@ msgstr "{0} · 由系统管理，清除缓存不会动它"
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0}（本设备）"
-
-#. placeholder {0}: diffs.length
-#. placeholder {1}: totals.additions
-#. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "{0} files · +{1} −{2}"
-msgstr "{0} 个文件 · +{1} −{2}"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
@@ -371,6 +376,11 @@ msgstr "允许使用相机"
 msgid "Allow the camera, or enter the address instead."
 msgstr "允许使用相机，或改为输入地址"
 
+#. placeholder {0}: request.save.join(' · ')
+#: src/components/agent-permission-card.tsx
+msgid "Also allow {0} from now on"
+msgstr "今后同时允许 {0}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
 msgstr "Alt"
@@ -452,6 +462,10 @@ msgstr "应用主题"
 msgid "Applying…"
 msgstr "正在应用…"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Approval required"
+msgstr "需要批准"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
 msgstr "架构设计、方案建议与分步实施路线"
@@ -463,6 +477,10 @@ msgstr "每次询问"
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
 msgstr "在工作区中提问、查看文件或运行命令"
+
+#: src/i18n/labels.ts
+msgid "Ask you a question"
+msgstr "向你提出一个问题"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
@@ -1541,6 +1559,10 @@ msgstr "示例 Shell"
 msgid "Demo workspace"
 msgstr "示例工作区"
 
+#: src/components/agent-tool-card.tsx
+msgid "Denied by you"
+msgstr "已被你拒绝"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒绝"
@@ -1809,12 +1831,12 @@ msgid "Files in this workspace"
 msgstr "此工作区的文件"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type a path"
-msgstr "筛选项目，或输入路径"
+msgid "Filter workspaces or type a path"
+msgstr "筛选工作区，或输入路径"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects, or type a path"
-msgstr "筛选项目，或输入路径"
+msgid "Filter workspaces, or type a path"
+msgstr "筛选工作区，或输入路径"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1952,6 +1974,11 @@ msgstr "分组"
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
 msgstr "分组 {0}。长按显示操作"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Guided AGENTS.md setup"
+msgstr "引导式 AGENTS.md 设置"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2571,15 +2598,6 @@ msgstr "这种文件无法预览，它会留在服务器上"
 msgid "No preview on this connection"
 msgstr "此连接不提供预览"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects here yet. Type a path above to open one."
-msgstr "这里还没有项目。在上面输入路径即可打开一个"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects match “{0}”."
-msgstr "没有与“{0}”匹配的项目"
-
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "没有可以开始任务的服务器"
@@ -2632,6 +2650,15 @@ msgstr "还没有已发布的主题"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "该模型未提供上下文窗口"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces here yet. Type a path above to open one."
+msgstr "这里还没有工作区。在上面输入路径即可打开一个"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces match “{0}”."
+msgstr "没有与“{0}”匹配的工作区"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2743,8 +2770,8 @@ msgid "Open anyway"
 msgstr "仍要打开"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a project workspace"
-msgstr "作为项目工作区打开"
+msgid "Open as a workspace"
+msgstr "作为工作区打开"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -4066,8 +4093,8 @@ msgid "Subagent"
 msgstr "子代理"
 
 #: src/components/agent-form-card.tsx
-msgid "Submit Response"
-msgstr "提交回复"
+msgid "Submit"
+msgstr "提交"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -4897,6 +4924,7 @@ msgstr "工作目录"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "工作区"

@@ -44,6 +44,13 @@ msgstr "{0, plural, other {#일}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {파일 #개 변경됨}}"
 
+#. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
+msgstr "{0, plural, other {파일 #개}} · +{1} −{2}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -72,6 +79,11 @@ msgstr "{0, plural, other {테마 #개}} · {1}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {외 #개 에이전트}}"
 
+#. placeholder {0}: visibleFields.length
+#: src/components/agent-form-card.tsx
+msgid "{0, plural, one {Question} other {Questions}}"
+msgstr "{0, plural, other {질문}}"
+
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
@@ -81,13 +93,6 @@ msgstr "{0} · 시스템이 관리하므로 캐시를 비워도 지워지지 않
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (이 기기)"
-
-#. placeholder {0}: diffs.length
-#. placeholder {1}: totals.additions
-#. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "{0} files · +{1} −{2}"
-msgstr "파일 {0}개 · +{1} −{2}"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
@@ -371,6 +376,11 @@ msgstr "카메라 허용"
 msgid "Allow the camera, or enter the address instead."
 msgstr "카메라를 허용하거나 주소를 입력하세요"
 
+#. placeholder {0}: request.save.join(' · ')
+#: src/components/agent-permission-card.tsx
+msgid "Also allow {0} from now on"
+msgstr "앞으로 {0}도 허용"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
 msgstr "Alt"
@@ -452,6 +462,10 @@ msgstr "테마 적용"
 msgid "Applying…"
 msgstr "적용 중…"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Approval required"
+msgstr "승인 필요"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
 msgstr "아키텍처, 설계 제안, 단계별 로드맵"
@@ -463,6 +477,10 @@ msgstr "매번 묻기"
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
 msgstr "작업 공간에서 질문하고, 파일을 검사하거나, 명령을 실행하세요"
+
+#: src/i18n/labels.ts
+msgid "Ask you a question"
+msgstr "사용자에게 질문하기"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
@@ -1541,6 +1559,10 @@ msgstr "데모 셸"
 msgid "Demo workspace"
 msgstr "데모 워크스페이스"
 
+#: src/components/agent-tool-card.tsx
+msgid "Denied by you"
+msgstr "사용자가 거부함"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "거부"
@@ -1809,12 +1831,12 @@ msgid "Files in this workspace"
 msgstr "이 워크스페이스의 파일"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type a path"
-msgstr "프로젝트를 걸러내거나 경로를 입력"
+msgid "Filter workspaces or type a path"
+msgstr "워크스페이스를 걸러내거나 경로를 입력"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects, or type a path"
-msgstr "프로젝트를 걸러내거나 경로를 입력"
+msgid "Filter workspaces, or type a path"
+msgstr "워크스페이스를 걸러내거나 경로를 입력"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1952,6 +1974,11 @@ msgstr "그룹"
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
 msgstr "그룹 {0}. 길게 눌러 작업 보기"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Guided AGENTS.md setup"
+msgstr "AGENTS.md 가이드 설정"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2571,15 +2598,6 @@ msgstr "이 형식의 파일은 미리 볼 수 없습니다. 파일은 서버에
 msgid "No preview on this connection"
 msgstr "이 연결에서는 미리 볼 수 없습니다"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects here yet. Type a path above to open one."
-msgstr "아직 프로젝트가 없습니다. 위에 경로를 입력하면 열 수 있습니다"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects match “{0}”."
-msgstr "“{0}”과 일치하는 프로젝트가 없습니다"
-
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "작업을 시작할 서버가 없습니다"
@@ -2632,6 +2650,15 @@ msgstr "아직 공개된 테마가 없습니다"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "이 모델의 창 크기가 보고되지 않았습니다"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces here yet. Type a path above to open one."
+msgstr "아직 워크스페이스가 없습니다. 위에 경로를 입력하면 열 수 있습니다"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces match “{0}”."
+msgstr "“{0}”과 일치하는 워크스페이스가 없습니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2743,8 +2770,8 @@ msgid "Open anyway"
 msgstr "그래도 열기"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a project workspace"
-msgstr "프로젝트 작업 공간으로 열기"
+msgid "Open as a workspace"
+msgstr "워크스페이스로 열기"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -4066,8 +4093,8 @@ msgid "Subagent"
 msgstr "서브에이전트"
 
 #: src/components/agent-form-card.tsx
-msgid "Submit Response"
-msgstr "응답 제출"
+msgid "Submit"
+msgstr "제출"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -4897,6 +4924,7 @@ msgstr "작업 디렉터리"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "워크스페이스"
