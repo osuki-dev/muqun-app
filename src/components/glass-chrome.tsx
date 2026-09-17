@@ -136,13 +136,25 @@ export function GlassChrome({
    * than in the five branches below, because every one of them needs it and a
    * rule that has to be repeated five times is a rule that will be repeated
    * four.
+   *
+   * The width is always declared and only the colour turns the edge on and off.
+   * That is not style: on Android, taking `borderWidth` *off* a view that keeps
+   * its `borderRadius` and its `overflow: 'hidden'` leaves the view drawing its
+   * own fill and none of its children. Every pill, circle and dock on the screen
+   * became an empty rounded shape -- children still laid out, still in the
+   * accessibility tree, simply never drawn -- and stayed that way until the
+   * views were built again by a relaunch. It took a pack that sets a surface
+   * opacity (Aegean Paperlight, 95%) being replaced by one that does not (every
+   * built-in pack) to do it, which is the one way this width ever changed.
+   * A constant hairline inset costs one physical pixel and is the same in every
+   * pack, so nothing moves when a theme is applied either.
    */
   const chromeStyle: StyleProp<ViewStyle> = [
     style,
     hasImage && { overflow: 'hidden' },
-    backgroundOpacity < 1 && {
+    {
       borderWidth: StyleSheet.hairlineWidth,
-      borderColor: theme.colors.border,
+      borderColor: backgroundOpacity < 1 ? theme.colors.border : 'transparent',
     },
   ];
   const opacityLimit = useMemo(

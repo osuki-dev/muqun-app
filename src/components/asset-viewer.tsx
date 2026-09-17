@@ -9,6 +9,7 @@ import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createMarkdownStyle } from '@/lib/markdown-style';
@@ -30,7 +31,8 @@ import {
 } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
-import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
+import { SheetSceneAction } from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
 import { ThemeImportRequest } from '@/theme/import-request';
@@ -203,6 +205,19 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
   const [previewedThemeDocument, setPreviewedThemeDocument] = useState<string | null>(null);
+  /**
+   * The one decision a previewed theme offers, pinned rather than scrolled to.
+   *
+   * The library drew its own Apply between the preview and the appearance
+   * settings, and the settings are several screens long on a phone: the device
+   * run had to scroll 900px to reach the confirm on a theme it had just opened.
+   * Taking the action (`onPrimaryActionChange`) moves it to the bottom bar
+   * below, where the viewer's other permanent controls already are, and stops
+   * the library drawing the inline one. `setPrimary` is a `useState` setter, so
+   * its identity is stable and the library reports again only when the action
+   * itself changes; the same contract the detail route has used since #834.
+   */
+  const [primary, setPrimary] = useState<ThemePrimaryAction | null>(null);
   const themeDocumentIdentity = `${asset.id}:${asset.modified_unix_ms}`;
   const themeManifest = useMemo(
     () => themeFromDocument(asset.name, content),
@@ -420,6 +435,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                   // when the reader closes the file.
                   ownsPreparedAssets={false}
                   onClosePreview={() => setPack(null)}
+                  onPrimaryActionChange={setPrimary}
                 />
               </ScrollView>
             ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
@@ -429,6 +445,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                   initialManifest={themeManifest}
                   detail
                   onClosePreview={() => setPreviewedThemeDocument(null)}
+                  onPrimaryActionChange={setPrimary}
                 />
               </ScrollView>
             ) : (
@@ -467,6 +484,30 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                 />
               </>
             )}
+
+            {/* Pinned, for the same reason the detail route pins its own: the
+                confirm for a theme sits under a preview and a column of
+                appearance settings, and one you have to go looking for is one
+                the reader has already decided against. `KeyboardStickyView`
+                rather than a plain bar because this viewer is the one place a
+                theme is read next to a file: nothing here opens a keyboard
+                today, and if something does the button rides above it instead
+                of underneath. The column already pays the bottom inset. */}
+            {primary ? (
+              <KeyboardStickyView offset={{ closed: 0, opened: -insets.bottom }}>
+                <View style={styles.themeAction}>
+                  <SheetSceneAction
+                    // The id belongs to the apply: `theme-document` looks for it
+                    // on a theme that is not the current one, and
+                    // `custom-themes` presses it and then checks it has gone.
+                    testID={primary.applies ? 'theme-apply' : undefined}
+                    label={primary.applies ? t`Apply theme` : t`Done`}
+                    disabled={primary.disabled}
+                    onPress={primary.run}
+                  />
+                </View>
+              </KeyboardStickyView>
+            ) : null}
           </View>
         </SheetFrame>
       </View>
@@ -705,6 +746,13 @@ const styles = StyleSheet.create({
   headerLayer: {
     zIndex: 1,
     elevation: 1,
+  },
+  // The bar the theme confirm sits in: the viewer's own gutter, and enough room
+  // above the column's bottom inset that the button is not on the edge.
+  themeAction: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   header: {
     flexDirection: 'row',
