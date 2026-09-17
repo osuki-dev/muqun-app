@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
@@ -81,6 +82,7 @@ export function SheetScene({
   testID,
   title,
   caption,
+  captionLines,
   headingTrailing,
   header,
   contentSized = false,
@@ -91,6 +93,8 @@ export function SheetScene({
   title: string;
   /** The current value, live -- never a hint. */
   caption?: string;
+  /** See `SheetSceneHeading`: two only where the caption is a sentence. */
+  captionLines?: number;
   /** One quiet control on the title's line. See `SheetSceneHeading`. */
   headingTrailing?: ReactNode;
   /** Search, segmented control: anything pinned above the scroller. */
@@ -110,7 +114,12 @@ export function SheetScene({
       <View collapsable={false} style={contentSized ? undefined : styles.scene}>
         <View style={styles.fixedTop}>
           <SheetHandle />
-          <SheetSceneHeading title={title} caption={caption} trailing={headingTrailing} />
+          <SheetSceneHeading
+            title={title}
+            caption={caption}
+            captionLines={captionLines}
+            trailing={headingTrailing}
+          />
           {header}
         </View>
         {children}
@@ -130,10 +139,22 @@ export function SheetScene({
 export function SheetSceneHeading({
   title,
   caption,
+  captionLines = 1,
   trailing,
 }: {
   title: string;
   caption?: string;
+  /**
+   * How many lines the caption may take, and one unless a sheet says so.
+   *
+   * A caption is normally the current value -- a model's name, a branch, a
+   * pack -- and a value that wraps is a value that has grown a paragraph. The
+   * exception is a sheet whose heading is a step rather than a state: pairing
+   * says what to do next, in a sentence, and the sentence clipped at one line
+   * ("A Gateway on a machine you can SSH into, even one that only listens on
+   * its own…") is the caption failing at its only job.
+   */
+  captionLines?: number;
   /**
    * One quiet control on the title's line -- the commands sheet's edit toggle.
    * Not a close: the grabber and the swipe are the close. Anything that lands
@@ -149,7 +170,7 @@ export function SheetSceneHeading({
           {title}
         </Text>
         {caption ? (
-          <Text variant="caption" color={colors.textMuted} numberOfLines={1}>
+          <Text variant="caption" color={colors.textMuted} numberOfLines={captionLines}>
             {caption}
           </Text>
         ) : null}
@@ -525,7 +546,12 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    // A `TextInput` is not a kit `Text` and cannot take a variant, so the one
+    // number it needs comes from the type scale rather than from this file: a
+    // field holds what the reader wrote, which is what `prose` sizes. It was a
+    // literal 15 here and another in `fieldInput`, which is two sizes on one
+    // sheet and neither of them on the scale.
+    fontSize: AGENT_TYPE.prose.size,
     padding: 0,
     includeFontPadding: false,
   },
@@ -567,7 +593,9 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  fieldInput: { flex: 1, fontSize: 15, padding: 0, includeFontPadding: false },
+  // The search field's face, for the same reason. No `lineHeight`: Android
+  // clips a single-line input to it and the descenders go with it.
+  fieldInput: { flex: 1, fontSize: AGENT_TYPE.prose.size, padding: 0, includeFontPadding: false },
   fieldNote: { lineHeight: 16 },
   action: {
     height: 48,

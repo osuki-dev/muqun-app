@@ -215,7 +215,7 @@ export function NewTaskSheet({
         style={[styles.sheet, styles.transparent]}
         contentContainerStyle={styles.canvas}>
         {/* The ground and the padded column are the scroller's two children,
-            which is the shape `SettingsSheet` uses -- the content container
+            which is the shape a content-sized sheet uses -- the content container
             carries no padding of its own, so the ground's `absoluteFill` covers
             the sheet's edges instead of stopping at the form's gutter. The
             route keeps the scroll view as its native root. */}

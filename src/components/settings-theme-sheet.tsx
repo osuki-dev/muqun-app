@@ -1,77 +1,71 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
- * The theme picker, on the surface it always wanted.
+ * The theme picker, on the one sheet every other picker in this app is on.
  *
- * A theme pack is a *pair* --
- * Latte and Mocha, Dawn and Main, Day and Moon -- and the mode control two rows
- * above it decides which one the app is wearing. Both halves stay visible in
- * every card, so a reader picking in the dark can still see the morning half.
+ * It was a full-screen frame holding a measured grid of tiles, two to four
+ * across, each tile a `surfaceRaised` card with the pack's name over both
+ * halves of it. Two things were wrong with that. The frame had no way out --
+ * the X circle went when the sheets were unified and a full-screen route has no
+ * grabber to inherit instead, which is the defect the owner reported. And a
+ * grid of cards is the card kit the sheet system exists to have stopped: four
+ * radii, a second surface inside the sheet, and comparison by scrolling anyway
+ * once the reader is past the first eight.
  *
- * Thirty-two choices would turn comparison into scrolling. The sheet therefore uses
- * a measured grid: two columns on a normal phone, three on a compact Pad sheet,
- * four when the Pad canvas is wide enough, and one only in a narrow split view.
- * Each card keeps its two variants on one row, so a full Pad grid remains
- * compact enough to compare without turning the sheet into a long scroll.
+ * So it is a form sheet of scene rows. A theme pack is a *pair* -- Latte and
+ * Mocha, Dawn and Main, Day and Moon -- and the mode control on the settings
+ * page decides which half the app is wearing, so both halves stay on every row:
+ * the artwork keeps its own component (`ThemePreview`), right-aligned as the
+ * row's meta, and the name is the row. Which one is on is the scene's left
+ * rule, the same mark the agent timeline puts beside the reader's own messages.
  *
- * Each variant is reduced to its canvas and three colour dots -- accent, link,
- * warning -- so narrow grid cells never turn variant names into ellipses. The
- * hues are far enough apart to tell two packs apart at a glance, and they come from
- * `themeSwatch` so a preview can never drift from the theme it advertises.
- *
- * The tile surface groups each name with its pair instead of leaving labels and
- * swatches floating on the sheet. Selection is a borderless primary-subtle
- * wash, cross-faded on `micro`; it keeps the grid calm and makes the chosen
- * pack clear without adding a heavy outline around four independent corners.
+ * Each half is reduced to its canvas and three colour dots -- accent, link,
+ * warning -- which is enough to tell two packs apart at a glance and comes from
+ * `themeSwatch`, so a preview can never drift from the theme it advertises.
  */
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useState } from 'react';
-import { type LayoutChangeEvent, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Text } from '@osuki-dev/ui';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PressableScale } from '@/components/pressable-scale';
-import { LADDER } from '@/components/settings-chrome';
-import { SettingsSheet } from '@/components/settings-sheet';
-import { appChrome } from '@/constants/appearance';
+import {
+  SheetScene,
+  SheetSceneFooter,
+  SheetSceneRow,
+  SHEET_LADDER,
+  sheetSceneStyles,
+} from '@/components/sheet-scene';
 import {
   THEME_PACKS,
   themeSwatch,
   type ThemePack,
   type ThemePackId,
 } from '@/constants/theme-packs';
-import { timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
-import {
-  THEME_PICKER_GRID_GAP,
-  THEME_PICKER_MAX_CONTENT_WIDTH,
-  themePickerGridLayout,
-} from '@/lib/theme-picker-layout';
+import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
 import { CustomThemeLibrary } from '@/components/custom-theme-library';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
+
+/** The focused field's clearance above the keyboard: the import link's input. */
+const KEYBOARD_BOTTOM_OFFSET = 88;
 
 export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
   const openEditor = useOpenThemeEditor();
+  const insets = useSafeAreaInsets();
   useRenderTally('SettingsThemeSheet');
-  const { width: windowWidth } = useWindowDimensions();
-  const [measuredWidth, setMeasuredWidth] = useState(0);
-  const fallbackWidth = Math.min(
-    THEME_PICKER_MAX_CONTENT_WIDTH - LADDER.gutter * 2,
-    Math.max(0, windowWidth - LADDER.gutter * 2)
-  );
-  const gridLayout = themePickerGridLayout(measuredWidth || fallbackWidth);
 
-  const themePack = useThemePack().id;
+  const themePack = useThemePack();
   const [error, setError] = useState<string | null>(null);
 
   /**
    * Apply, then leave.
    *
-   * The write goes in before the dismissal rather than after it, so the ring
+   * The write goes in before the dismissal rather than after it, so the rule
    * has somewhere to travel to while the sheet is on its way out and the app
    * behind it is already repainted when it lands. Tapping the pack that is
    * already chosen writes nothing and still closes: in a sheet that is a
@@ -87,106 +81,84 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <SettingsSheet
+    <SheetScene
+      testID="settings-theme-sheet"
       title={t`Theme`}
-      caption={t`Terminal colours follow the theme.`}
-      closeLabel={t`Close theme picker`}
-      onClose={onClose}
-      contentMaxWidth={THEME_PICKER_MAX_CONTENT_WIDTH}>
-      {/* `tabs`, and with it no caption of its own: the segmented control
-          names the collection now, and a heading under the tab that repeats
-          the word is the same word twice. */}
-      <CustomThemeLibrary tabs onOpenCandidate={openEditor}>
-        {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-        <View
-          accessibilityRole="radiogroup"
-          testID="theme-picker-grid"
-          onLayout={(event: LayoutChangeEvent) => setMeasuredWidth(event.nativeEvent.layout.width)}
-          style={styles.list}>
-          {THEME_PACKS.map((pack) => (
-            <ThemePackTile
-              key={pack.id}
-              pack={pack}
-              selected={pack.id === themePack}
-              width={gridLayout.itemWidth}
-              onSelect={() => choose(pack.id)}
-            />
-          ))}
+      caption={t`Terminal colours follow the theme.`}>
+      {/*
+        Keyboard-aware because the library's link import puts a field inside
+        this scroller, and `SheetSceneFooter` adds the keyboard's own height at
+        the end so the last pack stays reachable while it is up.
+      */}
+      <KeyboardAwareScrollView
+        bottomOffset={KEYBOARD_BOTTOM_OFFSET}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={sheetSceneStyles.scroller}
+        contentContainerStyle={sheetSceneStyles.scrollerContent}>
+        <View style={styles.column}>
+          {/* `tabs`, and with it no caption of its own: the segmented control
+              names the collection now, and a heading under the tab that repeats
+              the word is the same word twice. */}
+          <CustomThemeLibrary tabs onOpenCandidate={openEditor}>
+            {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+            <View testID="theme-picker-grid">
+              {THEME_PACKS.map((pack) => (
+                <ThemePackRow
+                  key={pack.id}
+                  pack={pack}
+                  selected={pack.id === themePack.id}
+                  onSelect={() => choose(pack.id)}
+                />
+              ))}
+            </View>
+          </CustomThemeLibrary>
         </View>
-      </CustomThemeLibrary>
-    </SettingsSheet>
+        <SheetSceneFooter bottomInset={insets.bottom} />
+      </KeyboardAwareScrollView>
+    </SheetScene>
   );
 }
 
 /**
- * One pack: its name, and both halves of it.
+ * One pack: its name, the rule that says it is on, and both halves of it.
  *
- * `accessibilityLabel` is the pack's own name and nothing else. That label is
- * what the e2e flow taps and what its `selected` assertion reads, and it is also
- * the only thing a screen reader needs: the two swatches are decoration.
+ * `accessibilityLabel` is the pack's own name and nothing else -- the two
+ * swatches are decoration. The id carries the selection state because the
+ * flows that drive this list match on it: a row's *role* reads differently on
+ * the two runtimes, and a flow that names either one passes on one platform
+ * and fails on the other.
  */
-function ThemePackTile({
+function ThemePackRow({
   pack,
   selected,
-  width,
   onSelect,
 }: {
   pack: ThemePack;
   selected: boolean;
-  width: number;
   onSelect: () => void;
 }) {
-  const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
-  useRenderTally('ThemePackTile');
-  const on = useSharedValue(selected ? 1 : 0);
-
-  useEffect(() => {
-    on.value = withTiming(selected ? 1 : 0, timing('micro'));
-  }, [on, selected]);
-
-  const selectedStyle = useAnimatedStyle(() => ({ opacity: on.value }));
-
+  useRenderTally('ThemePackRow');
   return (
-    <PressableScale
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
+    <SheetSceneRow
+      title={pack.label}
+      selected={selected}
+      onPress={onSelect}
       accessibilityLabel={pack.label}
       testID={`settings-selection:${selected ? 'on' : 'off'}:theme-${pack.id}`}
-      onPress={onSelect}
-      style={[
-        styles.tile,
-        { width, backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-      ]}>
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.selectedFill,
-          { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-          selectedStyle,
-        ]}
-      />
-      <Text
-        variant="bodySmall"
-        color={selected ? theme.colors.primary : theme.colors.text}
-        numberOfLines={1}
-        style={styles.tileLabel}>
-        {pack.label}
-      </Text>
-      <View style={styles.previews}>
-        <ThemePreview pack={pack} mode="light" />
-        <ThemePreview pack={pack} mode="dark" />
-      </View>
-    </PressableScale>
+      meta={
+        <View style={styles.previews}>
+          <ThemePreview pack={pack} mode="light" />
+          <ThemePreview pack={pack} mode="dark" />
+        </View>
+      }
+    />
   );
 }
 
 /**
- * Half a pack, drawn in itself.
- *
- * Each preview is a fill-only window onto its theme. The selected pack gets the
- * one semantic outline in this grid; the preview surfaces themselves stay
- * borderless like the rest of the app.
+ * Half a pack, drawn in itself: a fill-only window onto its theme, with the
+ * three dots that separate two packs at a glance.
  */
 const SWATCH_DOT_ROLES = ['primary', 'info', 'warning'] as const;
 
@@ -207,38 +179,20 @@ function ThemePreview({ pack, mode }: { pack: ThemePack; mode: 'light' | 'dark' 
 }
 
 const styles = StyleSheet.create({
-  list: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
-    columnGap: THEME_PICKER_GRID_GAP,
-    rowGap: THEME_PICKER_GRID_GAP,
-  },
-  tile: {
-    borderRadius: appChrome.radius.control,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    padding: LADDER.gap,
-    gap: LADDER.gap,
-  },
-  selectedFill: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: appChrome.radius.control,
-    borderCurve: 'continuous',
-  },
-  tileLabel: { lineHeight: 18, includeFontPadding: false },
-  previews: { flexDirection: 'row', gap: LADDER.tight },
+  // The picker is the widest sheet in the app on a Pad, and rows that ran the
+  // whole width of one would be a name at the left and a swatch pair a canvas
+  // away from it.
+  column: { width: '100%', maxWidth: THEME_PICKER_MAX_CONTENT_WIDTH, alignSelf: 'center' },
+  previews: { flexDirection: 'row', gap: SHEET_LADDER.tight },
   preview: {
-    flex: 1,
-    minWidth: 0,
-    height: 28,
-    borderRadius: 8,
+    width: 38,
+    height: 24,
+    borderRadius: 6,
     borderCurve: 'continuous',
-    paddingHorizontal: LADDER.gap,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  previewDots: { flexDirection: 'row', gap: LADDER.tight },
-  previewDot: { width: 8, height: 8, borderRadius: 4 },
+  previewDots: { flexDirection: 'row', gap: 3 },
+  previewDot: { width: 6, height: 6, borderRadius: 3 },
 });

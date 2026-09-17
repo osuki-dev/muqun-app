@@ -17,7 +17,20 @@ export type SheetPresentation = 'sheet' | 'fullscreen';
  */
 export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly number[];
 
-/** One setting controls native presentation and the root safe-area frame. */
+/**
+ * One setting controls native presentation and the root safe-area frame.
+ *
+ * Every sheet-shaped route in this app is a native form sheet. The three that
+ * were not -- the theme picker, the theme catalogue and pairing -- were
+ * `fullScreenModal` frames wearing a hand-drawn X circle, and the owner found
+ * the first of them with no way out at all: the X had gone when the sheets were
+ * unified, and a full-screen route has no grabber to inherit instead. They are
+ * sheets now, so the grabber and the swipe are the close for all of them.
+ *
+ * The two entries left on `fullscreen` are not sheets and never were. Each one
+ * says why here, because this table is the allowlist
+ * `sheet-scene-contract.test.ts` holds the app to.
+ */
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
   commands: 'sheet',
   panels: 'sheet',
@@ -26,9 +39,17 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'git-diff': 'sheet',
   'settings-language': 'sheet',
   'web-service': 'sheet',
-  'settings-theme': 'fullscreen',
-  'settings-theme-browse': 'fullscreen',
-  explore: 'fullscreen',
+  'settings-theme': 'sheet',
+  'settings-theme-browse': 'sheet',
+  explore: 'sheet',
+  // A whole app screen wearing the theme being judged -- its floor, its
+  // wallpaper, its header glass -- which is the one thing a sheet cannot be,
+  // because a sheet is a panel over the theme the reader is leaving. Its
+  // sliders and its long editor column also pan vertically, which is the
+  // gesture a form sheet reads as dismiss.
+  'custom-theme': 'fullscreen',
+  // The Skia farm: a canvas that takes every touch on it, edge to edge.
+  simfarm: 'fullscreen',
   'new-task': 'sheet',
   // The agent's pickers. Every one of them is a destination -- pick a model,
   // pick a workspace, read a diff -- so every one is a route rather than a

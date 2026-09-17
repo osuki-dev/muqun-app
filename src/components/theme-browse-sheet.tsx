@@ -1,22 +1,23 @@
-import { SheetHeading } from '@/components/sheet-heading';
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { Spinner, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogoLoader } from '@/components/logo-loader';
-import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { GlassChrome } from '@/components/glass-chrome';
-import { SheetFrame, useSheetGroundPlate, useSheetGroundProvided } from '@/components/sheet-ground';
-import { PressableScale } from '@/components/pressable-scale';
-import { LADDER, SettingsSeparator } from '@/components/settings-chrome';
+import {
+  SheetScene,
+  SheetSceneFooter,
+  SheetSceneRow,
+  SHEET_LADDER,
+  sheetSceneStyles,
+} from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { Button } from '@/components/themed-button';
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
 import { DURATION, fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
 import { holdFor, remainingVisibleMs } from '@/lib/minimum-visible';
@@ -54,6 +55,13 @@ import { useThemeLibrary } from '@/stores/theme-library';
  * different matter: the format allows 25 MiB, so a row shows its size and
  * downloads nothing until it is pressed.
  *
+ * It is a form sheet like every other picker now. It was a full-screen frame
+ * with a hand-drawn X circle in the corner, which is the chrome the sheet
+ * system replaced with the grabber and the swipe; the rows were cards in
+ * `surfaceRaised` under a separator each, which is the second surface a sheet
+ * is not allowed. What is left is the scene: a heading, a frosted ground, and
+ * one column of rows whose cover is the row's leading slot.
+ *
  * Cancellation is `ThemeGallery`'s, carried over intact and for the unchanged
  * reason: a download that finishes after the screen is gone has staged assets
  * that nothing will ever dispose. One owned request at a time, unmount cancels
@@ -77,36 +85,27 @@ const THEME_BROWSE_STAGGER_CAP = 8;
 
 /**
  * The cover, as a thumbnail rather than a poster: 8:5, the shape
- * `skills/muqun-theme` asks every cover to be published in, at the size a list
- * row can carry without becoming a card.
+ * `skills/muqun-theme` asks every cover to be published in, at the size a
+ * scene row can carry without becoming a card. Narrower than the 112 it was:
+ * a row on the sheet's own gutter has less to give than a card with its own
+ * padding did.
  */
-const COVER_WIDTH = 112;
-const COVER_HEIGHT = 70;
+const COVER_WIDTH = 88;
+const COVER_HEIGHT = 55;
 
-/** The thumbnail plus the row's own padding; three capped lines fit inside it. */
-const ROW_MIN_HEIGHT = 96;
+/** The thumbnail plus the row's own padding; two capped lines fit beside it. */
+const ROW_MIN_HEIGHT = 84;
 
 type BrowseRowType = 'preview' | 'plain';
 
 export function ThemeBrowseSheet({
-  onClose,
   onReady,
 }: {
-  onClose: () => void;
   onReady: (candidate: ThemeEditorCandidate) => void;
 }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
-  // The catalogue is a full-screen route, so `FullscreenSheetFrame` already
-  // owns the safe edges; padding them again here would double them. It is
-  // still its own `SheetFrame` -- the nested ground no-ops and the frame is
-  // what publishes the tint its plate is mixed from.
-  const groundProvided = useSheetGroundProvided();
   const theme = useThemeTokens();
-  // Explicit: this is the component that renders the frame, so it sits above
-  // its own tint provider. Everything *inside* the sheet reads the tint from
-  // the frame and calls this with no argument.
-  const plate = useSheetGroundPlate('surface');
   useRenderTally('ThemeBrowseSheet');
   const installed = useThemeLibrary((state) => state.library.themes);
 
@@ -342,9 +341,9 @@ export function ThemeBrowseSheet({
           entering={fadeIn('medium')}
           exiting={fadeOut('micro')}
           testID="theme-browse-loading"
-          // On the ground now that the list no longer paints a column behind
-          // it, so it takes the same plate the header's two lines take.
-          style={[styles.loading, plate]}>
+          // Plain on the ground: the scene frosts it, so nothing on this sheet
+          // needs a plate of its own to stay legible over a wallpaper.
+          style={styles.loading}>
           <LogoLoader size={56} accessibilityLabel={t`Loading themes…`} />
           <Text color={theme.colors.textMuted} style={{ textAlign: 'center', flexShrink: 1 }}>
             {t`Loading themes…`}
@@ -355,7 +354,7 @@ export function ThemeBrowseSheet({
           key="none"
           entering={fadeIn('medium')}
           testID="theme-browse-none"
-          style={[styles.stateBlock, plate]}>
+          style={styles.stateBlock}>
           <Text color={theme.colors.textMuted}>{t`No themes are published yet`}</Text>
         </Animated.View>
       )}
@@ -374,144 +373,114 @@ export function ThemeBrowseSheet({
     entries && total > 0 ? (
       <View testID="theme-browse-page-status" style={styles.footer}>
         {appending ? <Spinner size="sm" color={theme.colors.textMuted} /> : null}
-        <Text variant="caption" color={theme.colors.textMuted} style={plate}>
+        <Text variant="caption" color={theme.colors.textMuted}>
           {t`Showing ${shown} of ${total}`}
         </Text>
       </View>
     ) : null;
 
-  // The ground the theme sheet has, because to a reader these two are one
-  // place -- and now the ground every other form sheet has too, from the one
-  // frame they all share.
+  /**
+   * The status line: what the install is doing, and what went wrong.
+   *
+   * Pinned in the scene's header rather than left under the pressed row, so it
+   * cannot scroll out of sight mid-download, and it carries `listLayout` so the
+   * list below slides down to make room instead of jumping. The failure only
+   * appears here when there are rows -- with none, the empty component is
+   * already saying it.
+   */
+  const status = (
+    <Animated.View layout={listLayout('short')}>
+      {pending ? (
+        <Animated.View
+          key="progress"
+          entering={fadeIn('medium')}
+          exiting={fadeOut('short')}
+          style={styles.status}>
+          {/* Three waits, three names, one bar. `downloading` has nothing to
+              count and says so by not drawing one. */}
+          <ThemeImportProgress
+            testID="theme-browse-progress"
+            label={
+              progress?.phase === 'unpacking'
+                ? t`Unpacking…`
+                : progress?.phase === 'assets'
+                  ? t`Preparing images`
+                  : t`Downloading…`
+            }
+            phase={progress?.phase}
+            completed={counted?.completed}
+            total={counted?.total}
+            receivedBytes={progress?.phase === 'assets' ? progress.receivedBytes : undefined}
+          />
+        </Animated.View>
+      ) : failed && rows.length ? (
+        <View style={styles.status}>{failure}</View>
+      ) : null}
+    </Animated.View>
+  );
+
+  // The scene every other picker is built in: one frosted ground, the heading,
+  // and the catalogue under it. No close button, and no `onClose` prop to draw
+  // one from: the grabber and the swipe are the close.
   return (
-    <SheetFrame testID="settings-sheet-scene">
-      {/*
-        Exactly two subviews, which is the most a native form sheet lays out
-        around a scroll view -- the ground above, and this column. The header is
-        inside the column rather than inside the list, because a way out that
-        scrolls away is one the reader has to go looking for: after two screens
-        of catalogue there was no close button anywhere. `collapsable={false}`
-        so the column is not flattened into its parent, which would put the
-        scroller back at index 0 and hand it the whole sheet's height.
-      */}
-      <View
-        collapsable={false}
-        style={[
-          styles.column,
-          groundProvided ? null : { paddingTop: insets.top, paddingBottom: insets.bottom },
-        ]}>
-        <View style={styles.headerBlock}>
-          {/* No grabber: this is a full-screen route, not a sheet that can be
-              dragged away, and `SheetHandle` draws nothing inside a fullscreen
-              frame for exactly that reason. */}
-          <View style={styles.header}>
-            {/* The two lines a reader reads before any row exists, and the only
-                text on this sheet not already on a row. Over a wallpaper they
-                take the settings page's plate. */}
-            <SheetHeading
-              title={t`Browse themes`}
-              caption={t`Themes published at muqun.dev. Nothing downloads until you open one.`}
-            />
-            <GlassChrome face="sheet" style={styles.closeButton}>
-              <PressableScale
-                accessibilityLabel={t`Close theme catalogue`}
-                disabled={pending !== null}
-                onPress={onClose}
-                style={styles.closeHit}>
-                <X size={18} color={theme.colors.text} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
-          {/*
-            The status line: what the install is doing, and what went wrong.
-            It lives in the pinned header rather than under the pressed row so
-            that it cannot scroll out of sight mid-download, and it carries
-            `listLayout` so the list below slides down to make room instead of
-            jumping. The failure only appears here when there are rows -- with
-            none, the empty component below is already saying it.
-          */}
-          <Animated.View layout={listLayout('short')}>
-            {pending ? (
-              <Animated.View
-                key="progress"
-                entering={fadeIn('medium')}
-                exiting={fadeOut('short')}
-                style={styles.status}>
-                {/* Three waits, three names, one bar. `downloading` has
-                    nothing to count and says so by not drawing one. */}
-                <ThemeImportProgress
-                  testID="theme-browse-progress"
-                  label={
-                    progress?.phase === 'unpacking'
-                      ? t`Unpacking…`
-                      : progress?.phase === 'assets'
-                        ? t`Preparing images`
-                        : t`Downloading…`
-                  }
-                  phase={progress?.phase}
-                  completed={counted?.completed}
-                  total={counted?.total}
-                  receivedBytes={progress?.phase === 'assets' ? progress.receivedBytes : undefined}
-                />
-              </Animated.View>
-            ) : failed && rows.length ? (
-              <View style={styles.status}>{failure}</View>
-            ) : null}
-          </Animated.View>
-        </View>
-        <LegendList
-          testID="theme-browse-list"
-          data={rows}
-          onEndReached={appendPage}
-          onEndReachedThreshold={0.4}
-          keyExtractor={keyOfEntry}
-          // Entries are stable objects straight out of the parsed index and are
-          // never rebuilt per render, so the strictest comparison is both the
-          // correct one and the cheapest. Everything a row draws that is *not*
-          // the entry travels in `extraData`; see `rowState`.
-          itemsAreEqual={entriesAreEqual}
-          extraData={rowState}
-          // Never. A row owns a preview image, and recycling would hand one
-          // theme's cover to another.
-          recycleItems={false}
-          getItemType={(entry: ThemeIndexEntry): BrowseRowType =>
-            coverOf(entry) ? 'preview' : 'plain'
-          }
-          // The thumbnail is a fixed box and the text is capped at three lines,
-          // so every row is about the same height whichever bucket it is in.
-          estimatedItemSize={ROW_MIN_HEIGHT}
-          ItemSeparatorComponent={SettingsSeparator}
-          renderItem={({ item, index }) => (
-            <ThemeBrowseRow
-              entry={item}
-              cover={coverOf(item)}
-              installed={installedIds.has(item.id)}
-              pending={pending === item.id}
-              dimmed={pending !== null && pending !== item.id}
-              disabled={pending !== null}
-              revealed={revealed}
-              delay={
-                Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row
-              }
-              onPress={() => open(item)}
-              onCoverError={() =>
-                setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
-              }
-            />
-          )}
-          ListEmptyComponent={empty}
-          ListFooterComponent={footer}
-          style={styles.sheet}
-          // No fill here. The rows carry their own, in `surfaceRaised`, the
-          // way every other list in this app does; painting the whole content
-          // container in the ground's own `surface` put a second coat of the
-          // same tint over the picture and ended it in a straight line under
-          // the header. What is left on the ground is what should be: the
-          // header's two lines (plated), the empty state, and the footer.
-          contentContainerStyle={styles.listContent}
-        />
-      </View>
-    </SheetFrame>
+    <SheetScene
+      testID="settings-sheet-scene"
+      title={t`Browse themes`}
+      caption={t`Themes published at muqun.dev. Nothing downloads until you open one.`}
+      header={status}>
+      <LegendList
+        testID="theme-browse-list"
+        data={rows}
+        onEndReached={appendPage}
+        onEndReachedThreshold={0.4}
+        keyExtractor={keyOfEntry}
+        // Entries are stable objects straight out of the parsed index and are
+        // never rebuilt per render, so the strictest comparison is both the
+        // correct one and the cheapest. Everything a row draws that is *not*
+        // the entry travels in `extraData`; see `rowState`.
+        itemsAreEqual={entriesAreEqual}
+        extraData={rowState}
+        // Never. A row owns a preview image, and recycling would hand one
+        // theme's cover to another.
+        recycleItems={false}
+        getItemType={(entry: ThemeIndexEntry): BrowseRowType =>
+          coverOf(entry) ? 'preview' : 'plain'
+        }
+        // The thumbnail is a fixed box and the text is capped at two lines,
+        // so every row is about the same height whichever bucket it is in.
+        // No separator: a scene puts a hairline between groups and nowhere
+        // else, and a catalogue is one group.
+        estimatedItemSize={ROW_MIN_HEIGHT}
+        renderItem={({ item, index }) => (
+          <ThemeBrowseRow
+            entry={item}
+            cover={coverOf(item)}
+            installed={installedIds.has(item.id)}
+            pending={pending === item.id}
+            dimmed={pending !== null && pending !== item.id}
+            disabled={pending !== null}
+            revealed={revealed}
+            delay={Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row}
+            onPress={() => open(item)}
+            onCoverError={() =>
+              setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
+            }
+          />
+        )}
+        ListEmptyComponent={empty}
+        ListFooterComponent={
+          <>
+            {footer}
+            <SheetSceneFooter bottomInset={insets.bottom} />
+          </>
+        }
+        style={sheetSceneStyles.scroller}
+        // The scene's gutter and nothing else. No fill: every row is plain
+        // text and one thumbnail on the sheet's own frosted ground, so there
+        // is no second surface left to paint a seam with.
+        contentContainerStyle={styles.listContent}
+      />
+    </SheetScene>
   );
 }
 
@@ -534,12 +503,12 @@ function entriesAreEqual(previous: ThemeIndexEntry, next: ThemeIndexEntry): bool
 const MINIMUM_PENDING_VISIBLE_MS = DURATION.short * 2;
 
 /**
- * One catalogue entry: its cover, its name, what it costs, and who wrote it.
+ * One catalogue entry: its cover, its name, who wrote it and what it costs.
  *
- * A list row rather than a poster. The cover is a left thumbnail at the 8:5 it
- * is published in, and the three lines beside it are capped, so a long
- * description costs an ellipsis instead of half the screen -- which is what
- * decides how many themes a reader can compare without scrolling.
+ * A scene row rather than a card. The cover is the row's leading slot at the
+ * 8:5 it is published in, the name is the row, the author and description share
+ * the caption capped at two lines, and the trailing slot is the size -- which
+ * cross-fades to a spinner when this is the row being downloaded.
  *
  * The `Installed` badge is a hint rather than a guarantee. Installation
  * identity is local and content-hashed while the manifest `id` is
@@ -572,7 +541,6 @@ function ThemeBrowseRow({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
 
   // Spent once. Legend List mounts and unmounts rows as they cross the
@@ -592,6 +560,11 @@ function ThemeBrowseRow({
   }, [dim, dimmed]);
   const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
 
+  // One line under the name, assembled rather than stacked: who wrote it, then
+  // what it is. Two separate lines would put a third capped run in a row whose
+  // whole job is to let a reader compare names.
+  const caption = [entry.author, entry.description].filter(Boolean).join(' · ');
+
   return (
     // Two views, and the split is not cosmetic: a layout animation and an
     // animated `opacity` on one view make Reanimated warn that the layout
@@ -600,178 +573,99 @@ function ThemeBrowseRow({
     // and reflow, the inner one owns the dim.
     <Animated.View entering={entering} layout={listLayout('short')}>
       <Animated.View style={dimStyle}>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel={entry.name}
-          accessibilityState={{ disabled, busy: pending }}
+        <SheetSceneRow
           testID={`theme-browse-item:${entry.id}`}
+          title={entry.name}
+          caption={caption || undefined}
+          accessibilityLabel={entry.name}
           disabled={disabled}
           onPress={onPress}
-          // The row carries its own fill, and it is the only thing on this
-          // sheet that does. The column used to be painted by the list's
-          // content container, in the ground's own token -- so under the
-          // header the wallpaper came through `surface` once and below it
-          // through `surface` twice, which is the hard seam a reader sees
-          // across the sheet and the reason this one did not look like the
-          // others. `surfaceRaised` is what a row sits on everywhere else in
-          // the app (the panels sheet's card, the files list's rows), and
-          // adjacent rows in the same fill read as the column they replace.
-          style={[styles.row, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
-          <View
-            style={[
-              styles.cover,
-              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-            ]}>
-            {/* The placeholder is always underneath, so the image's own fade is
-                a cross-fade onto a surface that is already the right colour --
-                no flash of sheet background, and no extra code. The index
-                carries no palette of its own, so the two swatches are the
-                sheet's rather than the theme's. */}
-            <View accessible={false} style={[StyleSheet.absoluteFill, styles.placeholder]}>
-              <View style={[styles.swatch, { backgroundColor: theme.colors.background }]} />
-              <View style={[styles.swatch, { backgroundColor: theme.colors.primary }]} />
-            </View>
-            {cover ? (
-              <Animated.View exiting={fadeOut('micro')} style={StyleSheet.absoluteFill}>
-                <Image
-                  accessible={false}
-                  testID={`theme-browse-preview:${entry.id}`}
-                  source={{ uri: cover }}
-                  cachePolicy="memory-disk"
-                  recyclingKey={entry.id}
-                  contentFit="cover"
-                  transition={DURATION.medium}
-                  onError={onCoverError}
-                  style={StyleSheet.absoluteFill}
-                />
-              </Animated.View>
-            ) : null}
-          </View>
-          <View style={styles.body}>
-            <View style={styles.titleRow}>
-              {/* The name gets the line to itself, beside the size and
-                  nothing else. The badge used to sit here and cost the name a
-                  third of its width, so "Aegean Paperlight" was read as
-                  "Aegean Paperl…" -- a row whose one job is to name a theme. */}
-              <Text variant="bodySmall" numberOfLines={1} style={styles.flexOne}>
-                {entry.name}
-              </Text>
-              {/* The trailing slot is one thing or the other, never both and
-                  never a jump: the size cross-fades out as the spinner comes
-                  in, which is the row acknowledging the tap. */}
-              <View style={styles.trailing}>
-                {pending ? (
-                  <Animated.View
-                    key="busy"
-                    entering={fadeIn('short')}
-                    exiting={fadeOut('short')}
-                    style={styles.trailingSlot}>
-                    <Spinner size="sm" color={theme.colors.primary} />
-                  </Animated.View>
-                ) : (
-                  <Animated.View
-                    key="size"
-                    entering={fadeIn('short')}
-                    exiting={fadeOut('short')}
-                    style={styles.trailingSlot}>
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      {formatAssetSize(entry.bytes)}
-                    </Text>
-                  </Animated.View>
-                )}
+          style={styles.row}
+          leading={
+            <View style={[styles.cover, { backgroundColor: theme.colors.surfaceRaised }]}>
+              {/* The placeholder is always underneath, so the image's own fade
+                  is a cross-fade onto a surface that is already the right
+                  colour -- no flash of sheet background, and no extra code. The
+                  index carries no palette of its own, so the two swatches are
+                  the sheet's rather than the theme's. */}
+              <View accessible={false} style={[StyleSheet.absoluteFill, styles.placeholder]}>
+                <View style={[styles.swatch, { backgroundColor: theme.colors.background }]} />
+                <View style={[styles.swatch, { backgroundColor: theme.colors.primary }]} />
               </View>
+              {cover ? (
+                <Animated.View exiting={fadeOut('micro')} style={StyleSheet.absoluteFill}>
+                  <Image
+                    accessible={false}
+                    testID={`theme-browse-preview:${entry.id}`}
+                    source={{ uri: cover }}
+                    cachePolicy="memory-disk"
+                    recyclingKey={entry.id}
+                    contentFit="cover"
+                    transition={DURATION.medium}
+                    onError={onCoverError}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              ) : null}
             </View>
-            {/* The badge leads the author line rather than the name line: it
-                is about this row's relationship to the library, which is the
-                same register as who wrote the theme, and down here it costs a
-                name nothing. */}
-            {installed || entry.author ? (
-              <View style={styles.metaRow}>
-                {installed ? (
-                  <Animated.View entering={fadeIn('medium')}>
-                    <Tag
-                      // One layer of paint per pixel: under a custom theme the
-                      // kit's opaque chip would be the one thing on the row
-                      // refusing the reader's surface slider, so it drops its
-                      // fill and the row behind shows through at its own alpha.
-                      // A default theme has no alpha to honour and keeps the
-                      // kit's.
-                      style={surfaceOpacity === 1 ? undefined : styles.badgeTransparent}>
-                      {t`Installed`}
-                    </Tag>
-                  </Animated.View>
-                ) : null}
-                {entry.author ? (
-                  <Text
-                    variant="caption"
-                    color={theme.colors.textSubtle}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={styles.flexOne}>
-                    {entry.author}
+          }
+          meta={
+            <View style={styles.trailing}>
+              {/* One thing or the other, never both and never a jump: the size
+                  cross-fades out as the spinner comes in, which is the row
+                  acknowledging the tap. */}
+              {pending ? (
+                <Animated.View
+                  key="busy"
+                  entering={fadeIn('short')}
+                  exiting={fadeOut('short')}
+                  style={styles.trailingSlot}>
+                  <Spinner size="sm" color={theme.colors.primary} />
+                </Animated.View>
+              ) : (
+                <Animated.View
+                  key="size"
+                  entering={fadeIn('short')}
+                  exiting={fadeOut('short')}
+                  style={styles.trailingSlot}>
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    {formatAssetSize(entry.bytes)}
                   </Text>
-                ) : null}
-              </View>
-            ) : null}
-            {entry.description ? (
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                numberOfLines={2}
-                ellipsizeMode="tail">
-                {entry.description}
-              </Text>
-            ) : null}
-          </View>
-        </PressableScale>
+                </Animated.View>
+              )}
+              {installed ? (
+                <Animated.View entering={fadeIn('medium')}>
+                  <Tag
+                    // One layer of paint per pixel: under a custom theme the
+                    // kit's opaque chip would be the one thing on the row
+                    // refusing the reader's surface slider, so it drops its
+                    // fill and the row behind shows through at its own alpha.
+                    // A default theme has no alpha to honour and keeps the
+                    // kit's.
+                    style={surfaceOpacity === 1 ? undefined : styles.badgeTransparent}>
+                    {t`Installed`}
+                  </Tag>
+                </Animated.View>
+              ) : null}
+            </View>
+          }
+        />
       </Animated.View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  column: { flex: 1 },
-  sheet: { flex: 1, minHeight: 0, overflow: 'hidden' },
   listContent: {
     // A short catalogue still fills the sheet rather than leaving a stub.
     flexGrow: 1,
     width: '100%',
     maxWidth: THEME_PICKER_MAX_CONTENT_WIDTH,
     alignSelf: 'center',
-    paddingBottom: LADDER.gutter,
+    paddingHorizontal: SHEET_LADDER.gutter,
   },
-  headerBlock: {
-    width: '100%',
-    maxWidth: THEME_PICKER_MAX_CONTENT_WIDTH,
-    alignSelf: 'center',
-    paddingTop: 10,
-    paddingBottom: LADDER.gap,
-    paddingHorizontal: LADDER.gutter,
-    gap: LADDER.snug,
-  },
-  header: { flexDirection: 'row', alignItems: 'center', gap: LADDER.snug },
-  // The settings sheet's title size, so the two announce themselves the same.
-  headerTitle: { fontSize: 20, lineHeight: 25, includeFontPadding: false },
-  status: { paddingTop: LADDER.tight },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeHit: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  flexOne: { flex: 1, minWidth: 0 },
-  row: {
-    minHeight: ROW_MIN_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LADDER.gap,
-    paddingHorizontal: LADDER.gutter,
-    paddingVertical: LADDER.snug,
-  },
+  status: { paddingTop: SHEET_LADDER.tight },
+  row: { minHeight: ROW_MIN_HEIGHT },
   cover: {
     width: COVER_WIDTH,
     height: COVER_HEIGHT,
@@ -780,23 +674,17 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   placeholder: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
-  swatch: { width: 28, height: 20, borderRadius: 6, borderCurve: 'continuous' },
-  body: { flex: 1, minWidth: 0, gap: LADDER.tight / 2 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap },
+  swatch: { width: 24, height: 16, borderRadius: 5, borderCurve: 'continuous' },
   badgeTransparent: { backgroundColor: 'transparent' },
-  trailing: { minWidth: 56, alignItems: 'flex-end', justifyContent: 'center' },
+  trailing: { minWidth: 56, alignItems: 'flex-end', gap: SHEET_LADDER.tight },
   trailingSlot: { alignItems: 'flex-end', justifyContent: 'center' },
-  state: { paddingHorizontal: LADDER.gutter, paddingTop: LADDER.section, gap: LADDER.gap },
-  stateBlock: { gap: LADDER.gap },
-  stateAction: { flexDirection: 'row' },
-  loading: { alignItems: 'center', gap: LADDER.gap, paddingVertical: LADDER.gap },
-  footer: { paddingHorizontal: LADDER.gutter, paddingTop: LADDER.snug },
-  more: {
-    alignItems: 'center',
-    gap: LADDER.tight,
-    padding: LADDER.snug,
-    borderRadius: 16,
-    borderCurve: 'continuous',
+  state: {
+    paddingHorizontal: SHEET_LADDER.gutter,
+    paddingTop: SHEET_LADDER.section,
+    gap: SHEET_LADDER.gap,
   },
+  stateBlock: { gap: SHEET_LADDER.gap },
+  stateAction: { flexDirection: 'row' },
+  loading: { alignItems: 'center', gap: SHEET_LADDER.gap, paddingVertical: SHEET_LADDER.gap },
+  footer: { paddingTop: SHEET_LADDER.snug },
 });

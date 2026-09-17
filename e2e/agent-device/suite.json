@@ -3204,7 +3204,7 @@
       },
       {
         "target": {
-          "text": "GATEWAY URL"
+          "text": "Gateway URL"
         },
         "mode": "visible",
         "run": "flows/pairing-manual.ad#s7"
@@ -3246,7 +3246,7 @@
       },
       {
         "target": {
-          "text": "GATEWAY URL"
+          "text": "Gateway URL"
         },
         "mode": "visible",
         "run": "flows/pairing-manual.ad#s13"

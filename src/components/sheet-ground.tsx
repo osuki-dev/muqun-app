@@ -16,7 +16,7 @@
  * 3. **The wallpaper**, `shell.background`, at the strength the pack asked for.
  *
  * The bug this component exists to end is that 2 and 3 were the other way
- * round. `settings-sheet.tsx` and the two sheets that copied it painted the
+ * round. The settings sheet (since retired) and the two that copied it painted the
  * picture first and the tint over it, and `surfaceBackgroundFill` returns the
  * colour unchanged at alpha 1 -- which is the default and what every reader who
  * has never touched the slider has. So the sheets mounted a full-screen
@@ -73,12 +73,6 @@ export type SheetGroundTint = 'surface' | 'background';
  */
 const SheetGroundTintContext = createContext<SheetGroundTint>('background');
 
-/** The fullscreen route paints one continuous backdrop outside its safe area. */
-export const SheetGroundProvidedContext = createContext(false);
-export function useSheetGroundProvided() {
-  return useContext(SheetGroundProvidedContext);
-}
-
 /**
  * How much of the sheet's own surface stands between the wallpaper and a row.
  *
@@ -115,7 +109,6 @@ export function SheetGround({
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const provided = useSheetGroundProvided();
   const hasShell = useHasThemeArtwork('shell.background');
   return (
     <View
@@ -124,31 +117,27 @@ export function SheetGround({
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       style={StyleSheet.absoluteFill}>
-      {provided ? null : (
-        <>
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
-            ]}
-          />
-          <ThemeArtwork slot="shell.background" />
-          {frosted && hasShell ? (
-            <View
-              style={[
-                StyleSheet.absoluteFill,
-                {
-                  backgroundColor: withAlpha(
-                    sheetGroundTintColor(theme.colors, tint),
-                    SHEET_FROST_ALPHA
-                  ),
-                },
-              ]}
-            />
-          ) : null}
-        </>
-      )}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
+        ]}
+      />
+      <ThemeArtwork slot="shell.background" />
+      {frosted && hasShell ? (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: withAlpha(
+                sheetGroundTintColor(theme.colors, tint),
+                SHEET_FROST_ALPHA
+              ),
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }
@@ -181,13 +170,13 @@ export type SheetGroundPlate = {
  * the only thing the sheet measures, which is what `fitToContents` needs.
  *
  * Sheets differ in where that pair sits. A sheet whose root is the scroller
- * itself (`SettingsSheet`, the two keyboard forms) puts the frame *inside* the
- * scroll view, over a content container with no padding of its own, so the
- * ground reaches the sheet's edges rather than stopping at the form's gutter. A
- * sheet with a pinned header (the catalogue, the files list, the patch) puts
- * the frame at its root and its header and list inside one column. Both shapes
- * are already shipping; what they now share is this component, so the ground is
- * changed in one place for all of them.
+ * itself (the content-sized keyboard forms) puts the frame *inside* the scroll
+ * view, over a content container with no padding of its own, so the ground
+ * reaches the sheet's edges rather than stopping at the form's gutter. A sheet
+ * with a pinned header (the theme picker, the catalogue, the files list, the
+ * patch) puts the frame at its root and its heading and list inside one column.
+ * Both shapes are already shipping; what they share is this component, so the
+ * ground is changed in one place for all of them.
  */
 export function SheetFrame({
   testID,

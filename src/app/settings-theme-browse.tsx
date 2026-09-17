@@ -1,5 +1,3 @@
-import { useRouter } from 'expo-router';
-
 import { ThemeBrowseSheet } from '@/components/theme-browse-sheet';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 
@@ -14,9 +12,11 @@ import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
  * A catalogue is read by scrolling and a panel capped at 420pt inside an
  * already-long sheet is not a way to read one -- and only the navigator can
  * give a sheet its detent, its grabber and its dismissal gesture.
+ *
+ * No `onClose` either: it is a form sheet now, so the way out is the grabber
+ * and the swipe rather than a button this route had to hand the sheet.
  */
 export default function SettingsThemeBrowseScreen() {
-  const router = useRouter();
   const openEditor = useOpenThemeEditor();
-  return <ThemeBrowseSheet onClose={() => router.back()} onReady={openEditor} />;
+  return <ThemeBrowseSheet onReady={openEditor} />;
 }
