@@ -666,6 +666,10 @@ msgstr "파일 선택"
 msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
 msgstr "아름답게 그려진 공식 테마 컬렉션에서 골라 종이, 터미널, 아트워크를 한 번에 다시 칠하거나, 나만의 테마를 직접 만들어 보세요"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose Project"
+msgstr "프로젝트 선택"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose the specialized agent for this task"
 msgstr "이 작업에 적합한 특화 에이전트 선택"
@@ -1326,6 +1330,10 @@ msgstr "현재 테마"
 msgid "Custom"
 msgstr "사용자 지정"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "CUSTOM PROJECT DIRECTORY"
+msgstr "사용자 지정 프로젝트 디렉터리"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "터미널 명령과 키 조합을 사용자 지정합니다"
@@ -1635,10 +1643,6 @@ msgstr "이 워크스페이스의 파일"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or path"
 msgstr "프로젝트 또는 경로 필터"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (/home/...)"
-msgstr "프로젝트 필터 또는 경로 입력 (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2086,7 +2090,7 @@ msgstr "이전 출력 불러오는 중…"
 msgid "Loading paired devices…"
 msgstr "페어링된 기기를 불러오는 중…"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "서버 불러오는 중"
@@ -2137,7 +2141,7 @@ msgstr "머신 및 세션"
 msgid "Make it yours"
 msgstr "나만의 앱으로"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage"
 msgstr "관리"
 
@@ -2145,7 +2149,7 @@ msgstr "관리"
 msgid "Manage machines"
 msgstr "머신 관리"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage SSH hosts"
 msgstr "SSH 호스트 관리"
 
@@ -2191,7 +2195,6 @@ msgstr "편집기 컨트롤 이동"
 msgid "Move the simulator controls"
 msgstr "시뮬레이터 컨트롤 이동"
 
-#: src/app/(drawer)/_layout.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2514,7 +2517,7 @@ msgstr "열기"
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
 #. placeholder {0}: server.label
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2527,6 +2530,10 @@ msgstr "{title} 열기. 길게 눌러 닫기"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "그래도 열기"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open as Project Workspace"
+msgstr "프로젝트 워크스페이스로 열기"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -2597,7 +2604,11 @@ msgstr "OpenCode 에이전트"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "이 호스트에서 OpenCode 데몬이 실행 중이지 않습니다. `opencode serve --service`를 실행하여 시작하세요."
+msgstr "이 호스트에서 OpenCode 데몬이 실행 중이지 않습니다. `opencode serve --service`를 실행하여 시작하세요"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode ready"
+msgstr "OpenCode 준비 완료"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"
@@ -2657,7 +2668,7 @@ msgstr "출력"
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
 msgstr "출력은 프로그램 본연의 색으로 터미널 그리드에 그려지고, 키 줄은 누르는 순간 전송됩니다. nvim, less, REPL 모두 그대로 동작합니다"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Pair a server"
@@ -2688,7 +2699,7 @@ msgstr "{0}을(를) 통해 페어링"
 msgid "Pair through an SSH host"
 msgstr "SSH 호스트를 통해 페어링"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Pair your first server"
 msgstr "첫 서버 페어링하기"
 
@@ -3177,7 +3188,7 @@ msgstr "명령 실행"
 msgid "Run relevant tests"
 msgstr "관련 테스트 실행"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다"
 
@@ -3235,8 +3246,8 @@ msgstr "저장한 프롬프트"
 msgid "Saving…"
 msgstr "저장 중…"
 
-#: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
@@ -3452,7 +3463,7 @@ msgstr "먼저 시스템 설정에서 {label}을(를) 설정하세요"
 msgid "Set up a Gateway on your computer"
 msgstr "내 컴퓨터에 Gateway 설치하기"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -3634,7 +3645,7 @@ msgstr "소스 코드"
 msgid "Space"
 msgstr "스페이스"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3646,7 +3657,7 @@ msgstr "SSH"
 msgid "SSH host"
 msgstr "SSH 호스트"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
 msgstr "SSH 호스트"
@@ -4262,7 +4273,7 @@ msgstr "다시 시도"
 msgid "Try again once the gateway responds."
 msgstr "Gateway가 응답하면 다시 시도하세요"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Try the demo"
 msgstr "데모 사용해 보기"
 
@@ -4540,7 +4551,7 @@ msgstr "이 줄 복사"
 msgid "Yesterday"
 msgstr "어제"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."

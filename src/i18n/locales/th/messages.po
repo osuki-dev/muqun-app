@@ -666,6 +666,10 @@ msgstr "เลือกไฟล์"
 msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
 msgstr "เลือกจากคอลเลกชันธีมทางการพร้อมภาพประกอบสวยงามที่เปลี่ยนสีพื้น เทอร์มินัล และภาพประกอบไปด้วยกัน หรือสร้างธีมของคุณเอง"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose Project"
+msgstr "เลือกโปรเจกต์"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose the specialized agent for this task"
 msgstr "เลือกเอเจนต์เฉพาะทางสำหรับงานนี้"
@@ -1326,6 +1330,10 @@ msgstr "ธีมปัจจุบัน"
 msgid "Custom"
 msgstr "กำหนดเอง"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "CUSTOM PROJECT DIRECTORY"
+msgstr "ไดเรกทอรีโปรเจกต์ที่กำหนดเอง"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "ปรับแต่งคำสั่งเทอร์มินัลและชุดปุ่มลัด"
@@ -1635,10 +1643,6 @@ msgstr "ไฟล์ในพื้นที่ทำงานนี้"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or path"
 msgstr "กรองโปรเจกต์หรือเส้นทาง"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (/home/...)"
-msgstr "กรองโปรเจกต์หรือพิมพ์เส้นทาง (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2086,7 +2090,7 @@ msgstr "กำลังโหลดเอาต์พุตก่อนหน้
 msgid "Loading paired devices…"
 msgstr "กำลังโหลดอุปกรณ์ที่จับคู่…"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "กำลังโหลดเซิร์ฟเวอร์"
@@ -2137,7 +2141,7 @@ msgstr "เครื่องและเซสชัน"
 msgid "Make it yours"
 msgstr "ปรับให้เป็นของคุณ"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage"
 msgstr "จัดการ"
 
@@ -2145,7 +2149,7 @@ msgstr "จัดการ"
 msgid "Manage machines"
 msgstr "จัดการเครื่อง"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage SSH hosts"
 msgstr "จัดการโฮสต์ SSH"
 
@@ -2191,7 +2195,6 @@ msgstr "ย้ายตัวควบคุมตัวแก้ไข"
 msgid "Move the simulator controls"
 msgstr "ย้ายตัวควบคุมเครื่องจำลอง"
 
-#: src/app/(drawer)/_layout.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2514,7 +2517,7 @@ msgstr "เปิด"
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
 #. placeholder {0}: server.label
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2527,6 +2530,10 @@ msgstr "เปิด {title} กดค้างเพื่อปิด"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "เปิดต่อไป"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open as Project Workspace"
+msgstr "เปิดเป็นพื้นที่ทำงานของโปรเจกต์"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -2599,6 +2606,10 @@ msgstr "เอเจนต์ OpenCode"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "บริการ OpenCode ไม่ได้ทำงานอยู่บนโฮสต์นี้ เรียกใช้ `opencode serve --service` เพื่อเริ่มต้น"
 
+#: src/components/new-task-action.tsx
+msgid "OpenCode ready"
+msgstr "OpenCode พร้อมแล้ว"
+
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"
 msgstr "บริการ OpenCode ออฟไลน์"
@@ -2657,7 +2668,7 @@ msgstr "เอาต์พุต"
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
 msgstr "เอาต์พุตแสดงบนกริดเทอร์มินัลด้วยสีของโปรแกรมเอง พร้อมแถวปุ่มที่ส่งทันทีเมื่อกด ใช้กับ nvim, less และ REPL ได้"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Pair a server"
@@ -2688,7 +2699,7 @@ msgstr "จับคู่ผ่าน {0}"
 msgid "Pair through an SSH host"
 msgstr "จับคู่ผ่านโฮสต์ SSH"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Pair your first server"
 msgstr "จับคู่เซิร์ฟเวอร์แรกของคุณ"
 
@@ -3177,7 +3188,7 @@ msgstr "เรียกใช้คำสั่ง"
 msgid "Run relevant tests"
 msgstr "เรียกใช้การทดสอบที่เกี่ยวข้อง"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
 
@@ -3235,8 +3246,8 @@ msgstr "พรอมต์ที่บันทึกไว้"
 msgid "Saving…"
 msgstr "กำลังบันทึก…"
 
-#: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
@@ -3452,7 +3463,7 @@ msgstr "ตั้งค่า {label} ในการตั้งค่าระ
 msgid "Set up a Gateway on your computer"
 msgstr "ตั้งค่า Gateway บนคอมพิวเตอร์ของคุณ"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -3634,7 +3645,7 @@ msgstr "ซอร์สโค้ด"
 msgid "Space"
 msgstr "Space"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3646,7 +3657,7 @@ msgstr "SSH"
 msgid "SSH host"
 msgstr "โฮสต์ SSH"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
 msgstr "โฮสต์ SSH"
@@ -4262,7 +4273,7 @@ msgstr "ลองอีกครั้ง"
 msgid "Try again once the gateway responds."
 msgstr "ลองอีกครั้งเมื่อ Gateway ตอบกลับ"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Try the demo"
 msgstr "ลองโหมดสาธิต"
 
@@ -4540,7 +4551,7 @@ msgstr "คัดลอกบรรทัดนี้"
 msgid "Yesterday"
 msgstr "เมื่อวาน"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."

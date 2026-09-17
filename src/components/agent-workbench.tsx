@@ -37,8 +37,9 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { isSafeExternalLink } from '@/lib/safe-link';
+import Animated from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import { DURATION } from '@/lib/motion';
+import { DURATION, fadeIn, listLayout } from '@/lib/motion';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { StatusDot } from '@/components/status-dot';
 import {
@@ -203,6 +204,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   }, [openModelSheetRef]);
 
+  const initialCheckDoneRef = useRef(Boolean(initialAsid));
+
   // Load available sessions if no activeAsid
   const refreshSessions = useCallback(async () => {
     try {
@@ -218,7 +221,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             onModelChange?.(list[0].model);
           }
           if (list[0].agent) setSelectedAgent(list[0].agent);
+        } else if (list.length === 0) {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     } catch (err) {
       console.warn('Failed to list agent sessions:', err);
@@ -232,6 +239,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ) {
         setIsOffline(true);
       }
+      setLoading(false);
+    } finally {
+      initialCheckDoneRef.current = true;
     }
   }, [sessionId, activeAsid, onModelChange]);
 
@@ -243,7 +253,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // Load full snapshot when activeAsid changes
   const loadSnapshot = useCallback(async () => {
     if (!activeAsid) {
-      setLoading(false);
+      if (initialCheckDoneRef.current) {
+        setLoading(false);
+      }
       return;
     }
     setLoading(true);
@@ -1090,7 +1102,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             styles.emptyScrollWrapper,
             { paddingTop: topInset + 20, paddingBottom: bottomInset + 185 },
           ]}>
-          <View
+          <Animated.View
+            entering={fadeIn()}
+            layout={listLayout()}
             style={[
               styles.emptyContainer,
               {
@@ -1126,7 +1140,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             {isOffline ? (
               <>
                 <Bot size={44} color={theme.colors.textMuted} />
-                <Text variant="bodySmall" color={theme.colors.text} style={styles.emptyTitle}>
+                <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
                   <Trans>OpenCode Service Offline</Trans>
                 </Text>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
@@ -1148,7 +1162,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   ) : (
                     <RefreshCw size={14} color={theme.colors.primary} />
                   )}
-                  <Text variant="caption" color={theme.colors.primary} style={styles.emptyNewBtnText}>
+                  <Text variant="label" color={theme.colors.primary} style={styles.emptyNewBtnText}>
                     <Trans>Check Again</Trans>
                   </Text>
                 </PressableScale>
@@ -1156,26 +1170,44 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             ) : (
               <>
                 <Bot size={44} color={theme.colors.primary} />
-                <Text variant="bodySmall" color={theme.colors.text} style={styles.emptyTitle}>
+                <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
                   <Trans>Welcome to OpenCode Agent</Trans>
                 </Text>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
                   <Trans>Ask questions, inspect files, or run commands in your workspace.</Trans>
                 </Text>
-                <PressableScale
-                  onPress={handleCreateNewSession}
-                  style={[
-                    styles.emptyNewBtn,
-                    { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
-                  ]}>
-                  <PlusCircle size={14} color={theme.colors.primary} />
-                  <Text variant="caption" color={theme.colors.primary} style={styles.emptyNewBtnText}>
-                    <Trans>New Session</Trans>
-                  </Text>
-                </PressableScale>
+                <View style={styles.emptyActionsRow}>
+                  <PressableScale
+                    testID="agent-empty-new-session-btn"
+                    onPress={handleCreateNewSession}
+                    style={[
+                      styles.emptyNewBtn,
+                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
+                    ]}>
+                    <PlusCircle size={14} color={theme.colors.primary} />
+                    <Text variant="label" color={theme.colors.primary} style={styles.emptyNewBtnText}>
+                      <Trans>New Session</Trans>
+                    </Text>
+                  </PressableScale>
+                  <PressableScale
+                    testID="agent-empty-choose-project-btn"
+                    onPress={() => setWorkspaceSheetVisible(true)}
+                    style={[
+                      styles.emptySecondaryBtn,
+                      {
+                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                        borderColor: theme.colors.border,
+                      },
+                    ]}>
+                    <FolderGit2 size={14} color={theme.colors.text} />
+                    <Text variant="label" color={theme.colors.text} style={styles.emptyNewBtnText}>
+                      <Trans>Choose Project</Trans>
+                    </Text>
+                  </PressableScale>
+                </View>
               </>
             )}
-          </View>
+          </Animated.View>
         </View>
       ) : (
         <LegendList<TimelineItem>
@@ -1279,6 +1311,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         visible={workspaceSheetVisible}
         activeDirectory={activeDirectory}
         sessionId={sessionId}
+        initialProjects={knownProjects}
         onSelectWorkspace={handleSelectWorkspace}
         onClose={() => setWorkspaceSheetVisible(false)}
       />
@@ -1394,14 +1427,28 @@ const styles = StyleSheet.create({
     maxWidth: 260,
     lineHeight: 18,
   },
+  emptyActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+  },
   emptyNewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 6,
     paddingVertical: 7,
     paddingHorizontal: 14,
     borderRadius: 999,
+  },
+  emptySecondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   emptyNewBtnText: {
     fontWeight: '600',

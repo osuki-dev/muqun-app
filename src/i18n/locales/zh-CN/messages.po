@@ -666,6 +666,10 @@ msgstr "选择文件"
 msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
 msgstr "从一系列精美的官方插画主题中挑选，纸面、终端和插图一起重绘；也可以创建一套自己的主题"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose Project"
+msgstr "选择项目"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose the specialized agent for this task"
 msgstr "为此任务选择专门的 Agent"
@@ -1326,6 +1330,10 @@ msgstr "当前主题"
 msgid "Custom"
 msgstr "自定义"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "CUSTOM PROJECT DIRECTORY"
+msgstr "自定义项目目录"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "自定义终端命令和组合键"
@@ -1635,10 +1643,6 @@ msgstr "此工作区的文件"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or path"
 msgstr "过滤项目或路径"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (/home/...)"
-msgstr "过滤项目或输入路径 (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2086,7 +2090,7 @@ msgstr "正在加载之前的输出…"
 msgid "Loading paired devices…"
 msgstr "正在加载已配对的设备…"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "正在加载服务器"
@@ -2137,7 +2141,7 @@ msgstr "机器与会话"
 msgid "Make it yours"
 msgstr "打造专属于你的 App"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage"
 msgstr "管理"
 
@@ -2145,7 +2149,7 @@ msgstr "管理"
 msgid "Manage machines"
 msgstr "管理机器"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主机"
 
@@ -2191,7 +2195,6 @@ msgstr "移动编辑器控件"
 msgid "Move the simulator controls"
 msgstr "移动模拟器控件"
 
-#: src/app/(drawer)/_layout.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2514,7 +2517,7 @@ msgstr "打开"
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
 #. placeholder {0}: server.label
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2527,6 +2530,10 @@ msgstr "打开 {title}。长按可关闭"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "仍要打开"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open as Project Workspace"
+msgstr "打开为项目工作区"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -2597,7 +2604,11 @@ msgstr "OpenCode 智能体"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "此主机上未运行 OpenCode 服务。请运行 `opencode serve --service` 启动。"
+msgstr "此主机上未运行 OpenCode 服务。请运行 `opencode serve --service` 启动"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode ready"
+msgstr "OpenCode 已就绪"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"
@@ -2657,7 +2668,7 @@ msgstr "输出"
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
 msgstr "输出以程序自己的颜色落在终端网格上，按键行一按即发。nvim、less 和 REPL 都表现如常"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Pair a server"
@@ -2688,7 +2699,7 @@ msgstr "通过 {0} 配对"
 msgid "Pair through an SSH host"
 msgstr "通过 SSH 主机配对"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Pair your first server"
 msgstr "配对你的第一台服务器"
 
@@ -3177,7 +3188,7 @@ msgstr "运行命令"
 msgid "Run relevant tests"
 msgstr "运行相关测试"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
 
@@ -3235,8 +3246,8 @@ msgstr "已保存的提示词"
 msgid "Saving…"
 msgstr "保存中…"
 
-#: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
@@ -3452,7 +3463,7 @@ msgstr "请先在系统设置中设置 {label}"
 msgid "Set up a Gateway on your computer"
 msgstr "在你的电脑上装一个 Gateway"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -3634,7 +3645,7 @@ msgstr "源代码"
 msgid "Space"
 msgstr "空格键"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3646,7 +3657,7 @@ msgstr "SSH"
 msgid "SSH host"
 msgstr "SSH 主机"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
 msgstr "SSH 主机"
@@ -4262,7 +4273,7 @@ msgstr "重试"
 msgid "Try again once the gateway responds."
 msgstr "等 Gateway 响应后再重试"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Try the demo"
 msgstr "试用示例"
 
@@ -4540,7 +4551,7 @@ msgstr "复制这一行"
 msgid "Yesterday"
 msgstr "昨天"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."

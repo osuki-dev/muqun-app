@@ -1084,7 +1084,7 @@ function ServerCard({
               finish loading, rather than the slot popping into existence. */}
           <Animated.View style={styles.serverTrailing} layout={listLayout()}>
             {reachability === 'live' || Boolean(server.sshTunnel) ? (
-              <NewTaskAction serverId={server.serverId} label={server.label} />
+              <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
             ) : null}
           </Animated.View>
         </View>

@@ -23,6 +23,7 @@ export interface AgentWorkspaceSheetProps {
   visible: boolean;
   activeDirectory?: string;
   sessionId?: string;
+  initialProjects?: AgentProject[];
   onSelectWorkspace: (directory: string, project?: AgentProject) => void;
   onClose: () => void;
 }
@@ -31,6 +32,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   visible,
   activeDirectory,
   sessionId,
+  initialProjects,
   onSelectWorkspace,
   onClose,
 }: AgentWorkspaceSheetProps) {
@@ -40,13 +42,22 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
 
-  const [projects, setProjects] = useState<AgentProject[]>([]);
+  const [projects, setProjects] = useState<AgentProject[]>(initialProjects || []);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<DirectoryItem[]>([]);
 
+  useEffect(() => {
+    if (initialProjects && initialProjects.length > 0) {
+      const valid = initialProjects.filter((p) => p.id !== 'global' && p.canonical !== '/');
+      setProjects((prev) => (prev.length === 0 ? valid : prev));
+    }
+  }, [initialProjects]);
+
   const loadProjects = useCallback(async () => {
-    setLoading(true);
+    if (projects.length === 0 && (!initialProjects || initialProjects.length === 0)) {
+      setLoading(true);
+    }
     try {
       const list = await getAgentProjects(sessionId);
       const valid = (list || []).filter((p) => p.id !== 'global' && p.canonical !== '/');
@@ -56,7 +67,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
     } finally {
       setLoading(false);
     }
-  }, [sessionId]);
+  }, [sessionId, projects.length, initialProjects]);
 
   useEffect(() => {
     if (visible) {
@@ -144,12 +155,14 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                 <Input
                   testID="agent-workspace-search-input"
                   accessibilityLabel={t`Filter projects or path`}
-                  placeholder={t`Filter projects or type path (/home/...)`}
+                  placeholder={t`Filter projects or path`}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   variant="outline"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  numberOfLines={1}
+                  multiline={false}
                 />
               </View>
 
@@ -165,6 +178,44 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                     { paddingBottom: LADDER.section + insets.bottom },
                   ]}
                   keyboardShouldPersistTaps="handled">
+                  {/* Custom Project Directory / Direct Path Input */}
+                  {searchQuery.trim().length > 0 &&
+                  (searchQuery.trim().startsWith('/') || searchQuery.trim().startsWith('~')) ? (
+                    <View style={styles.sectionBlock}>
+                      <SectionLabel
+                        title={t`CUSTOM PROJECT DIRECTORY`}
+                        color={theme.colors.textMuted}
+                      />
+                      <SettingsCard>
+                        <PressableScale
+                          testID="agent-workspace-custom-path-btn"
+                          onPress={() => handleSelect(searchQuery.trim())}
+                          style={styles.itemRow}>
+                          <View style={styles.itemRowLeft}>
+                            <FolderGit2 size={18} color={theme.colors.primary} />
+                            <View style={styles.itemTextCol}>
+                              <Text
+                                variant="bodySmall"
+                                weight="semibold"
+                                color={theme.colors.primary}
+                                numberOfLines={1}
+                                style={styles.itemTitle}>
+                                {t`Open as Project Workspace`}
+                              </Text>
+                              <Text
+                                variant="caption"
+                                color={theme.colors.textMuted}
+                                numberOfLines={1}
+                                style={styles.itemSub}>
+                                {searchQuery.trim()}
+                              </Text>
+                            </View>
+                          </View>
+                        </PressableScale>
+                      </SettingsCard>
+                    </View>
+                  ) : null}
+
                   {/* Suggestions for path */}
                   {suggestions.length > 0 ? (
                     <View style={styles.sectionBlock}>

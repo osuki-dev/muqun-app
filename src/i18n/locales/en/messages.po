@@ -666,6 +666,10 @@ msgstr "Choose files"
 msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
 msgstr "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose Project"
+msgstr "Choose Project"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose the specialized agent for this task"
 msgstr "Choose the specialized agent for this task"
@@ -1326,6 +1330,10 @@ msgstr "Current theme"
 msgid "Custom"
 msgstr "Custom"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "CUSTOM PROJECT DIRECTORY"
+msgstr "CUSTOM PROJECT DIRECTORY"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Customize terminal commands and key combinations"
@@ -1635,10 +1643,6 @@ msgstr "Files in this workspace"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or path"
 msgstr "Filter projects or path"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (/home/...)"
-msgstr "Filter projects or type path (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2086,7 +2090,7 @@ msgstr "Loading earlier output…"
 msgid "Loading paired devices…"
 msgstr "Loading paired devices…"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "Loading servers"
@@ -2137,7 +2141,7 @@ msgstr "Machines and sessions"
 msgid "Make it yours"
 msgstr "Make it yours"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage"
 msgstr "Manage"
 
@@ -2145,7 +2149,7 @@ msgstr "Manage"
 msgid "Manage machines"
 msgstr "Manage machines"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage SSH hosts"
 msgstr "Manage SSH hosts"
 
@@ -2191,7 +2195,6 @@ msgstr "Move the editor controls"
 msgid "Move the simulator controls"
 msgstr "Move the simulator controls"
 
-#: src/app/(drawer)/_layout.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2514,7 +2517,7 @@ msgstr "Open"
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
 #. placeholder {0}: server.label
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2527,6 +2530,10 @@ msgstr "Open {title}. Long press to close"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "Open anyway"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open as Project Workspace"
+msgstr "Open as Project Workspace"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -2599,6 +2606,10 @@ msgstr "OpenCode Agent"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it"
 
+#: src/components/new-task-action.tsx
+msgid "OpenCode ready"
+msgstr "OpenCode ready"
+
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"
 msgstr "OpenCode service offline"
@@ -2657,7 +2668,7 @@ msgstr "Output"
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
 msgstr "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Pair a server"
@@ -2688,7 +2699,7 @@ msgstr "Pair through {0}"
 msgid "Pair through an SSH host"
 msgstr "Pair through an SSH host"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Pair your first server"
 msgstr "Pair your first server"
 
@@ -3177,7 +3188,7 @@ msgstr "Run command"
 msgid "Run relevant tests"
 msgstr "Run relevant tests"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device"
 
@@ -3235,8 +3246,8 @@ msgstr "SAVED PROMPTS"
 msgid "Saving…"
 msgstr "Saving…"
 
-#: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
@@ -3452,7 +3463,7 @@ msgstr "Set up {label} in system settings first"
 msgid "Set up a Gateway on your computer"
 msgstr "Set up a Gateway on your computer"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -3634,7 +3645,7 @@ msgstr "Source code"
 msgid "Space"
 msgstr "Space"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3646,7 +3657,7 @@ msgstr "SSH"
 msgid "SSH host"
 msgstr "SSH host"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
 msgstr "SSH hosts"
@@ -4262,7 +4273,7 @@ msgstr "Try again"
 msgid "Try again once the gateway responds."
 msgstr "Try again once the gateway responds"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Try the demo"
 msgstr "Try the demo"
 
@@ -4540,7 +4551,7 @@ msgstr "Yank this line"
 msgid "Yesterday"
 msgstr "Yesterday"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."

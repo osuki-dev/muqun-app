@@ -3,6 +3,7 @@ import { TextDecoder } from 'react-native-nitro-text-decoder';
 import { gatewayAuthHeaders, gatewayFetch, gatewayUrl, isGatewayConfigured } from './gateway-client';
 import { ServerSentEventParser } from './sse-stream';
 import type { FileMentionHit } from './file-mentions';
+import { activeLocaleHeaders } from '@/i18n/active-locale';
 
 export type AgentSessionStatus = 'idle' | 'running' | 'paused' | 'error' | 'terminated';
 
@@ -502,15 +503,27 @@ export async function replyAgentForm(
   }
 }
 
-export async function getAgentCatalog(sessionId?: string): Promise<AgentCatalog> {
+export async function getAgentCatalog(
+  sessionId?: string,
+  endpoint?: { url?: string; token?: string | null }
+): Promise<AgentCatalog> {
   try {
-    if (!isGatewayConfigured()) return { agents: [], models: [], mcp: [] };
-    const url = sessionId
-      ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`)
-      : gatewayUrl('/api/agent-catalog');
+    const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
+    if (!base && !isGatewayConfigured()) return { agents: [], models: [], mcp: [] };
+    const url = base
+      ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog` : '/api/agent-catalog'}`
+      : sessionId
+        ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`)
+        : gatewayUrl('/api/agent-catalog');
+    const headers = endpoint?.url
+      ? {
+          ...activeLocaleHeaders(),
+          ...(endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {}),
+        }
+      : gatewayAuthHeaders();
     const res = await gatewayFetch(url, {
       method: 'GET',
-      headers: gatewayAuthHeaders(),
+      headers,
     });
     if (!res.ok) {
       return { agents: [], models: [], mcp: [] };
@@ -581,15 +594,27 @@ export async function listAgentFiles(
   }
 }
 
-export async function getAgentProjects(sessionId?: string): Promise<AgentProject[]> {
-  const path = sessionId
-    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`
-    : '/api/agent-projects';
-  const url = gatewayUrl(path);
+export async function getAgentProjects(
+  sessionId?: string,
+  endpoint?: { url?: string; token?: string | null }
+): Promise<AgentProject[]> {
   try {
+    const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
+    if (!base && !isGatewayConfigured()) return [];
+    const url = base
+      ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects` : '/api/agent-projects'}`
+      : sessionId
+        ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`)
+        : gatewayUrl('/api/agent-projects');
+    const headers = endpoint?.url
+      ? {
+          ...activeLocaleHeaders(),
+          ...(endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {}),
+        }
+      : gatewayAuthHeaders();
     const res = await gatewayFetch(url, {
       method: 'GET',
-      headers: gatewayAuthHeaders(),
+      headers,
     });
     if (!res.ok) return [];
     const json = (await res.json()) as { data?: AgentProject[] };

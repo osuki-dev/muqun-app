@@ -40,6 +40,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LogoLoader } from '@/components/logo-loader';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { PressableScale } from '@/components/pressable-scale';
+import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { GATEWAY_INSTALL_COMMAND, GATEWAY_SETUP_URL } from '@/constants/links';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -150,6 +151,7 @@ export default function PairModal() {
   // has no way to know the result also depends on the active locale.
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useSheetGroundPlate('background');
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const { setRecord, enterDemo } = useGatewayRecord();
@@ -923,14 +925,14 @@ export default function PairModal() {
                   accessibilityRole="link"
                   accessibilityLabel={t`Set up a Gateway on your computer`}
                   onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
-                  style={styles.setupLink}>
+                  style={[styles.setupLink, plate]}>
                   {/* The gap is laid out, not typed. A literal space inside the Text
                 becomes part of the node's own text, so every matcher -- and the
                 screen reader -- sees "No Gateway yet? " with a tail on it. */}
-                  <Text variant="caption" color={theme.colors.textMuted}>
+                  <Text variant="label" color={theme.colors.textMuted}>
                     {t`No Gateway yet?`}
                   </Text>
-                  <Text variant="caption" color={theme.colors.primary}>
+                  <Text variant="label" color={theme.colors.primary}>
                     {t`Set one up on your computer`}
                   </Text>
                 </PressableScale>

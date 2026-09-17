@@ -666,6 +666,10 @@ msgstr "Chọn tệp"
 msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
 msgstr "Chọn từ bộ sưu tập chủ đề chính thức được minh họa đẹp mắt, tô lại nền, terminal và tranh vẽ cùng lúc, hoặc tự tạo chủ đề của riêng bạn"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose Project"
+msgstr "Chọn dự án"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose the specialized agent for this task"
 msgstr "Chọn agent chuyên biệt cho nhiệm vụ này"
@@ -1326,6 +1330,10 @@ msgstr "Giao diện hiện tại"
 msgid "Custom"
 msgstr "Tùy chỉnh"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "CUSTOM PROJECT DIRECTORY"
+msgstr "THƯ MỤC DỰ ÁN TÙY CHỈNH"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "Tùy chỉnh lệnh terminal và tổ hợp phím"
@@ -1635,10 +1643,6 @@ msgstr "Tệp trong không gian làm việc này"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or path"
 msgstr "Lọc dự án hoặc đường dẫn"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (/home/...)"
-msgstr "Lọc dự án hoặc nhập đường dẫn (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2086,7 +2090,7 @@ msgstr "Đang tải đầu ra trước đó…"
 msgid "Loading paired devices…"
 msgstr "Đang tải các thiết bị đã ghép nối…"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "Đang tải máy chủ"
@@ -2137,7 +2141,7 @@ msgstr "Máy và phiên"
 msgid "Make it yours"
 msgstr "Biến nó thành của bạn"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage"
 msgstr "Quản lý"
 
@@ -2145,7 +2149,7 @@ msgstr "Quản lý"
 msgid "Manage machines"
 msgstr "Quản lý máy"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage SSH hosts"
 msgstr "Quản lý host SSH"
 
@@ -2191,7 +2195,6 @@ msgstr "Di chuyển các nút điều khiển trình soạn thảo"
 msgid "Move the simulator controls"
 msgstr "Di chuyển các nút điều khiển trình giả lập"
 
-#: src/app/(drawer)/_layout.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2514,7 +2517,7 @@ msgstr "Mở"
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
 #. placeholder {0}: server.label
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2527,6 +2530,10 @@ msgstr "Mở {title}. Nhấn giữ để đóng"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "Vẫn mở"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open as Project Workspace"
+msgstr "Mở dưới dạng không gian làm việc của dự án"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -2597,7 +2604,11 @@ msgstr "Tác nhân OpenCode"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "Dịch vụ OpenCode không chạy trên máy chủ này. Chạy `opencode serve --service` để khởi động."
+msgstr "Dịch vụ OpenCode không chạy trên máy chủ này. Chạy `opencode serve --service` để khởi động"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode ready"
+msgstr "OpenCode đã sẵn sàng"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"
@@ -2657,7 +2668,7 @@ msgstr "Đầu ra"
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
 msgstr "Kết quả hiển thị trên lưới terminal với đúng màu của chương trình, cùng hàng phím gửi ngay khi bạn bấm. nvim, less và REPL hoạt động như thường"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Pair a server"
@@ -2688,7 +2699,7 @@ msgstr "Ghép nối qua {0}"
 msgid "Pair through an SSH host"
 msgstr "Ghép nối qua host SSH"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Pair your first server"
 msgstr "Ghép nối máy chủ đầu tiên của bạn"
 
@@ -3177,7 +3188,7 @@ msgstr "Chạy lệnh"
 msgid "Run relevant tests"
 msgstr "Chạy các kiểm thử liên quan"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
 
@@ -3235,8 +3246,8 @@ msgstr "PROMPT ĐÃ LƯU"
 msgid "Saving…"
 msgstr "Đang lưu…"
 
-#: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
@@ -3452,7 +3463,7 @@ msgstr "Hãy thiết lập {label} trong cài đặt hệ thống trước"
 msgid "Set up a Gateway on your computer"
 msgstr "Cài Gateway trên máy tính của bạn"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -3634,7 +3645,7 @@ msgstr "Mã nguồn"
 msgid "Space"
 msgstr "Space"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3646,7 +3657,7 @@ msgstr "SSH"
 msgid "SSH host"
 msgstr "Host SSH"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
 msgstr "Host SSH"
@@ -4262,7 +4273,7 @@ msgstr "Thử lại"
 msgid "Try again once the gateway responds."
 msgstr "Hãy thử lại khi gateway phản hồi"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Try the demo"
 msgstr "Dùng thử demo"
 
@@ -4540,7 +4551,7 @@ msgstr "Sao chép dòng này"
 msgid "Yesterday"
 msgstr "Hôm qua"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."

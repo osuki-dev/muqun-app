@@ -666,6 +666,10 @@ msgstr "ファイルを選択"
 msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
 msgstr "美しく描かれた公式テーマのコレクションから選ぶと、紙面、ターミナル、アートワークがまとめて塗り替わります。自分だけのテーマを作ることもできます"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose Project"
+msgstr "プロジェクトを選択"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose the specialized agent for this task"
 msgstr "このタスクに適したエージェントを選択"
@@ -1326,6 +1330,10 @@ msgstr "現在のテーマ"
 msgid "Custom"
 msgstr "カスタム"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "CUSTOM PROJECT DIRECTORY"
+msgstr "カスタムプロジェクトディレクトリ"
+
 #: src/app/commands.tsx
 msgid "Customize terminal commands and key combinations."
 msgstr "ターミナルのコマンドとキーの組み合わせをカスタマイズします"
@@ -1635,10 +1643,6 @@ msgstr "このワークスペースのファイル"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or path"
 msgstr "プロジェクトまたはパスを絞り込み"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type path (/home/...)"
-msgstr "プロジェクト絞り込みまたはパス入力 (/home/...)"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2086,7 +2090,7 @@ msgstr "以前の出力を読み込み中…"
 msgid "Loading paired devices…"
 msgstr "ペアリング済みデバイスを読み込み中…"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "サーバーを読み込み中"
@@ -2137,7 +2141,7 @@ msgstr "マシンとセッション"
 msgid "Make it yours"
 msgstr "自分だけのアプリに"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage"
 msgstr "管理"
 
@@ -2145,7 +2149,7 @@ msgstr "管理"
 msgid "Manage machines"
 msgstr "マシンを管理"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage SSH hosts"
 msgstr "SSH ホストを管理"
 
@@ -2191,7 +2195,6 @@ msgstr "エディタの操作パネルを移動"
 msgid "Move the simulator controls"
 msgstr "シミュレータの操作ボタンを移動"
 
-#: src/app/(drawer)/_layout.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2514,7 +2517,7 @@ msgstr "開く"
 #. placeholder {0}: asset.name
 #. placeholder {0}: part.fallback_text || part.asset_id
 #. placeholder {0}: server.label
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2527,6 +2530,10 @@ msgstr "{title} を開く。長押しで閉じる"
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "それでも開く"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open as Project Workspace"
+msgstr "プロジェクトワークスペースとして開く"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -2597,7 +2604,11 @@ msgstr "OpenCodeエージェント"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "このホストでOpenCodeデーモンが実行されていません。`opencode serve --service`を実行して起動してください。"
+msgstr "このホストでOpenCodeデーモンが実行されていません。`opencode serve --service`を実行して起動してください"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode ready"
+msgstr "OpenCodeの準備が完了しました"
 
 #: src/components/agent-composer.tsx
 msgid "OpenCode service offline"
@@ -2657,7 +2668,7 @@ msgstr "出力"
 msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
 msgstr "出力はプログラム本来の色でターミナルのグリッドに描かれ、キー列は押した瞬間に送信されます。nvim、less、REPL もそのまま動きます"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Pair a server"
@@ -2688,7 +2699,7 @@ msgstr "{0} 経由でペアリング"
 msgid "Pair through an SSH host"
 msgstr "SSH ホスト経由でペアリング"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Pair your first server"
 msgstr "最初のサーバーをペアリング"
 
@@ -3177,7 +3188,7 @@ msgstr "コマンドを実行"
 msgid "Run relevant tests"
 msgstr "関連するテストを実行"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
 
@@ -3235,8 +3246,8 @@ msgstr "保存したプロンプト"
 msgid "Saving…"
 msgstr "保存中…"
 
-#: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
@@ -3452,7 +3463,7 @@ msgstr "先にシステム設定で {label} を設定してください"
 msgid "Set up a Gateway on your computer"
 msgstr "自分のパソコンに Gateway を用意する"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -3634,7 +3645,7 @@ msgstr "ソースコード"
 msgid "Space"
 msgstr "スペース"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3646,7 +3657,7 @@ msgstr "SSH"
 msgid "SSH host"
 msgstr "SSH ホスト"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 msgid "SSH hosts"
 msgstr "SSH ホスト"
@@ -4262,7 +4273,7 @@ msgstr "もう一度試す"
 msgid "Try again once the gateway responds."
 msgstr "Gateway が応答したらもう一度試してください"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Try the demo"
 msgstr "デモを試す"
 
@@ -4540,7 +4551,7 @@ msgstr "この行をヤンク"
 msgid "Yesterday"
 msgstr "昨日"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
