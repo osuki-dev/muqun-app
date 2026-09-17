@@ -19,6 +19,7 @@ import {
   PlusCircle,
   RefreshCw,
   ShieldAlert,
+  X,
 } from 'lucide-react-native';
 import {
   LegendList,
@@ -31,7 +32,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import Animated from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import { DURATION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, listLayout } from '@/lib/motion';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { StatusDot } from '@/components/status-dot';
 import {
@@ -123,6 +124,7 @@ import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
+import { appChrome } from '@/constants/appearance';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -137,6 +139,23 @@ const HISTORY_PAGE_SIZE = 40;
  * history and new output must not move their viewport.
  */
 const NEAR_BOTTOM_PX = 120;
+
+/**
+ * How long the screen's own notice stays before it fades out by itself.
+ *
+ * Long enough to be read on the way past, short enough that it is gone before
+ * the reader wants the space back. It is dismissible either way.
+ */
+const SCREEN_NOTICE_DWELL_MS = 4200;
+
+/**
+ * The gap between the header's bottom edge and the screen's own notice.
+ *
+ * `topInset` is already the first row under the header plus the timeline's own
+ * clearance (`HEADER_INSET` in `src/app/agent.tsx`); a notice wants to sit a
+ * little higher than the first message without ever reaching the pills.
+ */
+const SCREEN_NOTICE_HEADER_GAP = 14;
 
 function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
@@ -181,6 +200,33 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
+
+  /**
+   * The screen's own notice, under the header rather than over it.
+   *
+   * "New session" used to be an app-wide toast, and an app-wide toast is
+   * placed against the safe-area inset -- which is exactly where this screen's
+   * workspace pill and new-session control live, so the one notice the reader
+   * did not ask for covered the two controls they did. This one belongs to the
+   * screen, so it can start below the chrome, and it is dismissible.
+   */
+  const [screenNotice, setScreenNotice] = useState<{
+    id: number;
+    title: string;
+    body: string;
+  } | null>(null);
+  const screenNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showScreenNotice = useCallback((title: string, body: string) => {
+    if (screenNoticeTimerRef.current) clearTimeout(screenNoticeTimerRef.current);
+    setScreenNotice({ id: Date.now(), title, body });
+    screenNoticeTimerRef.current = setTimeout(() => setScreenNotice(null), SCREEN_NOTICE_DWELL_MS);
+  }, []);
+  useEffect(
+    () => () => {
+      if (screenNoticeTimerRef.current) clearTimeout(screenNoticeTimerRef.current);
+    },
+    []
+  );
 
   const [sessions, setSessions] = useState<AgentSessionInfo[]>([]);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
@@ -1262,11 +1308,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       lastSeqRef.current = 0;
       refreshSessions();
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast({
-        variant: 'info',
-        title: t`New Session`,
-        message: t`Started a new session with clean context.`,
-      });
+      showScreenNotice(t`New session`, t`Started with a clean context.`);
     } catch (err) {
       console.warn('Failed to create session:', err);
       setIsOffline(true);
@@ -1285,6 +1327,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     t,
     refreshSessions,
     showToast,
+    showScreenNotice,
   ]);
 
   useEffect(() => {
@@ -2244,6 +2287,42 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         />
       )}
 
+      {/* The screen's own notice: under the header, never over it */}
+      {screenNotice ? (
+        <Animated.View
+          key={screenNotice.id}
+          entering={fadeInDown('short')}
+          exiting={fadeOutUp('short')}
+          style={[
+            styles.screenNoticeWrap,
+            { top: Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) },
+          ]}>
+          <PressableScale
+            testID="agent-screen-notice"
+            accessibilityRole="button"
+            accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
+            onPress={() => setScreenNotice(null)}
+            style={[
+              styles.screenNotice,
+              {
+                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                borderColor: theme.colors.border,
+              },
+            ]}>
+            <StatusDot color={theme.colors.primary} filled size={7} />
+            <View style={styles.screenNoticeText}>
+              <Text variant="caption" weight="bold" color={theme.colors.text}>
+                {screenNotice.title}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+                {screenNotice.body}
+              </Text>
+            </View>
+            <X size={14} color={theme.colors.textMuted} />
+          </PressableScale>
+        </Animated.View>
+      ) : null}
+
       {/* Jump back to the latest message while browsing history */}
       {!loading && timeline.length > 0 && !isNearBottom ? (
         <Animated.View
@@ -2593,6 +2672,30 @@ const styles = StyleSheet.create({
   footerContainer: {
     gap: 10,
     marginTop: 4,
+  },
+  screenNoticeWrap: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    zIndex: 6,
+    alignItems: 'center',
+  },
+  screenNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    maxWidth: 480,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: appChrome.radius.noticeBanner,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    boxShadow: appChrome.shadow.notice,
+  },
+  screenNoticeText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   jumpToLatestWrap: {
     position: 'absolute',
