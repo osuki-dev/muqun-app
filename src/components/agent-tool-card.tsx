@@ -18,6 +18,7 @@ import {
 import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { isDeclinedByUser } from '@/lib/agent-engine-text';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { TOOL_BODY_MAX_LINES, capToolBody } from '@/lib/markdown-cap';
 import { diffRowsForFence, diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
@@ -588,6 +589,20 @@ export const AgentToolCard = memo(function AgentToolCard({
     ]
   );
 
+  /**
+   * The failure line, in this app's vocabulary where it is about this app.
+   *
+   * "The user declined this tool call" is the engine writing for its own
+   * terminal, and a third word -- after the "Deny" on the button and the
+   * "Denied" in the tray -- for one act. Everything else the engine says is
+   * its own and is said as it was said.
+   */
+  const errorLine = part.error?.message
+    ? isDeclinedByUser(part.error.message)
+      ? t`Denied by you`
+      : part.error.message
+    : '';
+
   // A todo list is a checklist, not a tool row: OpenCode's own UI draws it
   // that way and there is nothing about the call worth a header.
   if (kind === 'todo') {
@@ -605,7 +620,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       status={part.state}
       {...(durationMs === undefined ? {} : { durationMs })}
       truncated={truncated}
-      {...(part.error?.message ? { error: part.error.message } : {})}
+      {...(errorLine ? { error: errorLine } : {})}
       background={part.background === true}
       chips={chips}
       actions={actions}

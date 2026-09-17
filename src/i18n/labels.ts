@@ -142,6 +142,7 @@ export const permissionActionPhrase: Record<string, MessageDescriptor> = {
   network: msg`Reach the network`,
   install: msg`Install a package`,
   task: msg`Start a subagent`,
+  question: msg`Ask you a question`,
 };
 
 /**
