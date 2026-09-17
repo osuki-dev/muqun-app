@@ -338,7 +338,7 @@ function ServerRow({
                   { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
                 ]}>
                 <Text variant="caption" color={theme.colors.primary} style={styles.usingText}>
-                  <Trans>USING</Trans>
+                  <Trans>Using</Trans>
                 </Text>
               </View>
             ) : null}

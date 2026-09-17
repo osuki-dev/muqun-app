@@ -52,10 +52,19 @@ export interface AgentSheetSnapshot {
   sessions: readonly AgentSessionInfo[];
   knownProjects: readonly AgentProject[];
   activeDirectory?: string;
+  /** The project that directory belongs to, when the engine knows a named one. */
+  activeProject?: AgentProject;
   sessionInfo?: AgentSessionInfo;
   tokens?: TokensUsage;
   cost?: number;
   selectedModel?: ModelRef;
+  /** The catalogue's own name for it -- "Nemotron 3.5 Lightning Free". */
+  selectedModelName?: string;
+  /**
+   * The context window to measure against: the session's when the gateway
+   * stated one, the catalogue model's otherwise.
+   */
+  contextLimit?: number;
   selectedAgent?: string;
   showReasoning: boolean;
   yoloMode: boolean;
@@ -118,10 +127,13 @@ const INITIAL: AgentSheetSnapshot = {
   sessions: EMPTY_SESSIONS,
   knownProjects: EMPTY_PROJECTS,
   activeDirectory: undefined,
+  activeProject: undefined,
   sessionInfo: undefined,
   tokens: undefined,
   cost: undefined,
   selectedModel: undefined,
+  selectedModelName: undefined,
+  contextLimit: undefined,
   selectedAgent: undefined,
   showReasoning: true,
   yoloMode: false,

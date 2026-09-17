@@ -12,6 +12,8 @@ export default function AgentContextScreen() {
   const sessionInfo = useAgentSheetBridge((state) => state.sessionInfo);
   const tokens = useAgentSheetBridge((state) => state.tokens);
   const contextUsage = useAgentSheetBridge((state) => state.contextUsage);
+  const contextLimit = useAgentSheetBridge((state) => state.contextLimit);
+  const modelName = useAgentSheetBridge((state) => state.selectedModelName);
   const cost = useAgentSheetBridge((state) => state.cost);
   const showReasoning = useAgentSheetBridge((state) => state.showReasoning);
   const yoloMode = useAgentSheetBridge((state) => state.yoloMode);
@@ -22,6 +24,8 @@ export default function AgentContextScreen() {
       session={sessionInfo}
       tokens={tokens}
       contextUsage={contextUsage}
+      contextLimit={contextLimit}
+      modelName={modelName}
       cost={cost}
       showReasoning={showReasoning}
       onToggleReasoning={actions.toggleReasoning}

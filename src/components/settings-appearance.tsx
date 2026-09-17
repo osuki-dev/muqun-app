@@ -63,7 +63,7 @@ export function SettingsAppearance({ title }: { title: string }) {
         onPress={() => router.push('/settings-theme')}
       />
 
-      <SettingsBlock label={t`Color mode`}>
+      <SettingsBlock label={t`Colour mode`}>
         <SettingsSegmented
           options={[
             { label: t`System`, value: 'system' },

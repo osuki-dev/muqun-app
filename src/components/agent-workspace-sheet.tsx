@@ -21,6 +21,7 @@ import {
   getAgentDirectories,
   getAgentProjects,
   getCachedAgentProjectsSync,
+  workspaceDisplayName,
   type AgentProject,
   type DirectoryItem,
 } from '@/lib/agent-session';
@@ -35,6 +36,23 @@ const STAGGERED_ROWS = 8;
  * repository the session is in. The filter doubles as a path field -- type a
  * `/` and the first group becomes the directory you typed.
  */
+/**
+ * A directory the engine has no named project for, as a row.
+ *
+ * OpenCode files loose directories under one catch-all project whose canonical
+ * is `/`, and this sheet drops that project -- it is not a workspace anyone
+ * chose. Which meant the workspace the reader was *in* was frequently missing
+ * from the list of workspaces: `/tmp/muqun-showcase` had no row, so there was
+ * nothing for the selection rule to mark and nothing for the filter to find.
+ */
+function directoryAsProject(directory: string): AgentProject {
+  return {
+    id: `directory:${directory}`,
+    canonical: directory,
+    name: workspaceDisplayName(undefined, directory, directory),
+  };
+}
+
 export interface AgentWorkspaceSheetProps {
   activeDirectory?: string;
   sessionId?: string;
@@ -108,16 +126,30 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
     };
   }, [searchQuery, sessionId]);
 
+  /**
+   * Every workspace worth a row: the named projects, and the directory the
+   * session is actually in when that is not one of them.
+   */
+  const listedProjects = useMemo(() => {
+    if (!activeDirectory) return projects;
+    if (projects.some((project) => project.canonical === activeDirectory)) return projects;
+    return [directoryAsProject(activeDirectory), ...projects];
+  }, [projects, activeDirectory]);
+
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q || q.startsWith('/')) return projects;
-    return projects.filter(
+    if (!q) return listedProjects;
+    // A path typed in full filters the list too. The field says "or type a
+    // path", and typing one used to empty the list it was filtering -- the
+    // query was handed straight to the directory suggester and the rows below
+    // were left matching nothing.
+    return listedProjects.filter(
       (project) =>
         project.name.toLowerCase().includes(q) ||
         project.canonical.toLowerCase().includes(q) ||
         project.id.toLowerCase().includes(q)
     );
-  }, [projects, searchQuery]);
+  }, [listedProjects, searchQuery]);
 
   const choose = (directory: string, project?: AgentProject) => {
     onSelectWorkspace(directory, project);
@@ -125,8 +157,12 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   };
 
   const typedPath = searchQuery.trim();
+  // Never for the workspace already open: "Open this path" on the path you are
+  // standing in is an action with nothing to do.
   const showTypedPath =
-    typedPath.length > 0 && (typedPath.startsWith('/') || typedPath.startsWith('~'));
+    typedPath.length > 0 &&
+    (typedPath.startsWith('/') || typedPath.startsWith('~')) &&
+    typedPath !== activeDirectory;
   let rowIndex = 0;
 
   return (
@@ -185,13 +221,15 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
           <Animated.View layout={listLayout('short')}>
             {showTypedPath || suggestions.length > 0 ? <SheetSceneGroupRule /> : null}
             <SheetSceneGroupHeading
-              title={t`Known repositories`}
+              title={t`Known workspaces`}
               first={!showTypedPath && suggestions.length === 0}
             />
             {filtered.length === 0 ? (
               <View style={styles.empty}>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
-                  {t`No projects here yet. Type a path above to open one.`}
+                  {searchQuery.trim()
+                    ? t`No projects match “${searchQuery.trim()}”.`
+                    : t`No projects here yet. Type a path above to open one.`}
                 </Text>
               </View>
             ) : (

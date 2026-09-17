@@ -882,7 +882,8 @@ describe('context, shells, engine, diff', () => {
     });
     expect(usage.messages).toBe(12);
     expect(usage.tokens).toMatchObject({ input: 20801, cache_read: 3, cache_write: 4 });
-    expect(contextTokenTotal(usage.tokens)).toBe(20801 + 41 + 134);
+    // The cached half of the input is input the model still read.
+    expect(contextTokenTotal(usage.tokens)).toBe(20801 + 41 + 134 + 3);
   });
 
   test('tokens may be null, and the ring has nothing to fill', () => {

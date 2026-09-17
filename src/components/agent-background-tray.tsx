@@ -190,7 +190,7 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
         <View style={styles.centre}>
           <Terminal size={32} color={theme.colors.textSubtle} />
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-            {t`Nothing is running in the background. Detach a long command from its tool card and it appears here.`}
+            {t`Nothing is running in the background — detach a long command from its tool card and it appears here`}
           </Text>
         </View>
       ) : (

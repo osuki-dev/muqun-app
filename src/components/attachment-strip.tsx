@@ -12,6 +12,16 @@ import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/mo
 const TILE_SIZE = 62;
 /** A chip's own thumbnail: the tile's square, at a row's height. */
 const CHIP_THUMB_SIZE = 26;
+/**
+ * The chip thumbnail's corner.
+ *
+ * It was `CHIP_THUMB_SIZE / 2` -- a circle, which crops a screenshot to its
+ * middle and is the one shape in this app that means "a person". The transcript
+ * draws the very same picture as a rounded rectangle a few seconds later, so
+ * the reader watched their attachment change shape on its way to being sent.
+ * Scaled from the transcript's 14 on its 160pt thumbnail.
+ */
+const CHIP_THUMB_RADIUS = 7;
 
 /**
  * Two shapes for one strip.
@@ -119,7 +129,9 @@ export function AttachmentStrip({
                 <Text variant="caption" color={textColor} numberOfLines={1} style={styles.chipName}>
                   {attachment.name}
                 </Text>
-                {/* The same three states, said in a row's worth of space. */}
+                {/* The same four states, said in a row's worth of space -- and
+                    said, not only drawn: a bare green tick on a chip answers
+                    no question the reader was asking. */}
                 {attachment.status === 'pending' ? (
                   <Icon name="Clock" size={12} color={theme.colors.textMuted} />
                 ) : attachment.status === 'uploading' ? (
@@ -127,7 +139,12 @@ export function AttachmentStrip({
                 ) : failed ? (
                   <Icon name="RotateCcw" size={12} color={theme.colors.danger} />
                 ) : (
-                  <Icon name="Check" size={12} color={theme.colors.success} strokeWidth={3} />
+                  <>
+                    <Icon name="Check" size={12} color={theme.colors.success} strokeWidth={3} />
+                    <Text variant="caption" color={theme.colors.success} style={styles.chipStatus}>
+                      {t`Uploaded`}
+                    </Text>
+                  </>
                 )}
                 <PressableScale
                   accessibilityLabel={t`Remove ${attachment.name}`}
@@ -280,8 +297,10 @@ const styles = StyleSheet.create({
   chipThumb: {
     width: CHIP_THUMB_SIZE,
     height: CHIP_THUMB_SIZE,
-    borderRadius: CHIP_THUMB_SIZE / 2,
+    borderRadius: CHIP_THUMB_RADIUS,
+    borderCurve: 'continuous',
   },
+  chipStatus: { flexShrink: 0 },
   chipName: {
     flexShrink: 1,
     fontSize: 12,

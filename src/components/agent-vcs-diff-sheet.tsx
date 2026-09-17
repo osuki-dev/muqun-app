@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 
@@ -119,31 +119,43 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
           testID="agent-vcs-diff-mode"
         />
       }>
-      <DiffRowList
-        rows={rows}
-        colors={colors}
-        gutterFill={theme.colors.surface}
-        headerFill={theme.colors.surfaceRaised}
-        surfaceFill={surfaceBackground(theme.colors.surface)}
-        // There is no index to attribute an agent's edits to, so there is no
-        // staged/unstaged mark to show either.
-        showSide={false}
-        onToggleFile={toggleFile}
-        onShowMore={noShowMore}
-        fallback={
-          loading ? (
-            <ActivityIndicator size="small" color={theme.colors.textMuted} />
-          ) : (
-            <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-              {t`Nothing uncommitted in this workspace.`}
-            </Text>
-          )
-        }
-      />
+      {/*
+        Inside the scene, not across it. The diff viewer paints its own ground
+        edge to edge -- which is right on the terminal's full-width changes
+        page and wrong here: it arrived as an opaque slab from x=0, with a hard
+        edge under the segmented control and an expanded patch running past the
+        sheet's right margin. The sheet's gutter is the column every other row
+        on this ground starts from, so the viewer sits in it and what shows
+        through is the sheet's own frosted ground.
+      */}
+      <View style={styles.body}>
+        <DiffRowList
+          rows={rows}
+          colors={colors}
+          gutterFill={surfaceBackground(theme.colors.surface)}
+          headerFill={surfaceBackground(theme.colors.surface)}
+          surfaceFill="transparent"
+          // There is no index to attribute an agent's edits to, so there is no
+          // staged/unstaged mark to show either.
+          showSide={false}
+          onToggleFile={toggleFile}
+          onShowMore={noShowMore}
+          fallback={
+            loading ? (
+              <ActivityIndicator size="small" color={theme.colors.textMuted} />
+            ) : (
+              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
+                {t`Nothing uncommitted in this workspace.`}
+              </Text>
+            )
+          }
+        />
+      </View>
     </SheetScene>
   );
 });
 
 const styles = StyleSheet.create({
+  body: { flex: 1, minHeight: 0, paddingHorizontal: SHEET_LADDER.gutter },
   emptyText: { textAlign: 'center', paddingHorizontal: SHEET_LADDER.gutter },
 });

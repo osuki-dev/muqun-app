@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TextInput,
   TextInputSelectionChangeEventData,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
@@ -37,7 +38,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
+import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
@@ -62,7 +63,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
-import { fadeIn, fadeOut, fadeOutDown, timing } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut, fadeOutDown, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
@@ -112,11 +113,14 @@ const SessionChip = memo(function SessionChip({
   active,
   fallbackAgent,
   onPress,
+  onMeasure,
 }: {
   node: SessionNode;
   active: boolean;
   fallbackAgent?: string;
   onPress: (asid: string) => void;
+  /** Where this chip sits in the strip, so the strip can bring it into view. */
+  onMeasure?: (asid: string, x: number, width: number) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -138,7 +142,12 @@ const SessionChip = memo(function SessionChip({
         : theme.colors.success;
 
   return (
-    <View style={styles.chipRow}>
+    <View
+      style={styles.chipRow}
+      onLayout={(event) => {
+        const { x, width } = event.nativeEvent.layout;
+        onMeasure?.(session.asid, x, width);
+      }}>
       {/* The connector: one segment per level in, so a child reads as hanging
           off the chip before it rather than sitting beside it. */}
       {child ? (
@@ -223,8 +232,26 @@ export interface AgentComposerProps {
   tokens?: TokensUsage;
   /** What the model can still see, from `GET …/context`. */
   contextUsage?: AgentContextUsage | null;
+  /**
+   * Where the screen's content begins under the header.
+   *
+   * A popup raised from the dock grows upwards, and with the keyboard up it
+   * grew straight through the header pills and past the top of the screen --
+   * so its last row was cut in half by the edge it had run out of. This is the
+   * line it may not cross.
+   */
+  topInset?: number;
   /** The session's own context window, when the engine stated one. */
   contextLimit?: number;
+  /**
+   * The catalogue's own name for the selected model.
+   *
+   * `formatModelName` reads a `ModelRef`'s id and can only guess at a title;
+   * its table also drops the "Free" the catalogue puts in the name, so the chip
+   * said "Nemotron 3.5 Lightning" for a model called "Nemotron 3.5 Lightning
+   * Free" in the picker the reader chose it from.
+   */
+  modelName?: string;
   /** A compaction in flight, or one that failed and has not been read yet. */
   compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
   onDismissCompaction?: () => void;
@@ -282,10 +309,12 @@ export const AgentComposer = memo(function AgentComposer({
   selectedModel,
   hasDiffs = false,
   bottomInset = 0,
+  topInset = 0,
   tasks,
   tokens,
   contextUsage,
   contextLimit,
+  modelName,
   compaction,
   onDismissCompaction,
   cost,
@@ -345,7 +374,10 @@ export const AgentComposer = memo(function AgentComposer({
     return { label: `${tokStr} • ${costStr}`, ratio };
   }, [contextUsage, contextLimit, tokens, cost, t]);
 
-  const modelDisplayName = useMemo(() => formatModelName(selectedModel), [selectedModel]);
+  const modelDisplayName = useMemo(
+    () => modelName || formatModelName(selectedModel),
+    [modelName, selectedModel]
+  );
 
   const inputRef = useRef<TextInput>(null);
   const [caret, setCaret] = useState<number | undefined>(undefined);
@@ -573,19 +605,85 @@ export const AgentComposer = memo(function AgentComposer({
     [activeAsid, onSelectSession]
   );
 
+  /**
+   * The strip follows the session on screen.
+   *
+   * Opening a session from the sessions sheet, or a subagent from a child
+   * chip, changes which chip is lit -- and on a workspace with more sessions
+   * than fit, the lit one was frequently off the right-hand edge, so the strip
+   * went on showing a different session than the transcript above it. Each
+   * chip reports where it sits; when the active one changes, the strip scrolls
+   * it to the left edge.
+   */
+  const sessionStripRef = useRef<ScrollView>(null);
+  const chipOffsetsRef = useRef<Record<string, { x: number; width: number }>>({});
+  const measureChip = useCallback((asid: string, x: number, width: number) => {
+    chipOffsetsRef.current[asid] = { x, width };
+  }, []);
+
+  useEffect(() => {
+    if (!activeAsid) return;
+    // One frame after the chips have laid out: a session opened from a sheet
+    // arrives with the strip rebuilding under it, and the chip's offset is not
+    // known until it has.
+    const timer = setTimeout(() => {
+      const offset = chipOffsetsRef.current[activeAsid];
+      if (!offset) return;
+      sessionStripRef.current?.scrollTo({
+        x: Math.max(0, offset.x - SESSION_CHIP_REVEAL_MARGIN),
+        animated: true,
+      });
+    }, DURATION.short);
+    return () => clearTimeout(timer);
+  }, [activeAsid, sessionStrip]);
+
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const composerKeyboardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: keyboardOffset.value }],
   }));
 
+  /**
+   * How much room a popup raised from the dock actually has.
+   *
+   * The dock is pinned to the bottom and slides up with the keyboard, so the
+   * space above it is the window minus the keyboard, minus the dock, minus the
+   * header the popup must stay clear of. The keyboard's height is read in JS
+   * here rather than off the shared value the dock animates with: this is a
+   * layout bound, and it only has to be right when the keyboard has settled.
+   */
+  const { height: windowHeight } = useWindowDimensions();
+  const keyboardHeight = useKeyboardState((state) => state.height);
+  const [dockHeight, setDockHeight] = useState(0);
+  const [inputRowHeight, setInputRowHeight] = useState(0);
+  const popupMaxHeight = Math.max(
+    POPUP_MIN_HEIGHT,
+    windowHeight - keyboardHeight - dockHeight - topInset - POPUP_HEADER_GAP
+  );
+  /** The dock's own bottom padding, which the anchored menu has to clear too. */
+  const dockBottomPadding = Math.max(10, bottomInset + 6);
+
   return (
     <Animated.View style={[styles.dockOuter, composerKeyboardStyle]}>
       <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
 
-      {/* Dismiss backdrop for popups */}
+      {/*
+        Dismiss backdrop for popups.
+
+        It used to be `absoluteFill` inside the dock, which is a strip at the
+        bottom of the screen -- so a tap anywhere above the composer went
+        straight through to the transcript and the menu stayed open. It reaches
+        the top of the window now, and while the attachment menu is up it
+        carries a scrim, because that menu is a decision and everything behind
+        it is not.
+      */}
       {attachmentMenuOpen || modeMenuOpen || inboxOpen ? (
         <Pressable
-          style={StyleSheet.absoluteFill}
+          testID="agent-composer-popup-scrim"
+          style={[
+            styles.backdrop,
+            { top: -windowHeight },
+            attachmentMenuOpen ? { backgroundColor: withAlpha('#000000', 0.28) } : null,
+          ]}
           onPress={() => {
             setAttachmentMenuOpen(false);
             setModeMenuOpen(false);
@@ -594,9 +692,21 @@ export const AgentComposer = memo(function AgentComposer({
         />
       ) : null}
 
-      {/* Attachment source popup */}
+      {/*
+        Attachment source popup, over the paperclip that opened it.
+
+        It used to sit above the whole dock -- session strip, chips row, input
+        -- which on a busy composer put it some five hundred points north of
+        the control it belongs to, pointing at nothing. It is anchored to the
+        input row's left edge instead, one gap above it.
+      */}
       {attachmentMenuOpen ? (
-        <View style={styles.popupWrapper}>
+        <View
+          pointerEvents="box-none"
+          style={[
+            styles.attachmentAnchor,
+            { bottom: inputRowHeight + dockBottomPadding + ATTACHMENT_MENU_GAP },
+          ]}>
           <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
         </View>
       ) : null}
@@ -608,16 +718,39 @@ export const AgentComposer = memo(function AgentComposer({
           exiting={fadeOut('micro')}
           style={styles.popupWrapper}>
           <GlassChrome surface="composer" style={styles.inboxCard}>
+            {/* The strip said nothing about itself: three lines of text over
+                the transcript, in the same ink as a sent message, floating
+                across the thinking pill. It says what it is. */}
+            <View style={styles.inboxHeading}>
+              <Text variant="caption" weight="bold" color={theme.colors.textMuted}>
+                {t`Waiting to send`}
+              </Text>
+            </View>
             {inbox.map((item) => (
-              <View key={item.id} style={styles.inboxRow}>
+              <View
+                key={item.id}
+                style={[
+                  styles.inboxRow,
+                  { backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)) },
+                ]}>
                 <Inbox size={13} color={theme.colors.primary} />
                 <Text
                   variant="caption"
                   numberOfLines={2}
-                  color={theme.colors.text}
+                  color={theme.colors.textMuted}
                   style={styles.inboxText}>
                   {inboxItemText(item) || item.type}
                 </Text>
+                {/* Queued is not sent, and the two used to look identical. */}
+                <View
+                  style={[
+                    styles.queuedChip,
+                    { backgroundColor: withAlpha(theme.colors.primary, 0.16) },
+                  ]}>
+                  <Text variant="caption" weight="bold" color={theme.colors.primary}>
+                    {t`Queued`}
+                  </Text>
+                </View>
                 {onCancelInboxItem ? (
                   <PressableScale
                     testID={`agent-composer-inbox-cancel-${item.id}`}
@@ -669,6 +802,7 @@ export const AgentComposer = memo(function AgentComposer({
           <ComposerPopup
             rows={slashPopup.rows}
             onPick={slashPopup.pick}
+            maxHeight={popupMaxHeight}
             testIDPrefix="slash-command"
           />
         </View>
@@ -684,410 +818,448 @@ export const AgentComposer = memo(function AgentComposer({
         />
       ) : null}
 
-      <GlassChrome surface="composer" style={styles.composerDock}>
-        <View style={[styles.composerInner, { paddingBottom: Math.max(10, bottomInset + 6) }]}>
-          {/* Row 1: the workspace's sessions, and the open one's subagents */}
-          {sessionStrip.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.sessionStripContent}
-              style={styles.sessionStripViewport}>
-              {/* The way back out of a subagent. A child is opened by tapping
+      {/* The wrapper is here to be measured: `GlassChrome` is a material and
+          takes no `onLayout` of its own. */}
+      <View onLayout={(event) => setDockHeight(event.nativeEvent.layout.height)}>
+        <GlassChrome surface="composer" style={styles.composerDock}>
+          <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
+            {/* Row 1: the workspace's sessions, and the open one's subagents */}
+            {sessionStrip.length > 0 ? (
+              <ScrollView
+                ref={sessionStripRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sessionStripContent}
+                style={styles.sessionStripViewport}>
+                {/* The way back out of a subagent. A child is opened by tapping
                   its chip, and a strip with no way up is a one-way door. */}
-              {parentSession ? (
-                <PressableScale
-                  testID="agent-composer-session-back"
-                  onPress={() => onSelectSession?.(parentSession.asid)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Back to the parent session`}
-                  style={[
-                    styles.backChip,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: surfaceBackground(theme.colors.border),
-                    },
-                  ]}>
-                  <ArrowLeft size={13} color={theme.colors.primary} />
-                </PressableScale>
-              ) : null}
-              {sessionStrip.map((node) => (
-                <SessionChip
-                  key={node.session.asid}
-                  node={node}
-                  active={node.session.asid === activeAsid}
-                  {...(selectedAgent ? { fallbackAgent: selectedAgent } : {})}
-                  onPress={handleSelectSession}
-                />
-              ))}
-            </ScrollView>
-          ) : null}
-
-          {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.actionRowContent}
-            style={styles.actionRowScroll}>
-            {/* All Sessions Button (Icon-only) */}
-            {onOpenSessionsSheet ? (
-              <PressableScale
-                testID="agent-composer-sessions-btn"
-                onPress={onOpenSessionsSheet}
-                accessibilityLabel={t`All Sessions`}
-                style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
-                <Layers size={16} color={chromeText} />
-              </PressableScale>
-            ) : null}
-
-            {/* Quick Agent Mode Popover Button */}
-            <PressableScale
-              testID="agent-composer-mode-btn"
-              onPress={() => {
-                setAttachmentMenuOpen(false);
-                setModeMenuOpen(false);
-                if (onOpenModeSheet) {
-                  onOpenModeSheet();
-                } else {
-                  setModeMenuOpen((prev) => !prev);
-                }
-              }}
-              accessibilityLabel={t`Select agent mode`}
-              style={[
-                styles.actionBtnWithLabel,
-                modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
-                { backgroundColor: surfaceBackground(chromeGlass) },
-              ]}>
-              <Sparkles size={14} color={theme.colors.primary} />
-              <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                {selectedAgent ?? 'build'}
-              </Text>
-            </PressableScale>
-
-            {/* Quick Model Selector Button (placed right after agent mode, displayed in full) */}
-            {onOpenModelSheet ? (
-              <PressableScale
-                testID="agent-composer-model-btn"
-                onPress={onOpenModelSheet}
-                accessibilityLabel={t`Select model: ${modelDisplayName}`}
-                style={[
-                  styles.actionBtnWithLabel,
-                  { backgroundColor: surfaceBackground(chromeGlass) },
-                ]}>
-                <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                  {modelDisplayName}
-                </Text>
-                <ChevronDown size={12} color={theme.colors.textMuted} />
-              </PressableScale>
-            ) : null}
-
-            {/* OpenCode Tasks Button */}
-            {onOpenTasksSheet || (tasks && tasks.length > 0) ? (
-              <PressableScale
-                testID="agent-composer-tasks-btn"
-                onPress={onOpenTasksSheet}
-                accessibilityLabel={t`Tasks progress`}
-                style={[
-                  styles.actionBtnWithLabel,
-                  { backgroundColor: surfaceBackground(chromeGlass) },
-                ]}>
-                <CheckSquare
-                  size={14}
-                  color={
-                    tasks && tasks.length > 0 && tasks.every((t) => t.done)
-                      ? theme.colors.success
-                      : theme.colors.primary
-                  }
-                />
-                <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                  {tasks && tasks.length > 0
-                    ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
-                    : t`Tasks`}
-                </Text>
-              </PressableScale>
-            ) : null}
-
-            {/* The queue, as the gateway last stated it */}
-            {inbox.length > 0 ? (
-              <PressableScale
-                testID="agent-composer-inbox-pill"
-                onPress={() => setInboxOpen((open) => !open)}
-                accessibilityRole="button"
-                accessibilityState={{ expanded: inboxOpen }}
-                accessibilityLabel={t`${inbox.length} queued`}
-                style={[
-                  styles.actionBtnWithLabel,
-                  { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
-                ]}>
-                <Inbox size={13} color={theme.colors.primary} />
-                <Text
-                  variant="caption"
-                  weight="bold"
-                  color={theme.colors.primary}
-                  style={styles.actionBtnLabel}>
-                  {inbox.length}
-                </Text>
-              </PressableScale>
-            ) : null}
-
-            {/* What is still running after the agent moved on */}
-            {backgroundCount > 0 && onOpenBackgroundTray ? (
-              <PressableScale
-                testID="agent-composer-background-pill"
-                onPress={onOpenBackgroundTray}
-                accessibilityLabel={t`${backgroundCount} running in the background`}
-                style={[
-                  styles.actionBtnWithLabel,
-                  {
-                    backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
-                  },
-                ]}>
-                <Terminal size={13} color={theme.colors.warning} />
-                <Text
-                  variant="caption"
-                  weight="bold"
-                  color={theme.colors.warning}
-                  style={styles.actionBtnLabel}>
-                  {backgroundCount}
-                </Text>
-              </PressableScale>
-            ) : null}
-
-            {/* Context window, token spend and cost, in one pill */}
-            {contextPill ? (
-              <PressableScale
-                testID="agent-composer-tokens-pill"
-                onPress={() => {
-                  if (onPressTokens) {
-                    onPressTokens();
-                  } else if (tokens) {
-                    showToast({
-                      variant: 'info',
-                      title: t`Session Tokens`,
-                      message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
-                    });
-                  }
-                }}
-                accessibilityLabel={
-                  contextPill.ratio === null
-                    ? t`Tokens usage and cost`
-                    : t`Context ${Math.round(contextPill.ratio * 100)}% full`
-                }
-                style={[
-                  styles.actionBtnWithLabel,
-                  { backgroundColor: surfaceBackground(chromeGlass) },
-                ]}>
-                <Cpu size={13} color={chromeText} />
-                <Text
-                  variant="caption"
-                  color={theme.colors.textMuted}
-                  style={styles.actionBtnLabel}>
-                  {contextPill.label}
-                </Text>
-                {/* The gauge, only when the engine stated a window to measure
-                    against. A bar with no limit behind it is a decoration. */}
-                {contextPill.ratio !== null ? (
-                  <View
+                {parentSession ? (
+                  <PressableScale
+                    testID="agent-composer-session-back"
+                    onPress={() => onSelectSession?.(parentSession.asid)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Back to the parent session`}
                     style={[
-                      styles.contextTrack,
-                      { backgroundColor: withAlpha(theme.colors.text, 0.12) },
+                      styles.backChip,
+                      {
+                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                        borderColor: surfaceBackground(theme.colors.border),
+                      },
                     ]}>
-                    <View
-                      style={[
-                        styles.contextFill,
-                        {
-                          width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
-                          backgroundColor:
-                            contextPill.ratio > 0.9
-                              ? theme.colors.danger
-                              : contextPill.ratio > 0.7
-                                ? theme.colors.warning
-                                : theme.colors.primary,
-                        },
-                      ]}
-                    />
-                  </View>
+                    <ArrowLeft size={13} color={theme.colors.primary} />
+                  </PressableScale>
                 ) : null}
-              </PressableScale>
+                {sessionStrip.map((node) => (
+                  <SessionChip
+                    key={node.session.asid}
+                    node={node}
+                    active={node.session.asid === activeAsid}
+                    {...(selectedAgent ? { fallbackAgent: selectedAgent } : {})}
+                    onPress={handleSelectSession}
+                    onMeasure={measureChip}
+                  />
+                ))}
+              </ScrollView>
             ) : null}
 
-            {/* VCS Diff Button: only rendered when hasDiffs is true */}
-            {hasDiffs ? (
-              <PressableScale
-                onPress={onOpenDiffSheet}
-                accessibilityLabel={t`View file changes`}
-                style={[
-                  styles.actionBtn,
-                  {
-                    backgroundColor: withAlpha(theme.colors.primary, 0.18),
-                  },
-                ]}>
-                {/* The same glyph the terminal's own changes button uses
-                    (`git-diff-button.tsx`). A commit dot is not a diff, and
-                    the two buttons open the same kind of thing. */}
-                <GitCompare size={15} color={theme.colors.primary} />
-                <View style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]} />
-              </PressableScale>
-            ) : null}
+            {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}
+            {/*
+            The row scrolls and always did; nothing said so. The last chip ran
+            off the right-hand edge mid-glyph -- `$0.0` for a cost of $0.00 --
+            which reads as a clipped layout rather than as more to come. The
+            fade says there is more, and the content's own right padding keeps
+            the last chip whole under it.
+          */}
+            <View style={styles.actionRowViewport}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.actionRowContent}
+                style={styles.actionRowScroll}>
+                {/* All-sessions button (icon only) */}
+                {onOpenSessionsSheet ? (
+                  <PressableScale
+                    testID="agent-composer-sessions-btn"
+                    onPress={onOpenSessionsSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`All sessions`}
+                    style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
+                    <Layers size={16} color={chromeText} />
+                  </PressableScale>
+                ) : null}
 
-            {running ? (
-              <PressableScale
-                testID="agent-composer-delivery-btn"
-                onPress={() => {
-                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
-                }}
-                accessibilityLabel={
-                  deliveryMode === 'steer'
-                    ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
-                    : t`Delivery mode: Queue. Tap to switch to Steer.`
-                }
-                style={[
-                  styles.actionBtnWithLabel,
-                  {
-                    backgroundColor:
-                      deliveryMode === 'steer'
-                        ? withAlpha(theme.colors.warning, 0.2)
-                        : withAlpha(theme.colors.primary, 0.2),
-                    borderColor:
-                      deliveryMode === 'steer'
-                        ? withAlpha(theme.colors.warning, 0.5)
-                        : withAlpha(theme.colors.primary, 0.5),
-                    borderWidth: 1,
-                  },
-                ]}>
-                {deliveryMode === 'steer' ? (
-                  <>
-                    <Zap size={13} color={theme.colors.warning} />
-                    <Text
-                      variant="caption"
-                      weight="bold"
-                      color={theme.colors.warning}
-                      style={styles.actionBtnLabel}>
-                      <Trans>Steer</Trans>
+                {/* Quick Agent Mode Popover Button */}
+                <PressableScale
+                  testID="agent-composer-mode-btn"
+                  onPress={() => {
+                    setAttachmentMenuOpen(false);
+                    setModeMenuOpen(false);
+                    if (onOpenModeSheet) {
+                      onOpenModeSheet();
+                    } else {
+                      setModeMenuOpen((prev) => !prev);
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Select agent mode`}
+                  style={[
+                    styles.actionBtnWithLabel,
+                    modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
+                    { backgroundColor: surfaceBackground(chromeGlass) },
+                  ]}>
+                  <Sparkles size={14} color={theme.colors.primary} />
+                  <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                    {selectedAgent ?? 'build'}
+                  </Text>
+                  {/* One affordance for one behaviour: a chip that opens a sheet
+                  wears the chevron, and only the model chip used to. */}
+                  <ChevronDown size={12} color={theme.colors.textMuted} />
+                </PressableScale>
+
+                {/* Quick Model Selector Button (placed right after agent mode, displayed in full) */}
+                {onOpenModelSheet ? (
+                  <PressableScale
+                    testID="agent-composer-model-btn"
+                    onPress={onOpenModelSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Select model: ${modelDisplayName}`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
+                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                      {modelDisplayName}
                     </Text>
-                  </>
-                ) : (
-                  <>
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                  </PressableScale>
+                ) : null}
+
+                {/* OpenCode Tasks Button */}
+                {onOpenTasksSheet || (tasks && tasks.length > 0) ? (
+                  <PressableScale
+                    testID="agent-composer-tasks-btn"
+                    onPress={onOpenTasksSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Tasks progress`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
+                    <CheckSquare
+                      size={14}
+                      color={
+                        tasks && tasks.length > 0 && tasks.every((t) => t.done)
+                          ? theme.colors.success
+                          : theme.colors.primary
+                      }
+                    />
+                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                      {tasks && tasks.length > 0
+                        ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
+                        : t`Tasks`}
+                    </Text>
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                  </PressableScale>
+                ) : null}
+
+                {/* The queue, as the gateway last stated it */}
+                {inbox.length > 0 ? (
+                  <PressableScale
+                    testID="agent-composer-inbox-pill"
+                    onPress={() => setInboxOpen((open) => !open)}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: inboxOpen }}
+                    accessibilityLabel={t`${inbox.length} queued`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
+                    ]}>
                     <Inbox size={13} color={theme.colors.primary} />
                     <Text
                       variant="caption"
                       weight="bold"
                       color={theme.colors.primary}
                       style={styles.actionBtnLabel}>
-                      <Trans>Queue</Trans>
+                      {inbox.length}
                     </Text>
-                  </>
-                )}
-              </PressableScale>
-            ) : null}
+                  </PressableScale>
+                ) : null}
 
-            {running ? (
-              <PressableScale
-                onPress={onAbort}
-                accessibilityLabel={t`Stop agent execution`}
-                style={[
-                  styles.actionBtnWithLabel,
-                  styles.stopActionBtn,
-                  { backgroundColor: theme.colors.danger },
-                ]}>
-                <Square size={12} color={theme.colors.onPrimary} />
-                <Text
-                  variant="caption"
-                  color={theme.colors.onPrimary}
-                  style={styles.actionBtnLabel}>
-                  <Trans>Stop</Trans>
-                </Text>
-              </PressableScale>
-            ) : null}
-          </ScrollView>
+                {/* What is still running after the agent moved on */}
+                {backgroundCount > 0 && onOpenBackgroundTray ? (
+                  <PressableScale
+                    testID="agent-composer-background-pill"
+                    onPress={onOpenBackgroundTray}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`${backgroundCount} running in the background`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      {
+                        backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
+                      },
+                    ]}>
+                    <Terminal size={13} color={theme.colors.warning} />
+                    <Text
+                      variant="caption"
+                      weight="bold"
+                      color={theme.colors.warning}
+                      style={styles.actionBtnLabel}>
+                      {backgroundCount}
+                    </Text>
+                  </PressableScale>
+                ) : null}
 
-          {/* Attachment staged preview strip */}
-          {attachmentUploads.attachments.length > 0 ? (
-            <Animated.View
-              entering={fadeIn('micro')}
-              exiting={fadeOutDown('short')}
-              style={styles.stripWrapper}>
-              <AttachmentStrip
-                variant="chip"
-                attachments={attachmentUploads.attachments}
-                onRemove={attachmentUploads.removeAttachment}
-                onRetry={attachmentUploads.retryUpload}
-                onPreview={() => {}}
-                textColor={chromeText}
-              />
-            </Animated.View>
-          ) : null}
+                {/* Context window, token spend and cost, in one pill */}
+                {contextPill ? (
+                  <PressableScale
+                    testID="agent-composer-tokens-pill"
+                    onPress={() => {
+                      if (onPressTokens) {
+                        onPressTokens();
+                      } else if (tokens) {
+                        showToast({
+                          variant: 'info',
+                          title: t`Session Tokens`,
+                          message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
+                        });
+                      }
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      contextPill.ratio === null
+                        ? t`Tokens usage and cost`
+                        : t`Context ${Math.round(contextPill.ratio * 100)}% full`
+                    }
+                    style={[
+                      styles.actionBtnWithLabel,
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
+                    <Cpu size={13} color={chromeText} />
+                    <Text
+                      variant="caption"
+                      color={theme.colors.textMuted}
+                      style={styles.actionBtnLabel}>
+                      {contextPill.label}
+                    </Text>
+                    {/* The gauge, only when the engine stated a window to measure
+                    against. A bar with no limit behind it is a decoration. */}
+                    {contextPill.ratio !== null ? (
+                      <View
+                        style={[
+                          styles.contextTrack,
+                          { backgroundColor: withAlpha(theme.colors.text, 0.12) },
+                        ]}>
+                        <View
+                          style={[
+                            styles.contextFill,
+                            {
+                              width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
+                              backgroundColor:
+                                contextPill.ratio > 0.9
+                                  ? theme.colors.danger
+                                  : contextPill.ratio > 0.7
+                                    ? theme.colors.warning
+                                    : theme.colors.primary,
+                            },
+                          ]}
+                        />
+                      </View>
+                    ) : null}
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                  </PressableScale>
+                ) : null}
 
-          {/* Uploading wait banner */}
-          {sending && attachmentUploads.uploading ? (
-            <Animated.View
-              entering={fadeIn('micro')}
-              exiting={fadeOut('micro')}
-              style={styles.uploadWait}>
-              <Spinner size="sm" color={theme.colors.textMuted} />
-              <Text variant="caption" color={theme.colors.textMuted}>
-                <Trans>Waiting for uploads to finish…</Trans>
-              </Text>
-            </Animated.View>
-          ) : null}
+                {/* VCS Diff Button: only rendered when hasDiffs is true */}
+                {hasDiffs ? (
+                  <PressableScale
+                    onPress={onOpenDiffSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`View file changes`}
+                    style={[
+                      styles.actionBtn,
+                      {
+                        backgroundColor: withAlpha(theme.colors.primary, 0.18),
+                      },
+                    ]}>
+                    {/* The same glyph the terminal's own changes button uses
+                    (`git-diff-button.tsx`). A commit dot is not a diff, and
+                    the two buttons open the same kind of thing. */}
+                    <GitCompare size={15} color={theme.colors.primary} />
+                    <View
+                      style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
+                    />
+                  </PressableScale>
+                ) : null}
 
-          {/* TerminalComposer reused for agent prompt */}
-          <TerminalComposer
-            inputRef={inputRef}
-            leading={
-              <PressableScale
-                testID="agent-composer-attach"
-                accessibilityLabel={
-                  attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
-                }
-                disabled={sending || disabled}
-                onPress={() => setAttachmentMenuOpen((open) => !open)}
-                style={[
-                  composerStyles.button,
-                  { backgroundColor: surfaceBackground(chromeGlass) },
-                  attachmentMenuOpen
-                    ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
-                    : null,
-                  disabled ? { opacity: 0.5 } : null,
-                ]}>
-                <Paperclip
-                  size={16}
-                  color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                {running ? (
+                  <PressableScale
+                    testID="agent-composer-delivery-btn"
+                    onPress={() => {
+                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setDeliveryMode((prev) => (prev === 'steer' ? 'queue' : 'steer'));
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      deliveryMode === 'steer'
+                        ? t`Delivery mode: Steer (real-time). Tap to switch to Queue.`
+                        : t`Delivery mode: Queue. Tap to switch to Steer.`
+                    }
+                    style={[
+                      styles.actionBtnWithLabel,
+                      {
+                        backgroundColor:
+                          deliveryMode === 'steer'
+                            ? withAlpha(theme.colors.warning, 0.2)
+                            : withAlpha(theme.colors.primary, 0.2),
+                        borderColor:
+                          deliveryMode === 'steer'
+                            ? withAlpha(theme.colors.warning, 0.5)
+                            : withAlpha(theme.colors.primary, 0.5),
+                        borderWidth: 1,
+                      },
+                    ]}>
+                    {deliveryMode === 'steer' ? (
+                      <>
+                        <Zap size={13} color={theme.colors.warning} />
+                        <Text
+                          variant="caption"
+                          weight="bold"
+                          color={theme.colors.warning}
+                          style={styles.actionBtnLabel}>
+                          <Trans>Steer</Trans>
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Inbox size={13} color={theme.colors.primary} />
+                        <Text
+                          variant="caption"
+                          weight="bold"
+                          color={theme.colors.primary}
+                          style={styles.actionBtnLabel}>
+                          <Trans>Queue</Trans>
+                        </Text>
+                      </>
+                    )}
+                  </PressableScale>
+                ) : null}
+
+                {running ? (
+                  <PressableScale
+                    onPress={onAbort}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Stop agent execution`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      styles.stopActionBtn,
+                      { backgroundColor: theme.colors.danger },
+                    ]}>
+                    <Square size={12} color={theme.colors.onPrimary} />
+                    <Text
+                      variant="caption"
+                      color={theme.colors.onPrimary}
+                      style={styles.actionBtnLabel}>
+                      <Trans>Stop</Trans>
+                    </Text>
+                  </PressableScale>
+                ) : null}
+              </ScrollView>
+              <EdgeFade edge="right" color={theme.colors.surface} style={styles.actionRowFade} />
+            </View>
+
+            {/* Attachment staged preview strip */}
+            {attachmentUploads.attachments.length > 0 ? (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOutDown('short')}
+                style={styles.stripWrapper}>
+                <AttachmentStrip
+                  variant="chip"
+                  attachments={attachmentUploads.attachments}
+                  onRemove={attachmentUploads.removeAttachment}
+                  onRetry={attachmentUploads.retryUpload}
+                  onPreview={() => {}}
+                  textColor={chromeText}
                 />
-              </PressableScale>
-            }
-            inputProps={{
-              value: text,
-              onChangeText: setText,
-              placeholder: disabled
-                ? t`OpenCode service offline`
-                : t`Send a message, type / for commands, @ for files…`,
-              editable: !sending && !disabled,
-              testID: 'agent-composer-input',
-              selection: slashPopup.inputProps.selection,
-              onSelectionChange: handleSelectionChange,
-              onKeyPress: slashPopup.inputProps.onKeyPress,
-              onSubmitEditing: handleSend,
-            }}
-            send={{
-              accessibilityLabel: running
-                ? deliveryMode === 'steer'
-                  ? t`Steer running agent`
-                  : t`Queue message for agent`
-                : t`Send message`,
-              armed:
-                (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
-                !sending &&
-                !disabled,
-              sending,
-              disabled:
-                sending || disabled || (!text.trim() && attachmentUploads.attachments.length === 0),
-              onPress: handleSend,
-            }}
-          />
-        </View>
-      </GlassChrome>
+              </Animated.View>
+            ) : null}
+
+            {/* Uploading wait banner */}
+            {sending && attachmentUploads.uploading ? (
+              <Animated.View
+                entering={fadeIn('micro')}
+                exiting={fadeOut('micro')}
+                style={styles.uploadWait}>
+                <Spinner size="sm" color={theme.colors.textMuted} />
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  <Trans>Waiting for uploads to finish…</Trans>
+                </Text>
+              </Animated.View>
+            ) : null}
+
+            {/* TerminalComposer reused for agent prompt */}
+            <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
+              <TerminalComposer
+                inputRef={inputRef}
+                leading={
+                  <PressableScale
+                    testID="agent-composer-attach"
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: attachmentMenuOpen }}
+                    accessibilityLabel={
+                      attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
+                    }
+                    disabled={sending || disabled}
+                    onPress={() => setAttachmentMenuOpen((open) => !open)}
+                    style={[
+                      composerStyles.button,
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                      attachmentMenuOpen
+                        ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
+                        : null,
+                      disabled ? { opacity: 0.5 } : null,
+                    ]}>
+                    <Paperclip
+                      size={16}
+                      color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                    />
+                  </PressableScale>
+                }
+                inputProps={{
+                  value: text,
+                  onChangeText: setText,
+                  placeholder: disabled
+                    ? t`OpenCode service offline`
+                    : t`Send a message, type / for commands, @ for files…`,
+                  editable: !sending && !disabled,
+                  testID: 'agent-composer-input',
+                  selection: slashPopup.inputProps.selection,
+                  onSelectionChange: handleSelectionChange,
+                  onKeyPress: slashPopup.inputProps.onKeyPress,
+                  onSubmitEditing: handleSend,
+                }}
+                send={{
+                  accessibilityLabel: running
+                    ? deliveryMode === 'steer'
+                      ? t`Steer running agent`
+                      : t`Queue message for agent`
+                    : t`Send message`,
+                  armed:
+                    (Boolean(text.trim()) || attachmentUploads.attachments.length > 0) &&
+                    !sending &&
+                    !disabled,
+                  sending,
+                  disabled:
+                    sending ||
+                    disabled ||
+                    (!text.trim() && attachmentUploads.attachments.length === 0),
+                  onPress: handleSend,
+                }}
+              />
+            </View>
+          </View>
+        </GlassChrome>
+      </View>
     </Animated.View>
   );
 });
@@ -1164,6 +1336,21 @@ const CompactionPill = memo(function CompactionPill({
   );
 });
 
+/** The least room a popup is given, even on a short window with the keyboard up. */
+const POPUP_MIN_HEIGHT = 120;
+
+/** The clearance a popup keeps below the header it must not reach. */
+const POPUP_HEADER_GAP = 16;
+
+/** Between the paperclip's row and the menu it opens. */
+const ATTACHMENT_MENU_GAP = 8;
+
+/** How wide the chips row's right-hand fade is, and its content's right padding. */
+const ACTION_ROW_FADE_WIDTH = 28;
+
+/** How much of the strip stays visible to the left of the chip brought into view. */
+const SESSION_CHIP_REVEAL_MARGIN = 24;
+
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
@@ -1195,6 +1382,18 @@ const styles = StyleSheet.create({
   composerInner: {
     paddingHorizontal: 12,
     paddingTop: 8,
+  },
+  backdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  // `left: 0` because the menu carries the dock's own 12pt gutter itself.
+  attachmentAnchor: {
+    position: 'absolute',
+    left: 0,
+    zIndex: 2,
   },
   popupWrapper: {
     paddingHorizontal: 12,
@@ -1268,14 +1467,27 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.meta.size,
     fontWeight: '500',
   },
-  actionRowScroll: {
+  actionRowViewport: {
     marginBottom: 8,
+  },
+  actionRowScroll: {
+    overflow: 'visible',
   },
   actionRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 2,
+    // Under the fade, so the chip beneath it is still whole.
+    paddingRight: ACTION_ROW_FADE_WIDTH,
+  },
+  actionRowFade: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: ACTION_ROW_FADE_WIDTH,
+    pointerEvents: 'none',
   },
   actionBtn: {
     alignItems: 'center',
@@ -1308,12 +1520,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingVertical: 4,
   },
+  inboxHeading: {
+    paddingHorizontal: 12,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
   inboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 12,
+    marginHorizontal: 8,
+    marginVertical: 3,
+    paddingHorizontal: 8,
     paddingVertical: 8,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+  },
+  queuedChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderCurve: 'continuous',
   },
   inboxText: {
     flex: 1,

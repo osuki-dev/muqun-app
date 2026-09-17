@@ -99,7 +99,7 @@ export const quickCommandName: Record<string, MessageDescriptor> = {
   'terminal-ctrl-z': msg`Suspend`,
   'terminal-escape': msg`Escape`,
   'terminal-clear-line': msg`Clear line`,
-  'agent-summary': msg`Summarize progress`,
+  'agent-summary': msg`Summarise progress`,
   'agent-tests': msg`Run relevant tests`,
   'agent-continue': msg`Continue task`,
   'agent-commit': msg`Commit`,
@@ -120,14 +120,52 @@ export const agentStatusWord: Record<string, MessageDescriptor> = {
 };
 
 /**
+ * What a permission is asking for, said as a phrase rather than a wire key.
+ *
+ * OpenCode names a permission by the rule it tripped -- `external_directory`,
+ * `bash`, `webfetch` -- and the card printed that key, so the reader was asked
+ * to approve "external_directory · read". These are the same keys as sentences;
+ * anything not in the table is spelled out from the key itself, which is still
+ * better than the key.
+ */
+export const permissionActionPhrase: Record<string, MessageDescriptor> = {
+  external_directory: msg`Read outside the workspace`,
+  external_write: msg`Write outside the workspace`,
+  bash: msg`Run a command`,
+  shell: msg`Run a command`,
+  command: msg`Run a command`,
+  read: msg`Read a file`,
+  write: msg`Write a file`,
+  edit: msg`Edit a file`,
+  patch: msg`Apply a patch`,
+  webfetch: msg`Fetch a web page`,
+  network: msg`Reach the network`,
+  install: msg`Install a package`,
+  task: msg`Start a subagent`,
+};
+
+/**
+ * The three answers to a permission, in one vocabulary.
+ *
+ * The card said "Allow Once / Always Allow / Reject", the push notification
+ * said "Approve / Deny", and the engine's own refusal text says "declined" --
+ * three words for one act across three surfaces. These are the app's.
+ */
+export const permissionDecisionLabel: Record<NamedApprovalDecision, MessageDescriptor> = {
+  allow: msg`Allow`,
+  allow_always: msg`Always allow`,
+  deny: msg`Deny`,
+};
+
+/**
  * The buttons on an approval push notification, by the decision each answers
  * with. `approval-notifications` registers these against the OS category at
  * startup and again whenever push registration re-runs, which is also what
  * refreshes them after a language switch.
  */
 export const approvalActionTitle: Record<NamedApprovalDecision, MessageDescriptor> = {
-  allow: msg`Approve`,
-  allow_always: msg`Approve and don't ask again`,
+  allow: msg`Allow`,
+  allow_always: msg`Always allow`,
   deny: msg`Deny`,
 };
 
@@ -296,7 +334,7 @@ export function paneViewModeFallback(mode: PaneViewMode): PaneViewMode {
  */
 export const agentClientCommandDescription: Record<AgentClientCommandId, MessageDescriptor> = {
   new: msg({ message: 'Start a session with a clean context', context: 'agent slash command' }),
-  sessions: msg({ message: 'All sessions on this workspace', context: 'agent slash command' }),
+  sessions: msg({ message: 'Sessions in this workspace', context: 'agent slash command' }),
   models: msg({ message: 'Switch language model', context: 'agent slash command' }),
   agents: msg({ message: 'Switch agent mode', context: 'agent slash command' }),
   undo: msg({ message: 'Roll back to before the last message', context: 'agent slash command' }),

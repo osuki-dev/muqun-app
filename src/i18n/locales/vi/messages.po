@@ -85,8 +85,8 @@ msgstr "{0} tệp · +{1} −{2}"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
-msgid "{0} messages since the last compaction"
-msgstr "{0} tin nhắn kể từ lần nén gần nhất"
+msgid "{0} messages in context"
+msgstr "{0} tin nhắn trong ngữ cảnh"
 
 #. placeholder {0}: capped.hidden
 #: src/components/agent-tool-card.tsx
@@ -95,8 +95,8 @@ msgstr "{0} dòng nữa"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
-msgid "{0} of {limitLabel} tokens"
-msgstr "{0} trên {limitLabel} token"
+msgid "{0} of {limitLabel} tokens the model can hold"
+msgstr "{0} trên {limitLabel} token mà mô hình có thể chứa"
 
 #. placeholder {0}: sessions.length
 #: src/components/agent-sessions-sheet.tsx
@@ -110,8 +110,8 @@ msgstr "{0} đang chờ"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
-msgid "{0} tokens in context"
-msgstr "{0} token trong ngữ cảnh"
+msgid "{0} tokens the model last read"
+msgstr "{0} token mà mô hình đã đọc lần gần nhất"
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
@@ -286,10 +286,6 @@ msgstr "Tác nhân · {0}"
 msgid "Agent · {0} → {1}"
 msgstr "Tác nhân · {0} → {1}"
 
-#: src/components/agent-workbench.tsx
-msgid "Agent actions are auto-approved; dangerous commands stay blocked."
-msgstr "Các hành động của agent được tự động phê duyệt; các lệnh nguy hiểm vẫn bị chặn"
-
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -346,26 +342,21 @@ msgstr "Tất cả mô hình"
 msgid "All panes"
 msgstr "Tất cả các ngăn"
 
-#: src/components/agent-sessions-sheet.tsx
-msgid "All projects"
-msgstr "Tất cả dự án"
-
 #: src/components/agent-composer.tsx
-msgid "All Sessions"
-msgstr "Tất cả phiên"
+msgid "All sessions"
+msgstr "Tất cả các phiên"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "All workspaces"
+msgstr "Mọi không gian làm việc"
 
 #: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "All sessions on this workspace"
-msgstr "Tất cả phiên trong không gian làm việc này"
+msgid "Allow"
+msgstr "Cho phép"
 
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "Cho phép camera"
-
-#: src/components/agent-permission-card.tsx
-msgid "Allow Once"
-msgstr "Cho phép một lần"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -391,8 +382,8 @@ msgstr "Alt Mũi tên phải"
 msgid "Alt Up arrow"
 msgstr "Alt Mũi tên lên"
 
-#: src/components/agent-permission-card.tsx
-msgid "Always Allow"
+#: src/i18n/labels.ts
+msgid "Always allow"
 msgstr "Luôn cho phép"
 
 #: src/components/ssh-host-key-dialog.tsx
@@ -434,7 +425,12 @@ msgstr "Giao diện"
 msgid "Appearance, terminal, security"
 msgstr "Giao diện, terminal, bảo mật"
 
+#: src/i18n/labels.ts
+msgid "Apply a patch"
+msgstr "Áp dụng một bản vá"
+
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "Áp dụng giao diện"
@@ -442,18 +438,6 @@ msgstr "Áp dụng giao diện"
 #: src/components/terminal-theme-drop.tsx
 msgid "Applying…"
 msgstr "Đang áp dụng…"
-
-#: src/i18n/labels.ts
-msgid "Approve"
-msgstr "Chấp thuận"
-
-#: src/i18n/labels.ts
-msgid "Approve and don't ask again"
-msgstr "Chấp thuận và không hỏi lại"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Approve every agent action automatically"
-msgstr "Tự động duyệt mọi hành động của tác nhân"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -540,13 +524,21 @@ msgstr "Xác thực thất bại. Hãy thử lại"
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Không thể xác thực. Hãy thử lại hoặc kiểm tra cài đặt hệ thống"
 
-#: src/components/agent-workbench.tsx
-msgid "auto-approving actions"
-msgstr "đang tự động phê duyệt hành động"
-
 #: src/components/agent-context-sheet.tsx
-msgid "Auto-approving agent actions"
-msgstr "Đang tự động phê duyệt hành động của agent"
+msgid "Auto-approve every action"
+msgstr "Tự động duyệt mọi hành động"
+
+#: src/components/agent-workbench.tsx
+msgid "Auto-approve is on"
+msgstr "Tự động duyệt đang bật"
+
+#: src/components/agent-workbench.tsx
+msgid "Auto-approve is on — tap to turn it off"
+msgstr "Tự động duyệt đang bật — chạm để tắt"
+
+#: src/components/agent-workbench.tsx
+msgid "Auto-approving every action"
+msgstr "Đang tự động duyệt mọi hành động"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -601,8 +593,8 @@ msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ đọc"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
-msgstr "Nằm giữa phần đầu trang và danh sách máy chủ. Chọn “Hiển thị” cũng sẽ mượn ảnh trạng thái trống của chủ đề khi chủ đề không có hình minh hoạ riêng cho trang chủ"
+msgid "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own."
+msgstr "Giữa phần đầu trang và danh sách máy chủ. Trang chủ cũng mượn ảnh trạng thái trống của chủ đề khi chủ đề không có hình minh hoạ riêng cho trang chủ"
 
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -717,19 +709,16 @@ msgid "Changes"
 msgstr "Thay đổi"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Changes colored backgrounds, not text, icons or artwork"
+msgid "Changes coloured backgrounds, not text, icons or artwork"
 msgstr "Chỉ thay đổi nền màu, không ảnh hưởng đến chữ, biểu tượng hay hình trang trí"
 
 #: src/i18n/labels.ts
 msgid "Chat"
 msgstr "Trò chuyện"
 
+#: src/components/agent-workbench.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Check again"
-msgstr "Kiểm tra lại"
-
-#: src/components/agent-workbench.tsx
-msgid "Check Again"
 msgstr "Kiểm tra lại"
 
 #: src/components/settings-security.tsx
@@ -784,13 +773,13 @@ msgstr "Chọn một host SSH"
 msgid "Choose files"
 msgstr "Chọn tệp"
 
-#: src/components/agent-workbench.tsx
-msgid "Choose Project"
-msgstr "Chọn dự án"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
+
+#: src/components/agent-workbench.tsx
+msgid "Choose workspace"
+msgstr "Chọn không gian làm việc"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -821,6 +810,10 @@ msgstr "Xóa màn hình terminal"
 msgid "Clear the conversation"
 msgstr "Xoá cuộc trò chuyện"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Clear the search"
+msgstr "Xoá nội dung tìm kiếm"
+
 #: src/components/settings-storage.tsx
 msgid "Clearing cache"
 msgstr "Đang xóa bộ nhớ đệm"
@@ -830,29 +823,16 @@ msgid "Clearing…"
 msgstr "Đang xóa…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/session-map.tsx
 msgid "Close"
 msgstr "Đóng"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "Đóng thay đổi"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "Đóng tệp"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "Đóng danh sách tệp"
-
 #: src/app/new-task.tsx
 msgid "Close new task"
 msgstr "Đóng tác vụ mới"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "Đóng ghép nối"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -881,14 +861,6 @@ msgstr "Đóng menu"
 #: src/components/simfarm-stage.tsx
 msgid "Close the simulator"
 msgstr "Đóng trình giả lập"
-
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "Đóng danh mục giao diện"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "Đóng bộ chọn chủ đề"
 
 #: src/components/session-artifacts.tsx
 msgid "Code"
@@ -920,7 +892,7 @@ msgid "Collapse tool call"
 msgstr "Thu gọn lệnh gọi công cụ"
 
 #: src/components/settings-appearance.tsx
-msgid "Color mode"
+msgid "Colour mode"
 msgstr "Chế độ màu"
 
 #: src/app/commands.tsx
@@ -1603,6 +1575,11 @@ msgstr "Đã ngắt kết nối"
 msgid "Dismiss the approval error"
 msgstr "Bỏ qua lỗi chấp thuận"
 
+#. placeholder {0}: screenNotice.title
+#: src/components/agent-workbench.tsx
+msgid "Dismiss the notice: {0}"
+msgstr "Bỏ qua thông báo: {0}"
+
 #: src/components/terminal-theme-drop.tsx
 msgid "Dismiss this theme"
 msgstr "Bỏ qua chủ đề này"
@@ -1615,11 +1592,8 @@ msgstr "Bỏ qua những gì đã xảy ra khi bạn vắng mặt"
 msgid "Dismiss what's new"
 msgstr "Bỏ qua có gì mới"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "Tài liệu"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1673,6 +1647,10 @@ msgstr "Mỗi thiết bị giữ token riêng cho {0}"
 #: src/components/ssh-host-row.tsx
 msgid "Edit {0}"
 msgstr "Sửa {0}"
+
+#: src/i18n/labels.ts
+msgid "Edit a file"
+msgstr "Sửa một tệp"
 
 #: src/components/agent-message-block.tsx
 msgid "Edit queued message"
@@ -1764,7 +1742,7 @@ msgid "Explore"
 msgstr "Khám phá"
 
 #: src/components/custom-theme-library.tsx
-msgid "Export colors"
+msgid "Export colours"
 msgstr "Xuất màu sắc"
 
 #: src/components/custom-theme-library.tsx
@@ -1787,6 +1765,10 @@ msgstr "Không thể chuyển phiên không gian làm việc"
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
 msgstr "Agent nhanh chuyên khám phá mã nguồn"
+
+#: src/i18n/labels.ts
+msgid "Fetch a web page"
+msgstr "Tải một trang web"
 
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
@@ -1850,6 +1832,7 @@ msgstr "Tiến một từ"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-model-sheet.tsx
 msgid "Free"
 msgstr "Miễn phí"
 
@@ -2057,6 +2040,10 @@ msgstr "Chèn {0} {1}"
 msgid "Insert mode"
 msgstr "Chế độ chèn"
 
+#: src/i18n/labels.ts
+msgid "Install a package"
+msgstr "Cài đặt một gói"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "Đã sao chép lệnh cài đặt"
@@ -2153,8 +2140,8 @@ msgid "Keys are generated on the device and never leave it."
 msgstr "Khóa được tạo trên thiết bị và không bao giờ rời khỏi đó"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Known repositories"
-msgstr "Kho mã đã biết"
+msgid "Known workspaces"
+msgstr "Không gian làm việc đã biết"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2462,11 +2449,8 @@ msgid "New output available · refresh"
 msgstr "Có đầu ra mới · làm mới"
 
 #: src/app/agent.tsx
-msgid "New session"
-msgstr "Phiên mới"
-
 #: src/components/agent-workbench.tsx
-msgid "New Session"
+msgid "New session"
 msgstr "Phiên mới"
 
 #: src/app/commands.tsx
@@ -2523,6 +2507,10 @@ msgstr "Không có thay đổi. Cây làm việc trùng với HEAD"
 msgid "No files match."
 msgstr "Không có tệp nào khớp"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No free models on this host."
+msgstr "Không có mô hình miễn phí trên máy chủ này"
+
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "Chưa có Gateway?"
@@ -2531,9 +2519,10 @@ msgstr "Chưa có Gateway?"
 msgid "No matching commands. Try another word."
 msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
 
+#. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
-msgid "No models match that search."
-msgstr "Không có mô hình nào khớp tìm kiếm đó"
+msgid "No models match “{0}”."
+msgstr "Không có mô hình nào khớp với “{0}”"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -2567,6 +2556,11 @@ msgstr "Không có bản xem trước trên kết nối này"
 msgid "No projects here yet. Type a path above to open one."
 msgstr "Chưa có dự án nào ở đây. Nhập một đường dẫn ở trên để mở"
 
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "Không có dự án nào khớp với “{0}”"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "Không có máy chủ để bắt đầu tác vụ"
@@ -2581,8 +2575,8 @@ msgid "No sessions in this workspace yet. Start one from the + button."
 msgstr "Chưa có phiên nào trong không gian làm việc này. Bắt đầu bằng nút +"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions match that search."
-msgstr "Không có phiên nào khớp tìm kiếm đó"
+msgid "No sessions match “{searchQuery}”."
+msgstr "Không có phiên nào khớp với “{searchQuery}”"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -2615,6 +2609,10 @@ msgstr "Không có thay đổi văn bản"
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Chưa có giao diện nào được công bố"
+
+#: src/components/agent-context-sheet.tsx
+msgid "no window reported for this model"
+msgstr "không có cửa sổ nào được báo cho mô hình này"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2663,7 +2661,7 @@ msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "Chưa có gì ở đây. Các tệp mà phiên ghi ra sẽ tự xuất hiện"
 
 #: src/components/agent-background-tray.tsx
-msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "Không có gì đang chạy nền. Tách một lệnh dài khỏi thẻ công cụ của nó và nó sẽ xuất hiện ở đây"
 
 #: src/components/pane-chat-view.tsx
@@ -2842,11 +2840,8 @@ msgid "OpenCode service is offline"
 msgstr "Dịch vụ OpenCode đang ngoại tuyến"
 
 #: src/components/agent-composer.tsx
-msgid "OpenCode service offline"
-msgstr "Dịch vụ OpenCode ngoại tuyến"
-
 #: src/components/agent-workbench.tsx
-msgid "OpenCode Service Offline"
+msgid "OpenCode service offline"
 msgstr "Dịch vụ OpenCode ngoại tuyến"
 
 #: src/components/new-task-action.tsx
@@ -2988,7 +2983,7 @@ msgid "Path"
 msgstr "Đường dẫn"
 
 #: src/components/agent-permission-card.tsx
-msgid "Permission Required"
+msgid "Permission required"
 msgstr "Cần có quyền"
 
 #: src/components/attachment-menu.tsx
@@ -3096,6 +3091,7 @@ msgstr "Xếp hàng"
 msgid "Queue message for agent"
 msgstr "Xếp hàng tin nhắn cho tác nhân"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-message-block.tsx
 msgid "Queued"
 msgstr "Đang chờ"
@@ -3118,6 +3114,10 @@ msgstr "Thao tác nhanh"
 msgid "Quit"
 msgstr "Thoát"
 
+#: src/i18n/labels.ts
+msgid "Reach the network"
+msgstr "Truy cập mạng"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
 msgstr "Kết nối qua host SSH {host}"
@@ -3125,6 +3125,14 @@ msgstr "Kết nối qua host SSH {host}"
 #: src/app/explore.tsx
 msgid "Reaching the Gateway"
 msgstr "Đang kết nối Gateway"
+
+#: src/i18n/labels.ts
+msgid "Read a file"
+msgstr "Đọc một tệp"
+
+#: src/i18n/labels.ts
+msgid "Read outside the workspace"
+msgstr "Đọc bên ngoài không gian làm việc"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
@@ -3206,10 +3214,6 @@ msgstr "Làm mới tệp"
 #: src/components/collaboration-notice.tsx
 msgid "Refresh output"
 msgstr "Làm mới đầu ra"
-
-#: src/components/agent-permission-card.tsx
-msgid "Reject"
-msgstr "Từ chối"
 
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
@@ -3406,6 +3410,10 @@ msgstr "Mũi tên phải"
 msgctxt "agent slash command"
 msgid "Roll back to before the last message"
 msgstr "Quay lại trạng thái trước tin nhắn gần nhất"
+
+#: src/i18n/labels.ts
+msgid "Run a command"
+msgstr "Chạy một lệnh"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3650,6 +3658,16 @@ msgstr "Token phiên"
 msgid "Sessions"
 msgstr "Phiên"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Sessions in this workspace"
+msgstr "Các phiên trong không gian làm việc này"
+
+#. placeholder {0}: sessionTitle ?? ''
+#: src/app/agent.tsx
+msgid "Sessions: {0}"
+msgstr "Phiên: {0}"
+
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
 msgstr "Đặt mật mã thiết bị trước khi dùng Khóa ứng dụng"
@@ -3728,21 +3746,9 @@ msgstr "Hiện {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Hiện các tác tử và trạng thái của chúng trên màn hình chính. Cập nhật khi Muqun đang mở"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "Hiện tất cả tệp"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Hiện chi tiết camera"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "Hiện mã"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "Hiện tài liệu"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3763,10 +3769,6 @@ msgstr "Hiển thị chữ trên trang chủ"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show illustration on Home"
 msgstr "Hiển thị hình minh hoạ trên trang chủ"
-
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "Hiện hình ảnh"
 
 #: src/components/diff-rows.tsx
 msgid "Show more"
@@ -3933,6 +3935,10 @@ msgctxt "agent slash command"
 msgid "Start a session with a clean context"
 msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
 
+#: src/i18n/labels.ts
+msgid "Start a subagent"
+msgstr "Khởi động một tác nhân phụ"
+
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do"
 msgstr "Khởi động một tác nhân và gửi việc đầu tiên"
@@ -3950,8 +3956,8 @@ msgid "Start task"
 msgstr "Bắt đầu tác vụ"
 
 #: src/components/agent-workbench.tsx
-msgid "Started a new session with clean context."
-msgstr "Đã bắt đầu phiên mới với ngữ cảnh sạch"
+msgid "Started with a clean context."
+msgstr "Đã bắt đầu với ngữ cảnh trống"
 
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
@@ -4039,13 +4045,13 @@ msgid "Submit Response"
 msgstr "Gửi phản hồi"
 
 #: src/i18n/labels.ts
+msgid "Summarise progress"
+msgstr "Tóm tắt tiến độ"
+
+#: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Summarise the history and keep working from the summary"
 msgstr "Tóm tắt lịch sử và làm việc tiếp từ bản tóm tắt"
-
-#: src/i18n/labels.ts
-msgid "Summarize progress"
-msgstr "Tóm tắt tiến độ"
 
 #: src/i18n/labels.ts
 msgid "Suspend"
@@ -4248,6 +4254,18 @@ msgstr "Tác tử giờ đang hỏi điều khác"
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
 msgstr "Tác tử không còn chờ nữa"
+
+#: src/components/agent-workbench.tsx
+msgid "The agent stops asking; dangerous commands stay blocked."
+msgstr "Tác nhân sẽ thôi hỏi; các lệnh nguy hiểm vẫn bị chặn"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent stops asking; irreversibly destructive commands stay blocked"
+msgstr "Tác nhân sẽ thôi hỏi; các lệnh phá huỷ không thể hoàn tác vẫn bị chặn"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
+msgstr "Tác nhân sẽ hành động mà không hỏi mỗi lần. Các lệnh phá huỷ không thể hoàn tác vẫn bị chặn"
 
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
@@ -4529,6 +4547,10 @@ msgstr "Terminal này không còn khả dụng"
 msgid "This theme contains images that must be installed before applying"
 msgstr "Giao diện này chứa hình ảnh cần được cài đặt trước khi áp dụng"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "This workspace"
+msgstr "Không gian làm việc này"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Không gian làm việc này chưa có nhóm nào"
@@ -4549,6 +4571,10 @@ msgstr "Qua {host}"
 msgid "Today"
 msgstr "Hôm nay"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Tokens this session"
+msgstr "Token trong phiên này"
+
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Mức sử dụng mã token và chi phí"
@@ -4556,10 +4582,6 @@ msgstr "Mức sử dụng mã token và chi phí"
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Total spent"
-msgstr "Tổng đã dùng"
 
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
@@ -4739,6 +4761,10 @@ msgid "uploaded"
 msgstr "đã tải lên"
 
 #: src/components/attachment-strip.tsx
+msgid "Uploaded"
+msgstr "Đã tải lên"
+
+#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "đang tải lên"
 
@@ -4772,8 +4798,8 @@ msgid "Username"
 msgstr "Tên người dùng"
 
 #: src/components/settings-servers.tsx
-msgid "USING"
-msgstr "ĐANG DÙNG"
+msgid "Using"
+msgstr "Đang dùng"
 
 #. placeholder {0}: build ? ` (${build})` : ''
 #: src/app/settings.tsx
@@ -4789,7 +4815,7 @@ msgid "Visual mode"
 msgstr "Chế độ visual"
 
 #: src/lib/demo-gateway.ts
-msgid "Visualize current context usage as a colored grid"
+msgid "Visualise current context usage as a coloured grid"
 msgstr "Hiển thị mức dùng ngữ cảnh hiện tại dưới dạng lưới màu"
 
 #: src/components/skia-terminal.web.tsx
@@ -4804,6 +4830,14 @@ msgstr "Đang chờ mạng"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Đang chờ tải lên xong…"
+
+#: src/components/agent-workbench.tsx
+msgid "Waiting for your answer"
+msgstr "Đang chờ bạn trả lời"
+
+#: src/components/agent-composer.tsx
+msgid "Waiting to send"
+msgstr "Chờ gửi"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to OpenCode Agent"
@@ -4825,10 +4859,6 @@ msgstr "Khi tác nhân dừng để xin xác nhận, thông báo đẩy sẽ đ�
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
-#: src/components/agent-context-sheet.tsx
-msgid "window not reported"
-msgstr "chưa báo kích thước cửa sổ"
-
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
@@ -4845,6 +4875,10 @@ msgstr "Thư mục làm việc"
 msgid "Workspace"
 msgstr "Không gian làm việc"
 
+#: src/i18n/labels.ts
+msgid "Write a file"
+msgstr "Ghi một tệp"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Write a line"
@@ -4853,6 +4887,10 @@ msgstr "Viết một dòng"
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"
 msgstr "Ghi và thoát"
+
+#: src/i18n/labels.ts
+msgid "Write outside the workspace"
+msgstr "Ghi bên ngoài không gian làm việc"
 
 #: src/i18n/labels.ts
 #: src/lib/demo-gateway.ts
@@ -4870,22 +4908,6 @@ msgstr "Sao chép dòng này"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Hôm qua"
-
-#: src/components/agent-context-sheet.tsx
-msgid "YOLO lets the agent act without asking each time. Irreversibly destructive commands are still blocked."
-msgstr "YOLO cho tác nhân hành động mà không hỏi mỗi lần. Các lệnh phá huỷ không thể hoàn tác vẫn bị chặn"
-
-#: src/components/agent-context-sheet.tsx
-msgid "YOLO mode"
-msgstr "Chế độ YOLO"
-
-#: src/components/agent-workbench.tsx
-msgid "YOLO mode on"
-msgstr "Đã bật chế độ YOLO"
-
-#: src/components/agent-workbench.tsx
-msgid "YOLO mode on — tap to turn off"
-msgstr "Đã bật chế độ YOLO — chạm để tắt"
 
 #: src/components/agent-message-block.tsx
 msgid "You"

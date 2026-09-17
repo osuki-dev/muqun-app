@@ -248,7 +248,8 @@ export function NewTaskAction({
             layout={listLayout()}
             style={styles.announcementContainer}>
             <Text
-              variant="label"
+              variant="caption"
+              weight="semibold"
               color={theme.colors.primary}
               numberOfLines={1}
               style={styles.announcementText}>

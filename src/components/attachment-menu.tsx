@@ -78,6 +78,7 @@ export function AttachmentMenu({
         return (
           <PressableScale
             key={source}
+            accessibilityRole="button"
             accessibilityLabel={name}
             onPress={() => onSelect(source)}
             style={styles.option}>

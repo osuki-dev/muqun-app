@@ -1,10 +1,12 @@
 import { memo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { Check, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { permissionActionPhrase, permissionDecisionLabel } from '@/i18n/labels';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import {
@@ -28,20 +30,34 @@ const DECISION_ICON = {
   deny: XCircle,
 } as const;
 
+/** A decision with nothing but its own order, for a payload that listed none. */
+function asOption(decision: PermissionDecision, index: number): PermissionOption {
+  return { index, label: decision, decision };
+}
+
+/** `external_directory` as "External directory": the key, at least readable. */
+function spellOutAction(action: string): string {
+  const words = action.replace(/[_-]+/g, ' ').trim();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : action;
+}
+
 /**
  * What the agent is asking to do, and the answers it offered.
  *
- * The three buttons used to be hard-coded. OpenCode sends `options[]` -- an
- * index, a label and a decision each -- and a permission with a menu of its own
- * lost it here. It also sends `save[]`: the glob patterns an "always" would
- * whitelist project-wide, which is exactly the thing a reader should see before
- * pressing it, and which was dropped too.
+ * OpenCode sends `options[]` -- an index, a label and a decision each -- so a
+ * permission with a menu of its own keeps its order here. The *wording* is not
+ * taken from the wire: a label the gateway sent in English would be English in
+ * all twelve languages, and the three answers are one vocabulary across this
+ * card, the push notification and the tray. An empty `options[]` is not a
+ * request with no answers; it is a payload that did not list the three every
+ * permission has, which come from `DEFAULT_PERMISSION_DECISIONS`.
  *
- * An empty `options[]` is not a request with no answers; it is a payload that
- * did not list the three every permission has, and those three are drawn from
- * `DEFAULT_PERMISSION_DECISIONS` with wording from the macro rather than from
- * the wire -- a label the gateway sent in English would otherwise be English in
- * all eight languages.
+ * The request is stated once. It used to be stated three times over: the wire
+ * key (`external_directory`) on the header's second line, the prompt, a bullet
+ * list of `resources`, and then `save[]` under "Always allow" -- which on a
+ * read of `/etc/hosts` meant `/etc/*` three times on one card. The action is a
+ * phrase, the thing it acts on is one line under it, and the glob an "always"
+ * would whitelist stays where it belongs: beside the button that whitelists it.
  */
 export const AgentPermissionCard = memo(function AgentPermissionCard({
   request,
@@ -49,26 +65,36 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
   attached = false,
 }: AgentPermissionCardProps) {
   const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const [submitting, setSubmitting] = useState<PermissionDecision | null>(null);
 
-  // Not memoised: the fallback labels come from the macro, whose binding the
-  // React Compiler cannot follow into a `useMemo` -- and building three
-  // objects is cheaper than the hook that would have skipped it anyway.
-  const defaultLabels: Record<PermissionDecision, string> = {
-    allow: t`Allow Once`,
-    allow_always: t`Always Allow`,
-    deny: t`Reject`,
-  };
-  const options: readonly PermissionOption[] =
-    request.options.length > 0
-      ? request.options
-      : DEFAULT_PERMISSION_DECISIONS.map((decision, index) => ({
-          index,
-          label: defaultLabels[decision],
-          decision,
-        }));
+  const options: readonly PermissionOption[] = (
+    request.options.length > 0 ? request.options : DEFAULT_PERMISSION_DECISIONS.map(asOption)
+  ).map((option) => ({ ...option, label: _(permissionDecisionLabel[option.decision]) }));
+
+  /** The rule the engine tripped, as a phrase; the key spelled out when it has none. */
+  const phrase = request.action ? permissionActionPhrase[request.action] : undefined;
+  const actionPhrase = phrase
+    ? _(phrase)
+    : request.action
+      ? spellOutAction(request.action)
+      : t`Permission required`;
+
+  /**
+   * The one thing this permission is about.
+   *
+   * The prompt is the engine's own statement and the most specific -- the file,
+   * the command -- so it leads; `resources[0]` answers for a payload that sent
+   * no prompt. Anything else in `resources` that is neither that nor a glob
+   * already shown beside "Always allow" is additional, and only then is it
+   * worth a line of its own.
+   */
+  const subject = request.prompt.trim() || request.resources[0] || '';
+  const extraResources = request.resources.filter(
+    (resource) => resource !== subject && !request.save.includes(resource)
+  );
 
   const handleDecision = async (decision: PermissionDecision) => {
     if (submitting) return;
@@ -100,21 +126,23 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
         </View>
         <View style={styles.headerText}>
           <Text variant="bodySmall" color={theme.colors.text} style={styles.title}>
-            {t`Permission Required`}
+            {t`Permission required`}
           </Text>
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.action}>
-            {request.tool ? `${request.action} · ${request.tool}` : request.action}
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {actionPhrase}
           </Text>
         </View>
       </View>
 
       <View style={[styles.body, { backgroundColor: withAlpha(theme.colors.surface, 0.6) }]}>
-        <Text variant="caption" color={theme.colors.text} style={styles.prompt}>
-          {request.prompt}
-        </Text>
-        {request.resources.length > 0 ? (
+        {subject ? (
+          <Text selectable style={[styles.subject, { color: theme.colors.text }]}>
+            {subject}
+          </Text>
+        ) : null}
+        {extraResources.length > 0 ? (
           <View style={styles.resourcesBox}>
-            {request.resources.map((res) => (
+            {extraResources.map((res) => (
               <Text
                 key={res}
                 selectable
@@ -177,7 +205,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
                   numberOfLines={2}
                   color={theme.colors.textSubtle}
                   style={styles.saveText}>
-                  {request.save.join('  ')}
+                  {request.save.join(' · ')}
                 </Text>
               ) : null}
             </View>
@@ -222,19 +250,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: AGENT_TYPE.meta.size,
   },
-  action: {
+  subject: {
     fontFamily: 'monospace',
-    fontSize: AGENT_TYPE.micro.size,
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   body: {
     padding: 8,
     borderRadius: 6,
     borderCurve: 'continuous',
     marginBottom: 10,
-  },
-  prompt: {
-    fontSize: AGENT_TYPE.meta.size,
-    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   message: {
     fontSize: AGENT_TYPE.micro.size,

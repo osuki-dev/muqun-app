@@ -6,17 +6,31 @@ import { Bell, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { appChrome } from '@/constants/appearance';
-import { fadeInDown } from '@/lib/motion';
+import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
+import { fadeInDown, fadeOutUp } from '@/lib/motion';
 import { useAppSettings } from '@/stores/app-settings';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
 
 import { PressableScale } from './pressable-scale';
 
+/**
+ * How far below the safe-area inset a notice starts.
+ *
+ * A notice used to sit on the inset itself, which is where the app's own nav
+ * chrome sits: on the agent screen it landed squarely over the workspace pill
+ * and the new-session control, and over a permission card's title under them.
+ * The chrome's own height plus a gap is the first row a notice may occupy, so
+ * it is never a lid on the controls the reader was reaching for.
+ */
+const NOTICE_TOP_GAP = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 10;
+
 /** Mounted inside AppLockGate: neither contents nor actions cross the lock. */
 export function InAppNotificationHost() {
+  const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const { colors } = useThemeTokens();
@@ -41,7 +55,9 @@ export function InAppNotificationHost() {
     dismiss();
   };
   return (
-    <SafeAreaView edges={['top']} pointerEvents="box-none" style={styles.overlay}>
+    <View
+      pointerEvents="box-none"
+      style={[styles.overlay, { paddingTop: insets.top + NOTICE_TOP_GAP }]}>
       <View pointerEvents="box-none" style={styles.deck}>
         {[2, 1].map((depth) =>
           items.length > depth ? (
@@ -63,6 +79,7 @@ export function InAppNotificationHost() {
         <Animated.View
           key={notice.id}
           entering={fadeInDown('short')}
+          exiting={fadeOutUp('short')}
           style={[
             styles.card,
             {
@@ -75,7 +92,10 @@ export function InAppNotificationHost() {
             <Bell size={18} color={colors.primary} />
           </View>
           <View style={styles.content} accessibilityLiveRegion="polite">
-            <Text variant="label" numberOfLines={2}>
+            {/* `bodySmall` rather than the kit's `label`: `label` carries
+                `textTransform: 'uppercase'`, and a notice shouting
+                "APPROVAL REQUIRED" is a sign rather than a sentence. */}
+            <Text variant="bodySmall" weight="bold" numberOfLines={2}>
               {notice.title || t`Muqun`}
             </Text>
             {notice.body ? (
@@ -111,7 +131,7 @@ export function InAppNotificationHost() {
           </PressableScale>
         </Animated.View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -1268,10 +1268,20 @@ export function parseAgentContextUsage(value: unknown): AgentContextUsage {
   };
 }
 
-/** Every token still in context, which is what the ring fills against. */
+/**
+ * Every token still in context, which is what the ring fills against.
+ *
+ * `cache_read` counts. OpenCode reports the latest assistant message's usage
+ * split four ways -- fresh input, cached input, reasoning and output -- and the
+ * cached half is input the model still read; leaving it out is what made a
+ * long session with a warm prompt cache report a few hundred tokens against a
+ * 262k window. `cache_write` is deliberately not added: a write is the same
+ * text as the `input` beside it, counted twice by the provider's billing shape
+ * rather than twice in the window.
+ */
 export function contextTokenTotal(tokens: TokensUsage | null | undefined): number {
   if (!tokens) return 0;
-  return tokens.input + tokens.output + (tokens.reasoning ?? 0);
+  return tokens.input + tokens.output + (tokens.reasoning ?? 0) + (tokens.cache_read ?? 0);
 }
 
 /** 0…1, or `null` when there is no limit to measure against. */
@@ -1383,6 +1393,15 @@ export interface FileDiffItem {
   patch: string;
   additions: number;
   deletions: number;
+  /**
+   * What OpenCode says happened to the file, when it says anything.
+   *
+   * `FileDiff.Info` carries a `status` -- added, modified, deleted -- and it was
+   * parsed away, so every row was classified by reading the patch header
+   * instead and a modified file with a full-file patch read as "Added". Kept as
+   * the wire string; `agent-diff-rows.ts` is where it becomes a status.
+   */
+  status?: string;
 }
 
 export function parseFileDiffItem(value: unknown): FileDiffItem | null {
@@ -1390,11 +1409,13 @@ export function parseFileDiffItem(value: unknown): FileDiffItem | null {
   if (!rec) return null;
   const path = pickString(rec, ['path', 'file', 'filename', 'filePath', 'file_path']);
   if (!path) return null;
+  const status = pickString(rec, ['status', 'change', 'change_type', 'changeType']);
   return {
     path,
     patch: asString(rec.patch) ?? asString(rec.diff) ?? '',
     additions: asFiniteNumber(rec.additions) ?? asFiniteNumber(rec.added) ?? 0,
     deletions: asFiniteNumber(rec.deletions) ?? asFiniteNumber(rec.removed) ?? 0,
+    ...(status ? { status } : {}),
   };
 }
 
@@ -1587,12 +1608,29 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
       });
       // The flat list is what every picker in the app reads; a provider-only
       // catalog must not come back with no models at all.
+      //
+      // A model listed in both places is one model described twice, and the
+      // two descriptions are not always equally complete: OpenCode's flat
+      // `models[]` is a summary and the provider's own entry is where the
+      // price list, the context window and the variants live. Taking the first
+      // one seen and discarding the other is what put a paid model under
+      // "Free only" -- the summary had no `cost`, so `isFreeModel` fell back to
+      // reading the name. So the flat entry is filled in from the provider's
+      // rather than replaced by it: what the summary states wins, what it
+      // leaves out is answered here.
       for (const model of providerModels) {
-        if (
-          !models.some((known) => known.id === model.id && known.provider_id === model.provider_id)
-        ) {
+        const known = models.find(
+          (entry) => entry.id === model.id && entry.provider_id === model.provider_id
+        );
+        if (!known) {
           models.push(model);
+          continue;
         }
+        if (known.cost === undefined && model.cost !== undefined) known.cost = model.cost;
+        if (!known.limit && model.limit) known.limit = model.limit;
+        if (!known.variants && model.variants) known.variants = model.variants;
+        if (!known.family && model.family) known.family = model.family;
+        if (!known.status && model.status) known.status = model.status;
       }
     }
   }

@@ -302,6 +302,16 @@ describe('visibleServerAgents', () => {
   test('"agents" against an all-plain-panes snapshot is an empty list, not the untouched one', () => {
     expect(visibleServerAgents([plainPane], 'agents')).toEqual([]);
   });
+
+  test('one pane is one row, however many sources described it', () => {
+    // The same pane, once from the agent list and once from the pane list, so
+    // the two rows carry different ids and the same `paneId`.
+    const fromAgents = { ...withAgent, paneId: 'pane-1' } as const;
+    const fromPanes = { ...withAgent, id: 'pane-1', paneId: 'pane-1' } as const;
+    expect(visibleServerAgents([fromAgents, fromPanes], 'all')).toEqual([fromAgents]);
+    // Two rows with no pane id between them are still two rows.
+    expect(visibleServerAgents([withAgent, plainPane], 'all')).toEqual([withAgent, plainPane]);
+  });
 });
 
 describe('keepMirroredServers', () => {

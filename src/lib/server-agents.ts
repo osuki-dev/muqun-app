@@ -347,7 +347,26 @@ export function visibleServerAgents(
   agents: readonly ServerAgent[],
   serverCardPanes: 'agents' | 'all'
 ): ServerAgent[] {
-  return serverCardPanes === 'agents' ? agents.filter((agent) => agent.hasAgent) : agents.slice();
+  const listed =
+    serverCardPanes === 'agents' ? agents.filter((agent) => agent.hasAgent) : agents.slice();
+  /*
+    One pane is one row.
+
+    The mirror is built from two sources -- the gateway's agent list and its
+    pane list -- and a pane carrying an agent is in both. Where the two spell
+    the row's `id` differently (an agent id on one side, the pane id on the
+    other) nothing deduplicated them, so the card listed the same pane twice,
+    with the same name and the same cwd, and the reader had two rows that
+    opened the same terminal. The pane is the identity when there is one; a row
+    with no pane id has only its own `id` to be itself by.
+   */
+  const seen = new Set<string>();
+  return listed.filter((agent) => {
+    const key = agent.paneId ? `pane:${agent.paneId}` : `row:${agent.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /**

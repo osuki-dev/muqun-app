@@ -1673,7 +1673,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -2059,7 +2059,7 @@
       },
       {
         "target": {
-          "text": "^(Color mode|色彩模式)$"
+          "text": "^(Colour mode|色彩模式)$"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2080,7 +2080,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2225,7 +2225,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2490,7 +2490,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -3442,7 +3442,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "scroll",
         "direction": "down",
@@ -5840,7 +5840,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -6011,7 +6011,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,

@@ -76,6 +76,40 @@ export function fileStatusFromPatch(
   return 'modified';
 }
 
+/**
+ * Every status OpenCode may state on a `FileDiff.Info`, as this app names it.
+ *
+ * The wire word is preferred over the patch header whenever it is one this app
+ * knows: the header is a guess from text, and a `…/vcs/diff` patch that opens
+ * against `/dev/null` is a full-file diff of a file that already existed as
+ * often as it is a new one.
+ */
+const WIRE_FILE_STATUS: Readonly<Record<string, GitFileStatus>> = {
+  added: 'added',
+  add: 'added',
+  new: 'added',
+  created: 'added',
+  modified: 'modified',
+  modify: 'modified',
+  changed: 'modified',
+  deleted: 'deleted',
+  delete: 'deleted',
+  removed: 'deleted',
+  renamed: 'renamed',
+  rename: 'renamed',
+  copied: 'copied',
+  copy: 'copied',
+  untracked: 'untracked',
+  conflicted: 'conflicted',
+  type_changed: 'type_changed',
+};
+
+/** The status OpenCode stated, or `null` when it stated nothing this app knows. */
+export function fileStatusFromWire(status: string | undefined): GitFileStatus | null {
+  if (!status) return null;
+  return WIRE_FILE_STATUS[status.trim().toLowerCase()] ?? null;
+}
+
 /** Where a rename came from, or `null`. */
 export function oldPathFromPatch(patch: string): string | null {
   return /^rename from (.+)$/m.exec(patch)?.[1] ?? /^copy from (.+)$/m.exec(patch)?.[1] ?? null;
@@ -87,7 +121,9 @@ export function fileChangeFromDiffItem(item: FileDiffItem): GitFileChange {
   return {
     path: item.path,
     oldPath: oldPathFromPatch(item.patch),
-    status: fileStatusFromPatch(item.patch, item.additions, item.deletions),
+    status:
+      fileStatusFromWire(item.status) ??
+      fileStatusFromPatch(item.patch, item.additions, item.deletions),
     // The agent's diff is the working tree against HEAD; there is no index
     // half to attribute it to, and claiming one would be a lie the `all` view's
     // S/U marks would then repeat.

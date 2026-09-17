@@ -19,6 +19,7 @@ import {
   PlusCircle,
   RefreshCw,
   ShieldAlert,
+  X,
 } from 'lucide-react-native';
 import {
   LegendList,
@@ -31,7 +32,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import Animated from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import { DURATION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, listLayout } from '@/lib/motion';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { StatusDot } from '@/components/status-dot';
 import {
@@ -61,6 +62,7 @@ import {
   revertAgentSession,
   sendAgentCommand,
   sortTimeline,
+  formatModelName,
   isBusyStatus,
   inboxItemText,
   type AgentContextUsage,
@@ -77,6 +79,7 @@ import {
   type ModelRef,
   type PermissionDecision,
   type AgentInfo,
+  type ModelInfo,
   type SkillInfo,
   type AgentProject,
 } from '@/lib/agent-session';
@@ -123,6 +126,7 @@ import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
+import { appChrome } from '@/constants/appearance';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -137,6 +141,23 @@ const HISTORY_PAGE_SIZE = 40;
  * history and new output must not move their viewport.
  */
 const NEAR_BOTTOM_PX = 120;
+
+/**
+ * How long the screen's own notice stays before it fades out by itself.
+ *
+ * Long enough to be read on the way past, short enough that it is gone before
+ * the reader wants the space back. It is dismissible either way.
+ */
+const SCREEN_NOTICE_DWELL_MS = 4200;
+
+/**
+ * The gap between the header's bottom edge and the screen's own notice.
+ *
+ * `topInset` is already the first row under the header plus the timeline's own
+ * clearance (`HEADER_INSET` in `src/app/agent.tsx`); a notice wants to sit a
+ * little higher than the first message without ever reaching the pills.
+ */
+const SCREEN_NOTICE_HEADER_GAP = 14;
 
 function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
@@ -182,8 +203,42 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const listRef = useRef<LegendListRef>(null);
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
 
+  /**
+   * The screen's own notice, under the header rather than over it.
+   *
+   * "New session" used to be an app-wide toast, and an app-wide toast is
+   * placed against the safe-area inset -- which is exactly where this screen's
+   * workspace pill and new-session control live, so the one notice the reader
+   * did not ask for covered the two controls they did. This one belongs to the
+   * screen, so it can start below the chrome, and it is dismissible.
+   */
+  const [screenNotice, setScreenNotice] = useState<{
+    id: number;
+    title: string;
+    body: string;
+  } | null>(null);
+  const screenNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showScreenNotice = useCallback((title: string, body: string) => {
+    if (screenNoticeTimerRef.current) clearTimeout(screenNoticeTimerRef.current);
+    setScreenNotice({ id: Date.now(), title, body });
+    screenNoticeTimerRef.current = setTimeout(() => setScreenNotice(null), SCREEN_NOTICE_DWELL_MS);
+  }, []);
+  useEffect(
+    () => () => {
+      if (screenNoticeTimerRef.current) clearTimeout(screenNoticeTimerRef.current);
+    },
+    []
+  );
+
   const [sessions, setSessions] = useState<AgentSessionInfo[]>([]);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
+  /**
+   * Every model the host publishes, kept for the two things a `ModelRef`
+   * cannot answer on its own: the name the catalogue gives it -- "Nemotron 3.5
+   * Lightning Free", not this app's guess at a title from the id -- and the
+   * context window, for a session the gateway stated no `limit` for.
+   */
+  const [catalogModels, setCatalogModels] = useState<readonly ModelInfo[]>([]);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
@@ -342,6 +397,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSkills(catalog.skills);
         }
         setCommands(catalog?.commands ?? []);
+        setCatalogModels(catalog?.models ?? []);
         // The host's own defaults, shown as the current selection. What was
         // here before was a guess -- the first model whose id contained "free"
         // or "spark" -- and it was then *sent* on every session create, so a
@@ -1212,13 +1268,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const next = !yoloModeRef.current;
     setYoloMode(next);
     if (next) {
-      showToast({
-        variant: 'info',
-        title: t`YOLO mode on`,
-        message: t`Agent actions are auto-approved; dangerous commands stay blocked.`,
-      });
+      showScreenNotice(
+        t`Auto-approve is on`,
+        t`The agent stops asking; dangerous commands stay blocked.`
+      );
     }
-  }, [setYoloMode, showToast, t]);
+  }, [setYoloMode, showScreenNotice, t]);
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
@@ -1243,7 +1298,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (isOffline) {
       showToast({
         variant: 'danger',
-        title: t`OpenCode Service Offline`,
+        title: t`OpenCode service offline`,
         message: t`Please start OpenCode on the server: opencode serve --service`,
       });
       return;
@@ -1262,11 +1317,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       lastSeqRef.current = 0;
       refreshSessions();
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showToast({
-        variant: 'info',
-        title: t`New Session`,
-        message: t`Started a new session with clean context.`,
-      });
+      showScreenNotice(t`New session`, t`Started with a clean context.`);
     } catch (err) {
       console.warn('Failed to create session:', err);
       setIsOffline(true);
@@ -1285,6 +1336,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     t,
     refreshSessions,
     showToast,
+    showScreenNotice,
   ]);
 
   useEffect(() => {
@@ -1756,6 +1808,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
     if (!hasFormsOrPerms && !isRunning && !statusNotice) return <KeyboardInset />;
+    /*
+      A turn blocked on a question is still `running`, and the footer said
+      "Thinking…" over a form whose only blocker was the reader. The agent is
+      not thinking; it is waiting, and saying so is what tells them the next
+      move is theirs.
+     */
+    const waitingOnReader = forms.length > 0;
     return (
       <View style={styles.footerContainer}>
         {isRunning ? (
@@ -1770,7 +1829,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ]}>
               <ThinkingIndicator size={13} color={theme.colors.primary} />
               <Text variant="caption" color={theme.colors.primary} weight="semibold">
-                <Trans>Thinking…</Trans>
+                {waitingOnReader ? (
+                  <Trans>Waiting for your answer</Trans>
+                ) : (
+                  <Trans>Thinking…</Trans>
+                )}
               </Text>
             </View>
           </View>
@@ -1904,6 +1967,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const activeTokens = currentSession?.tokens ?? sessionInfo?.tokens;
 
   /**
+   * The catalogue's own entry for the model this session runs on.
+   *
+   * A `ModelRef` is three strings; everything else about a model -- its name as
+   * its publisher spells it, how much it can hold -- is in the catalogue.
+   */
+  const activeModelRef = selectedModel ?? currentSession?.model ?? sessionInfo?.model ?? undefined;
+  const activeModelInfo = useMemo(() => {
+    if (!activeModelRef?.model_id) return undefined;
+    return catalogModels.find(
+      (model) =>
+        model.id === activeModelRef.model_id &&
+        (!activeModelRef.provider_id || model.provider_id === activeModelRef.provider_id)
+    );
+  }, [catalogModels, activeModelRef]);
+
+  /** The catalogue's name for it, which is the one the reader chose from. */
+  const activeModelName = activeModelInfo?.name || formatModelName(activeModelRef, '');
+
+  /**
+   * The window the context gauge measures against.
+   *
+   * The session's own `limit` when the gateway stated one, and the catalogue's
+   * entry for the model otherwise -- the window is a property of the model, and
+   * "window not reported" was this app declining to read a number it already
+   * had in hand.
+   */
+  const contextLimit = sessionInfo?.limit?.context ?? activeModelInfo?.limit?.context;
+
+  /**
    * How many things are still running out of sight.
    *
    * Running shells, plus any *other* tool the gateway marked `background` that
@@ -1949,10 +2041,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       sessions: allSessions,
       knownProjects,
       activeDirectory,
+      activeProject,
       sessionInfo: sessionInfo ?? undefined,
       tokens: activeTokens,
       cost: sessionInfo?.cost,
       selectedModel,
+      selectedModelName: activeModelName,
+      contextLimit,
       selectedAgent,
       showReasoning,
       yoloMode,
@@ -1969,9 +2064,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     allSessions,
     knownProjects,
     activeDirectory,
+    activeProject,
     sessionInfo,
     activeTokens,
     selectedModel,
+    activeModelName,
+    contextLimit,
     selectedAgent,
     showReasoning,
     yoloMode,
@@ -2099,7 +2197,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               <>
                 <Bot size={44} color={theme.colors.textMuted} />
                 <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
-                  <Trans>OpenCode Service Offline</Trans>
+                  <Trans>OpenCode service offline</Trans>
                 </Text>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
                   <Trans>
@@ -2123,8 +2221,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   ) : (
                     <RefreshCw size={14} color={theme.colors.primary} />
                   )}
-                  <Text variant="label" color={theme.colors.primary} style={styles.emptyNewBtnText}>
-                    <Trans>Check Again</Trans>
+                  <Text
+                    variant="caption"
+                    weight="semibold"
+                    color={theme.colors.primary}
+                    style={styles.emptyNewBtnText}>
+                    <Trans>Check again</Trans>
                   </Text>
                 </PressableScale>
               </>
@@ -2146,11 +2248,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                       { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
                     ]}>
                     <PlusCircle size={14} color={theme.colors.primary} />
+                    {/* Sentence case, like every other button on this
+                        surface: `variant="label"` is the kit's 11pt all-caps
+                        instrument style, and a sign is not a button. */}
                     <Text
-                      variant="label"
+                      variant="caption"
+                      weight="semibold"
                       color={theme.colors.primary}
                       style={styles.emptyNewBtnText}>
-                      <Trans>New Session</Trans>
+                      <Trans>New session</Trans>
                     </Text>
                   </PressableScale>
                   <PressableScale
@@ -2164,8 +2270,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                       },
                     ]}>
                     <FolderGit2 size={14} color={theme.colors.text} />
-                    <Text variant="label" color={theme.colors.text} style={styles.emptyNewBtnText}>
-                      <Trans>Choose Project</Trans>
+                    <Text
+                      variant="caption"
+                      weight="semibold"
+                      color={theme.colors.text}
+                      style={styles.emptyNewBtnText}>
+                      <Trans>Choose workspace</Trans>
                     </Text>
                   </PressableScale>
                 </View>
@@ -2244,6 +2354,42 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         />
       )}
 
+      {/* The screen's own notice: under the header, never over it */}
+      {screenNotice ? (
+        <Animated.View
+          key={screenNotice.id}
+          entering={fadeInDown('short')}
+          exiting={fadeOutUp('short')}
+          style={[
+            styles.screenNoticeWrap,
+            { top: Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) },
+          ]}>
+          <PressableScale
+            testID="agent-screen-notice"
+            accessibilityRole="button"
+            accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
+            onPress={() => setScreenNotice(null)}
+            style={[
+              styles.screenNotice,
+              {
+                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                borderColor: theme.colors.border,
+              },
+            ]}>
+            <StatusDot color={theme.colors.primary} filled size={7} />
+            <View style={styles.screenNoticeText}>
+              <Text variant="caption" weight="bold" color={theme.colors.text}>
+                {screenNotice.title}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+                {screenNotice.body}
+              </Text>
+            </View>
+            <X size={14} color={theme.colors.textMuted} />
+          </PressableScale>
+        </Animated.View>
+      ) : null}
+
       {/* Jump back to the latest message while browsing history */}
       {!loading && timeline.length > 0 && !isNearBottom ? (
         <Animated.View
@@ -2272,7 +2418,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           <PressableScale
             testID="agent-yolo-indicator"
             accessibilityRole="button"
-            accessibilityLabel={t`YOLO mode on — tap to turn off`}
+            accessibilityLabel={t`Auto-approve is on — tap to turn it off`}
             onPress={() => setYoloMode(false)}
             style={[
               styles.yoloBanner,
@@ -2282,15 +2428,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               },
             ]}>
             <ShieldAlert size={13} color={theme.colors.danger} />
-            <Text variant="caption" weight="bold" color={theme.colors.danger}>
-              YOLO
-            </Text>
             <Text
               variant="caption"
-              color={theme.colors.textMuted}
+              weight="bold"
+              color={theme.colors.danger}
               numberOfLines={1}
               style={styles.yoloBannerHint}>
-              <Trans>auto-approving actions</Trans>
+              <Trans>Auto-approving every action</Trans>
             </Text>
           </PressableScale>
         </Animated.View>
@@ -2312,10 +2456,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         selectedModel={selectedModel}
         hasDiffs={hasDiffs}
         bottomInset={bottomInset}
+        topInset={topInset}
         tasks={activeTodos}
         tokens={activeTokens}
         contextUsage={contextUsage}
-        contextLimit={sessionInfo?.limit?.context}
+        contextLimit={contextLimit}
+        modelName={activeModelName}
         compaction={compaction}
         onDismissCompaction={dismissCompaction}
         cost={sessionInfo?.cost}
@@ -2593,6 +2739,30 @@ const styles = StyleSheet.create({
   footerContainer: {
     gap: 10,
     marginTop: 4,
+  },
+  screenNoticeWrap: {
+    position: 'absolute',
+    left: 14,
+    right: 14,
+    zIndex: 6,
+    alignItems: 'center',
+  },
+  screenNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    maxWidth: 480,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: appChrome.radius.noticeBanner,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    boxShadow: appChrome.shadow.notice,
+  },
+  screenNoticeText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   jumpToLatestWrap: {
     position: 'absolute',
