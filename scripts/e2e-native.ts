@@ -648,7 +648,24 @@ export class NativeRunner {
       }
       let result: Record<string, unknown>;
       try {
-        result = await this.invoke(args);
+        try {
+          result = await this.invoke(args);
+        } catch (error) {
+          // Right after a relaunch the accessibility backend can stall before
+          // it has read a single tree: agent-device reports `captureStalled`
+          // with zero captures and calls it retriable. The app is up (the
+          // failure screenshot shows it); only the capture is. One more try
+          // before it counts as the flow's failure.
+          const detail = error instanceof NativeCommandError ? error.details.details : undefined;
+          if (
+            args[0] !== 'wait' ||
+            args[1] !== 'stable' ||
+            detail?.captureStalled !== true ||
+            (typeof detail.captures === 'number' && detail.captures > 0)
+          )
+            throw error;
+          result = await this.invoke(args);
+        }
         // An atomic `fill` can race the IME: agent-device then reports the
         // set as `unconfirmed` and the field is left with whatever the editor
         // settled on. One more attempt after the field is stable is the same
