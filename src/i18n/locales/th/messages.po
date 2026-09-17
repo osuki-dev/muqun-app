@@ -1321,6 +1321,10 @@ msgstr "โหลดเอาต์พุตก่อนหน้านี้ไ
 msgid "Could not load files."
 msgstr "โหลดไฟล์ไม่ได้"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not load the session"
+msgstr "โหลดเซสชันไม่สำเร็จ"
+
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "โหลดรายการที่กำลังทำงานไม่ได้"

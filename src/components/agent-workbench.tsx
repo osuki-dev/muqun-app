@@ -188,6 +188,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [windowStart, setWindowStart] = useState(0);
   // Whether a pull for earlier history is still being answered.
   const [loadingEarlier, setLoadingEarlier] = useState(false);
+  /**
+   * Where the rendered window starts, mirrored for the resync path.
+   *
+   * A ref rather than a dependency: `loadSnapshot` is what the snapshot effect
+   * runs, and taking `windowStart` as a dependency would refetch the whole
+   * session every time the reader pulled in a page of history.
+   */
+  const windowStartRef = useRef(0);
+  useEffect(() => {
+    windowStartRef.current = windowStart;
+  }, [windowStart]);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   const [forms, setForms] = useState<FormRequest[]>([]);
   // What is waiting behind the current turn, as the gateway last stated it.
@@ -420,83 +431,132 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeAsid]);
 
   // Load full snapshot when activeAsid changes
-  const loadSnapshot = useCallback(async () => {
-    if (!activeAsid) {
-      if (initialCheckDoneRef.current) {
-        setLoading(false);
-      }
-      return;
-    }
-    setLoading(true);
-    try {
-      const snap = await getAgentSessionSnapshot(sessionId, activeAsid);
-      const info = snap.info;
-      if (info) {
-        setSessionInfo(info);
-        if (info.directory) setActiveDirectory(info.directory);
-      }
-      setInbox(snap.inbox);
-      setTimeline(snap.timeline);
-      // Enter every session on its latest page: only the newest slice is
-      // rendered at first and older history loads on demand from the top.
-      setWindowStart(Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE));
-      isNearBottomRef.current = true;
-      setIsNearBottom(true);
-      if (yoloModeRef.current) {
-        // Auto-answer everything the engine raised while we were away — the
-        // safety list still denies its share.
-        for (const perm of snap.permissions) void handleAutoPermission(perm);
-        for (const item of snap.timeline) {
-          if (item.part.type === 'approval') void handleAutoPermission(item.part.request);
+  /**
+   * Refetch the session, either as an arrival or as a correction.
+   *
+   * `mode: 'enter'` is the reader opening a session: the spinner is honest,
+   * the window lands on the newest page and the list pins to the end, because
+   * that is where they asked to be.
+   *
+   * `mode: 'silent'` is `agent.resync` -- the gateway saying its event log
+   * overflowed and what the app holds may have gaps. That is not the reader
+   * doing anything. It used to run the same path: the transcript was swapped
+   * for a full-screen spinner, `windowStart` reset to the newest page, and the
+   * viewport re-pinned to the bottom -- so a reader three screens up reading a
+   * diff was thrown to the end of the conversation by a housekeeping event
+   * they had no part in. Nothing moves now: the window is re-anchored on the
+   * row that was at its top, and the list re-pins only for a reader who was
+   * already at the bottom.
+   */
+  const loadSnapshot = useCallback(
+    async (mode: 'enter' | 'silent' = 'enter') => {
+      if (!activeAsid) {
+        if (initialCheckDoneRef.current) {
+          setLoading(false);
         }
-        setPermissions([]);
-      } else {
-        setPermissions(snap.permissions);
+        return;
       }
-      setForms(snap.forms);
-      lastSeqRef.current = snap.seq;
-      if (info?.model) {
-        applySelectedModel(info.model);
-      }
-      if (info?.agent) setSelectedAgent(info.agent);
-
-      // What the model can still see, which the snapshot does not carry.
-      void refreshContext();
-      void refreshShells();
-      void refreshInbox();
-
-      // Check diffs
+      if (mode === 'enter') setLoading(true);
       try {
-        const diffs = await getAgentVcsDiff(sessionId, activeAsid);
-        setHasDiffs(diffs.length > 0);
-      } catch {
-        setHasDiffs(false);
+        const snap = await getAgentSessionSnapshot(sessionId, activeAsid);
+        const info = snap.info;
+        if (info) {
+          setSessionInfo(info);
+          if (info.directory) setActiveDirectory(info.directory);
+        }
+        setInbox(snap.inbox);
+
+        if (mode === 'enter') {
+          setTimeline(snap.timeline);
+          // Enter every session on its latest page: only the newest slice is
+          // rendered at first and older history loads on demand from the top.
+          setWindowStart(Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE));
+          isNearBottomRef.current = true;
+          setIsNearBottom(true);
+        } else {
+          // Hold the reader's place across the correction. The row that was at
+          // the top of the window is the anchor: its index has moved, because
+          // that is what a resync means, so the window start moves with it.
+          setTimeline((previous) => {
+            const anchorId = previous[windowStartRef.current]?.id;
+            const anchorIndex = anchorId
+              ? snap.timeline.findIndex((item) => item.id === anchorId)
+              : -1;
+            setWindowStart(
+              anchorIndex >= 0 ? anchorIndex : Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE)
+            );
+            return snap.timeline;
+          });
+        }
+
+        if (yoloModeRef.current) {
+          // Auto-answer everything the engine raised while we were away — the
+          // safety list still denies its share.
+          for (const perm of snap.permissions) void handleAutoPermission(perm);
+          for (const item of snap.timeline) {
+            if (item.part.type === 'approval') void handleAutoPermission(item.part.request);
+          }
+          setPermissions([]);
+        } else {
+          setPermissions(snap.permissions);
+        }
+        setForms(snap.forms);
+        lastSeqRef.current = snap.seq;
+        if (info?.model) {
+          applySelectedModel(info.model);
+        }
+        if (info?.agent) setSelectedAgent(info.agent);
+
+        // What the model can still see, which the snapshot does not carry.
+        void refreshContext();
+        void refreshShells();
+        void refreshInbox();
+
+        // Check diffs
+        try {
+          const diffs = await getAgentVcsDiff(sessionId, activeAsid);
+          setHasDiffs(diffs.length > 0);
+        } catch {
+          setHasDiffs(false);
+        }
+      } catch (err) {
+        console.warn('Failed to load snapshot:', err);
+        if (
+          err instanceof Error &&
+          (err.message.includes('404') || err.message.includes('session_not_found'))
+        ) {
+          setActiveAsid(undefined);
+          setSessionInfo(null);
+          setTimeline([]);
+          setWindowStart(0);
+          setPermissions([]);
+          setForms([]);
+          return;
+        }
+        // Anything else is a session that exists and could not be read. This
+        // is also what pull-to-refresh lands on, and a pull that answers with
+        // nothing at all is a pull the reader will make again.
+        showToast({
+          variant: 'danger',
+          title: t`Could not load the session`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+      } finally {
+        if (mode === 'enter') setLoading(false);
       }
-    } catch (err) {
-      console.warn('Failed to load snapshot:', err);
-      if (
-        err instanceof Error &&
-        (err.message.includes('404') || err.message.includes('session_not_found'))
-      ) {
-        setActiveAsid(undefined);
-        setSessionInfo(null);
-        setTimeline([]);
-        setWindowStart(0);
-        setPermissions([]);
-        setForms([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    sessionId,
-    activeAsid,
-    applySelectedModel,
-    handleAutoPermission,
-    refreshContext,
-    refreshShells,
-    refreshInbox,
-  ]);
+    },
+    [
+      sessionId,
+      activeAsid,
+      applySelectedModel,
+      handleAutoPermission,
+      refreshContext,
+      refreshShells,
+      refreshInbox,
+      showToast,
+      t,
+    ]
+  );
 
   useEffect(() => {
     void loadSnapshot().catch(() => {});
@@ -644,7 +704,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
 
         case 'agent.resync':
-          void loadSnapshot();
+          // Housekeeping, not navigation: the reader's place is kept.
+          void loadSnapshot('silent');
           break;
       }
     },
@@ -2023,7 +2084,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         inbox={inbox}
         onCancelInboxItem={handleCancelInboxItem}
         onPressTokens={openContextSheet}
-        onRefresh={loadSnapshot}
         injectDraftRef={injectDraftRef}
       />
 

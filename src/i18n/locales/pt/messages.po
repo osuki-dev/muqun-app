@@ -1321,6 +1321,10 @@ msgstr "Não foi possível carregar a saída anterior"
 msgid "Could not load files."
 msgstr "Não foi possível carregar os ficheiros"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not load the session"
+msgstr "Não foi possível carregar a sessão"
+
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "Não foi possível carregar o que está a correr"

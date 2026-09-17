@@ -255,7 +255,6 @@ export interface AgentComposerProps {
   inbox?: readonly InboxItem[];
   onCancelInboxItem?: (inboxId: string) => void;
   onPressTokens?: () => void;
-  onRefresh?: () => void;
   injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
 }
 
@@ -299,7 +298,6 @@ export const AgentComposer = memo(function AgentComposer({
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
   onPressTokens,
-  onRefresh,
   injectDraftRef,
 }: AgentComposerProps) {
   const { t } = useLingui();

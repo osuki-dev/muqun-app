@@ -1321,6 +1321,10 @@ msgstr "以前の出力を読み込めませんでした"
 msgid "Could not load files."
 msgstr "ファイルを読み込めませんでした"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not load the session"
+msgstr "セッションを読み込めませんでした"
+
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "実行中のものを読み込めませんでした"

@@ -1321,6 +1321,10 @@ msgstr "Could not load earlier output"
 msgid "Could not load files."
 msgstr "Could not load files"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not load the session"
+msgstr "Could not load the session"
+
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "Could not load what is running"
