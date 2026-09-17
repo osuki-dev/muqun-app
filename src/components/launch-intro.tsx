@@ -2,7 +2,7 @@ import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Bell, Palette, ScanLine, SquareTerminal, type LucideIcon } from 'lucide-react-native';
+import { Bell, Bot, ScanLine, SquareTerminal, type LucideIcon } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -79,28 +79,28 @@ export function LaunchIntro({
 
   const pages: IntroPage[] = [
     {
-      key: 'yours',
-      icon: Palette,
-      title: t`Make it yours`,
-      body: t`Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own.`,
-    },
-    {
-      key: 'answer',
-      icon: Bell,
-      title: t`The question comes to you`,
-      body: t`When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen.`,
+      key: 'opencode',
+      icon: Bot,
+      title: t`OpenCode Agent`,
+      body: t`Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go.`,
     },
     {
       key: 'terminal',
       icon: SquareTerminal,
       title: t`The real terminal`,
-      body: t`Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave.`,
+      body: t`Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave.`,
+    },
+    {
+      key: 'answer',
+      icon: Bell,
+      title: t`The question comes to you`,
+      body: t`When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets.`,
     },
     {
       key: 'gateway',
       icon: ScanLine,
       title: t`Your machine, your rules`,
-      body: t`Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours.`,
+      body: t`Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours.`,
     },
   ];
   const last = pages.length - 1;
@@ -136,7 +136,9 @@ export function LaunchIntro({
       done();
       return;
     }
-    scrollRef.current?.scrollTo({ x: (page + 1) * width, animated: true });
+    const nextPage = page + 1;
+    setPage(nextPage);
+    scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
   };
 
   const sheetStyle = useAnimatedStyle(() => ({

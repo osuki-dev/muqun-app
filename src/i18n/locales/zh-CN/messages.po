@@ -640,6 +640,7 @@ msgid "Chat"
 msgstr "聊天"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Check Again"
 msgstr "重新检查"
 
@@ -692,8 +693,8 @@ msgid "Choose files"
 msgstr "选择文件"
 
 #: src/components/launch-intro.tsx
-msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "从一系列精美的官方插画主题中挑选，纸面、终端和插图一起重绘；也可以创建一套自己的主题"
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "专为 OpenCode 自主编程打造。手机端实时跟进思考过程、审查代码变更、跟进多步任务，随时掌控远程智能体"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
@@ -756,6 +757,7 @@ msgstr "正在清除…"
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "关闭"
@@ -867,6 +869,7 @@ msgid "Color mode"
 msgstr "色彩模式"
 
 #: src/app/commands.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Command"
 msgstr "命令"
 
@@ -1117,6 +1120,7 @@ msgid "Conversational coding assistance, general programming advice, and open-en
 msgstr "对话式编程辅助、通用编程建议及开放式工作区问答"
 
 #: src/components/agent-message-block.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "已复制"
 
@@ -1135,6 +1139,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "复制命令，可直接粘贴到终端"
 
 #: src/components/asset-viewer.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "复制"
@@ -2182,10 +2187,6 @@ msgstr "Mac mini · 办公室"
 msgid "Machines and sessions"
 msgstr "机器与会话"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "打造专属于你的 App"
-
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "管理"
@@ -2648,8 +2649,13 @@ msgid "OpenCode Agent"
 msgstr "OpenCode 智能体"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "此主机上未运行 OpenCode 服务。请运行 `opencode serve --service` 启动"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is still unreachable. Please ensure the service is running."
+msgstr "OpenCode 服务仍无法连接。请确认服务正在运行"
 
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
@@ -2660,8 +2666,13 @@ msgid "OpenCode service offline"
 msgstr "OpenCode 服务离线"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode Service Offline"
 msgstr "OpenCode 服务离线"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode service offline. Tap for setup instructions"
+msgstr "OpenCode 服务离线。点击查看启动引导"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -2710,8 +2721,8 @@ msgid "Output"
 msgstr "输出"
 
 #: src/components/launch-intro.tsx
-msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "输出以程序自己的颜色落在终端网格上，按键行一按即发。nvim、less 和 REPL 都表现如常"
+msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
+msgstr "硬件加速字符网格，保留真实色彩与排版，配合即按即发的专业按键行与多会话 tmux 管理，nvim、less 和 REPL 运转如初"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -3307,8 +3318,8 @@ msgid "Scan the Gateway QR."
 msgstr "扫描 Gateway 的二维码"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "扫描运行在你自己电脑上的 Gateway 的二维码。没有账号，没有中继，你的任何数据都不会经过我们的服务器"
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
+msgstr "扫描自己电脑上 Gateway 的二维码即可直连。无需注册账号，无任何云端中继，全链路端到端加密，并搭配 32 套专属赛博机械主题"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4290,6 +4301,10 @@ msgstr "思考 · {durationStr}"
 msgid "Through {host}"
 msgstr "通过 {host}"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Tip: Run with systemd or tmux to keep OpenCode running in the background."
+msgstr "提示：可使用 systemd 或 tmux 让 OpenCode 在后台持续运行"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "今天"
@@ -4556,8 +4571,8 @@ msgid "What's new"
 msgstr "新功能"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "当代理停下来请求权限时，提示会以推送送达。在锁屏上就能批准、始终批准或拒绝"
+msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
+msgstr "当智能体暂停请求权限时，通知直达锁屏。一键批准或拒绝高危操作，更能通过灵动岛实时活动与桌面小组件抬手即览进度"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

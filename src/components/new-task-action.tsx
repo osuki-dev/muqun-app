@@ -2,16 +2,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { OpenCodeIcon } from '@/components/opencode-icon';
+import { OpenCodeGuideSheet } from '@/components/opencode-guide-sheet';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { effectiveGatewayBaseUrl } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { withAlpha } from '@/lib/color';
 import {
   buildAgentCacheKey,
   getAgentCatalog,
@@ -23,6 +25,9 @@ import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
 /** How long the "OpenCode ready" label stays visible before settling to the compact icon. */
 const READY_ANNOUNCEMENT_MS = 3800;
+
+/** Probe timeout for determining whether OpenCode service is reachable. */
+const PROBE_TIMEOUT_MS = 5000;
 
 /** Set of servers that have already completed their "ready" announcement this session. */
 const announcedServers = new Set<string>();
@@ -58,8 +63,13 @@ export function NewTaskAction({
       (Array.isArray(cachedProj) && cachedProj.length > 0)
     );
   });
+  const [hasChecked, setHasChecked] = useState(false);
+  const [guideVisible, setGuideVisible] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Probe OpenCode readiness on mount / config change
+  const checkReadyRef = useRef<(isRetry?: boolean) => Promise<boolean>>(async () => false);
 
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- retryTimer and announcementTimer are cleared on unmount in cleanup below.
   useEffect(() => {
@@ -71,19 +81,34 @@ export function NewTaskAction({
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let announcementTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const checkReady = async (isRetry = false) => {
+    const checkReady = async (isRetry = false): Promise<boolean> => {
       try {
         const endpoint = endpointUrl ? { url: endpointUrl, token: endpointToken } : undefined;
-        const [catalog, projects] = await Promise.all([
+        const probePromise = Promise.all([
           getAgentCatalog(undefined, endpoint),
           getAgentProjects(undefined, endpoint),
         ]);
-        if (cancelled) return;
+        const timeoutPromise = new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), PROBE_TIMEOUT_MS)
+        );
+
+        const result = await Promise.race([probePromise, timeoutPromise]);
+        if (cancelled) return false;
+
+        if (!result) {
+          // Timeout reached
+          setHasChecked(true);
+          setIsReady(false);
+          return false;
+        }
+
+        const [catalog, projects] = result;
         const ready =
           (Array.isArray(catalog?.models) && catalog.models.length > 0) ||
           (Array.isArray(catalog?.agents) && catalog.agents.length > 0) ||
           (Array.isArray(projects) && projects.length > 0);
 
+        setHasChecked(true);
         if (ready) {
           setIsReady(true);
           if (!announcedServers.has(serverId)) {
@@ -96,6 +121,7 @@ export function NewTaskAction({
             }, READY_ANNOUNCEMENT_MS);
             announcementTimerRef.current = announcementTimer;
           }
+          return true;
         } else {
           setIsReady(false);
           if (!isRetry && !cancelled) {
@@ -103,9 +129,11 @@ export function NewTaskAction({
               void checkReady(true);
             }, 10000);
           }
+          return false;
         }
       } catch {
         if (!cancelled) {
+          setHasChecked(true);
           setIsReady(false);
           if (!isRetry) {
             retryTimer = setTimeout(() => {
@@ -113,9 +141,11 @@ export function NewTaskAction({
             }, 10000);
           }
         }
+        return false;
       }
     };
 
+    checkReadyRef.current = checkReady;
     void checkReady();
 
     return () => {
@@ -131,14 +161,54 @@ export function NewTaskAction({
     router.push('/agent');
   }, [selectRecord, serverId, router]);
 
+  if (!capabilities?.includes('agent_sessions')) {
+    return null;
+  }
+
+  // If probe completed and OpenCode service is offline / timed out:
+  // Render warning button opening the guide sheet
+  if (!isReady) {
+    if (!hasChecked) return null;
+    return (
+      <>
+        <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+          <PressableScale
+            testID="server-opencode-offline-action"
+            accessibilityRole="button"
+            accessibilityLabel={t`OpenCode service offline. Tap for setup instructions`}
+            onPress={() => setGuideVisible(true)}
+            style={[
+              styles.button,
+              styles.square,
+              {
+                backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
+                borderColor: withAlpha(theme.colors.warning, 0.4),
+              },
+            ]}>
+            <View style={styles.offlineIconWrapper}>
+              <OpenCodeIcon size={16} color={theme.colors.warning} />
+              <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+            </View>
+          </PressableScale>
+        </Animated.View>
+        <OpenCodeGuideSheet
+          visible={guideVisible}
+          serverLabel={label}
+          onClose={() => setGuideVisible(false)}
+          onCheckAgain={async () => {
+            const ok = await checkReadyRef.current(true);
+            return ok;
+          }}
+          onOpenAgent={handlePress}
+        />
+      </>
+    );
+  }
+
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away
   const openAgentLabel = t`Open OpenCode Agent on ${label}`;
   const readyLabel = t`OpenCode ready`;
   const actionLabel = showAnnouncement ? `${readyLabel}. ${openAgentLabel}` : openAgentLabel;
-
-  if (!capabilities?.includes('agent_sessions') || !isReady) {
-    return null;
-  }
 
   return (
     <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
@@ -192,6 +262,19 @@ const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: 10,
     gap: 6,
+  },
+  offlineIconWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  offlineDot: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   announcementContainer: {
     flexDirection: 'row',

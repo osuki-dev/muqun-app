@@ -1314,6 +1314,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         sessionId={sessionId}
         activeAsid={activeAsid}
         activeDirectory={activeDirectory}
+        activeProject={activeProject}
         selectedAgent={selectedAgent}
         selectedModel={selectedModel}
         hasDiffs={hasDiffs}

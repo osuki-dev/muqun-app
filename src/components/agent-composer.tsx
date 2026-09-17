@@ -20,7 +20,6 @@ import {
   Inbox,
   Layers,
   Paperclip,
-  Plus,
   Sparkles,
   Square,
   Zap,
@@ -58,6 +57,7 @@ import {
   formatModelName,
   listAgentFiles,
   type AgentInfo,
+  type AgentProject,
   type AgentSessionInfo,
   type ModelRef,
   type SkillInfo,
@@ -82,6 +82,7 @@ export interface AgentComposerProps {
   sessionId?: string;
   activeAsid?: string;
   activeDirectory?: string;
+  activeProject?: AgentProject;
   selectedAgent?: string;
   selectedModel?: ModelRef;
   hasDiffs?: boolean;
@@ -114,6 +115,7 @@ export const AgentComposer = memo(function AgentComposer({
   sessionId,
   activeAsid,
   activeDirectory,
+  activeProject,
   selectedAgent,
   selectedModel,
   hasDiffs = false,
@@ -360,21 +362,29 @@ export const AgentComposer = memo(function AgentComposer({
           },
         ];
 
-  // Resolve sessions belonging to the current workspace (root sessions)
+  // Resolve sessions belonging strictly to the current workspace (root sessions)
   const workspaceSessions = useMemo(() => {
     if (!sessions || sessions.length === 0) return [];
     const roots = sessions.filter((s) => !s.parent_id);
-    if (!activeDirectory) return roots;
-    const matching = roots.filter((s) => {
+    if (!activeDirectory && !activeProject) return [];
+
+    const normActive = activeDirectory?.replace(/\/+$/, '');
+    const normProj = activeProject?.canonical?.replace(/\/+$/, '');
+    const projId = activeProject?.id;
+
+    return roots.filter((s) => {
+      // 1. If project_id matches activeProject
+      if (projId && s.project_id && s.project_id === projId) return true;
       if (!s.directory) return false;
-      return (
-        s.directory === activeDirectory ||
-        activeDirectory.startsWith(s.directory) ||
-        s.directory.startsWith(activeDirectory)
-      );
+      const normDir = s.directory.replace(/\/+$/, '');
+      // 2. Match activeDirectory exactly or as child directory
+      if (normActive && (normDir === normActive || normDir.startsWith(`${normActive}/`)))
+        return true;
+      // 3. Match project canonical directory exactly or as child directory
+      if (normProj && (normDir === normProj || normDir.startsWith(`${normProj}/`))) return true;
+      return false;
     });
-    return matching.length > 0 ? matching : roots;
-  }, [sessions, activeDirectory]);
+  }, [sessions, activeDirectory, activeProject]);
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const composerKeyboardStyle = useAnimatedStyle(() => ({
@@ -449,36 +459,10 @@ export const AgentComposer = memo(function AgentComposer({
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.sessionStripContent}
               style={styles.sessionStripViewport}>
-              {/* Quick New Session Chip */}
-              {onCreateNewSession ? (
-                <PressableScale
-                  testID="agent-composer-new-session-chip"
-                  onPress={onCreateNewSession}
-                  accessibilityLabel={t`New Session`}
-                  style={[
-                    styles.sessionChip,
-                    styles.newSessionChip,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: surfaceBackground(theme.colors.border),
-                      borderWidth: StyleSheet.hairlineWidth,
-                    },
-                  ]}>
-                  <Plus size={13} color={theme.colors.primary} />
-                  <Text
-                    variant="caption"
-                    weight="medium"
-                    color={theme.colors.primary}
-                    style={styles.sessionChipTitle}>
-                    {t`New Session`}
-                  </Text>
-                </PressableScale>
-              ) : null}
-
               {workspaceSessions.map((s) => {
                 const isSessActive = s.asid === activeAsid;
                 const agentName = s.agent || selectedAgent || 'build';
-                const displayTitle = resolveSessionTitle(s, s.asid ? `${s.asid.slice(0, 8)}…` : '');
+                const displayTitle = resolveSessionTitle(s, t`New Session`);
                 const sessSubagents = sessions.filter((sub) => sub.parent_id === s.asid);
 
                 return (
@@ -507,7 +491,7 @@ export const AgentComposer = memo(function AgentComposer({
                         weight="bold"
                         color={isSessActive ? '#fff' : theme.colors.primary}
                         style={styles.sessionChipAgentBadge}>
-                        {`@${agentName}`}
+                        {agentName}
                       </Text>
                       <Text
                         variant="caption"
@@ -530,7 +514,7 @@ export const AgentComposer = memo(function AgentComposer({
                       sessSubagents.map((sub) => {
                         const isSubActive = sub.asid === activeAsid;
                         const subAgentName = sub.agent || 'subagent';
-                        const subDisplayTitle = resolveSessionTitle(sub, `@${subAgentName}`);
+                        const subDisplayTitle = resolveSessionTitle(sub, subAgentName);
                         return (
                           <PressableScale
                             key={sub.asid}
@@ -555,9 +539,9 @@ export const AgentComposer = memo(function AgentComposer({
                               weight="bold"
                               color={isSubActive ? '#fff' : theme.colors.primary}
                               style={styles.sessionChipAgentBadge}>
-                              {`@${subAgentName}`}
+                              {subAgentName}
                             </Text>
-                            {subDisplayTitle !== `@${subAgentName}` ? (
+                            {subDisplayTitle !== subAgentName ? (
                               <>
                                 <Text
                                   variant="caption"
@@ -571,7 +555,9 @@ export const AgentComposer = memo(function AgentComposer({
                                   variant="caption"
                                   weight="medium"
                                   numberOfLines={1}
-                                  color={isSubActive ? 'rgba(255,255,255,0.95)' : theme.colors.text}
+                                  color={
+                                    isSessActive ? 'rgba(255,255,255,0.95)' : theme.colors.text
+                                  }
                                   style={styles.sessionChipTitle}>
                                   {subDisplayTitle}
                                 </Text>

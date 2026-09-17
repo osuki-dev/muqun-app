@@ -640,6 +640,7 @@ msgid "Chat"
 msgstr "Conversa"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Check Again"
 msgstr "Verificar novamente"
 
@@ -692,8 +693,8 @@ msgid "Choose files"
 msgstr "Escolher ficheiros"
 
 #: src/components/launch-intro.tsx
-msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "Escolha entre uma coleção de temas oficiais lindamente ilustrados que repintam papel, terminal e arte de uma só vez, ou crie um tema seu"
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "Controle direto para agentes OpenCode. Acompanhe o raciocínio em tempo real, inspecione diffs de código, revise tarefas passo a passo e comande seus agentes de onde estiver"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
@@ -756,6 +757,7 @@ msgstr "A limpar…"
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Fechar"
@@ -867,6 +869,7 @@ msgid "Color mode"
 msgstr "Modo de cor"
 
 #: src/app/commands.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Command"
 msgstr "Comando"
 
@@ -1117,6 +1120,7 @@ msgid "Conversational coding assistance, general programming advice, and open-en
 msgstr "Assistência de código conversacional, conselhos gerais e dúvidas sobre o espaço de trabalho"
 
 #: src/components/agent-message-block.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Copiado"
 
@@ -1135,6 +1139,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "Copia-o, pronto a colar num terminal"
 
 #: src/components/asset-viewer.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Copiar"
@@ -2182,10 +2187,6 @@ msgstr "Mac mini · Escritório"
 msgid "Machines and sessions"
 msgstr "Máquinas e sessões"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "Deixe-o com a sua cara"
-
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "Gerenciar"
@@ -2648,8 +2649,13 @@ msgid "OpenCode Agent"
 msgstr "Agente OpenCode"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "O daemon OpenCode não está em execução neste host. Execute `opencode serve --service` para iniciá-lo"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is still unreachable. Please ensure the service is running."
+msgstr "OpenCode ainda está inacessível. Verifique se o serviço está em execução"
 
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
@@ -2660,8 +2666,13 @@ msgid "OpenCode service offline"
 msgstr "Serviço OpenCode offline"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode Service Offline"
 msgstr "Serviço OpenCode offline"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode service offline. Tap for setup instructions"
+msgstr "Serviço OpenCode offline. Toque para ver instruções de configuração"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -2710,8 +2721,8 @@ msgid "Output"
 msgstr "Saída"
 
 #: src/components/launch-intro.tsx
-msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "A saída aparece numa grade de terminal com as cores do próprio programa, e a fileira de teclas envia no momento em que você pressiona. nvim, less e REPLs comportam-se como sempre"
+msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
+msgstr "Saída em uma grade de terminal acelerada por hardware com teclas de resposta imediata e controle tmux. nvim, less e REPLs funcionam perfeitamente"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -3307,8 +3318,8 @@ msgid "Scan the Gateway QR."
 msgstr "Leia o código QR do Gateway"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "Leia o código QR de um Gateway em execução no seu próprio computador. Sem conta, sem relay, e nada seu passa por um servidor nosso"
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
+msgstr "Escaneie o código QR do Gateway no seu computador. Sem conta, sem servidores de relay, criptografado de ponta a ponta e com 32 temas artesanais"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4290,6 +4301,10 @@ msgstr "Pensamento · {durationStr}"
 msgid "Through {host}"
 msgstr "Por {host}"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Tip: Run with systemd or tmux to keep OpenCode running in the background."
+msgstr "Dica: execute com systemd ou tmux para manter o OpenCode em segundo plano"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Hoje"
@@ -4556,8 +4571,8 @@ msgid "What's new"
 msgstr "Novidades"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "Quando um agente para para pedir permissão, o pedido chega como notificação. Aprove, aprove sempre ou recuse a partir da tela de bloqueio"
+msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
+msgstr "Quando um agente precisa de confirmação, o aviso chega por notificação. Aprove ou negue pela tela de bloqueio e acompanhe o progresso ao vivo na Dynamic Island e widgets"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

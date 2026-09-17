@@ -640,6 +640,7 @@ msgid "Chat"
 msgstr "แชต"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Check Again"
 msgstr "ตรวจสอบอีกครั้ง"
 
@@ -692,8 +693,8 @@ msgid "Choose files"
 msgstr "เลือกไฟล์"
 
 #: src/components/launch-intro.tsx
-msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "เลือกจากคอลเลกชันธีมทางการพร้อมภาพประกอบสวยงามที่เปลี่ยนสีพื้น เทอร์มินัล และภาพประกอบไปด้วยกัน หรือสร้างธีมของคุณเอง"
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "ควบคุมเอเจนต์เขียนโค้ด OpenCode ได้โดยตรง ติดตามการคิดแบบเรียลไทม์ ตรวจสอบความเปลี่ยนแปลงของโค้ด และติดตามงานได้จากทุกที่"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
@@ -756,6 +757,7 @@ msgstr "กำลังล้าง…"
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "ปิด"
@@ -867,6 +869,7 @@ msgid "Color mode"
 msgstr "โหมดสี"
 
 #: src/app/commands.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Command"
 msgstr "คำสั่ง"
 
@@ -1117,6 +1120,7 @@ msgid "Conversational coding assistance, general programming advice, and open-en
 msgstr "การช่วยเหลือเขียนโค้ดเชิงสนทนา คำแนะนำทั่วไป และตอบคำถามเกี่ยวกับพื้นที่ทำงาน"
 
 #: src/components/agent-message-block.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "คัดลอกแล้ว"
 
@@ -1135,6 +1139,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "คัดลอกให้พร้อมวางในเทอร์มินัล"
 
 #: src/components/asset-viewer.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "คัดลอก"
@@ -2182,10 +2187,6 @@ msgstr "Mac mini · สำนักงาน"
 msgid "Machines and sessions"
 msgstr "เครื่องและเซสชัน"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "ปรับให้เป็นของคุณ"
-
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "จัดการ"
@@ -2648,8 +2649,13 @@ msgid "OpenCode Agent"
 msgstr "เอเจนต์ OpenCode"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "บริการ OpenCode ไม่ได้ทำงานอยู่บนโฮสต์นี้ เรียกใช้ `opencode serve --service` เพื่อเริ่มต้น"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is still unreachable. Please ensure the service is running."
+msgstr "ยังไม่สามารถเชื่อมต่อ OpenCode ได้ โปรดตรวจสอบว่าบริการกำลังทำงานอยู่"
 
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
@@ -2660,8 +2666,13 @@ msgid "OpenCode service offline"
 msgstr "บริการ OpenCode ออฟไลน์"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode Service Offline"
 msgstr "บริการ OpenCode ออฟไลน์"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode service offline. Tap for setup instructions"
+msgstr "บริการ OpenCode ออฟไลน์ แตะเพื่อดูคำแนะนำการตั้งค่า"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -2710,8 +2721,8 @@ msgid "Output"
 msgstr "เอาต์พุต"
 
 #: src/components/launch-intro.tsx
-msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "เอาต์พุตแสดงบนกริดเทอร์มินัลด้วยสีของโปรแกรมเอง พร้อมแถวปุ่มที่ส่งทันทีเมื่อกด ใช้กับ nvim, less และ REPL ได้"
+msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
+msgstr "แสดงผลบนตารางเทอร์มินัลเร่งความเร็วด้วยฮาร์ดแวร์ พร้อมแถวคีย์ที่ตอบสนองทันทีและการควบคุม tmux สำหรับ nvim, less และ REPL"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -3307,8 +3318,8 @@ msgid "Scan the Gateway QR."
 msgstr "สแกน QR ของ Gateway"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "สแกน QR ของ Gateway ที่ทำงานบนคอมพิวเตอร์ของคุณ ไม่ต้องมีบัญชี ไม่มีตัวกลาง และข้อมูลของคุณไม่ผ่านเซิร์ฟเวอร์ของเรา"
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
+msgstr "สแกนรหัส QR ของ Gateway ที่ทำงานบนคอมพิวเตอร์ของคุณเพื่อเชื่อมต่อโดยตรง ไม่มีบัญชี ไม่ต้องผ่านรีเลย์ เข้ารหัสแบบต้นทางถึงปลายทาง พร้อม 32 ธีมพิเศษ"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4290,6 +4301,10 @@ msgstr "ความคิด · {durationStr}"
 msgid "Through {host}"
 msgstr "ผ่าน {host}"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Tip: Run with systemd or tmux to keep OpenCode running in the background."
+msgstr "เคล็ดลับ: ใช้งานด้วย systemd หรือ tmux เพื่อให้ OpenCode ทำงานในพื้นหลัง"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "วันนี้"
@@ -4556,8 +4571,8 @@ msgid "What's new"
 msgstr "มีอะไรใหม่"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "เมื่อเอเจนต์หยุดเพื่อขออนุญาต พรอมต์จะส่งมาเป็นการแจ้งเตือน เลือกอนุมัติ อนุมัติเสมอ หรือปฏิเสธได้จากหน้าจอล็อก"
+msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
+msgstr "เมื่อเอเจนต์หยุดเพื่อขอการยืนยัน ข้อความจะแจ้งเตือนมายังหน้าจอล็อก อนุมัติหรือปฏิเสธได้ทันที พร้อมติดตามความคืบหน้าผ่าน Dynamic Island และวิดเจ็ต"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

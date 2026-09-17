@@ -640,6 +640,7 @@ msgid "Chat"
 msgstr "대화"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Check Again"
 msgstr "다시 확인"
 
@@ -692,8 +693,8 @@ msgid "Choose files"
 msgstr "파일 선택"
 
 #: src/components/launch-intro.tsx
-msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "아름답게 그려진 공식 테마 컬렉션에서 골라 종이, 터미널, 아트워크를 한 번에 다시 칠하거나, 나만의 테마를 직접 만들어 보세요"
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "OpenCode 자율 코딩 에이전트를 모바일에서 직접 제어하세요. 실시간 추론 스트림, 코드 변경 사항, 작업 체크리스트를 확인하고 관리합니다"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
@@ -756,6 +757,7 @@ msgstr "비우는 중…"
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "닫기"
@@ -867,6 +869,7 @@ msgid "Color mode"
 msgstr "색상 모드"
 
 #: src/app/commands.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Command"
 msgstr "명령"
 
@@ -1117,6 +1120,7 @@ msgid "Conversational coding assistance, general programming advice, and open-en
 msgstr "대화형 코딩 지원, 일반 프로그래밍 조언 및 워크스페이스 관련 질문 지원"
 
 #: src/components/agent-message-block.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "복사됨"
 
@@ -1135,6 +1139,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 
 #: src/components/asset-viewer.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "복사"
@@ -2182,10 +2187,6 @@ msgstr "Mac mini · 사무실"
 msgid "Machines and sessions"
 msgstr "머신 및 세션"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "나만의 앱으로"
-
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "관리"
@@ -2648,8 +2649,13 @@ msgid "OpenCode Agent"
 msgstr "OpenCode 에이전트"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "이 호스트에서 OpenCode 데몬이 실행 중이지 않습니다. `opencode serve --service`를 실행하여 시작하세요"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is still unreachable. Please ensure the service is running."
+msgstr "OpenCode에 여전히 연결할 수 없습니다. 서비스가 실행 중인지 확인하세요"
 
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
@@ -2660,8 +2666,13 @@ msgid "OpenCode service offline"
 msgstr "OpenCode 서비스 오프라인"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode Service Offline"
 msgstr "OpenCode 서비스 오프라인"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode service offline. Tap for setup instructions"
+msgstr "OpenCode 서비스 오프라인. 탭하여 설정 안내 확인"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -2710,8 +2721,8 @@ msgid "Output"
 msgstr "출력"
 
 #: src/components/launch-intro.tsx
-msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "출력은 프로그램 본연의 색으로 터미널 그리드에 그려지고, 키 줄은 누르는 순간 전송됩니다. nvim, less, REPL 모두 그대로 동작합니다"
+msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
+msgstr "하드웨어 가속 터미널 그리드와 즉각 반응하는 키보드 바, 강력한 tmux 세션 관리를 제공합니다. nvim, less 및 REPL이 완벽하게 작동합니다"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -3307,8 +3318,8 @@ msgid "Scan the Gateway QR."
 msgstr "Gateway QR 코드를 스캔하세요"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "내 컴퓨터에서 실행 중인 Gateway의 QR 코드를 스캔하세요. 계정도 중계 서버도 없고, 당신의 데이터는 저희 서버를 거치지 않습니다"
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
+msgstr "내 컴퓨터에서 실행 중인 Gateway의 QR 코드를 스캔하여 직접 연결하세요. 계정도, 클라우드 중계도 없으며, 종단간 암호화와 32가지 전용 테마를 제공합니다"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4290,6 +4301,10 @@ msgstr "생각 · {durationStr}"
 msgid "Through {host}"
 msgstr "{host} 경유"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Tip: Run with systemd or tmux to keep OpenCode running in the background."
+msgstr "팁: systemd 또는 tmux를 사용하여 OpenCode를 백그라운드에서 실행하세요"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "오늘"
@@ -4556,8 +4571,8 @@ msgid "What's new"
 msgstr "새로운 기능"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "에이전트가 권한을 묻기 위해 멈추면 그 요청이 푸시로 도착합니다. 잠금 화면에서 바로 승인, 항상 승인 또는 거부하세요"
+msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
+msgstr "에이전트가 승인을 요청하면 알림이 잠금 화면으로 바로 전달됩니다. 탭 한 번으로 승인 또는 거부하고, 라이브 액티비티와 위젯으로 실시간 진행 상황을 확인하세요"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

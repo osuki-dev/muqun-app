@@ -640,6 +640,7 @@ msgid "Chat"
 msgstr "Trò chuyện"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Check Again"
 msgstr "Kiểm tra lại"
 
@@ -692,8 +693,8 @@ msgid "Choose files"
 msgstr "Chọn tệp"
 
 #: src/components/launch-intro.tsx
-msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "Chọn từ bộ sưu tập chủ đề chính thức được minh họa đẹp mắt, tô lại nền, terminal và tranh vẽ cùng lúc, hoặc tự tạo chủ đề của riêng bạn"
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "Kiểm soát trực tiếp tác nhân lập trình OpenCode. Theo dõi luồng suy nghĩ theo thời gian thực, xem khác biệt mã, kiểm tra danh sách nhiệm vụ và điều hướng mọi lúc"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
@@ -756,6 +757,7 @@ msgstr "Đang xóa…"
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Đóng"
@@ -867,6 +869,7 @@ msgid "Color mode"
 msgstr "Chế độ màu"
 
 #: src/app/commands.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Command"
 msgstr "Lệnh"
 
@@ -1117,6 +1120,7 @@ msgid "Conversational coding assistance, general programming advice, and open-en
 msgstr "Hỗ trợ lập trình hội thoại, tư vấn chung và giải đáp thắc mắc về không gian làm việc"
 
 #: src/components/agent-message-block.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Đã sao chép"
 
@@ -1135,6 +1139,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 
 #: src/components/asset-viewer.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Sao chép"
@@ -2182,10 +2187,6 @@ msgstr "Mac mini · Văn phòng"
 msgid "Machines and sessions"
 msgstr "Máy và phiên"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "Biến nó thành của bạn"
-
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "Quản lý"
@@ -2648,8 +2649,13 @@ msgid "OpenCode Agent"
 msgstr "Tác nhân OpenCode"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "Dịch vụ OpenCode không chạy trên máy chủ này. Chạy `opencode serve --service` để khởi động"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is still unreachable. Please ensure the service is running."
+msgstr "Vẫn không thể kết nối tới OpenCode. Vui lòng đảm bảo dịch vụ đang chạy"
 
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
@@ -2660,8 +2666,13 @@ msgid "OpenCode service offline"
 msgstr "Dịch vụ OpenCode ngoại tuyến"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode Service Offline"
 msgstr "Dịch vụ OpenCode ngoại tuyến"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode service offline. Tap for setup instructions"
+msgstr "Dịch vụ OpenCode ngoại tuyến. Chạm để xem hướng dẫn thiết lập"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -2710,8 +2721,8 @@ msgid "Output"
 msgstr "Đầu ra"
 
 #: src/components/launch-intro.tsx
-msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "Kết quả hiển thị trên lưới terminal với đúng màu của chương trình, cùng hàng phím gửi ngay khi bạn bấm. nvim, less và REPL hoạt động như thường"
+msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
+msgstr "Hiển thị trên lưới terminal tăng tốc phần cứng với hàng phím phản hồi tức thì và quản lý tmux đầy đủ. nvim, less và REPL hoạt động mượt mà"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -3307,8 +3318,8 @@ msgid "Scan the Gateway QR."
 msgstr "Quét mã QR của Gateway"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "Quét mã QR của Gateway đang chạy trên chính máy tính của bạn. Không tài khoản, không trung gian, và không dữ liệu nào của bạn đi qua máy chủ của chúng tôi"
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
+msgstr "Quét mã QR Gateway đang chạy trên máy tính của bạn để kết nối trực tiếp. Không tài khoản, không máy chủ trung gian, mã hóa đầu cuối và 32 chủ đề tinh tế"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4290,6 +4301,10 @@ msgstr "Suy nghĩ · {durationStr}"
 msgid "Through {host}"
 msgstr "Qua {host}"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Tip: Run with systemd or tmux to keep OpenCode running in the background."
+msgstr "Mẹo: Chạy với systemd hoặc tmux để duy trì OpenCode trong nền"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Hôm nay"
@@ -4556,8 +4571,8 @@ msgid "What's new"
 msgstr "Có gì mới"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "Khi tác tử dừng lại để xin phép, lời nhắc sẽ đến dưới dạng thông báo đẩy. Chấp thuận, luôn chấp thuận hoặc từ chối ngay từ màn hình khóa"
+msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
+msgstr "Khi tác nhân dừng để xin xác nhận, thông báo đẩy sẽ đến màn hình khóa. Phê duyệt hoặc từ chối bằng một chạm và theo dõi tiến độ qua Dynamic Island và tiện ích"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

@@ -640,6 +640,7 @@ msgid "Chat"
 msgstr "Чат"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Check Again"
 msgstr "Проверить снова"
 
@@ -692,8 +693,8 @@ msgid "Choose files"
 msgstr "Выбрать файлы"
 
 #: src/components/launch-intro.tsx
-msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "Выберите из коллекции красиво иллюстрированных официальных тем, которые разом перекрашивают фон, терминал и графику, или создайте свою"
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "Прямое управление агентами OpenCode. Отслеживайте ход мыслей в реальном времени, проверяйте диффы кода, контролируйте шаги задач прямо с телефона"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
@@ -756,6 +757,7 @@ msgstr "Очищаем…"
 #: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Закрыть"
@@ -867,6 +869,7 @@ msgid "Color mode"
 msgstr "Цветовой режим"
 
 #: src/app/commands.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Command"
 msgstr "Команда"
 
@@ -1117,6 +1120,7 @@ msgid "Conversational coding assistance, general programming advice, and open-en
 msgstr "Диалоговая помощь по коду, общие советы по программированию и ответы на вопросы"
 
 #: src/components/agent-message-block.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Скопировано"
 
@@ -1135,6 +1139,7 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "Копирует её, чтобы вставить в терминал"
 
 #: src/components/asset-viewer.tsx
+#: src/components/opencode-guide-sheet.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Копировать"
@@ -2182,10 +2187,6 @@ msgstr "Mac mini · Офис"
 msgid "Machines and sessions"
 msgstr "Компьютеры и сеансы"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "Сделайте его своим"
-
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "Управлять"
@@ -2648,8 +2649,13 @@ msgid "OpenCode Agent"
 msgstr "Агент OpenCode"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "Демон OpenCode не запущен на этом хосте. Запустите `opencode serve --service` для его старта"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is still unreachable. Please ensure the service is running."
+msgstr "OpenCode по-прежнему недоступен. Убедитесь, что служба запущена"
 
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
@@ -2660,8 +2666,13 @@ msgid "OpenCode service offline"
 msgstr "Служба OpenCode не в сети"
 
 #: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode Service Offline"
 msgstr "Служба OpenCode не в сети"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode service offline. Tap for setup instructions"
+msgstr "Служба OpenCode не в сети. Нажмите для инструкций по настройке"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -2710,8 +2721,8 @@ msgid "Output"
 msgstr "Выход"
 
 #: src/components/launch-intro.tsx
-msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "Вывод ложится на сетку терминала в цветах самой программы, а ряд клавиш отправляет нажатие мгновенно. nvim, less и REPL работают как обычно"
+msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
+msgstr "Аппаратно ускоренная сетка терминала с мгновенным откликом клавиш и управлением сессиями tmux. nvim, less и REPL работают безупречно"
 
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
@@ -3307,8 +3318,8 @@ msgid "Scan the Gateway QR."
 msgstr "Отсканируйте QR-код Gateway"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "Отсканируйте QR-код Gateway, запущенного на вашем собственном компьютере. Без аккаунта, без ретранслятора, и ничего вашего не проходит через наш сервер"
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
+msgstr "Отсканируйте QR-код Gateway на своем компьютере для прямого подключения. Без учетных записей и сторонних серверов, сквозное шифрование и 32 темы оформления"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4290,6 +4301,10 @@ msgstr "Размышление · {durationStr}"
 msgid "Through {host}"
 msgstr "Через {host}"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Tip: Run with systemd or tmux to keep OpenCode running in the background."
+msgstr "Совет: используйте systemd или tmux для работы OpenCode в фоновом режиме"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Сегодня"
@@ -4556,8 +4571,8 @@ msgid "What's new"
 msgstr "Что нового"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "Когда агент останавливается и просит разрешение, запрос приходит push-уведомлением. Разрешить, разрешать всегда или отклонить можно прямо с экрана блокировки"
+msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
+msgstr "Когда агенту требуется подтверждение, запрос приходит в пуш-уведомлении. Одобряйте или отклоняйте с экрана блокировки и следите за прогрессом через виджеты"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
