@@ -2507,7 +2507,9 @@ const styles = StyleSheet.create({
   },
   timelineContent: {
     paddingHorizontal: 14,
-    gap: 10,
+    // The rows carry their own rhythm (`TRANSCRIPT_ROW_GAP`); a gap here as
+    // well is what made a message boundary twice the gap of a row boundary.
+    gap: 0,
   },
   emptyContainer: {
     alignItems: 'center',

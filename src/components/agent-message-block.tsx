@@ -354,6 +354,16 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
   }, [running, shimmer]);
   const shimmerStyle = useAnimatedStyle(() => ({ opacity: shimmer.value }));
 
+  // Closed points down, open points up -- the same as every other foldable row
+  // in the transcript. This one never moved at all.
+  const chevronProgress = useSharedValue(expanded ? 1 : 0);
+  useEffect(() => {
+    chevronProgress.value = withTiming(expanded ? 1 : 0, timing('micro'));
+  }, [expanded, chevronProgress]);
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
+  }));
+
   const label = running
     ? t`Compacting context…`
     : failed
@@ -380,7 +390,11 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
           <Text variant="caption" color={tone} numberOfLines={1} style={styles.noticeText}>
             {label}
           </Text>
-          {hasSummary ? <ChevronDown size={11} color={theme.colors.textSubtle} /> : null}
+          {hasSummary ? (
+            <Animated.View style={chevronStyle}>
+              <ChevronDown size={11} color={theme.colors.textSubtle} />
+            </Animated.View>
+          ) : null}
         </Animated.View>
         <View style={[styles.compactionRule, { backgroundColor: colors.border }]} />
       </PressableScale>
@@ -485,7 +499,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
     chevronProgress.value = withTiming(expanded ? 1 : 0, timing('micro'));
   }, [expanded, chevronProgress]);
   const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
+    transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
   }));
 
   const stats = useMemo(
@@ -1021,13 +1035,24 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
   'status',
 ]);
 
+/**
+ * The one gap between two rows of the transcript, whether they belong to the
+ * same message or not.
+ *
+ * Each row carries half of it above and half below, so a tool card has the
+ * same air over it as under it -- it used to have ten points above and twenty
+ * below, because the list put its own gap between messages on top of the
+ * rows' own margins. The list's gap is zero now; this is the only spacing.
+ */
+export const TRANSCRIPT_ROW_GAP = 10;
+
 const styles = StyleSheet.create({
   /** The one geometry both sides share: full width, padded, on a plate. */
   messageBlock: {
     // Hugs its content: "OK" is a short plate, a paragraph a wide one.
     alignSelf: 'flex-start',
     maxWidth: '100%',
-    marginVertical: 4,
+    marginVertical: TRANSCRIPT_ROW_GAP / 2,
     paddingVertical: 10,
     paddingHorizontal: 12,
     gap: 6,
@@ -1038,7 +1063,7 @@ const styles = StyleSheet.create({
   standaloneRow: {
     alignSelf: 'stretch',
     width: '100%',
-    marginVertical: 4,
+    marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
   roleRow: {
     flexDirection: 'row',
@@ -1105,7 +1130,7 @@ const styles = StyleSheet.create({
   noticeBlock: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
-    marginVertical: 4,
+    marginVertical: TRANSCRIPT_ROW_GAP / 2,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
@@ -1123,7 +1148,7 @@ const styles = StyleSheet.create({
   compactionBlock: {
     alignSelf: 'stretch',
     gap: 4,
-    paddingVertical: 2,
+    marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
   compactionRow: {
     flexDirection: 'row',

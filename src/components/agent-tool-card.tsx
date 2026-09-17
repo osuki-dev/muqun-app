@@ -24,6 +24,7 @@ import {
   basename,
   capLines,
   classifyTool,
+  dirname,
   editFilesFromMetadata,
   executeToolCalls,
   extractCaption,
@@ -524,8 +525,10 @@ export const AgentToolCard = memo(function AgentToolCard({
 
   const { headerTitle, headerCaption } = useMemo(() => {
     if (kind === 'read' || kind === 'edit' || kind === 'write') {
-      // The basename identifies the file; the path is the quieter second line.
-      return { headerTitle: basename(target) || target, headerCaption: caption };
+      // The basename identifies the file; the *folder* is the quieter second
+      // line. Handing the caption the whole path again printed the same long
+      // name twice, truncated twice, in two directions.
+      return { headerTitle: basename(target) || target, headerCaption: dirname(caption) };
     }
     if (kind === 'subagent') {
       const agent = typeof input?.agent === 'string' ? input.agent : undefined;
@@ -763,13 +766,19 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       return outputText ? <WebResult markdown={outputText} markdownStyle={markdownStyle} /> : null;
 
     case 'subagent':
-      return args.subagentText ? (
-        <BoundedMarkdown
-          markdown={args.subagentText}
-          markdownStyle={markdownStyle}
-          openLinks={false}
-        />
-      ) : null;
+      if (args.subagentText) {
+        return (
+          <BoundedMarkdown
+            markdown={args.subagentText}
+            markdownStyle={markdownStyle}
+            openLinks={false}
+          />
+        );
+      }
+      // A subagent that failed returned nothing to render, and a card with no
+      // body has no chevron -- the one case where the reader most wants to
+      // open it. The prompt it was given is what there is to show.
+      return <GenericToolBody input={part.input} outputText={outputText} />;
 
     case 'skill': {
       const description =
@@ -778,9 +787,12 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
     }
 
     case 'question':
-      // v2 asks through forms; the form card is the question. A second copy of
-      // it in the timeline would be two places to answer the same thing.
-      return null;
+      // v2 asks through forms, and the form card is where the question is
+      // answered -- a second copy of it in the timeline would be two places to
+      // answer the same thing. What is left once it has been answered is a row
+      // naming a question with no way to see what was asked or what was said,
+      // so the card keeps a body: the question, and the answer under it.
+      return <QuestionBody input={input} answer={outputText} />;
 
     case 'execute':
       return (
@@ -923,6 +935,39 @@ const WebResult = memo(function WebResult({
   // Github flavor: a fetched page's markdown reliably has tables and task
   // lists in it, and commonmark draws neither.
   return <BoundedMarkdown markdown={markdown} markdownStyle={markdownStyle} flavor="github" />;
+});
+
+/** What was asked, and what was answered. */
+const QuestionBody = memo(function QuestionBody({
+  input,
+  answer,
+}: {
+  input: Record<string, unknown> | null;
+  answer: string;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const question =
+    typeof input?.question === 'string'
+      ? input.question
+      : typeof input?.prompt === 'string'
+        ? input.prompt
+        : '';
+  if (!question && !answer) return null;
+  return (
+    <View style={styles.stretch}>
+      {question ? (
+        <Text variant="caption" selectable color={theme.colors.text} style={styles.skillText}>
+          {question}
+        </Text>
+      ) : null}
+      {answer ? (
+        <Text variant="caption" selectable color={theme.colors.textMuted} style={styles.skillText}>
+          {t`Answered`}: {answer}
+        </Text>
+      ) : null}
+    </View>
+  );
 });
 
 const SkillBody = memo(function SkillBody({ description }: { description: string }) {

@@ -417,6 +417,10 @@ msgstr "Resposta"
 msgid "Answer: {0}"
 msgstr "Resposta: {0}"
 
+#: src/components/agent-tool-card.tsx
+msgid "Answered"
+msgstr "Respondido"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Ícone do app"
