@@ -46,10 +46,10 @@ import {
   type AgentPart,
   type AgentRunStatus,
   type PermissionDecision,
-  type PermissionRequest,
   type TimelineItem,
   type ToolPart,
 } from '@/lib/agent-session';
+import { usePermissionDecider, usePermissionForToolCall } from '@/stores/agent-permissions';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
@@ -190,15 +190,6 @@ export interface AgentToolActions {
   onOpenFullDiff?: () => void;
   /** Live status per child session, from that session's own status events. */
   childStatuses?: Readonly<Record<string, AgentRunStatus>>;
-  /**
-   * Requests still waiting for an answer.
-   *
-   * A permission names the call it came from (`source_tool_call_id`), so the
-   * card belongs under that card rather than in a footer several screens away
-   * from the thing it is about.
-   */
-  permissions?: readonly PermissionRequest[];
-  onPermissionDecision?: (permissionId: string, decision: PermissionDecision) => Promise<void>;
 }
 
 const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
@@ -607,10 +598,11 @@ const ToolPartCard = memo(function ToolPartCard({
     ? actions.childStatuses?.[part.child_session_id]
     : undefined;
 
-  const attachedPermission = actions.permissions?.find(
-    (request) => request.source_tool_call_id === part.id
-  );
-  const decide = actions.onPermissionDecision;
+  // Subscribed by call id rather than searched out of a list handed to every
+  // card: one pending permission used to change the object every memoised tool
+  // card compared against, so a single prompt re-rendered the whole transcript.
+  const attachedPermission = usePermissionForToolCall(part.id);
+  const decide = usePermissionDecider();
   const handleDecision = useMemo(
     () =>
       decide && attachedPermission

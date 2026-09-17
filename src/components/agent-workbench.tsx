@@ -92,6 +92,7 @@ import {
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
 import { useAgentSessionState } from '@/stores/agent-session-state';
+import { useAgentPermissionStore } from '@/stores/agent-permissions';
 import { useAppActive } from '@/hooks/use-app-active';
 import type { SessionAsset } from '@/lib/session-assets';
 import {
@@ -176,10 +177,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
-  // Whether the reader is currently at (or near) the bottom of the timeline.
-  // Streaming output may only re-pin the list to the latest message while this
-  // is true; once the reader scrolls up into history, their viewport stays put.
-  const isNearBottomRef = useRef(true);
 
   const [sessions, setSessions] = useState<AgentSessionInfo[]>([]);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
@@ -409,16 +406,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     if (contentSize.height <= 0) return;
     const distanceFromBottom = contentOffset.y + layoutMeasurement.height - contentSize.height;
-    const nearBottom = distanceFromBottom < NEAR_BOTTOM_PX;
-    isNearBottomRef.current = nearBottom;
-    // Mirror into state for the jump-to-latest affordance; React bails out when
-    // the value is unchanged, so streaming near the bottom costs nothing.
-    setIsNearBottom(nearBottom);
+    // For the jump-to-latest affordance; React bails out when the value is
+    // unchanged, so streaming near the bottom costs nothing.
+    setIsNearBottom(distanceFromBottom < NEAR_BOTTOM_PX);
   }, []);
 
   const handleJumpToLatest = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    isNearBottomRef.current = true;
     listRef.current?.scrollToEnd({ animated: true });
   }, []);
 
@@ -516,7 +510,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // Enter every session on its latest page: only the newest slice is
           // rendered at first and older history loads on demand from the top.
           setWindowStart(Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE));
-          isNearBottomRef.current = true;
           setIsNearBottom(true);
         } else {
           // Hold the reader's place across the correction. The row that was at
@@ -1096,7 +1089,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       queued: isQueued,
     };
     setTimeline((prev) => [...prev, tempUserItem]);
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+    // No manual scroll. Following the newest message is the list's
+    // `maintainScrollAtEnd`, threshold-guarded -- and a reader who had
+    // deliberately scrolled up to read something while typing has the
+    // jump-to-latest button, which appears in exactly that case. A timer that
+    // yanked them to the bottom was the viewport-moving behaviour the rest of
+    // this screen is built to avoid.
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
@@ -1542,6 +1540,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return statuses;
   }, [childrenByParent]);
 
+  /**
+   * What the tool cards read, published rather than passed.
+   *
+   * A permission that names a call is drawn under that call's card; handing
+   * every card the pending list meant one arriving re-rendered all of them.
+   */
+  useEffect(() => {
+    useAgentPermissionStore.getState().publish(permissions);
+  }, [permissions]);
+
+  useEffect(() => {
+    useAgentPermissionStore.getState().setDecider(handlePermissionDecision);
+  }, [handlePermissionDecision]);
+
+  // A card outliving the workbench would be holding a decider for a session
+  // that is gone.
+  useEffect(() => {
+    return () => {
+      useAgentPermissionStore.getState().reset();
+    };
+  }, []);
+
   const toolActions = useMemo<AgentToolActions>(
     () => ({
       onOpenChildSession: setActiveAsid,
@@ -1551,18 +1571,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onOpenBackgroundTray: openBackgroundTray,
       onOpenFullDiff: openDiffSheet,
       childStatuses,
-      permissions,
-      onPermissionDecision: handlePermissionDecision,
     }),
-    [
-      handleRunInBackground,
-      handleOpenToolFile,
-      openBackgroundTray,
-      openDiffSheet,
-      childStatuses,
-      permissions,
-      handlePermissionDecision,
-    ]
+    [handleRunInBackground, handleOpenToolFile, openBackgroundTray, openDiffSheet, childStatuses]
   );
 
   /**
