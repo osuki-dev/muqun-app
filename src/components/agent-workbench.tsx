@@ -111,6 +111,7 @@ import {
   AgentUserMessage,
   type AgentToolActions,
 } from './agent-message-block';
+import { isAtBottom, showJumpToLatest } from '@/lib/transcript-scroll';
 import {
   buildTimelineGroupsCached,
   createTimelineGroupCache,
@@ -132,13 +133,6 @@ import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
  * growing the rendered window downwards from the latest page.
  */
 const HISTORY_PAGE_SIZE = 40;
-
-/**
- * Distance from the bottom, in pixels, within which streaming output may keep
- * the list pinned to the latest message. Beyond it, the reader is browsing
- * history and new output must not move their viewport.
- */
-const NEAR_BOTTOM_PX = 120;
 
 function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
@@ -234,9 +228,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
-  // Whether the reader is browsing history, which is what shows the
-  // jump-to-latest button.
+  // Whether the reader is browsing history, and whether anything arrived
+  // while they were: together, the two facts the jump-to-latest pill is drawn
+  // from. New output never moves their viewport, so the pill is the whole of
+  // what the transcript is allowed to do about it.
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [unseenRows, setUnseenRows] = useState(0);
 
   // Attachment image preview. The shared lightbox, not a second copy of it:
   // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
@@ -411,15 +408,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleTimelineScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     if (contentSize.height <= 0) return;
-    const distanceFromBottom = contentOffset.y + layoutMeasurement.height - contentSize.height;
     // For the jump-to-latest affordance; React bails out when the value is
     // unchanged, so streaming near the bottom costs nothing.
-    setIsNearBottom(distanceFromBottom < NEAR_BOTTOM_PX);
+    setIsNearBottom(
+      isAtBottom({
+        offset: contentOffset.y,
+        viewport: layoutMeasurement.height,
+        content: contentSize.height,
+      })
+    );
   }, []);
 
   const handleJumpToLatest = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     listRef.current?.scrollToEnd({ animated: true });
+    setUnseenRows(0);
   }, []);
 
   // Initial load
@@ -1672,6 +1675,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return reconcileShellParts(window, shells);
   }, [timeline, windowStart, shells]);
 
+  /**
+   * Rows that arrived while the reader was up in the history.
+   *
+   * Counted against the last row they were level with, so scrolling up to
+   * re-read something does not by itself put a button over the transcript --
+   * and reaching the end again clears it without a tap.
+   */
+  const seenRowsRef = useRef(0);
+  useEffect(() => {
+    if (isNearBottom) {
+      seenRowsRef.current = timeline.length;
+      setUnseenRows(0);
+      return;
+    }
+    setUnseenRows(Math.max(0, timeline.length - seenRowsRef.current));
+  }, [timeline.length, isNearBottom]);
+
   // Group the window back into whole messages, the shape OpenCode's own UI
   // renders: reasoning and tool calls fold into the message they belong to.
   //
@@ -2257,20 +2277,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         />
       )}
 
-      {/* Jump back to the latest message while browsing history */}
-      {!loading && timeline.length > 0 && !isNearBottom ? (
+      {/*
+        The one thing the transcript does about output that landed behind the
+        reader: offer the way back. Never a scroll of its own -- a viewport
+        that moves under someone reading is the behaviour this whole screen is
+        built to avoid -- and never a standing button either: it appears when
+        something has actually arrived, and goes when they are level with it.
+      */}
+      {!loading && showJumpToLatest(isNearBottom, unseenRows) ? (
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
           style={[styles.jumpToLatestWrap, { bottom: bottomInset + 196 }]}>
-          <GlassChrome surface="navigation" style={styles.jumpToLatestCircle}>
+          <GlassChrome surface="navigation" style={styles.jumpToLatestPill}>
             <PressableScale
               testID="agent-jump-to-latest-btn"
               accessibilityRole="button"
               accessibilityLabel={t`Scroll to latest message`}
               onPress={handleJumpToLatest}
               style={styles.jumpToLatestInner}>
-              <ChevronDown size={18} color={theme.colors.text} strokeWidth={2.2} />
+              <ChevronDown size={15} color={theme.colors.text} strokeWidth={2.2} />
+              <Text variant="caption" weight="semibold" color={theme.colors.text}>
+                <Trans>Latest</Trans>
+              </Text>
             </PressableScale>
           </GlassChrome>
         </Animated.View>
@@ -2618,20 +2647,20 @@ const styles = StyleSheet.create({
     right: 14,
     zIndex: 5,
   },
-  jumpToLatestCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  jumpToLatestPill: {
+    height: 34,
+    borderRadius: 17,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
   jumpToLatestInner: {
-    width: '100%',
-    height: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
+    height: '100%',
+    paddingHorizontal: 12,
   },
   yoloBannerWrap: {
     position: 'absolute',

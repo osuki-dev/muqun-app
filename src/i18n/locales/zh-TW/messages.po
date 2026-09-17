@@ -2204,6 +2204,7 @@ msgstr "上次連線於 {minutes} 分鐘前"
 msgid "Last seen just now"
 msgstr "剛剛連線過"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"

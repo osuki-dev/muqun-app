@@ -2204,6 +2204,7 @@ msgstr "Last seen {minutes}m ago"
 msgid "Last seen just now"
 msgstr "Last seen just now"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Latest"

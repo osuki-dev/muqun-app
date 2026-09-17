@@ -2204,6 +2204,7 @@ msgstr "Последний раз в сети {minutes} мин. назад"
 msgid "Last seen just now"
 msgstr "В сети только что"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Последнее"

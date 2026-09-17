@@ -2204,6 +2204,7 @@ msgstr "Thấy lần cuối {minutes} phút trước"
 msgid "Last seen just now"
 msgstr "Thấy lần cuối vừa xong"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Mới nhất"

@@ -2204,6 +2204,7 @@ msgstr "Visto há {minutes} min"
 msgid "Last seen just now"
 msgstr "Visto agora mesmo"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Mais recente"

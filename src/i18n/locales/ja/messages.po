@@ -2204,6 +2204,7 @@ msgstr "最終確認: {minutes}分前"
 msgid "Last seen just now"
 msgstr "最終確認: たった今"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
