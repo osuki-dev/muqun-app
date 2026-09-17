@@ -710,7 +710,7 @@ msgstr "変更点"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "色付きの背景を変更します。テキスト、アイコン、アートワークは変わりません"
+msgstr "背景色だけを変更し、文字・アイコン・画像は変更しません"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1743,7 +1743,7 @@ msgstr "探索 (Explore)"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export colours"
-msgstr "カラーを書き出す"
+msgstr "色をエクスポート"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
@@ -2662,7 +2662,7 @@ msgstr "まだ何もありません。セッションが書き出したファイ
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "バックグラウンドで実行中のものはありません — 長いコマンドをツールカードから切り離すと、ここに表示されます"
+msgstr "バックグラウンドでは何も動いていません。長いコマンドをツールカードから切り離すと、ここに表示されます"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2984,7 +2984,7 @@ msgstr "パス"
 
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
-msgstr "許可が必要です"
+msgstr "権限が必要です"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
@@ -4046,7 +4046,7 @@ msgstr "回答を送信"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
-msgstr "進捗をまとめる"
+msgstr "進捗を要約"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4816,7 +4816,7 @@ msgstr "ビジュアルモード"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "現在のコンテキスト使用量を色付きのグリッドで表示する"
+msgstr "現在のコンテキスト使用量を色分けしたグリッドで表示します"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

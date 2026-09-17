@@ -710,7 +710,7 @@ msgstr "การเปลี่ยนแปลง"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "เปลี่ยนพื้นหลังที่มีสี ไม่ใช่ข้อความ ไอคอน หรือภาพประกอบ"
+msgstr "เปลี่ยนสีพื้นหลัง ไม่เปลี่ยนข้อความ ไอคอน หรือภาพประกอบ"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -2662,7 +2662,7 @@ msgstr "ยังไม่มีอะไรที่นี่ ไฟล์ท�
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "ไม่มีอะไรทำงานอยู่เบื้องหลัง — แยกคำสั่งที่ใช้เวลานานออกจากการ์ดเครื่องมือ แล้วมันจะปรากฏที่นี่"
+msgstr "ยังไม่มีอะไรทำงานเบื้องหลัง แยกคำสั่งที่ใช้เวลานานออกจากการ์ดเครื่องมือ แล้วมันจะมาอยู่ที่นี่"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2984,7 +2984,7 @@ msgstr "พาธ"
 
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
-msgstr "ต้องขออนุญาต"
+msgstr "ต้องการสิทธิ์อนุญาต"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
@@ -4816,7 +4816,7 @@ msgstr "โหมดเลือกข้อความ"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "แสดงการใช้บริบทปัจจุบันเป็นตารางสี"
+msgstr "แสดงการใช้บริบทปัจจุบันเป็นกริดสี"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

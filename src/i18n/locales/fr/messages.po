@@ -893,7 +893,7 @@ msgstr "Réduire l’appel d’outil"
 
 #: src/components/settings-appearance.tsx
 msgid "Colour mode"
-msgstr "Mode de couleur"
+msgstr "Mode couleur"
 
 #: src/app/commands.tsx
 msgid "Command"
@@ -2662,7 +2662,7 @@ msgstr "Rien ici pour l’instant. Les fichiers écrits par la session apparaiss
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "Rien ne tourne en arrière-plan – détachez une commande longue de sa carte d’outil et elle apparaîtra ici"
+msgstr "Rien ne tourne en arrière-plan. Détachez une commande longue depuis sa carte d'outil et elle apparaîtra ici"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -4046,7 +4046,7 @@ msgstr "Soumettre la réponse"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
-msgstr "Résumer l’avancement"
+msgstr "Résumer la progression"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4816,7 +4816,7 @@ msgstr "Mode visuel"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "Visualiser l’utilisation actuelle du contexte sous forme de grille colorée"
+msgstr "Visualise l’utilisation actuelle du contexte sous forme de grille colorée"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

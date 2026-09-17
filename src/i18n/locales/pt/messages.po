@@ -710,7 +710,7 @@ msgstr "Alterações"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "Muda os fundos coloridos, não o texto, os ícones nem as ilustrações"
+msgstr "Altera os fundos coloridos, não o texto, os ícones nem as ilustrações"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -2662,7 +2662,7 @@ msgstr "Ainda não há nada aqui. Os ficheiros que a sessão escrever aparecem s
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "Não há nada em segundo plano — destaca um comando longo do seu cartão de ferramenta e ele aparece aqui"
+msgstr "Nada em execução em segundo plano. Desanexe um comando longo do cartão da ferramenta e ele aparecerá aqui"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2984,7 +2984,7 @@ msgstr "Caminho"
 
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
-msgstr "É necessária permissão"
+msgstr "Permissão necessária"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
@@ -4816,7 +4816,7 @@ msgstr "Modo visual"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "Visualizar o uso atual do contexto como uma grelha colorida"
+msgstr "Visualize o uso atual do contexto como uma grelha colorida"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

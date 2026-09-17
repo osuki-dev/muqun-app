@@ -710,7 +710,7 @@ msgstr "改动"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "改变有色背景，不影响文字、图标或插画"
+msgstr "只调整背景颜色，不影响文字、图标或装饰图片"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -893,7 +893,7 @@ msgstr "折叠工具调用"
 
 #: src/components/settings-appearance.tsx
 msgid "Colour mode"
-msgstr "配色模式"
+msgstr "色彩模式"
 
 #: src/app/commands.tsx
 msgid "Command"
@@ -1743,7 +1743,7 @@ msgstr "探索 (Explore)"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export colours"
-msgstr "导出配色"
+msgstr "导出颜色"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
@@ -2662,7 +2662,7 @@ msgstr "这里还是空的。会话写出的文件会自动出现"
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "后台没有任何运行中的任务 — 把耗时的命令从工具卡片中分离出来，它就会出现在这里"
+msgstr "后台没有任何任务。从工具卡片里把长命令转入后台，它就会出现在这里"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2984,7 +2984,7 @@ msgstr "路径"
 
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
-msgstr "需要授权"
+msgstr "需要权限"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
@@ -4046,7 +4046,7 @@ msgstr "提交回复"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
-msgstr "总结进展"
+msgstr "总结进度"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -4816,7 +4816,7 @@ msgstr "可视模式"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "以彩色网格展示当前上下文用量"
+msgstr "以彩色网格显示当前的上下文用量"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

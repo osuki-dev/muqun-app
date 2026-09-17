@@ -2662,7 +2662,7 @@ msgstr "Aquí todavía no hay nada. Los archivos que escriba la sesión aparecen
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "No hay nada en segundo plano: separa un comando largo de su tarjeta de herramienta y aparecerá aquí"
+msgstr "No hay nada en segundo plano. Separa un comando largo desde su tarjeta de herramienta y aparecerá aquí"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2984,7 +2984,7 @@ msgstr "Ruta"
 
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
-msgstr "Se requiere permiso"
+msgstr "Permiso requerido"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
@@ -4816,7 +4816,7 @@ msgstr "Modo visual"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "Visualizar el uso actual del contexto como una cuadrícula de colores"
+msgstr "Visualiza el uso actual del contexto como una cuadrícula de colores"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

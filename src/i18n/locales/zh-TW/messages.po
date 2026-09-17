@@ -710,7 +710,7 @@ msgstr "變更"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "改變有色背景，不影響文字、圖示或插畫"
+msgstr "只調整背景顏色，不影響文字、圖示或裝飾圖片"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -893,7 +893,7 @@ msgstr "摺疊工具呼叫"
 
 #: src/components/settings-appearance.tsx
 msgid "Colour mode"
-msgstr "配色模式"
+msgstr "色彩模式"
 
 #: src/app/commands.tsx
 msgid "Command"
@@ -1743,7 +1743,7 @@ msgstr "探索 (Explore)"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export colours"
-msgstr "匯出配色"
+msgstr "匯出色彩"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
@@ -2662,7 +2662,7 @@ msgstr "這裡還是空的。工作階段寫出的檔案會自動出現"
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "背景沒有任何執行中的工作 — 把耗時的指令從工具卡片中分離出來，它就會出現在這裡"
+msgstr "背景沒有任何工作。從工具卡片把長命令轉入背景，它就會出現在這裡"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2984,7 +2984,7 @@ msgstr "路徑"
 
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
-msgstr "需要授權"
+msgstr "需要權限"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
@@ -4816,7 +4816,7 @@ msgstr "選取模式"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "以彩色格線展示目前的上下文用量"
+msgstr "以彩色格線顯示目前的脈絡用量"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

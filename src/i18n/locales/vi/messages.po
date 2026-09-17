@@ -710,7 +710,7 @@ msgstr "Thay đổi"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "Thay đổi nền màu, không đổi chữ, biểu tượng hay hình minh hoạ"
+msgstr "Chỉ thay đổi nền màu, không ảnh hưởng đến chữ, biểu tượng hay hình trang trí"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1743,7 +1743,7 @@ msgstr "Khám phá"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export colours"
-msgstr "Xuất màu"
+msgstr "Xuất màu sắc"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
@@ -2662,7 +2662,7 @@ msgstr "Chưa có gì ở đây. Các tệp mà phiên ghi ra sẽ tự xuất h
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "Không có gì đang chạy nền — tách một lệnh dài khỏi thẻ công cụ của nó và nó sẽ xuất hiện ở đây"
+msgstr "Không có gì đang chạy nền. Tách một lệnh dài khỏi thẻ công cụ của nó và nó sẽ xuất hiện ở đây"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -2984,7 +2984,7 @@ msgstr "Đường dẫn"
 
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
-msgstr "Cần cấp quyền"
+msgstr "Cần có quyền"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"

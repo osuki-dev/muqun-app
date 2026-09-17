@@ -710,7 +710,7 @@ msgstr "Изменения"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "Меняет цветные фоны, но не текст, значки и иллюстрации"
+msgstr "Меняет цветные фоны, но не текст, значки или иллюстрации"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -1743,7 +1743,7 @@ msgstr "Исследование"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export colours"
-msgstr "Экспорт цветов"
+msgstr "Экспортировать цвета"
 
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
@@ -2662,7 +2662,7 @@ msgstr "Пока пусто. Файлы, которые записывает с�
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "В фоне ничего не выполняется — отсоедините долгую команду от её карточки, и она появится здесь"
+msgstr "В фоне ничего не выполняется. Отсоедините длинную команду с её карточки инструмента, и она появится здесь"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -4816,7 +4816,7 @@ msgstr "Визуальный режим"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "Показать текущее использование контекста цветной сеткой"
+msgstr "Показать текущее использование контекста в виде цветной сетки"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

@@ -710,7 +710,7 @@ msgstr "Änderungen"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
-msgstr "Ändert farbige Hintergründe, nicht Text, Symbole oder Artwork"
+msgstr "Ändert farbige Hintergründe, nicht Text, Symbole oder Grafiken"
 
 #: src/i18n/labels.ts
 msgid "Chat"
@@ -2662,7 +2662,7 @@ msgstr "Noch nichts da. Dateien, die die Session schreibt, erscheinen von selbst
 
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
-msgstr "Im Hintergrund läuft nichts – löse einen langen Befehl von seiner Werkzeugkarte, dann erscheint er hier"
+msgstr "Im Hintergrund läuft nichts. Löse einen langen Befehl von seiner Werkzeugkarte, und er erscheint hier"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -4816,7 +4816,7 @@ msgstr "Visueller Modus"
 
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
-msgstr "Aktuelle Kontextnutzung als farbiges Raster darstellen"
+msgstr "Stellt die aktuelle Kontextnutzung als farbiges Raster dar"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"
