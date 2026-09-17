@@ -16,7 +16,7 @@
  */
 export const AGENT_TYPE = {
   prose: { size: 14, lineHeight: 21 },
-  mono: { size: 12.5, lineHeight: 18 },
+  mono: { size: 12, lineHeight: 17 },
   meta: { size: 12, lineHeight: 16 },
   micro: { size: 11, lineHeight: 14 },
 } as const;
