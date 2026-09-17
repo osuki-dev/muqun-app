@@ -164,8 +164,8 @@ export const permissionDecisionLabel: Record<NamedApprovalDecision, MessageDescr
  * refreshes them after a language switch.
  */
 export const approvalActionTitle: Record<NamedApprovalDecision, MessageDescriptor> = {
-  allow: msg`Approve`,
-  allow_always: msg`Approve and don't ask again`,
+  allow: msg`Allow`,
+  allow_always: msg`Always allow`,
   deny: msg`Deny`,
 };
 
