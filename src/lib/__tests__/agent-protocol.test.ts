@@ -558,6 +558,29 @@ describe('timeline', () => {
     ]);
   });
 
+  test('a detached shell is not what a new message is anchored after', () => {
+    // A `shell` row is keyed by the shell's own id, from an id space that
+    // sorts after every message id there will ever be.
+    const items: TimelineItem[] = [
+      parseTimelineItem({
+        id: 'msg_019a:t0',
+        message_id: 'msg_019a',
+        ordinal: 0,
+        part: { type: 'text', text: 'earlier' },
+      }) as TimelineItem,
+      {
+        id: 'sh_zzz',
+        message_id: 'sh_zzz',
+        role: 'assistant',
+        ordinal: 0,
+        part: { type: 'shell', shell_id: 'sh_zzz', command: 'sleep 120', status: 'running' },
+        seq: 2,
+        updated_ms: 2,
+      },
+    ];
+    expect(orderKeyAfter(items)).toBe('msg_019a~');
+  });
+
   test('sorting is stable and does not mutate its input', () => {
     const items = [
       parseTimelineItem({

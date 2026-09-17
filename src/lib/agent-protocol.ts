@@ -1154,21 +1154,31 @@ export function timelineOrderKey(item: TimelineItem): string {
 }
 
 /**
- * A key that sorts after everything in hand and before anything made later.
+ * A key that sorts after every *message* in hand and before anything made
+ * later.
  *
  * `~` is above every character the engine's ids use, and its ids are of one
  * fixed length, so no id made after this one can fall between the two: an id
  * that differs from the last one differs before the suffix is reached. An
  * empty timeline has nothing to sort after, and the empty key puts the first
  * row of a session first.
+ *
+ * A `shell` row is not a message and is skipped. It is keyed by the shell's
+ * own id -- `sh_…`, from a different id space -- which sorts after every
+ * `msg_…` there will ever be, so anchoring a new message after one would put
+ * it after every reply as well, which is the bug this key exists to fix.
  */
 export function orderKeyAfter(items: readonly TimelineItem[]): string {
   let max = '';
+  let fallback = '';
   for (const item of items) {
     const key = timelineOrderKey(item);
+    if (key > fallback) fallback = key;
+    if (item.part.type === 'shell') continue;
     if (key > max) max = key;
   }
-  return max ? `${max}~` : '';
+  const anchor = max || fallback;
+  return anchor ? `${anchor}~` : '';
 }
 
 /**
