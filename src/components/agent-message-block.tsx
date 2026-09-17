@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -34,7 +34,7 @@ import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { AgentToolCard } from '@/components/agent-tool-card';
 import { AgentPermissionCard } from '@/components/agent-permission-card';
-import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
@@ -695,7 +695,6 @@ const StatusPartRow = memo(function StatusPartRow({ text }: { text: string }) {
 export const AgentUserMessage = memo(function AgentUserMessage({
   group,
   showReasoning,
-  markdownStyle,
   onPreviewImage,
   onEditQueued,
   onCancelQueued,
@@ -710,6 +709,9 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   actions?: AgentToolActions;
 }) {
   const { t } = useLingui();
+  // Live theme style, see AgentToolCard: a memoised cell must still repaint
+  // its markdown when the palette changes.
+  const markdownStyle = usePaneChatMarkdownStyle();
   const theme = useThemeTokens();
   const { showToast } = useToast();
   const colors = usePaneChatColors();
@@ -829,7 +831,6 @@ export const AgentUserMessage = memo(function AgentUserMessage({
 export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   group,
   showReasoning,
-  markdownStyle,
   actions = NO_TOOL_ACTIONS,
 }: {
   group: TimelineRenderGroup;
@@ -838,6 +839,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   actions?: AgentToolActions;
 }) {
   const plate = useTranscriptPlate();
+  const markdownStyle = usePaneChatMarkdownStyle();
 
   // The parts this message actually paints, in order. `showReasoning` hides
   // the model's private reasoning the same way it did for the flat list.
@@ -858,23 +860,60 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
 
   if (entries.length === 0) return null;
 
-  return (
-    <View style={[styles.messageBlock, plate]}>
-      {entries.map((entry, index) =>
-        entry.kind === 'reasoning' ? (
-          <ReasoningRunBlock key={entry.key} run={entry.run} />
-        ) : (
-          renderTimelinePart(entry.item, {
-            showReasoning,
-            markdownStyle,
-            prevItem: previousItemAt(entries, index) ?? group.prevItem,
-            actions,
-          })
-        )
-      )}
-    </View>
-  );
+  // One plate per row, never a plate inside a plate. Prose and the thought
+  // block share a plate; a tool card, a diff, a shell or a todo list carries
+  // its own surface and is laid out as a row of its own between them.
+  const rows: ReactNode[] = [];
+  let run: ReactNode[] = [];
+  let runKey = '';
+  const flush = () => {
+    if (run.length === 0) return;
+    rows.push(
+      <View key={`run:${runKey}`} style={[styles.messageBlock, plate]}>
+        {run}
+      </View>
+    );
+    run = [];
+  };
+  entries.forEach((entry, index) => {
+    if (entry.kind === 'reasoning') {
+      if (run.length === 0) runKey = entry.key;
+      run.push(<ReasoningRunBlock key={entry.key} run={entry.run} />);
+      return;
+    }
+    const drawn = renderTimelinePart(entry.item, {
+      showReasoning,
+      markdownStyle,
+      prevItem: previousItemAt(entries, index) ?? group.prevItem,
+      actions,
+    });
+    if (drawn === null) return;
+    if (STANDALONE_PART_TYPES.has(entry.item.part.type)) {
+      flush();
+      rows.push(
+        <View key={`row:${entry.item.id}`} style={styles.standaloneRow}>
+          {drawn}
+        </View>
+      );
+      return;
+    }
+    if (run.length === 0) runKey = entry.item.id;
+    run.push(<Fragment key={entry.item.id}>{drawn}</Fragment>);
+  });
+  flush();
+
+  if (rows.length === 0) return null;
+  return <>{rows}</>;
 });
+
+/** Parts that paint their own surface and therefore stand as their own row. */
+const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
+  'tool',
+  'diff',
+  'shell',
+  'todo',
+  'compaction',
+]);
 
 const styles = StyleSheet.create({
   /** The one geometry both sides share: full width, padded, on a plate. */
@@ -888,6 +927,11 @@ const styles = StyleSheet.create({
   },
   userBlock: {
     borderLeftWidth: 2,
+  },
+  standaloneRow: {
+    alignSelf: 'stretch',
+    width: '100%',
+    marginVertical: 4,
   },
   roleRow: {
     flexDirection: 'row',

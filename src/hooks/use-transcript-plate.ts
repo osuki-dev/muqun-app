@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, type ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 
 import { appChrome } from '@/constants/appearance';
@@ -23,24 +23,25 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * wallpaper up to show through their cards asked for exactly that, and a plate
  * that ignored the slider would be the one element on screen that did.
  *
- * `raised` is the nested case -- a tool card inside a message block -- which
- * takes the next surface up so it reads as a card on a card rather than as a
- * floating paragraph.
+ * No border, deliberately. A hairline around every plate turned a message
+ * holding a tool card into a frame inside a frame, and a transcript into a
+ * stack of boxes. The fill and the gap between rows already say where a block
+ * starts; a line around it only competes with the artwork behind it.
+ *
+ * `raised` takes the next surface up. It is what a tool card fills itself
+ * with -- as its own row on the timeline, not as a box inside a message.
  */
 export function useTranscriptPlate(variant: 'plate' | 'raised' = 'plate'): ViewStyle {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const fill = variant === 'raised' ? theme.colors.surfaceRaised : theme.colors.surface;
-  const border = theme.colors.border;
   return useMemo<ViewStyle>(
     () => ({
       backgroundColor: surfaceBackground(fill),
       borderRadius:
         variant === 'raised' ? appChrome.radius.control : appChrome.radius.transcriptPlate,
       borderCurve: 'continuous',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: border,
     }),
-    [surfaceBackground, fill, border, variant]
+    [surfaceBackground, fill, variant]
   );
 }

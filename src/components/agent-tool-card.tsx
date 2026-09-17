@@ -14,7 +14,7 @@ import {
   isToolPending,
 } from '@/components/embedded-terminal-tool-block';
 import { InlineDiffRows } from '@/components/diff-rows';
-import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -243,7 +243,6 @@ const PatchBody = memo(function PatchBody({
 
 export const AgentToolCard = memo(function AgentToolCard({
   part,
-  markdownStyle,
   childStatus,
   onOpenChildSession,
   onRunInBackground,
@@ -254,6 +253,12 @@ export const AgentToolCard = memo(function AgentToolCard({
 }: AgentToolCardProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  // Read from the theme here, not from a prop: the timeline's memoised cells
+  // skip re-renders the list cannot see, and a style handed down through
+  // render props would stay the palette the cell was born with. A hook
+  // subscribes this card to the theme itself, so a colour-mode switch reaches
+  // it whatever the list decides.
+  const markdownStyle = usePaneChatMarkdownStyle();
   const colors = usePaneChatColors();
 
   const kind = useMemo(() => classifyTool(part.name), [part.name]);
