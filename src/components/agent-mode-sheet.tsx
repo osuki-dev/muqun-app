@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Check, Sparkles, X, Bot, Compass, FileText } from 'lucide-react-native';
@@ -13,15 +13,20 @@ import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { getAgentCatalog, type AgentInfo } from '@/lib/agent-session';
 
+/**
+ * The agent-mode picker, as a native form sheet route. Presentational: the
+ * route above it reads the selection and the handler out of the sheet bridge.
+ */
 export interface AgentModeSheetProps {
-  visible: boolean;
+  /** The gateway session whose catalog is listed. */
+  sessionId?: string;
   selectedAgent?: string;
   onSelectAgent: (agent: string) => void;
   onClose: () => void;
 }
 
 export const AgentModeSheet = memo(function AgentModeSheet({
-  visible,
+  sessionId,
   selectedAgent,
   onSelectAgent,
   onClose,
@@ -64,11 +69,12 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     [t]
   );
 
+  // A route mounts when it opens and unmounts when it is dismissed, so the
+  // catalog is fetched once per opening without a `visible` flag to watch.
   useEffect(() => {
-    if (!visible) return;
     let active = true;
     setLoading(true);
-    getAgentCatalog()
+    getAgentCatalog(sessionId)
       .then((cat) => {
         if (active && cat?.agents && cat.agents.length > 0) {
           setAgents(cat.agents);
@@ -86,7 +92,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     return () => {
       active = false;
     };
-  }, [visible, builtinAgents]);
+  }, [sessionId, builtinAgents]);
 
   const displayAgents = agents.length > 0 ? agents : builtinAgents;
 
@@ -129,137 +135,113 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable
-          testID="agent-mode-sheet"
-          onPress={(e) => e.stopPropagation()}
-          style={styles.sheetContainer}>
-          <SheetFrame tint="background">
-            <View collapsable={false} style={styles.sheetLayout}>
-              {/* Pinned Top Navigation Bar */}
-              <View style={styles.fixedTop}>
-                <SheetHandle style={styles.sheetHandle} />
+    // One ground and one layout column: the two subviews a native form sheet
+    // lays itself out around. See `sheet-ground.tsx`.
+    <SheetFrame testID="agent-mode-sheet" tint="background">
+      <View collapsable={false} style={styles.sheetLayout}>
+        {/* Pinned Top Navigation Bar */}
+        <View style={styles.fixedTop}>
+          <SheetHandle />
 
-                <View style={styles.header}>
-                  <View style={[styles.headerCopy, plate]}>
-                    <Text variant="subheading" style={styles.headerTitle}>
-                      {t`Agent Mode`}
-                    </Text>
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      {t`Choose the specialized agent for this task`}
-                    </Text>
-                  </View>
-
-                  <GlassChrome face="sheet" style={styles.headerButton}>
-                    <PressableScale
-                      testID="agent-mode-close"
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Close`}
-                      onPress={onClose}
-                      style={styles.headerButtonHit}>
-                      <X size={19} color={theme.colors.text} strokeWidth={2} />
-                    </PressableScale>
-                  </GlassChrome>
-                </View>
-              </View>
-
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <Spinner size="lg" color={theme.colors.primary} />
-                </View>
-              ) : (
-                <ScrollView
-                  style={styles.scrollViewport}
-                  contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: LADDER.section + insets.bottom },
-                  ]}>
-                  <SettingsCard>
-                    {displayAgents.map((ag: AgentInfo) => {
-                      const isSelected = selectedAgent === ag.id;
-                      const meta = getAgentModeMeta(ag);
-                      const accentColor =
-                        ag.color || (isSelected ? theme.colors.primary : theme.colors.text);
-
-                      return (
-                        <PressableScale
-                          key={ag.id}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: isSelected }}
-                          onPress={() => onSelectAgent(ag.id)}
-                          style={[
-                            styles.agentRow,
-                            isSelected && {
-                              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                            },
-                          ]}>
-                          <View style={styles.agentRowTop}>
-                            <View style={styles.agentTitleRow}>
-                              {getAgentIcon(ag.id, accentColor)}
-                              <Text
-                                variant="bodySmall"
-                                weight="semibold"
-                                color={isSelected ? theme.colors.primary : theme.colors.text}
-                                style={styles.agentName}>
-                                {ag.name || ag.id}
-                              </Text>
-                              <View style={[styles.modeBadge, { backgroundColor: meta.bg }]}>
-                                <Text
-                                  variant="caption"
-                                  color={meta.textColor}
-                                  style={styles.modeBadgeText}>
-                                  {meta.label}
-                                </Text>
-                              </View>
-                            </View>
-                            {isSelected ? <Check size={18} color={theme.colors.primary} /> : null}
-                          </View>
-                          {ag.description ? (
-                            <Text
-                              variant="caption"
-                              color={theme.colors.textMuted}
-                              style={styles.agentDesc}>
-                              {ag.description}
-                            </Text>
-                          ) : null}
-                        </PressableScale>
-                      );
-                    })}
-                  </SettingsCard>
-                </ScrollView>
-              )}
+          <View style={styles.header}>
+            <View style={[styles.headerCopy, plate]}>
+              <Text variant="subheading" style={styles.headerTitle}>
+                {t`Agent Mode`}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`Choose the specialized agent for this task`}
+              </Text>
             </View>
-          </SheetFrame>
-        </Pressable>
-      </Pressable>
-    </Modal>
+
+            <GlassChrome face="sheet" style={styles.headerButton}>
+              <PressableScale
+                testID="agent-mode-close"
+                accessibilityRole="button"
+                accessibilityLabel={t`Close`}
+                onPress={onClose}
+                style={styles.headerButtonHit}>
+                <X size={19} color={theme.colors.text} strokeWidth={2} />
+              </PressableScale>
+            </GlassChrome>
+          </View>
+        </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Spinner size="lg" color={theme.colors.primary} />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollViewport}
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: LADDER.section + insets.bottom },
+            ]}>
+            <SettingsCard>
+              {displayAgents.map((ag: AgentInfo) => {
+                const isSelected = selectedAgent === ag.id;
+                const meta = getAgentModeMeta(ag);
+                const accentColor =
+                  ag.color || (isSelected ? theme.colors.primary : theme.colors.text);
+
+                return (
+                  <PressableScale
+                    key={ag.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    onPress={() => onSelectAgent(ag.id)}
+                    style={[
+                      styles.agentRow,
+                      isSelected && {
+                        backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                      },
+                    ]}>
+                    <View style={styles.agentRowTop}>
+                      <View style={styles.agentTitleRow}>
+                        {getAgentIcon(ag.id, accentColor)}
+                        <Text
+                          variant="bodySmall"
+                          weight="semibold"
+                          color={isSelected ? theme.colors.primary : theme.colors.text}
+                          style={styles.agentName}>
+                          {ag.name || ag.id}
+                        </Text>
+                        <View style={[styles.modeBadge, { backgroundColor: meta.bg }]}>
+                          <Text
+                            variant="caption"
+                            color={meta.textColor}
+                            style={styles.modeBadgeText}>
+                            {meta.label}
+                          </Text>
+                        </View>
+                      </View>
+                      {isSelected ? <Check size={18} color={theme.colors.primary} /> : null}
+                    </View>
+                    {ag.description ? (
+                      <Text
+                        variant="caption"
+                        color={theme.colors.textMuted}
+                        style={styles.agentDesc}>
+                        {ag.description}
+                      </Text>
+                    ) : null}
+                  </PressableScale>
+                );
+              })}
+            </SettingsCard>
+          </ScrollView>
+        )}
+      </View>
+    </SheetFrame>
   );
 });
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    maxHeight: '85%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
+  // The stack renders form sheets over a transparent background so the native
+  // sheet keeps its own corners; without filling the height, that transparency
+  // shows as a strip under the content.
   sheetLayout: {
-    flexShrink: 1,
-    overflow: 'hidden',
-  },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+    flex: 1,
   },
   fixedTop: {
     flexShrink: 0,
@@ -299,9 +281,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollViewport: {
-    flexShrink: 1,
-  },
+  scrollViewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
   content: {
     paddingHorizontal: LADDER.gutter,
     paddingTop: 4,

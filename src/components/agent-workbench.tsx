@@ -3,13 +3,10 @@ import {
   View,
   StyleSheet,
   ActivityIndicator,
-  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Pressable,
-  ScrollView,
 } from 'react-native';
-import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -21,7 +18,6 @@ import {
   PlusCircle,
   RefreshCw,
   ShieldAlert,
-  X,
   Zap,
 } from 'lucide-react-native';
 import {
@@ -63,17 +59,17 @@ import {
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { useAgentSessionState } from '@/stores/agent-session-state';
-import { AgentTodoBlock } from './agent-todo-block';
+import {
+  EMPTY_TODOS,
+  useAgentSheetBridge,
+  type AgentSheetActions,
+  type AgentSheetSnapshot,
+} from '@/stores/agent-sheet-bridge';
+import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { AgentAssistantMessage, AgentUserMessage } from './agent-message-block';
 import { buildTimelineGroups, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
-import { AgentModelSheet } from './agent-model-sheet';
-import { AgentModeSheet } from './agent-mode-sheet';
-import { AgentVcsDiffSheet } from './agent-vcs-diff-sheet';
-import { AgentSessionsSheet } from './agent-sessions-sheet';
-import { AgentContextSheet } from './agent-context-sheet';
-import { AgentWorkspaceSheet } from './agent-workspace-sheet';
 import { AgentComposer } from './agent-composer';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 
@@ -113,8 +109,6 @@ export interface AgentWorkbenchProps {
   initialAsid?: string;
   topInset?: number;
   bottomInset?: number;
-  openModelSheetRef?: React.MutableRefObject<(() => void) | null>;
-  openWorkspaceSheetRef?: React.MutableRefObject<(() => void) | null>;
   createNewSessionRef?: React.MutableRefObject<(() => void) | null>;
   /** Wired to the workbench's abort call so a header can expose a Stop control. */
   abortSessionRef?: React.MutableRefObject<(() => void) | null>;
@@ -125,12 +119,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialAsid,
   topInset = 0,
   bottomInset = 0,
-  openModelSheetRef,
-  openWorkspaceSheetRef,
   createNewSessionRef,
   abortSessionRef,
 }: AgentWorkbenchProps) {
   const { t } = useLingui();
+  const router = useRouter();
   const theme = useThemeTokens();
   const { showToast } = useToast();
   const surfaceBackground = useSurfaceBackground();
@@ -163,17 +156,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // jump-to-latest button.
   const [isNearBottom, setIsNearBottom] = useState(true);
 
-  // Attachment Image Preview Modal
+  // Attachment image preview. The shared lightbox, not a second copy of it:
+  // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
   const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
 
-  // Sheets
-  const [modelSheetVisible, setModelSheetVisible] = useState(false);
-  const [workspaceSheetVisible, setWorkspaceSheetVisible] = useState(false);
-  const [modeSheetVisible, setModeSheetVisible] = useState(false);
-  const [diffSheetVisible, setDiffSheetVisible] = useState(false);
-  const [sessionsSheetVisible, setSessionsSheetVisible] = useState(false);
-  const [contextSheetVisible, setContextSheetVisible] = useState(false);
-  const [tasksModalVisible, setTasksModalVisible] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelRef | undefined>(undefined);
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>('build');
   // YOLO mode: every permission request is answered automatically, `allow`
@@ -231,12 +217,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       mounted = false;
     };
   }, [sessionId, applySelectedModel]);
-
-  useEffect(() => {
-    if (openModelSheetRef) {
-      openModelSheetRef.current = () => setModelSheetVisible(true);
-    }
-  }, [openModelSheetRef]);
 
   const initialCheckDoneRef = useRef(Boolean(initialAsid));
 
@@ -569,7 +549,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
       applySelectedModel(model);
-      setModelSheetVisible(false);
       // The server owns the per-session model via this call; on next entry the
       // session's own model is restored from it (see loadSnapshot).
       if (activeAsid) {
@@ -580,6 +559,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [applySelectedModel, sessionId, activeAsid]
   );
+
+  // Held in a ref so the sheet actions that use it (compact, clear) stay
+  // stable and do not re-publish the action object on every render.
+  const handleSendPromptRef = useRef<
+    ((text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<void>) | null
+  >(null);
 
   const handleSendPrompt = async (
     text: string,
@@ -648,6 +633,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       console.warn('Failed to send prompt:', err);
     }
   };
+
+  // Assigned in an effect rather than during render: a ref written while
+  // rendering is a ref React may throw away under Strict Mode, and the rule
+  // that forbids it is the same one `react/refs` enforces everywhere else.
+  useEffect(() => {
+    handleSendPromptRef.current = handleSendPrompt;
+  });
 
   const handleAbort = useCallback(async () => {
     if (!activeAsid) return;
@@ -763,21 +755,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     showToast,
   ]);
 
-  // Remounts the workspace sheet on every open so it starts with clean search
-  // state and a fresh project fetch (key change resets the component).
-  const [workspaceOpenCount, setWorkspaceOpenCount] = useState(0);
-
-  const openWorkspaceSheet = useCallback(() => {
-    setWorkspaceOpenCount((prev) => prev + 1);
-    setWorkspaceSheetVisible(true);
-  }, []);
-
-  useEffect(() => {
-    if (openWorkspaceSheetRef) {
-      openWorkspaceSheetRef.current = openWorkspaceSheet;
-    }
-  }, [openWorkspaceSheetRef, openWorkspaceSheet]);
-
   useEffect(() => {
     if (createNewSessionRef) {
       createNewSessionRef.current = handleCreateNewSession;
@@ -795,7 +772,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleSelectWorkspace = useCallback(
     async (directory: string, project?: AgentProject) => {
       setActiveDirectory(directory);
-      setWorkspaceSheetVisible(false);
       try {
         const created = await createAgentSession(sessionId, {
           title: project?.name || directory.split('/').filter(Boolean).pop() || t`New Session`,
@@ -823,6 +799,58 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [sessionId, selectedAgent, selectedModel, t, refreshSessions, showToast]
   );
+
+  /**
+   * Opening a picker is a navigation, not a boolean.
+   *
+   * Each of these used to flip a `visible` flag on a `<Modal>` that was in the
+   * tree either way -- six components, six `useSafeAreaInsets` subscriptions
+   * and, for the model and mode sheets, an effect watching that flag so it
+   * could fetch the catalog. As routes they are mounted by the navigator when
+   * the reader arrives and unmounted when they leave, so none of that work
+   * exists until it is asked for. Identity travels as a param; what the sheet
+   * reads while it is open comes from `stores/agent-sheet-bridge.ts`.
+   */
+  const openSessionsSheet = useCallback(() => {
+    router.push('/agent-sessions');
+  }, [router]);
+
+  const openModelSheet = useCallback(() => {
+    router.push({ pathname: '/agent-model', params: { sessionId } });
+  }, [router, sessionId]);
+
+  const openModeSheet = useCallback(() => {
+    router.push({ pathname: '/agent-mode', params: { sessionId } });
+  }, [router, sessionId]);
+
+  const openWorkspaceSheet = useCallback(() => {
+    router.push({ pathname: '/agent-workspace', params: { sessionId } });
+  }, [router, sessionId]);
+
+  const openContextSheet = useCallback(() => {
+    router.push('/agent-context');
+  }, [router]);
+
+  const openTasksSheet = useCallback(() => {
+    router.push('/agent-tasks');
+  }, [router]);
+
+  const openDiffSheet = useCallback(() => {
+    if (!activeAsid) return;
+    router.push({ pathname: '/agent-vcs-diff', params: { sessionId, asid: activeAsid } });
+  }, [router, sessionId, activeAsid]);
+
+  const handleToggleReasoning = useCallback(() => {
+    setShowReasoning((prev) => !prev);
+  }, []);
+
+  const handleCompactContext = useCallback(() => {
+    void handleSendPromptRef.current?.('/compact');
+  }, []);
+
+  const handleClearContext = useCallback(() => {
+    void handleSendPromptRef.current?.('/clear');
+  }, []);
 
   const handleEditQueuedItem = useCallback((itemId: string, text: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1077,6 +1105,98 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return undefined;
   }, [timeline]);
 
+  /**
+   * What the sheet routes read, published rather than passed.
+   *
+   * A store write, not a prop: the sheets are mounted by the navigator above
+   * this screen, so there is nowhere to pass a prop to. `publish` commits
+   * nothing when every field is unchanged, so a stream tick that only grows
+   * the timeline never re-renders an open sheet -- and the workbench does not
+   * subscribe to the bridge at all, so nothing a sheet writes back re-renders
+   * the workbench either. Each sheet route selects only the fields it reads.
+   */
+  useEffect(() => {
+    const snapshot: Partial<AgentSheetSnapshot> = {
+      sessionId,
+      activeAsid,
+      sessions,
+      knownProjects,
+      activeDirectory,
+      sessionInfo: sessionInfo ?? undefined,
+      tokens: activeTokens,
+      cost: sessionInfo?.cost,
+      selectedModel,
+      selectedAgent,
+      showReasoning,
+      yoloMode,
+      todos: activeTodos ?? EMPTY_TODOS,
+    };
+    useAgentSheetBridge.getState().publish(snapshot);
+  }, [
+    sessionId,
+    activeAsid,
+    sessions,
+    knownProjects,
+    activeDirectory,
+    sessionInfo,
+    activeTokens,
+    selectedModel,
+    selectedAgent,
+    showReasoning,
+    yoloMode,
+    activeTodos,
+  ]);
+
+  const sheetActions = useMemo<AgentSheetActions>(
+    () => ({
+      selectSession: setActiveAsid,
+      createSession: () => {
+        void handleCreateNewSession();
+      },
+      selectModel: handleSelectModel,
+      selectAgentMode: setSelectedAgent,
+      selectWorkspace: (directory, project) => {
+        void handleSelectWorkspace(directory, project);
+      },
+      toggleReasoning: handleToggleReasoning,
+      toggleYolo: handleToggleYoloMode,
+      compactContext: handleCompactContext,
+      clearContext: handleClearContext,
+    }),
+    [
+      handleCreateNewSession,
+      handleSelectModel,
+      handleSelectWorkspace,
+      handleToggleReasoning,
+      handleToggleYoloMode,
+      handleCompactContext,
+      handleClearContext,
+    ]
+  );
+
+  useEffect(() => {
+    useAgentSheetBridge.getState().setActions(sheetActions);
+  }, [sheetActions]);
+
+  // A sheet outliving the workbench would be holding a closure over a session
+  // that is gone. Emptying the bridge on unmount makes every handler a no-op
+  // again rather than a stale one.
+  useEffect(() => {
+    return () => {
+      useAgentSheetBridge.getState().reset();
+    };
+  }, []);
+
+  /**
+   * The one image the reader tapped, in the shape the shared lightbox takes.
+   * Memoised so opening the viewer does not hand it a new array on every
+   * stream tick, which would reset its pager.
+   */
+  const previewImages = useMemo<PreviewImage[] | null>(
+    () => (previewImageUri ? [{ id: previewImageUri, uri: previewImageUri }] : null),
+    [previewImageUri]
+  );
+
   return (
     <View style={styles.root}>
       {/* Main Content Stream */}
@@ -1190,7 +1310,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   </PressableScale>
                   <PressableScale
                     testID="agent-empty-choose-project-btn"
-                    onPress={() => setWorkspaceSheetVisible(true)}
+                    onPress={openWorkspaceSheet}
                     style={[
                       styles.emptySecondaryBtn,
                       {
@@ -1306,138 +1426,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onSelectSession={setActiveAsid}
         onSelectAgentMode={setSelectedAgent}
         onCreateNewSession={handleCreateNewSession}
-        onOpenModeSheet={() => setModeSheetVisible(true)}
-        onOpenModelSheet={() => setModelSheetVisible(true)}
-        onOpenDiffSheet={() => setDiffSheetVisible(true)}
-        onOpenSessionsSheet={() => setSessionsSheetVisible(true)}
-        onOpenTasksSheet={
-          activeTodos && activeTodos.length > 0 ? () => setTasksModalVisible(true) : undefined
-        }
-        onPressTokens={() => setContextSheetVisible(true)}
+        onOpenModeSheet={openModeSheet}
+        onOpenModelSheet={openModelSheet}
+        onOpenDiffSheet={openDiffSheet}
+        onOpenSessionsSheet={openSessionsSheet}
+        onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
+        onPressTokens={openContextSheet}
         onRefresh={loadSnapshot}
         injectDraftRef={injectDraftRef}
       />
 
-      {/* Context & Cost Sheet */}
-      <AgentContextSheet
-        visible={contextSheetVisible}
-        session={sessionInfo ?? undefined}
-        tokens={activeTokens}
-        cost={sessionInfo?.cost}
-        showReasoning={showReasoning}
-        onToggleReasoning={() => setShowReasoning((prev) => !prev)}
-        yoloMode={yoloMode}
-        onToggleYolo={handleToggleYoloMode}
-        onClose={() => setContextSheetVisible(false)}
-        onCompact={() => handleSendPrompt('/compact')}
-        onClear={() => handleSendPrompt('/clear')}
-      />
-
-      {/* All Sessions Sheet (roots + subagents, search, select) */}
-      <AgentSessionsSheet
-        visible={sessionsSheetVisible}
-        sessions={sessions}
-        activeAsid={activeAsid}
-        knownProjects={knownProjects}
-        activeDirectory={activeDirectory}
-        onSelectSession={setActiveAsid}
-        onCreateNewSession={handleCreateNewSession}
-        onClose={() => setSessionsSheetVisible(false)}
-      />
-
-      {/* Mode Selection Sheet (Build, Explore, Plan, General) */}
-      <AgentModeSheet
-        visible={modeSheetVisible}
-        selectedAgent={selectedAgent}
-        onSelectAgent={(ag) => {
-          setSelectedAgent(ag);
-          setModeSheetVisible(false);
-        }}
-        onClose={() => setModeSheetVisible(false)}
-      />
-
-      {/* Model Selection Sheet (Real OpenCode models, compact, grouped by provider) */}
-      <AgentModelSheet
-        visible={modelSheetVisible}
-        selectedModel={selectedModel}
-        onSelectModel={handleSelectModel}
-        onClose={() => setModelSheetVisible(false)}
-      />
-
-      {/* Workspace / Multi-Project Switcher Sheet */}
-      <AgentWorkspaceSheet
-        key={workspaceOpenCount}
-        visible={workspaceSheetVisible}
-        activeDirectory={activeDirectory}
-        sessionId={sessionId}
-        initialProjects={knownProjects}
-        onSelectWorkspace={handleSelectWorkspace}
-        onClose={() => setWorkspaceSheetVisible(false)}
-      />
-
-      {/* VCS Code Diff Sheet */}
-      {activeAsid ? (
-        <AgentVcsDiffSheet
-          visible={diffSheetVisible}
-          sessionId={sessionId}
-          asid={activeAsid}
-          onClose={() => setDiffSheetVisible(false)}
+      {/*
+        The only overlay the workbench still mounts, and only while an image is
+        open. Every picker is a route under `src/app/agent-*.tsx` now, so none
+        of them is in this tree -- or fetching a catalog, or parsing a diff --
+        unless the reader has actually navigated to it.
+      */}
+      {previewImages ? (
+        <ImagePreviewModal
+          images={previewImages}
+          initialIndex={0}
+          onClose={() => setPreviewImageUri(null)}
         />
-      ) : null}
-
-      {/* Tasks Overview Modal */}
-      {activeTodos && activeTodos.length > 0 ? (
-        <Modal
-          visible={tasksModalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setTasksModalVisible(false)}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setTasksModalVisible(false)}>
-            <Pressable
-              testID="agent-tasks-modal"
-              onPress={(e) => e.stopPropagation()}
-              style={[styles.modalSheet, { backgroundColor: theme.colors.surface }]}>
-              <View style={styles.modalHandle} />
-              <View style={styles.modalHeader}>
-                <Text variant="heading" style={styles.modalTitle}>
-                  <Trans>Tasks Progress</Trans>
-                </Text>
-                <PressableScale
-                  testID="agent-tasks-close"
-                  onPress={() => setTasksModalVisible(false)}
-                  style={styles.modalCloseBtn}
-                  accessibilityLabel={t`Close`}>
-                  <X size={18} color={theme.colors.textMuted} />
-                </PressableScale>
-              </View>
-              <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-                <AgentTodoBlock items={activeTodos} defaultExpanded={true} />
-              </ScrollView>
-            </Pressable>
-          </Pressable>
-        </Modal>
-      ) : null}
-
-      {/* Fullscreen Image Preview Modal */}
-      {previewImageUri ? (
-        <Modal
-          visible={Boolean(previewImageUri)}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setPreviewImageUri(null)}>
-          <Pressable style={styles.imagePreviewBackdrop} onPress={() => setPreviewImageUri(null)}>
-            <PressableScale
-              onPress={() => setPreviewImageUri(null)}
-              style={styles.imagePreviewCloseBtn}>
-              <X size={20} color="#fff" />
-            </PressableScale>
-            <Image
-              source={{ uri: previewImageUri }}
-              style={styles.imagePreviewFull}
-              contentFit="contain"
-            />
-          </Pressable>
-        </Modal>
       ) : null}
     </View>
   );
@@ -1675,44 +1685,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontSize: 11,
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 10,
-    paddingBottom: 34,
-    paddingHorizontal: 16,
-    maxHeight: '65%',
-  },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(128,128,128,0.4)',
-    alignSelf: 'center',
-    marginBottom: 12,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  modalCloseBtn: {
-    padding: 6,
-    borderRadius: 999,
-  },
-  modalBody: {
-    maxHeight: 350,
-  },
   bubbleAttachmentsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1771,27 +1743,5 @@ const styles = StyleSheet.create({
   },
   queuedActionBtn: {
     padding: 3,
-  },
-  imagePreviewBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.92)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imagePreviewFull: {
-    width: '94%',
-    height: '80%',
-  },
-  imagePreviewCloseBtn: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
   },
 });

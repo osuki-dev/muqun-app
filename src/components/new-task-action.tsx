@@ -7,8 +7,8 @@ import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { OpenCodeIcon } from '@/components/opencode-icon';
-import { OpenCodeGuideSheet } from '@/components/opencode-guide-sheet';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useOpenCodeGuideStore } from '@/stores/opencode-guide';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { effectiveGatewayBaseUrl } from '@/lib/gateway-client';
@@ -64,7 +64,6 @@ export function NewTaskAction({
     );
   });
   const [hasChecked, setHasChecked] = useState(false);
-  const [guideVisible, setGuideVisible] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -161,6 +160,30 @@ export function NewTaskAction({
     router.push('/agent');
   }, [selectRecord, serverId, router]);
 
+  /**
+   * The setup sheet is a route now, so "check again" runs over there and this
+   * card's probe has to be reachable from it. Registered per server -- several
+   * cards are on screen at once -- and cleared when this one goes away, so a
+   * dismissed card can never answer for a live one.
+   */
+  useEffect(() => {
+    const store = useOpenCodeGuideStore.getState();
+    store.registerProbe(serverId, () => checkReadyRef.current(true));
+    return () => {
+      useOpenCodeGuideStore.getState().clearProbe(serverId);
+    };
+  }, [serverId]);
+
+  // The sheet cannot dismiss itself and land on the agent screen in one
+  // gesture, so it writes where the reader asked to go; this reads it and
+  // clears it, the way the server screen reads a panel pick.
+  const openAgentFor = useOpenCodeGuideStore((state) => state.openAgentFor);
+  useEffect(() => {
+    if (openAgentFor !== serverId) return;
+    useOpenCodeGuideStore.getState().clearOpenAgent();
+    handlePress();
+  }, [openAgentFor, serverId, handlePress]);
+
   if (!capabilities?.includes('agent_sessions')) {
     return null;
   }
@@ -176,7 +199,9 @@ export function NewTaskAction({
             testID="server-opencode-offline-action"
             accessibilityRole="button"
             accessibilityLabel={t`OpenCode service offline. Tap for setup instructions`}
-            onPress={() => setGuideVisible(true)}
+            onPress={() =>
+              router.push({ pathname: '/opencode-guide', params: { serverId, label } })
+            }
             style={[
               styles.button,
               styles.square,
@@ -191,16 +216,6 @@ export function NewTaskAction({
             </View>
           </PressableScale>
         </Animated.View>
-        <OpenCodeGuideSheet
-          visible={guideVisible}
-          serverLabel={label}
-          onClose={() => setGuideVisible(false)}
-          onCheckAgain={async () => {
-            const ok = await checkReadyRef.current(true);
-            return ok;
-          }}
-          onOpenAgent={handlePress}
-        />
       </>
     );
   }

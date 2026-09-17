@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ChevronDown, FolderGit2, Plus, Square } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
@@ -150,6 +150,7 @@ function WorkspacePillContent({
  */
 export default function AgentScreen() {
   const { t } = useLingui();
+  const router = useRouter();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
@@ -162,7 +163,6 @@ export default function AgentScreen() {
   const activeDirectory = useAgentSessionState((s) => s.directory);
   const activeProject = useAgentSessionState((s) => s.project);
 
-  const openWorkspaceSheetRef = useRef<(() => void) | null>(null);
   const createNewSessionRef = useRef<(() => void) | null>(null);
   const abortSessionRef = useRef<(() => void) | null>(null);
 
@@ -186,7 +186,6 @@ export default function AgentScreen() {
         initialAsid={params.asid}
         topInset={insets.top + HEADER_INSET}
         bottomInset={insets.bottom}
-        openWorkspaceSheetRef={openWorkspaceSheetRef}
         createNewSessionRef={createNewSessionRef}
         abortSessionRef={abortSessionRef}
       />
@@ -205,7 +204,7 @@ export default function AgentScreen() {
             <GlassChrome surface="navigation" style={styles.workspaceHeaderPill}>
               <PressableScale
                 testID="agent-header-workspace-pill"
-                onPress={() => openWorkspaceSheetRef.current?.()}
+                onPress={() => router.push({ pathname: '/agent-workspace', params: { sessionId } })}
                 accessibilityRole="button"
                 accessibilityLabel={switchWorkspaceLabel}
                 style={styles.workspaceHeaderPillInner}>

@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { GitCommit, FileCode, X } from 'lucide-react-native';
@@ -15,15 +15,16 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { getAgentVcsDiff, type FileDiffItem } from '@/lib/agent-session';
 import { keyedLines } from '@/lib/line-keys';
 
+/**
+ * What the agent changed on disk, as a native form sheet route.
+ */
 export interface AgentVcsDiffSheetProps {
-  visible: boolean;
   sessionId: string;
   asid: string;
   onClose: () => void;
 }
 
 export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
-  visible,
   sessionId,
   asid,
   onClose,
@@ -37,18 +38,18 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const [diffs, setDiffs] = useState<FileDiffItem[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
+  // Fetched once per opening: a route mounts when it opens. `selectedFile` is
+  // deliberately not a dependency -- it used to be, so picking a tab refetched
+  // the whole diff set.
   useEffect(() => {
-    if (!visible || !sessionId || !asid) return;
+    if (!sessionId || !asid) return;
     let active = true;
     setLoading(true);
     getAgentVcsDiff(sessionId, asid)
       .then((items) => {
-        if (active) {
-          setDiffs(items);
-          if (items.length > 0 && !selectedFile) {
-            setSelectedFile(items[0].path);
-          }
-        }
+        if (!active) return;
+        setDiffs(items);
+        setSelectedFile((current) => current ?? items[0]?.path ?? null);
       })
       .catch((err) => {
         console.warn('Failed to load VCS diff:', err);
@@ -59,200 +60,172 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
     return () => {
       active = false;
     };
-  }, [visible, sessionId, asid, selectedFile]);
+  }, [sessionId, asid]);
 
   const activeDiff = diffs.find((d) => d.path === selectedFile) ?? diffs[0];
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable
-          testID="agent-vcs-diff-sheet"
-          onPress={(e) => e.stopPropagation()}
-          style={styles.sheetContainer}>
-          <SheetFrame tint="background">
-            <View collapsable={false} style={styles.sheetLayout}>
-              {/* Pinned Top Navigation Bar */}
-              <View style={styles.fixedTop}>
-                <SheetHandle style={styles.sheetHandle} />
+    // One ground and one layout column: the two subviews a native form sheet
+    // lays itself out around. See `sheet-ground.tsx`.
+    <SheetFrame testID="agent-vcs-diff-sheet" tint="background">
+      <View collapsable={false} style={styles.sheetLayout}>
+        {/* Pinned Top Navigation Bar */}
+        <View style={styles.fixedTop}>
+          <SheetHandle />
 
-                <View style={styles.header}>
-                  <View style={[styles.headerCopy, plate]}>
-                    <Text variant="subheading" style={styles.headerTitle}>
-                      {t`Code Changes`}
-                    </Text>
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      {t`${diffs.length} file(s) modified in workspace`}
-                    </Text>
-                  </View>
-
-                  <GlassChrome face="sheet" style={styles.headerButton}>
-                    <PressableScale
-                      testID="agent-vcs-diff-close"
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Close`}
-                      onPress={onClose}
-                      style={styles.headerButtonHit}>
-                      <X size={19} color={theme.colors.text} strokeWidth={2} />
-                    </PressableScale>
-                  </GlassChrome>
-                </View>
-
-                {/* File list tabs */}
-                {diffs.length > 0 ? (
-                  <ThemedSurface
-                    slot="tabs.background"
-                    baseColor={theme.colors.surface}
-                    style={styles.fileTabsStrip}>
-                    <FlatList
-                      horizontal
-                      data={diffs}
-                      keyExtractor={(d) => d.path}
-                      extraData={selectedFile}
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.fileTabsContent}
-                      renderItem={({ item: d }) => {
-                        const isSelected = selectedFile === d.path;
-                        const fileName = d.path.split('/').pop() ?? d.path;
-                        return (
-                          <PressableScale
-                            onPress={() => setSelectedFile(d.path)}
-                            style={[
-                              styles.fileTab,
-                              isSelected && {
-                                backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                              },
-                            ]}>
-                            <FileCode
-                              size={13}
-                              color={isSelected ? theme.colors.primary : theme.colors.textMuted}
-                            />
-                            <Text
-                              variant="caption"
-                              color={isSelected ? theme.colors.primary : theme.colors.text}
-                              style={styles.fileName}>
-                              {fileName}
-                            </Text>
-                            <View style={styles.statsBadge}>
-                              {d.additions > 0 ? (
-                                <Text
-                                  variant="caption"
-                                  color={theme.colors.success}
-                                  style={styles.statAdd}>
-                                  +{d.additions}
-                                </Text>
-                              ) : null}
-                              {d.deletions > 0 ? (
-                                <Text
-                                  variant="caption"
-                                  color={theme.colors.danger}
-                                  style={styles.statDel}>
-                                  -{d.deletions}
-                                </Text>
-                              ) : null}
-                            </View>
-                          </PressableScale>
-                        );
-                      }}
-                    />
-                  </ThemedSurface>
-                ) : null}
-              </View>
-
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <Spinner size="lg" color={theme.colors.primary} />
-                </View>
-              ) : diffs.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <GitCommit size={36} color={theme.colors.textSubtle} />
-                  <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-                    <Trans>No uncommitted file changes.</Trans>
-                  </Text>
-                </View>
-              ) : (
-                <ScrollView
-                  style={styles.scrollViewport}
-                  contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: LADDER.section + insets.bottom },
-                  ]}>
-                  {activeDiff?.patch ? (
-                    <SettingsCard>
-                      <View style={styles.patchContainer}>
-                        {keyedLines(activeDiff.patch).map(({ line, key }) => {
-                          const isAdd = line.startsWith('+') && !line.startsWith('+++');
-                          const isDel = line.startsWith('-') && !line.startsWith('---');
-                          const isHunk = line.startsWith('@@');
-
-                          let lineBg = 'transparent';
-                          let lineFg = theme.colors.text;
-
-                          if (isAdd) {
-                            lineBg = `${theme.colors.success}18`;
-                            lineFg = theme.colors.success;
-                          } else if (isDel) {
-                            lineBg = `${theme.colors.danger}18`;
-                            lineFg = theme.colors.danger;
-                          } else if (isHunk) {
-                            lineBg = `${theme.colors.primary}12`;
-                            lineFg = theme.colors.primary;
-                          }
-
-                          return (
-                            <View
-                              key={key}
-                              style={[styles.patchLineRow, { backgroundColor: lineBg }]}>
-                              <Text
-                                variant="caption"
-                                style={[styles.patchLineText, { color: lineFg }]}>
-                                {line || ' '}
-                              </Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    </SettingsCard>
-                  ) : (
-                    <View style={styles.emptyContainer}>
-                      <Text variant="caption" color={theme.colors.textMuted}>
-                        <Trans>No diff preview available for binary or unmodified files.</Trans>
-                      </Text>
-                    </View>
-                  )}
-                </ScrollView>
-              )}
+          <View style={styles.header}>
+            <View style={[styles.headerCopy, plate]}>
+              <Text variant="subheading" style={styles.headerTitle}>
+                {t`Code Changes`}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`${diffs.length} file(s) modified in workspace`}
+              </Text>
             </View>
-          </SheetFrame>
-        </Pressable>
-      </Pressable>
-    </Modal>
+
+            <GlassChrome face="sheet" style={styles.headerButton}>
+              <PressableScale
+                testID="agent-vcs-diff-close"
+                accessibilityRole="button"
+                accessibilityLabel={t`Close`}
+                onPress={onClose}
+                style={styles.headerButtonHit}>
+                <X size={19} color={theme.colors.text} strokeWidth={2} />
+              </PressableScale>
+            </GlassChrome>
+          </View>
+
+          {/* File list tabs */}
+          {diffs.length > 0 ? (
+            <ThemedSurface
+              slot="tabs.background"
+              baseColor={theme.colors.surface}
+              style={styles.fileTabsStrip}>
+              <FlatList
+                horizontal
+                data={diffs}
+                keyExtractor={(d) => d.path}
+                extraData={selectedFile}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.fileTabsContent}
+                renderItem={({ item: d }) => {
+                  const isSelected = selectedFile === d.path;
+                  const fileName = d.path.split('/').pop() ?? d.path;
+                  return (
+                    <PressableScale
+                      onPress={() => setSelectedFile(d.path)}
+                      style={[
+                        styles.fileTab,
+                        isSelected && {
+                          backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                        },
+                      ]}>
+                      <FileCode
+                        size={13}
+                        color={isSelected ? theme.colors.primary : theme.colors.textMuted}
+                      />
+                      <Text
+                        variant="caption"
+                        color={isSelected ? theme.colors.primary : theme.colors.text}
+                        style={styles.fileName}>
+                        {fileName}
+                      </Text>
+                      <View style={styles.statsBadge}>
+                        {d.additions > 0 ? (
+                          <Text
+                            variant="caption"
+                            color={theme.colors.success}
+                            style={styles.statAdd}>
+                            +{d.additions}
+                          </Text>
+                        ) : null}
+                        {d.deletions > 0 ? (
+                          <Text
+                            variant="caption"
+                            color={theme.colors.danger}
+                            style={styles.statDel}>
+                            -{d.deletions}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </PressableScale>
+                  );
+                }}
+              />
+            </ThemedSurface>
+          ) : null}
+        </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Spinner size="lg" color={theme.colors.primary} />
+          </View>
+        ) : diffs.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <GitCommit size={36} color={theme.colors.textSubtle} />
+            <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
+              <Trans>No uncommitted file changes.</Trans>
+            </Text>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollViewport}
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: LADDER.section + insets.bottom },
+            ]}>
+            {activeDiff?.patch ? (
+              <SettingsCard>
+                <View style={styles.patchContainer}>
+                  {keyedLines(activeDiff.patch).map(({ line, key }) => {
+                    const isAdd = line.startsWith('+') && !line.startsWith('+++');
+                    const isDel = line.startsWith('-') && !line.startsWith('---');
+                    const isHunk = line.startsWith('@@');
+
+                    let lineBg = 'transparent';
+                    let lineFg = theme.colors.text;
+
+                    if (isAdd) {
+                      lineBg = `${theme.colors.success}18`;
+                      lineFg = theme.colors.success;
+                    } else if (isDel) {
+                      lineBg = `${theme.colors.danger}18`;
+                      lineFg = theme.colors.danger;
+                    } else if (isHunk) {
+                      lineBg = `${theme.colors.primary}12`;
+                      lineFg = theme.colors.primary;
+                    }
+
+                    return (
+                      <View key={key} style={[styles.patchLineRow, { backgroundColor: lineBg }]}>
+                        <Text variant="caption" style={[styles.patchLineText, { color: lineFg }]}>
+                          {line || ' '}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </SettingsCard>
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  <Trans>No diff preview available for binary or unmodified files.</Trans>
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+        )}
+      </View>
+    </SheetFrame>
   );
 });
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    maxHeight: '88%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
+  // The stack renders form sheets over a transparent background so the native
+  // sheet keeps its own corners; without filling the height, that transparency
+  // shows as a strip under the content.
   sheetLayout: {
-    flexShrink: 1,
-    overflow: 'hidden',
-  },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+    flex: 1,
   },
   fixedTop: {
     flexShrink: 0,
@@ -337,9 +310,7 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
   },
-  scrollViewport: {
-    flexShrink: 1,
-  },
+  scrollViewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
   content: {
     paddingHorizontal: LADDER.gutter,
     paddingTop: 4,

@@ -9,10 +9,15 @@ import { surfaceBackgroundFill } from '../surface-background';
  * `src/app/_layout.tsx`, and therefore every frame that has to paint its own
  * ground: the route is transparent so the native sheet keeps its corners.
  *
- * Ten routes, eight frames -- `settings-theme`, `settings-language` and
+ * Eighteen routes, sixteen frames -- `settings-theme`, `settings-language` and
  * `sessions` all wear `SettingsSheet`. A route added to `_layout.tsx` with
  * `presentation: 'formSheet'` belongs in this list, and the assertions below
  * are what stop it being drawn some other way.
+ *
+ * The eight agent sheets at the end are the ones that were drawn some other
+ * way: `<Modal transparent>` components with their own backdrop, their own
+ * hand-drawn grabber and their own corner radius, none of which this file
+ * could see because none of them was a route.
  */
 const SHEET_FRAMES = [
   // Theme, Language, and Machines and sessions all wear this one.
@@ -24,7 +29,37 @@ const SHEET_FRAMES = [
   'src/components/git-diff-view.tsx',
   'src/components/new-task-sheet.tsx',
   'src/components/open-web-service-sheet.tsx',
+  'src/components/agent-sessions-sheet.tsx',
+  'src/components/agent-model-sheet.tsx',
+  'src/components/agent-mode-sheet.tsx',
+  'src/components/agent-workspace-sheet.tsx',
+  'src/components/agent-context-sheet.tsx',
+  'src/components/agent-vcs-diff-sheet.tsx',
+  'src/components/agent-tasks-sheet.tsx',
+  'src/components/opencode-guide-sheet.tsx',
 ];
+
+/**
+ * A sheet is a route, and a route is not a `<Modal>`.
+ *
+ * React Native's `Modal` inside a native form sheet is a second window over
+ * the first: it gets no sheet ground, no grabber, no detent and no dismissal
+ * gesture, and on the agent screen it was drawing its own backdrop over the
+ * screen it was supposed to be part of. The one exception the frames below may
+ * still mount is the shared image lightbox, which is genuinely full-screen.
+ */
+test('a sheet frame presents itself as a route, never as a Modal', () => {
+  for (const file of SHEET_FRAMES) {
+    const text = readFileSync(file, 'utf8');
+    expect({ file, modal: text.includes('<Modal') }).toEqual({ file, modal: false });
+    // No hand-drawn scrim either: a form sheet is dimmed natively, by
+    // `sheetLargestUndimmedDetentIndex`.
+    expect({ file, scrim: /backgroundColor: 'rgba\(0, ?0, ?0/.test(text) }).toEqual({
+      file,
+      scrim: false,
+    });
+  }
+});
 
 test('the sheet ground paints its wallpaper above its tint, never under it', () => {
   const text = readFileSync('src/components/sheet-ground.tsx', 'utf8');

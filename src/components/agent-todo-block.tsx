@@ -16,7 +16,7 @@ import { fadeIn, fadeOut } from '@/lib/motion';
 import type { TodoItem } from '@/lib/agent-session';
 
 export interface AgentTodoBlockProps {
-  items: TodoItem[];
+  items: readonly TodoItem[];
   title?: string;
   defaultExpanded?: boolean;
 }

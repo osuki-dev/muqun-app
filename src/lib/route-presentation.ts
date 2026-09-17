@@ -27,6 +27,17 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'settings-theme-browse': 'fullscreen',
   explore: 'fullscreen',
   'new-task': 'sheet',
+  // The agent's pickers. Every one of them is a destination -- pick a model,
+  // pick a workspace, read a diff -- so every one is a route rather than a
+  // `<Modal>` the workbench keeps mounted whether it is open or not.
+  'agent-sessions': 'sheet',
+  'agent-model': 'sheet',
+  'agent-mode': 'sheet',
+  'agent-workspace': 'sheet',
+  'agent-context': 'sheet',
+  'agent-vcs-diff': 'sheet',
+  'agent-tasks': 'sheet',
+  'opencode-guide': 'sheet',
 };
 
 function resolveDetents(

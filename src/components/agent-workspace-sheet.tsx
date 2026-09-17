@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Check, Folder, FolderGit2, X } from 'lucide-react-native';
@@ -21,17 +21,19 @@ import {
   type DirectoryItem,
 } from '@/lib/agent-session';
 
+/**
+ * The workspace switcher, as a native form sheet route. Presentational: the
+ * route above it reads the projects and the handler out of the sheet bridge.
+ */
 export interface AgentWorkspaceSheetProps {
-  visible: boolean;
   activeDirectory?: string;
   sessionId?: string;
-  initialProjects?: AgentProject[];
+  initialProjects?: readonly AgentProject[];
   onSelectWorkspace: (directory: string, project?: AgentProject) => void;
   onClose: () => void;
 }
 
 export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
-  visible,
   activeDirectory,
   sessionId,
   initialProjects,
@@ -58,9 +60,9 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<DirectoryItem[]>([]);
 
-  // The host remounts this sheet (key) on every open, so search state starts
-  // clean and the project list is fetched once per open rather than synced to
-  // prop changes after the fact.
+  // A route mounts when it opens and unmounts when it is dismissed, so search
+  // state starts clean and the project list is fetched once per opening --
+  // which is what the host used to force with a changing `key`.
   const loadedOnceRef = useRef(false);
   const loadProjects = useCallback(async () => {
     if (!loadedOnceRef.current) setLoading(true);
@@ -120,231 +122,201 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable
-          testID="agent-workspace-sheet"
-          onPress={(e) => e.stopPropagation()}
-          style={styles.sheetContainer}>
-          <SheetFrame tint="background">
-            <View collapsable={false} style={styles.sheetLayout}>
-              {/* Pinned Top Navigation Bar */}
-              <View style={styles.fixedTop}>
-                <SheetHandle style={styles.sheetHandle} />
+    // One ground and one layout column: the two subviews a native form sheet
+    // lays itself out around. See `sheet-ground.tsx`.
+    <SheetFrame testID="agent-workspace-sheet" tint="background">
+      <View collapsable={false} style={styles.sheetLayout}>
+        {/* Pinned Top Navigation Bar */}
+        <View style={styles.fixedTop}>
+          <SheetHandle />
 
-                <View style={styles.header}>
-                  <View style={[styles.headerCopy, plate]}>
-                    <Text variant="subheading" style={styles.headerTitle}>
-                      {t`Workspaces & Projects`}
-                    </Text>
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      {t`Select or enter working repository`}
-                    </Text>
-                  </View>
+          <View style={styles.header}>
+            <View style={[styles.headerCopy, plate]}>
+              <Text variant="subheading" style={styles.headerTitle}>
+                {t`Workspaces & Projects`}
+              </Text>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`Select or enter working repository`}
+              </Text>
+            </View>
 
-                  <GlassChrome face="sheet" style={styles.headerButton}>
-                    <PressableScale
-                      testID="agent-workspace-close"
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Close`}
-                      onPress={onClose}
-                      style={styles.headerButtonHit}>
-                      <X size={19} color={theme.colors.text} strokeWidth={2} />
-                    </PressableScale>
-                  </GlassChrome>
-                </View>
+            <GlassChrome face="sheet" style={styles.headerButton}>
+              <PressableScale
+                testID="agent-workspace-close"
+                accessibilityRole="button"
+                accessibilityLabel={t`Close`}
+                onPress={onClose}
+                style={styles.headerButtonHit}>
+                <X size={19} color={theme.colors.text} strokeWidth={2} />
+              </PressableScale>
+            </GlassChrome>
+          </View>
 
-                {/* Unified Search Input */}
-                <Input
-                  testID="agent-workspace-search-input"
-                  accessibilityLabel={t`Filter projects or path`}
-                  placeholder={t`Filter projects or path`}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  variant="outline"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  numberOfLines={1}
-                  multiline={false}
-                />
+          {/* Unified Search Input */}
+          <Input
+            testID="agent-workspace-search-input"
+            accessibilityLabel={t`Filter projects or path`}
+            placeholder={t`Filter projects or path`}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            variant="outline"
+            autoCapitalize="none"
+            autoCorrect={false}
+            numberOfLines={1}
+            multiline={false}
+          />
+        </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Spinner size="lg" color={theme.colors.primary} />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollViewport}
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: LADDER.section + insets.bottom },
+            ]}
+            keyboardShouldPersistTaps="handled">
+            {/* Custom Project Directory / Direct Path Input */}
+            {searchQuery.trim().length > 0 &&
+            (searchQuery.trim().startsWith('/') || searchQuery.trim().startsWith('~')) ? (
+              <View style={styles.sectionBlock}>
+                <SectionLabel title={t`CUSTOM PROJECT DIRECTORY`} color={theme.colors.textMuted} />
+                <SettingsCard>
+                  <PressableScale
+                    testID="agent-workspace-custom-path-btn"
+                    onPress={() => handleSelect(searchQuery.trim())}
+                    style={styles.itemRow}>
+                    <View style={styles.itemRowLeft}>
+                      <FolderGit2 size={18} color={theme.colors.primary} />
+                      <View style={styles.itemTextCol}>
+                        <Text
+                          variant="bodySmall"
+                          weight="semibold"
+                          color={theme.colors.primary}
+                          numberOfLines={1}
+                          style={styles.itemTitle}>
+                          {t`Open as Project Workspace`}
+                        </Text>
+                        <Text
+                          variant="caption"
+                          color={theme.colors.textMuted}
+                          numberOfLines={1}
+                          style={styles.itemSub}>
+                          {searchQuery.trim()}
+                        </Text>
+                      </View>
+                    </View>
+                  </PressableScale>
+                </SettingsCard>
               </View>
+            ) : null}
 
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <Spinner size="lg" color={theme.colors.primary} />
+            {/* Suggestions for path */}
+            {suggestions.length > 0 ? (
+              <View style={styles.sectionBlock}>
+                <SectionLabel title={t`DIRECTORY AUTOCOMPLETE`} color={theme.colors.textMuted} />
+                <SettingsCard>
+                  {suggestions.map((item) => (
+                    <PressableScale
+                      key={item.path}
+                      onPress={() => handleSelect(item.path)}
+                      style={styles.itemRow}>
+                      <View style={styles.itemRowLeft}>
+                        <Folder size={16} color={theme.colors.primary} />
+                        <Text
+                          variant="bodySmall"
+                          color={theme.colors.text}
+                          numberOfLines={1}
+                          style={styles.itemTitle}>
+                          {item.name || item.path}
+                        </Text>
+                      </View>
+                      <Text
+                        variant="caption"
+                        color={theme.colors.textMuted}
+                        numberOfLines={1}
+                        style={styles.pathSubtext}>
+                        {item.path}
+                      </Text>
+                    </PressableScale>
+                  ))}
+                </SettingsCard>
+              </View>
+            ) : null}
+
+            {/* Known Projects */}
+            <View style={styles.sectionBlock}>
+              <SectionLabel title={t`KNOWN REPOSITORIES`} color={theme.colors.textMuted} />
+              {filteredProjects.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    <Trans>No projects found. Enter a custom path above.</Trans>
+                  </Text>
                 </View>
               ) : (
-                <ScrollView
-                  style={styles.scrollViewport}
-                  contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: LADDER.section + insets.bottom },
-                  ]}
-                  keyboardShouldPersistTaps="handled">
-                  {/* Custom Project Directory / Direct Path Input */}
-                  {searchQuery.trim().length > 0 &&
-                  (searchQuery.trim().startsWith('/') || searchQuery.trim().startsWith('~')) ? (
-                    <View style={styles.sectionBlock}>
-                      <SectionLabel
-                        title={t`CUSTOM PROJECT DIRECTORY`}
-                        color={theme.colors.textMuted}
-                      />
-                      <SettingsCard>
-                        <PressableScale
-                          testID="agent-workspace-custom-path-btn"
-                          onPress={() => handleSelect(searchQuery.trim())}
-                          style={styles.itemRow}>
-                          <View style={styles.itemRowLeft}>
-                            <FolderGit2 size={18} color={theme.colors.primary} />
-                            <View style={styles.itemTextCol}>
-                              <Text
-                                variant="bodySmall"
-                                weight="semibold"
-                                color={theme.colors.primary}
-                                numberOfLines={1}
-                                style={styles.itemTitle}>
-                                {t`Open as Project Workspace`}
-                              </Text>
-                              <Text
-                                variant="caption"
-                                color={theme.colors.textMuted}
-                                numberOfLines={1}
-                                style={styles.itemSub}>
-                                {searchQuery.trim()}
-                              </Text>
-                            </View>
-                          </View>
-                        </PressableScale>
-                      </SettingsCard>
-                    </View>
-                  ) : null}
+                <SettingsCard>
+                  {filteredProjects.map((p) => {
+                    const isSelected = activeDirectory === p.canonical;
 
-                  {/* Suggestions for path */}
-                  {suggestions.length > 0 ? (
-                    <View style={styles.sectionBlock}>
-                      <SectionLabel
-                        title={t`DIRECTORY AUTOCOMPLETE`}
-                        color={theme.colors.textMuted}
-                      />
-                      <SettingsCard>
-                        {suggestions.map((item) => (
-                          <PressableScale
-                            key={item.path}
-                            onPress={() => handleSelect(item.path)}
-                            style={styles.itemRow}>
-                            <View style={styles.itemRowLeft}>
-                              <Folder size={16} color={theme.colors.primary} />
-                              <Text
-                                variant="bodySmall"
-                                color={theme.colors.text}
-                                numberOfLines={1}
-                                style={styles.itemTitle}>
-                                {item.name || item.path}
-                              </Text>
-                            </View>
+                    return (
+                      <PressableScale
+                        key={p.id}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: Boolean(isSelected) }}
+                        onPress={() => handleSelect(p.canonical, p)}
+                        style={[
+                          styles.itemRow,
+                          isSelected && {
+                            backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                          },
+                        ]}>
+                        <View style={styles.itemRowLeft}>
+                          <FolderGit2
+                            size={18}
+                            color={isSelected ? theme.colors.primary : theme.colors.text}
+                          />
+                          <View style={styles.itemTextCol}>
+                            <Text
+                              variant="bodySmall"
+                              weight={isSelected ? 'semibold' : 'regular'}
+                              color={isSelected ? theme.colors.primary : theme.colors.text}
+                              numberOfLines={1}
+                              style={styles.itemTitle}>
+                              {p.name || p.id}
+                            </Text>
                             <Text
                               variant="caption"
                               color={theme.colors.textMuted}
                               numberOfLines={1}
-                              style={styles.pathSubtext}>
-                              {item.path}
+                              style={styles.itemSub}>
+                              {p.canonical}
                             </Text>
-                          </PressableScale>
-                        ))}
-                      </SettingsCard>
-                    </View>
-                  ) : null}
+                          </View>
+                        </View>
 
-                  {/* Known Projects */}
-                  <View style={styles.sectionBlock}>
-                    <SectionLabel title={t`KNOWN REPOSITORIES`} color={theme.colors.textMuted} />
-                    {filteredProjects.length === 0 ? (
-                      <View style={styles.emptyContainer}>
-                        <Text variant="caption" color={theme.colors.textMuted}>
-                          <Trans>No projects found. Enter a custom path above.</Trans>
-                        </Text>
-                      </View>
-                    ) : (
-                      <SettingsCard>
-                        {filteredProjects.map((p) => {
-                          const isSelected = activeDirectory === p.canonical;
-
-                          return (
-                            <PressableScale
-                              key={p.id}
-                              accessibilityRole="button"
-                              accessibilityState={{ selected: Boolean(isSelected) }}
-                              onPress={() => handleSelect(p.canonical, p)}
-                              style={[
-                                styles.itemRow,
-                                isSelected && {
-                                  backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                                },
-                              ]}>
-                              <View style={styles.itemRowLeft}>
-                                <FolderGit2
-                                  size={18}
-                                  color={isSelected ? theme.colors.primary : theme.colors.text}
-                                />
-                                <View style={styles.itemTextCol}>
-                                  <Text
-                                    variant="bodySmall"
-                                    weight={isSelected ? 'semibold' : 'regular'}
-                                    color={isSelected ? theme.colors.primary : theme.colors.text}
-                                    numberOfLines={1}
-                                    style={styles.itemTitle}>
-                                    {p.name || p.id}
-                                  </Text>
-                                  <Text
-                                    variant="caption"
-                                    color={theme.colors.textMuted}
-                                    numberOfLines={1}
-                                    style={styles.itemSub}>
-                                    {p.canonical}
-                                  </Text>
-                                </View>
-                              </View>
-
-                              {isSelected ? <Check size={18} color={theme.colors.primary} /> : null}
-                            </PressableScale>
-                          );
-                        })}
-                      </SettingsCard>
-                    )}
-                  </View>
-                </ScrollView>
+                        {isSelected ? <Check size={18} color={theme.colors.primary} /> : null}
+                      </PressableScale>
+                    );
+                  })}
+                </SettingsCard>
               )}
             </View>
-          </SheetFrame>
-        </Pressable>
-      </Pressable>
-    </Modal>
+          </ScrollView>
+        )}
+      </View>
+    </SheetFrame>
   );
 });
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    maxHeight: '88%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
+  // The stack renders form sheets over a transparent background so the native
+  // sheet keeps its own corners; without filling the height, that transparency
+  // shows as a strip under the content.
   sheetLayout: {
-    flexShrink: 1,
-    overflow: 'hidden',
-  },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
+    flex: 1,
   },
   fixedTop: {
     flexShrink: 0,
@@ -384,9 +356,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollViewport: {
-    flexShrink: 1,
-  },
+  scrollViewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
   content: {
     paddingHorizontal: LADDER.gutter,
     paddingTop: 4,

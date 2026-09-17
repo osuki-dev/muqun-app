@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, Modal, Pressable, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { Check, Copy, RefreshCw, Terminal, X, AlertCircle } from 'lucide-react-native';
@@ -17,8 +17,14 @@ import { withAlpha } from '@/lib/color';
 import { feedback } from '@/lib/feedback';
 import { OpenCodeIcon } from '@/components/opencode-icon';
 
+/**
+ * What to run when OpenCode is not answering, as a native form sheet route.
+ *
+ * Content-sized: one banner, one command and one button. A full-height sheet
+ * for a line to paste would be the app implying the task is bigger than it is,
+ * which is the same argument `web-service` makes.
+ */
 export interface OpenCodeGuideSheetProps {
-  visible: boolean;
   serverLabel: string;
   onClose: () => void;
   onCheckAgain: () => Promise<boolean>;
@@ -29,7 +35,6 @@ const OPENCODE_COMMAND = 'opencode serve --service';
 const COPIED_HOLD_MS = 2000;
 
 export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
-  visible,
   serverLabel,
   onClose,
   onCheckAgain,
@@ -80,178 +85,151 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
     }
   }, [onCheckAgain, onClose, onOpenAgent, t]);
 
-  if (!visible) return null;
-
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheetContainer} onPress={(e) => e.stopPropagation()}>
-          <SheetFrame>
+    // The ground and one content-sized column: the two subviews a native form
+    // sheet lays itself out around, and the shape `fitToContents` measures.
+    <SheetFrame testID="opencode-guide-sheet">
+      <View style={[styles.content, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+        <SheetHandle style={styles.handle} />
+
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
             <View
               style={[
-                styles.sheetLayout,
-                styles.content,
-                { paddingBottom: Math.max(insets.bottom, 24) },
+                styles.iconBadge,
+                {
+                  backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.14)),
+                  borderColor: withAlpha(theme.colors.warning, 0.35),
+                },
               ]}>
-              <SheetHandle />
+              <OpenCodeIcon size={20} color={theme.colors.warning} />
+            </View>
+            <SheetHeading title={t`OpenCode Service Offline`} caption={serverLabel} />
+          </View>
 
-              {/* Header */}
-              <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                  <View
-                    style={[
-                      styles.iconBadge,
-                      {
-                        backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.14)),
-                        borderColor: withAlpha(theme.colors.warning, 0.35),
-                      },
-                    ]}>
-                    <OpenCodeIcon size={20} color={theme.colors.warning} />
-                  </View>
-                  <SheetHeading title={t`OpenCode Service Offline`} caption={serverLabel} />
-                </View>
+          <GlassChrome face="sheet" style={styles.closeButton}>
+            <PressableScale accessibilityLabel={t`Close`} onPress={onClose} style={styles.closeHit}>
+              <X size={18} color={theme.colors.text} />
+            </PressableScale>
+          </GlassChrome>
+        </View>
 
-                <GlassChrome face="sheet" style={styles.closeButton}>
-                  <PressableScale
-                    accessibilityLabel={t`Close`}
-                    onPress={onClose}
-                    style={styles.closeHit}>
-                    <X size={18} color={theme.colors.text} />
-                  </PressableScale>
-                </GlassChrome>
+        {/* Explanatory banner */}
+        <SettingsCard>
+          <View style={styles.descCard}>
+            <AlertCircle size={18} color={theme.colors.warning} style={styles.descIcon} />
+            <Text variant="caption" color={theme.colors.textMuted} style={styles.descText}>
+              {t`OpenCode agent daemon is not running on this host. Run \`opencode serve --service\` to start it.`}
+            </Text>
+          </View>
+        </SettingsCard>
+
+        {/* Command card with 1-tap copy */}
+        <View style={styles.section}>
+          <SectionLabel title={t`Command`} />
+          <SettingsCard>
+            <PressableScale
+              testID="opencode-guide-copy-cmd"
+              accessibilityRole="button"
+              accessibilityLabel={copied ? t`Copied` : t`Copy`}
+              onPress={handleCopy}
+              style={[
+                styles.commandRow,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+              ]}>
+              <View style={styles.commandCode}>
+                <Text variant="caption" color={theme.colors.primary} weight="bold">
+                  $
+                </Text>
+                <Text
+                  selectable
+                  variant="bodySmall"
+                  weight="semibold"
+                  color={theme.colors.text}
+                  style={styles.commandText}>
+                  {OPENCODE_COMMAND}
+                </Text>
               </View>
 
-              {/* Explanatory banner */}
-              <SettingsCard>
-                <View style={styles.descCard}>
-                  <AlertCircle size={18} color={theme.colors.warning} style={styles.descIcon} />
-                  <Text variant="caption" color={theme.colors.textMuted} style={styles.descText}>
-                    {t`OpenCode agent daemon is not running on this host. Run \`opencode serve --service\` to start it.`}
-                  </Text>
-                </View>
-              </SettingsCard>
-
-              {/* Command card with 1-tap copy */}
-              <View style={styles.section}>
-                <SectionLabel title={t`Command`} />
-                <SettingsCard>
-                  <PressableScale
-                    testID="opencode-guide-copy-cmd"
-                    accessibilityRole="button"
-                    accessibilityLabel={copied ? t`Copied` : t`Copy`}
-                    onPress={handleCopy}
-                    style={[
-                      styles.commandRow,
-                      { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                    ]}>
-                    <View style={styles.commandCode}>
-                      <Text variant="caption" color={theme.colors.primary} weight="bold">
-                        $
-                      </Text>
-                      <Text
-                        selectable
-                        variant="bodySmall"
-                        weight="semibold"
-                        color={theme.colors.text}
-                        style={styles.commandText}>
-                        {OPENCODE_COMMAND}
-                      </Text>
-                    </View>
-
-                    <View
-                      style={[
-                        styles.copyChip,
-                        copied
-                          ? { backgroundColor: theme.colors.primary }
-                          : {
-                              backgroundColor: surfaceBackground(theme.colors.surface),
-                              borderColor: theme.colors.border,
-                              borderWidth: StyleSheet.hairlineWidth,
-                            },
-                      ]}>
-                      {copied ? (
-                        <>
-                          <Check size={12} color="#fff" strokeWidth={2.5} />
-                          <Text variant="caption" weight="semibold" color="#fff">
-                            {t`Copied`}
-                          </Text>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={12} color={theme.colors.text} strokeWidth={2} />
-                          <Text variant="caption" weight="medium" color={theme.colors.text}>
-                            {t`Copy`}
-                          </Text>
-                        </>
-                      )}
-                    </View>
-                  </PressableScale>
-                </SettingsCard>
-              </View>
-
-              {/* Background Tip */}
               <View
                 style={[
-                  styles.tipContainer,
-                  {
-                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                    borderColor: surfaceBackground(theme.colors.border),
-                  },
+                  styles.copyChip,
+                  copied
+                    ? { backgroundColor: theme.colors.primary }
+                    : {
+                        backgroundColor: surfaceBackground(theme.colors.surface),
+                        borderColor: theme.colors.border,
+                        borderWidth: StyleSheet.hairlineWidth,
+                      },
                 ]}>
-                <Terminal size={14} color={theme.colors.textMuted} />
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.tipText}>
-                  {t`Tip: Run with systemd or tmux to keep OpenCode running in the background.`}
-                </Text>
-              </View>
-
-              {/* Status or error message */}
-              {statusMessage ? (
-                <Text variant="caption" color={theme.colors.danger} style={styles.statusError}>
-                  {statusMessage}
-                </Text>
-              ) : null}
-
-              {/* Check Again Button */}
-              <PressableScale
-                testID="opencode-guide-check-again-btn"
-                accessibilityRole="button"
-                accessibilityLabel={t`Check Again`}
-                disabled={checking}
-                onPress={handleCheckAgain}
-                style={[styles.checkAgainBtn, { backgroundColor: theme.colors.primary }]}>
-                {checking ? (
-                  <ActivityIndicator size="small" color="#fff" />
+                {copied ? (
+                  <>
+                    <Check size={12} color="#fff" strokeWidth={2.5} />
+                    <Text variant="caption" weight="semibold" color="#fff">
+                      {t`Copied`}
+                    </Text>
+                  </>
                 ) : (
-                  <RefreshCw size={16} color="#fff" strokeWidth={2.2} />
+                  <>
+                    <Copy size={12} color={theme.colors.text} strokeWidth={2} />
+                    <Text variant="caption" weight="medium" color={theme.colors.text}>
+                      {t`Copy`}
+                    </Text>
+                  </>
                 )}
-                <Text variant="bodySmall" weight="bold" color="#fff">
-                  {t`Check Again`}
-                </Text>
-              </PressableScale>
-            </View>
-          </SheetFrame>
-        </Pressable>
-      </Pressable>
-    </Modal>
+              </View>
+            </PressableScale>
+          </SettingsCard>
+        </View>
+
+        {/* Background Tip */}
+        <View
+          style={[
+            styles.tipContainer,
+            {
+              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+              borderColor: surfaceBackground(theme.colors.border),
+            },
+          ]}>
+          <Terminal size={14} color={theme.colors.textMuted} />
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.tipText}>
+            {t`Tip: Run with systemd or tmux to keep OpenCode running in the background.`}
+          </Text>
+        </View>
+
+        {/* Status or error message */}
+        {statusMessage ? (
+          <Text variant="caption" color={theme.colors.danger} style={styles.statusError}>
+            {statusMessage}
+          </Text>
+        ) : null}
+
+        {/* Check Again Button */}
+        <PressableScale
+          testID="opencode-guide-check-again-btn"
+          accessibilityRole="button"
+          accessibilityLabel={t`Check Again`}
+          disabled={checking}
+          onPress={handleCheckAgain}
+          style={[styles.checkAgainBtn, { backgroundColor: theme.colors.primary }]}>
+          {checking ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <RefreshCw size={16} color="#fff" strokeWidth={2.2} />
+          )}
+          <Text variant="bodySmall" weight="bold" color="#fff">
+            {t`Check Again`}
+          </Text>
+        </PressableScale>
+      </View>
+    </SheetFrame>
   );
 });
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    maxHeight: '85%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  sheetLayout: {
-    flexShrink: 1,
-    overflow: 'hidden',
+  handle: {
+    marginBottom: 2,
   },
   content: {
     paddingHorizontal: LADDER.gutter,
