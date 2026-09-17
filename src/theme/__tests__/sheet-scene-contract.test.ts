@@ -20,11 +20,11 @@ import { surfaceBackgroundFill } from '../surface-background';
  * hand-drawn grabber and their own corner radius, none of which this file
  * could see because none of them was a route.
  *
- * The theme picker and the catalogue at the end are two of the three that were
- * the other other way: full-screen frames with a hand-drawn X circle, which is
- * how the picker ended up with no way out at all once the X went. They are
- * sheets now, and `SettingsSheet` -- the shared full-screen/form-sheet frame
- * they wore -- is gone with them.
+ * The three at the end are the ones that were the other other way: full-screen
+ * frames with a hand-drawn X circle, which is how the theme picker ended up
+ * with no way out at all once the X went. They are sheets now, and
+ * `SettingsSheet` -- the shared full-screen/form-sheet frame two of them wore
+ * -- is gone with them.
  */
 const SHEET_FRAMES = [
   'src/components/theme-browse-sheet.tsx',
@@ -44,6 +44,7 @@ const SHEET_FRAMES = [
   'src/components/agent-background-tray.tsx',
   'src/components/opencode-guide-sheet.tsx',
   'src/components/settings-theme-sheet.tsx',
+  'src/app/explore.tsx',
 ];
 
 /**
@@ -181,6 +182,30 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
 /** `<SheetScene>` itself, not `<SheetSceneHeading>` and friends. */
 const SCENE_ROOT = /<SheetScene[\s>]/;
 
+/**
+ * The sheets whose tick is not a selection mark, and what it is instead.
+ *
+ * `<Check>` on a sheet with rows is normally the radio this system removed --
+ * the answer to "which one is this" should be readable from the shape of the
+ * column, not from a control. Pairing is the one place both meanings are on
+ * screen at once: its SSH hosts are scene rows with the left rule, and its two
+ * ticks are verbs rather than states.
+ */
+const TICK_ALLOWLIST: Record<string, string> = {
+  'src/app/explore.tsx':
+    'two ticks, neither a selection: the copy button answers a clipboard write nothing else can acknowledge, and the success step draws one over the paired server as confirmation that the pairing landed',
+};
+
+test('a sheet exempted from the no-tick rule still says what its tick is', () => {
+  for (const [file, reason] of Object.entries(TICK_ALLOWLIST)) {
+    const text = code(readFileSync(file, 'utf8'));
+    // The exemption is only worth anything while the file really has both.
+    expect({ file, rows: text.includes('<SheetSceneRow') }).toEqual({ file, rows: true });
+    expect({ file, tick: /<Check\b/.test(text) }).toEqual({ file, tick: true });
+    expect(reason.length).toBeGreaterThan(20);
+  }
+});
+
 test('a sheet built on the scene has no cards, no radios and no close button', () => {
   const sceneSheets = SHEET_FRAMES.filter((file) => SCENE_ROOT.test(readFileSync(file, 'utf8')));
   // The agent surface is what the spec calibrates against, so it is what has to
@@ -195,9 +220,10 @@ test('a sheet built on the scene has no cards, no radios and no close button', (
       cards: text.includes('<SettingsCard') || text.includes('<ThemedSurface'),
     }).toEqual({ file, cards: false });
     // The selection mark is the scene's left rule, not a control to read. Asked
-    // only of a sheet that has rows: the setup sheet's tick is a "copied"
+    // only of a sheet that has rows, and with one exemption per file, because
+    // a tick is not always a selection: the setup sheet's is a "copied"
     // confirmation on a button, which is a different word entirely.
-    if (text.includes('<SheetSceneRow')) {
+    if (text.includes('<SheetSceneRow') && !(file in TICK_ALLOWLIST)) {
       expect({ file, radio: /\bindicatorDot\b|<Check\b/.test(text) }).toEqual({
         file,
         radio: false,
@@ -248,7 +274,7 @@ test('the fullscreen allowlist is two routes, and both say why', () => {
   }
 });
 
-test('no route declares fullScreenModal behind the route table\'s back', () => {
+test("no route declares fullScreenModal behind the route table's back", () => {
   const layout = code(readFileSync('src/app/_layout.tsx', 'utf8'));
   // One mention per allowlisted route, and it comes from
   // `sheetPresentationOptions` rather than a hand-written options object --
