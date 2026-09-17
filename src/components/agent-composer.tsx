@@ -62,7 +62,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
-import { fadeIn, fadeOut, fadeOutDown, timing } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut, fadeOutDown, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
@@ -112,11 +112,14 @@ const SessionChip = memo(function SessionChip({
   active,
   fallbackAgent,
   onPress,
+  onMeasure,
 }: {
   node: SessionNode;
   active: boolean;
   fallbackAgent?: string;
   onPress: (asid: string) => void;
+  /** Where this chip sits in the strip, so the strip can bring it into view. */
+  onMeasure?: (asid: string, x: number, width: number) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -138,7 +141,12 @@ const SessionChip = memo(function SessionChip({
         : theme.colors.success;
 
   return (
-    <View style={styles.chipRow}>
+    <View
+      style={styles.chipRow}
+      onLayout={(event) => {
+        const { x, width } = event.nativeEvent.layout;
+        onMeasure?.(session.asid, x, width);
+      }}>
       {/* The connector: one segment per level in, so a child reads as hanging
           off the chip before it rather than sitting beside it. */}
       {child ? (
@@ -586,6 +594,38 @@ export const AgentComposer = memo(function AgentComposer({
     [activeAsid, onSelectSession]
   );
 
+  /**
+   * The strip follows the session on screen.
+   *
+   * Opening a session from the sessions sheet, or a subagent from a child
+   * chip, changes which chip is lit -- and on a workspace with more sessions
+   * than fit, the lit one was frequently off the right-hand edge, so the strip
+   * went on showing a different session than the transcript above it. Each
+   * chip reports where it sits; when the active one changes, the strip scrolls
+   * it to the left edge.
+   */
+  const sessionStripRef = useRef<ScrollView>(null);
+  const chipOffsetsRef = useRef<Record<string, { x: number; width: number }>>({});
+  const measureChip = useCallback((asid: string, x: number, width: number) => {
+    chipOffsetsRef.current[asid] = { x, width };
+  }, []);
+
+  useEffect(() => {
+    if (!activeAsid) return;
+    // One frame after the chips have laid out: a session opened from a sheet
+    // arrives with the strip rebuilding under it, and the chip's offset is not
+    // known until it has.
+    const timer = setTimeout(() => {
+      const offset = chipOffsetsRef.current[activeAsid];
+      if (!offset) return;
+      sessionStripRef.current?.scrollTo({
+        x: Math.max(0, offset.x - SESSION_CHIP_REVEAL_MARGIN),
+        animated: true,
+      });
+    }, DURATION.short);
+    return () => clearTimeout(timer);
+  }, [activeAsid, sessionStrip]);
+
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const composerKeyboardStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: keyboardOffset.value }],
@@ -702,6 +742,7 @@ export const AgentComposer = memo(function AgentComposer({
           {/* Row 1: the workspace's sessions, and the open one's subagents */}
           {sessionStrip.length > 0 ? (
             <ScrollView
+              ref={sessionStripRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.sessionStripContent}
@@ -731,6 +772,7 @@ export const AgentComposer = memo(function AgentComposer({
                   active={node.session.asid === activeAsid}
                   {...(selectedAgent ? { fallbackAgent: selectedAgent } : {})}
                   onPress={handleSelectSession}
+                  onMeasure={measureChip}
                 />
               ))}
             </ScrollView>
@@ -1176,6 +1218,9 @@ const CompactionPill = memo(function CompactionPill({
     </Animated.View>
   );
 });
+
+/** How much of the strip stays visible to the left of the chip brought into view. */
+const SESSION_CHIP_REVEAL_MARGIN = 24;
 
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);

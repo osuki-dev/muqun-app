@@ -69,8 +69,19 @@ export default function AgentScreen() {
    */
   const showSessionTitle = hasRealSessionTitle({ title: sessionTitle });
 
+  /**
+   * The pill opens whatever it is showing.
+   *
+   * It used to open the workspace switcher whatever it said, so tapping a
+   * session's title -- which is what the pill shows whenever a session has one
+   * -- offered a list of directories, and the screen reader announced "Switch
+   * workspace" over the session's name. A control that says one thing and does
+   * another is worse than either.
+   */
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
   const switchWorkspaceLabel = t`Switch workspace: ${displayWorkspaceName}`;
+  // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
+  const openSessionsLabel = t`Sessions: ${sessionTitle ?? ''}`;
 
   return (
     <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
@@ -100,9 +111,13 @@ export default function AgentScreen() {
             <GlassChrome surface="navigation" style={styles.workspaceHeaderPill}>
               <PressableScale
                 testID="agent-header-workspace-pill"
-                onPress={() => router.push({ pathname: '/agent-workspace', params: { sessionId } })}
+                onPress={() =>
+                  showSessionTitle
+                    ? router.push('/agent-sessions')
+                    : router.push({ pathname: '/agent-workspace', params: { sessionId } })
+                }
                 accessibilityRole="button"
-                accessibilityLabel={switchWorkspaceLabel}
+                accessibilityLabel={showSessionTitle ? openSessionsLabel : switchWorkspaceLabel}
                 style={styles.workspaceHeaderPillInner}>
                 <WorkspacePillContent
                   showSession={showSessionTitle}
