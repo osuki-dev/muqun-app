@@ -224,6 +224,20 @@ export function extractCaption(kind: ToolKind, input: unknown): string {
 }
 
 /** The last path segment, which is what identifies a file on a phone. */
+/**
+ * The folder a path is in, as the caption under a file name.
+ *
+ * The caption used to be the whole path, which already had its basename in the
+ * title above it: the same long name, truncated twice, in two directions.
+ */
+export function dirname(path: string): string {
+  if (!path) return '';
+  const cut = path.lastIndexOf('/');
+  if (cut < 0) return '';
+  if (cut === 0) return '/';
+  return path.slice(0, cut);
+}
+
 export function basename(path: string): string {
   if (!path) return '';
   const parts = path.split('/').filter(Boolean);

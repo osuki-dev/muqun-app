@@ -29,6 +29,11 @@ msgstr "[mô hình]"
 msgid "[pr number]"
 msgstr "[số pr]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, other {# ký tự không hiển thị}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, other {# phút}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {còn # dòng nữa}}"
@@ -87,11 +93,6 @@ msgstr "{0} tệp · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
 msgstr "{0} tin nhắn trong ngữ cảnh"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "{0} dòng nữa"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -155,13 +156,17 @@ msgid "{commandName} · sending to"
 msgstr "{commandName} · đang gửi đến"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count} kết quả"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, other {# kết quả}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "Xong {done} trên {0}"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB không hiển thị"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -174,6 +179,10 @@ msgstr "{host} đưa ra một khóa mà ứng dụng này chưa từng thấy. H
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} tạm thời bị khóa. Hãy dùng cách dự phòng của hệ thống hoặc thử lại sau"
+
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "Đã sao chép mã {language} vào bộ nhớ tạm"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -394,6 +403,10 @@ msgstr "Trả lời"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Trả lời: {0}"
+
+#: src/components/agent-tool-card.tsx
+msgid "Answered"
+msgstr "Đã trả lời"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -866,6 +879,10 @@ msgstr "Đóng trình giả lập"
 msgid "Code"
 msgstr "Mã"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "Đã sao chép mã vào bộ nhớ tạm"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "Mã đã hết hạn"
@@ -1177,6 +1194,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về không gian làm việc"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Đã sao chép"
@@ -2192,6 +2210,7 @@ msgstr "Thấy lần cuối {minutes} phút trước"
 msgid "Last seen just now"
 msgstr "Thấy lần cuối vừa xong"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Mới nhất"
@@ -2750,6 +2769,10 @@ msgstr "Mở ảnh"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "Mở trong Thay đổi"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "Mở trong trình xem"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -3770,6 +3793,8 @@ msgstr "Hiển thị chữ trên trang chủ"
 msgid "Show illustration on Home"
 msgstr "Hiển thị hình minh hoạ trên trang chủ"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Hiện thêm"
@@ -4583,6 +4608,7 @@ msgstr "Mức sử dụng mã token và chi phí"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "Đã cắt bớt"

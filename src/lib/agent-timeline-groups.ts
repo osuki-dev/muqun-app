@@ -1,4 +1,5 @@
-import type { TimelineItem, TimelineRole } from './agent-session';
+import type { ShellInfo, TimelineItem, TimelineRole } from './agent-session';
+import { classifyTool, extractTarget } from './agent-tool-output';
 
 /**
  * One rendered message: the timeline's flat per-part items grouped back into
@@ -127,4 +128,74 @@ export function buildTimelineGroupsCached(
   const next = buildTimelineGroups(items, cache.last);
   cache.last = next;
   return next;
+}
+
+/**
+ * One card per shell.
+ *
+ * The gateway maps OpenCode's `Shell` message into a `shell` timeline part, and
+ * the tool call that started the shell arrives as a `tool` part of its own. So
+ * every `ls -la` the model ran was drawn twice: once in place, correctly, and
+ * once more in a group of `shell` parts that -- sorting after every `msg_` id
+ * -- piled up at the bottom of the transcript and grew for the life of the
+ * session. Each of those copies wore a `Background` chip and a "Background
+ * tasks" button whether or not anything had been detached, and one of them was
+ * still spinning half an hour after the turn it belonged to was interrupted.
+ *
+ * A `shell` part that names a command a tool call in the same session already
+ * ran is that tool call, seen from the other side, and it is dropped. What
+ * survives is a shell with no call behind it -- one detached by
+ * `POST …/background`, or one `/api/agent-shells` is reporting that this
+ * transcript never started -- and that is drawn once, in place, as the
+ * background card it actually is.
+ *
+ * The shell list is the authority on what is still running: a detached shell
+ * the tray no longer lists has finished, whatever the snapshot that carried the
+ * part said. That is the same fact the tray's own counter is drawn from, so the
+ * card and the tray cannot disagree.
+ *
+ * Returns the array it was given when nothing changed -- the memoised cells
+ * downstream compare by reference.
+ */
+export function reconcileShellParts(
+  items: TimelineItem[],
+  shells: readonly ShellInfo[]
+): TimelineItem[] {
+  const toolCommands = new Set<string>();
+  let shellParts = 0;
+  for (const item of items) {
+    const part = item.part;
+    if (part.type === 'shell') {
+      shellParts += 1;
+      continue;
+    }
+    if (part.type !== 'tool' || classifyTool(part.name) !== 'shell') continue;
+    const command = extractTarget('shell', part.input).trim();
+    if (command) toolCommands.add(command);
+  }
+  if (shellParts === 0) return items;
+
+  const byId = new Map(shells.map((shell) => [shell.id, shell]));
+  const next: TimelineItem[] = [];
+  let changed = false;
+  for (const item of items) {
+    const part = item.part;
+    if (part.type !== 'shell') {
+      next.push(item);
+      continue;
+    }
+    if (toolCommands.has(part.command.trim())) {
+      changed = true;
+      continue;
+    }
+    const listed = byId.get(part.shell_id);
+    const status = listed ? listed.status : part.status === 'running' ? 'exited' : part.status;
+    if (status === part.status) {
+      next.push(item);
+      continue;
+    }
+    changed = true;
+    next.push({ ...item, part: { ...part, status } });
+  }
+  return changed ? next : items;
 }

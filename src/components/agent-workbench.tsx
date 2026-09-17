@@ -61,6 +61,7 @@ import {
   exportAgentSession,
   revertAgentSession,
   sendAgentCommand,
+  orderKeyAfter,
   sortTimeline,
   formatModelName,
   isBusyStatus,
@@ -113,9 +114,11 @@ import {
   AgentUserMessage,
   type AgentToolActions,
 } from './agent-message-block';
+import { isAtBottom, showJumpToLatest } from '@/lib/transcript-scroll';
 import {
   buildTimelineGroupsCached,
   createTimelineGroupCache,
+  reconcileShellParts,
   type TimelineRenderGroup,
 } from '@/lib/agent-timeline-groups';
 import { AgentPermissionCard } from './agent-permission-card';
@@ -134,13 +137,6 @@ import { appChrome } from '@/constants/appearance';
  * growing the rendered window downwards from the latest page.
  */
 const HISTORY_PAGE_SIZE = 40;
-
-/**
- * Distance from the bottom, in pixels, within which streaming output may keep
- * the list pinned to the latest message. Beyond it, the reader is browsing
- * history and new output must not move their viewport.
- */
-const NEAR_BOTTOM_PX = 120;
 
 /**
  * How long the screen's own notice stays before it fades out by itself.
@@ -287,9 +283,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
-  // Whether the reader is browsing history, which is what shows the
-  // jump-to-latest button.
+  // Whether the reader is browsing history, and whether anything arrived
+  // while they were: together, the two facts the jump-to-latest pill is drawn
+  // from. New output never moves their viewport, so the pill is the whole of
+  // what the transcript is allowed to do about it.
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [unseenRows, setUnseenRows] = useState(0);
 
   // Attachment image preview. The shared lightbox, not a second copy of it:
   // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
@@ -465,15 +464,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleTimelineScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     if (contentSize.height <= 0) return;
-    const distanceFromBottom = contentOffset.y + layoutMeasurement.height - contentSize.height;
     // For the jump-to-latest affordance; React bails out when the value is
     // unchanged, so streaming near the bottom costs nothing.
-    setIsNearBottom(distanceFromBottom < NEAR_BOTTOM_PX);
+    setIsNearBottom(
+      isAtBottom({
+        offset: contentOffset.y,
+        viewport: layoutMeasurement.height,
+        content: contentSize.height,
+      })
+    );
   }, []);
 
   const handleJumpToLatest = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     listRef.current?.scrollToEnd({ animated: true });
+    setUnseenRows(0);
   }, []);
 
   // Initial load
@@ -1136,7 +1141,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
     const isQueued = isBusyStatus(sessionInfo?.status) && delivery === 'queue';
 
-    // Optimistically add user text item
+    // Optimistically add user text item.
+    //
+    // With an order key, not on the strength of its id: a locally made
+    // `msg_1758…` sorts after the engine's `msg_019…`, so the reply to this
+    // message used to render above it and jump back into place when the turn
+    // ended. The key puts the row after everything on screen and before
+    // anything the engine makes next, and the acknowledged row inherits it.
     const tempUserItem: TimelineItem = {
       id: `temp_usr_${Date.now()}`,
       message_id: `msg_${Date.now()}`,
@@ -1147,6 +1158,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       part: { type: 'text', text },
       attachments,
       queued: isQueued,
+      order: orderKeyAfter(timeline),
     };
     setTimeline((prev) => [...prev, tempUserItem]);
     // No manual scroll. Following the newest message is the list's
@@ -1706,10 +1718,39 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   // Rendered window over the full timeline: entering a session shows the
   // latest page; earlier pages are prepended on demand.
-  const visibleTimeline = useMemo(
-    () => (windowStart > 0 ? timeline.slice(windowStart) : timeline),
-    [timeline, windowStart]
+  //
+  // A `shell` part that is the other side of a tool call in the same session
+  // is dropped here rather than drawn a second time, and a detached one takes
+  // its running state from the shell list the tray is drawn from.
+  //
+  // Over the whole timeline, not the window: the tool call a `shell` part
+  // mirrors is often hundreds of rows above it, outside the page being drawn,
+  // and a window-sized search would find nothing and draw the duplicate.
+  const reconciledTimeline = useMemo(
+    () => reconcileShellParts(timeline, shells),
+    [timeline, shells]
   );
+  const visibleTimeline = useMemo(
+    () => (windowStart > 0 ? reconciledTimeline.slice(windowStart) : reconciledTimeline),
+    [reconciledTimeline, windowStart]
+  );
+
+  /**
+   * Rows that arrived while the reader was up in the history.
+   *
+   * Counted against the last row they were level with, so scrolling up to
+   * re-read something does not by itself put a button over the transcript --
+   * and reaching the end again clears it without a tap.
+   */
+  const seenRowsRef = useRef(0);
+  useEffect(() => {
+    if (isNearBottom) {
+      seenRowsRef.current = timeline.length;
+      setUnseenRows(0);
+      return;
+    }
+    setUnseenRows(Math.max(0, timeline.length - seenRowsRef.current));
+  }, [timeline.length, isNearBottom]);
 
   // Group the window back into whole messages, the shape OpenCode's own UI
   // renders: reasoning and tool calls fold into the message they belong to.
@@ -2390,20 +2431,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         </Animated.View>
       ) : null}
 
-      {/* Jump back to the latest message while browsing history */}
-      {!loading && timeline.length > 0 && !isNearBottom ? (
+      {/*
+        The one thing the transcript does about output that landed behind the
+        reader: offer the way back. Never a scroll of its own -- a viewport
+        that moves under someone reading is the behaviour this whole screen is
+        built to avoid -- and never a standing button either: it appears when
+        something has actually arrived, and goes when they are level with it.
+      */}
+      {!loading && showJumpToLatest(isNearBottom, unseenRows) ? (
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
           style={[styles.jumpToLatestWrap, { bottom: bottomInset + 196 }]}>
-          <GlassChrome surface="navigation" style={styles.jumpToLatestCircle}>
+          <GlassChrome surface="navigation" style={styles.jumpToLatestPill}>
             <PressableScale
               testID="agent-jump-to-latest-btn"
               accessibilityRole="button"
               accessibilityLabel={t`Scroll to latest message`}
               onPress={handleJumpToLatest}
               style={styles.jumpToLatestInner}>
-              <ChevronDown size={18} color={theme.colors.text} strokeWidth={2.2} />
+              <ChevronDown size={15} color={theme.colors.text} strokeWidth={2.2} />
+              <Text variant="caption" weight="semibold" color={theme.colors.text}>
+                <Trans>Latest</Trans>
+              </Text>
             </PressableScale>
           </GlassChrome>
         </Animated.View>
@@ -2542,7 +2592,11 @@ function upsertTimelineItems(
           it.part.text.trim() === text
       );
       if (optimistic >= 0) {
-        next[optimistic] = item;
+        // The acknowledged row takes the optimistic row's place, exactly: its
+        // own id would sort it somewhere else, and the reader would watch
+        // their own message move.
+        const order = next[optimistic].order;
+        next[optimistic] = order === undefined ? item : { ...item, order };
         dirty = true;
         continue;
       }
@@ -2636,7 +2690,9 @@ const styles = StyleSheet.create({
   },
   timelineContent: {
     paddingHorizontal: 14,
-    gap: 10,
+    // The rows carry their own rhythm (`TRANSCRIPT_ROW_GAP`); a gap here as
+    // well is what made a message boundary twice the gap of a row boundary.
+    gap: 0,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -2769,20 +2825,20 @@ const styles = StyleSheet.create({
     right: 14,
     zIndex: 5,
   },
-  jumpToLatestCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  jumpToLatestPill: {
+    height: 34,
+    borderRadius: 17,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
   jumpToLatestInner: {
-    width: '100%',
-    height: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
+    height: '100%',
+    paddingHorizontal: 12,
   },
   yoloBannerWrap: {
     position: 'absolute',

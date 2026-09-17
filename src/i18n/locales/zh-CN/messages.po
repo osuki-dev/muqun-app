@@ -29,6 +29,11 @@ msgstr "[模型]"
 msgid "[pr number]"
 msgstr "[PR 编号]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, other {未显示 # 个字符}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, other {# 分钟}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {还有 # 行}}"
@@ -87,11 +93,6 @@ msgstr "{0} 个文件 · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
 msgstr "上下文中有 {0} 条消息"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "还有 {0} 行"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -155,13 +156,17 @@ msgid "{commandName} · sending to"
 msgstr "{commandName}·发送给"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count} 个结果"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, other {# 个结果}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "未显示 {hiddenKb} KB"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -174,6 +179,10 @@ msgstr "{host} 出示了此应用从未见过的密钥。信任之前，请先�
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} 已暂时锁定。请改用系统备用方式，或稍后再试"
+
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "已复制 {language} 代码到剪贴板"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -394,6 +403,10 @@ msgstr "回答"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "回答：{0}"
+
+#: src/components/agent-tool-card.tsx
+msgid "Answered"
+msgstr "已回答"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -866,6 +879,10 @@ msgstr "关闭模拟器"
 msgid "Code"
 msgstr "代码"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "已复制代码到剪贴板"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "代码已过期"
@@ -1177,6 +1194,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "对话式协助，以及关于工作区的开放式提问"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "已复制"
@@ -2192,6 +2210,7 @@ msgstr "上次在线于 {minutes} 分钟前"
 msgid "Last seen just now"
 msgstr "刚刚在线"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "最新"
@@ -2750,6 +2769,10 @@ msgstr "打开图片"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "在更改中打开"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "在查看器中打开"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -3770,6 +3793,8 @@ msgstr "显示首页文字"
 msgid "Show illustration on Home"
 msgstr "在首页显示插图"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "显示更多"
@@ -4583,6 +4608,7 @@ msgstr "Token 用量与花费"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "改动太多，无法全部列出。这只是开头，不是全部"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "已截断"

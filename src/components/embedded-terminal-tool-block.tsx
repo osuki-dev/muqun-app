@@ -13,7 +13,6 @@ import {
   AlertCircle,
   Braces,
   ChevronDown,
-  ChevronRight,
   CircleHelp,
   FileDiff,
   FilePen,
@@ -144,12 +143,15 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       ? theme.colors.warning
       : theme.colors.success;
 
+  // Closed points down, open points up, everywhere in the transcript. It used
+  // to swap a right-chevron for a down-chevron *and* rotate the result 90
+  // degrees, so an open card pointed left.
   const chevronProgress = useSharedValue(expanded ? 1 : 0);
   useEffect(() => {
     chevronProgress.value = withTiming(expanded ? 1 : 0, timing());
   }, [expanded, chevronProgress]);
   const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
+    transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
   }));
 
   const hasBody = Boolean(children);
@@ -181,6 +183,10 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               <Text
                 variant="caption"
                 numberOfLines={1}
+                // A long file name keeps its start and its extension; the
+                // caption under it carries the folder rather than the name
+                // again.
+                ellipsizeMode="middle"
                 color={theme.colors.textMuted}
                 style={styles.target}>
                 {title}
@@ -211,17 +217,13 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         ) : null}
         {hasBody ? (
           <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
-            {expanded ? (
-              <ChevronDown size={12} color={theme.colors.textMuted} />
-            ) : (
-              <ChevronRight size={12} color={theme.colors.textMuted} />
-            )}
+            <ChevronDown size={12} color={theme.colors.textMuted} />
           </Animated.View>
         ) : null}
       </PressableScale>
 
       {chips || truncated || background ? (
-        <View style={styles.chipRow}>
+        <View style={[styles.chipRow, styles.underTitle]}>
           {chips}
           {background ? (
             <View style={[styles.badge, { borderColor: colors.accent }]}>
@@ -242,20 +244,24 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 
       {/* OpenCode's own message, said as it was said. */}
       {failed && error ? (
-        <Text variant="caption" selectable color={theme.colors.danger} style={styles.errorText}>
+        <Text
+          variant="caption"
+          selectable
+          color={theme.colors.danger}
+          style={[styles.errorText, styles.underTitle]}>
           {error}
         </Text>
       ) : null}
 
-      {preview}
+      {preview ? <View style={styles.underTitle}>{preview}</View> : null}
 
-      {actions ? <View style={styles.actionRow}>{actions}</View> : null}
+      {actions ? <View style={[styles.actionRow, styles.underTitle]}>{actions}</View> : null}
 
       {expanded && hasBody ? (
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
-          style={[styles.body, { borderLeftColor: theme.colors.border }]}>
+          style={[styles.body, styles.underTitle, { borderLeftColor: theme.colors.border }]}>
           {children}
         </Animated.View>
       ) : null}
@@ -263,23 +269,37 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   );
 });
 
+/** The icon column, and the gap after it: what the title is indented by. */
+const ICON_COLUMN = 13;
+const HEADER_GAP = 7;
+
 const styles = StyleSheet.create({
   container: {
     // A card is a row: its header lays out with flex and its diff rows pan,
     // neither of which measures inside a shrink-to-fit box.
     alignSelf: 'stretch',
-    marginVertical: 2,
-    paddingVertical: 7,
-    paddingHorizontal: 9,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     gap: 5,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: HEADER_GAP,
   },
   headerIcon: {
     paddingTop: 1,
+    width: ICON_COLUMN,
+  },
+  /**
+   * The column the title starts in.
+   *
+   * The exit chip, the result count, the error line and the body all began at
+   * the card's outer edge while the title was indented past the icon, so every
+   * fact about a call hung left of the call it was about.
+   */
+  underTitle: {
+    marginLeft: ICON_COLUMN + HEADER_GAP,
   },
   headerText: {
     flex: 1,
@@ -335,7 +355,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   body: {
-    marginLeft: 4,
     paddingLeft: 8,
     borderLeftWidth: StyleSheet.hairlineWidth,
     gap: 4,

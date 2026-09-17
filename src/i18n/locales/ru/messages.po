@@ -29,6 +29,11 @@ msgstr "[модель]"
 msgid "[pr number]"
 msgstr "[номер pr]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, one {# символ не показан} few {# символа не показано} many {# символов не показано} other {# символа не показано}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, one {# минута} few {# минуты} many {# минут
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {ещё # строка} few {ещё # строки} many {ещё # строк} other {ещё # строки}}"
@@ -87,11 +93,6 @@ msgstr "{0} файлов · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
 msgstr "Сообщений в контексте: {0}"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "ещё {0} строк"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -155,13 +156,17 @@ msgid "{commandName} · sending to"
 msgstr "{commandName} · отправка"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count} результатов"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, one {# результат} few {# результата} many {# результатов} other {# результата}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{done} из {0} готово"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} КБ не показано"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -174,6 +179,10 @@ msgstr "{host} предъявил ключ, которого это прилож
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} временно заблокирован. Используйте системный запасной способ или повторите позже"
+
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "Код {language} скопирован в буфер обмена"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -394,6 +403,10 @@ msgstr "Ответ"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Ответ: {0}"
+
+#: src/components/agent-tool-card.tsx
+msgid "Answered"
+msgstr "Отвечено"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -866,6 +879,10 @@ msgstr "Закрыть симулятор"
 msgid "Code"
 msgstr "Код"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "Код скопирован в буфер обмена"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "Код истёк"
@@ -1177,6 +1194,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Диалоговая помощь и свободные вопросы о рабочем пространстве"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Скопировано"
@@ -2192,6 +2210,7 @@ msgstr "Последний раз в сети {minutes} мин. назад"
 msgid "Last seen just now"
 msgstr "В сети только что"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Последнее"
@@ -2750,6 +2769,10 @@ msgstr "Открыть изображение"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "Открыть в изменениях"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "Открыть в просмотрщике"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -3770,6 +3793,8 @@ msgstr "Показывать текст на главной"
 msgid "Show illustration on Home"
 msgstr "Показывать иллюстрацию на главной"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Показать ещё"
@@ -4583,6 +4608,7 @@ msgstr "Использование токенов и стоимость"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Слишком много изменений для списка. Это их начало, а не всё"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "Обрезано"

@@ -29,6 +29,11 @@ msgstr "[modelo]"
 msgid "[pr number]"
 msgstr "[número de pr]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, one {# carácter no mostrado} other {# caracteres no mostrados}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, one {# minuto} other {# minutos}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# línea más} other {# líneas más}}"
@@ -87,11 +93,6 @@ msgstr "{0} archivos · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
 msgstr "{0} mensajes en el contexto"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "{0} líneas más"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -155,13 +156,17 @@ msgid "{commandName} · sending to"
 msgstr "{commandName} · enviando a"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count} resultados"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, one {# resultado} other {# resultados}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{done} de {0} hechas"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB no mostrados"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -174,6 +179,10 @@ msgstr "{host} presentó una clave que esta app no había visto. Compara la huel
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} no está disponible temporalmente. Usa el método alternativo del sistema o inténtalo más tarde"
+
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "Código {language} copiado al portapapeles"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -394,6 +403,10 @@ msgstr "Respuesta"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Respuesta: {0}"
+
+#: src/components/agent-tool-card.tsx
+msgid "Answered"
+msgstr "Respondido"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -866,6 +879,10 @@ msgstr "Cerrar el simulador"
 msgid "Code"
 msgstr "Código"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "Código copiado al portapapeles"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "Código caducado"
@@ -1177,6 +1194,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Ayuda conversacional y preguntas abiertas sobre el espacio de trabajo"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Copiado"
@@ -2192,6 +2210,7 @@ msgstr "Visto hace {minutes} min"
 msgid "Last seen just now"
 msgstr "Visto justo ahora"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "Última"
@@ -2750,6 +2769,10 @@ msgstr "Abrir imagen"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "Abrir en Cambios"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "Abrir en el visor"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -3770,6 +3793,8 @@ msgstr "Mostrar el texto en Inicio"
 msgid "Show illustration on Home"
 msgstr "Mostrar la ilustración en Inicio"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Mostrar más"
@@ -4583,6 +4608,7 @@ msgstr "Uso de tokens y costo"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Demasiados cambios para listarlos. Esto es el principio, no todo"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "Truncado"

@@ -160,6 +160,10 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
       rowOddBackgroundColor: colors.surface,
       cellPaddingHorizontal: 12,
       cellPaddingVertical: 8,
+      // A wide table scrolls, and it scrolls to the edge of the screen rather
+      // than inside the plate's 12pt padding: a phone-width column of a
+      // four-column table is unreadable with a gutter on each side of it.
+      horizontalOverflow: 12,
     },
     taskList: {
       checkedColor: link,

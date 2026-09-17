@@ -1104,6 +1104,18 @@ export interface TimelineItem {
   attachments?: string[];
   /** Client-side only: an optimistic row that has not been acknowledged. */
   queued?: boolean;
+  /**
+   * Client-side only: where this row sorts, when its id cannot say.
+   *
+   * The engine's message ids sort by creation, so `message_id` is the order --
+   * except for a row the engine has never seen. An optimistic user row carries
+   * a locally made id, and `msg_1758…` sorts *after* the engine's `msg_019…`,
+   * which is how the reply to a message came to render above the message. The
+   * row is given a key that keeps it where it was typed instead, and keeps it
+   * when the real row replaces it, so nothing re-sorts under the reader when
+   * the acknowledgement lands.
+   */
+  order?: string;
 }
 
 export function parseTimelineItem(value: unknown): TimelineItem | null {
@@ -1136,22 +1148,53 @@ export function parseTimelineItems(value: unknown): TimelineItem[] {
   return out;
 }
 
+/** Where a row sorts: its own key when it has one, its message id otherwise. */
+export function timelineOrderKey(item: TimelineItem): string {
+  return item.order ?? item.message_id;
+}
+
 /**
- * The timeline's own order: `(message_id, ordinal)`, with message ids sorting
+ * A key that sorts after every *message* in hand and before anything made
+ * later.
+ *
+ * `~` is above every character the engine's ids use, and its ids are of one
+ * fixed length, so no id made after this one can fall between the two: an id
+ * that differs from the last one differs before the suffix is reached. An
+ * empty timeline has nothing to sort after, and the empty key puts the first
+ * row of a session first.
+ *
+ * A `shell` row is not a message and is skipped. It is keyed by the shell's
+ * own id -- `sh_…`, from a different id space -- which sorts after every
+ * `msg_…` there will ever be, so anchoring a new message after one would put
+ * it after every reply as well, which is the bug this key exists to fix.
+ */
+export function orderKeyAfter(items: readonly TimelineItem[]): string {
+  let max = '';
+  let fallback = '';
+  for (const item of items) {
+    const key = timelineOrderKey(item);
+    if (key > fallback) fallback = key;
+    if (item.part.type === 'shell') continue;
+    if (key > max) max = key;
+  }
+  const anchor = max || fallback;
+  return anchor ? `${anchor}~` : '';
+}
+
+/**
+ * The timeline's own order: `(order key, ordinal)`, with message ids sorting
  * by creation.
  *
  * Stable, and applied to a copy: sorting the array a render is reading from is
- * how a list gets a row in two places at once. Ids that sort equal keep the
+ * how a list gets a row in two places at once. Keys that sort equal keep the
  * order they arrived in, which is what makes a streaming append look like an
  * append rather than a shuffle.
  */
 export function sortTimeline(items: readonly TimelineItem[]): TimelineItem[] {
   return items
-    .map((item, index) => ({ item, index }))
+    .map((item, index) => ({ item, index, key: timelineOrderKey(item) }))
     .sort((a, b) => {
-      if (a.item.message_id !== b.item.message_id) {
-        return a.item.message_id < b.item.message_id ? -1 : 1;
-      }
+      if (a.key !== b.key) return a.key < b.key ? -1 : 1;
       if (a.item.ordinal !== b.item.ordinal) return a.item.ordinal - b.item.ordinal;
       return a.index - b.index;
     })

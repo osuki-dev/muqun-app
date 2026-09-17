@@ -1,12 +1,14 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { plural } from '@lingui/core/macro';
 import { FileText, GitFork, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown';
 import { StatusDot } from '@/components/status-dot';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import {
@@ -17,12 +19,13 @@ import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
-import { isSafeExternalLink } from '@/lib/safe-link';
+import { TOOL_BODY_MAX_LINES, capToolBody } from '@/lib/markdown-cap';
 import { diffRowsForFence, diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
 import {
   basename,
   capLines,
   classifyTool,
+  dirname,
   editFilesFromMetadata,
   executeToolCalls,
   extractCaption,
@@ -96,17 +99,31 @@ const Chip = memo(function Chip({ text, color }: { text: string; color: string }
   );
 });
 
-/** Monospace body, syntax-highlighted when the renderer has a grammar for it. */
+/**
+ * Monospace body, syntax-highlighted when the renderer has a grammar for it,
+ * and never longer than one native view can measure.
+ *
+ * A `read` of a five-thousand-line file used to be inlined whole: one shadow
+ * node measuring ~70,000px, a layout Fabric could not settle, and an abort.
+ * Four hundred lines is what a card draws; the rest is a tap away, and the
+ * whole file is one tap further, in the viewer that is built to scroll it.
+ */
 const CodeBody = memo(function CodeBody({
   body,
   language,
   markdownStyle,
+  onOpenInViewer,
 }: {
   body: string;
   language?: string;
   markdownStyle: MarkdownStyle;
+  onOpenInViewer?: () => void;
 }) {
-  const fenced = useMemo(() => fencedCode(body, language), [body, language]);
+  const { t } = useLingui();
+  const colors = usePaneChatColors();
+  const [budget, setBudget] = useState(TOOL_BODY_MAX_LINES);
+  const capped = useMemo(() => capToolBody(body, budget), [body, budget]);
+  const fenced = useMemo(() => fencedCode(capped.text, language), [capped.text, language]);
   // The card is the surface; the code block inside it draws no box of its own.
   const flat = useMemo<MarkdownStyle>(
     () => ({
@@ -123,16 +140,39 @@ const CodeBody = memo(function CodeBody({
     [markdownStyle]
   );
   return (
-    <EnrichedMarkdownText
-      key={markdownPaletteKey(markdownStyle)}
-      flavor="commonmark"
-      markdown={fenced.text}
-      markdownStyle={flat}
-      containerStyle={styles.stretch}
-      selectable
-      streamingAnimation={false}
-      textBreakStrategy="simple"
-    />
+    <View style={styles.stretch}>
+      <EnrichedMarkdownText
+        key={markdownPaletteKey(markdownStyle)}
+        flavor="commonmark"
+        markdown={fenced.text}
+        markdownStyle={flat}
+        containerStyle={styles.stretch}
+        selectable
+        streamingAnimation={false}
+        textBreakStrategy="simple"
+      />
+      {capped.hidden > 0 ? (
+        <TruncationFooter
+          note={t`${plural(capped.hidden, { one: '# more line', other: '# more lines' })}`}
+          onShowMore={() => setBudget((prev) => prev + TOOL_BODY_MAX_LINES)}
+          showMoreLabel={t`Show more`}
+          extra={
+            onOpenInViewer ? (
+              <PressableScale
+                testID="agent-tool-open-viewer"
+                accessibilityRole="button"
+                accessibilityLabel={t`Open in viewer`}
+                onPress={onOpenInViewer}
+                style={[styles.moreChip, { borderColor: colors.border }]}>
+                <Text variant="caption" color={colors.accent}>
+                  {t`Open in viewer`}
+                </Text>
+              </PressableScale>
+            ) : null
+          }
+        />
+      ) : null}
+    </View>
   );
 });
 
@@ -147,8 +187,13 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
-  const [showAll, setShowAll] = useState(false);
-  const capped = useMemo(() => (showAll ? { text, hidden: 0 } : capLines(text)), [text, showAll]);
+  // "Show the rest" used to mean the whole 64 KiB, in one `<Text>`. It means
+  // another four hundred lines now, and says so.
+  const [budget, setBudget] = useState(0);
+  const capped = useMemo(
+    () => (budget === 0 ? capLines(text) : capToolBody(text, budget)),
+    [text, budget]
+  );
 
   if (!text) return null;
   return (
@@ -161,10 +206,12 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
           testID="agent-tool-output-expand"
           accessibilityRole="button"
           accessibilityLabel={t`Show the rest of this output`}
-          onPress={() => setShowAll(true)}
+          onPress={() =>
+            setBudget((prev) => (prev === 0 ? TOOL_BODY_MAX_LINES : prev + TOOL_BODY_MAX_LINES))
+          }
           style={[styles.moreChip, { borderColor: colors.border }]}>
           <Text variant="caption" color={colors.accent}>
-            {t`${capped.hidden} more lines`}
+            {t`${plural(capped.hidden, { one: '# more line', other: '# more lines' })}`}
           </Text>
         </PressableScale>
       ) : null}
@@ -366,7 +413,13 @@ export const AgentToolCard = memo(function AgentToolCard({
     }
     const count = resultCountFromMetadata(part.metadata);
     if ((kind === 'glob' || kind === 'grep' || kind === 'search') && count !== undefined) {
-      nodes.push(<Chip key="count" text={t`${count} results`} color={theme.colors.textMuted} />);
+      nodes.push(
+        <Chip
+          key="count"
+          text={t`${plural(count, { one: '# result', other: '# results' })}`}
+          color={theme.colors.textMuted}
+        />
+      );
     }
     if (kind === 'subagent') {
       const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;
@@ -411,7 +464,10 @@ export const AgentToolCard = memo(function AgentToolCard({
         </PressableScale>
       );
     }
-    if (part.background && onOpenBackgroundTray) {
+    // Only while it is still running: the tray lists what is running, and a
+    // finished command that says "Background tasks" sends the reader to an
+    // empty sheet.
+    if (part.background && pending && onOpenBackgroundTray) {
       nodes.push(
         <PressableScale
           key="tray"
@@ -476,8 +532,10 @@ export const AgentToolCard = memo(function AgentToolCard({
 
   const { headerTitle, headerCaption } = useMemo(() => {
     if (kind === 'read' || kind === 'edit' || kind === 'write') {
-      // The basename identifies the file; the path is the quieter second line.
-      return { headerTitle: basename(target) || target, headerCaption: caption };
+      // The basename identifies the file; the *folder* is the quieter second
+      // line. Handing the caption the whole path again printed the same long
+      // name twice, truncated twice, in two directions.
+      return { headerTitle: basename(target) || target, headerCaption: dirname(caption) };
     }
     if (kind === 'subagent') {
       const agent = typeof input?.agent === 'string' ? input.agent : undefined;
@@ -638,7 +696,14 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       // is the content; the base64 never is.
       const body = stripDataUris(stripReadLineNumbers(outputText));
       if (!body) return null;
-      return <CodeBody body={body} language={language} markdownStyle={markdownStyle} />;
+      return (
+        <CodeBody
+          body={body}
+          language={language}
+          markdownStyle={markdownStyle}
+          {...viewerAction(target, args.onOpenFile)}
+        />
+      );
     }
 
     case 'edit': {
@@ -669,6 +734,7 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
           body={args.writeContent}
           language={fenceLanguageForPath(target)}
           markdownStyle={markdownStyle}
+          {...viewerAction(target, args.onOpenFile)}
         />
       ) : (
         <OutputLines text={outputText} />
@@ -707,18 +773,19 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       return outputText ? <WebResult markdown={outputText} markdownStyle={markdownStyle} /> : null;
 
     case 'subagent':
-      return args.subagentText ? (
-        <EnrichedMarkdownText
-          key={markdownPaletteKey(markdownStyle)}
-          flavor="commonmark"
-          markdown={args.subagentText}
-          markdownStyle={markdownStyle}
-          containerStyle={styles.stretch}
-          selectable
-          streamingAnimation={false}
-          textBreakStrategy="simple"
-        />
-      ) : null;
+      if (args.subagentText) {
+        return (
+          <BoundedMarkdown
+            markdown={args.subagentText}
+            markdownStyle={markdownStyle}
+            openLinks={false}
+          />
+        );
+      }
+      // A subagent that failed returned nothing to render, and a card with no
+      // body has no chevron -- the one case where the reader most wants to
+      // open it. The prompt it was given is what there is to show.
+      return <GenericToolBody input={part.input} outputText={outputText} />;
 
     case 'skill': {
       const description =
@@ -727,9 +794,12 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
     }
 
     case 'question':
-      // v2 asks through forms; the form card is the question. A second copy of
-      // it in the timeline would be two places to answer the same thing.
-      return null;
+      // v2 asks through forms, and the form card is where the question is
+      // answered -- a second copy of it in the timeline would be two places to
+      // answer the same thing. What is left once it has been answered is a row
+      // naming a question with no way to see what was asked or what was said,
+      // so the card keeps a body: the question, and the answer under it.
+      return <QuestionBody input={input} answer={outputText} />;
 
     case 'execute':
       return (
@@ -745,6 +815,22 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
     default:
       return <GenericToolBody input={part.input} outputText={outputText} />;
   }
+}
+
+/**
+ * The same file, in the viewer that is built to scroll it.
+ *
+ * Offered only for a real path: a `read` of a URL or of a relative name the
+ * gateway resolved elsewhere has nothing the asset viewer could open.
+ */
+function viewerAction(
+  target: string,
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void
+): { onOpenInViewer?: () => void } {
+  if (!onOpenFile || !target.startsWith('/')) return {};
+  const name = basename(target);
+  const mime = /\.mdx?$/i.test(target) ? 'text/markdown' : 'text/plain';
+  return { onOpenInViewer: () => onOpenFile({ uri: target, mime, name }) };
 }
 
 /** A `+`/`-` patch made from a before and an after, when no real one came. */
@@ -853,22 +939,41 @@ const WebResult = memo(function WebResult({
   markdown: string;
   markdownStyle: MarkdownStyle;
 }) {
+  // Github flavor: a fetched page's markdown reliably has tables and task
+  // lists in it, and commonmark draws neither.
+  return <BoundedMarkdown markdown={markdown} markdownStyle={markdownStyle} flavor="github" />;
+});
+
+/** What was asked, and what was answered. */
+const QuestionBody = memo(function QuestionBody({
+  input,
+  answer,
+}: {
+  input: Record<string, unknown> | null;
+  answer: string;
+}) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
+  const question =
+    typeof input?.question === 'string'
+      ? input.question
+      : typeof input?.prompt === 'string'
+        ? input.prompt
+        : '';
+  if (!question && !answer) return null;
   return (
-    <EnrichedMarkdownText
-      key={markdownPaletteKey(markdownStyle)}
-      flavor="github"
-      markdown={markdown}
-      markdownStyle={markdownStyle}
-      containerStyle={styles.stretch}
-      selectable
-      selectionColor={theme.colors.primary}
-      streamingAnimation={false}
-      textBreakStrategy="simple"
-      onLinkPress={({ url }) => {
-        if (isSafeExternalLink(url)) void Linking.openURL(url);
-      }}
-    />
+    <View style={styles.stretch}>
+      {question ? (
+        <Text variant="caption" selectable color={theme.colors.text} style={styles.skillText}>
+          {question}
+        </Text>
+      ) : null}
+      {answer ? (
+        <Text variant="caption" selectable color={theme.colors.textMuted} style={styles.skillText}>
+          {t`Answered`}: {answer}
+        </Text>
+      ) : null}
+    </View>
   );
 });
 

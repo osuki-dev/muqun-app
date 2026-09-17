@@ -29,6 +29,11 @@ msgstr "[모델]"
 msgid "[pr number]"
 msgstr "[PR 번호]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, other {#자 표시되지 않음}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -51,6 +56,7 @@ msgstr "{0, plural, other {#분}}"
 
 #. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
+#: src/components/agent-tool-card.tsx
 #: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {#줄 더 있음}}"
@@ -87,11 +93,6 @@ msgstr "파일 {0}개 · +{1} −{2}"
 #: src/components/agent-context-sheet.tsx
 msgid "{0} messages in context"
 msgstr "컨텍스트에 있는 메시지 {0}개"
-
-#. placeholder {0}: capped.hidden
-#: src/components/agent-tool-card.tsx
-msgid "{0} more lines"
-msgstr "{0}줄 더"
 
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
@@ -155,13 +156,17 @@ msgid "{commandName} · sending to"
 msgstr "{commandName} · 보내는 대상"
 
 #: src/components/agent-tool-card.tsx
-msgid "{count} results"
-msgstr "{count}개 결과"
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, other {결과 #개}}"
 
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB 표시되지 않음"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -174,6 +179,10 @@ msgstr "{host}이(가) 이 앱이 처음 보는 키를 제시했습니다. 신�
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단을 쓰거나 나중에 다시 시도하세요"
+
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "{language} 코드를 클립보드에 복사했습니다"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -394,6 +403,10 @@ msgstr "답변"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "응답: {0}"
+
+#: src/components/agent-tool-card.tsx
+msgid "Answered"
+msgstr "답변함"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -866,6 +879,10 @@ msgstr "시뮬레이터 닫기"
 msgid "Code"
 msgstr "코드"
 
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "코드를 클립보드에 복사했습니다"
+
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "코드가 만료되었습니다"
@@ -1177,6 +1194,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "대화형 도움말과 작업 공간에 대한 자유로운 질문"
 
 #: src/components/agent-message-block.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "복사됨"
@@ -2192,6 +2210,7 @@ msgstr "마지막 확인: {minutes}분 전"
 msgid "Last seen just now"
 msgstr "마지막 확인: 방금"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "최신"
@@ -2750,6 +2769,10 @@ msgstr "이미지 열기"
 #: src/components/diff-rows.tsx
 msgid "Open in changes"
 msgstr "변경 사항에서 열기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "뷰어에서 열기"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -3770,6 +3793,8 @@ msgstr "홈 텍스트 표시"
 msgid "Show illustration on Home"
 msgstr "홈에 일러스트 표시"
 
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "더 보기"
@@ -4583,6 +4608,7 @@ msgstr "토큰 사용량 및 비용"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
 
+#: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
 msgstr "잘림"
