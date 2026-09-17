@@ -51,6 +51,30 @@ export const appChrome = {
     composerField: 25,
     composerDock: 26,
     workspaceRail: 28,
+    /**
+     * The top corners of a sheet, and of anything that draws a sheet-like top
+     * edge over the content behind it (the agent composer dock).
+     *
+     * One number for both platforms. `route-presentation.ts` hands it to
+     * `sheetCornerRadius`, which react-native-screens 4.28 honours on iOS
+     * (`UISheetPresentationController.preferredCornerRadius`) and on Android
+     * (`ScreenStackFragment.attachShapeToScreen` builds a
+     * `MaterialShapeDrawable` from it and the screen clips to its outline).
+     * The prop's TSDoc still says `@platform ios`; the Android code path is
+     * real and is what this token is verified against on device.
+     */
+    sheet: 24,
+    /**
+     * The plate a transcript block sits on.
+     *
+     * The agent timeline draws onto the app background, which under an
+     * image-backed theme pack is an author's photograph. `text` and
+     * `textMuted` are proven against the theme's surfaces and never against a
+     * picture, so every message block and tool card takes a surface of its own
+     * -- the same argument, and deliberately the same number, as
+     * `SHEET_GROUND_PLATE_RADIUS`.
+     */
+    transcriptPlate: 18,
   },
   opacity: {
     disabled: 0.5,

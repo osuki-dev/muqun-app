@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text as NativeText } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { INSTANT, PRESET, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 
@@ -40,16 +41,31 @@ const SEGMENT_HEIGHT = 40;
 
 export type SegmentedOption = { label: string; value: string };
 
+/**
+ * How the labels are cased.
+ *
+ * `sentence` is the default and the app's rule: a segment says "All models",
+ * not "ALL MODELS". The kit's `Tabs.Label` carries `textTransform: 'uppercase'`
+ * in its type style, which is a decision about signage rather than about this
+ * control -- and it makes a proper noun unreadable as itself ("OPENCODE GO").
+ * `uppercase` is kept so a caller that genuinely wants the kit's signage can
+ * ask for it rather than forking the component.
+ */
+export type SegmentedCase = 'sentence' | 'uppercase';
+
 export function SettingsSegmented({
   options,
   value,
   onChange,
   testID,
+  textCase = 'sentence',
 }: {
   options: SegmentedOption[];
   value: string;
   onChange: (value: string) => void;
   testID?: string;
+  /** @default 'sentence' */
+  textCase?: SegmentedCase;
 }) {
   const theme = useThemeTokens();
   useRenderTally('SettingsSegmented');
@@ -117,6 +133,15 @@ export function SettingsSegmented({
         // itself and the selected side goes muddy, which is the legibility
         // problem again one layer up. Two opaque fills, one mark.
         onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}>
+        {/*
+          The pack's `tabs.background`, on the one tabbed control the app has.
+          It used to be painted per screen -- the commands sheet drew its own
+          strip -- which meant the slot lived or died with that screen. A pack
+          authoring it now decorates every segmented control at once, and the
+          artwork is under the track's fill and under the pill, so neither the
+          mark nor the chosen side loses contrast to it.
+        */}
+        <ThemedSurfaceArtwork slot="tabs.background" baseColor={theme.colors.surfaceRaised} />
         <Animated.View
           pointerEvents="none"
           style={[
@@ -154,6 +179,25 @@ export function SettingsSegmented({
                 ]}>
                 {option.label}
               </NativeText>
+            ) : textCase === 'sentence' ? (
+              // The kit's own label metrics, with its `textTransform` left off.
+              // Written as a `Text` rather than by restyling `Tabs.Label`,
+              // because the transform lives in the type style the label reads
+              // and there is no prop on it to say no.
+              <NativeText
+                numberOfLines={1}
+                maxFontSizeMultiplier={1.18}
+                style={[
+                  styles.sentenceLabel,
+                  {
+                    color: option.value === value ? theme.colors.text : theme.colors.textMuted,
+                    fontSize: theme.typeStyles.label.fontSize,
+                    lineHeight: Math.ceil(theme.typeStyles.label.fontSize * 1.4),
+                    letterSpacing: theme.typeStyles.label.letterSpacing,
+                  },
+                ]}>
+                {option.label}
+              </NativeText>
             ) : (
               <Tabs.Label>{option.label}</Tabs.Label>
             )}
@@ -165,6 +209,12 @@ export function SettingsSegmented({
 }
 
 const styles = StyleSheet.create({
+  sentenceLabel: {
+    fontWeight: '600',
+    includeFontPadding: false,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
   thaiLabel: {
     fontFamily: Platform.OS === 'android' ? 'sans-serif' : undefined,
     fontWeight: '400',

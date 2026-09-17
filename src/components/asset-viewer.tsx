@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { createMarkdownStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { SheetFrame } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
 import { fenceLanguageForFile, fencedFile } from '@/lib/code-language';
@@ -349,13 +350,22 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       onRequestClose={onClose}>
       {/* Both insets are paid here rather than per body: the fill is on this
           view, so padding it keeps the colour edge to edge while the content
-          stays clear of the status bar and the gesture bar. */}
-      <View
-        style={[
-          styles.sheet,
-          { backgroundColor: theme.colors.background, paddingBottom: insets.bottom },
-        ]}>
-        {/* SafeAreaView reports zero insets inside a native Modal, so pad from
+          stays clear of the status bar and the gesture bar.
+
+          `SheetFrame` rather than a flat `colors.background`: this is the one
+          themed surface in the app that was painting its own floor, so a pack
+          with a `shell.background` had a wallpaper everywhere except here. It
+          stays a `Modal` and not a route because it is opened from *inside* the
+          files form sheet, where it would be a third subview of a layout that
+          lays out two -- the constraint `session-artifacts.tsx:701` records.
+          And it keeps square corners and no grabber, for the same reason
+          `SheetHandle` draws nothing inside a fullscreen frame: this is a
+          full-bleed viewer, not a sheet that can be dragged away, and rounding
+          the top of something that fills the screen is a corner over nothing. */}
+      <View style={styles.sheet}>
+        <SheetFrame tint="background">
+          <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
+            {/* SafeAreaView reports zero insets inside a native Modal, so pad from
             the root provider's insets instead.
 
             `zIndex` and `elevation` are not decoration: the way out of this
@@ -363,100 +373,102 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             whatever the body puts on the screen -- including a loading state
             that fills the rest of it. A viewer you cannot leave while it is
             loading is worse than one that fails. */}
-        <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
-          <View style={styles.header}>
-            <View style={styles.headerText}>
-              <Text variant="bodySmall" numberOfLines={1}>
-                {asset.name}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                {subtitle}
-              </Text>
-            </View>
-            {content ? (
-              <PressableScale
-                accessibilityLabel={t`Copy`}
-                onPress={copy}
-                style={[
-                  styles.close,
-                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                ]}>
-                {copied ? (
-                  <Check size={18} color={theme.colors.success} />
-                ) : (
-                  <Copy size={18} color={theme.colors.text} />
-                )}
-              </PressableScale>
-            ) : null}
-            <PressableScale
-              accessibilityLabel={t`Close file`}
-              onPress={onClose}
-              style={[
-                styles.close,
-                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              <X size={18} color={theme.colors.text} />
-            </PressableScale>
-          </View>
-        </View>
-
-        {pack ? (
-          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-            <CustomThemeLibrary
-              key={`${themeDocumentIdentity}:pack`}
-              initialCandidate={pack}
-              detail
-              // The prepared artwork belongs to this screen, which disposes it
-              // when the reader closes the file.
-              ownsPreparedAssets={false}
-              onClosePreview={() => setPack(null)}
-            />
-          </ScrollView>
-        ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
-          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-            <CustomThemeLibrary
-              key={themeDocumentIdentity}
-              initialManifest={themeManifest}
-              detail
-              onClosePreview={() => setPreviewedThemeDocument(null)}
-            />
-          </ScrollView>
-        ) : (
-          <>
-            {themeManifest ? (
-              <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
-                <Button
-                  testID="asset-preview-theme"
-                  onPress={() =>
-                    setPreviewedThemeDocument(themeDocumentIdentity)
-                  }>{t`Preview`}</Button>
-              </View>
-            ) : packaged ? (
-              <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 8 }}>
-                <Button
-                  testID="asset-open-theme-package"
-                  disabled={Boolean(packProgress)}
-                  onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
-                {packProgress ? (
-                  <ThemeImportProgress
-                    label={t`Downloading theme`}
-                    receivedBytes={packProgress.done}
-                    completed={packProgress.done}
-                    total={packProgress.total ?? undefined}
-                  />
+            <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
+              <View style={styles.header}>
+                <View style={styles.headerText}>
+                  <Text variant="bodySmall" numberOfLines={1}>
+                    {asset.name}
+                  </Text>
+                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                </View>
+                {content ? (
+                  <PressableScale
+                    accessibilityLabel={t`Copy`}
+                    onPress={copy}
+                    style={[
+                      styles.close,
+                      { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                    ]}>
+                    {copied ? (
+                      <Check size={18} color={theme.colors.success} />
+                    ) : (
+                      <Copy size={18} color={theme.colors.text} />
+                    )}
+                  </PressableScale>
                 ) : null}
+                <PressableScale
+                  accessibilityLabel={t`Close file`}
+                  onPress={onClose}
+                  style={[
+                    styles.close,
+                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
+                  <X size={18} color={theme.colors.text} />
+                </PressableScale>
               </View>
-            ) : null}
-            <AssetBody
-              asset={asset}
-              readable={readable}
-              content={content}
-              error={error}
-              markdownStyle={markdownStyle}
-              onRetry={() => setAttempt((previous) => previous + 1)}
-            />
-          </>
-        )}
+            </View>
+
+            {pack ? (
+              <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+                <CustomThemeLibrary
+                  key={`${themeDocumentIdentity}:pack`}
+                  initialCandidate={pack}
+                  detail
+                  // The prepared artwork belongs to this screen, which disposes it
+                  // when the reader closes the file.
+                  ownsPreparedAssets={false}
+                  onClosePreview={() => setPack(null)}
+                />
+              </ScrollView>
+            ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
+              <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+                <CustomThemeLibrary
+                  key={themeDocumentIdentity}
+                  initialManifest={themeManifest}
+                  detail
+                  onClosePreview={() => setPreviewedThemeDocument(null)}
+                />
+              </ScrollView>
+            ) : (
+              <>
+                {themeManifest ? (
+                  <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+                    <Button
+                      testID="asset-preview-theme"
+                      onPress={() =>
+                        setPreviewedThemeDocument(themeDocumentIdentity)
+                      }>{t`Preview`}</Button>
+                  </View>
+                ) : packaged ? (
+                  <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 8 }}>
+                    <Button
+                      testID="asset-open-theme-package"
+                      disabled={Boolean(packProgress)}
+                      onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
+                    {packProgress ? (
+                      <ThemeImportProgress
+                        label={t`Downloading theme`}
+                        receivedBytes={packProgress.done}
+                        completed={packProgress.done}
+                        total={packProgress.total ?? undefined}
+                      />
+                    ) : null}
+                  </View>
+                ) : null}
+                <AssetBody
+                  asset={asset}
+                  readable={readable}
+                  content={content}
+                  error={error}
+                  markdownStyle={markdownStyle}
+                  onRetry={() => setAttempt((previous) => previous + 1)}
+                />
+              </>
+            )}
+          </View>
+        </SheetFrame>
       </View>
     </Modal>
   );
@@ -680,6 +692,11 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
 
 const styles = StyleSheet.create({
   sheet: {
+    flex: 1,
+  },
+  // The ground fills the sheet; the column inside it pays the bottom inset, so
+  // the wallpaper still reaches the gesture bar.
+  sheetColumn: {
     flex: 1,
   },
   // Both properties, because they are two different platforms' answer to the

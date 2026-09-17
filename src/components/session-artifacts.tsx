@@ -1,4 +1,5 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
+import { SheetSceneHeading } from '@/components/sheet-scene';
 import { SearchInput } from '@/components/themed-search-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
@@ -248,10 +249,6 @@ export function SessionArtifacts({
 
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  // Explicit: this is the component that renders the frame, so it sits above
-  // its own tint provider. Everything *inside* the sheet -- the day headings,
-  // their counts -- reads the tint from the frame and calls this bare.
-  const plate = useSheetGroundPlate('surface');
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
@@ -523,42 +520,40 @@ export function SessionArtifacts({
       {/* The panels sheet draws this and this one did not, which is the sort of
           difference that reads as two different apps. Android only: iOS has the
           system grabber. */}
-      <SheetHandle style={styles.sheetHandle} />
-      <View style={styles.header}>
-        {/* The only text on this sheet that is not already on a card or a
-            chip, so over a wallpaper it takes the settings page's plate. */}
-        <View style={[styles.flexOne, plate]}>
-          <Text variant="bodySmall" style={styles.headerTitle}>
-            <Trans>Files</Trans>
-          </Text>
-          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-            {label}
-          </Text>
-        </View>
-        {/* The same chrome as the panels sheet, from the same component: two
+      <SheetHandle />
+      {/* The one heading every sheet in the app announces itself with; the
+          refresh and the way out ride its trailing slot. */}
+      <SheetSceneHeading
+        title={t`Files`}
+        caption={label}
+        trailing={
+          <View style={styles.headerControls}>
+            {/* The same chrome as the panels sheet, from the same component: two
             sheets whose close buttons were different materials would read as
             two apps. `sheet`, not `floating` -- see `GlassChrome`. */}
-        <GlassChrome face="sheet" style={styles.iconButton}>
-          <PressableScale
-            accessibilityLabel={t`Refresh files`}
-            onPress={() => void load()}
-            style={styles.iconButtonHit}>
-            {loading ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            ) : (
-              <RefreshCw size={17} color={theme.colors.textMuted} />
-            )}
-          </PressableScale>
-        </GlassChrome>
-        <GlassChrome face="sheet" style={styles.iconButton}>
-          <PressableScale
-            accessibilityLabel={t`Close files`}
-            onPress={onClose}
-            style={styles.iconButtonHit}>
-            <X size={18} color={theme.colors.text} />
-          </PressableScale>
-        </GlassChrome>
-      </View>
+            <GlassChrome face="sheet" style={styles.iconButton}>
+              <PressableScale
+                accessibilityLabel={t`Refresh files`}
+                onPress={() => void load()}
+                style={styles.iconButtonHit}>
+                {loading ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} />
+                ) : (
+                  <RefreshCw size={17} color={theme.colors.textMuted} />
+                )}
+              </PressableScale>
+            </GlassChrome>
+            <GlassChrome face="sheet" style={styles.iconButton}>
+              <PressableScale
+                accessibilityLabel={t`Close files`}
+                onPress={onClose}
+                style={styles.iconButtonHit}>
+                <X size={18} color={theme.colors.text} />
+              </PressableScale>
+            </GlassChrome>
+          </View>
+        }
+      />
 
       {available ? (
         <>
@@ -793,11 +788,10 @@ const DAY_BUCKET_LABEL = {
  */
 const DayHeading = memo(function DayHeading({ label, count }: { label: string; count: number }) {
   const theme = useThemeTokens();
-  const { _ } = useLinguiRuntime();
-  // The day is the one label on this list that is not on a card. Over a
-  // wallpaper it takes the same plate the settings page gives a section label,
-  // which is why the chip stays around the word and not around the whole rule.
+  // The count sits on the sheet's ground with nothing under it, so it takes the
+  // plate the section label beside it already has.
   const plate = useSheetGroundPlate();
+  const { _ } = useLinguiRuntime();
   useRenderTally('ArtifactDayHeading');
   const bucket = DAY_BUCKET_LABEL[label as keyof typeof DAY_BUCKET_LABEL];
   const spoken = bucket ? _(bucket) : label;
@@ -904,18 +898,12 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     gap: 12,
   },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
+  headerControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: {
     fontSize: 20,
     lineHeight: 25,

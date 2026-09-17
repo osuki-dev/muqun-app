@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { GlassChrome } from '@/components/glass-chrome';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetFrame, useSheetGroundPlate, useSheetGroundProvided } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsSeparator } from '@/components/settings-chrome';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
@@ -97,6 +97,11 @@ export function ThemeBrowseSheet({
 }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
+  // The catalogue is a full-screen route, so `FullscreenSheetFrame` already
+  // owns the safe edges; padding them again here would double them. It is
+  // still its own `SheetFrame` -- the nested ground no-ops and the frame is
+  // what publishes the tint its plate is mixed from.
+  const groundProvided = useSheetGroundProvided();
   const theme = useThemeTokens();
   // Explicit: this is the component that renders the frame, so it sits above
   // its own tint provider. Everything *inside* the sheet reads the tint from
@@ -391,12 +396,14 @@ export function ThemeBrowseSheet({
       */}
       <View
         collapsable={false}
-        style={[styles.column, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        style={[
+          styles.column,
+          groundProvided ? null : { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}>
         <View style={styles.headerBlock}>
-          {/* iOS draws the grabber itself; Android's form sheet does not, and a
-              sheet with no handle reads as a screen that arrived from the wrong
-              direction. The same two lines the settings sheet carries. */}
-
+          {/* No grabber: this is a full-screen route, not a sheet that can be
+              dragged away, and `SheetHandle` draws nothing inside a fullscreen
+              frame for exactly that reason. */}
           <View style={styles.header}>
             {/* The two lines a reader reads before any row exists, and the only
                 text on this sheet not already on a row. Over a wallpaper they
@@ -741,13 +748,6 @@ const styles = StyleSheet.create({
     paddingBottom: LADDER.gap,
     paddingHorizontal: LADDER.gutter,
     gap: LADDER.snug,
-  },
-  handle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: LADDER.snug },
   // The settings sheet's title size, so the two announce themselves the same.

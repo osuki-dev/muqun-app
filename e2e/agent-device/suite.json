@@ -4189,16 +4189,12 @@
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Terminal commands and key combinations"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s92"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/settings.ad#s93"
       },
       {

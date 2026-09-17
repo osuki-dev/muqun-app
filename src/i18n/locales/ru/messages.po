@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "… open for the full change"
-msgstr "… откройте, чтобы увидеть полное изменение"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… обрезано"
@@ -53,8 +49,9 @@ msgstr "{0, plural, one {# час} few {# часа} many {# часов} other {#
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, one {# минута} few {# минуты} many {# минут} other {# минуты}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {ещё # строка} few {ещё # строки} many {ещё # строк} other {ещё # строки}}"
 
@@ -80,9 +77,41 @@ msgid "{0} (this device)"
 msgstr "{0} (это устройство)"
 
 #. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "{0} file(s) modified in workspace"
-msgstr "Изменено файлов в рабочей области: {0}"
+msgid "{0} files · +{1} −{2}"
+msgstr "{0} файлов · +{1} −{2}"
+
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages since the last compaction"
+msgstr "{0} сообщений с момента последнего сжатия"
+
+#. placeholder {0}: capped.hidden
+#: src/components/agent-tool-card.tsx
+msgid "{0} more lines"
+msgstr "ещё {0} строк"
+
+#. placeholder {0}: compact(inContext)
+#: src/components/agent-context-sheet.tsx
+msgid "{0} of {limitLabel} tokens"
+msgstr "{0} из {limitLabel} токенов"
+
+#. placeholder {0}: sessions.length
+#: src/components/agent-sessions-sheet.tsx
+msgid "{0} on this host"
+msgstr "{0} на этом хосте"
+
+#. placeholder {0}: inbox.length
+#: src/components/agent-composer.tsx
+msgid "{0} queued"
+msgstr "{0} в очереди"
+
+#. placeholder {0}: compact(inContext)
+#: src/components/agent-context-sheet.tsx
+msgid "{0} tokens in context"
+msgstr "{0} токенов в контексте"
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
@@ -117,9 +146,22 @@ msgstr "{0} мин. назад"
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· спрашивал # раз} few {· спрашивал # раза} many {· спрашивал # раз} other {· спрашивал # раза}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "{backgroundCount} выполняется в фоне"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · отправка"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count} results"
+msgstr "{count} результатов"
+
+#. placeholder {0}: items.length
+#: src/components/agent-tasks-sheet.tsx
+msgid "{done} of {0} done"
+msgstr "{done} из {0} готово"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -141,17 +183,18 @@ msgstr "{panelCount, plural, one {# в работе} few {# в работе} man
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{running} из {0} выполняется"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "Ещё {overflow}"
 
-#: src/components/agent-model-sheet.tsx
-msgid "⚡ Free & Unlimited (Recommended)"
-msgstr "⚡ Бесплатно и без ограничений (Рекомендуется)"
-
-#: src/components/agent-context-sheet.tsx
-msgid "$0.00 (Free)"
-msgstr "0,00 $ (Бесплатно)"
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "модель по умолчанию"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -187,24 +230,12 @@ msgid "About"
 msgstr "О приложении"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "Действовать в этом терминале или отправить ему команду"
+msgid "Act on this terminal, or send it a command"
+msgstr "Действуйте в этом терминале или отправьте ему команду"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "Действовать в этом терминале или отправить его агенту промпт"
-
-#: src/components/agent-context-sheet.tsx
-msgid "ACTIONS"
-msgstr "ДЕЙСТВИЯ"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Active Model"
-msgstr "Активная модель"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Active Session"
-msgstr "Активная сессия"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "Действуйте в этом терминале или дайте задание его агенту"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -241,8 +272,19 @@ msgid "Added"
 msgstr "Добавлен"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
-msgstr "АГЕНТ"
+msgid "Agent"
+msgstr "Агент"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "Агент · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "Агент · {0} → {1}"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -255,12 +297,8 @@ msgid "Agent collaboration"
 msgstr "Совместная работа агентов"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
-msgstr "КОМАНДЫ АГЕНТА"
-
-#: src/components/agent-mode-sheet.tsx
-msgid "Agent Mode"
-msgstr "Режим агента"
+msgid "Agent commands"
+msgstr "Команды агента"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -274,6 +312,10 @@ msgstr "Панели агентов открываются в"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Агенты"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Agents on this host"
+msgstr "Агенты на этом хосте"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -297,7 +339,7 @@ msgid "All commands"
 msgstr "Все команды"
 
 #: src/components/agent-model-sheet.tsx
-msgid "All Models"
+msgid "All models"
 msgstr "Все модели"
 
 #: src/components/settings-servers.tsx
@@ -305,13 +347,17 @@ msgid "All panes"
 msgstr "Все панели"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "All Projects"
+msgid "All projects"
 msgstr "Все проекты"
 
 #: src/components/agent-composer.tsx
-#: src/components/agent-sessions-sheet.tsx
 msgid "All Sessions"
 msgstr "Все сессии"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "All sessions on this workspace"
+msgstr "Все сессии этого рабочего пространства"
 
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
@@ -346,12 +392,8 @@ msgid "Alt Up arrow"
 msgstr "Alt Стрелка вверх"
 
 #: src/components/agent-permission-card.tsx
-msgid "Always"
-msgstr "Всегда"
-
-#: src/components/agent-composer.tsx
-msgid "Analyze project and initialize AGENTS.md"
-msgstr "Анализировать проект и инициализировать AGENTS.md"
+msgid "Always Allow"
+msgstr "Всегда разрешать"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -361,10 +403,6 @@ msgstr "Ответ"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Ответ: {0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "Всё, что {label} раздаёт на каком-либо порту: dev-сервер, предпросмотр, панель мониторинга"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -413,6 +451,14 @@ msgstr "Разрешить"
 msgid "Approve and don't ask again"
 msgstr "Разрешить и больше не спрашивать"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Approve every agent action automatically"
+msgstr "Автоматически одобрять каждое действие агента"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Architecture, design proposals, step-by-step roadmaps."
+msgstr "Архитектура, проектные предложения, пошаговые планы"
+
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "Спрашивать каждый раз"
@@ -440,6 +486,26 @@ msgstr "Назначить задачу нельзя"
 #: src/components/server-terminal-workspace.tsx
 msgid "Assistant started"
 msgstr "Ассистент запущен"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "Не менее {0} символов"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "Не менее {0}"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "Не более {0} символов"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "Не более {0}"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -474,10 +540,6 @@ msgstr "Проверка не пройдена. Попробуйте ещё ра
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "Проверка недоступна. Попробуйте ещё раз или проверьте системные настройки"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Auto-approve every agent action without prompts"
-msgstr "Автоматически одобрять каждое действие агента без запроса"
-
 #: src/components/agent-workbench.tsx
 msgid "auto-approving actions"
 msgstr "действия одобряются автоматически"
@@ -487,8 +549,8 @@ msgid "Auto-approving agent actions"
 msgstr "Действия агента одобряются автоматически"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Autonomous software engineering, editing files, running terminal commands, and testing."
-msgstr "Автономная разработка ПО, редактирование файлов, выполнение команд и тестов"
+msgid "Autonomous software engineering: edits files, runs commands, tests."
+msgstr "Автономная разработка: правит файлы, запускает команды, тестирует"
 
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -512,10 +574,27 @@ msgstr "К SSH-хостам"
 msgid "Back to the on-screen keyboard"
 msgstr "Вернуться к экранной клавиатуре"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "Назад к родительской сессии"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "Фоновый"
+
+#: src/components/agent-background-tray.tsx
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "Фоновые задачи"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "Backspace"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Behaviour"
+msgstr "Поведение"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
@@ -525,7 +604,7 @@ msgstr "Ниже {minimumPercent}% читаемость текста не гар
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
 msgstr "Между шапкой и списком серверов. «Показывать» также берёт картинку пустого состояния темы, если у неё нет собственной иллюстрации для главной"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "Двоичный файл"
 
@@ -540,6 +619,10 @@ msgstr "Ждёт ответа"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Заблокировано защитой агента"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "Ветка"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -567,12 +650,8 @@ msgid "Built-in"
 msgstr "Встроенные"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Cache Read"
+msgid "Cache read"
 msgstr "Чтение из кэша"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Cache Write"
-msgstr "Запись в кэш"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -600,6 +679,11 @@ msgstr "Нужен доступ к камере"
 msgid "Cancel"
 msgstr "Отмена"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Cancel a staged rollback"
+msgstr "Отменить подготовленный откат"
+
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancel connecting to {0}"
@@ -614,6 +698,10 @@ msgstr "Отменить правку {0}"
 msgid "Cancel queued message"
 msgstr "Отменить сообщение в очереди"
 
+#: src/components/agent-composer.tsx
+msgid "Cancel this queued message"
+msgstr "Отменить это сообщение из очереди"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "Отменено"
@@ -623,6 +711,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "Изменён"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Changes"
 msgstr "Изменения"
@@ -635,8 +724,11 @@ msgstr "Меняет цветные фоны, но не текст, значки
 msgid "Chat"
 msgstr "Чат"
 
-#: src/components/agent-workbench.tsx
 #: src/components/opencode-guide-sheet.tsx
+msgid "Check again"
+msgstr "Проверить снова"
+
+#: src/components/agent-workbench.tsx
 msgid "Check Again"
 msgstr "Проверить снова"
 
@@ -664,6 +756,10 @@ msgstr "Проверяем системную аутентификацию…"
 msgid "Checking…"
 msgstr "Проверка…"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Choose a model"
+msgstr "Выбрать модель"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
 msgstr "Выберите симулятор"
@@ -672,13 +768,13 @@ msgstr "Выберите симулятор"
 msgid "Choose a simulator from the menu."
 msgstr "Выберите симулятор в меню"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose an agent"
+msgstr "Выбрать агента"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Choose an assistant"
 msgstr "Выберите ассистента"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Choose an LLM model"
-msgstr "Выберите модель LLM"
 
 #: src/app/explore.tsx
 msgid "Choose an SSH host."
@@ -691,14 +787,6 @@ msgstr "Выбрать файлы"
 #: src/components/agent-workbench.tsx
 msgid "Choose Project"
 msgstr "Выбрать проект"
-
-#: src/components/agent-mode-sheet.tsx
-msgid "Choose the specialized agent for this task"
-msgstr "Выберите специализированного агента для этой задачи"
-
-#: src/components/machine-switcher-sheet.tsx
-msgid "Choose where to work"
-msgstr "Выберите место работы"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -716,11 +804,8 @@ msgstr "Очистить"
 msgid "Clear cache"
 msgstr "Очистить кэш"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Clear Context"
-msgstr "Очистить контекст"
-
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Clear context and start fresh"
 msgstr "Очистить контекст и начать заново"
 
@@ -732,6 +817,10 @@ msgstr "Очистить строку"
 msgid "Clear terminal"
 msgstr "Очистить терминал"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Clear the conversation"
+msgstr "Очистить переписку"
+
 #: src/components/settings-storage.tsx
 msgid "Clearing cache"
 msgstr "Очищаем кэш"
@@ -740,16 +829,7 @@ msgstr "Очищаем кэш"
 msgid "Clearing…"
 msgstr "Очищаем…"
 
-#: src/components/agent-context-sheet.tsx
-#: src/components/agent-mode-sheet.tsx
-#: src/components/agent-model-sheet.tsx
-#: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-workspace-sheet.tsx
 #: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
-#: src/components/opencode-guide-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Закрыть"
@@ -766,12 +846,7 @@ msgstr "Закрыть файл"
 msgid "Close files"
 msgstr "Закрыть список файлов"
 
-#: src/components/settings-language-sheet.tsx
-msgid "Close language picker"
-msgstr "Закрыть выбор языка"
-
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Закрыть новую задачу"
 
@@ -784,14 +859,6 @@ msgstr "Закрыть привязку"
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "Закрыть предпросмотр"
-
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "Закрыть быстрые действия"
-
-#: src/components/machine-switcher-sheet.tsx
-msgid "Close session picker"
-msgstr "Закрыть выбор сеанса"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -827,10 +894,6 @@ msgstr "Закрыть выбор темы"
 msgid "Code"
 msgstr "Код"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Code Changes"
-msgstr "Изменения в коде"
-
 #: src/app/explore.tsx
 msgid "Code expired"
 msgstr "Код истёк"
@@ -861,7 +924,6 @@ msgid "Color mode"
 msgstr "Цветовой режим"
 
 #: src/app/commands.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Command"
 msgstr "Команда"
 
@@ -881,17 +943,35 @@ msgstr "Коммит"
 msgid "Commit & push"
 msgstr "Коммит и пуш"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "Закоммичено"
+
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Компактно"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Compact Context"
+msgid "Compact context"
 msgstr "Сжать контекст"
 
 #: src/components/agent-composer.tsx
-msgid "Compact session history to save context"
-msgstr "Сжать историю сессии"
+msgid "Compacting context automatically…"
+msgstr "Контекст сжимается автоматически…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "Сжатие контекста…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "Сжатие не удалось"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "Сжатие не удалось — нажмите, чтобы скрыть"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -979,12 +1059,25 @@ msgid "Connecting to agent engine…"
 msgstr "Подключение к движку агента…"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Context & Usage"
-msgstr "Контекст и использование"
+msgid "Context"
+msgstr "Контекст"
+
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "Контекст заполнен на {0}%"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "Контекст сжат · автоматически"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "Контекст сжат · вручную"
 
 #: src/components/agent-context-sheet.tsx
-msgid "CONTEXT WINDOW"
-msgstr "ОКНО КОНТЕКСТА"
+msgid "Context used"
+msgstr "Контекст занят"
 
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -1108,8 +1201,8 @@ msgid "Control Z, suspend"
 msgstr "Ctrl Z, приостановить"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational coding assistance, general programming advice, and open-ended workspace questions."
-msgstr "Диалоговая помощь по коду, общие советы по программированию и ответы на вопросы"
+msgid "Conversational help and open-ended workspace questions."
+msgstr "Диалоговая помощь и свободные вопросы о рабочем пространстве"
 
 #: src/components/agent-message-block.tsx
 #: src/components/opencode-guide-sheet.tsx
@@ -1131,7 +1224,6 @@ msgid "Copies it, ready to paste into a terminal"
 msgstr "Копирует её, чтобы вставить в терминал"
 
 #: src/components/asset-viewer.tsx
-#: src/components/opencode-guide-sheet.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
 msgstr "Копировать"
@@ -1139,6 +1231,10 @@ msgstr "Копировать"
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "Копировать открытый ключ"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Copy the command"
+msgstr "Скопировать команду"
 
 #: src/components/simfarm-preview.tsx
 msgid "Copy the command that starts simfarm"
@@ -1158,6 +1254,10 @@ msgstr "Копировать открытый ключ"
 msgid "Could not add a file"
 msgstr "Не удалось добавить файл"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "Не удалось сжать"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "Не удалось подключиться"
@@ -1173,6 +1273,10 @@ msgstr "Не удалось скопировать"
 #: src/components/agent-workbench.tsx
 msgid "Could not create session"
 msgstr "Не удалось создать сессию"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "Не удалось отсоединить"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -1193,6 +1297,10 @@ msgstr "Не удалось загрузить предыдущий вывод"
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "Не удалось загрузить файлы"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not load the session"
+msgstr "Не удалось загрузить сессию"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1264,6 +1372,10 @@ msgstr "Не удалось прочитать терминал"
 msgid "Could not read this file."
 msgstr "Не удалось прочитать этот файл"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not redo"
+msgstr "Не удалось повторить"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Не удалось удалить хост"
@@ -1275,6 +1387,10 @@ msgstr "Не удалось ответить"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Не удалось отозвать устройство"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that"
+msgstr "Не удалось выполнить"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1312,6 +1428,10 @@ msgstr "Не удалось отправить клавишу"
 msgid "Could not send shortcut."
 msgstr "Не удалось отправить быструю команду"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "Не удалось начать сессию"
+
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
 msgstr "Не удалось запустить терминал"
@@ -1320,9 +1440,22 @@ msgstr "Не удалось запустить терминал"
 msgid "Could not start the task."
 msgstr "Не удалось запустить задачу"
 
+#: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
+msgid "Could not stop it"
+msgstr "Не удалось остановить"
+
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
 msgstr "Не удалось остановить этого агента"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not switch agent"
+msgstr "Не удалось сменить агента"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not undo"
+msgstr "Не удалось отменить"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
@@ -1360,18 +1493,14 @@ msgstr "Текущая тема"
 msgid "Custom"
 msgstr "Пользовательский"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "CUSTOM PROJECT DIRECTORY"
-msgstr "ПОЛЬЗОВАТЕЛЬСКИЙ КАТАЛОГ ПРОЕКТА"
-
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "Настройте команды терминала и сочетания клавиш"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Тёмная"
+
+#: src/components/agent-model-sheet.tsx
+msgid "default"
+msgstr "по умолчанию"
 
 #: src/components/settings-terminal.tsx
 msgid "Default"
@@ -1443,13 +1572,18 @@ msgstr "Сводка diff"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "Прямое управление агентами OpenCode. Отслеживайте ход мыслей в реальном времени, проверяйте диффы кода, контролируйте шаги задач прямо с телефона"
 
-#: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
-msgstr "КАТАЛОГ"
-
 #: src/components/agent-workspace-sheet.tsx
-msgid "DIRECTORY AUTOCOMPLETE"
-msgstr "АВТОДОПОЛНЕНИЕ ПУТИ"
+msgid "Directories"
+msgstr "Каталоги"
+
+#: src/components/new-task-sheet.tsx
+msgid "Directory"
+msgstr "Каталог"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Directory · {0}"
+msgstr "Каталог · {0}"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1556,10 +1690,6 @@ msgstr "Изменить SSH-хост"
 msgid "Edit this server"
 msgstr "Изменить этот сервер"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Enable YOLO"
-msgstr "Включить YOLO"
-
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter"
@@ -1599,8 +1729,8 @@ msgid "Escape twice"
 msgstr "Escape дважды"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Estimated Cost"
-msgstr "Примерная стоимость"
+msgid "Estimated cost"
+msgstr "Оценка стоимости"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1612,8 +1742,8 @@ msgid "Expand reasoning"
 msgstr "Развернуть рассуждения"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Expand reasoning & thoughts"
-msgstr "Развернуть цепочку размышлений"
+msgid "Expand reasoning in the timeline"
+msgstr "Разворачивать рассуждения в ленте"
 
 #: src/components/agent-todo-block.tsx
 msgid "Expand tasks"
@@ -1658,10 +1788,6 @@ msgstr "Не удалось переключить сеанс рабочей о�
 msgid "Fast agent specialized for exploring codebases."
 msgstr "Быстрый агент для исследования кодовой базы"
 
-#: src/components/agent-mode-sheet.tsx
-msgid "Fast read-only codebase exploration, symbol search, file discovery, and dependency tracing."
-msgstr "Быстрый поиск по кодовой базе в режиме чтения, поиск символов и отслеживание зависимостей"
-
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
 msgstr "Упоминания файлов"
@@ -1683,8 +1809,12 @@ msgid "Files in this workspace"
 msgstr "Файлы этого пространства"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or path"
-msgstr "Фильтр проектов или пути"
+msgid "Filter projects or type a path"
+msgstr "Отфильтровать проекты или ввести путь"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Filter projects, or type a path"
+msgstr "Отфильтруйте проекты или введите путь"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1695,8 +1825,8 @@ msgid "Fingerprint"
 msgstr "Отпечаток"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "ПЕРВЫЙ ПРОМПТ"
+msgid "First prompt"
+msgstr "Первое задание"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -1706,17 +1836,25 @@ msgstr "Исправьте контраст текста перед примен
 msgid "Fold the tool steps away"
 msgstr "Свернуть шаги инструментов"
 
+#: src/components/settings-language-sheet.tsx
+msgid "Follow the language your phone is set to"
+msgstr "Следовать языку телефона"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Following your phone"
+msgstr "Как на телефоне"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "На слово вперёд"
 
 #: src/components/agent-composer.tsx
-#: src/components/agent-model-sheet.tsx
+#: src/components/agent-context-sheet.tsx
 msgid "Free"
 msgstr "Бесплатно"
 
 #: src/components/agent-model-sheet.tsx
-msgid "Free Only"
+msgid "Free only"
 msgstr "Только бесплатные"
 
 #: src/lib/demo-gateway.ts
@@ -1824,7 +1962,7 @@ msgstr "Скрыть"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "Скрыть {0}"
@@ -1849,10 +1987,6 @@ msgstr "Скрыть список серверов"
 #: src/components/server-terminal-workspace.tsx
 msgid "Hide the simulator"
 msgstr "Скрыть симулятор"
-
-#: src/components/agent-mode-sheet.tsx
-msgid "High-level architectural planning, design proposals, and step-by-step implementation roadmaps."
-msgstr "Высокоуровневое планирование архитектуры, проектные предложения и дорожные карты"
 
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2019,8 +2153,8 @@ msgid "Keys are generated on the device and never leave it."
 msgstr "Ключи создаются на устройстве и никогда его не покидают"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "KNOWN REPOSITORIES"
-msgstr "ИЗВЕСТНЫЕ РЕПОЗИТОРИИ"
+msgid "Known repositories"
+msgstr "Известные репозитории"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2093,10 +2227,6 @@ msgstr "Буквы"
 msgid "Light"
 msgstr "Светлая"
 
-#: src/components/agent-context-sheet.tsx
-msgid "limit"
-msgstr "Лимит"
-
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "Список веток"
@@ -2113,14 +2243,6 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages"
-msgstr "Загрузить более ранние сообщения"
-
-#: src/components/agent-workbench.tsx
-msgid "Load earlier messages ({windowStart})"
-msgstr "Загрузить более ранние сообщения ({windowStart})"
-
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2131,10 +2253,6 @@ msgstr "Загрузка"
 #: src/app/commands.tsx
 msgid "Loading commands"
 msgstr "Загружаем команды"
-
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "Загружаем предыдущий вывод…"
 
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
@@ -2216,6 +2334,23 @@ msgstr "Упомянуть {0}"
 msgid "Message copied to clipboard"
 msgstr "Сообщение скопировано в буфер обмена"
 
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "Сообщение не отправлено"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Model"
+msgstr "Модель"
+
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "Модель · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "Модель · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "Изменён"
@@ -2256,7 +2391,6 @@ msgid "Muqun could not verify your identity. Try again."
 msgstr "Muqun не удалось подтвердить вашу личность. Попробуйте ещё раз"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun использует язык, выбранный на телефоне"
 
@@ -2281,7 +2415,6 @@ msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in 
 msgstr "Muqun говорит по SSH. Сохраните хост, коснитесь его на главном экране — и вы в настоящем shell: по паролю, ключу или коду из вашего аутентификатора"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "Muqun остаётся на этом языке, что бы ни было выбрано на телефоне"
 
@@ -2329,18 +2462,16 @@ msgid "New output available · refresh"
 msgstr "Есть новый вывод · обновить"
 
 #: src/app/agent.tsx
-#: src/components/agent-sessions-sheet.tsx
 msgid "New session"
 msgstr "Новая сессия"
 
-#: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "New Session"
 msgstr "Новый сеанс"
 
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "НОВАЯ БЫСТРАЯ КОМАНДА"
+msgid "New shortcut"
+msgstr "Новый ярлык"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2388,10 +2519,6 @@ msgstr "На этом устройстве не найдена камера"
 msgid "No changes. The working tree matches HEAD."
 msgstr "Изменений нет. Рабочее дерево совпадает с HEAD"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No diff preview available for binary or unmodified files."
-msgstr "Нет предпросмотра diff для бинарных или неизмененных файлов"
-
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Нет подходящих файлов"
@@ -2405,12 +2532,16 @@ msgid "No matching commands. Try another word."
 msgstr "Команды не найдены. Попробуйте другое слово"
 
 #: src/components/agent-model-sheet.tsx
-msgid "No models found matching your search."
-msgstr "Модели не найдены"
+msgid "No models match that search."
+msgstr "По этому запросу моделей нет"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "В этой сессии пока нет других ассистентов"
+
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "Вывода пока нет"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -2433,8 +2564,8 @@ msgid "No preview on this connection"
 msgstr "Через это соединение предпросмотр недоступен"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "No projects found. Enter a custom path above."
-msgstr "Проекты не найдены. Введите путь выше"
+msgid "No projects here yet. Type a path above to open one."
+msgstr "Здесь пока нет проектов. Введите путь выше, чтобы открыть один"
 
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
@@ -2446,12 +2577,12 @@ msgid "No servers paired yet"
 msgstr "Пока нет привязанных серверов"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions found"
-msgstr "Сессии не найдены"
+msgid "No sessions in this workspace yet. Start one from the + button."
+msgstr "В этом рабочем пространстве ещё нет сессий. Начните её кнопкой +"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions yet"
-msgstr "Сессий пока нет"
+msgid "No sessions match that search."
+msgstr "По этому запросу сессий нет"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -2473,17 +2604,17 @@ msgstr "Пока нет SSH-хостов. Добавьте один, чтобы 
 msgid "No still frames"
 msgstr "Нет стоп-кадров"
 
-#: src/components/git-diff-view.tsx
+#: src/components/agent-tasks-sheet.tsx
+msgid "No tasks in this session yet."
+msgstr "В этой сессии пока нет задач"
+
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "Текст не изменился"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Пока нет опубликованных тем"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No uncommitted file changes."
-msgstr "Нет незафиксированных изменений файлов"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2510,6 +2641,10 @@ msgstr "Не найден"
 msgid "Not running"
 msgstr "Выключен"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Not set"
+msgstr "Не задано"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Недействительно"
@@ -2527,9 +2662,21 @@ msgstr "На порту {port} никто не ответил. Либо там �
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "Пока пусто. Файлы, которые записывает сеанс, появятся сами"
 
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background. Detach a long command from its tool card and it appears here."
+msgstr "В фоне ничего не выполняется. Отсоедините длинную команду с её карточки инструмента, и она появится здесь"
+
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Пока нечего показать"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing to undo"
+msgstr "Нечего отменять"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing uncommitted in this workspace."
+msgstr "В этом рабочем пространстве нет незакоммиченных изменений"
 
 #: src/components/toggle.tsx
 msgid "Off"
@@ -2561,9 +2708,10 @@ msgid "Open"
 msgstr "Открыть"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
 #: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2578,8 +2726,16 @@ msgid "Open anyway"
 msgstr "Всё равно открыть"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as Project Workspace"
-msgstr "Открыть как рабочую область проекта"
+msgid "Open as a project workspace"
+msgstr "Открыть как рабочее пространство проекта"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "Открыть вложение"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "Открыть фоновые задачи"
 
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
@@ -2588,6 +2744,14 @@ msgstr "Открыть изменения"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Открыть список файлов"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "Открыть изображение"
+
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "Открыть в изменениях"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2623,6 +2787,10 @@ msgstr "Открыть порт {recent}"
 msgid "Open quick actions"
 msgstr "Открыть быстрые действия"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "Открыть сессию"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -2638,6 +2806,18 @@ msgstr "Открыть терминал"
 msgid "Open the file explorer"
 msgstr "Открыть обозреватель файлов"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "Открыть сессию субагента"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "Открыть это различие в просмотрщике изменений"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open this path"
+msgstr "Открыть этот путь"
+
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
@@ -2650,13 +2830,8 @@ msgid "OpenCode Agent"
 msgstr "Агент OpenCode"
 
 #: src/components/agent-workbench.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "Демон OpenCode не запущен на этом хосте. Запустите `opencode serve --service` для его старта"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode is still unreachable. Please ensure the service is running."
-msgstr "OpenCode по-прежнему недоступен. Убедитесь, что служба запущена"
 
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
@@ -2671,7 +2846,6 @@ msgid "OpenCode service offline"
 msgstr "Служба OpenCode не в сети"
 
 #: src/components/agent-workbench.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "OpenCode Service Offline"
 msgstr "Служба OpenCode не в сети"
 
@@ -2843,10 +3017,6 @@ msgstr "Запустите OpenCode на сервере: opencode serve --servic
 msgid "Port"
 msgstr "Порт"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
-msgstr "ПОРТ"
-
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -2918,10 +3088,6 @@ msgstr "Открытый ключ скопирован"
 msgid "Pull"
 msgstr "Pull"
 
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "Потяните, чтобы загрузить предыдущий вывод"
-
 #: src/components/agent-composer.tsx
 msgid "Queue"
 msgstr "Очередь"
@@ -2960,6 +3126,10 @@ msgstr "Доступен через SSH-хост {host}"
 msgid "Reaching the Gateway"
 msgstr "Подключаемся к Gateway"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Read-only: symbol search, file discovery, dependency tracing."
+msgstr "Только чтение: поиск символов, обход файлов, трассировка зависимостей"
+
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Reading the theme"
@@ -2984,6 +3154,10 @@ msgstr "Рассуждение"
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "Получать сообщения о том, что агент ждёт, и обновления Gateway"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Recent"
+msgstr "Недавние"
 
 #: src/i18n/labels.ts
 msgid "Recent commits"
@@ -3016,10 +3190,7 @@ msgstr "Переподключиться к {0}"
 msgid "Reconnecting · {0}"
 msgstr "Переподключение · {0}"
 
-#: src/components/agent-composer.tsx
-msgid "Redo last undone step"
-msgstr "Повторить последнее отмененное действие"
-
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Обновить"
@@ -3124,10 +3295,6 @@ msgstr "Обязательно"
 msgid "Requires iOS 16.1 or later."
 msgstr "Требуется iOS 16.1 или новее"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Reset conversation context window (/clear)"
-msgstr "Сбросить окно контекста диалога (/clear)"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Перезапустите Muqun, чтобы завершить обновление"
@@ -3162,6 +3329,10 @@ msgstr "Повторите отмеченные красным или удали
 #: src/components/attachment-strip.tsx
 msgid "Retry uploading {0}"
 msgstr "Повторить загрузку {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "Повторная попытка…"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
@@ -3209,10 +3380,6 @@ msgstr "Проверьте текущие изменения"
 msgid "Review the failing test and fix it."
 msgstr "Посмотрите на падающий тест и почините его"
 
-#: src/components/agent-composer.tsx
-msgid "Review workspace changes"
-msgstr "Просмотреть изменения рабочего пространства"
-
 #: src/lib/demo-gateway.ts
 msgid "Reviewing the changes and checking the tests…"
 msgstr "Проверяем изменения и тесты…"
@@ -3235,6 +3402,11 @@ msgstr "Отзываем…"
 msgid "Right arrow"
 msgstr "Стрелка вправо"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Roll back to before the last message"
+msgstr "Вернуться к состоянию до последнего сообщения"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
@@ -3245,6 +3417,14 @@ msgstr "Выполнить команду терминала"
 msgid "Run command"
 msgstr "Выполнить команду"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "Выполнить в фоне"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Run it under systemd or tmux to keep it up after you log out."
+msgstr "Запустите его под systemd или tmux, чтобы он пережил выход из системы"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "Запустить нужные тесты"
@@ -3252,10 +3432,6 @@ msgstr "Запустить нужные тесты"
 #: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Запустите Gateway на своём компьютере и отсканируйте QR-код, который он выводит. Привязка остаётся на этом устройстве"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Running command in background…"
-msgstr "Выполнение команды в фоновом режиме…"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -3295,12 +3471,12 @@ msgid "Saved"
 msgstr "Сохранено"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
-msgstr "СОХРАНЁННЫЕ КОМАНДЫ"
+msgid "Saved commands"
+msgstr "Сохранённые команды"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "СОХРАНЁННЫЕ ПРОМПТЫ"
+msgid "Saved prompts"
+msgstr "Сохранённые задания"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3351,16 +3527,12 @@ msgid "Search models"
 msgstr "Поиск моделей"
 
 #: src/components/agent-model-sheet.tsx
-msgid "Search models or providers..."
-msgstr "Поиск моделей или провайдеров..."
+msgid "Search models or providers"
+msgstr "Поиск моделей или провайдеров"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Search sessions"
 msgstr "Поиск сессий"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Search sessions..."
-msgstr "Поиск сессий…"
 
 #: src/i18n/labels.ts
 msgid "Search the whole project"
@@ -3397,17 +3569,9 @@ msgstr "Выбрать режим агента"
 msgid "Select all"
 msgstr "Выбрать всё"
 
-#: src/components/agent-model-sheet.tsx
-msgid "Select Model"
-msgstr "Выбрать модель"
-
 #: src/components/agent-composer.tsx
 msgid "Select model: {modelDisplayName}"
 msgstr "Выбрать модель: {modelDisplayName}"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Select or enter working repository"
-msgstr "Выберите или введите рабочий репозиторий"
 
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
@@ -3448,6 +3612,7 @@ msgstr "Отправка"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3477,25 +3642,13 @@ msgstr "Сервер недоступен"
 msgid "Servers"
 msgstr "Серверы"
 
-#: src/components/agent-workbench.tsx
-msgid "Service is experiencing high load."
-msgstr "Сервис испытывает высокую нагрузку"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "session"
-msgstr "сессия"
-
-#: src/components/agent-context-sheet.tsx
-msgid "SESSION DETAILS"
-msgstr "ДЕТАЛИ СЕССИИ"
-
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
 msgstr "Токены сессии"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "sessions"
-msgstr "сессий"
+msgid "Sessions"
+msgstr "Сессии"
 
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
@@ -3528,12 +3681,25 @@ msgstr "Сначала настройте {label} в системных наст
 msgid "Set up a Gateway on your computer"
 msgstr "Настройте Gateway на своём компьютере"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Set up on the host"
+msgstr "Настройте на хосте"
+
 #: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Настройки"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Share this session's transcript"
+msgstr "Поделиться расшифровкой этой сессии"
+
+#: src/components/agent-background-tray.tsx
+msgid "Shells"
+msgstr "Оболочки"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
@@ -3553,7 +3719,7 @@ msgstr "Shift Tab, переключить режим"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "Показать {0}"
@@ -3573,10 +3739,6 @@ msgstr "Показать сведения о камере"
 #: src/components/session-artifacts.tsx
 msgid "Show code"
 msgstr "Показать код"
-
-#: src/components/agent-composer.tsx
-msgid "Show command help"
-msgstr "Показать справку по командам"
 
 #: src/components/session-artifacts.tsx
 msgid "Show documents"
@@ -3606,9 +3768,13 @@ msgstr "Показывать иллюстрацию на главной"
 msgid "Show images"
 msgstr "Показать изображения"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Показать ещё"
+
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "Показать больше этих различий"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
@@ -3622,13 +3788,17 @@ msgstr "Показать клавиатуру редактора"
 msgid "Show the newer list of changes"
 msgstr "Показать новый список изменений"
 
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "Показать остальной вывод"
+
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Показать список серверов"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Show Thinking Process"
-msgstr "Показать ход мыслей"
+msgid "Show thinking"
+msgstr "Показывать рассуждения"
 
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
@@ -3679,6 +3849,11 @@ msgstr "Кнопки симулятора"
 #: src/components/asset-viewer.tsx
 msgid "Size"
 msgstr "Размер"
+
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill · {0}"
+msgstr "Навык · {0}"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -3731,11 +3906,12 @@ msgstr "SSH-хосты"
 msgid "SSH tunnel through {host} is down"
 msgstr "SSH-туннель через {host} разорван"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "В индексе"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "В индексе и не в индексе"
 
@@ -3752,10 +3928,22 @@ msgstr "Запустить новый {0}"
 msgid "Start a new session with empty context"
 msgstr "Начать новый сеанс с пустым контекстом"
 
-#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Start a session with a clean context"
+msgstr "Начать сессию с чистым контекстом"
+
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "Запустите агента и отправьте ему первое задание"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "Запустите агента и дайте ему первое задание"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Start OpenCode"
+msgstr "Запустить OpenCode"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
@@ -3783,6 +3971,7 @@ msgstr "Запуск…"
 msgid "Status unavailable"
 msgstr "Состояние недоступно"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "Состояние неизвестно"
@@ -3794,6 +3983,10 @@ msgstr "Корректировать"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "Корректировать работу агента в реальном времени"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Still not answering. Check the service is running on the host."
+msgstr "По-прежнему не отвечает. Проверьте, запущена ли служба на хосте"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -3821,9 +4014,21 @@ msgstr "Отменить назначение задачи"
 msgid "Stop this agent"
 msgstr "Остановить этого агента"
 
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "Остановить эту команду"
+
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "Остановлено"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Хранилище"
+
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "субагент"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Subagent"
@@ -3833,9 +4038,10 @@ msgstr "Субагент"
 msgid "Submit Response"
 msgstr "Отправить ответ"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Summarize history into compact memory (/compact)"
-msgstr "Сжать историю в компактную память (/compact)"
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Summarise the history and keep working from the summary"
+msgstr "Сжать историю и продолжить работу по сводке"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -3849,13 +4055,10 @@ msgstr "Приостановить"
 msgid "Swipe left or right to switch workspace"
 msgstr "Смахните влево или вправо, чтобы сменить пространство"
 
-#: src/components/agent-workbench.tsx
-msgid "Switch & Retry"
-msgstr "Переключить и повторить"
-
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch agent mode"
-msgstr "Переключить режим агента"
+msgstr "Сменить режим агента"
 
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
@@ -3865,9 +4068,10 @@ msgstr "Сменить приложение"
 msgid "Switch between open files"
 msgstr "Переключиться между открытыми файлами"
 
-#: src/components/agent-composer.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
 msgid "Switch language model"
-msgstr "Переключить языковую модель"
+msgstr "Сменить языковую модель"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch machine or session"
@@ -3886,9 +4090,9 @@ msgstr "Переключиться на чат"
 msgid "Switch to the terminal view"
 msgstr "Переключиться на терминал"
 
-#: src/components/agent-workbench.tsx
-msgid "Switch to Union Alpha (Fast & Free) for immediate response."
-msgstr "Переключитесь на Union Alpha (быстро и бесплатно) для мгновенного ответа"
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch workspace"
+msgstr "Сменить рабочее пространство"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
@@ -3924,6 +4128,10 @@ msgstr "Нажмите для подключения"
 msgid "Tap to preview and adjust"
 msgstr "Нажмите, чтобы посмотреть и настроить"
 
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "Нажмите, чтобы обновить эту сессию"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
 msgstr "Задача для {assignmentLabel}"
@@ -3934,6 +4142,7 @@ msgid "Task for a new {0}"
 msgstr "Задача для нового {0}"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 msgid "Tasks"
 msgstr "Задачи"
@@ -3946,10 +4155,6 @@ msgstr "Задачи ({0}/{1})"
 
 #: src/components/agent-composer.tsx
 msgid "Tasks progress"
-msgstr "Прогресс задач"
-
-#: src/components/agent-workbench.tsx
-msgid "Tasks Progress"
 msgstr "Прогресс задач"
 
 #: src/components/settings-storage.tsx
@@ -3972,8 +4177,12 @@ msgid "Terminal colours follow the theme."
 msgstr "Цвета терминала следуют теме"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
-msgstr "КОМАНДЫ ТЕРМИНАЛА"
+msgid "Terminal commands"
+msgstr "Команды терминала"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "Команды терминала и сочетания клавиш"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -3999,9 +4208,18 @@ msgstr "Этого ассистента больше нет в этом терм
 msgid "That code was refused. Hold still for a new one."
 msgstr "Этот код отклонён. Не двигайтесь, пока не появится новый"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "Это не соответствует ожидаемому формату"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "Этот файл не является темой Muqun"
+
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "Это не корректный {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
@@ -4063,6 +4281,10 @@ msgstr "Значок на вашем главном экране. Android зак
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "Не удалось прочитать ключ ({0}). Проверьте ключ и его парольную фразу"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "The OpenCode daemon is not running on this host. Run this and it will be."
+msgstr "Демон OpenCode на этом хосте не запущен. Выполните это — и он запустится"
 
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
@@ -4136,6 +4358,10 @@ msgstr "Тема будет удалена с этого устройства"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Транскрипт в виде беседы, шаги инструментов свёрнуты"
 
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "Ход завершился ошибкой"
+
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
 #: src/components/settings-theme-sheet.tsx
@@ -4167,10 +4393,6 @@ msgstr "Тема, {0}"
 #: src/components/theme-browse-sheet.tsx
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Темы, опубликованные на muqun.dev. Ничего не загружается, пока вы не откроете тему"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Thinking:"
-msgstr "Размышления:"
 
 #: src/components/agent-workbench.tsx
 msgid "Thinking…"
@@ -4228,6 +4450,10 @@ msgstr "Это встроенная запись, а не настоящий с�
 msgid "This link goes nowhere"
 msgstr "Эта ссылка никуда не ведёт"
 
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "Это поле обязательно"
+
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "Эта панель работает не в git-репозитории, поэтому сравнивать нечего"
@@ -4235,6 +4461,10 @@ msgstr "Эта панель работает не в git-репозитории,
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "Этот QR-код недействителен"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "Чтобы ответить на этот вопрос, нужна более новая версия приложения"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4265,6 +4495,7 @@ msgid "This server has no session to start an agent in."
 msgstr "На этом сервере нет сеанса, в котором можно запустить агента"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -4277,6 +4508,14 @@ msgstr "Этот сервер больше не узнаёт это устрой
 #: src/lib/network-error.ts
 msgid "This server refused the request."
 msgstr "Этот сервер отклонил запрос"
+
+#: src/components/agent-context-sheet.tsx
+msgid "This session"
+msgstr "Эта сессия"
+
+#: src/components/agent-workbench.tsx
+msgid "This session has no message to roll back to."
+msgstr "В этой сессии нет сообщения, к которому можно вернуться"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
@@ -4306,29 +4545,25 @@ msgstr "Размышление · {durationStr}"
 msgid "Through {host}"
 msgstr "Через {host}"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Tip: Run with systemd or tmux to keep OpenCode running in the background."
-msgstr "Совет: используйте systemd или tmux для работы OpenCode в фоновом режиме"
-
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Сегодня"
-
-#: src/components/agent-context-sheet.tsx
-msgid "TOKEN BREAKDOWN"
-msgstr "РАСХОД ТОКЕНОВ"
 
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Использование токенов и стоимость"
 
-#: src/components/agent-context-sheet.tsx
-msgid "tokens used"
-msgstr "токенов использовано"
-
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Слишком много изменений для списка. Это их начало, а не всё"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Total spent"
+msgstr "Всего израсходовано"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "Обрезано"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
@@ -4353,6 +4588,10 @@ msgstr "Попробовать демо"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Tunnel down"
 msgstr "Туннель разорван"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Turn it on"
+msgstr "Включить"
 
 #: src/components/asset-viewer.tsx
 msgid "Type"
@@ -4388,10 +4627,6 @@ msgstr "Ввод на симуляторе"
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Отменить"
-
-#: src/components/agent-composer.tsx
-msgid "Undo last message or action"
-msgstr "Отменить последнее действие"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"
@@ -4446,9 +4681,20 @@ msgstr "Отвязываем {label}"
 msgid "Unpairing…"
 msgstr "Отвязываем…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Не в индексе"
+
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "Неподдерживаемый элемент ({0})"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-sessions-sheet.tsx
+msgid "Untitled session"
+msgstr "Сессия без названия"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -4521,10 +4767,6 @@ msgstr "Использовать настройки темы по умолчан
 msgid "Use this server"
 msgstr "Использовать этот сервер"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Used Capacity"
-msgstr "Использовано"
-
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "Имя пользователя"
@@ -4583,13 +4825,18 @@ msgstr "Когда агенту требуется подтверждение, �
 msgid "While you were away"
 msgstr "Пока вас не было"
 
+#: src/components/agent-context-sheet.tsx
+msgid "window not reported"
+msgstr "окно не сообщено"
+
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Работает"
 
 #: src/components/agent-context-sheet.tsx
-msgid "Working Directory"
+msgid "Working directory"
 msgstr "Рабочий каталог"
 
 #: src/app/agent.tsx
@@ -4597,10 +4844,6 @@ msgstr "Рабочий каталог"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Пространство"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Workspaces & Projects"
-msgstr "Рабочие области и проекты"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -4629,11 +4872,11 @@ msgid "Yesterday"
 msgstr "Вчера"
 
 #: src/components/agent-context-sheet.tsx
-msgid "YOLO lets the agent act without asking each time. Irreversibly destructive commands (system paths, block devices, remote scripts) are still blocked."
-msgstr "YOLO позволяет агенту действовать без запроса. Необратимо разрушительные команды (системные пути, блочные устройства, удалённые скрипты) по-прежнему блокируются"
+msgid "YOLO lets the agent act without asking each time. Irreversibly destructive commands are still blocked."
+msgstr "YOLO позволяет агенту действовать, не спрашивая каждый раз. Необратимо разрушительные команды по-прежнему блокируются"
 
 #: src/components/agent-context-sheet.tsx
-msgid "YOLO Mode"
+msgid "YOLO mode"
 msgstr "Режим YOLO"
 
 #: src/components/agent-workbench.tsx
@@ -4644,6 +4887,10 @@ msgstr "Режим YOLO включён"
 msgid "YOLO mode on — tap to turn off"
 msgstr "Режим YOLO включён — нажмите, чтобы выключить"
 
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "Вы"
+
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
@@ -4653,6 +4900,10 @@ msgstr "Ваши агенты, где угодно"
 #: src/components/launch-intro.tsx
 msgid "Your machine, your rules"
 msgstr "Ваш компьютер, ваши правила"
+
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "Ваше сообщение"
 
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"

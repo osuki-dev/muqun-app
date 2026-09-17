@@ -1,5 +1,3 @@
-import { SheetHandle } from '@/components/sheet-route-frame';
-import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
  * The full-height sheet keeps input reachable with long host catalogs.
@@ -10,7 +8,6 @@ import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { LogoLoader } from '@/components/logo-loader';
-import { SheetHeading } from '@/components/sheet-heading';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import {
@@ -20,16 +17,22 @@ import {
   type AttachmentSource,
 } from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Bot, Check, FolderOpen, Paperclip, X } from 'lucide-react-native';
+import { Bot, Check, FolderOpen, Paperclip } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
-import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { LADDER, SectionLabel } from '@/components/settings-chrome';
+import {
+  SheetScene,
+  SheetSceneAction,
+  SheetSceneField,
+  SHEET_LADDER,
+  sheetSceneStyles,
+  useSheetSceneInputStyle,
+} from '@/components/sheet-scene';
+import { LADDER } from '@/components/settings-chrome';
 import {
   agentSpawnRequest,
   canSpawnAgent,
@@ -39,7 +42,7 @@ import {
   type AgentProfile,
   type SpawnedAgent,
 } from '@/lib/gateway-client';
-import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
+import { listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useRenderTally } from '@/lib/render-tally';
 
@@ -82,12 +85,12 @@ export function NewTaskSheet({
   // has no way to know the result also depends on the active locale.
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const inputStyle = useSheetSceneInputStyle();
   // The plate any text drawn straight onto the shell's wallpaper takes; empty
   // on every theme that has no picture there. Explicit, because this is the
   // component that renders the frame and so sits above its own tint provider:
   // everything *inside* the sheet reads the tint from the frame and calls this
   // with no argument at all.
-  const plate = useSheetGroundPlate('surface');
   useRenderTally('NewTaskSheet');
 
   const [profiles, setProfiles] = useState<AgentProfile[]>([]);
@@ -216,41 +219,19 @@ export function NewTaskSheet({
             carries no padding of its own, so the ground's `absoluteFill` covers
             the sheet's edges instead of stopping at the form's gutter. The
             route keeps the scroll view as its native root. */}
-        <SheetFrame>
-          <View style={styles.column}>
-            {/* iOS draws the grabber itself; Android's form sheet does not, and a
-          sheet with no handle reads as a screen that arrived from the wrong
-          direction. Every sheet in this app carries the same two lines. */}
-            <SheetHandle style={styles.handle} />
-
-            <View style={styles.header}>
-              <SheetHeading
-                title={t`New task`}
-                caption={t`Start an agent and send it the first thing to do.`}
-              />
-              <GlassChrome face="sheet" style={styles.closeButton}>
-                <PressableScale
-                  accessibilityLabel={t`Close new task`}
-                  onPress={onClose}
-                  disabled={starting}
-                  style={styles.closeHit}>
-                  <X size={18} color={theme.colors.text} />
-                </PressableScale>
-              </GlassChrome>
-            </View>
-
-            <View style={styles.section}>
-              <SectionLabel title={<Trans>AGENT</Trans>} color={theme.colors.textMuted} />
+        <SheetScene
+          testID="new-task-sheet"
+          title={t`New task`}
+          caption={t`Start an agent and send it the first thing to do`}>
+          <View style={sheetSceneStyles.column}>
+            <SheetSceneField label={t`Agent`}>
               {loadingProfiles ? (
-                <View style={[styles.loadingRow, plate]}>
+                <View style={styles.loadingRow}>
                   <LogoLoader
-                    size={36}
+                    size={28}
                     accessibilityLabel={t`Asking the server what it can run…`}
                   />
-                  <Text
-                    variant="caption"
-                    color={theme.colors.textMuted}
-                    style={{ textAlign: 'center' }}>
+                  <Text variant="caption" color={theme.colors.textMuted}>
                     <Trans>Asking the server what it can run…</Trans>
                   </Text>
                 </View>
@@ -280,93 +261,103 @@ export function NewTaskSheet({
                   ))}
                 </ScrollView>
               )}
-            </View>
+            </SheetSceneField>
 
-            <View style={styles.section}>
-              <SectionLabel title={<Trans>DIRECTORY</Trans>} color={theme.colors.textMuted} />
-              {recentCwds.length > 0 ? (
-                <View style={styles.recentList}>
-                  {recentCwds.map((path, index) => (
-                    <Animated.View
-                      key={path}
-                      entering={riseIn(index * STAGGER.row)}
-                      layout={listLayout('short')}>
-                      <RecentCwdRow
-                        path={path}
-                        selected={path === cwd.trim()}
-                        onSelect={() => {
-                          if (!sending.current) setCwd(path);
-                        }}
-                      />
-                    </Animated.View>
-                  ))}
-                </View>
-              ) : null}
-              {/* Under the list, not instead of it, and always present: the recent
-                answers are a shortcut, and a shortcut that hides the long way
-                round is a trap the first time it does not have the place you
-                meant. */}
-              <Input
-                label={t`Path`}
+            <SheetSceneField
+              label={t`Directory`}
+              hint={t`Leave it empty to start where the session already is.`}>
+              <TextInput
+                accessibilityLabel={t`Path`}
                 editable={!starting}
                 value={cwd}
                 onChangeText={setCwd}
                 autoCapitalize="none"
                 autoCorrect={false}
-                // Not translated: a path is typed as it exists on the machine, and a
-                // localized example would teach the wrong thing.
+                // Not translated: a path is typed as it exists on the machine,
+                // and a localized example would teach the wrong thing.
                 placeholder="~/code/muqun"
-                variant="outline"
-                helper={t`Leave it empty to start where the session already is.`}
+                placeholderTextColor={theme.colors.textSubtle}
+                style={inputStyle}
               />
-            </View>
+            </SheetSceneField>
 
-            <View style={styles.section}>
-              <SectionLabel title={<Trans>FIRST PROMPT</Trans>} color={theme.colors.textMuted} />
-              {attachmentMenuOpen && !starting ? (
-                <AttachmentMenu onSelect={chooseAttachmentSource} textColor={theme.colors.text} />
-              ) : null}
-              <View pointerEvents={starting ? 'none' : 'auto'}>
-                <AttachmentStrip
-                  attachments={uploads.attachments}
-                  onRemove={uploads.removeAttachment}
-                  onRetry={uploads.retryUpload}
-                  onPreview={setPreviewId}
-                  textColor={theme.colors.text}
+            {/* Under the field, not instead of it, and always present: the
+                recent answers are a shortcut, and a shortcut that hides the long
+                way round is a trap the first time it does not have the place you
+                meant. */}
+            {recentCwds.length > 0 ? (
+              <View style={styles.recentList}>
+                {recentCwds.map((path, index) => (
+                  <Animated.View
+                    key={path}
+                    entering={riseIn(index * STAGGER.row)}
+                    layout={listLayout('short')}>
+                    <RecentCwdRow
+                      path={path}
+                      selected={path === cwd.trim()}
+                      onSelect={() => {
+                        if (!sending.current) setCwd(path);
+                      }}
+                    />
+                  </Animated.View>
+                ))}
+              </View>
+            ) : null}
+
+            <SheetSceneField
+              label={t`First prompt`}
+              hint={t`Type it, or use your keyboard's dictation key.`}
+              error={error ?? undefined}>
+              <View style={styles.promptColumn}>
+                {attachmentMenuOpen && !starting ? (
+                  <AttachmentMenu onSelect={chooseAttachmentSource} textColor={theme.colors.text} />
+                ) : null}
+                <View pointerEvents={starting ? 'none' : 'auto'}>
+                  <AttachmentStrip
+                    attachments={uploads.attachments}
+                    onRemove={uploads.removeAttachment}
+                    onRetry={uploads.retryUpload}
+                    onPreview={setPreviewId}
+                    textColor={theme.colors.text}
+                  />
+                </View>
+                <TerminalComposer
+                  leading={
+                    <PressableScale
+                      testID="new-task-attach"
+                      accessibilityRole="button"
+                      accessibilityLabel={t`Add attachment`}
+                      disabled={starting || !record}
+                      onPress={() => setAttachmentMenuOpen((open) => !open)}
+                      style={composerStyles.button}>
+                      <Paperclip size={18} color={theme.colors.text} />
+                    </PressableScale>
+                  }
+                  inputProps={{
+                    testID: 'new-task-prompt',
+                    value: prompt,
+                    onChangeText: setPrompt,
+                    editable: !starting,
+                    placeholder: t`Review the failing test and fix it.`,
+                  }}
+                  send={{
+                    accessibilityLabel: starting ? t`Starting…` : t`Start task`,
+                    armed: canSpawnAgent({ agent }),
+                    sending: starting,
+                    disabled: starting || !record || !canSpawnAgent({ agent }),
+                    onPress: () => void start(),
+                  }}
                 />
               </View>
-              <TerminalComposer
-                leading={
-                  <PressableScale
-                    testID="new-task-attach"
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Add attachment`}
-                    disabled={starting || !record}
-                    onPress={() => setAttachmentMenuOpen((open) => !open)}
-                    style={composerStyles.button}>
-                    <Paperclip size={18} color={theme.colors.text} />
-                  </PressableScale>
-                }
-                inputProps={{
-                  testID: 'new-task-prompt',
-                  value: prompt,
-                  onChangeText: setPrompt,
-                  editable: !starting,
-                  placeholder: t`Review the failing test and fix it.`,
-                }}
-                send={{
-                  accessibilityLabel: starting ? t`Starting…` : t`Start task`,
-                  armed: canSpawnAgent({ agent }),
-                  sending: starting,
-                  disabled: starting || !record || !canSpawnAgent({ agent }),
-                  onPress: () => void start(),
-                }}
-              />
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                style={plate}>{t`Type it, or use your keyboard's dictation key.`}</Text>
-            </View>
+            </SheetSceneField>
+
+            <SheetSceneAction
+              testID="new-task-start"
+              label={starting ? t`Starting…` : t`Start task`}
+              busy={starting}
+              disabled={!record || !canSpawnAgent({ agent })}
+              onPress={() => void start()}
+            />
 
             {previewId && previewImages.some((item) => item.id === previewId) ? (
               <ImagePreviewModal
@@ -375,19 +366,8 @@ export function NewTaskSheet({
                 onClose={() => setPreviewId(null)}
               />
             ) : null}
-
-            {error ? (
-              <Animated.View
-                entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}
-                layout={listLayout('short')}>
-                <Text selectable variant="caption" color={theme.colors.danger} style={plate}>
-                  {error}
-                </Text>
-              </Animated.View>
-            ) : null}
           </View>
-        </SheetFrame>
+        </SheetScene>
       </KeyboardAwareScrollView>
     </>
   );
@@ -505,47 +485,10 @@ const styles = StyleSheet.create({
   // No padding here: the ground is laid out against this box, and a padded
   // content container would inset it away from the sheet's own edges.
   canvas: { flexGrow: 1, width: '100%' },
-  column: {
-    flexGrow: 1,
-    paddingHorizontal: LADDER.gutter,
-    paddingTop: LADDER.gap,
-    paddingBottom: LADDER.section,
-    gap: LADDER.gutter,
-  },
-  handle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
-    marginBottom: 2,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LADDER.snug,
-  },
-  headerCopy: { flex: 1, minWidth: 0, gap: LADDER.tight / 2 },
-  // The panels sheet's title size, so every sheet agrees on how one announces
-  // itself.
-  title: { fontSize: 20, lineHeight: 25, includeFontPadding: false },
-  closeButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeHit: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  section: { gap: LADDER.gap },
-  loadingRow: { alignItems: 'center', gap: LADDER.gap, paddingVertical: LADDER.gap },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: SHEET_LADDER.gap },
+  // The composer is its own control, so the field holds it in a column
+  // rather than on the field's own baseline row.
+  promptColumn: { flex: 1, gap: SHEET_LADDER.gap, paddingVertical: SHEET_LADDER.gap },
   pills: { flexDirection: 'row', gap: LADDER.gap, paddingVertical: 4 },
   pill: {
     flexDirection: 'row',

@@ -1,11 +1,20 @@
-import { memo, useState } from 'react';
-import { View, StyleSheet, TextInput, Switch, ActivityIndicator } from 'react-native';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { Linking, View, StyleSheet, TextInput, Switch, ActivityIndicator } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { FormInput, Send, Check } from 'lucide-react-native';
+import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import type { FormRequest, FormField } from '@/lib/agent-session';
+import { withAlpha } from '@/lib/color';
+import { isSafeExternalLink } from '@/lib/safe-link';
+import {
+  isFormFieldVisible,
+  validateFormField,
+  type FormField,
+  type FormFieldViolation,
+  type FormRequest,
+} from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 export interface AgentFormCardProps {
   request: FormRequest;
@@ -38,18 +47,87 @@ export const AgentFormCard = memo(function AgentFormCard({
     return initial;
   });
 
-  const setValue = (key: string, val: unknown) => {
+  const [violations, setViolations] = useState<Record<string, FormFieldViolation>>({});
+
+  const setValue = useCallback((key: string, val: unknown) => {
     setValues((prev) => ({ ...prev, [key]: val }));
-  };
+    // A field the reader is fixing stops complaining while they fix it.
+    setViolations((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  }, []);
+
+  /**
+   * A field is hidden unless every one of its `when` conditions holds against
+   * the answers so far -- which also means a hidden field is never required and
+   * never submitted, because the engine did not ask it.
+   */
+  const visibleFields = useMemo(
+    () => request.fields.filter((field) => isFormFieldVisible(field, values)),
+    [request.fields, values]
+  );
 
   const handleSubmit = async () => {
     if (submitting) return;
+    // Required, min/max, length and pattern, checked before the round trip:
+    // the engine's rejection is a turn of the agent loop, and the reader gets
+    // it back as an error rather than as a field to correct.
+    const found: Record<string, FormFieldViolation> = {};
+    for (const field of visibleFields) {
+      const violation = validateFormField(field, values[field.key]);
+      if (violation) found[field.key] = violation;
+    }
+    if (Object.keys(found).length > 0) {
+      setViolations(found);
+      return;
+    }
+    setViolations({});
+    const answers: Record<string, unknown> = {};
+    for (const field of visibleFields) {
+      if (field.type === 'external') continue;
+      if (field.key in values) answers[field.key] = values[field.key];
+    }
     setSubmitting(true);
     try {
-      await onSubmit(values);
+      await onSubmit(answers);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  /** Why this answer was refused, in the reader's language. */
+  const violationText = (key: string): string | null => {
+    const violation = violations[key];
+    if (!violation) return null;
+    switch (violation.reason) {
+      case 'required':
+        return t`This one is required.`;
+      case 'min_length':
+        return t`At least ${violation.limit} characters.`;
+      case 'max_length':
+        return t`At most ${violation.limit} characters.`;
+      case 'pattern':
+        return t`That does not match the expected format.`;
+      case 'format':
+        return t`That is not a valid ${violation.format}.`;
+      case 'min':
+        return t`At least ${violation.limit}.`;
+      case 'max':
+        return t`At most ${violation.limit}.`;
+    }
+  };
+
+  const FieldProblem = ({ fieldKey }: { fieldKey: string }) => {
+    const text = violationText(fieldKey);
+    if (!text) return null;
+    return (
+      <Text variant="caption" color={theme.colors.danger} style={styles.fieldDesc}>
+        {text}
+      </Text>
+    );
   };
 
   const renderField = (field: FormField) => {
@@ -78,8 +156,8 @@ export const AgentFormCard = memo(function AgentFormCard({
                         styles.optionPill,
                         {
                           backgroundColor: selected
-                            ? `${theme.colors.primary}22`
-                            : `${theme.colors.surfaceRaised}`,
+                            ? withAlpha(theme.colors.primary, 0.13)
+                            : theme.colors.surfaceRaised,
                           borderColor: selected ? theme.colors.primary : theme.colors.border,
                         },
                       ]}>
@@ -93,6 +171,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                   );
                 })}
               </View>
+              <FieldProblem fieldKey={field.key} />
             </View>
           );
         }
@@ -117,10 +196,11 @@ export const AgentFormCard = memo(function AgentFormCard({
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
-                  backgroundColor: `${theme.colors.surface}80`,
+                  backgroundColor: withAlpha(theme.colors.surface, 0.5),
                 },
               ]}
             />
+            <FieldProblem fieldKey={field.key} />
           </View>
         );
       }
@@ -143,7 +223,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               value={currentVal}
               onValueChange={(val) => setValue(field.key, val)}
               trackColor={{ true: theme.colors.primary, false: theme.colors.border }}
-              thumbColor="#fff"
+              thumbColor={theme.colors.surface}
             />
           </View>
         );
@@ -165,10 +245,11 @@ export const AgentFormCard = memo(function AgentFormCard({
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
-                  backgroundColor: `${theme.colors.surface}80`,
+                  backgroundColor: withAlpha(theme.colors.surface, 0.5),
                 },
               ]}
             />
+            <FieldProblem fieldKey={field.key} />
           </View>
         );
       }
@@ -201,8 +282,8 @@ export const AgentFormCard = memo(function AgentFormCard({
                       styles.optionPill,
                       {
                         backgroundColor: selected
-                          ? `${theme.colors.primary}22`
-                          : `${theme.colors.surfaceRaised}`,
+                          ? withAlpha(theme.colors.primary, 0.13)
+                          : theme.colors.surfaceRaised,
                         borderColor: selected ? theme.colors.primary : theme.colors.border,
                       },
                     ]}>
@@ -220,8 +301,55 @@ export const AgentFormCard = memo(function AgentFormCard({
         );
       }
 
+      case 'external':
+        // A consent or sign-in link. It used to render as nothing at all, so a
+        // form made only of these was a title and a Submit button.
+        return (
+          <View key={field.key} style={styles.fieldRow}>
+            <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
+              {field.title}
+            </Text>
+            {field.description ? (
+              <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldDesc}>
+                {field.description}
+              </Text>
+            ) : null}
+            <PressableScale
+              testID={`agent-form-external-${field.key}`}
+              accessibilityRole="link"
+              accessibilityLabel={field.title}
+              onPress={() => {
+                if (isSafeExternalLink(field.url)) void Linking.openURL(field.url);
+              }}
+              style={[
+                styles.externalBtn,
+                {
+                  backgroundColor: withAlpha(theme.colors.info, 0.1),
+                  borderColor: theme.colors.info,
+                },
+              ]}>
+              <ExternalLink size={13} color={theme.colors.info} />
+              <Text variant="caption" numberOfLines={1} color={theme.colors.info}>
+                {field.url}
+              </Text>
+            </PressableScale>
+          </View>
+        );
+
       default:
-        return null;
+        // A field type this build has never seen. Its title is still worth
+        // showing: the reader is being asked something, and a silent gap is a
+        // form that cannot be answered for a reason nobody stated.
+        return (
+          <View key={field.key} style={styles.fieldRow}>
+            <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
+              {field.title}
+            </Text>
+            <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldDesc}>
+              <Trans>This question needs a newer app to answer.</Trans>
+            </Text>
+          </View>
+        );
     }
   };
 
@@ -236,7 +364,7 @@ export const AgentFormCard = memo(function AgentFormCard({
       ]}>
       {/* Title */}
       <View style={styles.header}>
-        <View style={[styles.iconBox, { backgroundColor: `${theme.colors.info}20` }]}>
+        <View style={[styles.iconBox, { backgroundColor: withAlpha(theme.colors.info, 0.13) }]}>
           <FormInput size={16} color={theme.colors.info} />
         </View>
         <Text variant="bodySmall" color={theme.colors.text} style={styles.title}>
@@ -245,7 +373,7 @@ export const AgentFormCard = memo(function AgentFormCard({
       </View>
 
       {/* Fields */}
-      <View style={styles.fieldsContainer}>{request.fields.map(renderField)}</View>
+      <View style={styles.fieldsContainer}>{visibleFields.map(renderField)}</View>
 
       {/* Submit Button */}
       <PressableScale
@@ -253,11 +381,11 @@ export const AgentFormCard = memo(function AgentFormCard({
         onPress={handleSubmit}
         style={[styles.submitBtn, { backgroundColor: theme.colors.primary }]}>
         {submitting ? (
-          <ActivityIndicator size="small" color="#fff" />
+          <ActivityIndicator size="small" color={theme.colors.onPrimary} />
         ) : (
           <>
-            <Send size={14} color="#fff" />
-            <Text variant="caption" color="#fff" style={styles.submitText}>
+            <Send size={14} color={theme.colors.onPrimary} />
+            <Text variant="caption" color={theme.colors.onPrimary} style={styles.submitText}>
               <Trans>Submit Response</Trans>
             </Text>
           </>
@@ -290,7 +418,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: AGENT_TYPE.meta.size,
   },
   fieldsContainer: {
     gap: 12,
@@ -309,17 +437,17 @@ const styles = StyleSheet.create({
   },
   fieldTitle: {
     fontWeight: '600',
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   fieldDesc: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
   },
   textInput: {
     borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 10,
     paddingVertical: 7,
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   optionsWrap: {
     flexDirection: 'row',
@@ -336,6 +464,16 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     gap: 4,
   },
+  externalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 32,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -346,6 +484,6 @@ const styles = StyleSheet.create({
   },
   submitText: {
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
 });

@@ -449,10 +449,15 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section s92
+# The caption under the title, which is what a sheet with no close button has
+# instead of a second thing to point at. The sheets lost their X circles when
+# the app went to one sheet system: on a form sheet the grabber and the swipe
+# are the close, so there is no "Close quick actions" control left to press.
 is visible "${TARGET}"
 
 # section s93
-press "${TARGET}"
+# Android's back dismisses a form sheet, which is the same gesture a reader has.
+back --system
 
 # section s94
 is visible "${TARGET}"

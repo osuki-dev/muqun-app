@@ -20,6 +20,7 @@
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 
+import type { AgentClientCommandId } from '@/lib/agent-commands';
 import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
@@ -283,3 +284,27 @@ export const terminalKeyDescription: Record<string, MessageDescriptor> = {
 export function paneViewModeFallback(mode: PaneViewMode): PaneViewMode {
   return mode in paneViewModeLabel ? mode : 'terminal';
 }
+
+/**
+ * What each of the app's own slash commands does.
+ *
+ * The list itself is in `@/lib/agent-commands`, which is pure and tested and
+ * therefore cannot hold a macro. It is here for the second reason in this
+ * file's header as well: the composer's menu is rebuilt on every keystroke,
+ * and a `t` call there is exactly the kind React Compiler memoizes past a
+ * locale change.
+ */
+export const agentClientCommandDescription: Record<AgentClientCommandId, MessageDescriptor> = {
+  new: msg({ message: 'Start a session with a clean context', context: 'agent slash command' }),
+  sessions: msg({ message: 'All sessions on this workspace', context: 'agent slash command' }),
+  models: msg({ message: 'Switch language model', context: 'agent slash command' }),
+  agents: msg({ message: 'Switch agent mode', context: 'agent slash command' }),
+  undo: msg({ message: 'Roll back to before the last message', context: 'agent slash command' }),
+  redo: msg({ message: 'Cancel a staged rollback', context: 'agent slash command' }),
+  compact: msg({
+    message: 'Summarise the history and keep working from the summary',
+    context: 'agent slash command',
+  }),
+  clear: msg({ message: 'Clear context and start fresh', context: 'agent slash command' }),
+  export: msg({ message: "Share this session's transcript", context: 'agent slash command' }),
+};

@@ -1,58 +1,141 @@
 import { memo, useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
-import { Trans, useLingui } from '@lingui/react/macro';
-import { Check, X, Sparkles } from 'lucide-react-native';
+import { useLingui } from '@lingui/react/macro';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
 
-import { GlassChrome } from '@/components/glass-chrome';
-import { Input } from '@/components/themed-input';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { SheetHandle } from '@/components/sheet-route-frame';
-import { ThemedSurface } from '@/components/themed-surface';
-import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { SettingsSegmented } from '@/components/settings-segmented';
 import {
+  SheetScene,
+  SheetSceneFooter,
+  SheetSceneGroupHeading,
+  SheetSceneGroupRule,
+  SheetSceneRow,
+  SheetSceneSearch,
+  SHEET_LADDER,
+  sheetSceneStyles,
+} from '@/components/sheet-scene';
+import { appChrome } from '@/constants/appearance';
+import { withAlpha } from '@/lib/color';
+import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
+import {
+  formatModelName,
   getAgentCatalog,
   isFreeModel,
   type AgentCatalog,
+  type CatalogDefaults,
   type ModelInfo,
   type ModelRef,
+  type ProviderInfo,
 } from '@/lib/agent-session';
 
+/** Rows past this one arrive together; a stagger that long reads as a wait. */
+const STAGGERED_ROWS = 8;
+
+/**
+ * Choose a model, as a native form sheet route.
+ *
+ * Built on `sheet-scene.tsx`: one frosted ground, no cards, and the left rule
+ * for the current model. Variants are chips *under the selected row only* --
+ * they are a property of the thing you chose, not of every row you did not.
+ */
 export interface AgentModelSheetProps {
-  visible: boolean;
+  /** The gateway session whose catalog is listed. */
+  sessionId?: string;
   selectedModel?: ModelRef;
   onSelectModel: (model: ModelRef) => void;
   onClose: () => void;
 }
 
+/**
+ * The provider's own spelling of its name.
+ *
+ * The group heading is the only thing telling two identically-named models
+ * apart -- `opencode` and `opencode-go` both publish a "Union Alpha Free" --
+ * so a hyphenated id has to survive as words rather than collapse to one.
+ */
+function providerName(provider: string): string {
+  const known: Record<string, string> = {
+    anthropic: 'Anthropic',
+    openai: 'OpenAI',
+    google: 'Google Cloud',
+    deepseek: 'DeepSeek',
+    ollama: 'Ollama',
+    openrouter: 'OpenRouter',
+    opencode: 'OpenCode',
+    'opencode-go': 'OpenCode Go',
+  };
+  const lower = provider.toLowerCase();
+  if (known[lower]) return known[lower];
+  return lower
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((word) => known[word] ?? word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * The two facts a row carries under its name: how much it can hold, and what
+ * thinking levels it offers. Nothing else -- the provider is the heading and
+ * the price is the filter.
+ */
+function modelCaption(model: ModelInfo): string | undefined {
+  const parts: string[] = [];
+  const context = model.limit?.context;
+  if (context) {
+    parts.push(
+      context >= 1_000_000
+        ? `${(context / 1_000_000).toFixed(1)}M context`
+        : `${(context / 1000).toFixed(0)}k context`
+    );
+  }
+  const variants = model.variants ?? [];
+  if (variants.length === 1) parts.push(variants[0].id);
+  else if (variants.length > 1) {
+    parts.push(`${variants[0].id} to ${variants[variants.length - 1].id}`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : undefined;
+}
+
 export const AgentModelSheet = memo(function AgentModelSheet({
-  visible,
+  sessionId,
   selectedModel,
   onSelectModel,
-  onClose,
+  onClose: _onClose,
 }: AgentModelSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const plate = useSheetGroundPlate();
   const insets = useSafeAreaInsets();
-  const surfaceBackground = useSurfaceBackground();
   const [loading, setLoading] = useState(false);
   const [models, setModels] = useState<ModelInfo[]>([]);
+  /**
+   * The providers, for their `activation`, and the catalog's own defaults.
+   *
+   * Both were fetched and thrown away. A provider with `activation:
+   * "disabled"` and a model with `enabled: false` are carried through by the
+   * gateway deliberately -- "grey them out and say OpenCode on the host needs
+   * configuring" -- and listing them as ordinary rows meant tapping one
+   * switched the session to a model that cannot run, with the refusal arriving
+   * later as an unexplained failed turn.
+   */
+  const [providers, setProviders] = useState<readonly ProviderInfo[]>([]);
+  const [defaults, setDefaults] = useState<CatalogDefaults>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'free'>('all');
 
+  // A route mounts when it opens and unmounts when it is dismissed, so the
+  // catalog is fetched once per opening without a `visible` flag to watch.
   useEffect(() => {
-    if (!visible) return;
     let active = true;
     setLoading(true);
-    getAgentCatalog()
+    getAgentCatalog(sessionId)
       .then((cat: AgentCatalog) => {
-        if (active && cat?.models) {
-          setModels(cat.models);
-        }
+        if (!active) return;
+        if (cat?.models) setModels(cat.models);
+        setProviders(cat?.providers ?? []);
+        setDefaults(cat?.defaults ?? {});
       })
       .catch((err: unknown) => {
         console.warn('Failed to load model catalog:', err);
@@ -63,13 +146,11 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return () => {
       active = false;
     };
-  }, [visible]);
+  }, [sessionId]);
 
   const filteredModels = useMemo(() => {
     let list = models;
-    if (filterMode === 'free') {
-      list = list.filter((m) => isFreeModel(m));
-    }
+    if (filterMode === 'free') list = list.filter((m) => isFreeModel(m));
     const q = searchQuery.trim().toLowerCase();
     if (!q) return list;
     return list.filter(
@@ -80,495 +161,219 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     );
   }, [models, searchQuery, filterMode]);
 
-  const formatProviderName = (prov: string): string => {
-    const known: Record<string, string> = {
-      anthropic: 'Anthropic',
-      openai: 'OpenAI',
-      google: 'Google Cloud',
-      deepseek: 'DeepSeek',
-      ollama: 'Ollama (Local)',
-      openrouter: 'OpenRouter',
-      opencode: 'OpenCode Free Gateway',
-    };
-    return (
-      known[prov.toLowerCase()] ||
-      prov.charAt(0).toUpperCase() + prov.slice(1).replace(/[-_]/g, ' ')
-    );
-  };
-
+  /**
+   * One group per provider, and nothing else.
+   *
+   * There used to be a synthetic "Free and unlimited" group above these, which
+   * listed the same models a second time -- and because two providers publish a
+   * model of the same name, it put two rows reading "Union Alpha Free" next to
+   * each other with nothing to tell them apart. The provider heading is what
+   * distinguishes them, and the "Free only" segment is what the synthetic group
+   * was really for.
+   */
   const sections = useMemo(() => {
     const result: { title: string; models: ModelInfo[] }[] = [];
-
-    const freeModels = models.filter((m) => isFreeModel(m));
-    if (filterMode === 'all' && !searchQuery.trim() && freeModels.length > 0) {
-      result.push({
-        title: t`⚡ Free & Unlimited (Recommended)`,
-        models: freeModels,
-      });
+    const byProvider = new Map<string, ModelInfo[]>();
+    for (const model of filteredModels) {
+      const provider = model.provider_id || 'other';
+      const list = byProvider.get(provider) ?? [];
+      list.push(model);
+      byProvider.set(provider, list);
     }
-
-    const providerMap = new Map<string, ModelInfo[]>();
-    for (const m of filteredModels) {
-      const prov = m.provider_id || 'other';
-      const list = providerMap.get(prov) || [];
-      list.push(m);
-      providerMap.set(prov, list);
-    }
-
-    const preferredOrder = ['opencode', 'deepseek', 'openai', 'anthropic', 'google'];
-    const sortedProviders = Array.from(providerMap.keys()).sort((a, b) => {
-      const idxA = preferredOrder.indexOf(a);
-      const idxB = preferredOrder.indexOf(b);
-      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-      if (idxA !== -1) return -1;
-      if (idxB !== -1) return 1;
+    const preferred = ['opencode', 'deepseek', 'openai', 'anthropic', 'google'];
+    const order = Array.from(byProvider.keys()).sort((a, b) => {
+      const ia = preferred.indexOf(a);
+      const ib = preferred.indexOf(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
       return a.localeCompare(b);
     });
-
-    for (const prov of sortedProviders) {
-      const items = providerMap.get(prov) || [];
-      result.push({
-        title: formatProviderName(prov),
-        models: items,
-      });
+    for (const provider of order) {
+      result.push({ title: providerName(provider), models: byProvider.get(provider) ?? [] });
     }
-
     return result;
-  }, [filteredModels, models, searchQuery, filterMode, t]);
+  }, [filteredModels]);
+
+  /** Which providers the host has switched off. */
+  const disabledProviders = useMemo(() => {
+    const off = new Set<string>();
+    for (const provider of providers) {
+      if (provider.activation === 'disabled') off.add(provider.id);
+    }
+    return off;
+  }, [providers]);
+
+  /**
+   * What the session is running, or what it would run if it ran now.
+   *
+   * A session with no model of its own is not a session with no model: the
+   * gateway hands OpenCode's configured default, and the catalog says what
+   * that is. Showing nothing here meant the sheet had no current row at all on
+   * a fresh session, and the reader had to pick one to find out what was
+   * already selected.
+   */
+  const effectiveModel = selectedModel ?? defaults.model;
+  const currentValue = effectiveModel
+    ? [
+        formatModelName(effectiveModel),
+        effectiveModel.variant,
+        selectedModel ? undefined : t`default`,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : undefined;
+
+  let rowIndex = 0;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable
-          testID="agent-model-sheet"
-          onPress={(e) => e.stopPropagation()}
-          style={styles.sheetContainer}>
-          <SheetFrame tint="background">
-            <View collapsable={false} style={styles.sheetLayout}>
-              {/* Pinned Top Navigation Bar */}
-              <View style={styles.fixedTop}>
-                <SheetHandle style={styles.sheetHandle} />
-
-                <View style={styles.header}>
-                  <View style={[styles.headerCopy, plate]}>
-                    <Text variant="subheading" style={styles.headerTitle}>
-                      {t`Select Model`}
-                    </Text>
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      {selectedModel?.model_id || t`Choose an LLM model`}
-                    </Text>
-                  </View>
-
-                  <GlassChrome face="sheet" style={styles.headerButton}>
-                    <PressableScale
-                      testID="agent-model-sheet-close"
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Close`}
-                      onPress={onClose}
-                      style={styles.headerButtonHit}>
-                      <X size={19} color={theme.colors.text} strokeWidth={2} />
-                    </PressableScale>
-                  </GlassChrome>
-                </View>
-
-                {/* Unified Search Input */}
-                <Input
-                  accessibilityLabel={t`Search models`}
-                  placeholder={t`Search models or providers...`}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  variant="outline"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-
-                {/* Filter Mode Tabs */}
-                <ThemedSurface
-                  slot="tabs.background"
-                  baseColor={theme.colors.surface}
-                  style={styles.filterTabs}>
-                  <PressableScale
-                    testID="agent-model-filter-all"
-                    onPress={() => setFilterMode('all')}
-                    style={[
-                      styles.filterTab,
-                      filterMode === 'all' && {
-                        backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                      },
-                    ]}>
-                    <Text
-                      variant="caption"
-                      weight={filterMode === 'all' ? 'semibold' : 'medium'}
-                      color={filterMode === 'all' ? theme.colors.primary : theme.colors.textMuted}>
-                      {t`All Models`}
-                    </Text>
-                  </PressableScale>
-
-                  <PressableScale
-                    testID="agent-model-filter-free"
-                    onPress={() => setFilterMode('free')}
-                    style={[
-                      styles.filterTab,
-                      filterMode === 'free' && {
-                        backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                      },
-                    ]}>
-                    <Text
-                      variant="caption"
-                      weight={filterMode === 'free' ? 'semibold' : 'medium'}
-                      color={filterMode === 'free' ? theme.colors.primary : theme.colors.textMuted}>
-                      {`✨ ${t`Free Only`}`}
-                    </Text>
-                  </PressableScale>
-                </ThemedSurface>
-              </View>
-
-              {loading ? (
-                <View style={styles.loadingContainer}>
-                  <Spinner size="lg" color={theme.colors.primary} />
-                </View>
-              ) : (
-                <ScrollView
-                  style={styles.scrollViewport}
-                  contentContainerStyle={[
-                    styles.content,
-                    { paddingBottom: LADDER.section + insets.bottom },
-                  ]}
-                  showsVerticalScrollIndicator={false}>
-                  {sections.length === 0 || filteredModels.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                      <Text variant="caption" color={theme.colors.textMuted}>
-                        <Trans>No models found matching your search.</Trans>
-                      </Text>
-                    </View>
-                  ) : (
-                    sections.map((section) => (
-                      <View key={section.title} style={styles.sectionBlock}>
-                        <SectionLabel title={section.title} color={theme.colors.textMuted} />
-
-                        <SettingsCard>
-                          {section.models.map((mod) => {
-                            const isSelected =
-                              selectedModel?.model_id === mod.id &&
-                              (!selectedModel.provider_id ||
-                                selectedModel.provider_id === mod.provider_id);
-                            const isFree = isFreeModel(mod);
-                            const hasVariants = mod.variants && mod.variants.length > 0;
-
-                            return (
-                              <View
-                                key={`${mod.provider_id}:${mod.id}`}
-                                style={[
-                                  styles.modelRowWrap,
-                                  isSelected && {
-                                    backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                                  },
-                                ]}>
-                                <PressableScale
-                                  testID={`agent-model-row-${mod.id}`}
-                                  accessibilityLabel={
-                                    isFree ? `${mod.name || mod.id} ${t`Free`}` : mod.name || mod.id
-                                  }
-                                  onPress={() => {
-                                    const defaultVariant =
-                                      mod.variants?.find((v) => v.id === 'high')?.id ??
-                                      mod.variants?.[0]?.id;
-                                    onSelectModel({
-                                      provider_id: mod.provider_id,
-                                      model_id: mod.id,
-                                      variant: isSelected ? selectedModel?.variant : defaultVariant,
-                                    });
-                                  }}
-                                  style={styles.modelRow}>
-                                  <View style={styles.modelRowLeft}>
-                                    <View
-                                      style={[
-                                        styles.indicatorDot,
-                                        {
-                                          backgroundColor: isSelected
-                                            ? theme.colors.primary
-                                            : 'transparent',
-                                          borderColor: isSelected
-                                            ? theme.colors.primary
-                                            : theme.colors.border,
-                                        },
-                                      ]}
-                                    />
-                                    <View style={styles.modelNameCol}>
-                                      <View style={styles.nameAndBadge}>
-                                        <Text
-                                          variant="bodySmall"
-                                          weight={isSelected ? 'semibold' : 'regular'}
-                                          color={
-                                            isSelected ? theme.colors.primary : theme.colors.text
-                                          }
-                                          numberOfLines={1}
-                                          style={styles.modelNameText}>
-                                          {mod.name || mod.id}
-                                        </Text>
-                                        {isFree ? (
-                                          <View
-                                            style={[
-                                              styles.freeBadge,
-                                              { backgroundColor: `${theme.colors.primary}18` },
-                                            ]}>
-                                            <Sparkles size={9} color={theme.colors.primary} />
-                                            <Text
-                                              variant="caption"
-                                              color={theme.colors.primary}
-                                              style={styles.freeBadgeText}>
-                                              {t`Free`}
-                                            </Text>
-                                          </View>
-                                        ) : null}
-                                      </View>
-                                      {mod.limit?.context ? (
-                                        <Text
-                                          variant="caption"
-                                          color={theme.colors.textMuted}
-                                          style={styles.limitText}>
-                                          {mod.limit.context >= 1_000_000
-                                            ? `${(mod.limit.context / 1_000_000).toFixed(1)}M context`
-                                            : `${(mod.limit.context / 1000).toFixed(0)}k context`}
-                                        </Text>
-                                      ) : null}
-                                    </View>
-                                  </View>
-
-                                  {isSelected ? (
-                                    <Check size={18} color={theme.colors.primary} />
-                                  ) : null}
-                                </PressableScale>
-
-                                {/* Variants Row (e.g. low, medium, high) */}
-                                {isSelected && hasVariants ? (
-                                  <View style={styles.variantsRow}>
+    <SheetScene
+      testID="agent-model-sheet"
+      title={t`Choose a model`}
+      caption={currentValue}
+      header={
+        <>
+          <SheetSceneSearch
+            testID="agent-model-search"
+            accessibilityLabel={t`Search models`}
+            placeholder={t`Search models or providers`}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <SettingsSegmented
+            testID="agent-model-filter"
+            options={[
+              { label: t`All models`, value: 'all' },
+              { label: t`Free only`, value: 'free' },
+            ]}
+            value={filterMode}
+            onChange={(next) => setFilterMode(next === 'free' ? 'free' : 'all')}
+          />
+        </>
+      }>
+      {loading ? (
+        <View style={styles.loading}>
+          <Spinner size="lg" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <ScrollView
+          style={sheetSceneStyles.scroller}
+          contentContainerStyle={sheetSceneStyles.scrollerContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          {sections.length === 0 || filteredModels.length === 0 ? (
+            <View style={styles.empty}>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`No models match that search.`}
+              </Text>
+            </View>
+          ) : (
+            sections.map((section, sectionIndex) => (
+              <Animated.View key={section.title} layout={listLayout('short')}>
+                {sectionIndex > 0 ? <SheetSceneGroupRule /> : null}
+                <SheetSceneGroupHeading title={section.title} first={sectionIndex === 0} />
+                {section.models.map((model) => {
+                  const isSelected =
+                    effectiveModel?.model_id === model.id &&
+                    (!effectiveModel.provider_id ||
+                      effectiveModel.provider_id === model.provider_id);
+                  // Carried through rather than filtered out, and said plainly:
+                  // the host is where a provider is signed in, and the gateway
+                  // proxies no credential route.
+                  const unavailable =
+                    model.enabled === false || disabledProviders.has(model.provider_id);
+                  const variants = model.variants ?? [];
+                  const index = rowIndex++;
+                  return (
+                    <Animated.View
+                      key={`${model.provider_id}:${model.id}`}
+                      entering={
+                        index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')
+                      }
+                      layout={listLayout('short')}>
+                      <SheetSceneRow
+                        testID={`agent-model-row-${model.id}`}
+                        title={model.name || model.id}
+                        caption={modelCaption(model)}
+                        selected={isSelected && !unavailable}
+                        disabled={unavailable}
+                        disabledCaption={model.status || t`Set up on the host`}
+                        onPress={() =>
+                          onSelectModel({
+                            provider_id: model.provider_id,
+                            model_id: model.id,
+                            variant: isSelected
+                              ? effectiveModel?.variant
+                              : (variants.find((v) => v.id === 'high')?.id ?? variants[0]?.id),
+                          })
+                        }
+                        trailing={
+                          isSelected && !unavailable && variants.length > 0 ? (
+                            <View style={styles.variants}>
+                              {variants.map((variant) => {
+                                const active = (effectiveModel?.variant || 'high') === variant.id;
+                                return (
+                                  <PressableScale
+                                    key={variant.id}
+                                    accessibilityRole="button"
+                                    accessibilityState={{ selected: active }}
+                                    accessibilityLabel={variant.id}
+                                    onPress={() =>
+                                      onSelectModel({
+                                        provider_id: model.provider_id,
+                                        model_id: model.id,
+                                        variant: variant.id,
+                                      })
+                                    }
+                                    style={[
+                                      styles.variantChip,
+                                      {
+                                        backgroundColor: active
+                                          ? theme.colors.primary
+                                          : withAlpha(theme.colors.primary, 0.09),
+                                      },
+                                    ]}>
                                     <Text
                                       variant="caption"
-                                      color={theme.colors.textMuted}
-                                      style={styles.thinkingLabel}>
-                                      {t`Thinking:`}
+                                      weight={active ? 'semibold' : 'regular'}
+                                      color={active ? theme.colors.onPrimary : theme.colors.primary}
+                                      style={styles.variantChipText}>
+                                      {variant.id}
                                     </Text>
-                                    <View style={styles.variantChips}>
-                                      {mod.variants?.map((v) => {
-                                        const isVarSelected =
-                                          (selectedModel?.variant || 'high') === v.id;
-                                        return (
-                                          <PressableScale
-                                            key={v.id}
-                                            onPress={() =>
-                                              onSelectModel({
-                                                provider_id: mod.provider_id,
-                                                model_id: mod.id,
-                                                variant: v.id,
-                                              })
-                                            }
-                                            style={[
-                                              styles.variantChip,
-                                              {
-                                                backgroundColor: isVarSelected
-                                                  ? theme.colors.primary
-                                                  : surfaceBackground(theme.colors.surfaceRaised),
-                                              },
-                                            ]}>
-                                            <Text
-                                              variant="caption"
-                                              weight={isVarSelected ? 'semibold' : 'regular'}
-                                              color={
-                                                isVarSelected ? '#fff' : theme.colors.textMuted
-                                              }
-                                              style={styles.variantChipText}>
-                                              {v.id}
-                                            </Text>
-                                          </PressableScale>
-                                        );
-                                      })}
-                                    </View>
-                                  </View>
-                                ) : null}
-                              </View>
-                            );
-                          })}
-                        </SettingsCard>
-                      </View>
-                    ))
-                  )}
-                </ScrollView>
-              )}
-            </View>
-          </SheetFrame>
-        </Pressable>
-      </Pressable>
-    </Modal>
+                                  </PressableScale>
+                                );
+                              })}
+                            </View>
+                          ) : null
+                        }
+                      />
+                    </Animated.View>
+                  );
+                })}
+              </Animated.View>
+            ))
+          )}
+          <SheetSceneFooter bottomInset={insets.bottom} />
+        </ScrollView>
+      )}
+    </SheetScene>
   );
 });
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    maxHeight: '88%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  sheetLayout: {
-    flexShrink: 1,
-    overflow: 'hidden',
-  },
-  sheetHandle: {
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.36)',
-  },
-  fixedTop: {
-    flexShrink: 0,
-    paddingHorizontal: LADDER.gutter,
-    paddingTop: LADDER.gap * 1.5,
-    paddingBottom: LADDER.gap,
-    gap: LADDER.snug,
-  },
-  header: {
+  loading: { padding: 40, alignItems: 'center', justifyContent: 'center' },
+  empty: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
+  variants: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: LADDER.gap,
-  },
-  headerCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  headerTitle: {
-    includeFontPadding: false,
-  },
-  headerButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  headerButtonHit: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterTabs: {
-    flexDirection: 'row',
-    padding: 3,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    gap: 4,
-  },
-  filterTab: {
-    flex: 1,
-    minHeight: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9,
-    borderCurve: 'continuous',
-  },
-  loadingContainer: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollViewport: {
-    flexShrink: 1,
-  },
-  content: {
-    paddingHorizontal: LADDER.gutter,
-    paddingTop: 4,
-    gap: LADDER.section,
-  },
-  emptyContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionBlock: {
-    gap: LADDER.snug,
-  },
-  modelRowWrap: {
-    overflow: 'hidden',
-  },
-  modelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: LADDER.gutter,
-    paddingVertical: LADDER.snug,
-  },
-  modelRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  indicatorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 1,
-  },
-  modelNameCol: {
-    flex: 1,
-    gap: 2,
-  },
-  nameAndBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  modelNameText: {
-    includeFontPadding: false,
-  },
-  freeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  freeBadgeText: {
-    fontSize: 9,
-    fontWeight: '700',
-  },
-  limitText: {
-    fontSize: 11,
-  },
-  variantsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: LADDER.gutter,
-    paddingBottom: 10,
-    paddingTop: 2,
-    gap: 8,
-  },
-  thinkingLabel: {
-    fontSize: 11,
-  },
-  variantChips: {
-    flexDirection: 'row',
-    gap: 6,
+    flexWrap: 'wrap',
+    gap: SHEET_LADDER.gap,
+    paddingBottom: SHEET_LADDER.snug,
   },
   variantChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
+    paddingHorizontal: SHEET_LADDER.snug,
+    paddingVertical: 5,
+    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
   },
-  variantChipText: {
-    fontSize: 10,
-    textTransform: 'capitalize',
-  },
+  variantChipText: { textTransform: 'capitalize', includeFontPadding: false },
 });

@@ -28,7 +28,10 @@ const consumers = {
   'actions.background': 'src/components/glass-chrome.tsx',
   'cards.decoration': 'src/components/settings-chrome.tsx',
   'buttons.primary.background': 'src/components/themed-button.tsx',
-  'tabs.background': 'src/app/commands.tsx',
+  // The control, not a screen. The commands sheet used to paint its own tab
+  // strip, so the slot lived or died with that one screen; it is on
+  // `SettingsSegmented` now, which is every tabbed control in the app.
+  'tabs.background': 'src/components/settings-segmented.tsx',
   'emptyState.illustration': [
     'src/app/index.tsx',
     'src/theme/launch-artwork.ts',

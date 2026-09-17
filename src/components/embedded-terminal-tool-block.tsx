@@ -1,240 +1,54 @@
-import { createElement, useEffect, memo, useMemo, useState, type ComponentType } from 'react';
+import {
+  createElement,
+  memo,
+  useEffect,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { useLingui } from '@lingui/react/macro';
 import {
   AlertCircle,
   Braces,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
   FileDiff,
   FilePen,
   FilePlus,
   FileText,
-  GitFork,
   Globe,
-  Loader2,
+  GitFork,
+  ListChecks,
+  MonitorSmartphone,
+  Regex,
   Search,
   Sparkles,
   Terminal,
   Wrench,
 } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
+
 import { PressableScale } from '@/components/pressable-scale';
-import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
+import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
+import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
-import { keyedLines } from '@/lib/line-keys';
+import type { ToolCallState } from '@/lib/agent-protocol';
+import type { ToolKind } from '@/lib/agent-tool-output';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
-export interface EmbeddedTerminalProps {
-  toolId: string;
-  toolName: string;
-  command?: string;
-  input?: unknown;
-  output?: unknown;
-  status: 'running' | 'completed' | 'failed';
-  defaultExpanded?: boolean;
-}
-
-interface ParsedToolOutput {
-  stdout: string;
-  exitCode?: number;
-}
-
-function parseToolOutput(raw: unknown): ParsedToolOutput {
-  if (!raw) return { stdout: '' };
-
-  let data: unknown = raw;
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim();
-    if (
-      (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
-      (trimmed.startsWith('{') && trimmed.endsWith('}'))
-    ) {
-      try {
-        data = JSON.parse(trimmed);
-      } catch {
-        // Keep as raw string
-      }
-    }
-  }
-
-  // If data is array (OpenCode's standard tool output: [{"text": "...", "type": "text"}, {"text": "Command exited with code 0.", "type": "text"}])
-  if (Array.isArray(data)) {
-    let stdout = '';
-    let exitCode: number | undefined;
-
-    for (const item of data) {
-      const text =
-        typeof item === 'object' && item && 'text' in item
-          ? String((item as { text: unknown }).text)
-          : typeof item === 'string'
-            ? item
-            : '';
-
-      const exitMatch = text.match(/Command exited with code (\d+)/i);
-      if (exitMatch) {
-        exitCode = parseInt(exitMatch[1], 10);
-      } else if (!stdout) {
-        // First text content is command stdout!
-        stdout = text;
-      } else {
-        stdout += `\n${text}`;
-      }
-    }
-
-    return {
-      stdout: stdout || (data.length > 0 ? JSON.stringify(data, null, 2) : ''),
-      exitCode,
-    };
-  }
-
-  if (typeof data === 'object' && data !== null) {
-    const rec = data as Record<string, unknown>;
-    if (typeof rec.stdout === 'string') {
-      return {
-        stdout: rec.stdout,
-        exitCode: typeof rec.exitCode === 'number' ? rec.exitCode : undefined,
-      };
-    }
-    if (typeof rec.output === 'string') return parseToolOutput(rec.output);
-    if (Array.isArray(rec.content)) return parseToolOutput(rec.content);
-    if (typeof rec.text === 'string') return { stdout: rec.text };
-    return { stdout: JSON.stringify(data, null, 2) };
-  }
-
-  return { stdout: String(data) };
-}
-
-/** The tool families OpenCode ships, plus a bucket for MCP additions. */
-type ToolKind =
-  | 'shell'
-  | 'read'
-  | 'edit'
-  | 'write'
-  | 'patch'
-  | 'search'
-  | 'web'
-  | 'subagent'
-  | 'skill'
-  | 'code'
-  | 'mcp';
-
-function classifyTool(name: string): ToolKind {
-  const n = name.toLowerCase();
-  if (n === 'shell' || n === 'bash' || n === 'terminal' || n === 'run') return 'shell';
-  if (n === 'read' || n === 'list') return 'read';
-  if (n === 'edit' || n === 'multiedit' || n === 'str_replace' || n === 'str_replace_editor') {
-    return 'edit';
-  }
-  if (n === 'write' || n === 'create' || n === 'new_file') return 'write';
-  if (n === 'patch' || n === 'apply_patch') return 'patch';
-  if (n === 'grep' || n === 'glob' || n === 'search' || n === 'find') return 'search';
-  if (n === 'webfetch' || n === 'fetch' || n === 'websearch' || n === 'web_search') return 'web';
-  if (n === 'subagent' || n === 'task' || n === 'spawn' || n === 'agent') return 'subagent';
-  if (n === 'skill' || n === 'load_skill') return 'skill';
-  if (n === 'execute' || n === 'code') return 'code';
-  return 'mcp';
-}
-
-function asRecord(input: unknown): Record<string, unknown> | null {
-  return input && typeof input === 'object' && !Array.isArray(input)
-    ? (input as Record<string, unknown>)
-    : null;
-}
-
-/** Fence language for a file path, when the markdown renderer has a grammar. */
-const LANG_BY_EXT: Record<string, string> = {
-  ts: 'typescript',
-  tsx: 'tsx',
-  js: 'javascript',
-  jsx: 'javascript',
-  mjs: 'javascript',
-  cjs: 'javascript',
-  json: 'json',
-  html: 'html',
-  htm: 'html',
-  css: 'css',
-  scss: 'css',
-  md: 'markdown',
-  markdown: 'markdown',
-  yml: 'yaml',
-  yaml: 'yaml',
-  go: 'go',
-  java: 'java',
-  py: 'python',
-  c: 'c',
-  h: 'c',
-  cpp: 'cpp',
-  cc: 'cpp',
-  hpp: 'cpp',
-  rs: 'rust',
-  sh: 'bash',
-  bash: 'bash',
-  zsh: 'bash',
-  swift: 'swift',
-  php: 'php',
-  rb: 'ruby',
-  cs: 'c-sharp',
-};
-
-function fenceLanguageForPath(path?: string): string | undefined {
-  if (!path) return undefined;
-  const ext = path.split('.').pop()?.toLowerCase();
-  return ext ? LANG_BY_EXT[ext] : undefined;
-}
-
-function pickString(rec: Record<string, unknown>, keys: string[]): string | undefined {
-  for (const key of keys) {
-    const value = rec[key];
-    if (typeof value === 'string' && value.length > 0) return value;
-  }
-  return undefined;
-}
-
-/** The one-line target a tool is pointed at: the path, the pattern, the URL… */
-function extractTarget(kind: ToolKind, input: unknown): string {
-  const rec = asRecord(input);
-  if (!rec) return typeof input === 'string' ? input : '';
-  switch (kind) {
-    case 'shell':
-      return pickString(rec, ['command', 'cmd']) ?? '';
-    case 'read':
-      return pickString(rec, ['path', 'filePath', 'file_path', 'file']) ?? '';
-    case 'edit':
-    case 'write':
-      return pickString(rec, ['path', 'filePath', 'file_path', 'file']) ?? '';
-    case 'patch':
-      // `*** Add File: path` / `*** Update File: path` / `*** Delete File: path`
-      return (
-        pickString(rec, ['patchText', 'patch_text', 'patch'])?.match(
-          /\*\*\* [A-Za-z]+ File: (.+)/
-        )?.[1] ??
-        pickString(rec, ['patchText', 'patch_text', 'patch'])
-          ?.split('\n')
-          .find((line) => line.startsWith('*** '))
-          ?.replace(/^\*\*\* [A-Za-z]+ File: /, '') ??
-        ''
-      );
-    case 'search':
-      return pickString(rec, ['pattern', 'query', 'literal']) ?? '';
-    case 'web':
-      return pickString(rec, ['url', 'query']) ?? '';
-    case 'subagent':
-      return (
-        pickString(rec, ['description', 'agentID', 'agent_id', 'subagent', 'agent']) ??
-        pickString(rec, ['prompt'])?.split('\n')[0] ??
-        ''
-      );
-    case 'skill':
-      return pickString(rec, ['skillID', 'skill_id', 'skillId', 'skill', 'id']) ?? '';
-    default:
-      return (
-        pickString(rec, ['command', 'cmd', 'path', 'filePath', 'query', 'url', 'pattern']) ??
-        (typeof input === 'string' ? input : '')
-      );
-  }
-}
+/**
+ * The shell every tool call is drawn in.
+ *
+ * One header -- icon, name, target, state, duration, badges -- one row of chips
+ * and actions, and one expandable body that the caller fills with whatever that
+ * particular tool is worth showing. `agent-tool-card.tsx` owns the bodies; this
+ * file owns the frame, so a shell, an edit and an MCP call cannot drift into
+ * three different headers.
+ */
 
 /** Static icon per tool family — component references resolve to fixed imports. */
 const TOOL_ICONS: Record<ToolKind, ComponentType<{ size?: number; color?: string }>> = {
@@ -243,92 +57,92 @@ const TOOL_ICONS: Record<ToolKind, ComponentType<{ size?: number; color?: string
   edit: FilePen,
   write: FilePlus,
   patch: FileDiff,
+  glob: Search,
+  grep: Regex,
   search: Search,
   web: Globe,
   subagent: GitFork,
   skill: Sparkles,
-  code: Braces,
+  todo: ListChecks,
+  question: CircleHelp,
+  execute: Braces,
+  browser: MonitorSmartphone,
   mcp: Wrench,
 };
 
-const MINI_DIFF_MAX_LINES = 6;
+export interface EmbeddedTerminalProps {
+  /** The tool's own name, shown as it came. */
+  toolName: string;
+  kind: ToolKind;
+  /** The one line that says what this call is pointed at. */
+  title?: string;
+  /** A second, quieter line: the rest of a path, a working directory, a query. */
+  caption?: string;
+  status: ToolCallState;
+  /** `time.completed - time.ran`, when the engine reported both. */
+  durationMs?: number;
+  /** The reader is looking at a clipped result. */
+  truncated?: boolean;
+  /** OpenCode's own message, shown as it came, on a failed call. */
+  error?: string;
+  /** Detached by `POST …/background`; the card says so and stays quiet. */
+  background?: boolean;
+  /** Counts, exit codes, `+N lines`: small facts that fit on one line. */
+  chips?: ReactNode;
+  /** Buttons: run in background, open the child session. */
+  actions?: ReactNode;
+  /** Drawn above the fold, whether or not the card is expanded. */
+  preview?: ReactNode;
+  /** Drawn when the card is expanded. */
+  children?: ReactNode;
+  defaultExpanded?: boolean;
+  testID?: string;
+}
 
-/**
- * One tool call, as OpenCode's own output shows it: a single quiet line naming
- * the tool and its target, with the part that matters for that tool — an edit
- * shows its before/after, a write its content, a patch its text — and the bare
- * command/output behind an animated expand. No card, no background, no chrome.
- */
+/** Whether the tool is still doing something, in any of the three ways it can be. */
+export function isToolPending(status: ToolCallState): boolean {
+  return status === 'pending' || status === 'streaming' || status === 'running';
+}
+
+/** `1.2s`, `340ms`, `2m 04s`: short enough to sit in a header. */
+export function formatToolDuration(ms: number): string {
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  if (ms < 60_000) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
+  const minutes = Math.floor(ms / 60_000);
+  const seconds = Math.round((ms % 60_000) / 1000);
+  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+}
+
 export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock({
   toolName,
-  command,
-  input,
-  output,
+  kind,
+  title,
+  caption,
   status,
+  durationMs,
+  truncated,
+  error,
+  background,
+  chips,
+  actions,
+  preview,
+  children,
   defaultExpanded = false,
+  testID,
 }: EmbeddedTerminalProps) {
   const theme = useThemeTokens();
+  const colors = usePaneChatColors();
   const { t } = useLingui();
+  const raised = useTranscriptPlate();
   const [expanded, setExpanded] = useState(defaultExpanded);
 
-  const kind = useMemo(() => classifyTool(toolName), [toolName]);
-
-  const rec = asRecord(input);
-  const displayCommand = useMemo(() => {
-    if (command) return command;
-    return extractTarget(kind, input);
-  }, [command, kind, input]);
-
-  const oldString = rec ? pickString(rec, ['oldString', 'old_string']) : undefined;
-  const newString = rec ? pickString(rec, ['newString', 'new_string']) : undefined;
-  const content = rec ? pickString(rec, ['content']) : undefined;
-  const patchText = rec ? pickString(rec, ['patchText', 'patch_text', 'patch']) : undefined;
-
-  const oldKeyed = useMemo(() => (oldString ? keyedLines(oldString) : []), [oldString]);
-  const newKeyed = useMemo(() => (newString ? keyedLines(newString) : []), [newString]);
-  const contentKeyed = useMemo(() => (content ? keyedLines(content) : []), [content]);
-  const patchKeyed = useMemo(() => (patchText ? keyedLines(patchText) : []), [patchText]);
-
-  // The markdown renderer's tree-sitter grammars highlight file bodies; only
-  // when the tool target reveals a known language.
-  const markdownStyle = usePaneChatMarkdownStyle();
-  const highlightLang = useMemo(
-    () => (kind === 'write' || kind === 'edit' ? fenceLanguageForPath(displayCommand) : undefined),
-    [kind, displayCommand]
-  );
-  const fencedHighlight = useMemo(() => {
-    if (!highlightLang) return null;
-    const body = kind === 'write' ? content : newString;
-    if (!body) return null;
-    return `\`\`\`${highlightLang}\n${body}\n\`\`\``;
-  }, [highlightLang, kind, content, newString]);
-
-  const renderHighlighted = (key: string, fenced: string) => (
-    <EnrichedMarkdownText
-      key={key}
-      flavor="commonmark"
-      markdown={fenced}
-      markdownStyle={markdownStyle}
-      containerStyle={styles.highlightedCode}
-      selectable
-      streamingAnimation={false}
-      textBreakStrategy="simple"
-    />
-  );
-
-  // Extract output text and unwrap structured JSON wrappers
-  const parsedOutput = useMemo(() => parseToolOutput(output), [output]);
-  const outputText = parsedOutput.stdout;
-  const exitCode = parsedOutput.exitCode;
-
-  const statusColor =
-    status === 'completed'
-      ? theme.colors.success
-      : status === 'failed'
-        ? theme.colors.danger
-        : theme.colors.warning;
-  const addedColor = theme.colors.success ?? '#22c55e';
-  const removedColor = theme.colors.danger;
+  const pending = isToolPending(status);
+  const failed = status === 'failed';
+  const statusColor = failed
+    ? theme.colors.danger
+    : pending
+      ? theme.colors.warning
+      : theme.colors.success;
 
   const chevronProgress = useSharedValue(expanded ? 1 : 0);
   useEffect(() => {
@@ -336,63 +150,65 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   }, [expanded, chevronProgress]);
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
-    opacity: 1,
   }));
 
-  const hasBody =
-    Boolean(outputText) ||
-    oldKeyed.length > 0 ||
-    Boolean(content) ||
-    Boolean(patchText) ||
-    status === 'running';
+  const hasBody = Boolean(children);
 
   return (
-    <Animated.View style={styles.container}>
-      {/* Header: one quiet line — tool, target, outcome */}
+    <Animated.View style={[styles.container, raised]} testID={testID}>
+      {/* Header: one line naming the tool and what it is pointed at */}
       <PressableScale
         testID="agent-tool-toggle"
         accessibilityRole="button"
+        accessibilityState={{ expanded, busy: pending }}
         accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
+        disabled={!hasBody}
         onPress={() => setExpanded((prev) => !prev)}
         style={styles.header}>
-        <View style={styles.headerLeft}>
-          {createElement(TOOL_ICONS[kind], { size: 12, color: theme.colors.textMuted })}
-          <Text
-            variant="caption"
-            weight="medium"
-            color={theme.colors.textMuted}
-            style={styles.toolBadge}>
-            {toolName}
-          </Text>
-          {displayCommand ? (
-            <Text
-              variant="caption"
-              numberOfLines={1}
-              color={theme.colors.textSubtle}
-              style={styles.commandPreview}>
-              {displayCommand}
-            </Text>
-          ) : null}
-          {content ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.exitCodeText}>
-              {`+${content.split('\n').length} lines`}
-            </Text>
-          ) : null}
-          {status === 'running' ? (
-            <Loader2 size={11} color={statusColor} />
-          ) : status === 'failed' ? (
-            <AlertCircle size={11} color={statusColor} />
-          ) : null}
-          {exitCode !== undefined ? (
+        <View style={styles.headerIcon}>
+          {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
+        </View>
+        <View style={styles.headerText}>
+          <View style={styles.headerLine}>
             <Text
               variant="caption"
               weight="semibold"
-              color={exitCode === 0 ? addedColor : removedColor}
-              style={styles.exitCodeText}>
-              {`exit ${exitCode}`}
+              color={theme.colors.text}
+              style={styles.toolName}>
+              {toolName}
+            </Text>
+            {title ? (
+              <Text
+                variant="caption"
+                numberOfLines={1}
+                color={theme.colors.textMuted}
+                style={styles.target}>
+                {title}
+              </Text>
+            ) : null}
+          </View>
+          {caption ? (
+            <Text
+              variant="caption"
+              numberOfLines={1}
+              ellipsizeMode="head"
+              color={theme.colors.textSubtle}
+              style={styles.caption}>
+              {caption}
             </Text>
           ) : null}
         </View>
+        {/* A soft pulse rather than a spinner: a tool that is thinking reads
+            the same way the assistant does while it thinks. */}
+        {pending ? (
+          <ThinkingIndicator size={12} color={statusColor} />
+        ) : failed ? (
+          <AlertCircle size={12} color={statusColor} />
+        ) : durationMs !== undefined ? (
+          <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
+            {formatToolDuration(durationMs)}
+          </Text>
+        ) : null}
         {hasBody ? (
           <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
             {expanded ? (
@@ -404,133 +220,43 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         ) : null}
       </PressableScale>
 
-      {/* An edit's before/after is the content — short enough to show in place */}
-      {kind === 'edit' && (oldKeyed.length > 0 || newKeyed.length > 0) ? (
-        <View style={styles.miniDiff}>
-          {oldKeyed.slice(0, MINI_DIFF_MAX_LINES).map(({ line, key }) => (
-            <View key={key} style={styles.diffLineRow}>
-              <Text selectable style={[styles.codeText, { color: removedColor }]}>
-                - {line || ' '}
+      {chips || truncated || background ? (
+        <View style={styles.chipRow}>
+          {chips}
+          {background ? (
+            <View style={[styles.badge, { borderColor: colors.accent }]}>
+              <Text variant="caption" color={colors.accent} style={styles.badgeText}>
+                {t`Background`}
               </Text>
             </View>
-          ))}
-          {newKeyed.slice(0, MINI_DIFF_MAX_LINES).map(({ line, key }) => (
-            <View key={key} style={styles.diffLineRow}>
-              <Text selectable style={[styles.codeText, { color: theme.colors.text }]}>
-                <Text style={{ color: addedColor }}>+ </Text>
-                {line || ' '}
+          ) : null}
+          {truncated ? (
+            <View style={[styles.badge, { borderColor: theme.colors.warning }]}>
+              <Text variant="caption" color={theme.colors.warning} style={styles.badgeText}>
+                {t`Truncated`}
               </Text>
             </View>
-          ))}
-          {oldKeyed.length > MINI_DIFF_MAX_LINES || newKeyed.length > MINI_DIFF_MAX_LINES ? (
-            <Text variant="caption" color={theme.colors.textSubtle} style={styles.runningText}>
-              <Trans>… open for the full change</Trans>
-            </Text>
           ) : null}
         </View>
       ) : null}
 
-      {expanded ? (
+      {/* OpenCode's own message, said as it was said. */}
+      {failed && error ? (
+        <Text variant="caption" selectable color={theme.colors.danger} style={styles.errorText}>
+          {error}
+        </Text>
+      ) : null}
+
+      {preview}
+
+      {actions ? <View style={styles.actionRow}>{actions}</View> : null}
+
+      {expanded && hasBody ? (
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
-          style={[styles.terminalWindow, { borderLeftColor: theme.colors.border }]}>
-          {/* The rest of the edit, beyond the in-place preview */}
-          {kind === 'edit' && oldKeyed.length > MINI_DIFF_MAX_LINES
-            ? oldKeyed.slice(MINI_DIFF_MAX_LINES).map(({ line, key }) => (
-                <View key={key} style={styles.diffLineRow}>
-                  <Text selectable style={[styles.codeText, { color: removedColor }]}>
-                    - {line || ' '}
-                  </Text>
-                </View>
-              ))
-            : null}
-          {kind === 'edit' && newKeyed.length > MINI_DIFF_MAX_LINES && !highlightLang
-            ? newKeyed.slice(MINI_DIFF_MAX_LINES).map(({ line, key }) => (
-                <View key={key} style={styles.diffLineRow}>
-                  <Text selectable style={[styles.codeText, { color: theme.colors.text }]}>
-                    <Text style={{ color: addedColor }}>+ </Text>
-                    {line || ' '}
-                  </Text>
-                </View>
-              ))
-            : null}
-          {kind === 'edit' && fencedHighlight ? (
-            <View style={styles.outputContent}>
-              {renderHighlighted('edit-new', fencedHighlight)}
-            </View>
-          ) : null}
-
-          {/* A write's content is the change itself */}
-          {kind === 'write' && contentKeyed.length > 0 ? (
-            fencedHighlight ? (
-              <View style={styles.outputContent}>
-                {renderHighlighted('write-content', fencedHighlight)}
-              </View>
-            ) : (
-              <View style={styles.outputContent}>
-                {contentKeyed.map(({ line, key }) => {
-                  const added = line.startsWith('+');
-                  const removed = line.startsWith('-');
-                  return (
-                    <Text
-                      key={key}
-                      selectable
-                      style={[
-                        styles.codeText,
-                        {
-                          color: added ? addedColor : removed ? removedColor : theme.colors.text,
-                        },
-                      ]}>
-                      {line || ' '}
-                    </Text>
-                  );
-                })}
-              </View>
-            )
-          ) : null}
-
-          {/* A patch's text, marker-coloured */}
-          {kind === 'patch' && patchKeyed.length > 0 ? (
-            <View style={styles.outputContent}>
-              {patchKeyed.map(({ line, key }) => {
-                const added = line.startsWith('+');
-                const removed = line.startsWith('-');
-                const section = line.startsWith('***');
-                return (
-                  <Text
-                    key={key}
-                    selectable
-                    style={[
-                      styles.codeText,
-                      {
-                        color: added
-                          ? addedColor
-                          : removed
-                            ? removedColor
-                            : section
-                              ? theme.colors.primary
-                              : theme.colors.textMuted,
-                      },
-                    ]}>
-                    {line || ' '}
-                  </Text>
-                );
-              })}
-            </View>
-          ) : null}
-
-          {outputText ? (
-            <Text
-              selectable
-              style={[styles.codeText, styles.outputWrap, { color: theme.colors.textMuted }]}>
-              {outputText}
-            </Text>
-          ) : status === 'running' ? (
-            <Text variant="caption" color={theme.colors.textMuted} style={styles.runningText}>
-              <Trans>Running command in background…</Trans>
-            </Text>
-          ) : null}
+          style={[styles.body, { borderLeftColor: theme.colors.border }]}>
+          {children}
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -539,72 +265,79 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 
 const styles = StyleSheet.create({
   container: {
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    // A card is a row: its header lays out with flex and its diff rows pan,
+    // neither of which measures inside a shrink-to-fit box.
+    alignSelf: 'stretch',
     marginVertical: 2,
+    paddingVertical: 7,
+    paddingHorizontal: 9,
+    gap: 5,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    paddingVertical: 2,
+    gap: 7,
   },
-  headerLeft: {
+  headerIcon: {
+    paddingTop: 1,
+  },
+  headerText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
+  },
+  headerLine: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flexShrink: 1,
-    minWidth: 0,
   },
-  toolBadge: {
-    fontSize: 11.5,
+  toolName: {
+    fontSize: AGENT_TYPE.meta.size,
   },
-  commandPreview: {
+  target: {
     fontFamily: 'monospace',
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     flexShrink: 1,
   },
-  exitCodeText: {
-    fontSize: 10.5,
+  caption: {
+    fontFamily: 'monospace',
+    fontSize: AGENT_TYPE.micro.size,
   },
-  miniDiff: {
-    marginLeft: 12,
-    marginTop: 1,
-    paddingLeft: 8,
-    borderLeftWidth: StyleSheet.hairlineWidth,
+  duration: {
+    fontSize: AGENT_TYPE.micro.size,
+    fontVariant: ['tabular-nums'],
   },
-  diffLineRow: {
+  chipRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
   },
-  terminalWindow: {
-    marginLeft: 12,
-    marginTop: 2,
-    marginBottom: 2,
+  badge: {
+    paddingHorizontal: 7,
+    paddingVertical: 1,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  badgeText: {
+    fontSize: AGENT_TYPE.micro.size,
+    fontWeight: '600',
+  },
+  errorText: {
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  body: {
+    marginLeft: 4,
     paddingLeft: 8,
     borderLeftWidth: StyleSheet.hairlineWidth,
     gap: 4,
-  },
-  outputScroll: {
-    maxWidth: '100%',
-  },
-  outputContent: {
-    paddingVertical: 2,
-  },
-  highlightedCode: {
-    alignSelf: 'stretch',
-  },
-  outputWrap: {
-    lineHeight: 17,
-    maxWidth: '100%',
-  },
-  codeText: {
-    fontFamily: 'monospace',
-    fontSize: 11.5,
-    lineHeight: 16,
-  },
-  runningText: {
-    fontStyle: 'italic',
-    fontSize: 11,
   },
 });

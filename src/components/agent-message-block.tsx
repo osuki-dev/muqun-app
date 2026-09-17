@@ -1,164 +1,354 @@
-import { memo, useEffect, useMemo, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { ChevronDown, Clock, Edit3, FileDiff, FileText, Trash2 } from 'lucide-react-native';
+import {
+  Bot,
+  ChevronDown,
+  Clock,
+  Cpu,
+  Edit3,
+  FileDiff,
+  FileText,
+  CircleHelp,
+  FolderGit2,
+  Info,
+  Layers,
+  Sparkles,
+  Trash2,
+} from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
-import { EmbeddedTerminalToolBlock } from '@/components/embedded-terminal-tool-block';
-import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { AgentToolCard } from '@/components/agent-tool-card';
+import { AgentPermissionCard } from '@/components/agent-permission-card';
+import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
+import { InlineDiffRows } from '@/components/diff-rows';
+import { useRelativeTime } from '@/hooks/use-relative-time';
+import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
+import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, timing } from '@/lib/motion';
+import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { isSafeExternalLink } from '@/lib/safe-link';
-import { keyedLines, type KeyedLine } from '@/lib/line-keys';
-import type { TimelineItem } from '@/lib/agent-session';
+import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
+import {
+  formatModelName,
+  type AgentPart,
+  type AgentRunStatus,
+  type PermissionDecision,
+  type TimelineItem,
+  type ToolPart,
+} from '@/lib/agent-session';
+import { usePermissionDecider, usePermissionForToolCall } from '@/stores/agent-permissions';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
 function isImageAttachment(uri: string): boolean {
   return uri.startsWith(IMAGE_DATA_URI_PREFIX) || /\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i.test(uri);
 }
 
-export const AgentUserMessage = memo(function AgentUserMessage({
-  item,
+/**
+ * What the reader attached, under what they said.
+ *
+ * A row of chips and thumbnails rather than a grid above the text: the text is
+ * the message and the files are what came with it, which is the order the
+ * composer stages them in and the order the TUI prints them.
+ */
+const MessageAttachments = memo(function MessageAttachments({
+  attachments,
   onPreviewImage,
-  onEditQueued,
-  onCancelQueued,
 }: {
-  item: TimelineItem;
+  attachments: readonly string[];
   onPreviewImage: (uri: string) => void;
-  onEditQueued: (itemId: string, text: string) => void;
-  onCancelQueued: (itemId: string) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const { showToast } = useToast();
-  const surfaceBackground = useSurfaceBackground();
-  const colors = usePaneChatColors();
-
-  const text = item.part.type === 'text' ? item.part.text : '';
-  const attachments = item.attachments ?? [];
+  const raised = useTranscriptPlate('raised');
 
   return (
-    <View style={styles.userBubbleRow}>
-      <Pressable
-        testID={`user-bubble-${item.id}`}
-        onLongPress={async () => {
-          if (!text) return;
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await Clipboard.setStringAsync(text);
-          showToast({
-            variant: 'info',
-            title: t`Copied`,
-            message: t`Message copied to clipboard`,
-          });
-        }}
-        delayLongPress={260}
-        style={[
-          styles.userBubble,
-          {
-            backgroundColor: surfaceBackground(colors.bubble),
-            borderColor: colors.accent,
-          },
-          item.queued
-            ? {
-                borderStyle: 'dashed',
-                borderWidth: 1.5,
-                borderColor: colors.accent,
-              }
-            : null,
-        ]}>
-        {/* Queued indicator and actions: only allowed for queued messages */}
-        {item.queued ? (
-          <View style={styles.queuedBadgeRow}>
-            <View
-              style={[styles.queuedPill, { backgroundColor: surfaceBackground(colors.bubble) }]}>
-              <Clock size={11} color={theme.colors.primary} />
-              <Text
-                variant="caption"
-                weight="semibold"
-                color={theme.colors.primary}
-                style={styles.queuedPillText}>
-                <Trans>Queued</Trans>
-              </Text>
-            </View>
-            <View style={styles.queuedActions}>
-              <PressableScale
-                testID={`queued-edit-${item.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={t`Edit queued message`}
-                onPress={() => onEditQueued(item.id, text)}
-                style={styles.queuedActionBtn}>
-                <Edit3 size={13} color={theme.colors.primary} />
-              </PressableScale>
-              <PressableScale
-                testID={`queued-cancel-${item.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={t`Cancel queued message`}
-                onPress={() => onCancelQueued(item.id)}
-                style={styles.queuedActionBtn}>
-                <Trash2 size={13} color={theme.colors.danger} />
-              </PressableScale>
-            </View>
+    <View style={styles.attachmentRow}>
+      {attachments.map((att, attIdx) => {
+        if (isImageAttachment(att)) {
+          return (
+            <PressableScale
+              key={`${att}-${attIdx}`}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={t`Open attachment`}
+              onPress={() => onPreviewImage(att)}
+              style={styles.attachmentImageWrapper}>
+              <Image source={{ uri: att }} style={styles.attachmentThumbnail} contentFit="cover" />
+            </PressableScale>
+          );
+        }
+        const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
+        return (
+          <View key={`${att}-${attIdx}`} style={[styles.attachmentChip, raised]}>
+            <FileText size={13} color={theme.colors.primary} />
+            <Text
+              variant="caption"
+              color={theme.colors.text}
+              numberOfLines={1}
+              style={styles.attachmentChipName}>
+              {fileName}
+            </Text>
           </View>
-        ) : null}
+        );
+      })}
+    </View>
+  );
+});
 
-        {/* Attachment Preview Chips / Images */}
-        {attachments.length > 0 ? (
-          <View style={styles.bubbleAttachmentsGrid}>
-            {attachments.map((att, attIdx) => {
-              if (isImageAttachment(att)) {
-                return (
-                  <PressableScale
-                    key={`${att}-${attIdx}`}
-                    onPress={() => onPreviewImage(att)}
-                    style={styles.bubbleImageWrapper}>
-                    <Image
-                      source={{ uri: att }}
-                      style={styles.bubbleImageThumbnail}
-                      contentFit="cover"
-                    />
-                  </PressableScale>
-                );
-              }
-              const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
-              return (
-                <View
-                  key={`${att}-${attIdx}`}
-                  style={[
-                    styles.bubbleFileChip,
-                    {
-                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                      borderColor: theme.colors.border,
-                    },
-                  ]}>
-                  <FileText size={13} color={theme.colors.primary} />
-                  <Text
-                    variant="caption"
-                    color={theme.colors.text}
-                    numberOfLines={1}
-                    style={styles.bubbleFileName}>
-                    {fileName}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
+/**
+ * A quiet single line: what the session switched to, what skill was loaded,
+ * what the engine said about itself.
+ *
+ * These are not messages and they are not tool calls. OpenCode's own output
+ * prints them as one dim line between the turns they separate, and anything
+ * louder here reads as content the model produced -- which none of it is.
+ */
+const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const plate = useTranscriptPlate();
 
-        {text ? (
-          <Text selectable variant="bodySmall" color={theme.colors.text}>
-            {text}
+  const [expanded, setExpanded] = useState(false);
+  const notice = useMemo((): { Icon: typeof Cpu; text: string; label?: string } | null => {
+    switch (part.type) {
+      case 'model_switched': {
+        const next = formatModelName(part.model, t`a default model`);
+        return {
+          Icon: Cpu,
+          text: part.previous
+            ? t`Model · ${formatModelName(part.previous)} → ${next}`
+            : t`Model · ${next}`,
+        };
+      }
+      case 'agent_switched':
+        return {
+          Icon: Bot,
+          text: part.previous
+            ? t`Agent · ${part.previous} → ${part.agent}`
+            : t`Agent · ${part.agent}`,
+        };
+      case 'location_switched':
+        return { Icon: FolderGit2, text: t`Directory · ${part.directory}` };
+      case 'skill':
+        return { Icon: Sparkles, text: t`Skill · ${part.name ?? part.skill}` };
+      case 'synthetic':
+      case 'system': {
+        const text = part.text ?? part.description ?? '';
+        if (!text) return null;
+        // An engine-injected note often arrives wrapped in a tag,
+        // `<system-reminder>…</system-reminder>`; the tag is the label, not
+        // the content, so it becomes a title and the angle brackets go.
+        const tagged = untagNotice(text);
+        return tagged
+          ? { Icon: Info, text: tagged.body, label: humaniseTag(tagged.tag) }
+          : { Icon: Info, text };
+      }
+      case 'unsupported':
+        return { Icon: CircleHelp, text: t`Unsupported item (${part.raw_type})` };
+      default:
+        return null;
+    }
+  }, [part, t]);
+
+  if (!notice) return null;
+  const { Icon, text, label } = notice;
+  // A long note is never cut short for good: two lines closed, everything
+  // when tapped, and the same tap folds it back.
+  const foldable = label !== undefined || text.length > 120 || text.includes('\n');
+
+  return (
+    <Pressable
+      accessibilityRole={foldable ? 'button' : undefined}
+      accessibilityState={foldable ? { expanded } : undefined}
+      onPress={foldable ? () => setExpanded((v) => !v) : undefined}
+      style={[styles.noticeRow, styles.noticeBlock, plate]}>
+      <Icon size={11} color={theme.colors.textMuted} style={styles.noticeIcon} />
+      <View style={styles.noticeCopy}>
+        {label ? (
+          <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
+            {label}
           </Text>
         ) : null}
-      </Pressable>
+        <Text
+          variant="caption"
+          color={theme.colors.textMuted}
+          selectable={expanded}
+          numberOfLines={expanded ? undefined : 2}
+          style={styles.noticeText}>
+          {text}
+        </Text>
+      </View>
+      {foldable ? (
+        <ChevronDown
+          size={12}
+          color={theme.colors.textSubtle}
+          style={expanded ? styles.chevronOpen : undefined}
+        />
+      ) : null}
+    </Pressable>
+  );
+});
+
+/** `<system-reminder>body</system-reminder>` → the tag and the body inside it. */
+function untagNotice(text: string): { tag: string; body: string } | null {
+  const match = /^\s*<([a-z][\w-]*)>\s*([\s\S]*?)\s*<\/\1>\s*$/i.exec(text);
+  if (!match) return null;
+  return { tag: match[1] ?? '', body: match[2] ?? '' };
+}
+
+/** `system-reminder` → `System reminder`. */
+function humaniseTag(tag: string): string {
+  const words = tag.replace(/[-_]+/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
+ * What a tool card can do that a message block cannot decide for itself:
+ * detach a running shell, open the session a subagent started, open a file the
+ * tool returned.
+ *
+ * One object rather than six props, because it is passed straight through two
+ * components and every one of them is optional -- a transcript with no
+ * workbench behind it draws the same cards, minus the buttons.
+ */
+export interface AgentToolActions {
+  onOpenChildSession?: (asid: string) => void;
+  onRunInBackground?: (toolCallId: string) => void;
+  onOpenBackgroundTray?: () => void;
+  onPreviewImage?: (uri: string) => void;
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+  /** The virtualised changes viewer, for a patch too big to draw in a cell. */
+  onOpenFullDiff?: () => void;
+  /** Live status per child session, from that session's own status events. */
+  childStatuses?: Readonly<Record<string, AgentRunStatus>>;
+}
+
+const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
+
+/** A detached shell, as the tool call it was before it was detached. */
+function shellAsToolPart(part: Extract<AgentPart, { type: 'shell' }>): ToolPart {
+  return {
+    type: 'tool',
+    id: part.shell_id,
+    name: 'shell',
+    input: { command: part.command },
+    output: part.output,
+    content: [],
+    metadata: part.exit === undefined ? {} : { exit: part.exit },
+    state:
+      part.status === 'running' ? 'running' : part.status === 'exited' ? 'completed' : 'failed',
+    background: true,
+    ...(part.truncated ? { truncated: true } : {}),
+  };
+}
+
+/**
+ * The boundary a compaction left behind.
+ *
+ * Not a message and not a tool call: the history before this point is gone and
+ * what the model can still see is the summary. A labelled divider says that in
+ * one line, and the summary is behind it rather than in front of it -- it is a
+ * few thousand words of the model's own notes, and unfolding it by default
+ * would bury the turn that follows.
+ */
+export const AgentCompactionRow = memo(function AgentCompactionRow({
+  part,
+}: {
+  part: Extract<AgentPart, { type: 'compaction' }>;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const colors = usePaneChatColors();
+  const plate = useTranscriptPlate();
+  const markdownStyle = usePaneChatMarkdownStyle();
+  const [expanded, setExpanded] = useState(false);
+
+  const running = part.status === 'running';
+  const failed = part.status === 'failed';
+  const tone = failed ? theme.colors.danger : theme.colors.textMuted;
+
+  // A slow breath while it runs, on the UI thread, honouring reduced motion --
+  // the same idea as the thinking mark rather than a second kind of progress.
+  const shimmer = useSharedValue(running ? 0 : 1);
+  useEffect(() => {
+    shimmer.value = running
+      ? withRepeat(
+          withSequence(withTiming(1, timing('long')), withTiming(0.35, timing('long'))),
+          -1
+        )
+      : withTiming(1, timing('micro'));
+  }, [running, shimmer]);
+  const shimmerStyle = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+
+  const label = running
+    ? t`Compacting context…`
+    : failed
+      ? t`Compaction failed`
+      : part.reason === 'manual'
+        ? t`Context compacted · manual`
+        : t`Context compacted · auto`;
+
+  const hasSummary = Boolean(part.summary);
+
+  return (
+    <View style={styles.compactionBlock}>
+      <PressableScale
+        testID="agent-compaction-row"
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={label}
+        disabled={!hasSummary}
+        onPress={() => setExpanded((prev) => !prev)}
+        style={styles.compactionRow}>
+        <View style={[styles.compactionRule, { backgroundColor: colors.border }]} />
+        <Animated.View style={[styles.compactionLabel, shimmerStyle]}>
+          <Layers size={11} color={tone} />
+          <Text variant="caption" color={tone} numberOfLines={1} style={styles.noticeText}>
+            {label}
+          </Text>
+          {hasSummary ? <ChevronDown size={11} color={theme.colors.textSubtle} /> : null}
+        </Animated.View>
+        <View style={[styles.compactionRule, { backgroundColor: colors.border }]} />
+      </PressableScale>
+
+      {failed && part.error?.message ? (
+        <Text variant="caption" selectable color={theme.colors.danger} style={styles.noticeText}>
+          {part.error.message}
+        </Text>
+      ) : null}
+
+      {expanded && part.summary ? (
+        <Animated.View entering={fadeIn('micro')} style={[styles.messageBlock, plate]}>
+          <EnrichedMarkdownText
+            key={markdownPaletteKey(markdownStyle)}
+            flavor="commonmark"
+            markdown={part.summary}
+            markdownStyle={markdownStyle}
+            containerStyle={styles.markdownContainer}
+            selectable
+            selectionColor={theme.colors.primary}
+            selectionHandleColor={theme.colors.primary}
+            streamingAnimation={false}
+            textBreakStrategy="simple"
+          />
+        </Animated.View>
+      ) : null}
     </View>
   );
 });
@@ -189,49 +379,35 @@ function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string 
 }
 
 /**
- * Patch lines, never wrapped and coloured by their marker in the terminal's
- * red and green. Shared by the `diff` part and by `diff` fences inside an
- * assistant's markdown.
+ * A patch, as the rows the diff viewer draws.
+ *
+ * This used to be a `ScrollView` of marker-coloured `<Text>` with no line
+ * numbers -- one of four hand-rolled patch painters in this tree, each with its
+ * own greens and reds. It is the real rows now: the same parser, the same
+ * gutter, the same palette and the same character advance as the changes sheet,
+ * capped so a fifty-thousand-line patch cannot land fifty thousand `<Text>`
+ * nodes in one timeline cell.
  */
-const DiffPatchLines = memo(function DiffPatchLines({ lines }: { lines: KeyedLine[] }) {
+const InlinePatch = memo(function InlinePatch({
+  patch,
+  onOpenFullDiff,
+}: {
+  patch: string;
+  onOpenFullDiff?: () => void;
+}) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
+  const rows = useMemo(() => diffRowsForFence(patch), [patch]);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.inlineDiffScroll}>
-      <View style={styles.inlineDiffBody}>
-        {lines.map(({ line, key }) => {
-          const marker = line.charAt(0);
-          const added = marker === '+';
-          const removed = marker === '-';
-          const hunk = marker === '@';
-          return (
-            <Text
-              key={key}
-              selectable
-              style={[
-                styles.diffLine,
-                {
-                  color: added
-                    ? colors.added
-                    : removed
-                      ? colors.removed
-                      : hunk
-                        ? theme.colors.primary
-                        : colors.muted,
-                  backgroundColor: added
-                    ? colors.addedBackground
-                    : removed
-                      ? colors.removedBackground
-                      : 'transparent',
-                  fontStyle: hunk ? 'italic' : undefined,
-                },
-              ]}>
-              {line || ' '}
-            </Text>
-          );
-        })}
-      </View>
-    </ScrollView>
+    <InlineDiffRows
+      rows={rows}
+      colors={colors}
+      {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
+      // The same fill as the plate the diff sits on, so the gutter and the hunk
+      // header are not two lighter boxes inside the card.
+      gutterFill={theme.colors.surface}
+      headerFill={theme.colors.surface}
+    />
   );
 });
 
@@ -242,9 +418,11 @@ const DiffPatchLines = memo(function DiffPatchLines({ lines }: { lines: KeyedLin
 const AgentDiffBlock = memo(function AgentDiffBlock({
   file,
   diff,
+  onOpenFullDiff,
 }: {
   file: string;
   diff: string;
+  onOpenFullDiff?: () => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -258,21 +436,10 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
     transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
   }));
 
-  const keyedDiffLines = useMemo(() => keyedLines(diff), [diff]);
-  const lines = useMemo(() => keyedDiffLines.map((l) => l.line), [keyedDiffLines]);
-  const stats = useMemo(() => {
-    let added = 0;
-    let removed = 0;
-    for (const line of lines) {
-      if (line.startsWith('+') && !line.startsWith('+++')) added++;
-      else if (line.startsWith('-') && !line.startsWith('---')) removed++;
-    }
-    return { added, removed };
-  }, [lines]);
-
-  // Long patches are shown whole — no silent truncation — with the patch rows'
-  // own horizontal scroll ready for over-long lines.
-  const shown = keyedDiffLines;
+  const stats = useMemo(
+    () => ({ added: countMarked(diff, '+'), removed: countMarked(diff, '-') }),
+    [diff]
+  );
 
   return (
     <Animated.View style={styles.diffBlock}>
@@ -308,7 +475,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
         <Animated.View entering={fadeIn('micro')} style={styles.diffBodyWrap}>
           {/* Never wrapped: a re-wrapped diff line no longer lines up with the
               one above it, which is the only thing a diff is read for. */}
-          <DiffPatchLines lines={shown} />
+          <InlinePatch patch={diff} {...(onOpenFullDiff ? { onOpenFullDiff } : {})} />
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -359,7 +526,7 @@ const MessageTextPart = memo(function MessageTextPart({
 
   const renderMarkdown = (key: string, markdown: string) => (
     <EnrichedMarkdownText
-      key={key}
+      key={`${key}:${markdownPaletteKey(markdownStyle)}`}
       flavor="commonmark"
       markdown={markdown}
       markdownStyle={markdownStyle}
@@ -385,7 +552,7 @@ const MessageTextPart = memo(function MessageTextPart({
         seg.kind === 'md' ? (
           renderMarkdown(`md-${segIdx}`, seg.text)
         ) : (
-          <DiffPatchLines key={`diff-${segIdx}`} lines={keyedLines(seg.text)} />
+          <InlinePatch key={`diff-${segIdx}`} patch={seg.text} />
         )
       )}
     </View>
@@ -393,176 +560,542 @@ const MessageTextPart = memo(function MessageTextPart({
 });
 
 /**
- * One assistant or system message, laid out the way OpenCode's own output is:
- * every part in order inside a single card — the reasoning as short collapsed
- * `Thought · Xs` rows, the tool calls as quiet single-line shells, the file
- * diffs, and finally the text the thinking produced.
+ * The drawn item before this one, skipping merged thinking.
+ *
+ * `prevItem` feeds the "this text merely echoes the tool above it" check, and
+ * a Thought block between them is not what that check is about.
  */
-export const AgentAssistantMessage = memo(function AgentAssistantMessage({
-  group,
-  showReasoning,
-  markdownStyle,
-}: {
-  group: TimelineRenderGroup;
-  showReasoning: boolean;
-  markdownStyle: MarkdownStyle;
-}) {
-  const theme = useThemeTokens();
+function previousItemAt(
+  entries: readonly TimelineEntry[],
+  index: number
+): TimelineItem | undefined {
+  for (let at = index - 1; at >= 0; at -= 1) {
+    const entry = entries[at];
+    if (entry.kind === 'item') return entry.item;
+  }
+  return undefined;
+}
 
-  // The parts this message actually paints, in order. `showReasoning` hides
-  // the model's private reasoning the same way it did for the flat list.
-  const visibleItems = useMemo(
+/**
+ * One part, whichever side of the conversation it arrived on.
+ *
+ * Both roles go through this. A user message whose part is not `text` used to
+ * render as an empty bordered rectangle -- the bubble drew, the text was `''`
+ * because the branch only read `part.text`, and nothing else was tried. There
+ * is no reason a `diff` or a `status` on a user row should be less readable
+ * than the same part on an assistant row, so neither is any more.
+ */
+function renderTimelinePart(
+  item: TimelineItem,
+  options: {
+    showReasoning: boolean;
+    markdownStyle: MarkdownStyle;
+    prevItem?: TimelineItem;
+    actions: AgentToolActions;
+  }
+): ReactNode {
+  const part = item.part;
+  switch (part.type) {
+    case 'reasoning':
+      // Never drawn from here: consecutive reasoning parts are merged into one
+      // run by `buildTimelineEntries` and drawn as a single block.
+      return null;
+    case 'tool':
+      return <ToolPartCard key={item.id} part={part} options={options} />;
+    case 'shell':
+      // A detached shell is a tool call that outlived its turn, and it reads
+      // best as the card it was before it was detached.
+      return <ToolPartCard key={item.id} part={shellAsToolPart(part)} options={options} />;
+    case 'diff':
+      return (
+        <AgentDiffBlock
+          key={item.id}
+          file={part.file}
+          diff={part.diff}
+          {...(options.actions.onOpenFullDiff
+            ? { onOpenFullDiff: options.actions.onOpenFullDiff }
+            : {})}
+        />
+      );
+    case 'todo':
+      return <AgentTodoBlock key={item.id} items={part.items} />;
+    case 'status':
+      return <StatusPartRow key={item.id} text={part.text} />;
+    case 'compaction':
+      return <AgentCompactionRow key={item.id} part={part} />;
+    case 'model_switched':
+    case 'agent_switched':
+    case 'location_switched':
+    case 'skill':
+    case 'synthetic':
+    case 'system':
+    case 'unsupported':
+      return <AgentNoticeRow key={item.id} part={part} />;
+    case 'text':
+      return (
+        <MessageTextPart
+          key={item.id}
+          text={part.text}
+          prevTool={
+            options.prevItem && options.prevItem.part.type === 'tool' ? options.prevItem : undefined
+          }
+          markdownStyle={options.markdownStyle}
+        />
+      );
+    default:
+      // `approval` and `form` are drawn by the surfaces that own their state:
+      // a permission under the tool row it came from, a form in the footer.
+      return null;
+  }
+}
+
+/**
+ * The tool card, with the one callback it needs bound to its own call id.
+ *
+ * A component rather than an inline arrow so the closure is created per card
+ * rather than per render of the whole message -- `AgentToolCard` is memoised
+ * and a new function on every stream tick would defeat that.
+ */
+const ToolPartCard = memo(function ToolPartCard({
+  part,
+  options,
+}: {
+  part: ToolPart;
+  options: { markdownStyle: MarkdownStyle; actions: AgentToolActions };
+}) {
+  const { actions } = options;
+  const runInBackground = actions.onRunInBackground;
+  const handleRunInBackground = useMemo(
+    () => (runInBackground ? () => runInBackground(part.id) : undefined),
+    [runInBackground, part.id]
+  );
+  const childStatus = part.child_session_id
+    ? actions.childStatuses?.[part.child_session_id]
+    : undefined;
+
+  // Subscribed by call id rather than searched out of a list handed to every
+  // card: one pending permission used to change the object every memoised tool
+  // card compared against, so a single prompt re-rendered the whole transcript.
+  const attachedPermission = usePermissionForToolCall(part.id);
+  const decide = usePermissionDecider();
+  const handleDecision = useMemo(
     () =>
-      group.items.filter((it) => {
-        switch (it.part.type) {
-          case 'reasoning':
-            return showReasoning;
-          case 'text':
-          case 'tool':
-          case 'diff':
-          case 'todo':
-          case 'status':
-            return true;
-          default:
-            return false;
-        }
-      }),
-    [group.items, showReasoning]
+      decide && attachedPermission
+        ? (decision: PermissionDecision) => decide(attachedPermission.id, decision)
+        : undefined,
+    [decide, attachedPermission]
   );
 
-  if (visibleItems.length === 0) return null;
-
   return (
-    <View style={styles.messageCard}>
-      {visibleItems.map((it, index) => {
-        switch (it.part.type) {
-          case 'reasoning':
-            return (
-              <AgentReasoningBlock
-                key={it.id}
-                text={it.part.text}
-                durationMs={it.part.duration_ms}
-              />
-            );
-          case 'tool':
-            return (
-              <EmbeddedTerminalToolBlock
-                key={it.id}
-                toolId={it.part.id}
-                toolName={it.part.name}
-                input={it.part.input}
-                output={it.part.output}
-                status={it.part.status}
-              />
-            );
-          case 'diff':
-            return <AgentDiffBlock key={it.id} file={it.part.file} diff={it.part.diff} />;
-          case 'todo':
-            return <AgentTodoBlock key={it.id} items={it.part.items} />;
-          case 'status':
-            return (
-              <View key={it.id} style={styles.statusRow}>
-                <Text variant="caption" color={theme.colors.textSubtle} style={styles.statusText}>
-                  • {it.part.text}
-                </Text>
-              </View>
-            );
-          case 'text': {
-            const prevItem = index > 0 ? visibleItems[index - 1] : group.prevItem;
-            return (
-              <MessageTextPart
-                key={it.id}
-                text={it.part.text}
-                prevTool={prevItem && prevItem.part.type === 'tool' ? prevItem : undefined}
-                markdownStyle={markdownStyle}
-              />
-            );
-          }
-          default:
-            return null;
-        }
-      })}
+    <>
+      <AgentToolCard
+        part={part}
+        markdownStyle={options.markdownStyle}
+        {...(childStatus ? { childStatus } : {})}
+        {...(actions.onOpenChildSession ? { onOpenChildSession: actions.onOpenChildSession } : {})}
+        {...(handleRunInBackground ? { onRunInBackground: handleRunInBackground } : {})}
+        {...(actions.onOpenBackgroundTray
+          ? { onOpenBackgroundTray: actions.onOpenBackgroundTray }
+          : {})}
+        {...(actions.onPreviewImage ? { onPreviewImage: actions.onPreviewImage } : {})}
+        {...(actions.onOpenFile ? { onOpenFile: actions.onOpenFile } : {})}
+        {...(actions.onOpenFullDiff ? { onOpenFullDiff: actions.onOpenFullDiff } : {})}
+      />
+      {attachedPermission && handleDecision ? (
+        <AgentPermissionCard attached request={attachedPermission} onDecision={handleDecision} />
+      ) : null}
+    </>
+  );
+});
+
+/**
+ * One message's thinking, as one block.
+ *
+ * `buildTimelineEntries` has already merged the consecutive `reasoning` parts
+ * a step-by-step engine emits, so this draws at most one Thought per run
+ * rather than one pill per step -- and a run that is still arriving counts up
+ * instead of sitting there as an empty pill.
+ */
+const ReasoningRunBlock = memo(function ReasoningRunBlock({ run }: { run: ReasoningRun }) {
+  return (
+    <AgentReasoningBlock
+      text={run.text}
+      {...(run.durationMs === undefined ? {} : { durationMs: run.durationMs })}
+      pending={run.pending}
+    />
+  );
+});
+
+const StatusPartRow = memo(function StatusPartRow({ text }: { text: string }) {
+  const theme = useThemeTokens();
+  return (
+    <View style={styles.statusRow}>
+      <Text variant="caption" color={theme.colors.textSubtle} style={styles.statusText}>
+        • {text}
+      </Text>
     </View>
   );
 });
 
+/**
+ * What the reader said, as a block rather than a bubble.
+ *
+ * The right-hand bubble is gone. It cost a `maxWidth: 85%` on every message, it
+ * re-wrapped anything monospaced the reader pasted, and on a phone it read as a
+ * different app from the assistant side directly under it. What is left is the
+ * shape the rest of this transcript already uses: a full-width block with a
+ * rule down its left edge, a role caption at the weight
+ * `EmbeddedTerminalToolBlock` puts its tool name at, and the attachments under
+ * the text.
+ */
+export const AgentUserMessage = memo(function AgentUserMessage({
+  group,
+  showReasoning,
+  onPreviewImage,
+  onEditQueued,
+  onCancelQueued,
+  actions = NO_TOOL_ACTIONS,
+}: {
+  group: TimelineRenderGroup;
+  showReasoning: boolean;
+  markdownStyle: MarkdownStyle;
+  onPreviewImage: (uri: string) => void;
+  onEditQueued: (itemId: string, text: string) => void;
+  onCancelQueued: (itemId: string) => void;
+  actions?: AgentToolActions;
+}) {
+  const { t } = useLingui();
+  // Live theme style, see AgentToolCard: a memoised cell must still repaint
+  // its markdown when the palette changes.
+  const markdownStyle = usePaneChatMarkdownStyle();
+  const theme = useThemeTokens();
+  const { showToast } = useToast();
+  const colors = usePaneChatColors();
+  const plate = useTranscriptPlate();
+  const relativeTime = useRelativeTime();
+
+  const first = group.items[0];
+  const text = useMemo(
+    () =>
+      group.items
+        .map((item) => (item.part.type === 'text' ? item.part.text : ''))
+        .filter(Boolean)
+        .join('\n'),
+    [group.items]
+  );
+  const attachments = useMemo(
+    () => group.items.flatMap((item) => item.attachments ?? []),
+    [group.items]
+  );
+  const queued = group.items.find((item) => item.queued);
+  const entries = useMemo(() => buildTimelineEntries(group.items), [group.items]);
+  const stamp = first?.updated_ms ? relativeTime(first.updated_ms) : '';
+
+  return (
+    <Pressable
+      testID={`user-message-${first?.id ?? group.key}`}
+      accessibilityLabel={t`Your message`}
+      onLongPress={async () => {
+        if (!text) return;
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Clipboard.setStringAsync(text);
+        showToast({
+          variant: 'info',
+          title: t`Copied`,
+          message: t`Message copied to clipboard`,
+        });
+      }}
+      delayLongPress={260}
+      style={[
+        styles.messageBlock,
+        plate,
+        styles.userBlock,
+        { borderLeftColor: colors.accent },
+        queued ? { borderLeftColor: theme.colors.warning } : null,
+      ]}>
+      <View style={styles.roleRow}>
+        <Text variant="caption" weight="semibold" color={colors.accent} style={styles.roleLabel}>
+          <Trans>You</Trans>
+        </Text>
+        {stamp ? (
+          <Text variant="caption" color={theme.colors.textSubtle} style={styles.roleStamp}>
+            {stamp}
+          </Text>
+        ) : null}
+        {queued ? (
+          <>
+            <View style={styles.roleSpacer} />
+            <View style={styles.queuedPill}>
+              <Clock size={11} color={theme.colors.warning} />
+              <Text
+                variant="caption"
+                weight="semibold"
+                color={theme.colors.warning}
+                style={styles.queuedPillText}>
+                <Trans>Queued</Trans>
+              </Text>
+            </View>
+            <PressableScale
+              testID={`queued-edit-${queued.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={t`Edit queued message`}
+              onPress={() => onEditQueued(queued.id, text)}
+              style={styles.queuedActionBtn}>
+              <Edit3 size={13} color={theme.colors.primary} />
+            </PressableScale>
+            <PressableScale
+              testID={`queued-cancel-${queued.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={t`Cancel queued message`}
+              onPress={() => onCancelQueued(queued.id)}
+              style={styles.queuedActionBtn}>
+              <Trash2 size={13} color={theme.colors.danger} />
+            </PressableScale>
+          </>
+        ) : null}
+      </View>
+
+      {entries.map((entry, index) =>
+        entry.kind === 'reasoning' ? (
+          showReasoning ? (
+            <ReasoningRunBlock key={entry.key} run={entry.run} />
+          ) : null
+        ) : (
+          renderTimelinePart(entry.item, {
+            showReasoning,
+            markdownStyle,
+            prevItem: previousItemAt(entries, index) ?? group.prevItem,
+            actions,
+          })
+        )
+      )}
+
+      {attachments.length > 0 ? (
+        <MessageAttachments attachments={attachments} onPreviewImage={onPreviewImage} />
+      ) : null}
+    </Pressable>
+  );
+});
+
+/**
+ * One assistant or system message, laid out the way OpenCode's own output is:
+ * every part in order inside a single block — the reasoning as short collapsed
+ * `Thought · Xs` rows, the tool calls as quiet shells, the file diffs, the one
+ * dim line a switch or a skill gets, and finally the text the thinking
+ * produced.
+ */
+export const AgentAssistantMessage = memo(function AgentAssistantMessage({
+  group,
+  showReasoning,
+  actions = NO_TOOL_ACTIONS,
+}: {
+  group: TimelineRenderGroup;
+  showReasoning: boolean;
+  markdownStyle: MarkdownStyle;
+  actions?: AgentToolActions;
+}) {
+  const plate = useTranscriptPlate();
+  const markdownStyle = usePaneChatMarkdownStyle();
+
+  // The parts this message actually paints, in order. `showReasoning` hides
+  // the model's private reasoning the same way it did for the flat list.
+  /**
+   * The parts this message paints, in order, with the thinking merged.
+   *
+   * `approval` and `form` are owned by the permission and form surfaces;
+   * `reasoning` is folded into runs by `buildTimelineEntries`, and
+   * `showReasoning` hides those runs the same way it hid the pills.
+   */
+  const entries = useMemo(() => {
+    const drawn = group.items.filter(
+      (it) => it.part.type !== 'approval' && it.part.type !== 'form'
+    );
+    const built = buildTimelineEntries(drawn);
+    return showReasoning ? built : built.filter((entry) => entry.kind !== 'reasoning');
+  }, [group.items, showReasoning]);
+
+  if (entries.length === 0) return null;
+
+  // One plate per row, never a plate inside a plate. Prose and the thought
+  // block share a plate; a tool card, a diff, a shell or a todo list carries
+  // its own surface and is laid out as a row of its own between them.
+  const rows: ReactNode[] = [];
+  let run: ReactNode[] = [];
+  let runKey = '';
+  const flush = () => {
+    if (run.length === 0) return;
+    rows.push(
+      <View key={`run:${runKey}`} style={[styles.messageBlock, plate]}>
+        {run}
+      </View>
+    );
+    run = [];
+  };
+  entries.forEach((entry, index) => {
+    if (entry.kind === 'reasoning') {
+      if (run.length === 0) runKey = entry.key;
+      run.push(<ReasoningRunBlock key={entry.key} run={entry.run} />);
+      return;
+    }
+    const drawn = renderTimelinePart(entry.item, {
+      showReasoning,
+      markdownStyle,
+      prevItem: previousItemAt(entries, index) ?? group.prevItem,
+      actions,
+    });
+    if (drawn === null) return;
+    if (STANDALONE_PART_TYPES.has(entry.item.part.type)) {
+      flush();
+      rows.push(
+        <View key={`row:${entry.item.id}`} style={styles.standaloneRow}>
+          {drawn}
+        </View>
+      );
+      return;
+    }
+    if (run.length === 0) runKey = entry.item.id;
+    run.push(<Fragment key={entry.item.id}>{drawn}</Fragment>);
+  });
+  flush();
+
+  if (rows.length === 0) return null;
+  return <>{rows}</>;
+});
+
+/** Parts that paint their own surface and therefore stand as their own row. */
+const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
+  'tool',
+  'diff',
+  'shell',
+  'todo',
+  'compaction',
+  // Notices draw their own compact plate.
+  'model_switched',
+  'agent_switched',
+  'location_switched',
+  'skill',
+  'synthetic',
+  'system',
+  'unsupported',
+  'status',
+]);
+
 const styles = StyleSheet.create({
-  userBubbleRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+  /** The one geometry both sides share: full width, padded, on a plate. */
+  messageBlock: {
+    // Hugs its content: "OK" is a short plate, a paragraph a wide one.
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    marginVertical: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    gap: 6,
+  },
+  userBlock: {
+    borderLeftWidth: 2,
+  },
+  standaloneRow: {
+    alignSelf: 'stretch',
+    width: '100%',
     marginVertical: 4,
   },
-  userBubble: {
-    maxWidth: '85%',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  bubbleAttachmentsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
-  },
-  bubbleImageWrapper: {
-    borderRadius: 14,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  bubbleImageThumbnail: {
-    width: 160,
-    height: 110,
-    borderRadius: 14,
-  },
-  bubbleFileChip: {
+  roleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    maxWidth: 220,
   },
-  bubbleFileName: {
-    fontSize: 12,
-    flexShrink: 1,
+  roleLabel: {
+    fontSize: AGENT_TYPE.meta.size,
   },
-  queuedBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-    gap: 8,
+  roleStamp: {
+    fontSize: AGENT_TYPE.micro.size,
+  },
+  roleSpacer: {
+    flex: 1,
   },
   queuedPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderCurve: 'continuous',
   },
   queuedPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  queuedActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    fontSize: AGENT_TYPE.micro.size,
   },
   queuedActionBtn: {
     padding: 3,
   },
-  messageCard: {
-    marginVertical: 4,
-    width: '100%',
-    alignSelf: 'stretch',
+  attachmentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  attachmentImageWrapper: {
+    borderRadius: 14,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  attachmentThumbnail: {
+    width: 160,
+    height: 110,
+    borderRadius: 14,
+  },
+  attachmentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    maxWidth: 220,
+  },
+  attachmentChipName: {
+    fontSize: AGENT_TYPE.meta.size,
+    flexShrink: 1,
+  },
+  noticeIcon: { marginTop: 3 },
+  // Shrinks, never grows: inside a plate that hugs its content a `flex: 1`
+  // column measures to nothing and the row collapses to its icon.
+  noticeCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
+  noticeBlock: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+    marginVertical: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  chevronOpen: { transform: [{ rotate: '180deg' }] },
+  noticeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  noticeText: {
+    flexShrink: 1,
+    fontSize: AGENT_TYPE.micro.size,
+  },
+  compactionBlock: {
+    alignSelf: 'stretch',
+    gap: 4,
+    paddingVertical: 2,
+  },
+  compactionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  compactionRule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  compactionLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flexShrink: 1,
+  },
+  summary: {
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   markdownContainer: {
     alignSelf: 'stretch',
@@ -571,39 +1104,11 @@ const styles = StyleSheet.create({
     gap: 6,
     alignSelf: 'stretch',
   },
-  inlineDiffScroll: {
-    maxWidth: '100%',
-  },
-  inlineDiffBody: {
-    paddingVertical: 2,
-  },
-  activitySection: {
-    marginBottom: 6,
-  },
-  activityHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-    alignSelf: 'flex-start',
-    backgroundColor: 'transparent',
-  },
-  activityChevron: {
-    opacity: 0.75,
-  },
-  activityBody: {
-    marginTop: 4,
-    gap: 2,
-  },
   statusRow: {
     paddingVertical: 2,
-    paddingHorizontal: 4,
   },
   statusText: {
-    fontSize: 11,
+    fontSize: AGENT_TYPE.micro.size,
     fontStyle: 'italic',
   },
   diffBodyWrap: {
@@ -611,7 +1116,6 @@ const styles = StyleSheet.create({
   },
   diffBlock: {
     alignSelf: 'stretch',
-    marginVertical: 4,
   },
   diffHeader: {
     flexDirection: 'row',
@@ -621,17 +1125,12 @@ const styles = StyleSheet.create({
   },
   diffFile: {
     flexShrink: 1,
-    fontSize: 11.5,
+    fontSize: AGENT_TYPE.meta.size,
   },
   diffStat: {
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
   },
   diffChevron: {
     padding: 2,
-  },
-  diffLine: {
-    fontFamily: 'monospace',
-    fontSize: 11.5,
-    lineHeight: 17,
   },
 });

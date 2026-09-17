@@ -12,11 +12,13 @@ import {
 } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import type { TodoItem } from '@/lib/agent-session';
+import { AGENT_TYPE } from '@/constants/agent-type';
 
 export interface AgentTodoBlockProps {
-  items: TodoItem[];
+  items: readonly TodoItem[];
   title?: string;
   defaultExpanded?: boolean;
 }
@@ -52,7 +54,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
         styles.container,
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
-          borderColor: allCompleted ? `${theme.colors.primary}44` : theme.colors.border,
+          borderColor: allCompleted ? withAlpha(theme.colors.primary, 0.27) : theme.colors.border,
           borderRadius: expanded ? 18 : 999,
         },
       ]}>
@@ -65,7 +67,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
         <View style={styles.headerLeft}>
           <CheckSquare
             size={14}
-            color={allCompleted ? (theme.colors.success ?? '#22c55e') : theme.colors.primary}
+            color={allCompleted ? theme.colors.success : theme.colors.primary}
           />
           <Text variant="caption" weight="semibold" color={theme.colors.text} style={styles.title}>
             {title ?? <Trans>Tasks</Trans>}
@@ -75,14 +77,14 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
               styles.countBadge,
               {
                 backgroundColor: allCompleted
-                  ? `${theme.colors.success ?? '#22c55e'}1c`
-                  : `${theme.colors.primary}18`,
+                  ? withAlpha(theme.colors.success, 0.11)
+                  : withAlpha(theme.colors.primary, 0.09),
               },
             ]}>
             <Text
               variant="caption"
               weight="bold"
-              color={allCompleted ? (theme.colors.success ?? '#22c55e') : theme.colors.primary}
+              color={allCompleted ? theme.colors.success : theme.colors.primary}
               style={styles.countText}>
               {`${completedCount}/${total}`}
             </Text>
@@ -99,15 +101,14 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
       </Pressable>
 
       {/* Progress Bar Line */}
-      <View style={[styles.progressTrack, { backgroundColor: `${theme.colors.border}66` }]}>
+      <View
+        style={[styles.progressTrack, { backgroundColor: withAlpha(theme.colors.border, 0.4) }]}>
         <View
           style={[
             styles.progressBar,
             {
               width: `${progressPct}%`,
-              backgroundColor: allCompleted
-                ? (theme.colors.success ?? '#22c55e')
-                : theme.colors.primary,
+              backgroundColor: allCompleted ? theme.colors.success : theme.colors.primary,
             },
           ]}
         />
@@ -123,11 +124,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
               <View key={item.text} style={styles.itemRow}>
                 <View style={styles.itemIcon}>
                   {isCompleted ? (
-                    <CheckCircle2
-                      size={14}
-                      color={theme.colors.success ?? '#22c55e'}
-                      strokeWidth={2.2}
-                    />
+                    <CheckCircle2 size={14} color={theme.colors.success} strokeWidth={2.2} />
                   ) : isInProgress ? (
                     <Clock size={14} color={theme.colors.primary} strokeWidth={2.2} />
                   ) : (
@@ -182,7 +179,7 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   title: {
-    fontSize: 12,
+    fontSize: AGENT_TYPE.meta.size,
   },
   countBadge: {
     paddingHorizontal: 6,
@@ -190,7 +187,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   countText: {
-    fontSize: 10.5,
+    fontSize: AGENT_TYPE.micro.size,
   },
   headerRight: {
     padding: 2,
@@ -218,8 +215,8 @@ const styles = StyleSheet.create({
   },
   itemText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   itemDoneText: {
     textDecorationLine: 'line-through',
