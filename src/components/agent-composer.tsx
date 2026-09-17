@@ -20,13 +20,20 @@ import {
   GitFork,
   Inbox,
   Layers,
+  Loader,
   Paperclip,
   Sparkles,
   Square,
   Zap,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -51,15 +58,19 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
-import { fadeIn, fadeOut, fadeOutDown } from '@/lib/motion';
+import { fadeIn, fadeOut, fadeOutDown, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import {
+  contextFillRatio,
+  contextTokenTotal,
   formatModelName,
   listAgentFiles,
+  type AgentContextUsage,
   type AgentInfo,
   type AgentProject,
   type AgentSessionInfo,
+  type CompactionReason,
   type ModelRef,
   type SkillInfo,
   type TodoItem,
@@ -90,6 +101,12 @@ export interface AgentComposerProps {
   bottomInset?: number;
   tasks?: TodoItem[];
   tokens?: TokensUsage;
+  /** What the model can still see, from `GET …/context`. */
+  contextUsage?: AgentContextUsage | null;
+  /** The session's own context window, when the engine stated one. */
+  contextLimit?: number;
+  /** Non-null only while a compaction is running. */
+  compaction?: { status: 'running'; reason: CompactionReason } | null;
   cost?: number;
   sessionTitle?: string;
   onSend: (text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<void>;
@@ -123,6 +140,9 @@ export const AgentComposer = memo(function AgentComposer({
   bottomInset = 0,
   tasks,
   tokens,
+  contextUsage,
+  contextLimit,
+  compaction,
   cost,
   sessionTitle,
   onSend,
@@ -150,18 +170,27 @@ export const AgentComposer = memo(function AgentComposer({
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
 
-  const tokenDisplayStr = useMemo(() => {
-    if (!tokens) return null;
-    const total = tokens.input + tokens.output + (tokens.reasoning ?? 0);
+  /**
+   * How full the model's context is, and how much the session has cost.
+   *
+   * The number is `GET …/context`, not `info.tokens`: the second is total
+   * spend and never comes down, so a gauge drawn from it would sit at 100%
+   * forever after one long session. The spend is still the fallback, because a
+   * gateway that has not answered the context route yet has nothing else to
+   * say, and it is labelled the same either way.
+   */
+  const contextPill = useMemo(() => {
+    const live = contextUsage?.tokens ?? null;
+    const total = live ? contextTokenTotal(live) : contextTokenTotal(tokens);
     if (total <= 0) return null;
+    const ratio = live ? contextFillRatio(live, contextLimit) : null;
     let tokStr = `${total}`;
     if (total >= 1_000_000) tokStr = `${(total / 1_000_000).toFixed(1)}M`;
     else if (total >= 1_000) tokStr = `${(total / 1_000).toFixed(1)}k`;
-
     const costStr =
       cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
-    return `${tokStr} • ${costStr}`;
-  }, [tokens, cost, t]);
+    return { label: `${tokStr} • ${costStr}`, ratio };
+  }, [contextUsage, contextLimit, tokens, cost, t]);
 
   const modelDisplayName = useMemo(() => formatModelName(selectedModel), [selectedModel]);
 
@@ -451,6 +480,10 @@ export const AgentComposer = memo(function AgentComposer({
         </View>
       ) : null}
 
+      {/* A compaction in flight. Transient, above the dock, and gone the
+          moment the boundary lands in the timeline as a row of its own. */}
+      {compaction ? <CompactionPill reason={compaction.reason} /> : null}
+
       <GlassChrome surface="composer" style={styles.composerDock}>
         <View style={[styles.composerInner, { paddingBottom: Math.max(10, bottomInset + 6) }]}>
           {/* Row 1: Workspace Sessions Horizontal Strip */}
@@ -667,8 +700,8 @@ export const AgentComposer = memo(function AgentComposer({
               </PressableScale>
             ) : null}
 
-            {/* OpenCode Session Tokens & Cost Pill */}
-            {tokenDisplayStr ? (
+            {/* Context window, token spend and cost, in one pill */}
+            {contextPill ? (
               <PressableScale
                 testID="agent-composer-tokens-pill"
                 onPress={() => {
@@ -682,7 +715,11 @@ export const AgentComposer = memo(function AgentComposer({
                     });
                   }
                 }}
-                accessibilityLabel={t`Tokens usage and cost`}
+                accessibilityLabel={
+                  contextPill.ratio === null
+                    ? t`Tokens usage and cost`
+                    : t`Context ${Math.round(contextPill.ratio * 100)}% full`
+                }
                 style={[
                   styles.actionBtnWithLabel,
                   { backgroundColor: surfaceBackground(chromeGlass) },
@@ -692,8 +729,32 @@ export const AgentComposer = memo(function AgentComposer({
                   variant="caption"
                   color={theme.colors.textMuted}
                   style={styles.actionBtnLabel}>
-                  {tokenDisplayStr}
+                  {contextPill.label}
                 </Text>
+                {/* The gauge, only when the engine stated a window to measure
+                    against. A bar with no limit behind it is a decoration. */}
+                {contextPill.ratio !== null ? (
+                  <View
+                    style={[
+                      styles.contextTrack,
+                      { backgroundColor: withAlpha(theme.colors.text, 0.12) },
+                    ]}>
+                    <View
+                      style={[
+                        styles.contextFill,
+                        {
+                          width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
+                          backgroundColor:
+                            contextPill.ratio > 0.9
+                              ? theme.colors.danger
+                              : contextPill.ratio > 0.7
+                                ? theme.colors.warning
+                                : theme.colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                ) : null}
               </PressableScale>
             ) : null}
 
@@ -877,6 +938,51 @@ export const AgentComposer = memo(function AgentComposer({
   );
 });
 
+/**
+ * "Compacting context…", while it is happening.
+ *
+ * `agent.compaction.changed` is the only thing that knows a compaction is
+ * running: the boundary does not reach the timeline until it finishes, so
+ * without this the reader watches a quiet agent and wonders what it is doing.
+ */
+const CompactionPill = memo(function CompactionPill({ reason }: { reason: CompactionReason }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
+
+  const pulse = useSharedValue(0.4);
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
+      -1
+    );
+  }, [pulse]);
+  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
+
+  return (
+    <Animated.View
+      entering={fadeIn('micro')}
+      exiting={fadeOut('micro')}
+      style={styles.compactionPillWrap}>
+      <View
+        style={[
+          styles.compactionPill,
+          {
+            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+            borderColor: theme.colors.border,
+          },
+        ]}>
+        <Animated.View style={pulseStyle}>
+          <Loader size={12} color={theme.colors.primary} />
+        </Animated.View>
+        <Text variant="caption" weight="semibold" color={theme.colors.text}>
+          {reason === 'manual' ? t`Compacting context…` : t`Compacting context automatically…`}
+        </Text>
+      </View>
+    </Animated.View>
+  );
+});
+
 const styles = StyleSheet.create({
   dockOuter: {
     position: 'absolute',
@@ -1009,6 +1115,32 @@ const styles = StyleSheet.create({
   },
   stopActionBtn: {
     paddingHorizontal: 10,
+  },
+  contextTrack: {
+    width: 26,
+    height: 4,
+    borderRadius: 2,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  contextFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  compactionPillWrap: {
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    marginBottom: 6,
+  },
+  compactionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   diffIndicator: {
     position: 'absolute',

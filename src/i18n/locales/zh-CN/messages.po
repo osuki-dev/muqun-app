@@ -81,6 +81,11 @@ msgstr "{0}（本设备）"
 msgid "{0} file(s) modified in workspace"
 msgstr "工作区修改了 {0} 个文件"
 
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages since the last compaction"
+msgstr "自上次压缩以来 {0} 条消息"
+
 #. placeholder {0}: capped.hidden
 #: src/components/agent-tool-card.tsx
 msgid "{0} more lines"
@@ -437,6 +442,10 @@ msgstr "批准且不再询问"
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "每次询问"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Ask OpenCode to summarise the history and keep working from the summary"
+msgstr "让 OpenCode 把历史总结成摘要，并基于摘要继续工作"
 
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
@@ -950,6 +959,19 @@ msgstr "压缩上下文"
 msgid "Compact session history to save context"
 msgstr "压缩会话历史以节省上下文"
 
+#: src/components/agent-composer.tsx
+msgid "Compacting context automatically…"
+msgstr "正在自动压缩上下文…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "正在压缩上下文…"
+
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "压缩失败"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "确认清除缓存"
@@ -1035,9 +1057,22 @@ msgstr "正在连接到 {address}"
 msgid "Connecting to agent engine…"
 msgstr "正在连接智能体引擎…"
 
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "上下文已用 {0}%"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context & Usage"
 msgstr "上下文与用量"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "上下文已压缩 · 自动"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "上下文已压缩 · 手动"
 
 #: src/components/agent-context-sheet.tsx
 msgid "CONTEXT WINDOW"
@@ -1214,6 +1249,10 @@ msgstr "复制公钥"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "无法添加文件"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "无法压缩"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -3216,10 +3255,6 @@ msgstr "必填"
 msgid "Requires iOS 16.1 or later."
 msgstr "需要 iOS 16.1 或更高版本"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Reset conversation context window (/clear)"
-msgstr "重置会话上下文窗口 (/clear)"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "请重新启动牧群以完成更新"
@@ -3859,6 +3894,10 @@ msgstr "启动新的 {0}"
 msgid "Start a new session with empty context"
 msgstr "以空白上下文开始新会话"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Start a session with a clean context"
+msgstr "新开一个上下文干净的会话"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -3939,10 +3978,6 @@ msgstr "子代理"
 #: src/components/agent-form-card.tsx
 msgid "Submit Response"
 msgstr "提交回复"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Summarize history into compact memory (/compact)"
-msgstr "将历史记录压缩为精简记忆 (/compact)"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -4443,17 +4478,21 @@ msgstr "今天"
 msgid "TOKEN BREAKDOWN"
 msgstr "Token 用量明细"
 
+#: src/components/agent-context-sheet.tsx
+msgid "tokens in context"
+msgstr "个 token 在上下文中"
+
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Token 用量与花费"
 
-#: src/components/agent-context-sheet.tsx
-msgid "tokens used"
-msgstr "已用 token"
-
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "改动太多，无法全部列出。这只是开头，不是全部"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Total spent"
+msgstr "累计消耗"
 
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
@@ -4712,6 +4751,10 @@ msgstr "当智能体暂停请求权限时，通知直达锁屏。一键批准或
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "离开期间"
+
+#: src/components/agent-context-sheet.tsx
+msgid "window not reported"
+msgstr "未报告窗口大小"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

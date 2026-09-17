@@ -81,6 +81,11 @@ msgstr "{0} (thiết bị này)"
 msgid "{0} file(s) modified in workspace"
 msgstr "Đã sửa đổi {0} tệp trong không gian làm việc"
 
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages since the last compaction"
+msgstr "{0} tin nhắn kể từ lần nén gần nhất"
+
 #. placeholder {0}: capped.hidden
 #: src/components/agent-tool-card.tsx
 msgid "{0} more lines"
@@ -437,6 +442,10 @@ msgstr "Chấp thuận và không hỏi lại"
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "Hỏi mỗi lần"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Ask OpenCode to summarise the history and keep working from the summary"
+msgstr "Yêu cầu OpenCode tóm tắt lịch sử và làm việc tiếp từ bản tóm tắt"
 
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
@@ -950,6 +959,19 @@ msgstr "Thu gọn ngữ cảnh"
 msgid "Compact session history to save context"
 msgstr "Nén lịch sử phiên để tiết kiệm ngữ cảnh"
 
+#: src/components/agent-composer.tsx
+msgid "Compacting context automatically…"
+msgstr "Đang tự động nén ngữ cảnh…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "Đang nén ngữ cảnh…"
+
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "Nén thất bại"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Xác nhận xóa bộ nhớ đệm"
@@ -1035,9 +1057,22 @@ msgstr "Đang kết nối đến {address}"
 msgid "Connecting to agent engine…"
 msgstr "Đang kết nối với công cụ tác vụ…"
 
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "Ngữ cảnh đã dùng {0}%"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context & Usage"
 msgstr "Ngữ cảnh & Sử dụng"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "Đã nén ngữ cảnh · tự động"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "Đã nén ngữ cảnh · thủ công"
 
 #: src/components/agent-context-sheet.tsx
 msgid "CONTEXT WINDOW"
@@ -1214,6 +1249,10 @@ msgstr "Sao chép khóa công khai"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Không thể thêm tệp"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "Không thể nén"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -3216,10 +3255,6 @@ msgstr "Bắt buộc"
 msgid "Requires iOS 16.1 or later."
 msgstr "Yêu cầu iOS 16.1 trở lên"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Reset conversation context window (/clear)"
-msgstr "Đặt lại cửa sổ ngữ cảnh hội thoại (/clear)"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Khởi động lại Muqun để hoàn tất cập nhật"
@@ -3859,6 +3894,10 @@ msgstr "Khởi động {0} mới"
 msgid "Start a new session with empty context"
 msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Start a session with a clean context"
+msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -3939,10 +3978,6 @@ msgstr "Tác nhân phụ"
 #: src/components/agent-form-card.tsx
 msgid "Submit Response"
 msgstr "Gửi phản hồi"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Summarize history into compact memory (/compact)"
-msgstr "Tóm tắt lịch sử vào bộ nhớ tinh gọn (/compact)"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -4443,17 +4478,21 @@ msgstr "Hôm nay"
 msgid "TOKEN BREAKDOWN"
 msgstr "CHI TIẾT TOKEN"
 
+#: src/components/agent-context-sheet.tsx
+msgid "tokens in context"
+msgstr "token trong ngữ cảnh"
+
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Mức sử dụng mã token và chi phí"
 
-#: src/components/agent-context-sheet.tsx
-msgid "tokens used"
-msgstr "mã token đã dùng"
-
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Total spent"
+msgstr "Tổng đã dùng"
 
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
@@ -4712,6 +4751,10 @@ msgstr "Khi tác nhân dừng để xin xác nhận, thông báo đẩy sẽ đ�
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
+
+#: src/components/agent-context-sheet.tsx
+msgid "window not reported"
+msgstr "chưa báo kích thước cửa sổ"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

@@ -81,6 +81,11 @@ msgstr "{0} (este dispositivo)"
 msgid "{0} file(s) modified in workspace"
 msgstr "{0} archivo(s) modificado(s) en el espacio de trabajo"
 
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages since the last compaction"
+msgstr "{0} mensajes desde la última compactación"
+
 #. placeholder {0}: capped.hidden
 #: src/components/agent-tool-card.tsx
 msgid "{0} more lines"
@@ -437,6 +442,10 @@ msgstr "Aprobar y no volver a preguntar"
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "Preguntar cada vez"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Ask OpenCode to summarise the history and keep working from the summary"
+msgstr "Pedir a OpenCode que resuma el historial y siga trabajando desde el resumen"
 
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
@@ -950,6 +959,19 @@ msgstr "Compactar contexto"
 msgid "Compact session history to save context"
 msgstr "Compactar historial de sesión"
 
+#: src/components/agent-composer.tsx
+msgid "Compacting context automatically…"
+msgstr "Compactando el contexto automáticamente…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "Compactando el contexto…"
+
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "La compactación falló"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Confirmar el vaciado de la caché"
@@ -1035,9 +1057,22 @@ msgstr "Conectando a {address}"
 msgid "Connecting to agent engine…"
 msgstr "Conectando al motor del agente…"
 
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "Contexto al {0}%"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context & Usage"
 msgstr "Contexto y uso"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "Contexto compactado · automático"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "Contexto compactado · manual"
 
 #: src/components/agent-context-sheet.tsx
 msgid "CONTEXT WINDOW"
@@ -1214,6 +1249,10 @@ msgstr "Copiar la clave pública"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "No se pudo agregar el archivo"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "No se pudo compactar"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -3216,10 +3255,6 @@ msgstr "Obligatorio"
 msgid "Requires iOS 16.1 or later."
 msgstr "Requiere iOS 16.1 o posterior"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Reset conversation context window (/clear)"
-msgstr "Restablecer ventana de contexto (/clear)"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "Reinicia Muqun para terminar de actualizar"
@@ -3859,6 +3894,10 @@ msgstr "Iniciar un nuevo {0}"
 msgid "Start a new session with empty context"
 msgstr "Inicia una sesión nueva con el contexto vacío"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Start a session with a clean context"
+msgstr "Iniciar una sesión con el contexto limpio"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -3939,10 +3978,6 @@ msgstr "Subagente"
 #: src/components/agent-form-card.tsx
 msgid "Submit Response"
 msgstr "Enviar respuesta"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Summarize history into compact memory (/compact)"
-msgstr "Resumir historial en memoria compacta (/compact)"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -4443,17 +4478,21 @@ msgstr "Hoy"
 msgid "TOKEN BREAKDOWN"
 msgstr "DESGLOSE DE TOKENS"
 
+#: src/components/agent-context-sheet.tsx
+msgid "tokens in context"
+msgstr "tokens en el contexto"
+
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Uso de tokens y costo"
 
-#: src/components/agent-context-sheet.tsx
-msgid "tokens used"
-msgstr "tokens utilizados"
-
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Demasiados cambios para listarlos. Esto es el principio, no todo"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Total spent"
+msgstr "Gasto total"
 
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
@@ -4712,6 +4751,10 @@ msgstr "Cuando un agente solicita confirmación, el aviso llega como notificaci�
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Mientras no estabas"
+
+#: src/components/agent-context-sheet.tsx
+msgid "window not reported"
+msgstr "ventana no informada"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

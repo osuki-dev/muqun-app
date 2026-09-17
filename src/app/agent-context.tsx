@@ -11,6 +11,7 @@ export default function AgentContextScreen() {
   const router = useRouter();
   const sessionInfo = useAgentSheetBridge((state) => state.sessionInfo);
   const tokens = useAgentSheetBridge((state) => state.tokens);
+  const contextUsage = useAgentSheetBridge((state) => state.contextUsage);
   const cost = useAgentSheetBridge((state) => state.cost);
   const showReasoning = useAgentSheetBridge((state) => state.showReasoning);
   const yoloMode = useAgentSheetBridge((state) => state.yoloMode);
@@ -20,6 +21,7 @@ export default function AgentContextScreen() {
     <AgentContextSheet
       session={sessionInfo}
       tokens={tokens}
+      contextUsage={contextUsage}
       cost={cost}
       showReasoning={showReasoning}
       onToggleReasoning={actions.toggleReasoning}

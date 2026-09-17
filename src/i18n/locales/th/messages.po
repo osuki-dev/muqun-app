@@ -81,6 +81,11 @@ msgstr "{0} (อุปกรณ์นี้)"
 msgid "{0} file(s) modified in workspace"
 msgstr "แก้ไข {0} ไฟล์ในพื้นที่ทำงาน"
 
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages since the last compaction"
+msgstr "{0} ข้อความนับจากการบีบอัดครั้งล่าสุด"
+
 #. placeholder {0}: capped.hidden
 #: src/components/agent-tool-card.tsx
 msgid "{0} more lines"
@@ -437,6 +442,10 @@ msgstr "อนุมัติและไม่ต้องถามอีก"
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "ถามทุกครั้ง"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Ask OpenCode to summarise the history and keep working from the summary"
+msgstr "ให้ OpenCode สรุปประวัติแล้วทำงานต่อจากบทสรุป"
 
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
@@ -950,6 +959,19 @@ msgstr "ย่อขนาดบริบท"
 msgid "Compact session history to save context"
 msgstr "บีบอัดประวัติเซสชันเพื่อประหยัดบริบท"
 
+#: src/components/agent-composer.tsx
+msgid "Compacting context automatically…"
+msgstr "กำลังบีบอัดบริบทโดยอัตโนมัติ…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "กำลังบีบอัดบริบท…"
+
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "บีบอัดไม่สำเร็จ"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "ยืนยันการล้างแคช"
@@ -1035,9 +1057,22 @@ msgstr "กำลังเชื่อมต่อกับ {address}"
 msgid "Connecting to agent engine…"
 msgstr "กำลังเชื่อมต่อกับเอนจินเอเจนต์…"
 
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "บริบทใช้ไปแล้ว {0}%"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context & Usage"
 msgstr "บริบทและการใช้งาน"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "บีบอัดบริบทแล้ว · อัตโนมัติ"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "บีบอัดบริบทแล้ว · ด้วยตนเอง"
 
 #: src/components/agent-context-sheet.tsx
 msgid "CONTEXT WINDOW"
@@ -1214,6 +1249,10 @@ msgstr "คัดลอกคีย์สาธารณะ"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "บีบอัดไม่ได้"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -3216,10 +3255,6 @@ msgstr "จำเป็น"
 msgid "Requires iOS 16.1 or later."
 msgstr "ต้องใช้ iOS 16.1 ขึ้นไป"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Reset conversation context window (/clear)"
-msgstr "รีเซ็ตหน้าต่างบริบทการสนทนา (/clear)"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "เริ่ม Muqun ใหม่เพื่ออัปเดตให้เสร็จ"
@@ -3859,6 +3894,10 @@ msgstr "เริ่ม {0} ใหม่"
 msgid "Start a new session with empty context"
 msgstr "เริ่มเซสชันใหม่ด้วยบริบทว่าง"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Start a session with a clean context"
+msgstr "เริ่มเซสชันใหม่ด้วยบริบทที่ว่างเปล่า"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -3939,10 +3978,6 @@ msgstr "เอเจนต์ย่อย"
 #: src/components/agent-form-card.tsx
 msgid "Submit Response"
 msgstr "ส่งคำตอบ"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Summarize history into compact memory (/compact)"
-msgstr "สรุปประวัติเป็นหน่วยความจำขนาดกะทัดรัด (/compact)"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -4443,17 +4478,21 @@ msgstr "วันนี้"
 msgid "TOKEN BREAKDOWN"
 msgstr "รายละเอียดโทเค็น"
 
+#: src/components/agent-context-sheet.tsx
+msgid "tokens in context"
+msgstr "โทเคนในบริบท"
+
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "การใช้โทเค็นและค่าใช้จ่าย"
 
-#: src/components/agent-context-sheet.tsx
-msgid "tokens used"
-msgstr "โทเค็นที่ใช้ไป"
-
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "มีการเปลี่ยนแปลงมากเกินกว่าจะแสดงทั้งหมด นี่เป็นเพียงส่วนแรก"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Total spent"
+msgstr "ใช้ไปทั้งหมด"
 
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
@@ -4712,6 +4751,10 @@ msgstr "เมื่อเอเจนต์หยุดเพื่อขอก
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
+
+#: src/components/agent-context-sheet.tsx
+msgid "window not reported"
+msgstr "ไม่ได้ระบุขนาดหน้าต่าง"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

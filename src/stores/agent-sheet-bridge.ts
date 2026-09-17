@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 
 import type {
+  AgentContextUsage,
   AgentProject,
   AgentSessionInfo,
+  CommandInfo,
   CompactionReason,
   InboxItem,
   ModelRef,
@@ -55,6 +57,15 @@ export interface AgentSheetSnapshot {
   inbox: readonly InboxItem[];
   /** Non-null only while a compaction is in flight. */
   compaction: CompactionProgress | null;
+  /**
+   * What the model can still see, read from `GET …/context`.
+   *
+   * Not `tokens`, which is the session's total spend: a compaction drops the
+   * first and leaves the second alone.
+   */
+  contextUsage: AgentContextUsage | null;
+  /** The host's own slash commands, from the catalog. */
+  commands: readonly CommandInfo[];
 }
 
 /**
@@ -92,6 +103,7 @@ const EMPTY_SESSIONS: readonly AgentSessionInfo[] = Object.freeze([]);
 const EMPTY_PROJECTS: readonly AgentProject[] = Object.freeze([]);
 const EMPTY_TODOS: readonly TodoItem[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
+const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 
 const INITIAL: AgentSheetSnapshot = {
   sessionId: '',
@@ -109,6 +121,8 @@ const INITIAL: AgentSheetSnapshot = {
   todos: EMPTY_TODOS,
   inbox: EMPTY_INBOX,
   compaction: null,
+  contextUsage: null,
+  commands: EMPTY_COMMANDS,
 };
 
 interface AgentSheetBridge extends AgentSheetSnapshot {
@@ -142,4 +156,4 @@ export const useAgentSheetBridge = create<AgentSheetBridge>((set, get) => ({
   reset: () => set({ ...INITIAL, actions: NO_ACTIONS }),
 }));
 
-export { EMPTY_TODOS, EMPTY_INBOX };
+export { EMPTY_TODOS, EMPTY_INBOX, EMPTY_COMMANDS };

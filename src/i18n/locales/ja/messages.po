@@ -81,6 +81,11 @@ msgstr "{0}（このデバイス）"
 msgid "{0} file(s) modified in workspace"
 msgstr "ワークスペース内で {0} 個のファイルが変更されました"
 
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages since the last compaction"
+msgstr "前回の圧縮以降 {0} 件のメッセージ"
+
 #. placeholder {0}: capped.hidden
 #: src/components/agent-tool-card.tsx
 msgid "{0} more lines"
@@ -437,6 +442,10 @@ msgstr "承認し、今後は確認しない"
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "毎回たずねる"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Ask OpenCode to summarise the history and keep working from the summary"
+msgstr "これまでの履歴を要約させ、その要約から作業を続けさせます"
 
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
@@ -950,6 +959,19 @@ msgstr "コンテキストを要約"
 msgid "Compact session history to save context"
 msgstr "セッション履歴を圧縮してコンテキストを節約"
 
+#: src/components/agent-composer.tsx
+msgid "Compacting context automatically…"
+msgstr "コンテキストを自動で圧縮しています…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "コンテキストを圧縮しています…"
+
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "圧縮に失敗しました"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "キャッシュの削除を確認"
@@ -1035,9 +1057,22 @@ msgstr "{address} に接続しています"
 msgid "Connecting to agent engine…"
 msgstr "エージェントエンジンに接続中…"
 
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "コンテキスト使用率 {0}%"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context & Usage"
 msgstr "コンテキストと使用量"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "コンテキストを圧縮しました · 自動"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "コンテキストを圧縮しました · 手動"
 
 #: src/components/agent-context-sheet.tsx
 msgid "CONTEXT WINDOW"
@@ -1214,6 +1249,10 @@ msgstr "公開鍵をコピーする"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "ファイルを追加できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "圧縮できませんでした"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -3216,10 +3255,6 @@ msgstr "必須です"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 以降が必要です"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Reset conversation context window (/clear)"
-msgstr "会話コンテキストウィンドウをリセット (/clear)"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "更新を完了するには牧群を再起動してください"
@@ -3859,6 +3894,10 @@ msgstr "新しい {0} を起動"
 msgid "Start a new session with empty context"
 msgstr "空のコンテキストで新しいセッションを開始します"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Start a session with a clean context"
+msgstr "まっさらなコンテキストでセッションを始めます"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -3939,10 +3978,6 @@ msgstr "サブエージェント"
 #: src/components/agent-form-card.tsx
 msgid "Submit Response"
 msgstr "回答を送信"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Summarize history into compact memory (/compact)"
-msgstr "履歴をコンパクトなメモリに要約 (/compact)"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -4443,17 +4478,21 @@ msgstr "今日"
 msgid "TOKEN BREAKDOWN"
 msgstr "トークン内訳"
 
+#: src/components/agent-context-sheet.tsx
+msgid "tokens in context"
+msgstr "トークンがコンテキスト内"
+
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "トークン使用量とコスト"
 
-#: src/components/agent-context-sheet.tsx
-msgid "tokens used"
-msgstr "使用済みトークン"
-
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Total spent"
+msgstr "累計消費"
 
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
@@ -4712,6 +4751,10 @@ msgstr "エージェントが確認を求めて停止したとき、通知がロ
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離席中の変化"
+
+#: src/components/agent-context-sheet.tsx
+msgid "window not reported"
+msgstr "ウィンドウ未報告"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

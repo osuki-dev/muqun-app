@@ -81,6 +81,11 @@ msgstr "{0} (이 기기)"
 msgid "{0} file(s) modified in workspace"
 msgstr "작업 공간에서 {0}개 파일이 수정됨"
 
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages since the last compaction"
+msgstr "마지막 압축 이후 메시지 {0}개"
+
 #. placeholder {0}: capped.hidden
 #: src/components/agent-tool-card.tsx
 msgid "{0} more lines"
@@ -437,6 +442,10 @@ msgstr "승인하고 다시 묻지 않기"
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "매번 묻기"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Ask OpenCode to summarise the history and keep working from the summary"
+msgstr "OpenCode에 기록을 요약하게 하고 그 요약으로 작업을 이어갑니다"
 
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
@@ -950,6 +959,19 @@ msgstr "컨텍스트 요약"
 msgid "Compact session history to save context"
 msgstr "세션 기록 압축으로 컨텍스트 절약"
 
+#: src/components/agent-composer.tsx
+msgid "Compacting context automatically…"
+msgstr "컨텍스트를 자동으로 압축하는 중…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "컨텍스트를 압축하는 중…"
+
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "압축에 실패했습니다"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "캐시 비우기 확인"
@@ -1035,9 +1057,22 @@ msgstr "{address}에 연결하는 중"
 msgid "Connecting to agent engine…"
 msgstr "에이전트 엔진에 연결 중…"
 
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "컨텍스트 {0}% 사용"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context & Usage"
 msgstr "컨텍스트 및 사용량"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "컨텍스트 압축됨 · 자동"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "컨텍스트 압축됨 · 수동"
 
 #: src/components/agent-context-sheet.tsx
 msgid "CONTEXT WINDOW"
@@ -1214,6 +1249,10 @@ msgstr "공개 키를 복사"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "파일을 추가하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "압축하지 못했습니다"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
@@ -3216,10 +3255,6 @@ msgstr "필수입니다"
 msgid "Requires iOS 16.1 or later."
 msgstr "iOS 16.1 이상이 필요합니다"
 
-#: src/components/agent-context-sheet.tsx
-msgid "Reset conversation context window (/clear)"
-msgstr "대화 컨텍스트 창 초기화 (/clear)"
-
 #: src/components/update-status-banner.tsx
 msgid "Restart Muqun to finish updating"
 msgstr "업데이트를 마치려면 Muqun을 다시 실행하세요"
@@ -3859,6 +3894,10 @@ msgstr "새 {0} 시작"
 msgid "Start a new session with empty context"
 msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Start a session with a clean context"
+msgstr "빈 컨텍스트로 새 세션을 시작합니다"
+
 #: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Start an agent and send it the first thing to do."
@@ -3939,10 +3978,6 @@ msgstr "서브에이전트"
 #: src/components/agent-form-card.tsx
 msgid "Submit Response"
 msgstr "응답 제출"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Summarize history into compact memory (/compact)"
-msgstr "기록을 압축 메모리로 요약 (/compact)"
 
 #: src/i18n/labels.ts
 msgid "Summarize progress"
@@ -4443,17 +4478,21 @@ msgstr "오늘"
 msgid "TOKEN BREAKDOWN"
 msgstr "토큰 세부 분석"
 
+#: src/components/agent-context-sheet.tsx
+msgid "tokens in context"
+msgstr "토큰이 컨텍스트에 있음"
+
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "토큰 사용량 및 비용"
 
-#: src/components/agent-context-sheet.tsx
-msgid "tokens used"
-msgstr "사용된 토큰"
-
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Total spent"
+msgstr "총 사용량"
 
 #: src/components/embedded-terminal-tool-block.tsx
 msgid "Truncated"
@@ -4712,6 +4751,10 @@ msgstr "에이전트가 승인을 요청하면 알림이 잠금 화면으로 바
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "자리를 비운 사이"
+
+#: src/components/agent-context-sheet.tsx
+msgid "window not reported"
+msgstr "창 크기 미보고"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

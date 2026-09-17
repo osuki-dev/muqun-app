@@ -48,11 +48,16 @@ import {
   getAgentProjects,
   openAgentSessionStream,
   backgroundAgentSession,
+  compactAgentSession,
+  getAgentContext,
+  sendAgentCommand,
   sortTimeline,
   isBusyStatus,
+  type AgentContextUsage,
   type AgentDomainEvent,
   type AgentRunStatus,
   type AgentSessionInfo,
+  type CommandInfo,
   type CompactionReason,
   type InboxItem,
   type TimelineItem,
@@ -213,6 +218,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, []);
   const [showReasoning, setShowReasoning] = useState<boolean>(true);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
+  // The catalog's own slash commands, which go to `POST …/command` rather than
+  // into the prompt as text.
+  const [commands, setCommands] = useState<CommandInfo[]>([]);
+  /**
+   * Everything still in the model's context, i.e. after the last compaction.
+   *
+   * Not the same number as `info.tokens`, which is what the session has spent
+   * in total: a compaction drops the first and leaves the second alone, and a
+   * gauge drawn from the spend would never come down.
+   */
+  const [contextUsage, setContextUsage] = useState<AgentContextUsage | null>(null);
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
   const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
 
@@ -228,6 +244,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (catalog?.skills && catalog.skills.length > 0) {
           setSkills(catalog.skills);
         }
+        setCommands(catalog?.commands ?? []);
         if (catalog?.models && catalog.models.length > 0 && !appliedModelRef.current) {
           const defaultModel =
             catalog.models.find((m) => m.id.includes('free') || m.id.includes('spark')) ||
@@ -331,6 +348,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionId, showToast, t]
   );
 
+  /**
+   * What the model can still see, read from the engine rather than guessed.
+   *
+   * Asked for on entering a session, when a turn ends, and when a compaction
+   * finishes -- the three moments the answer can have changed. Never on a
+   * stream tick: it is a request, and the gauge does not need to be live to
+   * the token.
+   */
+  const refreshContext = useCallback(async () => {
+    if (!activeAsid) return;
+    const usage = await getAgentContext(activeAsid);
+    setContextUsage(usage);
+  }, [activeAsid]);
+
   // Load full snapshot when activeAsid changes
   const loadSnapshot = useCallback(async () => {
     if (!activeAsid) {
@@ -372,6 +403,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
       if (info?.agent) setSelectedAgent(info.agent);
 
+      // What the model can still see, which the snapshot does not carry.
+      void refreshContext();
+
       // Check diffs
       try {
         const diffs = await getAgentVcsDiff(sessionId, activeAsid);
@@ -395,7 +429,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     } finally {
       setLoading(false);
     }
-  }, [sessionId, activeAsid, applySelectedModel, handleAutoPermission]);
+  }, [sessionId, activeAsid, applySelectedModel, handleAutoPermission, refreshContext]);
 
   useEffect(() => {
     void loadSnapshot().catch(() => {});
@@ -451,6 +485,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             // Delivered: a queued row is now ordinary history.
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
             void refreshSessions();
+            void refreshContext();
           }
           break;
         }
@@ -506,6 +541,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   reason: event.reason,
                 }
           );
+          // The boundary itself arrives in the timeline; what changed here is
+          // how much of the window is left.
+          if (event.status === 'completed') void refreshContext();
           break;
 
         case 'agent.resync':
@@ -513,7 +551,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
       }
     },
-    [loadSnapshot, refreshSessions, handleAutoPermission]
+    [loadSnapshot, refreshSessions, refreshContext, handleAutoPermission]
   );
 
   // Real-time SSE stream — the only sync channel. Engine output arrives over
@@ -570,8 +608,58 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [applySelectedModel, sessionId, activeAsid]
   );
 
-  // Held in a ref so the sheet actions that use it (compact, clear) stay
-  // stable and do not re-publish the action object on every render.
+  /**
+   * Compaction, through the route that exists for it.
+   *
+   * `/compact` used to be sent as an ordinary prompt and hope OpenCode read it
+   * as a command. It is a real endpoint: the request is admitted to the inbox,
+   * runs at the next step boundary, and reports itself on
+   * `agent.compaction.changed` -- none of which a text prompt could do.
+   */
+  const handleCompactContext = useCallback(() => {
+    if (!activeAsid) return;
+    setCompaction({ status: 'running', reason: 'manual' });
+    compactAgentSession(activeAsid).catch((err) => {
+      console.warn('Failed to compact session:', err);
+      setCompaction(null);
+      showToast({
+        variant: 'danger',
+        title: t`Could not compact`,
+        message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+      });
+    });
+  }, [activeAsid, showToast, t]);
+
+  /**
+   * Clearing the context is starting a session, not typing `/clear`.
+   *
+   * v2 has no route that empties a session's history, and a prompt saying
+   * "/clear" is a prompt: the model reads it, answers it, and the context is
+   * one turn longer than it was. A session with a clean context is a new
+   * session -- unless the host's own command catalog carries a `clear`, in
+   * which case that is what the reader asked for and it goes to the engine.
+   */
+  const handleClearContext = useCallback(() => {
+    const serverCommand = commands.find((command) => command.name.replace(/^\//, '') === 'clear');
+    if (activeAsid && serverCommand) {
+      sendAgentCommand(activeAsid, { name: serverCommand.name }).catch((err) => {
+        console.warn('Failed to run /clear:', err);
+      });
+      return;
+    }
+    void handleCreateNewSessionRef.current?.();
+  }, [activeAsid, commands]);
+
+  /**
+   * The session creator, reachable from a handler declared above it.
+   *
+   * Assigned in an effect rather than during render: a ref written while
+   * rendering is a ref React may throw away under Strict Mode.
+   */
+  const handleCreateNewSessionRef = useRef<(() => Promise<void>) | null>(null);
+
+  // Held in a ref so the sheet actions that use it stay stable and do not
+  // re-publish the action object on every render.
   const handleSendPromptRef = useRef<
     ((text: string, attachments?: string[], delivery?: 'steer' | 'queue') => Promise<void>) | null
   >(null);
@@ -581,6 +669,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ) => {
+    // The two client-side commands that used to be typed at the model and
+    // hoped for. Both are real actions now, so neither reaches the prompt.
+    const command = text.trim().toLowerCase();
+    if (command === '/compact' && !attachments?.length) {
+      handleCompactContext();
+      return;
+    }
+    if (command === '/clear' && !attachments?.length) {
+      handleClearContext();
+      return;
+    }
+
     let currentAsid = activeAsid;
     if (!currentAsid) {
       try {
@@ -755,6 +855,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   ]);
 
   useEffect(() => {
+    handleCreateNewSessionRef.current = handleCreateNewSession;
     if (createNewSessionRef) {
       createNewSessionRef.current = handleCreateNewSession;
     }
@@ -840,14 +941,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleToggleReasoning = useCallback(() => {
     setShowReasoning((prev) => !prev);
-  }, []);
-
-  const handleCompactContext = useCallback(() => {
-    void handleSendPromptRef.current?.('/compact');
-  }, []);
-
-  const handleClearContext = useCallback(() => {
-    void handleSendPromptRef.current?.('/clear');
   }, []);
 
   const handleEditQueuedItem = useCallback((itemId: string, text: string) => {
@@ -1222,6 +1315,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       todos: activeTodos ?? EMPTY_TODOS,
       inbox,
       compaction,
+      contextUsage,
+      commands,
     };
     useAgentSheetBridge.getState().publish(snapshot);
   }, [
@@ -1239,6 +1334,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     activeTodos,
     inbox,
     compaction,
+    contextUsage,
+    commands,
   ]);
 
   const sheetActions = useMemo<AgentSheetActions>(
@@ -1550,6 +1647,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         bottomInset={bottomInset}
         tasks={activeTodos}
         tokens={activeTokens}
+        contextUsage={contextUsage}
+        contextLimit={sessionInfo?.limit?.context}
+        compaction={compaction}
         cost={sessionInfo?.cost}
         sessionTitle={sessionInfo?.title}
         onSend={handleSendPrompt}

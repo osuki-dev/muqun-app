@@ -12,6 +12,7 @@ import {
   FileText,
   FolderGit2,
   Info,
+  Layers,
   Sparkles,
   Trash2,
 } from 'lucide-react-native';
@@ -19,7 +20,13 @@ import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
@@ -207,6 +214,90 @@ function shellAsToolPart(part: Extract<AgentPart, { type: 'shell' }>): ToolPart 
     ...(part.truncated ? { truncated: true } : {}),
   };
 }
+
+/**
+ * The boundary a compaction left behind.
+ *
+ * Not a message and not a tool call: the history before this point is gone and
+ * what the model can still see is the summary. A labelled divider says that in
+ * one line, and the summary is behind it rather than in front of it -- it is a
+ * few thousand words of the model's own notes, and unfolding it by default
+ * would bury the turn that follows.
+ */
+export const AgentCompactionRow = memo(function AgentCompactionRow({
+  part,
+}: {
+  part: Extract<AgentPart, { type: 'compaction' }>;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const colors = usePaneChatColors();
+  const [expanded, setExpanded] = useState(false);
+
+  const running = part.status === 'running';
+  const failed = part.status === 'failed';
+  const tone = failed ? theme.colors.danger : theme.colors.textMuted;
+
+  // A slow breath while it runs, on the UI thread, honouring reduced motion --
+  // the same idea as the thinking mark rather than a second kind of progress.
+  const shimmer = useSharedValue(running ? 0 : 1);
+  useEffect(() => {
+    shimmer.value = running
+      ? withRepeat(
+          withSequence(withTiming(1, timing('long')), withTiming(0.35, timing('long'))),
+          -1
+        )
+      : withTiming(1, timing('micro'));
+  }, [running, shimmer]);
+  const shimmerStyle = useAnimatedStyle(() => ({ opacity: shimmer.value }));
+
+  const label = running
+    ? t`Compacting context…`
+    : failed
+      ? t`Compaction failed`
+      : part.reason === 'manual'
+        ? t`Context compacted · manual`
+        : t`Context compacted · auto`;
+
+  const hasSummary = Boolean(part.summary);
+
+  return (
+    <View style={styles.compactionBlock}>
+      <PressableScale
+        testID="agent-compaction-row"
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={label}
+        disabled={!hasSummary}
+        onPress={() => setExpanded((prev) => !prev)}
+        style={styles.compactionRow}>
+        <View style={[styles.compactionRule, { backgroundColor: colors.border }]} />
+        <Animated.View style={[styles.compactionLabel, shimmerStyle]}>
+          <Layers size={11} color={tone} />
+          <Text variant="caption" color={tone} numberOfLines={1} style={styles.noticeText}>
+            {label}
+          </Text>
+          {hasSummary ? <ChevronDown size={11} color={theme.colors.textSubtle} /> : null}
+        </Animated.View>
+        <View style={[styles.compactionRule, { backgroundColor: colors.border }]} />
+      </PressableScale>
+
+      {failed && part.error?.message ? (
+        <Text variant="caption" selectable color={theme.colors.danger} style={styles.noticeText}>
+          {part.error.message}
+        </Text>
+      ) : null}
+
+      {expanded && part.summary ? (
+        <Animated.View entering={fadeIn('micro')}>
+          <Text variant="caption" selectable color={theme.colors.textMuted} style={styles.summary}>
+            {part.summary}
+          </Text>
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+});
 
 /**
  * Pull ` ```diff … ``` ` fences out of assistant markdown. The enriched
@@ -441,6 +532,8 @@ function renderTimelinePart(
       return <AgentTodoBlock key={item.id} items={part.items} />;
     case 'status':
       return <StatusPartRow key={item.id} text={part.text} />;
+    case 'compaction':
+      return <AgentCompactionRow key={item.id} part={part} />;
     case 'model_switched':
     case 'agent_switched':
     case 'location_switched':
@@ -460,8 +553,8 @@ function renderTimelinePart(
         />
       );
     default:
-      // `approval`, `form` and `compaction` are drawn by the surfaces that own
-      // their state, not inline here.
+      // `approval` and `form` are drawn by the surfaces that own their state:
+      // a permission under the tool row it came from, a form in the footer.
       return null;
   }
 }
@@ -695,8 +788,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
             return showReasoning;
           case 'approval':
           case 'form':
-          case 'compaction':
-            // Owned by the permission, form and compaction surfaces.
+            // Owned by the permission and form surfaces.
             return false;
           default:
             return true;
@@ -795,6 +887,30 @@ const styles = StyleSheet.create({
   noticeText: {
     flexShrink: 1,
     fontSize: 11,
+  },
+  compactionBlock: {
+    alignSelf: 'stretch',
+    gap: 4,
+    paddingVertical: 2,
+  },
+  compactionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  compactionRule: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  compactionLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    flexShrink: 1,
+  },
+  summary: {
+    fontSize: 11,
+    lineHeight: 17,
   },
   markdownContainer: {
     alignSelf: 'stretch',

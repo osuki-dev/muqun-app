@@ -13,7 +13,13 @@ import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { Toggle } from '@/components/toggle';
-import type { AgentSessionInfo, TokensUsage } from '@/lib/agent-session';
+import {
+  contextFillRatio,
+  contextTokenTotal,
+  type AgentContextUsage,
+  type AgentSessionInfo,
+  type TokensUsage,
+} from '@/lib/agent-session';
 
 /**
  * Context window, token spend and the two session-wide switches, as a native
@@ -22,7 +28,10 @@ import type { AgentSessionInfo, TokensUsage } from '@/lib/agent-session';
  */
 export interface AgentContextSheetProps {
   session?: AgentSessionInfo;
+  /** The session's total spend, which a compaction does not reduce. */
   tokens?: TokensUsage;
+  /** What the model can still see, from `GET …/context`. */
+  contextUsage?: AgentContextUsage | null;
   cost?: number;
   showReasoning?: boolean;
   onToggleReasoning?: () => void;
@@ -36,6 +45,7 @@ export interface AgentContextSheetProps {
 export const AgentContextSheet = memo(function AgentContextSheet({
   session,
   tokens,
+  contextUsage,
   cost,
   showReasoning = true,
   onToggleReasoning,
@@ -52,12 +62,22 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const surfaceBackground = useSurfaceBackground();
   const [confirmingYolo, setConfirmingYolo] = useState(false);
 
-  const totalTokens = (tokens?.input ?? 0) + (tokens?.output ?? 0) + (tokens?.reasoning ?? 0);
-
-  // Extract context window limit from session or default to 1M (1,048,576)
-  const contextLimit = (session?.limit as { context?: number } | undefined)?.context ?? 1_048_576;
-  const contextRatio = Math.min(1, Math.max(0, totalTokens / Math.max(1, contextLimit)));
-  const contextPct = (contextRatio * 100).toFixed(1);
+  /**
+   * Two different numbers, and they were being conflated.
+   *
+   * `tokens` is what the session has spent in total and never comes down.
+   * `GET …/context` is what the model can still see -- everything after the
+   * last compaction -- which is the only one a "used capacity" gauge can
+   * honestly be drawn from. The spend is still shown, under its own heading.
+   */
+  const liveContext = contextUsage?.tokens ?? null;
+  const contextTokens = contextTokenTotal(liveContext);
+  const totalTokens = contextTokenTotal(tokens);
+  // No invented window. The gateway states one when OpenCode does, and a
+  // percentage against a number nobody said is a number nobody can act on.
+  const contextLimit = session?.limit?.context;
+  const contextRatio = contextFillRatio(liveContext, contextLimit);
+  const contextPct = contextRatio === null ? null : (contextRatio * 100).toFixed(1);
 
   const formatTokens = (n?: number) => (n ?? 0).toLocaleString();
   const costDisplay =
@@ -114,9 +134,15 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                   <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
                     <Trans>Used Capacity</Trans>
                   </Text>
-                  <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                    {contextPct}%
-                  </Text>
+                  {contextPct === null ? (
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      <Trans>window not reported</Trans>
+                    </Text>
+                  ) : (
+                    <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                      {contextPct}%
+                    </Text>
+                  )}
                 </View>
 
                 {/* Progress bar */}
@@ -129,8 +155,13 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                     style={[
                       styles.progressBarFill,
                       {
-                        width: `${Math.max(2, Math.min(100, contextRatio * 100))}%`,
-                        backgroundColor: theme.colors.primary,
+                        width: `${contextRatio === null ? 0 : Math.max(2, contextRatio * 100)}%`,
+                        backgroundColor:
+                          contextRatio !== null && contextRatio > 0.9
+                            ? theme.colors.danger
+                            : contextRatio !== null && contextRatio > 0.7
+                              ? theme.colors.warning
+                              : theme.colors.primary,
                       },
                     ]}
                   />
@@ -138,15 +169,23 @@ export const AgentContextSheet = memo(function AgentContextSheet({
 
                 <View style={styles.cardSubtextRow}>
                   <Text variant="caption" color={theme.colors.textMuted}>
-                    {formatTokens(totalTokens)} <Trans>tokens used</Trans>
+                    {formatTokens(contextTokens)} <Trans>tokens in context</Trans>
                   </Text>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    {contextLimit >= 1_000_000
-                      ? `${(contextLimit / 1_000_000).toFixed(1)}M`
-                      : `${(contextLimit / 1000).toFixed(0)}k`}{' '}
-                    <Trans>limit</Trans>
-                  </Text>
+                  {contextLimit === undefined ? null : (
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      {contextLimit >= 1_000_000
+                        ? `${(contextLimit / 1_000_000).toFixed(1)}M`
+                        : `${(contextLimit / 1000).toFixed(0)}k`}{' '}
+                      <Trans>limit</Trans>
+                    </Text>
+                  )}
                 </View>
+
+                {contextUsage ? (
+                  <Text variant="caption" color={theme.colors.textSubtle}>
+                    {t`${contextUsage.messages} messages since the last compaction`}
+                  </Text>
+                ) : null}
               </View>
             </SettingsCard>
           </View>
@@ -157,6 +196,15 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             <SettingsCard>
               <View style={styles.gridPad}>
                 <View style={styles.grid}>
+                  <View style={styles.gridItem}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
+                      <Trans>Total spent</Trans>
+                    </Text>
+                    <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+                      {formatTokens(totalTokens)}
+                    </Text>
+                  </View>
+
                   <View style={styles.gridItem}>
                     <Text variant="caption" color={theme.colors.textMuted}>
                       <Trans>Input</Trans>
@@ -404,7 +452,9 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                           <Trans>Compact Context</Trans>
                         </Text>
                         <Text variant="caption" color={theme.colors.textMuted}>
-                          <Trans>Summarize history into compact memory (/compact)</Trans>
+                          <Trans>
+                            Ask OpenCode to summarise the history and keep working from the summary
+                          </Trans>
                         </Text>
                       </View>
                     </View>
@@ -427,7 +477,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                           <Trans>Clear Context</Trans>
                         </Text>
                         <Text variant="caption" color={theme.colors.textMuted}>
-                          <Trans>Reset conversation context window (/clear)</Trans>
+                          <Trans>Start a session with a clean context</Trans>
                         </Text>
                       </View>
                     </View>
