@@ -1,5 +1,5 @@
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { BlurView } from 'expo-blur';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { type ComponentProps, type ReactNode, useEffect, useMemo, useState } from 'react';

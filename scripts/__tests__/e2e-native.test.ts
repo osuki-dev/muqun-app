@@ -952,9 +952,13 @@ describe('native end-to-end gate', () => {
       {}
     );
     expect((await runner.locate({ text: 'Done' }))?.label).toBe('Done');
-    expect(calls[1]).toEqual(['press', 'role="button" label="不允许"']);
-    expect(calls[2]).toEqual(['wait', 'stable', '300', '5000']);
-    expect(calls[3]).toEqual(['snapshot']);
+    // The dialog is let settle and re-read before its button is pressed, so
+    // the press never carries the geometry of a frame the dialog has left.
+    expect(calls[1]).toEqual(['wait', 'stable', '300', '5000']);
+    expect(calls[2]).toEqual(['snapshot']);
+    expect(calls[3]).toEqual(['press', 'role="button" label="不允许"']);
+    expect(calls[4]).toEqual(['wait', 'stable', '300', '5000']);
+    expect(calls[5]).toEqual(['snapshot']);
   });
   test('unknown alerts block even negative and optional app assertions', async () => {
     const runner = new NativeRunner(
@@ -985,6 +989,8 @@ describe('native end-to-end gate', () => {
       {}
     );
     await expect(runner.readySnapshot()).rejects.toThrow('did not dismiss');
-    expect(presses).toBe(1);
+    // Two presses at most: one may race the dialog's last frame, a second
+    // that also fails is a real blocker, not a timing accident.
+    expect(presses).toBe(2);
   });
 });
