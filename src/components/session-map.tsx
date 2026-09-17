@@ -23,6 +23,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { agentStatusWord } from '@/i18n/labels';
 import { GlassChrome } from '@/components/glass-chrome';
+import { KeyboardInset } from '@/components/keyboard-inset';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetFrame } from '@/components/sheet-ground';
 import { RowActionMenu } from '@/components/row-action-menu';
@@ -694,6 +695,9 @@ export function SessionMap({
             <Trans>New terminal</Trans>
           </Text>
         </PressableScale>
+        {/* The filter field is in this sheet's sticky header, so nothing scrolls
+            the last group clear of the keys by itself. */}
+        <KeyboardInset />
       </ScrollScreen>
     </SheetFrame>
   );

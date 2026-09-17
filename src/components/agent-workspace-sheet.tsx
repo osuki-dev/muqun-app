@@ -6,6 +6,7 @@ import { Check, Folder, FolderGit2, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GlassChrome } from '@/components/glass-chrome';
+import { KeyboardInset } from '@/components/keyboard-inset';
 import { Input } from '@/components/themed-input';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
@@ -304,6 +305,9 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                 </SettingsCard>
               )}
             </View>
+            {/* The filter field is pinned above this scroller, so nothing
+                scrolls the last repository clear of the keys by itself. */}
+            <KeyboardInset />
           </ScrollView>
         )}
       </View>

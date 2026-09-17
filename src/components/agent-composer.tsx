@@ -16,7 +16,7 @@ import {
   CheckSquare,
   ChevronDown,
   Cpu,
-  GitCommit,
+  GitCompare,
   GitFork,
   Inbox,
   Layers,
@@ -708,7 +708,10 @@ export const AgentComposer = memo(function AgentComposer({
                     backgroundColor: withAlpha(theme.colors.primary, 0.18),
                   },
                 ]}>
-                <GitCommit size={15} color={theme.colors.primary} />
+                {/* The same glyph the terminal's own changes button uses
+                    (`git-diff-button.tsx`). A commit dot is not a diff, and
+                    the two buttons open the same kind of thing. */}
+                <GitCompare size={15} color={theme.colors.primary} />
                 <View style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]} />
               </PressableScale>
             ) : null}
