@@ -662,6 +662,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     let attempts = 0;
 
     const connect = () => {
+      /**
+       * Try again, soon.
+       *
+       * Both ways a stream can end come here. A *failure* is the obvious one.
+       * An orderly close is the one that was missing: a gateway restart, a
+       * proxy's idle timeout or OpenCode being restarted underneath the
+       * connection all end the body with no error at all, and the app used to
+       * treat that as nothing happening -- the backoff never armed and the
+       * session sat there looking current while the engine moved on.
+       */
+      const scheduleReconnect = () => {
+        if (!mounted) return;
+        // Quiet reconnect. Mobile streams drop often; keep the gap short so
+        // a dropped connection costs at most a couple of seconds, not a poll.
+        const delay = Math.min(400 * 2 ** attempts, 5000);
+        attempts += 1;
+        reconnectTimer = setTimeout(connect, delay);
+      };
+
       const closeStream = openAgentSessionStream({
         asid: activeAsid,
         sessionId,
@@ -670,14 +689,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           attempts = 0;
           handleStreamEvent(event);
         },
-        onError: () => {
-          if (!mounted) return;
-          // Quiet reconnect. Mobile streams drop often; keep the gap short so
-          // a dropped connection costs at most a couple of seconds, not a poll.
-          const delay = Math.min(400 * 2 ** attempts, 5000);
-          attempts += 1;
-          reconnectTimer = setTimeout(connect, delay);
-        },
+        onError: scheduleReconnect,
+        onClose: scheduleReconnect,
       });
       return closeStream;
     };

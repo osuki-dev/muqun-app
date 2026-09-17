@@ -6,7 +6,7 @@ import {
   gatewayUrl,
   isGatewayConfigured,
 } from './gateway-client';
-import { ServerSentEventParser } from './sse-stream';
+import { pumpAgentStream } from './agent-stream';
 import type { FileMentionHit } from './file-mentions';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 import {
@@ -24,7 +24,6 @@ import {
   EMPTY_CATALOG,
   parseAgentCatalog,
   parseAgentContextUsage,
-  parseAgentDomainEvent,
   parseAgentEngineInfo,
   parseAgentSessionInfo,
   parseAgentSessionList,
@@ -710,12 +709,25 @@ export async function getAgentTimelineDelta(
   );
 }
 
+/**
+ * The session's event stream, with its ending reported.
+ *
+ * `onClose` fires when the far end hangs up in good order -- a gateway
+ * restart, a proxy's idle timeout, OpenCode being restarted underneath it. It
+ * used to be silent: the read loop fell off the bottom of its `while`,
+ * `connect()` resolved, and nothing told the caller. The reconnect backoff
+ * never armed and the session sat there looking current while the engine moved
+ * on without it, until the reader left the screen and came back.
+ */
 export function openAgentSessionStream(options: {
   asid: string;
   sessionId?: string;
   /** Already parsed and validated; an unrecognised frame never arrives here. */
   onEvent: (event: AgentDomainEvent) => void;
+  /** The transport failed. */
   onError?: (err: unknown) => void;
+  /** The far end closed it in good order. Reconnect, the same as an error. */
+  onClose?: () => void;
   onConnected?: () => void;
 }): () => void {
   let cancelled = false;
@@ -729,8 +741,6 @@ export function openAgentSessionStream(options: {
       }
       const url = gatewayUrl(sessionRoute(options.asid, '/stream', options.sessionId, true));
       const headers = gatewayAuthHeaders();
-      const decoder = new TextDecoder();
-      const parser = new ServerSentEventParser();
 
       const response = await nitroFetch(url, {
         headers: {
@@ -748,23 +758,15 @@ export function openAgentSessionStream(options: {
 
       options.onConnected?.();
 
-      while (!cancelled) {
-        const { done, value } = await reader.read();
-        if (done || cancelled) break;
-        if (!value) continue;
-        const text = decoder.decode(value, { stream: true });
-        for (const frame of parser.push(text)) {
-          let data: unknown = frame.data;
-          try {
-            data = JSON.parse(frame.data);
-          } catch {
-            // A frame that is not JSON is still named, and `connected` is one
-            // of those; the parser below decides whether it means anything.
-          }
-          const event = parseAgentDomainEvent(frame.event, data);
-          if (event) options.onEvent(event);
-        }
-      }
+      const ending = await pumpAgentStream({
+        reader,
+        decoder: new TextDecoder(),
+        onEvent: options.onEvent,
+        isCancelled: () => cancelled,
+      });
+
+      // The one line this whole split exists for.
+      if (ending === 'closed' && !cancelled) options.onClose?.();
     } catch (err) {
       if (!cancelled) {
         options.onError?.(err);

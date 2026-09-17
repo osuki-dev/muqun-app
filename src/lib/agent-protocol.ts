@@ -1717,7 +1717,13 @@ export type AgentDomainEvent =
  * same field, which is what the contract says about the two newer events.
  */
 export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDomainEvent | null {
-  const rec = asRecord(data) ?? {};
+  // Every documented event carries an object. A frame whose payload is not one
+  // -- a body that did not parse as JSON, a keep-alive that grew a comment --
+  // is not a domain event, and treating it as one used to synthesise an
+  // `agent.status.changed` with an empty `asid` and a status of `unknown`:
+  // a malformed frame flipping the open session's state.
+  const rec = asRecord(data);
+  if (!rec) return null;
   const type = asString(rec.type) ?? eventName;
   const asid = pickString(rec, ['asid', 'session_id', 'sessionID']) ?? '';
   const seq = asFiniteNumber(rec.seq) ?? 0;
