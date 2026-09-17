@@ -59,6 +59,16 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [agents, setAgents] = useState<AgentInfo[]>([]);
+  /**
+   * The agent the host runs when nobody has picked one.
+   *
+   * A session created without an `agent` is not a session with no agent: the
+   * contract says the host applies its own default, and the catalog states
+   * which that is. Without it the sheet marked nothing at all -- the reader
+   * was looking at the list of agents their session could be running and
+   * could not tell which one it *was*.
+   */
+  const [defaultAgent, setDefaultAgent] = useState<string | undefined>(undefined);
 
   const builtinAgents = useMemo<AgentInfo[]>(
     () => [
@@ -110,6 +120,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
         const listed = selectableAgents(catalog?.agents ?? []);
         const fallback = catalog?.agents && catalog.agents.length > 0 ? catalog.agents : [];
         setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : builtinAgents);
+        setDefaultAgent(catalog?.defaults?.agent);
       })
       .catch((err) => {
         console.warn('Failed to load agent catalog:', err);
@@ -132,13 +143,24 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     return t`Custom`;
   };
 
-  const current = displayAgents.find((agent) => agent.id === selectedAgent);
+  /**
+   * The agent this session is actually running.
+   *
+   * The reader's own pick when they have made one, the host's default when
+   * they have not, and `build` when the catalog stated neither -- the same
+   * order the workbench sends a create in. It is marked with the sheet's
+   * ordinary left rule, the one every other picker in the app uses, rather
+   * than with a heavier word or a colour of its own.
+   */
+  const effectiveAgent =
+    selectedAgent ?? (defaultAgent && defaultAgent.trim() ? defaultAgent : 'build');
+  const current = displayAgents.find((agent) => agent.id === effectiveAgent);
 
   return (
     <SheetScene
       testID="agent-mode-sheet"
       title={t`Choose an agent`}
-      caption={current ? current.name || current.id : selectedAgent}>
+      caption={current ? current.name || current.id : effectiveAgent}>
       {loading ? (
         <View style={styles.loading}>
           <Spinner size="lg" color={theme.colors.primary} />
@@ -150,7 +172,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
           showsVerticalScrollIndicator={false}>
           <SheetSceneGroupHeading title={t`Agents on this host`} first />
           {displayAgents.map((agent, index) => {
-            const isSelected = selectedAgent === agent.id;
+            const isSelected = effectiveAgent === agent.id;
             return (
               <Animated.View
                 key={agent.id}
