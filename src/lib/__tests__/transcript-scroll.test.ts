@@ -5,6 +5,8 @@ import {
   distanceFromBottom,
   isAtBottom,
   showJumpToLatest,
+  TRANSCRIPT_START,
+  unseenBelow,
 } from '../transcript-scroll';
 
 const tall = { offset: 0, viewport: 800, content: 5000 };
@@ -55,5 +57,32 @@ describe('showJumpToLatest', () => {
 
   test('not for merely having scrolled up', () => {
     expect(showJumpToLatest(false, 0)).toBe(false);
+  });
+});
+
+describe('unseenBelow', () => {
+  test('counts the rows that arrived', () => {
+    expect(unseenBelow({ rows: 10, seq: 40 }, { rows: 13, seq: 43 })).toBe(3);
+  });
+
+  test('counts a row that only grew as one thing to see', () => {
+    // A streaming answer: one row, a sequence climbing word by word. This is
+    // the case a row count answered `0` for, which left the way back hidden
+    // for a reader parked at the very top of a long transcript.
+    expect(unseenBelow({ rows: 10, seq: 40 }, { rows: 10, seq: 41 })).toBe(1);
+  });
+
+  test('nothing when the transcript has not moved', () => {
+    expect(unseenBelow({ rows: 10, seq: 40 }, { rows: 10, seq: 40 })).toBe(0);
+  });
+
+  test('nothing from the start mark of an empty transcript', () => {
+    expect(unseenBelow(TRANSCRIPT_START, { rows: 0, seq: 0 })).toBe(0);
+  });
+
+  test('drives the pill for a reader at the very top', () => {
+    const seen = { rows: 200, seq: 900 };
+    const streaming = { rows: 200, seq: 901 };
+    expect(showJumpToLatest(false, unseenBelow(seen, streaming))).toBe(true);
   });
 });

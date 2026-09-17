@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, TextInput, Switch, ActivityIndicator } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Trans, useLingui } from '@lingui/react/macro';
+import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -371,8 +371,14 @@ export const AgentFormCard = memo(function AgentFormCard({
         <View style={[styles.iconBox, { backgroundColor: withAlpha(theme.colors.info, 0.13) }]}>
           <FormInput size={16} color={theme.colors.info} />
         </View>
+        {/*
+          What the card is, not what the engine called it. `request.title` is
+          the tool's own -- "Questions" for a single yes-or-no, and untranslated
+          in every locale this app ships. The number of fields is the fact worth
+          stating, and it is the one the reader can check.
+        */}
         <Text variant="bodySmall" color={theme.colors.text} style={styles.title}>
-          {request.title}
+          <Plural value={visibleFields.length} one="Question" other="Questions" />
         </Text>
       </View>
 
@@ -390,7 +396,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           <>
             <Send size={14} color={theme.colors.onPrimary} />
             <Text variant="caption" color={theme.colors.onPrimary} style={styles.submitText}>
-              <Trans>Submit Response</Trans>
+              <Trans>Submit</Trans>
             </Text>
           </>
         )}

@@ -882,7 +882,12 @@ export const AgentUserMessage = memo(function AgentUserMessage({
           <Trans>You</Trans>
         </Text>
         {stamp ? (
-          <Text variant="caption" color={theme.colors.textSubtle} style={styles.roleStamp}>
+          <Text
+            variant="caption"
+            color={theme.colors.textSubtle}
+            numberOfLines={1}
+            textBreakStrategy="simple"
+            style={styles.roleStamp}>
             {stamp}
           </Text>
         ) : null}

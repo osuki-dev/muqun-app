@@ -19,10 +19,13 @@ import {
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import {
+  formatModelName,
   sessionTitleOr,
   workspaceDisplayName,
   type AgentProject,
   type AgentSessionInfo,
+  type ModelInfo,
+  type ModelRef,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
@@ -58,6 +61,8 @@ export interface AgentSessionsSheetProps {
   activeDirectory?: string;
   /** The project the active directory belongs to, when it belongs to a named one. */
   activeProject?: AgentProject;
+  /** Every model the host publishes, for naming the one each session runs. */
+  models?: readonly ModelInfo[];
   onSelectSession: (asid: string) => void;
   onCreateNewSession?: () => void;
   onClose: () => void;
@@ -69,6 +74,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   knownProjects,
   activeDirectory,
   activeProject,
+  models,
   onSelectSession,
   onClose,
 }: AgentSessionsSheetProps) {
@@ -212,6 +218,24 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return options;
   }, [activeDirectory, currentWorkspaceName, t]);
 
+  /**
+   * The model a session runs, named the way the reader chose it.
+   *
+   * The row used to print `model_id` -- `openai/gpt-oss-120b:free` in a caption
+   * next to a human-written title. The catalogue's own name is the one on the
+   * chip and in the model sheet; `formatModelName` is the fallback for a model
+   * this host no longer publishes.
+   */
+  const modelNameOf = (model?: ModelRef | null): string => {
+    if (!model?.model_id) return '';
+    const listed = models?.find(
+      (entry) =>
+        entry.id === model.model_id &&
+        (!model.provider_id || entry.provider_id === model.provider_id)
+    );
+    return listed?.name || formatModelName(model, '');
+  };
+
   let rowIndex = 0;
 
   return (
@@ -266,7 +290,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                 <SheetSceneRow
                   testID={`agent-session-row-${root.asid}`}
                   title={sessionTitleOr(root, t`Untitled session`)}
-                  caption={[root.agent || 'build', root.model?.model_id, projectName]
+                  caption={[root.agent || 'build', modelNameOf(root.model), projectName]
                     .filter(Boolean)
                     .join(' · ')}
                   selected={root.asid === activeAsid}

@@ -7,6 +7,7 @@ import { Check, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { permissionActionPhrase, permissionDecisionLabel } from '@/i18n/labels';
+import { permissionSubject } from '@/lib/agent-engine-text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import {
@@ -87,11 +88,14 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
    *
    * The prompt is the engine's own statement and the most specific -- the file,
    * the command -- so it leads; `resources[0]` answers for a payload that sent
-   * no prompt. Anything else in `resources` that is neither that nor a glob
-   * already shown beside "Always allow" is additional, and only then is it
-   * worth a line of its own.
+   * no prompt. Either way the rule key is taken off the front of it
+   * (`agent-engine-text.ts`): the header's second line already says what the
+   * rule means, and `external_directory: /etc/*` spent the most legible line
+   * on the wire word. Anything else in `resources` that is neither that nor a
+   * glob already shown beside "Always allow" is additional, and only then is
+   * it worth a line of its own.
    */
-  const subject = request.prompt.trim() || request.resources[0] || '';
+  const subject = permissionSubject(request);
   const extraResources = request.resources.filter(
     (resource) => resource !== subject && !request.save.includes(resource)
   );
@@ -202,10 +206,10 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
               {option.decision === 'allow_always' && request.save.length > 0 ? (
                 <Text
                   variant="caption"
-                  numberOfLines={2}
+                  numberOfLines={3}
                   color={theme.colors.textSubtle}
                   style={styles.saveText}>
-                  {request.save.join(' · ')}
+                  {t`Also allow ${request.save.join(' · ')} from now on`}
                 </Text>
               ) : null}
             </View>
@@ -300,7 +304,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   saveText: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.micro.size,
     textAlign: 'center',
   },

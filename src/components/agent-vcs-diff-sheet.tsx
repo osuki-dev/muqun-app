@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 
 import { DiffRowList } from '@/components/diff-rows';
@@ -104,7 +105,7 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
       title={t`Changes`}
       caption={
         diffs.length > 0
-          ? t`${diffs.length} files · +${totals.additions} −${totals.deletions}`
+          ? t`${plural(diffs.length, { one: '# file', other: '# files' })} · +${totals.additions} −${totals.deletions}`
           : undefined
       }
       header={

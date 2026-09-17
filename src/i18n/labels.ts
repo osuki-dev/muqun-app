@@ -142,6 +142,7 @@ export const permissionActionPhrase: Record<string, MessageDescriptor> = {
   network: msg`Reach the network`,
   install: msg`Install a package`,
   task: msg`Start a subagent`,
+  question: msg`Ask you a question`,
 };
 
 /**
@@ -345,4 +346,18 @@ export const agentClientCommandDescription: Record<AgentClientCommandId, Message
   }),
   clear: msg({ message: 'Clear context and start fresh', context: 'agent slash command' }),
   export: msg({ message: "Share this session's transcript", context: 'agent slash command' }),
+};
+
+/**
+ * What one of the *host's* commands does, where this app can say it better.
+ *
+ * The catalogue's descriptions are the engine's, and they are shown as they
+ * were written -- except for the handful OpenCode ships with every install,
+ * whose wording is English written for a terminal and sits in a menu where
+ * every other line is a sentence. `init` is the one that shows: it arrives as
+ * "guided AGENTS.md setup", lower case, beside "Start a session with a clean
+ * context". Keyed without the leading slash, as the catalogue names them.
+ */
+export const agentHostCommandDescription: Record<string, MessageDescriptor> = {
+  init: msg({ message: 'Guided AGENTS.md setup', context: 'agent slash command' }),
 };

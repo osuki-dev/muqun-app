@@ -52,6 +52,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
+import { composerChipIds } from '@/lib/agent-composer-chips';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import {
   findFileMentionTrigger,
@@ -73,7 +74,7 @@ import {
   readSlashCommand,
   type AgentClientCommandId,
 } from '@/lib/agent-commands';
-import { agentClientCommandDescription } from '@/i18n/labels';
+import { agentClientCommandDescription, agentHostCommandDescription } from '@/i18n/labels';
 import {
   contextFillRatio,
   contextTokenTotal,
@@ -412,13 +413,17 @@ export const AgentComposer = memo(function AgentComposer({
 
   const serverCommands: PaneSlashCommand[] = useMemo(
     () =>
-      commands.map((command) => ({
-        name: command.name.startsWith('/') ? command.name : `/${command.name}`,
-        description: command.description ?? command.agent ?? '',
-        argsHint: command.template ? '…' : '',
-        source: 'workspace' as const,
-      })),
-    [commands]
+      commands.map((command) => {
+        const key = command.name.replace(/^\//, '');
+        const known = agentHostCommandDescription[key];
+        return {
+          name: command.name.startsWith('/') ? command.name : `/${command.name}`,
+          description: known ? _(known) : (command.description ?? command.agent ?? ''),
+          argsHint: command.template ? '…' : '',
+          source: 'workspace' as const,
+        };
+      }),
+    [commands, _]
   );
 
   const skillCommands: PaneSlashCommand[] = useMemo(
@@ -437,6 +442,42 @@ export const AgentComposer = memo(function AgentComposer({
     [builtinCommands, serverCommands, skillCommands]
   );
   const slashTrigger = useMemo(() => slashCommandTrigger(slashCatalog), [slashCatalog]);
+
+  /**
+   * The chips row, as a list rather than as ten nested conditions.
+   *
+   * See `lib/agent-composer-chips.ts`: each chip is there on its own terms,
+   * and the row scrolls rather than dropping one to fit.
+   */
+  const chipIds = useMemo(
+    () =>
+      new Set(
+        composerChipIds({
+          canOpenSessions: Boolean(onOpenSessionsSheet),
+          canOpenModel: Boolean(onOpenModelSheet),
+          taskCount: tasks?.length ?? 0,
+          canOpenTasks: Boolean(onOpenTasksSheet),
+          inboxCount: inbox.length,
+          backgroundCount,
+          canOpenBackground: Boolean(onOpenBackgroundTray),
+          hasContextPill: Boolean(contextPill),
+          hasDiffs: Boolean(hasDiffs),
+          running,
+        })
+      ),
+    [
+      onOpenSessionsSheet,
+      onOpenModelSheet,
+      tasks,
+      onOpenTasksSheet,
+      inbox.length,
+      backgroundCount,
+      onOpenBackgroundTray,
+      contextPill,
+      hasDiffs,
+      running,
+    ]
+  );
 
   const slashPopup = useComposerPopup({
     draft: text,
@@ -878,7 +919,7 @@ export const AgentComposer = memo(function AgentComposer({
                 contentContainerStyle={styles.actionRowContent}
                 style={styles.actionRowScroll}>
                 {/* All-sessions button (icon only) */}
-                {onOpenSessionsSheet ? (
+                {chipIds.has('sessions') ? (
                   <PressableScale
                     testID="agent-composer-sessions-btn"
                     onPress={onOpenSessionsSheet}
@@ -918,7 +959,7 @@ export const AgentComposer = memo(function AgentComposer({
                 </PressableScale>
 
                 {/* Quick Model Selector Button (placed right after agent mode, displayed in full) */}
-                {onOpenModelSheet ? (
+                {chipIds.has('model') ? (
                   <PressableScale
                     testID="agent-composer-model-btn"
                     onPress={onOpenModelSheet}
@@ -936,7 +977,7 @@ export const AgentComposer = memo(function AgentComposer({
                 ) : null}
 
                 {/* OpenCode Tasks Button */}
-                {onOpenTasksSheet || (tasks && tasks.length > 0) ? (
+                {chipIds.has('tasks') ? (
                   <PressableScale
                     testID="agent-composer-tasks-btn"
                     onPress={onOpenTasksSheet}
@@ -964,7 +1005,7 @@ export const AgentComposer = memo(function AgentComposer({
                 ) : null}
 
                 {/* The queue, as the gateway last stated it */}
-                {inbox.length > 0 ? (
+                {chipIds.has('inbox') ? (
                   <PressableScale
                     testID="agent-composer-inbox-pill"
                     onPress={() => setInboxOpen((open) => !open)}
@@ -987,7 +1028,7 @@ export const AgentComposer = memo(function AgentComposer({
                 ) : null}
 
                 {/* What is still running after the agent moved on */}
-                {backgroundCount > 0 && onOpenBackgroundTray ? (
+                {chipIds.has('background') ? (
                   <PressableScale
                     testID="agent-composer-background-pill"
                     onPress={onOpenBackgroundTray}
@@ -1011,7 +1052,7 @@ export const AgentComposer = memo(function AgentComposer({
                 ) : null}
 
                 {/* Context window, token spend and cost, in one pill */}
-                {contextPill ? (
+                {chipIds.has('context') && contextPill ? (
                   <PressableScale
                     testID="agent-composer-tokens-pill"
                     onPress={() => {
@@ -1070,8 +1111,11 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
 
-                {/* VCS Diff Button: only rendered when hasDiffs is true */}
-                {hasDiffs ? (
+                {/* The changes on disk. Independent of every chip before it:
+                    it used to be last in a chain of conditions and went
+                    missing on the sessions that had actually written
+                    something. */}
+                {chipIds.has('diff') ? (
                   <PressableScale
                     onPress={onOpenDiffSheet}
                     accessibilityRole="button"
@@ -1092,7 +1136,7 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
 
-                {running ? (
+                {chipIds.has('delivery') ? (
                   <PressableScale
                     testID="agent-composer-delivery-btn"
                     onPress={() => {
@@ -1145,7 +1189,7 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
 
-                {running ? (
+                {chipIds.has('stop') ? (
                   <PressableScale
                     onPress={onAbort}
                     accessibilityRole="button"

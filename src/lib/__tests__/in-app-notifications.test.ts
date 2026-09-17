@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   dismissNotice,
+  dismissNoticeKind,
   enqueueNotice,
   MAX_NOTICES,
   MAX_SEEN_NOTICES,
@@ -11,7 +12,13 @@ import {
   type NoticeQueue,
 } from '../in-app-notifications';
 
-const notice = (id: string): InAppNotice => ({ id, title: `Event ${id}`, body: '', route: null });
+const notice = (id: string): InAppNotice => ({
+  id,
+  title: `Event ${id}`,
+  body: '',
+  route: null,
+  kind: 'general',
+});
 const empty = (): NoticeQueue => ({ items: [], seen: [] });
 
 describe('foreground notification queue', () => {
@@ -98,12 +105,14 @@ describe('push content conversion', () => {
       title: '',
       body: 'Agent needs attention',
       route: null,
+      kind: 'general',
     });
     expect(noticeFromPush('title', { title: 'Update' })).toEqual({
       id: 'title',
       title: 'Update',
       body: '',
       route: null,
+      kind: 'general',
     });
   });
 
@@ -177,5 +186,48 @@ describe('presentation policy', () => {
   test('disabled notifications suppress both paths in either lifecycle state', () => {
     expect(noticePresentation(false, true)).toEqual({ inApp: false, system: false });
     expect(noticePresentation(false, false)).toEqual({ inApp: false, system: false });
+  });
+});
+
+describe('approval notices', () => {
+  test('a push tagged as an approval is marked as one', () => {
+    expect(
+      noticeFromPush('a1', { title: 'APPROVAL REQUIRED', data: { categoryId: 'approval' } })?.kind
+    ).toBe('approval');
+    expect(
+      noticeFromPush('a2', { title: 'Waiting', data: { type: 'approval.pending' } })?.kind
+    ).toBe('approval');
+    // What an agent permission actually arrives as, measured on the wire.
+    expect(
+      noticeFromPush('a4', {
+        title: 'Approval Required',
+        body: 'external_directory: /etc/*',
+        data: { category: 'approval', type: 'approval', approval_id: 'per_1' },
+      })?.kind
+    ).toBe('approval');
+    expect(noticeFromPush('a3', { title: 'Build finished' })?.kind).toBe('general');
+  });
+
+  test('they all go when nothing is waiting any more, and nothing else does', () => {
+    const queue: NoticeQueue = {
+      items: [
+        { id: 'a', title: 'Approval', body: '', route: null, kind: 'approval' },
+        { id: 'b', title: 'Done', body: '', route: null, kind: 'general' },
+        { id: 'c', title: 'Approval', body: '', route: null, kind: 'approval' },
+      ],
+      seen: ['a', 'b', 'c'],
+    };
+    const next = dismissNoticeKind(queue, 'approval');
+    expect(next.items.map((item) => item.id)).toEqual(['b']);
+    // Still seen, so a late duplicate of the same receipt stays dismissed.
+    expect(next.seen).toEqual(['a', 'b', 'c']);
+  });
+
+  test('a queue with none of that kind is returned untouched', () => {
+    const queue: NoticeQueue = {
+      items: [{ id: 'b', title: 'Done', body: '', route: null, kind: 'general' }],
+      seen: ['b'],
+    };
+    expect(dismissNoticeKind(queue, 'approval')).toBe(queue);
   });
 });

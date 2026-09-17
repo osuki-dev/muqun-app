@@ -44,6 +44,13 @@ msgstr "{0, plural, one {# день} few {# дня} many {# дней} other {# �
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, one {Изменён # файл} few {Изменено # файла} many {Изменено # файлов} other {Изменено # файла}}"
 
+#. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
+msgstr "{0, plural, one {# файл} few {# файла} many {# файлов} other {# файла}} · +{1} −{2}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -72,6 +79,11 @@ msgstr "{0, plural, one {# тема} few {# темы} many {# тем} other {# �
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, one {и ещё # агент} few {и ещё # агента} many {и ещё # агентов} other {и ещё # агента}}"
 
+#. placeholder {0}: visibleFields.length
+#: src/components/agent-form-card.tsx
+msgid "{0, plural, one {Question} other {Questions}}"
+msgstr "{0, plural, one {Вопрос} few {Вопроса} many {Вопросов} other {Вопроса}}"
+
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
@@ -81,13 +93,6 @@ msgstr "{0} · Этим управляет система, и очистка к�
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (это устройство)"
-
-#. placeholder {0}: diffs.length
-#. placeholder {1}: totals.additions
-#. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "{0} files · +{1} −{2}"
-msgstr "{0} файлов · +{1} −{2}"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
@@ -371,6 +376,11 @@ msgstr "Разрешить камеру"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Разрешите камеру или введите адрес вручную"
 
+#. placeholder {0}: request.save.join(' · ')
+#: src/components/agent-permission-card.tsx
+msgid "Also allow {0} from now on"
+msgstr "Впредь разрешать также {0}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
 msgstr "Alt"
@@ -452,6 +462,10 @@ msgstr "Применить тему"
 msgid "Applying…"
 msgstr "Применяется…"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Approval required"
+msgstr "Требуется подтверждение"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
 msgstr "Архитектура, проектные предложения, пошаговые планы"
@@ -463,6 +477,10 @@ msgstr "Спрашивать каждый раз"
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
 msgstr "Задавайте вопросы, проверяйте файлы или запускайте команды в рабочей области"
+
+#: src/i18n/labels.ts
+msgid "Ask you a question"
+msgstr "Задать вам вопрос"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
@@ -1541,6 +1559,10 @@ msgstr "Демо-shell"
 msgid "Demo workspace"
 msgstr "Демо-пространство"
 
+#: src/components/agent-tool-card.tsx
+msgid "Denied by you"
+msgstr "Отклонено вами"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Отклонить"
@@ -1809,12 +1831,12 @@ msgid "Files in this workspace"
 msgstr "Файлы этого пространства"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type a path"
-msgstr "Отфильтровать проекты или ввести путь"
+msgid "Filter workspaces or type a path"
+msgstr "Отфильтровать рабочие пространства или ввести путь"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects, or type a path"
-msgstr "Отфильтруйте проекты или введите путь"
+msgid "Filter workspaces, or type a path"
+msgstr "Отфильтруйте рабочие пространства или введите путь"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1952,6 +1974,11 @@ msgstr "Группа"
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
 msgstr "Группа {0}. Удерживайте для действий"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Guided AGENTS.md setup"
+msgstr "Пошаговая настройка AGENTS.md"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2571,15 +2598,6 @@ msgstr "Для файлов этого типа нет предпросмотр�
 msgid "No preview on this connection"
 msgstr "Через это соединение предпросмотр недоступен"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects here yet. Type a path above to open one."
-msgstr "Здесь пока нет проектов. Введите путь выше, чтобы открыть один"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects match “{0}”."
-msgstr "Нет проектов по запросу «{0}»"
-
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "Нет сервера, на котором можно запустить задачу"
@@ -2632,6 +2650,15 @@ msgstr "Пока нет опубликованных тем"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "окно для этой модели не указано"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces here yet. Type a path above to open one."
+msgstr "Здесь пока нет рабочих пространств. Введите путь выше, чтобы открыть одно"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces match “{0}”."
+msgstr "Нет рабочих пространств по запросу «{0}»"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2743,8 +2770,8 @@ msgid "Open anyway"
 msgstr "Всё равно открыть"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a project workspace"
-msgstr "Открыть как рабочее пространство проекта"
+msgid "Open as a workspace"
+msgstr "Открыть как рабочее пространство"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -4066,8 +4093,8 @@ msgid "Subagent"
 msgstr "Субагент"
 
 #: src/components/agent-form-card.tsx
-msgid "Submit Response"
-msgstr "Отправить ответ"
+msgid "Submit"
+msgstr "Отправить"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -4897,6 +4924,7 @@ msgstr "Рабочий каталог"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Пространство"

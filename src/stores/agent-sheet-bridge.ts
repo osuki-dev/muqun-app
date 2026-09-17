@@ -7,6 +7,7 @@ import type {
   CommandInfo,
   CompactionReason,
   InboxItem,
+  ModelInfo,
   ModelRef,
   TodoItem,
   TokensUsage,
@@ -82,6 +83,14 @@ export interface AgentSheetSnapshot {
   contextUsage: AgentContextUsage | null;
   /** The host's own slash commands, from the catalog. */
   commands: readonly CommandInfo[];
+  /**
+   * Every model the host publishes.
+   *
+   * A `ModelRef` is three wire strings; the name a reader chose from --
+   * "Nemotron 3.5 Lightning Free" -- is the catalogue's. A sheet listing other
+   * sessions has only their refs, so it needs the catalogue to name them.
+   */
+  models: readonly ModelInfo[];
 }
 
 /**
@@ -120,6 +129,7 @@ const EMPTY_PROJECTS: readonly AgentProject[] = Object.freeze([]);
 const EMPTY_TODOS: readonly TodoItem[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
+const EMPTY_MODELS: readonly ModelInfo[] = Object.freeze([]);
 
 const INITIAL: AgentSheetSnapshot = {
   sessionId: '',
@@ -142,6 +152,7 @@ const INITIAL: AgentSheetSnapshot = {
   compaction: null,
   contextUsage: null,
   commands: EMPTY_COMMANDS,
+  models: EMPTY_MODELS,
 };
 
 interface AgentSheetBridge extends AgentSheetSnapshot {
@@ -175,4 +186,4 @@ export const useAgentSheetBridge = create<AgentSheetBridge>((set, get) => ({
   reset: () => set({ ...INITIAL, actions: NO_ACTIONS }),
 }));
 
-export { EMPTY_TODOS, EMPTY_INBOX, EMPTY_COMMANDS };
+export { EMPTY_TODOS, EMPTY_INBOX, EMPTY_COMMANDS, EMPTY_MODELS };

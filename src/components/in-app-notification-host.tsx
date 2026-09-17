@@ -1,17 +1,21 @@
+import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { router, type Href } from 'expo-router';
 import { Bell, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
+import { permissionActionPhrase } from '@/i18n/labels';
+import { readApprovalBody } from '@/lib/agent-engine-text';
 import { fadeInDown, fadeOutUp } from '@/lib/motion';
+import { AGENT_TYPE } from '@/constants/agent-type';
 import { useAppSettings } from '@/stores/app-settings';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
 
@@ -33,6 +37,7 @@ export function InAppNotificationHost() {
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
   const { colors } = useThemeTokens();
   const enabled = useAppSettings((state) => state.notificationsEnabled);
   const items = useInAppNotifications((state) => state.items);
@@ -47,7 +52,39 @@ export function InAppNotificationHost() {
     if (!enabled) useInAppNotifications.getState().clear();
   }, [enabled]);
   const notice = items[0];
-  if (!enabled || !active || !notice) return null;
+  const visible = Boolean(enabled && active && notice);
+  /*
+    Nothing on screen takes no room. A screen that leaves space for the deck
+    reads the height from the store, and a stale one would leave a hole at the
+    top of a transcript with no notice in it.
+  */
+  useEffect(() => {
+    if (!visible) useInAppNotifications.getState().setOverlayHeight(0);
+  }, [visible]);
+  /*
+    How far down the screen the deck reaches, not how tall the card is: a
+    screen leaving room for it has to clear the safe-area inset and the nav
+    chrome the deck sits below as well. The outer view carries both in its
+    padding, so its own height is the answer.
+  */
+  const measure = (event: LayoutChangeEvent) =>
+    useInAppNotifications.getState().setOverlayHeight(Math.round(event.nativeEvent.layout.height));
+  if (!visible || !notice) return null;
+
+  /*
+    An approval is the one notice the app can say better than the gateway can.
+    The push arrives titled "APPROVAL REQUIRED" -- a sign, not a sentence --
+    with a body of `external_directory: /etc/*`, which is the rule key the
+    permission card already translates. Same words here as on the card.
+  */
+  const approval = notice.kind === 'approval' ? readApprovalBody(notice.body) : null;
+  const approvalPhrase =
+    approval && approval.action && permissionActionPhrase[approval.action]
+      ? _(permissionActionPhrase[approval.action]!)
+      : '';
+  const title = approval ? t`Approval required` : notice.title || t`Muqun`;
+  const body = approval ? approvalPhrase : notice.body;
+  const detail = approval ? approval.subject : '';
   const dismiss = () => useInAppNotifications.getState().dismiss(notice.id);
   const open = () => {
     if (!notice.route) return;
@@ -57,6 +94,7 @@ export function InAppNotificationHost() {
   return (
     <View
       pointerEvents="box-none"
+      onLayout={measure}
       style={[styles.overlay, { paddingTop: insets.top + NOTICE_TOP_GAP }]}>
       <View pointerEvents="box-none" style={styles.deck}>
         {[2, 1].map((depth) =>
@@ -96,11 +134,17 @@ export function InAppNotificationHost() {
                 `textTransform: 'uppercase'`, and a notice shouting
                 "APPROVAL REQUIRED" is a sign rather than a sentence. */}
             <Text variant="bodySmall" weight="bold" numberOfLines={2}>
-              {notice.title || t`Muqun`}
+              {title}
             </Text>
-            {notice.body ? (
+            {body ? (
               <Text selectable variant="bodySmall" color={colors.textMuted} numberOfLines={4}>
-                {notice.body}
+                {body}
+              </Text>
+            ) : null}
+            {/* The path or the command, once, in the face the card gives it. */}
+            {detail ? (
+              <Text selectable color={colors.text} numberOfLines={2} style={styles.detail}>
+                {detail}
               </Text>
             ) : null}
             <View style={styles.actions}>
@@ -173,4 +217,9 @@ const styles = StyleSheet.create({
   action: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
   close: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   count: { fontVariant: ['tabular-nums'] },
+  detail: {
+    fontFamily: 'monospace',
+    fontSize: AGENT_TYPE.meta.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
+  },
 });

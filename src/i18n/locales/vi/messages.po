@@ -44,6 +44,13 @@ msgstr "{0, plural, other {# ngày}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# tệp đã thay đổi}}"
 
+#. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
+msgstr "{0, plural, other {# tệp}} · +{1} −{2}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# hour} other {# hours}}"
@@ -72,6 +79,11 @@ msgstr "{0, plural, other {# giao diện}} · {1}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {và # tác tử nữa}}"
 
+#. placeholder {0}: visibleFields.length
+#: src/components/agent-form-card.tsx
+msgid "{0, plural, one {Question} other {Questions}}"
+msgstr "{0, plural, other {Câu hỏi}}"
+
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
@@ -81,13 +93,6 @@ msgstr "{0} · Do hệ thống quản lý, xóa bộ nhớ đệm không đụng
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (thiết bị này)"
-
-#. placeholder {0}: diffs.length
-#. placeholder {1}: totals.additions
-#. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "{0} files · +{1} −{2}"
-msgstr "{0} tệp · +{1} −{2}"
 
 #. placeholder {0}: contextUsage.messages
 #: src/components/agent-context-sheet.tsx
@@ -371,6 +376,11 @@ msgstr "Cho phép camera"
 msgid "Allow the camera, or enter the address instead."
 msgstr "Cho phép camera, hoặc nhập địa chỉ thay thế"
 
+#. placeholder {0}: request.save.join(' · ')
+#: src/components/agent-permission-card.tsx
+msgid "Also allow {0} from now on"
+msgstr "Từ nay cũng cho phép {0}"
+
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
 msgstr "Alt"
@@ -452,6 +462,10 @@ msgstr "Áp dụng giao diện"
 msgid "Applying…"
 msgstr "Đang áp dụng…"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Approval required"
+msgstr "Cần phê duyệt"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
 msgstr "Kiến trúc, đề xuất thiết kế, lộ trình từng bước"
@@ -463,6 +477,10 @@ msgstr "Hỏi mỗi lần"
 #: src/components/agent-workbench.tsx
 msgid "Ask questions, inspect files, or run commands in your workspace."
 msgstr "Đặt câu hỏi, kiểm tra tệp hoặc chạy lệnh trong không gian làm việc của bạn"
+
+#: src/i18n/labels.ts
+msgid "Ask you a question"
+msgstr "Hỏi bạn một câu hỏi"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
@@ -1541,6 +1559,10 @@ msgstr "Shell demo"
 msgid "Demo workspace"
 msgstr "Không gian làm việc demo"
 
+#: src/components/agent-tool-card.tsx
+msgid "Denied by you"
+msgstr "Bạn đã từ chối"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Từ chối"
@@ -1809,12 +1831,12 @@ msgid "Files in this workspace"
 msgstr "Tệp trong không gian làm việc này"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects or type a path"
-msgstr "Lọc dự án hoặc nhập đường dẫn"
+msgid "Filter workspaces or type a path"
+msgstr "Lọc không gian làm việc hoặc nhập đường dẫn"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter projects, or type a path"
-msgstr "Lọc dự án, hoặc nhập đường dẫn"
+msgid "Filter workspaces, or type a path"
+msgstr "Lọc không gian làm việc, hoặc nhập đường dẫn"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1952,6 +1974,11 @@ msgstr "Nhóm"
 #: src/components/session-map.tsx
 msgid "Group {0}. Long press for actions."
 msgstr "Nhóm {0}. Nhấn giữ để xem thao tác"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Guided AGENTS.md setup"
+msgstr "Thiết lập AGENTS.md có hướng dẫn"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2571,15 +2598,6 @@ msgstr "Không có bản xem trước cho loại tệp này. Nó vẫn ở trên
 msgid "No preview on this connection"
 msgstr "Không có bản xem trước trên kết nối này"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects here yet. Type a path above to open one."
-msgstr "Chưa có dự án nào ở đây. Nhập một đường dẫn ở trên để mở"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No projects match “{0}”."
-msgstr "Không có dự án nào khớp với “{0}”"
-
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "Không có máy chủ để bắt đầu tác vụ"
@@ -2632,6 +2650,15 @@ msgstr "Chưa có giao diện nào được công bố"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "không có cửa sổ nào được báo cho mô hình này"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces here yet. Type a path above to open one."
+msgstr "Chưa có không gian làm việc nào ở đây. Nhập một đường dẫn ở trên để mở"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No workspaces match “{0}”."
+msgstr "Không có không gian làm việc nào khớp với “{0}”"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2743,8 +2770,8 @@ msgid "Open anyway"
 msgstr "Vẫn mở"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a project workspace"
-msgstr "Mở làm không gian làm việc của dự án"
+msgid "Open as a workspace"
+msgstr "Mở làm không gian làm việc"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -4066,8 +4093,8 @@ msgid "Subagent"
 msgstr "Tác nhân phụ"
 
 #: src/components/agent-form-card.tsx
-msgid "Submit Response"
-msgstr "Gửi phản hồi"
+msgid "Submit"
+msgstr "Gửi"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -4897,6 +4924,7 @@ msgstr "Thư mục làm việc"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Không gian làm việc"
