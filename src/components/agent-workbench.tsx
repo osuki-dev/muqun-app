@@ -616,6 +616,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // for whatever landed after it rather than refetching the world.
       if (event.seq > lastSeqRef.current) lastSeqRef.current = event.seq;
 
+      /**
+       * Whether this event is about the session on screen.
+       *
+       * The per-session stream is filtered, but a subagent's session events
+       * reach it too -- a subagent *is* a session, and its status, its inbox
+       * and its compaction all announce themselves by their own `asid`. Applied
+       * blindly, a subagent finishing flipped the parent to idle, cleared the
+       * parent's queued rows and fired three refreshes, in the middle of a turn
+       * the parent was still running.
+       *
+       * An event that names nobody is about the stream's own session, which is
+       * the only one it carries.
+       */
+      const forActiveSession = !event.asid || event.asid === activeAsid;
+
       switch (event.type) {
         case 'agent.timeline.upsert':
           setTimeline((prev) => upsertTimelineItems(prev, event.items));
@@ -632,6 +647,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
 
         case 'agent.status.changed': {
+          // The roots list and the subagent tree take every status, whoever it
+          // is about: that is what a chip's own dot is drawn from.
+          setSessions((prev) =>
+            prev.map((s) => (s.asid === event.asid ? { ...s, status: event.status } : s))
+          );
+          setChildrenByParent((prev) => applyChildStatus(prev, event.asid, event.status));
+
+          // The transcript takes it only when it is the transcript's own.
+          if (!forActiveSession) break;
           // The status the engine reports is the status shown -- `failed`
           // keeps its error, `interrupted` says so, and nothing here forces
           // idle on the way past.
@@ -640,12 +664,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ? { ...prev, status: event.status, ...(event.error ? { error: event.error } : {}) }
               : prev
           );
-          setSessions((prev) =>
-            prev.map((s) => (s.asid === event.asid ? { ...s, status: event.status } : s))
-          );
-          // A subagent's chip shows the child's own dot, so the tree takes the
-          // same update the strip does.
-          setChildrenByParent((prev) => applyChildStatus(prev, event.asid, event.status));
           if (event.status === 'idle') {
             // Delivered: a queued row is now ordinary history.
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
@@ -658,9 +676,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
         case 'agent.session.updated': {
           const info = event.info;
-          setSessionInfo((prev) =>
-            prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
-          );
+
+          /**
+           * A session that has been deleted leaves.
+           *
+           * `deleted` was parsed off the wire and read nowhere, so a session
+           * removed on the host -- or a whole subtree, which is what deleting
+           * a parent does -- stayed in the strip as a chip that opened an
+           * empty transcript. OpenCode announces each one.
+           */
+          if (info.deleted) {
+            setSessions((prev) => prev.filter((session) => session.asid !== info.asid));
+            setChildrenByParent((prev) => dropSession(prev, info.asid));
+            if (info.asid === activeAsid) {
+              setActiveAsid(undefined);
+              setSessionInfo(null);
+              setTimeline([]);
+              setWindowStart(0);
+              setPermissions([]);
+              setForms([]);
+              setInbox([]);
+            }
+            break;
+          }
+
+          if (forActiveSession) {
+            setSessionInfo((prev) =>
+              prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
+            );
+          }
           setSessions((prev) =>
             prev.some((s) => s.asid === info.asid)
               ? prev.map((s) => (s.asid === info.asid ? { ...s, ...info } : s))
@@ -699,11 +743,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
 
         case 'agent.inbox.changed':
+          // A subagent has its own queue, and it is not the one drawn above
+          // this composer.
+          if (!forActiveSession) break;
           // The whole queue every time, so there is no diff to reconcile.
           setInbox(event.items);
           break;
 
         case 'agent.compaction.changed':
+          // Likewise: a subagent compacting its own context is not this
+          // session's pill.
+          if (!forActiveSession) break;
           setCompaction(
             event.status === 'completed' || event.status === 'failed'
               ? null
@@ -723,7 +773,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
       }
     },
-    [loadSnapshot, refreshSessions, refreshContext, refreshShells, handleAutoPermission]
+    [activeAsid, loadSnapshot, refreshSessions, refreshContext, refreshShells, handleAutoPermission]
   );
 
   /**
@@ -2240,6 +2290,24 @@ function applyChildStatus(
       changed = true;
       return { ...child, status };
     });
+  }
+  return changed ? next : previous;
+}
+
+/** A session removed on the host, taken out of the tree wherever it sits. */
+function dropSession(previous: ChildrenByParent, asid: string): ChildrenByParent {
+  let changed = false;
+  const next: Record<string, AgentSessionInfo[]> = {};
+  for (const [parent, children] of Object.entries(previous)) {
+    // Its own branch goes with it: deleting a session deletes its children,
+    // and OpenCode announces each of those too.
+    if (parent === asid) {
+      changed = true;
+      continue;
+    }
+    const kept = children.filter((child) => child.asid !== asid);
+    if (kept.length !== children.length) changed = true;
+    next[parent] = kept;
   }
   return changed ? next : previous;
 }
