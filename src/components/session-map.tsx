@@ -1,4 +1,5 @@
 import { SheetHandle } from '@/components/sheet-route-frame';
+import { SheetSceneHeading } from '@/components/sheet-scene';
 import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { plural } from '@lingui/core/macro';
@@ -421,39 +422,39 @@ export function SessionMap({
           style={[styles.stickyTop, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
           <SheetHandle style={styles.sheetHandle} />
 
-          <View style={styles.header}>
-            <View style={styles.flexOne}>
-              <Text variant="bodySmall" style={styles.headerTitle}>
-                <Trans>What is running</Trans>
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                {activeWorkspace ? `${label} · ${activeWorkspace.title}` : label}
-              </Text>
-            </View>
-            {/* The sheet's chrome, in the same material as the server page's --
+          {/* The one heading every sheet in the app announces itself with; the
+              refresh and the way out ride its trailing slot. */}
+          <SheetSceneHeading
+            title={t`What is running`}
+            caption={activeWorkspace ? `${label} \u00b7 ${activeWorkspace.title}` : label}
+            trailing={
+              <View style={styles.headerControls}>
+                {/* The sheet's chrome, in the same material as the server page's --
             `sheet` rather than `floating` because this sits on an opaque sheet,
             where the thick material would only read as a grey disc. */}
-            <GlassChrome face="sheet" style={styles.iconButton}>
-              <PressableScale
-                accessibilityLabel={t`Refresh`}
-                onPress={() => void load()}
-                style={styles.iconButtonHit}>
-                {loading ? (
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
-                ) : (
-                  <RefreshCw size={17} color={theme.colors.textMuted} />
-                )}
-              </PressableScale>
-            </GlassChrome>
-            <GlassChrome face="sheet" style={styles.iconButton}>
-              <PressableScale
-                accessibilityLabel={t`Close`}
-                onPress={onClose}
-                style={styles.iconButtonHit}>
-                <X size={18} color={theme.colors.text} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
+                <GlassChrome face="sheet" style={styles.iconButton}>
+                  <PressableScale
+                    accessibilityLabel={t`Refresh`}
+                    onPress={() => void load()}
+                    style={styles.iconButtonHit}>
+                    {loading ? (
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
+                    ) : (
+                      <RefreshCw size={17} color={theme.colors.textMuted} />
+                    )}
+                  </PressableScale>
+                </GlassChrome>
+                <GlassChrome face="sheet" style={styles.iconButton}>
+                  <PressableScale
+                    accessibilityLabel={t`Close`}
+                    onPress={onClose}
+                    style={styles.iconButtonHit}>
+                    <X size={18} color={theme.colors.text} />
+                  </PressableScale>
+                </GlassChrome>
+              </View>
+            }
+          />
         </View>
 
         {renaming ? (
@@ -1054,6 +1055,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  headerControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: {
     fontSize: 20,
     lineHeight: 25,

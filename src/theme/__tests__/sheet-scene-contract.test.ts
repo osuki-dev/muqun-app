@@ -91,9 +91,13 @@ test('the sheet ground paints its wallpaper above its tint, never under it', () 
 test('every form sheet is built in the one shared frame', () => {
   for (const file of SHEET_FRAMES) {
     const text = readFileSync(file, 'utf8');
-    // `SheetFrame`, not a `SheetGround` mounted by hand: one frame is what
-    // makes the ground a single place to change rather than eight.
-    expect(text).toContain('<SheetFrame');
+    // `SheetFrame`, or `SheetScene`, which is the furniture built on top of it
+    // -- never a `SheetGround` mounted by hand. One frame is what makes the
+    // ground a single place to change rather than sixteen.
+    expect({ file, framed: text.includes('<SheetFrame') || text.includes('<SheetScene') }).toEqual({
+      file,
+      framed: true,
+    });
     expect(text).not.toContain('<SheetGround');
     // And none of them paints a second surface of its own over it. The scroll
     // root keeps an opaque floor or nothing; the tint belongs to the ground.
@@ -101,7 +105,7 @@ test('every form sheet is built in the one shared frame', () => {
   }
   // The frame is the only thing that mounts the ground.
   const ground = readFileSync('src/components/sheet-ground.tsx', 'utf8');
-  expect(ground).toContain('<SheetGround testID={testID} tint={tint} />');
+  expect(ground).toContain('<SheetGround testID={testID} tint={tint} frosted={frosted} />');
 });
 
 test('the settings sheet keeps the native scroll root a form sheet needs', () => {
@@ -177,7 +181,65 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
     const text = readFileSync(file, 'utf8');
     const direct = text.includes('useSheetGroundPlate(') && text.includes(', plate]');
     const viaLabel = text.includes('<SectionLabel') || text.includes('<SheetHeading');
-    expect({ file, plated: direct || viaLabel }).toEqual({ file, plated: true });
+    // A frosted ground is the other answer, and the better one: `SheetScene`
+    // frosts itself, and a sheet that frosts its own frame has said the same
+    // thing. Either way the reader is not asked to read text on a photograph.
+    const viaScene = SCENE_ROOT.test(text);
+    const viaFrost = text.includes('frosted');
+    expect({ file, plated: direct || viaLabel || viaScene || viaFrost }).toEqual({
+      file,
+      plated: true,
+    });
+  }
+
+  // And the furniture really does protect what it draws, so `viaScene` above is
+  // a fact rather than an exemption -- by frosting the ground rather than by
+  // plating each run, which is the thing this system is not.
+  const scene = readFileSync('src/components/sheet-scene.tsx', 'utf8');
+  expect(scene).toContain('<SheetFrame testID={testID} tint="surface" frosted>');
+  expect(scene).not.toContain('useSheetGroundPlate');
+
+  // The frost is a floor the reader's opacity slider cannot take a sheet below.
+  expect(ground).toContain('export const SHEET_FROST_ALPHA = 0.82;');
+  expect(ground).toContain('frosted && hasShell');
+});
+
+/**
+ * The sheet system's own rules, from `sheet-design.md`.
+ *
+ * A sheet is one frosted ground with nothing boxed on it. The three things that
+ * make it the SaaS card kit again -- a second surface inside the sheet, a radio
+ * or a tick marking the selection, and an X circle repeating the grabber -- are
+ * checked here rather than left to review, because every one of them arrived by
+ * being locally reasonable.
+ */
+/** `<SheetScene>` itself, not `<SheetSceneHeading>` and friends. */
+const SCENE_ROOT = /<SheetScene[\s>]/;
+
+test('a sheet built on the scene has no cards, no radios and no close button', () => {
+  const sceneSheets = SHEET_FRAMES.filter((file) => SCENE_ROOT.test(readFileSync(file, 'utf8')));
+  // The agent surface is what the spec calibrates against, so it is what has to
+  // be covered: if this list empties, the rules below stopped being enforced.
+  expect(sceneSheets.length).toBeGreaterThanOrEqual(6);
+
+  for (const file of sceneSheets) {
+    const text = code(readFileSync(file, 'utf8'));
+    // No second surface: the sheet's ground is the only one.
+    expect({
+      file,
+      cards: text.includes('<SettingsCard') || text.includes('<ThemedSurface'),
+    }).toEqual({ file, cards: false });
+    // The selection mark is the scene's left rule, not a control to read. Asked
+    // only of a sheet that has rows: the setup sheet's tick is a "copied"
+    // confirmation on a button, which is a different word entirely.
+    if (text.includes('<SheetSceneRow')) {
+      expect({ file, radio: /\bindicatorDot\b|<Check\b/.test(text) }).toEqual({
+        file,
+        radio: false,
+      });
+    }
+    // The grabber and the swipe are the close.
+    expect({ file, closeButton: text.includes('<X ') }).toEqual({ file, closeButton: false });
   }
 });
 
@@ -234,6 +296,47 @@ test('every allowlisted modal still exists and still is one, so the list cannot 
   for (const [file, reason] of Object.entries(MODAL_ALLOWLIST)) {
     const text = code(readFileSync(file, 'utf8'));
     expect({ file, modal: text.includes('<Modal') }).toEqual({ file, modal: true });
+    expect(reason.length).toBeGreaterThan(20);
+  }
+});
+
+/**
+ * Every sheet announces itself the same way.
+ *
+ * One heading component -- `SheetSceneHeading`, which `SheetHeading` and
+ * `SheetScene` both render -- so "the app has one sheet" is a fact the gate
+ * holds rather than a habit the next sheet can break. A sheet that rolls its
+ * own title is how the agent surface drifted in the first place.
+ *
+ * Two exemptions, and both are inspectors whose whole surface is one
+ * continuous thing rather than a heading over content.
+ */
+const HEADING_EXEMPT: Record<string, string> = {
+  'src/components/git-diff-view.tsx':
+    'the diff is one measured monospace grid under a pinned bar that also carries the branch, the refresh and the staged/unstaged segments',
+  'src/components/asset-viewer.tsx':
+    'a full-bleed document viewer, not a sheet: it is a Modal opened from inside the files sheet and has no grabber to pair a heading with',
+};
+
+test('every sheet frame announces itself with the one heading', () => {
+  const offenders: string[] = [];
+  for (const file of SHEET_FRAMES) {
+    if (file in HEADING_EXEMPT) continue;
+    const text = code(readFileSync(file, 'utf8'));
+    const heads =
+      SCENE_ROOT.test(text) ||
+      text.includes('<SheetSceneHeading') ||
+      text.includes('<SheetHeading');
+    if (!heads) offenders.push(file);
+  }
+  expect(offenders).toEqual([]);
+
+  // `SheetHeading` is the same component, not a second one that agrees today.
+  const heading = readFileSync('src/components/sheet-heading.tsx', 'utf8');
+  expect(heading).toContain("import { SheetSceneHeading } from '@/components/sheet-scene'");
+
+  for (const [file, reason] of Object.entries(HEADING_EXEMPT)) {
+    expect(readFileSync(file, 'utf8').length).toBeGreaterThan(0);
     expect(reason.length).toBeGreaterThan(20);
   }
 });

@@ -1,28 +1,14 @@
-import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { StyleSheet, View } from 'react-native';
-import { useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetSceneHeading } from '@/components/sheet-scene';
 
-/** Shared title and supporting copy, protected from custom wallpaper. */
+/**
+ * A sheet's title and the line under it.
+ *
+ * One implementation, in `sheet-scene.tsx`, so "every sheet announces itself
+ * the same way" is a fact rather than two files that agree today. This name
+ * survives because the sheets that predate the scene -- settings, the
+ * catalogue, new task, web service -- import it, and they are still built on
+ * their own scroll roots.
+ */
 export function SheetHeading({ title, caption }: { title: string; caption?: string }) {
-  const { colors } = useThemeTokens();
-  const plate = useSheetGroundPlate();
-  return (
-    <View style={styles.container}>
-      <View style={[styles.copy, plate]}>
-        <Text variant="bodySmall" style={styles.title}>
-          {title}
-        </Text>
-        {caption ? (
-          <Text variant="caption" color={colors.textMuted}>
-            {caption}
-          </Text>
-        ) : null}
-      </View>
-    </View>
-  );
+  return <SheetSceneHeading title={title} caption={caption} />;
 }
-const styles = StyleSheet.create({
-  container: { flex: 1, minWidth: 0 },
-  copy: { gap: 2, maxWidth: '100%' },
-  title: { fontSize: 20, lineHeight: 25, includeFontPadding: false },
-});

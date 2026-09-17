@@ -1,18 +1,25 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Trans, useLingui } from '@lingui/react/macro';
-import { RefreshCw, Square, Terminal, X } from 'lucide-react-native';
+import { useLingui } from '@lingui/react/macro';
+import { Square, Terminal } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
 
-import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { SheetHandle } from '@/components/sheet-route-frame';
-import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
+import {
+  SheetScene,
+  SheetSceneFooter,
+  SheetSceneGroupHeading,
+  SheetSceneQuietAction,
+  SheetSceneRow,
+  SHEET_LADDER,
+  sheetSceneStyles,
+} from '@/components/sheet-scene';
 import { StatusDot } from '@/components/status-dot';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { capLines } from '@/lib/agent-tool-output';
 import {
   getAgentShellOutput,
@@ -30,11 +37,10 @@ import {
  * no representation of them at all: the card said "running" forever and the
  * output went nowhere the reader could see it.
  *
- * The shells are `GET /api/agent-shells`, their output is
+ * An inspector on the shared scene: shells are rows with the same left rule as
+ * every other sheet -- the rule marks the one you are reading -- and its output
+ * follows underneath it. The shells are `GET /api/agent-shells`, the output is
  * `GET …/{id}/output?cursor=`, and a shell is stopped with `DELETE …/{id}`.
- * Opening one asks for its output from the cursor it last reached, so a shell
- * printing for ten minutes costs one page per look rather than ten minutes of
- * buffer.
  */
 
 /** Lines of a shell's output held in the sheet at once. */
@@ -52,6 +58,9 @@ const OUTPUT_LINE_BUDGET = 400;
  */
 const OUTPUT_POLL_MS = 2000;
 
+/** Rows past this one arrive together; a stagger that long reads as a wait. */
+const STAGGERED_ROWS = 8;
+
 export interface AgentBackgroundTrayProps {
   /** Scopes the listing to the workspace the reader is in. */
   directory?: string;
@@ -65,12 +74,11 @@ function statusTone(status: ShellStatus, colors: { running: string; ok: string; 
 
 export const AgentBackgroundTray = memo(function AgentBackgroundTray({
   directory,
-  onClose,
+  onClose: _onClose,
 }: AgentBackgroundTrayProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
-  const plate = useSheetGroundPlate();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
@@ -159,149 +167,104 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
   const running = shells.filter((shell) => shell.status === 'running').length;
 
   return (
-    <SheetFrame testID="agent-background-tray" tint="background">
-      <View collapsable={false} style={styles.sheetLayout}>
-        <View style={styles.fixedTop}>
-          <SheetHandle />
-          <View style={styles.header}>
-            <View style={[styles.headerCopy, plate]}>
-              <Text variant="subheading" style={styles.headerTitle}>
-                {t`Background tasks`}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {t`${running} running of ${shells.length}`}
-              </Text>
-            </View>
-
-            <GlassChrome face="sheet" style={styles.headerButton}>
-              <PressableScale
-                testID="agent-background-refresh"
-                accessibilityRole="button"
-                accessibilityLabel={t`Refresh`}
-                onPress={() => {
-                  setLoading(true);
-                  void refreshShells().catch(() => setLoading(false));
-                }}
-                style={styles.headerButtonHit}>
-                {loading ? (
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
-                ) : (
-                  <RefreshCw size={17} color={theme.colors.textMuted} />
-                )}
-              </PressableScale>
-            </GlassChrome>
-
-            <GlassChrome face="sheet" style={styles.headerButton}>
-              <PressableScale
-                testID="agent-background-close"
-                accessibilityRole="button"
-                accessibilityLabel={t`Close`}
-                onPress={onClose}
-                style={styles.headerButtonHit}>
-                <X size={19} color={theme.colors.text} strokeWidth={2} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
+    <SheetScene
+      testID="agent-background-tray"
+      title={t`Background tasks`}
+      caption={shells.length > 0 ? t`${running} running of ${shells.length}` : undefined}
+      headingTrailing={
+        <SheetSceneQuietAction
+          testID="agent-background-refresh"
+          label={t`Refresh`}
+          onPress={() => {
+            setLoading(true);
+            void refreshShells().catch(() => setLoading(false));
+          }}
+        />
+      }>
+      {loading ? (
+        <View style={styles.centre}>
+          <ActivityIndicator size="small" color={theme.colors.primary} />
         </View>
-
+      ) : shells.length === 0 ? (
+        <View style={styles.centre}>
+          <Terminal size={32} color={theme.colors.textSubtle} />
+          <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
+            {t`Nothing is running in the background. Detach a long command from its tool card and it appears here.`}
+          </Text>
+        </View>
+      ) : (
         <ScrollView
-          style={styles.scrollViewport}
-          contentContainerStyle={[
-            styles.content,
-            { paddingBottom: LADDER.section + insets.bottom },
-          ]}
+          style={sheetSceneStyles.scroller}
+          contentContainerStyle={sheetSceneStyles.scrollerContent}
           showsVerticalScrollIndicator={false}>
-          {shells.length === 0 ? (
-            <View style={styles.empty}>
-              <Terminal size={32} color={theme.colors.textSubtle} />
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-                <Trans>
-                  Nothing is running in the background. Detach a long command from its tool card and
-                  it appears here.
-                </Trans>
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.sectionBlock}>
-              <SectionLabel title={t`SHELLS`} color={theme.colors.textMuted} />
-              <SettingsCard>
-                {shells.map((shell) => {
-                  const open = shell.id === openShellId;
-                  const tone = statusTone(shell.status, {
-                    running: theme.colors.warning,
-                    ok: theme.colors.success,
-                    bad: theme.colors.danger,
-                  });
-                  return (
-                    <View key={shell.id}>
+          <SheetSceneGroupHeading title={t`Shells`} first />
+          {shells.map((shell, index) => {
+            const open = shell.id === openShellId;
+            const tone = statusTone(shell.status, {
+              running: theme.colors.warning,
+              ok: theme.colors.success,
+              bad: theme.colors.danger,
+            });
+            return (
+              <Animated.View
+                key={shell.id}
+                entering={index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')}
+                layout={listLayout('short')}>
+                <SheetSceneRow
+                  testID={`agent-background-shell-${shell.id}`}
+                  title={shell.command || shell.id}
+                  caption={
+                    shell.exit === undefined
+                      ? (shell.cwd ?? shell.status)
+                      : `${shell.status} · exit ${shell.exit}`
+                  }
+                  selected={open}
+                  onPress={() => selectShell(shell.id)}
+                  leading={
+                    <StatusDot size={7} filled pulse={shell.status === 'running'} color={tone} />
+                  }
+                  meta={
+                    shell.status === 'running' ? (
                       <PressableScale
-                        testID={`agent-background-shell-${shell.id}`}
+                        testID={`agent-background-kill-${shell.id}`}
                         accessibilityRole="button"
-                        accessibilityState={{ expanded: open }}
-                        accessibilityLabel={shell.command || shell.id}
-                        onPress={() => selectShell(shell.id)}
-                        style={styles.shellRow}>
-                        <StatusDot
-                          size={7}
-                          filled
-                          pulse={shell.status === 'running'}
-                          color={tone}
-                        />
-                        <View style={styles.shellText}>
-                          <Text
-                            variant="bodySmall"
-                            numberOfLines={1}
-                            color={theme.colors.text}
-                            style={styles.shellCommand}>
-                            {shell.command || shell.id}
-                          </Text>
-                          <Text variant="caption" numberOfLines={1} color={theme.colors.textMuted}>
-                            {shell.exit === undefined
-                              ? (shell.cwd ?? shell.status)
-                              : `${shell.status} · exit ${shell.exit}`}
-                          </Text>
-                        </View>
-                        {shell.status === 'running' ? (
-                          <PressableScale
-                            testID={`agent-background-kill-${shell.id}`}
-                            accessibilityRole="button"
-                            accessibilityLabel={t`Stop this command`}
-                            disabled={killing !== null}
-                            onPress={() => void handleKill(shell.id)}
-                            style={[styles.killBtn, { borderColor: theme.colors.danger }]}>
-                            {killing === shell.id ? (
-                              <ActivityIndicator size="small" color={theme.colors.danger} />
-                            ) : (
-                              <Square
-                                size={11}
-                                color={theme.colors.danger}
-                                fill={theme.colors.danger}
-                              />
-                            )}
-                          </PressableScale>
-                        ) : null}
+                        accessibilityLabel={t`Stop this command`}
+                        disabled={killing !== null}
+                        onPress={() => void handleKill(shell.id)}
+                        style={[styles.killBtn, { borderColor: theme.colors.danger }]}>
+                        {killing === shell.id ? (
+                          <ActivityIndicator size="small" color={theme.colors.danger} />
+                        ) : (
+                          <Square
+                            size={11}
+                            color={theme.colors.danger}
+                            fill={theme.colors.danger}
+                          />
+                        )}
                       </PressableScale>
-
-                      {open ? (
-                        <View
-                          style={[
-                            styles.outputBox,
-                            { backgroundColor: surfaceBackground(theme.colors.surface) },
-                          ]}>
-                          <Text selectable style={[styles.outputText, { color: colors.muted }]}>
-                            {output || t`No output yet.`}
-                          </Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  );
-                })}
-              </SettingsCard>
-            </View>
-          )}
+                    ) : null
+                  }
+                  trailing={
+                    open ? (
+                      <View
+                        style={[
+                          styles.outputBox,
+                          { backgroundColor: surfaceBackground(theme.colors.surface) },
+                        ]}>
+                        <Text selectable style={[styles.outputText, { color: colors.muted }]}>
+                          {output || t`No output yet.`}
+                        </Text>
+                      </View>
+                    ) : null
+                  }
+                />
+              </Animated.View>
+            );
+          })}
+          <SheetSceneFooter bottomInset={insets.bottom} />
         </ScrollView>
-      </View>
-    </SheetFrame>
+      )}
+    </SheetScene>
   );
 });
 
@@ -316,80 +279,12 @@ export function runningShellCount(shells: readonly ShellInfo[]): number {
 
 /** The last lines of a shell's output, for a preview that is not the whole log. */
 export function shellOutputPreview(output: string, lines = 3): string {
-  const capped = capLines(output, lines);
-  return capped.text;
+  return capLines(output, lines).text;
 }
 
 const styles = StyleSheet.create({
-  sheetLayout: {
-    flex: 1,
-  },
-  fixedTop: {
-    flexShrink: 0,
-    paddingHorizontal: LADDER.gutter,
-    paddingTop: LADDER.gap * 1.5,
-    paddingBottom: LADDER.gap,
-    gap: LADDER.snug,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LADDER.gap,
-  },
-  headerCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  headerTitle: {
-    includeFontPadding: false,
-  },
-  headerButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  headerButtonHit: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollViewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
-  content: {
-    paddingHorizontal: LADDER.gutter,
-    paddingTop: 4,
-  },
-  sectionBlock: {
-    gap: LADDER.snug,
-  },
-  empty: {
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    gap: 12,
-  },
-  emptyText: {
-    textAlign: 'center',
-  },
-  shellRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  shellText: {
-    flex: 1,
-    minWidth: 0,
-    gap: 1,
-  },
-  shellCommand: {
-    fontFamily: 'monospace',
-    fontSize: 12.5,
-  },
+  centre: { padding: 40, alignItems: 'center', justifyContent: 'center', gap: SHEET_LADDER.snug },
+  emptyText: { textAlign: 'center' },
   killBtn: {
     width: 28,
     height: 28,
@@ -400,15 +295,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   outputBox: {
-    marginHorizontal: 12,
-    marginBottom: 10,
-    padding: 10,
+    marginBottom: SHEET_LADDER.snug,
+    padding: SHEET_LADDER.gap,
     borderRadius: 10,
     borderCurve: 'continuous',
   },
-  outputText: {
-    fontFamily: 'monospace',
-    fontSize: 11.5,
-    lineHeight: 16,
-  },
+  outputText: { fontFamily: 'monospace', fontSize: 11.5, lineHeight: 16 },
 });
