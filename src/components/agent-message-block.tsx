@@ -122,7 +122,8 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
   const { t } = useLingui();
   const theme = useThemeTokens();
 
-  const notice = useMemo((): { Icon: typeof Cpu; text: string } | null => {
+  const [expanded, setExpanded] = useState(false);
+  const notice = useMemo((): { Icon: typeof Cpu; text: string; label?: string } | null => {
     switch (part.type) {
       case 'model_switched': {
         const next = formatModelName(part.model, t`a default model`);
@@ -147,7 +148,14 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
       case 'synthetic':
       case 'system': {
         const text = part.text ?? part.description ?? '';
-        return text ? { Icon: Info, text } : null;
+        if (!text) return null;
+        // An engine-injected note often arrives wrapped in a tag,
+        // `<system-reminder>…</system-reminder>`; the tag is the label, not
+        // the content, so it becomes a title and the angle brackets go.
+        const tagged = untagNotice(text);
+        return tagged
+          ? { Icon: Info, text: tagged.body, label: humaniseTag(tagged.tag) }
+          : { Icon: Info, text };
       }
       case 'unsupported':
         return { Icon: CircleHelp, text: t`Unsupported item (${part.raw_type})` };
@@ -157,21 +165,56 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
   }, [part, t]);
 
   if (!notice) return null;
-  const { Icon, text } = notice;
+  const { Icon, text, label } = notice;
+  // A long note is never cut short for good: two lines closed, everything
+  // when tapped, and the same tap folds it back.
+  const foldable = label !== undefined || text.length > 120 || text.includes('\n');
 
   return (
-    <View style={styles.noticeRow}>
-      <Icon size={11} color={theme.colors.textMuted} />
-      <Text
-        variant="caption"
-        color={theme.colors.textMuted}
-        numberOfLines={2}
-        style={styles.noticeText}>
-        {text}
-      </Text>
-    </View>
+    <Pressable
+      accessibilityRole={foldable ? 'button' : undefined}
+      accessibilityState={foldable ? { expanded } : undefined}
+      onPress={foldable ? () => setExpanded((v) => !v) : undefined}
+      style={styles.noticeRow}>
+      <Icon size={11} color={theme.colors.textMuted} style={styles.noticeIcon} />
+      <View style={styles.noticeCopy}>
+        {label ? (
+          <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
+            {label}
+          </Text>
+        ) : null}
+        <Text
+          variant="caption"
+          color={theme.colors.textMuted}
+          selectable={expanded}
+          numberOfLines={expanded ? undefined : 2}
+          style={styles.noticeText}>
+          {text}
+        </Text>
+      </View>
+      {foldable ? (
+        <ChevronDown
+          size={12}
+          color={theme.colors.textSubtle}
+          style={expanded ? styles.chevronOpen : undefined}
+        />
+      ) : null}
+    </Pressable>
   );
 });
+
+/** `<system-reminder>body</system-reminder>` → the tag and the body inside it. */
+function untagNotice(text: string): { tag: string; body: string } | null {
+  const match = /^\s*<([a-z][\w-]*)>\s*([\s\S]*?)\s*<\/\1>\s*$/i.exec(text);
+  if (!match) return null;
+  return { tag: match[1] ?? '', body: match[2] ?? '' };
+}
+
+/** `system-reminder` → `System reminder`. */
+function humaniseTag(tag: string): string {
+  const words = tag.replace(/[-_]+/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 /**
  * What a tool card can do that a message block cannot decide for itself:
@@ -230,6 +273,8 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
+  const plate = useTranscriptPlate();
+  const markdownStyle = usePaneChatMarkdownStyle();
   const [expanded, setExpanded] = useState(false);
 
   const running = part.status === 'running';
@@ -287,10 +332,19 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
       ) : null}
 
       {expanded && part.summary ? (
-        <Animated.View entering={fadeIn('micro')}>
-          <Text variant="caption" selectable color={theme.colors.textMuted} style={styles.summary}>
-            {part.summary}
-          </Text>
+        <Animated.View entering={fadeIn('micro')} style={[styles.messageBlock, plate]}>
+          <EnrichedMarkdownText
+            key={markdownPaletteKey(markdownStyle)}
+            flavor="commonmark"
+            markdown={part.summary}
+            markdownStyle={markdownStyle}
+            containerStyle={styles.markdownContainer}
+            selectable
+            selectionColor={theme.colors.primary}
+            selectionHandleColor={theme.colors.primary}
+            streamingAnimation={false}
+            textBreakStrategy="simple"
+          />
         </Animated.View>
       ) : null}
     </View>
@@ -930,8 +984,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
   },
   standaloneRow: {
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    alignSelf: 'stretch',
+    width: '100%',
     marginVertical: 4,
   },
   roleRow: {
@@ -986,9 +1040,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     flexShrink: 1,
   },
+  noticeIcon: { marginTop: 3 },
+  noticeCopy: { flex: 1, minWidth: 0, gap: 2 },
+  chevronOpen: { transform: [{ rotate: '180deg' }] },
   noticeRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 6,
     paddingVertical: 2,
   },

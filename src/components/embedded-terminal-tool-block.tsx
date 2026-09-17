@@ -264,10 +264,9 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 
 const styles = StyleSheet.create({
   container: {
-    // As wide as its content, never wider than the row: a one-line card does
-    // not stretch across the screen just because a diff card had to.
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    // A card is a row: its header lays out with flex and its diff rows pan,
+    // neither of which measures inside a shrink-to-fit box.
+    alignSelf: 'stretch',
     marginVertical: 2,
     paddingVertical: 7,
     paddingHorizontal: 9,
