@@ -110,14 +110,16 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
       gapWidth: 10,
       backgroundColor: quoteBackground,
     },
-    // Inline code reads in the body ink on a quiet chip: a file name or a
-    // command is content, not a link, and the link colour said otherwise.
+    // Inline code is the body ink in the monospace face and nothing more: no
+    // chip, no border. Models backtick file names, numbers and half their
+    // nouns, and a tinted box behind every one of them turned a paragraph
+    // into confetti.
     code: {
       fontFamily: 'monospace',
       fontSize: AGENT_TYPE.mono.size,
       color: text,
-      backgroundColor: codeBackground,
-      borderColor: border,
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
     },
     codeBlock: {
       color: text,

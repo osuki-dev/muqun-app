@@ -39,6 +39,12 @@ import { InlineDiffRows } from '@/components/diff-rows';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import {
+  readUploadImageSource,
+  uploadImageSource,
+  uploadNameFromPath,
+  type AssetImageSource,
+} from '@/lib/gateway-client';
 import { fadeIn, timing } from '@/lib/motion';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -67,6 +73,61 @@ function isImageAttachment(uri: string): boolean {
  * the message and the files are what came with it, which is the order the
  * composer stages them in and the order the TUI prints them.
  */
+/**
+ * One attached image. A data URI or a URL is shown as it is; a host path under
+ * the gateway's upload folder is fetched back from the gateway with the
+ * device's credentials (streamed by expo-image on a plain transport, decoded
+ * from authenticated bytes on an encrypted one). Anything that cannot load
+ * stays a quiet placeholder rather than an empty box.
+ */
+const AttachmentImage = memo(function AttachmentImage({
+  uri,
+  label,
+  onPreviewImage,
+}: {
+  uri: string;
+  label: string;
+  onPreviewImage: (uri: string) => void;
+}) {
+  const theme = useThemeTokens();
+  const uploadName =
+    uri.startsWith('data:') || /^https?:/.test(uri) ? null : uploadNameFromPath(uri);
+  const [source, setSource] = useState<AssetImageSource | null>(() =>
+    uploadName ? uploadImageSource(uploadName) : { uri, cacheKey: uri }
+  );
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!uploadName || source) return;
+    const controller = new AbortController();
+    readUploadImageSource(uploadName, { signal: controller.signal })
+      .then((resolved) => setSource(resolved))
+      .catch(() => setFailed(true));
+    return () => controller.abort();
+  }, [uploadName, source]);
+
+  if (failed || !source) {
+    return (
+      <View style={[styles.attachmentThumbnail, styles.attachmentPlaceholder]}>
+        <FileText size={16} color={theme.colors.textSubtle} />
+      </View>
+    );
+  }
+  return (
+    <PressableScale
+      accessibilityRole="imagebutton"
+      accessibilityLabel={label}
+      onPress={() => onPreviewImage(source.uri)}
+      style={styles.attachmentImageWrapper}>
+      <Image
+        source={source}
+        style={styles.attachmentThumbnail}
+        contentFit="cover"
+        onError={() => setFailed(true)}
+      />
+    </PressableScale>
+  );
+});
+
 const MessageAttachments = memo(function MessageAttachments({
   attachments,
   onPreviewImage,
@@ -83,14 +144,12 @@ const MessageAttachments = memo(function MessageAttachments({
       {attachments.map((att, attIdx) => {
         if (isImageAttachment(att)) {
           return (
-            <PressableScale
+            <AttachmentImage
               key={`${att}-${attIdx}`}
-              accessibilityRole="imagebutton"
-              accessibilityLabel={t`Open attachment`}
-              onPress={() => onPreviewImage(att)}
-              style={styles.attachmentImageWrapper}>
-              <Image source={{ uri: att }} style={styles.attachmentThumbnail} contentFit="cover" />
-            </PressableScale>
+              uri={att}
+              label={t`Open attachment`}
+              onPreviewImage={onPreviewImage}
+            />
           );
         }
         const fileName = att.split('/').filter(Boolean).pop() || t`Attachment`;
@@ -1006,6 +1065,10 @@ const styles = StyleSheet.create({
   },
   roleLabel: {
     fontSize: AGENT_TYPE.meta.size,
+  },
+  attachmentPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   roleStamp: {
     fontSize: AGENT_TYPE.micro.size,

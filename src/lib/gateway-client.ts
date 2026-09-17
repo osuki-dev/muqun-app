@@ -1134,6 +1134,54 @@ export function assetImageSource(asset: SessionAsset): AssetImageSource | null {
   };
 }
 
+/** The folder the gateway keeps uploaded attachments in, as it appears in a host path. */
+const UPLOADS_SEGMENT = '/muqun-gateway/uploads/';
+
+/**
+ * The name the gateway serves an uploaded attachment under, or null when the
+ * path is not one of ours. A timeline item carries the host path OpenCode
+ * received (`/home/…/muqun-gateway/uploads/<uuid>.webp`); the phone cannot
+ * open that, but `GET /api/uploads/<name>` streams the same bytes back.
+ */
+export function uploadNameFromPath(path: string): string | null {
+  const index = path.indexOf(UPLOADS_SEGMENT);
+  if (index < 0) return null;
+  const name = path.slice(index + UPLOADS_SEGMENT.length).split(/[/?#]/)[0] ?? '';
+  return name.length > 0 ? name : null;
+}
+
+export function uploadContentUrl(name: string): string {
+  return gatewayUrl(`/api/uploads/${encodeURIComponent(name)}`);
+}
+
+/** Like `assetImageSource`, for a file the reader attached themselves. */
+export function uploadImageSource(name: string): AssetImageSource | null {
+  if (currentTransport === GATEWAY_TRANSPORT) return null;
+  return { uri: uploadContentUrl(name), headers: gatewayAuthHeaders(), cacheKey: `upload:${name}` };
+}
+
+/** The encrypted-transport path: bytes are authenticated here and decoded from a data URI. */
+export async function readUploadImageSource(
+  name: string,
+  options: { signal?: AbortSignal } = {}
+): Promise<AssetImageSource> {
+  const direct = uploadImageSource(name);
+  if (direct) return direct;
+  const response = await encryptedGatewayFetch(
+    uploadContentUrl(name),
+    { headers: gatewayAuthHeaders(), signal: options.signal },
+    ASSET_CONTENT_TIMEOUT_MS
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
+  if (!mime.startsWith('image/')) throw new Error('Gateway did not return an image.');
+  const bytes = QuickCrypto.Buffer.from(await response.arrayBuffer());
+  return {
+    uri: `data:${mime};base64,${bytes.toString('base64')}`,
+    cacheKey: `upload:${name}:encrypted`,
+  };
+}
+
 /** Download and authenticate image bytes before handing a data URI to the decoder. */
 export async function readAssetImageSource(
   asset: SessionAsset,
