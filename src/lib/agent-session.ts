@@ -4,6 +4,19 @@ import { gatewayAuthHeaders, gatewayFetch, gatewayUrl, isGatewayConfigured } fro
 import { ServerSentEventParser } from './sse-stream';
 import type { FileMentionHit } from './file-mentions';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
+import {
+  buildAgentCacheKey,
+  CATALOG_TTL_MS,
+  dedupeInFlight,
+  getCachedAgentCatalogSync,
+  getCachedAgentProjectsSync,
+  getCachedEntry,
+  PROJECTS_TTL_MS,
+  setCachedEntry,
+  touchCacheEntryTimestamp,
+} from './agent-cache';
+
+export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheKey };
 
 export type AgentSessionStatus = 'idle' | 'running' | 'paused' | 'error' | 'terminated';
 
@@ -505,35 +518,63 @@ export async function replyAgentForm(
 
 export async function getAgentCatalog(
   sessionId?: string,
-  endpoint?: { url?: string; token?: string | null }
+  endpoint?: { url?: string; token?: string | null },
+  options?: { forceRefresh?: boolean }
 ): Promise<AgentCatalog> {
-  try {
-    const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
-    if (!base && !isGatewayConfigured()) return { agents: [], models: [], mcp: [] };
-    const url = base
-      ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog` : '/api/agent-catalog'}`
-      : sessionId
-        ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`)
-        : gatewayUrl('/api/agent-catalog');
-    const headers = endpoint?.url
-      ? {
-          ...activeLocaleHeaders(),
-          ...(endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {}),
-        }
-      : gatewayAuthHeaders();
-    const res = await gatewayFetch(url, {
-      method: 'GET',
-      headers,
-    });
-    if (!res.ok) {
-      return { agents: [], models: [], mcp: [] };
-    }
-    const json = (await res.json()) as { data?: AgentCatalog } | AgentCatalog;
-    return ('data' in json && json.data ? json.data : json) as AgentCatalog;
-  } catch (err) {
-    console.warn('Failed to get agent catalog:', err);
-    return { agents: [], models: [], mcp: [] };
+  const cacheKey = buildAgentCacheKey('catalog', endpoint?.url, sessionId);
+  const cached = getCachedEntry<AgentCatalog>(cacheKey);
+  const isFresh = cached && Date.now() - cached.timestamp < CATALOG_TTL_MS;
+
+  if (isFresh && !options?.forceRefresh) {
+    return cached.data;
   }
+
+  return dedupeInFlight(cacheKey, async () => {
+    try {
+      const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
+      if (!base && !isGatewayConfigured()) {
+        return cached?.data ?? { agents: [], models: [], mcp: [] };
+      }
+      const url = base
+        ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog` : '/api/agent-catalog'}`
+        : sessionId
+          ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`)
+          : gatewayUrl('/api/agent-catalog');
+      const headers: Record<string, string> = endpoint?.url
+        ? {
+            ...activeLocaleHeaders(),
+            ...(endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {}),
+          }
+        : gatewayAuthHeaders();
+
+      if (cached?.etag) {
+        headers['If-None-Match'] = cached.etag;
+      }
+
+      const res = await gatewayFetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (res.status === 304 && cached) {
+        touchCacheEntryTimestamp(cacheKey);
+        return cached.data;
+      }
+
+      if (!res.ok) {
+        return cached?.data ?? { agents: [], models: [], mcp: [] };
+      }
+
+      const etag = res.headers.get('etag') ?? undefined;
+      const json = (await res.json()) as { data?: AgentCatalog } | AgentCatalog;
+      const catalog = ('data' in json && json.data ? json.data : json) as AgentCatalog;
+      setCachedEntry(cacheKey, catalog, etag);
+      return catalog;
+    } catch (err) {
+      console.warn('Failed to get agent catalog:', err);
+      return cached?.data ?? { agents: [], models: [], mcp: [] };
+    }
+  });
 }
 
 export async function getAgentVcsDiff(sessionId: string, asid: string): Promise<FileDiffItem[]> {
@@ -596,32 +637,60 @@ export async function listAgentFiles(
 
 export async function getAgentProjects(
   sessionId?: string,
-  endpoint?: { url?: string; token?: string | null }
+  endpoint?: { url?: string; token?: string | null },
+  options?: { forceRefresh?: boolean }
 ): Promise<AgentProject[]> {
-  try {
-    const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
-    if (!base && !isGatewayConfigured()) return [];
-    const url = base
-      ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects` : '/api/agent-projects'}`
-      : sessionId
-        ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`)
-        : gatewayUrl('/api/agent-projects');
-    const headers = endpoint?.url
-      ? {
-          ...activeLocaleHeaders(),
-          ...(endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {}),
-        }
-      : gatewayAuthHeaders();
-    const res = await gatewayFetch(url, {
-      method: 'GET',
-      headers,
-    });
-    if (!res.ok) return [];
-    const json = (await res.json()) as { data?: AgentProject[] };
-    return json.data ?? [];
-  } catch {
-    return [];
+  const cacheKey = buildAgentCacheKey('projects', endpoint?.url, sessionId);
+  const cached = getCachedEntry<AgentProject[]>(cacheKey);
+  const isFresh = cached && Date.now() - cached.timestamp < PROJECTS_TTL_MS;
+
+  if (isFresh && !options?.forceRefresh) {
+    return cached.data;
   }
+
+  return dedupeInFlight(cacheKey, async () => {
+    try {
+      const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
+      if (!base && !isGatewayConfigured()) return cached?.data ?? [];
+      const url = base
+        ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects` : '/api/agent-projects'}`
+        : sessionId
+          ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`)
+          : gatewayUrl('/api/agent-projects');
+      const headers: Record<string, string> = endpoint?.url
+        ? {
+            ...activeLocaleHeaders(),
+            ...(endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {}),
+          }
+        : gatewayAuthHeaders();
+
+      if (cached?.etag) {
+        headers['If-None-Match'] = cached.etag;
+      }
+
+      const res = await gatewayFetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      if (res.status === 304 && cached) {
+        touchCacheEntryTimestamp(cacheKey);
+        return cached.data;
+      }
+
+      if (!res.ok) {
+        return cached?.data ?? [];
+      }
+
+      const etag = res.headers.get('etag') ?? undefined;
+      const json = (await res.json()) as { data?: AgentProject[] };
+      const projects = json.data ?? [];
+      setCachedEntry(cacheKey, projects, etag);
+      return projects;
+    } catch {
+      return cached?.data ?? [];
+    }
+  });
 }
 
 export async function getAgentDirectories(

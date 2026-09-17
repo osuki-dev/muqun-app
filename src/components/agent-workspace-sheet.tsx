@@ -13,8 +13,10 @@ import { SheetHandle } from '@/components/sheet-route-frame';
 import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import {
+  buildAgentCacheKey,
   getAgentDirectories,
   getAgentProjects,
+  getCachedAgentProjectsSync,
   type AgentProject,
   type DirectoryItem,
 } from '@/lib/agent-session';
@@ -42,7 +44,16 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
 
-  const [projects, setProjects] = useState<AgentProject[]>(initialProjects || []);
+  const [projects, setProjects] = useState<AgentProject[]>(() => {
+    if (initialProjects && initialProjects.length > 0) {
+      return initialProjects.filter((p) => p.id !== 'global' && p.canonical !== '/');
+    }
+    const cached = getCachedAgentProjectsSync(buildAgentCacheKey('projects', null, sessionId));
+    if (cached && cached.length > 0) {
+      return cached.filter((p) => p.id !== 'global' && p.canonical !== '/');
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<DirectoryItem[]>([]);

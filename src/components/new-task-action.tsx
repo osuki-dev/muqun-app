@@ -12,7 +12,13 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { effectiveGatewayBaseUrl } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { getAgentCatalog, getAgentProjects } from '@/lib/agent-session';
+import {
+  buildAgentCacheKey,
+  getAgentCatalog,
+  getAgentProjects,
+  getCachedAgentCatalogSync,
+  getCachedAgentProjectsSync,
+} from '@/lib/agent-session';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
 /** How long the "OpenCode ready" label stays visible before settling to the compact icon. */
@@ -37,12 +43,23 @@ export function NewTaskAction({
   const { selectRecord } = useGatewayRecord();
   const capabilities = useServerCapabilities((s) => s.byServer[serverId]);
 
-  const [isReady, setIsReady] = useState(false);
-  const [showAnnouncement, setShowAnnouncement] = useState(false);
-  const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const endpointUrl = server ? effectiveGatewayBaseUrl(server) : undefined;
   const endpointToken = server?.token;
+
+  const [isReady, setIsReady] = useState(() => {
+    if (!capabilities?.includes('agent_sessions')) return false;
+    const cacheKeyCat = buildAgentCacheKey('catalog', endpointUrl);
+    const cacheKeyProj = buildAgentCacheKey('projects', endpointUrl);
+    const cachedCat = getCachedAgentCatalogSync(cacheKeyCat);
+    const cachedProj = getCachedAgentProjectsSync(cacheKeyProj);
+    return Boolean(
+      (Array.isArray(cachedCat?.models) && cachedCat.models.length > 0) ||
+      (Array.isArray(cachedCat?.agents) && cachedCat.agents.length > 0) ||
+      (Array.isArray(cachedProj) && cachedProj.length > 0)
+    );
+  });
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!capabilities?.includes('agent_sessions')) {
@@ -51,8 +68,9 @@ export function NewTaskAction({
     }
 
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const checkReady = async () => {
+    const checkReady = async (isRetry = false) => {
       try {
         const endpoint = endpointUrl ? { url: endpointUrl, token: endpointToken } : undefined;
         const [catalog, projects] = await Promise.all([
@@ -77,20 +95,29 @@ export function NewTaskAction({
           }
         } else {
           setIsReady(false);
+          if (!isRetry && !cancelled) {
+            retryTimer = setTimeout(() => {
+              void checkReady(true);
+            }, 10000);
+          }
         }
       } catch {
-        if (!cancelled) setIsReady(false);
+        if (!cancelled) {
+          setIsReady(false);
+          if (!isRetry) {
+            retryTimer = setTimeout(() => {
+              void checkReady(true);
+            }, 10000);
+          }
+        }
       }
     };
 
     void checkReady();
-    const interval = setInterval(() => {
-      void checkReady();
-    }, 6000);
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      if (retryTimer) clearTimeout(retryTimer);
       if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
     };
   }, [capabilities, endpointUrl, endpointToken, serverId]);
