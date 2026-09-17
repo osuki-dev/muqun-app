@@ -17,6 +17,7 @@ import {
 import { Toggle } from '@/components/toggle';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 import {
   contextFillRatio,
   contextTokenTotal,
@@ -261,13 +262,21 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             ) : null}
             {onToggleYolo ? (
               <>
+                {/*
+                  "YOLO mode" is a joke about the consequence, and the row it
+                  named looked exactly like the one above it -- the same ink,
+                  the same weight, no hint that one of them hands the agent the
+                  keys. It says what it does, in a row tinted the colour this
+                  app uses for "be careful", with the consequence on the line
+                  under it rather than behind a confirmation nobody reads.
+                */}
                 <SheetSceneRow
-                  title={t`YOLO mode`}
-                  caption={
-                    yoloMode
-                      ? t`Auto-approving agent actions`
-                      : t`Approve every agent action automatically`
-                  }
+                  title={t`Auto-approve every action`}
+                  caption={t`The agent stops asking; irreversibly destructive commands stay blocked`}
+                  style={[
+                    styles.dangerRow,
+                    { backgroundColor: withAlpha(theme.colors.warning, yoloMode ? 0.16 : 0.08) },
+                  ]}
                   meta={
                     <Toggle
                       value={yoloMode}
@@ -279,14 +288,14 @@ export const AgentContextSheet = memo(function AgentContextSheet({
                           onToggleYolo();
                         }
                       }}
-                      accessibilityLabel={t`YOLO mode`}
+                      accessibilityLabel={t`Auto-approve every action`}
                     />
                   }
                 />
                 {confirmingYolo ? (
                   <View style={styles.confirm}>
                     <Text variant="caption" color={theme.colors.text} style={styles.confirmText}>
-                      {t`YOLO lets the agent act without asking each time. Irreversibly destructive commands are still blocked.`}
+                      {t`The agent will act without asking each time. Irreversibly destructive commands are still blocked.`}
                     </Text>
                     <View style={styles.confirmActions}>
                       <PressableScale
@@ -367,6 +376,12 @@ const styles = StyleSheet.create({
   capacityTrack: { height: 4, borderRadius: 2, overflow: 'hidden', alignSelf: 'stretch' },
   capacityFill: { height: '100%', borderRadius: 2 },
   metaWide: { maxWidth: 200 },
+  // Out to the sheet's own edge, like the selection rule: the tint is the
+  // sheet's warning about the row, not a card around it.
+  dangerRow: {
+    marginHorizontal: -SHEET_LADDER.gutter,
+    paddingHorizontal: SHEET_LADDER.gutter,
+  },
   confirm: { paddingBottom: SHEET_LADDER.snug, gap: SHEET_LADDER.gap },
   confirmText: { lineHeight: AGENT_TYPE.mono.lineHeight },
   confirmActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: SHEET_LADDER.gap },

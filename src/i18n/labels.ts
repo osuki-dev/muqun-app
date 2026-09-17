@@ -99,7 +99,7 @@ export const quickCommandName: Record<string, MessageDescriptor> = {
   'terminal-ctrl-z': msg`Suspend`,
   'terminal-escape': msg`Escape`,
   'terminal-clear-line': msg`Clear line`,
-  'agent-summary': msg`Summarize progress`,
+  'agent-summary': msg`Summarise progress`,
   'agent-tests': msg`Run relevant tests`,
   'agent-continue': msg`Continue task`,
   'agent-commit': msg`Commit`,
@@ -334,7 +334,7 @@ export function paneViewModeFallback(mode: PaneViewMode): PaneViewMode {
  */
 export const agentClientCommandDescription: Record<AgentClientCommandId, MessageDescriptor> = {
   new: msg({ message: 'Start a session with a clean context', context: 'agent slash command' }),
-  sessions: msg({ message: 'All sessions on this workspace', context: 'agent slash command' }),
+  sessions: msg({ message: 'Sessions in this workspace', context: 'agent slash command' }),
   models: msg({ message: 'Switch language model', context: 'agent slash command' }),
   agents: msg({ message: 'Switch agent mode', context: 'agent slash command' }),
   undo: msg({ message: 'Roll back to before the last message', context: 'agent slash command' }),

@@ -945,7 +945,7 @@ export function CustomThemeLibrary({
                     void perform(() =>
                       shareThemeColors(useThemeLibrary.getState().exportColors(candidate.id!))
                     )
-                  }>{t`Export colors`}</Button>
+                  }>{t`Export colours`}</Button>
               ) : null}
               {candidate.id ? (
                 <Button

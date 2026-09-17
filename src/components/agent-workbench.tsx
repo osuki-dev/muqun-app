@@ -1268,13 +1268,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const next = !yoloModeRef.current;
     setYoloMode(next);
     if (next) {
-      showToast({
-        variant: 'info',
-        title: t`YOLO mode on`,
-        message: t`Agent actions are auto-approved; dangerous commands stay blocked.`,
-      });
+      showScreenNotice(
+        t`Auto-approve is on`,
+        t`The agent stops asking; dangerous commands stay blocked.`
+      );
     }
-  }, [setYoloMode, showToast, t]);
+  }, [setYoloMode, showScreenNotice, t]);
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
@@ -1299,7 +1298,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (isOffline) {
       showToast({
         variant: 'danger',
-        title: t`OpenCode Service Offline`,
+        title: t`OpenCode service offline`,
         message: t`Please start OpenCode on the server: opencode serve --service`,
       });
       return;
@@ -2198,7 +2197,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               <>
                 <Bot size={44} color={theme.colors.textMuted} />
                 <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
-                  <Trans>OpenCode Service Offline</Trans>
+                  <Trans>OpenCode service offline</Trans>
                 </Text>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
                   <Trans>
@@ -2222,8 +2221,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   ) : (
                     <RefreshCw size={14} color={theme.colors.primary} />
                   )}
-                  <Text variant="label" color={theme.colors.primary} style={styles.emptyNewBtnText}>
-                    <Trans>Check Again</Trans>
+                  <Text
+                    variant="caption"
+                    weight="semibold"
+                    color={theme.colors.primary}
+                    style={styles.emptyNewBtnText}>
+                    <Trans>Check again</Trans>
                   </Text>
                 </PressableScale>
               </>
@@ -2245,11 +2248,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                       { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
                     ]}>
                     <PlusCircle size={14} color={theme.colors.primary} />
+                    {/* Sentence case, like every other button on this
+                        surface: `variant="label"` is the kit's 11pt all-caps
+                        instrument style, and a sign is not a button. */}
                     <Text
-                      variant="label"
+                      variant="caption"
+                      weight="semibold"
                       color={theme.colors.primary}
                       style={styles.emptyNewBtnText}>
-                      <Trans>New Session</Trans>
+                      <Trans>New session</Trans>
                     </Text>
                   </PressableScale>
                   <PressableScale
@@ -2263,8 +2270,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                       },
                     ]}>
                     <FolderGit2 size={14} color={theme.colors.text} />
-                    <Text variant="label" color={theme.colors.text} style={styles.emptyNewBtnText}>
-                      <Trans>Choose Project</Trans>
+                    <Text
+                      variant="caption"
+                      weight="semibold"
+                      color={theme.colors.text}
+                      style={styles.emptyNewBtnText}>
+                      <Trans>Choose workspace</Trans>
                     </Text>
                   </PressableScale>
                 </View>
@@ -2407,7 +2418,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           <PressableScale
             testID="agent-yolo-indicator"
             accessibilityRole="button"
-            accessibilityLabel={t`YOLO mode on — tap to turn off`}
+            accessibilityLabel={t`Auto-approve is on — tap to turn it off`}
             onPress={() => setYoloMode(false)}
             style={[
               styles.yoloBanner,
@@ -2417,15 +2428,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               },
             ]}>
             <ShieldAlert size={13} color={theme.colors.danger} />
-            <Text variant="caption" weight="bold" color={theme.colors.danger}>
-              YOLO
-            </Text>
             <Text
               variant="caption"
-              color={theme.colors.textMuted}
+              weight="bold"
+              color={theme.colors.danger}
               numberOfLines={1}
               style={styles.yoloBannerHint}>
-              <Trans>auto-approving actions</Trans>
+              <Trans>Auto-approving every action</Trans>
             </Text>
           </PressableScale>
         </Animated.View>

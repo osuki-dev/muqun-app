@@ -407,7 +407,7 @@ function claudeComposer() {
       },
       {
         name: '/context',
-        description: i18n._(msg`Visualize current context usage as a colored grid`),
+        description: i18n._(msg`Visualise current context usage as a coloured grid`),
         args_hint: null,
         source: 'builtin',
       },
