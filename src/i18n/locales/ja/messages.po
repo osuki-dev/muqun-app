@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "… open for the full change"
-msgstr "… 完全な変更を表示するには開く"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…以下省略"
@@ -85,6 +81,11 @@ msgstr "{0}（このデバイス）"
 msgid "{0} file(s) modified in workspace"
 msgstr "ワークスペース内で {0} 個のファイルが変更されました"
 
+#. placeholder {0}: capped.hidden
+#: src/components/agent-tool-card.tsx
+msgid "{0} more lines"
+msgstr "他 {0} 行"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -121,6 +122,10 @@ msgstr "{asked, plural, other {· # 回確認あり}}"
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · 送信先"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count} results"
+msgstr "{count} 件"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -362,7 +367,7 @@ msgid "Alt Up arrow"
 msgstr "Alt 上矢印"
 
 #: src/components/agent-permission-card.tsx
-msgid "Always"
+msgid "Always Allow"
 msgstr "常に許可"
 
 #: src/components/agent-composer.tsx
@@ -457,6 +462,26 @@ msgstr "タスクの割り当ては利用できません"
 msgid "Assistant started"
 msgstr "アシスタントを起動しました"
 
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "{0} 文字以上で入力してください"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "{0} 以上にしてください"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "{0} 文字以内で入力してください"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "{0} 以下にしてください"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -527,6 +552,14 @@ msgstr "SSH ホスト一覧に戻る"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to the on-screen keyboard"
 msgstr "ソフトウェアキーボードに戻る"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "バックグラウンド"
+
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "バックグラウンドタスク"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -1197,6 +1230,10 @@ msgstr "コピーできませんでした"
 #: src/components/agent-workbench.tsx
 msgid "Could not create session"
 msgstr "セッションを作成できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "バックグラウンドに移せませんでした"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -2595,9 +2632,10 @@ msgid "Open"
 msgstr "開く"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
 #: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2619,6 +2657,10 @@ msgstr "プロジェクトワークスペースとして開く"
 msgid "Open attachment"
 msgstr "添付ファイルを開く"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "バックグラウンドタスクを開く"
+
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
 msgstr "変更点を開く"
@@ -2626,6 +2668,10 @@ msgstr "変更点を開く"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "ファイル一覧を開く"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "画像を開く"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2661,6 +2707,10 @@ msgstr "ポート {recent} を開く"
 msgid "Open quick actions"
 msgstr "クイックアクションを開く"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "セッションを開く"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -2675,6 +2725,10 @@ msgstr "ターミナルを見る"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "ファイルツリーを開く"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "サブエージェントのセッションを開く"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3283,6 +3337,10 @@ msgstr "ターミナルコマンドを実行"
 msgid "Run command"
 msgstr "コマンドを実行"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "バックグラウンドで実行"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "関連するテストを実行"
@@ -3290,10 +3348,6 @@ msgstr "関連するテストを実行"
 #: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Running command in background…"
-msgstr "バックグラウンドでコマンドを実行中…"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -3664,6 +3718,10 @@ msgstr "新しい変更一覧を表示"
 #: src/components/diff-rows.tsx
 msgid "Show the rest of this diff"
 msgstr "この差分の残りを表示"
+
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "この出力の残りを表示"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -4048,9 +4106,18 @@ msgstr "そのアシスタントはこのターミナルにはもういません
 msgid "That code was refused. Hold still for a new one."
 msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "想定された形式と一致しません"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "そのファイルは Muqun のテーマではありません"
+
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "有効な {0} ではありません"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
@@ -4277,6 +4344,10 @@ msgstr "これは同梱された記録で、本物のサーバーではありま
 msgid "This link goes nowhere"
 msgstr "このリンクの先には何もありません"
 
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "この項目は必須です"
+
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "このパネルは git リポジトリの中で作業していないため、比較するものがありません"
@@ -4284,6 +4355,10 @@ msgstr "このパネルは git リポジトリの中で作業していないた�
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "この QR コードは正しくありません"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "この質問に答えるには新しいバージョンのアプリが必要です"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4379,6 +4454,10 @@ msgstr "使用済みトークン"
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "途中まで"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"

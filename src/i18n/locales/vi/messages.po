@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "… open for the full change"
-msgstr "… mở để xem toàn bộ thay đổi"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… đã cắt bớt"
@@ -85,6 +81,11 @@ msgstr "{0} (thiết bị này)"
 msgid "{0} file(s) modified in workspace"
 msgstr "Đã sửa đổi {0} tệp trong không gian làm việc"
 
+#. placeholder {0}: capped.hidden
+#: src/components/agent-tool-card.tsx
+msgid "{0} more lines"
+msgstr "{0} dòng nữa"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -121,6 +122,10 @@ msgstr "{asked, plural, other {· đã hỏi # lần}}"
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · đang gửi đến"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count} results"
+msgstr "{count} kết quả"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -362,8 +367,8 @@ msgid "Alt Up arrow"
 msgstr "Alt Mũi tên lên"
 
 #: src/components/agent-permission-card.tsx
-msgid "Always"
-msgstr "Luôn luôn"
+msgid "Always Allow"
+msgstr "Luôn cho phép"
 
 #: src/components/agent-composer.tsx
 msgid "Analyze project and initialize AGENTS.md"
@@ -457,6 +462,26 @@ msgstr "Không thể giao việc"
 msgid "Assistant started"
 msgstr "Đã khởi động trợ lý"
 
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "Ít nhất {0} ký tự"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "Ít nhất {0}"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "Nhiều nhất {0} ký tự"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "Nhiều nhất {0}"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -527,6 +552,14 @@ msgstr "Về danh sách host SSH"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to the on-screen keyboard"
 msgstr "Về bàn phím trên màn hình"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "Nền"
+
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "Tác vụ nền"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -1197,6 +1230,10 @@ msgstr "Không thể sao chép"
 #: src/components/agent-workbench.tsx
 msgid "Could not create session"
 msgstr "Không thể tạo phiên"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "Không thể tách ra"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -2595,9 +2632,10 @@ msgid "Open"
 msgstr "Mở"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
 #: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2619,6 +2657,10 @@ msgstr "Mở dưới dạng không gian làm việc của dự án"
 msgid "Open attachment"
 msgstr "Mở tệp đính kèm"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "Mở tác vụ nền"
+
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
 msgstr "Mở thay đổi"
@@ -2626,6 +2668,10 @@ msgstr "Mở thay đổi"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Mở danh sách tệp"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "Mở ảnh"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2661,6 +2707,10 @@ msgstr "Mở cổng {recent}"
 msgid "Open quick actions"
 msgstr "Mở thao tác nhanh"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "Mở phiên"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -2675,6 +2725,10 @@ msgstr "Mở terminal"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "Mở trình duyệt tệp"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "Mở phiên của tác nhân con"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3283,6 +3337,10 @@ msgstr "Chạy một lệnh terminal"
 msgid "Run command"
 msgstr "Chạy lệnh"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "Chạy nền"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "Chạy các kiểm thử liên quan"
@@ -3290,10 +3348,6 @@ msgstr "Chạy các kiểm thử liên quan"
 #: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Running command in background…"
-msgstr "Đang chạy lệnh trong nền…"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -3664,6 +3718,10 @@ msgstr "Hiện danh sách thay đổi mới hơn"
 #: src/components/diff-rows.tsx
 msgid "Show the rest of this diff"
 msgstr "Hiện phần còn lại của diff này"
+
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "Hiện phần còn lại của kết quả"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -4048,9 +4106,18 @@ msgstr "Trợ lý đó không còn trong terminal này. Hãy mở lại và th�
 msgid "That code was refused. Hold still for a new one."
 msgstr "Mã đó bị từ chối. Hãy giữ yên để lấy mã mới"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "Không khớp với định dạng mong đợi"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "Tệp đó không phải là giao diện Muqun"
+
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "Đây không phải {0} hợp lệ"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
@@ -4277,6 +4344,10 @@ msgstr "Đây là bản ghi đi kèm, không phải máy chủ thật"
 msgid "This link goes nowhere"
 msgstr "Liên kết này không dẫn đến đâu cả"
 
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "Mục này là bắt buộc"
+
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "Ngăn này không làm việc trong một kho git, nên không có gì để so sánh"
@@ -4284,6 +4355,10 @@ msgstr "Ngăn này không làm việc trong một kho git, nên không có gì �
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "Mã QR này không hợp lệ"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "Câu hỏi này cần phiên bản ứng dụng mới hơn để trả lời"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4379,6 +4454,10 @@ msgstr "mã token đã dùng"
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "Đã cắt bớt"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"

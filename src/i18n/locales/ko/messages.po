@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "… open for the full change"
-msgstr "… 전체 변경 사항을 보려면 열기"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…이후 생략"
@@ -85,6 +81,11 @@ msgstr "{0} (이 기기)"
 msgid "{0} file(s) modified in workspace"
 msgstr "작업 공간에서 {0}개 파일이 수정됨"
 
+#. placeholder {0}: capped.hidden
+#: src/components/agent-tool-card.tsx
+msgid "{0} more lines"
+msgstr "{0}줄 더"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -121,6 +122,10 @@ msgstr "{asked, plural, other {· #번 확인 요청}}"
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · 보내는 대상"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count} results"
+msgstr "{count}개 결과"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -362,7 +367,7 @@ msgid "Alt Up arrow"
 msgstr "Alt 위쪽 화살표"
 
 #: src/components/agent-permission-card.tsx
-msgid "Always"
+msgid "Always Allow"
 msgstr "항상 허용"
 
 #: src/components/agent-composer.tsx
@@ -457,6 +462,26 @@ msgstr "작업을 맡길 수 없습니다"
 msgid "Assistant started"
 msgstr "어시스턴트를 시작했습니다"
 
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "{0}자 이상이어야 합니다"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "{0} 이상이어야 합니다"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "{0}자 이하여야 합니다"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "{0} 이하여야 합니다"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -527,6 +552,14 @@ msgstr "SSH 호스트 목록으로"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to the on-screen keyboard"
 msgstr "화면 키보드로 돌아가기"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "백그라운드"
+
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "백그라운드 작업"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -1197,6 +1230,10 @@ msgstr "복사하지 못했습니다"
 #: src/components/agent-workbench.tsx
 msgid "Could not create session"
 msgstr "세션을 생성할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "분리하지 못했습니다"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -2595,9 +2632,10 @@ msgid "Open"
 msgstr "열기"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
 #: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2619,6 +2657,10 @@ msgstr "프로젝트 워크스페이스로 열기"
 msgid "Open attachment"
 msgstr "첨부 파일 열기"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "백그라운드 작업 열기"
+
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
 msgstr "변경 사항 열기"
@@ -2626,6 +2668,10 @@ msgstr "변경 사항 열기"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "파일 목록 열기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "이미지 열기"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2661,6 +2707,10 @@ msgstr "포트 {recent} 열기"
 msgid "Open quick actions"
 msgstr "빠른 동작 열기"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "세션 열기"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -2675,6 +2725,10 @@ msgstr "터미널 보기"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "파일 탐색기 열기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "서브에이전트 세션 열기"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3283,6 +3337,10 @@ msgstr "터미널 명령 실행"
 msgid "Run command"
 msgstr "명령 실행"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "백그라운드에서 실행"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "관련 테스트 실행"
@@ -3290,10 +3348,6 @@ msgstr "관련 테스트 실행"
 #: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Running command in background…"
-msgstr "백그라운드에서 명령 실행 중…"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -3664,6 +3718,10 @@ msgstr "최신 변경 목록 보기"
 #: src/components/diff-rows.tsx
 msgid "Show the rest of this diff"
 msgstr "이 diff의 나머지 보기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "이 출력의 나머지 보기"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -4048,9 +4106,18 @@ msgstr "그 어시스턴트는 이 터미널에 더 이상 없습니다. 다시 
 msgid "That code was refused. Hold still for a new one."
 msgstr "해당 코드가 거부되었습니다. 그대로 두면 새 코드를 읽습니다"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "예상한 형식과 맞지 않습니다"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "이 파일은 Muqun 테마가 아닙니다"
+
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "올바른 {0}이(가) 아닙니다"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
@@ -4277,6 +4344,10 @@ msgstr "이것은 번들된 기록이며 실제 서버가 아닙니다"
 msgid "This link goes nowhere"
 msgstr "이 링크는 아무 데도 연결되지 않습니다"
 
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "이 항목은 필수입니다"
+
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "이 패널은 git 저장소 안에서 작업하고 있지 않아 비교할 것이 없습니다"
@@ -4284,6 +4355,10 @@ msgstr "이 패널은 git 저장소 안에서 작업하고 있지 않아 비교�
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "이 QR 코드는 올바르지 않습니다"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "이 질문에 답하려면 더 새로운 앱이 필요합니다"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4379,6 +4454,10 @@ msgstr "사용된 토큰"
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "잘림"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"

@@ -24,7 +24,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { PressableScale } from '@/components/pressable-scale';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
-import { EmbeddedTerminalToolBlock } from '@/components/embedded-terminal-tool-block';
+import { AgentToolCard } from '@/components/agent-tool-card';
+import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { useRelativeTime } from '@/hooks/use-relative-time';
@@ -32,7 +33,15 @@ import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, timing } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
-import { formatModelName, type AgentPart, type TimelineItem } from '@/lib/agent-session';
+import {
+  formatModelName,
+  type AgentPart,
+  type AgentRunStatus,
+  type PermissionDecision,
+  type PermissionRequest,
+  type TimelineItem,
+  type ToolPart,
+} from '@/lib/agent-session';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
@@ -152,10 +161,51 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
   );
 });
 
-/** OpenCode's shell states, in the three a tool card draws. */
-function shellCardStatus(status: 'running' | 'exited' | 'timeout' | 'killed') {
-  if (status === 'running') return 'running' as const;
-  return status === 'exited' ? ('completed' as const) : ('failed' as const);
+/**
+ * What a tool card can do that a message block cannot decide for itself:
+ * detach a running shell, open the session a subagent started, open a file the
+ * tool returned.
+ *
+ * One object rather than six props, because it is passed straight through two
+ * components and every one of them is optional -- a transcript with no
+ * workbench behind it draws the same cards, minus the buttons.
+ */
+export interface AgentToolActions {
+  onOpenChildSession?: (asid: string) => void;
+  onRunInBackground?: (toolCallId: string) => void;
+  onOpenBackgroundTray?: () => void;
+  onPreviewImage?: (uri: string) => void;
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+  /** Live status per child session, from that session's own status events. */
+  childStatuses?: Readonly<Record<string, AgentRunStatus>>;
+  /**
+   * Requests still waiting for an answer.
+   *
+   * A permission names the call it came from (`source_tool_call_id`), so the
+   * card belongs under that card rather than in a footer several screens away
+   * from the thing it is about.
+   */
+  permissions?: readonly PermissionRequest[];
+  onPermissionDecision?: (permissionId: string, decision: PermissionDecision) => Promise<void>;
+}
+
+const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
+
+/** A detached shell, as the tool call it was before it was detached. */
+function shellAsToolPart(part: Extract<AgentPart, { type: 'shell' }>): ToolPart {
+  return {
+    type: 'tool',
+    id: part.shell_id,
+    name: 'shell',
+    input: { command: part.command },
+    output: part.output,
+    content: [],
+    metadata: part.exit === undefined ? {} : { exit: part.exit },
+    state:
+      part.status === 'running' ? 'running' : part.status === 'exited' ? 'completed' : 'failed',
+    background: true,
+    ...(part.truncated ? { truncated: true } : {}),
+  };
 }
 
 /**
@@ -370,6 +420,7 @@ function renderTimelinePart(
     showReasoning: boolean;
     markdownStyle: MarkdownStyle;
     prevItem?: TimelineItem;
+    actions: AgentToolActions;
   }
 ): ReactNode {
   const part = item.part;
@@ -379,27 +430,11 @@ function renderTimelinePart(
         <AgentReasoningBlock key={item.id} text={part.text} durationMs={part.duration_ms} />
       ) : null;
     case 'tool':
-      return (
-        <EmbeddedTerminalToolBlock
-          key={item.id}
-          toolName={part.name}
-          input={part.input}
-          output={part.output}
-          status={part.state}
-        />
-      );
+      return <ToolPartCard key={item.id} part={part} options={options} />;
     case 'shell':
       // A detached shell is a tool call that outlived its turn, and it reads
       // best as the card it was before it was detached.
-      return (
-        <EmbeddedTerminalToolBlock
-          key={item.id}
-          toolName="shell"
-          input={{ command: part.command }}
-          output={part.output}
-          status={shellCardStatus(part.status)}
-        />
-      );
+      return <ToolPartCard key={item.id} part={shellAsToolPart(part)} options={options} />;
     case 'diff':
       return <AgentDiffBlock key={item.id} file={part.file} diff={part.diff} />;
     case 'todo':
@@ -431,6 +466,63 @@ function renderTimelinePart(
   }
 }
 
+/**
+ * The tool card, with the one callback it needs bound to its own call id.
+ *
+ * A component rather than an inline arrow so the closure is created per card
+ * rather than per render of the whole message -- `AgentToolCard` is memoised
+ * and a new function on every stream tick would defeat that.
+ */
+const ToolPartCard = memo(function ToolPartCard({
+  part,
+  options,
+}: {
+  part: ToolPart;
+  options: { markdownStyle: MarkdownStyle; actions: AgentToolActions };
+}) {
+  const { actions } = options;
+  const runInBackground = actions.onRunInBackground;
+  const handleRunInBackground = useMemo(
+    () => (runInBackground ? () => runInBackground(part.id) : undefined),
+    [runInBackground, part.id]
+  );
+  const childStatus = part.child_session_id
+    ? actions.childStatuses?.[part.child_session_id]
+    : undefined;
+
+  const attachedPermission = actions.permissions?.find(
+    (request) => request.source_tool_call_id === part.id
+  );
+  const decide = actions.onPermissionDecision;
+  const handleDecision = useMemo(
+    () =>
+      decide && attachedPermission
+        ? (decision: PermissionDecision) => decide(attachedPermission.id, decision)
+        : undefined,
+    [decide, attachedPermission]
+  );
+
+  return (
+    <>
+      <AgentToolCard
+        part={part}
+        markdownStyle={options.markdownStyle}
+        {...(childStatus ? { childStatus } : {})}
+        {...(actions.onOpenChildSession ? { onOpenChildSession: actions.onOpenChildSession } : {})}
+        {...(handleRunInBackground ? { onRunInBackground: handleRunInBackground } : {})}
+        {...(actions.onOpenBackgroundTray
+          ? { onOpenBackgroundTray: actions.onOpenBackgroundTray }
+          : {})}
+        {...(actions.onPreviewImage ? { onPreviewImage: actions.onPreviewImage } : {})}
+        {...(actions.onOpenFile ? { onOpenFile: actions.onOpenFile } : {})}
+      />
+      {attachedPermission && handleDecision ? (
+        <AgentPermissionCard attached request={attachedPermission} onDecision={handleDecision} />
+      ) : null}
+    </>
+  );
+});
+
 const StatusPartRow = memo(function StatusPartRow({ text }: { text: string }) {
   const theme = useThemeTokens();
   return (
@@ -460,6 +552,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage,
   onEditQueued,
   onCancelQueued,
+  actions = NO_TOOL_ACTIONS,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
@@ -467,6 +560,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage: (uri: string) => void;
   onEditQueued: (itemId: string, text: string) => void;
   onCancelQueued: (itemId: string) => void;
+  actions?: AgentToolActions;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -560,6 +654,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
           showReasoning,
           markdownStyle,
           prevItem: index > 0 ? group.items[index - 1] : group.prevItem,
+          actions,
         })
       )}
 
@@ -581,10 +676,12 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   group,
   showReasoning,
   markdownStyle,
+  actions = NO_TOOL_ACTIONS,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
   markdownStyle: MarkdownStyle;
+  actions?: AgentToolActions;
 }) {
   const plate = useTranscriptPlate();
 
@@ -617,6 +714,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
           showReasoning,
           markdownStyle,
           prevItem: index > 0 ? visibleItems[index - 1] : group.prevItem,
+          actions,
         })
       )}
     </View>

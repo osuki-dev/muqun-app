@@ -47,9 +47,11 @@ import {
   getAgentCatalog,
   getAgentProjects,
   openAgentSessionStream,
+  backgroundAgentSession,
   sortTimeline,
   isBusyStatus,
   type AgentDomainEvent,
+  type AgentRunStatus,
   type AgentSessionInfo,
   type CompactionReason,
   type InboxItem,
@@ -64,6 +66,7 @@ import {
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { useAgentSessionState } from '@/stores/agent-session-state';
+import type { SessionAsset } from '@/lib/session-assets';
 import {
   EMPTY_TODOS,
   useAgentSheetBridge,
@@ -71,7 +74,13 @@ import {
   type AgentSheetSnapshot,
 } from '@/stores/agent-sheet-bridge';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
-import { AgentAssistantMessage, AgentUserMessage } from './agent-message-block';
+import { AssetViewer } from '@/components/asset-viewer';
+import { assetFromToolFile } from '@/lib/session-assets';
+import {
+  AgentAssistantMessage,
+  AgentUserMessage,
+  type AgentToolActions,
+} from './agent-message-block';
 import {
   buildTimelineGroupsCached,
   createTimelineGroupCache,
@@ -176,6 +185,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // Attachment image preview. The shared lightbox, not a second copy of it:
   // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
   const [previewImageUri, setPreviewImageUri] = useState<string | null>(null);
+  // A file a tool returned -- a PDF from `read`, say -- opened in the same
+  // viewer the artifacts list uses rather than in a second one.
+  const [openToolAsset, setOpenToolAsset] = useState<SessionAsset | null>(null);
 
   const [selectedModel, setSelectedModel] = useState<ModelRef | undefined>(undefined);
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>('build');
@@ -849,6 +861,90 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setTimeline((prev) => prev.filter((it) => it.id !== itemId));
   }, []);
 
+  /**
+   * Detach the foreground tools blocking the loop -- the TUI's `ctrl+b`.
+   *
+   * There is no per-call route: `POST …/background` detaches whatever is
+   * blocking the session, which for a card offering the button is the shell it
+   * is drawing. The card's own id is passed so a later engine that grows a
+   * per-call route needs no change here.
+   */
+  const handleRunInBackground = useCallback(
+    (_toolCallId: string) => {
+      if (!activeAsid) return;
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      backgroundAgentSession(activeAsid).catch((err) => {
+        console.warn('Failed to background tools:', err);
+        showToast({
+          variant: 'danger',
+          title: t`Could not detach`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+      });
+    },
+    [activeAsid, showToast, t]
+  );
+
+  const handleOpenToolFile = useCallback(
+    (file: { uri: string; mime?: string; name?: string }) => {
+      const asset = assetFromToolFile(file, sessionId);
+      if (asset) setOpenToolAsset(asset);
+    },
+    [sessionId]
+  );
+
+  /**
+   * The live status of every child session, keyed by its id.
+   *
+   * A subagent's card shows the child's own dot, not the tool's: the call that
+   * started it returns long before the child is finished, and `agent.status.changed`
+   * for the child arrives on the same list this is read from.
+   */
+  const childStatuses = useMemo(() => {
+    const statuses: Record<string, AgentRunStatus> = {};
+    for (const session of sessions) {
+      if (session.parent_id) statuses[session.asid] = session.status;
+    }
+    return statuses;
+  }, [sessions]);
+
+  const toolActions = useMemo<AgentToolActions>(
+    () => ({
+      onOpenChildSession: setActiveAsid,
+      onRunInBackground: handleRunInBackground,
+      onPreviewImage: setPreviewImageUri,
+      onOpenFile: handleOpenToolFile,
+      childStatuses,
+      permissions,
+      onPermissionDecision: handlePermissionDecision,
+    }),
+    [
+      handleRunInBackground,
+      handleOpenToolFile,
+      childStatuses,
+      permissions,
+      handlePermissionDecision,
+    ]
+  );
+
+  /**
+   * The requests no tool row on screen can carry.
+   *
+   * A permission names the call it came from, so it is drawn under that card.
+   * One that names nothing -- or names a call that has fallen out of the
+   * rendered window -- still has to be answerable, and the footer is where it
+   * lands.
+   */
+  const footerPermissions = useMemo(() => {
+    const toolIds = new Set<string>();
+    for (const item of timeline) {
+      if (item.part.type === 'tool') toolIds.add(item.part.id);
+    }
+    return permissions.filter(
+      (request) => !request.source_tool_call_id || !toolIds.has(request.source_tool_call_id)
+    );
+  }, [permissions, timeline]);
+
   const renderTimelineItem = useCallback(
     ({ item: group }: LegendListRenderItemProps<TimelineRenderGroup>) => {
       if (group.role === 'user') {
@@ -861,6 +957,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             onPreviewImage={setPreviewImageUri}
             onEditQueued={handleEditQueuedItem}
             onCancelQueued={handleCancelQueuedItem}
+            actions={toolActions}
           />
         );
       }
@@ -870,10 +967,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           group={group}
           showReasoning={showReasoning}
           markdownStyle={markdownStyle}
+          actions={toolActions}
         />
       );
     },
-    [showReasoning, markdownStyle, handleEditQueuedItem, handleCancelQueuedItem]
+    [showReasoning, markdownStyle, handleEditQueuedItem, handleCancelQueuedItem, toolActions]
   );
 
   const isRunning = isBusyStatus(sessionInfo?.status);
@@ -996,7 +1094,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [windowStart, handleLoadEarlier, theme.colors.border, theme.colors.textMuted, t]);
 
   const listFooter = useMemo(() => {
-    const hasFormsOrPerms = permissions.length > 0 || forms.length > 0;
+    const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
     if (!hasFormsOrPerms && !isRunning && !isOverloaded) return null;
     return (
       <View style={styles.footerContainer}>
@@ -1053,7 +1151,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             </PressableScale>
           </View>
         ) : null}
-        {permissions.map((p) => (
+        {footerPermissions.map((p) => (
           <AgentPermissionCard
             key={p.id}
             request={p}
@@ -1070,7 +1168,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       </View>
     );
   }, [
-    permissions,
+    footerPermissions,
     forms,
     isRunning,
     isOverloaded,
@@ -1481,6 +1579,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           initialIndex={0}
           onClose={() => setPreviewImageUri(null)}
         />
+      ) : null}
+
+      {/* A file a tool returned, in the artifacts viewer rather than a second
+          copy of it. */}
+      {openToolAsset ? (
+        <AssetViewer asset={openToolAsset} onClose={() => setOpenToolAsset(null)} />
       ) : null}
     </View>
   );

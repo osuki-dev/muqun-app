@@ -1,25 +1,73 @@
 import { memo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Trans } from '@lingui/react/macro';
-import { ShieldAlert, Check, ShieldCheck, XCircle } from 'lucide-react-native';
+import { useLingui } from '@lingui/react/macro';
+import { Check, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react-native';
+
 import { PressableScale } from '@/components/pressable-scale';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
-import type { PermissionRequest, PermissionDecision } from '@/lib/agent-session';
+import {
+  DEFAULT_PERMISSION_DECISIONS,
+  type PermissionDecision,
+  type PermissionOption,
+  type PermissionRequest,
+} from '@/lib/agent-session';
 
 export interface AgentPermissionCardProps {
   request: PermissionRequest;
   onDecision: (decision: PermissionDecision) => Promise<void>;
+  /** Attached under the tool row it belongs to, rather than in the footer. */
+  attached?: boolean;
 }
 
+const DECISION_ICON = {
+  allow: Check,
+  allow_always: ShieldCheck,
+  deny: XCircle,
+} as const;
+
+/**
+ * What the agent is asking to do, and the answers it offered.
+ *
+ * The three buttons used to be hard-coded. OpenCode sends `options[]` -- an
+ * index, a label and a decision each -- and a permission with a menu of its own
+ * lost it here. It also sends `save[]`: the glob patterns an "always" would
+ * whitelist project-wide, which is exactly the thing a reader should see before
+ * pressing it, and which was dropped too.
+ *
+ * An empty `options[]` is not a request with no answers; it is a payload that
+ * did not list the three every permission has, and those three are drawn from
+ * `DEFAULT_PERMISSION_DECISIONS` with wording from the macro rather than from
+ * the wire -- a label the gateway sent in English would otherwise be English in
+ * all eight languages.
+ */
 export const AgentPermissionCard = memo(function AgentPermissionCard({
   request,
   onDecision,
+  attached = false,
 }: AgentPermissionCardProps) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const [submitting, setSubmitting] = useState<PermissionDecision | null>(null);
+
+  // Not memoised: the fallback labels come from the macro, whose binding the
+  // React Compiler cannot follow into a `useMemo` -- and building three
+  // objects is cheaper than the hook that would have skipped it anyway.
+  const defaultLabels: Record<PermissionDecision, string> = {
+    allow: t`Allow Once`,
+    allow_always: t`Always Allow`,
+    deny: t`Reject`,
+  };
+  const options: readonly PermissionOption[] =
+    request.options.length > 0
+      ? request.options
+      : DEFAULT_PERMISSION_DECISIONS.map((decision, index) => ({
+          index,
+          label: defaultLabels[decision],
+          decision,
+        }));
 
   const handleDecision = async (decision: PermissionDecision) => {
     if (submitting) return;
@@ -31,31 +79,34 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
     }
   };
 
+  const tone = (decision: PermissionDecision) =>
+    decision === 'deny' ? theme.colors.danger : theme.colors.primary;
+
   return (
     <View
+      testID={`agent-permission-${request.id}`}
       style={[
         styles.container,
+        attached ? styles.attached : null,
         {
           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           borderColor: theme.colors.warning,
         },
       ]}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={[styles.iconBox, { backgroundColor: withAlpha(theme.colors.warning, 0.13) }]}>
           <ShieldAlert size={16} color={theme.colors.warning} />
         </View>
         <View style={styles.headerText}>
           <Text variant="bodySmall" color={theme.colors.text} style={styles.title}>
-            <Trans>Permission Required</Trans>
+            {t`Permission Required`}
           </Text>
           <Text variant="caption" color={theme.colors.textMuted} style={styles.action}>
-            {request.action}
+            {request.tool ? `${request.action} · ${request.tool}` : request.action}
           </Text>
         </View>
       </View>
 
-      {/* Description / Resources */}
       <View style={[styles.body, { backgroundColor: withAlpha(theme.colors.surface, 0.6) }]}>
         <Text variant="caption" color={theme.colors.text} style={styles.prompt}>
           {request.prompt}
@@ -72,71 +123,65 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
             ))}
           </View>
         ) : null}
+        {/* The engine's own note about why it is asking. */}
+        {request.message ? (
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.message}>
+            {request.message}
+          </Text>
+        ) : null}
       </View>
 
-      {/* Decision Buttons */}
       <View style={styles.actions}>
-        <PressableScale
-          disabled={!!submitting}
-          onPress={() => handleDecision('allow')}
-          style={[styles.btn, styles.allowOnceBtn, { backgroundColor: theme.colors.primary }]}>
-          {submitting === 'allow' ? (
-            <ActivityIndicator size="small" color={theme.colors.onPrimary} />
-          ) : (
-            <>
-              <Check size={14} color={theme.colors.onPrimary} />
-              <Text variant="caption" color={theme.colors.onPrimary} style={styles.btnText}>
-                <Trans>Allow Once</Trans>
-              </Text>
-            </>
-          )}
-        </PressableScale>
-
-        <PressableScale
-          disabled={!!submitting}
-          onPress={() => handleDecision('allow_always')}
-          style={[
-            styles.btn,
-            styles.allowAlwaysBtn,
-            {
-              backgroundColor: withAlpha(theme.colors.primary, 0.09),
-              borderColor: theme.colors.primary,
-            },
-          ]}>
-          {submitting === 'allow_always' ? (
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-          ) : (
-            <>
-              <ShieldCheck size={14} color={theme.colors.primary} />
-              <Text variant="caption" color={theme.colors.primary} style={styles.btnText}>
-                <Trans>Always</Trans>
-              </Text>
-            </>
-          )}
-        </PressableScale>
-
-        <PressableScale
-          disabled={!!submitting}
-          onPress={() => handleDecision('deny')}
-          style={[
-            styles.btn,
-            styles.denyBtn,
-            {
-              backgroundColor: withAlpha(theme.colors.danger, 0.08),
-              borderColor: theme.colors.danger,
-            },
-          ]}>
-          {submitting === 'deny' ? (
-            <ActivityIndicator size="small" color={theme.colors.danger} />
-          ) : (
-            <>
-              <XCircle size={14} color={theme.colors.danger} />
-              <Text variant="caption" color={theme.colors.danger} style={styles.btnText}>
-                <Trans>Reject</Trans>
-              </Text>
-            </>
-          )}
-        </PressableScale>
+        {options.map((option) => {
+          const Icon = DECISION_ICON[option.decision];
+          const color = tone(option.decision);
+          const primary = option.decision === 'allow';
+          return (
+            <View key={`${option.index}:${option.label}`} style={styles.optionColumn}>
+              <PressableScale
+                testID={`agent-permission-option-${option.decision}`}
+                disabled={submitting !== null}
+                accessibilityRole="button"
+                accessibilityLabel={option.label}
+                onPress={() => handleDecision(option.decision)}
+                style={[
+                  styles.btn,
+                  primary
+                    ? { backgroundColor: theme.colors.primary }
+                    : { backgroundColor: withAlpha(color, 0.09), borderColor: color },
+                ]}>
+                {submitting === option.decision ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={primary ? theme.colors.onPrimary : color}
+                  />
+                ) : (
+                  <>
+                    <Icon size={14} color={primary ? theme.colors.onPrimary : color} />
+                    <Text
+                      variant="caption"
+                      numberOfLines={1}
+                      color={primary ? theme.colors.onPrimary : color}
+                      style={styles.btnText}>
+                      {option.label}
+                    </Text>
+                  </>
+                )}
+              </PressableScale>
+              {/* What an "always" actually whitelists, said before it is
+                  pressed rather than discovered afterwards. */}
+              {option.decision === 'allow_always' && request.save.length > 0 ? (
+                <Text
+                  variant="caption"
+                  numberOfLines={2}
+                  color={theme.colors.textSubtle}
+                  style={styles.saveText}>
+                  {request.save.join('  ')}
+                </Text>
+              ) : null}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -145,10 +190,14 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
 const styles = StyleSheet.create({
   container: {
     borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1.5,
     overflow: 'hidden',
     marginVertical: 6,
     padding: 10,
+  },
+  attached: {
+    marginLeft: 12,
   },
   header: {
     flexDirection: 'row',
@@ -160,11 +209,13 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 6,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerText: {
     flex: 1,
+    minWidth: 0,
   },
   title: {
     fontWeight: '700',
@@ -177,11 +228,16 @@ const styles = StyleSheet.create({
   body: {
     padding: 8,
     borderRadius: 6,
+    borderCurve: 'continuous',
     marginBottom: 10,
   },
   prompt: {
     fontSize: 12,
     lineHeight: 16,
+  },
+  message: {
+    fontSize: 11,
+    marginTop: 4,
   },
   resourcesBox: {
     marginTop: 4,
@@ -193,26 +249,33 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
   },
-  btn: {
+  optionColumn: {
     flex: 1,
+    gap: 3,
+  },
+  btn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 7,
     paddingHorizontal: 8,
     borderRadius: 6,
+    borderCurve: 'continuous',
     gap: 4,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'transparent',
   },
-  allowOnceBtn: {},
-  allowAlwaysBtn: {},
-  denyBtn: {},
   btnText: {
     fontWeight: '600',
     fontSize: 11.5,
+    flexShrink: 1,
+  },
+  saveText: {
+    fontFamily: 'monospace',
+    fontSize: 9.5,
+    textAlign: 'center',
   },
 });

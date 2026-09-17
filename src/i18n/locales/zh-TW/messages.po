@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "… open for the full change"
-msgstr "… 展開查看完整變更"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "…已截斷"
@@ -85,6 +81,11 @@ msgstr "{0}（這台裝置）"
 msgid "{0} file(s) modified in workspace"
 msgstr "工作區修改了 {0} 個檔案"
 
+#. placeholder {0}: capped.hidden
+#: src/components/agent-tool-card.tsx
+msgid "{0} more lines"
+msgstr "還有 {0} 行"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -121,6 +122,10 @@ msgstr "{asked, plural, other {· 詢問 # 次}}"
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName}·傳送給"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count} results"
+msgstr "{count} 個結果"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -362,8 +367,8 @@ msgid "Alt Up arrow"
 msgstr "Alt 上箭頭"
 
 #: src/components/agent-permission-card.tsx
-msgid "Always"
-msgstr "永遠允許"
+msgid "Always Allow"
+msgstr "一律允許"
 
 #: src/components/agent-composer.tsx
 msgid "Analyze project and initialize AGENTS.md"
@@ -457,6 +462,26 @@ msgstr "無法交給其他助手"
 msgid "Assistant started"
 msgstr "助理已啟動"
 
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "至少需要 {0} 個字元"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "不能小於 {0}"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "最多 {0} 個字元"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "不能大於 {0}"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -527,6 +552,14 @@ msgstr "返回 SSH 主機"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to the on-screen keyboard"
 msgstr "回到螢幕鍵盤"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "背景"
+
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "背景工作"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -1197,6 +1230,10 @@ msgstr "無法複製"
 #: src/components/agent-workbench.tsx
 msgid "Could not create session"
 msgstr "無法建立會話"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "無法轉入背景"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -2595,9 +2632,10 @@ msgid "Open"
 msgstr "開啟"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
 #: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2619,6 +2657,10 @@ msgstr "開啟為專案工作區"
 msgid "Open attachment"
 msgstr "開啟附件"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "開啟背景工作"
+
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
 msgstr "開啟變更"
@@ -2626,6 +2668,10 @@ msgstr "開啟變更"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "開啟檔案"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "開啟圖片"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2661,6 +2707,10 @@ msgstr "開啟連接埠 {recent}"
 msgid "Open quick actions"
 msgstr "開啟快速動作"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "開啟工作階段"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -2675,6 +2725,10 @@ msgstr "查看終端"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "開啟檔案瀏覽器"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "開啟子智慧體的工作階段"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3283,6 +3337,10 @@ msgstr "執行終端機指令"
 msgid "Run command"
 msgstr "執行指令"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "轉入背景執行"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "執行相關測試"
@@ -3290,10 +3348,6 @@ msgstr "執行相關測試"
 #: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的電腦上執行 Gateway，然後掃描它印出的 QR code。配對資料只留在這台裝置上"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Running command in background…"
-msgstr "正在背景執行命令…"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -3664,6 +3718,10 @@ msgstr "顯示最新的變更清單"
 #: src/components/diff-rows.tsx
 msgid "Show the rest of this diff"
 msgstr "顯示此差異的其餘部分"
+
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "顯示其餘輸出"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -4048,9 +4106,18 @@ msgstr "那個助理已經不在這個終端機裡了。重新開啟後再試"
 msgid "That code was refused. Hold still for a new one."
 msgstr "這組代碼被拒絕了，請保持穩定以讀取新的代碼"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "與預期格式不符"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "這個檔案不是 Muqun 主題"
+
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "不是有效的 {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
@@ -4277,6 +4344,10 @@ msgstr "這是內建的紀錄，不是真正的伺服器"
 msgid "This link goes nowhere"
 msgstr "這個連結沒有指向任何地方"
 
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "此項為必填"
+
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "這個面板不是在 git 儲存庫中工作，因此沒有可比較的內容"
@@ -4284,6 +4355,10 @@ msgstr "這個面板不是在 git 儲存庫中工作，因此沒有可比較的�
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "這個 QR code 無效"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "回答這個問題需要更新版本的應用程式"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4379,6 +4454,10 @@ msgstr "已用 token"
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "已截斷"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"

@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "… open for the full change"
-msgstr "… เปิดเพื่อดูการเปลี่ยนแปลงทั้งหมด"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… ตัดข้อความบางส่วนแล้ว"
@@ -85,6 +81,11 @@ msgstr "{0} (อุปกรณ์นี้)"
 msgid "{0} file(s) modified in workspace"
 msgstr "แก้ไข {0} ไฟล์ในพื้นที่ทำงาน"
 
+#. placeholder {0}: capped.hidden
+#: src/components/agent-tool-card.tsx
+msgid "{0} more lines"
+msgstr "อีก {0} บรรทัด"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -121,6 +122,10 @@ msgstr "{asked, plural, other {· ถามแล้ว # ครั้ง}}"
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · กำลังส่งไปยัง"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count} results"
+msgstr "{count} รายการ"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -362,7 +367,7 @@ msgid "Alt Up arrow"
 msgstr "Alt ลูกศรขึ้น"
 
 #: src/components/agent-permission-card.tsx
-msgid "Always"
+msgid "Always Allow"
 msgstr "อนุญาตเสมอ"
 
 #: src/components/agent-composer.tsx
@@ -457,6 +462,26 @@ msgstr "ยังไม่สามารถมอบหมายงานได
 msgid "Assistant started"
 msgstr "เริ่มผู้ช่วยแล้ว"
 
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "อย่างน้อย {0} ตัวอักษร"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "อย่างน้อย {0}"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "ไม่เกิน {0} ตัวอักษร"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "ไม่เกิน {0}"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -527,6 +552,14 @@ msgstr "กลับไปยังโฮสต์ SSH"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to the on-screen keyboard"
 msgstr "กลับไปยังแป้นพิมพ์บนหน้าจอ"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "เบื้องหลัง"
+
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "งานเบื้องหลัง"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -1197,6 +1230,10 @@ msgstr "คัดลอกไม่ได้"
 #: src/components/agent-workbench.tsx
 msgid "Could not create session"
 msgstr "ไม่สามารถสร้างเซสชันได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "ย้ายไปเบื้องหลังไม่สำเร็จ"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -2595,9 +2632,10 @@ msgid "Open"
 msgstr "เปิด"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
 #: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2619,6 +2657,10 @@ msgstr "เปิดเป็นพื้นที่ทำงานของโ
 msgid "Open attachment"
 msgstr "เปิดไฟล์แนบ"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "เปิดงานเบื้องหลัง"
+
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
 msgstr "เปิดการเปลี่ยนแปลง"
@@ -2626,6 +2668,10 @@ msgstr "เปิดการเปลี่ยนแปลง"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "เปิดไฟล์"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "เปิดรูปภาพ"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2661,6 +2707,10 @@ msgstr "เปิดพอร์ต {recent}"
 msgid "Open quick actions"
 msgstr "เปิดการทำงานด่วน"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "เปิดเซสชัน"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -2675,6 +2725,10 @@ msgstr "เปิดเทอร์มินัล"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "เปิดตัวสำรวจไฟล์"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "เปิดเซสชันของซับเอเจนต์"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3283,6 +3337,10 @@ msgstr "เรียกใช้คำสั่งเทอร์มินัล
 msgid "Run command"
 msgstr "เรียกใช้คำสั่ง"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "รันเบื้องหลัง"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "เรียกใช้การทดสอบที่เกี่ยวข้อง"
@@ -3290,10 +3348,6 @@ msgstr "เรียกใช้การทดสอบที่เกี่ย
 #: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Running command in background…"
-msgstr "กำลังเรียกใช้คำสั่งในเบื้องหลัง…"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -3664,6 +3718,10 @@ msgstr "แสดงรายการการเปลี่ยนแปลง
 #: src/components/diff-rows.tsx
 msgid "Show the rest of this diff"
 msgstr "แสดงส่วนที่เหลือของ diff นี้"
+
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "แสดงผลลัพธ์ส่วนที่เหลือ"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -4048,9 +4106,18 @@ msgstr "ผู้ช่วยนั้นไม่อยู่ในเทอร
 msgid "That code was refused. Hold still for a new one."
 msgstr "รหัสนั้นถูกปฏิเสธ ถือให้นิ่งเพื่อรับรหัสใหม่"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "ไม่ตรงกับรูปแบบที่กำหนด"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "ไฟล์นั้นไม่ใช่ธีม Muqun"
+
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "ไม่ใช่ {0} ที่ถูกต้อง"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
@@ -4277,6 +4344,10 @@ msgstr "นี่คือบันทึกการสนทนาที่ม
 msgid "This link goes nowhere"
 msgstr "ลิงก์นี้ไม่มีปลายทาง"
 
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "ต้องกรอกช่องนี้"
+
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "พาเนลนี้ไม่ได้ทำงานอยู่ในที่เก็บโค้ด Git จึงไม่มีอะไรให้เปรียบเทียบ"
@@ -4284,6 +4355,10 @@ msgstr "พาเนลนี้ไม่ได้ทำงานอยู่ใ
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "QR นี้ไม่ถูกต้อง"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "คำถามนี้ต้องใช้แอปเวอร์ชันใหม่กว่าจึงจะตอบได้"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4379,6 +4454,10 @@ msgstr "โทเค็นที่ใช้ไป"
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "มีการเปลี่ยนแปลงมากเกินกว่าจะแสดงทั้งหมด นี่เป็นเพียงส่วนแรก"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "ตัดบางส่วน"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"

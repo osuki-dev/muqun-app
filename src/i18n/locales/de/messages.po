@@ -13,10 +13,6 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "… open for the full change"
-msgstr "… zum Ansehen der vollständigen Änderung öffnen"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "… truncated"
 msgstr "… gekürzt"
@@ -85,6 +81,11 @@ msgstr "{0} (dieses Gerät)"
 msgid "{0} file(s) modified in workspace"
 msgstr "{0} Datei(en) im Arbeitsbereich geändert"
 
+#. placeholder {0}: capped.hidden
+#: src/components/agent-tool-card.tsx
+msgid "{0} more lines"
+msgstr "{0} weitere Zeilen"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
@@ -121,6 +122,10 @@ msgstr "{asked, plural, one {· einmal nachgefragt} other {· #-mal nachgefragt}
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · senden an"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count} results"
+msgstr "{count} Treffer"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -362,8 +367,8 @@ msgid "Alt Up arrow"
 msgstr "Alt Pfeil oben"
 
 #: src/components/agent-permission-card.tsx
-msgid "Always"
-msgstr "Immer"
+msgid "Always Allow"
+msgstr "Immer erlauben"
 
 #: src/components/agent-composer.tsx
 msgid "Analyze project and initialize AGENTS.md"
@@ -457,6 +462,26 @@ msgstr "Aufgaben zuweisen ist nicht verfügbar"
 msgid "Assistant started"
 msgstr "Assistent gestartet"
 
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "Mindestens {0} Zeichen"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "Mindestens {0}"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "Höchstens {0} Zeichen"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "Höchstens {0}"
+
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
@@ -527,6 +552,14 @@ msgstr "Zurück zu den SSH-Hosts"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to the on-screen keyboard"
 msgstr "Zurück zur Bildschirmtastatur"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "Hintergrund"
+
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "Hintergrundaufgaben"
 
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
@@ -1197,6 +1230,10 @@ msgstr "Konnte nicht kopiert werden"
 #: src/components/agent-workbench.tsx
 msgid "Could not create session"
 msgstr "Sitzung konnte nicht erstellt werden"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "Konnte nicht losgelöst werden"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -2595,9 +2632,10 @@ msgid "Open"
 msgstr "Öffnen"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
 #: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2619,6 +2657,10 @@ msgstr "Als Projekt-Arbeitsbereich öffnen"
 msgid "Open attachment"
 msgstr "Anhang öffnen"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "Hintergrundaufgaben öffnen"
+
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
 msgstr "Änderungen öffnen"
@@ -2626,6 +2668,10 @@ msgstr "Änderungen öffnen"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "Dateiliste öffnen"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "Bild öffnen"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2661,6 +2707,10 @@ msgstr "Port {recent} öffnen"
 msgid "Open quick actions"
 msgstr "Schnellaktionen öffnen"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "Sitzung öffnen"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -2675,6 +2725,10 @@ msgstr "Terminal öffnen"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "Dateibaum öffnen"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "Sitzung des Subagenten öffnen"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3283,6 +3337,10 @@ msgstr "Terminal-Befehl ausführen"
 msgid "Run command"
 msgstr "Befehl ausführen"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "Im Hintergrund ausführen"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "Relevante Tests ausführen"
@@ -3290,10 +3348,6 @@ msgstr "Relevante Tests ausführen"
 #: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Starte das Gateway auf deinem Rechner und scanne den QR-Code, den es ausgibt. Die Kopplung bleibt auf diesem Gerät"
-
-#: src/components/embedded-terminal-tool-block.tsx
-msgid "Running command in background…"
-msgstr "Befehl wird im Hintergrund ausgeführt…"
 
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -3664,6 +3718,10 @@ msgstr "Die neuere Liste der Änderungen anzeigen"
 #: src/components/diff-rows.tsx
 msgid "Show the rest of this diff"
 msgstr "Rest dieses Diffs anzeigen"
+
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "Restliche Ausgabe anzeigen"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -4048,9 +4106,18 @@ msgstr "Dieser Assistent ist nicht mehr in diesem Terminal. Öffne es erneut und
 msgid "That code was refused. Hold still for a new one."
 msgstr "Der Code wurde abgelehnt. Halte still für einen neuen"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "Das entspricht nicht dem erwarteten Format"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "Diese Datei ist kein Muqun-Theme"
+
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "Das ist kein gültiges {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
@@ -4277,6 +4344,10 @@ msgstr "Dies ist eine mitgelieferte Aufzeichnung, kein echter Server"
 msgid "This link goes nowhere"
 msgstr "Dieser Link führt ins Leere"
 
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "Dieses Feld ist erforderlich"
+
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "Dieses Panel arbeitet nicht in einem Git-Repository, es gibt also nichts zu vergleichen"
@@ -4284,6 +4355,10 @@ msgstr "Dieses Panel arbeitet nicht in einem Git-Repository, es gibt also nichts
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "Dieser QR-Code ist ungültig"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "Diese Frage lässt sich erst mit einer neueren App beantworten"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4379,6 +4454,10 @@ msgstr "Token verwendet"
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Zu viele Änderungen für eine Liste. Dies ist der Anfang, nicht alles"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "Gekürzt"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
