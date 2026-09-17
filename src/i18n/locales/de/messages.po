@@ -194,12 +194,12 @@ msgid "About"
 msgstr "Über"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "Auf dieses Terminal wirken oder ihm einen Befehl senden"
+msgid "Act on this terminal, or send it a command"
+msgstr "Auf dieses Terminal wirken oder ihm einen Befehl schicken"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "Auf dieses Terminal wirken oder seinem Agenten einen Prompt senden"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "Auf dieses Terminal wirken oder seinem Agenten etwas auftragen"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -236,8 +236,8 @@ msgid "Added"
 msgstr "Hinzugefügt"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
-msgstr "AGENT"
+msgid "Agent"
+msgstr "Agent"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -250,8 +250,8 @@ msgid "Agent collaboration"
 msgstr "Agenten-Zusammenarbeit"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
-msgstr "AGENT-BEFEHLE"
+msgid "Agent commands"
+msgstr "Agentenbefehle"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -355,10 +355,6 @@ msgstr "Antwort"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Antwort: {0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "Alles, was {label} auf einem Port bereitstellt – ein Dev-Server, eine Vorschau, ein Dashboard"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -739,7 +735,6 @@ msgid "Clearing…"
 msgstr "Wird geleert…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Schließen"
@@ -757,7 +752,6 @@ msgid "Close files"
 msgstr "Dateiliste schließen"
 
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Neue Aufgabe schließen"
 
@@ -770,10 +764,6 @@ msgstr "Kopplung schließen"
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "Vorschau schließen"
-
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "Schnellaktionen schließen"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1340,10 +1330,6 @@ msgstr "Aktuelles Design"
 msgid "Custom"
 msgstr "Benutzerdefiniert"
 
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "Passe Terminal-Befehle und Tastenkombinationen an"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
@@ -1424,8 +1410,8 @@ msgid "Directories"
 msgstr "Verzeichnisse"
 
 #: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
-msgstr "VERZEICHNIS"
+msgid "Directory"
+msgstr "Verzeichnis"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1668,8 +1654,8 @@ msgid "Fingerprint"
 msgstr "Fingerabdruck"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "ERSTER PROMPT"
+msgid "First prompt"
+msgstr "Erster Auftrag"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -2313,8 +2299,8 @@ msgid "New Session"
 msgstr "Neue Sitzung"
 
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "NEUER SHORTCUT"
+msgid "New shortcut"
+msgstr "Neue Verknüpfung"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2819,10 +2805,6 @@ msgstr "Bitte starten Sie OpenCode auf dem Server: opencode serve --service"
 msgid "Port"
 msgstr "Port"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
-msgstr "PORT"
-
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -3279,12 +3261,12 @@ msgid "Saved"
 msgstr "Gespeichert"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
-msgstr "GESPEICHERTE BEFEHLE"
+msgid "Saved commands"
+msgstr "Gespeicherte Befehle"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "GESPEICHERTE PROMPTS"
+msgid "Saved prompts"
+msgstr "Gespeicherte Aufträge"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3717,8 +3699,11 @@ msgstr "Neuen {0} starten"
 msgid "Start a new session with empty context"
 msgstr "Startet eine neue Session mit leerem Kontext"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "Einen Agenten starten und ihm das Erste auftragen"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "Starte einen Agent und gib ihm das Erste zu tun"
 
@@ -3942,8 +3927,12 @@ msgid "Terminal colours follow the theme."
 msgstr "Die Terminalfarben folgen dem Theme"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
-msgstr "TERMINAL-BEFEHLE"
+msgid "Terminal commands"
+msgstr "Terminalbefehle"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "Terminalbefehle und Tastenkombinationen"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"

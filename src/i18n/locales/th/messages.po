@@ -194,12 +194,12 @@ msgid "About"
 msgstr "เกี่ยวกับ"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "จัดการเทอร์มินัลนี้หรือส่งคำสั่งไปยังเทอร์มินัล"
+msgid "Act on this terminal, or send it a command"
+msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้มัน"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "จัดการเทอร์มินัลนี้หรือส่งพรอมต์ให้เอเจนต์"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้เอเจนต์ของมัน"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -236,7 +236,7 @@ msgid "Added"
 msgstr "เพิ่มแล้ว"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
+msgid "Agent"
 msgstr "เอเจนต์"
 
 #: src/components/agent-workbench.tsx
@@ -250,8 +250,8 @@ msgid "Agent collaboration"
 msgstr "การทำงานร่วมกันของเอเจนต์"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
-msgstr "คำสั่งเอเจนต์"
+msgid "Agent commands"
+msgstr "คำสั่งของเอเจนต์"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -355,10 +355,6 @@ msgstr "คำตอบ"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "คำตอบ: {0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "สิ่งใดก็ตามที่ {label} ให้บริการผ่านพอร์ต เช่น เซิร์ฟเวอร์พัฒนา ตัวอย่าง หรือแดชบอร์ด"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -739,7 +735,6 @@ msgid "Clearing…"
 msgstr "กำลังล้าง…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "ปิด"
@@ -757,7 +752,6 @@ msgid "Close files"
 msgstr "ปิดรายการไฟล์"
 
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "ปิดงานใหม่"
 
@@ -770,10 +764,6 @@ msgstr "ปิดการจับคู่"
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "ปิดตัวอย่าง"
-
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "ปิดการทำงานด่วน"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1340,10 +1330,6 @@ msgstr "ธีมปัจจุบัน"
 msgid "Custom"
 msgstr "กำหนดเอง"
 
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "ปรับแต่งคำสั่งเทอร์มินัลและชุดปุ่มลัด"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
@@ -1424,7 +1410,7 @@ msgid "Directories"
 msgstr "ไดเรกทอรี"
 
 #: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
+msgid "Directory"
 msgstr "ไดเรกทอรี"
 
 #. placeholder {0}: record.label
@@ -1668,8 +1654,8 @@ msgid "Fingerprint"
 msgstr "ลายนิ้วมือ"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "พรอมต์แรก"
+msgid "First prompt"
+msgstr "คำสั่งแรก"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -2313,8 +2299,8 @@ msgid "New Session"
 msgstr "เซสชันใหม่"
 
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "ปุ่มลัดใหม่"
+msgid "New shortcut"
+msgstr "ทางลัดใหม่"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2819,10 +2805,6 @@ msgstr "โปรดเริ่ม OpenCode บนเซิร์ฟเวอ�
 msgid "Port"
 msgstr "พอร์ต"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
-msgstr "พอร์ต"
-
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -3279,12 +3261,12 @@ msgid "Saved"
 msgstr "บันทึกแล้ว"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
+msgid "Saved commands"
 msgstr "คำสั่งที่บันทึกไว้"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "พรอมต์ที่บันทึกไว้"
+msgid "Saved prompts"
+msgstr "คำสั่งที่บันทึกไว้"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3717,8 +3699,11 @@ msgstr "เริ่ม {0} ใหม่"
 msgid "Start a new session with empty context"
 msgstr "เริ่มเซสชันใหม่ด้วยบริบทว่าง"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "เริ่มเอเจนต์แล้วส่งงานแรกให้"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "เริ่มเอเจนต์และส่งงานแรกให้ทำ"
 
@@ -3942,8 +3927,12 @@ msgid "Terminal colours follow the theme."
 msgstr "สีเทอร์มินัลใช้ตามธีม"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
+msgid "Terminal commands"
 msgstr "คำสั่งเทอร์มินัล"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "คำสั่งเทอร์มินัลและคีย์ผสม"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"

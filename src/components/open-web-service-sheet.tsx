@@ -1,4 +1,3 @@
-import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /**
  * Open a web service that is running on the machine this phone is paired to.
@@ -24,19 +23,22 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * it was right.
  */
 import { KeyboardToolbar, Text, useThemeTokens } from '@osuki-dev/ui';
-import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
-import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { SheetHandle } from '@/components/sheet-route-frame';
-import { LADDER, SectionLabel } from '@/components/settings-chrome';
+import {
+  SheetScene,
+  SheetSceneAction,
+  SheetSceneField,
+  SHEET_LADDER,
+  sheetSceneStyles,
+  useSheetSceneInputStyle,
+} from '@/components/sheet-scene';
+import { appChrome } from '@/constants/appearance';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { describeWebServiceUrl, parsePort, webServiceUrl } from '@/lib/web-service';
@@ -72,12 +74,7 @@ export function OpenWebServiceSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  // The plate any text drawn straight onto the shell's wallpaper takes; empty
-  // on every theme that has no picture there. Explicit, because this is the
-  // component that renders the frame and so sits above its own tint provider:
-  // everything *inside* the sheet reads the tint from the frame and calls this
-  // with no argument at all.
-  const plate = useSheetGroundPlate('surface');
+  const inputStyle = useSheetSceneInputStyle();
   useRenderTally('OpenWebServiceSheet');
 
   const hydrate = useServerWebPorts((state) => state.hydrate);
@@ -156,86 +153,26 @@ export function OpenWebServiceSheet({
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardShouldPersistTaps="handled"
         // Transparent: the ground below paints this sheet's floor, its surface
-        // tint and the shell's wallpaper, in that order.
+        // tint, the shell's wallpaper and the frost over it, in that order.
         style={[styles.sheet, styles.transparent]}
         contentContainerStyle={styles.canvas}>
-        {/* The ground and the padded column are the scroller's two children,
-            which is the shape `SettingsSheet` uses -- the content container
-            carries no padding of its own, so the ground's `absoluteFill` covers
-            the sheet's edges instead of stopping at the form's gutter. The
-            sheet's own two subviews are still the scroller and the keyboard
-            toolbar. */}
-        <SheetFrame>
-          <View style={styles.column}>
-            {/* iOS draws the grabber itself; Android's form sheet does not, and a
-            sheet with no handle reads as a screen that arrived from the wrong
-            direction. Every sheet in this app carries the same one line. */}
-            <SheetHandle style={styles.handle} />
-
-            <View style={styles.header}>
-              <View style={[styles.headerCopy, plate]}>
-                <Text variant="bodySmall" style={styles.title}>
-                  <Trans>Open in your browser</Trans>
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>
-                    Anything {label} is serving on a port — a dev server, a preview, a dashboard.
-                  </Trans>
-                </Text>
-              </View>
-              <GlassChrome face="sheet" style={styles.closeButton}>
-                <PressableScale
-                  accessibilityLabel={t`Close`}
-                  onPress={onClose}
-                  style={styles.closeHit}>
-                  <X size={18} color={theme.colors.text} />
-                </PressableScale>
-              </GlassChrome>
-            </View>
-
-            <View style={styles.section}>
-              <SectionLabel title={<Trans>PORT</Trans>} color={theme.colors.textMuted} />
-
-              {recentPorts && recentPorts.length > 0 ? (
-                <View style={styles.chips}>
-                  {recentPorts.map((recent, index) => (
-                    <Animated.View
-                      key={recent}
-                      entering={riseIn(index * STAGGER.row)}
-                      layout={listLayout('short')}>
-                      <PressableScale
-                        accessibilityLabel={t`Open port ${recent}`}
-                        testID={`open-web-service-recent-${recent}`}
-                        disabled={checking}
-                        onPress={() => {
-                          // The field follows the tap so the address line below
-                          // still describes what is about to open.
-                          setPortText(String(recent));
-                          void open(recent);
-                        }}
-                        style={[
-                          styles.chip,
-                          {
-                            borderColor: theme.colors.border,
-                            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                          },
-                        ]}>
-                        <Text variant="data">{String(recent)}</Text>
-                      </PressableScale>
-                    </Animated.View>
-                  ))}
-                </View>
-              ) : null}
-
-              {/* Under the chips, not instead of them: the remembered ports are a
-              shortcut, and a shortcut that hides the long way round is a trap
-              the first time it does not have the port that was meant. */}
-              {/* No `label`: the design system draws one uppercased, which is the
-              same word as the section eyebrow above and printed "PORT" twice.
-              The prompt field in the New task sheet is bare for the same
-              reason -- the eyebrow is the label. The accessible name has to be
-              said explicitly once the visible one belongs to the section. */}
-              <Input
+        {/*
+          The scene, inside the scroller rather than around it: this sheet is
+          content-sized, so the scroller is what the form sheet measures and the
+          ground has to be laid out against it. Same furniture as every other
+          sheet -- heading, frosted ground, flush fields, one primary action.
+        */}
+        <SheetScene
+          testID="open-web-service-sheet"
+          title={t`Open in your browser`}
+          caption={label}
+          contentSized>
+          <View style={sheetSceneStyles.column}>
+            <SheetSceneField
+              label={t`Port`}
+              hint={target ? describeWebServiceUrl(target) : undefined}
+              error={error ?? undefined}>
+              <TextInput
                 accessibilityLabel={t`Port`}
                 testID="open-web-service-port"
                 value={portText}
@@ -246,38 +183,62 @@ export function OpenWebServiceSheet({
                 keyboardType="number-pad"
                 autoCapitalize="none"
                 autoCorrect={false}
-                // Not translated: a port is a number, and 3000 is the one a reader
-                // is most likely to already have running.
+                // Not translated: a port is a number, and 3000 is the one a
+                // reader is most likely to already have running.
                 placeholder="3000"
-                variant="outline"
+                placeholderTextColor={theme.colors.textSubtle}
                 returnKeyType="go"
                 onSubmitEditing={() => {
                   if (port !== null) void open(port);
                 }}
+                style={inputStyle}
               />
+            </SheetSceneField>
 
-              {/* The address, assembled as it is typed. This is what makes the
-              feature legible: the machine's own name with the reader's number
-              on the end, and nothing in between that anyone had to configure. */}
-              {target ? (
-                <Animated.View entering={fadeIn('micro')} exiting={fadeOut('micro')}>
-                  <Text variant="data" color={theme.colors.textMuted} style={styles.address}>
-                    {describeWebServiceUrl(target)}
-                  </Text>
-                </Animated.View>
-              ) : null}
-            </View>
+            {/* Under the field, not instead of it: the remembered ports are a
+                shortcut, and a shortcut that hides the long way round is a trap
+                the first time it does not have the port that was meant. */}
+            {recentPorts && recentPorts.length > 0 ? (
+              <View style={styles.chips}>
+                {recentPorts.map((recent, index) => (
+                  <Animated.View
+                    key={recent}
+                    entering={riseIn(index * STAGGER.row)}
+                    layout={listLayout('short')}>
+                    <PressableScale
+                      accessibilityLabel={t`Open port ${recent}`}
+                      testID={`open-web-service-recent-${recent}`}
+                      disabled={checking}
+                      onPress={() => {
+                        // The field follows the tap so the address line above
+                        // still describes what is about to open.
+                        setPortText(String(recent));
+                        void open(recent);
+                      }}
+                      style={[
+                        styles.chip,
+                        {
+                          borderColor: theme.colors.border,
+                          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                        },
+                      ]}>
+                      <Text variant="data">{String(recent)}</Text>
+                    </PressableScale>
+                  </Animated.View>
+                ))}
+              </View>
+            ) : null}
 
             {wasSilent ? (
               <Animated.View
                 entering={fadeIn('micro')}
                 exiting={fadeOut('micro')}
                 layout={listLayout('short')}>
-                {/* Both readings, because from this phone they are the same event:
-                a refused connection, a loopback-bound server and an empty port
-                are indistinguishable here. Naming the one that is fixable is
-                the most useful thing this sheet can do; claiming to know which
-                one happened would be a guess. */}
+                {/* Both readings, because from this phone they are the same
+                    event: a refused connection, a loopback-bound server and an
+                    empty port are indistinguishable here. Naming the one that
+                    is fixable is the most useful thing this sheet can do;
+                    claiming to know which one happened would be a guess. */}
                 <Text variant="caption" color={theme.colors.warning}>
                   <Trans>
                     Nothing answered on port {port}. Either nothing is listening, or it is bound to
@@ -287,27 +248,17 @@ export function OpenWebServiceSheet({
               </Animated.View>
             ) : null}
 
-            <Button
+            <SheetSceneAction
               testID="open-web-service-submit"
+              label={checking ? t`Checking…` : wasSilent ? t`Open anyway` : t`Open`}
+              busy={checking}
+              disabled={target === null}
               onPress={() => {
                 if (port !== null) void open(port);
               }}
-              disabled={checking || target === null}>
-              {checking ? t`Checking…` : wasSilent ? t`Open anyway` : t`Open`}
-            </Button>
-
-            {error ? (
-              <Animated.View
-                entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}
-                layout={listLayout('short')}>
-                <Text selectable variant="caption" color={theme.colors.danger}>
-                  {error}
-                </Text>
-              </Animated.View>
-            ) : null}
+            />
           </View>
-        </SheetFrame>
+        </SheetScene>
       </KeyboardAwareScrollView>
       {/* One field here, so the arrows would only ever point at themselves.
         Opaque on purpose: see the same toolbar in `new-task-sheet.tsx` for why
@@ -326,49 +277,18 @@ const styles = StyleSheet.create({
   // No padding here: the ground is laid out against this box, and a padded
   // content container would inset it away from the sheet's own edges.
   canvas: { flexGrow: 1, width: '100%' },
-  column: {
-    flexGrow: 1,
-    paddingHorizontal: LADDER.gutter,
-    paddingTop: LADDER.gap,
-    paddingBottom: LADDER.section,
-    gap: LADDER.gutter,
-  },
-  handle: {
-    marginBottom: 2,
-  },
-  header: {
+  chips: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: LADDER.snug,
+    flexWrap: 'wrap',
+    gap: SHEET_LADDER.gap,
+    paddingTop: SHEET_LADDER.gap,
   },
-  headerCopy: { flex: 1, minWidth: 0, gap: LADDER.tight / 2 },
-  // The panels sheet's title size, so every sheet agrees on how one announces
-  // itself.
-  title: { fontSize: 20, lineHeight: 25, includeFontPadding: false },
-  closeButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeHit: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  section: { gap: LADDER.gap },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: LADDER.gap },
   chip: {
     minHeight: 36,
     justifyContent: 'center',
-    paddingHorizontal: LADDER.snug,
-    borderRadius: 12,
+    paddingHorizontal: SHEET_LADDER.snug,
+    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  address: { marginLeft: LADDER.tight, includeFontPadding: false },
 });

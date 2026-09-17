@@ -2,8 +2,13 @@ import { SheetHandle } from '@/components/sheet-route-frame';
 import { Input } from '@/components/themed-input';
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
-import { ThemedSurface } from '@/components/themed-surface';
+import { SheetFrame } from '@/components/sheet-ground';
+import { SettingsSegmented } from '@/components/settings-segmented';
+import {
+  SheetSceneGroupHeading,
+  SheetSceneHeading,
+  SheetSceneSearch,
+} from '@/components/sheet-scene';
 /**
  * Quick actions: one thing done to the pane in front of you.
  *
@@ -81,7 +86,6 @@ import {
   Pencil,
   SquareTerminal,
   Trash2,
-  X,
 } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -89,10 +93,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GlassChrome } from '@/components/glass-chrome';
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
 import { PressableScale } from '@/components/pressable-scale';
-import { LADDER, SectionLabel, SettingsCard } from '@/components/settings-chrome';
+import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
@@ -160,11 +163,6 @@ const MONO_TEXT = {
 
 export default function QuickCommandsScreen() {
   const surfaceBackground = useSurfaceBackground();
-  // `background`, which is also what this screen gives `SheetFrame` below: the
-  // commands sheet's blocks each draw their own panel, so a second surface
-  // under them is one too many. Explicit because this component sits above its
-  // own tint provider; `SectionHeading` inside the frame calls the hook bare.
-  const plate = useSheetGroundPlate('background');
   const router = useRouter();
   const theme = useThemeTokens();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
@@ -584,61 +582,52 @@ export default function QuickCommandsScreen() {
 
   return (
     // One ground and one layout column preserve native sheet measurement.
-    <SheetFrame tint="background">
+    // Frosted, like every sheet: the wallpaper is texture under a reading
+    // surface, which is what lets the rows below be plain text on it.
+    <SheetFrame tint="background" frosted>
       {/* Keep the fixed header and scroller in one native layout column. */}
       <View collapsable={false} style={styles.sheet}>
         <View style={[styles.fixedTop, isPadLayout && styles.padContent]}>
           <SheetHandle />
 
-          {/* No glyph beside the title. The reader arrived here by pressing the
-              lightning button, so a lightning chip repeats the gesture back at
-              them -- and it was the first of the forty places this screen spent
-              the accent. */}
-          <View style={styles.header}>
-            {/* The plate the settings page gives a label drawn straight onto
-                the wallpaper. Not the slab described above -- it is two lines
-                of type, not a lid over the tiles -- and it is `null` on a theme
-                with no `shell.background`, which is every built-in one. */}
-            <View style={[styles.headerCopy, plate]}>
-              <Text variant="subheading" style={styles.headerTitle}>
-                {manageOnly ? t`Quick action settings` : t`Quick actions`}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {manageOnly
-                  ? t`Customize terminal commands and key combinations.`
-                  : mode === 'agent'
-                    ? t`Act on this terminal, or send its agent a prompt.`
-                    : t`Act on this terminal, or send it a command.`}
-              </Text>
-            </View>
-            {/* Settings' entry is the editor, so it has no state to toggle and
-                offers no way to leave a mode that is the whole screen. */}
-            {manageOnly ? null : (
-              <GlassChrome face="sheet" style={styles.headerButton}>
+          {/* No glyph beside the title. The reader arrived here by pressing
+              the lightning button, so a lightning chip repeats the gesture back
+              at them -- and it was the first of the forty places this screen
+              spent the accent.
+
+              No close button either: on a form sheet the grabber and the swipe
+              are the close, which is the rule `sheet-scene.tsx` states for
+              every sheet in the app. What stays on the title's line is the one
+              control that changes what the sheet *is* -- the edit toggle --
+              quiet until it is on. */}
+          <SheetSceneHeading
+            title={manageOnly ? t`Quick action settings` : t`Quick actions`}
+            caption={
+              manageOnly
+                ? t`Terminal commands and key combinations`
+                : mode === 'agent'
+                  ? t`Act on this terminal, or send its agent a prompt`
+                  : t`Act on this terminal, or send it a command`
+            }
+            trailing={
+              // Settings' entry is the editor, so it has no state to toggle and
+              // offers no way to leave a mode that is the whole screen.
+              manageOnly ? null : (
                 <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={editing ? t`Done editing shortcuts` : t`Edit shortcuts`}
                   accessibilityState={{ selected: editing }}
                   onPress={() => setEditRequested((was) => !was)}
-                  style={styles.headerButtonHit}>
+                  style={styles.headingControl}>
                   {editing ? (
-                    <Check size={19} color={theme.colors.text} strokeWidth={2} />
+                    <Check size={19} color={theme.colors.primary} strokeWidth={2} />
                   ) : (
-                    <Pencil size={18} color={theme.colors.text} strokeWidth={2} />
+                    <Pencil size={18} color={theme.colors.textMuted} strokeWidth={2} />
                   )}
                 </PressableScale>
-              </GlassChrome>
-            )}
-            <GlassChrome face="sheet" style={styles.headerButton}>
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Close quick actions`}
-                onPress={() => router.back()}
-                style={styles.headerButtonHit}>
-                <X size={19} color={theme.colors.text} strokeWidth={2} />
-              </PressableScale>
-            </GlassChrome>
-          </View>
+              )
+            }
+          />
 
           {/* The sheet's own verbs. Ordered by how far each one takes you from
               the pane you are looking at: two that make somewhere to work, then
@@ -779,7 +768,7 @@ export default function QuickCommandsScreen() {
             below: those carry instructions of their own, which is a different
             thing from choosing an assistant. */}
           {available.canStartTask ? (
-            <SettingsCard>
+            <SettingsCard flush>
               <ActionRow
                 accessibilityLabel={t`New task`}
                 name={t`New task`}
@@ -793,44 +782,23 @@ export default function QuickCommandsScreen() {
 
           {!editing ? (
             <View style={styles.section}>
-              <ThemedSurface
-                slot="tabs.background"
-                baseColor={theme.colors.surface}
-                style={[styles.commandTabs, { overflow: 'hidden' }]}>
-                {(['saved', 'catalog'] as const).map((tab) => (
-                  <PressableScale
-                    key={tab}
-                    testID={`quick-actions-tab-${tab}`}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: commandTab === tab }}
-                    onPress={() => {
-                      setCommandTab(tab);
-                      setSearch('');
-                    }}
-                    style={[
-                      styles.commandTab,
-                      {
-                        backgroundColor: surfaceBackground(
-                          commandTab === tab ? theme.colors.primarySubtle : 'transparent'
-                        ),
-                      },
-                    ]}>
-                    <Text
-                      variant="bodySmall"
-                      color={commandTab === tab ? theme.colors.primary : theme.colors.textMuted}>
-                      {tab === 'saved' ? t`Frequent` : t`All commands`}
-                    </Text>
-                  </PressableScale>
-                ))}
-              </ThemedSurface>
-              <Input
+              <SettingsSegmented
+                testID="quick-actions-tab"
+                options={[
+                  { label: t`Frequent`, value: 'saved' },
+                  { label: t`All commands`, value: 'catalog' },
+                ]}
+                value={commandTab}
+                onChange={(next: string) => {
+                  setCommandTab(next === 'catalog' ? 'catalog' : 'saved');
+                  setSearch('');
+                }}
+              />
+              <SheetSceneSearch
                 accessibilityLabel={t`Search actions and commands`}
                 placeholder={t`Search actions and commands`}
                 value={search}
                 onChangeText={setSearch}
-                variant="outline"
-                autoCapitalize="none"
-                autoCorrect={false}
               />
               {query && visibleCommands.length === 0 && visibleAgentCommands.length === 0 ? (
                 <Text
@@ -842,8 +810,8 @@ export default function QuickCommandsScreen() {
 
           {showSaved ? (
             <View style={styles.section}>
-              <SectionHeading title={mode === 'agent' ? t`SAVED PROMPTS` : t`SAVED COMMANDS`} />
-              <SettingsCard>
+              <SectionHeading title={mode === 'agent' ? t`Saved prompts` : t`Saved commands`} />
+              <SettingsCard flush>
                 {visibleCommands.map((command, index) => {
                   // A default's name is ours to translate; a custom one is the
                   // user's own word, shown exactly as they typed it.
@@ -942,7 +910,7 @@ export default function QuickCommandsScreen() {
               style={styles.section}
               accessibilityLabel={t`Loading commands`}>
               <Skeleton variant="text" width={110} height={11} style={styles.headingSkeleton} />
-              <SettingsCard>
+              <SettingsCard flush>
                 {[0, 1].map((row) => (
                   <View key={row} style={styles.row}>
                     <View style={styles.rowCopy}>
@@ -965,8 +933,8 @@ export default function QuickCommandsScreen() {
           !loadingAgentCommands &&
           visibleAgentCommands.length > 0 ? (
             <Animated.View entering={fadeIn('short')} style={styles.section}>
-              <SectionHeading title={mode === 'agent' ? t`AGENT COMMANDS` : t`TERMINAL COMMANDS`} />
-              <SettingsCard>
+              <SectionHeading title={mode === 'agent' ? t`Agent commands` : t`Terminal commands`} />
+              <SettingsCard flush>
                 {visibleAgentCommands.map((entry, index) => (
                   <Animated.View
                     key={entry.command}
@@ -1020,7 +988,7 @@ export default function QuickCommandsScreen() {
               exiting={fadeOut('micro')}
               layout={listLayout('short')}
               style={styles.section}>
-              <SectionHeading title={t`NEW SHORTCUT`} />
+              <SectionHeading title={t`New shortcut`} />
               <Card variant="flat" padding="md" style={styles.addCard}>
                 <Text variant="caption" color={theme.colors.textMuted}>
                   {mode === 'agent'
@@ -1130,9 +1098,15 @@ export default function QuickCommandsScreen() {
  * in it was claiming the mode belonged to one section. What was left was a
  * `space-between` row with a single child.
  */
+/**
+ * A group's name, in sentence case and on the ground.
+ *
+ * `SectionLabel` is the settings page's, and it is uppercased there because it
+ * labels a card. On a sheet the rule is the one `sheet-scene.tsx` states: a
+ * group heading is a name, not a sign.
+ */
 function SectionHeading({ title }: { title: string }) {
-  const theme = useThemeTokens();
-  return <SectionLabel title={title} color={theme.colors.textSubtle} />;
+  return <SheetSceneGroupHeading title={title} />;
 }
 
 /**
@@ -1416,6 +1390,14 @@ const styles = StyleSheet.create({
     gap: LADDER.gap,
   },
   headerCopy: { flex: 1, minWidth: 0, gap: 2 },
+  // A quiet control on the heading's line: a hit target, no disc. The disc is
+  // what a close button was, and this sheet no longer has one.
+  headingControl: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTitle: { includeFontPadding: false },
   /**
    * 38 and half of it, which is the disc every other sheet in this app gives a

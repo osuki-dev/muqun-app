@@ -180,10 +180,15 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
     const text = readFileSync(file, 'utf8');
     const direct = text.includes('useSheetGroundPlate(') && text.includes(', plate]');
     const viaLabel = text.includes('<SectionLabel') || text.includes('<SheetHeading');
-    // `SheetScene` plates its own heading and its group headings, which is the
-    // whole reason a sheet built on it writes no plate of its own.
-    const viaScene = text.includes('<SheetScene');
-    expect({ file, plated: direct || viaLabel || viaScene }).toEqual({ file, plated: true });
+    // A frosted ground is the other answer, and the better one: `SheetScene`
+    // frosts itself, and a sheet that frosts its own frame has said the same
+    // thing. Either way the reader is not asked to read text on a photograph.
+    const viaScene = SCENE_ROOT.test(text);
+    const viaFrost = text.includes('frosted');
+    expect({ file, plated: direct || viaLabel || viaScene || viaFrost }).toEqual({
+      file,
+      plated: true,
+    });
   }
 
   // And the furniture really does protect what it draws, so `viaScene` above is
@@ -207,10 +212,11 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
  * checked here rather than left to review, because every one of them arrived by
  * being locally reasonable.
  */
+/** `<SheetScene>` itself, not `<SheetSceneHeading>` and friends. */
+const SCENE_ROOT = /<SheetScene[\s>]/;
+
 test('a sheet built on the scene has no cards, no radios and no close button', () => {
-  const sceneSheets = SHEET_FRAMES.filter((file) =>
-    readFileSync(file, 'utf8').includes('<SheetScene')
-  );
+  const sceneSheets = SHEET_FRAMES.filter((file) => SCENE_ROOT.test(readFileSync(file, 'utf8')));
   // The agent surface is what the spec calibrates against, so it is what has to
   // be covered: if this list empties, the rules below stopped being enforced.
   expect(sceneSheets.length).toBeGreaterThanOrEqual(6);
@@ -289,6 +295,47 @@ test('every allowlisted modal still exists and still is one, so the list cannot 
   for (const [file, reason] of Object.entries(MODAL_ALLOWLIST)) {
     const text = code(readFileSync(file, 'utf8'));
     expect({ file, modal: text.includes('<Modal') }).toEqual({ file, modal: true });
+    expect(reason.length).toBeGreaterThan(20);
+  }
+});
+
+/**
+ * Every sheet announces itself the same way.
+ *
+ * One heading component -- `SheetSceneHeading`, which `SheetHeading` and
+ * `SheetScene` both render -- so "the app has one sheet" is a fact the gate
+ * holds rather than a habit the next sheet can break. A sheet that rolls its
+ * own title is how the agent surface drifted in the first place.
+ *
+ * Two exemptions, and both are inspectors whose whole surface is one
+ * continuous thing rather than a heading over content.
+ */
+const HEADING_EXEMPT: Record<string, string> = {
+  'src/components/git-diff-view.tsx':
+    'the diff is one measured monospace grid under a pinned bar that also carries the branch, the refresh and the staged/unstaged segments',
+  'src/components/asset-viewer.tsx':
+    'a full-bleed document viewer, not a sheet: it is a Modal opened from inside the files sheet and has no grabber to pair a heading with',
+};
+
+test('every sheet frame announces itself with the one heading', () => {
+  const offenders: string[] = [];
+  for (const file of SHEET_FRAMES) {
+    if (file in HEADING_EXEMPT) continue;
+    const text = code(readFileSync(file, 'utf8'));
+    const heads =
+      SCENE_ROOT.test(text) ||
+      text.includes('<SheetSceneHeading') ||
+      text.includes('<SheetHeading');
+    if (!heads) offenders.push(file);
+  }
+  expect(offenders).toEqual([]);
+
+  // `SheetHeading` is the same component, not a second one that agrees today.
+  const heading = readFileSync('src/components/sheet-heading.tsx', 'utf8');
+  expect(heading).toContain("import { SheetSceneHeading } from '@/components/sheet-scene'");
+
+  for (const [file, reason] of Object.entries(HEADING_EXEMPT)) {
+    expect(readFileSync(file, 'utf8').length).toBeGreaterThan(0);
     expect(reason.length).toBeGreaterThan(20);
   }
 });

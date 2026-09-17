@@ -194,12 +194,12 @@ msgid "About"
 msgstr "Giới thiệu"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "Thao tác trên terminal này, hoặc gửi cho nó một lệnh"
+msgid "Act on this terminal, or send it a command"
+msgstr "Tác động lên terminal này, hoặc gửi cho nó một lệnh"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "Thao tác trên terminal này, hoặc gửi cho tác tử của nó một prompt"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân của nó"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -236,8 +236,8 @@ msgid "Added"
 msgstr "Đã thêm"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
-msgstr "TÁC TỬ"
+msgid "Agent"
+msgstr "Tác nhân"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -250,8 +250,8 @@ msgid "Agent collaboration"
 msgstr "Cộng tác giữa các tác nhân"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
-msgstr "LỆNH TÁC TỬ"
+msgid "Agent commands"
+msgstr "Lệnh của tác nhân"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -355,10 +355,6 @@ msgstr "Trả lời"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "Trả lời: {0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "Bất cứ thứ gì {label} đang phục vụ trên một cổng — máy chủ dev, bản xem trước, bảng điều khiển"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -739,7 +735,6 @@ msgid "Clearing…"
 msgstr "Đang xóa…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "Đóng"
@@ -757,7 +752,6 @@ msgid "Close files"
 msgstr "Đóng danh sách tệp"
 
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "Đóng tác vụ mới"
 
@@ -770,10 +764,6 @@ msgstr "Đóng ghép nối"
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "Đóng bản xem trước"
-
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "Đóng thao tác nhanh"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1340,10 +1330,6 @@ msgstr "Giao diện hiện tại"
 msgid "Custom"
 msgstr "Tùy chỉnh"
 
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "Tùy chỉnh lệnh terminal và tổ hợp phím"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
@@ -1424,8 +1410,8 @@ msgid "Directories"
 msgstr "Thư mục"
 
 #: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
-msgstr "THƯ MỤC"
+msgid "Directory"
+msgstr "Thư mục"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1668,8 +1654,8 @@ msgid "Fingerprint"
 msgstr "Dấu vân tay"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "PROMPT ĐẦU TIÊN"
+msgid "First prompt"
+msgstr "Yêu cầu đầu tiên"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -2313,8 +2299,8 @@ msgid "New Session"
 msgstr "Phiên mới"
 
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "LỆNH TẮT MỚI"
+msgid "New shortcut"
+msgstr "Lối tắt mới"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2819,10 +2805,6 @@ msgstr "Vui lòng khởi động OpenCode trên máy chủ: opencode serve --ser
 msgid "Port"
 msgstr "Cổng"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
-msgstr "CỔNG"
-
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -3279,12 +3261,12 @@ msgid "Saved"
 msgstr "Đã lưu"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
-msgstr "LỆNH ĐÃ LƯU"
+msgid "Saved commands"
+msgstr "Lệnh đã lưu"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "PROMPT ĐÃ LƯU"
+msgid "Saved prompts"
+msgstr "Yêu cầu đã lưu"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3717,8 +3699,11 @@ msgstr "Khởi động {0} mới"
 msgid "Start a new session with empty context"
 msgstr "Bắt đầu phiên mới với ngữ cảnh trống"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "Khởi động một tác nhân và gửi việc đầu tiên"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "Khởi động một tác tử và giao cho nó việc đầu tiên"
 
@@ -3942,8 +3927,12 @@ msgid "Terminal colours follow the theme."
 msgstr "Màu terminal theo chủ đề"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
-msgstr "LỆNH TERMINAL"
+msgid "Terminal commands"
+msgstr "Lệnh terminal"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "Lệnh terminal và tổ hợp phím"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"

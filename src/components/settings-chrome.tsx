@@ -134,6 +134,21 @@ export function SectionLabel({
   style?: TextStyle | TextStyle[];
 }) {
   const plate = useSheetGroundPlate();
+  /**
+   * The label's text starts where the card's row text starts.
+   *
+   * It used to start at the card's outer edge, so "Servers" sat twelve points
+   * to the left of the `osk` row it names -- two left edges on a page whose
+   * whole argument is that there is one. The card insets its rows by
+   * `LADDER.gutter`, so the label is pushed in by the same amount, less
+   * whatever horizontal padding it is already carrying.
+   *
+   * Computed from the plate rather than branched on it, which is what keeps
+   * the bleed working: with a plate the padding is the plate's, without one it
+   * is the bare label's, and the glyphs land on the same x either way -- so a
+   * plate appearing does not move the text it is protecting.
+   */
+  const indent = LADDER.gutter - (plate.paddingHorizontal ?? LADDER.tight);
   return (
     <Text
       variant="label"
@@ -145,11 +160,12 @@ export function SectionLabel({
         // Android letter tracking clips Thai combining clusters in compact labels.
         typeof title === 'string' && /[\u0e00-\u0e7f]/u.test(title) ? { letterSpacing: 0 } : {},
         plate,
-        // Only when there is a plate, and only ever a negative number: the
-        // plate's own padding, less the indent the bare label already carries.
-        plate.paddingHorizontal === undefined
-          ? {}
-          : { marginHorizontal: LADDER.tight - plate.paddingHorizontal },
+        {
+          marginLeft: indent,
+          // The right side only ever bleeds, and only when a plate is there.
+          marginRight:
+            plate.paddingHorizontal === undefined ? 0 : LADDER.tight - plate.paddingHorizontal,
+        },
         // Spread rather than nested, because the kit's `Text` takes a flat
         // `TextStyle[]` and nothing narrower.
         ...(style ? (Array.isArray(style) ? style : [style]) : []),
@@ -181,9 +197,37 @@ export function SettingsSection({ title, children }: { title: string; children: 
  * same word twice. A section is this card plus its label; nothing about the
  * card is re-decided in the sheet.
  */
-export function SettingsCard({ children }: { children: ReactNode }) {
+export function SettingsCard({
+  children,
+  flush = false,
+}: {
+  children: ReactNode;
+  /**
+   * No surface of its own: the rows sit straight on the ground with their
+   * hairlines and nothing else.
+   *
+   * For a sheet. A card inside a frosted sheet is the second layer of paint
+   * `sheet-scene.tsx` exists to remove, but the interleaved separators and the
+   * row insets are the same list either way -- so the shape stays here and only
+   * the fill goes. The settings page keeps its cards; a page is not a sheet.
+   */
+  flush?: boolean;
+}) {
   const theme = useThemeTokens();
   const rows = Children.toArray(children);
+  if (flush) {
+    return (
+      <View style={styles.sectionBodyFlush}>
+        {rows.map((row, position) => (
+          <Fragment
+            key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
+            {position > 0 ? <SettingsSeparator /> : null}
+            {row}
+          </Fragment>
+        ))}
+      </View>
+    );
+  }
   return (
     <ThemedSurface
       slot="cards.decoration"
@@ -487,6 +531,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LADDER.tight,
     letterSpacing: 0.8,
   },
+  sectionBodyFlush: { overflow: 'hidden' },
   sectionBody: {
     borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',

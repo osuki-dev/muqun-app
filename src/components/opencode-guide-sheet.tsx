@@ -78,7 +78,11 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
   }, [onCheckAgain, onClose, onOpenAgent, t]);
 
   return (
-    <SheetScene testID="opencode-guide-sheet" title={t`Start OpenCode`} caption={serverLabel}>
+    <SheetScene
+      testID="opencode-guide-sheet"
+      title={t`Start OpenCode`}
+      caption={serverLabel}
+      contentSized>
       <View
         style={[styles.column, { paddingBottom: Math.max(insets.bottom, SHEET_LADDER.section) }]}>
         <Text variant="caption" color={theme.colors.textMuted} style={styles.blurb}>

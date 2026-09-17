@@ -1,7 +1,15 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Search } from 'lucide-react-native';
 import { useEffect, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  View,
+  type StyleProp,
+  type TextStyle,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { appChrome } from '@/constants/appearance';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
@@ -72,7 +81,9 @@ export function SheetScene({
   testID,
   title,
   caption,
+  headingTrailing,
   header,
+  contentSized = false,
   children,
 }: {
   testID?: string;
@@ -80,16 +91,26 @@ export function SheetScene({
   title: string;
   /** The current value, live -- never a hint. */
   caption?: string;
+  /** One quiet control on the title's line. See `SheetSceneHeading`. */
+  headingTrailing?: ReactNode;
   /** Search, segmented control: anything pinned above the scroller. */
   header?: ReactNode;
+  /**
+   * Whether the sheet is sized to what it holds rather than to a detent.
+   *
+   * A `fitToContents` sheet has no height to hand down, so a column that asked
+   * for `flex: 1` inside it measured zero and the sheet arrived as an empty
+   * strip. Content-sized scenes size themselves instead.
+   */
+  contentSized?: boolean;
   children: ReactNode;
 }) {
   return (
     <SheetFrame testID={testID} tint="surface" frosted>
-      <View collapsable={false} style={styles.scene}>
+      <View collapsable={false} style={contentSized ? undefined : styles.scene}>
         <View style={styles.fixedTop}>
           <SheetHandle />
-          <SheetSceneHeading title={title} caption={caption} />
+          <SheetSceneHeading title={title} caption={caption} trailing={headingTrailing} />
           {header}
         </View>
         {children}
@@ -106,7 +127,20 @@ export function SheetScene({
  * survives only in fullscreen frames, where there is no grabber -- which is
  * why `SheetHandle` and this heading are a pair.
  */
-export function SheetSceneHeading({ title, caption }: { title: string; caption?: string }) {
+export function SheetSceneHeading({
+  title,
+  caption,
+  trailing,
+}: {
+  title: string;
+  caption?: string;
+  /**
+   * One quiet control on the title's line -- the commands sheet's edit toggle.
+   * Not a close: the grabber and the swipe are the close. Anything that lands
+   * here is `textMuted` until it is on, and `primary` when it is.
+   */
+  trailing?: ReactNode;
+}) {
   const { colors } = useThemeTokens();
   return (
     <View style={styles.heading}>
@@ -120,6 +154,7 @@ export function SheetSceneHeading({ title, caption }: { title: string; caption?:
           </Text>
         ) : null}
       </View>
+      {trailing}
     </View>
   );
 }
@@ -300,6 +335,138 @@ export function SheetSceneRow({
   );
 }
 
+/**
+ * One field on a sheet, and the whole of what a form is made of here.
+ *
+ * The same treatment as the search field: flush with the ground under one
+ * hairline, with its label above it as a caption. A boxed input on a sheet is
+ * the card again -- and a form is not a different visual system from a picker,
+ * it is the same ground with fields on it instead of rows.
+ *
+ * Uncontrolled in the sense that matters: this owns no state. The screen keeps
+ * the value, because the screen is what validates and submits it.
+ */
+export function SheetSceneField({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  /** Sentence case, `textMuted`, above the value. Never a placeholder-only field. */
+  label: string;
+  /** What the value is for, when the label cannot say it in three words. */
+  hint?: string;
+  /** Why the value is not accepted. Replaces the hint while it is there. */
+  error?: string;
+  /** The input itself: a `TextInput`, a row of chips, a toggle. */
+  children: ReactNode;
+}) {
+  const { colors } = useThemeTokens();
+  return (
+    <View style={styles.field}>
+      <Text variant="caption" color={colors.textMuted}>
+        {label}
+      </Text>
+      <View style={[styles.fieldValue, { borderBottomColor: colors.border }]}>{children}</View>
+      {error ? (
+        <Text variant="caption" color={colors.danger} style={styles.fieldNote}>
+          {error}
+        </Text>
+      ) : hint ? (
+        <Text variant="caption" color={colors.textSubtle} style={styles.fieldNote}>
+          {hint}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+/** The text style a flush field's own `TextInput` takes. */
+export function useSheetSceneInputStyle(): StyleProp<TextStyle> {
+  const { colors } = useThemeTokens();
+  return [styles.fieldInput, { color: colors.text }];
+}
+
+/**
+ * The one thing a form sheet is for, at the bottom, full width.
+ *
+ * One primary action and no more: a sheet that offers two equal buttons is a
+ * sheet that has not decided what it is for. Anything else on it is
+ * `SheetSceneQuietAction`, which is a line of text and not a second button.
+ */
+export function SheetSceneAction({
+  label,
+  onPress,
+  disabled = false,
+  busy = false,
+  leading,
+  accessibilityLabel,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+  leading?: ReactNode;
+  accessibilityLabel?: string;
+  testID?: string;
+}) {
+  const { colors } = useThemeTokens();
+  return (
+    <PressableScale
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled: disabled || busy, busy }}
+      disabled={disabled || busy}
+      onPress={onPress}
+      style={[
+        styles.action,
+        { backgroundColor: colors.primary },
+        disabled && !busy ? { opacity: appChrome.opacity.disabled } : null,
+      ]}>
+      {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : leading}
+      <Text variant="bodySmall" weight="bold" color={colors.onPrimary}>
+        {label}
+      </Text>
+    </PressableScale>
+  );
+}
+
+/** A secondary action: a line of text under the primary one, never a button. */
+export function SheetSceneQuietAction({
+  label,
+  onPress,
+  tone = 'muted',
+  disabled = false,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  /** `danger` for the one that throws something away. */
+  tone?: 'muted' | 'danger';
+  disabled?: boolean;
+  testID?: string;
+}) {
+  const { colors } = useThemeTokens();
+  return (
+    <PressableScale
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled}
+      onPress={onPress}
+      style={styles.quietAction}>
+      <Text
+        variant="caption"
+        weight="semibold"
+        color={tone === 'danger' ? colors.danger : colors.textMuted}>
+        {label}
+      </Text>
+    </PressableScale>
+  );
+}
+
 /** The hairline between one group and the next, and nowhere else. */
 export function SheetSceneGroupRule() {
   const { colors } = useThemeTokens();
@@ -340,8 +507,13 @@ const styles = StyleSheet.create({
     paddingBottom: SHEET_LADDER.gap,
     gap: SHEET_LADDER.gap,
   },
-  heading: { marginTop: SHEET_LADDER.tight },
-  headingCopy: { gap: SHEET_LADDER.tight, alignSelf: 'flex-start', maxWidth: '100%' },
+  heading: {
+    marginTop: SHEET_LADDER.tight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SHEET_LADDER.snug,
+  },
+  headingCopy: { flex: 1, minWidth: 0, gap: SHEET_LADDER.tight },
   headingTitle: { includeFontPadding: false },
   searchRow: {
     flexDirection: 'row',
@@ -387,4 +559,25 @@ const styles = StyleSheet.create({
   rowTitle: { includeFontPadding: false },
   rowMeta: { flexShrink: 0, marginLeft: 'auto' },
   groupRule: { height: StyleSheet.hairlineWidth, marginTop: SHEET_LADDER.gap },
+  field: { paddingTop: SHEET_LADDER.snug, gap: SHEET_LADDER.tight },
+  fieldValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SHEET_LADDER.gap,
+    minHeight: 40,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  fieldInput: { flex: 1, fontSize: 15, padding: 0, includeFontPadding: false },
+  fieldNote: { lineHeight: 16 },
+  action: {
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SHEET_LADDER.gap,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+    marginTop: SHEET_LADDER.snug,
+  },
+  quietAction: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 });

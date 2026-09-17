@@ -194,12 +194,12 @@ msgid "About"
 msgstr "정보"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "이 터미널을 조작하거나 명령을 보냅니다"
+msgid "Act on this terminal, or send it a command"
+msgstr "이 터미널을 조작하거나 명령을 보내기"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "이 터미널을 조작하거나 에이전트에 프롬프트를 보냅니다"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "이 터미널을 조작하거나 에이전트에게 지시 보내기"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -236,7 +236,7 @@ msgid "Added"
 msgstr "추가됨"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
+msgid "Agent"
 msgstr "에이전트"
 
 #: src/components/agent-workbench.tsx
@@ -250,7 +250,7 @@ msgid "Agent collaboration"
 msgstr "에이전트 협업"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
+msgid "Agent commands"
 msgstr "에이전트 명령"
 
 #: src/components/collaboration-notice.tsx
@@ -355,10 +355,6 @@ msgstr "답변"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "응답: {0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "{label}이 포트로 제공하는 모든 것 — 개발 서버, 미리보기, 대시보드"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -739,7 +735,6 @@ msgid "Clearing…"
 msgstr "비우는 중…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "닫기"
@@ -757,7 +752,6 @@ msgid "Close files"
 msgstr "파일 목록 닫기"
 
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "새 작업 닫기"
 
@@ -770,10 +764,6 @@ msgstr "페어링 닫기"
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "미리보기 닫기"
-
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "빠른 동작 닫기"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1340,10 +1330,6 @@ msgstr "현재 테마"
 msgid "Custom"
 msgstr "사용자 지정"
 
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "터미널 명령과 키 조합을 사용자 지정합니다"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
@@ -1424,7 +1410,7 @@ msgid "Directories"
 msgstr "디렉터리"
 
 #: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
+msgid "Directory"
 msgstr "디렉터리"
 
 #. placeholder {0}: record.label
@@ -1668,8 +1654,8 @@ msgid "Fingerprint"
 msgstr "지문"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "첫 프롬프트"
+msgid "First prompt"
+msgstr "첫 지시"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -2313,8 +2299,8 @@ msgid "New Session"
 msgstr "새 세션"
 
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "새 단축 명령"
+msgid "New shortcut"
+msgstr "새 단축키"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2819,10 +2805,6 @@ msgstr "서버에서 OpenCode를 시작하세요: opencode serve --service"
 msgid "Port"
 msgstr "포트"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
-msgstr "포트"
-
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -3279,12 +3261,12 @@ msgid "Saved"
 msgstr "저장됨"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
-msgstr "저장한 명령어"
+msgid "Saved commands"
+msgstr "저장한 명령"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "저장한 프롬프트"
+msgid "Saved prompts"
+msgstr "저장한 지시"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3717,8 +3699,11 @@ msgstr "새 {0} 시작"
 msgid "Start a new session with empty context"
 msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "에이전트를 시작하고 첫 할 일을 보내기"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "에이전트를 시작하고 가장 먼저 할 일을 보냅니다"
 
@@ -3942,8 +3927,12 @@ msgid "Terminal colours follow the theme."
 msgstr "터미널 색상은 테마를 따릅니다"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
-msgstr "터미널 명령어"
+msgid "Terminal commands"
+msgstr "터미널 명령"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "터미널 명령과 키 조합"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"

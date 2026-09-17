@@ -194,12 +194,12 @@ msgid "About"
 msgstr "关于"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "操作这个终端，或给它发送一条命令"
+msgid "Act on this terminal, or send it a command"
+msgstr "操作这个终端，或给它发一条命令"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "操作这个终端，或给它的代理发送一段提示词"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "操作这个终端，或给它的 Agent 下一条指令"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -236,8 +236,8 @@ msgid "Added"
 msgstr "新增"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
-msgstr "代理"
+msgid "Agent"
+msgstr "Agent"
 
 #: src/components/agent-workbench.tsx
 msgid "Agent actions are auto-approved; dangerous commands stay blocked."
@@ -250,8 +250,8 @@ msgid "Agent collaboration"
 msgstr "代理协作"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
-msgstr "代理命令"
+msgid "Agent commands"
+msgstr "Agent 命令"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -355,10 +355,6 @@ msgstr "回答"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "回答：{0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "{label} 在某个端口上提供的任何东西——开发服务器、预览、仪表板"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -739,7 +735,6 @@ msgid "Clearing…"
 msgstr "正在清除…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "关闭"
@@ -757,7 +752,6 @@ msgid "Close files"
 msgstr "关闭文件列表"
 
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "关闭新任务"
 
@@ -770,10 +764,6 @@ msgstr "关闭配对"
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "关闭预览"
-
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "关闭快捷操作"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1340,10 +1330,6 @@ msgstr "当前主题"
 msgid "Custom"
 msgstr "自定义"
 
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "自定义终端命令和组合键"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
@@ -1424,7 +1410,7 @@ msgid "Directories"
 msgstr "目录"
 
 #: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
+msgid "Directory"
 msgstr "目录"
 
 #. placeholder {0}: record.label
@@ -1668,8 +1654,8 @@ msgid "Fingerprint"
 msgstr "指纹"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "第一条提示词"
+msgid "First prompt"
+msgstr "第一条指令"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -2313,8 +2299,8 @@ msgid "New Session"
 msgstr "新建会话"
 
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "新建快捷命令"
+msgid "New shortcut"
+msgstr "新建快捷方式"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2819,10 +2805,6 @@ msgstr "请在服务器上启动 OpenCode：opencode serve --service"
 msgid "Port"
 msgstr "端口"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
-msgstr "端口"
-
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -3279,12 +3261,12 @@ msgid "Saved"
 msgstr "已保存"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
+msgid "Saved commands"
 msgstr "已保存的命令"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "已保存的提示词"
+msgid "Saved prompts"
+msgstr "已保存的指令"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3717,8 +3699,11 @@ msgstr "启动新的 {0}"
 msgid "Start a new session with empty context"
 msgstr "以空白上下文开始新会话"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "启动一个 Agent，并交给它第一件事"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "启动一个代理，并告诉它第一件要做的事"
 
@@ -3942,8 +3927,12 @@ msgid "Terminal colours follow the theme."
 msgstr "终端配色跟随主题"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
+msgid "Terminal commands"
 msgstr "终端命令"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "终端命令与组合键"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"

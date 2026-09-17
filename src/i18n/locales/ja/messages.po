@@ -194,12 +194,12 @@ msgid "About"
 msgstr "アプリについて"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "このターミナルを操作するか、コマンドを送ります"
+msgid "Act on this terminal, or send it a command"
+msgstr "このターミナルを操作するか、コマンドを送る"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "このターミナルを操作するか、エージェントにプロンプトを送ります"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "このターミナルを操作するか、エージェントに指示を送る"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -236,7 +236,7 @@ msgid "Added"
 msgstr "追加"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
+msgid "Agent"
 msgstr "エージェント"
 
 #: src/components/agent-workbench.tsx
@@ -250,8 +250,8 @@ msgid "Agent collaboration"
 msgstr "エージェント連携"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
-msgstr "エージェントコマンド"
+msgid "Agent commands"
+msgstr "エージェントのコマンド"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-collaboration-output.ts
@@ -355,10 +355,6 @@ msgstr "回答"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "回答：{0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "{label} がポートで公開しているもの——開発サーバー、プレビュー、ダッシュボードなど"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -739,7 +735,6 @@ msgid "Clearing…"
 msgstr "削除しています…"
 
 #: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Close"
 msgstr "閉じる"
@@ -757,7 +752,6 @@ msgid "Close files"
 msgstr "ファイル一覧を閉じる"
 
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "新規タスクを閉じる"
 
@@ -770,10 +764,6 @@ msgstr "ペアリングを閉じる"
 #: src/components/image-preview-modal.tsx
 msgid "Close preview"
 msgstr "プレビューを閉じる"
-
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "クイックアクションを閉じる"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1340,10 +1330,6 @@ msgstr "現在のテーマ"
 msgid "Custom"
 msgstr "カスタム"
 
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "ターミナルのコマンドとキーの組み合わせをカスタマイズします"
-
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
@@ -1424,7 +1410,7 @@ msgid "Directories"
 msgstr "ディレクトリ"
 
 #: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
+msgid "Directory"
 msgstr "ディレクトリ"
 
 #. placeholder {0}: record.label
@@ -1668,8 +1654,8 @@ msgid "Fingerprint"
 msgstr "フィンガープリント"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "最初のプロンプト"
+msgid "First prompt"
+msgstr "最初の指示"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -2313,8 +2299,8 @@ msgid "New Session"
 msgstr "新規セッション"
 
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "新規ショートカット"
+msgid "New shortcut"
+msgstr "新しいショートカット"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2819,10 +2805,6 @@ msgstr "サーバーでOpenCodeを起動してください: opencode serve --ser
 msgid "Port"
 msgstr "ポート"
 
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
-msgstr "ポート"
-
 #: src/components/theme-browse-sheet.tsx
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
@@ -3279,12 +3261,12 @@ msgid "Saved"
 msgstr "保存済み"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
+msgid "Saved commands"
 msgstr "保存したコマンド"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "保存したプロンプト"
+msgid "Saved prompts"
+msgstr "保存した指示"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3717,8 +3699,11 @@ msgstr "新しい {0} を起動"
 msgid "Start a new session with empty context"
 msgstr "空のコンテキストで新しいセッションを開始します"
 
-#: src/app/commands.tsx
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "エージェントを起動して、最初にやることを送る"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "エージェントを起動して、最初にやることを伝えます"
 
@@ -3942,8 +3927,12 @@ msgid "Terminal colours follow the theme."
 msgstr "ターミナルの色はテーマに従います"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
-msgstr "ターミナルコマンド"
+msgid "Terminal commands"
+msgstr "ターミナルのコマンド"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "ターミナルのコマンドとキーの組み合わせ"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"

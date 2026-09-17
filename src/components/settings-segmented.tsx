@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Text as NativeText } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { INSTANT, PRESET, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 
@@ -132,6 +133,15 @@ export function SettingsSegmented({
         // itself and the selected side goes muddy, which is the legibility
         // problem again one layer up. Two opaque fills, one mark.
         onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}>
+        {/*
+          The pack's `tabs.background`, on the one tabbed control the app has.
+          It used to be painted per screen -- the commands sheet drew its own
+          strip -- which meant the slot lived or died with that screen. A pack
+          authoring it now decorates every segmented control at once, and the
+          artwork is under the track's fill and under the pill, so neither the
+          mark nor the chosen side loses contrast to it.
+        */}
+        <ThemedSurfaceArtwork slot="tabs.background" baseColor={theme.colors.surfaceRaised} />
         <Animated.View
           pointerEvents="none"
           style={[
