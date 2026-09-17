@@ -1389,9 +1389,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
+  // `left: 0` because the menu carries the dock's own 12pt gutter itself.
   attachmentAnchor: {
     position: 'absolute',
-    left: 12,
+    left: 0,
     zIndex: 2,
   },
   popupWrapper: {
