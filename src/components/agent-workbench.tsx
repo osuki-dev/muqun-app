@@ -41,6 +41,7 @@ import {
   sendAgentPrompt,
   abortAgentSession,
   switchAgentModel,
+  switchAgentMode,
   replyAgentPermission,
   replyAgentForm,
   getAgentVcsDiff,
@@ -242,7 +243,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [openToolAsset, setOpenToolAsset] = useState<SessionAsset | null>(null);
 
   const [selectedModel, setSelectedModel] = useState<ModelRef | undefined>(undefined);
-  const [selectedAgent, setSelectedAgent] = useState<string | undefined>('build');
+  /**
+   * The agent the session runs, and whether the *reader* chose it.
+   *
+   * It used to start as `'build'` and be sent on every session create, which
+   * overrode whatever the host had configured. The contract is explicit about
+   * this: omitting `model` and `agent` is how a new session gets the user's own
+   * defaults, and the gateway no longer substitutes one. So what is sent on a
+   * create is what the reader picked, and nothing when they have picked
+   * nothing -- while the chips still show the catalog's `defaults`, so the
+   * screen is not blank about which model is about to run.
+   */
+  const [selectedAgent, setSelectedAgent] = useState<string | undefined>(undefined);
+  const pickedAgentRef = useRef(false);
+  const pickedModelRef = useRef(false);
   // YOLO mode: every permission request is answered automatically, `allow`
   // except for the irreversibly dangerous commands the safety list denies.
   // Mirrored in a ref so the stream handler sees the current value without
@@ -263,6 +277,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     appliedModelRef.current = model;
     setSelectedModel(model);
   }, []);
+
+  /**
+   * What a `POST /api/agent-sessions` carries.
+   *
+   * Only the parts the reader actually chose. Omitting `model` is the
+   * documented way to get the user's configured default, and a display
+   * fallback sent as a real field is not a default -- it is this app
+   * overriding the host.
+   */
+  const newSessionParams = useCallback(
+    (directory?: string) => ({
+      ...(pickedAgentRef.current && selectedAgent ? { agent: selectedAgent } : {}),
+      ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
+      ...(directory ? { directory } : {}),
+    }),
+    [selectedAgent, selectedModel]
+  );
   const [showReasoning, setShowReasoning] = useState<boolean>(true);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
   // The catalog's own slash commands, which go to `POST …/command` rather than
@@ -310,15 +341,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setSkills(catalog.skills);
         }
         setCommands(catalog?.commands ?? []);
-        if (catalog?.models && catalog.models.length > 0 && !appliedModelRef.current) {
-          const defaultModel =
-            catalog.models.find((m) => m.id.includes('free') || m.id.includes('spark')) ||
-            catalog.models[0];
-          const ref: ModelRef = {
-            provider_id: defaultModel.provider_id,
-            model_id: defaultModel.id,
-          };
-          applySelectedModel(ref);
+        // The host's own defaults, shown as the current selection. What was
+        // here before was a guess -- the first model whose id contained "free"
+        // or "spark" -- and it was then *sent* on every session create, so a
+        // host configured for something else got this app's guess instead.
+        if (catalog?.defaults.model && !appliedModelRef.current) {
+          applySelectedModel(catalog.defaults.model);
+        }
+        if (catalog?.defaults.agent && !pickedAgentRef.current) {
+          setSelectedAgent(catalog.defaults.agent);
         }
       })
       .catch((err) => {
@@ -889,6 +920,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
+      pickedModelRef.current = true;
       applySelectedModel(model);
       // The server owns the per-session model via this call; on next entry the
       // session's own model is restored from it (see loadSnapshot).
@@ -1031,11 +1063,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     let currentAsid = activeAsid;
     if (!currentAsid) {
       try {
-        const created = await createAgentSession(sessionId, {
-          agent: selectedAgent,
-          model: selectedModel,
-          directory: activeDirectory ?? sessionInfo?.directory,
-        });
+        const created = await createAgentSession(
+          sessionId,
+          newSessionParams(activeDirectory ?? sessionInfo?.directory)
+        );
         currentAsid = created.asid;
         setActiveAsid(created.asid);
         setSessionInfo(created);
@@ -1129,6 +1160,33 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   }, [activeAsid, sessionId, showToast, t]);
 
+  /**
+   * The agent mode, switched on the session rather than in a local variable.
+   *
+   * `switchAgentMode` existed in the client with no caller: picking Plan set a
+   * string in this component, drew a different word on the chip, and the
+   * session went on running Build. Model and agent are both session state in
+   * v2 -- switch first, then prompt -- so this is the same shape as the model
+   * picker, including the toast when the engine refuses (it does refuse: agent
+   * ids are lowercase, and a display name is rejected).
+   */
+  const handleSelectAgentMode = useCallback(
+    (agent: string) => {
+      pickedAgentRef.current = true;
+      setSelectedAgent(agent);
+      if (!activeAsid) return;
+      switchAgentMode(activeAsid, agent).catch((err) => {
+        console.warn('Failed to switch agent:', err);
+        showToast({
+          variant: 'danger',
+          title: t`Could not switch agent`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+      });
+    },
+    [activeAsid, showToast, t]
+  );
+
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
       if (!activeAsid) return;
@@ -1189,11 +1247,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       return;
     }
     try {
-      const created = await createAgentSession(sessionId, {
-        agent: selectedAgent,
-        model: selectedModel,
-        directory: activeDirectory ?? sessionInfo?.directory,
-      });
+      const created = await createAgentSession(
+        sessionId,
+        newSessionParams(activeDirectory ?? sessionInfo?.directory)
+      );
       setActiveAsid(created.asid);
       setSessionInfo(created);
       setTimeline([]);
@@ -1220,8 +1277,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [
     isOffline,
     sessionId,
-    selectedAgent,
-    selectedModel,
+    newSessionParams,
     activeDirectory,
     sessionInfo,
     t,
@@ -1248,11 +1304,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     async (directory: string, project?: AgentProject) => {
       setActiveDirectory(directory);
       try {
-        const created = await createAgentSession(sessionId, {
-          agent: selectedAgent,
-          model: selectedModel,
-          directory,
-        });
+        const created = await createAgentSession(sessionId, newSessionParams(directory));
         setActiveAsid(created.asid);
         setSessionInfo(created);
         setTimeline([]);
@@ -1271,7 +1323,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
       }
     },
-    [sessionId, selectedAgent, selectedModel, t, refreshSessions, showToast]
+    [sessionId, newSessionParams, t, refreshSessions, showToast]
   );
 
   /**
@@ -1889,7 +1941,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         void handleCreateNewSession();
       },
       selectModel: handleSelectModel,
-      selectAgentMode: setSelectedAgent,
+      selectAgentMode: handleSelectAgentMode,
       selectWorkspace: (directory, project) => {
         void handleSelectWorkspace(directory, project);
       },
@@ -1901,6 +1953,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [
       handleCreateNewSession,
       handleSelectModel,
+      handleSelectAgentMode,
       handleSelectWorkspace,
       handleToggleReasoning,
       handleToggleYoloMode,
@@ -2213,7 +2266,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onSend={handleSendPrompt}
         onAbort={handleAbort}
         onSelectSession={setActiveAsid}
-        onSelectAgentMode={setSelectedAgent}
+        onSelectAgentMode={handleSelectAgentMode}
         onCreateNewSession={handleCreateNewSession}
         onOpenModeSheet={openModeSheet}
         onOpenModelSheet={openModelSheet}

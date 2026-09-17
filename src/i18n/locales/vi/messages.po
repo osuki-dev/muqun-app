@@ -1478,6 +1478,10 @@ msgid "Could not stop this agent."
 msgstr "Không thể dừng tác tử này"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch agent"
+msgstr "Không thể đổi tác nhân"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "Không thể hoàn tác"
 

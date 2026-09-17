@@ -1478,6 +1478,10 @@ msgid "Could not stop this agent."
 msgstr "Dieser Agent konnte nicht gestoppt werden"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch agent"
+msgstr "Agent konnte nicht gewechselt werden"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "Rückgängig nicht möglich"
 

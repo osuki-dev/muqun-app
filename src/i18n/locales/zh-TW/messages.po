@@ -1478,6 +1478,10 @@ msgid "Could not stop this agent."
 msgstr "無法停止這個代理程式"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch agent"
+msgstr "無法切換 Agent"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "無法復原"
 
