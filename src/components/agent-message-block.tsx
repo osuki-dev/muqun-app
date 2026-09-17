@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
@@ -26,11 +26,12 @@ import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { EmbeddedTerminalToolBlock } from '@/components/embedded-terminal-tool-block';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { InlineDiffRows } from '@/components/diff-rows';
 import { useRelativeTime } from '@/hooks/use-relative-time';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, timing } from '@/lib/motion';
 import { isSafeExternalLink } from '@/lib/safe-link';
-import { keyedLines, type KeyedLine } from '@/lib/line-keys';
+import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
 import { formatModelName, type AgentPart, type TimelineItem } from '@/lib/agent-session';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 
@@ -183,49 +184,28 @@ function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string 
 }
 
 /**
- * Patch lines, never wrapped and coloured by their marker in the terminal's
- * red and green. Shared by the `diff` part and by `diff` fences inside an
- * assistant's markdown.
+ * A patch, as the rows the diff viewer draws.
+ *
+ * This used to be a `ScrollView` of marker-coloured `<Text>` with no line
+ * numbers -- one of four hand-rolled patch painters in this tree, each with its
+ * own greens and reds. It is the real rows now: the same parser, the same
+ * gutter, the same palette and the same character advance as the changes sheet,
+ * capped so a fifty-thousand-line patch cannot land fifty thousand `<Text>`
+ * nodes in one timeline cell.
  */
-const DiffPatchLines = memo(function DiffPatchLines({ lines }: { lines: KeyedLine[] }) {
+const InlinePatch = memo(function InlinePatch({ patch }: { patch: string }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
+  const rows = useMemo(() => diffRowsForFence(patch), [patch]);
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.inlineDiffScroll}>
-      <View style={styles.inlineDiffBody}>
-        {lines.map(({ line, key }) => {
-          const marker = line.charAt(0);
-          const added = marker === '+';
-          const removed = marker === '-';
-          const hunk = marker === '@';
-          return (
-            <Text
-              key={key}
-              selectable
-              style={[
-                styles.diffLine,
-                {
-                  color: added
-                    ? colors.added
-                    : removed
-                      ? colors.removed
-                      : hunk
-                        ? theme.colors.primary
-                        : colors.muted,
-                  backgroundColor: added
-                    ? colors.addedBackground
-                    : removed
-                      ? colors.removedBackground
-                      : 'transparent',
-                  fontStyle: hunk ? 'italic' : undefined,
-                },
-              ]}>
-              {line || ' '}
-            </Text>
-          );
-        })}
-      </View>
-    </ScrollView>
+    <InlineDiffRows
+      rows={rows}
+      colors={colors}
+      // Opaque on purpose: the gutter is a plane that panned code slides under,
+      // and a translucent one would let the code show through the numbers.
+      gutterFill={theme.colors.surface}
+      headerFill={theme.colors.surfaceRaised}
+    />
   );
 });
 
@@ -252,21 +232,10 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
     transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
   }));
 
-  const keyedDiffLines = useMemo(() => keyedLines(diff), [diff]);
-  const lines = useMemo(() => keyedDiffLines.map((l) => l.line), [keyedDiffLines]);
-  const stats = useMemo(() => {
-    let added = 0;
-    let removed = 0;
-    for (const line of lines) {
-      if (line.startsWith('+') && !line.startsWith('+++')) added++;
-      else if (line.startsWith('-') && !line.startsWith('---')) removed++;
-    }
-    return { added, removed };
-  }, [lines]);
-
-  // Long patches are shown whole — no silent truncation — with the patch rows'
-  // own horizontal scroll ready for over-long lines.
-  const shown = keyedDiffLines;
+  const stats = useMemo(
+    () => ({ added: countMarked(diff, '+'), removed: countMarked(diff, '-') }),
+    [diff]
+  );
 
   return (
     <Animated.View style={styles.diffBlock}>
@@ -302,7 +271,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
         <Animated.View entering={fadeIn('micro')} style={styles.diffBodyWrap}>
           {/* Never wrapped: a re-wrapped diff line no longer lines up with the
               one above it, which is the only thing a diff is read for. */}
-          <DiffPatchLines lines={shown} />
+          <InlinePatch patch={diff} />
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -379,7 +348,7 @@ const MessageTextPart = memo(function MessageTextPart({
         seg.kind === 'md' ? (
           renderMarkdown(`md-${segIdx}`, seg.text)
         ) : (
-          <DiffPatchLines key={`diff-${segIdx}`} lines={keyedLines(seg.text)} />
+          <InlinePatch key={`diff-${segIdx}`} patch={seg.text} />
         )
       )}
     </View>
@@ -736,12 +705,6 @@ const styles = StyleSheet.create({
     gap: 6,
     alignSelf: 'stretch',
   },
-  inlineDiffScroll: {
-    maxWidth: '100%',
-  },
-  inlineDiffBody: {
-    paddingVertical: 2,
-  },
   statusRow: {
     paddingVertical: 2,
   },
@@ -770,10 +733,5 @@ const styles = StyleSheet.create({
   },
   diffChevron: {
     padding: 2,
-  },
-  diffLine: {
-    fontFamily: 'monospace',
-    fontSize: 11.5,
-    lineHeight: 17,
   },
 });

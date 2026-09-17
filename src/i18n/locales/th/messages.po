@@ -53,8 +53,9 @@ msgstr "{0, plural, other {# ชั่วโมง}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# นาที}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {อีก # บรรทัด}}"
 
@@ -540,7 +541,7 @@ msgstr "ต่ำกว่า {minimumPercent}% จะไม่รับปร�
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
 msgstr "อยู่ระหว่างส่วนหัวกับเซิร์ฟเวอร์ของคุณ เมื่อแสดง หากธีมไม่มีภาพสำหรับหน้าแรก จะใช้ภาพหน้าว่างของธีมแทน"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "ไฟล์ไบนารี"
 
@@ -555,6 +556,10 @@ msgstr "ถูกบล็อก"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "ถูกบล็อกโดยระบบความปลอดภัยของเอเจนต์"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "สาขา"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -895,6 +900,10 @@ msgstr "คอมมิต"
 #: src/i18n/labels.ts
 msgid "Commit & push"
 msgstr "คอมมิตและพุช"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "คอมมิตแล้ว"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
@@ -1844,7 +1853,7 @@ msgstr "ซ่อนอยู่"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "ซ่อน {0}"
@@ -2417,10 +2426,6 @@ msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
 msgid "No changes. The working tree matches HEAD."
 msgstr "ไม่มีการเปลี่ยนแปลง พื้นที่ทำงานตรงกับ HEAD"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No diff preview available for binary or unmodified files."
-msgstr "ไม่มีการแสดงตัวอย่าง diff สำหรับไฟล์ไบนารีหรือไฟล์ที่ไม่ได้แก้ไข"
-
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "ไม่พบไฟล์ที่ตรงกัน"
@@ -2502,7 +2507,7 @@ msgstr "ยังไม่มีโฮสต์ SSH เพิ่มโฮสต�
 msgid "No still frames"
 msgstr "ไม่มีภาพนิ่ง"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "ไม่มีข้อความเปลี่ยนแปลง"
 
@@ -3587,7 +3592,7 @@ msgstr "Shift Tab สลับโหมด"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "แสดง {0}"
@@ -3640,7 +3645,7 @@ msgstr "แสดงภาพประกอบในหน้าแรก"
 msgid "Show images"
 msgstr "แสดงรูปภาพ"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "แสดงเพิ่มเติม"
 
@@ -3655,6 +3660,10 @@ msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "แสดงรายการการเปลี่ยนแปลงใหม่กว่า"
+
+#: src/components/diff-rows.tsx
+msgid "Show the rest of this diff"
+msgstr "แสดงส่วนที่เหลือของ diff นี้"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3770,11 +3779,12 @@ msgstr "โฮสต์ SSH"
 msgid "SSH tunnel through {host} is down"
 msgstr "อุโมงค์ SSH ผ่าน {host} ขัดข้อง"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "เตรียมคอมมิตแล้ว"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "เตรียมคอมมิตแล้วและยังไม่เตรียม"
 
@@ -4486,6 +4496,7 @@ msgstr "กำลังเลิกจับคู่ {label}"
 msgid "Unpairing…"
 msgstr "กำลังเลิกจับคู่…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "ยังไม่เตรียมคอมมิต"
@@ -4623,6 +4634,7 @@ msgstr "เมื่อเอเจนต์หยุดเพื่อขอก
 msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

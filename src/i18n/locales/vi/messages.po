@@ -53,8 +53,9 @@ msgstr "{0, plural, other {# giờ}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# phút}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {còn # dòng nữa}}"
 
@@ -540,7 +541,7 @@ msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ 
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
 msgstr "Nằm giữa phần đầu trang và danh sách máy chủ. Chọn “Hiển thị” cũng sẽ mượn ảnh trạng thái trống của chủ đề khi chủ đề không có hình minh hoạ riêng cho trang chủ"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "Tệp nhị phân"
 
@@ -555,6 +556,10 @@ msgstr "Đang chờ"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Bị chặn bởi tính năng an toàn của agent"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "Nhánh"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -895,6 +900,10 @@ msgstr "Commit"
 #: src/i18n/labels.ts
 msgid "Commit & push"
 msgstr "Commit và push"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "Đã commit"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
@@ -1844,7 +1853,7 @@ msgstr "Ẩn"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "Ẩn {0}"
@@ -2417,10 +2426,6 @@ msgstr "Không tìm thấy camera trên thiết bị này"
 msgid "No changes. The working tree matches HEAD."
 msgstr "Không có thay đổi. Cây làm việc trùng với HEAD"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No diff preview available for binary or unmodified files."
-msgstr "Không có xem trước diff cho tệp nhị phân hoặc chưa sửa đổi"
-
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Không có tệp nào khớp"
@@ -2502,7 +2507,7 @@ msgstr "Chưa có host SSH nào. Thêm một cái để mở shell trên bất k
 msgid "No still frames"
 msgstr "Không có khung hình tĩnh"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "Không có thay đổi văn bản"
 
@@ -3587,7 +3592,7 @@ msgstr "Shift Tab, chuyển chế độ"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "Hiện {0}"
@@ -3640,7 +3645,7 @@ msgstr "Hiển thị hình minh hoạ trên trang chủ"
 msgid "Show images"
 msgstr "Hiện hình ảnh"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Hiện thêm"
 
@@ -3655,6 +3660,10 @@ msgstr "Hiện bàn phím soạn thảo"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "Hiện danh sách thay đổi mới hơn"
+
+#: src/components/diff-rows.tsx
+msgid "Show the rest of this diff"
+msgstr "Hiện phần còn lại của diff này"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3770,11 +3779,12 @@ msgstr "Host SSH"
 msgid "SSH tunnel through {host} is down"
 msgstr "Đường hầm SSH qua {host} đã ngắt"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "Đã staged"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "Đã staged và chưa staged"
 
@@ -4486,6 +4496,7 @@ msgstr "Đang hủy ghép nối {label}"
 msgid "Unpairing…"
 msgstr "Đang hủy ghép nối…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Chưa staged"
@@ -4623,6 +4634,7 @@ msgstr "Khi tác nhân dừng để xin xác nhận, thông báo đẩy sẽ đ�
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

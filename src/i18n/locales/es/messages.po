@@ -53,8 +53,9 @@ msgstr "{0, plural, one {# hora} other {# horas}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, one {# minuto} other {# minutos}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# línea más} other {# líneas más}}"
 
@@ -540,7 +541,7 @@ msgstr "Por debajo del {minimumPercent}%, ya no se garantiza que el texto siga s
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
 msgstr "Entre la cabecera y tus servidores. «Mostrada» también toma prestada la imagen de estado vacío del tema cuando este no tiene su propia ilustración de Inicio"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "Archivo binario"
 
@@ -555,6 +556,10 @@ msgstr "Bloqueado"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Bloqueado por la seguridad del agente"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "Rama"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -895,6 +900,10 @@ msgstr "Commit"
 #: src/i18n/labels.ts
 msgid "Commit & push"
 msgstr "Commit y push"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "Confirmado"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
@@ -1844,7 +1853,7 @@ msgstr "Oculta"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "Ocultar {0}"
@@ -2417,10 +2426,6 @@ msgstr "No se encontró ninguna cámara en este dispositivo"
 msgid "No changes. The working tree matches HEAD."
 msgstr "Sin cambios. El árbol de trabajo coincide con HEAD"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No diff preview available for binary or unmodified files."
-msgstr "No hay vista previa para archivos binarios o sin cambios"
-
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Ningún archivo coincide"
@@ -2502,7 +2507,7 @@ msgstr "Aún no hay hosts SSH. Añade uno para abrir una shell en cualquier máq
 msgid "No still frames"
 msgstr "Sin imágenes fijas"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "Sin cambios de texto"
 
@@ -3587,7 +3592,7 @@ msgstr "Mayús Tab, cambiar de modo"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "Mostrar {0}"
@@ -3640,7 +3645,7 @@ msgstr "Mostrar la ilustración en Inicio"
 msgid "Show images"
 msgstr "Mostrar imágenes"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Mostrar más"
 
@@ -3655,6 +3660,10 @@ msgstr "Mostrar el teclado del editor"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "Mostrar la lista de cambios más reciente"
+
+#: src/components/diff-rows.tsx
+msgid "Show the rest of this diff"
+msgstr "Mostrar el resto de este diff"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3770,11 +3779,12 @@ msgstr "Hosts SSH"
 msgid "SSH tunnel through {host} is down"
 msgstr "El túnel SSH a través de {host} está caído"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "Preparado"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "Preparado y sin preparar"
 
@@ -4486,6 +4496,7 @@ msgstr "Desvinculando {label}"
 msgid "Unpairing…"
 msgstr "Desvinculando…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Sin preparar"
@@ -4623,6 +4634,7 @@ msgstr "Cuando un agente solicita confirmación, el aviso llega como notificaci�
 msgid "While you were away"
 msgstr "Mientras no estabas"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

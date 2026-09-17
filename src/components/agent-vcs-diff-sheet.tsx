@@ -1,23 +1,37 @@
-import { memo, useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { GitCommit, FileCode, X } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { X } from 'lucide-react-native';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
-import { ThemedSurface } from '@/components/themed-surface';
-import { LADDER, SettingsCard } from '@/components/settings-chrome';
+import { SettingsSegmented } from '@/components/settings-segmented';
+import { DiffRowList } from '@/components/diff-rows';
+import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { LADDER } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { withAlpha } from '@/lib/color';
-import { getAgentVcsDiff, type FileDiffItem } from '@/lib/agent-session';
-import { keyedLines } from '@/lib/line-keys';
+import { diffRowsFromPatches } from '@/lib/agent-diff-rows';
+import { closeFile, openFile } from '@/lib/gateway-client';
+import { getAgentVcsDiff, type FileDiffItem, type VcsDiffMode } from '@/lib/agent-session';
 
 /**
  * What the agent changed on disk, as a native form sheet route.
+ *
+ * The terminal side already has a diff viewer -- a file list of what changed,
+ * sticky file headers, a pinned gutter and one horizontal scroller for the
+ * whole body -- and this used to be a second design: a horizontal strip of file
+ * tabs over a plain `ScrollView` of marker-coloured `<Text>`, with no line
+ * numbers and a third set of greens and reds. Two designs for one thing, and
+ * the one thing a diff must do is let the reader compare columns.
+ *
+ * So the body is `DiffRowList`, exactly as the terminal's sheet draws it. What
+ * differs is only the source: this one is handed every file's whole patch by
+ * `GET …/vcs/diff`, so there is no paging and no "show more" row, and the
+ * segmented control picks the comparison OpenCode requires -- `mode` is not
+ * optional there, and omitting it is why this sheet used to come back empty.
  */
 export interface AgentVcsDiffSheetProps {
   sessionId: string;
@@ -33,24 +47,28 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const theme = useThemeTokens();
   const { t } = useLingui();
   const plate = useSheetGroundPlate();
-  const insets = useSafeAreaInsets();
+  const colors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
-  const [loading, setLoading] = useState(false);
-  const [diffs, setDiffs] = useState<FileDiffItem[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
-  // Fetched once per opening: a route mounts when it opens. `selectedFile` is
-  // deliberately not a dependency -- it used to be, so picking a tab refetched
-  // the whole diff set.
+  const [loading, setLoading] = useState(false);
+  const [diffs, setDiffs] = useState<readonly FileDiffItem[]>([]);
+  const [mode, setMode] = useState<VcsDiffMode>('working');
+  /** Which files are open, oldest first: the same eviction rule as the sheet. */
+  const [expandedOrder, setExpandedOrder] = useState<readonly string[]>([]);
+
+  // Fetched once per opening and once per mode: a route mounts when it opens.
   useEffect(() => {
-    if (!sessionId || !asid) return;
+    if (!asid) return;
     let active = true;
     setLoading(true);
-    getAgentVcsDiff(sessionId, asid)
+    getAgentVcsDiff(sessionId, asid, mode)
       .then((items) => {
         if (!active) return;
         setDiffs(items);
-        setSelectedFile((current) => current ?? items[0]?.path ?? null);
+        // A single changed file is opened without being asked; with more than
+        // one on screen, opening one of them is a choice the sheet must not
+        // make for the reader.
+        setExpandedOrder(items.length === 1 ? [items[0].path] : []);
       })
       .catch((err) => {
         console.warn('Failed to load VCS diff:', err);
@@ -61,9 +79,27 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, asid]);
+  }, [sessionId, asid, mode]);
 
-  const activeDiff = diffs.find((d) => d.path === selectedFile) ?? diffs[0];
+  const changeMode = useCallback((next: string) => {
+    if (next !== 'working' && next !== 'branch' && next !== 'committed') return;
+    // A different comparison is different text; the list starts collapsed
+    // again, which is also the honest reading position.
+    setExpandedOrder([]);
+    setDiffs([]);
+    setMode(next);
+  }, []);
+
+  const toggleFile = useCallback((path: string) => {
+    setExpandedOrder((order) =>
+      order.includes(path) ? closeFile(order, path) : openFile(order, path)
+    );
+  }, []);
+
+  const noShowMore = useCallback(() => {}, []);
+
+  const expanded = useMemo(() => new Set(expandedOrder), [expandedOrder]);
+  const rows = useMemo(() => diffRowsFromPatches(diffs, expanded), [diffs, expanded]);
 
   return (
     // One ground and one layout column: the two subviews a native form sheet
@@ -96,126 +132,39 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
             </GlassChrome>
           </View>
 
-          {/* File list tabs */}
-          {diffs.length > 0 ? (
-            <ThemedSurface
-              slot="tabs.background"
-              baseColor={theme.colors.surface}
-              style={styles.fileTabsStrip}>
-              <FlatList
-                horizontal
-                data={diffs}
-                keyExtractor={(d) => d.path}
-                extraData={selectedFile}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.fileTabsContent}
-                renderItem={({ item: d }) => {
-                  const isSelected = selectedFile === d.path;
-                  const fileName = d.path.split('/').pop() ?? d.path;
-                  return (
-                    <PressableScale
-                      onPress={() => setSelectedFile(d.path)}
-                      style={[
-                        styles.fileTab,
-                        isSelected && {
-                          backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-                        },
-                      ]}>
-                      <FileCode
-                        size={13}
-                        color={isSelected ? theme.colors.primary : theme.colors.textMuted}
-                      />
-                      <Text
-                        variant="caption"
-                        color={isSelected ? theme.colors.primary : theme.colors.text}
-                        style={styles.fileName}>
-                        {fileName}
-                      </Text>
-                      <View style={styles.statsBadge}>
-                        {d.additions > 0 ? (
-                          <Text
-                            variant="caption"
-                            color={theme.colors.success}
-                            style={styles.statAdd}>
-                            +{d.additions}
-                          </Text>
-                        ) : null}
-                        {d.deletions > 0 ? (
-                          <Text
-                            variant="caption"
-                            color={theme.colors.danger}
-                            style={styles.statDel}>
-                            -{d.deletions}
-                          </Text>
-                        ) : null}
-                      </View>
-                    </PressableScale>
-                  );
-                }}
-              />
-            </ThemedSurface>
-          ) : null}
+          <SettingsSegmented
+            options={[
+              { value: 'working', label: t`Working` },
+              { value: 'branch', label: t`Branch` },
+              { value: 'committed', label: t`Committed` },
+            ]}
+            value={mode}
+            onChange={changeMode}
+            testID="agent-vcs-diff-mode"
+          />
         </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <Spinner size="lg" color={theme.colors.primary} />
-          </View>
-        ) : diffs.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <GitCommit size={36} color={theme.colors.textSubtle} />
-            <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-              <Trans>No uncommitted file changes.</Trans>
-            </Text>
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.scrollViewport}
-            contentContainerStyle={[
-              styles.content,
-              { paddingBottom: LADDER.section + insets.bottom },
-            ]}>
-            {activeDiff?.patch ? (
-              <SettingsCard>
-                <View style={styles.patchContainer}>
-                  {keyedLines(activeDiff.patch).map(({ line, key }) => {
-                    const isAdd = line.startsWith('+') && !line.startsWith('+++');
-                    const isDel = line.startsWith('-') && !line.startsWith('---');
-                    const isHunk = line.startsWith('@@');
-
-                    let lineBg = 'transparent';
-                    let lineFg = theme.colors.text;
-
-                    if (isAdd) {
-                      lineBg = withAlpha(theme.colors.success, 0.09);
-                      lineFg = theme.colors.success;
-                    } else if (isDel) {
-                      lineBg = withAlpha(theme.colors.danger, 0.09);
-                      lineFg = theme.colors.danger;
-                    } else if (isHunk) {
-                      lineBg = withAlpha(theme.colors.primary, 0.07);
-                      lineFg = theme.colors.primary;
-                    }
-
-                    return (
-                      <View key={key} style={[styles.patchLineRow, { backgroundColor: lineBg }]}>
-                        <Text variant="caption" style={[styles.patchLineText, { color: lineFg }]}>
-                          {line || ' '}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </SettingsCard>
+        <DiffRowList
+          rows={rows}
+          colors={colors}
+          gutterFill={theme.colors.surface}
+          headerFill={theme.colors.surfaceRaised}
+          surfaceFill={surfaceBackground(theme.colors.surface)}
+          // There is no index to attribute an agent's edits to, so there is no
+          // staged/unstaged mark to show either.
+          showSide={false}
+          onToggleFile={toggleFile}
+          onShowMore={noShowMore}
+          fallback={
+            loading ? (
+              <ActivityIndicator size="small" color={theme.colors.textMuted} />
             ) : (
-              <View style={styles.emptyContainer}>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>No diff preview available for binary or unmodified files.</Trans>
-                </Text>
-              </View>
-            )}
-          </ScrollView>
-        )}
+              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.stateText}>
+                <Trans>No uncommitted file changes.</Trans>
+              </Text>
+            )
+          }
+        />
       </View>
     </SheetFrame>
   );
@@ -261,71 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fileTabsStrip: {
-    padding: 3,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-  },
-  fileTabsContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  fileTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    minHeight: 30,
-    borderRadius: 9,
-    borderCurve: 'continuous',
-  },
-  fileName: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  statsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statAdd: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  statDel: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  loadingContainer: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyContainer: {
-    padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  emptyText: {
+  stateText: {
     textAlign: 'center',
-  },
-  scrollViewport: { flex: 1, minHeight: 0, overflow: 'hidden' },
-  content: {
-    paddingHorizontal: LADDER.gutter,
-    paddingTop: 4,
-  },
-  patchContainer: {
-    paddingVertical: 8,
-  },
-  patchLineRow: {
-    paddingHorizontal: 12,
-    paddingVertical: 1,
-  },
-  patchLineText: {
-    fontFamily: 'monospace',
-    fontSize: 11,
-    lineHeight: 16,
   },
 });

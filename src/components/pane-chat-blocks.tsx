@@ -8,6 +8,8 @@ import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-
 
 import { createMarkdownStyle } from '@/lib/markdown-style';
 import { PressableScale } from '@/components/pressable-scale';
+import { InlineDiffRows } from '@/components/diff-rows';
+import { diffRowsForFence } from '@/lib/agent-diff-rows';
 import { firstLine, type PaneChatItem, type PaneChatToolBlock } from '@/lib/pane-chat';
 import type { PanePart, PanePartStatus } from '@/lib/pane-parts';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -437,8 +439,12 @@ const DiffRow = memo(function DiffRow({
   part: Extract<PanePart, { type: 'diff' }>;
   colors: PaneChatColors;
 }) {
+  const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const lines = useMemo(() => part.hunks.flatMap((hunk) => hunk.split('\n')), [part.hunks]);
+  // The fourth hand-rolled patch painter in this tree is gone: the terminal
+  // transcript draws the same rows, with the same gutter and the same greens
+  // and reds, as the changes sheet and the agent timeline.
+  const rows = useMemo(() => diffRowsForFence(part.hunks.join('\n')), [part.hunks]);
 
   return (
     <View
@@ -454,33 +460,12 @@ const DiffRow = memo(function DiffRow({
       ) : null}
       {/* Never wrapped: a re-wrapped diff line no longer lines up with the one
           above it, which is the only thing a diff is read for. */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View>
-          {lines.map((line, linePosition) => {
-            const marker = line.charAt(0);
-            const added = marker === '+';
-            const removed = marker === '-';
-            return (
-              <Text
-                key={`diff-line-${linePosition}-${line.slice(0, 16)}`}
-                selectable
-                style={[
-                  styles.diffLine,
-                  {
-                    color: added ? colors.added : removed ? colors.removed : colors.muted,
-                    backgroundColor: added
-                      ? colors.addedBackground
-                      : removed
-                        ? colors.removedBackground
-                        : 'transparent',
-                  },
-                ]}>
-                {line || ' '}
-              </Text>
-            );
-          })}
-        </View>
-      </ScrollView>
+      <InlineDiffRows
+        rows={rows}
+        colors={colors}
+        gutterFill={theme.colors.surface}
+        headerFill={theme.colors.surfaceRaised}
+      />
     </View>
   );
 });
@@ -665,12 +650,6 @@ const styles = StyleSheet.create({
   diffFile: {
     paddingHorizontal: 12,
     paddingBottom: 4,
-  },
-  diffLine: {
-    fontFamily: 'monospace',
-    fontSize: 11.5,
-    lineHeight: 17,
-    paddingHorizontal: 12,
   },
   tableCard: {
     borderRadius: 14,

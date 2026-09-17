@@ -53,8 +53,9 @@ msgstr "{0, plural, other {# 時間}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# 分}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {残り # 行}}"
 
@@ -540,7 +541,7 @@ msgstr "{minimumPercent}% を下回ると、文字が読めることは保証さ
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
 msgstr "ヘッダーとサーバーの間に表示します。「表示」を選ぶと、テーマ専用のホームイラストがない場合は空状態の画像を借用します"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "バイナリファイル"
 
@@ -555,6 +556,10 @@ msgstr "応答待ち"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "エージェントの安全機能がブロックしました"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "ブランチ"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -895,6 +900,10 @@ msgstr "コミット"
 #: src/i18n/labels.ts
 msgid "Commit & push"
 msgstr "コミットしてプッシュ"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "コミット済み"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
@@ -1844,7 +1853,7 @@ msgstr "非表示"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "{0} を隠す"
@@ -2417,10 +2426,6 @@ msgstr "このデバイスでカメラが見つかりませんでした"
 msgid "No changes. The working tree matches HEAD."
 msgstr "変更はありません。作業ツリーは HEAD と一致しています"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No diff preview available for binary or unmodified files."
-msgstr "バイナリまたは未変更ファイルには差分プレビューがありません"
-
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "一致するファイルはありません"
@@ -2502,7 +2507,7 @@ msgstr "SSH ホストはまだありません。追加すると、届く範囲�
 msgid "No still frames"
 msgstr "静止画に非対応"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "テキストの変更なし"
 
@@ -3587,7 +3592,7 @@ msgstr "シフト タブ、モードを切り替え"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "{0} を表示"
@@ -3640,7 +3645,7 @@ msgstr "ホームにイラストを表示"
 msgid "Show images"
 msgstr "画像を表示"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "さらに表示"
 
@@ -3655,6 +3660,10 @@ msgstr "エディタ用キーボードを表示"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "新しい変更一覧を表示"
+
+#: src/components/diff-rows.tsx
+msgid "Show the rest of this diff"
+msgstr "この差分の残りを表示"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3770,11 +3779,12 @@ msgstr "SSH ホスト"
 msgid "SSH tunnel through {host} is down"
 msgstr "{host} 経由の SSH トンネルが切断されています"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "ステージ済み"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "ステージ済みと未ステージ"
 
@@ -4486,6 +4496,7 @@ msgstr "{label} のペアリングを解除しています"
 msgid "Unpairing…"
 msgstr "解除しています…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "未ステージ"
@@ -4623,6 +4634,7 @@ msgstr "エージェントが確認を求めて停止したとき、通知がロ
 msgid "While you were away"
 msgstr "離席中の変化"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

@@ -53,8 +53,9 @@ msgstr "{0, plural, other {#시간}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {#분}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {#줄 더 있음}}"
 
@@ -540,7 +541,7 @@ msgstr "{minimumPercent}% 아래에서는 글자의 가독성이 보장되지 �
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
 msgstr "헤더와 서버 목록 사이에 표시됩니다. ‘표시’를 선택하면 테마에 홈 일러스트가 없을 때 빈 상태 이미지를 대신 사용합니다"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "바이너리 파일"
 
@@ -555,6 +556,10 @@ msgstr "응답 대기"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "에이전트 안전 기능이 차단함"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "브랜치"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -895,6 +900,10 @@ msgstr "커밋"
 #: src/i18n/labels.ts
 msgid "Commit & push"
 msgstr "커밋 후 푸시"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "커밋됨"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
@@ -1844,7 +1853,7 @@ msgstr "숨김"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "{0} 숨기기"
@@ -2417,10 +2426,6 @@ msgstr "이 기기에서 카메라를 찾지 못했습니다"
 msgid "No changes. The working tree matches HEAD."
 msgstr "변경 사항이 없습니다. 작업 트리가 HEAD와 같습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No diff preview available for binary or unmodified files."
-msgstr "바이너리 또는 수정되지 않은 파일은 diff 미리보기가 없습니다"
-
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "일치하는 파일이 없습니다"
@@ -2502,7 +2507,7 @@ msgstr "아직 SSH 호스트가 없습니다. 하나 추가하면 닿을 수 있
 msgid "No still frames"
 msgstr "정지 화면 없음"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "텍스트 변경 없음"
 
@@ -3587,7 +3592,7 @@ msgstr "시프트 탭, 모드 전환"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "{0} 표시"
@@ -3640,7 +3645,7 @@ msgstr "홈에 일러스트 표시"
 msgid "Show images"
 msgstr "이미지 표시"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "더 보기"
 
@@ -3655,6 +3660,10 @@ msgstr "편집기 키보드 표시"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "최신 변경 목록 보기"
+
+#: src/components/diff-rows.tsx
+msgid "Show the rest of this diff"
+msgstr "이 diff의 나머지 보기"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3770,11 +3779,12 @@ msgstr "SSH 호스트"
 msgid "SSH tunnel through {host} is down"
 msgstr "{host}을(를) 통한 SSH 터널이 끊어졌습니다"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "스테이징됨"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "스테이징됨 및 안 됨"
 
@@ -4486,6 +4496,7 @@ msgstr "{label} 페어링 해제 중"
 msgid "Unpairing…"
 msgstr "해제하는 중…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "스테이징 안 됨"
@@ -4623,6 +4634,7 @@ msgstr "에이전트가 승인을 요청하면 알림이 잠금 화면으로 바
 msgid "While you were away"
 msgstr "자리를 비운 사이"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

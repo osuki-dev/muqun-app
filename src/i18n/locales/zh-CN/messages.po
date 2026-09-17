@@ -53,8 +53,9 @@ msgstr "{0, plural, other {# 小时}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {# 分钟}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {还有 # 行}}"
 
@@ -540,7 +541,7 @@ msgstr "低于 {minimumPercent}% 后,文字不再保证可读"
 msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
 msgstr "位于标题栏与服务器之间。选择“显示”时，若主题没有自己的首页插图，也会借用它的空状态图片"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "二进制文件"
 
@@ -555,6 +556,10 @@ msgstr "等待回应"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "已被智能体安全机制拦截"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "分支"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -895,6 +900,10 @@ msgstr "提交"
 #: src/i18n/labels.ts
 msgid "Commit & push"
 msgstr "提交并推送"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "已提交"
 
 #: src/components/settings-terminal.tsx
 msgid "Compact"
@@ -1844,7 +1853,7 @@ msgstr "隐藏"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "隐藏 {0}"
@@ -2417,10 +2426,6 @@ msgstr "在本设备上找不到相机"
 msgid "No changes. The working tree matches HEAD."
 msgstr "没有改动。工作区与 HEAD 一致"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "No diff preview available for binary or unmodified files."
-msgstr "二进制或未修改的文件无差异预览"
-
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "没有匹配的文件"
@@ -2502,7 +2507,7 @@ msgstr "还没有 SSH 主机。添加一个，即可在任何能连上的机器�
 msgid "No still frames"
 msgstr "不支持静态画面"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "没有文本改动"
 
@@ -3587,7 +3592,7 @@ msgstr "Shift Tab 键，循环切换模式"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "显示 {0}"
@@ -3640,7 +3645,7 @@ msgstr "在首页显示插图"
 msgid "Show images"
 msgstr "显示图片"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "显示更多"
 
@@ -3655,6 +3660,10 @@ msgstr "显示编辑器键盘"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "显示最新的改动列表"
+
+#: src/components/diff-rows.tsx
+msgid "Show the rest of this diff"
+msgstr "显示此差异的其余部分"
 
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
@@ -3770,11 +3779,12 @@ msgstr "SSH 主机"
 msgid "SSH tunnel through {host} is down"
 msgstr "通过 {host} 的 SSH 隧道已断开"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "已暂存"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "已暂存和未暂存"
 
@@ -4486,6 +4496,7 @@ msgstr "正在取消 {label} 的配对"
 msgid "Unpairing…"
 msgstr "正在取消配对…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "未暂存"
@@ -4623,6 +4634,7 @@ msgstr "当智能体暂停请求权限时，通知直达锁屏。一键批准或
 msgid "While you were away"
 msgstr "离开期间"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
