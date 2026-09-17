@@ -2776,6 +2776,10 @@ msgstr "Mở danh sách tệp"
 msgid "Open image"
 msgstr "Mở ảnh"
 
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "Mở trong Thay đổi"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -2832,6 +2836,10 @@ msgstr "Mở trình duyệt tệp"
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "Mở phiên của tác nhân con"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "Mở diff này trong trình xem thay đổi"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3801,6 +3809,10 @@ msgstr "Hiện hình ảnh"
 msgid "Show more"
 msgstr "Hiện thêm"
 
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "Hiện thêm diff này"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "Hiển thị nền ứng dụng phía sau văn bản terminal"
@@ -3812,10 +3824,6 @@ msgstr "Hiện bàn phím soạn thảo"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "Hiện danh sách thay đổi mới hơn"
-
-#: src/components/diff-rows.tsx
-msgid "Show the rest of this diff"
-msgstr "Hiện phần còn lại của diff này"
 
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"

@@ -28,6 +28,33 @@ import type { FileDiffItem } from './agent-protocol';
 /** How many rows an inline block draws before it offers the rest. */
 export const INLINE_DIFF_MAX_ROWS = 60;
 
+/** How many more it draws each time the reader asks. */
+export const INLINE_DIFF_STEP_ROWS = 200;
+
+/**
+ * The most an inline block will ever draw, however many times it is asked.
+ *
+ * "Show the rest" used to mean exactly that: one tap replaced the cap with the
+ * whole row list, and every row in an inline block is a mounted component with
+ * its own `useAnimatedStyle` -- so a six-thousand-line patch inside a timeline
+ * cell mounted six thousand animated styles at once, in a cell that is itself
+ * inside a virtualised list. Past this, the answer is the sheet, which is
+ * virtualised and recycles.
+ */
+export const INLINE_DIFF_HARD_CAP = 1000;
+
+/**
+ * The next cap after a tap, and whether the block has run out of room.
+ *
+ * Pure so the two bounds can be tested rather than trusted: stepping never
+ * passes the hard cap, and a block already at it says so instead of offering a
+ * tap that would do nothing.
+ */
+export function stepDiffLimit(current: number): { limit: number; exhausted: boolean } {
+  const next = Math.min(current + INLINE_DIFF_STEP_ROWS, INLINE_DIFF_HARD_CAP);
+  return { limit: next, exhausted: next >= INLINE_DIFF_HARD_CAP };
+}
+
 /**
  * What git would have called this change, read out of the patch header.
  *

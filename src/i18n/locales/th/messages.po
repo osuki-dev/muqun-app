@@ -2776,6 +2776,10 @@ msgstr "เปิดไฟล์"
 msgid "Open image"
 msgstr "เปิดรูปภาพ"
 
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "เปิดในหน้าการเปลี่ยนแปลง"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -2832,6 +2836,10 @@ msgstr "เปิดตัวสำรวจไฟล์"
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "เปิดเซสชันของซับเอเจนต์"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "เปิด diff นี้ในตัวดูการเปลี่ยนแปลง"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3801,6 +3809,10 @@ msgstr "แสดงรูปภาพ"
 msgid "Show more"
 msgstr "แสดงเพิ่มเติม"
 
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "แสดง diff นี้เพิ่มเติม"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "แสดงพื้นหลังแอปหลังข้อความเทอร์มินัล"
@@ -3812,10 +3824,6 @@ msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "แสดงรายการการเปลี่ยนแปลงใหม่กว่า"
-
-#: src/components/diff-rows.tsx
-msgid "Show the rest of this diff"
-msgstr "แสดงส่วนที่เหลือของ diff นี้"
 
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"

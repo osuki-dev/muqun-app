@@ -186,6 +186,8 @@ export interface AgentToolActions {
   onOpenBackgroundTray?: () => void;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+  /** The virtualised changes viewer, for a patch too big to draw in a cell. */
+  onOpenFullDiff?: () => void;
   /** Live status per child session, from that session's own status events. */
   childStatuses?: Readonly<Record<string, AgentRunStatus>>;
   /**
@@ -337,7 +339,13 @@ function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string 
  * capped so a fifty-thousand-line patch cannot land fifty thousand `<Text>`
  * nodes in one timeline cell.
  */
-const InlinePatch = memo(function InlinePatch({ patch }: { patch: string }) {
+const InlinePatch = memo(function InlinePatch({
+  patch,
+  onOpenFullDiff,
+}: {
+  patch: string;
+  onOpenFullDiff?: () => void;
+}) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
   const rows = useMemo(() => diffRowsForFence(patch), [patch]);
@@ -345,6 +353,7 @@ const InlinePatch = memo(function InlinePatch({ patch }: { patch: string }) {
     <InlineDiffRows
       rows={rows}
       colors={colors}
+      {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
       // Opaque on purpose: the gutter is a plane that panned code slides under,
       // and a translucent one would let the code show through the numbers.
       gutterFill={theme.colors.surface}
@@ -360,9 +369,11 @@ const InlinePatch = memo(function InlinePatch({ patch }: { patch: string }) {
 const AgentDiffBlock = memo(function AgentDiffBlock({
   file,
   diff,
+  onOpenFullDiff,
 }: {
   file: string;
   diff: string;
+  onOpenFullDiff?: () => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -415,7 +426,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
         <Animated.View entering={fadeIn('micro')} style={styles.diffBodyWrap}>
           {/* Never wrapped: a re-wrapped diff line no longer lines up with the
               one above it, which is the only thing a diff is read for. */}
-          <InlinePatch patch={diff} />
+          <InlinePatch patch={diff} {...(onOpenFullDiff ? { onOpenFullDiff } : {})} />
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -530,7 +541,16 @@ function renderTimelinePart(
       // best as the card it was before it was detached.
       return <ToolPartCard key={item.id} part={shellAsToolPart(part)} options={options} />;
     case 'diff':
-      return <AgentDiffBlock key={item.id} file={part.file} diff={part.diff} />;
+      return (
+        <AgentDiffBlock
+          key={item.id}
+          file={part.file}
+          diff={part.diff}
+          {...(options.actions.onOpenFullDiff
+            ? { onOpenFullDiff: options.actions.onOpenFullDiff }
+            : {})}
+        />
+      );
     case 'todo':
       return <AgentTodoBlock key={item.id} items={part.items} />;
     case 'status':
@@ -612,6 +632,7 @@ const ToolPartCard = memo(function ToolPartCard({
           : {})}
         {...(actions.onPreviewImage ? { onPreviewImage: actions.onPreviewImage } : {})}
         {...(actions.onOpenFile ? { onOpenFile: actions.onOpenFile } : {})}
+        {...(actions.onOpenFullDiff ? { onOpenFullDiff: actions.onOpenFullDiff } : {})}
       />
       {attachedPermission && handleDecision ? (
         <AgentPermissionCard attached request={attachedPermission} onDecision={handleDecision} />

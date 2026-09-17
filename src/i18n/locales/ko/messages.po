@@ -2776,6 +2776,10 @@ msgstr "파일 목록 열기"
 msgid "Open image"
 msgstr "이미지 열기"
 
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "변경 사항에서 열기"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -2832,6 +2836,10 @@ msgstr "파일 탐색기 열기"
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "서브에이전트 세션 열기"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "이 diff를 변경 사항 뷰어에서 열기"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3801,6 +3809,10 @@ msgstr "이미지 표시"
 msgid "Show more"
 msgstr "더 보기"
 
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "이 diff 더 보기"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "터미널 텍스트 뒤에 앱 배경 표시"
@@ -3812,10 +3824,6 @@ msgstr "편집기 키보드 표시"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "최신 변경 목록 보기"
-
-#: src/components/diff-rows.tsx
-msgid "Show the rest of this diff"
-msgstr "이 diff의 나머지 보기"
 
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"

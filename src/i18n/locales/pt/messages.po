@@ -2776,6 +2776,10 @@ msgstr "Abrir a lista de ficheiros"
 msgid "Open image"
 msgstr "Abrir imagem"
 
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "Abrir em Alterações"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -2832,6 +2836,10 @@ msgstr "Abrir o explorador de ficheiros"
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "Abrir a sessão do subagente"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "Abrir este diff no visualizador de alterações"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3801,6 +3809,10 @@ msgstr "Mostrar imagens"
 msgid "Show more"
 msgstr "Mostrar mais"
 
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "Mostrar mais deste diff"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "Mostrar o fundo do app atrás do texto do terminal"
@@ -3812,10 +3824,6 @@ msgstr "Mostrar o teclado do editor"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "Mostrar a lista de alterações mais recente"
-
-#: src/components/diff-rows.tsx
-msgid "Show the rest of this diff"
-msgstr "Mostrar o restante deste diff"
 
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"

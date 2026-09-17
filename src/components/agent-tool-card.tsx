@@ -78,6 +78,8 @@ export interface AgentToolCardProps {
   onOpenBackgroundTray?: () => void;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+  /** The virtualised changes viewer, for a patch too big to draw in a cell. */
+  onOpenFullDiff?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -211,7 +213,13 @@ const ToolFiles = memo(function ToolFiles({
 });
 
 /** The rows of one patch, inside a card. */
-const PatchBody = memo(function PatchBody({ patch }: { patch: string }) {
+const PatchBody = memo(function PatchBody({
+  patch,
+  onOpenFullDiff,
+}: {
+  patch: string;
+  onOpenFullDiff?: () => void;
+}) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
   const rows = useMemo(() => diffRowsForFence(patch), [patch]);
@@ -222,6 +230,7 @@ const PatchBody = memo(function PatchBody({ patch }: { patch: string }) {
       colors={colors}
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surfaceRaised}
+      {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
   );
 });
@@ -239,6 +248,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   onOpenBackgroundTray,
   onPreviewImage,
   onOpenFile,
+  onOpenFullDiff,
 }: AgentToolCardProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -474,6 +484,7 @@ export const AgentToolCard = memo(function AgentToolCard({
         markdownStyle,
         onPreviewImage,
         onOpenFile,
+        onOpenFullDiff,
       }),
     [
       kind,
@@ -492,6 +503,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       markdownStyle,
       onPreviewImage,
       onOpenFile,
+      onOpenFullDiff,
     ]
   );
 
@@ -570,6 +582,7 @@ interface ToolBodyArgs {
   markdownStyle: MarkdownStyle;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+  onOpenFullDiff?: () => void;
 }
 
 /** One body per family. Nothing here fetches; everything is already in hand. */
@@ -593,11 +606,23 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
     }
 
     case 'edit': {
-      if (args.editFiles.length > 0) return <EditDiffs files={args.editFiles} />;
+      if (args.editFiles.length > 0) {
+        return (
+          <EditDiffs
+            files={args.editFiles}
+            {...(args.onOpenFullDiff ? { onOpenFullDiff: args.onOpenFullDiff } : {})}
+          />
+        );
+      }
       // No `metadata.files`: an older engine, or a tool that answered without
       // one. The before and after are still a diff, just one we assemble.
       if (args.oldString || args.newString) {
-        return <PatchBody patch={syntheticPatch(target, args.oldString, args.newString)} />;
+        return (
+          <PatchBody
+            patch={syntheticPatch(target, args.oldString, args.newString)}
+            {...(args.onOpenFullDiff ? { onOpenFullDiff: args.onOpenFullDiff } : {})}
+          />
+        );
       }
       return <OutputLines text={outputText} />;
     }
@@ -618,7 +643,10 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
         <>
           {args.patchSections.map((section) => (
             <View key={`${section.action}:${section.path}`} style={styles.stretch}>
-              <PatchBody patch={section.patch} />
+              <PatchBody
+                patch={section.patch}
+                {...(args.onOpenFullDiff ? { onOpenFullDiff: args.onOpenFullDiff } : {})}
+              />
             </View>
           ))}
         </>
@@ -684,13 +712,12 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
 
 /** A `+`/`-` patch made from a before and an after, when no real one came. */
 function syntheticPatch(path: string, oldString?: string, newString?: string): string {
-  const removed = (oldString ?? '')
-    .split('\n')
-    .filter((_, index, all) => index < all.length || true);
-  const added = (newString ?? '').split('\n');
   const lines: string[] = [`@@ ${path} @@`];
-  if (oldString) for (const line of removed) lines.push(`-${line}`);
-  if (newString) for (const line of added) lines.push(`+${line}`);
+  // No `.filter()` that keeps everything: the predicate was
+  // `index < all.length || true`, which is `true`, and it read as though some
+  // rule were being applied.
+  if (oldString) for (const line of oldString.split('\n')) lines.push(`-${line}`);
+  if (newString) for (const line of newString.split('\n')) lines.push(`+${line}`);
   return lines.join('\n');
 }
 
@@ -705,8 +732,10 @@ const ShellCommand = memo(function ShellCommand({ command }: { command: string }
 
 const EditDiffs = memo(function EditDiffs({
   files,
+  onOpenFullDiff,
 }: {
   files: ReturnType<typeof editFilesFromMetadata>;
+  onOpenFullDiff?: () => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -728,6 +757,7 @@ const EditDiffs = memo(function EditDiffs({
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surfaceRaised}
       onToggleFile={toggle}
+      {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
   );
 });

@@ -25,7 +25,12 @@ import { PressableScale } from '@/components/pressable-scale';
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
 import { gitFileStatusWord } from '@/i18n/labels';
 import { sideOfFile, type GitDiffRow, type GitDiffRowType } from '@/lib/git-diff';
-import { capDiffRows } from '@/lib/agent-diff-rows';
+import {
+  capDiffRows,
+  INLINE_DIFF_HARD_CAP,
+  INLINE_DIFF_MAX_ROWS,
+  stepDiffLimit,
+} from '@/lib/agent-diff-rows';
 
 /**
  * A diff, as rows.
@@ -627,9 +632,17 @@ export interface InlineDiffRowsProps {
   colors: PaneChatColors;
   gutterFill: string;
   headerFill: string;
-  /** How many rows to draw before offering the rest; the default is 60. */
+  /** How many rows to draw before offering more; the default is 60. */
   limit?: number;
   onToggleFile?: (path: string) => void;
+  /**
+   * Open the virtualised viewer, for a patch too big to draw in a cell.
+   *
+   * Without it the block simply stops at the hard cap, which is still better
+   * than mounting a thousand animated rows -- but the reader is then told
+   * there is more and given no way to it.
+   */
+  onOpenFullDiff?: () => void;
 }
 
 /**
@@ -653,9 +666,10 @@ export function InlineDiffRows({
   headerFill,
   limit,
   onToggleFile,
+  onOpenFullDiff,
 }: InlineDiffRowsProps) {
   const { t } = useLingui();
-  const [showAll, setShowAll] = useState(false);
+  const [shownLimit, setShownLimit] = useState(limit ?? INLINE_DIFF_MAX_ROWS);
   const { onRulerLayout, onViewportLayout, contentWidth, pinnedWidth } = useDiffMetrics(rows);
 
   const scrollX = useSharedValue(0);
@@ -663,10 +677,11 @@ export function InlineDiffRows({
     scrollX.value = event.contentOffset.x;
   });
 
-  const capped = useMemo(
-    () => (showAll ? { rows, hidden: 0 } : capDiffRows(rows, limit)),
-    [rows, limit, showAll]
-  );
+  const capped = useMemo(() => capDiffRows(rows, shownLimit), [rows, shownLimit]);
+  const atHardCap = shownLimit >= INLINE_DIFF_HARD_CAP;
+  const showMore = useCallback(() => {
+    setShownLimit((current) => stepDiffLimit(current).limit);
+  }, []);
 
   const noop = useCallback(() => {}, []);
 
@@ -701,16 +716,34 @@ export function InlineDiffRows({
         </View>
       </Animated.ScrollView>
       {capped.hidden > 0 ? (
-        <PressableScale
-          testID="inline-diff-expand"
-          accessibilityRole="button"
-          accessibilityLabel={t`Show the rest of this diff`}
-          onPress={() => setShowAll(true)}
-          style={[styles.inlineMore, { borderColor: colors.border }]}>
-          <Text variant="caption" color={colors.accent}>
-            <Plural value={capped.hidden} one="# more line" other="# more lines" />
-          </Text>
-        </PressableScale>
+        <View style={styles.inlineMoreRow}>
+          {/* A step, not "the rest": every row here is a mounted component
+              with its own animated style, and this cell is inside a list. */}
+          {atHardCap ? null : (
+            <PressableScale
+              testID="inline-diff-expand"
+              accessibilityRole="button"
+              accessibilityLabel={t`Show more of this diff`}
+              onPress={showMore}
+              style={[styles.inlineMore, { borderColor: colors.border }]}>
+              <Text variant="caption" color={colors.accent}>
+                <Plural value={capped.hidden} one="# more line" other="# more lines" />
+              </Text>
+            </PressableScale>
+          )}
+          {onOpenFullDiff ? (
+            <PressableScale
+              testID="inline-diff-open-full"
+              accessibilityRole="button"
+              accessibilityLabel={t`Open this diff in the changes viewer`}
+              onPress={onOpenFullDiff}
+              style={[styles.inlineMore, { borderColor: colors.border }]}>
+              <Text variant="caption" color={colors.accent}>
+                <Trans>Open in changes</Trans>
+              </Text>
+            </PressableScale>
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
@@ -744,6 +777,12 @@ const styles = StyleSheet.create({
   inlineWrap: {
     alignSelf: 'stretch',
     gap: 4,
+  },
+  inlineMoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   inlineMore: {
     alignSelf: 'flex-start',

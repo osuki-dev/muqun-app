@@ -3,6 +3,9 @@ import { describe, expect, test } from 'bun:test';
 import {
   capDiffRows,
   countMarked,
+  INLINE_DIFF_HARD_CAP,
+  INLINE_DIFF_STEP_ROWS,
+  stepDiffLimit,
   diffRowsForFence,
   diffRowsForPatch,
   diffRowsFromPatches,
@@ -245,6 +248,35 @@ describe('capDiffRows', () => {
 
   test('a cap of zero draws nothing and says so', () => {
     expect(capDiffRows(rows, 0)).toEqual({ rows: [], hidden: rows.length });
+  });
+});
+
+describe('stepDiffLimit', () => {
+  /**
+   * "Show the rest" used to mean exactly that: one tap replaced the cap with
+   * the whole row list. Every row in an inline block is a mounted component
+   * with its own animated style, and the block sits inside a timeline cell
+   * inside a virtualised list -- so a six-thousand-line patch mounted six
+   * thousand animated styles at once. The step is what stops that.
+   */
+  test('a tap adds a page rather than everything', () => {
+    expect(stepDiffLimit(60)).toEqual({ limit: 60 + INLINE_DIFF_STEP_ROWS, exhausted: false });
+  });
+
+  test('stepping never passes the hard cap', () => {
+    expect(stepDiffLimit(INLINE_DIFF_HARD_CAP - 1).limit).toBe(INLINE_DIFF_HARD_CAP);
+    expect(stepDiffLimit(INLINE_DIFF_HARD_CAP).limit).toBe(INLINE_DIFF_HARD_CAP);
+  });
+
+  test('a block at the cap says it is out of room, so the tap is not offered', () => {
+    expect(stepDiffLimit(INLINE_DIFF_HARD_CAP - 1).exhausted).toBe(true);
+    expect(stepDiffLimit(INLINE_DIFF_HARD_CAP).exhausted).toBe(true);
+    expect(stepDiffLimit(0).exhausted).toBe(false);
+  });
+
+  test('the bounds are the ones the block is built around', () => {
+    expect(INLINE_DIFF_STEP_ROWS).toBe(200);
+    expect(INLINE_DIFF_HARD_CAP).toBe(1000);
   });
 });
 

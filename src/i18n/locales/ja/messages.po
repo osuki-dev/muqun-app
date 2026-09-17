@@ -2776,6 +2776,10 @@ msgstr "ファイル一覧を開く"
 msgid "Open image"
 msgstr "画像を開く"
 
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "「変更」で開く"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -2832,6 +2836,10 @@ msgstr "ファイルツリーを開く"
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "サブエージェントのセッションを開く"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "この差分を変更ビューアで開く"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3801,6 +3809,10 @@ msgstr "画像を表示"
 msgid "Show more"
 msgstr "さらに表示"
 
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "この差分をもっと表示"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "ターミナルの文字の背後にアプリの背景を表示"
@@ -3812,10 +3824,6 @@ msgstr "エディタ用キーボードを表示"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "新しい変更一覧を表示"
-
-#: src/components/diff-rows.tsx
-msgid "Show the rest of this diff"
-msgstr "この差分の残りを表示"
 
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"

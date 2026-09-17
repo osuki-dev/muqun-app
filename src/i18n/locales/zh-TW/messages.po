@@ -2776,6 +2776,10 @@ msgstr "開啟檔案"
 msgid "Open image"
 msgstr "開啟圖片"
 
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "在變更中開啟"
+
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open in your browser"
@@ -2832,6 +2836,10 @@ msgstr "開啟檔案瀏覽器"
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "開啟子智慧體的工作階段"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "在變更檢視器中開啟這個差異"
 
 #. placeholder {0}: workspace.title
 #. placeholder {1}: inventory.panels
@@ -3801,6 +3809,10 @@ msgstr "顯示圖片"
 msgid "Show more"
 msgstr "顯示更多"
 
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "顯示更多差異內容"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
 msgstr "在終端機文字後方顯示 App 背景"
@@ -3812,10 +3824,6 @@ msgstr "顯示編輯器鍵盤"
 #: src/components/git-diff-view.tsx
 msgid "Show the newer list of changes"
 msgstr "顯示最新的變更清單"
-
-#: src/components/diff-rows.tsx
-msgid "Show the rest of this diff"
-msgstr "顯示此差異的其餘部分"
 
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
