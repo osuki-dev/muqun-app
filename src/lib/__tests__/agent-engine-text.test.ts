@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isDeclinedByUser, permissionSubject } from '../agent-engine-text';
+import { isDeclinedByUser, permissionSubject, readApprovalBody } from '../agent-engine-text';
 
 describe('permissionSubject', () => {
   test('takes the rule key off the front of the prompt', () => {
@@ -61,5 +61,25 @@ describe('isDeclinedByUser', () => {
     expect(isDeclinedByUser('EACCES: permission denied, open /etc/hosts')).toBe(false);
     expect(isDeclinedByUser('Connection refused')).toBe(false);
     expect(isDeclinedByUser('')).toBe(false);
+  });
+});
+
+describe('readApprovalBody', () => {
+  test('separates the rule key from what it is about', () => {
+    expect(readApprovalBody('external_directory: /etc/*')).toEqual({
+      action: 'external_directory',
+      subject: '/etc/*',
+    });
+  });
+
+  test('leaves prose that merely contains a colon whole', () => {
+    expect(readApprovalBody('Run: sleep 30; echo slept')).toEqual({
+      action: '',
+      subject: 'Run: sleep 30; echo slept',
+    });
+  });
+
+  test('a body with no key at all is all subject', () => {
+    expect(readApprovalBody('  /etc/hosts  ')).toEqual({ action: '', subject: '/etc/hosts' });
   });
 });

@@ -1,11 +1,22 @@
 import { notificationRoute, type NotificationRoute } from './notification-route';
 import { sanitizeServerText } from './ssh-server-text';
 
+/**
+ * What a notice is about, when the app has something to say about it itself.
+ *
+ * An approval is the one kind whose life the app knows: it stands while the
+ * agent is waiting and means nothing the moment the request is answered --
+ * from the card, from the lock screen, or by another device. Everything else
+ * is `general` and lives until it is read or dismissed.
+ */
+export type NoticeKind = 'approval' | 'general';
+
 export interface InAppNotice {
   id: string;
   title: string;
   body: string;
   route: NotificationRoute | string | null;
+  kind: NoticeKind;
 }
 
 export interface NoticeQueue {
@@ -38,6 +49,23 @@ export function dismissNotice(queue: NoticeQueue, id: string): NoticeQueue {
   return { ...queue, items: queue.items.filter((item) => item.id !== id) };
 }
 
+/** Every notice of one kind at once: an approval nobody is waiting on any more. */
+export function dismissNoticeKind(queue: NoticeQueue, kind: NoticeKind): NoticeQueue {
+  if (!queue.items.some((item) => item.kind === kind)) return queue;
+  return { ...queue, items: queue.items.filter((item) => item.kind !== kind) };
+}
+
+/**
+ * Whether a push is the gateway asking for an approval.
+ *
+ * The same two markers `pane-approval.ts` answers a notification action by,
+ * read here for the opposite reason: to know when the question has been
+ * answered and the notice can go.
+ */
+function pushIsApproval(data: Record<string, unknown> | undefined): boolean {
+  return data?.categoryId === 'approval' || data?.type === 'approval.pending';
+}
+
 export function noticeFromPush(
   id: string,
   content: { title?: unknown; body?: unknown; data?: Record<string, unknown> }
@@ -45,7 +73,13 @@ export function noticeFromPush(
   const title = sanitizeServerText(content.title, 120).replace(/\n/g, ' ');
   const body = sanitizeServerText(content.body, 320);
   if (!id || id.length > 512 || (!title && !body)) return null;
-  return { id, title, body, route: notificationRoute(content.data, id) };
+  return {
+    id,
+    title,
+    body,
+    route: notificationRoute(content.data, id),
+    kind: pushIsApproval(content.data) ? 'approval' : 'general',
+  };
 }
 
 /** Foreground messages belong to the app, background delivery stays with the OS. */

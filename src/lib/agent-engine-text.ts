@@ -56,3 +56,18 @@ export function isDeclinedByUser(message: string): boolean {
     /\b(declined|denied|rejected)\s+by\s+(the\s+)?user\b/.test(text)
   );
 }
+
+/**
+ * An approval push's body, taken apart.
+ *
+ * The gateway writes it as `<rule key>: <what it is about>` -- the same shape
+ * the permission card's prompt arrives in, and raw wire vocabulary in the one
+ * line a notice has. Only a leading token that *looks* like a wire key is
+ * taken as one: lower case, no spaces, and followed by a colon.
+ */
+export function readApprovalBody(body: string): { action: string; subject: string } {
+  const text = body.trim();
+  const match = /^([a-z][a-z0-9_-]*):\s*(\S[\s\S]*)$/.exec(text);
+  if (!match) return { action: '', subject: text };
+  return { action: match[1] ?? '', subject: (match[2] ?? '').trim() };
+}

@@ -30,9 +30,9 @@ import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, listLayout } from '@/lib/motion';
+import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, listLayout, timing } from '@/lib/motion';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { StatusDot } from '@/components/status-dot';
 import {
@@ -98,6 +98,7 @@ import {
 import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { useAgentPermissionStore } from '@/stores/agent-permissions';
+import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { useAppActive } from '@/hooks/use-app-active';
 import type { SessionAsset } from '@/lib/session-assets';
 import {
@@ -160,6 +161,9 @@ const SCREEN_NOTICE_DWELL_MS = 4200;
  * little higher than the first message without ever reaching the pills.
  */
 const SCREEN_NOTICE_HEADER_GAP = 14;
+
+/** Between a notice and the first transcript row it is standing over. */
+const NOTICE_RESERVE_GAP = 8;
 
 function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
@@ -232,6 +236,47 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     []
   );
 
+  /**
+   * How much of the top of the screen a notice is standing on.
+   *
+   * A notice is an overlay, and an overlay over a transcript is a lid on the
+   * row the reader was reading -- the permission card's own title, in the case
+   * that made this worth fixing. Padding the *content* would not have helped:
+   * the notice sits at a fixed place on the screen, not at the top of the
+   * scroll. So the transcript's viewport gives the notice its room and takes
+   * it back, which is a move the reader can follow rather than a row that was
+   * simply covered.
+   *
+   * Two sources, one gap: this screen's own notice, and the app-wide deck
+   * (`InAppNotificationHost`) that an approval push lands in. They stand in
+   * the same place, so the room they need is the larger of the two.
+   */
+  const [screenNoticeHeight, setScreenNoticeHeight] = useState(0);
+  const inAppNoticeHeight = useInAppNotifications((state) =>
+    state.items.length > 0 ? state.overlayHeight : 0
+  );
+  const noticeReserve = useSharedValue(0);
+  const reserved = Math.max(
+    screenNotice ? screenNoticeHeight + NOTICE_RESERVE_GAP : 0,
+    inAppNoticeHeight
+  );
+  useEffect(() => {
+    noticeReserve.value = withTiming(reserved, timing('dropdown'));
+  }, [reserved, noticeReserve]);
+  const transcriptAreaStyle = useAnimatedStyle(() => ({ paddingTop: noticeReserve.value }));
+
+  /**
+   * An approval notice outlives the question it asked, and should not.
+   *
+   * The push arrives while the app is in front, so the reader often answers
+   * the card itself -- or another device does, or the agent gives up waiting.
+   * The notice knew none of that and stood there until its X was pressed,
+   * asking for a decision that had already been made. When the last request
+   * leaves `permissions` -- which is what `agent.permission.resolved` does to
+   * it -- the notices about them go too.
+   */
+  const wasWaitingRef = useRef(false);
+
   const [sessions, setSessions] = useState<AgentSessionInfo[]>([]);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
   /**
@@ -273,6 +318,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     activeAsidRef.current = activeAsid;
   }, [activeAsid]);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
+  useEffect(() => {
+    if (permissions.length > 0) {
+      wasWaitingRef.current = true;
+      return;
+    }
+    if (!wasWaitingRef.current) return;
+    wasWaitingRef.current = false;
+    useInAppNotifications.getState().dismissKind('approval');
+  }, [permissions.length]);
   const [forms, setForms] = useState<FormRequest[]>([]);
   // What is waiting behind the current turn, as the gateway last stated it.
   const [inbox, setInbox] = useState<InboxItem[]>([]);
@@ -2222,154 +2276,167 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   return (
     <View style={styles.root}>
-      {/* Main Content Stream */}
-      {loading ? (
-        <View style={[styles.centerContainer, { paddingTop: topInset + 20 }]}>
-          <TerminalNotice>
-            <StatusDot color={theme.colors.primary} filled pulse size={7} />
-            <Text variant="caption" numberOfLines={1} style={terminalNoticeStyles.label}>
-              <Trans>Connecting to agent engine…</Trans>
-            </Text>
-          </TerminalNotice>
-        </View>
-      ) : timeline.length === 0 && permissions.length === 0 && forms.length === 0 ? (
-        <View
-          style={[
-            styles.emptyScrollWrapper,
-            { paddingTop: topInset + 20, paddingBottom: bottomInset + 185 },
-          ]}>
-          <Animated.View
-            entering={fadeIn()}
-            layout={listLayout()}
+      {/* Main Content Stream, standing clear of whatever notice is up. */}
+      <Animated.View style={[styles.transcriptArea, transcriptAreaStyle]}>
+        {loading ? (
+          <View style={[styles.centerContainer, { paddingTop: topInset + 20 }]}>
+            <TerminalNotice>
+              <StatusDot color={theme.colors.primary} filled pulse size={7} />
+              <Text variant="caption" numberOfLines={1} style={terminalNoticeStyles.label}>
+                <Trans>Connecting to agent engine…</Trans>
+              </Text>
+            </TerminalNotice>
+          </View>
+        ) : timeline.length === 0 && permissions.length === 0 && forms.length === 0 ? (
+          <View
             style={[
-              styles.emptyContainer,
-              {
-                backgroundColor: surfaceBackground(theme.colors.surface),
-                borderColor: theme.colors.border,
-              },
+              styles.emptyScrollWrapper,
+              { paddingTop: topInset + 20, paddingBottom: bottomInset + 185 },
             ]}>
-            <PressableScale
-              testID="agent-empty-workspace-pill"
-              onPress={openWorkspaceSheet}
-              accessibilityLabel={t`Switch workspace: ${displayWorkspaceName}`}
+            <Animated.View
+              entering={fadeIn()}
+              layout={listLayout()}
               style={[
-                styles.workspacePill,
+                styles.emptyContainer,
                 {
-                  backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.08)),
-                  borderColor: withAlpha(theme.colors.primary, 0.25),
-                  marginBottom: 6,
+                  backgroundColor: surfaceBackground(theme.colors.surface),
+                  borderColor: theme.colors.border,
                 },
               ]}>
-              <FolderGit2 size={13} color={theme.colors.primary} />
-              <Text variant="caption" weight="bold" color={theme.colors.primary} numberOfLines={1}>
-                {displayWorkspaceName}
-              </Text>
-              <Text
-                variant="caption"
-                color={theme.colors.textMuted}
-                numberOfLines={1}
-                style={styles.workspacePillPath}>
-                {displayWorkspacePath}
-              </Text>
-              <ChevronDown size={12} color={theme.colors.primary} />
-            </PressableScale>
-            {isOffline ? (
-              <>
-                <Bot size={44} color={theme.colors.textMuted} />
-                <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
-                  <Trans>OpenCode service offline</Trans>
+              <PressableScale
+                testID="agent-empty-workspace-pill"
+                onPress={openWorkspaceSheet}
+                accessibilityLabel={t`Switch workspace: ${displayWorkspaceName}`}
+                style={[
+                  styles.workspacePill,
+                  {
+                    backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.08)),
+                    borderColor: withAlpha(theme.colors.primary, 0.25),
+                    marginBottom: 6,
+                  },
+                ]}>
+                <FolderGit2 size={13} color={theme.colors.primary} />
+                <Text
+                  variant="caption"
+                  weight="bold"
+                  color={theme.colors.primary}
+                  numberOfLines={1}>
+                  {displayWorkspaceName}
                 </Text>
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
-                  <Trans>
-                    OpenCode agent daemon is not running on this host. Run `opencode serve
-                    --service` to start it.
-                  </Trans>
+                <Text
+                  variant="caption"
+                  color={theme.colors.textMuted}
+                  numberOfLines={1}
+                  style={styles.workspacePillPath}>
+                  {displayWorkspacePath}
                 </Text>
-                <PressableScale
-                  testID="agent-offline-retry-btn"
-                  onPress={async () => {
-                    setCheckingHealth(true);
-                    await refreshSessions();
-                    setCheckingHealth(false);
-                  }}
-                  style={[
-                    styles.emptyNewBtn,
-                    { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
-                  ]}>
-                  {checkingHealth ? (
-                    <ActivityIndicator size="small" color={theme.colors.primary} />
-                  ) : (
-                    <RefreshCw size={14} color={theme.colors.primary} />
-                  )}
+                <ChevronDown size={12} color={theme.colors.primary} />
+              </PressableScale>
+              {isOffline ? (
+                <>
+                  <Bot size={44} color={theme.colors.textMuted} />
+                  <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
+                    <Trans>OpenCode service offline</Trans>
+                  </Text>
                   <Text
                     variant="caption"
-                    weight="semibold"
-                    color={theme.colors.primary}
-                    style={styles.emptyNewBtnText}>
-                    <Trans>Check again</Trans>
+                    color={theme.colors.textMuted}
+                    style={styles.emptySubtitle}>
+                    <Trans>
+                      OpenCode agent daemon is not running on this host. Run `opencode serve
+                      --service` to start it.
+                    </Trans>
                   </Text>
-                </PressableScale>
-              </>
-            ) : (
-              <>
-                <Bot size={44} color={theme.colors.primary} />
-                <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
-                  <Trans>Welcome to OpenCode Agent</Trans>
-                </Text>
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.emptySubtitle}>
-                  <Trans>Ask questions, inspect files, or run commands in your workspace.</Trans>
-                </Text>
-                <View style={styles.emptyActionsRow}>
                   <PressableScale
-                    testID="agent-empty-new-session-btn"
-                    onPress={handleCreateNewSession}
+                    testID="agent-offline-retry-btn"
+                    onPress={async () => {
+                      setCheckingHealth(true);
+                      await refreshSessions();
+                      setCheckingHealth(false);
+                    }}
                     style={[
                       styles.emptyNewBtn,
                       { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)) },
                     ]}>
-                    <PlusCircle size={14} color={theme.colors.primary} />
-                    {/* Sentence case, like every other button on this
-                        surface: `variant="label"` is the kit's 11pt all-caps
-                        instrument style, and a sign is not a button. */}
+                    {checkingHealth ? (
+                      <ActivityIndicator size="small" color={theme.colors.primary} />
+                    ) : (
+                      <RefreshCw size={14} color={theme.colors.primary} />
+                    )}
                     <Text
                       variant="caption"
                       weight="semibold"
                       color={theme.colors.primary}
                       style={styles.emptyNewBtnText}>
-                      <Trans>New session</Trans>
+                      <Trans>Check again</Trans>
                     </Text>
                   </PressableScale>
-                  <PressableScale
-                    testID="agent-empty-choose-project-btn"
-                    onPress={openWorkspaceSheet}
-                    style={[
-                      styles.emptySecondaryBtn,
-                      {
-                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                        borderColor: theme.colors.border,
-                      },
-                    ]}>
-                    <FolderGit2 size={14} color={theme.colors.text} />
-                    <Text
-                      variant="caption"
-                      weight="semibold"
-                      color={theme.colors.text}
-                      style={styles.emptyNewBtnText}>
-                      <Trans>Choose workspace</Trans>
-                    </Text>
-                  </PressableScale>
-                </View>
-              </>
-            )}
-          </Animated.View>
-        </View>
-      ) : (
-        <LegendList<TimelineRenderGroup>
-          ref={listRef}
-          data={renderGroups}
-          keyExtractor={keyOfGroup}
-          renderItem={renderTimelineItem}
-          /*
+                </>
+              ) : (
+                <>
+                  <Bot size={44} color={theme.colors.primary} />
+                  <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
+                    <Trans>Welcome to OpenCode Agent</Trans>
+                  </Text>
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    style={styles.emptySubtitle}>
+                    <Trans>Ask questions, inspect files, or run commands in your workspace.</Trans>
+                  </Text>
+                  <View style={styles.emptyActionsRow}>
+                    <PressableScale
+                      testID="agent-empty-new-session-btn"
+                      onPress={handleCreateNewSession}
+                      style={[
+                        styles.emptyNewBtn,
+                        {
+                          backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.14)),
+                        },
+                      ]}>
+                      <PlusCircle size={14} color={theme.colors.primary} />
+                      {/* Sentence case, like every other button on this
+                        surface: `variant="label"` is the kit's 11pt all-caps
+                        instrument style, and a sign is not a button. */}
+                      <Text
+                        variant="caption"
+                        weight="semibold"
+                        color={theme.colors.primary}
+                        style={styles.emptyNewBtnText}>
+                        <Trans>New session</Trans>
+                      </Text>
+                    </PressableScale>
+                    <PressableScale
+                      testID="agent-empty-choose-project-btn"
+                      onPress={openWorkspaceSheet}
+                      style={[
+                        styles.emptySecondaryBtn,
+                        {
+                          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                          borderColor: theme.colors.border,
+                        },
+                      ]}>
+                      <FolderGit2 size={14} color={theme.colors.text} />
+                      <Text
+                        variant="caption"
+                        weight="semibold"
+                        color={theme.colors.text}
+                        style={styles.emptyNewBtnText}>
+                        <Trans>Choose workspace</Trans>
+                      </Text>
+                    </PressableScale>
+                  </View>
+                </>
+              )}
+            </Animated.View>
+          </View>
+        ) : (
+          <LegendList<TimelineRenderGroup>
+            ref={listRef}
+            data={renderGroups}
+            keyExtractor={keyOfGroup}
+            renderItem={renderTimelineItem}
+            /*
             Never, and this one is load-bearing rather than a preference. An
             assistant cell renders `EnrichedMarkdownText`, whose native view
             compares the incoming markdown against the last string it drew and
@@ -2378,61 +2445,62 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             markdown parse on every cell of every scroll.
             See docs/git-diff-viewer.md:362-380.
           */
-          recycleItems={false}
-          /*
+            recycleItems={false}
+            /*
             The other half of the identity deal, stated to the list itself: a
             group whose object has not changed has not changed.
             `buildTimelineGroupsCached` guarantees exactly that, so the
             strictest comparison is also the correct one, and the cheapest.
           */
-          itemsAreEqual={groupsAreEqual}
-          /*
+            itemsAreEqual={groupsAreEqual}
+            /*
             A user bubble, an assistant card carrying six tool shells and a diff
             block are wildly different heights, and one flat average across all
             of them is what makes a virtualised list jump when content lands
             above the viewport. The role is already the right bucket, so the
             list learns a size per kind instead.
           */
-          getItemType={groupTypeOf}
-          estimatedItemSize={70}
-          initialScrollAtEnd={true}
-          /*
+            getItemType={groupTypeOf}
+            estimatedItemSize={70}
+            initialScrollAtEnd={true}
+            /*
             The reader's place across a change of *data* -- which is what
             "Load earlier messages" is here: the window comes back longer at the
             top, and the message they were reading has to stay under their eyes.
             The default covers rows changing size and skips that case.
           */
-          maintainVisibleContentPosition={MAINTAIN_TIMELINE_POSITION}
-          /*
+            maintainVisibleContentPosition={MAINTAIN_TIMELINE_POSITION}
+            /*
             Follow the newest message, but only for a reader already at it --
             that is the threshold's job. New output must never move the viewport
             of someone who has scrolled up, which is also why there is no manual
             `scrollToEnd` on a stream tick.
           */
-          maintainScrollAtEnd={true}
-          maintainScrollAtEndThreshold={0.1}
-          onScroll={handleTimelineScroll}
-          refreshControl={
-            <RefreshControl
-              refreshing={loadingEarlier}
-              enabled={windowStart > 0}
-              onRefresh={handleLoadEarlier}
-              progressViewOffset={topInset}
-              // The same three colours the terminal transcript's own pull uses,
-              // so the two surfaces answer a pull the same way.
-              colors={[theme.colors.primary]}
-              tintColor={theme.colors.textMuted}
-              progressBackgroundColor={theme.colors.surfaceRaised}
-            />
-          }
-          ListFooterComponent={listFooter}
-          style={styles.timelineScroll}
-          contentContainerStyle={[
-            styles.timelineContent,
-            { paddingTop: topInset + 10, paddingBottom: bottomInset + 185 },
-          ]}
-        />
-      )}
+            maintainScrollAtEnd={true}
+            maintainScrollAtEndThreshold={0.1}
+            onScroll={handleTimelineScroll}
+            refreshControl={
+              <RefreshControl
+                refreshing={loadingEarlier}
+                enabled={windowStart > 0}
+                onRefresh={handleLoadEarlier}
+                progressViewOffset={topInset}
+                // The same three colours the terminal transcript's own pull uses,
+                // so the two surfaces answer a pull the same way.
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.textMuted}
+                progressBackgroundColor={theme.colors.surfaceRaised}
+              />
+            }
+            ListFooterComponent={listFooter}
+            style={styles.timelineScroll}
+            contentContainerStyle={[
+              styles.timelineContent,
+              { paddingTop: topInset + 10, paddingBottom: bottomInset + 185 },
+            ]}
+          />
+        )}
+      </Animated.View>
 
       {/* The screen's own notice: under the header, never over it */}
       {screenNotice ? (
@@ -2440,6 +2508,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           key={screenNotice.id}
           entering={fadeInDown('short')}
           exiting={fadeOutUp('short')}
+          onLayout={(event) => setScreenNoticeHeight(Math.round(event.nativeEvent.layout.height))}
           style={[
             styles.screenNoticeWrap,
             { top: Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) },
@@ -2723,6 +2792,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 30,
     gap: 12,
+  },
+  transcriptArea: {
+    flex: 1,
   },
   timelineScroll: {
     flex: 1,
