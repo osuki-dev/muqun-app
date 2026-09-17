@@ -19,11 +19,14 @@ import { AGENT_TYPE } from '@/constants/agent-type';
 export interface AgentFormCardProps {
   request: FormRequest;
   onSubmit: (answers: Record<string, unknown>) => Promise<void>;
+  /** A text field took focus: the host scrolls the card above the keyboard. */
+  onFieldFocus?: () => void;
 }
 
 export const AgentFormCard = memo(function AgentFormCard({
   request,
   onSubmit,
+  onFieldFocus,
 }: AgentFormCardProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -191,6 +194,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               onChangeText={(text) => setValue(field.key, text)}
               placeholder={field.placeholder ?? t`Type here…`}
               placeholderTextColor={theme.colors.textSubtle}
+              onFocus={onFieldFocus}
               style={[
                 styles.textInput,
                 {

@@ -113,7 +113,6 @@ export function GlassChrome({
     ? resolveThemeImage(active.manifest, slot, resolvedMode, width >= 768 ? 'regular' : 'compact')
     : null;
   const hasImage = Boolean(artwork && assets?.[artwork.asset]?.startsWith('file:///'));
-  const background = useSurfaceBackground();
   const backgroundOpacity = useSurfaceBackgroundOpacity();
   const glassAvailable = isGlassChromeLive();
   // Native glass includes its own system fill. An explicit translucent-color
@@ -184,13 +183,15 @@ export function GlassChrome({
   }, [settled]);
 
   if (material === 'solid') {
+    // The slider may thin the page; chrome keeps a frosted floor under it.
+    const alpha = Math.max(backgroundOpacity, appChrome.opacity.glassSolidFloor);
     return (
       <Animated.View
         entering={entering}
         exiting={exiting}
         style={[
           chromeStyle,
-          { backgroundColor: background(theme.colors.surfaceRaised), overflow: 'hidden' },
+          { backgroundColor: withAlpha(theme.colors.surfaceRaised, alpha), overflow: 'hidden' },
         ]}>
         {content}
       </Animated.View>
@@ -229,7 +230,15 @@ export function GlassChrome({
       <Animated.View
         entering={entering}
         exiting={exiting}
-        style={[chromeStyle, { backgroundColor: background(theme.colors.surfaceRaised) }]}>
+        style={[
+          chromeStyle,
+          {
+            backgroundColor: withAlpha(
+              theme.colors.surfaceRaised,
+              Math.max(backgroundOpacity, appChrome.opacity.glassSolidFloor)
+            ),
+          },
+        ]}>
         {content}
       </Animated.View>
     );

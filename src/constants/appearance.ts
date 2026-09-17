@@ -85,6 +85,14 @@ export const appChrome = {
     glassFloatingTintLight: 0.26,
     glassFloatingTintDark: 0.34,
     glassAndroidFill: 0.94,
+    /**
+     * The least opaque a piece of chrome may become when a pack turns its
+     * surfaces translucent. The reader's slider still thins the timeline and
+     * the sheets' tint; the header pills and the composer dock stop here, so
+     * what is typed and what is tapped stays on a frosted floor rather than
+     * on the wallpaper.
+     */
+    glassSolidFloor: 0.82,
     glassLegacyOverlay: 0.2,
     padGutterFill: 0.72,
   },

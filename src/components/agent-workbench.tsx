@@ -31,7 +31,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import Animated from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { StatusDot } from '@/components/status-dot';
 import {
@@ -120,6 +120,7 @@ import { AgentComposer } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { KeyboardInset } from '@/components/keyboard-inset';
 import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
 
 /**
@@ -1747,9 +1748,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return null;
   }, [sessionInfo?.status, sessionInfo?.error?.message, theme.colors, t]);
 
+  // A form field in the footer took focus: once the keyboard has risen, bring
+  // the card up above the composer. The inset at the end of the list is what
+  // makes that scroll possible.
+  const scrollFooterAboveKeyboard = useCallback(() => {
+    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), DURATION.medium);
+  }, []);
+
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
-    if (!hasFormsOrPerms && !isRunning && !statusNotice) return null;
+    if (!hasFormsOrPerms && !isRunning && !statusNotice) return <KeyboardInset />;
     return (
       <View style={styles.footerContainer}>
         {isRunning ? (
@@ -1811,8 +1819,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             key={f.id}
             request={f}
             onSubmit={(answers) => handleFormSubmit(f.id, answers)}
+            onFieldFocus={scrollFooterAboveKeyboard}
           />
         ))}
+        <KeyboardInset />
       </View>
     );
   }, [
@@ -1823,6 +1833,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     loadSnapshot,
     handlePermissionDecision,
     handleFormSubmit,
+    scrollFooterAboveKeyboard,
     surfaceBackground,
     theme.colors,
   ]);

@@ -1840,16 +1840,39 @@ export function sessionTitleOr(
 }
 
 /** Whether a catalog model sits on the free tier. */
-export function isFreeModel(model: { id: string; name?: string; provider_id: string }): boolean {
+export function isFreeModel(model: {
+  id: string;
+  name?: string;
+  provider_id: string;
+  cost?: unknown;
+}): boolean {
+  // The catalogue's own price list is the truth when it is there: a model is
+  // free when every tier charges nothing for input and output. Only without a
+  // price list does the name get a say, and a provider's name never does --
+  // `opencode` hosts paid models next to its free ones.
+  const tiers = readCostTiers(model.cost);
+  if (tiers !== null) {
+    return tiers.length > 0 && tiers.every((tier) => tier.input === 0 && tier.output === 0);
+  }
   const idLower = (model.id || '').toLowerCase();
   const nameLower = (model.name || '').toLowerCase();
-  const provLower = (model.provider_id || '').toLowerCase();
-  return (
-    idLower.includes('free') ||
-    nameLower.includes('free') ||
-    provLower === 'opencode' ||
-    provLower.includes('free')
-  );
+  return idLower.includes('free') || nameLower.includes('free');
+}
+
+/** `Model.Cost[]` as the catalogue sends it, or null when absent or unreadable. */
+function readCostTiers(cost: unknown): { input: number; output: number }[] | null {
+  const list = Array.isArray(cost) ? cost : cost && typeof cost === 'object' ? [cost] : null;
+  if (!list) return null;
+  const tiers: { input: number; output: number }[] = [];
+  for (const entry of list) {
+    if (!entry || typeof entry !== 'object') continue;
+    const rec = entry as Record<string, unknown>;
+    const input = typeof rec.input === 'number' ? rec.input : null;
+    const output = typeof rec.output === 'number' ? rec.output : null;
+    if (input === null || output === null) continue;
+    tiers.push({ input, output });
+  }
+  return tiers.length > 0 ? tiers : null;
 }
 
 const KNOWN_MODEL_NAMES: Readonly<Record<string, string>> = {

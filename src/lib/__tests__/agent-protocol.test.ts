@@ -1074,9 +1074,15 @@ describe('titles and model names', () => {
     expect(sessionTitleOr(null, 'Untitled session')).toBe('Untitled session');
   });
 
-  test('free models are recognised by provider or by name', () => {
+  test('free models are recognised by their price list, then by name', () => {
+    const free = [{ input: 0, output: 0, cache: { read: 0, write: 0 } }];
+    const paid = [{ input: 5, output: 25, cache: { read: 0.5, write: 6.25 } }];
+    expect(isFreeModel({ id: 'union-alpha', provider_id: 'opencode', cost: free })).toBe(true);
+    // A paid model hosted by the free provider is still paid.
+    expect(isFreeModel({ id: 'claude-opus-5', provider_id: 'opencode', cost: paid })).toBe(false);
+    // Without a price list only the name can say so; the provider never does.
     expect(isFreeModel({ id: 'nemotron-3.5-lightning-free', provider_id: 'opencode' })).toBe(true);
-    expect(isFreeModel({ id: 'anything', provider_id: 'opencode' })).toBe(true);
+    expect(isFreeModel({ id: 'anything', provider_id: 'opencode' })).toBe(false);
     expect(isFreeModel({ id: 'gpt-6-astra', provider_id: 'openai' })).toBe(false);
   });
 
