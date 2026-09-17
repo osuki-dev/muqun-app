@@ -565,6 +565,16 @@ export const AgentToolCard = memo(function AgentToolCard({
   );
 });
 
+/** Drops `data:…;base64,…` runs and bare base64 walls from a text body. */
+function stripDataUris(text: string): string {
+  return text
+    .replace(/data:[a-z0-9.+-]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+/gi, '')
+    .split('\n')
+    .filter((line) => !(line.length > 120 && /^[A-Za-z0-9+/=]+$/.test(line.trim())))
+    .join('\n')
+    .trim();
+}
+
 function readTodoItems(input: Record<string, unknown> | null): { text: string; done: boolean }[] {
   const raw = input?.todos ?? input?.items;
   if (!Array.isArray(raw)) return [];
@@ -623,7 +633,10 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
 
     case 'read': {
       const language = fenceLanguageForPath(target);
-      const body = stripReadLineNumbers(outputText);
+      // An image read comes back as a file item (drawn above) and, on some
+      // engines, the same bytes again as a data URI in the text. The picture
+      // is the content; the base64 never is.
+      const body = stripDataUris(stripReadLineNumbers(outputText));
       if (!body) return null;
       return <CodeBody body={body} language={language} markdownStyle={markdownStyle} />;
     }
