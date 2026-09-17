@@ -509,15 +509,26 @@ export class NativeRunner {
       }
     }
     if (!hasAlert(nodes)) return nodes;
-    const deny = notificationDenyButton(nodes, this.runtime.allowCameraDenial);
-    if (!deny)
-      throw new Error(
-        'Unexpected system alert blocks the test; inspect the saved snapshot before continuing'
-      );
-    // Only the app's notification request is an automatic setup action. The
-    // device language may differ from the app language. Never press or swipe
-    // app controls underneath a native alert, even if they remain in its tree.
-    await this.invoke(['press', selector(deny)]);
+    // A system dialog is caught mid-slide as often as not: a button resolved
+    // from that capture carries the geometry of a frame the dialog has since
+    // left, and the tap lands on the scrim. Let it settle, resolve the button
+    // from a fresh capture, and only then press -- twice, because the first
+    // press can still race the last frame of the animation.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      await this.invoke(['wait', 'stable', '300', '5000']);
+      nodes = snapshotNodes(await this.readCapture());
+      if (!hasAlert(nodes)) return nodes;
+      const deny = notificationDenyButton(nodes, this.runtime.allowCameraDenial);
+      if (!deny)
+        throw new Error(
+          'Unexpected system alert blocks the test; inspect the saved snapshot before continuing'
+        );
+      // Only the app's permission requests are automatic setup actions. The
+      // device language may differ from the app language. Never press or
+      // swipe app controls underneath a native alert, even if they remain in
+      // its tree.
+      await this.invoke(['press', selector(deny)]);
+    }
     await this.invoke(['wait', 'stable', '300', '5000']);
     nodes = snapshotNodes(await this.readCapture());
     if (hasAlert(nodes)) throw new Error('Notification permission alert did not dismiss');
