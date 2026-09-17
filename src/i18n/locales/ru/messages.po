@@ -698,10 +698,6 @@ msgstr "Выбрать файлы"
 msgid "Choose Project"
 msgstr "Выбрать проект"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Choose where to work"
-msgstr "Выберите место работы"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Выбрать, какой симулятор показывать"
@@ -760,10 +756,6 @@ msgstr "Закрыть файл"
 msgid "Close files"
 msgstr "Закрыть список файлов"
 
-#: src/components/settings-language-sheet.tsx
-msgid "Close language picker"
-msgstr "Закрыть выбор языка"
-
 #: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
@@ -782,10 +774,6 @@ msgstr "Закрыть предпросмотр"
 #: src/app/commands.tsx
 msgid "Close quick actions"
 msgstr "Закрыть быстрые действия"
-
-#: src/components/machine-switcher-sheet.tsx
-msgid "Close session picker"
-msgstr "Закрыть выбор сеанса"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1691,6 +1679,14 @@ msgstr "Исправьте контраст текста перед примен
 msgid "Fold the tool steps away"
 msgstr "Свернуть шаги инструментов"
 
+#: src/components/settings-language-sheet.tsx
+msgid "Follow the language your phone is set to"
+msgstr "Следовать языку телефона"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Following your phone"
+msgstr "Как на телефоне"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "На слово вперёд"
@@ -1699,10 +1695,6 @@ msgstr "На слово вперёд"
 #: src/components/agent-context-sheet.tsx
 msgid "Free"
 msgstr "Бесплатно"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Free and unlimited"
-msgstr "Бесплатно и без ограничений"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Free only"
@@ -2241,7 +2233,6 @@ msgid "Muqun could not verify your identity. Try again."
 msgstr "Muqun не удалось подтвердить вашу личность. Попробуйте ещё раз"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun использует язык, выбранный на телефоне"
 
@@ -2266,7 +2257,6 @@ msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in 
 msgstr "Muqun говорит по SSH. Сохраните хост, коснитесь его на главном экране — и вы в настоящем shell: по паролю, ключу или коду из вашего аутентификатора"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "Muqun остаётся на этом языке, что бы ни было выбрано на телефоне"
 

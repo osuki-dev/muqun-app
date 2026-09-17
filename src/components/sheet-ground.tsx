@@ -44,6 +44,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 
 /**
  * Which token the sheet's tint is mixed from.
@@ -78,17 +79,44 @@ export function useSheetGroundProvided() {
   return useContext(SheetGroundProvidedContext);
 }
 
+/**
+ * How much of the sheet's own surface stands between the wallpaper and a row.
+ *
+ * A sheet is a reading surface laid over live content, and the picture is
+ * decoration on it -- so the picture gets the remaining 18%, which is enough
+ * for it to read as texture and not enough for it to read as a photograph
+ * behind text. This is the frosted material the navigation pills already have,
+ * arrived at by fill rather than by blur so both platforms land in the same
+ * place: `GlassChrome`'s own Android fallback is a fill at 0.94 for the same
+ * reason.
+ *
+ * It is a floor, not the reader's slider. The slider moves the tint *under* the
+ * artwork, which is what it was always for; this layer is above the artwork and
+ * is the app promising that a sheet is legible whatever pack is applied.
+ */
+export const SHEET_FROST_ALPHA = 0.82;
+
 export function SheetGround({
   testID,
   tint = 'surface',
+  frosted = false,
 }: {
   /** Kept so existing flows can still find the scene they already anchor on. */
   testID?: string;
   tint?: SheetGroundTint;
+  /**
+   * Whether the wallpaper is veiled to a reading surface.
+   *
+   * On for every sheet built on `sheet-scene.tsx`, which is what lets its rows
+   * be plain text on the ground instead of each one carrying a plate -- a
+   * scatter of pills is busier than the cards it replaced.
+   */
+  frosted?: boolean;
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const provided = useSheetGroundProvided();
+  const hasShell = useHasThemeArtwork('shell.background');
   return (
     <View
       testID={testID}
@@ -106,6 +134,19 @@ export function SheetGround({
             ]}
           />
           <ThemeArtwork slot="shell.background" />
+          {frosted && hasShell ? (
+            <View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: withAlpha(
+                    sheetGroundTintColor(theme.colors, tint),
+                    SHEET_FROST_ALPHA
+                  ),
+                },
+              ]}
+            />
+          ) : null}
         </>
       )}
     </View>
@@ -151,15 +192,18 @@ export type SheetGroundPlate = {
 export function SheetFrame({
   testID,
   tint,
+  frosted,
   children,
 }: {
   testID?: string;
   tint?: SheetGroundTint;
+  /** See `SheetGround`: the wallpaper veiled to a reading surface. */
+  frosted?: boolean;
   children: ReactNode;
 }) {
   return (
     <SheetGroundTintContext.Provider value={tint ?? 'surface'}>
-      <SheetGround testID={testID} tint={tint} />
+      <SheetGround testID={testID} tint={tint} frosted={frosted} />
       {children}
     </SheetGroundTintContext.Provider>
   );

@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { SheetFrame, useSheetGroundPlate } from '@/components/sheet-ground';
+import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { PRESET, timing } from '@/lib/motion';
@@ -85,7 +85,7 @@ export function SheetScene({
   children: ReactNode;
 }) {
   return (
-    <SheetFrame testID={testID} tint="surface">
+    <SheetFrame testID={testID} tint="surface" frosted>
       <View collapsable={false} style={styles.scene}>
         <View style={styles.fixedTop}>
           <SheetHandle />
@@ -108,10 +108,9 @@ export function SheetScene({
  */
 export function SheetSceneHeading({ title, caption }: { title: string; caption?: string }) {
   const { colors } = useThemeTokens();
-  const plate = useSheetGroundPlate();
   return (
     <View style={styles.heading}>
-      <View style={[styles.headingCopy, plate]}>
+      <View style={styles.headingCopy}>
         <Text variant="subheading" style={styles.headingTitle}>
           {title}
         </Text>
@@ -173,14 +172,13 @@ export function SheetSceneSearch({
  */
 export function SheetSceneGroupHeading({ title, first }: { title: string; first?: boolean }) {
   const { colors } = useThemeTokens();
-  const plate = useSheetGroundPlate();
   return (
     <View style={[styles.groupHeading, first ? styles.groupHeadingFirst : null]}>
       <Text
         variant="caption"
         weight="semibold"
         color={colors.textMuted}
-        style={[styles.groupHeadingText, plate]}>
+        style={styles.groupHeadingText}>
         {title}
       </Text>
     </View>
@@ -212,6 +210,7 @@ export function SheetSceneRow({
   onPress,
   accessibilityLabel,
   testID,
+  selectedTestID,
   style,
 }: {
   title: string;
@@ -228,15 +227,21 @@ export function SheetSceneRow({
   onPress?: () => void;
   accessibilityLabel?: string;
   testID?: string;
+  /**
+   * An id that exists only while this row is the current one.
+   *
+   * The rule is drawn whether or not it is lit, so a flow cannot ask "is it
+   * visible" of the mark itself. A node that appears with the selection can be
+   * waited on, which is what the language flow has always done.
+   */
+  selectedTestID?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useThemeTokens();
-  // The same plate the heading takes, for the same reason: `text` and
-  // `textMuted` are proven against the theme's surfaces and never against an
-  // author's photograph. One per row and shrink-to-fit, so it reads as
-  // protected text rather than as the card this system exists to remove. Empty
-  // on a pack with no `shell.background`, which is every built-in one.
-  const plate = useSheetGroundPlate();
+  // No plate on any of this. A row is plain text on the ground, because the
+  // ground is frosted (`SHEET_FROST_ALPHA`) and the wallpaper is texture under
+  // it rather than a photograph behind it. Plating each run instead turned the
+  // sheet into a scatter of stickers -- busier than the cards it replaced.
   const rule = useSharedValue(selected ? 1 : 0);
 
   useEffect(() => {
@@ -255,6 +260,7 @@ export function SheetSceneRow({
     <View style={[styles.rowWrap, style]}>
       <Animated.View
         pointerEvents="none"
+        testID={selected ? selectedTestID : undefined}
         style={[styles.rule, { backgroundColor: colors.primary }, ruleStyle]}
       />
       <PressableScale
@@ -266,7 +272,7 @@ export function SheetSceneRow({
         onPress={onPress}
         style={styles.row}>
         {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
-        <View style={[styles.rowCopy, plate]}>
+        <View style={styles.rowCopy}>
           <Text
             variant="bodySmall"
             weight={selected ? 'semibold' : 'regular'}
@@ -282,13 +288,11 @@ export function SheetSceneRow({
           ) : null}
         </View>
         {disabled && disabledCaption ? (
-          <Text variant="caption" color={colors.textSubtle} style={[styles.rowMeta, plate]}>
+          <Text variant="caption" color={colors.textSubtle} style={styles.rowMeta}>
             {disabledCaption}
           </Text>
         ) : meta ? (
-          // Plated too: a time or a token count on the right of the row is text
-          // on the wallpaper exactly as much as the title is.
-          <View style={[styles.rowMeta, plate]}>{meta}</View>
+          <View style={styles.rowMeta}>{meta}</View>
         ) : null}
       </PressableScale>
       {trailing}

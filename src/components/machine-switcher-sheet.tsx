@@ -1,11 +1,19 @@
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Check, ChevronRight, Monitor, Plus } from 'lucide-react-native';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ChevronRight, Monitor, Plus } from 'lucide-react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { SettingsCard } from '@/components/settings-chrome';
-import { SettingsSheet } from '@/components/settings-sheet';
+import {
+  SheetScene,
+  SheetSceneFooter,
+  SheetSceneGroupHeading,
+  SheetSceneGroupRule,
+  SheetSceneRow,
+  SHEET_LADDER,
+  sheetSceneStyles,
+} from '@/components/sheet-scene';
 import type { SessionChoice } from '@/lib/session-switcher';
 
 export type MachineChoice = {
@@ -15,7 +23,15 @@ export type MachineChoice = {
   error?: string;
 };
 
-/** Machine headings own their sessions: identical session IDs never share selection. */
+/**
+ * Where to work: the machines this phone is paired with, and the sessions on
+ * each one.
+ *
+ * Machine headings own their sessions: identical session IDs never share
+ * selection. On `sheet-scene.tsx` like every other sheet -- the machine is a
+ * group heading and its sessions are rows under it, with the left rule on the
+ * one you are in.
+ */
 export function MachineSwitcherSheet({
   machines,
   serverId,
@@ -25,7 +41,7 @@ export function MachineSwitcherSheet({
   onChoose,
   onAdd,
   onManage,
-  onClose,
+  onClose: _onClose,
 }: {
   machines: MachineChoice[];
   serverId: string;
@@ -39,103 +55,93 @@ export function MachineSwitcherSheet({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const insets = useSafeAreaInsets();
+  const current = machines.find((machine) => machine.id === serverId);
+
   return (
-    <SettingsSheet
+    <SheetScene
+      testID="machine-switcher-sheet"
       title={t`Machines and sessions`}
-      caption={t`Choose where to work`}
-      closeLabel={t`Close session picker`}
-      onClose={onClose}>
-      {machines.map((machine) => (
-        <SettingsCard key={machine.id}>
-          <PressableScale
-            testID={`machine-option-${machine.id}`}
-            accessibilityRole="button"
-            accessibilityLabel={t`Connect to ${machine.label}`}
-            accessibilityState={{ busy: pendingId === machine.id }}
-            disabled={pendingId !== null || Boolean(machine.sessions?.length)}
-            onPress={() => onConnect(machine.id)}
-            style={styles.row}>
-            <Monitor size={18} color={theme.colors.textMuted} />
-            <View style={styles.copy}>
-              <Text variant="bodySmall" numberOfLines={1}>
-                {machine.label}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {machine.id === serverId
+      caption={current?.label}>
+      <ScrollView
+        style={sheetSceneStyles.scroller}
+        contentContainerStyle={sheetSceneStyles.scrollerContent}
+        showsVerticalScrollIndicator={false}>
+        {machines.map((machine, index) => (
+          <View key={machine.id}>
+            {index > 0 ? <SheetSceneGroupRule /> : null}
+            <SheetSceneGroupHeading title={machine.label} first={index === 0} />
+            <SheetSceneRow
+              testID={`machine-option-${machine.id}`}
+              title={machine.label}
+              caption={
+                machine.id === serverId
                   ? t`Current machine`
                   : machine.sessions
                     ? t`Connected`
-                    : t`Tap to connect`}
+                    : t`Tap to connect`
+              }
+              leading={<Monitor size={17} color={theme.colors.textSubtle} />}
+              accessibilityLabel={t`Connect to ${machine.label}`}
+              disabled={pendingId !== null || Boolean(machine.sessions?.length)}
+              onPress={() => onConnect(machine.id)}
+              meta={
+                pendingId === machine.id ? (
+                  <ActivityIndicator />
+                ) : !machine.sessions ? (
+                  <ChevronRight size={16} color={theme.colors.textMuted} />
+                ) : null
+              }
+            />
+            {machine.error ? (
+              <Text
+                selectable
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={styles.error}>
+                {machine.error}
               </Text>
-            </View>
-            {pendingId === machine.id ? (
-              <ActivityIndicator />
-            ) : !machine.sessions ? (
-              <ChevronRight size={16} color={theme.colors.textMuted} />
             ) : null}
-          </PressableScale>
-          {machine.error ? (
-            <Text selectable variant="caption" style={styles.error} color={theme.colors.textMuted}>
-              {machine.error}
-            </Text>
-          ) : null}
-          {machine.sessions?.map((session) => {
-            const selected = machine.id === serverId && session.id === sessionId;
-            return (
-              <PressableScale
+            {machine.sessions?.map((session) => (
+              <SheetSceneRow
                 key={session.id}
                 testID={`session-option-${machine.id}-${session.id}`}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
+                title={session.label}
+                caption={session.kind}
+                selected={machine.id === serverId && session.id === sessionId}
+                style={styles.session}
                 accessibilityLabel={t`${machine.label}, session ${session.label}`}
                 disabled={pendingId !== null}
                 onPress={() => onChoose(machine.id, session.id)}
-                style={[styles.row, styles.session]}>
-                <View style={styles.copy}>
-                  <Text variant="bodySmall" numberOfLines={1}>
-                    {session.label}
-                  </Text>
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    {session.kind}
-                  </Text>
-                </View>
-                {selected ? <Check size={18} color={theme.colors.primary} /> : null}
-              </PressableScale>
-            );
-          })}
-        </SettingsCard>
-      ))}
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={t`Add machine`}
-        onPress={onAdd}
-        disabled={pendingId !== null}
-        style={styles.row}>
-        <Plus size={18} color={theme.colors.primary} />
-        <Text variant="bodySmall" color={theme.colors.primary}>{t`Add machine`}</Text>
-      </PressableScale>
-      <PressableScale
-        accessibilityRole="button"
-        onPress={onManage}
-        disabled={pendingId !== null}
-        style={styles.manage}>
-        <Text variant="caption" color={theme.colors.textMuted}>{t`Manage machines`}</Text>
-      </PressableScale>
-    </SettingsSheet>
+              />
+            ))}
+          </View>
+        ))}
+
+        <SheetSceneGroupRule />
+        <SheetSceneRow
+          title={t`Add machine`}
+          leading={<Plus size={17} color={theme.colors.primary} />}
+          accessibilityLabel={t`Add machine`}
+          disabled={pendingId !== null}
+          onPress={onAdd}
+        />
+        <PressableScale
+          accessibilityRole="button"
+          onPress={onManage}
+          disabled={pendingId !== null}
+          style={styles.manage}>
+          <Text variant="caption" color={theme.colors.textMuted}>{t`Manage machines`}</Text>
+        </PressableScale>
+        <SheetSceneFooter bottomInset={insets.bottom} />
+      </ScrollView>
+    </SheetScene>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    minHeight: 56,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  copy: { flex: 1, minWidth: 0, gap: 3 },
-  session: { paddingLeft: 46 },
-  error: { paddingHorizontal: 16, paddingBottom: 12 },
+  // Sessions belong to the machine above them, so they start one step in.
+  session: { paddingLeft: SHEET_LADDER.section },
+  error: { paddingBottom: SHEET_LADDER.snug, lineHeight: 17 },
   manage: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
 });

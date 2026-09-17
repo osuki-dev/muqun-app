@@ -47,6 +47,13 @@ export interface AgentModelSheetProps {
   onClose: () => void;
 }
 
+/**
+ * The provider's own spelling of its name.
+ *
+ * The group heading is the only thing telling two identically-named models
+ * apart -- `opencode` and `opencode-go` both publish a "Union Alpha Free" --
+ * so a hyphenated id has to survive as words rather than collapse to one.
+ */
 function providerName(provider: string): string {
   const known: Record<string, string> = {
     anthropic: 'Anthropic',
@@ -56,19 +63,38 @@ function providerName(provider: string): string {
     ollama: 'Ollama',
     openrouter: 'OpenRouter',
     opencode: 'OpenCode',
+    'opencode-go': 'OpenCode Go',
   };
-  return (
-    known[provider.toLowerCase()] ??
-    provider.charAt(0).toUpperCase() + provider.slice(1).replace(/[-_]/g, ' ')
-  );
+  const lower = provider.toLowerCase();
+  if (known[lower]) return known[lower];
+  return lower
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((word) => known[word] ?? word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
-function contextCaption(model: ModelInfo): string | undefined {
+/**
+ * The two facts a row carries under its name: how much it can hold, and what
+ * thinking levels it offers. Nothing else -- the provider is the heading and
+ * the price is the filter.
+ */
+function modelCaption(model: ModelInfo): string | undefined {
+  const parts: string[] = [];
   const context = model.limit?.context;
-  if (!context) return undefined;
-  return context >= 1_000_000
-    ? `${(context / 1_000_000).toFixed(1)}M context`
-    : `${(context / 1000).toFixed(0)}k context`;
+  if (context) {
+    parts.push(
+      context >= 1_000_000
+        ? `${(context / 1_000_000).toFixed(1)}M context`
+        : `${(context / 1000).toFixed(0)}k context`
+    );
+  }
+  const variants = model.variants ?? [];
+  if (variants.length === 1) parts.push(variants[0].id);
+  else if (variants.length > 1) {
+    parts.push(`${variants[0].id} to ${variants[variants.length - 1].id}`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : undefined;
 }
 
 export const AgentModelSheet = memo(function AgentModelSheet({
@@ -118,12 +144,18 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     );
   }, [models, searchQuery, filterMode]);
 
+  /**
+   * One group per provider, and nothing else.
+   *
+   * There used to be a synthetic "Free and unlimited" group above these, which
+   * listed the same models a second time -- and because two providers publish a
+   * model of the same name, it put two rows reading "Union Alpha Free" next to
+   * each other with nothing to tell them apart. The provider heading is what
+   * distinguishes them, and the "Free only" segment is what the synthetic group
+   * was really for.
+   */
   const sections = useMemo(() => {
     const result: { title: string; models: ModelInfo[] }[] = [];
-    const free = models.filter((m) => isFreeModel(m));
-    if (filterMode === 'all' && !searchQuery.trim() && free.length > 0) {
-      result.push({ title: t`Free and unlimited`, models: free });
-    }
     const byProvider = new Map<string, ModelInfo[]>();
     for (const model of filteredModels) {
       const provider = model.provider_id || 'other';
@@ -144,7 +176,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       result.push({ title: providerName(provider), models: byProvider.get(provider) ?? [] });
     }
     return result;
-  }, [filteredModels, models, searchQuery, filterMode, t]);
+  }, [filteredModels]);
 
   // The caption is the current value, live -- not a hint.
   const currentValue = selectedModel
@@ -215,7 +247,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                       <SheetSceneRow
                         testID={`agent-model-row-${model.id}`}
                         title={model.name || model.id}
-                        caption={contextCaption(model)}
+                        caption={modelCaption(model)}
                         selected={isSelected}
                         onPress={() =>
                           onSelectModel({

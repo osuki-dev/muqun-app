@@ -698,10 +698,6 @@ msgstr "파일 선택"
 msgid "Choose Project"
 msgstr "프로젝트 선택"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Choose where to work"
-msgstr "작업할 위치 선택"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "표시할 시뮬레이터 선택"
@@ -760,10 +756,6 @@ msgstr "파일 닫기"
 msgid "Close files"
 msgstr "파일 목록 닫기"
 
-#: src/components/settings-language-sheet.tsx
-msgid "Close language picker"
-msgstr "언어 목록 닫기"
-
 #: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
@@ -782,10 +774,6 @@ msgstr "미리보기 닫기"
 #: src/app/commands.tsx
 msgid "Close quick actions"
 msgstr "빠른 동작 닫기"
-
-#: src/components/machine-switcher-sheet.tsx
-msgid "Close session picker"
-msgstr "세션 목록 닫기"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1691,6 +1679,14 @@ msgstr "이 테마를 적용하기 전에 텍스트 대비를 조정하세요"
 msgid "Fold the tool steps away"
 msgstr "도구 단계 접기"
 
+#: src/components/settings-language-sheet.tsx
+msgid "Follow the language your phone is set to"
+msgstr "휴대폰 언어를 따르기"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Following your phone"
+msgstr "휴대폰을 따름"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "한 단어 앞으로"
@@ -1699,10 +1695,6 @@ msgstr "한 단어 앞으로"
 #: src/components/agent-context-sheet.tsx
 msgid "Free"
 msgstr "무료"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Free and unlimited"
-msgstr "무료 무제한"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Free only"
@@ -2241,7 +2233,6 @@ msgid "Muqun could not verify your identity. Try again."
 msgstr "Muqun이 본인 확인에 실패했습니다. 다시 시도하세요"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun이 휴대폰에 설정된 언어를 따릅니다"
 
@@ -2266,7 +2257,6 @@ msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in 
 msgstr "Muqun이 SSH를 말합니다. 호스트를 저장하고 홈 화면에서 누르면 진짜 셸로 들어갑니다 — 비밀번호, 키, 또는 인증 앱의 코드로"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "휴대폰 설정과 상관없이 Muqun은 이 언어를 유지합니다"
 

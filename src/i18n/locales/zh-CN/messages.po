@@ -698,10 +698,6 @@ msgstr "选择文件"
 msgid "Choose Project"
 msgstr "选择项目"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Choose where to work"
-msgstr "选择要工作的机器与会话"
-
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "选择要显示的模拟器"
@@ -760,10 +756,6 @@ msgstr "关闭文件"
 msgid "Close files"
 msgstr "关闭文件列表"
 
-#: src/components/settings-language-sheet.tsx
-msgid "Close language picker"
-msgstr "关闭语言列表"
-
 #: src/app/new-task.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Close new task"
@@ -782,10 +774,6 @@ msgstr "关闭预览"
 #: src/app/commands.tsx
 msgid "Close quick actions"
 msgstr "关闭快捷操作"
-
-#: src/components/machine-switcher-sheet.tsx
-msgid "Close session picker"
-msgstr "关闭会话列表"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -1691,6 +1679,14 @@ msgstr "请先修正文字对比度再应用此主题"
 msgid "Fold the tool steps away"
 msgstr "收起工具步骤"
 
+#: src/components/settings-language-sheet.tsx
+msgid "Follow the language your phone is set to"
+msgstr "跟随手机的语言"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Following your phone"
+msgstr "跟随手机"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "前进一个词"
@@ -1699,10 +1695,6 @@ msgstr "前进一个词"
 #: src/components/agent-context-sheet.tsx
 msgid "Free"
 msgstr "免费"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Free and unlimited"
-msgstr "免费且不限量"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Free only"
@@ -2241,7 +2233,6 @@ msgid "Muqun could not verify your identity. Try again."
 msgstr "牧群无法验证你的身份。请重试"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "牧群会跟随手机设置的语言"
 
@@ -2266,7 +2257,6 @@ msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in 
 msgstr "Muqun 会说 SSH。保存一台主机，在主页点一下，就进入真正的 shell — 密码、密钥，或验证器上的验证码"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "无论手机设置为何，牧群都保持这个语言"
 

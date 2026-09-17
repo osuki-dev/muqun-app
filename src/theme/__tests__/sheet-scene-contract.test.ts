@@ -104,7 +104,7 @@ test('every form sheet is built in the one shared frame', () => {
   }
   // The frame is the only thing that mounts the ground.
   const ground = readFileSync('src/components/sheet-ground.tsx', 'utf8');
-  expect(ground).toContain('<SheetGround testID={testID} tint={tint} />');
+  expect(ground).toContain('<SheetGround testID={testID} tint={tint} frosted={frosted} />');
 });
 
 test('the settings sheet keeps the native scroll root a form sheet needs', () => {
@@ -186,11 +186,16 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
     expect({ file, plated: direct || viaLabel || viaScene }).toEqual({ file, plated: true });
   }
 
-  // And the furniture really does plate what it draws, so `viaScene` above is a
-  // fact rather than an exemption.
+  // And the furniture really does protect what it draws, so `viaScene` above is
+  // a fact rather than an exemption -- by frosting the ground rather than by
+  // plating each run, which is the thing this system is not.
   const scene = readFileSync('src/components/sheet-scene.tsx', 'utf8');
-  expect(scene).toContain('const plate = useSheetGroundPlate();');
-  expect(scene).toContain('<SheetFrame testID={testID} tint="surface">');
+  expect(scene).toContain('<SheetFrame testID={testID} tint="surface" frosted>');
+  expect(scene).not.toContain('useSheetGroundPlate');
+
+  // The frost is a floor the reader's opacity slider cannot take a sheet below.
+  expect(ground).toContain('export const SHEET_FROST_ALPHA = 0.82;');
+  expect(ground).toContain('frosted && hasShell');
 });
 
 /**
