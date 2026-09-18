@@ -345,7 +345,7 @@ export function SettingsToggleRow({
         <Text variant="bodySmall" color={labelColor} style={styles.rowLabel}>
           {label}
         </Text>
-        <Text variant="caption" color={detailColor} numberOfLines={2} style={styles.rowDetail}>
+        <Text variant="caption" color={detailColor} numberOfLines={3} style={styles.rowDetail}>
           {detail}
         </Text>
       </View>
@@ -436,7 +436,7 @@ export function SettingsNavRow({
           <Text
             variant="caption"
             color={theme.colors.textMuted}
-            numberOfLines={2}
+            numberOfLines={3}
             style={styles.rowDetail}>
             {detail}
           </Text>
@@ -504,7 +504,7 @@ export function SettingsChoiceRow({
           <Text
             variant="caption"
             color={theme.colors.textMuted}
-            numberOfLines={2}
+            numberOfLines={3}
             style={styles.rowDetail}>
             {detail}
           </Text>
@@ -513,10 +513,22 @@ export function SettingsChoiceRow({
       {/* Muted, not accent. The decision area is the sheet; a coral value here
           would put the accent on the report of the choice as well as on the
           making of it. */}
+      {/*
+        Two lines, not one.
+
+        The value was briefly held to a single ellipsised line, which is the
+        right rule for a chip or a tab and the wrong one here: what should wrap
+        may wrap. "Lanterns in the Overworld" is a name a reader chose and an
+        answer they came to the row to read, and cutting it to "Lanterns in
+        the..." to keep the row 60 points tall is the app preferring its own
+        rhythm to their content. So it wraps, right-aligned, and the row grows
+        by a line. The floor on the column opposite is what makes that safe: a
+        long value now wraps inside its own half instead of taking the label's.
+      */}
       <Text
         variant="bodySmall"
         color={theme.colors.textMuted}
-        numberOfLines={1}
+        numberOfLines={2}
         ellipsizeMode="tail"
         style={styles.choiceValue}>
         {value}
@@ -564,7 +576,7 @@ export function SettingsInfoRow({
           selectable
           variant="caption"
           color={theme.colors.textMuted}
-          numberOfLines={2}
+          numberOfLines={3}
           style={styles.rowDetail}>
           {detail}
         </Text>
@@ -642,8 +654,8 @@ const styles = StyleSheet.create({
   // `flexShrink` alone was not enough. Shrink is weighted by flex basis, and
   // this one's basis is its own content, so on a wide face it was the only
   // child with any weight and it took everything -- see `rowCopyFloor`. With
-  // the floor in place this is what spends the remainder: one line, ellipsised,
-  // ending at the chevron.
+  // the floor in place this is what spends the remainder: up to two lines,
+  // right-aligned, ending at the chevron.
   choiceValue: { flexShrink: 1, minWidth: 0, textAlign: 'right' },
   /**
    * No `lineHeight` on either line, deliberately.

@@ -49,9 +49,14 @@ test('the choice row gives its label column a floor of more than half the row', 
   );
 });
 
-test('the choice row value is one shrinking, ellipsising, right-aligned line', () => {
+test('the choice row value wraps to two right-aligned lines, then ellipsises', () => {
   const body = component(chrome(), 'SettingsChoiceRow');
-  expect(body).toContain('numberOfLines={1}');
+  // Two, not one. What should wrap may wrap: the value is an answer the reader
+  // came to the row to read, and cutting a theme name to keep the row 60
+  // points tall is the app preferring its own rhythm to their content. One
+  // line is the rule for a chip or a tab label, which must stay on one line by
+  // nature; a row is free to grow.
+  expect(body).toContain('numberOfLines={2}');
   expect(body).toContain('ellipsizeMode="tail"');
   expect(body).toContain('style={styles.choiceValue}');
 
@@ -63,11 +68,13 @@ test('the choice row value is one shrinking, ellipsising, right-aligned line', (
   expect(style).toContain("textAlign: 'right'");
 });
 
-test('every settings row caption stops at two lines', () => {
+test('every settings row caption stops at three lines', () => {
   const source = chrome();
   // Each of the four rows that carries a caption renders it through
   // `styles.rowDetail`; every one of those must be capped, or a hostile face
-  // turns one sentence into a paragraph and the row into a page.
+  // turns one sentence into a paragraph and the row into a page. Three lines
+  // rather than two, because a caption is a sentence and a sentence may wrap;
+  // the cap is there to stop a page, not to stop a second line.
   const captions = source.match(/style=\{styles\.rowDetail\}/gu) ?? [];
   expect(captions.length).toBeGreaterThanOrEqual(4);
   for (const row of [
@@ -78,7 +85,7 @@ test('every settings row caption stops at two lines', () => {
   ]) {
     const body = component(source, row);
     if (!body.includes('styles.rowDetail')) continue;
-    expect(body).toContain('numberOfLines={2}');
+    expect(body).toContain('numberOfLines={3}');
   }
 });
 
