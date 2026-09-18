@@ -124,6 +124,8 @@ import {
 } from '@/lib/agent-session';
 import { shouldRefetchAgentCatalog, type AgentCatalogScope } from '@/lib/agent-catalog-scope';
 import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
+import { loadRememberedAgentSession, rememberOpenedAgentSession } from '@/lib/agent-session-memory';
+import { latestSession, pickSessionToOpen } from '@/lib/agent-session-pick';
 import { resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
@@ -223,15 +225,6 @@ const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
 
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
-
-/** The session with the newest activity, or null when there is none. */
-function latestSession(list: readonly AgentSessionInfo[]): AgentSessionInfo | null {
-  let best: AgentSessionInfo | null = null;
-  for (const item of list) {
-    if (!best || (item.updated_ms ?? 0) > (best.updated_ms ?? 0)) best = item;
-  }
-  return best;
-}
 
 function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
@@ -611,6 +604,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeDirectory]);
 
   /**
+   * The session on screen, remembered for the next time this screen opens.
+   *
+   * Written here rather than in each handler because every way into a session
+   * ends here: a chip in the strip, a row in the sessions sheet, a swipe across
+   * the title, a workspace switch, a session just created, a child opened from
+   * its parent. One place, and no path that quietly forgets.
+   *
+   * It follows the directory as well as the session, so a session moved to a
+   * worktree is remembered where it now lives rather than where it used to.
+   */
+  useEffect(() => {
+    if (!activeAsid) return;
+    rememberOpenedAgentSession(sessionId, activeDirectory, activeAsid);
+  }, [sessionId, activeDirectory, activeAsid]);
+
+  /**
    * Whether the badge reads may run: context, diff, shells, worktrees.
    *
    * They are all about the session's workspace folder, and the host does not
@@ -806,16 +815,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setIsOffline(false);
         if (list) {
           setSessions(list);
-          // Coming in from Home lands on the session the reader last worked in,
-          // not on whatever the engine listed first: newest activity wins.
-          const latest = latestSession(list);
-          if (latest && !activeAsidRef.current) {
-            setActiveAsid(latest.asid);
-            setSessionInfo(latest);
-            if (latest.model) {
-              applySelectedModel(latest.model);
+          // Coming in from Home lands on the session the reader last opened,
+          // and only falls back to newest activity when there is no such
+          // session any more. Newest activity alone meant an agent finishing a
+          // turn elsewhere could take the screen away from the session the
+          // reader had chosen -- see `agent-session-pick.ts`.
+          const opening = pickSessionToOpen(list, loadRememberedAgentSession(sessionId, directory));
+          if (opening && !activeAsidRef.current) {
+            setActiveAsid(opening.asid);
+            setSessionInfo(opening);
+            if (opening.model) {
+              applySelectedModel(opening.model);
             }
-            if (latest.agent) setSelectedAgent(latest.agent);
+            if (opening.agent) setSelectedAgent(opening.agent);
           } else if (list.length === 0) {
             setLoading(false);
           }
@@ -2178,11 +2190,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     async (directory: string, project?: AgentProject) => {
       setActiveDirectory(directory);
       try {
-        // A workspace that already has sessions opens on its most recent one;
-        // only an empty workspace gets a new session made for it.
+        // A workspace that already has sessions opens on the one the reader
+        // last had open there, or on its most recent one; only an empty
+        // workspace gets a new session made for it.
         const existing = await listAgentSessions(sessionId, { roots: true, directory });
-        const latest = existing ? latestSession(existing) : null;
-        const target = latest ?? (await createAgentSession(sessionId, newSessionParams(directory)));
+        const opening = existing
+          ? pickSessionToOpen(existing, loadRememberedAgentSession(sessionId, directory))
+          : null;
+        const target =
+          opening ?? (await createAgentSession(sessionId, newSessionParams(directory)));
         setActiveAsid(target.asid);
         setSessionInfo(target);
         setTimeline([]);
