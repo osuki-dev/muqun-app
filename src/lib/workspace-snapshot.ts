@@ -93,11 +93,26 @@ export async function loadWorkspaceSnapshot(
 export async function warmConfiguredWorkspace(
   serverId: string,
   preference: string | undefined,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  /**
+   * `/health` the caller already has, when it has one worth reusing.
+   *
+   * The home screen's status dot asks this very gateway for `/health` on the
+   * same focus that starts this warm, and used to throw the body away -- so the
+   * warm's first act was to ask again, and the reader paid for the same answer
+   * twice. Passing it here is the whole of that fix. Undefined is still valid
+   * and still correct: it means nobody has an answer to share, and the warm
+   * fetches its own exactly as before.
+   *
+   * It must already have passed `assertSupportedHerdr`, because skipping
+   * `loadHealth` skips that check too. `stores/server-reachability` is the one
+   * producer and applies it there; nothing else may hand a body in here.
+   */
+  knownHealth?: HealthResponse | null
 ): Promise<void> {
   if (!serverId || !isCurrent() || warmWorkspace(serverId)) return;
   try {
-    const result = await loadWorkspaceSnapshot(preference, undefined, isCurrent);
+    const result = await loadWorkspaceSnapshot(preference, knownHealth, isCurrent);
     if (!result || !isCurrent()) return;
     const { snapshot } = result;
     const firstPane = await firstPaneScreen(snapshot);

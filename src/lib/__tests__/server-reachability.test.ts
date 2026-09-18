@@ -11,6 +11,7 @@ import {
   agentStatusesAreCurrent,
   MAX_PROBED_SERVERS,
   needsReachabilityProbe,
+  prewarmGate,
   reachabilityFromProbe,
   REACHABILITY_FRESH_MS,
   REACHABILITY_RECHECK_MS,
@@ -160,5 +161,57 @@ describe('which servers the list is willing to ask', () => {
     const input = [...records];
     serversToProbe(input, { d: 9 });
     expect(ids(input)).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('what the probe tells the workspace prewarm', () => {
+  const now = 1_000_000;
+  const probe = (over: Partial<ReachabilityProbe>): ReachabilityProbe => ({
+    serverId: 's1',
+    ok: true,
+    checkedAtMs: now,
+    ...over,
+  });
+
+  test('a fresh green probe hands its health over so the warm skips /health', () => {
+    const health = { ok: true, gatewayVersion: '1.2.3' };
+    expect(prewarmGate(probe({ health }), now)).toEqual({ warm: true, health });
+  });
+
+  test('a server that just failed to answer is not warmed at all', () => {
+    // Six requests at a machine the list has already drawn as offline is six
+    // full timeouts, on the screen the reader is looking at right now.
+    expect(prewarmGate(probe({ ok: false }), now)).toEqual({ warm: false, health: null });
+  });
+
+  test('never having asked is not evidence, so the warm goes ahead as before', () => {
+    expect(prewarmGate(undefined, now)).toEqual({ warm: true, health: null });
+  });
+
+  test('a probe too old to colour the dot is too old to seed the warm', () => {
+    // The two have to expire on the same tick. A health body that no longer
+    // backs a green light cannot be the one a snapshot is built on -- and an
+    // offline answer that old is no longer a reason to refuse either.
+    const stale = probe({ ok: false, checkedAtMs: now - REACHABILITY_FRESH_MS - 1 });
+    expect(prewarmGate(stale, now)).toEqual({ warm: true, health: null });
+    const staleGreen = probe({
+      ok: true,
+      health: { ok: true },
+      checkedAtMs: now - REACHABILITY_FRESH_MS - 1,
+    });
+    expect(prewarmGate(staleGreen, now)).toEqual({ warm: true, health: null });
+  });
+
+  test('a green probe that brought no usable health still warms, the slow way', () => {
+    // `health` is null when the body was unreadable or failed the Herdr check.
+    // The warm then asks for its own and gets the real error; what it must not
+    // do is skip.
+    expect(prewarmGate(probe({ health: null }), now)).toEqual({ warm: true, health: null });
+  });
+
+  test('the warm never re-runs more often than the probe it waits on', () => {
+    // The expensive path is gated by the cheap one, so the cheap one has to be
+    // the more frequent of the two. See `WARM_WORKSPACE_TTL_MS`.
+    expect(REACHABILITY_FRESH_MS).toBeGreaterThanOrEqual(REACHABILITY_RECHECK_MS);
   });
 });

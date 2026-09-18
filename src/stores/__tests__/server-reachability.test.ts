@@ -38,7 +38,28 @@ test('the per-server rate limit survived the fan-out', () => {
   // Four servers asked on every focus, unlimited, is four tokens on the wire
   // every time the reader returns to the screen.
   expect(refresh).toContain('needsReachabilityProbe');
-  expect(refresh).toContain('inFlight.has(serverId)');
+  // One flight per server, and the second caller *joins* it rather than
+  // returning to a store that has not been written yet. The home screen's warm
+  // now waits on this probe for its `/health`, so a guard that returned early
+  // would hand the warm an empty answer and buy back the second round trip
+  // this whole path exists to remove.
+  expect(refresh).toContain('const pending = inFlight.get(serverId);');
+  expect(refresh).toContain('if (pending) return pending;');
+  expect(refresh).toContain('inFlight.delete(serverId);');
+});
+
+test('the health the dot already paid for is kept for the warm, once vetted', () => {
+  // The body is only recorded after `assertSupportedHerdr`, because handing it
+  // to the warm is what lets the warm skip `loadHealth` -- and `loadHealth` is
+  // where that check used to happen. A gateway whose terminal backend is down
+  // is reachable and must still light its dot, but must not seed a prewarm.
+  expect(refresh).toContain('assertSupportedHerdr(answer);');
+  const vetted = refresh.indexOf('assertSupportedHerdr(answer);');
+  const kept = refresh.indexOf('health = answer;');
+  expect(vetted).toBeGreaterThan(-1);
+  expect(kept).toBeGreaterThan(vetted);
+  // A server that did not answer contributes no health at all.
+  expect(refresh).toContain('health: ok ? health : null');
 });
 
 test('several servers are asked one at a time, not all at once', () => {

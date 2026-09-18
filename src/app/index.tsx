@@ -72,7 +72,7 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
-import { useServerReachability } from '@/stores/server-reachability';
+import { serverPrewarmGate, useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -150,6 +150,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   const probes = useServerReachability((state) => state.probes);
   const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
+  const refreshReachability = useServerReachability((state) => state.refresh);
   const keepReachability = useServerReachability((state) => state.keepOnly);
 
   // Which servers have been opened on this device, and when. Already stored for
@@ -271,22 +272,36 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
         AppState.currentState === 'active' &&
         useGatewayConnectionStore.getState().record === record;
       // Prepare only the selected direct gateway while the home is visible.
-      // The terminal consumes this same short-lived cache on its first render.
-      void useServerSession
-        .getState()
-        .hydrate()
-        .then(() => {
-          if (isCurrent())
-            void warmConfiguredWorkspace(
-              record.serverId,
-              useServerSession.getState().byServer[record.serverId],
-              isCurrent
-            );
-        });
+      // The terminal consumes this same short-lived cache on its first render;
+      // see `openServer` for why this screen warms on sight rather than on tap.
+      //
+      // The dot probe above and this warm both want `/health` from the same
+      // gateway, on the same focus. Waiting for the probe rather than racing it
+      // is what turns two `/health` calls into one: `refreshReachability` joins
+      // the flight the probe effect already started (or starts the only one),
+      // and the answer it leaves behind is both the dot's colour and the warm's
+      // `knownHealth`. It is not an extra round trip -- it is the same one.
+      void (async () => {
+        await useServerSession.getState().hydrate();
+        if (!isCurrent()) return;
+        await refreshReachability(record, { shouldContinue: isCurrent });
+        if (!isCurrent()) return;
+        const gate = serverPrewarmGate(record.serverId);
+        // Nothing to warm from a machine that just failed to answer: the six
+        // requests would each sit out the full timeout, against a server the
+        // list has already drawn as offline.
+        if (!gate.warm) return;
+        await warmConfiguredWorkspace(
+          record.serverId,
+          useServerSession.getState().byServer[record.serverId],
+          isCurrent,
+          gate.health
+        );
+      })();
       return () => {
         current = false;
       };
-    }, [appActive, loading, hydrationError, record])
+    }, [appActive, loading, hydrationError, record, refreshReachability])
   );
 
   // A pull is someone asking, so it overrides the store's own rate limit. The
