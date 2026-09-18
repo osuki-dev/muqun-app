@@ -47,6 +47,16 @@ export type LaunchWorldInput = {
   imageReady: boolean;
   /** Whether the front has waited as long as the budget allows. */
   deadlinePassed: boolean;
+  /**
+   * Whether the opening has already given up on the painting once.
+   *
+   * The reveal is a decision made *during* an animation, so it has to be
+   * monotonic: a painting that arrives a frame after the front gave up on it
+   * must not yank the iris back out mid-flight. Without this, a slow load
+   * produced `iris` at the deadline and `painted` the moment it finished,
+   * which is two reveals in one second and a visible cut between them.
+   */
+  irisLatched: boolean;
 };
 
 /**
@@ -61,6 +71,8 @@ export type LaunchWorldInput = {
 export function chooseLaunchWorld(input: LaunchWorldInput): LaunchWorld {
   if (!input.shaderCompiled) return input.hasArtwork ? { kind: 'iris' } : { kind: 'plain' };
   if (!input.hasArtwork) return { kind: 'palette' };
+  // Once given up on, stays given up on. See `irisLatched`.
+  if (input.irisLatched) return { kind: 'iris' };
   if (input.imageReady) return { kind: 'painted', ready: true };
   return input.deadlinePassed ? { kind: 'iris' } : { kind: 'painted', ready: false };
 }

@@ -2,7 +2,13 @@ import { describe, expect, test } from 'bun:test';
 
 import { bloomRadius, chooseLaunchWorld } from '../launch-intro-world';
 
-const PAINTED = { hasArtwork: true, shaderCompiled: true, imageReady: true, deadlinePassed: false };
+const PAINTED = {
+  hasArtwork: true,
+  shaderCompiled: true,
+  imageReady: true,
+  deadlinePassed: false,
+  irisLatched: false,
+};
 
 describe('chooseLaunchWorld', () => {
   test('a pack with a painting and a decoded image gets the shader', () => {
@@ -45,6 +51,94 @@ describe('chooseLaunchWorld', () => {
     expect(chooseLaunchWorld({ ...PAINTED, shaderCompiled: false, hasArtwork: false })).toEqual({
       kind: 'plain',
     });
+  });
+});
+
+describe('chooseLaunchWorld, over a whole launch', () => {
+  /**
+   * The reveal is a decision made *during* an animation, so what matters is
+   * not each answer on its own but the sequence of them. These three walk the
+   * three ways a cold pack's painting can behave, and the property they hold
+   * is the same one every time: the reveal never becomes *less* conservative,
+   * because that is what a hard cut looks like from the inside.
+   *
+   * This is the bug that reached a frame sheet. A pack whose wallpaper was not
+   * already in the image cache spent the whole bloom in `painted, ready:false`
+   * -- the cover closed over paper -- and then the painting arrived and the
+   * cover came off in one frame. The reader saw a splash screen and then,
+   * abruptly, a world.
+   */
+  const cold = { hasArtwork: true, shaderCompiled: true, imageReady: false, deadlinePassed: false };
+
+  test('the painting arrives inside the cap: the front waits, then reveals it', () => {
+    let latched = false;
+    const step = (over: Partial<typeof cold> & { irisLatched?: boolean }) => {
+      const next = chooseLaunchWorld({ ...cold, irisLatched: latched, ...over });
+      if (next.kind === 'iris') latched = true;
+      return next;
+    };
+    // The rim breathes around the hero while the load is out.
+    expect(step({})).toEqual({ kind: 'painted', ready: false });
+    // It lands before the cap, and the bloom runs against the real painting.
+    expect(step({ imageReady: true })).toEqual({ kind: 'painted', ready: true });
+    // And nothing later takes it away.
+    expect(step({ imageReady: true, deadlinePassed: true })).toEqual({
+      kind: 'painted',
+      ready: true,
+    });
+  });
+
+  test('the painting never arrives: the iris runs instead, and keeps running', () => {
+    let latched = false;
+    const step = (over: Partial<typeof cold>) => {
+      const next = chooseLaunchWorld({ ...cold, irisLatched: latched, ...over });
+      if (next.kind === 'iris') latched = true;
+      return next;
+    };
+    expect(step({})).toEqual({ kind: 'painted', ready: false });
+    expect(step({ deadlinePassed: true })).toEqual({ kind: 'iris' });
+    expect(step({ deadlinePassed: true })).toEqual({ kind: 'iris' });
+  });
+
+  test('the painting arrives after the cap: the iris keeps it, rather than cutting', () => {
+    // The one that matters. A painting that lands a frame after the front gave
+    // up on it must not yank the iris back out: that is two reveals in one
+    // second with a cut between them.
+    let latched = false;
+    const step = (over: Partial<typeof cold>) => {
+      const next = chooseLaunchWorld({ ...cold, irisLatched: latched, ...over });
+      if (next.kind === 'iris') latched = true;
+      return next;
+    };
+    expect(step({})).toEqual({ kind: 'painted', ready: false });
+    expect(step({ deadlinePassed: true })).toEqual({ kind: 'iris' });
+    expect(step({ deadlinePassed: true, imageReady: true })).toEqual({ kind: 'iris' });
+  });
+
+  test('a source that only resolves after the first frame still gets a reveal', () => {
+    // A custom pack's file URI can arrive a commit late, so the first render
+    // sees no artwork at all. That must open as a palette world and then take
+    // the painting when it appears -- never sit on `waiting` forever.
+    let latched = false;
+    const step = (over: Partial<typeof cold>) => {
+      const next = chooseLaunchWorld({ ...cold, irisLatched: latched, ...over });
+      if (next.kind === 'iris') latched = true;
+      return next;
+    };
+    expect(step({ hasArtwork: false })).toEqual({ kind: 'palette' });
+    expect(step({ imageReady: true })).toEqual({ kind: 'painted', ready: true });
+  });
+
+  test('the reveal is never less conservative than it has already been', () => {
+    // The property behind all of the above, stated once: `iris` is a one-way
+    // door for as long as the opening lasts.
+    for (const imageReady of [false, true]) {
+      for (const deadlinePassed of [false, true]) {
+        expect(
+          chooseLaunchWorld({ ...cold, imageReady, deadlinePassed, irisLatched: true }).kind
+        ).toBe('iris');
+      }
+    }
   });
 });
 

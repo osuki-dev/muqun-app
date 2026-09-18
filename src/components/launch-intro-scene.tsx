@@ -1,7 +1,7 @@
 import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, Fill, Shader, Skia } from '@shopify/react-native-skia';
+import { Canvas, ColorShader, Fill, Shader } from '@shopify/react-native-skia';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -35,17 +35,11 @@ import { LAUNCH_HERO_MAX_WIDTH, LAUNCH_HERO_WIDTH_FRACTION } from '@/hooks/use-l
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import {
-  BLOOM_CHROMA,
-  BLOOM_DRIFT,
-  BLOOM_GLOW_IN,
-  BLOOM_GLOW_OUT,
-  BLOOM_GLOW_STRENGTH,
-  BLOOM_MODE,
-  BLOOM_RIM_WIDTH,
-  bloomSlack,
-  BLOOM_WOBBLE,
-  LAUNCH_BLOOM_EFFECT,
-} from '@/lib/launch-bloom-shader';
+  colorVector,
+  INK_BLOOM_EFFECT,
+  inkBloomUniforms,
+  type InkBloomHole,
+} from '@/lib/ink-bloom-shader';
 import { subscribeLaunchHeroRect, type LaunchHeroRect } from '@/lib/launch-hero-rect';
 import { cursorOpacity, launchPromptLine, scrimWidth, typedCount } from '@/lib/launch-intro-prompt';
 import {
@@ -143,6 +137,14 @@ import { resolveThemeImage } from '@/theme/resolve';
  */
 
 /**
+ * How far the noise field drifts across the whole bloom, in noise units.
+ *
+ * The launch's own taste rather than the effect's: the edge should crawl a
+ * little as it travels, and this is how much.
+ */
+const BLOOM_DRIFT = 0.9;
+
+/**
  * The two trailing copies of the hero, as a fraction of the travel they lag by.
  *
  * Further behind than the first cut of this, where the lag was re-normalised
@@ -196,15 +198,6 @@ const CURSOR_HEIGHT = 1.18;
 const IRIS_RIM = 2;
 
 const FALLBACK_MONO = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
-
-/** A colour string as the four floats a uniform wants. Skia owns the parsing. */
-function colorVector(color: string): number[] {
-  try {
-    return Array.from(Skia.Color(color));
-  } catch {
-    return [0, 0, 0, 1];
-  }
-}
 
 /** A style dimension that is actually a number, or the fallback. */
 function points(value: unknown, fallback: number): number {
@@ -304,12 +297,20 @@ export function LaunchSceneIntro({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, hasArtwork, reduced]);
 
+  // The reveal, once chosen, may only become more conservative. `irisLatched`
+  // is the one-way door: see `LaunchWorldInput`.
+  const [irisLatched, setIrisLatched] = useState(false);
   const world = chooseLaunchWorld({
     hasArtwork,
-    shaderCompiled: LAUNCH_BLOOM_EFFECT !== null,
+    shaderCompiled: INK_BLOOM_EFFECT !== null,
     imageReady,
     deadlinePassed,
+    irisLatched,
   });
+  const worldKind = world.kind;
+  useEffect(() => {
+    if (worldKind === 'iris') setIrisLatched(true);
+  }, [worldKind]);
 
   // The far corner from wherever the hero is, taken over both ends of its
   // travel: the front has to have covered the screen at the end of the beat no
@@ -451,43 +452,55 @@ export function LaunchSceneIntro({
   const paperVector = useMemo(() => colorVector(paper), [paper]);
   const primaryVector = useMemo(() => colorVector(theme.colors.primary), [theme.colors.primary]);
   const rimVector = useMemo(() => colorVector(theme.colors.surface), [theme.colors.surface]);
-  const mode =
-    world.kind === 'palette'
-      ? BLOOM_MODE.palette
-      : world.kind === 'painted' && world.ready
-        ? BLOOM_MODE.painted
-        : BLOOM_MODE.waiting;
+  // What is behind the hole -- and, before the handover, nothing is.
+  //
+  // The overlay paints a copy of the native launch screen and native is removed
+  // the moment that copy has laid out, which leaves a window where this sheet is
+  // what the reader is looking at while `phase` is still 'native'. Anything the
+  // cover reveals during that window is a hole sitting on the splash before the
+  // opening has started: invisible for a painted pack, whose closed hole is the
+  // paper it is already showing, but a palette pack drew a small coloured blob
+  // on the splash for half a second. The cover stays shut until there is an
+  // opening to open.
+  const hole: InkBloomHole =
+    phase !== 'visible'
+      ? 'closed'
+      : world.kind === 'palette'
+        ? 'field'
+        : world.kind === 'painted' && world.ready
+          ? 'through'
+          : 'closed';
   const worldAlpha = wallpaper?.opacity ?? 1;
 
   // Every uniform, once per frame, on the UI thread. JavaScript does nothing
   // here at all: the shared values below are the only things that change.
-  const uniforms = useDerivedValue(() => {
-    const front = restRadius + (maxRadius * BLOOM_OVERSHOOT - restRadius) * bloom.value;
-    return {
-      uResolution: [width, height],
-      uCentre: [
-        launchCentre.x + (landingCentre.x - launchCentre.x) * hero.value,
-        launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value,
-      ],
-      uFront: front,
-      uWobble: BLOOM_WOBBLE,
-      uSlack: bloomSlack(front),
+  const uniforms = useDerivedValue(() =>
+    inkBloomUniforms({
+      resolution: { width, height },
+      // The hole follows the picture rather than staying where the picture
+      // started: the world came out of the hero, so it goes on coming out of
+      // the hero while the hero travels.
+      centre: {
+        x: launchCentre.x + (landingCentre.x - launchCentre.x) * hero.value,
+        y: launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value,
+      },
+      front: restRadius + (maxRadius * BLOOM_OVERSHOOT - restRadius) * bloom.value,
       // The drift rides the bloom rather than a clock, so the canvas stops
       // redrawing the moment the animation stops rather than at unmount.
-      uTime: bloom.value * BLOOM_DRIFT,
-      uRimWidth: BLOOM_RIM_WIDTH,
-      uGlowIn: BLOOM_GLOW_IN,
-      uGlowOut: BLOOM_GLOW_OUT,
-      uGlowStrength: BLOOM_GLOW_STRENGTH,
-      uChroma: BLOOM_CHROMA * ignite.value,
-      uMode: mode,
-      uDrift: 1 - settle.value,
-      uPaper: paperVector,
-      uPrimary: primaryVector,
-      uRimColor: [rimVector[0] ?? 1, rimVector[1] ?? 1, rimVector[2] ?? 1, ignite.value],
-      uSurface: rimVector,
-    };
-  });
+      drift: bloom.value * BLOOM_DRIFT,
+      settle: settle.value,
+      hole,
+      cover: 'paper',
+      paper: paperVector,
+      accent: primaryVector,
+      rim: rimVector,
+      surface: rimVector,
+      // The rim wakes with the ignite beat rather than being there from the
+      // first frame, which is what makes it read as the picture catching light.
+      rimOpacity: ignite.value,
+      chroma: ignite.value,
+    })
+  );
 
   const sheetStyle = useAnimatedStyle(() => ({ opacity: 1 - exit.value }));
   const heroStyle = useAnimatedStyle(() => ({
@@ -505,7 +518,12 @@ export function LaunchSceneIntro({
   }));
 
   const showWorldImage = world.kind === 'painted' && Boolean(wallpaperUri);
-  const showCanvas = world.kind === 'palette' || (world.kind === 'painted' && !frontGone);
+  // The cover may only leave once it has something to leave behind. Unmounting
+  // it while the painting has still not loaded would swap a covered screen for
+  // an uncovered one in a single frame -- the hard cut this opening exists to
+  // avoid -- so `ready` is part of the condition and not merely `frontGone`.
+  const showCanvas =
+    world.kind === 'palette' || (world.kind === 'painted' && !(frontGone && world.ready));
 
   return (
     <Animated.View style={[mirror.container.style, sheetStyle]}>
@@ -548,10 +566,17 @@ export function LaunchSceneIntro({
         splash) since the first commit, so the SkSL program is compiled and
         warm long before the front starts to move.
       */}
-      {showCanvas && LAUNCH_BLOOM_EFFECT ? (
+      {showCanvas && INK_BLOOM_EFFECT ? (
         <Canvas androidWarmup style={StyleSheet.absoluteFill}>
           <Fill>
-            <Shader source={LAUNCH_BLOOM_EFFECT} uniforms={uniforms} />
+            <Shader source={INK_BLOOM_EFFECT} uniforms={uniforms}>
+              {/*
+                The effect declares a cover image and a runtime effect must be
+                given every child it declares, but this caller's cover is flat
+                paper -- so this is bound and never evaluated.
+              */}
+              <ColorShader color={paper} />
+            </Shader>
           </Fill>
         </Canvas>
       ) : null}
