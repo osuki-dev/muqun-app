@@ -986,11 +986,29 @@ export const SESSION_ASSET_PAGE_LIMIT = 100;
 export const MAX_SESSION_ASSET_LIMIT = 200;
 
 /**
- * Ceiling on a text-ish asset read. The gateway caps this too, but a phone is
- * the side that runs out of memory, so the app refuses oversized files before
- * asking for them rather than after receiving them.
+ * Ceiling on a text-ish asset read, and the one number the viewer refuses at.
+ *
+ * It used to be 512 KiB, and the viewer refused to *draw* anything past 64 KiB
+ * -- so a 100 KB file was fetched over the wire, held whole in the JS heap, and
+ * then replaced with a sentence saying it was too large. There is no gate at
+ * 64 KiB any more: a document is drawn a block at a time and a source file a
+ * line at a time, so what the viewer can show is simply what the phone can
+ * hold.
+ *
+ * Five MiB is what that turns out to be worth. A megabyte of text is 20 000
+ * lines and a `bun.lock`; five is a limit nothing an agent writes has ever come
+ * near. It is under the gateway's own 10 MiB asset ceiling
+ * (`MAX_ASSET_CONTENT_BYTES`) and under what its encrypted transport will
+ * buffer, so the app's refusal is the first one the reader meets and it is the
+ * one that can explain itself. The cost is real and bounded: a JS string is
+ * UTF-16, so five MiB of source is about ten of heap, held only while the file
+ * is open.
+ *
+ * The gateway caps this too, but a phone is the side that runs out of memory,
+ * so the app refuses oversized files before asking for them rather than after
+ * receiving them.
  */
-export const MAX_ASSET_TEXT_BYTES = 512 * 1024;
+export const MAX_ASSET_TEXT_BYTES = 5 * 1024 * 1024;
 /**
  * Reading a file is not a control call; it gets its own, longer budget.
  *
@@ -1002,6 +1020,22 @@ export const MAX_ASSET_TEXT_BYTES = 512 * 1024;
  * app is broken.
  */
 export const ASSET_CONTENT_TIMEOUT_MS = 15_000;
+
+/**
+ * That budget, widened for the file actually being asked for.
+ *
+ * 15 seconds was chosen when nothing larger than 512 KiB could be asked for. A
+ * flat budget over a ceiling ten times higher is not a stall guard any more, it
+ * is a size limit wearing a clock: five MiB over a phone's uplink is a minute's
+ * honest work, and cutting it off at fifteen seconds would refuse the file
+ * while blaming the network. So the allowance grows with the file and the floor
+ * stays where it is -- a small file that stalls still fails fast, which is the
+ * case the budget exists for.
+ */
+export function assetTextTimeoutMs(bytes: number): number {
+  const megabytes = Math.ceil(Math.max(0, bytes) / (1024 * 1024));
+  return Math.min(90_000, ASSET_CONTENT_TIMEOUT_MS + megabytes * 10_000);
+}
 
 export function isGatewayConfigured(): boolean {
   return Boolean(currentBaseUrl && currentBaseUrl.trim().length > 0);
@@ -1305,10 +1339,11 @@ export async function readAssetText(
   // to completion into a component that is gone.
   const url = assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
+  const budget = assetTextTimeoutMs(asset.size);
   const response =
     currentTransport === GATEWAY_TRANSPORT
-      ? await encryptedGatewayFetch(url, init, ASSET_CONTENT_TIMEOUT_MS)
-      : await fetchWithin(ASSET_CONTENT_TIMEOUT_MS, 'Timed out reading the file.', url, init);
+      ? await encryptedGatewayFetch(url, init, budget)
+      : await fetchWithin(budget, 'Timed out reading the file.', url, init);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }

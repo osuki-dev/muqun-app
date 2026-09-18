@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Conversational help and open-ended workspace questions"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "Copy"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Copy message"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "Copy path"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "This device has no camera available"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "This file is empty"
@@ -4856,10 +4865,6 @@ msgstr "This file is not a TrueType or OpenType font"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "This file is not among the session artifacts"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "This file is too large to display. Copy it to read it elsewhere"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "Tokens this session"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Tokens usage and cost"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "Too large to highlight — showing plain text"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

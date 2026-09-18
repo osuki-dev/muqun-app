@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Ajuda conversacional e perguntas abertas sobre o espaço de trabalho"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "Copiar"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Copiar mensagem"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "Copiar caminho"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "Este dispositivo não tem câmara disponível"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "Este ficheiro tem {size}. O Muqun abre ficheiros de texto até {ceiling}; os maiores ficam no servidor"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "Este ficheiro está vazio"
@@ -4856,10 +4865,6 @@ msgstr "Este ficheiro não é um tipo de letra TrueType ou OpenType"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "Este ficheiro não está entre os artefactos da sessão"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "Este ficheiro é demasiado grande para ser apresentado. Copie-o para o ler noutro lado"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "Tokens desta sessão"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Uso de tokens e custo"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "Demasiado grande para realçar — mostrado como texto simples"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

@@ -29,7 +29,11 @@ import {
   type AssetImageSource,
   type SessionAsset,
   readAssetBytes,
+  MAX_ASSET_TEXT_BYTES,
 } from '@/lib/gateway-client';
+import { CodeLinesView } from '@/components/code-lines-view';
+import { MarkdownDocumentView } from '@/components/markdown-document-view';
+import { indexTextLines } from '@/lib/text-lines';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
@@ -48,9 +52,10 @@ import { themeFromDocument } from '@/theme/file-preview';
  * Every kind is displayed straight from the gateway rather than copied to a
  * cache file first: an image is fetched by the image library, which sends the
  * bearer token itself and owns the decode and the disk cache, and text is read
- * into a string because that is what the renderer wants anyway. Nothing here
+ * into a string because that is what the renderers want anyway. Nothing here
  * holds a whole file in the JS heap except text, which is size-capped by
- * `readAssetText`.
+ * `readAssetText` -- and that cap is now the only one: what arrives is drawn,
+ * a block or a line at a time.
  */
 export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   if (asset.kind === 'image' && asset.previewable) {
@@ -143,9 +148,11 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
 const COPIED_FEEDBACK_MS = 1_600;
 
 /**
- * Where a file stops being drawn and starts being described.
+ * Where a file stops being highlighted and starts being drawn as lines.
  *
- * There is one renderer now, so there is one gate, and it is iOS that sets it.
+ * Not where it stops being drawn. There is no size at which this viewer refuses
+ * a text file any more, short of `MAX_ASSET_TEXT_BYTES` -- what changes at this
+ * number is which renderer draws it, and the reason is iOS.
  *
  * `react-native-enriched-markdown` parses and lays out natively -- the
  * tree-sitter highlighter never touches the JS thread -- but the layout still
@@ -162,26 +169,33 @@ const COPIED_FEEDBACK_MS = 1_600;
  *   160 KiB          5_847 ms              390 ms
  *   200 KiB          7_920 ms              141 ms
  *
- * Android is flat and cheap at every size -- a 200 KiB block is on screen in
- * under half a second, confirmed end to end with a stopwatch around the tap and
- * not only from `onLayout`. iOS is quadratic, and at 200 KiB the sheet shows its
- * loading skeleton for eight seconds and then a screenful of code. That is not a
- * slow render, it is the reader waiting at a placeholder, and it is the same
- * shape card #661 reported.
+ * Android is flat and cheap at every size. iOS is quadratic, and at 200 KiB the
+ * sheet shows its loading skeleton for eight seconds and then a screenful of
+ * code. That is not a slow render, it is the reader waiting at a placeholder,
+ * and it is the shape card #661 reported.
  *
- * 64 KiB is the last size on the flat part of the iOS curve -- under a second --
- * and it is the number the markdown gate this replaces already used, arrived at
- * from the same cliff on the same simulator. It is comfortably above every file
- * an agent actually writes.
+ * 64 KiB is the last size on the flat part of that curve -- under a second --
+ * so it stays, and every file under it is drawn exactly as it was: one fenced
+ * block, highlighted natively, selectable, nothing changed. What is new is the
+ * other side. A file above it goes to `CodeLinesView`, which is a virtualized
+ * list of monospaced rows and costs the screenful on screen rather than the
+ * file, so 170 KB and 2 MB open in the same time as 20 KB. It has no colour in
+ * it, and the viewer says so.
  *
- * Above it the file is not drawn at all. That is a real loss against the
- * virtualized viewer card #661 built, which would show a 200 KiB file a
- * screenful at a time -- and it is the trade: one renderer with a gate, rather
- * than two renderers and a tokenizer to keep in step with each other. The file
- * is loaded by then, so the header's copy action still works, which is what the
- * message points at.
+ * Highlighting the visible window instead was the alternative, and it loses.
+ * The only highlighter in this app is inside the native fenced block; feeding
+ * it a window at a time means a nested horizontal scroller per window, so
+ * columns stop agreeing down the file, a height that cannot be predicted, so
+ * the fixed row geometry that makes the list smooth goes with it, and a native
+ * re-parse several times a second on a fling. Colour on the files an agent
+ * writes, and a file that opens at all on the files it does not, is the better
+ * half of that trade -- and it is strictly more than the refusal it replaces.
+ *
+ * Characters, not bytes, and deliberately: what the renderer measures is
+ * glyphs. Real bytes are what `MAX_ASSET_TEXT_BYTES` gates on, one layer down,
+ * where `asset.size` is a real file size.
  */
-const RENDER_MAX_BYTES = 64 * 1024;
+const HIGHLIGHT_MAX_CHARS = 64 * 1024;
 
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
@@ -204,7 +218,18 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
     () => createMarkdownStyle(theme.colors, markdownFonts),
     [theme.colors, markdownFonts]
   );
-  const readable = asset.previewable && (asset.kind === 'markdown' || asset.kind === 'text');
+  const textual = asset.previewable && (asset.kind === 'markdown' || asset.kind === 'text');
+  /**
+   * The one ceiling left, and it is about the phone rather than the renderer.
+   *
+   * `asset.size` is a real file size in real bytes, which is what this has to
+   * be measured in -- the renderers' own limits are in characters, because
+   * glyphs are what they lay out. Above this the file is not asked for at all:
+   * refusing after downloading five megabytes into a component that will not
+   * draw them is what the viewer used to do at a tenth of the size.
+   */
+  const tooLarge = textual && asset.size > MAX_ASSET_TEXT_BYTES;
+  const readable = textual && !tooLarge;
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
@@ -482,6 +507,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                 <AssetBody
                   asset={asset}
                   readable={readable}
+                  tooLarge={tooLarge}
                   content={content}
                   error={error}
                   markdownStyle={markdownStyle}
@@ -523,6 +549,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 function AssetBody({
   asset,
   readable,
+  tooLarge,
   content,
   error,
   markdownStyle,
@@ -530,6 +557,8 @@ function AssetBody({
 }: {
   asset: SessionAsset;
   readable: boolean;
+  /** Text, but past the size the app will hold; nothing was read. */
+  tooLarge: boolean;
   content: string | null;
   error: string | null;
   markdownStyle: ReturnType<typeof createMarkdownStyle>;
@@ -540,26 +569,86 @@ function AssetBody({
 
   const theme = useThemeTokens();
 
+  /** A markdown file is a document; everything else is code, whatever it is called. */
+  const document = asset.kind === 'markdown';
+
   /**
-   * What the renderer is handed.
+   * What the highlighted renderer is handed, when it is the one drawing.
    *
-   * A markdown file is its own source and goes through as it is. Everything
-   * else -- source, config, a log, a diff, a `.txt` -- is wrapped in one fenced
-   * block named after its extension, and the renderer highlights it natively.
-   * That is the whole of the second path: there is no JavaScript tokenizer here
-   * any more, and no second viewer to keep in step with this one.
+   * Source, config, a log, a diff, a `.txt` -- wrapped in one fenced block
+   * named after its extension, and highlighted natively. There is no JavaScript
+   * tokenizer here and never was: this is the only path in the app that
+   * colours code, and above `HIGHLIGHT_MAX_CHARS` it is not the path taken.
    */
   const source = useMemo(() => {
-    if (content === null) return '';
-    if (asset.kind === 'markdown') return content;
+    if (content === null || document || content.length > HIGHLIGHT_MAX_CHARS) return '';
     return fencedFile(content, fenceLanguageForFile(asset.name));
-  }, [asset.kind, asset.name, content]);
+  }, [asset.name, content, document]);
+
+  /**
+   * The same file as rows, when it is past the size one native pass can lay
+   * out. Built once per file rather than per render: a megabyte is split on
+   * newlines exactly once, and `CodeLinesView` reads the result.
+   */
+  const index = useMemo(() => {
+    if (content === null || document || content.length <= HIGHLIGHT_MAX_CHARS) return null;
+    return indexTextLines(content);
+  }, [content, document]);
+
+  /**
+   * The path, for a file the reader has to go and open somewhere else.
+   *
+   * The header's copy action needs the file's text and a refused file has none,
+   * so the one thing worth carrying away is where it is. Same feedback as the
+   * header: a word, for as long as a tick lasts there.
+   */
+  const [pathCopied, setPathCopied] = useState(false);
+  const copyPath = useCallback(() => {
+    void Clipboard.setStringAsync(asset.path).then(() => setPathCopied(true));
+  }, [asset.path]);
+  useEffect(() => {
+    if (!pathCopied) return;
+    const timer = setTimeout(() => setPathCopied(false), COPIED_FEEDBACK_MS);
+    return () => clearTimeout(timer);
+  }, [pathCopied]);
 
   // The states of one viewer, and they used to be bare returns: the spinner
   // ceased to exist and a full page of markdown existed, on the same frame. Each branch is now a layer of its own, keyed so React tears the old
   // one down rather than reusing it, and the two overlap for the length of a
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
+  if (tooLarge) {
+    // The one refusal left, and the only one that says a number. It is reached
+    // before a byte is read, so what it offers is the way to the file rather
+    // than the file: nothing here has the text to put on the clipboard.
+    const size = formatAssetSize(asset.size);
+    const ceiling = formatAssetSize(MAX_ASSET_TEXT_BYTES);
+    return (
+      <AssetBodyLayer id="too-large">
+        <View style={styles.centerState}>
+          <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
+            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the server.`}
+          </Text>
+          <Text variant="caption" color={theme.colors.textMuted} selectable>
+            {asset.path}
+          </Text>
+          <PressableScale
+            testID="asset-copy-path"
+            accessibilityLabel={t`Copy path`}
+            onPress={copyPath}
+            style={[
+              styles.retry,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
+            <Text variant="caption" color={theme.colors.primary}>
+              {pathCopied ? t`Copied` : t`Copy path`}
+            </Text>
+          </PressableScale>
+        </View>
+      </AssetBodyLayer>
+    );
+  }
+
   if (!readable) {
     return (
       <AssetBodyLayer id="details">
@@ -632,20 +721,39 @@ function AssetBody({
     );
   }
 
-  if (content.length > RENDER_MAX_BYTES) {
+  if (document) {
+    // A document of any length, a block at a time. A README is one cell; a
+    // 300 KB changelog is eighty, and only the ones near the viewport exist.
     return (
-      <AssetBodyLayer id="too-large">
-        <View style={styles.centerState}>
-          <Text variant="bodySmall" color={theme.colors.textMuted}>
-            <Trans>This file is too large to display. Copy it to read it elsewhere.</Trans>
-          </Text>
-        </View>
+      <AssetBodyLayer id="document">
+        <MarkdownDocumentView
+          testID="asset-document"
+          markdown={content}
+          markdownStyle={markdownStyle}
+          selectionColor={theme.colors.primarySubtle}
+        />
+      </AssetBodyLayer>
+    );
+  }
+
+  if (index) {
+    // Past the size one native layout pass stays linear at. Rows, numbered,
+    // pannable, and on screen in the time it takes to split a string.
+    return (
+      <AssetBodyLayer id="lines">
+        <CodeLinesView
+          testID="asset-lines"
+          lines={index.lines}
+          longest={index.longest}
+          markdownStyle={markdownStyle}
+          note={t`Too large to highlight — showing plain text.`}
+        />
       </AssetBodyLayer>
     );
   }
 
   return (
-    <AssetBodyLayer id="document">
+    <AssetBodyLayer id="code">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.documentContent}
@@ -815,6 +923,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     padding: 24,
+  },
+  // The refusal is a sentence with two numbers in it, not a label: it wraps,
+  // and it reads as prose centred under nothing rather than as a ragged column.
+  centerText: {
+    textAlign: 'center',
   },
   // The same padding the markdown body uses, so the placeholder lines sit where
   // the paragraphs replacing them will.

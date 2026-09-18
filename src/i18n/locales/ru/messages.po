@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Диалоговая помощь и свободные вопросы о рабочем пространстве"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "Копировать"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Копировать сообщение"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "Копировать путь"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "На этом устройстве нет доступной камеры"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "Этот файл — {size}. Muqun открывает текстовые файлы до {ceiling}; файлы больше остаются на сервере"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "Этот файл пуст"
@@ -4856,10 +4865,6 @@ msgstr "Это не шрифт TrueType или OpenType"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "Этого файла нет среди артефактов сеанса"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "Этот файл слишком большой, чтобы показать его здесь. Скопируйте его, чтобы прочитать в другом месте"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "Токенов за сессию"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Использование токенов и стоимость"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "Слишком большой для подсветки — показан обычным текстом"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

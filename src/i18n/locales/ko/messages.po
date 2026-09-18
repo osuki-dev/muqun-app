@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "대화형 도움말과 작업 공간에 대한 자유로운 질문"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "복사"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "메시지 복사"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "경로 복사"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "이 기기에는 사용할 수 있는 카메라가 없습니다"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "이 파일은 {size}입니다. Muqun은 {ceiling}까지의 텍스트 파일을 열 수 있고, 더 큰 파일은 서버에 그대로 남습니다"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "이 파일은 비어 있습니다"
@@ -4856,10 +4865,6 @@ msgstr "이 파일은 TrueType이나 OpenType 글꼴이 아닙니다"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "이 파일은 세션 산출물에 없습니다"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "이 파일은 너무 커서 표시할 수 없습니다. 복사해서 다른 곳에서 읽어 보세요"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "이 세션의 토큰"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "토큰 사용량 및 비용"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "너무 커서 구문 강조 없이 일반 텍스트로 표시합니다"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
