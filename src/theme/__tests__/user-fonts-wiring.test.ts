@@ -166,3 +166,45 @@ test('the e2e flow that covers the sheet is registered with the gate tag', () =>
   expect(flow?.tags).toContain('full');
   expect(suite.programs[flow?.program ?? '']).toBeDefined();
 });
+
+test('every phase the font row draws is a step the install actually takes', () => {
+  // The rule this holds in place: no step is a timer, and no step is inferred
+  // from another one. Each of the four below is reported at the line that
+  // starts the work it names, so a row that says "Checking" is a row whose
+  // file is being read. Deleting any of these calls breaks nothing that a
+  // type or a build would notice -- the row simply stops moving, on a device
+  // with a slow connection, which is not where any of us develops.
+  const module = read('src/theme/user-fonts.ts');
+  expect(module).toContain("onStep?.('connecting');");
+  expect(module).toContain("onStep?.('copying');");
+  expect(module).toContain("onStep?.('checking');");
+  // `checking` belongs to the checks, not to the download: an import runs the
+  // same three and must report them too.
+  const accept = module.split('async function acceptStagedFont')[1]?.split('\n}')[0] ?? '';
+  expect(accept).toContain("onStep?.('checking');");
+  expect(accept.indexOf("onStep?.('checking')")).toBeLessThan(accept.indexOf('checkFontSize'));
+  // And both ways in hand the callback down to them.
+  expect(module).toContain(
+    'return acceptStagedFont(downloaded, slot, url.trim(), previous, onStep);'
+  );
+  expect(module).toContain('return acceptStagedFont(staged, slot, source.name, previous, onStep);');
+
+  const sheet = read('src/components/settings-font-sheet.tsx');
+  // The one step the module cannot report, because it happens in the sheet.
+  expect(sheet).toContain("emit(id, { kind: 'step', phase: 'registering' });");
+  // The progress the sheet draws is the download's own bytes and the steps
+  // above, never a ramp standing in for them.
+  expect(sheet).toContain("onStep: (phase) => emit(id, { kind: 'step', phase })");
+  expect(sheet).toContain("emit(id, { kind: 'bytes', bytesWritten, totalBytes })");
+});
+
+test('a cancelled download leaves nothing behind, in either place it can land', () => {
+  const module = read('src/theme/user-fonts.ts');
+  const download = module.split('export async function downloadUserFont')[1] ?? '';
+  // The transfer itself rejecting.
+  expect(download).toContain('discard(staged);');
+  // And the abort that arrives after it resolved, where nothing else would
+  // ever have rejected and the `.part` file would have stayed on disk.
+  expect(download).toContain('discard(downloaded);');
+  expect(download).toMatch(/if \(signal\?\.aborted\) \{\n\s*discard\(downloaded\);/u);
+});

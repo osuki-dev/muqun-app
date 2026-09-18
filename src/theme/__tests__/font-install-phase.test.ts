@@ -241,3 +241,19 @@ test('Cancel is offered while the bytes move and withdrawn once they stop', () =
   // An import is a local copy that is over before a Cancel could be aimed at.
   expect(fontInstallCancellable(run([START_IMPORT])!)).toBe(false);
 });
+
+test('the done beat is ended by its own timer and by nothing else', () => {
+  const done = run([
+    START_DOWNLOAD,
+    { kind: 'bytes', bytesWritten: 100, totalBytes: 100 },
+    { kind: 'step', phase: 'registering' },
+    { kind: 'done' },
+  ]);
+  expect(advanceFontInstall(done, { kind: 'settled' })).toBeNull();
+
+  // A stale timer from the font before this one, arriving while a second
+  // install is in flight, must not clear the row it finds.
+  const downloading = run([START_DOWNLOAD, { kind: 'bytes', bytesWritten: 1, totalBytes: 100 }]);
+  expect(advanceFontInstall(downloading, { kind: 'settled' })).toBe(downloading);
+  expect(advanceFontInstall(null, { kind: 'settled' })).toBeNull();
+});

@@ -99,6 +99,13 @@ export type FontInstallEvent =
   | { kind: 'bytes'; bytesWritten: number; totalBytes: number | null }
   | { kind: 'step'; phase: FontInstallPhase }
   | { kind: 'done' }
+  /**
+   * The beat after `done` is over: the bar has filled, been seen full, and can
+   * go. Only `done` answers it -- it arrives on a timer, and a timer that has
+   * outlived its own run must not clear the next one out from under a reader
+   * who has already started a second font.
+   */
+  | { kind: 'settled' }
   | { kind: 'failed' }
   | { kind: 'cancelled' };
 
@@ -129,6 +136,9 @@ export function advanceFontInstall(
     case 'failed':
     case 'cancelled':
       return null;
+
+    case 'settled':
+      return state.phase === 'done' ? null : state;
 
     case 'done':
       return state.phase === 'done' ? state : { ...state, phase: 'done' };
