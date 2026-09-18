@@ -41,6 +41,7 @@ import {
   fencedCode,
   filesFromContent,
   groupGrepMatches,
+  groupPathsByDirectory,
   parsePatchSections,
   parseToolOutput,
   parseToolQuestions,
@@ -435,6 +436,10 @@ export const AgentToolCard = memo(function AgentToolCard({
     () => (kind === 'grep' ? groupGrepMatches(outputText) : []),
     [kind, outputText]
   );
+  const globGroups = useMemo(
+    () => (kind === 'glob' ? groupPathsByDirectory(outputText) : []),
+    [kind, outputText]
+  );
   const subagent = useMemo(
     () => (kind === 'subagent' ? stripSubagentEnvelope(outputText) : null),
     [kind, outputText]
@@ -688,6 +693,7 @@ export const AgentToolCard = memo(function AgentToolCard({
         patchSections,
         patchFiles,
         grepGroups,
+        globGroups,
         questions,
         answers,
         subagentText: subagent?.text ?? '',
@@ -710,6 +716,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       patchSections,
       patchFiles,
       grepGroups,
+      globGroups,
       questions,
       answers,
       subagent,
@@ -820,6 +827,7 @@ interface ToolBodyArgs {
   patchSections: ReturnType<typeof parsePatchSections>;
   patchFiles: ReturnType<typeof diffFilesFromMetadata>;
   grepGroups: ReturnType<typeof groupGrepMatches>;
+  globGroups: ReturnType<typeof groupPathsByDirectory>;
   questions: readonly ToolQuestion[];
   answers: readonly string[][];
   subagentText: string;
@@ -923,6 +931,15 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       );
 
     case 'glob':
+      return args.globGroups.length > 0 ? (
+        <GlobFiles
+          groups={args.globGroups}
+          {...(args.onOpenFile ? { onOpenFile: args.onOpenFile } : {})}
+        />
+      ) : (
+        <OutputLines text={outputText} />
+      );
+
     case 'search':
       return <OutputLines text={outputText} />;
 
@@ -996,9 +1013,16 @@ function viewerAction(
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void
 ): { onOpenInViewer?: () => void } {
   if (!onOpenFile || !target.startsWith('/')) return {};
-  const name = basename(target);
-  const mime = /\.mdx?$/i.test(target) ? 'text/markdown' : 'text/plain';
-  return { onOpenInViewer: () => onOpenFile({ uri: target, mime, name }) };
+  return { onOpenInViewer: () => onOpenFile(viewerFile(target)) };
+}
+
+/** One file, in the shape the asset viewer takes. */
+function viewerFile(path: string): { uri: string; mime: string; name: string } {
+  return {
+    uri: path,
+    mime: /\.mdx?$/i.test(path) ? 'text/markdown' : 'text/plain',
+    name: basename(path),
+  };
 }
 
 /** A `+`/`-` patch made from a before and an after, when no real one came. */
@@ -1066,6 +1090,82 @@ const EditDiffs = memo(function EditDiffs({
       onToggleFile={toggle}
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
+  );
+});
+
+/** Directories a glob card lists, and files inside each, before it stops. */
+const GLOB_GROUP_MAX = 8;
+const GLOB_FILE_MAX = 12;
+
+/**
+ * What a `glob` found, as files rather than as a wall of paths.
+ *
+ * The tool answers with one absolute path per line. Drawn as it comes, every
+ * row repeats the same long prefix and the part that differs -- the file name
+ * -- is off the right-hand edge of a phone. The folder is a heading said once,
+ * each row is a name, and a row opens the file in the viewer a `read` opens:
+ * finding a file and then having to ask a second tool to see it was the whole
+ * of the interaction this card was missing.
+ */
+const GlobFiles = memo(function GlobFiles({
+  groups,
+  onOpenFile,
+}: {
+  groups: ReturnType<typeof groupPathsByDirectory>;
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+}) {
+  const theme = useThemeTokens();
+  const colors = usePaneChatColors();
+  const shown = groups.slice(0, GLOB_GROUP_MAX);
+  return (
+    <View style={styles.stretch}>
+      {shown.map((group) => (
+        <View key={group.directory} style={styles.globGroup}>
+          <Text
+            variant="caption"
+            weight="semibold"
+            numberOfLines={1}
+            // A path says what it is in its last segment: every result of one
+            // glob shares a prefix, so the head is what can be dropped.
+            ellipsizeMode="head"
+            color={theme.colors.textSubtle}
+            style={styles.globDirectory}>
+            {group.directory || '/'}
+          </Text>
+          {group.files.slice(0, GLOB_FILE_MAX).map((name) => {
+            const path = group.directory ? `${group.directory}/${name}` : name;
+            return (
+              <PressableScale
+                key={path}
+                testID="agent-tool-glob-file"
+                accessibilityRole="button"
+                accessibilityLabel={name}
+                disabled={!onOpenFile}
+                onPress={() => onOpenFile?.(viewerFile(path))}
+                style={styles.globRow}>
+                <FileText size={11} color={colors.subtle} />
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="middle"
+                  style={[styles.mono, styles.globName, { color: theme.colors.text }]}>
+                  {name}
+                </Text>
+              </PressableScale>
+            );
+          })}
+          {group.files.length > GLOB_FILE_MAX ? (
+            <Text variant="caption" color={colors.subtle} style={styles.globMore}>
+              {`… ${group.files.length - GLOB_FILE_MAX}`}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+      {groups.length > shown.length ? (
+        <Text variant="caption" color={colors.subtle} style={styles.globMore}>
+          {`… ${groups.length - shown.length}`}
+        </Text>
+      ) : null}
+    </View>
   );
 });
 
@@ -1435,6 +1535,26 @@ const styles = StyleSheet.create({
   fileChipName: {
     fontSize: AGENT_TYPE.meta.size,
     flexShrink: 1,
+  },
+  globGroup: {
+    gap: 1,
+    marginBottom: 4,
+  },
+  globDirectory: {
+    fontFamily: 'monospace',
+    fontSize: AGENT_TYPE.micro.size,
+  },
+  globRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 22,
+  },
+  globName: {
+    flexShrink: 1,
+  },
+  globMore: {
+    fontSize: AGENT_TYPE.micro.size,
   },
   grepGroup: {
     gap: 1,

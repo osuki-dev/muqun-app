@@ -991,6 +991,50 @@ export function parsePatchSections(patchText: string): PatchSection[] {
 }
 
 // ---------------------------------------------------------------------------
+// glob output
+// ---------------------------------------------------------------------------
+
+export interface PathGroup {
+  directory: string;
+  /** The file names in it, without the directory they share. */
+  files: string[];
+}
+
+/**
+ * `glob`'s one-path-per-line answer, grouped by the folder the files are in.
+ *
+ * The tool prints absolute paths, one per line, and drawing them as they come
+ * is a wall in which every line repeats the same long prefix and the part that
+ * differs is off the right-hand edge of a phone. Grouped, the prefix is said
+ * once as a heading and each row is the file name -- which is the part the
+ * reader is scanning for.
+ *
+ * Order is preserved: the first directory to appear is the first group, so the
+ * shape of the answer is not rearranged under the reader.
+ */
+export function groupPathsByDirectory(output: string): PathGroup[] {
+  if (!output) return [];
+  const groups: PathGroup[] = [];
+  const byDirectory = new Map<string, PathGroup>();
+  for (const raw of output.split('\n')) {
+    const line = raw.trim();
+    // A count, a note, an empty line: a path is the only thing grouped here.
+    if (!line || line.includes(' ')) continue;
+    const directory = dirname(line);
+    const name = basename(line);
+    if (!name) continue;
+    let group = byDirectory.get(directory);
+    if (!group) {
+      group = { directory, files: [] };
+      byDirectory.set(directory, group);
+      groups.push(group);
+    }
+    group.files.push(name);
+  }
+  return groups;
+}
+
+// ---------------------------------------------------------------------------
 // grep output
 // ---------------------------------------------------------------------------
 

@@ -16,6 +16,7 @@ import {
   fenceLanguageForPath,
   filesFromContent,
   groupGrepMatches,
+  groupPathsByDirectory,
   parsePatchSections,
   partialJsonStrings,
   parseToolOutput,
@@ -694,5 +695,50 @@ describe('what a skill and a web call are called', () => {
     expect(contentTypeFromMetadata({})).toBe('');
     expect(searchProviderFromMetadata({ provider: 'brave' })).toBe('brave');
     expect(searchProviderFromMetadata({})).toBe('');
+  });
+});
+
+describe('groupPathsByDirectory', () => {
+  test('one path per line becomes folders and the names in them', () => {
+    const output = [
+      '/home/ryu/app/src/lib/agent-tool-output.ts',
+      '/home/ryu/app/src/lib/agent-session.ts',
+      '/home/ryu/app/src/components/agent-tool-card.tsx',
+      '/home/ryu/app/src/lib/motion.ts',
+    ].join('\n');
+    expect(groupPathsByDirectory(output)).toEqual([
+      {
+        directory: '/home/ryu/app/src/lib',
+        files: ['agent-tool-output.ts', 'agent-session.ts', 'motion.ts'],
+      },
+      { directory: '/home/ryu/app/src/components', files: ['agent-tool-card.tsx'] },
+    ]);
+  });
+
+  test('the order the tool answered in is the order it is read in', () => {
+    const groups = groupPathsByDirectory('/b/2.ts\n/a/1.ts\n/b/3.ts');
+    expect(groups.map((group) => group.directory)).toEqual(['/b', '/a']);
+  });
+
+  test('a real captured glob answer, of one file', () => {
+    const output = '/home/ryu/.cache/tmp/claude-1000/scratchpad/probe/sample.txt';
+    expect(groupPathsByDirectory(output)).toEqual([
+      {
+        directory: '/home/ryu/.cache/tmp/claude-1000/scratchpad/probe',
+        files: ['sample.txt'],
+      },
+    ]);
+  });
+
+  test('anything that is not a path is not a file row', () => {
+    // A note, a count, a blank: only a path is grouped.
+    expect(groupPathsByDirectory('Found 3 files\n/a/b.ts\n\n  ')).toEqual([
+      { directory: '/a', files: ['b.ts'] },
+    ]);
+    expect(groupPathsByDirectory('')).toEqual([]);
+    // A relative answer has no folder, and says so rather than inventing one.
+    expect(groupPathsByDirectory('a.ts\nb.ts')).toEqual([
+      { directory: '', files: ['a.ts', 'b.ts'] },
+    ]);
   });
 });
