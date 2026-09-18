@@ -25,6 +25,23 @@ export type ReachabilityProbe = {
   serverId: string;
   ok: boolean;
   checkedAtMs: number;
+  /**
+   * The `/health` body this probe already paid for, when it was one the
+   * prewarm may build on.
+   *
+   * The dot only needs `response.ok`, but the body arrives with it, and the
+   * workspace prewarm's first request used to be a second `/health` to the same
+   * gateway a few hundred milliseconds later. Carrying it here is what makes
+   * that second round trip unnecessary (`lib/workspace-snapshot`).
+   *
+   * Null has one meaning and it is not "no answer": it means *nothing here is
+   * safe to warm from* -- the probe failed, the body was unreadable, or it
+   * failed `assertSupportedHerdr`. The warm then asks for health itself and
+   * gets the real error. Typed loosely on purpose so this module, which is pure
+   * and dependency-free, does not have to import the transport's response
+   * types; `stores/server-reachability` is where the shape is established.
+   */
+  health?: unknown;
 };
 
 /**
@@ -114,6 +131,35 @@ export function reachabilityFromProbe(
   if (!probe) return 'unknown';
   if (nowMs - probe.checkedAtMs > REACHABILITY_FRESH_MS) return 'unknown';
   return probe.ok ? 'live' : 'offline';
+}
+
+/**
+ * What the probe has to say to the workspace prewarm.
+ *
+ * Two separate answers, from the one round trip the dot already made:
+ *
+ * - `warm` -- whether running the prewarm at all is worth a request. A server
+ *   that *just* failed to answer has nothing to warm from, and firing six more
+ *   requests at it is six more four-second timeouts for a screen the reader is
+ *   looking at now. "We never asked" and "we asked a while ago" are not that:
+ *   they are absence of evidence, and the warm goes ahead exactly as it did
+ *   before.
+ * - `health` -- the `/health` body the warm would otherwise have asked for
+ *   itself, when there is one worth reusing.
+ *
+ * Freshness is `REACHABILITY_FRESH_MS`, the same window the dot is allowed to
+ * speak for. Past it the probe stops being evidence for the light, and it must
+ * stop being evidence for the warm on the same tick: a health body that no
+ * longer backs a green dot cannot be the one the prewarm builds a snapshot on.
+ */
+export function prewarmGate(
+  probe: ReachabilityProbe | undefined,
+  nowMs: number = Date.now()
+): { warm: boolean; health: unknown } {
+  const state = reachabilityFromProbe(probe, nowMs);
+  if (state === 'offline') return { warm: false, health: null };
+  if (state === 'unknown') return { warm: true, health: null };
+  return { warm: true, health: probe?.health ?? null };
 }
 
 /** Whether a fresh enough answer is already on hand. */

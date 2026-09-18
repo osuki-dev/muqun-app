@@ -72,7 +72,7 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
-import { useServerReachability } from '@/stores/server-reachability';
+import { serverPrewarmGate, useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -150,6 +150,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
 
   const probes = useServerReachability((state) => state.probes);
   const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
+  const refreshReachability = useServerReachability((state) => state.refresh);
   const keepReachability = useServerReachability((state) => state.keepOnly);
 
   // Which servers have been opened on this device, and when. Already stored for
@@ -271,22 +272,36 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
         AppState.currentState === 'active' &&
         useGatewayConnectionStore.getState().record === record;
       // Prepare only the selected direct gateway while the home is visible.
-      // The terminal consumes this same short-lived cache on its first render.
-      void useServerSession
-        .getState()
-        .hydrate()
-        .then(() => {
-          if (isCurrent())
-            void warmConfiguredWorkspace(
-              record.serverId,
-              useServerSession.getState().byServer[record.serverId],
-              isCurrent
-            );
-        });
+      // The terminal consumes this same short-lived cache on its first render;
+      // see `openServer` for why this screen warms on sight rather than on tap.
+      //
+      // The dot probe above and this warm both want `/health` from the same
+      // gateway, on the same focus. Waiting for the probe rather than racing it
+      // is what turns two `/health` calls into one: `refreshReachability` joins
+      // the flight the probe effect already started (or starts the only one),
+      // and the answer it leaves behind is both the dot's colour and the warm's
+      // `knownHealth`. It is not an extra round trip -- it is the same one.
+      void (async () => {
+        await useServerSession.getState().hydrate();
+        if (!isCurrent()) return;
+        await refreshReachability(record, { shouldContinue: isCurrent });
+        if (!isCurrent()) return;
+        const gate = serverPrewarmGate(record.serverId);
+        // Nothing to warm from a machine that just failed to answer: the six
+        // requests would each sit out the full timeout, against a server the
+        // list has already drawn as offline.
+        if (!gate.warm) return;
+        await warmConfiguredWorkspace(
+          record.serverId,
+          useServerSession.getState().byServer[record.serverId],
+          isCurrent,
+          gate.health
+        );
+      })();
       return () => {
         current = false;
       };
-    }, [appActive, loading, hydrationError, record])
+    }, [appActive, loading, hydrationError, record, refreshReachability])
   );
 
   // A pull is someone asking, so it overrides the store's own rate limit. The
@@ -405,16 +420,40 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   }));
 
   function openServer(serverId: string, paneId?: string) {
-    // Fetch on intent, not on sight.
+    // A second chance to warm, for the server this tap is about.
     //
-    // This screen used to warm the configured server's workspace on every
-    // focus -- seven requests each time, for a server the reader might never
-    // open, and the single most expensive thing the list did. Warming on the
-    // tap instead costs the same seven requests but only when they are
-    // certainly wanted, and buys *more* speed rather than less: the request is
-    // already in flight while the push animates, so the workspace screen finds
-    // a filled cache on mount (`warmWorkspace` seeds both `data` and the
-    // connection phase) instead of painting `Connecting` and asking afterwards.
+    // ## Why the focus warm above exists, and must keep existing
+    //
+    // This comment used to say "fetch on intent, not on sight", and described a
+    // screen that had stopped warming on focus. It is wrong twice over now.
+    //
+    // It is wrong about the requirement: arriving on Home must already have the
+    // configured server's data in hand, and tapping into the terminal must show
+    // content with no wait. That is the product's ask, not an optimisation the
+    // list happens to make, and the focus warm in the `useFocusEffect` above is
+    // how it is met. This is the second time the warm was removed as dead
+    // weight and put back (`a92cc59` took it out, `fc5820a` restored it), so:
+    // it is not dead weight, and making it cheaper is the way to answer its
+    // cost -- never deleting it or deferring the first pane's screen read to
+    // the tap.
+    //
+    // It is wrong about the price, too. A focus warm was seven requests on top
+    // of the status probe. It is now three, and only for the one selected
+    // server: health is the probe's own answer rather than a second call,
+    // workspaces/tabs/panes arrive together, and the warm does not run at all
+    // against a server the probe just found offline. See `warmConfiguredWorkspace`.
+    //
+    // ## What this tap adds
+    //
+    // The focus warm covers the *selected* server. A tap can open a different
+    // one, which has no warm cache and no head start, and that is what this is
+    // for. When it is the selected server the cache is usually already filled
+    // and `warmConfiguredWorkspace` returns without asking anything.
+    //
+    // Either way the request is in flight while the push animates, so the
+    // workspace screen finds a filled cache on mount (`warmWorkspace` seeds
+    // both `data` and the connection phase) instead of painting `Connecting`
+    // and asking afterwards.
     //
     // The warm hangs off the selection rather than running beside it, and that
     // ordering is load-bearing. `gatewayTransport` is bound to one base URL and
@@ -449,7 +488,13 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           useServerSession.getState().byServer[serverId],
           () =>
             AppState.currentState === 'active' &&
-            useGatewayConnectionStore.getState().record === server
+            useGatewayConnectionStore.getState().record === server,
+          // This server is on the probed list, so a fresh `/health` for it may
+          // already be in hand; if it is, the warm starts a request further on.
+          // Unlike the focus warm this does not refuse an offline server: the
+          // reader has asked for this one, and the screen is about to connect
+          // to it regardless.
+          serverPrewarmGate(serverId).health
         );
     });
     // Pushed straight away so the slide-in is immediate, without waiting on the

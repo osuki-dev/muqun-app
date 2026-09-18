@@ -14,6 +14,7 @@ import {
   getApiSessionsBySessionIdAgents,
   getApiSessionsBySessionIdAgentsByTarget,
   getApiSessionsBySessionIdPanes,
+  getApiSessionsBySessionIdSnapshot,
   getApiSessionsBySessionIdPanesByPaneId,
   getApiSessionsBySessionIdPanesByPaneIdOutput,
   getApiSessionsBySessionIdPanesByPaneIdShortcuts,
@@ -146,6 +147,12 @@ import {
   transportKeyMaterial,
   type EncryptedEnvelope,
 } from './gateway-transport';
+import { dedupeKey, withRequestDedupe } from '@/lib/request-dedupe';
+import {
+  endpointIsAbsent,
+  sessionSnapshotFromAnswer,
+  type SessionSnapshot,
+} from '@/lib/session-snapshot';
 import { assertSupportedHerdr } from './herdr-compatibility';
 import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
 
@@ -426,7 +433,43 @@ async function encryptedGatewayFetch(
 export const gatewayFetch: typeof globalThis.fetch = (input, init) =>
   gatewayFetchWithin(REQUEST_TIMEOUT_MS, input, init);
 
-async function gatewayFetchWithin(
+/**
+ * Identical GETs that are out right now, so a second asker joins rather than
+ * asks again. Emptied as each settles -- this is not a cache; see
+ * `lib/request-dedupe`.
+ */
+const inFlightGets = new Map<string, Promise<Response>>();
+
+/** Test seam: the map is process-wide, so suites must be able to reset it. */
+export function forgetInFlightGets(): void {
+  inFlightGets.clear();
+}
+
+/**
+ * The narrowest useful place for the dedupe: below every caller, above the
+ * transport.
+ *
+ * Both the generated client and every raw call in this file come through here,
+ * and neither knows what the other is doing -- which is the whole reason two
+ * screens can ask one gateway the same question twice in the same frame. Doing
+ * it here rather than in `api/http-request` also keeps the generated file
+ * generated.
+ *
+ * The key is built before the locale and the token are merged in, because those
+ * are module state and so identical for two calls that overlap in time. What a
+ * caller passed for itself *is* in the key.
+ */
+function gatewayFetchWithin(
+  timeoutMs: number,
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  return withRequestDedupe(inFlightGets, dedupeKey(input, init, timeoutMs), () =>
+    sendGatewayRequest(timeoutMs, input, init)
+  );
+}
+
+async function sendGatewayRequest(
   timeoutMs: number,
   input: RequestInfo | URL,
   init?: RequestInit
@@ -585,11 +628,20 @@ export interface PaneOutputResponse {
 export interface GatewayTransport {
   loadHealth: () => Promise<HealthResponse>;
   loadSessions: () => Promise<SessionsResponse>;
+  loadSessionSnapshot: (sessionId: string) => Promise<SessionSnapshot | null>;
   loadWorkspaces: (sessionId: string) => Promise<HerdrEntity[]>;
   loadTabs: (sessionId: string) => Promise<HerdrEntity[]>;
   loadPanes: (sessionId: string) => Promise<HerdrEntity[]>;
   loadAgents: (sessionId: string) => Promise<HerdrEntity[]>;
 }
+
+/**
+ * The three lists that describe a session's shape, in one answer.
+ *
+ * Agents are deliberately not among them even though the endpoint returns a
+ * set: see `loadSessionSnapshot`.
+ */
+export type { SessionSnapshot } from '@/lib/session-snapshot';
 
 export interface DevicePushTokenRegistration {
   token: string;
@@ -2035,17 +2087,31 @@ export async function claimPairing(
  * unauthorised -- is reported the same way, as "not answering": the list has no
  * use for the distinction, and every failure resolves to the same grey dot.
  *
- * The one request here that does not go through `fetchWithin`, and it is safe
- * only because it reads no body: `response.ok` is answered by the headers, so
- * there is nothing left on the wire that could stall. Anyone who adds a
- * `.json()` below has to move this onto the budget with the rest of them --
- * clearing an abort timer the moment the headers land is exactly the mistake
- * `request-budget` exists to have stopped making.
+ * The one request here that does not go through `fetchWithin`. It does read a
+ * body, so the deadline has to cover the body -- and it does: the abort signal
+ * is the fetch's own, and `clearTimeout` sits in a `finally` that runs after
+ * the `json()` below has settled, not the moment the headers land. Clearing it
+ * early is exactly the mistake `request-budget` exists to have stopped making,
+ * so anyone reordering this has to keep the clear behind the last `await`.
+ *
+ * ## Why the body is read at all
+ *
+ * `/health` is the same answer the workspace prewarm needs, and the dot was
+ * already paying for it. Throwing it away meant the home screen asked one
+ * gateway for `/health` twice within a few hundred milliseconds -- once for the
+ * dot, once for the warm. So `onHealth` hands the parsed body straight back to
+ * the caller, which files the capabilities *and* keeps the health for the warm
+ * to reuse (`stores/server-reachability`, `lib/workspace-snapshot`).
+ *
+ * The body is passed up unvalidated on purpose: this function knows a gateway
+ * answered, not that it answered with something this app version understands.
+ * Deciding that is `assertSupportedHerdr`'s job, and the reachability store
+ * runs it before recording a health anyone may build on.
  */
 export async function probeGatewayReachable(
   endpoint: GatewayEndpoint,
   timeoutMs: number,
-  onCapabilities?: (capabilities: unknown) => void
+  onHealth?: (health: unknown) => void
 ): Promise<boolean> {
   const base = endpoint.url.replace(/\/$/, '');
   if (!base) return false;
@@ -2068,14 +2134,12 @@ export async function probeGatewayReachable(
             },
             signal: controller.signal,
           });
-    if (response.ok && onCapabilities) {
+    if (response.ok && onHealth) {
       try {
-        const data = (await response.json()) as { capabilities?: unknown };
-        if (data?.capabilities) {
-          onCapabilities(data.capabilities);
-        }
+        onHealth(await response.json());
       } catch {
-        // ignore json parse error
+        // A gateway that answers 200 with something unreadable is still
+        // reachable, which is the only question this function was asked.
       }
     }
     return response.ok;
@@ -2123,6 +2187,80 @@ export async function loadRecordSessions(record: GatewayRecord): Promise<Session
       ? withSessionAvailability(sessions, (await read('/health')) as HealthResponse)
       : sessions;
   });
+}
+
+/**
+ * Gateways that answered `/api/sessions/{id}/snapshot` with "no such route",
+ * by base URL.
+ *
+ * The batched endpoint is not in `/health`'s capability list, so there is no
+ * flag to read -- and guessing from `gatewayVersion` is exactly what `AGENTS.md`
+ * forbids. What is left is the strongest form of detection available: ask the
+ * endpoint. A gateway too old to have it says 404 once per launch and is
+ * remembered here; every later call takes the three-request path with no probe
+ * and no penalty.
+ *
+ * Keyed by base URL because the client is repointed per server, and this is a
+ * fact about a machine rather than about the app. Deliberately not persisted: a
+ * gateway upgraded under a running app gets its one 404 again on the next
+ * launch, which is the cheapest possible way to notice the upgrade.
+ */
+const snapshotEndpointMissing = new Set<string>();
+
+/**
+ * Workspaces, tabs and panes in one round trip.
+ *
+ * Three of the requests the workspace prewarm made were these, asked
+ * separately: `/workspaces`, `/tabs`, `/panes` against one session, in
+ * parallel, each paying its own round trip on a radio where the round trip is
+ * most of the cost. The gateway has answered all three at once since the
+ * batched route landed, and nothing in the app was calling it.
+ *
+ * ## Why the agents in that answer are not used
+ *
+ * The endpoint returns an `agents` array too, and it is not the array `/agents`
+ * returns. The gateway derives it from the panes (`agent_from_pane` in
+ * `backend/compat.rs`), so it carries `pane_id`, `workspace_id`, `tab_id`,
+ * `agent`, `display_agent` and `agent_status` -- and not `instance_id` or
+ * `target`, which the backend agent list does carry.
+ *
+ * Both of those are read off this very array. `instance_id` is the opaque agent
+ * instance identity a collaboration assignment is bound to, bound that way
+ * precisely so it is not bound to a reusable pane id
+ * (`components/server-terminal-workspace`, `lib/agent-collaboration`); an
+ * assignment built from a derived agent would carry an empty one and be dropped
+ * on the floor. `target` is the opaque send address the commands screen is
+ * handed. So the agents call stays, and this turns four requests into two
+ * rather than into one.
+ *
+ * (`state_change_seq` is the third field the derived shape omits, and it is
+ * read nowhere in the app, so it costs nothing either way.)
+ *
+ * Null means the gateway has no such route -- not that it failed. Any other
+ * failure is raised, because a session that genuinely cannot be read is not
+ * something to paper over with three more requests.
+ */
+export async function loadSessionSnapshot(sessionId: string): Promise<SessionSnapshot | null> {
+  if (isDemoActive()) return { workspaces: demoWorkspaces(), tabs: demoTabs(), panes: demoPanes() };
+  const base = currentBaseUrl;
+  if (snapshotEndpointMissing.has(base)) return null;
+  let answer: unknown;
+  try {
+    answer = await getApiSessionsBySessionIdSnapshot({ sessionId });
+  } catch (error) {
+    if (!endpointIsAbsent(error)) throw error;
+    snapshotEndpointMissing.add(base);
+    return null;
+  }
+  // The panes in this answer have been through the gateway's scrollback
+  // observe/amend pass exactly as `/panes` has, so a pane's `scroll` says the
+  // same thing here as there and pull-for-earlier is unaffected.
+  return sessionSnapshotFromAnswer(answer);
+}
+
+/** Test seam: the miss set is process-wide, so suites must be able to reset it. */
+export function forgetSnapshotEndpointSupport(): void {
+  snapshotEndpointMissing.clear();
 }
 
 export async function loadWorkspaces(sessionId: string): Promise<HerdrEntity[]> {
@@ -2739,6 +2877,7 @@ export async function sendTestNotification(data: TestNotificationRequest = {}): 
 export const gatewayTransport: GatewayTransport = {
   loadHealth,
   loadSessions,
+  loadSessionSnapshot,
   loadWorkspaces,
   loadTabs,
   loadPanes,
