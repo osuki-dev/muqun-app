@@ -612,16 +612,16 @@
       },
       {
         "target": {
-          "text": "v0\\.100\\.0"
+          "text": "v0\\.114\\.0"
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 120000,
+        "timeout": 60000,
         "run": "flows/large-file-preview.ad#scroll-body"
       },
       {
         "target": {
-          "text": "v0\\.100\\.0"
+          "text": "v0\\.114\\.0"
         },
         "mode": "visible",
         "run": "flows/large-file-preview.ad#visible"
@@ -687,16 +687,16 @@
       },
       {
         "target": {
-          "text": "function render300\\(state, props\\) \\{"
+          "text": "function render80\\(state, props\\) \\{"
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 240000,
+        "timeout": 90000,
         "run": "flows/large-file-preview.ad#scroll-body"
       },
       {
         "target": {
-          "text": "function render300\\(state, props\\) \\{"
+          "text": "function render80\\(state, props\\) \\{"
         },
         "mode": "visible",
         "run": "flows/large-file-preview.ad#visible"
