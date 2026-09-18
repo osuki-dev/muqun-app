@@ -45,16 +45,16 @@ test('the router does not mount until the fonts have been registered', () => {
   expect(hook).toContain('open({ timedOut: true })');
 });
 
-test('the kit theme takes the interface slot, and leaves the label style alone', () => {
+test('the kit theme takes the interface slot for every role, captions included', () => {
   const theme = read('src/constants/theme.ts');
   expect(theme).toContain("slotFontFamily(interfaceFont, 'interface')");
   expect(theme).toContain('display: { family: interfaceFamily }');
   expect(theme).toContain('body: { family: interfaceFamily }');
-  // `label` is the 11pt all-caps instrument style the section headings use.
-  // A reader's face uppercased and tracked out at 11pt is the one place a
-  // custom font reliably stops being legible, and nobody installed a font to
-  // read the word SERVERS.
-  expect(theme).not.toContain('label: { family');
+  // The kit draws every caption through the `label` role. Leaving it on the
+  // system face put two fonts in one row -- a title in the reader's face over
+  // a caption in the platform's -- so the role follows the choice too; the
+  // instrument style (size, tracking) stays the role's own.
+  expect(theme).toContain('label: { family: interfaceFamily }');
 
   // And the slot is in the palette memo's deps, or a font installed while the
   // app is running would be stored, re-render every reader of the setting, and
