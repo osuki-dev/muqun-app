@@ -1229,3 +1229,38 @@ describe('titles and model names', () => {
     expect(formatModelName(undefined, 'Pick one')).toBe('Pick one');
   });
 });
+
+describe('a tool part whose input is still streaming', () => {
+  test('input_partial is kept, under either spelling', () => {
+    const part = parseAgentPart({
+      type: 'tool',
+      id: 'call_1',
+      name: 'shell',
+      state: 'streaming',
+      input_partial: '{"command":"echo pro',
+    });
+    expect(part?.type).toBe('tool');
+    expect(part && part.type === 'tool' ? part.input_partial : undefined).toBe(
+      '{"command":"echo pro'
+    );
+    const camel = parseAgentPart({
+      type: 'tool',
+      id: 'call_2',
+      name: 'shell',
+      state: 'streaming',
+      inputPartial: '{"command":"e',
+    });
+    expect(camel && camel.type === 'tool' ? camel.input_partial : undefined).toBe('{"command":"e');
+  });
+
+  test('a part that never streamed carries no partial at all', () => {
+    const part = parseAgentPart({
+      type: 'tool',
+      id: 'call_3',
+      name: 'shell',
+      state: 'completed',
+      input: { command: 'ls' },
+    });
+    expect(part && part.type === 'tool' ? 'input_partial' in part : true).toBe(false);
+  });
+});

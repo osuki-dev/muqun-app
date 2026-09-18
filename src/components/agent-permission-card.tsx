@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
@@ -7,6 +7,10 @@ import { Check, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
+import { InlineDiffRows } from '@/components/diff-rows';
+import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { diffRowsFromPatches } from '@/lib/agent-diff-rows';
+import { diffFilesFromMetadata } from '@/lib/agent-tool-output';
 import { permissionActionPhrase, permissionDecisionLabel } from '@/i18n/labels';
 import { permissionSubject } from '@/lib/agent-engine-text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -70,9 +74,29 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const colors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = useCompactMarkdownStyle('muted');
   const [submitting, setSubmitting] = useState<PermissionDecision | null>(null);
+
+  /**
+   * The change being asked for, drawn before it is approved.
+   *
+   * An `edit`, a `write` or a `patch` sends its diff on the ask itself --
+   * `metadata.files` as `FileDiff.Info[]`, or the flat `{filepath, diff}` a
+   * patch adds -- and the card read none of it, so every one of them was
+   * approved sight-unseen. The same rows as the tool card's diff, through the
+   * same flattener, so what is approved here and what appears in the timeline
+   * afterwards are the same picture.
+   */
+  const diffFiles = useMemo(
+    () => (request.metadata ? diffFilesFromMetadata(request.metadata) : []),
+    [request.metadata]
+  );
+  const diffRows = useMemo(
+    () => diffRowsFromPatches(diffFiles, new Set(diffFiles.map((file) => file.path))),
+    [diffFiles]
+  );
 
   const options: readonly PermissionOption[] = (
     request.options.length > 0 ? request.options : DEFAULT_PERMISSION_DECISIONS.map(asOption)
@@ -171,6 +195,22 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
           />
         ) : null}
       </View>
+
+      {/* The diff, between what is being asked and the answer to it. Outside
+          the body's own box: one plate per row, and a patch inside a tinted
+          box inside a bordered card is three frames deep. The approve and deny
+          targets stay below it, outside the native diff view, where a scroll
+          gesture in the patch cannot reach them. */}
+      {diffRows.length > 0 ? (
+        <View style={styles.diff}>
+          <InlineDiffRows
+            rows={diffRows}
+            colors={colors}
+            gutterFill={theme.colors.surface}
+            headerFill={theme.colors.surface}
+          />
+        </View>
+      ) : null}
 
       <View style={styles.actions}>
         {options.map((option) => {
@@ -279,6 +319,10 @@ const styles = StyleSheet.create({
   },
   resourcesBox: {
     marginTop: 4,
+  },
+  diff: {
+    alignSelf: 'stretch',
+    marginBottom: 10,
   },
   resourceText: {
     fontFamily: 'monospace',

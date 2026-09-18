@@ -5,7 +5,10 @@ import {
   capLines,
   capText,
   classifyTool,
+  contentTypeFromMetadata,
+  diffFilesFromMetadata,
   editFilesFromMetadata,
+  executeErrored,
   executeToolCalls,
   extractCaption,
   extractTarget,
@@ -13,43 +16,81 @@ import {
   fenceLanguageForPath,
   filesFromContent,
   groupGrepMatches,
+  groupPathsByDirectory,
   parsePatchSections,
+  partialJsonStrings,
   parseToolOutput,
+  parseToolQuestions,
   prettyJson,
+  questionAnswersFromMetadata,
   resultCountFromMetadata,
+  searchProviderFromMetadata,
   shellExitFromMetadata,
+  skillDirectoryFromMetadata,
+  skillNameFromMetadata,
+  splitUrl,
   stripReadLineNumbers,
   stripSubagentEnvelope,
   subagentStatusFromMetadata,
   textFromContent,
+  toolArgumentLine,
   toolInputRecord,
+  TOOL_ARGUMENT_LINE_CAP,
   TOOL_OUTPUT_BYTE_CAP,
   TOOL_OUTPUT_MAX_LINES,
 } from '../agent-tool-output';
+import { fileChangeFromDiffItem } from '../agent-diff-rows';
 
 describe('classifyTool', () => {
-  test('the toolset OpenCode 2.0.1 actually ships', () => {
+  /**
+   * The thirteen names in the 2.0.1 binary, and nothing else.
+   *
+   * This list used to have `search` and `browser` in it and to file
+   * `webfetch`, `websearch` and `patch` under "v1 names" -- which is backwards
+   * in both directions, and is why the web and patch cards went unexamined for
+   * so long. `search` is a Code Mode sandbox global and `browser` is a Code
+   * Mode namespace: both appear only inside an `execute`'s
+   * `metadata.toolCalls[].tool`, never as a tool of their own.
+   */
+  test('the thirteen tools OpenCode 2.0.1 actually ships', () => {
     expect(classifyTool('shell')).toBe('shell');
+    expect(classifyTool('glob')).toBe('glob');
     expect(classifyTool('read')).toBe('read');
+    expect(classifyTool('grep')).toBe('grep');
+    expect(classifyTool('webfetch')).toBe('web');
+    expect(classifyTool('websearch')).toBe('web');
     expect(classifyTool('write')).toBe('write');
     expect(classifyTool('edit')).toBe('edit');
-    expect(classifyTool('glob')).toBe('glob');
-    expect(classifyTool('grep')).toBe('grep');
-    expect(classifyTool('search')).toBe('search');
     expect(classifyTool('subagent')).toBe('subagent');
-    expect(classifyTool('skill')).toBe('skill');
-    expect(classifyTool('question')).toBe('question');
     expect(classifyTool('execute')).toBe('execute');
-    expect(classifyTool('browser')).toBe('browser');
+    expect(classifyTool('patch')).toBe('patch');
+    expect(classifyTool('question')).toBe('question');
+    expect(classifyTool('skill')).toBe('skill');
   });
 
-  test('v1 names still classify, because a session can be running one', () => {
+  test('the aliases stay, for a session running something else', () => {
+    // Kept because an MCP server or an older engine can send them, not
+    // because 2.0.1 does.
     expect(classifyTool('bash')).toBe('shell');
     expect(classifyTool('task')).toBe('subagent');
-    expect(classifyTool('websearch')).toBe('web');
-    expect(classifyTool('webfetch')).toBe('web');
+    expect(classifyTool('fetch')).toBe('web');
     expect(classifyTool('multiedit')).toBe('edit');
     expect(classifyTool('apply_patch')).toBe('patch');
+    expect(classifyTool('str_replace_editor')).toBe('edit');
+  });
+
+  test('names that are not in 2.0.1 at all, and still classify', () => {
+    // Unreachable from this engine: `list`/`cat` and `todowrite` are v1,
+    // `codesearch` never shipped, and `search`/`browser` are Code Mode's own
+    // sandbox names rather than tools a session calls. They keep their cards
+    // so that a gateway pointed at another engine is not a screen of raw JSON.
+    expect(classifyTool('list')).toBe('read');
+    expect(classifyTool('cat')).toBe('read');
+    expect(classifyTool('search')).toBe('search');
+    expect(classifyTool('codesearch')).toBe('search');
+    expect(classifyTool('browser')).toBe('browser');
+    expect(classifyTool('todowrite')).toBe('todo');
+    expect(classifyTool('todoread')).toBe('todo');
   });
 
   test('only the todo tools become a checklist, and the case does not matter', () => {
@@ -60,7 +101,7 @@ describe('classifyTool', () => {
     expect(classifyTool('task')).not.toBe('todo');
   });
 
-  test('anything else is an MCP addition, not an error', () => {
+  test('an MCP tool is <server>_<tool>, and is not an error', () => {
     expect(classifyTool('linear_create_issue')).toBe('mcp');
     expect(classifyTool('')).toBe('mcp');
   });
@@ -75,8 +116,17 @@ describe('toolInputRecord', () => {
     expect(toolInputRecord('{"path":"a"}')).toEqual({ path: 'a' });
   });
 
-  test('a partial JSON string -- the streaming state -- is not an object yet', () => {
-    expect(toolInputRecord('{"pattern": "**')).toBeNull();
+  test('a partial JSON string gives up the fields that have landed', () => {
+    // The streaming state. What is drawn from it is the *value*, never the
+    // half-written payload around it, so a card fills in as the input arrives.
+    expect(toolInputRecord('{"pattern": "**')).toEqual({ pattern: '**' });
+    expect(toolInputRecord('{"path":"/a","pattern":"*.ts')).toEqual({
+      path: '/a',
+      pattern: '*.ts',
+    });
+    // Not even a key yet: there is nothing to say but the tool's name.
+    expect(toolInputRecord('{"comm')).toBeNull();
+    expect(toolInputRecord('{')).toBeNull();
     expect(toolInputRecord('')).toBeNull();
     expect(toolInputRecord(7)).toBeNull();
     expect(toolInputRecord(null)).toBeNull();
@@ -114,11 +164,14 @@ describe('extractTarget and extractCaption', () => {
     expect(extractCaption('mcp', { anything: 1 })).toBe('');
   });
 
-  test('a partial input -- the streaming state -- has no target yet', () => {
-    // Not the half-written payload: the card shows its tool name until the
-    // input has actually arrived.
-    expect(extractTarget('shell', '{"command": "sle')).toBe('');
+  test('a partial input names what it can, and never the payload', () => {
+    // The value, not `{"command": "sle`: the protocol's own half-written text
+    // in a card's title is not a title.
+    expect(extractTarget('shell', '{"command": "sle')).toBe('sle');
     expect(extractCaption('shell', '{"command": "sle')).toBe('');
+    expect(extractCaption('shell', '{"command":"ls","workdir":"/tm')).toBe('/tm');
+    // Nothing readable yet, and nothing that is not a string at all.
+    expect(extractTarget('shell', '{"comm')).toBe('');
     expect(extractTarget('read', '')).toBe('');
     expect(extractTarget('mcp', 42)).toBe('');
   });
@@ -308,13 +361,41 @@ describe('metadata readings', () => {
     expect(resultCountFromMetadata({ truncated: false })).toBeUndefined();
   });
 
-  test("Code Mode's own calls", () => {
+  test("Code Mode's own calls, with how each one went", () => {
+    // The real shape: `{tool, status, input}`, not `{name}`. The fixture said
+    // `name` and so the app only ever read a name.
+    expect(
+      executeToolCalls({
+        toolCalls: [
+          { tool: 'read', status: 'completed', input: { path: '/a/b.ts' } },
+          { tool: 'grep', status: 'error', input: { pattern: 'x' } },
+          { tool: 'glob', status: 'running' },
+        ],
+      })
+    ).toEqual([
+      { name: 'read', status: 'completed', input: 'path /a/b.ts' },
+      { name: 'grep', status: 'error', input: 'pattern x' },
+      { name: 'glob', status: 'running' },
+    ]);
+    // A status this build has never heard of is a call that finished, not a
+    // call with no row.
+    expect(executeToolCalls({ toolCalls: [{ tool: 'read', status: 'weird' }] })).toEqual([
+      { name: 'read', status: 'completed' },
+    ]);
+    // Older spellings, and entries that are not calls at all.
     expect(executeToolCalls({ toolCalls: [{ name: 'read' }, 'grep', { id: 'glob' }, 3] })).toEqual([
-      'read',
-      'grep',
-      'glob',
+      { name: 'read', status: 'completed' },
+      { name: 'grep', status: 'completed' },
+      { name: 'glob', status: 'completed' },
     ]);
     expect(executeToolCalls({})).toEqual([]);
+    expect(executeToolCalls({ toolCalls: 'soon' })).toEqual([]);
+  });
+
+  test('the sandboxed code throwing is a fact about the code, not the tool', () => {
+    expect(executeErrored({ error: true })).toBe(true);
+    expect(executeErrored({ error: 'yes' })).toBe(false);
+    expect(executeErrored({ toolCalls: [] })).toBe(false);
   });
 });
 
@@ -428,5 +509,312 @@ describe('stripReadLineNumbers', () => {
 
   test('nothing is nothing', () => {
     expect(stripReadLineNumbers('')).toBe('');
+  });
+});
+
+describe('the question tool', () => {
+  // The shape 2.0.1 actually sends: `questions[]`, each with its own short
+  // header, and the answers back as one list per question.
+  const INPUT = {
+    questions: [
+      {
+        question: 'Which approach should I take for the tool cards?',
+        header: 'Approach',
+        options: [
+          { label: 'Rewrite', description: 'Start the renderer from scratch' },
+          { label: 'Patch', description: 'Keep the shell, change the bodies' },
+        ],
+        multiple: false,
+      },
+      {
+        question: 'Which surfaces should it cover?',
+        header: 'Scope',
+        options: [{ label: 'Timeline' }, { label: 'Permission card' }],
+        multiple: true,
+      },
+    ],
+  };
+
+  test('every question, with its header, its options and their descriptions', () => {
+    const questions = parseToolQuestions(INPUT);
+    expect(questions).toHaveLength(2);
+    expect(questions[0]).toEqual({
+      header: 'Approach',
+      question: 'Which approach should I take for the tool cards?',
+      options: [
+        { label: 'Rewrite', description: 'Start the renderer from scratch' },
+        { label: 'Patch', description: 'Keep the shell, change the bodies' },
+      ],
+      multiple: false,
+    });
+    expect(questions[1].multiple).toBe(true);
+    expect(questions[1].options).toEqual([{ label: 'Timeline' }, { label: 'Permission card' }]);
+  });
+
+  test('the header is the header, and a headerless question names itself', () => {
+    expect(extractTarget('question', INPUT)).toBe('Approach');
+    expect(extractTarget('question', { questions: [{ question: 'Ready?' }] })).toBe('Ready?');
+    expect(extractTarget('question', { question: 'the key that does not exist' })).toBe('');
+    expect(extractTarget('question', '{"questions": [{"header": "App')).toBe('');
+  });
+
+  test('answers arrive as one list per question', () => {
+    expect(
+      questionAnswersFromMetadata({ answers: [['Patch'], ['Timeline', 'Permission card']] })
+    ).toEqual([['Patch'], ['Timeline', 'Permission card']]);
+    // A payload that answered with a bare string per question still reads.
+    expect(questionAnswersFromMetadata({ answers: ['Patch'] })).toEqual([['Patch']]);
+    expect(questionAnswersFromMetadata({})).toEqual([]);
+  });
+
+  test('nothing here throws on a shape it has never seen', () => {
+    expect(parseToolQuestions(null)).toEqual([]);
+    expect(parseToolQuestions({ questions: 'soon' })).toEqual([]);
+    expect(parseToolQuestions({ questions: [null, 7, {}, { options: 'no' }] })).toEqual([]);
+    expect(questionAnswersFromMetadata({ answers: [null, 7, ['a', 3]] })).toEqual([[], [], ['a']]);
+  });
+});
+
+describe('the diffs a payload carries', () => {
+  // Lifted from a real `session.tool.success` for `edit`: `metadata.files` is
+  // `FileDiff.Info[]`, and OpenCode states the status rather than leaving the
+  // patch header to be guessed at.
+  const EDIT_METADATA = {
+    files: [
+      {
+        file: 'out.txt',
+        patch:
+          'Index: out.txt\n===================================================================\n--- out.txt\n+++ out.txt\n@@ -1,1 +1,1 @@\n-ok\n\\ No newline at end of file\n+okay\n\\ No newline at end of file\n',
+        status: 'modified',
+        additions: 1,
+        deletions: 1,
+      },
+    ],
+    truncated: false,
+  };
+
+  test('the status OpenCode stated survives, rather than being read back out of the patch', () => {
+    const files = editFilesFromMetadata(EDIT_METADATA);
+    expect(files).toHaveLength(1);
+    expect(files[0].path).toBe('out.txt');
+    expect(files[0].status).toBe('modified');
+    expect(files[0].additions).toBe(1);
+    expect(files[0].deletions).toBe(1);
+  });
+
+  test('a permission ask for an edit carries the same files[]', () => {
+    expect(diffFilesFromMetadata(EDIT_METADATA)).toEqual(editFilesFromMetadata(EDIT_METADATA));
+  });
+
+  test("a patch's flat {filepath, diff} is read when there is no files[]", () => {
+    const files = diffFilesFromMetadata({
+      filepath: 'src/a.ts',
+      diff: '@@ -1,2 +1,2 @@\n-const a = 1;\n+const a = 2;\n b',
+    });
+    expect(files).toHaveLength(1);
+    expect(files[0].path).toBe('src/a.ts');
+    // Counted off the patch, because a flat pair carries no totals of its own.
+    expect(files[0].additions).toBe(1);
+    expect(files[0].deletions).toBe(1);
+  });
+
+  test('a metadata with no diff in it at all is no diff, not a throw', () => {
+    expect(diffFilesFromMetadata({})).toEqual([]);
+    expect(diffFilesFromMetadata({ files: 'soon' })).toEqual([]);
+    expect(diffFilesFromMetadata({ diff: 7 })).toEqual([]);
+    expect(diffFilesFromMetadata({ files: [{ file: 'a' }] })).toEqual([]);
+  });
+});
+
+describe('an input that is still arriving', () => {
+  // The real one, from a captured `session.tool.input.ended` for `shell`.
+  const FULL = '{"workdir":"/home/ryu/.cache/tmp/scratchpad/probe","command":"echo probe-done"}';
+
+  test('every prefix of a real shell input is read without throwing', () => {
+    for (let length = 0; length <= FULL.length; length += 1) {
+      const prefix = FULL.slice(0, length);
+      expect(() => toolInputRecord(prefix)).not.toThrow();
+      expect(() => extractTarget('shell', prefix)).not.toThrow();
+      expect(() => toolArgumentLine(toolInputRecord(prefix))).not.toThrow();
+      const target = extractTarget('shell', prefix);
+      // Whatever is shown is always a prefix of the command itself, never a
+      // brace, a quote or a key from the payload around it.
+      expect('echo probe-done'.startsWith(target)).toBe(true);
+    }
+  });
+
+  test('the card fills in as the command lands, and is complete when it has', () => {
+    // The workdir lands first and the command has not started: no target yet.
+    expect(extractTarget('shell', FULL.slice(0, 50))).toBe('');
+    expect(extractTarget('shell', FULL.slice(0, 66))).toBe('echo');
+    expect(extractTarget('shell', FULL.slice(0, 70))).toBe('echo pro');
+    expect(extractTarget('shell', FULL)).toBe('echo probe-done');
+    // The workdir is the caption from the frame it completes in, whole rather
+    // than clipped: it is a finished value, not a growing one.
+    expect(extractCaption('shell', FULL.slice(0, 50))).toBe(
+      '/home/ryu/.cache/tmp/scratchpad/probe'
+    );
+  });
+
+  test('the argument line holds every field that has landed, in order', () => {
+    expect(toolArgumentLine(toolInputRecord(FULL.slice(0, 66)))).toBe(
+      'workdir /home/ryu/.cache/tmp/scratchpad/probe  command echo'
+    );
+    expect(toolArgumentLine(toolInputRecord(FULL))).toBe(
+      'workdir /home/ryu/.cache/tmp/scratchpad/probe  command echo probe-done'
+    );
+    expect(toolArgumentLine(null)).toBe('');
+  });
+
+  test('the scanner is not a parser and says so on every shape', () => {
+    // A value that is not a string is skipped rather than guessed at.
+    expect(partialJsonStrings('{"hidden":true,"path":".","pattern":"**/*"}')).toEqual({
+      path: '.',
+      pattern: '**/*',
+    });
+    // An escaped quote inside a command does not end the value early.
+    expect(partialJsonStrings('{"command":"echo \\"hi\\" > a.txt')).toEqual({
+      command: 'echo "hi" > a.txt',
+    });
+    expect(partialJsonStrings('')).toEqual({});
+    expect(partialJsonStrings('{')).toEqual({});
+    expect(partialJsonStrings('{"a"')).toEqual({});
+    expect(partialJsonStrings('{"a":')).toEqual({});
+    expect(partialJsonStrings('{"a":{"b":"c"}}')).toEqual({});
+  });
+
+  test('the argument line is bounded, whatever the engine sends', () => {
+    const long = toolArgumentLine({ command: 'x'.repeat(5000) });
+    expect(long.length).toBeLessThanOrEqual(TOOL_ARGUMENT_LINE_CAP);
+  });
+});
+
+describe('what a skill and a web call are called', () => {
+  test('a skill is its name and where it came from, not its id', () => {
+    const metadata = { name: 'PDF forms', directory: '/home/ryu/.config/opencode/skills/pdf' };
+    expect(skillNameFromMetadata(metadata)).toBe('PDF forms');
+    expect(skillDirectoryFromMetadata(metadata)).toBe('/home/ryu/.config/opencode/skills/pdf');
+    // Nothing said: the id the skill was asked for by is still the fallback.
+    expect(skillNameFromMetadata({})).toBe('');
+    expect(skillDirectoryFromMetadata({})).toBe('');
+    expect(extractTarget('skill', { id: 'pdf' })).toBe('pdf');
+  });
+
+  test('a URL is a host and a page of it', () => {
+    expect(splitUrl('https://docs.expo.dev/versions/v57.0.0/')).toEqual({
+      host: 'docs.expo.dev',
+      path: '/versions/v57.0.0/',
+    });
+    // `www.` is noise on a host and the bare `/` is noise on a path.
+    expect(splitUrl('https://www.example.com/')).toEqual({ host: 'example.com', path: '' });
+    expect(splitUrl('https://example.com')).toEqual({ host: 'example.com', path: '' });
+    expect(splitUrl('https://example.com/a?b=c#d')).toEqual({
+      host: 'example.com',
+      path: '/a?b=c',
+    });
+    // A search query is not a URL, and saying so is how the card tells them apart.
+    expect(splitUrl('expo sdk 57 release notes')).toEqual({ host: '', path: '' });
+    expect(splitUrl('')).toEqual({ host: '', path: '' });
+  });
+
+  test('what came back, and who answered', () => {
+    expect(contentTypeFromMetadata({ contentType: 'text/html; charset=utf-8' })).toBe('text/html');
+    expect(contentTypeFromMetadata({ contentType: 'application/json' })).toBe('application/json');
+    expect(contentTypeFromMetadata({})).toBe('');
+    expect(searchProviderFromMetadata({ provider: 'brave' })).toBe('brave');
+    expect(searchProviderFromMetadata({})).toBe('');
+  });
+});
+
+describe('groupPathsByDirectory', () => {
+  test('one path per line becomes folders and the names in them', () => {
+    const output = [
+      '/home/ryu/app/src/lib/agent-tool-output.ts',
+      '/home/ryu/app/src/lib/agent-session.ts',
+      '/home/ryu/app/src/components/agent-tool-card.tsx',
+      '/home/ryu/app/src/lib/motion.ts',
+    ].join('\n');
+    expect(groupPathsByDirectory(output)).toEqual([
+      {
+        directory: '/home/ryu/app/src/lib',
+        files: ['agent-tool-output.ts', 'agent-session.ts', 'motion.ts'],
+      },
+      { directory: '/home/ryu/app/src/components', files: ['agent-tool-card.tsx'] },
+    ]);
+  });
+
+  test('the order the tool answered in is the order it is read in', () => {
+    const groups = groupPathsByDirectory('/b/2.ts\n/a/1.ts\n/b/3.ts');
+    expect(groups.map((group) => group.directory)).toEqual(['/b', '/a']);
+  });
+
+  test('a real captured glob answer, of one file', () => {
+    const output = '/home/ryu/.cache/tmp/claude-1000/scratchpad/probe/sample.txt';
+    expect(groupPathsByDirectory(output)).toEqual([
+      {
+        directory: '/home/ryu/.cache/tmp/claude-1000/scratchpad/probe',
+        files: ['sample.txt'],
+      },
+    ]);
+  });
+
+  test('anything that is not a path is not a file row', () => {
+    // A note, a count, a blank: only a path is grouped.
+    expect(groupPathsByDirectory('Found 3 files\n/a/b.ts\n\n  ')).toEqual([
+      { directory: '/a', files: ['b.ts'] },
+    ]);
+    expect(groupPathsByDirectory('')).toEqual([]);
+    // A relative answer has no folder, and says so rather than inventing one.
+    expect(groupPathsByDirectory('a.ts\nb.ts')).toEqual([
+      { directory: '', files: ['a.ts', 'b.ts'] },
+    ]);
+  });
+});
+
+describe("an edit's per-file status reaches the file row", () => {
+  // The case the status exists for: OpenCode rewrote a file it already had,
+  // and the patch it sent opens against `/dev/null` with no deletions in it.
+  // Read off the patch alone that is a new file; OpenCode says it is not.
+  const REWRITE = {
+    files: [
+      {
+        file: 'src/a.ts',
+        patch: '--- /dev/null\n+++ src/a.ts\n@@ -0,0 +1,2 @@\n+const a = 1;\n+const b = 2;',
+        status: 'modified',
+        additions: 2,
+        deletions: 0,
+      },
+    ],
+  };
+
+  test('the wire status is kept and is what the row is classified by', () => {
+    const [file] = editFilesFromMetadata(REWRITE);
+    expect(file.status).toBe('modified');
+    expect(fileChangeFromDiffItem(file).status).toBe('modified');
+    // Without it -- which is what the card did before -- the same file is a
+    // new one, and the row said "Added" for a file that was edited.
+    expect(
+      fileChangeFromDiffItem({
+        path: file.path,
+        patch: file.patch,
+        additions: file.additions,
+        deletions: file.deletions,
+      }).status
+    ).toBe('added');
+  });
+
+  test('a status this app has no word for falls back to reading the patch', () => {
+    const [file] = editFilesFromMetadata({
+      files: [{ ...REWRITE.files[0], status: 'transmogrified' }],
+    });
+    expect(file.status).toBe('transmogrified');
+    expect(fileChangeFromDiffItem(file).status).toBe('added');
+  });
+
+  test('every status OpenCode states on an edit is one the row can name', () => {
+    for (const status of ['added', 'modified', 'deleted'] as const) {
+      const [file] = editFilesFromMetadata({ files: [{ ...REWRITE.files[0], status }] });
+      expect(fileChangeFromDiffItem(file).status).toBe(status);
+    }
   });
 });

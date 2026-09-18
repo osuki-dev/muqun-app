@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { FileText, GitFork, Play } from 'lucide-react-native';
+import { Check, FileText, GitFork, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
@@ -20,7 +20,8 @@ import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-c
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { isDeclinedByUser } from '@/lib/agent-engine-text';
-import { hasMarkdownMarks } from '@/lib/markdown-text';
+import { hasMarkdownMarks, plainFromMarkdown } from '@/lib/markdown-text';
+import { withAlpha } from '@/lib/color';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { TOOL_BODY_MAX_LINES, capToolBody } from '@/lib/markdown-cap';
 import { diffRowsForFence, diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
@@ -28,8 +29,11 @@ import {
   basename,
   capLines,
   classifyTool,
+  contentTypeFromMetadata,
+  diffFilesFromMetadata,
   dirname,
   editFilesFromMetadata,
+  executeErrored,
   executeToolCalls,
   extractCaption,
   extractTarget,
@@ -37,17 +41,30 @@ import {
   fencedCode,
   filesFromContent,
   groupGrepMatches,
+  groupPathsByDirectory,
   parsePatchSections,
   parseToolOutput,
+  parseToolQuestions,
   prettyJson,
+  questionAnswersFromMetadata,
+  QUESTION_MAX,
+  QUESTION_OPTION_MAX,
   resultCountFromMetadata,
+  searchProviderFromMetadata,
   shellExitFromMetadata,
+  shellIdFromMetadata,
+  shellTimedOutFromMetadata,
+  skillDirectoryFromMetadata,
+  skillNameFromMetadata,
+  splitUrl,
   stripReadLineNumbers,
   stripSubagentEnvelope,
   subagentStatusFromMetadata,
   textFromContent,
+  toolArgumentLine,
   toolInputRecord,
   type ToolKind,
+  type ToolQuestion,
 } from '@/lib/agent-tool-output';
 import {
   isBusyStatus,
@@ -83,7 +100,11 @@ export interface AgentToolCardProps {
   onOpenChildSession?: (asid: string) => void;
   /** `POST …/background`, offered while a foreground tool is still running. */
   onRunInBackground?: () => void;
-  onOpenBackgroundTray?: () => void;
+  /**
+   * The background tray. A `shell` names the shell it is running in, so the
+   * tray can open that one rather than the list it belongs to.
+   */
+  onOpenBackgroundTray?: (shellId?: string) => void;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
@@ -328,9 +349,23 @@ export const AgentToolCard = memo(function AgentToolCard({
   const colors = usePaneChatColors();
 
   const kind = useMemo(() => classifyTool(part.name), [part.name]);
-  const input = useMemo(() => toolInputRecord(part.input), [part.input]);
-  const target = useMemo(() => extractTarget(kind, part.input), [kind, part.input]);
-  const caption = useMemo(() => extractCaption(kind, part.input), [kind, part.input]);
+  /**
+   * The input, or as much of it as has arrived.
+   *
+   * A pending card used to be a tool name and a pulse: no title, no body, no
+   * chevron, because the input was still streaming and the whole of it was a
+   * partial JSON string. `input_partial` is that text as the gateway has
+   * concatenated it so far, and the values already in it are what the header
+   * is drawn from -- so a shell card names its command while the command is
+   * still being written, rather than a second after it has finished running.
+   */
+  const inputSource = useMemo(() => {
+    if (toolInputRecord(part.input)) return part.input;
+    return part.input_partial ?? part.input;
+  }, [part.input, part.input_partial]);
+  const input = useMemo(() => toolInputRecord(inputSource), [inputSource]);
+  const target = useMemo(() => extractTarget(kind, inputSource), [kind, inputSource]);
+  const caption = useMemo(() => extractCaption(kind, inputSource), [kind, inputSource]);
 
   // `content` is the real result; `output` is the same text flattened and is
   // what an older gateway sends on its own.
@@ -341,9 +376,31 @@ export const AgentToolCard = memo(function AgentToolCard({
   const files = useMemo(() => filesFromContent(part.content), [part.content]);
   const parsed = useMemo(() => parseToolOutput(part.output), [part.output]);
 
+  /**
+   * Detached, however it got that way.
+   *
+   * `part.background` is the gateway's flag, set when the reader pressed "Run
+   * in background". But `shell` and `subagent` both take `background: true` in
+   * their own input -- the agent deciding on its own that this one runs
+   * detached -- and a card started that way carried no badge at all, so a
+   * command that would never block the loop looked exactly like one that did.
+   */
+  const detached =
+    part.background === true ||
+    ((kind === 'shell' || kind === 'subagent') && input?.background === true);
+
   const pending = isToolPending(part.state);
+  // Only while it is pending: once the call has run, the result is what the
+  // card is about and its arguments are in the body.
+  const argumentLine = useMemo(() => (pending ? toolArgumentLine(input) : ''), [pending, input]);
   const durationMs = toolDurationMs(part.time);
   const truncated = part.truncated === true || parsed.truncated;
+
+  /** The tray, opened on this call's own shell when the engine named one. */
+  const handleOpenTray = useCallback(() => {
+    const shellId = shellIdFromMetadata(part.metadata);
+    onOpenBackgroundTray?.(shellId || undefined);
+  }, [part.metadata, onOpenBackgroundTray]);
 
   const handleOpenChild = useCallback(() => {
     const childId = part.child_session_id;
@@ -356,18 +413,44 @@ export const AgentToolCard = memo(function AgentToolCard({
     () => (kind === 'edit' ? editFilesFromMetadata(part.metadata) : []),
     [kind, part.metadata]
   );
+  /**
+   * What a `patch` actually did, in preference to what it was asked to do.
+   *
+   * The tool answers with `metadata.files` -- real unified diffs, with the
+   * additions, the deletions and the status OpenCode counted -- and the card
+   * re-parsed `input.patchText` instead. That is the *request*: the
+   * `*** Update File:` format, which is not a unified diff, whose totals the
+   * card then had to guess at and got as two empty chips. `patchText` is still
+   * read, for an engine or an MCP tool that answered without metadata.
+   */
+  const patchFiles = useMemo(
+    () => (kind === 'patch' ? diffFilesFromMetadata(part.metadata) : []),
+    [kind, part.metadata]
+  );
   const patchSections = useMemo(() => {
-    if (kind !== 'patch') return [];
+    if (kind !== 'patch' || patchFiles.length > 0) return [];
     const text = input ? (input.patchText ?? input.patch_text ?? input.patch) : undefined;
     return typeof text === 'string' ? parsePatchSections(text) : [];
-  }, [kind, input]);
+  }, [kind, input, patchFiles]);
   const grepGroups = useMemo(
     () => (kind === 'grep' ? groupGrepMatches(outputText) : []),
+    [kind, outputText]
+  );
+  const globGroups = useMemo(
+    () => (kind === 'glob' ? groupPathsByDirectory(outputText) : []),
     [kind, outputText]
   );
   const subagent = useMemo(
     () => (kind === 'subagent' ? stripSubagentEnvelope(outputText) : null),
     [kind, outputText]
+  );
+  const questions = useMemo(
+    () => (kind === 'question' ? parseToolQuestions(part.input) : []),
+    [kind, part.input]
+  );
+  const answers = useMemo(
+    () => (kind === 'question' ? questionAnswersFromMetadata(part.metadata) : []),
+    [kind, part.metadata]
   );
 
   const writeContent = typeof input?.content === 'string' ? input.content : undefined;
@@ -394,10 +477,20 @@ export const AgentToolCard = memo(function AgentToolCard({
         <Chip key="exit" text={`exit ${exit}`} color={exit === 0 ? colors.added : colors.removed} />
       );
     }
+    // Killed for taking too long, which an exit code alone does not say: a
+    // command that was cut off and one that failed on its own both end
+    // non-zero, and only one of them is worth running again.
+    if (kind === 'shell' && shellTimedOutFromMetadata(part.metadata)) {
+      nodes.push(<Chip key="timeout" text={t`timed out`} color={theme.colors.warning} />);
+    }
     if (kind === 'edit' || kind === 'patch') {
+      // The tool's own count when it made one -- `metadata.files` for both
+      // families -- and the before/after lengths only when it did not. A patch
+      // used to have no first case at all, so its chips were always empty.
+      const counted = kind === 'patch' ? patchFiles : editFiles;
       const totals =
-        editFiles.length > 0
-          ? diffTotals(editFiles)
+        counted.length > 0
+          ? diffTotals(counted)
           : {
               additions: newString ? newString.split('\n').length : 0,
               deletions: oldString ? oldString.split('\n').length : 0,
@@ -424,6 +517,23 @@ export const AgentToolCard = memo(function AgentToolCard({
         />
       );
     }
+    // The sandboxed code threw. The tool call itself succeeded -- it ran the
+    // code and reported what happened -- so nothing else on the card says so.
+    if (kind === 'execute' && executeErrored(part.metadata)) {
+      nodes.push(<Chip key="err" text={t`error`} color={colors.removed} />);
+    }
+    if (kind === 'web') {
+      // What came back, and who answered: a fetch states its content type and
+      // a search states its provider, and neither reached the reader.
+      const contentType = contentTypeFromMetadata(part.metadata);
+      if (contentType) {
+        nodes.push(<Chip key="type" text={contentType} color={theme.colors.textMuted} />);
+      }
+      const provider = searchProviderFromMetadata(part.metadata);
+      if (provider) {
+        nodes.push(<Chip key="provider" text={provider} color={theme.colors.textMuted} />);
+      }
+    }
     if (kind === 'subagent') {
       const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;
       if (status) {
@@ -436,7 +546,9 @@ export const AgentToolCard = memo(function AgentToolCard({
     part.metadata,
     parsed.exitCode,
     colors,
+    theme.colors.warning,
     editFiles,
+    patchFiles,
     newString,
     oldString,
     writeContent,
@@ -451,7 +563,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     const nodes: React.ReactNode[] = [];
     // `ctrl+b` in the TUI: detach the foreground tools blocking the loop. The
     // shell keeps running and stays readable in the tray.
-    if (kind === 'shell' && pending && !part.background && onRunInBackground) {
+    if (kind === 'shell' && pending && !detached && onRunInBackground) {
       nodes.push(
         <PressableScale
           key="bg"
@@ -470,14 +582,14 @@ export const AgentToolCard = memo(function AgentToolCard({
     // Only while it is still running: the tray lists what is running, and a
     // finished command that says "Background tasks" sends the reader to an
     // empty sheet.
-    if (part.background && pending && onOpenBackgroundTray) {
+    if (detached && pending && onOpenBackgroundTray) {
       nodes.push(
         <PressableScale
           key="tray"
           testID="agent-tool-open-tray"
           accessibilityRole="button"
           accessibilityLabel={t`Open background tasks`}
-          onPress={onOpenBackgroundTray}
+          onPress={handleOpenTray}
           style={[styles.action, { borderColor: colors.border }]}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Background tasks</Trans>
@@ -519,11 +631,12 @@ export const AgentToolCard = memo(function AgentToolCard({
   }, [
     kind,
     pending,
-    part.background,
+    detached,
     part.child_session_id,
     onRunInBackground,
     onOpenBackgroundTray,
     onOpenChildSession,
+    handleOpenTray,
     handleOpenChild,
     childStatus,
     colors,
@@ -544,8 +657,26 @@ export const AgentToolCard = memo(function AgentToolCard({
       const agent = typeof input?.agent === 'string' ? input.agent : undefined;
       return { headerTitle: agent ? `${agent} · ${target}` : target, headerCaption: '' };
     }
+    if (kind === 'skill') {
+      // `metadata.name` is the skill; `input.id` is the file it lives in. The
+      // header used to show the id, which named the wrong thing.
+      const name = skillNameFromMetadata(part.metadata);
+      return {
+        headerTitle: name || target,
+        headerCaption: skillDirectoryFromMetadata(part.metadata),
+      };
+    }
+    if (kind === 'web') {
+      // A fetch is identified by where it went: the host is the fact and the
+      // path is which page of it. A whole URL in a clipped one-line header is
+      // `https://docs.expo.d…/config` -- neither of them.
+      const { host, path } = splitUrl(target);
+      if (host) return { headerTitle: host, headerCaption: path };
+      // A search: the query is the title, and there is no second line.
+      return { headerTitle: part.title ?? target, headerCaption: '' };
+    }
     return { headerTitle: part.title ?? target, headerCaption: caption };
-  }, [kind, target, caption, part.title, input]);
+  }, [kind, target, caption, part.title, part.metadata, input]);
 
   // ---- body --------------------------------------------------------------
 
@@ -560,7 +691,11 @@ export const AgentToolCard = memo(function AgentToolCard({
         files,
         editFiles,
         patchSections,
+        patchFiles,
         grepGroups,
+        globGroups,
+        questions,
+        answers,
         subagentText: subagent?.text ?? '',
         writeContent,
         oldString,
@@ -579,7 +714,11 @@ export const AgentToolCard = memo(function AgentToolCard({
       files,
       editFiles,
       patchSections,
+      patchFiles,
       grepGroups,
+      globGroups,
+      questions,
+      answers,
       subagent,
       writeContent,
       oldString,
@@ -623,13 +762,17 @@ export const AgentToolCard = memo(function AgentToolCard({
       {...(durationMs === undefined ? {} : { durationMs })}
       truncated={truncated}
       {...(errorLine ? { error: errorLine } : {})}
-      background={part.background === true}
+      background={detached}
       chips={chips}
       actions={actions}
       // An edit's diff and a read's images are the content, not a detail
       // behind an expand.
       preview={
-        kind === 'edit' || kind === 'patch' ? (
+        // While the input is still arriving there is no result to preview and
+        // the arguments are the only thing there is to say.
+        pending && argumentLine ? (
+          <StreamingArguments text={argumentLine} />
+        ) : kind === 'edit' || kind === 'patch' ? (
           body
         ) : files.length > 0 ? (
           <ToolFiles files={files} onPreviewImage={onPreviewImage} onOpenFile={onOpenFile} />
@@ -682,7 +825,11 @@ interface ToolBodyArgs {
   files: readonly { uri: string; mime?: string; name?: string }[];
   editFiles: ReturnType<typeof editFilesFromMetadata>;
   patchSections: ReturnType<typeof parsePatchSections>;
+  patchFiles: ReturnType<typeof diffFilesFromMetadata>;
   grepGroups: ReturnType<typeof groupGrepMatches>;
+  globGroups: ReturnType<typeof groupPathsByDirectory>;
+  questions: readonly ToolQuestion[];
+  answers: readonly string[][];
   subagentText: string;
   writeContent?: string;
   oldString?: string;
@@ -758,6 +905,16 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       );
 
     case 'patch':
+      // What was applied, when the tool said: the same per-file rows an `edit`
+      // draws, so two tools that changed the same file read the same way.
+      if (args.patchFiles.length > 0) {
+        return (
+          <EditDiffs
+            files={args.patchFiles}
+            {...(args.onOpenFullDiff ? { onOpenFullDiff: args.onOpenFullDiff } : {})}
+          />
+        );
+      }
       return args.patchSections.length > 0 ? (
         <>
           {args.patchSections.map((section) => (
@@ -774,6 +931,15 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       );
 
     case 'glob':
+      return args.globGroups.length > 0 ? (
+        <GlobFiles
+          groups={args.globGroups}
+          {...(args.onOpenFile ? { onOpenFile: args.onOpenFile } : {})}
+        />
+      ) : (
+        <OutputLines text={outputText} />
+      );
+
     case 'search':
       return <OutputLines text={outputText} />;
 
@@ -815,8 +981,10 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       // answered -- a second copy of it in the timeline would be two places to
       // answer the same thing. What is left once it has been answered is a row
       // naming a question with no way to see what was asked or what was said,
-      // so the card keeps a body: the question, and the answer under it.
-      return <QuestionBody input={input} answer={outputText} />;
+      // so the card keeps a body: the questions, and what was picked in each.
+      return (
+        <QuestionBody questions={args.questions} answers={args.answers} fallback={outputText} />
+      );
 
     case 'execute':
       return (
@@ -845,9 +1013,16 @@ function viewerAction(
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void
 ): { onOpenInViewer?: () => void } {
   if (!onOpenFile || !target.startsWith('/')) return {};
-  const name = basename(target);
-  const mime = /\.mdx?$/i.test(target) ? 'text/markdown' : 'text/plain';
-  return { onOpenInViewer: () => onOpenFile({ uri: target, mime, name }) };
+  return { onOpenInViewer: () => onOpenFile(viewerFile(target)) };
+}
+
+/** One file, in the shape the asset viewer takes. */
+function viewerFile(path: string): { uri: string; mime: string; name: string } {
+  return {
+    uri: path,
+    mime: /\.mdx?$/i.test(path) ? 'text/markdown' : 'text/plain',
+    name: basename(path),
+  };
 }
 
 /** A `+`/`-` patch made from a before and an after, when no real one came. */
@@ -860,6 +1035,22 @@ function syntheticPatch(path: string, oldString?: string, newString?: string): s
   if (newString) for (const line of newString.split('\n')) lines.push(`+${line}`);
   return lines.join('\n');
 }
+
+/**
+ * The arguments of a call that has not run yet, as they arrive.
+ *
+ * Monospace and wrapping, because it is a payload being written rather than a
+ * sentence: the header's one clipped line cannot show a command taking shape,
+ * and two lines of it can.
+ */
+const StreamingArguments = memo(function StreamingArguments({ text }: { text: string }) {
+  const colors = usePaneChatColors();
+  return (
+    <Text numberOfLines={2} style={[styles.mono, { color: colors.muted }]}>
+      {text}
+    </Text>
+  );
+});
 
 const ShellCommand = memo(function ShellCommand({ command }: { command: string }) {
   const colors = usePaneChatColors();
@@ -899,6 +1090,82 @@ const EditDiffs = memo(function EditDiffs({
       onToggleFile={toggle}
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
+  );
+});
+
+/** Directories a glob card lists, and files inside each, before it stops. */
+const GLOB_GROUP_MAX = 8;
+const GLOB_FILE_MAX = 12;
+
+/**
+ * What a `glob` found, as files rather than as a wall of paths.
+ *
+ * The tool answers with one absolute path per line. Drawn as it comes, every
+ * row repeats the same long prefix and the part that differs -- the file name
+ * -- is off the right-hand edge of a phone. The folder is a heading said once,
+ * each row is a name, and a row opens the file in the viewer a `read` opens:
+ * finding a file and then having to ask a second tool to see it was the whole
+ * of the interaction this card was missing.
+ */
+const GlobFiles = memo(function GlobFiles({
+  groups,
+  onOpenFile,
+}: {
+  groups: ReturnType<typeof groupPathsByDirectory>;
+  onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
+}) {
+  const theme = useThemeTokens();
+  const colors = usePaneChatColors();
+  const shown = groups.slice(0, GLOB_GROUP_MAX);
+  return (
+    <View style={styles.stretch}>
+      {shown.map((group) => (
+        <View key={group.directory} style={styles.globGroup}>
+          <Text
+            variant="caption"
+            weight="semibold"
+            numberOfLines={1}
+            // A path says what it is in its last segment: every result of one
+            // glob shares a prefix, so the head is what can be dropped.
+            ellipsizeMode="head"
+            color={theme.colors.textSubtle}
+            style={styles.globDirectory}>
+            {group.directory || '/'}
+          </Text>
+          {group.files.slice(0, GLOB_FILE_MAX).map((name) => {
+            const path = group.directory ? `${group.directory}/${name}` : name;
+            return (
+              <PressableScale
+                key={path}
+                testID="agent-tool-glob-file"
+                accessibilityRole="button"
+                accessibilityLabel={name}
+                disabled={!onOpenFile}
+                onPress={() => onOpenFile?.(viewerFile(path))}
+                style={styles.globRow}>
+                <FileText size={11} color={colors.subtle} />
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="middle"
+                  style={[styles.mono, styles.globName, { color: theme.colors.text }]}>
+                  {name}
+                </Text>
+              </PressableScale>
+            );
+          })}
+          {group.files.length > GLOB_FILE_MAX ? (
+            <Text variant="caption" color={colors.subtle} style={styles.globMore}>
+              {`… ${group.files.length - GLOB_FILE_MAX}`}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+      {groups.length > shown.length ? (
+        <Text variant="caption" color={colors.subtle} style={styles.globMore}>
+          {`… ${groups.length - shown.length}`}
+        </Text>
+      ) : null}
+    </View>
   );
 });
 
@@ -961,40 +1228,129 @@ const WebResult = memo(function WebResult({
   return <BoundedMarkdown markdown={markdown} markdownStyle={markdownStyle} flavor="github" />;
 });
 
-/** What was asked, and what was answered. */
+/**
+ * What was asked, and which of the offered answers came back.
+ *
+ * The tool asks with `input.questions[]` -- a short `header`, the question
+ * itself, and the options it will accept -- and answers in
+ * `metadata.answers[i]`, one list per question. The card used to read
+ * `input.question` and `input.prompt`, keys this tool has never sent, so a
+ * question row in the transcript said nothing at all.
+ *
+ * The interactive form card is where a live question is answered; this is the
+ * record of one that was.
+ */
 const QuestionBody = memo(function QuestionBody({
-  input,
-  answer,
+  questions,
+  answers,
+  fallback,
 }: {
-  input: Record<string, unknown> | null;
-  answer: string;
+  questions: readonly ToolQuestion[];
+  answers: readonly string[][];
+  /** The engine's own sentence about what was answered, for a card with no `questions[]`. */
+  fallback: string;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  // The question is the agent's own words and is content; the answer is what
-  // was said back to it, and reads as the quieter of the two.
+  const colors = usePaneChatColors();
+  // The question is the agent's own words and is content; everything else here
+  // is a label naming a choice.
   const askedStyle = useCompactMarkdownStyle('body');
   const answeredStyle = useCompactMarkdownStyle('muted');
-  const question =
-    typeof input?.question === 'string'
-      ? input.question
-      : typeof input?.prompt === 'string'
-        ? input.prompt
-        : '';
-  if (!question && !answer) return null;
+
+  if (questions.length === 0) {
+    return fallback ? (
+      <BoundedMarkdown markdown={fallback} markdownStyle={answeredStyle} openLinks={false} />
+    ) : null;
+  }
+
   return (
     <View style={styles.stretch}>
-      {question ? (
-        <BoundedMarkdown markdown={question} markdownStyle={askedStyle} openLinks={false} />
-      ) : null}
-      {answer ? (
-        <>
-          <Text variant="caption" color={theme.colors.textSubtle} style={styles.answerLabel}>
-            {t`Answered`}
-          </Text>
-          <BoundedMarkdown markdown={answer} markdownStyle={answeredStyle} openLinks={false} />
-        </>
-      ) : null}
+      {questions.slice(0, QUESTION_MAX).map((question, index) => {
+        const picked = answers[index] ?? [];
+        // An answer the option list does not hold: a free-text reply, or an
+        // engine that answered with something it never offered.
+        const offered = new Set(question.options.map((option) => option.label));
+        const unlisted = picked.filter((answer) => !offered.has(answer)).join(' · ');
+        return (
+          <View key={`${index}:${question.header || question.question}`} style={styles.questionRow}>
+            {question.header || question.multiple ? (
+              <View style={styles.questionHeaderLine}>
+                {question.header ? (
+                  <Text
+                    variant="caption"
+                    weight="semibold"
+                    color={theme.colors.text}
+                    style={styles.questionHeader}>
+                    {question.header}
+                  </Text>
+                ) : null}
+                {/* Whether the reader was allowed to pick more than one, which
+                    is what makes several marked options a single answer. */}
+                {question.multiple ? (
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textSubtle}
+                    style={styles.questionHeader}>
+                    {t`Several answers`}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+            {question.question ? (
+              <BoundedMarkdown
+                markdown={question.question}
+                markdownStyle={askedStyle}
+                openLinks={false}
+              />
+            ) : null}
+            <View style={styles.optionsWrap}>
+              {question.options.slice(0, QUESTION_OPTION_MAX).map((option) => {
+                // An answered question marks what was chosen rather than
+                // repeating it underneath: the options are already the list.
+                const chosen = picked.includes(option.label);
+                return (
+                  <View
+                    key={option.label}
+                    style={[
+                      styles.optionPill,
+                      {
+                        borderColor: chosen ? colors.accent : colors.border,
+                        backgroundColor: chosen ? withAlpha(colors.accent, 0.12) : 'transparent',
+                      },
+                    ]}>
+                    {chosen ? <Check size={11} color={colors.accent} /> : null}
+                    <Text
+                      variant="caption"
+                      weight={chosen ? 'semibold' : 'regular'}
+                      color={chosen ? colors.accent : theme.colors.text}
+                      style={styles.optionLabel}>
+                      {plainFromMarkdown(option.label)}
+                    </Text>
+                    {option.description ? (
+                      <Text
+                        variant="caption"
+                        numberOfLines={1}
+                        color={theme.colors.textSubtle}
+                        style={styles.optionDescription}>
+                        {plainFromMarkdown(option.description)}
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
+            {unlisted ? (
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={styles.questionExtraAnswer}>
+                {unlisted}
+              </Text>
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 });
@@ -1010,21 +1366,68 @@ const SkillBody = memo(function SkillBody({ description }: { description: string
   return <BoundedMarkdown markdown={description} markdownStyle={markdownStyle} openLinks={false} />;
 });
 
+/**
+ * What the sandboxed code called, and how each call went.
+ *
+ * `metadata.toolCalls` carries `{tool, status, input}` per entry and the card
+ * kept only the names, joined into one grey line: a `read` that failed inside
+ * the sandbox and a `read` that worked read identically. A row each, with the
+ * same status dot the rest of the transcript uses -- the progress event
+ * streams this list while the code runs, so `running` is a state the reader
+ * actually sees.
+ */
 const ExecuteCalls = memo(function ExecuteCalls({
   metadata,
 }: {
   metadata: Record<string, unknown>;
 }) {
+  const theme = useThemeTokens();
   const colors = usePaneChatColors();
   const calls = useMemo(() => executeToolCalls(metadata), [metadata]);
   if (calls.length === 0) return null;
   return (
-    // Tool names, not prose: a one-line list of what the code called.
-    <Text variant="caption" color={colors.subtle} style={styles.callList}>
-      {calls.join(' · ')}
-    </Text>
+    <View style={styles.stretch}>
+      {calls.slice(0, EXECUTE_CALL_MAX).map((call, index) => (
+        <View key={`${index}:${call.name}`} style={styles.callRow}>
+          <StatusDot
+            size={6}
+            filled
+            pulse={call.status === 'running'}
+            color={
+              call.status === 'error'
+                ? theme.colors.danger
+                : call.status === 'running'
+                  ? theme.colors.warning
+                  : theme.colors.success
+            }
+          />
+          <Text
+            variant="caption"
+            weight="semibold"
+            color={call.status === 'error' ? theme.colors.danger : theme.colors.text}
+            style={styles.callName}>
+            {call.name}
+          </Text>
+          {call.input ? (
+            <Text
+              numberOfLines={1}
+              style={[styles.mono, styles.callInput, { color: colors.subtle }]}>
+              {call.input}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+      {calls.length > EXECUTE_CALL_MAX ? (
+        <Text variant="caption" color={colors.subtle} style={styles.callMore}>
+          {`… ${calls.length - EXECUTE_CALL_MAX}`}
+        </Text>
+      ) : null}
+    </View>
   );
 });
+
+/** Calls a card draws before it says how many more there were. */
+const EXECUTE_CALL_MAX = 12;
 
 /**
  * A tool nothing in this build recognises.
@@ -1133,6 +1536,26 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.meta.size,
     flexShrink: 1,
   },
+  globGroup: {
+    gap: 1,
+    marginBottom: 4,
+  },
+  globDirectory: {
+    fontFamily: 'monospace',
+    fontSize: AGENT_TYPE.micro.size,
+  },
+  globRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 22,
+  },
+  globName: {
+    flexShrink: 1,
+  },
+  globMore: {
+    fontSize: AGENT_TYPE.micro.size,
+  },
   grepGroup: {
     gap: 1,
     marginBottom: 4,
@@ -1155,11 +1578,63 @@ const styles = StyleSheet.create({
   grepMore: {
     fontSize: AGENT_TYPE.micro.size,
   },
-  answerLabel: {
+  questionRow: {
+    alignSelf: 'stretch',
+    gap: 3,
+    marginBottom: 6,
+  },
+  questionHeaderLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  questionHeader: {
     fontSize: AGENT_TYPE.micro.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },
-  callList: {
+  optionsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  /** The same pill the form card offers, with nothing left to press. */
+  optionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    maxWidth: '100%',
+  },
+  optionLabel: {
+    fontSize: AGENT_TYPE.micro.size,
+    flexShrink: 1,
+  },
+  optionDescription: {
+    fontSize: AGENT_TYPE.micro.size,
+    flexShrink: 1,
+  },
+  questionExtraAnswer: {
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
+  },
+  callRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 18,
+  },
+  callName: {
+    fontSize: AGENT_TYPE.micro.size,
+  },
+  callInput: {
+    fontSize: AGENT_TYPE.micro.size,
+    flexShrink: 1,
+  },
+  callMore: {
     fontSize: AGENT_TYPE.micro.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },

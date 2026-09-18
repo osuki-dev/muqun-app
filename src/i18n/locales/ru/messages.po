@@ -452,10 +452,6 @@ msgstr "Ответ"
 msgid "Answer: {0}"
 msgstr "Ответ: {0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "Отвечено"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Значок приложения"
@@ -1805,6 +1801,10 @@ msgstr "Введите порт Gateway на этом хосте"
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "Ввести URL вручную"
+
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "ошибка"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
@@ -3908,6 +3908,10 @@ msgstr "Настройте на хосте"
 msgid "Settings"
 msgstr "Настройки"
 
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "Несколько ответов"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
@@ -4783,6 +4787,10 @@ msgstr "Размышление · {durationStr}"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "Через {host}"
+
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "превышено время"
 
 #: src/i18n/labels.ts
 msgid "Today"

@@ -452,10 +452,6 @@ msgstr "답변"
 msgid "Answer: {0}"
 msgstr "응답: {0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "답변함"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "앱 아이콘"
@@ -1805,6 +1801,10 @@ msgstr "그 호스트의 Gateway 포트를 입력하세요"
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "URL 직접 입력"
+
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "오류"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
@@ -3908,6 +3908,10 @@ msgstr "호스트에서 설정하세요"
 msgid "Settings"
 msgstr "설정"
 
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "복수 응답"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
@@ -4783,6 +4787,10 @@ msgstr "생각 · {durationStr}"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "{host} 경유"
+
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "시간 초과"
 
 #: src/i18n/labels.ts
 msgid "Today"

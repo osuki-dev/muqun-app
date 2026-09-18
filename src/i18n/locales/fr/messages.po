@@ -452,10 +452,6 @@ msgstr "Réponse"
 msgid "Answer: {0}"
 msgstr "Réponse : {0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "Répondu"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Icône de l’app"
@@ -1805,6 +1801,10 @@ msgstr "Saisissez le port du gateway sur cet hôte"
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "Saisir l’URL manuellement"
+
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "erreur"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
@@ -3908,6 +3908,10 @@ msgstr "À configurer sur l'hôte"
 msgid "Settings"
 msgstr "Paramètres"
 
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "Plusieurs réponses"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
@@ -4783,6 +4787,10 @@ msgstr "Réflexion · {durationStr}"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "Via {host}"
+
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "délai dépassé"
 
 #: src/i18n/labels.ts
 msgid "Today"

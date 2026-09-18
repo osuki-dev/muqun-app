@@ -146,20 +146,96 @@ export function toolInputRecord(input: unknown): Record<string, unknown> | null 
   try {
     return asRecord(JSON.parse(trimmed));
   } catch {
-    // A partial object is not yet an object. The header shows the tool name
-    // until the rest of it lands.
-    return null;
+    // A partial object is not yet an object -- but the part of it that has
+    // arrived is still an answer to "what is this call pointed at". The
+    // half-written *payload* never reaches a header; the values pulled out of
+    // it do, so a shell card fills in its command as the command streams.
+    const partial = partialJsonStrings(trimmed);
+    return Object.keys(partial).length > 0 ? partial : null;
   }
+}
+
+/**
+ * The string fields a half-written JSON object has got to so far.
+ *
+ * A scanner rather than a parser: `JSON.parse` is all-or-nothing and the input
+ * here is by definition not valid JSON yet. It walks the text once, takes
+ * every `"key": "value"` pair it completes, and takes the last value even when
+ * its closing quote has not arrived -- which is the interesting one, because
+ * that is the argument currently being written. Escapes are honoured so a
+ * command containing `\"` does not end a value early, and anything that is not
+ * a string value is skipped rather than guessed at.
+ *
+ * It never throws and it never loops unboundedly: every branch consumes at
+ * least one character.
+ */
+export function partialJsonStrings(text: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  let index = 0;
+
+  /** The string starting at `index`, and whether it was closed. */
+  const readString = (): { value: string; closed: boolean } => {
+    index += 1; // the opening quote
+    let value = '';
+    while (index < text.length) {
+      const char = text[index];
+      if (char === '\\') {
+        const next = text[index + 1];
+        if (next === undefined) {
+          index += 1;
+          return { value, closed: false };
+        }
+        value += next === 'n' ? '\n' : next === 't' ? '\t' : next;
+        index += 2;
+        continue;
+      }
+      if (char === '"') {
+        index += 1;
+        return { value, closed: true };
+      }
+      value += char;
+      index += 1;
+    }
+    return { value, closed: false };
+  };
+
+  while (index < text.length) {
+    if (text[index] !== '"') {
+      index += 1;
+      continue;
+    }
+    const key = readString();
+    if (!key.closed) break;
+    // Past the colon, if it has arrived.
+    while (index < text.length && (text[index] === ' ' || text[index] === '\t')) index += 1;
+    if (text[index] !== ':') continue;
+    index += 1;
+    while (index < text.length && (text[index] === ' ' || text[index] === '\t')) index += 1;
+    if (index >= text.length) break;
+    if (text[index] !== '"') {
+      // A number, a boolean, an object, a list: not something a header draws,
+      // and not something to guess at half-written. Skip to the next comma at
+      // this level, or give up if the object has not got that far.
+      const comma = text.indexOf(',', index);
+      if (comma < 0) break;
+      index = comma + 1;
+      continue;
+    }
+    const value = readString();
+    if (key.value) out[key.value] = value.value;
+    if (!value.closed) break;
+  }
+
+  return out;
 }
 
 /** The one-line target a tool is pointed at: the path, the pattern, the URL… */
 export function extractTarget(kind: ToolKind, input: unknown): string {
   const rec = toolInputRecord(input);
-  // Nothing readable yet. While a tool is `streaming`, its input is a *partial
-  // JSON string* -- `{"command": "sle` -- and returning that put the protocol's
-  // own half-written payload in the card's title for as long as the input took
-  // to arrive. The tool's name is already in the header; an empty target is the
-  // honest thing to show beside it until there is one.
+  // Nothing readable yet -- not even a key. While a tool is `streaming` its
+  // input is a *partial JSON string*, and what is drawn from it is the value
+  // (`git sta`), never the payload around it (`{"command": "git sta`): the
+  // protocol's own half-written text in a card's title is not a title.
   if (!rec) return '';
   switch (kind) {
     case 'shell':
@@ -187,6 +263,13 @@ export function extractTarget(kind: ToolKind, input: unknown): string {
       );
     case 'skill':
       return pickString(rec, ['id', 'skillID', 'skill_id', 'skillId', 'skill']) ?? '';
+    case 'question': {
+      // The tool asks with `questions[]`, and each entry carries its own short
+      // `header` -- "Approach", "Scope" -- which is exactly the one line a
+      // header wants. The question itself is prose and belongs in the body.
+      const first = parseToolQuestions(rec)[0];
+      return first ? first.header || first.question : '';
+    }
     case 'execute':
       return firstLineOf(pickString(rec, ['code']) ?? '');
     case 'browser':
@@ -482,6 +565,115 @@ function safeStringify(value: unknown, maxDepth: number): string {
   }
 }
 
+/** How long the argument line under a streaming header is allowed to get. */
+export const TOOL_ARGUMENT_LINE_CAP = 240;
+
+/**
+ * The arguments a call is being made with, on one line.
+ *
+ * Drawn under the header while the input is still arriving. The header's title
+ * is one line shared with the tool name and clipped in the middle, which is
+ * the wrong shape for a command being typed out a token at a time; this line
+ * is monospace, wraps, and holds every argument that has landed. `key value`
+ * pairs rather than JSON, because this is the one place the payload's own
+ * punctuation would read as the payload.
+ */
+export function toolArgumentLine(rec: Record<string, unknown> | null): string {
+  if (!rec) return '';
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(rec)) {
+    const text =
+      typeof value === 'string'
+        ? value
+        : typeof value === 'number' || typeof value === 'boolean'
+          ? String(value)
+          : '';
+    if (!text) continue;
+    parts.push(`${key} ${text}`);
+    if (parts.join('  ').length >= TOOL_ARGUMENT_LINE_CAP) break;
+  }
+  const line = parts.join('  ');
+  return line.length > TOOL_ARGUMENT_LINE_CAP ? line.slice(0, TOOL_ARGUMENT_LINE_CAP) : line;
+}
+
+// ---------------------------------------------------------------------------
+// `question`
+// ---------------------------------------------------------------------------
+
+/** One choice offered for a question, as OpenCode words it. */
+export interface ToolQuestionOption {
+  label: string;
+  /** The line under the label, when the agent wrote one. */
+  description?: string;
+}
+
+/**
+ * One question of a `question` call.
+ *
+ * The input is `{questions: [{question, header, options, multiple?}]}` -- the
+ * plural is the whole shape, and the card used to read `input.question` and
+ * `input.prompt`, neither of which the tool has ever sent. `header` is the
+ * short label the agent puts above the question; `question` is the prose.
+ */
+export interface ToolQuestion {
+  header: string;
+  question: string;
+  options: ToolQuestionOption[];
+  /** More than one option may be picked; the answer is then a list. */
+  multiple: boolean;
+}
+
+/** How many questions and options a card draws before it stops. */
+export const QUESTION_MAX = 6;
+export const QUESTION_OPTION_MAX = 8;
+
+export function parseToolQuestions(input: unknown): ToolQuestion[] {
+  const rec = toolInputRecord(input);
+  if (!rec || !Array.isArray(rec.questions)) return [];
+  const out: ToolQuestion[] = [];
+  for (const entry of rec.questions) {
+    const question = asRecord(entry);
+    if (!question) continue;
+    const text = pickString(question, ['question', 'prompt', 'text']) ?? '';
+    const header = pickString(question, ['header', 'title', 'label']) ?? '';
+    if (!text && !header) continue;
+    const options: ToolQuestionOption[] = [];
+    if (Array.isArray(question.options)) {
+      for (const raw of question.options) {
+        if (typeof raw === 'string') {
+          if (raw) options.push({ label: raw });
+          continue;
+        }
+        const option = asRecord(raw);
+        if (!option) continue;
+        const label = pickString(option, ['label', 'value', 'title']);
+        if (!label) continue;
+        const description = pickString(option, ['description', 'detail', 'hint']);
+        options.push({ label, ...(description ? { description } : {}) });
+      }
+    }
+    out.push({ header, question: text, options, multiple: question.multiple === true });
+  }
+  return out;
+}
+
+/**
+ * What was answered, per question, as `metadata.answers` states it.
+ *
+ * `string[][]`: one list per question, because a `multiple` question is
+ * answered with several of its options. A payload that sent one string per
+ * question rather than a list is read as a list of one.
+ */
+export function questionAnswersFromMetadata(metadata: Record<string, unknown>): string[][] {
+  const raw = metadata.answers;
+  if (!Array.isArray(raw)) return [];
+  return raw.map((entry) => {
+    if (typeof entry === 'string') return entry ? [entry] : [];
+    if (!Array.isArray(entry)) return [];
+    return entry.filter((value): value is string => typeof value === 'string' && value.length > 0);
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Per-tool readings of `metadata`
 // ---------------------------------------------------------------------------
@@ -501,21 +693,124 @@ export function editFilesFromMetadata(metadata: Record<string, unknown>): FileDi
     const rec = asRecord(entry);
     if (!rec) continue;
     const path = pickString(rec, ['file', 'path', 'filePath', 'file_path']);
-    const patch = typeof rec.patch === 'string' ? rec.patch : '';
+    const patch =
+      typeof rec.patch === 'string' ? rec.patch : typeof rec.diff === 'string' ? rec.diff : '';
     if (!path || !patch) continue;
+    // `FileDiff.Info.status` -- added, modified, deleted -- is what OpenCode
+    // says happened. Dropping it left every row to be classified by reading
+    // the patch header, and a modified file whose patch covers the whole file
+    // read as "Added".
+    const status = pickString(rec, ['status', 'change', 'change_type', 'changeType']);
     out.push({
       path,
       patch,
       additions: typeof rec.additions === 'number' ? rec.additions : 0,
       deletions: typeof rec.deletions === 'number' ? rec.deletions : 0,
+      ...(status ? { status } : {}),
     });
   }
   return out;
 }
 
+/**
+ * The diffs any payload carries, however it carries them.
+ *
+ * `edit` and `write` answer with `metadata.files`; `patch` answers with that
+ * *and* a flat `{filepath, diff}` pair, and a permission ask for any of the
+ * three carries whichever the tool would have returned. One reading, so a
+ * permission card and a tool card cannot show two different diffs for the same
+ * change.
+ */
+export function diffFilesFromMetadata(metadata: Record<string, unknown>): FileDiffItem[] {
+  const files = editFilesFromMetadata(metadata);
+  if (files.length > 0) return files;
+  const patch = pickString(metadata, ['diff', 'patch']);
+  if (!patch) return [];
+  const path = pickString(metadata, ['filepath', 'filePath', 'file', 'path', 'file_path']) ?? '';
+  return [
+    {
+      path,
+      patch,
+      additions: countMarkedLines(patch, '+'),
+      deletions: countMarkedLines(patch, '-'),
+    },
+  ];
+}
+
+/** Added or removed lines of a patch, not counting its `+++`/`---` headers. */
+function countMarkedLines(patch: string, marker: '+' | '-'): number {
+  const header = marker.repeat(3);
+  let count = 0;
+  for (const line of patch.split('\n')) {
+    if (line.startsWith(marker) && !line.startsWith(header)) count += 1;
+  }
+  return count;
+}
+
+/**
+ * What a skill actually is, rather than the id it was asked for by.
+ *
+ * `metadata.name` is the skill's own name and `metadata.directory` is where it
+ * was loaded from. The header used to show `input.id` -- `pdf`, `docx` -- and
+ * nothing else, which named the file and not the thing.
+ */
+export function skillNameFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['name', 'title']) ?? '';
+}
+
+export function skillDirectoryFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['directory', 'dir', 'path']) ?? '';
+}
+
+/** The content type a `webfetch` got back, for the chip beside the host. */
+export function contentTypeFromMetadata(metadata: Record<string, unknown>): string {
+  const raw = pickString(metadata, ['contentType', 'content_type', 'mime']);
+  if (!raw) return '';
+  // `text/html; charset=utf-8` is a header value; the chip wants the type.
+  return raw.split(';')[0].trim();
+}
+
+/** Who answered a `websearch`; OpenCode sends it on progress and on success. */
+export function searchProviderFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['provider', 'engine']) ?? '';
+}
+
+/** A URL split for a header: the host identifies it, the path says which page. */
+export function splitUrl(url: string): { host: string; path: string } {
+  const match = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]+)([^#]*)/i.exec(url.trim());
+  if (!match) return { host: '', path: '' };
+  const host = match[1].replace(/^www\./i, '');
+  const path = match[2] === '/' ? '' : match[2];
+  return { host, path };
+}
+
 /** The exit status a `shell` reports in its own metadata. */
 export function shellExitFromMetadata(metadata: Record<string, unknown>): number | undefined {
   return typeof metadata.exit === 'number' ? metadata.exit : undefined;
+}
+
+/**
+ * Whether the command was killed for taking too long.
+ *
+ * `metadata.timeout === true` is the event; `metadata.status === 'timeout'` is
+ * the same fact under `Shell.Info`'s own vocabulary. A *number* is deliberately
+ * not read as one: `timeout` is also the spelling of the configured limit that
+ * a call is given, and `timeout: 120000` on a command that finished in a second
+ * would light a chip saying it had been killed.
+ */
+export function shellTimedOutFromMetadata(metadata: Record<string, unknown>): boolean {
+  return metadata.timeout === true || metadata.status === 'timeout';
+}
+
+/**
+ * The shell a `shell` call is running in.
+ *
+ * It arrives on the progress event before the command has finished, which is
+ * exactly when the reader wants to open it: the tray reads a shell's output by
+ * this id, and without it "Background tasks" could only offer the whole list.
+ */
+export function shellIdFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['shellID', 'shell_id', 'shellId']) ?? '';
 }
 
 /** A subagent's own progress, which runs independently of the tool's state. */
@@ -532,21 +827,68 @@ export function resultCountFromMetadata(metadata: Record<string, unknown>): numb
   return undefined;
 }
 
-/** The calls Code Mode made, for the one-line summary under an `execute`. */
-export function executeToolCalls(metadata: Record<string, unknown>): string[] {
+/** How a call Code Mode made ended, as OpenCode reports it. */
+export type ExecuteCallStatus = 'running' | 'completed' | 'error';
+
+/** One call the sandboxed code made, from `metadata.toolCalls`. */
+export interface ExecuteToolCall {
+  name: string;
+  status: ExecuteCallStatus;
+  /** What it was called with, when the payload said; a header line, not a body. */
+  input?: string;
+}
+
+function parseExecuteCallStatus(value: unknown): ExecuteCallStatus {
+  const raw = typeof value === 'string' ? value.toLowerCase() : '';
+  if (raw === 'error' || raw === 'failed' || raw === 'rejected') return 'error';
+  if (raw === 'running' || raw === 'pending' || raw === 'started') return 'running';
+  return 'completed';
+}
+
+/**
+ * The calls Code Mode made, with how each one went.
+ *
+ * `metadata.toolCalls` is `{tool, status, input?}` per entry and the app kept
+ * only the names, joined into one grey line -- so a `read` that failed inside
+ * the sandbox and a `read` that worked were the same three letters. The
+ * progress event streams this list live, which is why `running` is a status a
+ * card has to be able to draw rather than an impossible one.
+ */
+export function executeToolCalls(metadata: Record<string, unknown>): ExecuteToolCall[] {
   const raw = metadata.toolCalls ?? metadata.tool_calls;
   if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
+  const out: ExecuteToolCall[] = [];
   for (const entry of raw) {
     if (typeof entry === 'string') {
-      out.push(entry);
+      if (entry) out.push({ name: entry, status: 'completed' });
       continue;
     }
     const rec = asRecord(entry);
-    const name = rec ? pickString(rec, ['name', 'tool', 'id']) : undefined;
-    if (name) out.push(name);
+    if (!rec) continue;
+    const name = pickString(rec, ['tool', 'name', 'id']);
+    if (!name) continue;
+    const input = executeCallInput(rec.input);
+    out.push({
+      name,
+      status: parseExecuteCallStatus(rec.status),
+      ...(input ? { input } : {}),
+    });
   }
   return out;
+}
+
+/** A call's argument as one line: the string it is, or the shape it has. */
+function executeCallInput(value: unknown): string {
+  if (typeof value === 'string') return firstLineOf(value).slice(0, 120);
+  const rec = asRecord(value);
+  if (!rec) return '';
+  const line = toolArgumentLine(rec);
+  return line.slice(0, 120);
+}
+
+/** Whether the sandboxed code itself threw, which is not the tool failing. */
+export function executeErrored(metadata: Record<string, unknown>): boolean {
+  return metadata.error === true;
 }
 
 // ---------------------------------------------------------------------------
@@ -646,6 +988,50 @@ export function parsePatchSections(patchText: string): PatchSection[] {
   }
   flush();
   return sections;
+}
+
+// ---------------------------------------------------------------------------
+// glob output
+// ---------------------------------------------------------------------------
+
+export interface PathGroup {
+  directory: string;
+  /** The file names in it, without the directory they share. */
+  files: string[];
+}
+
+/**
+ * `glob`'s one-path-per-line answer, grouped by the folder the files are in.
+ *
+ * The tool prints absolute paths, one per line, and drawing them as they come
+ * is a wall in which every line repeats the same long prefix and the part that
+ * differs is off the right-hand edge of a phone. Grouped, the prefix is said
+ * once as a heading and each row is the file name -- which is the part the
+ * reader is scanning for.
+ *
+ * Order is preserved: the first directory to appear is the first group, so the
+ * shape of the answer is not rearranged under the reader.
+ */
+export function groupPathsByDirectory(output: string): PathGroup[] {
+  if (!output) return [];
+  const groups: PathGroup[] = [];
+  const byDirectory = new Map<string, PathGroup>();
+  for (const raw of output.split('\n')) {
+    const line = raw.trim();
+    // A count, a note, an empty line: a path is the only thing grouped here.
+    if (!line || line.includes(' ')) continue;
+    const directory = dirname(line);
+    const name = basename(line);
+    if (!name) continue;
+    let group = byDirectory.get(directory);
+    if (!group) {
+      group = { directory, files: [] };
+      byDirectory.set(directory, group);
+      groups.push(group);
+    }
+    group.files.push(name);
+  }
+  return groups;
 }
 
 // ---------------------------------------------------------------------------

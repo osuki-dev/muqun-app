@@ -452,10 +452,6 @@ msgstr "回答"
 msgid "Answer: {0}"
 msgstr "回答：{0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "回答済み"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "アプリアイコン"
@@ -1805,6 +1801,10 @@ msgstr "そのホスト上の Gateway のポートを入力してください"
 #: src/app/explore.tsx
 msgid "Enter URL manually"
 msgstr "URL を手動で入力"
+
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "エラー"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
@@ -3908,6 +3908,10 @@ msgstr "ホスト側で設定してください"
 msgid "Settings"
 msgstr "設定"
 
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "複数回答可"
+
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
 msgid "Share this session's transcript"
@@ -4783,6 +4787,10 @@ msgstr "思考 · {durationStr}"
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "{host} 経由"
+
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "タイムアウト"
 
 #: src/i18n/labels.ts
 msgid "Today"
