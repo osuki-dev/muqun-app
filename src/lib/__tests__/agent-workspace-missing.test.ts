@@ -4,8 +4,11 @@ import { parseAgentVcsDiff, parseWorkspaceMissing } from '../agent-protocol';
 import {
   badgeLoadsAllowed,
   diffEmptyState,
+  listableWorkspaces,
   workspaceMissingState,
+  workspaceProjectMissing,
 } from '../agent-workspace-missing';
+import type { AgentProject } from '../agent-protocol';
 
 /** The gateway's answer, verbatim from `docs/agent-api.md`. */
 const REFUSAL = {
@@ -173,5 +176,42 @@ describe('diffEmptyState', () => {
       'not-a-repository'
     );
     expect(diffEmptyState({ loading: false, fileCount: 0 })).toBe('clean');
+  });
+});
+
+describe('listableWorkspaces', () => {
+  const app: AgentProject = { id: 'a', canonical: '/home/ryu/Work/app', name: 'app' };
+  const gone: AgentProject = {
+    id: 'b',
+    canonical: '/home/ryu/throwaway',
+    name: 'throwaway',
+    missing: true,
+  };
+  const here: AgentProject = {
+    id: 'c',
+    canonical: '/home/ryu/Work/website',
+    name: 'website',
+    missing: true,
+  };
+
+  test('a workspace the host says is gone is not offered', () => {
+    expect(listableWorkspaces([app, gone]).map((project) => project.id)).toEqual(['a']);
+  });
+
+  test('the workspace the reader is standing in stays, and says so', () => {
+    expect(listableWorkspaces([app, gone, here], '/home/ryu/Work/website')).toEqual([app, here]);
+    expect(workspaceProjectMissing(here)).toBe(true);
+    expect(workspaceProjectMissing(app)).toBe(false);
+  });
+
+  test('a gateway that never sends the field lists everything it did before', () => {
+    // Absent is present: this is every gateway shipped so far, and the whole
+    // list has to survive the field arriving later.
+    expect(listableWorkspaces([app, { ...gone, missing: undefined }])).toHaveLength(2);
+    expect(listableWorkspaces([])).toEqual([]);
+  });
+
+  test('a trailing slash is the same folder, not another one', () => {
+    expect(listableWorkspaces([here], '/home/ryu/Work/website/')).toEqual([here]);
   });
 });

@@ -1996,6 +1996,10 @@ msgstr "แก้ไขความต่างระดับสีของข
 msgid "Fold the tool steps away"
 msgstr "ซ่อนขั้นตอนการใช้เครื่องมือ"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "ไม่พบโฟลเดอร์"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "ตามภาษาของเครื่อง"
@@ -2787,6 +2791,10 @@ msgstr "ไม่มีคำสั่งที่ตรงกัน ลอง�
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "ไม่มีโมเดลที่ตรงกับ “{0}”"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "ไม่มีโมเดลบนโฮสต์นี้"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ
 msgid "Restore hidden defaults"
 msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

@@ -118,7 +118,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const [loading, setLoading] = useState(false);
+  /**
+   * True from the first frame, because the read starts on the first frame.
+   *
+   * Starting at `false` painted the empty state once before the effect had
+   * run -- "No models on this host" under a list that was about to arrive.
+   * Nothing on this screen may say the host has nothing until the host has
+   * answered.
+   */
+  const [loading, setLoading] = useState(true);
   const [models, setModels] = useState<ModelInfo[]>([]);
   /**
    * The providers, for their `activation`, and the catalog's own defaults.
@@ -134,13 +142,24 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const [defaults, setDefaults] = useState<CatalogDefaults>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'free'>('all');
+  /**
+   * Bumped by "Try again", which is the whole of the retry: the effect below
+   * watches it and reads the catalog once more, past the cache.
+   */
+  const [reloadToken, setReloadToken] = useState(0);
 
   // A route mounts when it opens and unmounts when it is dismissed, so the
   // catalog is fetched once per opening without a `visible` flag to watch.
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getAgentCatalog(sessionId, undefined, directory ? { directory } : {})
+    getAgentCatalog(sessionId, undefined, {
+      ...(directory ? { directory } : {}),
+      // A retry that reads the cached answer again is not a retry. Only the
+      // reader's own tap gets here: the first read of an opening is allowed to
+      // be instant.
+      ...(reloadToken > 0 ? { forceRefresh: true } : {}),
+    })
       .then((cat: AgentCatalog) => {
         if (!active) return;
         if (cat?.models) setModels(cat.models);
@@ -156,7 +175,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, directory]);
+  }, [sessionId, directory, reloadToken]);
 
   /**
    * Which rows the reader scrolls past, and nothing more.
@@ -243,6 +262,22 @@ export const AgentModelSheet = memo(function AgentModelSheet({
         .join(' · ')
     : undefined;
 
+  /**
+   * What an empty list means, which is three different things.
+   *
+   * The sheet used to say "No free models on this host" whatever had emptied
+   * it, so a host that answered with nothing at all -- a cold workspace, a
+   * gateway that had just gone quiet -- was reported as a host whose models
+   * were all paid, under a segment reading "All models". Each case is now its
+   * own sentence, and the one the reader can do something about is the one
+   * that offers to ask again.
+   */
+  const emptyReason: 'search' | 'free-filter' | 'nothing' = searchQuery.trim()
+    ? 'search'
+    : filterMode === 'free' && models.length > 0
+      ? 'free-filter'
+      : 'nothing';
+
   let rowIndex = 0;
 
   return (
@@ -282,13 +317,30 @@ export const AgentModelSheet = memo(function AgentModelSheet({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           {sections.length === 0 || filteredModels.length === 0 ? (
-            <View style={styles.empty}>
+            <Animated.View entering={fadeIn('short')} style={styles.empty}>
               <Text variant="caption" color={theme.colors.textMuted}>
-                {searchQuery.trim()
+                {emptyReason === 'search'
                   ? t`No models match “${searchQuery.trim()}”.`
-                  : t`No free models on this host.`}
+                  : emptyReason === 'free-filter'
+                    ? t`No free models on this host.`
+                    : t`No models on this host.`}
               </Text>
-            </View>
+              {emptyReason === 'nothing' ? (
+                <PressableScale
+                  testID="agent-model-retry"
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Retry`}
+                  onPress={() => setReloadToken((token) => token + 1)}
+                  style={[
+                    styles.retry,
+                    { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+                  ]}>
+                  <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                    {t`Retry`}
+                  </Text>
+                </PressableScale>
+              ) : null}
+            </Animated.View>
           ) : (
             sections.map((section, sectionIndex) => (
               <Animated.View key={section.title} layout={listLayout('short')}>
@@ -405,7 +457,18 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 
 const styles = StyleSheet.create({
   loading: { padding: 40, alignItems: 'center', justifyContent: 'center' },
-  empty: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
+  empty: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SHEET_LADDER.gap,
+  },
+  retry: {
+    paddingHorizontal: SHEET_LADDER.snug,
+    paddingVertical: 6,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+  },
   variants: {
     flexDirection: 'row',
     flexWrap: 'wrap',

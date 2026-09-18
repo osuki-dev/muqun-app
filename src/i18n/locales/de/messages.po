@@ -1996,6 +1996,10 @@ msgstr "Vor dem Anwenden dieses Designs den Textkontrast korrigieren"
 msgid "Fold the tool steps away"
 msgstr "Tool-Schritte einklappen"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "Ordner fehlt"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Der Sprache des Telefons folgen"
@@ -2787,6 +2791,10 @@ msgstr "Keine passenden Befehle. Versuche einen anderen Suchbegriff"
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "Keine Modelle passen zu „{0}“"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "Keine Modelle auf diesem Host"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "Ausgeblendete Standardbefehle wiederherstellen"
 msgid "Restore hidden defaults"
 msgstr "Ausgeblendete Standards wiederherstellen"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

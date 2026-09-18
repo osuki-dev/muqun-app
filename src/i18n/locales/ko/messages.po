@@ -1996,6 +1996,10 @@ msgstr "이 테마를 적용하기 전에 텍스트 대비를 조정하세요"
 msgid "Fold the tool steps away"
 msgstr "도구 단계 접기"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "폴더가 없습니다"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "휴대폰 언어를 따르기"
@@ -2787,6 +2791,10 @@ msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "“{0}”과 일치하는 모델이 없습니다"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "이 호스트에는 모델이 없습니다"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "숨긴 기본 명령 복원"
 msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

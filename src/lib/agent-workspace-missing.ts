@@ -1,4 +1,9 @@
-import { sameDirectory, type AgentVcsDiff, type WorkspaceMissing } from './agent-protocol';
+import {
+  sameDirectory,
+  type AgentProject,
+  type AgentVcsDiff,
+  type WorkspaceMissing,
+} from './agent-protocol';
 
 /**
  * A workspace that is gone, as the screen holds it.
@@ -87,4 +92,37 @@ export function diffEmptyState(answer: {
   if (answer.reason === 'workspace_missing') return 'workspace-missing';
   if (answer.reason === 'not_a_repository') return 'not-a-repository';
   return 'clean';
+}
+
+/**
+ * Which known workspaces a picker lists.
+ *
+ * The gateway flags a project whose directory is no longer on disk with
+ * `missing: true`. A row for one is an offer the app cannot keep: tapping it
+ * lands on a folder that is not there, and the session that opens has nothing
+ * to stand on. So they are not offered.
+ *
+ * The workspace the reader is *in* is the exception, and stays on the list
+ * whatever the gateway says about it. It is where the screen already is --
+ * removing its row would leave the sheet marking nothing as current and the
+ * reader with no way to see what they are standing on. It is marked instead;
+ * `workspaceProjectMissing` is what the row asks.
+ *
+ * The field is optional on the wire and a gateway that has never sent it is
+ * the normal case: absent is present, which is what `=== true` says here.
+ */
+export function listableWorkspaces(
+  projects: readonly AgentProject[],
+  activeDirectory?: string
+): AgentProject[] {
+  return projects.filter(
+    (project) =>
+      project.missing !== true ||
+      (activeDirectory !== undefined && sameDirectory(project.canonical, activeDirectory))
+  );
+}
+
+/** Whether a listed workspace is one the host says is no longer there. */
+export function workspaceProjectMissing(project: Pick<AgentProject, 'missing'>): boolean {
+  return project.missing === true;
 }

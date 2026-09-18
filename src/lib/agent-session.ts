@@ -25,6 +25,7 @@ import {
 import {
   agentCatalogCacheVariant,
   agentCatalogPath,
+  isEmptyAgentCatalog,
   normalizeCatalogDirectory,
 } from './agent-catalog-scope';
 import {
@@ -51,6 +52,7 @@ import {
   sortTimeline,
   type AgentCatalog,
   type AgentContextUsage,
+  type AgentProject,
   type AgentDomainEvent,
   type AgentEngineInfo,
   type AgentRunStatus,
@@ -80,14 +82,6 @@ export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheK
  * body to a parser that takes `unknown` and never throws.
  */
 export * from './agent-protocol';
-
-export interface AgentProject {
-  id: string;
-  canonical: string;
-  name: string;
-  vcs?: string;
-  sandboxes?: string[];
-}
 
 export interface DirectoryItem {
   name: string;
@@ -747,6 +741,13 @@ export async function getAgentCatalog(
 
       const etag = res.headers.get('etag') ?? undefined;
       const catalog = parseAgentCatalog(envelopeData(await res.json()));
+      // A workspace the engine has not loaded yet answers `200` with an empty
+      // catalog and an ETag of its own, and caching that hides every model on
+      // the host behind an empty picker until the TTL runs out. Answered, not
+      // remembered -- and answered with whatever this workspace last really
+      // had, because a catalog that went empty for a moment is not a host that
+      // lost its models. See `isEmptyAgentCatalog`.
+      if (isEmptyAgentCatalog(catalog)) return cached?.data ?? catalog;
       setCachedEntry(cacheKey, catalog, etag);
       return catalog;
     } catch (err) {
@@ -803,6 +804,11 @@ export async function getAgentProjects(
       const etag = res.headers.get('etag') ?? undefined;
       const data = envelopeData(await res.json());
       const projects = Array.isArray(data) ? (data as AgentProject[]) : [];
+      // The same rule the catalog keeps, for the same reason: an engine that
+      // has just started answers `200` with an empty list and an ETag, and
+      // caching that empties the workspace switcher for the whole TTL with no
+      // request going out to correct it. Answered, never remembered.
+      if (projects.length === 0) return cached?.data ?? projects;
       setCachedEntry(cacheKey, projects, etag);
       return projects;
     } catch {

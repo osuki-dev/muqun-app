@@ -1996,6 +1996,10 @@ msgstr "このテーマを適用する前に文字のコントラストを修正
 msgid "Fold the tool steps away"
 msgstr "ツールの手順を折りたたむ"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "フォルダーがありません"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "端末の言語に従う"
@@ -2787,6 +2791,10 @@ msgstr "一致するコマンドがありません。別の語句で検索して
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "「{0}」に一致するモデルはありません"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "このホストにモデルはありません"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "非表示にした標準コマンドを元に戻す"
 msgid "Restore hidden defaults"
 msgstr "非表示の標準を元に戻す"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

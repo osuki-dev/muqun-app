@@ -1996,6 +1996,10 @@ msgstr "Исправьте контраст текста перед примен
 msgid "Fold the tool steps away"
 msgstr "Свернуть шаги инструментов"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "Папка отсутствует"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Следовать языку телефона"
@@ -2787,6 +2791,10 @@ msgstr "Команды не найдены. Попробуйте другое с
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "Нет моделей по запросу «{0}»"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "На этом хосте нет моделей"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "Восстановить скрытые команды по умолча
 msgid "Restore hidden defaults"
 msgstr "Восстановить скрытые значения по умолчанию"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

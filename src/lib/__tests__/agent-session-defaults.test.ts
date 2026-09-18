@@ -8,6 +8,7 @@ import {
   firstUsableModel,
   recentSessionChoice,
   resolveNewSessionDefaults,
+  unsupportedModelRefs,
 } from '../agent-session-defaults';
 
 const models: ModelInfo[] = [
@@ -373,5 +374,62 @@ describe("a project's own agent", () => {
     expect(effectiveAgentId(undefined, 'osuki-coder')).toBe('osuki-coder');
     expect(effectiveAgentId(undefined, undefined)).toBe('build');
     expect(effectiveAgentId('  ', '  ')).toBe('build');
+  });
+});
+
+describe('a default this server has already refused', () => {
+  /**
+   * The host answers `defaults.model` with `opencode/jev-latest` -- OpenCode's
+   * list-order fallback on a host with no default configured -- and then
+   * refuses every turn on it with "Model jev-latest is not supported". The
+   * rung stays; what changes is that a preference the server has already
+   * proved it cannot honour is no longer treated as one.
+   */
+  const jev = { provider_id: 'opencode', model_id: 'jev-latest' };
+  const withJev: ModelInfo[] = [
+    { id: 'jev-latest', name: 'Jev', provider_id: 'opencode', enabled: true },
+    ...models,
+  ];
+  const failed = [
+    session({
+      asid: 'failed',
+      model: jev,
+      updated_ms: 30,
+      error: { name: 'error', message: 'Model jev-latest is not supported' },
+    }),
+  ];
+
+  test('the refusal is read off the sessions, in the host\u2019s own words', () => {
+    expect(unsupportedModelRefs(failed).has('opencode\u0000jev-latest')).toBe(true);
+    expect(unsupportedModelRefs([session({ asid: 'fine', model: jev })]).size).toBe(0);
+  });
+
+  test('it falls through to the next rung rather than starting another dead session', () => {
+    expect(
+      resolveNewSessionDefaults({
+        picked: {},
+        sessions: failed,
+        catalogDefaults: { model: jev },
+        models: withJev,
+        agents,
+      }).model
+    ).toEqual(free);
+  });
+
+  test('the guess below it does not hand back the same refused model either', () => {
+    expect(firstUsableModel(withJev, unsupportedModelRefs(failed))).toEqual(free);
+    expect(firstUsableModel([withJev[0]!], unsupportedModelRefs(failed))).toBeUndefined();
+  });
+
+  test('a default that has never failed here is still what a new session starts on', () => {
+    expect(
+      resolveNewSessionDefaults({
+        picked: {},
+        sessions: [],
+        catalogDefaults: { model: jev },
+        models: withJev,
+        agents,
+      }).model
+    ).toEqual(jev);
   });
 });

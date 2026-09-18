@@ -2013,6 +2013,22 @@ export function parseModelInfo(value: unknown, providerId?: string): ModelInfo |
   return model;
 }
 
+/**
+ * A workspace the engine knows about.
+ *
+ * `missing` is the gateway saying the directory is no longer on disk. It is
+ * optional and a gateway that has never sent it is the ordinary case, so
+ * absent means present -- see `listableWorkspaces`.
+ */
+export interface AgentProject {
+  id: string;
+  canonical: string;
+  name: string;
+  vcs?: string;
+  sandboxes?: string[];
+  missing?: boolean;
+}
+
 export function parseAgentCatalog(value: unknown): AgentCatalog {
   const rec = asRecord(value) ?? {};
 

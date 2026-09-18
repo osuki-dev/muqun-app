@@ -25,6 +25,10 @@ import {
   type AgentProject,
   type DirectoryItem,
 } from '@/lib/agent-session';
+import { PressableScale } from '@/components/pressable-scale';
+import { appChrome } from '@/constants/appearance';
+import { withAlpha } from '@/lib/color';
+import { listableWorkspaces, workspaceProjectMissing } from '@/lib/agent-workspace-missing';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 const STAGGERED_ROWS = 8;
@@ -81,25 +85,39 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
     const cached = getCachedAgentProjectsSync(buildAgentCacheKey('projects', null, sessionId));
     return cached ? withoutGlobalRoot(cached) : [];
   });
-  const [loading, setLoading] = useState(false);
+  /**
+   * True until the host has answered, because the empty state below claims
+   * the host has no workspaces and nothing may claim that before it is known.
+   * Starting at `false` painted that sentence for one frame on every opening.
+   */
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<DirectoryItem[]>([]);
 
   // A route mounts when it opens and unmounts when it is dismissed, so search
   // state starts clean and the project list is fetched once per opening.
   const loadedOnceRef = useRef(false);
-  const loadProjects = useCallback(async () => {
-    if (!loadedOnceRef.current) setLoading(true);
-    try {
-      const list = await getAgentProjects(sessionId);
-      setProjects(withoutGlobalRoot(list ?? []));
-      loadedOnceRef.current = true;
-    } catch {
-      // Quiet: the cached list, or the empty state, is still the right answer.
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
+  const loadProjects = useCallback(
+    async (options?: { forceRefresh?: boolean }) => {
+      if (!loadedOnceRef.current) setLoading(true);
+      try {
+        // A retry that reads the cached answer again is not a retry; the first
+        // read of an opening is still allowed to be instant.
+        const list = await getAgentProjects(
+          sessionId,
+          undefined,
+          options?.forceRefresh ? { forceRefresh: true } : undefined
+        );
+        setProjects(withoutGlobalRoot(list ?? []));
+        loadedOnceRef.current = true;
+      } catch {
+        // Quiet: the cached list, or the empty state, is still the right answer.
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sessionId]
+  );
 
   useEffect(() => {
     void loadProjects().catch(() => {});
@@ -131,9 +149,13 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
    * session is actually in when that is not one of them.
    */
   const listedProjects = useMemo(() => {
-    if (!activeDirectory) return projects;
-    if (projects.some((project) => project.canonical === activeDirectory)) return projects;
-    return [directoryAsProject(activeDirectory), ...projects];
+    // A workspace whose folder the host says is gone is not an offer this
+    // sheet can keep -- except the one the reader is standing in, which is
+    // listed and marked. See `listableWorkspaces`.
+    const listable = listableWorkspaces(projects, activeDirectory);
+    if (!activeDirectory) return listable;
+    if (listable.some((project) => project.canonical === activeDirectory)) return listable;
+    return [directoryAsProject(activeDirectory), ...listable];
   }, [projects, activeDirectory]);
 
   const filtered = useMemo(() => {
@@ -232,6 +254,26 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                     ? t`No workspaces match “${searchQuery.trim()}”.`
                     : t`No workspaces here yet. Type a path above to open one.`}
                 </Text>
+                {searchQuery.trim() ? null : (
+                  // A host that answered with nothing and a host that has
+                  // nothing look the same from here, and only one of them is
+                  // worth asking again. Offered rather than guessed at.
+                  <PressableScale
+                    testID="agent-workspace-retry"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Retry`}
+                    onPress={() => {
+                      void loadProjects({ forceRefresh: true }).catch(() => {});
+                    }}
+                    style={[
+                      styles.retry,
+                      { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+                    ]}>
+                    <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                      {t`Retry`}
+                    </Text>
+                  </PressableScale>
+                )}
               </View>
             ) : (
               filtered.map((project) => {
@@ -261,6 +303,18 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                           }
                         />
                       }
+                      // The only missing workspace that is listed at all is the
+                      // one the reader is standing in, and it says so rather
+                      // than looking like every other row.
+                      {...(workspaceProjectMissing(project)
+                        ? {
+                            meta: (
+                              <Text variant="caption" color={theme.colors.textSubtle}>
+                                {t`Folder is missing`}
+                              </Text>
+                            ),
+                          }
+                        : {})}
                       onPress={() => choose(project.canonical, project)}
                     />
                   </Animated.View>
@@ -277,6 +331,12 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
 
 const styles = StyleSheet.create({
   loading: { padding: 40, alignItems: 'center', justifyContent: 'center' },
-  empty: { paddingVertical: 32, alignItems: 'center', justifyContent: 'center' },
+  empty: { paddingVertical: 32, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  retry: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+  },
   emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: AGENT_TYPE.mono.lineHeight },
 });

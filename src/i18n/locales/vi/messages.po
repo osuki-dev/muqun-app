@@ -1996,6 +1996,10 @@ msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng 
 msgid "Fold the tool steps away"
 msgstr "Thu gọn các bước công cụ"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "Thư mục không còn"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Theo ngôn ngữ của điện thoại"
@@ -2787,6 +2791,10 @@ msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "Không có mô hình nào khớp với “{0}”"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "Không có mô hình trên máy chủ này"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "Khôi phục các lệnh mặc định đã ẩn"
 msgid "Restore hidden defaults"
 msgstr "Khôi phục mặc định đã ẩn"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

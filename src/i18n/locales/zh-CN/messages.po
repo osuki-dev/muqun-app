@@ -1996,6 +1996,10 @@ msgstr "请先修正文字对比度再应用此主题"
 msgid "Fold the tool steps away"
 msgstr "收起工具步骤"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "文件夹已不存在"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "跟随手机的语言"
@@ -2787,6 +2791,10 @@ msgstr "没有匹配的命令，换个关键词试试"
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "没有与“{0}”匹配的模型"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "该主机上没有模型"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "恢复隐藏的默认命令"
 msgid "Restore hidden defaults"
 msgstr "恢复隐藏的默认项"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

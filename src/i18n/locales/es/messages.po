@@ -1996,6 +1996,10 @@ msgstr "Corrige el contraste del texto antes de aplicar este tema"
 msgid "Fold the tool steps away"
 msgstr "Plegar los pasos de herramientas"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "Falta la carpeta"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Seguir el idioma del teléfono"
@@ -2787,6 +2791,10 @@ msgstr "No hay comandos coincidentes. Prueba otra palabra"
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
 msgstr "Ningún modelo coincide con «{0}»"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "No hay modelos en este host"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
@@ -3652,6 +3660,8 @@ msgstr "Restaurar los comandos predeterminados ocultos"
 msgid "Restore hidden defaults"
 msgstr "Restaurar predeterminados ocultos"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
