@@ -2815,6 +2815,10 @@ msgstr "“{0}”과 일치하는 워크스페이스가 없습니다"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "아직 워크트리가 없습니다. 아래에서 하나 만들면 이 체크아웃을 건드리지 않고 브랜치에서 작업할 수 있습니다"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Not a git repository"
+msgstr "Git 저장소가 아닙니다"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "사용 불가"
@@ -5223,6 +5227,15 @@ msgstr "작업 디렉터리"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "워크스페이스"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Workspace folder is missing: {0}"
+msgstr "작업 공간 폴더가 없습니다: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

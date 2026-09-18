@@ -2815,6 +2815,10 @@ msgstr "沒有與「{0}」相符的工作區"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "還沒有工作樹。在下面建立一個，就能在某個分支上工作而不打擾這份簽出"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Not a git repository"
+msgstr "不是 Git 儲存庫"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "無法使用"
@@ -5223,6 +5227,15 @@ msgstr "工作目錄"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "工作區"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Workspace folder is missing: {0}"
+msgstr "工作區資料夾不存在：{0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

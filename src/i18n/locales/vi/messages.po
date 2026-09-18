@@ -2815,6 +2815,10 @@ msgstr "Không có không gian làm việc nào khớp với “{0}”"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc trên một nhánh mà không đụng tới bản checkout này"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Not a git repository"
+msgstr "Không phải kho mã Git"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
@@ -5223,6 +5227,15 @@ msgstr "Thư mục làm việc"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Không gian làm việc"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Workspace folder is missing: {0}"
+msgstr "Không tìm thấy thư mục không gian làm việc: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"
