@@ -3657,6 +3657,7 @@ msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

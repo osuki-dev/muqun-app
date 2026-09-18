@@ -3657,6 +3657,7 @@ msgid "Restore hidden defaults"
 msgstr "Restaurar predefinições ocultas"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

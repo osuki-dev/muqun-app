@@ -804,6 +804,11 @@ export async function getAgentProjects(
       const etag = res.headers.get('etag') ?? undefined;
       const data = envelopeData(await res.json());
       const projects = Array.isArray(data) ? (data as AgentProject[]) : [];
+      // The same rule the catalog keeps, for the same reason: an engine that
+      // has just started answers `200` with an empty list and an ETag, and
+      // caching that empties the workspace switcher for the whole TTL with no
+      // request going out to correct it. Answered, never remembered.
+      if (projects.length === 0) return cached?.data ?? projects;
       setCachedEntry(cacheKey, projects, etag);
       return projects;
     } catch {
