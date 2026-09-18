@@ -2784,6 +2784,10 @@ msgstr "Команды не найдены. Попробуйте другое с
 msgid "No models match “{0}”."
 msgstr "Нет моделей по запросу «{0}»"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "На этом хосте нет моделей"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "В этой сессии пока нет других ассистентов"
@@ -3648,6 +3652,7 @@ msgstr "Восстановить скрытые команды по умолча
 msgid "Restore hidden defaults"
 msgstr "Восстановить скрытые значения по умолчанию"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

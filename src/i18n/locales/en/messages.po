@@ -2784,6 +2784,10 @@ msgstr "No matching commands. Try another word"
 msgid "No models match “{0}”."
 msgstr "No models match “{0}”"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "No models on this host"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "No other assistants in this session yet"
@@ -3648,6 +3652,7 @@ msgstr "Restore hidden default commands"
 msgid "Restore hidden defaults"
 msgstr "Restore hidden defaults"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

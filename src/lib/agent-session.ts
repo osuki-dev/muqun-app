@@ -25,6 +25,7 @@ import {
 import {
   agentCatalogCacheVariant,
   agentCatalogPath,
+  isEmptyAgentCatalog,
   normalizeCatalogDirectory,
 } from './agent-catalog-scope';
 import {
@@ -747,6 +748,13 @@ export async function getAgentCatalog(
 
       const etag = res.headers.get('etag') ?? undefined;
       const catalog = parseAgentCatalog(envelopeData(await res.json()));
+      // A workspace the engine has not loaded yet answers `200` with an empty
+      // catalog and an ETag of its own, and caching that hides every model on
+      // the host behind an empty picker until the TTL runs out. Answered, not
+      // remembered -- and answered with whatever this workspace last really
+      // had, because a catalog that went empty for a moment is not a host that
+      // lost its models. See `isEmptyAgentCatalog`.
+      if (isEmptyAgentCatalog(catalog)) return cached?.data ?? catalog;
       setCachedEntry(cacheKey, catalog, etag);
       return catalog;
     } catch (err) {

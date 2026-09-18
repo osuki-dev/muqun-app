@@ -3,6 +3,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import {
   agentCatalogCacheVariant,
   agentCatalogPath,
+  isEmptyAgentCatalog,
   normalizeCatalogDirectory,
   shouldRefetchAgentCatalog,
 } from '../agent-catalog-scope';
@@ -132,5 +133,28 @@ describe('shouldRefetchAgentCatalog', () => {
       )
     ).toBe(true);
     expect(shouldRefetchAgentCatalog({ sessionId: 'sess-1' }, { sessionId: undefined })).toBe(true);
+  });
+});
+
+describe('isEmptyAgentCatalog', () => {
+  /**
+   * What a cold workspace answers with, measured against the live gateway:
+   * `200`, an ETag of its own, and nothing in it. The read after it had every
+   * model on the host. Caching the first would have hidden all of them for the
+   * ten minutes the entry stays fresh.
+   */
+  test('a catalog with no models and no providers is not an answer worth keeping', () => {
+    expect(isEmptyAgentCatalog({ models: [], providers: [] })).toBe(true);
+  });
+
+  test('one model, or one provider, is a host that answered', () => {
+    expect(isEmptyAgentCatalog({ models: [{ id: 'union-alpha' }], providers: [] })).toBe(false);
+    expect(isEmptyAgentCatalog({ models: [], providers: [{ id: 'opencode' }] })).toBe(false);
+  });
+
+  test('the agents a directory-less read carries do not make it a catalog of models', () => {
+    // The same cold read still listed seven global agents. The picker this
+    // guards is the model picker, and for that the read was empty.
+    expect(isEmptyAgentCatalog({ models: [], providers: [] })).toBe(true);
   });
 });

@@ -2784,6 +2784,10 @@ msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
 msgid "No models match “{0}”."
 msgstr "“{0}”과 일치하는 모델이 없습니다"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "이 호스트에는 모델이 없습니다"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "이 세션에 아직 다른 어시스턴트가 없습니다"
@@ -3648,6 +3652,7 @@ msgstr "숨긴 기본 명령 복원"
 msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

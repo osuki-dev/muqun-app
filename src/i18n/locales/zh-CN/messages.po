@@ -2784,6 +2784,10 @@ msgstr "没有匹配的命令，换个关键词试试"
 msgid "No models match “{0}”."
 msgstr "没有与“{0}”匹配的模型"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "该主机上没有模型"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "这个会话里还没有其他助手"
@@ -3648,6 +3652,7 @@ msgstr "恢复隐藏的默认命令"
 msgid "Restore hidden defaults"
 msgstr "恢复隐藏的默认项"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

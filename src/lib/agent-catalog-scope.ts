@@ -79,3 +79,30 @@ export function shouldRefetchAgentCatalog(
   if (!nextDir) return false;
   return normalizeCatalogDirectory(previous.directory) !== nextDir;
 }
+
+/**
+ * Whether an answered catalog is one worth remembering.
+ *
+ * A catalog read for a workspace OpenCode has not loaded yet does not fail and
+ * does not wait for the project either: the gateway waits up to its floor and
+ * then answers `200` with `models: []` and `providers: []` -- and with an
+ * `ETag`, so to a cache it is indistinguishable from a real answer. Measured
+ * against the live gateway, a first read of a cold directory took 1.7s and came
+ * back with nothing in it; the next read of the same directory had all 126
+ * models and a different ETag.
+ *
+ * Storing the first of those pins an empty "Choose a model" in front of the
+ * reader for the whole of `CATALOG_TTL_MS`, with no request going out to
+ * correct it -- the freshness check short-circuits before the network. So an
+ * empty catalog is answered and never written down: the next read asks again.
+ *
+ * Emptiness is judged on models and providers only. A host with no provider
+ * configured has no models to pick either way, and the agents, commands and
+ * skills a directory-less read carries are not what this is guarding.
+ */
+export function isEmptyAgentCatalog(catalog: {
+  models: readonly unknown[];
+  providers: readonly unknown[];
+}): boolean {
+  return catalog.models.length === 0 && catalog.providers.length === 0;
+}

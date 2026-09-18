@@ -164,6 +164,53 @@ export function recentSessionChoice(
   };
 }
 
+/** One model ref as a key, so two lists of them can be compared. */
+function modelRefKey(ref: ModelRef): string {
+  return `${ref.provider_id ?? ''}\u0000${ref.model_id}`;
+}
+
+/**
+ * The models this server has already refused, in its own words.
+ *
+ * `recentSessionChoice` skips a session whose last turn died on its model, so
+ * a broken model is never *copied* from one session to the next. The catalog's
+ * own `defaults` came in under none of that, and on a host with no default
+ * configured OpenCode answers with the first entry of its model list -- which
+ * on this server is `opencode/jev-latest`, a model the same server then
+ * refuses with "Model jev-latest is not supported". Every new session started
+ * on it and every first turn died.
+ *
+ * So the sessions are read a second time, for the opposite fact: not which
+ * model to carry forward, but which one this server has already said it cannot
+ * run. Evidence from the host, not a list of bad names kept in the app.
+ */
+export function unsupportedModelRefs(sessions: readonly AgentSessionInfo[]): Set<string> {
+  const refused = new Set<string>();
+  for (const session of sessions) {
+    if (!session.model) continue;
+    if (isUnsupportedModelFailure(session.error?.message ?? '')) {
+      refused.add(modelRefKey(session.model));
+    }
+  }
+  return refused;
+}
+
+/**
+ * The host's own default, unless the host has already refused it.
+ *
+ * The rung stays: what a host prefers is worth more than anything this app
+ * could guess. A preference that has been tried and refused is not a
+ * preference, though -- it is a failed turn waiting to happen -- so it falls
+ * through to the next rung rather than ending the chain.
+ */
+function usableCatalogDefaultModel(
+  ref: ModelRef | undefined,
+  refused: ReadonlySet<string>
+): ModelRef | undefined {
+  if (!ref) return undefined;
+  return refused.has(modelRefKey(ref)) ? undefined : ref;
+}
+
 /**
  * Something the host can actually run, when nothing else answered.
  *
@@ -171,9 +218,20 @@ export function recentSessionChoice(
  * is the one rung the reader did not choose, so it should be the one that
  * cannot cost them anything. Paid is still better than the alternative, which
  * is not a default at all -- see `resolveNewSessionDefaults`.
+ *
+ * `refused` is what this server has already said it cannot run. A guess is the
+ * one thing that must not repeat a known failure: falling through rung 6 only
+ * to hand back the same refused model one rung later would fix nothing.
  */
-export function firstUsableModel(models: readonly ModelInfo[]): ModelRef | undefined {
-  const usable = models.filter((model) => model.enabled !== false);
+export function firstUsableModel(
+  models: readonly ModelInfo[],
+  refused: ReadonlySet<string> = new Set()
+): ModelRef | undefined {
+  const usable = models.filter(
+    (model) =>
+      model.enabled !== false &&
+      !refused.has(modelRefKey({ provider_id: model.provider_id, model_id: model.id }))
+  );
   const pick = usable.find((model) => isFreeModel(model)) ?? usable[0];
   return pick ? { provider_id: pick.provider_id, model_id: pick.id } : undefined;
 }
@@ -186,7 +244,7 @@ export function firstUsableModel(models: readonly ModelInfo[]): ModelRef | undef
  *   3. remembered for this server
  *   4. the newest session in this workspace
  *   5. the newest session anywhere on this server
- *   6. the catalog's own `defaults`
+ *   6. the catalog's own `defaults`, unless this server has already refused it
  *   7. the first enabled free model in the catalog (model only)
  *   8. nothing, and only when the catalog lists nothing to send
  *
@@ -221,14 +279,15 @@ export function resolveNewSessionDefaults(input: NewSessionDefaultsInput): NewSe
   const sessions = input.sessions ?? [];
   const here = recentSessionChoice(sessions, input.directory);
   const anywhere = recentSessionChoice(sessions);
+  const refused = unsupportedModelRefs(sessions);
   const model =
     picked.model ??
     catalogModelRef(workspace?.model, models) ??
     catalogModelRef(server?.model, models) ??
     catalogModelRef(here.model, models) ??
     catalogModelRef(anywhere.model, models) ??
-    catalogModelRef(catalogDefaults?.model, models) ??
-    firstUsableModel(models);
+    catalogModelRef(usableCatalogDefaultModel(catalogDefaults?.model, refused), models) ??
+    firstUsableModel(models, refused);
   const agent =
     picked.agent ??
     catalogAgentId(workspace?.agent, agents) ??

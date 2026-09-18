@@ -2784,6 +2784,10 @@ msgstr "No hay comandos coincidentes. Prueba otra palabra"
 msgid "No models match “{0}”."
 msgstr "Ningún modelo coincide con «{0}»"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "No hay modelos en este host"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "Todavía no hay otros asistentes en esta sesión"
@@ -3648,6 +3652,7 @@ msgstr "Restaurar los comandos predeterminados ocultos"
 msgid "Restore hidden defaults"
 msgstr "Restaurar predeterminados ocultos"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

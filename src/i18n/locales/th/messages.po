@@ -2784,6 +2784,10 @@ msgstr "ไม่มีคำสั่งที่ตรงกัน ลอง�
 msgid "No models match “{0}”."
 msgstr "ไม่มีโมเดลที่ตรงกับ “{0}”"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "ไม่มีโมเดลบนโฮสต์นี้"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
@@ -3648,6 +3652,7 @@ msgstr "คืนค่าคำสั่งเริ่มต้นที่ซ
 msgid "Restore hidden defaults"
 msgstr "คืนค่ารายการเริ่มต้นที่ซ่อนอยู่"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

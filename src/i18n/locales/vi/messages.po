@@ -2784,6 +2784,10 @@ msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
 msgid "No models match “{0}”."
 msgstr "Không có mô hình nào khớp với “{0}”"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "Không có mô hình trên máy chủ này"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "Phiên này chưa có trợ lý nào khác"
@@ -3648,6 +3652,7 @@ msgstr "Khôi phục các lệnh mặc định đã ẩn"
 msgid "Restore hidden defaults"
 msgstr "Khôi phục mặc định đã ẩn"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx

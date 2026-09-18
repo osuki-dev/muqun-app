@@ -2784,6 +2784,10 @@ msgstr "Keine passenden Befehle. Versuche einen anderen Suchbegriff"
 msgid "No models match “{0}”."
 msgstr "Keine Modelle passen zu „{0}“"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "Keine Modelle auf diesem Host"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "In dieser Sitzung gibt es noch keine weiteren Assistenten"
@@ -3648,6 +3652,7 @@ msgstr "Ausgeblendete Standardbefehle wiederherstellen"
 msgid "Restore hidden defaults"
 msgstr "Ausgeblendete Standards wiederherstellen"
 
+#: src/components/agent-model-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
