@@ -187,6 +187,7 @@
       "expo-router",
       "expo-screen-orientation",
       "./plugins/with-native-locales.js",
+      "./plugins/with-advance-width-line-breaks.js",
       [
         "expo-secure-store",
         {
