@@ -18,7 +18,9 @@ import {
 import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { isDeclinedByUser } from '@/lib/agent-engine-text';
+import { hasMarkdownMarks } from '@/lib/markdown-text';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { TOOL_BODY_MAX_LINES, capToolBody } from '@/lib/markdown-cap';
 import { diffRowsForFence, diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
@@ -969,6 +971,10 @@ const QuestionBody = memo(function QuestionBody({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  // The question is the agent's own words and is content; the answer is what
+  // was said back to it, and reads as the quieter of the two.
+  const askedStyle = useCompactMarkdownStyle('body');
+  const answeredStyle = useCompactMarkdownStyle('muted');
   const question =
     typeof input?.question === 'string'
       ? input.question
@@ -979,26 +985,29 @@ const QuestionBody = memo(function QuestionBody({
   return (
     <View style={styles.stretch}>
       {question ? (
-        <Text variant="caption" selectable color={theme.colors.text} style={styles.skillText}>
-          {question}
-        </Text>
+        <BoundedMarkdown markdown={question} markdownStyle={askedStyle} openLinks={false} />
       ) : null}
       {answer ? (
-        <Text variant="caption" selectable color={theme.colors.textMuted} style={styles.skillText}>
-          {t`Answered`}: {answer}
-        </Text>
+        <>
+          <Text variant="caption" color={theme.colors.textSubtle} style={styles.answerLabel}>
+            {t`Answered`}
+          </Text>
+          <BoundedMarkdown markdown={answer} markdownStyle={answeredStyle} openLinks={false} />
+        </>
       ) : null}
     </View>
   );
 });
 
+/**
+ * What the skill says it is.
+ *
+ * A skill's text is a document -- OpenCode's own skills lead with a heading
+ * and a fenced example -- and it was drawn as one unbroken caption.
+ */
 const SkillBody = memo(function SkillBody({ description }: { description: string }) {
-  const theme = useThemeTokens();
-  return (
-    <Text variant="caption" selectable color={theme.colors.textMuted} style={styles.skillText}>
-      {description}
-    </Text>
-  );
+  const markdownStyle = useCompactMarkdownStyle('muted');
+  return <BoundedMarkdown markdown={description} markdownStyle={markdownStyle} openLinks={false} />;
 });
 
 const ExecuteCalls = memo(function ExecuteCalls({
@@ -1010,7 +1019,8 @@ const ExecuteCalls = memo(function ExecuteCalls({
   const calls = useMemo(() => executeToolCalls(metadata), [metadata]);
   if (calls.length === 0) return null;
   return (
-    <Text variant="caption" color={colors.subtle} style={styles.skillText}>
+    // Tool names, not prose: a one-line list of what the code called.
+    <Text variant="caption" color={colors.subtle} style={styles.callList}>
       {calls.join(' · ')}
     </Text>
   );
@@ -1030,17 +1040,28 @@ const GenericToolBody = memo(function GenericToolBody({
   input: unknown;
   outputText: string;
 }) {
-  const theme = useThemeTokens();
+  // JSON is a language the renderer has a grammar for, so the payload is read
+  // in the same highlighted fence a `read` of a file is, rather than as one
+  // grey monospace wall.
+  const markdownStyle = usePaneChatMarkdownStyle();
+  const proseStyle = useCompactMarkdownStyle('body');
   const pretty = useMemo(() => prettyJson(input), [input]);
   const hasInput = pretty.text && pretty.text !== 'undefined' && pretty.text !== '{}';
+  // An MCP server answers with whatever it likes: one returns a written
+  // summary, the next returns a log. A heading, a list, a table or a backtick
+  // is somebody writing markdown on purpose and is read as such; anything else
+  // stays monospace, where its own alignment survives.
+  const prose = hasMarkdownMarks(outputText);
   return (
     <>
       {hasInput ? (
-        <Text selectable style={[styles.mono, { color: theme.colors.textSubtle }]}>
-          {pretty.text}
-        </Text>
+        <CodeBody body={pretty.text} language="json" markdownStyle={markdownStyle} />
       ) : null}
-      <OutputLines text={outputText} />
+      {prose ? (
+        <BoundedMarkdown markdown={outputText} markdownStyle={proseStyle} openLinks={false} />
+      ) : (
+        <OutputLines text={outputText} />
+      )}
     </>
   );
 });
@@ -1134,7 +1155,11 @@ const styles = StyleSheet.create({
   grepMore: {
     fontSize: AGENT_TYPE.micro.size,
   },
-  skillText: {
+  answerLabel: {
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
+  },
+  callList: {
     fontSize: AGENT_TYPE.micro.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },

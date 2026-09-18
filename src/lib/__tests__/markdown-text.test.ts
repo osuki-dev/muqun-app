@@ -1,14 +1,19 @@
 // What the app is still allowed to know about markdown syntax.
 //
 // Everything the model or the engine writes is rendered by one pipeline now,
-// so these three functions are the whole remaining surface where the app reads
-// the syntax itself: the preview under a closed notice, the one-line labels a
-// form's fields keep, and the question of whether a failure is a sentence or a
-// small document. Each is pure, and each is pinned here against the shapes the
-// engine actually sends.
+// so this module is the whole remaining surface where the app reads the syntax
+// itself: the preview under a closed notice, the one-line labels a form's
+// fields keep, whether a failure is a sentence or a small document, and
+// whether an unknown tool answered in prose or with a payload. Each rule is
+// pure, and each is pinned here against the shapes the engine actually sends.
 import { describe, expect, test } from 'bun:test';
 
-import { hasMarkdownStructure, plainFromMarkdown, strikeMarkdown } from '../markdown-text';
+import {
+  hasMarkdownMarks,
+  hasMarkdownStructure,
+  plainFromMarkdown,
+  strikeMarkdown,
+} from '../markdown-text';
 
 describe('plainFromMarkdown', () => {
   test('a heading loses its hashes and keeps its words', () => {
@@ -88,6 +93,24 @@ describe('hasMarkdownStructure', () => {
     expect(hasMarkdownStructure('see [the log](https://example.com/l)')).toBe(true);
     expect(hasMarkdownStructure('```sh')).toBe(true);
     expect(hasMarkdownStructure('$$E = mc^2$$')).toBe(true);
+  });
+});
+
+describe('hasMarkdownMarks', () => {
+  test('a log with several lines is not markdown for having them', () => {
+    // The difference from `hasMarkdownStructure`: an unknown tool's output is
+    // as likely to be a payload as prose, and "it has newlines" describes
+    // every payload there is.
+    expect(hasMarkdownMarks('starting\nlistening on 3000\nready')).toBe(false);
+    expect(hasMarkdownMarks('total 24\ndrwxr-xr-x 3 ryu ryu 4096 .')).toBe(false);
+  });
+
+  test('a mark somebody wrote on purpose is markdown', () => {
+    expect(hasMarkdownMarks('## Result\n\nthree rows')).toBe(true);
+    expect(hasMarkdownMarks('- one\n- two')).toBe(true);
+    expect(hasMarkdownMarks('| a | b |\n| - | - |')).toBe(true);
+    expect(hasMarkdownMarks('call `search` next')).toBe(true);
+    expect(hasMarkdownMarks('')).toBe(false);
   });
 });
 

@@ -1,8 +1,8 @@
 /**
- * Three questions the transcript asks about a string the engine wrote.
+ * What the transcript still asks about a string the engine wrote.
  *
  * The agent surface now draws every piece of model- or engine-authored prose
- * through one markdown pipeline, which leaves three places where the app still
+ * through one markdown pipeline, which leaves these places where the app still
  * has to reason about the *syntax* rather than hand it to the renderer:
  *
  * - a closed notice shows two lines of a note that may be a whole document, and
@@ -11,7 +11,9 @@
  * - a form's field title and an option's label have to stay one line inside a
  *   pressable, so their block syntax is taken off rather than drawn;
  * - a failure is sometimes one sentence and sometimes a fenced report, and only
- *   the second is worth a native markdown view.
+ *   the second is worth a native markdown view;
+ * - a tool this build has never heard of returns prose from one MCP server and
+ *   a log from the next, and only the first should stop being monospace.
  *
  * Pure, so each rule is stated once and tested once. Nothing here mutates what
  * the model said for display *inside* markdown -- `strikeMarkdown` is the one
@@ -68,19 +70,37 @@ const MARKDOWN_MARKS: readonly RegExp[] = [
 ];
 
 /**
+ * Whether a string carries a mark a renderer would act on.
+ *
+ * The narrow question, for text that could just as well be a payload: a tool
+ * this build has never heard of is an MCP call, and its result is prose from
+ * one server and a log from the next. The app cannot tell those apart by
+ * asking whether they have several lines -- raw output has several lines --
+ * but a heading, a bullet list, a table, a link, bold or a backtick is
+ * somebody writing markdown on purpose. Anything else stays monospace, where a
+ * payload's own alignment survives.
+ */
+export function hasMarkdownMarks(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  return MARKDOWN_MARKS.some((mark) => mark.test(trimmed));
+}
+
+/**
  * Whether a string the engine wrote has enough shape to be worth rendering.
  *
- * A failed tool is usually one sentence -- "ENOENT: no such file or directory"
- * -- and a native markdown view for that is a view per failure for no gain. A
- * failure that arrives as a list, a fence or several lines is a small document
- * and reads as one. More than one line counts on its own: a plain `<Text>`
- * keeps the line breaks but nothing else about the shape.
+ * The wide question, for text that is prose either way: a failed tool is
+ * usually one sentence -- "ENOENT: no such file or directory" -- and a native
+ * markdown view for that is a view per failure for no gain. A failure that
+ * arrives as a list, a fence or several lines is a small document and reads as
+ * one. More than one line counts on its own here: a plain `<Text>` keeps the
+ * line breaks but nothing else about the shape.
  */
 export function hasMarkdownStructure(text: string): boolean {
   const trimmed = text.trim();
   if (!trimmed) return false;
   if (trimmed.includes('\n')) return true;
-  return MARKDOWN_MARKS.some((mark) => mark.test(trimmed));
+  return hasMarkdownMarks(trimmed);
 }
 
 /**
