@@ -80,6 +80,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "settings-font",
+      "program": "flows/settings-font",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "away-digest",
       "program": "flows/away-digest",
       "tags": ["full"],
@@ -4205,6 +4211,65 @@
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings.ad#s96"
+      }
+    ],
+    "flows/settings-font": [
+      { "include": "subflows/launch-home" },
+      {
+        "target": { "text": "Settings" },
+        "mode": "press",
+        "run": "flows/settings-font.ad#open-settings"
+      },
+      {
+        "target": { "text": "SERVERS" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#settings-arrived"
+      },
+      { "include": "subflows/dismiss-logbox" },
+      {
+        "target": { "text": "Font, .+" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-font.ad#open-settings"
+      },
+      {
+        "target": { "text": "Font, .+" },
+        "mode": "press",
+        "run": "flows/settings-font.ad#open-font"
+      },
+      { "run": "flows/settings-font.ad#sheet-arrived" },
+      {
+        "target": { "text": "Interface" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#group-visible"
+      },
+      {
+        "target": { "text": "Monospace" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#group-visible"
+      },
+      {
+        "target": { "text": "Use system font" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#row-visible"
+      },
+      {
+        "target": { "text": "Paste a URL\u2026" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#row-visible"
+      },
+      { "run": "flows/settings-font.ad#leave" },
+      {
+        "target": { "text": "SERVERS" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#back-on-settings"
       }
     ],
     "flows/settings-guide": [
