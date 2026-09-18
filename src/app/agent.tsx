@@ -12,6 +12,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import { SessionActionIcon, WorkspacePillContent } from '@/components/agent-header-morph';
+import { AgentTitlePill } from '@/components/agent-title-pill';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
@@ -109,14 +110,19 @@ export default function AgentScreen() {
         <ScreenHeader
           titlePill={
             <GlassChrome surface="navigation" style={styles.workspaceHeaderPill}>
-              <PressableScale
+              {/* The pill keeps its tap -- it opens whatever it is showing --
+                  and gains a horizontal swipe between the workspace's
+                  sessions. Both live in `AgentTitlePill`, which reads the
+                  strip's order from the same store the workbench publishes it
+                  to, so the header and the strip can never disagree about
+                  which session is next. */}
+              <AgentTitlePill
                 testID="agent-header-workspace-pill"
                 onPress={() =>
                   showSessionTitle
                     ? router.push('/agent-sessions')
                     : router.push({ pathname: '/agent-workspace', params: { sessionId } })
                 }
-                accessibilityRole="button"
                 accessibilityLabel={showSessionTitle ? openSessionsLabel : switchWorkspaceLabel}
                 style={styles.workspaceHeaderPillInner}>
                 <WorkspacePillContent
@@ -126,7 +132,7 @@ export default function AgentScreen() {
                   workspaceName={displayWorkspaceName}
                   workspacePath={displayWorkspacePath}
                 />
-              </PressableScale>
+              </AgentTitlePill>
             </GlassChrome>
           }
           rightPill={

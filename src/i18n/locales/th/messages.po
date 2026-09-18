@@ -2620,6 +2620,10 @@ msgstr "ถัดไป"
 msgid "Next notification"
 msgstr "การแจ้งเตือนถัดไป"
 
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "เซสชันถัดไป"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "ไม่มีเอเจนต์กำลังทำงาน"
@@ -3211,6 +3215,10 @@ msgstr "ดูตัวอย่างและใช้"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "ดูตัวอย่างก่อน ธีมปัจจุบันของคุณยังไม่เปลี่ยน"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "เซสชันก่อนหน้า"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4269,6 +4277,10 @@ msgstr "สรุปประวัติแล้วทำงานต่อจ
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "พักกระบวนการ"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "ปัดซ้ายหรือขวาเพื่อสลับเซสชัน"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

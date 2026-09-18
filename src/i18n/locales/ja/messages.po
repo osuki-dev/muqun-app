@@ -2620,6 +2620,10 @@ msgstr "次へ"
 msgid "Next notification"
 msgstr "次の通知"
 
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "次のセッション"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "実行中のエージェントはありません"
@@ -3211,6 +3215,10 @@ msgstr "プレビューして適用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "まずプレビューします。現在のテーマは変更されません"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "前のセッション"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4269,6 +4277,10 @@ msgstr "履歴を要約して、その要約から作業を続ける"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "一時停止"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "左右にスワイプしてセッションを切り替えます"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

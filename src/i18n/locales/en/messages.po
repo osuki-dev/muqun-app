@@ -2620,6 +2620,10 @@ msgstr "Next"
 msgid "Next notification"
 msgstr "Next notification"
 
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "Next session"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "No agents running"
@@ -3211,6 +3215,10 @@ msgstr "Preview and apply"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Preview first. Your current theme stays unchanged"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "Previous session"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4269,6 +4277,10 @@ msgstr "Summarise the history and keep working from the summary"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "Suspend"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "Swipe left or right to switch session"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

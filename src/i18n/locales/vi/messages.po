@@ -2620,6 +2620,10 @@ msgstr "Tiếp theo"
 msgid "Next notification"
 msgstr "Thông báo tiếp theo"
 
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "Phiên tiếp theo"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Không có tác tử nào đang chạy"
@@ -3211,6 +3215,10 @@ msgstr "Xem trước và áp dụng"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "Phiên trước"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4269,6 +4277,10 @@ msgstr "Tóm tắt lịch sử và làm việc tiếp từ bản tóm tắt"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "Tạm dừng"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "Vuốt trái hoặc phải để chuyển phiên"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

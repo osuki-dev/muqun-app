@@ -2620,6 +2620,10 @@ msgstr "다음"
 msgid "Next notification"
 msgstr "다음 알림"
 
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "다음 세션"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "실행 중인 에이전트 없음"
@@ -3211,6 +3215,10 @@ msgstr "미리 보고 적용"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "먼저 미리 보세요. 현재 테마는 변경되지 않습니다"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "이전 세션"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4269,6 +4277,10 @@ msgstr "기록을 요약하고 그 요약으로 작업을 이어갑니다"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "일시 중단"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "좌우로 쓸어넘겨 세션을 전환합니다"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

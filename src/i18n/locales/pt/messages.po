@@ -2620,6 +2620,10 @@ msgstr "Seguinte"
 msgid "Next notification"
 msgstr "Próxima notificação"
 
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "Próxima sessão"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "Nenhum agente em execução"
@@ -3211,6 +3215,10 @@ msgstr "Ver e aplicar"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Confira a prévia primeiro. Seu tema atual não será alterado"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "Sessão anterior"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4269,6 +4277,10 @@ msgstr "Resumir o histórico e continuar a partir do resumo"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "Suspender"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "Deslize para a esquerda ou direita para mudar de sessão"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

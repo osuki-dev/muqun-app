@@ -2620,6 +2620,10 @@ msgstr "下一步"
 msgid "Next notification"
 msgstr "下一則通知"
 
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "下一個會話"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
 msgstr "沒有執行中的代理程式"
@@ -3211,6 +3215,10 @@ msgstr "預覽並套用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先預覽，目前的主題保持不變"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "上一個會話"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4269,6 +4277,10 @@ msgstr "把歷史整理成摘要，並依摘要繼續工作"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "暫停"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "左右滑動以切換會話"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
