@@ -62,6 +62,10 @@ const ALLOWED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   'agent-context-sheet.tsx': {
     'tokens?.output': 'a token count, formatted as a number',
   },
+  'agent-action-menu.tsx': {
+    'item.label':
+      "a menu action's own wording (Rename, Delete, Send now), from the app, never the engine",
+  },
   'agent-workbench.tsx': {
     'screenNotice.title': "the app's own banner title",
     'statusNotice.label': "the app's own status wording",
