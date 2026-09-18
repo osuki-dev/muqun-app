@@ -326,6 +326,16 @@ export interface AgentComposerProps {
   onSetInboxDelivery?: (inboxId: string, delivery: 'steer' | 'queue') => void;
   onPressTokens?: () => void;
   injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
+  /**
+   * The dock's height, whenever it changes.
+   *
+   * The dock floats over the transcript, so nothing above it can work out how
+   * much of the screen it is standing on. The empty-state card has to: it is
+   * centred in the room between the header and the dock, and that room is not
+   * a constant -- a session strip, a chips row and a two-line draft are all
+   * optional. It is the same measurement the popups already take, handed up.
+   */
+  onDockHeight?: (height: number) => void;
 }
 
 export const AgentComposer = memo(function AgentComposer({
@@ -378,6 +388,7 @@ export const AgentComposer = memo(function AgentComposer({
   onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
+  onDockHeight,
 }: AgentComposerProps) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -1029,7 +1040,12 @@ export const AgentComposer = memo(function AgentComposer({
 
       {/* The wrapper is here to be measured: `GlassChrome` is a material and
           takes no `onLayout` of its own. */}
-      <View onLayout={(event) => setDockHeight(event.nativeEvent.layout.height)}>
+      <View
+        onLayout={(event) => {
+          const { height } = event.nativeEvent.layout;
+          setDockHeight(height);
+          onDockHeight?.(height);
+        }}>
         <GlassChrome surface="composer" style={styles.composerDock}>
           <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
             {/* Row 1: the workspace's sessions, and the open one's subagents */}

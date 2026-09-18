@@ -41,16 +41,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import {
-  DURATION,
-  fadeIn,
-  fadeInDown,
-  fadeOut,
-  fadeOutUp,
-  listLayout,
-  riseIn,
-  timing,
-} from '@/lib/motion';
+import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, riseIn, timing } from '@/lib/motion';
+import { emptyCardBottomReserve, emptyCardTopReserve } from '@/lib/agent-empty-layout';
 import { StatusDot } from '@/components/status-dot';
 import {
   badgeLoadsAllowed,
@@ -346,6 +338,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     noticeReserve.value = withTiming(reservedWithGap, timing('dropdown'));
   }, [reservedWithGap, noticeReserve]);
   const transcriptAreaStyle = useAnimatedStyle(() => ({ paddingTop: noticeReserve.value }));
+
+  /**
+   * How much of the screen the composer is standing on, as measured rather
+   * than guessed.
+   *
+   * The empty card is centred between the header and the dock, and the dock's
+   * height is whatever its contents come to. It was a constant 185 before,
+   * which was right on no device and worst on the two that matter: with a
+   * session strip up the card sank under the dock, and with the composer
+   * offline it floated well above it.
+   */
+  const [dockHeight, setDockHeight] = useState(0);
+  const emptyBottomReserve = emptyCardBottomReserve(dockHeight, bottomInset);
+  /*
+    The transcript area already carries the notice's reserve as padding, so
+    the card's own top padding is the rest of the header inset, not all of it.
+    Animated on the same shared value the reserve is, so the card holds still
+    while a notice opens and closes rather than jumping the difference.
+  */
+  const emptyReserveStyle = useAnimatedStyle(() => ({
+    paddingTop: emptyCardTopReserve(topInset, noticeReserve.value),
+  }));
 
   /**
    * An approval notice outlives the question it asked, and should not.
@@ -3359,15 +3373,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           */
           <AgentTranscriptSkeleton paddingTop={topInset + 20} />
         ) : timeline.length === 0 && permissions.length === 0 && forms.length === 0 ? (
-          <View
+          <Animated.View
             style={[
               styles.emptyScrollWrapper,
-              { paddingTop: topInset + 20, paddingBottom: bottomInset + 185 },
+              emptyReserveStyle,
+              { paddingBottom: emptyBottomReserve },
             ]}>
+            {/*
+              No `layout` here. A single centred card has nothing to reflow
+              around, and a layout animation on a view that is also leaving
+              takes the exit over: the card was left in the native tree at the
+              position it had under the old notice reserve, a translucent
+              second copy sitting on top of the live one and swallowing every
+              tap meant for the pill and the two buttons.
+            */}
             <Animated.View
               entering={riseIn()}
               exiting={fadeOut('short')}
-              layout={listLayout()}
               style={[
                 styles.emptyContainer,
                 {
@@ -3501,7 +3523,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 </>
               )}
             </Animated.View>
-          </View>
+          </Animated.View>
         ) : (
           /*
             The transcript rises in, once, through the placeholder it replaces.
@@ -3754,6 +3776,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         hasDiffs={hasDiffs}
         bottomInset={bottomInset}
         topInset={topInset}
+        onDockHeight={setDockHeight}
         tasks={activeTodos}
         tokens={activeTokens}
         contextUsage={contextUsage}
@@ -4023,7 +4046,6 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: 20,
     marginHorizontal: 8,
-    marginTop: 30,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 10,
