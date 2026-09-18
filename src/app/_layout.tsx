@@ -1,5 +1,9 @@
 import { RouteScene } from '@/components/route-scene';
-import { sheetPresentationOptions, sheetRoutePresentations } from '@/lib/route-presentation';
+import {
+  sheetPresentationOptions,
+  sheetRouteOptions,
+  sheetRoutePresentations,
+} from '@/lib/route-presentation';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -347,56 +351,17 @@ function RootContent() {
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
               }}
             />
-            <Stack.Screen
-              name="commands"
-              options={sheetPresentationOptions(sheetRoutePresentations['commands'], 'expandable')}
-            />
-            <Stack.Screen
-              name="panels"
-              options={sheetPresentationOptions(sheetRoutePresentations['panels'], 'expandable')}
-            />
-            {/* The machines sheet's old deep link, rendering the same screen as
-                `panels` -- so it takes the same window, rather than the pair of
-                detents it chose when it was a list of its own. */}
-            <Stack.Screen
-              name="sessions"
-              options={sheetPresentationOptions(sheetRoutePresentations['sessions'], 'expandable')}
-            />
-            <Stack.Screen
-              name="artifacts"
-              options={sheetPresentationOptions(sheetRoutePresentations['artifacts'], 'expandable')}
-            />
-            <Stack.Screen
-              name="git-diff"
-              options={sheetPresentationOptions(sheetRoutePresentations['git-diff'], 'expandable')}
-            />
-            {/* Both are lists the reader scrolls -- thirty-two packs, or a
-                catalogue -- so both take the expandable window every other list
-                sheet has rather than the whole screen. */}
-            <Stack.Screen
-              name="settings-theme"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['settings-theme'],
-                'expandable'
-              )}
-            />
+            <Stack.Screen name="commands" options={sheetRouteOptions('commands')} />
+            <Stack.Screen name="panels" options={sheetRouteOptions('panels')} />
+            <Stack.Screen name="sessions" options={sheetRouteOptions('sessions')} />
+            <Stack.Screen name="artifacts" options={sheetRouteOptions('artifacts')} />
+            <Stack.Screen name="git-diff" options={sheetRouteOptions('git-diff')} />
+            <Stack.Screen name="settings-theme" options={sheetRouteOptions('settings-theme')} />
             <Stack.Screen
               name="settings-theme-browse"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['settings-theme-browse'],
-                'expandable'
-              )}
+              options={sheetRouteOptions('settings-theme-browse')}
             />
-            {/* Two groups of four rows, with a URL field that opens inside one
-                of them and a keyboard over it. Expandable, so the field has
-                somewhere to come up to. */}
-            <Stack.Screen
-              name="settings-font"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['settings-font'],
-                'expandable'
-              )}
-            />
+            <Stack.Screen name="settings-font" options={sheetRouteOptions('settings-font')} />
             {/*
               The one route that is a whole screen wearing a theme rather than a
               panel over one. See `sheetRoutePresentations` for why it stays
@@ -412,29 +377,10 @@ function RootContent() {
             />
             <Stack.Screen
               name="settings-language"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['settings-language'],
-                'fitToContents'
-              )}
+              options={sheetRouteOptions('settings-language')}
             />
-            {/* Full height leaves room for the composer and keyboard. */}
-            <Stack.Screen
-              name="new-task"
-              options={sheetPresentationOptions(sheetRoutePresentations['new-task'], 'expandable')}
-            />
-            {/*
-              Open a web service (card #829). Content-sized, and
-              for less reason than any of them: this is one field with a row of
-              shortcuts over it. A full-height sheet for a port number would be
-              the app implying the task is bigger than typing four digits.
-            */}
-            <Stack.Screen
-              name="web-service"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['web-service'],
-                'fitToContents'
-              )}
-            />
+            <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
+            <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
             {/*
               A full-screen modal, not a sheet, and the route file says why at
               length: a sheet's one-finger dismiss fought the device's
@@ -453,104 +399,25 @@ function RootContent() {
                 animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
               }}
             />
-            {/* Pairing: a viewfinder, two fields and a way in, on the sheet
-                every other form in this app is on. */}
-            <Stack.Screen
-              name="explore"
-              options={sheetPresentationOptions(sheetRoutePresentations['explore'], 'expandable')}
-            />
+            <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
             {/*
               The agent surface's pickers. They were `<Modal transparent>`
               components mounted inside the workbench, each with its own
               backdrop, its own hand-drawn grabber and its own corner radius;
               as routes they get the one sheet ground, the hardware back
               button, a real dismissal gesture and `freezeOnBlur` for free.
-              Detents follow the content: a list gets a bounded, expandable
-              viewport, and the one sheet with no scroller of its own is sized
-              to what it holds.
+              How tall each one opens, and why, is in `sheetRouteDetents`.
             */}
-            <Stack.Screen
-              name="agent-sessions"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-sessions'],
-                'expandable'
-              )}
-            />
-            {/* A model list is usually browsed and sometimes filtered to two
-                rows. At the expandable detent those two rows sat at the top of
-                a sheet that was 82% of the screen, and the rest was ground. It
-                opens at just over half and drags to full, which is the same
-                two shapes with far less void under a short list. */}
-            <Stack.Screen
-              name="agent-model"
-              options={sheetPresentationOptions(sheetRoutePresentations['agent-model'], [0.6, 1])}
-            />
-            <Stack.Screen
-              name="agent-mode"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-mode'],
-                'expandable'
-              )}
-            />
-            <Stack.Screen
-              name="agent-workspace"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-workspace'],
-                'expandable'
-              )}
-            />
-            {/* The project's checkouts: a short list, a create form under
-                it, and a keyboard over both while the name is being typed.
-                Expandable, so the fields have somewhere to come up to. */}
-            <Stack.Screen
-              name="agent-worktree"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-worktree'],
-                'expandable'
-              )}
-            />
-            <Stack.Screen
-              name="agent-context"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-context'],
-                'expandable'
-              )}
-            />
-            <Stack.Screen
-              name="agent-vcs-diff"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-vcs-diff'],
-                'expandable'
-              )}
-            />
-            {/* A short list, and its own scroll root, so it takes a bounded
-                viewport rather than circular fit-to-content sizing. */}
-            <Stack.Screen
-              name="agent-tasks"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-tasks'],
-                [0.65, 0.9]
-              )}
-            />
-            {/* What is still running after the agent moved on: a short list
-                with one expandable output box, so it takes a bounded viewport
-                rather than fit-to-content sizing. */}
-            <Stack.Screen
-              name="agent-shells"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['agent-shells'],
-                [0.65, 0.9]
-              )}
-            />
-            {/* One banner, one command and one button: content-sized, for the
-                reason `web-service` is. */}
-            <Stack.Screen
-              name="opencode-guide"
-              options={sheetPresentationOptions(
-                sheetRoutePresentations['opencode-guide'],
-                'fitToContents'
-              )}
-            />
+            <Stack.Screen name="agent-sessions" options={sheetRouteOptions('agent-sessions')} />
+            <Stack.Screen name="agent-model" options={sheetRouteOptions('agent-model')} />
+            <Stack.Screen name="agent-mode" options={sheetRouteOptions('agent-mode')} />
+            <Stack.Screen name="agent-workspace" options={sheetRouteOptions('agent-workspace')} />
+            <Stack.Screen name="agent-worktree" options={sheetRouteOptions('agent-worktree')} />
+            <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
+            <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
+            <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
+            <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
+            <Stack.Screen name="opencode-guide" options={sheetRouteOptions('opencode-guide')} />
           </Stack>
           <InAppNotificationHost />
         </AppLockGate>
