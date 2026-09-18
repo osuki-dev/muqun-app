@@ -15,6 +15,7 @@ import {
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { getAgentCatalog, selectableAgents, type AgentInfo } from '@/lib/agent-session';
+import { effectiveAgentId } from '@/lib/agent-session-defaults';
 
 const STAGGERED_ROWS = 8;
 
@@ -28,6 +29,14 @@ const STAGGERED_ROWS = 8;
 export interface AgentModeSheetProps {
   /** The gateway session whose catalog is listed. */
   sessionId?: string;
+  /**
+   * The workspace whose catalog is listed.
+   *
+   * OpenCode scopes agents per project, so a catalog read without this is the
+   * global list and a user's own agent from the workspace's `.opencode/agent`
+   * is not in it -- which is what made this sheet unable to offer one.
+   */
+  directory?: string;
   selectedAgent?: string;
   onSelectAgent: (agent: string) => void;
   onClose: () => void;
@@ -50,6 +59,7 @@ function agentIcon(id: string, color: string) {
 
 export const AgentModeSheet = memo(function AgentModeSheet({
   sessionId,
+  directory,
   selectedAgent,
   onSelectAgent,
   onClose: _onClose,
@@ -105,7 +115,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getAgentCatalog(sessionId)
+    getAgentCatalog(sessionId, undefined, directory ? { directory } : {})
       .then((catalog) => {
         if (!active) return;
         /*
@@ -132,7 +142,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, builtinAgents]);
+  }, [sessionId, directory, builtinAgents]);
 
   const displayAgents = agents.length > 0 ? agents : builtinAgents;
 
@@ -144,16 +154,12 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   };
 
   /**
-   * The agent this session is actually running.
-   *
-   * The reader's own pick when they have made one, the host's default when
-   * they have not, and `build` when the catalog stated neither -- the same
-   * order the workbench sends a create in. It is marked with the sheet's
-   * ordinary left rule, the one every other picker in the app uses, rather
-   * than with a heavier word or a colour of its own.
+   * The agent this session is actually running, marked with the sheet's
+   * ordinary left rule -- the one every other picker in the app uses, rather
+   * than a heavier word or a colour of its own. The order is
+   * `effectiveAgentId`'s, which is the order a create is sent in.
    */
-  const effectiveAgent =
-    selectedAgent ?? (defaultAgent && defaultAgent.trim() ? defaultAgent : 'build');
+  const effectiveAgent = effectiveAgentId(selectedAgent, defaultAgent);
   const current = displayAgents.find((agent) => agent.id === effectiveAgent);
 
   return (

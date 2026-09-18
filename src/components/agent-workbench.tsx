@@ -115,6 +115,7 @@ import {
   type SkillInfo,
   type AgentProject,
 } from '@/lib/agent-session';
+import { shouldRefetchAgentCatalog, type AgentCatalogScope } from '@/lib/agent-catalog-scope';
 import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
 import { resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
@@ -591,10 +592,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     activeDirectoryRef.current = activeDirectory;
   }, [activeDirectory]);
 
-  // Load workspace catalog (available agents, skills & models)
+  /**
+   * The catalog for the workspace on screen: agents, skills, commands, models.
+   *
+   * Read *with* the active directory, because OpenCode scopes agents, commands
+   * and skills per project: without it the answer is the global set and a user's
+   * own agent under `.opencode/agent` is missing from the composer's chips, from
+   * the mode picker, and from `defaults`. The directory is not known on the first
+   * pass -- it arrives with the session's snapshot -- so this reads once
+   * unscoped and again the moment there is a workspace to name, and again on
+   * every workspace switch and on a session moved to a worktree, whose
+   * `agent.session.updated` sets `activeDirectory` the same way.
+   *
+   * `shouldRefetchAgentCatalog` is the rule, kept pure in `agent-catalog-scope`
+   * and tested there. The ref is what this effect already read last, so a
+   * re-render that changes nothing about the scope does not ask again.
+   */
+  const catalogScopeRef = useRef<AgentCatalogScope | null>(null);
   useEffect(() => {
+    const scope: AgentCatalogScope = { sessionId, directory: activeDirectory };
+    if (!shouldRefetchAgentCatalog(catalogScopeRef.current, scope)) return;
+    catalogScopeRef.current = scope;
     let mounted = true;
-    getAgentCatalog(sessionId)
+    getAgentCatalog(sessionId, undefined, scope.directory ? { directory: scope.directory } : {})
       .then((catalog) => {
         if (!mounted) return;
         if (catalog?.agents && catalog.agents.length > 0) {
@@ -623,7 +643,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
     };
-  }, [sessionId, applySelectedModel]);
+  }, [sessionId, activeDirectory, applySelectedModel]);
 
   /**
    * The chips say what a new session is about to run, which is the remembered
@@ -2144,13 +2164,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     router.push('/agent-sessions');
   }, [router]);
 
+  /**
+   * The two catalog sheets carry the workspace as well as the gateway session.
+   *
+   * Both read the catalog themselves when they mount, and a catalog read
+   * without a directory is the global one -- so a project-defined agent was
+   * absent from the mode picker even once the workbench had it. The directory
+   * travels as a route param for the same reason `sessionId` does: it is
+   * identity, it is what the sheet has to be able to ask with, and a deep link
+   * has to be able to state it.
+   */
   const openModelSheet = useCallback(() => {
-    router.push({ pathname: '/agent-model', params: { sessionId } });
-  }, [router, sessionId]);
+    router.push({
+      pathname: '/agent-model',
+      params: { sessionId, ...(activeDirectory ? { directory: activeDirectory } : {}) },
+    });
+  }, [router, sessionId, activeDirectory]);
 
   const openModeSheet = useCallback(() => {
-    router.push({ pathname: '/agent-mode', params: { sessionId } });
-  }, [router, sessionId]);
+    router.push({
+      pathname: '/agent-mode',
+      params: { sessionId, ...(activeDirectory ? { directory: activeDirectory } : {}) },
+    });
+  }, [router, sessionId, activeDirectory]);
 
   const openWorkspaceSheet = useCallback(() => {
     router.push({ pathname: '/agent-workspace', params: { sessionId } });

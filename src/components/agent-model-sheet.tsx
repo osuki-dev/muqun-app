@@ -44,6 +44,15 @@ const STAGGERED_ROWS = 8;
 export interface AgentModelSheetProps {
   /** The gateway session whose catalog is listed. */
   sessionId?: string;
+  /**
+   * The workspace whose catalog is listed.
+   *
+   * The models are a host-wide list, but `defaults` is not: a project can set
+   * its own, and this sheet marks the default row. Asked with the same
+   * directory as the workbench so the two cannot disagree about which model is
+   * the default, and so both share one cache entry rather than two.
+   */
+  directory?: string;
   selectedModel?: ModelRef;
   onSelectModel: (model: ModelRef) => void;
   onClose: () => void;
@@ -101,6 +110,7 @@ function modelCaption(model: ModelInfo): string | undefined {
 
 export const AgentModelSheet = memo(function AgentModelSheet({
   sessionId,
+  directory,
   selectedModel,
   onSelectModel,
   onClose: _onClose,
@@ -130,7 +140,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getAgentCatalog(sessionId)
+    getAgentCatalog(sessionId, undefined, directory ? { directory } : {})
       .then((cat: AgentCatalog) => {
         if (!active) return;
         if (cat?.models) setModels(cat.models);
@@ -146,7 +156,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return () => {
       active = false;
     };
-  }, [sessionId]);
+  }, [sessionId, directory]);
 
   /**
    * Which rows the reader scrolls past, and nothing more.

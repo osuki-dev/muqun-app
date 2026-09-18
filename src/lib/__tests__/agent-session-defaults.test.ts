@@ -4,6 +4,7 @@ import type { AgentInfo, AgentSessionInfo, ModelInfo } from '../agent-protocol';
 import {
   catalogAgentId,
   catalogModelRef,
+  effectiveAgentId,
   firstUsableModel,
   recentSessionChoice,
   resolveNewSessionDefaults,
@@ -334,5 +335,43 @@ describe('the rungs below memory', () => {
     // OpenCode's fallback agent is its primary agent, which is a real default;
     // its fallback model is whatever sorted first, which is not.
     expect(resolveNewSessionDefaults({ picked: {}, models, agents: [] })).toEqual({ model: free });
+  });
+});
+
+describe("a project's own agent", () => {
+  /**
+   * What a workspace-scoped catalog answers with once `?directory=` is sent:
+   * the host's agents *and* the one defined under the project's own
+   * `.opencode/agent`. Nothing downstream may treat it as second class.
+   */
+  const withCustom: AgentInfo[] = [
+    ...agents,
+    {
+      id: 'osuki-coder',
+      name: 'osuki-coder',
+      mode: 'primary',
+      hidden: false,
+      description: 'The house style, the house checks, and nothing else.',
+    },
+  ];
+
+  test('it is a choice a session can be remembered on', () => {
+    expect(catalogAgentId('osuki-coder', withCustom)).toBe('osuki-coder');
+    // And it is not invented: an agent this catalog does not list is dropped,
+    // so a memory from another workspace cannot be sent to this one.
+    expect(catalogAgentId('osuki-coder', agents)).toBeUndefined();
+  });
+
+  test('a session running it marks it as the current row', () => {
+    expect(effectiveAgentId('osuki-coder', 'build')).toBe('osuki-coder');
+    expect(
+      withCustom.find((agent) => agent.id === effectiveAgentId('osuki-coder', 'build'))
+    ).toMatchObject({ id: 'osuki-coder', name: 'osuki-coder' });
+  });
+
+  test("the host's default is the current row when nobody has picked", () => {
+    expect(effectiveAgentId(undefined, 'osuki-coder')).toBe('osuki-coder');
+    expect(effectiveAgentId(undefined, undefined)).toBe('build');
+    expect(effectiveAgentId('  ', '  ')).toBe('build');
   });
 });
