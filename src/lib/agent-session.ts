@@ -52,6 +52,7 @@ import {
   sortTimeline,
   type AgentCatalog,
   type AgentContextUsage,
+  type AgentProject,
   type AgentDomainEvent,
   type AgentEngineInfo,
   type AgentRunStatus,
@@ -81,14 +82,6 @@ export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheK
  * body to a parser that takes `unknown` and never throws.
  */
 export * from './agent-protocol';
-
-export interface AgentProject {
-  id: string;
-  canonical: string;
-  name: string;
-  vcs?: string;
-  sandboxes?: string[];
-}
 
 export interface DirectoryItem {
   name: string;

@@ -1996,6 +1996,10 @@ msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng 
 msgid "Fold the tool steps away"
 msgstr "Thu gọn các bước công cụ"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "Thư mục không còn"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Theo ngôn ngữ của điện thoại"

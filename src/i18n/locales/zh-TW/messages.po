@@ -1996,6 +1996,10 @@ msgstr "請先修正文字對比度再套用此主題"
 msgid "Fold the tool steps away"
 msgstr "收合工具步驟"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "資料夾已不存在"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "跟隨手機的語言"

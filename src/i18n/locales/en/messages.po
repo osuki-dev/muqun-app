@@ -1996,6 +1996,10 @@ msgstr "Fix text contrast before applying this theme"
 msgid "Fold the tool steps away"
 msgstr "Fold the tool steps away"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "Folder is missing"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Follow the language your phone is set to"

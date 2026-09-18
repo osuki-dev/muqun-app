@@ -1996,6 +1996,10 @@ msgstr "Vor dem Anwenden dieses Designs den Textkontrast korrigieren"
 msgid "Fold the tool steps away"
 msgstr "Tool-Schritte einklappen"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "Ordner fehlt"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Der Sprache des Telefons folgen"

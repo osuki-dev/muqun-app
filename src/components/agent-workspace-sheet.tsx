@@ -25,6 +25,7 @@ import {
   type AgentProject,
   type DirectoryItem,
 } from '@/lib/agent-session';
+import { listableWorkspaces, workspaceProjectMissing } from '@/lib/agent-workspace-missing';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 const STAGGERED_ROWS = 8;
@@ -131,9 +132,13 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
    * session is actually in when that is not one of them.
    */
   const listedProjects = useMemo(() => {
-    if (!activeDirectory) return projects;
-    if (projects.some((project) => project.canonical === activeDirectory)) return projects;
-    return [directoryAsProject(activeDirectory), ...projects];
+    // A workspace whose folder the host says is gone is not an offer this
+    // sheet can keep -- except the one the reader is standing in, which is
+    // listed and marked. See `listableWorkspaces`.
+    const listable = listableWorkspaces(projects, activeDirectory);
+    if (!activeDirectory) return listable;
+    if (listable.some((project) => project.canonical === activeDirectory)) return listable;
+    return [directoryAsProject(activeDirectory), ...listable];
   }, [projects, activeDirectory]);
 
   const filtered = useMemo(() => {
@@ -261,6 +266,18 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                           }
                         />
                       }
+                      // The only missing workspace that is listed at all is the
+                      // one the reader is standing in, and it says so rather
+                      // than looking like every other row.
+                      {...(workspaceProjectMissing(project)
+                        ? {
+                            meta: (
+                              <Text variant="caption" color={theme.colors.textSubtle}>
+                                {t`Folder is missing`}
+                              </Text>
+                            ),
+                          }
+                        : {})}
                       onPress={() => choose(project.canonical, project)}
                     />
                   </Animated.View>

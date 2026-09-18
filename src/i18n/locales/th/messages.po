@@ -1996,6 +1996,10 @@ msgstr "แก้ไขความต่างระดับสีของข
 msgid "Fold the tool steps away"
 msgstr "ซ่อนขั้นตอนการใช้เครื่องมือ"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "ไม่พบโฟลเดอร์"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "ตามภาษาของเครื่อง"
