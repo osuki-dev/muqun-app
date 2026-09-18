@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  BLOOM_OVERSHOOT,
   canSkipLaunchIntro,
   LAUNCH_INTRO_BUDGET_MS,
   launchIntroTimeline,
   reducedLaunchIntroTimeline,
-  WIPE_COVERED_AT,
+  WORLD_ARRIVAL_ZOOM,
   type MotionDurations,
 } from '../launch-intro-timeline';
 
@@ -26,117 +27,126 @@ describe('launchIntroTimeline', () => {
     expect(beats.totalMs).toBe(1300);
   });
 
-  test('even a fully stalled cut cannot push the launch past the budget', () => {
-    // The cut waits, covered, for the pack's wallpaper to decode. That wait is
-    // the one thing here that depends on a disk read rather than on a clock,
-    // so the cap is what keeps the budget a promise rather than a hope.
+  test('even a front that stalls for the whole cap cannot pass the budget', () => {
+    // The front waits, breathing around the hero, for the pack's wallpaper to
+    // decode. That wait is the one thing here that depends on a disk read
+    // rather than on a clock, so the cap is what keeps the budget a promise
+    // rather than a hope -- and the worst case is the budget exactly.
     const beats = launchIntroTimeline(DURATIONS);
-    expect(beats.wipeStallCapMs).toBeGreaterThan(0);
-    expect(beats.totalMs + beats.wipeStallCapMs).toBeLessThanOrEqual(LAUNCH_INTRO_BUDGET_MS);
+    expect(beats.bloomStallCapMs).toBeGreaterThan(0);
+    expect(beats.totalMs + beats.bloomStallCapMs).toBe(LAUNCH_INTRO_BUDGET_MS);
+  });
+
+  test('the deadline for giving up on Skia is the end of the stall', () => {
+    // A front that has run out of patience has to take off with something
+    // behind it, so the moment it stops waiting is the moment the reveal is
+    // chosen. Two numbers here would be two numbers that could disagree.
+    const beats = launchIntroTimeline(DURATIONS);
+    expect(beats.worldDeadlineAt).toBe(beats.bloom.at + beats.bloomStallCapMs);
+    expect(beats.worldDeadlineAt).toBeLessThan(beats.holdUntil);
   });
 
   test('every moving beat has finished before the opening hands back', () => {
     const beats = launchIntroTimeline(DURATIONS);
-    for (const beat of [beats.wipe, beats.hero, beats.rise]) {
+    for (const beat of [beats.ignite, beats.bloom, beats.settle, beats.hero, beats.type]) {
       expect(beat.at + beat.ms).toBeLessThanOrEqual(beats.holdUntil);
     }
   });
 
   test('the beats overlap, so the launch resolves at once rather than in a list', () => {
     const beats = launchIntroTimeline(DURATIONS);
-    // The hero is already moving while the cut is still crossing, and the page
-    // starts rising before the hero has landed.
-    expect(beats.hero.at).toBeLessThan(beats.wipe.at + beats.wipe.ms);
-    expect(beats.rise.at).toBeLessThan(beats.hero.at + beats.hero.ms);
+    // The rim is still closing as the front leaves it.
+    expect(beats.bloom.at).toBeLessThanOrEqual(beats.ignite.at + beats.ignite.ms);
+    // The hero is already lifting while the front is still crossing.
+    expect(beats.hero.at).toBeLessThan(beats.bloom.at + beats.bloom.ms);
+    // And the prompt starts typing before the hero has landed.
+    expect(beats.type.at).toBeLessThan(beats.hero.at + beats.hero.ms);
   });
 
-  test('the cut is covering the screen while the hero is still on its way', () => {
-    // The swap underneath happens on the covered frame, so the hero must not
-    // have arrived before the cover exists -- otherwise the exchange is seen.
+  test('the world settles for longer than it takes to arrive', () => {
+    // The zoom is the slowest thing on screen on purpose: a world that stops
+    // moving the instant it has finished arriving has no weight.
     const beats = launchIntroTimeline(DURATIONS);
-    const coveredAt = beats.wipe.at + beats.wipe.ms * WIPE_COVERED_AT;
-    expect(coveredAt).toBeLessThan(beats.hero.at + beats.hero.ms);
+    expect(beats.settle.ms).toBeGreaterThan(beats.bloom.ms);
+    expect(WORLD_ARRIVAL_ZOOM).toBeGreaterThan(1);
+    expect(WORLD_ARRIVAL_ZOOM).toBeLessThanOrEqual(1.08);
   });
 
-  test('the exit begins exactly where the hold ends, and nothing follows it', () => {
+  test('the cursor blinks only after the name is spelled out', () => {
+    const beats = launchIntroTimeline(DURATIONS);
+    expect(beats.blink.at).toBe(beats.type.at + beats.type.ms);
+    expect(beats.holdUntil).toBe(beats.blink.at + beats.blink.ms);
+  });
+
+  test('the exit begins where the hold ends and is the last thing that happens', () => {
     const beats = launchIntroTimeline(DURATIONS);
     expect(beats.exit.at).toBe(beats.holdUntil);
     expect(beats.exit.at + beats.exit.ms).toBe(beats.totalMs);
   });
 
-  test('the skip arms while the opening is still running, not after it', () => {
+  test('the skip arms partway in, so an early tap is a reach rather than a refusal', () => {
     const beats = launchIntroTimeline(DURATIONS);
-    // A skip that arms after the hold is not a skip; it is a formality.
     expect(beats.skipArmedAt).toBeGreaterThan(0);
     expect(beats.skipArmedAt).toBeLessThan(beats.holdUntil);
     expect(beats.skipArmedAt).toBe(400);
   });
 
-  test('retuning the token scale retunes the launch with it', () => {
-    // The point of stating the beats in tokens: nothing here carries a number
-    // of its own that a global tuning pass would walk past.
+  test('the opening is stated in tokens, so retuning the scale retunes the launch', () => {
     const doubled = launchIntroTimeline({ micro: 300, short: 400, medium: 600, long: 800 });
     expect(doubled.totalMs).toBe(2600);
     expect(doubled.skipArmedAt).toBe(800);
   });
-});
 
-describe('WIPE_COVERED_AT', () => {
-  test('the swap frame is inside the cut, not at either end of it', () => {
-    // At 0 the cut has not arrived and at 1 it has gone; either would exchange
-    // the launch frame for the pack's world in plain sight.
-    expect(WIPE_COVERED_AT).toBeGreaterThan(0);
-    expect(WIPE_COVERED_AT).toBeLessThan(1);
+  test('the front overshoots the far corner, because its edge is ragged', () => {
+    // A front that stops exactly at the corner leaves the corner ragged on the
+    // frame it was supposed to have finished on.
+    expect(BLOOM_OVERSHOOT).toBeGreaterThan(1);
   });
 });
 
 describe('reducedLaunchIntroTimeline', () => {
-  test('nothing moves: every travelling beat is zero-length', () => {
+  test('nothing blooms, travels or types', () => {
     const beats = reducedLaunchIntroTimeline(DURATIONS);
-    for (const beat of [beats.wipe, beats.hero, beats.rise]) {
+    for (const beat of [
+      beats.ignite,
+      beats.bloom,
+      beats.settle,
+      beats.hero,
+      beats.type,
+      beats.blink,
+    ]) {
       expect(beat).toEqual({ at: 0, ms: 0 });
     }
+    expect(beats.bloomStallCapMs).toBe(0);
   });
 
-  test('the cross-fade survives, because a hard cut is not the accessible answer', () => {
+  test('the cross-fade is kept, because opacity is not travel', () => {
     const beats = reducedLaunchIntroTimeline(DURATIONS);
-    expect(beats.exit.ms).toBeGreaterThan(0);
     expect(beats.exit.ms).toBe(DURATIONS.short);
-  });
-
-  test('it is far shorter than the full opening and still inside the budget', () => {
-    const beats = reducedLaunchIntroTimeline(DURATIONS);
     expect(beats.totalMs).toBe(400);
     expect(beats.totalMs).toBeLessThan(launchIntroTimeline(DURATIONS).totalMs);
-    expect(beats.totalMs).toBeLessThanOrEqual(LAUNCH_INTRO_BUDGET_MS);
   });
 });
 
 describe('canSkipLaunchIntro', () => {
   const beats = launchIntroTimeline(DURATIONS);
 
-  test('a tap before the gate is the reader reaching for the app, and is ignored', () => {
+  test('a tap before the gate is the reader reaching for the app', () => {
     expect(canSkipLaunchIntro(0, beats)).toBe(false);
     expect(canSkipLaunchIntro(399, beats)).toBe(false);
   });
 
-  test('the gate itself counts as armed', () => {
+  test('a tap after it ends the opening', () => {
     expect(canSkipLaunchIntro(400, beats)).toBe(true);
-  });
-
-  test('a tap after the gate ends the opening', () => {
     expect(canSkipLaunchIntro(401, beats)).toBe(true);
     expect(canSkipLaunchIntro(100_000, beats)).toBe(true);
   });
 
-  test('with Reduce Motion there is nothing to sit through, so it is armed at once', () => {
+  test('with Reduce Motion there is nothing to sit through', () => {
     expect(canSkipLaunchIntro(0, reducedLaunchIntroTimeline(DURATIONS))).toBe(true);
   });
 
-  test('a clock that produced nonsense never arms the skip', () => {
-    // The gate is fed `Date.now() - startedAt`. Nothing should be able to make
-    // that non-finite, which is exactly why the guard is cheap to keep: a skip
-    // that fires on a garbage reading eats the reader's first touch.
+  test('a clock that has gone strange cannot arm the skip', () => {
     expect(canSkipLaunchIntro(Number.NaN, beats)).toBe(false);
     expect(canSkipLaunchIntro(Number.POSITIVE_INFINITY, beats)).toBe(false);
   });
