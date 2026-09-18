@@ -2815,6 +2815,10 @@ msgstr "ไม่มีเวิร์กสเปซที่ตรงกับ
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "ยังไม่มีเวิร์กทรี สร้างสักอันด้านล่างเพื่อทำงานบนสาขาโดยไม่รบกวนสำเนานี้"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Not a git repository"
+msgstr "ไม่ใช่ที่เก็บโค้ด Git"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "ไม่พร้อมใช้งาน"
@@ -5223,6 +5227,15 @@ msgstr "ไดเรกทอรีทำงาน"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "พื้นที่ทำงาน"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Workspace folder is missing: {0}"
+msgstr "ไม่พบโฟลเดอร์เวิร์กสเปซ: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

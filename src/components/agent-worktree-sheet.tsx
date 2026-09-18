@@ -48,6 +48,7 @@ import {
   removeAgentWorktree,
   sameDirectory,
   worktreeDisplayName,
+  type WorkspaceMissing,
   type WorktreeDirectory,
 } from '@/lib/agent-session';
 
@@ -107,6 +108,15 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
   const inputStyle = useSheetSceneInputStyle();
 
   const [entries, setEntries] = useState<WorktreeDirectory[]>([]);
+  /**
+   * The folder this sheet is about, when the host no longer has it.
+   *
+   * A session outlives its directory, and the inventory read is then a `404`
+   * naming the path. That is an empty state, not a failure: nothing went
+   * wrong, there is nothing to retry, and a toast over the one sheet that can
+   * move the session somewhere else would be in the way of the answer.
+   */
+  const [missing, setMissing] = useState<WorkspaceMissing | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -144,7 +154,9 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
 
   const load = useCallback(async () => {
     try {
-      setEntries(await listAgentWorktrees(queryDirectory));
+      const listing = await listAgentWorktrees(queryDirectory);
+      setEntries(listing.entries);
+      setMissing(listing.missing ?? null);
     } finally {
       setLoading(false);
     }
@@ -397,7 +409,9 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
               <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
                 {loading
                   ? t`Reading this project’s worktrees…`
-                  : t`No worktrees yet. Make one below to work on a branch without disturbing this checkout.`}
+                  : missing
+                    ? t`Workspace folder is missing: ${missing.directory}`
+                    : t`No worktrees yet. Make one below to work on a branch without disturbing this checkout.`}
               </Text>
             </View>
           ) : (

@@ -2815,6 +2815,10 @@ msgstr "Aucun espace de travail ne correspond à « {0} »"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "Aucun worktree pour l’instant. Crées-en un ci-dessous pour travailler sur une branche sans toucher à ce checkout"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Not a git repository"
+msgstr "Pas un dépôt Git"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Non disponible"
@@ -5223,6 +5227,15 @@ msgstr "Répertoire de travail"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Espace de travail"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Workspace folder is missing: {0}"
+msgstr "Dossier de l’espace de travail introuvable : {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

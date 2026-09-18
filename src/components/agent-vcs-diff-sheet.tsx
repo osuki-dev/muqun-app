@@ -11,7 +11,8 @@ import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
 import { closeFile, openFile } from '@/lib/gateway-client';
-import { getAgentVcsDiff, type FileDiffItem, type VcsDiffMode } from '@/lib/agent-session';
+import { diffEmptyState } from '@/lib/agent-workspace-missing';
+import { getAgentVcsDiff, type AgentVcsDiff, type VcsDiffMode } from '@/lib/agent-session';
 
 /**
  * What the agent changed on disk, as a native form sheet route.
@@ -48,7 +49,14 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const surfaceBackground = useSurfaceBackground();
 
   const [loading, setLoading] = useState(false);
-  const [diffs, setDiffs] = useState<readonly FileDiffItem[]>([]);
+  /**
+   * The answer, not just its list.
+   *
+   * An empty list has three readings -- clean, not a repository, and a folder
+   * that is gone -- and the sheet used to print the first of them for all
+   * three. The gateway says which, so the sheet keeps what it said.
+   */
+  const [answer, setAnswer] = useState<AgentVcsDiff>({ files: [] });
   const [mode, setMode] = useState<VcsDiffMode>('working');
   /** Which files are open, oldest first: the same eviction rule as the sheet. */
   const [expandedOrder, setExpandedOrder] = useState<readonly string[]>([]);
@@ -59,13 +67,13 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
     let active = true;
     setLoading(true);
     getAgentVcsDiff(sessionId, asid, mode)
-      .then((items) => {
+      .then((next) => {
         if (!active) return;
-        setDiffs(items);
+        setAnswer(next);
         // A single changed file is opened without being asked; with more than
         // one on screen, opening one of them is a choice the sheet must not
         // make for the reader.
-        setExpandedOrder(items.length === 1 ? [items[0].path] : []);
+        setExpandedOrder(next.files.length === 1 ? [next.files[0].path] : []);
       })
       .catch((err) => {
         console.warn('Failed to load VCS diff:', err);
@@ -83,7 +91,7 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
     // A different comparison is different text; the list starts collapsed
     // again, which is also the honest reading position.
     setExpandedOrder([]);
-    setDiffs([]);
+    setAnswer({ files: [] });
     setMode(next);
   }, []);
 
@@ -96,8 +104,24 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const noShowMore = useCallback(() => {}, []);
 
   const expanded = useMemo(() => new Set(expandedOrder), [expandedOrder]);
+  const diffs = answer.files;
   const rows = useMemo(() => diffRowsFromPatches(diffs, expanded), [diffs, expanded]);
   const totals = useMemo(() => diffTotals(diffs), [diffs]);
+
+  /**
+   * What to say when there is nothing to show, which is four sentences rather
+   * than one. A folder that is gone and a folder that is not a repository are
+   * not "nothing uncommitted": they are unanswerable, and saying otherwise is
+   * this app inventing a fact about the host. Neither is an error toast --
+   * nothing failed, and there is nothing for the reader to retry.
+   */
+  const empty = diffEmptyState({ loading, fileCount: diffs.length, reason: answer.reason });
+  const emptyText =
+    empty === 'workspace-missing'
+      ? t`Workspace folder is missing: ${answer.missing?.directory ?? ''}`
+      : empty === 'not-a-repository'
+        ? t`Not a git repository`
+        : t`Nothing uncommitted in this workspace.`;
 
   return (
     <SheetScene
@@ -142,11 +166,15 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
           onToggleFile={toggleFile}
           onShowMore={noShowMore}
           fallback={
-            loading ? (
+            empty === 'loading' ? (
               <ActivityIndicator size="small" color={theme.colors.textMuted} />
             ) : (
-              <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyText}>
-                {t`Nothing uncommitted in this workspace.`}
+              <Text
+                testID="agent-vcs-diff-empty"
+                variant="bodySmall"
+                color={theme.colors.textMuted}
+                style={styles.emptyText}>
+                {emptyText}
               </Text>
             )
           }
