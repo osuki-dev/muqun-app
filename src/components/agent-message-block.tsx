@@ -1229,10 +1229,6 @@ const styles = StyleSheet.create({
     gap: 5,
     flexShrink: 1,
   },
-  summary: {
-    fontSize: AGENT_TYPE.micro.size,
-    lineHeight: AGENT_TYPE.meta.lineHeight,
-  },
   markdownContainer: {
     alignSelf: 'stretch',
   },
