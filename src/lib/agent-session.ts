@@ -124,18 +124,36 @@ async function readJson<T>(
   fallback: T,
   init?: { headers?: Record<string, string>; signal?: AbortSignal }
 ): Promise<T> {
-  try {
-    if (!isGatewayConfigured()) return fallback;
-    const res = await gatewayFetch(gatewayUrl(path), {
-      method: 'GET',
-      headers: init?.headers ?? gatewayAuthHeaders(),
-      ...(init?.signal ? { signal: init.signal } : {}),
-    });
-    if (!res.ok) return fallback;
-    return parse(envelopeData(await res.json()));
-  } catch {
-    return fallback;
-  }
+  const url = gatewayUrl(path);
+  /**
+   * One request per path in flight, and everyone waits on the same answer.
+   *
+   * Opening the agent screen asked the gateway seventeen times in three
+   * seconds, and most of those were the *same* GET made twice by two effects
+   * that had both just been re-declared. Deduping by the full path is the
+   * honest shape of that: two identical reads at the same moment cannot
+   * disagree, so there is no reason to make the phone pay for both. A read
+   * that has already answered is not deduped -- the map is cleared when the
+   * promise settles -- so this is not a cache and nothing goes stale in it.
+   *
+   * A request with a caller's own `signal` stays its own: sharing one promise
+   * would let one caller's abort cancel another's read.
+   */
+  const run = async (): Promise<T> => {
+    try {
+      if (!isGatewayConfigured()) return fallback;
+      const res = await gatewayFetch(url, {
+        method: 'GET',
+        headers: init?.headers ?? gatewayAuthHeaders(),
+        ...(init?.signal ? { signal: init.signal } : {}),
+      });
+      if (!res.ok) return fallback;
+      return parse(envelopeData(await res.json()));
+    } catch {
+      return fallback;
+    }
+  };
+  return init?.signal ? run() : dedupeInFlight(`GET ${url}`, run);
 }
 
 /**
@@ -196,14 +214,51 @@ function listQuery(query: ListAgentSessionsQuery | undefined): string {
   return encoded ? `?${encoded}` : '';
 }
 
+/**
+ * The roots (or children) the gateway holds, conditionally.
+ *
+ * This is the biggest thing the agent screen asks for -- twenty kilobytes of
+ * JSON, and it is asked for again every time a turn ends -- and almost every
+ * one of those answers is the same list it already had. So it carries the
+ * ETag the gateway gave it and takes a `304` as "what you have is current",
+ * exactly as the catalog and the projects list already do. The cached list is
+ * also what a failed read answers with, because a strip that empties itself
+ * because one request timed out has told the reader something untrue.
+ */
 export async function listAgentSessions(
   sessionId?: string,
   query?: ListAgentSessionsQuery
 ): Promise<AgentSessionInfo[]> {
+  const search = listQuery(query);
   const path = sessionId
-    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${listQuery(query)}`
-    : `/api/agent-sessions${listQuery(query)}`;
-  return readJson(path, parseAgentSessionList, []);
+    ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${search}`
+    : `/api/agent-sessions${search}`;
+  // The query is part of the key: a listing scoped to one workspace is not the
+  // same resource as the unscoped one, and they must not share an ETag.
+  const cacheKey = buildAgentCacheKey('sessions', null, sessionId, search || 'all');
+  const cached = getCachedEntry<AgentSessionInfo[]>(cacheKey);
+
+  return dedupeInFlight(`GET ${path}`, async () => {
+    try {
+      if (!isGatewayConfigured()) return cached?.data ?? [];
+      const headers: Record<string, string> = gatewayAuthHeaders();
+      if (cached?.etag) headers['If-None-Match'] = cached.etag;
+
+      const res = await gatewayFetch(gatewayUrl(path), { method: 'GET', headers });
+      if (res.status === 304 && cached) {
+        touchCacheEntryTimestamp(cacheKey);
+        return cached.data;
+      }
+      if (!res.ok) return cached?.data ?? [];
+
+      const etag = res.headers.get('etag') ?? undefined;
+      const list = parseAgentSessionList(envelopeData(await res.json()));
+      setCachedEntry(cacheKey, list, etag);
+      return list;
+    } catch {
+      return cached?.data ?? [];
+    }
+  });
 }
 
 /** The children of one session, in the same shape as the list route. */

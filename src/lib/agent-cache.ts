@@ -40,13 +40,22 @@ export function dedupeInFlight<T>(key: string, fn: () => Promise<T>): Promise<T>
 }
 
 export function buildAgentCacheKey(
-  type: 'catalog' | 'projects',
+  type: 'catalog' | 'projects' | 'sessions',
   endpointKey?: string | null,
-  sessionId?: string | null
+  sessionId?: string | null,
+  /**
+   * What distinguishes two reads of the same route -- the sessions list's own
+   * query, which scopes it to a workspace and bounds it.
+   *
+   * Without it a scoped listing and an unscoped one share a key, so the second
+   * one's `If-None-Match` carries the first one's ETag and a `304` hands back
+   * the wrong list entirely.
+   */
+  variant?: string | null
 ): string {
   const ep = endpointKey ? endpointKey.replace(/\/$/, '') : 'default_gateway';
   const sid = sessionId || 'global';
-  return `${type}:${ep}:${sid}`;
+  return variant ? `${type}:${ep}:${sid}:${variant}` : `${type}:${ep}:${sid}`;
 }
 
 export function getCachedEntry<T>(key: string): AgentCacheEntry<T> | null {
