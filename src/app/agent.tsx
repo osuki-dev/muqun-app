@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,7 +17,9 @@ import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
+import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { LogoLoader } from '@/components/logo-loader';
 import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { hasRealSessionTitle } from '@/lib/agent-session';
@@ -45,9 +47,26 @@ export default function AgentScreen() {
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
-  const params = useLocalSearchParams<{ sessionId?: string; asid?: string }>();
+  const params = useLocalSearchParams<{ sessionId?: string; asid?: string; server?: string }>();
 
   const sessionId = params.sessionId || 'herdr';
+
+  /**
+   * Which server this screen is for.
+   *
+   * A Home card names its server on the route. The workbench reads the
+   * gateway that is *selected*, so until the selected record is that server
+   * nothing is mounted -- a workbench that came up on the previous selection
+   * would already have listed the wrong machine's sessions. Opened without a
+   * server (the drawer, a deep link), the selected one is the one meant.
+   */
+  const { record, selectRecord } = useGatewayRecord();
+  const wantedServer = typeof params.server === 'string' && params.server ? params.server : null;
+  const serverReady = !wantedServer || record?.serverId === wantedServer;
+  useEffect(() => {
+    if (!wantedServer || serverReady) return;
+    void selectRecord(wantedServer);
+  }, [wantedServer, serverReady, selectRecord]);
   const sessionRunning = useAgentSessionState((s) => s.running);
   const sessionTitle = useAgentSessionState((s) => s.title);
   const activeDirectory = useAgentSessionState((s) => s.directory);
@@ -90,14 +109,23 @@ export default function AgentScreen() {
       <ThemeArtwork slot="shell.background" />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
-      <AgentWorkbench
-        sessionId={sessionId}
-        initialAsid={params.asid}
-        topInset={insets.top + HEADER_INSET}
-        bottomInset={insets.bottom}
-        createNewSessionRef={createNewSessionRef}
-        abortSessionRef={abortSessionRef}
-      />
+      {serverReady ? (
+        <AgentWorkbench
+          // Keyed on the server: switching servers is a new workbench, not
+          // the old one told to look elsewhere.
+          key={record?.serverId ?? 'none'}
+          sessionId={sessionId}
+          initialAsid={params.asid}
+          topInset={insets.top + HEADER_INSET}
+          bottomInset={insets.bottom}
+          createNewSessionRef={createNewSessionRef}
+          abortSessionRef={abortSessionRef}
+        />
+      ) : (
+        <View style={styles.serverWait} pointerEvents="none">
+          <LogoLoader size={56} accessibilityLabel={t`Connecting`} />
+        </View>
+      )}
 
       {/* Top glass fade for smooth dissolve under nav header */}
       <EdgeFade
@@ -162,6 +190,7 @@ export default function AgentScreen() {
 }
 
 const styles = StyleSheet.create({
+  serverWait: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   page: { flex: 1 },
   topFade: {
     position: 'absolute',

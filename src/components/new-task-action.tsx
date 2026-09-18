@@ -155,9 +155,18 @@ export function NewTaskAction({
     };
   }, [capabilities, endpointUrl, endpointToken, serverId]);
 
+  // The card belongs to one server, and the screen it opens must be that
+  // server's. This used to fire the selection and push the route in the same
+  // tick, so the agent screen mounted on whichever server was selected a
+  // moment ago -- with two servers on Home, the first card's button opened the
+  // second server's OpenCode. The switch is awaited, and the route carries the
+  // server id so the screen can refuse to mount on any other.
   const handlePress = useCallback(() => {
-    void selectRecord(serverId);
-    router.push('/agent');
+    void (async () => {
+      const selected = await selectRecord(serverId);
+      if (!selected) return;
+      router.push({ pathname: '/agent', params: { server: serverId } });
+    })();
   }, [selectRecord, serverId, router]);
 
   /**
