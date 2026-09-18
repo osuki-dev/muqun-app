@@ -5572,7 +5572,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     height: PANE_CHIP_HEIGHT,
-    maxWidth: 200,
+    // No width cap: a chip is as wide as its title. The strip scrolls, so a
+    // long title costs a swipe; an ellipsis cost the reader the part of the
+    // title that tells two sessions of the same agent apart.
     flexShrink: 0,
     overflow: 'hidden',
     paddingHorizontal: 12,
@@ -5591,9 +5593,7 @@ const styles = StyleSheet.create({
     height: 13,
   },
   paneChipLabel: {
-    flexShrink: 1,
-    minWidth: 0,
-    overflow: 'hidden',
+    flexShrink: 0,
   },
   terminalKeyList: {
     gap: 6,
