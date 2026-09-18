@@ -77,7 +77,11 @@ export function buildTimelineGroups(
       continue;
     }
     fresh.push({
-      key: `grp_${item.id}`,
+      // `row_key` where the row has one: an optimistic user message keeps the
+      // key it was drawn under when the acknowledgement replaces it, so the
+      // list keeps the height it measured instead of remounting the row the
+      // reader is looking at. See `TimelineItem.row_key`.
+      key: `grp_${item.row_key ?? item.id}`,
       role: item.role,
       items: [item],
       prevItem: i > 0 ? items[i - 1] : undefined,

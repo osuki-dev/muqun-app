@@ -1,4 +1,12 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import {
   View,
   StyleSheet,
@@ -132,13 +140,9 @@ import {
   AgentUserMessage,
   type AgentToolActions,
 } from './agent-message-block';
-import {
-  isAtBottom,
-  showJumpToLatest,
-  TRANSCRIPT_START,
-  unseenBelow,
-  type TranscriptMark,
-} from '@/lib/transcript-scroll';
+import { type TranscriptMark } from '@/lib/transcript-scroll';
+import { createTranscriptFollow, type TranscriptFollow } from '@/lib/transcript-follow';
+import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
 import {
   buildTimelineGroupsCached,
   createTimelineGroupCache,
@@ -414,12 +418,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
-  // Whether the reader is browsing history, and whether anything arrived
-  // while they were: together, the two facts the jump-to-latest pill is drawn
-  // from. New output never moves their viewport, so the pill is the whole of
-  // what the transcript is allowed to do about it.
-  const [isNearBottom, setIsNearBottom] = useState(true);
-  const [unseenRows, setUnseenRows] = useState(0);
+  /*
+    Whether the reader is browsing history, and whether anything arrived while
+    they were: together, the two facts the jump-to-latest pill is drawn from.
+    New output never moves their viewport, so the pill is the whole of what the
+    transcript is allowed to do about it.
+
+    Held outside React because `onScroll` fires on every frame of every drag,
+    and as `useState` here each of those frames re-rendered this whole
+    component -- composer, header, sheets, footer and the list's element tree
+    -- to decide whether one pill was on screen. Exactly one view reads these,
+    so exactly one view subscribes. See `lib/transcript-follow.ts`.
+  */
+  const follow = useMemo(() => createTranscriptFollow(), []);
 
   // Attachment image preview. The shared lightbox, not a second copy of it:
   // `ImagePreviewModal` already owns pinch, drag-to-dismiss and the paging.
@@ -639,25 +650,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     void refreshSessions(scope || undefined).catch(() => {});
   }, [activeDirectory, refreshSessions]);
 
-  const handleTimelineScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    if (contentSize.height <= 0) return;
-    // For the jump-to-latest affordance; React bails out when the value is
-    // unchanged, so streaming near the bottom costs nothing.
-    setIsNearBottom(
-      isAtBottom({
+  const handleTimelineScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      if (contentSize.height <= 0) return;
+      // For the jump-to-latest affordance, and nothing else. The store drops
+      // an unchanged answer, so a drag that stays at the bottom -- or stays
+      // away from it -- notifies nobody and renders nothing.
+      follow.setGeometry({
         offset: contentOffset.y,
         viewport: layoutMeasurement.height,
         content: contentSize.height,
-      })
-    );
-  }, []);
+      });
+    },
+    [follow]
+  );
 
   const handleJumpToLatest = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     listRef.current?.scrollToEnd({ animated: true });
-    setUnseenRows(0);
-  }, []);
+    follow.reset();
+  }, [follow]);
 
   // YOLO answers every permission request itself: `allow` for anything the
   // safety list lets through, `deny` (with a report) for irreversibly
@@ -831,7 +844,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // Enter every session on its latest page: only the newest slice is
           // rendered at first and older history loads on demand from the top.
           setWindowStart(Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE));
-          setIsNearBottom(true);
+          follow.reset();
         } else {
           // Hold the reader's place across the correction. The row that was at
           // the top of the window is the anchor: its index has moved, because
@@ -939,7 +952,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (mode === 'enter') setLoading(false);
       }
     },
-    [sessionId, activeAsid, applySelectedModel, applyViewed, handleAutoPermission, showToast, t]
+    [
+      sessionId,
+      activeAsid,
+      applySelectedModel,
+      applyViewed,
+      follow,
+      handleAutoPermission,
+      showToast,
+      t,
+    ]
   );
 
   /**
@@ -1585,8 +1607,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // message used to render above it and jump back into place when the turn
     // ended. The key puts the row after everything on screen and before
     // anything the engine makes next, and the acknowledged row inherits it.
+    const tempKey = `temp_usr_${Date.now()}`;
     const tempUserItem: TimelineItem = {
-      id: `temp_usr_${Date.now()}`,
+      id: tempKey,
+      // The key the list will draw this row under, kept when the engine's own
+      // row takes its place: see `TimelineItem.row_key`.
+      row_key: tempKey,
       message_id: `msg_${Date.now()}`,
       ordinal: 0,
       seq: syncRef.current.seq + 1,
@@ -2369,15 +2395,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => ({ rows: timeline.length, seq: timeline[timeline.length - 1]?.seq ?? 0 }),
     [timeline]
   );
-  const seenMarkRef = useRef<TranscriptMark>(TRANSCRIPT_START);
   useEffect(() => {
-    if (isNearBottom) {
-      seenMarkRef.current = transcriptMark;
-      setUnseenRows(0);
-      return;
-    }
-    setUnseenRows(unseenBelow(seenMarkRef.current, transcriptMark));
-  }, [transcriptMark, isNearBottom]);
+    follow.setMark(transcriptMark);
+  }, [follow, transcriptMark]);
 
   // Group the window back into whole messages, the shape OpenCode's own UI
   // renders: reasoning and tool calls fold into the message they belong to.
@@ -2472,6 +2492,43 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const scrollFooterAboveKeyboard = useCallback(() => {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), DURATION.medium);
   }, []);
+
+  /*
+    Both of these were written inline, which made them a new object and a new
+    element on every render of this component -- so every stream tick, status
+    change and opened sheet re-rendered `LegendList` itself with props it could
+    not tell apart from real ones. They change when the insets or the theme
+    change, which is to say almost never.
+  */
+  const timelineContentStyle = useMemo(
+    () => [styles.timelineContent, { paddingTop: topInset + 10, paddingBottom: bottomInset + 185 }],
+    [topInset, bottomInset]
+  );
+
+  const timelineRefresh = useMemo(
+    () => (
+      <RefreshControl
+        refreshing={loadingEarlier}
+        enabled={windowStart > 0}
+        onRefresh={handleLoadEarlier}
+        progressViewOffset={topInset}
+        // The same three colours the terminal transcript's own pull uses,
+        // so the two surfaces answer a pull the same way.
+        colors={[theme.colors.primary]}
+        tintColor={theme.colors.textMuted}
+        progressBackgroundColor={theme.colors.surfaceRaised}
+      />
+    ),
+    [
+      loadingEarlier,
+      windowStart,
+      handleLoadEarlier,
+      topInset,
+      theme.colors.primary,
+      theme.colors.textMuted,
+      theme.colors.surfaceRaised,
+    ]
+  );
 
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
@@ -3022,7 +3079,35 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             list learns a size per kind instead.
           */
             getItemType={groupTypeOf}
-            estimatedItemSize={70}
+            /*
+            One allocation hint, measured rather than guessed. Legend List 3
+            removed `getEstimatedItemSize`, so there is no per-kind estimate to
+            give any more: this number only decides how many item containers
+            exist before anything has been measured, after which the list uses
+            what it measured and the per-type averages `getItemType` buckets
+            for it. The 70 that was here was less than half the real average of
+            165dp, so every mount built containers for more than twice the rows
+            a screen holds. See `lib/transcript-sizing.ts` for the measurement.
+          */
+            estimatedItemSize={TRANSCRIPT_ESTIMATED_ITEM_SIZE}
+            /*
+            The dataset's identity, stated rather than inferred. Switching
+            session replaces `data` wholesale, and without a `dataKey` the list
+            reads that as the same list having changed enormously -- it keeps
+            the previous session's measurements and scroll intent and reconciles
+            them against rows they do not describe. With it, the switch is a
+            switch: sizes and position start clean and the list is not
+            remounted to say so.
+          */
+            dataKey={activeAsid}
+            /*
+            A short transcript sits on the bottom of the viewport rather than
+            hanging from the top of it, which is what the docs' chat guide
+            prescribes in place of `inverted` -- and `inverted`, the same guide
+            says, is what causes the animation and scroll-edge trouble this
+            screen must not have.
+          */
+            alignItemsAtEnd={true}
             initialScrollAtEnd={true}
             /*
             The reader's place across a change of *data* -- which is what
@@ -3040,25 +3125,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             maintainScrollAtEnd={true}
             maintainScrollAtEndThreshold={0.1}
             onScroll={handleTimelineScroll}
-            refreshControl={
-              <RefreshControl
-                refreshing={loadingEarlier}
-                enabled={windowStart > 0}
-                onRefresh={handleLoadEarlier}
-                progressViewOffset={topInset}
-                // The same three colours the terminal transcript's own pull uses,
-                // so the two surfaces answer a pull the same way.
-                colors={[theme.colors.primary]}
-                tintColor={theme.colors.textMuted}
-                progressBackgroundColor={theme.colors.surfaceRaised}
-              />
-            }
+            refreshControl={timelineRefresh}
             ListFooterComponent={listFooter}
             style={styles.timelineScroll}
-            contentContainerStyle={[
-              styles.timelineContent,
-              { paddingTop: topInset + 10, paddingBottom: bottomInset + 185 },
-            ]}
+            contentContainerStyle={timelineContentStyle}
           />
         )}
       </Animated.View>
@@ -3107,26 +3177,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         built to avoid -- and never a standing button either: it appears when
         something has actually arrived, and goes when they are level with it.
       */}
-      {!loading && showJumpToLatest(isNearBottom, unseenRows) ? (
-        <Animated.View
-          entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
-          style={[styles.jumpToLatestWrap, { bottom: bottomInset + 196 }]}>
-          <GlassChrome surface="navigation" style={styles.jumpToLatestPill}>
-            <PressableScale
-              testID="agent-jump-to-latest-btn"
-              accessibilityRole="button"
-              accessibilityLabel={t`Scroll to latest message`}
-              onPress={handleJumpToLatest}
-              style={styles.jumpToLatestInner}>
-              <ChevronDown size={15} color={theme.colors.text} strokeWidth={2.2} />
-              <Text variant="caption" weight="semibold" color={theme.colors.text}>
-                <Trans>Latest</Trans>
-              </Text>
-            </PressableScale>
-          </GlassChrome>
-        </Animated.View>
-      ) : null}
+      <JumpToLatestPill
+        follow={follow}
+        enabled={!loading}
+        bottom={bottomInset + 196}
+        onPress={handleJumpToLatest}
+      />
 
       {/* YOLO mode indicator — tap to switch auto-approval off again */}
       {!loading && yoloMode ? (
@@ -3236,6 +3292,52 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 });
 
 /**
+ * The way back to the newest row, and the only view that reads the scroll.
+ *
+ * Its own component so that a drag costs one render of a pill rather than one
+ * render of the workbench. `useSyncExternalStore` is the right shape here
+ * precisely because the store is written from an `onScroll` callback that is
+ * not React's to schedule -- it subscribes, it does not poll, and it tears
+ * nothing when the value changes mid-render.
+ */
+const JumpToLatestPill = memo(function JumpToLatestPill({
+  follow,
+  enabled,
+  bottom,
+  onPress,
+}: {
+  follow: TranscriptFollow;
+  enabled: boolean;
+  bottom: number;
+  onPress: () => void;
+}) {
+  const theme = useThemeTokens();
+  const { t } = useLingui();
+  const { visible } = useSyncExternalStore(follow.subscribe, follow.getSnapshot);
+  if (!enabled || !visible) return null;
+  return (
+    <Animated.View
+      entering={fadeIn('micro')}
+      exiting={fadeOut('micro')}
+      style={[styles.jumpToLatestWrap, { bottom }]}>
+      <GlassChrome surface="navigation" style={styles.jumpToLatestPill}>
+        <PressableScale
+          testID="agent-jump-to-latest-btn"
+          accessibilityRole="button"
+          accessibilityLabel={t`Scroll to latest message`}
+          onPress={onPress}
+          style={styles.jumpToLatestInner}>
+          <ChevronDown size={15} color={theme.colors.text} strokeWidth={2.2} />
+          <Text variant="caption" weight="semibold" color={theme.colors.text}>
+            <Trans>Latest</Trans>
+          </Text>
+        </PressableScale>
+      </GlassChrome>
+    </Animated.View>
+  );
+});
+
+/**
  * Rows are addressed by `id` -- upsert, do not append -- and the result is put
  * back in the timeline's own `(message_id, ordinal)` order.
  *
@@ -3270,8 +3372,16 @@ function upsertTimelineItems(
         // The acknowledged row takes the optimistic row's place, exactly: its
         // own id would sort it somewhere else, and the reader would watch
         // their own message move.
-        const order = next[optimistic].order;
-        next[optimistic] = order === undefined ? item : { ...item, order };
+        // And its key, for the same reason the order is inherited: the row is
+        // the one already on screen, so it keeps the identity it was measured
+        // and drawn under. Without this the list discards the height it
+        // measured and remounts the row the moment the send is acknowledged.
+        const { order, row_key: rowKey } = next[optimistic];
+        next[optimistic] = {
+          ...item,
+          ...(order === undefined ? {} : { order }),
+          row_key: rowKey ?? next[optimistic].id,
+        };
         dirty = true;
         continue;
       }

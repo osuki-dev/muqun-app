@@ -1196,6 +1196,25 @@ export interface TimelineItem {
    * the acknowledgement lands.
    */
   order?: string;
+  /**
+   * Client-side only: the identity the list keys this row by.
+   *
+   * `id` is the engine's, and the engine's id for a row the reader has already
+   * seen on screen is not the id that row was drawn under. An optimistic user
+   * message is created as `temp_usr_…`, and the acknowledgement that replaces
+   * it carries the real id -- so the key changed underneath a row that had not
+   * visibly changed at all, and Legend List, which caches a row's measured
+   * height against its key, threw that measurement away and remounted the row
+   * mid-send. The docs are explicit about it: "an optimistic message must keep
+   * the same key when the server id arrives, or the row loses its measured
+   * height and any recycled state".
+   *
+   * So the optimistic row is given a key, and the acknowledged row inherits it
+   * the same way it inherits `order`. Rows the reader never saw optimistically
+   * -- everything the engine sends unprompted -- leave this unset and are keyed
+   * by `id`.
+   */
+  row_key?: string;
 }
 
 export function parseTimelineItem(value: unknown): TimelineItem | null {
