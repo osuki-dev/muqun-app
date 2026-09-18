@@ -29,6 +29,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
 import { ThemePaletteStrip } from '@/components/theme-palette-strip';
 import { useThemePack } from '@/hooks/use-theme-pack';
+import { useReskinTransition } from '@/components/reskin-transition';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { auditThemeContrast } from '@/theme/contrast';
 import {
@@ -161,6 +162,7 @@ export function CustomThemeLibrary({
 } = {}) {
   const { t } = useLingui();
   const { colors } = useThemeTokens();
+  const reskin = useReskinTransition();
   // The plate a label takes when the pack draws a wallpaper behind this sheet.
   // Bare, because this component is always somebody else's child: inside the
   // theme sheet it takes that sheet's `surface`, and on the full-screen editor
@@ -328,11 +330,21 @@ export function CustomThemeLibrary({
       if (draftAppearance.homeHero !== undefined) store.setHomeHero(id, draftAppearance.homeHero);
     }
     if (apply) {
-      store.apply({ kind: 'custom', id });
-      // Applying is a confirmation, exactly as choosing a built-in pack is:
-      // write first, then leave. Holding the screen open behind a notice read
-      // as the app having ignored the tap.
-      closePreview();
+      // `colors` here is the *candidate's* palette -- this editor is already
+      // wearing the theme being judged -- so the wash's front is lit in the
+      // theme the reader is about to get, without having to apply it to find
+      // out what colour that is.
+      void reskin.run({
+        kind: 'theme',
+        accent: colors.primary,
+        apply: () => {
+          store.apply({ kind: 'custom', id });
+          // Applying is a confirmation, exactly as choosing a built-in pack
+          // is: write first, then leave. Holding the screen open behind a
+          // notice read as the app having ignored the tap.
+          closePreview();
+        },
+      });
       return;
     }
     setNotice(t`Theme saved`);

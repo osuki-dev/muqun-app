@@ -22,7 +22,7 @@
  * `themeSwatch`, so a preview can never drift from the theme it advertises.
  */
 import { useLingui } from '@lingui/react/macro';
-import { Text } from '@osuki-dev/ui';
+import { Text, useThemeMode } from '@osuki-dev/ui';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -37,7 +37,9 @@ import {
 } from '@/components/sheet-scene';
 import {
   THEME_PACKS,
+  resolveThemePack,
   themeSwatch,
+  themeVariant,
   type ThemePack,
   type ThemePackId,
 } from '@/constants/theme-packs';
@@ -47,6 +49,7 @@ import { CustomThemeLibrary } from '@/components/custom-theme-library';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
+import { useReskinTransition } from '@/components/reskin-transition';
 
 /** The focused field's clearance above the keyboard: the import link's input. */
 const KEYBOARD_BOTTOM_OFFSET = 88;
@@ -60,6 +63,8 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
   useRenderTally('SettingsThemeSheet');
 
   const themePack = useThemePack();
+  const { resolvedMode } = useThemeMode();
+  const reskin = useReskinTransition();
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -72,12 +77,22 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
    * confirmation, not a no-op.
    */
   function choose(id: ThemePackId) {
-    try {
-      useThemeLibrary.getState().apply({ kind: 'builtin', id });
-      onClose();
-    } catch {
-      setError(t`Could not save theme`);
-    }
+    // The new pack's primary is resolved before it is applied -- the packs are
+    // pure data, so a theme can be asked its colours without wearing them --
+    // and it is what the wash's front is lit in. That light is the one moment
+    // in the transition that tells the reader in colour what they just chose.
+    void reskin.run({
+      kind: 'theme',
+      accent: themeVariant(resolveThemePack(id), resolvedMode).colors.primary,
+      apply: () => {
+        try {
+          useThemeLibrary.getState().apply({ kind: 'builtin', id });
+          onClose();
+        } catch {
+          setError(t`Could not save theme`);
+        }
+      },
+    });
   }
 
   return (

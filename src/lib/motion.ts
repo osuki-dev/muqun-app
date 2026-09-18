@@ -117,6 +117,45 @@ export const NAVIGATION_MOTION = {
 } as const;
 
 /**
+ * The two re-skin transitions, which are longer than anything else the app
+ * animates and are allowed to be.
+ *
+ * `long` is 400 ms, the length of a page transition -- a screen replacing
+ * another screen. These replace the *skin of every screen at once*, behind a
+ * photograph of the old one, and the whole reason they exist is that the
+ * reader should be able to watch the change happen rather than find it has
+ * happened. At 400 ms a front crossing a phone is moving fast enough to read
+ * as a wipe; the extra beats are what make it a wash.
+ *
+ * They are the app's own numbers for the same reason `NAVIGATION_MOTION`'s
+ * are, and they are here rather than at the call site for the same reason
+ * too: the two transitions are one family and retuning them should be one
+ * edit. The reduced-motion fallback is not here because it has a token --
+ * `DURATION.short` -- and a dissolve with no travel in it is exactly what that
+ * token is for.
+ *
+ * See `src/components/reskin-transition.tsx`.
+ */
+export const RESKIN_MOTION = {
+  /** The theme wash, from the near edge to past the far corner. */
+  washMs: 700,
+  /**
+   * How far the snapshot is carried away as the wash takes it, as a scale.
+   *
+   * A composited transform on the canvas, not a matrix inside the sampler --
+   * the launch opening's performance lesson, applied before it had to be
+   * learned twice. Two percent: enough that the old screen is perceptibly
+   * receding rather than sitting still while a hole is cut in it, small
+   * enough that nothing about the frozen interface looks wrong.
+   */
+  washParallax: 1.02,
+  /** How far the wash's watercolour edge evolves as it travels, in noise units. */
+  washDrift: 0.3,
+  /** The font halftone, from the tapped row out past the last corner. */
+  halftoneMs: 600,
+} as const;
+
+/**
  * How far a revealing element travels, in points.
  *
  * A short local arrival, kept small so text does not travel across the page.
