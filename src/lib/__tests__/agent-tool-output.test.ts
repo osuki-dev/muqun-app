@@ -42,28 +42,55 @@ import {
 import { fileChangeFromDiffItem } from '../agent-diff-rows';
 
 describe('classifyTool', () => {
-  test('the toolset OpenCode 2.0.1 actually ships', () => {
+  /**
+   * The thirteen names in the 2.0.1 binary, and nothing else.
+   *
+   * This list used to have `search` and `browser` in it and to file
+   * `webfetch`, `websearch` and `patch` under "v1 names" -- which is backwards
+   * in both directions, and is why the web and patch cards went unexamined for
+   * so long. `search` is a Code Mode sandbox global and `browser` is a Code
+   * Mode namespace: both appear only inside an `execute`'s
+   * `metadata.toolCalls[].tool`, never as a tool of their own.
+   */
+  test('the thirteen tools OpenCode 2.0.1 actually ships', () => {
     expect(classifyTool('shell')).toBe('shell');
+    expect(classifyTool('glob')).toBe('glob');
     expect(classifyTool('read')).toBe('read');
+    expect(classifyTool('grep')).toBe('grep');
+    expect(classifyTool('webfetch')).toBe('web');
+    expect(classifyTool('websearch')).toBe('web');
     expect(classifyTool('write')).toBe('write');
     expect(classifyTool('edit')).toBe('edit');
-    expect(classifyTool('glob')).toBe('glob');
-    expect(classifyTool('grep')).toBe('grep');
-    expect(classifyTool('search')).toBe('search');
     expect(classifyTool('subagent')).toBe('subagent');
-    expect(classifyTool('skill')).toBe('skill');
-    expect(classifyTool('question')).toBe('question');
     expect(classifyTool('execute')).toBe('execute');
-    expect(classifyTool('browser')).toBe('browser');
+    expect(classifyTool('patch')).toBe('patch');
+    expect(classifyTool('question')).toBe('question');
+    expect(classifyTool('skill')).toBe('skill');
   });
 
-  test('v1 names still classify, because a session can be running one', () => {
+  test('the aliases stay, for a session running something else', () => {
+    // Kept because an MCP server or an older engine can send them, not
+    // because 2.0.1 does.
     expect(classifyTool('bash')).toBe('shell');
     expect(classifyTool('task')).toBe('subagent');
-    expect(classifyTool('websearch')).toBe('web');
-    expect(classifyTool('webfetch')).toBe('web');
+    expect(classifyTool('fetch')).toBe('web');
     expect(classifyTool('multiedit')).toBe('edit');
     expect(classifyTool('apply_patch')).toBe('patch');
+    expect(classifyTool('str_replace_editor')).toBe('edit');
+  });
+
+  test('names that are not in 2.0.1 at all, and still classify', () => {
+    // Unreachable from this engine: `list`/`cat` and `todowrite` are v1,
+    // `codesearch` never shipped, and `search`/`browser` are Code Mode's own
+    // sandbox names rather than tools a session calls. They keep their cards
+    // so that a gateway pointed at another engine is not a screen of raw JSON.
+    expect(classifyTool('list')).toBe('read');
+    expect(classifyTool('cat')).toBe('read');
+    expect(classifyTool('search')).toBe('search');
+    expect(classifyTool('codesearch')).toBe('search');
+    expect(classifyTool('browser')).toBe('browser');
+    expect(classifyTool('todowrite')).toBe('todo');
+    expect(classifyTool('todoread')).toBe('todo');
   });
 
   test('only the todo tools become a checklist, and the case does not matter', () => {
@@ -74,7 +101,7 @@ describe('classifyTool', () => {
     expect(classifyTool('task')).not.toBe('todo');
   });
 
-  test('anything else is an MCP addition, not an error', () => {
+  test('an MCP tool is <server>_<tool>, and is not an error', () => {
     expect(classifyTool('linear_create_issue')).toBe('mcp');
     expect(classifyTool('')).toBe('mcp');
   });
