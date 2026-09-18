@@ -1100,6 +1100,7 @@ msgstr "Connected through SSH host {host}"
 msgid "Connected to {address}"
 msgstr "Connected to {address}"
 
+#: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx

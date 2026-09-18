@@ -1,4 +1,3 @@
-import { useLingui } from '@lingui/react/macro';
 import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -101,7 +100,6 @@ export function LaunchIntroCyberpunk({
   finish,
   onDone,
 }: SplashRenderContext & { onDone: () => void }) {
-  const { t } = useLingui();
   const mirror = useSplashMirror();
   const artwork = useLaunchHeroArtwork();
   const packBackground = useLaunchBackground();
@@ -380,8 +378,14 @@ export function LaunchIntroCyberpunk({
         leaving so a tap lands on the app rather than on a dissolving cover.
       */}
       <Pressable
-        accessibilityLabel={t`Skip intro`}
-        accessibilityRole="button"
+        // Not announced, and not called "Skip intro". That label belongs to the
+        // onboarding's own control, which the e2e launch subflow presses when
+        // it finds it: a cover that lasts 1.4 s carried the same words, was
+        // found by the pre-check and gone by the press, and 20 of 22 flows
+        // died at launch. A sequence this short needs no control to be read
+        // out -- it is over before a screen reader finishes saying so.
+        accessible={false}
+        importantForAccessibility="no"
         onPress={skip}
         pointerEvents={phase === 'visible' ? 'auto' : 'none'}
         style={StyleSheet.absoluteFill}
