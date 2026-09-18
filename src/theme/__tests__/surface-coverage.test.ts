@@ -90,7 +90,7 @@ test('both launch surfaces take their mark from the shared fallback chain', () =
   // screen grows a second opinion: a lock screen that resolved the slot itself
   // could drift from the overlay, and the two are the first and last thing a
   // reader sees in a session.
-  const launch = readFileSync('src/components/launch-brand.tsx', 'utf8');
+  const launch = readFileSync('src/components/launch-intro-cyberpunk.tsx', 'utf8');
   expect(launch).toContain("from '@/hooks/use-launch-artwork'");
   expect(launch).toContain('useLaunchHeroArtwork()');
   // The bundled mascot when a pack offers neither picture nor logo is the

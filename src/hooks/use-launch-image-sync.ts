@@ -16,7 +16,7 @@ import { useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
  * when JavaScript takes over. Without this, a themed install showed the app's
  * own mark for half a second on every launch and then cross-faded.
  *
- * The same picture `LaunchBrand` would cross-fade to: the pack's `home.hero`,
+ * The same picture `LaunchIntroCyberpunk` would cross-fade to: the pack's `home.hero`,
  * else its empty-state illustration, else its Home logo. No pack, or a pack
  * without a picture, clears the override and the compiled assets are back.
  *
@@ -26,7 +26,7 @@ import { useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
  * in when it decides.
  */
 
-/** The box the picture is drawn in, shared with `LaunchBrand`. */
+/** The box the picture is drawn in, shared with `LaunchIntroCyberpunk`. */
 export const LAUNCH_HERO_WIDTH_FRACTION = 0.74;
 export const LAUNCH_HERO_MAX_WIDTH = 560;
 
