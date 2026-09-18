@@ -232,6 +232,10 @@ msgstr "{0} 個中有 {running} 個正在執行"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 在你離開時完成"
 
+#: src/components/in-app-notification-host.tsx
+msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
+msgstr "{waiting, plural, other {還有 # 則通知}}"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
@@ -908,10 +912,6 @@ msgstr "正在清除快取"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "正在清除…"
-
-#: src/components/in-app-notification-host.tsx
-msgid "Close"
-msgstr "關閉"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1716,6 +1716,10 @@ msgstr "已中斷 · {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected."
 msgstr "已中斷連線"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Dismiss"
+msgstr "關閉"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"

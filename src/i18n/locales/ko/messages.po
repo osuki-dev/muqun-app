@@ -232,6 +232,10 @@ msgstr "{0}개 중 {running}개 실행 중"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 자리를 비운 사이에 끝났습니다"
 
+#: src/components/in-app-notification-host.tsx
+msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
+msgstr "{waiting, plural, other {알림 #개 더}}"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
@@ -908,10 +912,6 @@ msgstr "캐시를 비우는 중"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "비우는 중…"
-
-#: src/components/in-app-notification-host.tsx
-msgid "Close"
-msgstr "닫기"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1716,6 +1716,10 @@ msgstr "연결 끊김 · {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected."
 msgstr "연결이 끊겼습니다"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Dismiss"
+msgstr "닫기"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"

@@ -232,6 +232,10 @@ msgstr "{running} von {0} laufen"
 msgid "{title} — finished while you were away"
 msgstr "{title} – wurde fertig, während Sie weg waren"
 
+#: src/components/in-app-notification-host.tsx
+msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
+msgstr "{waiting, plural, one {# weitere Benachrichtigung} other {# weitere Benachrichtigungen}}"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} weitere"
@@ -908,10 +912,6 @@ msgstr "Cache wird geleert"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Wird geleert…"
-
-#: src/components/in-app-notification-host.tsx
-msgid "Close"
-msgstr "Schließen"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1716,6 +1716,10 @@ msgstr "Getrennt · {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected."
 msgstr "Getrennt"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Dismiss"
+msgstr "Ausblenden"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
