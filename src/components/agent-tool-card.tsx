@@ -49,6 +49,8 @@ import {
   QUESTION_OPTION_MAX,
   resultCountFromMetadata,
   shellExitFromMetadata,
+  skillDirectoryFromMetadata,
+  skillNameFromMetadata,
   stripReadLineNumbers,
   stripSubagentEnvelope,
   subagentStatusFromMetadata,
@@ -602,8 +604,17 @@ export const AgentToolCard = memo(function AgentToolCard({
       const agent = typeof input?.agent === 'string' ? input.agent : undefined;
       return { headerTitle: agent ? `${agent} · ${target}` : target, headerCaption: '' };
     }
+    if (kind === 'skill') {
+      // `metadata.name` is the skill; `input.id` is the file it lives in. The
+      // header used to show the id, which named the wrong thing.
+      const name = skillNameFromMetadata(part.metadata);
+      return {
+        headerTitle: name || target,
+        headerCaption: skillDirectoryFromMetadata(part.metadata),
+      };
+    }
     return { headerTitle: part.title ?? target, headerCaption: caption };
-  }, [kind, target, caption, part.title, input]);
+  }, [kind, target, caption, part.title, part.metadata, input]);
 
   // ---- body --------------------------------------------------------------
 

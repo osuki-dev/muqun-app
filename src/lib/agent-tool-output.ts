@@ -747,6 +747,43 @@ function countMarkedLines(patch: string, marker: '+' | '-'): number {
   return count;
 }
 
+/**
+ * What a skill actually is, rather than the id it was asked for by.
+ *
+ * `metadata.name` is the skill's own name and `metadata.directory` is where it
+ * was loaded from. The header used to show `input.id` -- `pdf`, `docx` -- and
+ * nothing else, which named the file and not the thing.
+ */
+export function skillNameFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['name', 'title']) ?? '';
+}
+
+export function skillDirectoryFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['directory', 'dir', 'path']) ?? '';
+}
+
+/** The content type a `webfetch` got back, for the chip beside the host. */
+export function contentTypeFromMetadata(metadata: Record<string, unknown>): string {
+  const raw = pickString(metadata, ['contentType', 'content_type', 'mime']);
+  if (!raw) return '';
+  // `text/html; charset=utf-8` is a header value; the chip wants the type.
+  return raw.split(';')[0].trim();
+}
+
+/** Who answered a `websearch`; OpenCode sends it on progress and on success. */
+export function searchProviderFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['provider', 'engine']) ?? '';
+}
+
+/** A URL split for a header: the host identifies it, the path says which page. */
+export function splitUrl(url: string): { host: string; path: string } {
+  const match = /^[a-z][a-z0-9+.-]*:\/\/([^/?#]+)([^#]*)/i.exec(url.trim());
+  if (!match) return { host: '', path: '' };
+  const host = match[1].replace(/^www\./i, '');
+  const path = match[2] === '/' ? '' : match[2];
+  return { host, path };
+}
+
 /** The exit status a `shell` reports in its own metadata. */
 export function shellExitFromMetadata(metadata: Record<string, unknown>): number | undefined {
   return typeof metadata.exit === 'number' ? metadata.exit : undefined;

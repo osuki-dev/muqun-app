@@ -5,6 +5,7 @@ import {
   capLines,
   capText,
   classifyTool,
+  contentTypeFromMetadata,
   diffFilesFromMetadata,
   editFilesFromMetadata,
   executeErrored,
@@ -22,7 +23,11 @@ import {
   prettyJson,
   questionAnswersFromMetadata,
   resultCountFromMetadata,
+  searchProviderFromMetadata,
   shellExitFromMetadata,
+  skillDirectoryFromMetadata,
+  skillNameFromMetadata,
+  splitUrl,
   stripReadLineNumbers,
   stripSubagentEnvelope,
   subagentStatusFromMetadata,
@@ -652,5 +657,42 @@ describe('an input that is still arriving', () => {
   test('the argument line is bounded, whatever the engine sends', () => {
     const long = toolArgumentLine({ command: 'x'.repeat(5000) });
     expect(long.length).toBeLessThanOrEqual(TOOL_ARGUMENT_LINE_CAP);
+  });
+});
+
+describe('what a skill and a web call are called', () => {
+  test('a skill is its name and where it came from, not its id', () => {
+    const metadata = { name: 'PDF forms', directory: '/home/ryu/.config/opencode/skills/pdf' };
+    expect(skillNameFromMetadata(metadata)).toBe('PDF forms');
+    expect(skillDirectoryFromMetadata(metadata)).toBe('/home/ryu/.config/opencode/skills/pdf');
+    // Nothing said: the id the skill was asked for by is still the fallback.
+    expect(skillNameFromMetadata({})).toBe('');
+    expect(skillDirectoryFromMetadata({})).toBe('');
+    expect(extractTarget('skill', { id: 'pdf' })).toBe('pdf');
+  });
+
+  test('a URL is a host and a page of it', () => {
+    expect(splitUrl('https://docs.expo.dev/versions/v57.0.0/')).toEqual({
+      host: 'docs.expo.dev',
+      path: '/versions/v57.0.0/',
+    });
+    // `www.` is noise on a host and the bare `/` is noise on a path.
+    expect(splitUrl('https://www.example.com/')).toEqual({ host: 'example.com', path: '' });
+    expect(splitUrl('https://example.com')).toEqual({ host: 'example.com', path: '' });
+    expect(splitUrl('https://example.com/a?b=c#d')).toEqual({
+      host: 'example.com',
+      path: '/a?b=c',
+    });
+    // A search query is not a URL, and saying so is how the card tells them apart.
+    expect(splitUrl('expo sdk 57 release notes')).toEqual({ host: '', path: '' });
+    expect(splitUrl('')).toEqual({ host: '', path: '' });
+  });
+
+  test('what came back, and who answered', () => {
+    expect(contentTypeFromMetadata({ contentType: 'text/html; charset=utf-8' })).toBe('text/html');
+    expect(contentTypeFromMetadata({ contentType: 'application/json' })).toBe('application/json');
+    expect(contentTypeFromMetadata({})).toBe('');
+    expect(searchProviderFromMetadata({ provider: 'brave' })).toBe('brave');
+    expect(searchProviderFromMetadata({})).toBe('');
   });
 });
