@@ -5,7 +5,7 @@ import { useLingui } from '@lingui/react/macro';
 import { ChevronDown } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
-import { fadeIn, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { formatThoughtDuration } from '@/lib/agent-reasoning';
 import { withAlpha } from '@/lib/color';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -97,9 +97,13 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
           { backgroundColor: withAlpha(theme.colors.primary, 0.08) },
           pressed && { opacity: 0.7 },
         ]}>
-        {/* The same breathing mark the assistant thinks with, so a block that
-            is still counting reads as work rather than as a stalled pill. */}
-        <ThinkingIndicator size={12} color={theme.colors.primary} active={pending} />
+        {/* The same mark the assistant thinks with, only while it is
+            thinking: a settled block is a title and a duration, nothing else. */}
+        {pending ? (
+          <Animated.View exiting={fadeOut('micro')}>
+            <ThinkingIndicator size={12} color={theme.colors.primary} />
+          </Animated.View>
+        ) : null}
         {/* Keyed on the label so the settled duration fades in where the live
             count was, rather than replacing it between two frames. */}
         <Animated.View key={label} entering={fadeIn('micro')}>
