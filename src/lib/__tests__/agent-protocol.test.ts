@@ -992,6 +992,39 @@ describe('catalog', () => {
     expect(selectableAgents(parsed.agents).map((agent) => agent.id)).toEqual(['build']);
   });
 
+  test("a user's own agent is a choice, whatever mode it declares", () => {
+    // The bug this filter was accused of: a project-defined agent from
+    // `.opencode/agent` was said to be missing from the picker. It never was
+    // -- the catalog was fetched without `?directory=`, so it was not in the
+    // answer at all. Once it arrives, nothing here may drop it: `hidden` and
+    // `mode: "subagent"` are the only two reasons to hide an entry, and a
+    // custom agent declares `primary`, `all`, or no mode whatsoever.
+    const parsed = parseAgentCatalog({
+      agents: [
+        { id: 'build', name: 'Build', mode: 'primary', hidden: false },
+        {
+          id: 'osuki-coder',
+          name: 'osuki-coder',
+          mode: 'primary',
+          hidden: false,
+          description: 'The house style, the house checks, and nothing else.',
+        },
+        { id: 'osuki-any', name: 'osuki-any', mode: 'all', hidden: false },
+        { id: 'osuki-plain', name: 'osuki-plain', hidden: false },
+        { id: 'osuki-helper', name: 'osuki-helper', mode: 'subagent', hidden: false },
+        { id: 'Compaction', name: 'Compaction', hidden: true },
+      ],
+    });
+    expect(selectableAgents(parsed.agents).map((agent) => agent.id)).toEqual([
+      'build',
+      'osuki-coder',
+      'osuki-any',
+      'osuki-plain',
+    ]);
+    const custom = parsed.agents.find((agent) => agent.id === 'osuki-coder');
+    expect(custom?.description).toBe('The house style, the house checks, and nothing else.');
+  });
+
   test('an empty answer is an empty catalog, never undefined fields', () => {
     const parsed = parseAgentCatalog(null);
     expect(parsed.models).toEqual([]);

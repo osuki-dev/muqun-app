@@ -119,6 +119,23 @@ export function catalogAgentId(
 }
 
 /**
+ * Which agent row a picker marks as the one already answering.
+ *
+ * The reader's own pick when they have made one, the host's default when they
+ * have not, and `build` when the catalog stated neither -- the same order a
+ * session create is sent in, so the marked row is the agent the next turn will
+ * actually run. A project-defined agent is nothing special here: once the
+ * catalog was read with the workspace's directory it is an id like any other,
+ * and a session whose `agent` is `osuki-coder` marks `osuki-coder`.
+ */
+export function effectiveAgentId(selected?: string, catalogDefault?: string): string {
+  const picked = selected?.trim();
+  if (picked) return picked;
+  const fallback = catalogDefault?.trim();
+  return fallback ? fallback : 'build';
+}
+
+/**
  * The model and agent of the sessions that ran most recently.
  *
  * Read per field and newest first, so a session that has a model but no agent
