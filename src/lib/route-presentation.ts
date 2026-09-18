@@ -13,7 +13,8 @@ export type SheetPresentation = 'sheet' | 'fullscreen';
  * still accepted for the one sheet whose window is neither of the two shapes.
  *
  * Android caps at three detents and ignores the rest, so none of these is
- * longer than two.
+ * longer than two -- and takes only the first of those two anyway. See
+ * `resolveDetents` for what a second detent costs a sheet's content there.
  */
 export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly number[];
 
@@ -65,13 +66,62 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'opencode-guide': 'sheet',
 };
 
-function resolveDetents(
-  detents: SheetDetents
+/**
+ * The detents a platform can actually honour, which on Android is one.
+ *
+ * react-native-screens lays an Android form sheet out at its **largest** detent
+ * whatever detent it is sitting at, and reaches a smaller one by sliding the
+ * whole view down the screen. Measured in 4.28.0:
+ *
+ * - `SheetDelegate.kt:216-225` gives `BottomSheetBehavior` `peekHeight =
+ *   detents[0] * H` and `maxHeight = detents[last] * H`.
+ * - Material's `BottomSheetBehavior.getChildMeasureSpec` then measures the
+ *   child at `min(parentHeight, maxHeight)` -- the *largest* detent -- and
+ *   `onLayoutChild` reaches the smaller one with `offsetTopAndBottom`.
+ * - `Screen.kt:247-263` pushes that same largest-detent height into Yoga as
+ *   `frameHeight`, and `RNSScreenComponentDescriptor.h:102-103` makes it the
+ *   shadow node's size. Nothing shrinks it when the detent changes:
+ *   `Screen.kt:563-566` sends the same `height` with only a new
+ *   `contentOffsetY`, and `getContentOriginOffset` is documented at
+ *   `LayoutableShadowNode.h:121-129` as applying to `getRelativeLayoutMetrics`
+ *   and `findNodeAtPoint` alone -- measure and hit-testing, never a mounted
+ *   view's position.
+ *
+ * So a `flex: 1` scroller inside a two-detent Android sheet is handed a
+ * viewport `(last - current) * H` taller than the sheet the reader can see,
+ * and that excess hangs below the screen edge. It cannot be scrolled to: a
+ * scroller's travel is `content - viewport`, and it is the *viewport's* own
+ * bottom that is off-screen. For `expandable` that is 18% of the screen
+ * permanently unreachable; for `[0.6, 1]` it is 40%.
+ *
+ * The owner found it on the workspace switcher -- a list whose last rows were
+ * cut off by the screen edge and would not come up -- but every multi-detent
+ * sheet in the table above has it, and the ones that look fine are the ones
+ * whose content never reaches the dead zone.
+ *
+ * There is no arrangement of children that fixes it, because Yoga is not told
+ * which detent the sheet is at; react-native-screens' own escape hatch for
+ * bottom-anchored content is `ScreenFooter`, which native code repositions by
+ * hand for exactly this reason (`ScreenFooter.kt:182-191`). What does fix it
+ * is a single detent: `useSingleDetent` (`BottomSheetBehaviorExt.kt:19-34`)
+ * pins the sheet expanded, so the laid-out height and the visible height are
+ * the same number and the overflow is nought.
+ *
+ * The **first** detent rather than the largest, so that nothing about how a
+ * sheet opens changes: every route above chose its opening height on purpose
+ * and said why. What the reader loses on Android is dragging a sheet taller --
+ * which today is not a feature but the only way to reach content that should
+ * never have been hidden. iOS resizes the presented view per detent and keeps
+ * the whole array.
+ */
+export function resolveDetents(
+  detents: SheetDetents,
+  platform: string | undefined = process.env.EXPO_OS
 ): NativeStackNavigationOptions['sheetAllowedDetents'] {
   if (detents === 'fitToContents') return 'fitToContents';
-  if (detents === 'full') return [1];
-  if (detents === 'expandable') return [0.82, 1];
-  return [...detents];
+  const heights = detents === 'full' ? [1] : detents === 'expandable' ? [0.82, 1] : [...detents];
+  if (platform === 'android' && heights.length > 1) return [heights[0]!];
+  return heights;
 }
 
 /** Route presentation is explicit: browsing is a page; short actions are sheets. */

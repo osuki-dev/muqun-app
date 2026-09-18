@@ -211,6 +211,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                   key={item.path}
                   title={item.name || item.path}
                   caption={item.path}
+                  captionKind="path"
                   leading={<Folder size={16} color={theme.colors.textSubtle} />}
                   onPress={() => choose(item.path)}
                 />
@@ -245,6 +246,10 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                     <SheetSceneRow
                       title={project.name || project.id}
                       caption={project.canonical}
+                      // Every workspace on one machine shares a prefix, so the
+                      // head is the part that is the same and the tail is the
+                      // part that is the answer.
+                      captionKind="path"
                       selected={activeDirectory === project.canonical}
                       leading={
                         <FolderGit2

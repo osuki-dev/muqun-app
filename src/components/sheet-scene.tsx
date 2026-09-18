@@ -375,6 +375,7 @@ export function SheetSceneQuietControl({
 export function SheetSceneRow({
   title,
   caption,
+  captionKind = 'text',
   meta,
   selected = false,
   disabled = false,
@@ -396,6 +397,24 @@ export function SheetSceneRow({
    * path, in the status colour, on the caption's own line.
    */
   caption?: ReactNode;
+  /**
+   * What kind of thing the caption is, and therefore which end of it to keep.
+   *
+   * Prose wraps to two lines and clips at the end, because the start of a
+   * sentence is the part that says what it is about. A filesystem path is the
+   * other way round: `/Users/ryu/Work/muqun/app-worktrees/opencode-c3` and
+   * `/Users/ryu/Work/muqun/app-worktrees/opencode-b2` differ only in the run
+   * that a tail clip throws away, and two rows reading
+   * `/Users/ryu/Work/muqun/app-worktre…` are two rows the reader cannot tell
+   * apart. So a path keeps its tail, loses its head, and stays on one line --
+   * wrapping a path to two lines breaks it at no meaningful boundary and
+   * doubles the row for a string the reader scans rather than reads.
+   *
+   * A prop on the row rather than a `numberOfLines`/`ellipsizeMode` pair at
+   * every call site: which end of a path matters is a fact about paths, and
+   * five sheets list them.
+   */
+  captionKind?: 'text' | 'path';
   /** Right-aligned in the row: a time, a token count, a diff stat. */
   meta?: ReactNode;
   selected?: boolean;
@@ -482,7 +501,11 @@ export function SheetSceneRow({
             {title}
           </Text>
           {caption ? (
-            <Text variant="caption" color={colors.textMuted} numberOfLines={2}>
+            <Text
+              variant="caption"
+              color={colors.textMuted}
+              numberOfLines={captionKind === 'path' ? 1 : 2}
+              ellipsizeMode={captionKind === 'path' ? 'head' : undefined}>
               {caption}
             </Text>
           ) : null}
