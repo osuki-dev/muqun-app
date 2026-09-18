@@ -630,10 +630,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     directory: activeDirectory,
     missing: workspaceMissing,
   });
+  /**
+   * What each session on this screen has already been told, so it is told once.
+   *
+   * State alone would be answered again on the way back: the reader steps from
+   * a session whose folder is gone to another one and returns, and the screen
+   * -- having cleared the notice for the session in between -- asks the four
+   * reads a second time and collects four more `404`s. A session's own answer
+   * is remembered for as long as the screen is up, and it is dropped the
+   * moment that session is somewhere else.
+   */
+  const workspaceMissingRef = useRef(new Map<string, WorkspaceMissingState>());
   const noteWorkspaceMissing = useCallback(
     (missing: WorkspaceMissing | undefined, asid: string | undefined) => {
       const next = workspaceMissingState(missing, asid);
       if (!next) return;
+      workspaceMissingRef.current.set(next.asid, next);
       setWorkspaceMissing((prev) =>
         prev && prev.asid === next.asid && sameDirectory(prev.directory, next.directory)
           ? prev
@@ -643,12 +655,32 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     []
   );
   useEffect(() => {
-    // The ground moved: whatever was said about the old one no longer applies.
-    setWorkspaceMissing((prev) =>
-      prev && badgeLoadsAllowed({ asid: activeAsid, directory: activeDirectory, missing: prev })
+    // The session or the ground changed. Either this session is known to be
+    // standing on a folder that is gone -- and says so without asking again --
+    // or whatever was said about it no longer describes where it is.
+    const remembered = activeAsid ? workspaceMissingRef.current.get(activeAsid) : undefined;
+    // Nothing is ever dropped from the map: an entry is only *used* when it
+    // still describes where the session is, so a session that moved somewhere
+    // real simply stops matching. Deleting on a mismatch looked tidier and was
+    // wrong -- the directory lags the session by a render on the way back into
+    // a session, and the entry was thrown away in that window and asked for
+    // again.
+    const applies =
+      remembered !== undefined &&
+      !badgeLoadsAllowed({ asid: activeAsid, directory: activeDirectory, missing: remembered });
+    setWorkspaceMissing((prev) => {
+      if (applies) {
+        return prev &&
+          prev.asid === remembered.asid &&
+          sameDirectory(prev.directory, remembered.directory)
+          ? prev
+          : remembered;
+      }
+      return prev &&
+        badgeLoadsAllowed({ asid: activeAsid, directory: activeDirectory, missing: prev })
         ? null
-        : prev
-    );
+        : prev;
+    });
   }, [activeAsid, activeDirectory]);
 
   /**
