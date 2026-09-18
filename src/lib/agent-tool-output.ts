@@ -146,20 +146,96 @@ export function toolInputRecord(input: unknown): Record<string, unknown> | null 
   try {
     return asRecord(JSON.parse(trimmed));
   } catch {
-    // A partial object is not yet an object. The header shows the tool name
-    // until the rest of it lands.
-    return null;
+    // A partial object is not yet an object -- but the part of it that has
+    // arrived is still an answer to "what is this call pointed at". The
+    // half-written *payload* never reaches a header; the values pulled out of
+    // it do, so a shell card fills in its command as the command streams.
+    const partial = partialJsonStrings(trimmed);
+    return Object.keys(partial).length > 0 ? partial : null;
   }
+}
+
+/**
+ * The string fields a half-written JSON object has got to so far.
+ *
+ * A scanner rather than a parser: `JSON.parse` is all-or-nothing and the input
+ * here is by definition not valid JSON yet. It walks the text once, takes
+ * every `"key": "value"` pair it completes, and takes the last value even when
+ * its closing quote has not arrived -- which is the interesting one, because
+ * that is the argument currently being written. Escapes are honoured so a
+ * command containing `\"` does not end a value early, and anything that is not
+ * a string value is skipped rather than guessed at.
+ *
+ * It never throws and it never loops unboundedly: every branch consumes at
+ * least one character.
+ */
+export function partialJsonStrings(text: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  let index = 0;
+
+  /** The string starting at `index`, and whether it was closed. */
+  const readString = (): { value: string; closed: boolean } => {
+    index += 1; // the opening quote
+    let value = '';
+    while (index < text.length) {
+      const char = text[index];
+      if (char === '\\') {
+        const next = text[index + 1];
+        if (next === undefined) {
+          index += 1;
+          return { value, closed: false };
+        }
+        value += next === 'n' ? '\n' : next === 't' ? '\t' : next;
+        index += 2;
+        continue;
+      }
+      if (char === '"') {
+        index += 1;
+        return { value, closed: true };
+      }
+      value += char;
+      index += 1;
+    }
+    return { value, closed: false };
+  };
+
+  while (index < text.length) {
+    if (text[index] !== '"') {
+      index += 1;
+      continue;
+    }
+    const key = readString();
+    if (!key.closed) break;
+    // Past the colon, if it has arrived.
+    while (index < text.length && (text[index] === ' ' || text[index] === '\t')) index += 1;
+    if (text[index] !== ':') continue;
+    index += 1;
+    while (index < text.length && (text[index] === ' ' || text[index] === '\t')) index += 1;
+    if (index >= text.length) break;
+    if (text[index] !== '"') {
+      // A number, a boolean, an object, a list: not something a header draws,
+      // and not something to guess at half-written. Skip to the next comma at
+      // this level, or give up if the object has not got that far.
+      const comma = text.indexOf(',', index);
+      if (comma < 0) break;
+      index = comma + 1;
+      continue;
+    }
+    const value = readString();
+    if (key.value) out[key.value] = value.value;
+    if (!value.closed) break;
+  }
+
+  return out;
 }
 
 /** The one-line target a tool is pointed at: the path, the pattern, the URL… */
 export function extractTarget(kind: ToolKind, input: unknown): string {
   const rec = toolInputRecord(input);
-  // Nothing readable yet. While a tool is `streaming`, its input is a *partial
-  // JSON string* -- `{"command": "sle` -- and returning that put the protocol's
-  // own half-written payload in the card's title for as long as the input took
-  // to arrive. The tool's name is already in the header; an empty target is the
-  // honest thing to show beside it until there is one.
+  // Nothing readable yet -- not even a key. While a tool is `streaming` its
+  // input is a *partial JSON string*, and what is drawn from it is the value
+  // (`git sta`), never the payload around it (`{"command": "git sta`): the
+  // protocol's own half-written text in a card's title is not a title.
   if (!rec) return '';
   switch (kind) {
     case 'shell':
@@ -487,6 +563,37 @@ function safeStringify(value: unknown, maxDepth: number): string {
     // a tool card is not the place to find out about it.
     return String(value);
   }
+}
+
+/** How long the argument line under a streaming header is allowed to get. */
+export const TOOL_ARGUMENT_LINE_CAP = 240;
+
+/**
+ * The arguments a call is being made with, on one line.
+ *
+ * Drawn under the header while the input is still arriving. The header's title
+ * is one line shared with the tool name and clipped in the middle, which is
+ * the wrong shape for a command being typed out a token at a time; this line
+ * is monospace, wraps, and holds every argument that has landed. `key value`
+ * pairs rather than JSON, because this is the one place the payload's own
+ * punctuation would read as the payload.
+ */
+export function toolArgumentLine(rec: Record<string, unknown> | null): string {
+  if (!rec) return '';
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(rec)) {
+    const text =
+      typeof value === 'string'
+        ? value
+        : typeof value === 'number' || typeof value === 'boolean'
+          ? String(value)
+          : '';
+    if (!text) continue;
+    parts.push(`${key} ${text}`);
+    if (parts.join('  ').length >= TOOL_ARGUMENT_LINE_CAP) break;
+  }
+  const line = parts.join('  ');
+  return line.length > TOOL_ARGUMENT_LINE_CAP ? line.slice(0, TOOL_ARGUMENT_LINE_CAP) : line;
 }
 
 // ---------------------------------------------------------------------------

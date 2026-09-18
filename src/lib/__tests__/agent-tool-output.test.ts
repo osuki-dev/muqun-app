@@ -15,6 +15,7 @@ import {
   filesFromContent,
   groupGrepMatches,
   parsePatchSections,
+  partialJsonStrings,
   parseToolOutput,
   parseToolQuestions,
   prettyJson,
@@ -25,7 +26,9 @@ import {
   stripSubagentEnvelope,
   subagentStatusFromMetadata,
   textFromContent,
+  toolArgumentLine,
   toolInputRecord,
+  TOOL_ARGUMENT_LINE_CAP,
   TOOL_OUTPUT_BYTE_CAP,
   TOOL_OUTPUT_MAX_LINES,
 } from '../agent-tool-output';
@@ -78,8 +81,17 @@ describe('toolInputRecord', () => {
     expect(toolInputRecord('{"path":"a"}')).toEqual({ path: 'a' });
   });
 
-  test('a partial JSON string -- the streaming state -- is not an object yet', () => {
-    expect(toolInputRecord('{"pattern": "**')).toBeNull();
+  test('a partial JSON string gives up the fields that have landed', () => {
+    // The streaming state. What is drawn from it is the *value*, never the
+    // half-written payload around it, so a card fills in as the input arrives.
+    expect(toolInputRecord('{"pattern": "**')).toEqual({ pattern: '**' });
+    expect(toolInputRecord('{"path":"/a","pattern":"*.ts')).toEqual({
+      path: '/a',
+      pattern: '*.ts',
+    });
+    // Not even a key yet: there is nothing to say but the tool's name.
+    expect(toolInputRecord('{"comm')).toBeNull();
+    expect(toolInputRecord('{')).toBeNull();
     expect(toolInputRecord('')).toBeNull();
     expect(toolInputRecord(7)).toBeNull();
     expect(toolInputRecord(null)).toBeNull();
@@ -117,11 +129,14 @@ describe('extractTarget and extractCaption', () => {
     expect(extractCaption('mcp', { anything: 1 })).toBe('');
   });
 
-  test('a partial input -- the streaming state -- has no target yet', () => {
-    // Not the half-written payload: the card shows its tool name until the
-    // input has actually arrived.
-    expect(extractTarget('shell', '{"command": "sle')).toBe('');
+  test('a partial input names what it can, and never the payload', () => {
+    // The value, not `{"command": "sle`: the protocol's own half-written text
+    // in a card's title is not a title.
+    expect(extractTarget('shell', '{"command": "sle')).toBe('sle');
     expect(extractCaption('shell', '{"command": "sle')).toBe('');
+    expect(extractCaption('shell', '{"command":"ls","workdir":"/tm')).toBe('/tm');
+    // Nothing readable yet, and nothing that is not a string at all.
+    expect(extractTarget('shell', '{"comm')).toBe('');
     expect(extractTarget('read', '')).toBe('');
     expect(extractTarget('mcp', 42)).toBe('');
   });
@@ -545,5 +560,68 @@ describe('the diffs a payload carries', () => {
     expect(diffFilesFromMetadata({ files: 'soon' })).toEqual([]);
     expect(diffFilesFromMetadata({ diff: 7 })).toEqual([]);
     expect(diffFilesFromMetadata({ files: [{ file: 'a' }] })).toEqual([]);
+  });
+});
+
+describe('an input that is still arriving', () => {
+  // The real one, from a captured `session.tool.input.ended` for `shell`.
+  const FULL = '{"workdir":"/home/ryu/.cache/tmp/scratchpad/probe","command":"echo probe-done"}';
+
+  test('every prefix of a real shell input is read without throwing', () => {
+    for (let length = 0; length <= FULL.length; length += 1) {
+      const prefix = FULL.slice(0, length);
+      expect(() => toolInputRecord(prefix)).not.toThrow();
+      expect(() => extractTarget('shell', prefix)).not.toThrow();
+      expect(() => toolArgumentLine(toolInputRecord(prefix))).not.toThrow();
+      const target = extractTarget('shell', prefix);
+      // Whatever is shown is always a prefix of the command itself, never a
+      // brace, a quote or a key from the payload around it.
+      expect('echo probe-done'.startsWith(target)).toBe(true);
+    }
+  });
+
+  test('the card fills in as the command lands, and is complete when it has', () => {
+    // The workdir lands first and the command has not started: no target yet.
+    expect(extractTarget('shell', FULL.slice(0, 50))).toBe('');
+    expect(extractTarget('shell', FULL.slice(0, 66))).toBe('echo');
+    expect(extractTarget('shell', FULL.slice(0, 70))).toBe('echo pro');
+    expect(extractTarget('shell', FULL)).toBe('echo probe-done');
+    // The workdir is the caption from the frame it completes in, whole rather
+    // than clipped: it is a finished value, not a growing one.
+    expect(extractCaption('shell', FULL.slice(0, 50))).toBe(
+      '/home/ryu/.cache/tmp/scratchpad/probe'
+    );
+  });
+
+  test('the argument line holds every field that has landed, in order', () => {
+    expect(toolArgumentLine(toolInputRecord(FULL.slice(0, 66)))).toBe(
+      'workdir /home/ryu/.cache/tmp/scratchpad/probe  command echo'
+    );
+    expect(toolArgumentLine(toolInputRecord(FULL))).toBe(
+      'workdir /home/ryu/.cache/tmp/scratchpad/probe  command echo probe-done'
+    );
+    expect(toolArgumentLine(null)).toBe('');
+  });
+
+  test('the scanner is not a parser and says so on every shape', () => {
+    // A value that is not a string is skipped rather than guessed at.
+    expect(partialJsonStrings('{"hidden":true,"path":".","pattern":"**/*"}')).toEqual({
+      path: '.',
+      pattern: '**/*',
+    });
+    // An escaped quote inside a command does not end the value early.
+    expect(partialJsonStrings('{"command":"echo \\"hi\\" > a.txt')).toEqual({
+      command: 'echo "hi" > a.txt',
+    });
+    expect(partialJsonStrings('')).toEqual({});
+    expect(partialJsonStrings('{')).toEqual({});
+    expect(partialJsonStrings('{"a"')).toEqual({});
+    expect(partialJsonStrings('{"a":')).toEqual({});
+    expect(partialJsonStrings('{"a":{"b":"c"}}')).toEqual({});
+  });
+
+  test('the argument line is bounded, whatever the engine sends', () => {
+    const long = toolArgumentLine({ command: 'x'.repeat(5000) });
+    expect(long.length).toBeLessThanOrEqual(TOOL_ARGUMENT_LINE_CAP);
   });
 });

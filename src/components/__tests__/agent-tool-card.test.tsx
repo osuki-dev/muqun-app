@@ -9,6 +9,8 @@ import {
   parsePatchSections,
   parseToolQuestions,
   questionAnswersFromMetadata,
+  toolArgumentLine,
+  toolInputRecord,
 } from '@/lib/agent-tool-output';
 
 /**
@@ -127,6 +129,48 @@ describe('the patch card', () => {
     expect(CARD).toContain('files={args.patchFiles}');
     // The chips count what was applied.
     expect(CARD).toContain("const counted = kind === 'patch' ? patchFiles : editFiles;");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// a call that has not run yet
+// ---------------------------------------------------------------------------
+
+describe('the pending card', () => {
+  // `input_partial` is `session.tool.input.delta` concatenated: the arguments
+  // as text, in the order the model wrote them.
+  const FULL = '{"workdir":"/home/ryu/probe","command":"echo probe-done"}';
+
+  test('the header names the call before the call is made', () => {
+    // Nothing but a brace: the tool name is all there is to say.
+    expect(extractTarget('shell', '{"workdir":"/home/ryu/pro')).toBe('');
+    // The workdir has landed, the command is still coming.
+    expect(extractCaption('shell', FULL.slice(0, 30))).toBe('/home/ryu/probe');
+    expect(extractTarget('shell', FULL.slice(0, 48))).toBe('echo pro');
+    expect(extractTarget('shell', FULL)).toBe('echo probe-done');
+  });
+
+  test('the argument line under the header is the arguments, not the payload', () => {
+    const line = toolArgumentLine(toolInputRecord(FULL.slice(0, 48)));
+    expect(line).toBe('workdir /home/ryu/probe  command echo pro');
+    expect(line).not.toContain('{');
+    expect(line).not.toContain('"');
+  });
+
+  test('the card reads input_partial and draws it only while pending', () => {
+    expect(CARD).toContain('part.input_partial ?? part.input');
+    expect(CARD).toContain('pending ? toolArgumentLine(input) : ');
+    expect(CARD).toContain('pending && argumentLine ?');
+    expect(CARD).toContain('<StreamingArguments text={argumentLine} />');
+  });
+
+  test('a half-written string never throws, at any length', () => {
+    for (let length = 0; length <= FULL.length; length += 1) {
+      const prefix = FULL.slice(0, length);
+      expect(() => toolInputRecord(prefix)).not.toThrow();
+      expect(() => toolArgumentLine(toolInputRecord(prefix))).not.toThrow();
+      expect(() => extractCaption('shell', prefix)).not.toThrow();
+    }
   });
 });
 

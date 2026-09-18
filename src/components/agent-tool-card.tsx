@@ -52,6 +52,7 @@ import {
   stripSubagentEnvelope,
   subagentStatusFromMetadata,
   textFromContent,
+  toolArgumentLine,
   toolInputRecord,
   type ToolKind,
   type ToolQuestion,
@@ -335,9 +336,23 @@ export const AgentToolCard = memo(function AgentToolCard({
   const colors = usePaneChatColors();
 
   const kind = useMemo(() => classifyTool(part.name), [part.name]);
-  const input = useMemo(() => toolInputRecord(part.input), [part.input]);
-  const target = useMemo(() => extractTarget(kind, part.input), [kind, part.input]);
-  const caption = useMemo(() => extractCaption(kind, part.input), [kind, part.input]);
+  /**
+   * The input, or as much of it as has arrived.
+   *
+   * A pending card used to be a tool name and a pulse: no title, no body, no
+   * chevron, because the input was still streaming and the whole of it was a
+   * partial JSON string. `input_partial` is that text as the gateway has
+   * concatenated it so far, and the values already in it are what the header
+   * is drawn from -- so a shell card names its command while the command is
+   * still being written, rather than a second after it has finished running.
+   */
+  const inputSource = useMemo(() => {
+    if (toolInputRecord(part.input)) return part.input;
+    return part.input_partial ?? part.input;
+  }, [part.input, part.input_partial]);
+  const input = useMemo(() => toolInputRecord(inputSource), [inputSource]);
+  const target = useMemo(() => extractTarget(kind, inputSource), [kind, inputSource]);
+  const caption = useMemo(() => extractCaption(kind, inputSource), [kind, inputSource]);
 
   // `content` is the real result; `output` is the same text flattened and is
   // what an older gateway sends on its own.
@@ -349,6 +364,9 @@ export const AgentToolCard = memo(function AgentToolCard({
   const parsed = useMemo(() => parseToolOutput(part.output), [part.output]);
 
   const pending = isToolPending(part.state);
+  // Only while it is pending: once the call has run, the result is what the
+  // card is about and its arguments are in the body.
+  const argumentLine = useMemo(() => (pending ? toolArgumentLine(input) : ''), [pending, input]);
   const durationMs = toolDurationMs(part.time);
   const truncated = part.truncated === true || parsed.truncated;
 
@@ -669,7 +687,11 @@ export const AgentToolCard = memo(function AgentToolCard({
       // An edit's diff and a read's images are the content, not a detail
       // behind an expand.
       preview={
-        kind === 'edit' || kind === 'patch' ? (
+        // While the input is still arriving there is no result to preview and
+        // the arguments are the only thing there is to say.
+        pending && argumentLine ? (
+          <StreamingArguments text={argumentLine} />
+        ) : kind === 'edit' || kind === 'patch' ? (
           body
         ) : files.length > 0 ? (
           <ToolFiles files={files} onPreviewImage={onPreviewImage} onOpenFile={onOpenFile} />
@@ -915,6 +937,22 @@ function syntheticPatch(path: string, oldString?: string, newString?: string): s
   if (newString) for (const line of newString.split('\n')) lines.push(`+${line}`);
   return lines.join('\n');
 }
+
+/**
+ * The arguments of a call that has not run yet, as they arrive.
+ *
+ * Monospace and wrapping, because it is a payload being written rather than a
+ * sentence: the header's one clipped line cannot show a command taking shape,
+ * and two lines of it can.
+ */
+const StreamingArguments = memo(function StreamingArguments({ text }: { text: string }) {
+  const colors = usePaneChatColors();
+  return (
+    <Text numberOfLines={2} style={[styles.mono, { color: colors.muted }]}>
+      {text}
+    </Text>
+  );
+});
 
 const ShellCommand = memo(function ShellCommand({ command }: { command: string }) {
   const colors = usePaneChatColors();

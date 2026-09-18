@@ -856,6 +856,16 @@ export interface ToolPart {
   /** Derived by the gateway; absent for a tool it does not recognise. */
   title?: string;
   input: unknown;
+  /**
+   * The input so far, while `state` is `streaming`.
+   *
+   * `session.tool.input.delta` carries the arguments in as text, and the
+   * gateway concatenates them onto this field rather than dropping them: it is
+   * the only thing a pending card has to say what the call will be. Not JSON
+   * yet -- it is whatever prefix has arrived -- so nothing may `JSON.parse` it
+   * and expect an answer.
+   */
+  input_partial?: string;
   output?: unknown;
   content: ToolContent[];
   /** OpenCode's own metadata, verbatim and camelCase. */
@@ -1022,6 +1032,8 @@ function parseToolPart(rec: Record<string, unknown>): ToolPart | null {
   };
   const title = pickString(rec, ['title']);
   if (title) part.title = title;
+  const inputPartial = pickString(rec, ['input_partial', 'inputPartial']);
+  if (inputPartial) part.input_partial = inputPartial;
   if (rec.output !== undefined) part.output = rec.output;
   const error = parseAgentError(rec.error);
   if (error) {
