@@ -69,6 +69,7 @@ import {
   removeUserFontFile,
   SYSTEM_FONT_SLOT,
   UserFontError,
+  userFontSource,
   USER_FONT_MAX_BYTES,
   type FontSlot,
   type FontSlotId,
@@ -493,8 +494,20 @@ function FontSlotGroup({
       <SheetSceneGroupHeading title={heading} first={first} testID={`font-group-${id}`} />
       <SheetSceneRow
         title={installed ? installed.label : t`System font`}
-        caption={installed ? installed.source : description}
-        captionKind={installed ? 'path' : 'text'}
+        /*
+         * The title is what the face calls itself and the caption is where it
+         * came from, which is the order a reader asks the two questions in.
+         *
+         * The caption used to be `installed.source` raw, which is the string
+         * the app stores to recognise a re-paste of the same URL -- a whole
+         * CDN path with a cache key on the end, or on Android a Storage Access
+         * Framework document URI. Neither is a place. `userFontSource` reduces
+         * a URL to its host and a picked file to its own name, and answers
+         * `null` for an opaque handle, where the honest caption is the sentence
+         * about the slot rather than a document id dressed up as provenance.
+         */
+        caption={installed ? (userFontSource(installed.source) ?? description) : description}
+        captionKind={installed && userFontSource(installed.source) ? 'path' : 'text'}
         selected
         // The slot is the label and whatever is in it is the value, which is
         // the one arrangement that reads correctly in every state: "Interface,
