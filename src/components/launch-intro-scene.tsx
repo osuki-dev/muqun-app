@@ -113,6 +113,9 @@ const WIPE_STALL_DRIFT = 0.08;
 /** How far past its final size the hero starts, when Home never reported a rect. */
 const HERO_FALLBACK_SCALE = 1.08;
 
+/** Off while the launch is being redesigned; see the note where it is read. */
+const LAUNCH_SCENE_CHOREOGRAPHY = false;
+
 export function LaunchSceneIntro({
   phase,
   finish,
@@ -125,7 +128,11 @@ export function LaunchSceneIntro({
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const { width, height } = useWindowDimensions();
-  const reduced = useReducedMotion();
+  // The owner rejected this choreography (a solid cover in the pack's primary
+  // hides everything it was meant to show). Until the replacement lands, the
+  // launch takes the quiet path every reader with Reduce Motion already gets:
+  // a short cross-fade from the launch frame into Home, nothing covering it.
+  const reduced = useReducedMotion() || !LAUNCH_SCENE_CHOREOGRAPHY;
 
   const beats = useMemo(
     () => (reduced ? reducedLaunchIntroTimeline(DURATION) : launchIntroTimeline(DURATION)),
