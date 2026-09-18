@@ -586,16 +586,58 @@ export function editFilesFromMetadata(metadata: Record<string, unknown>): FileDi
     const rec = asRecord(entry);
     if (!rec) continue;
     const path = pickString(rec, ['file', 'path', 'filePath', 'file_path']);
-    const patch = typeof rec.patch === 'string' ? rec.patch : '';
+    const patch =
+      typeof rec.patch === 'string' ? rec.patch : typeof rec.diff === 'string' ? rec.diff : '';
     if (!path || !patch) continue;
+    // `FileDiff.Info.status` -- added, modified, deleted -- is what OpenCode
+    // says happened. Dropping it left every row to be classified by reading
+    // the patch header, and a modified file whose patch covers the whole file
+    // read as "Added".
+    const status = pickString(rec, ['status', 'change', 'change_type', 'changeType']);
     out.push({
       path,
       patch,
       additions: typeof rec.additions === 'number' ? rec.additions : 0,
       deletions: typeof rec.deletions === 'number' ? rec.deletions : 0,
+      ...(status ? { status } : {}),
     });
   }
   return out;
+}
+
+/**
+ * The diffs any payload carries, however it carries them.
+ *
+ * `edit` and `write` answer with `metadata.files`; `patch` answers with that
+ * *and* a flat `{filepath, diff}` pair, and a permission ask for any of the
+ * three carries whichever the tool would have returned. One reading, so a
+ * permission card and a tool card cannot show two different diffs for the same
+ * change.
+ */
+export function diffFilesFromMetadata(metadata: Record<string, unknown>): FileDiffItem[] {
+  const files = editFilesFromMetadata(metadata);
+  if (files.length > 0) return files;
+  const patch = pickString(metadata, ['diff', 'patch']);
+  if (!patch) return [];
+  const path = pickString(metadata, ['filepath', 'filePath', 'file', 'path', 'file_path']) ?? '';
+  return [
+    {
+      path,
+      patch,
+      additions: countMarkedLines(patch, '+'),
+      deletions: countMarkedLines(patch, '-'),
+    },
+  ];
+}
+
+/** Added or removed lines of a patch, not counting its `+++`/`---` headers. */
+function countMarkedLines(patch: string, marker: '+' | '-'): number {
+  const header = marker.repeat(3);
+  let count = 0;
+  for (const line of patch.split('\n')) {
+    if (line.startsWith(marker) && !line.startsWith(header)) count += 1;
+  }
+  return count;
 }
 
 /** The exit status a `shell` reports in its own metadata. */

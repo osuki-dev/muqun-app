@@ -5,6 +5,7 @@ import {
   capLines,
   capText,
   classifyTool,
+  diffFilesFromMetadata,
   editFilesFromMetadata,
   executeToolCalls,
   extractCaption,
@@ -493,5 +494,56 @@ describe('the question tool', () => {
     expect(parseToolQuestions({ questions: 'soon' })).toEqual([]);
     expect(parseToolQuestions({ questions: [null, 7, {}, { options: 'no' }] })).toEqual([]);
     expect(questionAnswersFromMetadata({ answers: [null, 7, ['a', 3]] })).toEqual([[], [], ['a']]);
+  });
+});
+
+describe('the diffs a payload carries', () => {
+  // Lifted from a real `session.tool.success` for `edit`: `metadata.files` is
+  // `FileDiff.Info[]`, and OpenCode states the status rather than leaving the
+  // patch header to be guessed at.
+  const EDIT_METADATA = {
+    files: [
+      {
+        file: 'out.txt',
+        patch:
+          'Index: out.txt\n===================================================================\n--- out.txt\n+++ out.txt\n@@ -1,1 +1,1 @@\n-ok\n\\ No newline at end of file\n+okay\n\\ No newline at end of file\n',
+        status: 'modified',
+        additions: 1,
+        deletions: 1,
+      },
+    ],
+    truncated: false,
+  };
+
+  test('the status OpenCode stated survives, rather than being read back out of the patch', () => {
+    const files = editFilesFromMetadata(EDIT_METADATA);
+    expect(files).toHaveLength(1);
+    expect(files[0].path).toBe('out.txt');
+    expect(files[0].status).toBe('modified');
+    expect(files[0].additions).toBe(1);
+    expect(files[0].deletions).toBe(1);
+  });
+
+  test('a permission ask for an edit carries the same files[]', () => {
+    expect(diffFilesFromMetadata(EDIT_METADATA)).toEqual(editFilesFromMetadata(EDIT_METADATA));
+  });
+
+  test("a patch's flat {filepath, diff} is read when there is no files[]", () => {
+    const files = diffFilesFromMetadata({
+      filepath: 'src/a.ts',
+      diff: '@@ -1,2 +1,2 @@\n-const a = 1;\n+const a = 2;\n b',
+    });
+    expect(files).toHaveLength(1);
+    expect(files[0].path).toBe('src/a.ts');
+    // Counted off the patch, because a flat pair carries no totals of its own.
+    expect(files[0].additions).toBe(1);
+    expect(files[0].deletions).toBe(1);
+  });
+
+  test('a metadata with no diff in it at all is no diff, not a throw', () => {
+    expect(diffFilesFromMetadata({})).toEqual([]);
+    expect(diffFilesFromMetadata({ files: 'soon' })).toEqual([]);
+    expect(diffFilesFromMetadata({ diff: 7 })).toEqual([]);
+    expect(diffFilesFromMetadata({ files: [{ file: 'a' }] })).toEqual([]);
   });
 });
