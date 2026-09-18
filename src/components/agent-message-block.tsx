@@ -989,9 +989,11 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
 
   if (entries.length === 0) return null;
 
-  // One plate per row, never a plate inside a plate. Prose and the thought
-  // block share a plate; a tool card, a diff, a shell or a todo list carries
-  // its own surface and is laid out as a row of its own between them.
+  // One plate per row, never a plate inside a plate. A thought block sits on a
+  // plate of its own, apart from the prose it led to, so the reasoning reads
+  // as a separate step and the answer stands alone; a tool card, a diff, a
+  // shell or a todo list carries its own surface and is laid out as a row of
+  // its own between them.
   const rows: ReactNode[] = [];
   let run: ReactNode[] = [];
   let runKey = '';
@@ -1006,8 +1008,12 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   };
   entries.forEach((entry, index) => {
     if (entry.kind === 'reasoning') {
-      if (run.length === 0) runKey = entry.key;
-      run.push(<ReasoningRunBlock key={entry.key} run={entry.run} />);
+      flush();
+      rows.push(
+        <View key={`thought:${entry.key}`} style={[styles.messageBlock, plate]}>
+          <ReasoningRunBlock key={entry.key} run={entry.run} />
+        </View>
+      );
       return;
     }
     const drawn = renderTimelinePart(entry.item, {
