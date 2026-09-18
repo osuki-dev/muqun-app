@@ -33,6 +33,7 @@ import Animated, {
 
 import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
+import { EngineFailureText } from '@/components/engine-failure-text';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
 import { AgentToolCard } from '@/components/agent-tool-card';
@@ -40,6 +41,7 @@ import { AgentPermissionCard } from '@/components/agent-permission-card';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { InlineDiffRows } from '@/components/diff-rows';
 import { useRelativeTime } from '@/hooks/use-relative-time';
+import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { buildTimelineEntries, type ReasoningRun, type TimelineEntry } from '@/lib/agent-reasoning';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import {
@@ -49,6 +51,7 @@ import {
   type AssetImageSource,
 } from '@/lib/gateway-client';
 import { fadeIn, timing } from '@/lib/motion';
+import { plainFromMarkdown } from '@/lib/markdown-text';
 import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
 import {
   formatModelName,
@@ -183,6 +186,7 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
   const { t } = useLingui();
   const theme = useThemeTokens();
   const plate = useTranscriptPlate();
+  const markdownStyle = useCompactMarkdownStyle('muted');
 
   const [expanded, setExpanded] = useState(false);
   const notice = useMemo((): { Icon: typeof Cpu; text: string; label?: string } | null => {
@@ -226,6 +230,8 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
     }
   }, [part, t]);
 
+  const preview = useMemo(() => plainFromMarkdown(notice?.text ?? ''), [notice?.text]);
+
   if (!notice) return null;
   const { Icon, text, label } = notice;
   // A long note is never cut short for good: two lines closed, everything
@@ -233,35 +239,60 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
   const foldable = label !== undefined || text.length > 120 || text.includes('\n');
 
   return (
-    <Pressable
-      accessibilityRole={foldable ? 'button' : undefined}
-      accessibilityState={foldable ? { expanded } : undefined}
-      onPress={foldable ? () => setExpanded((v) => !v) : undefined}
-      style={[styles.noticeRow, styles.noticeBlock, plate]}>
-      <Icon size={11} color={theme.colors.textMuted} style={styles.noticeIcon} />
-      <View style={styles.noticeCopy}>
-        {label ? (
-          <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
-            {label}
-          </Text>
+    // The plate holds two things now, so the fold is a row rather than the
+    // whole block: an opened note is a native markdown view, and a tap that
+    // lands in it belongs to the selection, not to the fold.
+    <View style={[styles.noticeBlock, plate, expanded ? styles.noticeOpen : null]}>
+      <Pressable
+        accessibilityRole={foldable ? 'button' : undefined}
+        accessibilityState={foldable ? { expanded } : undefined}
+        onPress={foldable ? () => setExpanded((v) => !v) : undefined}
+        style={styles.noticeRow}>
+        <Icon size={11} color={theme.colors.textMuted} style={styles.noticeIcon} />
+        <View style={styles.noticeCopy}>
+          {label ? (
+            <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
+              {label}
+            </Text>
+          ) : null}
+          {/* The closed note, and the line an opened one is folded back by.
+              The engine writes these in markdown -- "## Search", a bullet per
+              tool -- and a preview is not rendering it, so the syntax comes
+              off rather than being read as punctuation. A tagged note keeps
+              its tag as the title and needs no second line when open. */}
+          {label && expanded ? null : (
+            <Text
+              variant="caption"
+              color={theme.colors.textMuted}
+              numberOfLines={expanded ? 1 : 2}
+              style={styles.noticeText}>
+              {preview}
+            </Text>
+          )}
+        </View>
+        {foldable ? (
+          <ChevronDown
+            size={12}
+            color={theme.colors.textSubtle}
+            style={expanded ? styles.chevronOpen : undefined}
+          />
         ) : null}
-        <Text
-          variant="caption"
-          color={theme.colors.textMuted}
-          selectable={expanded}
-          numberOfLines={expanded ? undefined : 2}
-          style={styles.noticeText}>
-          {text}
-        </Text>
-      </View>
-      {foldable ? (
-        <ChevronDown
-          size={12}
-          color={theme.colors.textSubtle}
-          style={expanded ? styles.chevronOpen : undefined}
-        />
+      </Pressable>
+
+      {/* Opened, it is the note itself: the same markdown the answer reads,
+          in the muted ink a notice is set in. */}
+      {expanded ? (
+        <Animated.View entering={fadeIn('micro')} style={styles.noticeBody}>
+          <BoundedMarkdown
+            markdown={text}
+            markdownStyle={markdownStyle}
+            containerStyle={styles.markdownContainer}
+            openLinks={false}
+            latexMath
+          />
+        </Animated.View>
       ) : null}
-    </Pressable>
+    </View>
   );
 });
 
@@ -410,11 +441,10 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
 
       {failed && part.error?.message ? (
         // The engine's reason sits on a plate like every other paragraph; red
-        // ink straight on the wallpaper was the one line without one.
+        // ink straight on the wallpaper was the one line without one. A reason
+        // that arrives as a small document is read as one.
         <View style={[styles.messageBlock, plate]}>
-          <Text variant="caption" selectable color={theme.colors.danger} style={styles.noticeText}>
-            {part.error.message}
-          </Text>
+          <EngineFailureText message={part.error.message} />
         </View>
       ) : null}
 
@@ -1164,6 +1194,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
+  // Closed, the plate hugs its two lines; open, it is a document and takes
+  // the row's full width like every other block that holds prose.
+  noticeOpen: { alignSelf: 'stretch' },
+  noticeBody: { marginTop: 4 },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
   noticeRow: {
     flexDirection: 'row',

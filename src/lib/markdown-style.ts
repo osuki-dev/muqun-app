@@ -53,21 +53,27 @@ function syntaxColors(colors: Colors): NonNullable<MarkdownStyle['codeBlock']>['
  * from a file looks the same as the transcript it was mentioned in.
  */
 /**
- * The style a thought block reads its reasoning in.
+ * The answer's markdown, at the size the surface's chrome is set in.
  *
- * The same markdown as the answer -- a model numbers its plans and backticks
- * its identifiers while it thinks, and a flat run of those was the complaint --
- * but in the muted ink and at the meta size, so it stays a note beside the
- * answer rather than a second answer. Every block that carries its own colour
- * goes muted with the paragraph; code and quote fills stay, they are what make
- * a fragment legible.
+ * Everything in the transcript that is neither the answer nor a terminal reads
+ * through this: a thought, a notice, a skill's text, a permission's note, a
+ * form's description, a checklist item. All of it is markdown for the same
+ * reason the answer is -- a model numbers its plans and backticks its
+ * identifiers wherever it is writing -- and all of it is set at the meta size
+ * so it stays chrome beside the answer rather than a second answer.
+ *
+ * `ink` is the one thing that varies, and it comes from the palette at the call
+ * site: muted for a note, the body colour for something that is content in its
+ * own right, danger for a failure. Every block that carries its own colour goes
+ * with it; code and quote fills stay the answer's, they are what make a
+ * fragment legible. There is no thematic break: a rule drawn across a card is
+ * the card's own edge again.
  */
-export function createThoughtMarkdownStyle(colors: Colors): MarkdownStyle {
+export function createCompactMarkdownStyle(colors: Colors, ink: string): MarkdownStyle {
   const base = createMarkdownStyle(colors);
-  const muted = colors.textMuted;
   const size = AGENT_TYPE.meta.size;
   const lineHeight = AGENT_TYPE.mono.lineHeight;
-  const quiet = { color: muted, fontSize: size, lineHeight, marginBottom: 6 };
+  const quiet = { color: ink, fontSize: size, lineHeight, marginBottom: 6 };
   return {
     ...base,
     paragraph: { ...base.paragraph, ...quiet },
@@ -77,21 +83,33 @@ export function createThoughtMarkdownStyle(colors: Colors): MarkdownStyle {
     h4: { ...base.h4, ...quiet },
     h5: { ...base.h5, ...quiet },
     h6: { ...base.h6, ...quiet },
-    strong: { color: muted },
-    em: { color: muted },
+    strong: { color: ink },
+    em: { color: ink },
+    strikethrough: { color: ink },
     list: { ...base.list, ...quiet },
     blockquote: { ...base.blockquote, ...quiet },
-    code: { ...base.code, color: muted, fontSize: AGENT_TYPE.micro.size },
+    code: { ...base.code, color: ink, fontSize: AGENT_TYPE.micro.size },
     codeBlock: {
       ...base.codeBlock,
-      color: muted,
+      color: ink,
       fontSize: AGENT_TYPE.micro.size,
       lineHeight: AGENT_TYPE.micro.lineHeight,
       marginBottom: 8,
     },
-    table: { ...base.table, ...quiet, headerTextColor: muted },
+    table: { ...base.table, ...quiet, headerTextColor: ink },
     thematicBreak: { color: 'transparent', height: 0, marginTop: 0, marginBottom: 0 },
   };
+}
+
+/**
+ * The style a thought block reads its reasoning in: the compact style, muted.
+ *
+ * Named because a thought is the one of these the reader knows by name, and
+ * because `agent-reasoning-block.tsx` asks for the thought's ink rather than
+ * for a colour.
+ */
+export function createThoughtMarkdownStyle(colors: Colors): MarkdownStyle {
+  return createCompactMarkdownStyle(colors, colors.textMuted);
 }
 
 export function createMarkdownStyle(colors: Colors): MarkdownStyle {
