@@ -445,17 +445,20 @@ export function LaunchSceneIntro({
         no control read out -- it is over before a screen reader finishes
         saying so.
 
-        It stops taking touches the moment the sheet starts leaving, so a tap
-        lands on the app rather than on a dissolving cover.
+        It is unmounted the moment the sheet starts leaving, rather than
+        merely having its `pointerEvents` turned off, so a tap during the exit
+        lands on the app rather than on a dissolving cover -- and so there is
+        no question of a prop being honoured.
       */}
-      <Pressable
-        accessible={false}
-        importantForAccessibility="no"
-        onPress={skip}
-        pointerEvents={phase === 'visible' ? 'auto' : 'none'}
-        style={StyleSheet.absoluteFill}
-        testID="launch-scene-skip"
-      />
+      {phase === 'visible' ? (
+        <Pressable
+          accessible={false}
+          importantForAccessibility="no"
+          onPress={skip}
+          style={StyleSheet.absoluteFill}
+          testID="launch-scene-skip"
+        />
+      ) : null}
     </Animated.View>
   );
 }
