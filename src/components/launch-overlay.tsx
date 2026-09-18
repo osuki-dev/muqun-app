@@ -2,7 +2,7 @@ import { SplashOverlay } from '@osuki-dev/react-native-splash';
 import { useState } from 'react';
 
 import { LaunchIntro } from '@/components/launch-intro';
-import { LaunchIntroCyberpunk } from '@/components/launch-intro-cyberpunk';
+import { LaunchSceneIntro } from '@/components/launch-intro-scene';
 import { hasSeenLaunchIntro } from '@/lib/launch-intro-seen';
 
 /**
@@ -17,12 +17,12 @@ import { hasSeenLaunchIntro } from '@/lib/launch-intro-seen';
  *    button; `ready` is that button, so the overlay stays for as long as the
  *    reader reads, and the safety cap is off (`timeout={0}`) because a cap
  *    would cut someone off mid-sentence.
- *  - **The boot sequence**, every launch after. Nothing to wait for, so it
- *    runs its own short sequence over the pack's launch artwork and says when
- *    it is done.
+ *  - **The opening**, every launch after. Nothing to wait for, so it runs
+ *    the theme pack's own short opening -- the world arriving, the picture
+ *    landing where Home keeps it -- and says when it is done.
  *
  * Both branches now end the same way: the child decides, `ready` is the
- * child's `onDone`, and `minimumDuration` is 0. The boot sequence owns its own
+ * child's `onDone`, and `minimumDuration` is 0. The opening owns its own
  * clock (`launch-intro-timeline.ts`) rather than having it split between a
  * hold here and an animation there -- which is what lets a tap end it early,
  * something a `minimumDuration` the overlay is counting down cannot do.
@@ -44,7 +44,7 @@ export function LaunchOverlay() {
       timeout={seen ? undefined : 0}>
       {(context) =>
         seen ? (
-          <LaunchIntroCyberpunk {...context} onDone={() => setBootDone(true)} />
+          <LaunchSceneIntro {...context} onDone={() => setBootDone(true)} />
         ) : (
           <LaunchIntro {...context} onDone={() => setIntroDone(true)} />
         )
