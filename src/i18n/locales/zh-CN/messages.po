@@ -763,6 +763,7 @@ msgstr "需要相机访问权限"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -839,6 +840,7 @@ msgid "Checking system authentication…"
 msgstr "正在检查系统验证…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "检查中…"
 
@@ -1122,6 +1124,10 @@ msgstr "正在通过 SSH 连接…"
 msgid "Connecting to {address}"
 msgstr "正在连接到 {address}"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "连接中…"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "上下文"
@@ -1321,6 +1327,10 @@ msgstr "复制安装命令"
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
 msgstr "复制公钥"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "复制中…"
 
 #: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
@@ -2266,6 +2276,7 @@ msgstr "安装软件包"
 msgid "Install command copied"
 msgstr "已复制安装命令"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "已安装"
@@ -2274,6 +2285,10 @@ msgstr "已安装"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "正在安装图片"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "安装中…"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -4642,7 +4657,7 @@ msgstr "这是内置的示例 shell，也是这里唯一的主机。添加你自
 
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
-msgstr "这个链接打开的是网页，不是字体文件。请使用文件的直接下载链接。"
+msgstr "这个链接打开的是网页，不是字体文件。请使用文件的直接下载链接"
 
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."

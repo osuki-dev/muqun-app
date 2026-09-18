@@ -763,6 +763,7 @@ msgstr "Camera access needed"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -839,6 +840,7 @@ msgid "Checking system authentication…"
 msgstr "Checking system authentication…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "Checking…"
 
@@ -1122,6 +1124,10 @@ msgstr "Connecting through SSH…"
 msgid "Connecting to {address}"
 msgstr "Connecting to {address}"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "Connecting…"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Context"
@@ -1321,6 +1327,10 @@ msgstr "Copy the install command"
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
 msgstr "Copy the public key"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "Copying…"
 
 #: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
@@ -2266,6 +2276,7 @@ msgstr "Install a package"
 msgid "Install command copied"
 msgstr "Install command copied"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "Installed"
@@ -2274,6 +2285,10 @@ msgstr "Installed"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Installing images"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "Installing…"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"

@@ -763,6 +763,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -839,6 +840,7 @@ msgid "Checking system authentication…"
 msgstr "กำลังตรวจสอบการยืนยันตัวตนของระบบ…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "กำลังตรวจสอบ…"
 
@@ -1122,6 +1124,10 @@ msgstr "กำลังเชื่อมต่อผ่าน SSH…"
 msgid "Connecting to {address}"
 msgstr "กำลังเชื่อมต่อกับ {address}"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "กำลังเชื่อมต่อ…"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "บริบท"
@@ -1321,6 +1327,10 @@ msgstr "คัดลอกคำสั่งติดตั้ง"
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
 msgstr "คัดลอกคีย์สาธารณะ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "กำลังคัดลอก…"
 
 #: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
@@ -2266,6 +2276,7 @@ msgstr "ติดตั้งแพ็กเกจ"
 msgid "Install command copied"
 msgstr "คัดลอกคำสั่งติดตั้งแล้ว"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "ติดตั้งแล้ว"
@@ -2274,6 +2285,10 @@ msgstr "ติดตั้งแล้ว"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "กำลังติดตั้งรูปภาพ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "กำลังติดตั้ง…"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"

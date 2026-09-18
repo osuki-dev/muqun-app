@@ -763,6 +763,7 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -839,6 +840,7 @@ msgid "Checking system authentication…"
 msgstr "시스템 인증 확인 중…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "확인 중…"
 
@@ -1122,6 +1124,10 @@ msgstr "SSH를 통해 연결하는 중…"
 msgid "Connecting to {address}"
 msgstr "{address}에 연결하는 중"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "연결 중…"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "컨텍스트"
@@ -1321,6 +1327,10 @@ msgstr "설치 명령어 복사"
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
 msgstr "공개 키를 복사"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "복사 중…"
 
 #: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
@@ -2266,6 +2276,7 @@ msgstr "패키지 설치"
 msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "설치됨"
@@ -2274,6 +2285,10 @@ msgstr "설치됨"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "이미지 설치 중"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "설치 중…"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -4642,7 +4657,7 @@ msgstr "이것은 함께 제공되는 데모 셸이며, 여기 있는 유일한 
 
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
-msgstr "이 링크는 글꼴 파일이 아니라 웹 페이지를 엽니다. 파일의 직접 다운로드 링크를 사용하세요."
+msgstr "이 링크는 글꼴 파일이 아니라 웹 페이지를 엽니다. 파일의 직접 다운로드 링크를 사용하세요"
 
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."

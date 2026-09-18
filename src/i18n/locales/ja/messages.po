@@ -763,6 +763,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -839,6 +840,7 @@ msgid "Checking system authentication…"
 msgstr "システム認証を確認中…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "確認中…"
 
@@ -1122,6 +1124,10 @@ msgstr "SSH 経由で接続しています…"
 msgid "Connecting to {address}"
 msgstr "{address} に接続しています"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "接続中…"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "コンテキスト"
@@ -1321,6 +1327,10 @@ msgstr "インストールコマンドをコピー"
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
 msgstr "公開鍵をコピーする"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "コピー中…"
 
 #: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
@@ -2266,6 +2276,7 @@ msgstr "パッケージをインストールする"
 msgid "Install command copied"
 msgstr "インストールコマンドをコピーしました"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "インストール済み"
@@ -2274,6 +2285,10 @@ msgstr "インストール済み"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "画像をインストールしています"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "インストール中…"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -4642,7 +4657,7 @@ msgstr "これは同梱のデモシェルで、ここにある唯一のホスト
 
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
-msgstr "そのリンクはフォントファイルではなく Web ページを開きます。ファイルの直接ダウンロードリンクを使ってください。"
+msgstr "そのリンクはフォントファイルではなく Web ページを開きます。ファイルの直接ダウンロードリンクを使ってください"
 
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
