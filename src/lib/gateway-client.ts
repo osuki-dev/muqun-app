@@ -55,6 +55,11 @@ import {
 } from './gateway-entities';
 import { GatewayTransportRefusalError } from './gateway-refusal';
 import {
+  decodeSealedBody,
+  ENVELOPE_ACCEPT_ENCODINGS,
+  ENVELOPE_ACCEPT_HEADER,
+} from './envelope-encoding';
+import {
   encodeMultipart,
   multipartBoundary,
   multipartContentType,
@@ -224,6 +229,12 @@ interface EncryptedResponsePayload {
   status: number;
   headers: Record<string, string>;
   body: string;
+  /**
+   * Set when the gateway took up `X-Muqun-Envelope-Accept` and compressed the
+   * body before sealing it. Optional in both directions; see
+   * `envelope-encoding`, which also reads the header-map spellings of it.
+   */
+  content_encoding?: string;
 }
 
 function base64Url(value: Uint8Array): string {
@@ -382,6 +393,14 @@ async function encryptedGatewayFetch(
       'Content-Type': 'application/json',
       'X-Muqun-Transport': '1',
       'X-Muqun-Device': deviceId,
+      // Compression cannot happen outside the envelope -- the body on the wire
+      // is ciphertext, and ciphertext does not compress -- so it is offered
+      // for the inside of it. A gateway that has never heard of this header
+      // answers exactly as it always did. Deliberately not `Accept-Encoding`:
+      // Cronet and NSURLSession own that one and decompress transparently, and
+      // setting it by hand is how an app ends up holding a body the platform
+      // has stopped decoding for it.
+      [ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS,
       ...(bodylessMethod
         ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
         : {}),
@@ -417,7 +436,11 @@ async function encryptedGatewayFetch(
   ) {
     throw new Error('Gateway returned an invalid encrypted response.');
   }
-  const bytes = fromBase64Url(payload.body);
+  // Inflated before the response is rebuilt, so every caller above reads the
+  // body the gateway meant to send and no one downstream has to know whether
+  // this connection compressed anything. `headers` comes back describing the
+  // bytes that come back with it.
+  const { bytes, headers: answerHeaders } = decodeSealedBody(fromBase64Url(payload.body), payload);
   const noBody = answerHasNoBody(method, payload.status);
   // Use the same response implementation as the request transport. React
   // Native's global Response treats a QuickCrypto Buffer as a string-like body
@@ -426,7 +449,7 @@ async function encryptedGatewayFetch(
   // UTF-8 and binary asset bodies.
   return new NitroResponse(noBody ? null : (bytes as unknown as BodyInit), {
     status: payload.status,
-    headers: payload.headers,
+    headers: answerHeaders,
   }) as unknown as Response;
 }
 
