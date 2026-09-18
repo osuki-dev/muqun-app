@@ -4640,6 +4640,10 @@ msgstr "ไม่ใช่ {0} ที่ถูกต้อง"
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
 msgstr "นี่คือเชลล์สาธิตที่มีมาในแอป และเป็นโฮสต์เดียวที่นี่ เพิ่มโฮสต์ของคุณเพื่อเปิดเชลล์บนเครื่องที่คุณเข้าถึงได้"
 
+#: src/components/settings-font-sheet.tsx
+msgid "That link opens a web page, not the font file. Use the file's direct download link."
+msgstr "ลิงก์นี้เปิดหน้าเว็บ ไม่ใช่ไฟล์ฟอนต์ ให้ใช้ลิงก์ดาวน์โหลดไฟล์โดยตรง"
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "เชลล์นั้นคือเทอร์มินัลที่คุณคุ้นเคย ใช้แป้นพิมพ์ แถวปุ่ม และสีแบบเดิม รวมถึงแป้นพิมพ์ของโทรศัพท์สำหรับสิ่งที่คุณต้องการพิมพ์"

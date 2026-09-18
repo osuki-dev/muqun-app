@@ -4640,6 +4640,10 @@ msgstr "不是有效的 {0}"
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
 msgstr "這是內建的示範 Shell，也是這裡唯一的主機。新增你自己的主機，即可在任何連得到的機器上開啟 Shell"
 
+#: src/components/settings-font-sheet.tsx
+msgid "That link opens a web page, not the font file. Use the file's direct download link."
+msgstr "這個連結開啟的是網頁，不是字型檔。請使用檔案的直接下載連結。"
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "那個 shell 就是你熟悉的終端機：同樣的鍵盤、同樣的按鍵列、同樣的配色，想打字時也能用手機自己的輸入法"

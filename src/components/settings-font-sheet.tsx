@@ -333,6 +333,9 @@ function FontSlotGroup({
         if (problem.format === 'collection') {
           return t`This is a font collection. Muqun needs a single font file.`;
         }
+        if (problem.format === 'webpage') {
+          return t`That link opens a web page, not the font file. Use the file's direct download link.`;
+        }
         return t`This file is not a TrueType or OpenType font.`;
       case 'too-large':
         return t`This file is too large.`;

@@ -4640,6 +4640,10 @@ msgstr "Это не корректный {0}"
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
 msgstr "Это встроенный демо-shell, и он здесь единственный хост. Добавьте свой, чтобы открыть shell на любой доступной машине"
 
+#: src/components/settings-font-sheet.tsx
+msgid "That link opens a web page, not the font file. Use the file's direct download link."
+msgstr "Эта ссылка открывает веб-страницу, а не файл шрифта. Используйте прямую ссылку на скачивание файла."
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "Этот shell — тот самый терминал, который вы уже знаете: та же клавиатура, тот же ряд клавиш, те же цвета, а для всего, что удобнее набирать, — клавиатура вашего телефона"

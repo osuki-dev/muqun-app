@@ -37,6 +37,7 @@ import QuickCrypto from 'react-native-quick-crypto';
 
 import {
   checkFontSize,
+  directFontUrl,
   downloadStatusFrom,
   fontAdvanceProfile,
   isUserFontRelativePath,
@@ -246,7 +247,7 @@ export async function downloadUserFont({
   const staged = stagingFile(slot);
   let downloaded: File;
   try {
-    downloaded = await File.downloadFileAsync(url.trim(), staged, {
+    downloaded = await File.downloadFileAsync(directFontUrl(url), staged, {
       // The staging name carries a fresh token every time, so there is nothing
       // to overwrite -- but a retry after a crash could find one, and failing
       // the download over a stale temporary file would be the app blaming the

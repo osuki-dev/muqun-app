@@ -87,11 +87,12 @@ test('WOFF, WOFF2 and collections are refused, and say which they were', () => {
   expect(isSupportedFontFormat(sniffFontFormat(ascii('ttcf')))).toBe(false);
 });
 
-test('junk, HTML and a file too short to have a signature are all unknown', () => {
+test('junk and a file too short to have a signature are unknown; a page is a page', () => {
   expect(sniffFontFormat(head([0xde, 0xad, 0xbe, 0xef]))).toBe('unknown');
   // The common case behind a pasted URL that does not point at a font: an
-  // error page, a login redirect, a directory listing.
-  expect(sniffFontFormat(ascii('<!DOCTYPE html>'))).toBe('unknown');
+  // error page, a login redirect, a repository's file view. It is named, so
+  // the sheet can say what happened instead of "not a font".
+  expect(sniffFontFormat(ascii('<!DOCTYPE html>'))).toBe('webpage');
   // A ZIP, which is what a downloaded font archive actually is.
   expect(sniffFontFormat(head([0x50, 0x4b, 0x03, 0x04]))).toBe('unknown');
   expect(sniffFontFormat(head([0x00, 0x01]))).toBe('unknown');

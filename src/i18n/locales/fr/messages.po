@@ -4640,6 +4640,10 @@ msgstr "Ce n'est pas un {0} valide"
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
 msgstr "Il s’agit du shell de démonstration fourni, et du seul hôte ici. Ajoutez le vôtre pour ouvrir un shell sur n’importe quelle machine joignable"
 
+#: src/components/settings-font-sheet.tsx
+msgid "That link opens a web page, not the font file. Use the file's direct download link."
+msgstr "Ce lien ouvre une page web, pas le fichier de police. Utilisez le lien de téléchargement direct du fichier."
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "Ce shell, c’est le terminal que vous connaissez déjà : même clavier, même rangée de touches, mêmes couleurs — et le clavier du téléphone dès que vous préférez écrire"

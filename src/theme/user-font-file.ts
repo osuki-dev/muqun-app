@@ -111,7 +111,8 @@ export type SniffedFontFormat =
   /** `wOF2`: web-only compression. */
   | 'woff2'
   /** Anything else, including a file too short to have a signature. */
-  | 'unknown';
+  | 'unknown'
+  | 'webpage';
 
 /** The two formats both expo-font and Skia's FreeType reader can open. */
 const ACCEPTED_FORMATS: readonly SniffedFontFormat[] = ['truetype', 'opentype'];
@@ -155,8 +156,28 @@ export function sniffFontFormat(head: Uint8Array): SniffedFontFormat {
     case 'wOF2':
       return 'woff2';
     default:
-      return 'unknown';
+      return looksLikeMarkup(head) ? 'webpage' : 'unknown';
   }
+}
+
+/**
+ * Whether the bytes open like a web page.
+ *
+ * The commonest wrong link is not a wrong file but a page ABOUT the file: a
+ * repository's file view, a download landing page, a 404. They all start with
+ * markup, after optional whitespace or a byte-order mark.
+ */
+function looksLikeMarkup(head: Uint8Array): boolean {
+  let text = '';
+  for (let index = 0; index < Math.min(head.length, 16); index += 1) {
+    text += String.fromCharCode(head[index] ?? 0);
+  }
+  const trimmed = text
+    .replace(/^\uFEFF/, '')
+    .replace(/^[\xEF\xBB\xBF]+/, '')
+    .trimStart()
+    .toLowerCase();
+  return trimmed.startsWith('<!do') || trimmed.startsWith('<htm') || trimmed.startsWith('<?xm');
 }
 
 /** Whether a sniffed format is one the app can register and draw with. */
@@ -271,6 +292,69 @@ function decodeURIComponentSafe(value: string): string {
  * -- anything that is not http(s). Everything else is decided by the server's
  * answer, which is a better judge than a regular expression.
  */
+/**
+ * The address the font's bytes are at, for an address a reader is likely to paste.
+ *
+ * A reader copies the link from the page they are looking at, and on a code
+ * host that page is a viewer around the file, not the file. The three hosts
+ * below each have a fixed, documented raw form, so the rewrite is mechanical
+ * and the reader never has to learn the word "raw":
+ *
+ *   github.com/o/r/blob/<ref>/<path>   -> raw.githubusercontent.com/o/r/<ref>/<path>
+ *   gitlab.com/.../-/blob/<ref>/<path> -> .../-/raw/<ref>/<path>
+ *   <gitea>/o/r/src/branch/...         -> <gitea>/o/r/raw/branch/...
+ *
+ * The path is decoded and re-encoded per segment: GitHub's share links escape
+ * the slashes inside the path (`Serif%2FSubsetOTF%2F...`), and the raw host
+ * wants real ones. Anything unrecognised is returned as it came.
+ */
+export function directFontUrl(value: string): string {
+  const trimmed = value.trim();
+  let url: URL;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    return trimmed;
+  }
+  const segments = url.pathname
+    .split('/')
+    .filter(Boolean)
+    .flatMap((segment) => safeDecode(segment).split('/'))
+    .filter(Boolean);
+  const encode = (parts: readonly string[]) => parts.map(encodeURIComponent).join('/');
+
+  if (url.hostname === 'github.com' && segments.length >= 5) {
+    const [owner, repo, view, ...rest] = segments;
+    if (view === 'blob' || view === 'raw') {
+      return `https://raw.githubusercontent.com/${encode([owner ?? '', repo ?? '', ...rest])}`;
+    }
+  }
+  const dash = segments.indexOf('-');
+  if (dash >= 0 && segments[dash + 1] === 'blob') {
+    const next = [...segments];
+    next[dash + 1] = 'raw';
+    return `${url.origin}/${encode(next)}`;
+  }
+  if (
+    segments.length >= 5 &&
+    segments[2] === 'src' &&
+    ['branch', 'commit', 'tag'].includes(segments[3] ?? '')
+  ) {
+    const next = [...segments];
+    next[2] = 'raw';
+    return `${url.origin}/${encode(next)}`;
+  }
+  return trimmed;
+}
+
+function safeDecode(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 export function isDownloadableFontUrl(value: string): boolean {
   const trimmed = value.trim();
   if (!trimmed) return false;

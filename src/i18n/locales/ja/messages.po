@@ -4640,6 +4640,10 @@ msgstr "有効な {0} ではありません"
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
 msgstr "これは同梱のデモシェルで、ここにある唯一のホストです。自分のホストを追加すると、届く範囲のどのマシンでもシェルを開けます"
 
+#: src/components/settings-font-sheet.tsx
+msgid "That link opens a web page, not the font file. Use the file's direct download link."
+msgstr "そのリンクはフォントファイルではなく Web ページを開きます。ファイルの直接ダウンロードリンクを使ってください。"
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "そのシェルは見慣れたターミナルそのもの。同じキーボード、同じキー列、同じ配色。入力したいときはスマホ自身のキーボードも使えます"

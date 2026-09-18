@@ -4640,6 +4640,10 @@ msgstr "Đây không phải {0} hợp lệ"
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
 msgstr "Đó là shell demo đi kèm, và là host duy nhất ở đây. Thêm một host của bạn để mở shell trên bất kỳ máy nào bạn kết nối được"
 
+#: src/components/settings-font-sheet.tsx
+msgid "That link opens a web page, not the font file. Use the file's direct download link."
+msgstr "Liên kết đó mở một trang web, không phải tệp phông chữ. Hãy dùng liên kết tải trực tiếp của tệp."
+
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
 msgstr "Shell đó chính là terminal bạn đã quen: cùng bàn phím, cùng hàng phím, cùng màu sắc, và bàn phím của điện thoại cho bất cứ thứ gì bạn muốn gõ"
