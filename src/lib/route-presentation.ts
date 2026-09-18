@@ -13,8 +13,9 @@ export type SheetPresentation = 'sheet' | 'fullscreen';
  * still accepted for the sheets whose window is neither of the two shapes.
  *
  * Both platforms cap at three detents and ignore the rest, so none of these is
- * longer than two. See `resolveDetents` for what the second detent costs a
- * sheet's content on Android, and `sheetDetentOvershoot` for what pays it back.
+ * longer than two -- and on Android only the first of them survives, because a
+ * multi-detent Android sheet cannot show its own content. `resolveDetents` has
+ * the citation, and `sheetRouteContent` decides which one survives.
  */
 export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly number[];
 
@@ -72,15 +73,14 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
 };
 
 /**
- * How tall each sheet opens, and how much taller it drags.
+ * How tall each sheet opens, and how much taller it drags on iOS.
  *
  * This lived as a literal second argument at every `<Stack.Screen>` in
  * `_layout.tsx`, which made the table above tell half the truth: presentation
- * was chosen in one place and height in another. Both are here now, because a
- * third reader has appeared that needs the heights at runtime and cannot see
- * `_layout.tsx` at all -- `SheetScene`, which asks `sheetDetentOvershoot` how
- * much of an Android sheet is hanging below the screen. A screen cannot read
- * its own navigation options, so the route name is the key both ends share.
+ * was chosen in one place and height in another. Both are here now, next to
+ * `sheetRouteContent`, which is the other half of what a route's height is --
+ * so that reading one route's entry tells the whole story rather than sending
+ * the reader to `_layout.tsx` for the rest of it.
  *
  * A route missing from this table gets `'full'`, the same default
  * `sheetPresentationOptions` has always had.
