@@ -22,6 +22,7 @@ import {
   resolveThemePack,
   type ThemeAppearance,
 } from '@/constants/theme-packs';
+import { userFontRegistry } from '@/theme/interface-font-registry';
 import { slotFontFamily, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
 /**
@@ -57,33 +58,22 @@ export function buildTheme(
   });
 
   /**
-   * `display` and `body`, and deliberately not `label`.
+   * Every role the kit has, including `label`.
    *
-   * Those two are the app's *reading*: a title, a row, a caption, a message.
-   * `label` is the 11pt all-caps instrument style the section headings are set
-   * in -- SERVERS, APPEARANCE, TERMINAL -- and it is chrome rather than
-   * content. A reader's face at 11pt, tracked out and uppercased, is the one
-   * place a custom font reliably stops being legible, and those seven words are
-   * not what anybody installed a font to read.
-   *
-   * One family for every weight, with no per-weight entry. The reader gave us
-   * one file; `resolveFontStyle` falls through the weight ladder, finds
-   * nothing, and lands on `family` while still setting the native `fontWeight`
-   * -- so bold is the platform's synthetic bold rather than a weight the app
-   * pretends to have.
+   * `display` and `body` are the app's *reading*: a title, a row, a caption, a
+   * message. `label` is the 11pt all-caps instrument style the section
+   * headings are set in -- SERVERS, APPEARANCE, TERMINAL -- and it was left on
+   * the system face for a while on the argument that it is chrome rather than
+   * content. It reads as two fonts in one line, so it follows the reader now:
+   * the instrument style (size, tracking, case) is the role's, the face is
+   * theirs. These three are the whole of `typeStyles`, so covering them covers
+   * every variant the kit can draw -- `hero` and `display` from `display`,
+   * `heading` through `bodySmall` from `body`, and `caption`, `label`,
+   * `data`, `dataLarge` and `button` from `label`.
    */
   const interfaceFamily = slotFontFamily(interfaceFont, 'interface');
   const fonts = interfaceFamily
-    ? {
-        ...preset.fonts,
-        display: { family: interfaceFamily },
-        body: { family: interfaceFamily },
-        // The kit draws every caption through the `label` role, so a row
-        // whose title changed face while its caption stayed on the system's
-        // read as two fonts in one line. The instrument style (size, tracking)
-        // is the role's; the face follows the reader's choice like the rest.
-        label: { family: interfaceFamily },
-      }
+    ? { ...preset.fonts, ...userFontRegistry(interfaceFamily) }
     : preset.fonts;
 
   return {

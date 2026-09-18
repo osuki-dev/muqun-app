@@ -48,13 +48,13 @@ test('the router does not mount until the fonts have been registered', () => {
 test('the kit theme takes the interface slot for every role, captions included', () => {
   const theme = read('src/constants/theme.ts');
   expect(theme).toContain("slotFontFamily(interfaceFont, 'interface')");
-  expect(theme).toContain('display: { family: interfaceFamily }');
-  expect(theme).toContain('body: { family: interfaceFamily }');
-  // The kit draws every caption through the `label` role. Leaving it on the
-  // system face put two fonts in one row -- a title in the reader's face over
-  // a caption in the platform's -- so the role follows the choice too; the
-  // instrument style (size, tracking) stays the role's own.
-  expect(theme).toContain('label: { family: interfaceFamily }');
+  // The three roles are no longer spelled out here. They are
+  // `theme/interface-font-registry.ts`'s list, checked against the kit's own
+  // `typeStyles` by `__tests__/interface-font-registry.test.ts` -- which also
+  // checks the thing this spelling could not: that each role answers with the
+  // reader's family at *every* weight, and never at 700, where Android stops
+  // finding a registered typeface and hands back its own font.
+  expect(theme).toContain('...preset.fonts, ...userFontRegistry(interfaceFamily)');
 
   // And the slot is in the palette memo's deps, or a font installed while the
   // app is running would be stored, re-render every reader of the setting, and
