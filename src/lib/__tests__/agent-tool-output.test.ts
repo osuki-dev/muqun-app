@@ -39,6 +39,7 @@ import {
   TOOL_OUTPUT_BYTE_CAP,
   TOOL_OUTPUT_MAX_LINES,
 } from '../agent-tool-output';
+import { fileChangeFromDiffItem } from '../agent-diff-rows';
 
 describe('classifyTool', () => {
   test('the toolset OpenCode 2.0.1 actually ships', () => {
@@ -740,5 +741,53 @@ describe('groupPathsByDirectory', () => {
     expect(groupPathsByDirectory('a.ts\nb.ts')).toEqual([
       { directory: '', files: ['a.ts', 'b.ts'] },
     ]);
+  });
+});
+
+describe("an edit's per-file status reaches the file row", () => {
+  // The case the status exists for: OpenCode rewrote a file it already had,
+  // and the patch it sent opens against `/dev/null` with no deletions in it.
+  // Read off the patch alone that is a new file; OpenCode says it is not.
+  const REWRITE = {
+    files: [
+      {
+        file: 'src/a.ts',
+        patch: '--- /dev/null\n+++ src/a.ts\n@@ -0,0 +1,2 @@\n+const a = 1;\n+const b = 2;',
+        status: 'modified',
+        additions: 2,
+        deletions: 0,
+      },
+    ],
+  };
+
+  test('the wire status is kept and is what the row is classified by', () => {
+    const [file] = editFilesFromMetadata(REWRITE);
+    expect(file.status).toBe('modified');
+    expect(fileChangeFromDiffItem(file).status).toBe('modified');
+    // Without it -- which is what the card did before -- the same file is a
+    // new one, and the row said "Added" for a file that was edited.
+    expect(
+      fileChangeFromDiffItem({
+        path: file.path,
+        patch: file.patch,
+        additions: file.additions,
+        deletions: file.deletions,
+      }).status
+    ).toBe('added');
+  });
+
+  test('a status this app has no word for falls back to reading the patch', () => {
+    const [file] = editFilesFromMetadata({
+      files: [{ ...REWRITE.files[0], status: 'transmogrified' }],
+    });
+    expect(file.status).toBe('transmogrified');
+    expect(fileChangeFromDiffItem(file).status).toBe('added');
+  });
+
+  test('every status OpenCode states on an edit is one the row can name', () => {
+    for (const status of ['added', 'modified', 'deleted'] as const) {
+      const [file] = editFilesFromMetadata({ files: [{ ...REWRITE.files[0], status }] });
+      expect(fileChangeFromDiffItem(file).status).toBe(status);
+    }
   });
 });
