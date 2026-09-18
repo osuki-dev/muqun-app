@@ -29,6 +29,34 @@ import type { ReskinPoint, ReskinSize } from './reskin-shaders';
 export const SNAPSHOT_BUDGET_MS = 120;
 
 /**
+ * How many over-budget snapshots a device gets before the app stops asking.
+ *
+ * This exists because of something measured rather than assumed, and it is the
+ * most important note in the module.
+ *
+ * `makeImageFromView` **blocks the JavaScript thread** on Android. That makes
+ * {@link SNAPSHOT_BUDGET_MS} unenforceable in the obvious way: racing the
+ * capture against a timer cannot work, because the timer cannot fire while the
+ * capture is running. The race resolves only once the capture has already
+ * finished, so the budget can classify a snapshot after the fact but can never
+ * cut one short. Measured on the GPU-less emulator, one full-screen capture
+ * cost between 600 ms and 1.8 s -- so the first apply on such a device pays
+ * that in full, and the reader gets a *slower* setting in exchange for an
+ * animation that is then discarded for being late. That is a worse app.
+ *
+ * Since the first one cannot be prevented, the only thing left to control is
+ * how many there are. After this many over-budget captures in a row, the
+ * device has said what it is and the app believes it: no more snapshots, no
+ * more transitions, every apply instant for the rest of the session.
+ *
+ * Two rather than one because a first capture on a cold Skia context is not
+ * representative -- the same emulator measured 1.8 s once and 0.6 s a minute
+ * later -- and retiring a real phone's transition forever over one unlucky
+ * warm-up would be the same mistake facing the other way.
+ */
+export const SNAPSHOT_STRIKES = 2;
+
+/**
  * How far past the far corner the front travels by the end of the run.
  *
  * Both transitions are driven by the design system's ease-out, which is the
@@ -276,4 +304,27 @@ export function selectReskinPlay(conditions: ReskinConditions): ReskinPlay {
 export function snapshotOutcome(image: unknown, elapsedMs: number): SnapshotOutcome {
   if (!image) return 'failed';
   return elapsedMs > SNAPSHOT_BUDGET_MS ? 'slow' : 'ok';
+}
+
+/**
+ * Whether it is still worth photographing the screen at all.
+ *
+ * `strikes` is how many over-budget captures this device has produced in a
+ * row. See {@link SNAPSHOT_STRIKES} for why the *count* is the thing the app
+ * can control and the duration is not.
+ */
+export function shouldAttemptSnapshot(strikes: number): boolean {
+  return strikes < SNAPSHOT_STRIKES;
+}
+
+/**
+ * The strike count after a capture that took this long.
+ *
+ * A capture inside the budget clears the record rather than merely failing to
+ * add to it: a device that has just proved it can do this is not left on
+ * probation for an earlier bad moment.
+ */
+export function recordSnapshotCost(strikes: number, elapsedMs: number): number {
+  if (elapsedMs <= SNAPSHOT_BUDGET_MS) return 0;
+  return strikes + 1;
 }

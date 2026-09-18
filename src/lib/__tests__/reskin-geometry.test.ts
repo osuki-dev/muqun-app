@@ -3,13 +3,16 @@ import { expect, test } from 'bun:test';
 import {
   FRONT_OVERSHOOT,
   SNAPSHOT_BUDGET_MS,
+  SNAPSHOT_STRIKES,
   denormalizeOrigin,
   halftoneCell,
   halftoneFront,
   halftoneReach,
   normalizeOrigin,
+  recordSnapshotCost,
   resolveOrigin,
   selectReskinPlay,
+  shouldAttemptSnapshot,
   snapshotOutcome,
   washFront,
   washGeometry,
@@ -224,4 +227,40 @@ test('a photograph is judged on whether it arrived and whether it was quick', ()
 
 test('the budget stays short enough that a reader reads it as the setting landing', () => {
   expect(SNAPSHOT_BUDGET_MS).toBeLessThanOrEqual(120);
+});
+
+/* -- what a slow device is told, and how often ---------------------------- */
+
+test('a device is asked until it has said no twice', () => {
+  expect(shouldAttemptSnapshot(0)).toBe(true);
+  expect(shouldAttemptSnapshot(SNAPSHOT_STRIKES - 1)).toBe(true);
+  expect(shouldAttemptSnapshot(SNAPSHOT_STRIKES)).toBe(false);
+  expect(shouldAttemptSnapshot(SNAPSHOT_STRIKES + 5)).toBe(false);
+});
+
+test('an over-budget capture is a strike and a quick one wipes the slate', () => {
+  // The whole point of counting: `makeImageFromView` blocks the JS thread, so
+  // the budget cannot cut a capture short -- it can only decide whether to ask
+  // again. See the note on SNAPSHOT_STRIKES.
+  expect(recordSnapshotCost(0, SNAPSHOT_BUDGET_MS + 1)).toBe(1);
+  expect(recordSnapshotCost(1, 1_800)).toBe(2);
+  expect(recordSnapshotCost(1, SNAPSHOT_BUDGET_MS)).toBe(0);
+  expect(recordSnapshotCost(1, 10)).toBe(0);
+});
+
+test('two slow captures in a row retire the effect for the session', () => {
+  let strikes = 0;
+  strikes = recordSnapshotCost(strikes, 1_785);
+  expect(shouldAttemptSnapshot(strikes)).toBe(true);
+  strikes = recordSnapshotCost(strikes, 613);
+  expect(shouldAttemptSnapshot(strikes)).toBe(false);
+});
+
+test('a device that recovers keeps its transition', () => {
+  // The emulator measured 1.8s then 0.6s; a real phone that merely warms up
+  // slowly must not be retired on the strength of its first frame.
+  let strikes = recordSnapshotCost(0, 900);
+  strikes = recordSnapshotCost(strikes, 40);
+  expect(strikes).toBe(0);
+  expect(shouldAttemptSnapshot(strikes)).toBe(true);
 });

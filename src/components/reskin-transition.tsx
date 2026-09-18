@@ -39,8 +39,10 @@ import {
   halftoneFront,
   halftoneReach,
   normalizeOrigin,
+  recordSnapshotCost,
   resolveOrigin,
   selectReskinPlay,
+  shouldAttemptSnapshot,
   snapshotOutcome,
   washFront,
   washGeometry,
@@ -220,6 +222,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
   const progress = useSharedValue(0);
   const surfaces = useRef(new Map<string, SurfaceEntry>());
   const nextId = useRef(0);
+  const strikes = useRef(0);
   const activeRef = useRef<ActiveRun | null>(null);
   // Synchronised after the commit rather than during the render, so that `run`
   // and `finish` -- both of which are called long after any render, from a tap
@@ -265,7 +268,10 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       const entries = [...surfaces.current.entries()].filter(
         ([, entry]) => entry.size.current.width > 0 && entry.size.current.height > 0
       );
-      if (entries.length === 0) {
+      // A device that has already shown it cannot photograph itself in time is
+      // not asked again: the picture is the expensive half, and taking one we
+      // know we will discard would only make the setting slower to land.
+      if (entries.length === 0 || !shouldAttemptSnapshot(strikes.current)) {
         await apply();
         return;
       }
@@ -286,6 +292,9 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         return;
       }
 
+      const elapsed = Date.now() - started;
+      strikes.current = recordSnapshotCost(strikes.current, elapsed);
+
       const primarySurface = entries[0]?.[1].size.current ?? { width: 0, height: 0 };
       const play = selectReskinPlay({
         kind,
@@ -293,7 +302,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         effectReady: Boolean(kind === 'theme' ? THEME_WASH_EFFECT : FONT_HALFTONE_EFFECT),
         snapshot: snapshotOutcome(
           raced.find((image) => Boolean(image)),
-          Date.now() - started
+          elapsed
         ),
         size: primarySurface,
       });
