@@ -1,5 +1,7 @@
 import { Skia, type Uniforms } from '@shopify/react-native-skia';
 
+import { SKSL_NOISE } from './sksl-field';
+
 /**
  * The ink bloom: a cover with a hole in it that grows from a point, its edge
  * torn rather than cut, lit along the tear.
@@ -69,6 +71,12 @@ import { Skia, type Uniforms } from '@shopify/react-native-skia';
  *
  * Coordinates are canvas points throughout: the fragment coordinate is the
  * coordinate the caller's centre, radius and widths are expressed in.
+ *
+ * The value-noise field is `SKSL_NOISE` from `sksl-field.ts`, shared with the
+ * re-skin transitions. It was written here first and moved there when the
+ * second and third callers arrived; the sine-free hash and the two-octave fbm
+ * are the launch's performance work, and a copy of them is a copy that would
+ * not have received it.
  */
 export const INK_BLOOM_SKSL = `
 uniform shader uCover;        // the cover's image, when uCoverMode says so
@@ -92,36 +100,7 @@ uniform float4 uAccent;       // the bank of light along the edge
 uniform float4 uRimColor;     // the thin bright line on the edge
 uniform float4 uSurface;      // the field's second stop
 
-// A hash with no trigonometry in it.
-//
-// The obvious one is fract(sin(dot(p, k)) * 43758.5453). It is also twenty-four
-// sines per pixel once it is inside two three-octave fbms, and on a device
-// without a GPU that is most of a second per frame. This is the sine-free
-// standard, and it measured an order of magnitude cheaper for a field no eye
-// can tell apart.
-float hash21(float2 p) {
-  float3 q = fract(float3(p.x, p.y, p.x) * 0.1031);
-  q += dot(q, q.yzx + 33.33);
-  return fract((q.x + q.y) * q.z);
-}
-
-// Value noise: four corners of the cell, smoothstepped between.
-float vnoise(float2 p) {
-  float2 i = floor(p);
-  float2 f = fract(p);
-  float2 u = f * f * (3.0 - 2.0 * f);
-  float a = hash21(i);
-  float b = hash21(i + float2(1.0, 0.0));
-  float c = hash21(i + float2(0.0, 1.0));
-  float d = hash21(i + float2(1.0, 1.0));
-  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-// Two octaves, normalised to 0..1. A third is not visible at this amplitude
-// and is half again as much work on every pixel of the edge band.
-float fbm(float2 p) {
-  return (0.5 * vnoise(p) + 0.25 * vnoise(p * 2.03)) / 0.75;
-}
+${SKSL_NOISE}
 
 // A soft three-stop field, lit under the centre, arriving with a drift that
 // stops. For a caller with nothing to reveal but its own colours.

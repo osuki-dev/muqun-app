@@ -52,6 +52,7 @@ import { formatAssetSize } from '@/lib/asset-display';
 import { feedback } from '@/lib/feedback';
 import { DURATION, fadeIn, fadeOut } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
+import { useReskinTransition } from '@/components/reskin-transition';
 import { useAppSettings } from '@/stores/app-settings';
 import {
   advanceFontInstall,
@@ -98,6 +99,7 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
   useRenderTally('SettingsFontSheet');
+  const reskin = useReskinTransition();
 
   const interfaceFont = useAppSettings((state) => state.interfaceFont);
   const monoFont = useAppSettings((state) => state.monoFont);
@@ -179,7 +181,13 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
    */
   async function apply(id: FontSlotId, slot: FontSlot) {
     await loadUserFont(id, slot);
-    await useAppSettings.getState().update({ [SLOT_SETTING[id]]: slot });
+    // The face is already registered by here, so the only thing left to happen
+    // is every text node in the app re-measuring at once. That is what the
+    // halftone is covering.
+    await reskin.run({
+      kind: 'font',
+      apply: () => useAppSettings.getState().update({ [SLOT_SETTING[id]]: slot }),
+    });
     setSlotError(id, undefined);
   }
 
@@ -280,7 +288,10 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
   async function clearSlot(id: FontSlotId) {
     await feedback('selection');
     const previous = slots[id];
-    await useAppSettings.getState().update({ [SLOT_SETTING[id]]: SYSTEM_FONT_SLOT });
+    await reskin.run({
+      kind: 'font',
+      apply: () => useAppSettings.getState().update({ [SLOT_SETTING[id]]: SYSTEM_FONT_SLOT }),
+    });
     // The setting first, the file after: a slot that is already back on the
     // system font cannot be left pointing at bytes that have gone.
     removeUserFontFile(previous);
