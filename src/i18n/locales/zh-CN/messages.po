@@ -21,6 +21,10 @@ msgstr "…已截断"
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}”未发送：技能不接受参数"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "“{title}”及其下的子代理会话都会从主机移除，且无法撤销"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[指示]"
@@ -262,6 +266,11 @@ msgstr "操作这个终端，或给它发一条命令"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "{0} 的操作"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -701,6 +710,7 @@ msgid "Camera access needed"
 msgstr "需要相机访问权限"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1295,6 +1305,10 @@ msgid "Could not create session"
 msgstr "无法创建会话"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "无法删除"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "无法转入后台"
 
@@ -1399,6 +1413,10 @@ msgstr "无法重做"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "无法移除主机"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "无法重命名"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
@@ -1538,6 +1556,7 @@ msgstr "默认"
 msgid "Defaults to theme.json at the repository root"
 msgstr "默认为仓库根目录下的 theme.json"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "删除"
@@ -1549,6 +1568,10 @@ msgstr "删除 {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "删除这一行"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "删除这个会话？"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2843,6 +2866,10 @@ msgstr "打开屏幕键盘"
 msgid "Open OpenCode Agent on {label}"
 msgstr "在 {label} 上打开 OpenCode Agent"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "打开上级会话"
+
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
 msgstr "打开端口 {recent}"
@@ -3320,6 +3347,10 @@ msgstr "正在移除未使用的主题"
 msgid "Removing…"
 msgstr "正在移除…"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "重命名"
+
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
 msgstr "重命名 {label}"
@@ -3507,6 +3538,7 @@ msgstr "运行相关测试"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3567,10 @@ msgstr "保存主机"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "保存快捷命令"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "保存新名称"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3715,6 +3751,10 @@ msgstr "服务器不可用"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "服务器"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "会话名称"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"

@@ -21,6 +21,10 @@ msgstr "…以下省略"
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "「{args}」は送信されませんでした。スキルは引数を取りません"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "「{title}」とその配下のサブエージェントセッションがホストから削除されます。元に戻せません"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[指示]"
@@ -262,6 +266,11 @@ msgstr "このターミナルを操作するか、コマンドを送る"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "このターミナルを操作するか、エージェントに指示を送る"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "{0} の操作"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -701,6 +710,7 @@ msgid "Camera access needed"
 msgstr "カメラへのアクセスが必要です"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1295,6 +1305,10 @@ msgid "Could not create session"
 msgstr "セッションを作成できませんでした"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "削除できませんでした"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "バックグラウンドに移せませんでした"
 
@@ -1399,6 +1413,10 @@ msgstr "やり直せませんでした"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ホストを削除できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "名前を変更できませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
@@ -1538,6 +1556,7 @@ msgstr "標準"
 msgid "Defaults to theme.json at the repository root"
 msgstr "既定はリポジトリ直下の theme.json です"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "削除"
@@ -1549,6 +1568,10 @@ msgstr "{name} を削除"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "この行を削除"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "このセッションを削除しますか？"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2843,6 +2866,10 @@ msgstr "ソフトウェアキーボードを開く"
 msgid "Open OpenCode Agent on {label}"
 msgstr "{label} で OpenCode エージェントを開く"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "親セッションを開く"
+
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
 msgstr "ポート {recent} を開く"
@@ -3320,6 +3347,10 @@ msgstr "未使用のテーマを削除しています"
 msgid "Removing…"
 msgstr "削除しています…"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "名前を変更"
+
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
 msgstr "{label} の名前を変更"
@@ -3507,6 +3538,7 @@ msgstr "関連するテストを実行"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3567,10 @@ msgstr "ホストを保存"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "ショートカットを保存"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "新しい名前を保存"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3715,6 +3751,10 @@ msgstr "サーバーを利用できません"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "サーバー"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "セッション名"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"

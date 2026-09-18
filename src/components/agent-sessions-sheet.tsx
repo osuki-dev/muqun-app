@@ -1,26 +1,42 @@
-import { memo, useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, View, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { GitFork } from 'lucide-react-native';
+import { CornerUpLeft, GitFork, MoreHorizontal, PencilLine, Trash2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
 
+import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
+import { PressableScale } from '@/components/pressable-scale';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
   SheetScene,
+  SheetSceneField,
   SheetSceneFooter,
   SheetSceneGroupHeading,
   SheetSceneGroupRule,
+  SheetSceneQuietAction,
   SheetSceneRow,
   SheetSceneSearch,
   SHEET_LADDER,
   sheetSceneStyles,
+  useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
-import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
+import { appChrome } from '@/constants/appearance';
+import {
+  DURATION,
+  fadeIn,
+  fadeInDown,
+  fadeOutDown,
+  listLayout,
+  riseIn,
+  STAGGER,
+} from '@/lib/motion';
 import {
   formatModelName,
+  hasRealSessionTitle,
   isSessionUnread,
   sessionTitleOr,
   workspaceDisplayName,
@@ -67,6 +83,10 @@ export interface AgentSessionsSheetProps {
   models?: readonly ModelInfo[];
   onSelectSession: (asid: string) => void;
   onCreateNewSession?: () => void;
+  /** A new name for one session. The workbench owns the call and the rollback. */
+  onRenameSession?: (asid: string, title: string) => void;
+  /** Delete one session, after the confirmation this sheet asks for. */
+  onDeleteSession?: (asid: string) => void;
   onClose: () => void;
 }
 
@@ -78,6 +98,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   activeProject,
   models,
   onSelectSession,
+  onRenameSession,
+  onDeleteSession,
   onClose,
 }: AgentSessionsSheetProps) {
   const { t } = useLingui();
@@ -247,6 +269,209 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return isSessionUnread(session) ? t`${title} — finished while you were away` : title;
   };
 
+  /**
+   * The row the reader has opened the actions on, and the one they are
+   * renaming. One at a time: two open menus on one list is two questions.
+   */
+  const [menuAsid, setMenuAsid] = useState<string | null>(null);
+  const [renameAsid, setRenameAsid] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
+  const scrollerRef = useRef<ScrollView>(null);
+  /** Where each root's block sits, so a rename field can be brought up. */
+  const rowOffsets = useRef<Record<string, number>>({});
+  const inputStyle = useSheetSceneInputStyle();
+
+  /**
+   * Where a root's block sits in the scroller.
+   *
+   * Written through a callback rather than into the ref from the row's own
+   * `onLayout` closure: everything inside the list's `map` is render scope, and
+   * a ref touched there is the thing `react/refs` is about -- the same shape
+   * the composer's chip measuring already uses.
+   */
+  const measureRow = useCallback((asid: string, y: number) => {
+    rowOffsets.current[asid] = y;
+  }, []);
+
+  const openMenu = useCallback((asid: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRenameAsid(null);
+    setMenuAsid((current) => (current === asid ? null : asid));
+  }, []);
+
+  const startRename = useCallback((session: AgentSessionInfo) => {
+    setMenuAsid(null);
+    setRenameDraft(hasRealSessionTitle(session) ? session.title : '');
+    setRenameAsid(session.asid);
+  }, []);
+
+  /**
+   * The field the reader is typing in, where the keyboard is not.
+   *
+   * The scroller grows by the keyboard's height at its end
+   * (`SheetSceneFooter` -> `KeyboardInset`), so there is somewhere to scroll
+   * to; this is what does the scrolling. A row near the bottom of a form sheet
+   * is exactly where the keyboard lands, and a field under the keys is a field
+   * the reader cannot see what they are typing into.
+   *
+   * In an effect rather than in `startRename`, because the field has to exist
+   * before it can be brought up -- and because a ref read in a handler built
+   * during render is the thing `react/refs` stops.
+   */
+  useEffect(() => {
+    if (!renameAsid) return;
+    const offset = rowOffsets.current[renameAsid];
+    if (offset === undefined) return;
+    const timer = setTimeout(() => {
+      scrollerRef.current?.scrollTo({
+        y: Math.max(0, offset - RENAME_REVEAL_MARGIN),
+        animated: true,
+      });
+    }, DURATION.short);
+    return () => clearTimeout(timer);
+  }, [renameAsid]);
+
+  const submitRename = useCallback(
+    (asid: string) => {
+      const next = renameDraft.trim();
+      setRenameAsid(null);
+      if (next) onRenameSession?.(asid, next);
+    },
+    [renameDraft, onRenameSession]
+  );
+
+  /**
+   * The one destructive thing on this sheet, asked natively.
+   *
+   * A row that deletes on a tap is a row that deletes by accident, and what
+   * goes with it is not only this session: OpenCode removes its children too.
+   */
+  const confirmDelete = useCallback(
+    (session: AgentSessionInfo) => {
+      const title = sessionTitleOr(session, t`Untitled session`);
+      setMenuAsid(null);
+      Alert.alert(
+        t`Delete this session?`,
+        t`“${title}” and any subagent sessions under it are removed from the host. This cannot be undone.`,
+        [
+          { text: t`Cancel`, style: 'cancel' },
+          {
+            text: t`Delete`,
+            style: 'destructive',
+            onPress: () => onDeleteSession?.(session.asid),
+          },
+        ]
+      );
+    },
+    [onDeleteSession, t]
+  );
+
+  const menuItems = (session: AgentSessionInfo): AgentActionMenuItem[] => {
+    const items: AgentActionMenuItem[] = [
+      {
+        id: 'rename',
+        label: t`Rename`,
+        Icon: PencilLine,
+        onPress: () => startRename(session),
+        testID: `agent-session-rename-${session.asid}`,
+      },
+    ];
+    // Bound out of the field rather than asserted: there is no `!` on anything
+    // that came off the wire in this surface.
+    const parent = session.parent_id;
+    if (parent) {
+      items.push({
+        id: 'parent',
+        label: t`Open parent`,
+        Icon: CornerUpLeft,
+        onPress: () => {
+          setMenuAsid(null);
+          onSelectSession(parent);
+          onClose();
+        },
+        testID: `agent-session-open-parent-${session.asid}`,
+      });
+    }
+    items.push({
+      id: 'delete',
+      label: t`Delete`,
+      Icon: Trash2,
+      tone: 'danger',
+      onPress: () => confirmDelete(session),
+      testID: `agent-session-delete-${session.asid}`,
+    });
+    return items;
+  };
+
+  /** The actions affordance, for a reader who cannot long-press. */
+  const overflowButton = (session: AgentSessionInfo) => (
+    <PressableScale
+      testID={`agent-session-actions-${session.asid}`}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: menuAsid === session.asid }}
+      accessibilityLabel={t`Actions for ${sessionTitleOr(session, t`Untitled session`)}`}
+      hitSlop={10}
+      onPress={() => openMenu(session.asid)}
+      style={styles.overflow}>
+      <MoreHorizontal size={16} color={theme.colors.textMuted} />
+    </PressableScale>
+  );
+
+  /** The menu, or the rename field that replaced it, under the row it belongs to. */
+  const rowTrailing = (session: AgentSessionInfo) => {
+    if (renameAsid === session.asid) {
+      return (
+        <Animated.View
+          entering={fadeInDown('dropdown')}
+          exiting={fadeOutDown('micro')}
+          style={styles.rename}>
+          <SheetSceneField label={t`Session name`}>
+            <TextInput
+              testID={`agent-session-rename-input-${session.asid}`}
+              accessibilityLabel={t`Session name`}
+              value={renameDraft}
+              onChangeText={setRenameDraft}
+              autoFocus
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={() => submitRename(session.asid)}
+              placeholder={t`Untitled session`}
+              placeholderTextColor={theme.colors.textSubtle}
+              style={inputStyle}
+            />
+          </SheetSceneField>
+          <View style={styles.renameActions}>
+            <SheetSceneQuietAction
+              testID={`agent-session-rename-cancel-${session.asid}`}
+              label={t`Cancel`}
+              onPress={() => setRenameAsid(null)}
+            />
+            <PressableScale
+              testID={`agent-session-rename-save-${session.asid}`}
+              accessibilityRole="button"
+              accessibilityLabel={t`Save the new name`}
+              onPress={() => submitRename(session.asid)}
+              style={[styles.renameSave, { backgroundColor: theme.colors.primary }]}>
+              <Text variant="caption" weight="bold" color={theme.colors.onPrimary}>
+                {t`Save`}
+              </Text>
+            </PressableScale>
+          </View>
+        </Animated.View>
+      );
+    }
+    if (menuAsid === session.asid) {
+      return (
+        <AgentActionMenu
+          testID={`agent-session-menu-${session.asid}`}
+          surface="ground"
+          items={menuItems(session)}
+        />
+      );
+    }
+    return null;
+  };
+
   let rowIndex = 0;
 
   return (
@@ -274,6 +499,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         </>
       }>
       <ScrollView
+        ref={scrollerRef}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         keyboardShouldPersistTaps="handled"
@@ -294,6 +520,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             return (
               <Animated.View
                 key={root.asid}
+                onLayout={(event) => measureRow(root.asid, event.nativeEvent.layout.y)}
                 entering={rowAt < STAGGERED_ROWS ? riseIn(rowAt * STAGGER.row) : fadeIn('short')}
                 layout={listLayout('short')}>
                 {index > 0 ? <SheetSceneGroupRule /> : null}
@@ -306,10 +533,12 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     .join(' · ')}
                   selected={root.asid === activeAsid}
                   accessibilityLabel={rowLabel(root)}
+                  crossfadeTitle
                   onPress={() => {
                     onSelectSession(root.asid);
                     onClose();
                   }}
+                  onLongPress={() => openMenu(root.asid)}
                   meta={
                     <View style={styles.meta}>
                       {isSessionUnread(root) ? (
@@ -318,8 +547,10 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                       <Text variant="caption" color={theme.colors.textMuted}>
                         {formatTime(root.updated_ms)}
                       </Text>
+                      {overflowButton(root)}
                     </View>
                   }
+                  trailing={rowTrailing(root)}
                 />
                 {subs.map((sub) => (
                   <SheetSceneRow
@@ -330,16 +561,22 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     selected={sub.asid === activeAsid}
                     style={styles.subagentRow}
                     accessibilityLabel={rowLabel(sub)}
+                    crossfadeTitle
                     leading={<GitFork size={13} color={theme.colors.textSubtle} />}
                     onPress={() => {
                       onSelectSession(sub.asid);
                       onClose();
                     }}
+                    onLongPress={() => openMenu(sub.asid)}
                     meta={
-                      isSessionUnread(sub) ? (
-                        <AgentUnreadDot testID={`agent-session-unread-${sub.asid}`} />
-                      ) : null
+                      <View style={styles.meta}>
+                        {isSessionUnread(sub) ? (
+                          <AgentUnreadDot testID={`agent-session-unread-${sub.asid}`} />
+                        ) : null}
+                        {overflowButton(sub)}
+                      </View>
                     }
+                    trailing={rowTrailing(sub)}
                   />
                 ))}
               </Animated.View>
@@ -352,8 +589,25 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   );
 });
 
+/** How much of the list stays visible above a rename field brought into view. */
+const RENAME_REVEAL_MARGIN = 12;
+
 const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  overflow: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  rename: { paddingBottom: SHEET_LADDER.gap },
+  renameActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: SHEET_LADDER.gap,
+  },
+  renameSave: {
+    paddingHorizontal: SHEET_LADDER.snug,
+    paddingVertical: SHEET_LADDER.gap,
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+  },
   empty: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
   emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: AGENT_TYPE.mono.lineHeight },
   // Subagents belong to the root above them, so they start one step in -- the

@@ -52,6 +52,8 @@ import {
   getAgentTimelineDelta,
   backgroundAgentSession,
   compactAgentSession,
+  deleteAgentSession,
+  renameAgentSession,
   invokeAgentSkill,
   getAgentContext,
   listAgentSessionChildren,
@@ -1548,6 +1550,91 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   }, [abortSessionRef, handleAbort]);
 
+  /**
+   * A new name for a session, everywhere it is shown, before the engine has
+   * answered -- and the old one back if it refuses.
+   *
+   * `renameAgentSession` existed with no caller: the only title a session could
+   * ever have was the one OpenCode auto-titled it with on its first turn. The
+   * rename lands in three places at once (the header pill, the strip's chip and
+   * the sheet's row), which is why it is written here rather than in the sheet:
+   * they all read the same lists.
+   */
+  const handleRenameSession = useCallback(
+    (asid: string, title: string) => {
+      const next = title.trim();
+      if (!asid || !next) return;
+      const previous =
+        sessions.find((session) => session.asid === asid)?.title ??
+        (sessionInfo?.asid === asid ? sessionInfo.title : undefined);
+      if (previous === next) return;
+
+      const apply = (value: string) => {
+        setSessions((prev) =>
+          prev.map((session) => (session.asid === asid ? { ...session, title: value } : session))
+        );
+        setChildrenByParent((prev) => applyChildTitle(prev, asid, value));
+        setSessionInfo((prev) => (prev && prev.asid === asid ? { ...prev, title: value } : prev));
+      };
+
+      apply(next);
+      renameAgentSession(asid, next).catch((err) => {
+        console.warn('Failed to rename session:', err);
+        // Back to what it was called, rather than leaving a name on screen that
+        // exists nowhere else.
+        if (previous !== undefined) apply(previous);
+        showScreenNotice(
+          t`Could not rename`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      });
+    },
+    [sessions, sessionInfo, showScreenNotice, t]
+  );
+
+  /**
+   * Delete a session, and go somewhere honest if it was the one on screen.
+   *
+   * The latest of what is left, or the empty state -- never a new session made
+   * on the reader's behalf: deleting one thing must not create another. The
+   * confirmation is the caller's; by the time this runs it has been given.
+   */
+  const handleDeleteSession = useCallback(
+    (asid: string) => {
+      if (!asid) return;
+      const previousSessions = sessions;
+      const previousChildren = childrenByParent;
+      const wasActive = asid === activeAsid;
+
+      const remaining = sessions.filter((session) => session.asid !== asid);
+      setSessions(remaining);
+      setChildrenByParent((prev) => dropSession(prev, asid));
+      if (wasActive) {
+        const next = latestSession(remaining);
+        setTimeline([]);
+        setWindowStart(0);
+        setPermissions([]);
+        setForms([]);
+        setInbox([]);
+        lastSeqRef.current = 0;
+        setActiveAsid(next?.asid);
+        setSessionInfo(next ?? null);
+      }
+
+      deleteAgentSession(asid).catch((err) => {
+        console.warn('Failed to delete session:', err);
+        setSessions(previousSessions);
+        setChildrenByParent(previousChildren);
+        if (wasActive) setActiveAsid(asid);
+        showScreenNotice(
+          t`Could not delete`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      });
+    },
+    [sessions, childrenByParent, activeAsid, showScreenNotice, t]
+  );
+
   const handleSelectWorkspace = useCallback(
     async (directory: string, project?: AgentProject) => {
       setActiveDirectory(directory);
@@ -2322,6 +2409,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       createSession: () => {
         void handleCreateNewSession();
       },
+      renameSession: handleRenameSession,
+      deleteSession: handleDeleteSession,
       selectModel: handleSelectModel,
       selectAgentMode: handleSelectAgentMode,
       selectWorkspace: (directory, project) => {
@@ -2334,6 +2423,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }),
     [
       handleCreateNewSession,
+      handleRenameSession,
+      handleDeleteSession,
       handleSelectModel,
       handleSelectAgentMode,
       handleSelectWorkspace,
@@ -2850,6 +2941,24 @@ function dropSession(previous: ChildrenByParent, asid: string): ChildrenByParent
     const kept = children.filter((child) => child.asid !== asid);
     if (kept.length !== children.length) changed = true;
     next[parent] = kept;
+  }
+  return changed ? next : previous;
+}
+
+/** A rename, applied to whichever branch of the tree carries that id. */
+function applyChildTitle(
+  previous: ChildrenByParent,
+  asid: string,
+  title: string
+): ChildrenByParent {
+  let changed = false;
+  const next: Record<string, AgentSessionInfo[]> = {};
+  for (const [parent, children] of Object.entries(previous)) {
+    next[parent] = children.map((child) => {
+      if (child.asid !== asid || child.title === title) return child;
+      changed = true;
+      return { ...child, title };
+    });
   }
   return changed ? next : previous;
 }

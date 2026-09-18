@@ -103,6 +103,13 @@ export interface AgentSheetSnapshot {
 export interface AgentSheetActions {
   selectSession: (asid: string) => void;
   createSession: () => void;
+  /** Rename one session. Optimistic in the workbench, rolled back on refusal. */
+  renameSession: (asid: string, title: string) => void;
+  /**
+   * Delete one session. The confirmation belongs to the surface that asks --
+   * this is the call that follows a yes.
+   */
+  deleteSession: (asid: string) => void;
   selectModel: (model: ModelRef) => void;
   selectAgentMode: (agent: string) => void;
   selectWorkspace: (directory: string, project?: AgentProject) => void;
@@ -115,6 +122,8 @@ export interface AgentSheetActions {
 const NO_ACTIONS: AgentSheetActions = Object.freeze({
   selectSession: () => {},
   createSession: () => {},
+  renameSession: () => {},
+  deleteSession: () => {},
   selectModel: () => {},
   selectAgentMode: () => {},
   selectWorkspace: () => {},

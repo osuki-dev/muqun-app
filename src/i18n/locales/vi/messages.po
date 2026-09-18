@@ -21,6 +21,10 @@ msgstr "… đã cắt bớt"
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}” không được gửi: kỹ năng không nhận đối số"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "“{title}” và các phiên subagent bên dưới sẽ bị xóa khỏi máy chủ. Không thể hoàn tác"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[hướng dẫn]"
@@ -262,6 +266,11 @@ msgstr "Tác động lên terminal này, hoặc gửi cho nó một lệnh"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân của nó"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "Thao tác cho {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -701,6 +710,7 @@ msgid "Camera access needed"
 msgstr "Cần quyền truy cập camera"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1295,6 +1305,10 @@ msgid "Could not create session"
 msgstr "Không thể tạo phiên"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "Không thể xóa"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "Không thể tách ra"
 
@@ -1399,6 +1413,10 @@ msgstr "Không thể làm lại"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Không thể gỡ host"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "Không thể đổi tên"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
@@ -1538,6 +1556,7 @@ msgstr "MẶC ĐỊNH"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Xóa"
@@ -1549,6 +1568,10 @@ msgstr "Xóa {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Xóa dòng này"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "Xóa phiên này?"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2843,6 +2866,10 @@ msgstr "Mở bàn phím trên màn hình"
 msgid "Open OpenCode Agent on {label}"
 msgstr "Mở OpenCode Agent trên {label}"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "Mở phiên cha"
+
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
 msgstr "Mở cổng {recent}"
@@ -3320,6 +3347,10 @@ msgstr "Đang xóa giao diện không dùng đến"
 msgid "Removing…"
 msgstr "Đang xóa…"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "Đổi tên"
+
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
 msgstr "Đổi tên {label}"
@@ -3507,6 +3538,7 @@ msgstr "Chạy các kiểm thử liên quan"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3567,10 @@ msgstr "Lưu host"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Lưu lệnh tắt"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "Lưu tên mới"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3715,6 +3751,10 @@ msgstr "Máy chủ không khả dụng"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Máy chủ"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "Tên phiên"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"

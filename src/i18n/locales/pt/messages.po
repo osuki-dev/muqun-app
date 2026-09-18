@@ -21,6 +21,10 @@ msgstr "… truncado"
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}” não foi enviado: uma habilidade não aceita argumentos"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "“{title}” e as sessões de subagente abaixo dela são removidas do host. Isso não pode ser desfeito"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[instruções]"
@@ -262,6 +266,11 @@ msgstr "Age sobre este terminal, ou envia-lhe um comando"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Age sobre este terminal, ou envia uma instrução ao seu agente"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "Ações para {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -701,6 +710,7 @@ msgid "Camera access needed"
 msgstr "É preciso acesso à câmara"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1295,6 +1305,10 @@ msgid "Could not create session"
 msgstr "Não foi possível criar a sessão"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "Não foi possível excluir"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "Não foi possível desanexar"
 
@@ -1399,6 +1413,10 @@ msgstr "Não foi possível refazer"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Não foi possível remover o host"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "Não foi possível renomear"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
@@ -1538,6 +1556,7 @@ msgstr "PREDEFINIDO"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Por padrão, theme.json na raiz do repositório"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Eliminar"
@@ -1549,6 +1568,10 @@ msgstr "Eliminar {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Eliminar esta linha"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "Excluir esta sessão?"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2843,6 +2866,10 @@ msgstr "Abrir o teclado no ecrã"
 msgid "Open OpenCode Agent on {label}"
 msgstr "Abrir agente OpenCode em {label}"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "Abrir a sessão principal"
+
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
 msgstr "Abrir a porta {recent}"
@@ -3320,6 +3347,10 @@ msgstr "A remover os temas não utilizados"
 msgid "Removing…"
 msgstr "A remover…"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "Renomear"
+
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
 msgstr "Mudar o nome de {label}"
@@ -3507,6 +3538,7 @@ msgstr "Executar os testes relevantes"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Execute o Gateway no seu computador e leia o código QR que ele mostra. O emparelhamento fica neste dispositivo"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3567,10 @@ msgstr "Guardar host"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Guardar atalho"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "Salvar o novo nome"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3715,6 +3751,10 @@ msgstr "Servidor indisponível"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Servidores"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "Nome da sessão"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"

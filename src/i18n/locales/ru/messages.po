@@ -21,6 +21,10 @@ msgstr "… обрезано"
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "«{args}» не отправлено: навык не принимает аргументы"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "«{title}» и все вложенные сессии субагентов будут удалены с хоста. Это необратимо"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[инструкции]"
@@ -262,6 +266,11 @@ msgstr "Действуйте в этом терминале или отправ�
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Действуйте в этом терминале или дайте задание его агенту"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "Действия для {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -701,6 +710,7 @@ msgid "Camera access needed"
 msgstr "Нужен доступ к камере"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1295,6 +1305,10 @@ msgid "Could not create session"
 msgstr "Не удалось создать сессию"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "Не удалось удалить"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "Не удалось отсоединить"
 
@@ -1399,6 +1413,10 @@ msgstr "Не удалось повторить"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Не удалось удалить хост"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "Не удалось переименовать"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
@@ -1538,6 +1556,7 @@ msgstr "ПО УМОЛЧАНИЮ"
 msgid "Defaults to theme.json at the repository root"
 msgstr "По умолчанию — theme.json в корне репозитория"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Удалить"
@@ -1549,6 +1568,10 @@ msgstr "Удалить {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Удалить эту строку"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "Удалить эту сессию?"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2843,6 +2866,10 @@ msgstr "Открыть экранную клавиатуру"
 msgid "Open OpenCode Agent on {label}"
 msgstr "Открыть OpenCode агент на {label}"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "Открыть родительскую сессию"
+
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
 msgstr "Открыть порт {recent}"
@@ -3320,6 +3347,10 @@ msgstr "Удаляем неиспользуемые темы"
 msgid "Removing…"
 msgstr "Удаляем…"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "Переименовать"
+
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
 msgstr "Переименовать {label}"
@@ -3507,6 +3538,7 @@ msgstr "Запустить нужные тесты"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Запустите Gateway на своём компьютере и отсканируйте QR-код, который он выводит. Привязка остаётся на этом устройстве"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3567,10 @@ msgstr "Сохранить хост"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Сохранить быструю команду"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "Сохранить новое имя"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3715,6 +3751,10 @@ msgstr "Сервер недоступен"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Серверы"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "Имя сессии"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"

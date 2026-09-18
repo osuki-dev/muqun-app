@@ -34,6 +34,8 @@ export default function AgentSessionsScreen() {
       models={models}
       onSelectSession={actions.selectSession}
       onCreateNewSession={actions.createSession}
+      onRenameSession={actions.renameSession}
+      onDeleteSession={actions.deleteSession}
       onClose={() => router.back()}
     />
   );
