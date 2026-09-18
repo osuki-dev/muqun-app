@@ -420,16 +420,40 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   }));
 
   function openServer(serverId: string, paneId?: string) {
-    // Fetch on intent, not on sight.
+    // A second chance to warm, for the server this tap is about.
     //
-    // This screen used to warm the configured server's workspace on every
-    // focus -- seven requests each time, for a server the reader might never
-    // open, and the single most expensive thing the list did. Warming on the
-    // tap instead costs the same seven requests but only when they are
-    // certainly wanted, and buys *more* speed rather than less: the request is
-    // already in flight while the push animates, so the workspace screen finds
-    // a filled cache on mount (`warmWorkspace` seeds both `data` and the
-    // connection phase) instead of painting `Connecting` and asking afterwards.
+    // ## Why the focus warm above exists, and must keep existing
+    //
+    // This comment used to say "fetch on intent, not on sight", and described a
+    // screen that had stopped warming on focus. It is wrong twice over now.
+    //
+    // It is wrong about the requirement: arriving on Home must already have the
+    // configured server's data in hand, and tapping into the terminal must show
+    // content with no wait. That is the product's ask, not an optimisation the
+    // list happens to make, and the focus warm in the `useFocusEffect` above is
+    // how it is met. This is the second time the warm was removed as dead
+    // weight and put back (`a92cc59` took it out, `fc5820a` restored it), so:
+    // it is not dead weight, and making it cheaper is the way to answer its
+    // cost -- never deleting it or deferring the first pane's screen read to
+    // the tap.
+    //
+    // It is wrong about the price, too. A focus warm was seven requests on top
+    // of the status probe. It is now three, and only for the one selected
+    // server: health is the probe's own answer rather than a second call,
+    // workspaces/tabs/panes arrive together, and the warm does not run at all
+    // against a server the probe just found offline. See `warmConfiguredWorkspace`.
+    //
+    // ## What this tap adds
+    //
+    // The focus warm covers the *selected* server. A tap can open a different
+    // one, which has no warm cache and no head start, and that is what this is
+    // for. When it is the selected server the cache is usually already filled
+    // and `warmConfiguredWorkspace` returns without asking anything.
+    //
+    // Either way the request is in flight while the push animates, so the
+    // workspace screen finds a filled cache on mount (`warmWorkspace` seeds
+    // both `data` and the connection phase) instead of painting `Connecting`
+    // and asking afterwards.
     //
     // The warm hangs off the selection rather than running beside it, and that
     // ordering is load-bearing. `gatewayTransport` is bound to one base URL and
@@ -464,7 +488,13 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           useServerSession.getState().byServer[serverId],
           () =>
             AppState.currentState === 'active' &&
-            useGatewayConnectionStore.getState().record === server
+            useGatewayConnectionStore.getState().record === server,
+          // This server is on the probed list, so a fresh `/health` for it may
+          // already be in hand; if it is, the warm starts a request further on.
+          // Unlike the focus warm this does not refuse an offline server: the
+          // reader has asked for this one, and the screen is about to connect
+          // to it regardless.
+          serverPrewarmGate(serverId).health
         );
     });
     // Pushed straight away so the slide-in is immediate, without waiting on the
