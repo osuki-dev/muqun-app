@@ -17,6 +17,10 @@ msgstr ""
 msgid "… truncated"
 msgstr "… truncado"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "“{args}” não foi enviado: uma habilidade não aceita argumentos"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[instruções]"
@@ -1399,6 +1403,10 @@ msgstr "Não foi possível revogar o dispositivo"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "Não foi possível executar"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "Não foi possível executar essa habilidade"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -3908,6 +3916,10 @@ msgstr "Tamanho"
 #: src/components/agent-message-block.tsx
 msgid "Skill · {0}"
 msgstr "Habilidade · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "Habilidade iniciada"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"

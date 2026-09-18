@@ -76,6 +76,7 @@ import {
   contextTokenTotal,
   formatModelName,
   hasRealSessionTitle,
+  isSlashSkill,
   listAgentFiles,
   inboxItemText,
   type AgentContextUsage,
@@ -270,6 +271,13 @@ export interface AgentComposerProps {
   commands?: readonly CommandInfo[];
   /** A command from that catalog: `POST …/command`, never a typed prompt. */
   onRunCommand?: (name: string, args: string) => void;
+  /**
+   * A skill from that catalog: `POST …/skill`, never a typed prompt either.
+   *
+   * Answers whether the engine took it, because the draft is cleared on the
+   * strength of that answer and comes back when it did not.
+   */
+  onInvokeSkill?: (skill: string, args: string) => Promise<boolean | void>;
   /** One of the app's own commands, dispatched by the screen that owns them. */
   onClientCommand?: (name: AgentClientCommandId) => void;
   /** What is waiting behind the current turn. */
@@ -318,6 +326,7 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenBackgroundTray,
   commands = EMPTY_COMMANDS,
   onRunCommand,
+  onInvokeSkill,
   onClientCommand,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
@@ -408,11 +417,22 @@ export const AgentComposer = memo(function AgentComposer({
     [commands, _]
   );
 
+  /**
+   * The host's skills, as the lines the reader may actually type.
+   *
+   * Only the ones the catalog marks `slash`: the rest are the agent's own to
+   * reach for, and listing every skill on the host under "/" buried the few
+   * that are meant to be asked for. Named like a host command -- its own name
+   * first, then what it does -- because that is what the row beside it does.
+   */
   const skillCommands: PaneSlashCommand[] = useMemo(
     () =>
-      (skills ?? []).map((s) => ({
-        name: `/${s.id}`,
-        description: s.description || s.name,
+      (skills ?? []).filter(isSlashSkill).map((skill) => ({
+        name: `/${skill.id}`,
+        description:
+          skill.name && skill.description && skill.name.toLowerCase() !== skill.id.toLowerCase()
+            ? `${skill.name} · ${skill.description}`
+            : skill.description || skill.name,
         argsHint: '',
         source: 'workspace' as const,
       })),
@@ -549,10 +569,24 @@ export const AgentComposer = memo(function AgentComposer({
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
     if (!hasAttachments) {
-      const parsed = readSlashCommand(trimmed, commands);
+      const parsed = readSlashCommand(trimmed, commands, skills);
       if (parsed?.kind === 'server' && onRunCommand) {
         onRunCommand(parsed.name, parsed.args);
         setText('');
+        return;
+      }
+      if (parsed?.kind === 'skill' && onInvokeSkill) {
+        // The draft stays put until the engine has taken it: a skill the
+        // gateway refused with the composer already emptied is a line the
+        // reader has to remember and retype.
+        setSending(true);
+        try {
+          const accepted = await onInvokeSkill(parsed.name, parsed.args);
+          if (accepted === false) return;
+          setText('');
+        } finally {
+          setSending(false);
+        }
         return;
       }
       if (parsed?.kind === 'client' && onClientCommand) {
@@ -600,7 +634,9 @@ export const AgentComposer = memo(function AgentComposer({
     running,
     deliveryMode,
     commands,
+    skills,
     onRunCommand,
+    onInvokeSkill,
     onClientCommand,
   ]);
 

@@ -17,6 +17,10 @@ msgstr ""
 msgid "… truncated"
 msgstr "… tronqué"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "« {args} » n’a pas été envoyé : une compétence ne prend pas d’arguments"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[instructions]"
@@ -1399,6 +1403,10 @@ msgstr "Impossible de révoquer l’appareil"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "Impossible de l'exécuter"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "Impossible d’exécuter cette compétence"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -3908,6 +3916,10 @@ msgstr "Taille"
 #: src/components/agent-message-block.tsx
 msgid "Skill · {0}"
 msgstr "Compétence · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "Compétence lancée"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"

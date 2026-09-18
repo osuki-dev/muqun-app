@@ -52,6 +52,7 @@ import {
   getAgentTimelineDelta,
   backgroundAgentSession,
   compactAgentSession,
+  invokeAgentSkill,
   getAgentContext,
   listAgentSessionChildren,
   listAgentShells,
@@ -1145,6 +1146,41 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       });
     },
     [activeAsid, sessionInfo?.status, showToast, t]
+  );
+
+  /**
+   * A skill from the host's catalog, run as one.
+   *
+   * The slash menu has listed skills as `/<id>` since it was written, and a
+   * picked one went out as a prompt -- so the model was handed the literal
+   * "/commit-message" and answered it as prose. `POST …/skill` is the route
+   * that exists for it; the failure lands on this screen's own notice and the
+   * draft comes back rather than being swallowed.
+   */
+  const handleInvokeSkill = useCallback(
+    async (skill: string, args: string): Promise<boolean> => {
+      if (!activeAsid) return false;
+      try {
+        await invokeAgentSkill(sessionId, activeAsid, { skill });
+        // A skill takes no arguments on the wire. Anything typed after it is
+        // said out loud rather than dropped in silence.
+        if (args) {
+          showScreenNotice(
+            t`Skill started`,
+            t`“${args}” was not sent: a skill takes no arguments.`
+          );
+        }
+        return true;
+      } catch (err) {
+        console.warn('Failed to run skill:', err);
+        showScreenNotice(
+          t`Could not run that skill`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+        return false;
+      }
+    },
+    [activeAsid, sessionId, showScreenNotice, t]
   );
 
   /** A failed compaction stays until the reader has seen it. */
@@ -2657,6 +2693,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onOpenBackgroundTray={openBackgroundTray}
         commands={commands}
         onRunCommand={handleRunCommand}
+        onInvokeSkill={handleInvokeSkill}
         onClientCommand={handleClientCommand}
         inbox={inbox}
         onCancelInboxItem={handleCancelInboxItem}

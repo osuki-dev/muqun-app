@@ -17,6 +17,10 @@ msgstr ""
 msgid "… truncated"
 msgstr "…以下省略"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "「{args}」は送信されませんでした。スキルは引数を取りません"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[指示]"
@@ -1399,6 +1403,10 @@ msgstr "デバイスを取り消せませんでした"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "実行できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "そのスキルを実行できませんでした"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -3908,6 +3916,10 @@ msgstr "サイズ"
 #: src/components/agent-message-block.tsx
 msgid "Skill · {0}"
 msgstr "スキル · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "スキルを開始しました"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"

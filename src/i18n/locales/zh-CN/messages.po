@@ -17,6 +17,10 @@ msgstr ""
 msgid "… truncated"
 msgstr "…已截断"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "“{args}”未发送：技能不接受参数"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[指示]"
@@ -1399,6 +1403,10 @@ msgstr "无法吊销设备"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "无法执行"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "无法运行该技能"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -3908,6 +3916,10 @@ msgstr "大小"
 #: src/components/agent-message-block.tsx
 msgid "Skill · {0}"
 msgstr "技能 · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "技能已启动"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"

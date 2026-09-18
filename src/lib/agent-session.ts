@@ -316,6 +316,29 @@ export async function sendAgentCommand(
   await writeJson(sessionRoute(asid, '/command'), 'Failed to run command', body);
 }
 
+/**
+ * Run a catalog skill on this session.
+ *
+ * `POST …/skill {skill, resume?}` -- not the skill's id typed into the prompt,
+ * which is what a picked skill used to become: the composer listed every
+ * catalog skill as `/<id>` and then sent the line as prose, so the model read
+ * "/commit-message" as text and answered it.
+ *
+ * `resume` asks the engine to continue the run the skill was part of rather
+ * than starting a turn of its own; it is omitted unless the caller says so.
+ */
+export async function invokeAgentSkill(
+  sessionId: string | undefined,
+  asid: string,
+  params: { skill: string; resume?: boolean }
+): Promise<void> {
+  const body: Record<string, unknown> = { skill: params.skill };
+  if (params.resume !== undefined) body.resume = params.resume;
+  // A v2-parity route, so it is on the global path only -- `sessionId` is
+  // taken for symmetry with the other calls and never spelled into the URL.
+  await writeJson(sessionRoute(asid, '/skill', sessionId, false), 'Failed to run skill', body);
+}
+
 export async function abortAgentSession(
   sessionId: string | undefined,
   asid: string

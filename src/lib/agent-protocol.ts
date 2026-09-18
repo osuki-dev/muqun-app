@@ -1538,6 +1538,22 @@ export interface SkillInfo {
   id: string;
   name: string;
   description: string;
+  /**
+   * Whether the host offers this skill as `/<id>` in a composer.
+   *
+   * A skill is not a command: most of them are things the agent reaches for on
+   * its own, and listing every one of them under a typed slash would bury the
+   * handful that are meant to be asked for. Only the ones the catalog marks
+   * appear in the menu, and only those are a `/`-line the app will run.
+   */
+  slash?: boolean;
+  /** Whether the agent may invoke it without being asked. */
+  autoinvoke?: boolean;
+}
+
+/** Whether a skill is one the reader can type as `/<id>`. */
+export function isSlashSkill(skill: SkillInfo): boolean {
+  return skill.slash === true;
 }
 
 export interface CommandInfo {
@@ -1722,10 +1738,14 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
       if (!skillRec) continue;
       const id = pickString(skillRec, ['id']);
       if (!id) continue;
+      const slash = asBool(skillRec.slash);
+      const autoinvoke = asBool(skillRec.autoinvoke);
       skills.push({
         id,
         name: pickString(skillRec, ['name']) ?? id,
         description: asString(skillRec.description) ?? '',
+        ...(slash === undefined ? {} : { slash }),
+        ...(autoinvoke === undefined ? {} : { autoinvoke }),
       });
     }
   }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { CommandInfo } from '../agent-protocol';
+import type { CommandInfo, SkillInfo } from '../agent-protocol';
 import {
   AGENT_CLIENT_COMMANDS,
   commandKey,
@@ -11,6 +11,15 @@ import {
 const SERVER: CommandInfo[] = [
   { name: 'review', description: 'Review the branch', agent: 'plan' },
   { name: '/deploy', description: 'Ship it' },
+];
+
+const SKILLS: SkillInfo[] = [
+  { id: 'commit-message', name: 'Commit message', description: 'Write one', slash: true },
+  { id: 'Changelog', name: 'Changelog', description: 'Weekly digest', slash: true },
+  // Not offered as a slash line: the agent reaches for it on its own.
+  { id: 'pdf', name: 'PDF', description: 'Read a PDF', autoinvoke: true },
+  // A catalog that predates the flag says nothing, which is not a yes.
+  { id: 'docx', name: 'DOCX', description: 'Read a document' },
 ];
 
 describe('commandKey', () => {
@@ -78,6 +87,53 @@ describe('readSlashCommand', () => {
       name: 'compact',
       args: '',
     });
+  });
+
+  test('a catalog skill is its own kind, carrying the skill id', () => {
+    expect(readSlashCommand('/commit-message', SERVER, SKILLS)).toEqual({
+      kind: 'skill',
+      name: 'commit-message',
+      args: '',
+    });
+    // The id is the wire value, whatever case it was typed in.
+    expect(readSlashCommand('/CHANGELOG last week', SERVER, SKILLS)).toEqual({
+      kind: 'skill',
+      name: 'Changelog',
+      args: 'last week',
+    });
+  });
+
+  test('a skill the catalog does not offer as a slash line stays a prompt', () => {
+    expect(readSlashCommand('/pdf', SERVER, SKILLS)).toBeNull();
+    expect(readSlashCommand('/docx', SERVER, SKILLS)).toBeNull();
+  });
+
+  test('a host command wins over a skill of the same name', () => {
+    const shadowed: SkillInfo[] = [
+      { id: 'review', name: 'Review', description: 'A skill called review', slash: true },
+    ];
+    expect(readSlashCommand('/review branch', SERVER, shadowed)).toEqual({
+      kind: 'server',
+      name: 'review',
+      args: 'branch',
+    });
+  });
+
+  test("a skill wins over the app's own command of the same name", () => {
+    // Both come from the host; the app's list is the fallback for what no
+    // catalog claims.
+    const shadowing: SkillInfo[] = [
+      { id: 'export', name: 'Export', description: 'The host\u2019s own export', slash: true },
+    ];
+    expect(readSlashCommand('/export', [], shadowing)).toEqual({
+      kind: 'skill',
+      name: 'export',
+      args: '',
+    });
+  });
+
+  test('with no skills passed, nothing changes', () => {
+    expect(readSlashCommand('/commit-message', SERVER)).toBeNull();
   });
 
   test('a slash that matches nothing is a prompt, not a refusal', () => {

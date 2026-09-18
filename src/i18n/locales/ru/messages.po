@@ -17,6 +17,10 @@ msgstr ""
 msgid "… truncated"
 msgstr "… обрезано"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "«{args}» не отправлено: навык не принимает аргументы"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[инструкции]"
@@ -1399,6 +1403,10 @@ msgstr "Не удалось отозвать устройство"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "Не удалось выполнить"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "Не удалось выполнить этот навык"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -3908,6 +3916,10 @@ msgstr "Размер"
 #: src/components/agent-message-block.tsx
 msgid "Skill · {0}"
 msgstr "Навык · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "Навык запущен"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
