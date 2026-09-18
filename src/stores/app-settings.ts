@@ -9,6 +9,7 @@ import {
   type StoredAgentViewSettings,
 } from '@/lib/pane-view-mode';
 import type { TerminalTextSize } from '@/lib/terminal-text-size';
+import { parseFontSlot, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
 // Declared with the rule that reads it rather than here, because the setting is
 // only half the answer to "how big is the terminal text": the other half is the
@@ -27,13 +28,34 @@ export type { TerminalTextSize };
  */
 export type ServerCardPanes = 'agents' | 'all';
 
+// Re-exported from the store the screens already read, the way `TerminalTextSize`
+// is: a settings screen asking for the shape of a setting should not have to
+// know which half of the font module defines it.
+export type { FontSlot };
+
 type PersistedSettings = {
   agentDefaultView: PaneViewMode;
   androidWidgetEnabled: boolean;
   appLockEnabled: boolean;
   hapticsEnabled: boolean;
+  /**
+   * The face the app's own text is set in, and the face its code is set in.
+   *
+   * Two slots rather than one, because they answer different questions: a
+   * reader who wants a Han face that reads well at 14pt on their phone wants it
+   * in the interface, and a reader who wants ligatures and a zero with a slash
+   * wants that in the terminal. Nobody wants the same file in both.
+   *
+   * Global, and deliberately not part of a theme pack. A pack is colour -- the
+   * pack format has no font field and the authoring skill forbids one -- and a
+   * font that arrived with a palette would be un-chosen every time the reader
+   * tried a different theme.
+   */
+  interfaceFont: FontSlot;
   language: LocalePreference;
   liveActivityEnabled: boolean;
+  /** The face the terminal and every code span are drawn in. See `interfaceFont`. */
+  monoFont: FontSlot;
   notificationsEnabled: boolean;
   serverCardPanes: ServerCardPanes;
   showTerminalKeyRow: boolean;
@@ -63,6 +85,10 @@ const defaults: PersistedSettings = {
   androidWidgetEnabled: false,
   appLockEnabled: false,
   hapticsEnabled: true,
+  // The system font, which is the absence of a choice rather than a third
+  // option. The app offers no fonts of its own, so until a reader brings one
+  // there is nothing to choose between.
+  interfaceFont: SYSTEM_FONT_SLOT,
   // `null` is "follow the system", which is what an app should do until it is
   // told otherwise. It is a distinct state from picking English: a device that
   // later switches to Chinese should follow, and only an explicit choice here
@@ -71,6 +97,7 @@ const defaults: PersistedSettings = {
   // A Lock Screen card names the agent and the panel it runs in, so it stays
   // off until the user asks for it.
   liveActivityEnabled: false,
+  monoFont: SYSTEM_FONT_SLOT,
   notificationsEnabled: true,
   // What is happening on my machines? is the question the home screen exists
   // for, and a card that lists only agent panes has been answering it wrong:
@@ -133,6 +160,12 @@ function parseSettings(value: string): Partial<PersistedSettings> {
       ...(typeof parsed.hapticsEnabled === 'boolean'
         ? { hapticsEnabled: parsed.hapticsEnabled }
         : {}),
+      // Every field of a stored slot is checked, and a slot that fails any of
+      // them reads as no slot at all -- back to the system font, which is the
+      // state the app can always be in. The guard is not a formality: the file
+      // path inside a slot reaches `new File(...)`, so an unchecked one is a
+      // path traversal with a font on the end of it. See `parseFontSlot`.
+      ...slotPatch('interfaceFont', parsed.interfaceFont),
       // Anything unrecognised -- a locale we dropped, a hand-edited file, a
       // build that shipped a code we no longer have a catalog for -- falls
       // through to the default and the app follows the system again.
@@ -140,6 +173,7 @@ function parseSettings(value: string): Partial<PersistedSettings> {
       ...(typeof parsed.liveActivityEnabled === 'boolean'
         ? { liveActivityEnabled: parsed.liveActivityEnabled }
         : {}),
+      ...slotPatch('monoFont', parsed.monoFont),
       ...(typeof parsed.notificationsEnabled === 'boolean'
         ? { notificationsEnabled: parsed.notificationsEnabled }
         : {}),
@@ -170,14 +204,28 @@ function parseSettings(value: string): Partial<PersistedSettings> {
   }
 }
 
+/**
+ * One slot, checked, or nothing at all.
+ *
+ * A helper rather than a spread at each call site, because the two slots are
+ * the same sentence and a copy of it is a second place for one of them to stop
+ * being guarded.
+ */
+function slotPatch(key: 'interfaceFont' | 'monoFont', value: unknown): Partial<PersistedSettings> {
+  const slot = parseFontSlot(value);
+  return slot ? { [key]: slot } : {};
+}
+
 function pickPersisted(state: AppSettingsState): PersistedSettings {
   return {
     agentDefaultView: state.agentDefaultView,
     androidWidgetEnabled: state.androidWidgetEnabled,
     appLockEnabled: state.appLockEnabled,
     hapticsEnabled: state.hapticsEnabled,
+    interfaceFont: state.interfaceFont,
     language: state.language,
     liveActivityEnabled: state.liveActivityEnabled,
+    monoFont: state.monoFont,
     notificationsEnabled: state.notificationsEnabled,
     serverCardPanes: state.serverCardPanes,
     showTerminalKeyRow: state.showTerminalKeyRow,
