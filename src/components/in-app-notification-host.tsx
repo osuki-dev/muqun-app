@@ -2,6 +2,7 @@ import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { router, type Href } from 'expo-router';
 import { Bell } from 'lucide-react-native';
@@ -85,6 +86,7 @@ export function InAppNotificationHost() {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const { colors } = useThemeTokens();
+  const mono = useMonoFontFamily();
   const enabled = useAppSettings((state) => state.notificationsEnabled);
   const items = useInAppNotifications((state) => state.items);
   const [active, setActive] = useState(AppState.currentState === 'active');
@@ -298,7 +300,11 @@ export function InAppNotificationHost() {
                     it: an approval that does not name its subject is not an
                     approval the reader can answer. */}
                 {detail ? (
-                  <Text selectable color={colors.text} numberOfLines={1} style={styles.detail}>
+                  <Text
+                    selectable
+                    color={colors.text}
+                    numberOfLines={1}
+                    style={[styles.detail, { fontFamily: mono }]}>
                     {detail}
                   </Text>
                 ) : null}
@@ -397,8 +403,12 @@ const styles = StyleSheet.create({
   },
   action: { minHeight: 44, justifyContent: 'center', paddingLeft: 10 },
   count: { fontVariant: ['tabular-nums'] },
+  // The approval's subject: a path or a command, and the one line of the
+  // banner the reader has to read character for character before they can
+  // answer it. The literal `'monospace'` it used to name meant this line alone
+  // stayed on the platform face while the permission card it mirrors moved to
+  // the reader's. The family is merged in at the render site.
   detail: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.meta.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },

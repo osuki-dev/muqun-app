@@ -14,6 +14,7 @@ import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-
 
 import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { MARKDOWN_CHUNK_CHARS, MARKDOWN_NATIVE_CEILING, capMarkdown } from '@/lib/markdown-cap';
@@ -117,6 +118,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const { showToast } = useToast();
+  const mono = useMonoFontFamily();
   const [budget, setBudget] = useState(MARKDOWN_CHUNK_CHARS);
 
   const capped = useMemo(() => capMarkdown(markdown, budget), [markdown, budget]);
@@ -146,7 +148,9 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
           style={styles.plainScroll}
           nestedScrollEnabled
           showsVerticalScrollIndicator={false}>
-          <Text selectable style={[styles.plainText, { color: theme.colors.text }]}>
+          <Text
+            selectable
+            style={[styles.plainText, { color: theme.colors.text, fontFamily: mono }]}>
             {capped.text}
           </Text>
         </ScrollView>
@@ -200,8 +204,15 @@ const styles = StyleSheet.create({
   plainScroll: {
     maxHeight: 420,
   },
+  // The escape hatch above the native ceiling: a document this long is drawn
+  // as one plain selectable block, and it is still a document, so it is still
+  // set in the reader's mono face. The family used to be the literal
+  // `'monospace'`, which meant the one path that gives up on the markdown
+  // renderer also quietly gave up on the reader's font choice -- the same text
+  // changed face as it crossed `MARKDOWN_NATIVE_CEILING`. It is merged in from
+  // `useMonoFontFamily()` at the render site, because a `StyleSheet.create`
+  // object cannot call a hook.
   plainText: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.mono.size,
     lineHeight: AGENT_TYPE.mono.lineHeight,
   },

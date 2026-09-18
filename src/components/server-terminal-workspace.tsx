@@ -28,7 +28,6 @@ import {
   AppState,
   Keyboard,
   type LayoutChangeEvent,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -114,6 +113,7 @@ import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { useLatestRef, useLazyRef, useResetSignal } from '@/hooks/use-render-refs';
 import { useSettledHeight } from '@/hooks/use-settled-height';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
 import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
 import {
@@ -4967,6 +4967,14 @@ function TerminalKeyButton({
 }) {
   const { t } = useLingui();
   const surfaceBackground = useSurfaceBackground();
+  // A cap is a key, not a word: `Ctrl C`, `:wq`, `␣ff`, `⌫`. The mono slot is
+  // what makes the row line up and what puts the glyphs the reader picked their
+  // font for -- U+2423 for the leader, the arrows -- on the caps. The family
+  // used to be a `Menlo`/`monospace` literal in the stylesheet at the foot of
+  // this file, and a `StyleSheet` is built the moment the module is imported:
+  // it never had a chance to learn that the reader had installed a mono, so the
+  // key row stayed in the platform's face while the pane above it changed.
+  const mono = useMonoFontFamily();
   const { _ } = useLinguiRuntime();
   // vim's vocabulary is the same in every language, so the cap is left alone;
   // what a screen reader says about it is not.
@@ -5062,11 +5070,18 @@ function TerminalKeyButton({
         <Text
           variant="caption"
           color={textColor}
-          style={
-            item.emphasis
-              ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
-              : styles.terminalKeyText
-          }>
+          // Insert mode's Esc used to carry `fontWeight: '700'`, and 700 is the
+          // weight at which a reader's font silently leaves the screen on
+          // Android: `expo-font` registers a loaded face under
+          // `Typeface.NORMAL` only, `ReactFontManager` rounds anything from 700
+          // up to BOLD, finds no entry, and falls through to
+          // `Typeface.create(family, style)` -- a lookup against the *system*
+          // font list, which does not know the reader's family by name. The one
+          // key meant to stand out was the one key in a different font from the
+          // rest of the row. `weight="semibold"` resolves to 600, under the
+          // threshold, so the registered face is still found.
+          weight={item.emphasis ? 'semibold' : undefined}
+          style={[styles.terminalKeyText, { fontFamily: mono }]}>
           {cap}
         </Text>
       </Animated.View>
@@ -5076,11 +5091,10 @@ function TerminalKeyButton({
         <Text
           variant="caption"
           color={activeText}
-          style={
-            item.emphasis
-              ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
-              : styles.terminalKeyText
-          }>
+          // The sending copy is drawn exactly over the resting one, so anything
+          // that changes its metrics moves the label. Same weight, same family.
+          weight={item.emphasis ? 'semibold' : undefined}
+          style={[styles.terminalKeyText, { fontFamily: mono }]}>
           {cap}
         </Text>
       </Animated.View>
@@ -5607,20 +5621,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // No `fontFamily`: the reader's monospace slot is merged in by
+  // `TerminalKeyButton`, which can ask for it. See the comment there.
   terminalKeyText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontVariant: ['tabular-nums'],
   },
   // Insert mode's Esc. Wider and bordered rather than a louder fill, so it
   // stays legible against both theme packs without needing a colour of its
-  // own -- the border already reuses `activeBackground`, which is themed.
+  // own -- the border already reuses `activeBackground`, which is themed. Its
+  // extra weight is the kit's `weight` prop on the label, not a style here;
+  // see `TerminalKeyButton`.
   terminalKeyEmphasis: {
     minWidth: 64,
     paddingHorizontal: 18,
     borderWidth: 2,
-  },
-  terminalKeyEmphasisText: {
-    fontWeight: '700',
   },
   viewToggle: {
     width: 46,

@@ -266,9 +266,18 @@ const styles = StyleSheet.create({
     lineHeight: AGENT_TYPE.micro.lineHeight,
     includeFontPadding: false,
   },
+  // No `fontWeight` here, and that is the whole of the fix: both places that
+  // wear this style already pass the kit's `weight="bold"` prop, and the kit
+  // puts the caller's `style` *after* its own resolved font style, so a `'700'`
+  // written here won the argument. On Android 700 is the one weight that
+  // discards the reader's interface font -- `expo-font` registers a face under
+  // `Typeface.NORMAL` only, `ReactFontManager` rounds 700 to BOLD, finds
+  // nothing, and ends on `Typeface.create(family, style)`, a lookup against the
+  // system list -- so the workspace name and the session title in the header
+  // were drawn in Roboto with the path directly beside them in the reader's
+  // face. The prop goes through the registry, which resolves bold down to 600.
   workspacePillName: {
     fontSize: AGENT_TYPE.meta.size,
-    fontWeight: '700',
     includeFontPadding: false,
   },
   workspacePillPath: {

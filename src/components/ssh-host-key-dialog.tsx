@@ -4,6 +4,7 @@ import { Dialog, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState } from 'react';
 import { Keyboard, Platform, StyleSheet, View } from 'react-native';
 
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import type { SshKeyboardInteractiveChallenge } from '@/lib/ssh-client';
 import { sanitizeServerText, SERVER_LINE_LIMIT } from '@/lib/ssh-server-text';
 import type { SshTrustedHostKey } from '@/lib/ssh-hosts';
@@ -84,6 +85,14 @@ export function SshHostKeyDialog({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  // A fingerprint is the one string on this dialog the reader is expected to
+  // compare glyph by glyph against what the server printed, so it is the
+  // definition of a literal and follows the mono slot. It used to name
+  // `Menlo`/`monospace` in the stylesheet below, which is evaluated once at
+  // module load: whatever the reader had installed was never asked for, and
+  // two base64 blobs that differ in one character were being compared in a
+  // face nobody chose.
+  const mono = useMonoFontFamily();
   const ready = useModalHandoff();
   const mismatch = verdict === 'mismatch';
   if (!ready) return null;
@@ -116,7 +125,7 @@ export function SshHostKeyDialog({
             <Text variant="caption" color={theme.colors.textMuted}>
               <Trans>Saved</Trans>
             </Text>
-            <Text selectable variant="caption" style={styles.mono}>
+            <Text selectable variant="caption" style={{ fontFamily: mono }}>
               {`${sanitizeServerText(trusted.algorithm, 64)}\n${trusted.fingerprint}`}
             </Text>
           </View>
@@ -125,7 +134,7 @@ export function SshHostKeyDialog({
           <Text variant="caption" color={theme.colors.textMuted}>
             {mismatch ? t`Presented now` : t`Fingerprint`}
           </Text>
-          <Text selectable variant="caption" style={styles.mono}>
+          <Text selectable variant="caption" style={{ fontFamily: mono }}>
             {`${sanitizeServerText(presented.algorithm, 64)}\n${presented.fingerprint}`}
           </Text>
         </View>
@@ -225,6 +234,5 @@ export function SshKeyboardInteractiveDialog({
 const styles = StyleSheet.create({
   fingerprints: { gap: 12 },
   fingerprint: { gap: 4 },
-  mono: { fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   prompts: { gap: 10 },
 });

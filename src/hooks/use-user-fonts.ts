@@ -192,6 +192,15 @@ export const SYSTEM_MONO_FAMILY = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
  * `constants/theme.ts` builds. What is left is the surfaces the kit has no
  * component for -- a `TextInput`, whose typed text *and* placeholder both take
  * their family off the input's own style -- and those are what this is for.
+ *
+ * One trap, and it is the reason this returns `null` rather than being spread
+ * blindly. `StyleSheet.flatten` assigns each style object over the last, and
+ * an explicit `null` or `undefined` assigns too: `[resolved, { fontFamily:
+ * useInterfaceFontFamily() }]` on a reader who has chosen nothing does not
+ * defer to `resolved`, it wipes it. Layer this on top of a style that already
+ * resolves a family only when it is non-null, or do not layer it at all --
+ * which for an input style that already came from the registry means not
+ * layering it, since the registry has already answered.
  */
 export function useInterfaceFontFamily(): string | null {
   const interfaceFont = useAppSettings((state) => state.interfaceFont);
