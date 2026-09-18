@@ -19,7 +19,7 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { sheetRoutePresentations } from '@/lib/route-presentation';
+import { sheetRouteDetents, sheetRoutePresentations } from '@/lib/route-presentation';
 import { FONT_SLOT_IDS, USER_FONT_ALIAS } from '@/theme/user-font-file';
 
 function read(file: string): string {
@@ -120,7 +120,10 @@ test('the Font row and its sheet are wired the way every other sheet is', () => 
   // `freezeOnBlur` all come from being one. `sheet-scene-contract.test.ts`
   // holds the sheet itself to the scene's rules.
   expect(sheetRoutePresentations['settings-font']).toBe('sheet');
-  expect(read('src/app/_layout.tsx')).toContain("sheetRoutePresentations['settings-font']");
+  // Both halves of the wiring now come from the one route table, so the layout
+  // names the route rather than indexing the presentations map by hand.
+  expect(read('src/app/_layout.tsx')).toContain("sheetRouteOptions('settings-font')");
+  expect(sheetRouteDetents['settings-font']).toBe('expandable');
   expect(read('src/components/settings-appearance.tsx')).toContain("router.push('/settings-font')");
   expect(read('src/app/settings-font.tsx')).toContain('<SettingsFontSheet');
 });
