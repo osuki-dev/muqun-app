@@ -41,6 +41,8 @@ import {
   SheetSceneAction,
   SheetSceneField,
   SheetSceneFooter,
+  SheetSceneGroupHeading,
+  SheetSceneGroupRule,
   SheetSceneQuietAction,
   SheetSceneRow,
   SHEET_LADDER,
@@ -911,22 +913,25 @@ export default function PairModal() {
               which is everyone opening this screen for the first time. Quiet,
               and below the toggle: it is the answer to "I do not have one of
               those yet", not a third way to pair. */}
-              <View style={[styles.setupGroup, { borderColor: theme.colors.border }]}>
-                <PressableScale
-                  accessibilityRole="link"
-                  accessibilityLabel={t`Set up a Gateway on your computer`}
-                  onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
-                  style={styles.setupLink}>
-                  {/* The gap is laid out, not typed. A literal space inside the Text
-                becomes part of the node's own text, so every matcher -- and the
-                screen reader -- sees "No Gateway yet? " with a tail on it. */}
-                  <Text variant="caption" color={theme.colors.textMuted}>
-                    {t`No Gateway yet?`}
-                  </Text>
-                  <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                    {t`Set one up on your computer`}
-                  </Text>
-                </PressableScale>
+              <View style={styles.setupGroup}>
+                {/* The sheet's own group label, with the link in the heading's
+                    meta slot: the same rule every other sheet labels a group
+                    by, rather than a caption and a coloured tail of its own. */}
+                <SheetSceneGroupRule />
+                <SheetSceneGroupHeading
+                  title={t`No Gateway yet?`}
+                  meta={
+                    <PressableScale
+                      accessibilityRole="link"
+                      accessibilityLabel={t`Set up a Gateway on your computer`}
+                      onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
+                      style={styles.setupLink}>
+                      <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                        {t`Set one up on your computer`}
+                      </Text>
+                    </PressableScale>
+                  }
+                />
 
                 {/* The command itself, under the link that would otherwise be the
               only answer.
@@ -1317,15 +1322,10 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.mono.size,
     lineHeight: AGENT_TYPE.mono.lineHeight,
   },
+  // A link in a heading's meta slot: its own touch height, no width of its own.
   setupLink: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    flexWrap: 'wrap',
-    gap: 5,
-    minHeight: 34,
-    paddingHorizontal: 0,
+    minHeight: 32,
+    justifyContent: 'center',
   },
   // No fill of its own any more: a rounded `surfaceRaised` slab holding two
   // pills is the card the sheet system removed everywhere else, and on a
@@ -1334,8 +1334,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   setupGroup: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
     gap: 4,
   },
   manualToggle: {
