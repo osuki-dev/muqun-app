@@ -24,13 +24,15 @@
  * the app complaining about its own state -- and the Font sheet is where it is
  * said, next to the row it is about.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { create } from 'zustand';
 
+import type { MarkdownFonts } from '@/lib/markdown-style';
 import { useAppSettings } from '@/stores/app-settings';
 import {
   FONT_SLOT_IDS,
   registerUserFonts,
+  slotFontFamily,
   type FontSlotId,
   type UserFontProblem,
 } from '@/theme/user-fonts';
@@ -140,4 +142,26 @@ export function useUserFontsReady(): boolean {
   }, []);
 
   return ready;
+}
+
+/**
+ * The two families the markdown theme is built with, where the reader set them.
+ *
+ * One hook for the three surfaces that render markdown -- the chat transcript,
+ * a tool card's output, the asset viewer's documents -- so none of them decides
+ * for itself what "the reader's font" means. The object is memoised on the two
+ * slots, because it goes straight into `useMemo` deps at every call site and a
+ * fresh object each render would rebuild the whole markdown style on every
+ * frame.
+ */
+export function useMarkdownFonts(): MarkdownFonts {
+  const interfaceFont = useAppSettings((state) => state.interfaceFont);
+  const monoFont = useAppSettings((state) => state.monoFont);
+  return useMemo(
+    () => ({
+      prose: slotFontFamily(interfaceFont, 'interface'),
+      mono: slotFontFamily(monoFont, 'mono'),
+    }),
+    [interfaceFont, monoFont]
+  );
 }

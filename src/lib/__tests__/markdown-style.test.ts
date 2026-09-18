@@ -176,3 +176,101 @@ describe('createCompactMarkdownStyle', () => {
     }
   }
 });
+
+/**
+ * The reader's own faces, through the style and into every block that should
+ * carry them.
+ *
+ * One palette is enough here: this is about which family each key gets, and a
+ * family does not vary by pack. What does have to hold for every pack is that
+ * *nothing* changes when the reader has chosen nothing, which is the first
+ * test below.
+ */
+describe('a reader-supplied face', () => {
+  const colors = THEME_PACKS[0].dark.colors;
+  const INTERFACE = 'MuqunUserInterface';
+  const MONO = 'MuqunUserMono';
+  const both = { prose: INTERFACE, mono: MONO };
+
+  /** Every block that is prose, and therefore takes the interface face. */
+  const PROSE_KEYS = [
+    'paragraph',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'list',
+    'blockquote',
+    'table',
+  ] as const;
+
+  test('no choice draws exactly what the app drew before the slots existed', () => {
+    for (const pack of THEME_PACKS) {
+      for (const mode of MODES) {
+        const plain = createMarkdownStyle(pack[mode].colors);
+        // Not merely "the same colours": the same object. A default argument
+        // that changed one key would be a silent restyle of every transcript
+        // in the app for readers who never opened the Font sheet.
+        expect(createMarkdownStyle(pack[mode].colors, {})).toEqual(plain);
+        expect(createMarkdownStyle(pack[mode].colors, { prose: null, mono: null })).toEqual(plain);
+        // `'monospace'` is the floor and is never given up: it is the
+        // platform's own answer to "draw this as code".
+        expect(plain.code?.fontFamily).toBe('monospace');
+        expect(plain.codeBlock?.fontFamily).toBe('monospace');
+        expect(plain.paragraph?.fontFamily).toBeUndefined();
+      }
+    }
+  });
+
+  test('prose blocks take the interface face, all of them', () => {
+    const style = createMarkdownStyle(colors, both);
+    for (const key of PROSE_KEYS) {
+      expect({ key, family: style[key]?.fontFamily }).toEqual({ key, family: INTERFACE });
+    }
+  });
+
+  test('code takes the monospace face, inline and fenced', () => {
+    const style = createMarkdownStyle(colors, both);
+    expect(style.code?.fontFamily).toBe(MONO);
+    expect(style.codeBlock?.fontFamily).toBe(MONO);
+  });
+
+  test('the two slots are independent, so one face never leaks into the other', () => {
+    const proseOnly = createMarkdownStyle(colors, { prose: INTERFACE });
+    expect(proseOnly.paragraph?.fontFamily).toBe(INTERFACE);
+    // A reader who set only the interface font still reads code in the
+    // platform's monospace, not in their body face.
+    expect(proseOnly.codeBlock?.fontFamily).toBe('monospace');
+
+    const monoOnly = createMarkdownStyle(colors, { mono: MONO });
+    expect(monoOnly.codeBlock?.fontFamily).toBe(MONO);
+    expect(monoOnly.paragraph?.fontFamily).toBeUndefined();
+  });
+
+  test('inline spans are left without a family, to inherit their block', () => {
+    // `enriched-markdown` resolves a span's family from the block it sits in,
+    // so naming it again on each of these would be three more places for the
+    // app to disagree with itself -- and a bold run in a paragraph would be
+    // the one thing on the page in a different face if one of them drifted.
+    const style = createMarkdownStyle(colors, both);
+    expect(style.strong?.fontFamily).toBeUndefined();
+    expect(style.em?.fontFamily).toBeUndefined();
+    expect(style.link?.fontFamily).toBeUndefined();
+  });
+
+  test('the compact and thought variants inherit both faces', () => {
+    // A thought, a notice, a skill's text, a permission's note: all of them
+    // are the compact style, and a reader who changed their font did not mean
+    // "except in the quiet parts".
+    const compact = createCompactMarkdownStyle(colors, colors.textMuted, both);
+    expect(compact.paragraph?.fontFamily).toBe(INTERFACE);
+    expect(compact.h1?.fontFamily).toBe(INTERFACE);
+    expect(compact.blockquote?.fontFamily).toBe(INTERFACE);
+    expect(compact.code?.fontFamily).toBe(MONO);
+    expect(compact.codeBlock?.fontFamily).toBe(MONO);
+
+    expect(createThoughtMarkdownStyle(colors, both)).toEqual(compact);
+  });
+});

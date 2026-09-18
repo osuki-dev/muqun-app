@@ -6,6 +6,7 @@ import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-
 import { memo, useMemo } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle } from '@/lib/markdown-style';
 import { PressableScale } from '@/components/pressable-scale';
 import { InlineDiffRows } from '@/components/diff-rows';
@@ -96,13 +97,14 @@ export function usePaneChatColors(): PaneChatColors {
  */
 export function usePaneChatMarkdownStyle(): MarkdownStyle {
   const theme = useThemeTokens();
+  const fonts = useMarkdownFonts();
   return useMemo(() => {
-    const base = createMarkdownStyle(theme.colors);
+    const base = createMarkdownStyle(theme.colors, fonts);
     return {
       ...base,
       thematicBreak: { color: 'transparent', height: 0, marginTop: 0, marginBottom: 0 },
     };
-  }, [theme.colors]);
+  }, [theme.colors, fonts]);
 }
 
 /** What the user said, on the right, as a bubble. */
