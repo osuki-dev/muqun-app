@@ -237,7 +237,18 @@ export function useLaunchHeroEdge({
 
   useEffect(() => {
     if (!isMeasurableHeroUri(uri) || !(width > 0) || !(height > 0)) return;
-    if (remembered(uri, width)) return;
+    const stored = remembered(uri, width);
+    if (stored) {
+      // Re-read rather than kept, because the read above was at whatever box
+      // the first render reported and the box can still change under it -- a
+      // rotation, or Android settling its insets a frame in. The stored shape
+      // is normalised, so the answer at the new box is a multiplication; what
+      // must not happen is the old box's points being used at the new one.
+      // Same box means the same reach, and then the object in hand is kept so
+      // the latch below does not see a new shape where there is none.
+      setMeasured((current) => (current && current.max === stored.max ? current : stored));
+      return;
+    }
     let cancelled = false;
     // Deliberately not awaited on any render path, and deliberately not
     // deferred either: it is racing the handover, and the launch it cannot
