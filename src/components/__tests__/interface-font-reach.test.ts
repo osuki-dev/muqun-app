@@ -56,6 +56,11 @@ const MONO_SURFACES = new Set([
   'src/components/skia-terminal.tsx',
   'src/components/skia-terminal.web.tsx',
   'src/components/terminal-transcript.tsx',
+  // The launch intro types a shell prompt at the reader. It is a terminal
+  // being drawn rather than a sentence being said, it already takes the mono
+  // slot through `fonts.mono`, and a proportional face would give away that
+  // the prompt is a picture of one.
+  'src/components/launch-intro-scene.tsx',
 ]);
 
 test('no reader-facing copy is drawn with React Native’s Text', () => {
