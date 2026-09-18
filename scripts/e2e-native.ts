@@ -101,7 +101,14 @@ type Node = {
 };
 type Reply = { success?: boolean; data?: Record<string, unknown>; error?: unknown };
 export class NativeCommandError extends Error {
-  constructor(readonly details: { code?: string; details?: Record<string, unknown> }) {
+  constructor(
+    readonly details: {
+      code?: string;
+      message?: string;
+      retriable?: boolean;
+      details?: Record<string, unknown>;
+    }
+  ) {
     super(`agent-device failed: ${JSON.stringify(details)}`);
   }
 }
@@ -440,6 +447,39 @@ export function junit(results: { name: string; seconds: number; error?: string }
 // order of magnitude below any permission-prompt interaction: prompts wait
 // for the reader, so noticing one up to 3s late only delays its dismissal.
 const ALERT_CLEAR_TTL_MS = 3000;
+/**
+ * The launch window in which an empty foreground is still the app arriving.
+ *
+ * A cold start draws its intro on the GPU before it has mounted anything a
+ * screen reader -- or the snapshot helper -- can read, so the first captures
+ * after a launch can find the app contributing no window root at all.
+ * agent-device reports that as `retriable`, and it is: the tree appears on
+ * its own a beat later. Past this many steps the app has had its chance, and
+ * a blank foreground is the flow's failure rather than its start.
+ */
+const APP_CONTENT_RETRY_STEPS = 6;
+/** Backoff between attempts, and the ceiling on all of them together. */
+const APP_CONTENT_RETRY_BACKOFF_MS = [500, 750, 1000, 1500, 2000];
+const APP_CONTENT_RETRY_BUDGET_MS = 10000;
+/** Commands that read the tree, and so can land on an app that has none yet. */
+const APP_CONTENT_RETRY_COMMANDS = new Set(['snapshot', 'wait', 'press']);
+const INSUFFICIENT_APP_CONTENT =
+  'Android snapshot helper returned insufficient foreground app content';
+/**
+ * Only agent-device's own verdict is retried: the stable part of the message
+ * AND the `retriable` flag it sets beside it. A COMMAND_FAILED without both
+ * is a real failure and is never repeated.
+ */
+export function isInsufficientAppContent(error: unknown): boolean {
+  if (!(error instanceof NativeCommandError)) return false;
+  const { code, message, retriable } = error.details;
+  return (
+    code === 'COMMAND_FAILED' &&
+    retriable === true &&
+    typeof message === 'string' &&
+    message.includes(INSUFFICIENT_APP_CONTENT)
+  );
+}
 
 export class NativeRunner {
   /**
@@ -453,6 +493,23 @@ export class NativeRunner {
    * older than its own guard.
    */
   private lastAlertClearMs = 0;
+  /**
+   * Steps run since the last launch, so the retry below only covers an app
+   * that is still arriving. `Infinity` until a flow opens one: a runner that
+   * never launched has no launch window to be inside.
+   */
+  private stepsSinceLaunch = Number.POSITIVE_INFINITY;
+  /**
+   * Every retry that fired, in order. The CLI writes this beside the flow's
+   * step records, so a report says a capture was repeated rather than hiding
+   * it behind a step that merely took longer.
+   */
+  readonly appContentRetries: {
+    command: string;
+    attempt: number;
+    waitedMs: number;
+    sinceFirstAttemptMs: number;
+  }[] = [];
 
   constructor(
     readonly suite: Suite,
@@ -535,9 +592,45 @@ export class NativeRunner {
     return nodes;
   }
 
+  /**
+   * Run one command, repeating it while agent-device says the foreground app
+   * has not produced a tree yet.
+   *
+   * The retry is deliberately narrow. It fires only for agent-device's own
+   * `retriable` insufficient-content verdict, only for commands that read the
+   * tree, and only inside the launch window -- a blank app in the middle of a
+   * flow is a failure and fails at once. The budget is both a count and a
+   * clock, and when it is spent the original error is what the flow sees:
+   * nothing is swallowed, and no step is ever repeated for any other reason.
+   */
+  private async invokeSettling(args: string[]): Promise<Record<string, unknown>> {
+    const started = Date.now();
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.invoke(args);
+      } catch (error) {
+        const waitedMs = APP_CONTENT_RETRY_BACKOFF_MS[attempt];
+        if (
+          waitedMs === undefined ||
+          this.stepsSinceLaunch > APP_CONTENT_RETRY_STEPS ||
+          !isInsufficientAppContent(error) ||
+          Date.now() - started >= APP_CONTENT_RETRY_BUDGET_MS
+        )
+          throw error;
+        this.appContentRetries.push({
+          command: args[0],
+          attempt: attempt + 1,
+          waitedMs,
+          sinceFirstAttemptMs: Date.now() - started,
+        });
+        await new Promise((resolve) => setTimeout(resolve, waitedMs));
+      }
+    }
+  }
+
   private async readCapture(): Promise<Record<string, unknown>> {
     for (let attempt = 0; ; attempt++) {
-      const capture = await this.invoke(['snapshot']);
+      const capture = await this.invokeSettling(['snapshot']);
       const quality = capture.snapshotQuality as
         | { state?: string; backend?: string; reason?: string; reasonCode?: string }
         | undefined;
@@ -631,6 +724,8 @@ export class NativeRunner {
         args[1] = path.join(this.artifacts, args[1].replace(/^dist\//, ''));
         await mkdir(path.dirname(args[1]), { recursive: true });
       }
+      // A launch reopens the window; every other step spends it down.
+      this.stepsSinceLaunch = args[0] === 'open' ? 0 : this.stepsSinceLaunch + 1;
       if (guardedMutations.has(args[0])) await this.readySnapshot(true);
       if (args[0] === 'alert' && args[1] === 'dismiss') {
         const status = await this.invoke(['alert', 'get']);
@@ -649,7 +744,9 @@ export class NativeRunner {
       let result: Record<string, unknown>;
       try {
         try {
-          result = await this.invoke(args);
+          result = APP_CONTENT_RETRY_COMMANDS.has(args[0])
+            ? await this.invokeSettling(args)
+            : await this.invoke(args);
         } catch (error) {
           // Right after a relaunch the accessibility backend can stall before
           // it has read a single tree: agent-device reports `captureStalled`
