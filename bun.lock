@@ -12,7 +12,7 @@
         "@legendapp/list": "^3.3.11",
         "@lingui/core": "^6.7.0",
         "@lingui/react": "^6.7.0",
-        "@osuki-dev/react-native-splash": "^0.2.3",
+        "@osuki-dev/react-native-splash": "0.4.0",
         "@osuki-dev/react-native-ssh": "0.3.0",
         "@osuki-dev/ui": "^1.1.0",
         "@shopify/react-native-skia": "2.12.0",
@@ -367,7 +367,7 @@
 
     "@messageformat/parser": ["@messageformat/parser@5.1.1", "https://registry.npmmirror.com/@messageformat/parser/-/parser-5.1.1.tgz", { "dependencies": { "moo": "^0.5.1" } }, "sha512-3p0YRGCcTUCYvBKLIxtDDyrJ0YijGIwrTRu1DT8gIviIDZru8H23+FkY6MJBzM1n9n20CiM4VeDYuBsrrwnLjg=="],
 
-    "@osuki-dev/react-native-splash": ["@osuki-dev/react-native-splash@0.2.3", "", { "dependencies": { "@expo/image-utils": "^0.11.5", "@expo/plist": "^0.8.1", "xcode": "^3.0.1" }, "peerDependencies": { "react": "*", "react-native": ">=0.78.0", "react-native-nitro-modules": "^0.36.0", "react-native-reanimated": ">=4.0.0", "react-native-worklets": "*" }, "optionalPeers": ["react-native-reanimated", "react-native-worklets"], "bin": { "react-native-splash": "cli/bin.js" } }, "sha512-G8QvxILKUErnVOxOURxHxnacidMPMvbU3NHxzAGvhVPY0z13IJUbPHd9PmRVbQODNi9kt45VkYgjuypg95ERww=="],
+    "@osuki-dev/react-native-splash": ["@osuki-dev/react-native-splash@0.4.0", "", { "dependencies": { "@expo/image-utils": "^0.11.5", "@expo/plist": "^0.8.1", "xcode": "^3.0.1" }, "peerDependencies": { "react": "*", "react-native": ">=0.78.0", "react-native-nitro-modules": "^0.36.0", "react-native-reanimated": ">=4.0.0", "react-native-worklets": "*" }, "optionalPeers": ["react-native-reanimated", "react-native-worklets"], "bin": { "react-native-splash": "cli/bin.js" } }, "sha512-EaH2C5d73Q0FQ/JYMsAiEKoEdOiR0JDCVE6UHFHZJF0C/zGN1Z9L7xF/vT3yssYuUm9jBCewFSF5xWlLmzmTSQ=="],
 
     "@osuki-dev/react-native-ssh": ["@osuki-dev/react-native-ssh@0.3.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-2dCbyddwoMMYfTkCyjMbREVw8sjFI2gpEOeIojoB+BDzww4YmBalIjiZLh2aD1Uf1Nxk919d2wG+1hcs71yOaQ=="],
 
