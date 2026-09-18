@@ -3,6 +3,11 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import { DEMO_PAIRING_SERVER_ID } from '../pairing';
+// The real constant, not a copy: the rule is executed in the sandbox below and
+// closes over this. Leaving it out made every reference throw a ReferenceError
+// that `register`'s own catch swallowed, so the effect looked silent for the
+// wrong reason -- indistinguishable, from the outside, from "nothing was due".
+import { PUSH_TOKEN_MAX_AGE_MS } from '../push-token-rule';
 
 /** Execute the actual production effect with inert native/network ports. No
  * React Native imports, global module mocks, devices or push credentials. */
@@ -26,7 +31,7 @@ function declaration(path: string, name: string): string {
  * map so a test can hand the same one to two runs of the effect and watch the
  * second stay silent -- which is the whole point of the rule.
  */
-type TokenStore = Map<string, { token: string; build: string }>;
+type TokenStore = Map<string, { token: string; build: string; atMs: number }>;
 
 function effect(
   serverId: string | null,
@@ -41,7 +46,7 @@ function effect(
     declaration('src/lib/demo-gateway.ts', 'isDemoRecord'),
     // The real rule and the real build identity, not restatements of them: a
     // test that re-implemented either would pass while production drifted.
-    declaration('src/lib/push-token-registry.ts', 'pushTokenNeedsSending'),
+    declaration('src/lib/push-token-rule.ts', 'pushTokenNeedsSending'),
     declaration('src/lib/notifications.ts', 'appBuildIdentity'),
     declaration('src/lib/notifications.ts', 'useGatewayPushRegistration'),
     'useGatewayPushRegistration(record);',
@@ -66,10 +71,13 @@ function effect(
       if (options.refuse) throw new Error('gateway refused the token');
     },
     Application: { nativeApplicationVersion: '3.0.0', nativeBuildVersion: '41' },
+    PUSH_TOKEN_MAX_AGE_MS,
     registeredPushToken: (id: string) => store.get(id) ?? null,
+    // Stamped the way the real store stamps it, so the age half of the rule is
+    // exercised here rather than quietly bypassed by a fake with no clock.
     rememberRegisteredPushToken: (id: string, entry: { token: string; build: string }) => {
       calls.push('remember');
-      store.set(id, entry);
+      store.set(id, { ...entry, atMs: Date.now() });
     },
     unregisterPushNotificationsAsync: async (remove: boolean) => {
       calls.push(`unregister:${remove}`);
@@ -148,6 +156,25 @@ test('a server this device has not told yet is told, even when another was', asy
   const other = effect('second-machine', true, store);
   await settle();
   expect(other.calls).toContain('gateway register');
+});
+
+test('a registration older than a week is asserted again', async () => {
+  // The gateway can lose its device row without anything on this device
+  // changing -- a reinstall, a restore from an older backup -- and from here
+  // that is invisible: the token still looks registered and pushes just stop.
+  // The age rule is the bound on how long that can last, and this is the wiring
+  // that carries the stored record to it.
+  const store: TokenStore = new Map();
+  store.set('paired-fixture', {
+    token: 'fixture-token',
+    build: '3.0.0+41',
+    atMs: Date.now() - 8 * 24 * 60 * 60 * 1000,
+  });
+  const run = effect('paired-fixture', true, store);
+  await settle();
+  expect(run.calls).toContain('gateway register');
+  // And the fresh stamp means the next launch is silent again.
+  expect(Date.now() - (store.get('paired-fixture')?.atMs ?? 0)).toBeLessThan(60_000);
 });
 
 test('a post the gateway refused is not remembered, so the next try sends it', async () => {
