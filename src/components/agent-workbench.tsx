@@ -55,6 +55,9 @@ import { StatusDot } from '@/components/status-dot';
 import { AgentTranscriptSkeleton } from '@/components/agent-transcript-skeleton';
 import {
   getAgentSessionSnapshot,
+  moveAgentSession,
+  sessionWorktreeName,
+  listAgentWorktrees,
   listAgentSessions,
   createAgentSession,
   sendAgentPrompt,
@@ -90,6 +93,7 @@ import {
   formatModelName,
   isBusyStatus,
   inboxItemText,
+  type WorktreeDirectory,
   type AgentContextUsage,
   type AgentDomainEvent,
   type AgentRunStatus,
@@ -1305,6 +1309,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // Housekeeping, not navigation: the reader's place is kept.
           void loadSnapshot('silent');
           break;
+        case 'agent.worktree.changed':
+          // `ready` as well as the two inventory states: 2.0.1 emits only
+          // `worktree.resolved` and `worktree.updated`, and the other is
+          // mapped in case a flow that does emit it turns up. `failed` is not
+          // here on purpose -- a create that failed refuses its own request,
+          // and the sheet already has that message on the row the reader is
+          // looking at. Announcing it twice is the second one being wrong.
+          if (event.state !== 'failed') setWorktreeRevision((n) => n + 1);
+          break;
       }
     },
     [
@@ -1836,6 +1849,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * rules, and it reads them from the gateway.
    */
   const [savedPermissionsRevision, setSavedPermissionsRevision] = useState(0);
+  /**
+   * How many times a project's worktree inventory has moved under us.
+   *
+   * `agent.worktree.changed` carries no `asid` and no `seq`: it belongs to a
+   * project rather than to a session, so it reaches every reader and is not
+   * replayable from anyone's ring buffer. Nothing here needs its payload --
+   * the sheet re-lists from the route, which is the only thing that can answer
+   * authoritatively -- so what is kept is the count, and the sheet watches it.
+   */
+  const [worktreeRevision, setWorktreeRevision] = useState(0);
 
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
@@ -2060,6 +2083,50 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     },
     [sessionId, newSessionParams, t, refreshSessions, showToast]
+  );
+
+  /**
+   * Point the open session at another directory, and keep it open.
+   *
+   * Not `handleSelectWorkspace`: that one *leaves* -- it finds or starts a
+   * session in the workspace picked and swaps the transcript for that
+   * session's. A move keeps this session, its history and whatever it is
+   * running, and changes the ground under it. A running session may be moved;
+   * the engine handles delivery, and refusing here would be the app inventing
+   * a rule OpenCode does not have.
+   *
+   * The reply is applied *and* `agent.session.updated` follows with the same
+   * directory, which is deliberate belt and braces: the event is what moves
+   * the header pill and the strip, and the reply is what makes the sheet's own
+   * dismissal land on a screen that has already changed.
+   */
+  const handleMoveSession = useCallback(
+    async (directory: string) => {
+      const asid = activeAsid;
+      if (!asid) return;
+      try {
+        const moved = await moveAgentSession(asid, directory);
+        setActiveDirectory(directory);
+        if (moved) {
+          setSessionInfo((prev) =>
+            prev && prev.asid === moved.asid ? { ...prev, ...moved } : moved
+          );
+          setSessions((prev) =>
+            prev.map((session) =>
+              session.asid === moved.asid ? { ...session, ...moved } : session
+            )
+          );
+        }
+        refreshSessions();
+      } catch (err) {
+        console.warn('Failed to move session:', err);
+        showScreenNotice(
+          t`Could not move this session`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      }
+    },
+    [activeAsid, refreshSessions, showScreenNotice, t]
   );
 
   /**
@@ -2468,9 +2535,55 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     );
   }, [activeDirectory, knownProjects]);
 
+  /**
+   * The directory the open session is in, as its project's own inventory has it.
+   *
+   * Asked of the engine rather than worked out here, because every local way
+   * of working it out is wrong, and the device showed both. `activeProject` is
+   * matched on a path *prefix*: a session in `/tmp/muqun-c10/repo` matches a
+   * known project whose canonical is `/tmp`, which makes the repository itself
+   * look like a worktree called "repo" -- a branch line on a session that is
+   * in no worktree at all. And matching by `project_id` instead only answers
+   * when `/api/agent-projects` happens to list that project, which for a
+   * repository opened by path it does not.
+   *
+   * `GET /api/agent-worktrees` resolves whatever directory it is given to the
+   * project that owns it and lists that project's checkouts, the root among
+   * them as the entry with no `strategy`. So one read answers both halves --
+   * which directory is the project, and whether this one is a worktree of it
+   * -- and `sessionWorktreeName` is handed the list rather than a guess.
+   * `readJson` dedupes it, and it is re-read only when the directory changes
+   * or the inventory says it moved.
+   */
+  const [worktreeEntries, setWorktreeEntries] = useState<readonly WorktreeDirectory[]>([]);
   useEffect(() => {
-    useAgentSessionState.getState().setWorkspace(activeDirectory, activeProject);
-  }, [activeDirectory, activeProject]);
+    if (!activeDirectory) {
+      setWorktreeEntries([]);
+      return;
+    }
+    let active = true;
+    void listAgentWorktrees(activeDirectory)
+      .then((entries) => {
+        if (active) setWorktreeEntries(entries);
+      })
+      .catch(() => {
+        // Quiet: with no inventory the header says nothing, which is the same
+        // thing it says for a session sitting in its own project.
+        if (active) setWorktreeEntries([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [activeDirectory, worktreeRevision]);
+
+  const activeWorktree = useMemo(() => {
+    const root = worktreeEntries.find((entry) => !entry.strategy)?.directory;
+    return sessionWorktreeName(activeDirectory, root, worktreeEntries);
+  }, [activeDirectory, worktreeEntries]);
+
+  useEffect(() => {
+    useAgentSessionState.getState().setWorkspace(activeDirectory, activeProject, activeWorktree);
+  }, [activeDirectory, activeProject, activeWorktree]);
 
   const displayWorkspaceName = workspaceDisplayName(activeProject, activeDirectory, t`Workspace`);
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
@@ -2985,6 +3098,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       contextUsage,
       commands,
       savedPermissionsRevision,
+      worktreeRevision,
       models: catalogModels,
     };
     useAgentSheetBridge.getState().publish(snapshot);
@@ -3009,6 +3123,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     contextUsage,
     commands,
     savedPermissionsRevision,
+    worktreeRevision,
     catalogModels,
   ]);
 
@@ -3025,6 +3140,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       selectWorkspace: (directory, project) => {
         void handleSelectWorkspace(directory, project);
       },
+      moveSession: (directory) => {
+        void handleMoveSession(directory);
+      },
       toggleReasoning: handleToggleReasoning,
       toggleYolo: handleToggleYoloMode,
       compactContext: handleCompactContext,
@@ -3037,6 +3155,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleSelectModel,
       handleSelectAgentMode,
       handleSelectWorkspace,
+      handleMoveSession,
       handleToggleReasoning,
       handleToggleYoloMode,
       handleCompactContext,

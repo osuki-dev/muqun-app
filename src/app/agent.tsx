@@ -52,6 +52,7 @@ export default function AgentScreen() {
   const sessionTitle = useAgentSessionState((s) => s.title);
   const activeDirectory = useAgentSessionState((s) => s.directory);
   const activeProject = useAgentSessionState((s) => s.project);
+  const activeWorktree = useAgentSessionState((s) => s.worktree);
 
   const createNewSessionRef = useRef<(() => void) | null>(null);
   const abortSessionRef = useRef<(() => void) | null>(null);
@@ -129,6 +130,7 @@ export default function AgentScreen() {
                   showSession={showSessionTitle}
                   running={sessionRunning}
                   sessionTitle={sessionTitle}
+                  worktreeName={activeWorktree}
                   workspaceName={displayWorkspaceName}
                   workspacePath={displayWorkspacePath}
                 />

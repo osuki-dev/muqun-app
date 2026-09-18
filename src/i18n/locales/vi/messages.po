@@ -17,6 +17,11 @@ msgstr ""
 msgid "… truncated"
 msgstr "… đã cắt bớt"
 
+#. placeholder {0}: worktreeDisplayName(directory)
+#: src/components/agent-worktree-sheet.tsx
+msgid "“{0}” has changes that have not been committed. Removing it throws them away."
+msgstr "“{0}” có thay đổi chưa commit. Xóa nó là bỏ luôn những thay đổi đó"
+
 #: src/components/agent-workbench.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}” không được gửi: kỹ năng không nhận đối số"
@@ -231,6 +236,10 @@ msgstr "{title} — đã xong khi bạn đi vắng"
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "A branch or tag this repository already has."
+msgstr "Một nhánh hoặc tag mà kho mã này đã có"
+
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "một mô hình mặc định"
@@ -243,6 +252,10 @@ msgstr "Một Gateway trên máy bạn có thể SSH vào, kể cả máy chỉ 
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "một {0} mới"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "A second checkout of this repository"
+msgstr "Một bản checkout thứ hai của kho mã này"
 
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
@@ -277,7 +290,9 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân của nó"
 
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 msgid "Actions for {0}"
 msgstr "Thao tác cho {0}"
 
@@ -685,9 +700,17 @@ msgstr "Nhánh"
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "Nhánh và tệp chủ đề lấy từ liên kết. Một nhánh có thể thay đổi về sau"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch from"
+msgstr "Bắt đầu từ nhánh"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "Nhánh hoặc commit (không bắt buộc)"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch to start from"
+msgstr "Nhánh để bắt đầu"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -725,6 +748,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1319,6 +1343,10 @@ msgstr "Không thể sao chép"
 msgid "Could not create session"
 msgstr "Không thể tạo phiên"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not create that worktree."
+msgstr "Không thể tạo worktree đó"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not delete"
 msgstr "Không thể xóa"
@@ -1358,6 +1386,10 @@ msgstr "Không thể tải phiên"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "Không thể tải những gì đang chạy"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not move this session"
+msgstr "Không thể chuyển phiên này"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1432,6 +1464,10 @@ msgstr "Không đọc được tệp này"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Không thể gỡ host"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not remove that worktree."
+msgstr "Không thể xóa worktree đó"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not rename"
@@ -1537,6 +1573,10 @@ msgstr "Không thể cập nhật phiên"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "Không thể tải tệp lên"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Create and move"
+msgstr "Tạo và chuyển sang"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -2333,6 +2373,10 @@ msgstr "Thấy lần cuối vừa xong"
 msgid "Latest"
 msgstr "Mới nhất"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Leave it empty and OpenCode picks a name."
+msgstr "Để trống thì OpenCode tự đặt tên"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "Để trống để bắt đầu từ nơi phiên đang ở"
@@ -2500,6 +2544,14 @@ msgstr "Di chuyển các nút điều khiển trình soạn thảo"
 msgid "Move the simulator controls"
 msgstr "Di chuyển các nút điều khiển trình giả lập"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Move to worktree"
+msgstr "Chuyển sang worktree"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Move to worktree…"
+msgstr "Chuyển sang worktree…"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2552,6 +2604,7 @@ msgid "My themes"
 msgstr "Giao diện của tôi"
 
 #: src/app/commands.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "Tên"
@@ -2611,6 +2664,10 @@ msgstr "Terminal mới"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "Không gian làm việc mới"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "New worktree…"
+msgstr "Worktree mới…"
 
 #: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
@@ -2759,6 +2816,10 @@ msgstr "Chưa có không gian làm việc nào ở đây. Nhập một đường
 #: src/components/agent-workspace-sheet.tsx
 msgid "No workspaces match “{0}”."
 msgstr "Không có không gian làm việc nào khớp với “{0}”"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
+msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc trên một nhánh mà không đụng tới bản checkout này"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -3237,6 +3298,10 @@ msgstr "Khóa riêng"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "Khóa riêng (để trống để giữ khóa đã lưu)"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project"
+msgstr "Dự án"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "Prompt"
@@ -3326,6 +3391,10 @@ msgstr "Đang đọc giao diện"
 msgid "Reading the theme link"
 msgstr "Đang đọc liên kết chủ đề"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Reading this project’s worktrees…"
+msgstr "Đang đọc các worktree của dự án này…"
+
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "Đang chờ nhập"
@@ -3394,6 +3463,11 @@ msgstr "Làm mới tệp"
 msgid "Refresh output"
 msgstr "Làm mới đầu ra"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Refresh worktrees"
+msgstr "Làm mới worktree"
+
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3408,6 +3482,10 @@ msgstr "Xóa"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Gỡ {0}"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove anyway?"
+msgstr "Vẫn xóa?"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -3424,6 +3502,14 @@ msgstr "Xóa giao diện này?"
 #: src/components/settings-storage.tsx
 msgid "Remove unused themes"
 msgstr "Xóa giao diện không dùng đến"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove worktree"
+msgstr "Xóa worktree"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Removing"
+msgstr "Đang xóa"
 
 #: src/components/settings-storage.tsx
 msgid "Removing unused themes"
@@ -4513,6 +4599,10 @@ msgstr "Kết nối đến trình giả lập đã dừng"
 msgid "The default agent. Executes tools."
 msgstr "Agent mặc định. Thực thi các công cụ"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "The host made a worktree but did not say where."
+msgstr "Host đã tạo worktree nhưng không cho biết ở đâu"
+
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
 msgstr "Biểu tượng trên màn hình chính của bạn"
@@ -4705,6 +4795,10 @@ msgstr "Mục này là bắt buộc"
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "Ngăn này không làm việc trong một kho git, nên không có gì để so sánh"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "This project"
+msgstr "Dự án này"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -5127,6 +5221,14 @@ msgstr "Thư mục làm việc"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Không gian làm việc"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktree name"
+msgstr "Tên worktree"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktrees"
+msgstr "Worktree"
 
 #: src/i18n/labels.ts
 msgid "Write a file"

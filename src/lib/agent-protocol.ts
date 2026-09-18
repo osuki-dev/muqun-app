@@ -1517,6 +1517,163 @@ export function parseShellOutputPage(value: unknown): ShellOutputPage {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Worktrees
+// ---------------------------------------------------------------------------
+
+/**
+ * One checkout in a project's inventory, as `GET /api/agent-worktrees` lists it.
+ *
+ * The project's own root is in that list too, and it is the entry **without a
+ * `strategy`**: OpenCode did not create it, so it is not a worktree and the
+ * remove route refuses it. Everything OpenCode manages carries one (`"git"` on
+ * 2.0.1), which is the whole of the difference the sheet draws between "this
+ * project" and a row it may offer to remove.
+ */
+export interface WorktreeDirectory {
+  directory: string;
+  strategy?: string;
+}
+
+export function parseWorktreeDirectory(value: unknown): WorktreeDirectory | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const directory = pickString(rec, ['directory', 'path']);
+  if (!directory) return null;
+  const strategy = pickString(rec, ['strategy']);
+  return { directory, ...(strategy ? { strategy } : {}) };
+}
+
+export function parseWorktreeList(value: unknown): WorktreeDirectory[] {
+  const rec = asRecord(value);
+  const list = Array.isArray(value)
+    ? value
+    : Array.isArray(rec?.items)
+      ? rec.items
+      : Array.isArray(rec?.worktrees)
+        ? rec.worktrees
+        : null;
+  if (!list) return [];
+  const out: WorktreeDirectory[] = [];
+  const seen = new Set<string>();
+  for (const entry of list) {
+    const parsed = parseWorktreeDirectory(entry);
+    // The inventory is a set of directories, and a directory listed twice is
+    // one row and not two: the second would be a row the selection rule could
+    // light with no way for the reader to tell which of the pair it lit.
+    if (parsed && !seen.has(parsed.directory)) {
+      seen.add(parsed.directory);
+      out.push(parsed);
+    }
+  }
+  return out;
+}
+
+/** Whether OpenCode manages this checkout, and therefore whether it can be removed. */
+export function isManagedWorktree(entry: WorktreeDirectory | undefined | null): boolean {
+  return typeof entry?.strategy === 'string' && entry.strategy.length > 0;
+}
+
+/**
+ * The directory `POST /api/agent-worktrees` created.
+ *
+ * The reply is `Worktree.Info` under a `worktree` key; the bare object is
+ * accepted too, because a parser that understands only one of the two shapes
+ * turns an envelope change into a create that silently did nothing.
+ */
+export function parseCreatedWorktree(value: unknown): string | undefined {
+  const rec = asRecord(value);
+  if (!rec) return undefined;
+  return parseWorktreeDirectory(rec.worktree)?.directory ?? parseWorktreeDirectory(rec)?.directory;
+}
+
+/** A path with no trailing separator, so `/repo/` and `/repo` are one directory. */
+function normalizeDirectory(directory: string | undefined | null): string {
+  const raw = (directory ?? '').trim();
+  if (raw.length <= 1) return raw;
+  return raw.replace(/\/+$/, '');
+}
+
+/** The last segment of a path: what a worktree is called, on a row and in the pill. */
+export function worktreeDisplayName(directory: string | undefined | null): string {
+  const normalized = normalizeDirectory(directory);
+  if (!normalized) return '';
+  const cut = normalized.lastIndexOf('/');
+  return cut >= 0 ? normalized.slice(cut + 1) || normalized : normalized;
+}
+
+/** Whether two paths name the same directory, trailing separator and all. */
+export function sameDirectory(a: string | undefined | null, b: string | undefined | null): boolean {
+  const left = normalizeDirectory(a);
+  const right = normalizeDirectory(b);
+  return left.length > 0 && left === right;
+}
+
+/**
+ * The worktree a session sits in, by name, or `undefined` for the project itself.
+ *
+ * Two answers, in this order, because the inventory is the truth and it is not
+ * always loaded. An entry in `entries` decides it outright -- the project root
+ * is in that list and carries no `strategy`, so a session in it is *not* in a
+ * worktree however far its path is from anything else. With no list, a
+ * directory that is not the project's canonical one is a worktree, which is
+ * what the header pill can say before the sheet has ever been opened.
+ *
+ * The name rather than a boolean: every caller that wants to know whether it is
+ * in one also wants to say which, and a helper answering `true` makes the
+ * second question a second basename call at the call site.
+ */
+export function sessionWorktreeName(
+  directory: string | undefined | null,
+  projectDirectory: string | undefined | null,
+  entries: readonly WorktreeDirectory[] = []
+): string | undefined {
+  const here = normalizeDirectory(directory);
+  if (!here) return undefined;
+  const listed = entries.find((entry) => sameDirectory(entry.directory, here));
+  if (listed) return isManagedWorktree(listed) ? worktreeDisplayName(here) : undefined;
+  const project = normalizeDirectory(projectDirectory);
+  if (!project || project === here) return undefined;
+  return worktreeDisplayName(here);
+}
+
+/**
+ * Whether a refusal is the one a second attempt can get past.
+ *
+ * OpenCode refuses to remove a worktree with local changes in it, and says so
+ * with `forceRequired: true` inside a `502 agent_engine_error` -- not with a
+ * status of its own, so the status is no help. The flag arrives as text,
+ * because `writeJson` throws the gateway's body as an `Error` message rather
+ * than a parsed object, and it is the only thing separating "ask the reader
+ * whether they meant it" from "this failed and the answer is no".
+ *
+ * The backslashes come off before the test, and that is the whole reason this
+ * is not a one-line regex. OpenCode's refusal is a JSON document, which the
+ * gateway puts inside a *message string*, which is then encoded as JSON again
+ * -- so the flag reaches the device already escaped twice, as
+ * `\\"forceRequired\\":true` rather than `"forceRequired":true`, and a pattern
+ * written for the second one does not match the first. The device found that:
+ * the sheet printed the whole 502 body on the row instead of asking "Remove
+ * anyway?", on the one refusal the reader is supposed to be able to answer.
+ * Stripping the escapes matches at any depth of nesting, and this is a boolean
+ * probe rather than a parse -- nothing is read back out of the flattened text.
+ */
+export function isWorktreeForceRequired(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (value instanceof Error) return isWorktreeForceRequired(value.message);
+  if (typeof value === 'string') {
+    return /["']?force_?required["']?\s*[:=]\s*true/i.test(value.replace(/\\/g, ''));
+  }
+  const rec = asRecord(value);
+  if (!rec) return false;
+  if (rec.forceRequired === true || rec.force_required === true) return true;
+  return (
+    isWorktreeForceRequired(rec.error) ||
+    isWorktreeForceRequired(rec.data) ||
+    isWorktreeForceRequired(rec.message)
+  );
+}
+
 export interface AgentEngineInfo {
   available: boolean;
   origin: 'adopted' | 'spawned' | 'none';
@@ -1939,7 +2096,47 @@ export type AgentDomainEvent =
       state: RevertState;
       revert: AgentSessionRevert | null;
     }
-  | { type: 'agent.resync'; asid: string; seq: number; reason?: string };
+  | { type: 'agent.resync'; asid: string; seq: number; reason?: string }
+  | {
+      type: 'agent.worktree.changed';
+      /**
+       * Always empty, and kept only so the union has one shape.
+       *
+       * A worktree belongs to a project rather than to a session, so this is
+       * the one event on the stream that carries no `asid` -- which is how it
+       * reaches every reader at once. `seq` is `0` for the same reason: it is
+       * not in any session's ring buffer and `…/events?after=` will not replay
+       * it. A handler that filters by `asid` must let this one through.
+       */
+      asid: string;
+      seq: number;
+      state: WorktreeState;
+      /** The project's directory, or the worktree's own where the event names it. */
+      directory?: string;
+      project_id?: string;
+      /** `ready` alone describes what was prepared. */
+      name?: string;
+      branch?: string;
+      /** `failed` alone: OpenCode's own message, already a sentence. */
+      error?: string;
+    };
+
+/**
+ * What happened to a project's worktree inventory.
+ *
+ * No `creating`: nothing in 2.0.1 announces a creation starting, because the
+ * create route blocks until the worktree exists and the inventory change
+ * follows it. The spinner on the row is therefore the app's own request, not
+ * a state that ever arrives here.
+ */
+export type WorktreeState = 'updated' | 'resolved' | 'ready' | 'failed';
+
+export function parseWorktreeState(value: unknown): WorktreeState | null {
+  const raw = asString(value);
+  return raw === 'updated' || raw === 'resolved' || raw === 'ready' || raw === 'failed'
+    ? raw
+    : null;
+}
 
 /** Where a rollback is: staged and previewable, applied, or withdrawn. */
 export type RevertState = 'staged' | 'committed' | 'cleared';
@@ -2039,6 +2236,28 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
     case 'agent.resync': {
       const reason = pickString(rec, ['reason']);
       return { type, asid, seq, ...(reason ? { reason } : {}) };
+    }
+    case 'agent.worktree.changed': {
+      const state = parseWorktreeState(rec.state);
+      if (!state) return null;
+      const directory = pickString(rec, ['directory']);
+      const projectId = pickString(rec, ['project_id', 'projectID', 'projectId']);
+      const name = pickString(rec, ['name']);
+      const wtBranch = pickString(rec, ['branch']);
+      // `error` only where the state is one, so a stale string on a `ready`
+      // frame cannot put a failure on a row that succeeded.
+      const error = state === 'failed' ? pickString(rec, ['error', 'message']) : undefined;
+      return {
+        type,
+        asid,
+        seq,
+        state,
+        ...(directory ? { directory } : {}),
+        ...(projectId ? { project_id: projectId } : {}),
+        ...(name ? { name } : {}),
+        ...(wtBranch ? { branch: wtBranch } : {}),
+        ...(error ? { error } : {}),
+      };
     }
     default:
       return null;

@@ -2,7 +2,14 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, View, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { CornerUpLeft, GitFork, MoreHorizontal, PencilLine, Trash2 } from 'lucide-react-native';
+import {
+  CornerUpLeft,
+  GitBranch,
+  GitFork,
+  MoreHorizontal,
+  PencilLine,
+  Trash2,
+} from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
@@ -87,6 +94,21 @@ export interface AgentSessionsSheetProps {
   onRenameSession?: (asid: string, title: string) => void;
   /** Delete one session, after the confirmation this sheet asks for. */
   onDeleteSession?: (asid: string) => void;
+  /**
+   * Open the worktree sheet on one session.
+   *
+   * The row makes its session the open one first, and that ordering is the
+   * whole of the contract: the worktree sheet moves whatever session the
+   * workbench has open, so opening it from a row that is *not* open would
+   * list one session's project and move a different session into it.
+   *
+   * It was a condition before -- the item was offered only on the row that was
+   * already current -- and the device showed why that is the wrong shape: a
+   * menu whose contents depend on a comparison the reader cannot see is a menu
+   * that is sometimes mysteriously missing the thing they came for. Selecting
+   * first is the same guarantee with nothing hidden.
+   */
+  onMoveSession?: (asid: string) => void;
   onClose: () => void;
 }
 
@@ -100,6 +122,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onSelectSession,
   onRenameSession,
   onDeleteSession,
+  onMoveSession,
   onClose,
 }: AgentSessionsSheetProps) {
   const { t } = useLingui();
@@ -390,6 +413,22 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           onClose();
         },
         testID: `agent-session-open-parent-${session.asid}`,
+      });
+    }
+    if (onMoveSession) {
+      items.push({
+        id: 'worktree',
+        label: t`Move to worktree…`,
+        Icon: GitBranch,
+        onPress: () => {
+          setMenuAsid(null);
+          // Selected first, then the sheet: the worktree sheet reads and moves
+          // the *open* session, so this is what makes the row it was opened
+          // from and the session it moves the same one.
+          if (session.asid !== activeAsid) onSelectSession(session.asid);
+          onMoveSession(session.asid);
+        },
+        testID: `agent-session-worktree-${session.asid}`,
       });
     }
     items.push({

@@ -17,6 +17,11 @@ msgstr ""
 msgid "… truncated"
 msgstr "…已截斷"
 
+#. placeholder {0}: worktreeDisplayName(directory)
+#: src/components/agent-worktree-sheet.tsx
+msgid "“{0}” has changes that have not been committed. Removing it throws them away."
+msgstr "「{0}」有尚未提交的變更。移除它就會把這些變更丟掉"
+
 #: src/components/agent-workbench.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "「{args}」未送出：技能不接受參數"
@@ -231,6 +236,10 @@ msgstr "{title} — 在你離開時完成"
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "A branch or tag this repository already has."
+msgstr "此儲存庫已有的分支或標籤"
+
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "預設模型"
@@ -243,6 +252,10 @@ msgstr "你能以 SSH 登入的機器上的 Gateway，即使它只在自己的 l
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "新的 {0}"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "A second checkout of this repository"
+msgstr "此儲存庫的第二份簽出"
 
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
@@ -277,7 +290,9 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作這個終端機，或給它的 Agent 下一條指令"
 
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 msgid "Actions for {0}"
 msgstr "{0} 的操作"
 
@@ -685,9 +700,17 @@ msgstr "分支"
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "分支和主題檔案來自該連結。分支之後可能會變"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch from"
+msgstr "起始分支"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "分支或提交（選填）"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch to start from"
+msgstr "作為起點的分支"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -725,6 +748,7 @@ msgstr "需要相機存取權"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1319,6 +1343,10 @@ msgstr "無法複製"
 msgid "Could not create session"
 msgstr "無法建立會話"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not create that worktree."
+msgstr "無法建立該工作樹"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not delete"
 msgstr "無法刪除"
@@ -1358,6 +1386,10 @@ msgstr "無法載入工作階段"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "無法載入正在執行的項目"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not move this session"
+msgstr "無法移動此會話"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1432,6 +1464,10 @@ msgstr "無法讀取這個檔案"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "無法移除主機"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not remove that worktree."
+msgstr "無法移除該工作樹"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not rename"
@@ -1537,6 +1573,10 @@ msgstr "無法更新工作階段"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "無法上傳檔案"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Create and move"
+msgstr "建立並移動"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -2333,6 +2373,10 @@ msgstr "剛剛連線過"
 msgid "Latest"
 msgstr "最新"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Leave it empty and OpenCode picks a name."
+msgstr "留空則由 OpenCode 取名"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "留空就從工作階段目前所在的位置開始"
@@ -2500,6 +2544,14 @@ msgstr "移動編輯器控制項"
 msgid "Move the simulator controls"
 msgstr "移動模擬器控制項"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Move to worktree"
+msgstr "移動到工作樹"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Move to worktree…"
+msgstr "移動到工作樹…"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2552,6 +2604,7 @@ msgid "My themes"
 msgstr "我的主題"
 
 #: src/app/commands.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "名稱"
@@ -2611,6 +2664,10 @@ msgstr "新增終端機"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "新增工作區"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "New worktree…"
+msgstr "新增工作樹…"
 
 #: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
@@ -2759,6 +2816,10 @@ msgstr "這裡還沒有工作區。在上面輸入路徑即可開啟一個"
 #: src/components/agent-workspace-sheet.tsx
 msgid "No workspaces match “{0}”."
 msgstr "沒有與「{0}」相符的工作區"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
+msgstr "還沒有工作樹。在下面建立一個，就能在某個分支上工作而不打擾這份簽出"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -3237,6 +3298,10 @@ msgstr "私密金鑰"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "私密金鑰（留空以保留已儲存的金鑰）"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project"
+msgstr "專案"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "提示詞"
@@ -3326,6 +3391,10 @@ msgstr "正在讀取主題"
 msgid "Reading the theme link"
 msgstr "正在讀取主題連結"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Reading this project’s worktrees…"
+msgstr "正在讀取此專案的工作樹…"
+
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "等待輸入"
@@ -3394,6 +3463,11 @@ msgstr "重新整理檔案"
 msgid "Refresh output"
 msgstr "重新整理輸出"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Refresh worktrees"
+msgstr "重新整理工作樹"
+
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3408,6 +3482,10 @@ msgstr "移除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove anyway?"
+msgstr "仍要移除？"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -3424,6 +3502,14 @@ msgstr "移除此主題？"
 #: src/components/settings-storage.tsx
 msgid "Remove unused themes"
 msgstr "移除未使用的主題"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove worktree"
+msgstr "移除工作樹"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Removing"
+msgstr "正在移除"
 
 #: src/components/settings-storage.tsx
 msgid "Removing unused themes"
@@ -4513,6 +4599,10 @@ msgstr "與模擬器的連線中斷了"
 msgid "The default agent. Executes tools."
 msgstr "預設智慧體，執行工具"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "The host made a worktree but did not say where."
+msgstr "主機建立了工作樹，卻沒有說它在哪裡"
+
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
 msgstr "顯示在主畫面上的圖示"
@@ -4705,6 +4795,10 @@ msgstr "此項為必填"
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "這個面板不是在 git 儲存庫中工作，因此沒有可比較的內容"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "This project"
+msgstr "本專案"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -5127,6 +5221,14 @@ msgstr "工作目錄"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "工作區"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktree name"
+msgstr "工作樹名稱"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktrees"
+msgstr "工作樹"
 
 #: src/i18n/labels.ts
 msgid "Write a file"

@@ -27,6 +27,14 @@ interface AgentSessionState {
   directory?: string;
   project?: AgentProject;
   /**
+   * The worktree the session is in, by name, and `undefined` in the project.
+   *
+   * Derived rather than looked up here: which directory is the project's own
+   * root is a question only the engine's inventory answers outright, and the
+   * workbench is what holds the pieces to ask it. The header takes the answer.
+   */
+  worktree?: string;
+  /**
    * The sessions the composer's strip draws, in the order it draws them: this
    * workspace's roots, with the open root's subagents folded in where the strip
    * shows them. The header pill swipes along exactly this list, so a chip and a
@@ -48,7 +56,7 @@ interface AgentSessionState {
    */
   switchSession?: (asid: string) => void;
   setSessionStatus: (state: { running: boolean; title?: string }) => void;
-  setWorkspace: (directory?: string, project?: AgentProject) => void;
+  setWorkspace: (directory?: string, project?: AgentProject, worktree?: string) => void;
   setSessionRouting: (routing: {
     sessionOrder: readonly SwipeableSession[];
     activeAsid?: string;
@@ -64,12 +72,13 @@ export const useAgentSessionState = create<AgentSessionState>((set) => ({
   title: undefined,
   directory: undefined,
   project: undefined,
+  worktree: undefined,
   sessionOrder: NO_SESSIONS,
   activeAsid: undefined,
   switching: false,
   switchSession: undefined,
   setSessionStatus: (state) => set({ running: state.running, title: state.title }),
-  setWorkspace: (directory, project) => set({ directory, project }),
+  setWorkspace: (directory, project, worktree) => set({ directory, project, worktree }),
   setSessionRouting: (routing) =>
     set({
       sessionOrder: routing.sessionOrder,

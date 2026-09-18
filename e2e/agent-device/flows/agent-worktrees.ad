@@ -1,0 +1,95 @@
+# Native agent-device regression: OpenCode worktrees on the agent screen.
+#
+# Deliberately NOT registered in suite.json, and therefore not part of the
+# `full` gate -- the same as `agent-workbench.ad` beside it and for the same
+# reason. The gate's flows drive offline demo mode, and the agent surface has
+# no demo mode: a worktree is a second checkout that OpenCode creates on the
+# host, so every assertion below needs a real paired Gateway with OpenCode
+# 2.0.1 behind it. Run it by hand against one.
+#
+# Preconditions:
+# 1. A paired Gateway whose OpenCode has adopted a project at /tmp/muqun-c10/repo
+#    (git init, one commit on `main`).
+# 2. The agent screen already open on a session in that project, on a free model.
+# 3. No worktree named `probe` in that project yet.
+# 4. `@ASID@` below is replaced with the open session's own asid before running
+#    (a session row's actions are addressed by it -- `agent-session-actions-ses_…`,
+#    which `snapshot -i` prints). The flow is not runnable verbatim for that
+#    reason; it is a recorded procedure, not a gate.
+#
+# Verifies:
+# 1. "Move to worktree…" on the session row's action menu.
+# 2. The sheet: "This project" naming the project root, and the worktrees group.
+# 3. Creating a worktree from the inline form, which moves the session onto it.
+# 4. The header pill's quiet worktree line.
+# 5. Moving back to the project, and removing the worktree.
+
+open "dev.osuki.muqun"
+wait stable 400 5000
+
+# 1. The entry point is the session row's own action menu.
+press "id=\"agent-composer-sessions-btn\""
+wait stable 400 3000
+is visible "id=\"agent-sessions-sheet\""
+
+press "id=\"agent-session-actions-@ASID@\""
+wait stable 400 2000
+is visible "label=\"Move to worktree…\""
+screenshot "shots/agent-worktree-menu-item.png"
+
+# 2. The sheet, and the project row it marks as current.
+press "label=\"Move to worktree…\""
+wait stable 400 3000
+is visible "id=\"agent-worktree-sheet\""
+is visible "id=\"agent-worktree-project-row\""
+is visible "id=\"agent-worktree-refresh-btn\""
+is visible "id=\"agent-worktree-new-btn\""
+screenshot "shots/agent-worktree-sheet.png"
+
+# 3. Create one, which moves the session onto it when it answers.
+press "id=\"agent-worktree-new-btn\""
+wait stable 400 2000
+fill id="agent-worktree-name-input" "probe"
+wait stable 400 2000
+fill id="agent-worktree-branch-input" "main"
+wait stable 400 2000
+screenshot "shots/agent-worktree-create-form.png"
+
+press "id=\"agent-worktree-create-btn\""
+# The create route blocks until the worktree exists, so this waits on the
+# request rather than on an event.
+wait stable 1000 30000
+screenshot "shots/agent-worktree-created-and-moved.png"
+
+# 4. The header pill names the worktree under the session's title.
+is visible "text=\"probe\""
+
+# 5. Back to the project, then remove the worktree.
+press "id=\"agent-composer-sessions-btn\""
+wait stable 400 3000
+press "id=\"agent-session-actions-@ASID@\""
+wait stable 400 2000
+press "label=\"Move to worktree…\""
+wait stable 400 3000
+press "id=\"agent-worktree-project-row\""
+wait stable 1000 20000
+
+press "id=\"agent-composer-sessions-btn\""
+wait stable 400 3000
+press "id=\"agent-session-actions-@ASID@\""
+wait stable 400 2000
+press "label=\"Move to worktree…\""
+wait stable 400 3000
+
+# The row the session is standing in offers no actions, so this one only
+# appears once the session has moved off it.
+press "id=\"agent-worktree-actions-probe\""
+wait stable 400 2000
+is visible "label=\"Remove worktree\""
+screenshot "shots/agent-worktree-remove-menu.png"
+
+press "label=\"Remove worktree\""
+wait stable 1000 20000
+screenshot "shots/agent-worktree-removed.png"
+
+close

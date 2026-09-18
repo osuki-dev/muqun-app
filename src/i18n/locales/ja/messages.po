@@ -17,6 +17,11 @@ msgstr ""
 msgid "… truncated"
 msgstr "…以下省略"
 
+#. placeholder {0}: worktreeDisplayName(directory)
+#: src/components/agent-worktree-sheet.tsx
+msgid "“{0}” has changes that have not been committed. Removing it throws them away."
+msgstr "「{0}」にはコミットしていない変更があります。削除すると失われます"
+
 #: src/components/agent-workbench.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "「{args}」は送信されませんでした。スキルは引数を取りません"
@@ -231,6 +236,10 @@ msgstr "{title} — 離れている間に完了しました"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "A branch or tag this repository already has."
+msgstr "このリポジトリにすでにあるブランチまたはタグ"
+
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "既定のモデル"
@@ -243,6 +252,10 @@ msgstr "SSH で入れるマシン上の Gateway。自身のループバックだ
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "新しい {0}"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "A second checkout of this repository"
+msgstr "このリポジトリの 2 つ目のチェックアウト"
 
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
@@ -277,7 +290,9 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "このターミナルを操作するか、エージェントに指示を送る"
 
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 msgid "Actions for {0}"
 msgstr "{0} の操作"
 
@@ -685,9 +700,17 @@ msgstr "ブランチ"
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "ブランチとテーマファイルはリンクから取得しました。ブランチは後で変わることがあります"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch from"
+msgstr "分岐元"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "ブランチまたはコミット（任意）"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch to start from"
+msgstr "起点にするブランチ"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -725,6 +748,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1319,6 +1343,10 @@ msgstr "コピーできませんでした"
 msgid "Could not create session"
 msgstr "セッションを作成できませんでした"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not create that worktree."
+msgstr "そのワークツリーを作成できませんでした"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not delete"
 msgstr "削除できませんでした"
@@ -1358,6 +1386,10 @@ msgstr "セッションを読み込めませんでした"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "実行中のものを読み込めませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not move this session"
+msgstr "このセッションを移動できませんでした"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1432,6 +1464,10 @@ msgstr "このファイルを読み込めませんでした"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ホストを削除できませんでした"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not remove that worktree."
+msgstr "そのワークツリーを削除できませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not rename"
@@ -1537,6 +1573,10 @@ msgstr "セッションを更新できませんでした"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "ファイルをアップロードできませんでした"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Create and move"
+msgstr "作成して移動"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -2333,6 +2373,10 @@ msgstr "最終確認: たった今"
 msgid "Latest"
 msgstr "最新"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Leave it empty and OpenCode picks a name."
+msgstr "空のままにすると OpenCode が名前を決めます"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "空のままにすると、セッションが今いる場所で開始します"
@@ -2500,6 +2544,14 @@ msgstr "エディタの操作パネルを移動"
 msgid "Move the simulator controls"
 msgstr "シミュレータの操作ボタンを移動"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Move to worktree"
+msgstr "ワークツリーへ移動"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Move to worktree…"
+msgstr "ワークツリーへ移動…"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2552,6 +2604,7 @@ msgid "My themes"
 msgstr "マイテーマ"
 
 #: src/app/commands.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "名前"
@@ -2611,6 +2664,10 @@ msgstr "新しいターミナル"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "新規ワークスペース"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "New worktree…"
+msgstr "新しいワークツリー…"
 
 #: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
@@ -2759,6 +2816,10 @@ msgstr "ここにはまだワークスペースがありません。上にパス
 #: src/components/agent-workspace-sheet.tsx
 msgid "No workspaces match “{0}”."
 msgstr "「{0}」に一致するワークスペースはありません"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
+msgstr "ワークツリーはまだありません。下で作成すると、このチェックアウトを触らずにブランチで作業できます"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -3237,6 +3298,10 @@ msgstr "秘密鍵"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "秘密鍵（空欄なら保存済みのものを維持）"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project"
+msgstr "プロジェクト"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "プロンプト"
@@ -3326,6 +3391,10 @@ msgstr "テーマを読み込んでいます"
 msgid "Reading the theme link"
 msgstr "テーマのリンクを読み込んでいます"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Reading this project’s worktrees…"
+msgstr "このプロジェクトのワークツリーを読み込んでいます…"
+
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "入力待ち"
@@ -3394,6 +3463,11 @@ msgstr "ファイルを再読み込み"
 msgid "Refresh output"
 msgstr "出力を更新"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Refresh worktrees"
+msgstr "ワークツリーを更新"
+
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3408,6 +3482,10 @@ msgstr "削除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} を取り除く"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove anyway?"
+msgstr "それでも削除しますか？"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -3424,6 +3502,14 @@ msgstr "このテーマを削除しますか？"
 #: src/components/settings-storage.tsx
 msgid "Remove unused themes"
 msgstr "未使用のテーマを削除"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove worktree"
+msgstr "ワークツリーを削除"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Removing"
+msgstr "削除しています"
 
 #: src/components/settings-storage.tsx
 msgid "Removing unused themes"
@@ -4513,6 +4599,10 @@ msgstr "シミュレータとの接続が切れました"
 msgid "The default agent. Executes tools."
 msgstr "デフォルトのエージェント。ツールを実行します"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "The host made a worktree but did not say where."
+msgstr "ホストはワークツリーを作成しましたが、場所を伝えませんでした"
+
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
 msgstr "ホーム画面に表示されるアイコンです"
@@ -4705,6 +4795,10 @@ msgstr "この項目は必須です"
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "このパネルは git リポジトリの中で作業していないため、比較するものがありません"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "This project"
+msgstr "このプロジェクト"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -5127,6 +5221,14 @@ msgstr "作業ディレクトリ"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "ワークスペース"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktree name"
+msgstr "ワークツリー名"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktrees"
+msgstr "ワークツリー"
 
 #: src/i18n/labels.ts
 msgid "Write a file"

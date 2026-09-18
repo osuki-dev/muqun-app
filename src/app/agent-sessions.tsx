@@ -36,6 +36,9 @@ export default function AgentSessionsScreen() {
       onCreateNewSession={actions.createSession}
       onRenameSession={actions.renameSession}
       onDeleteSession={actions.deleteSession}
+      // Replaces rather than stacks: two form sheets deep is two grabbers and
+      // one question, and the reader asked to go from this list to that one.
+      onMoveSession={() => router.replace('/agent-worktree')}
       onClose={() => router.back()}
     />
   );

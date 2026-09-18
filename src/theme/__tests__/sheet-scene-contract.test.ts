@@ -38,6 +38,7 @@ const SHEET_FRAMES = [
   'src/components/agent-model-sheet.tsx',
   'src/components/agent-mode-sheet.tsx',
   'src/components/agent-workspace-sheet.tsx',
+  'src/components/agent-worktree-sheet.tsx',
   'src/components/agent-context-sheet.tsx',
   'src/components/agent-vcs-diff-sheet.tsx',
   'src/components/agent-tasks-sheet.tsx',

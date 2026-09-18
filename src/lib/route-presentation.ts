@@ -59,6 +59,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'agent-model': 'sheet',
   'agent-mode': 'sheet',
   'agent-workspace': 'sheet',
+  'agent-worktree': 'sheet',
   'agent-context': 'sheet',
   'agent-vcs-diff': 'sheet',
   'agent-tasks': 'sheet',
