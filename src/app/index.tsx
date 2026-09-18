@@ -1051,9 +1051,14 @@ function ServerCard({
               style={[
                 styles.serverAvatar,
                 {
-                  backgroundColor: background(
-                    selected ? theme.colors.primary : theme.colors.surfaceRaised
-                  ),
+                  // The selected tile is solid: `onPrimary` ink is proven
+                  // against the full primary, and running it through the
+                  // artwork opacity left a faint tile with a glyph nobody
+                  // could read on an image pack, next to an unselected tile
+                  // whose muted ink still read fine.
+                  backgroundColor: selected
+                    ? theme.colors.primary
+                    : background(theme.colors.surfaceRaised),
                 },
               ]}>
               {selected ? (
