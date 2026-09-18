@@ -152,6 +152,10 @@ msgstr "hace {0} h"
 msgid "{0}m ago"
 msgstr "hace {0} min"
 
+#: src/components/agent-composer.tsx
+msgid "{agentName}: {title} — finished while you were away"
+msgstr "{agentName}: {title}: terminó mientras no estabas"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· preguntó una vez} other {· preguntó # veces}}"
@@ -205,6 +209,10 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} de {0} en ejecución"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "{title} — finished while you were away"
+msgstr "{title}: terminó mientras no estabas"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"

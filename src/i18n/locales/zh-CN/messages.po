@@ -152,6 +152,10 @@ msgstr "{0} 小时前"
 msgid "{0}m ago"
 msgstr "{0} 分钟前"
 
+#: src/components/agent-composer.tsx
+msgid "{agentName}: {title} — finished while you were away"
+msgstr "{agentName}：{title} — 在你离开时完成"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· 询问了 # 次}}"
@@ -205,6 +209,10 @@ msgstr "{removeLabel}：{label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "{title} — finished while you were away"
+msgstr "{title} — 在你离开时完成"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"

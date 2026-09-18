@@ -6,6 +6,7 @@ import { GitFork } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
+import { AgentUnreadDot } from '@/components/agent-unread-dot';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
   SheetScene,
@@ -20,6 +21,7 @@ import {
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import {
   formatModelName,
+  isSessionUnread,
   sessionTitleOr,
   workspaceDisplayName,
   type AgentProject,
@@ -236,6 +238,15 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return listed?.name || formatModelName(model, '');
   };
 
+  /**
+   * What a screen reader hears, when the dot is saying something the title is
+   * not. A mark that only exists as six points of colour is not a mark.
+   */
+  const rowLabel = (session: AgentSessionInfo): string => {
+    const title = sessionTitleOr(session, t`Untitled session`);
+    return isSessionUnread(session) ? t`${title} — finished while you were away` : title;
+  };
+
   let rowIndex = 0;
 
   return (
@@ -294,14 +305,20 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     .filter(Boolean)
                     .join(' · ')}
                   selected={root.asid === activeAsid}
+                  accessibilityLabel={rowLabel(root)}
                   onPress={() => {
                     onSelectSession(root.asid);
                     onClose();
                   }}
                   meta={
-                    <Text variant="caption" color={theme.colors.textMuted}>
-                      {formatTime(root.updated_ms)}
-                    </Text>
+                    <View style={styles.meta}>
+                      {isSessionUnread(root) ? (
+                        <AgentUnreadDot testID={`agent-session-unread-${root.asid}`} />
+                      ) : null}
+                      <Text variant="caption" color={theme.colors.textMuted}>
+                        {formatTime(root.updated_ms)}
+                      </Text>
+                    </View>
                   }
                 />
                 {subs.map((sub) => (
@@ -312,11 +329,17 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     caption={sub.agent || 'subagent'}
                     selected={sub.asid === activeAsid}
                     style={styles.subagentRow}
+                    accessibilityLabel={rowLabel(sub)}
                     leading={<GitFork size={13} color={theme.colors.textSubtle} />}
                     onPress={() => {
                       onSelectSession(sub.asid);
                       onClose();
                     }}
+                    meta={
+                      isSessionUnread(sub) ? (
+                        <AgentUnreadDot testID={`agent-session-unread-${sub.asid}`} />
+                      ) : null
+                    }
                   />
                 ))}
               </Animated.View>
@@ -330,6 +353,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
 });
 
 const styles = StyleSheet.create({
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   empty: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
   emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: AGENT_TYPE.mono.lineHeight },
   // Subagents belong to the root above them, so they start one step in -- the

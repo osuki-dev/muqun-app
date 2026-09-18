@@ -39,6 +39,7 @@ import Animated, {
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AgentUnreadDot } from '@/components/agent-unread-dot';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
@@ -76,6 +77,7 @@ import {
   contextTokenTotal,
   formatModelName,
   hasRealSessionTitle,
+  isSessionUnread,
   isSlashSkill,
   listAgentFiles,
   inboxItemText,
@@ -131,6 +133,9 @@ const SessionChip = memo(function SessionChip({
   // Untitled reads as untitled; the time is the caption a listing shows, not
   // the name a chip stands under.
   const title = titled ? session.title : t`Untitled session`;
+  // The gateway's two numbers, and nothing else: a chip never says "unread"
+  // because this app thought something had happened over there.
+  const unread = isSessionUnread(session);
 
   return (
     <View
@@ -154,7 +159,11 @@ const SessionChip = memo(function SessionChip({
         onPress={() => onPress(session.asid)}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
-        accessibilityLabel={`${agentName}: ${titled ? session.title : t`Untitled session`}`}
+        accessibilityLabel={
+          unread
+            ? t`${agentName}: ${title} — finished while you were away`
+            : `${agentName}: ${title}`
+        }
         style={[
           styles.sessionChip,
           active
@@ -165,6 +174,14 @@ const SessionChip = memo(function SessionChip({
                 borderWidth: StyleSheet.hairlineWidth,
               },
         ]}>
+        {/* On a lit chip the primary ink is the chip itself, so the dot takes
+            the ink that reads on it. */}
+        {unread ? (
+          <AgentUnreadDot
+            testID={`agent-composer-session-unread-${session.asid}`}
+            {...(active ? { tone: theme.colors.onPrimary } : {})}
+          />
+        ) : null}
         <Text
           variant="caption"
           weight="bold"

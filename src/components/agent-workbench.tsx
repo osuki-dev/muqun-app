@@ -57,6 +57,7 @@ import {
   listAgentSessionChildren,
   listAgentShells,
   listAgentInbox,
+  markAgentSessionViewed,
   cancelAgentInboxItem,
   clearAgentRevert,
   exportAgentSession,
@@ -330,6 +331,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     activeAsidRef.current = activeAsid;
   }, [activeAsid]);
+  /**
+   * Whether the app is in front, for the stream handler.
+   *
+   * A ref rather than a dependency: taking `appActive` into `handleStreamEvent`
+   * would tear the SSE connection down and rebuild it every time the reader
+   * switched apps, which is the one moment a stream should be left alone.
+   */
+  const appActiveRef = useRef(true);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   useEffect(() => {
     if (permissions.length > 0) {
@@ -706,6 +715,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
         if (info?.agent) setSelectedAgent(info.agent);
 
+        /**
+         * Reading it is what makes it read.
+         *
+         * `markAgentSessionViewed` existed in the client with no caller and
+         * `isSessionUnread` with no reader, so every session on the host was
+         * permanently unread and nothing drew the fact. The idle the session
+         * reached is what is acknowledged -- not "now" -- so a turn that ends
+         * between this call leaving and landing is still unread afterwards,
+         * which is the honest answer.
+         */
+        if (info) {
+          const idle = info.time_idle;
+          void (
+            idle === undefined
+              ? markAgentSessionViewed(info.asid)
+              : markAgentSessionViewed(info.asid, idle)
+          ).catch(() => {});
+        }
+
         // What the model can still see, which the snapshot does not carry.
         void refreshContext();
         void refreshShells();
@@ -847,6 +875,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (event.status === 'idle') {
             // Delivered: a queued row is now ordinary history.
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
+            // A turn that ended under the reader's eyes has been read. The
+            // dot is for the sessions they were not looking at.
+            if (appActiveRef.current && event.asid) {
+              void markAgentSessionViewed(event.asid).catch(() => {});
+            }
             void refreshSessions();
             void refreshContext();
             void refreshShells();
@@ -1014,8 +1047,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // socket may have been held open by the OS and delivered nothing.
   const appActive = useAppActive();
   useEffect(() => {
+    appActiveRef.current = appActive;
     if (appActive) catchUpRef.current();
   }, [appActive]);
+
+  /**
+   * Coming back to a session that is already open is reading it again.
+   *
+   * The snapshot's own `…/view` covers arriving; this covers the app being
+   * brought forward onto a session that finished a turn in the background.
+   * No `idle` on this one: the reader is looking at it now, and "now" is what
+   * the route defaults to.
+   */
+  useEffect(() => {
+    if (!appActive || !activeAsid) return;
+    void markAgentSessionViewed(activeAsid).catch(() => {});
+  }, [appActive, activeAsid]);
 
   // Real-time SSE stream — the only sync channel. Engine output arrives over
   // it; a dropped connection reconnects with a short backoff instead of being
