@@ -2005,12 +2005,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     router.push('/agent-tasks');
   }, [router]);
 
-  const openBackgroundTray = useCallback(() => {
-    router.push({
-      pathname: '/agent-shells',
-      ...(activeDirectory ? { params: { directory: activeDirectory } } : {}),
-    });
-  }, [router, activeDirectory]);
+  // A shell card that names its shell opens the tray on that row; the
+  // composer's pill opens the tray at its top.
+  const openBackgroundTray = useCallback(
+    (shellId?: string) => {
+      const params = {
+        ...(activeDirectory ? { directory: activeDirectory } : {}),
+        ...(shellId ? { shell: shellId } : {}),
+      };
+      router.push({ pathname: '/agent-shells', params });
+    },
+    [router, activeDirectory]
+  );
 
   const openDiffSheet = useCallback(() => {
     if (!activeAsid) return;

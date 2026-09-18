@@ -326,7 +326,7 @@ function humaniseTag(tag: string): string {
 export interface AgentToolActions {
   onOpenChildSession?: (asid: string) => void;
   onRunInBackground?: (toolCallId: string) => void;
-  onOpenBackgroundTray?: () => void;
+  onOpenBackgroundTray?: (shellId?: string) => void;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
