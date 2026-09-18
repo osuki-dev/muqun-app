@@ -71,3 +71,36 @@ export function readApprovalBody(body: string): { action: string; subject: strin
   if (!match) return { action: '', subject: text };
   return { action: match[1] ?? '', subject: (match[2] ?? '').trim() };
 }
+
+/**
+ * Whether a turn died because of the model it was running.
+ *
+ * "Model jev-latest is not supported" is what a host with no configured
+ * default produces: `GET /api/model/default` answers `null`, OpenCode falls
+ * back to the first entry of its own model list, and then refuses it. The
+ * sentence names the model, so it is the model that has to change -- and the
+ * reader, reading it, has no way to know that the app never chose that model
+ * and that one tap in the picker ends it.
+ *
+ * Narrow on purpose: it is the engine saying a *model* is unsupported, not a
+ * tool, a file type or a provider feature.
+ */
+export function isUnsupportedModelFailure(message: string): boolean {
+  const text = message.trim();
+  if (!text) return false;
+  return /\bmodels?\b[^\n]*?\bnot supported\b/i.test(text);
+}
+
+/**
+ * The one thing worth offering about a failed turn, when there is one.
+ *
+ * A failure plate that only restates the engine is a dead end. Where the app
+ * knows which control answers the sentence, it says so -- and where it does
+ * not, it stays out of the way rather than guessing at an action that would not
+ * help.
+ */
+export type EngineFailureAction = 'choose-model' | null;
+
+export function engineFailureAction(message: string): EngineFailureAction {
+  return isUnsupportedModelFailure(message) ? 'choose-model' : null;
+}

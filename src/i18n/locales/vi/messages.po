@@ -808,6 +808,7 @@ msgid "Checking…"
 msgstr "Đang kiểm tra…"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "Chọn mô hình"
 
