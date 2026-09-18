@@ -52,6 +52,11 @@ msgstr "{0, plural, one {# día} other {# días}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, one {# archivo cambiado} other {# archivos cambiados}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, one {# archivo} other {# archivos}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label} no está disponible temporalmente. Usa el método alternativo de
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "Código {language} copiado al portapapeles"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, one {# mensaje} other {# mensajes}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt Flecha arriba"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "Permitir siempre"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "y {rest} más"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "Se necesita acceso a la cámara"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Cancelar"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "Cancelar una reversión preparada"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "Lo copia, listo para pegar en un terminal"
 msgid "Copy"
 msgstr "Copiar"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "Copiar mensaje"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "Copiar clave pública"
@@ -1324,6 +1336,10 @@ msgstr "No se pudo activar el Bloqueo de la app"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "No se pudo generar una clave"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "No se pudo conservar"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "No se pudo leer el terminal"
 msgid "Could not read this file."
 msgstr "No se ha podido leer este archivo"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "No se pudo rehacer"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "No se pudo eliminar el host"
@@ -1474,6 +1486,10 @@ msgstr "No se pudo enviar la tecla"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "No se pudo enviar el atajo"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "No se pudo preparar la reversión"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "Ir a la última salida"
 msgid "just now"
 msgstr "justo ahora"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "Conservar"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Conservar {label}"
@@ -2211,6 +2231,15 @@ msgstr "Conservar {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "Conservar los archivos en caché"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "Conservar todo y descartar la reversión preparada"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "Conservar todo y descartar la reversión preparada"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "Aquí todavía no hay nada. Los archivos que escriba la sesión aparecen
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "No hay nada en segundo plano. Separa un comando largo desde su tarjeta de herramienta y aparecerá aquí"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "No hay nada preparado"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "Revocando…"
 msgid "Right arrow"
 msgstr "Flecha derecha"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "Volver al estado anterior al último mensaje"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "Se revertirán {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "Se revertirá hasta aquí"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "Mostrar el razonamiento"
 msgid "Show what is running"
 msgstr "Ver lo que se está ejecutando"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "Mostrar qué desharía revertir hasta el último mensaje"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Mostrando {shown} de {total}"
@@ -3982,8 +4023,8 @@ msgstr "Tamaño"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "Habilidad · {0}"
+msgid "Skill loaded · {0}"
+msgstr "Habilidad cargada · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Temas publicados en muqun.dev. No se descarga nada hasta que abras uno"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "No hay ninguna reversión esperando a aplicarse"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Pensando…"
 
@@ -4778,10 +4823,23 @@ msgstr "Escríbelo o usa la tecla de dictado del teclado"
 msgid "Type on the simulator"
 msgstr "Escribir en el simulador"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Deshacer"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "Deshacer {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "Deshacer hasta el mensaje preparado"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "Deshacer hasta aquí"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

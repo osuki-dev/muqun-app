@@ -52,6 +52,11 @@ msgstr "{0, plural, other {# 天}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# 個檔案有變更}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {# 個檔案}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label} 目前已鎖定。請改用系統備援方式，或稍後再試"
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "已複製 {language} 程式碼到剪貼簿"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {# 則訊息}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt 上箭頭"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "一律允許"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "還有 {rest} 個"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "需要相機存取權"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "取消已暫存的回復"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "複製指令，可直接貼到終端機"
 msgid "Copy"
 msgstr "複製"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "複製訊息"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "複製公開金鑰"
@@ -1324,6 +1336,10 @@ msgstr "無法啟用 App 鎖定"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "無法產生金鑰"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "無法保留"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "無法讀取終端機"
 msgid "Could not read this file."
 msgstr "無法讀取這個檔案"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "無法重做"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "無法移除主機"
@@ -1474,6 +1486,10 @@ msgstr "無法送出按鍵"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "無法傳送快捷指令"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "無法準備回溯"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "跳到最新輸出"
 msgid "just now"
 msgstr "剛剛"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "保留"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "保留 {label}"
@@ -2211,6 +2231,15 @@ msgstr "保留 {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "保留快取檔案"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "保留全部內容，放棄已準備的回溯"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "保留全部內容，放棄已準備的回溯"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "這裡還是空的。工作階段寫出的檔案會自動出現"
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "背景沒有任何工作。從工具卡片把長命令轉入背景，它就會出現在這裡"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "沒有待處理的回溯"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "撤銷中…"
 msgid "Right arrow"
 msgstr "向右鍵"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "回復到上一則訊息之前"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "將回溯 {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "將回溯到這裡"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "顯示思考過程"
 msgid "Show what is running"
 msgstr "查看正在執行的項目"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "查看回溯到上一則訊息會撤銷什麼"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "已顯示 {shown} / {total}"
@@ -3982,8 +4023,8 @@ msgstr "大小"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "技能 · {0}"
+msgid "Skill loaded · {0}"
+msgstr "已載入技能 · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "來自 muqun.dev 的已發布佈景主題。開啟前不會下載任何內容"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "沒有等待套用的回溯"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "正在思考…"
 
@@ -4778,10 +4823,23 @@ msgstr "可以直接打字，或用鍵盤上的語音輸入鍵"
 msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "復原"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "復原 {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "復原到已準備的訊息"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "復原到這裡"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

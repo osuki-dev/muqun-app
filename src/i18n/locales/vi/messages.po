@@ -52,6 +52,11 @@ msgstr "{0, plural, other {# ngày}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# tệp đã thay đổi}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {# tệp}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label} tạm thời bị khóa. Hãy dùng cách dự phòng của hệ
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "Đã sao chép mã {language} vào bộ nhớ tạm"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {# tin nhắn}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt Mũi tên lên"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "Luôn cho phép"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "và {rest} nữa"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "Cần quyền truy cập camera"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Hủy"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "Huỷ một lần hoàn tác đã chuẩn bị"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 msgid "Copy"
 msgstr "Sao chép"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "Sao chép tin nhắn"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "Sao chép khóa công khai"
@@ -1324,6 +1336,10 @@ msgstr "Không thể bật Khóa ứng dụng"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Không thể tạo khóa"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "Không thể giữ lại"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "Không thể đọc terminal"
 msgid "Could not read this file."
 msgstr "Không đọc được tệp này"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "Không thể làm lại"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Không thể gỡ host"
@@ -1474,6 +1486,10 @@ msgstr "Không thể gửi phím"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Không thể gửi lệnh tắt"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "Không thể chuẩn bị hoàn tác"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "Nhảy đến đầu ra mới nhất"
 msgid "just now"
 msgstr "vừa xong"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "Giữ lại"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Giữ {label}"
@@ -2211,6 +2231,15 @@ msgstr "Giữ {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "Giữ lại tệp trong bộ nhớ đệm"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "Giữ mọi thứ và bỏ thao tác hoàn tác đã chuẩn bị"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "Giữ mọi thứ và bỏ thao tác hoàn tác đã chuẩn bị"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "Chưa có gì ở đây. Các tệp mà phiên ghi ra sẽ tự xuất h
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "Không có gì đang chạy nền. Tách một lệnh dài khỏi thẻ công cụ của nó và nó sẽ xuất hiện ở đây"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "Chưa chuẩn bị gì"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "Đang thu hồi…"
 msgid "Right arrow"
 msgstr "Mũi tên phải"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "Quay lại trạng thái trước tin nhắn gần nhất"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "Hoàn tác {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "Hoàn tác đến đây"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "Hiện phần suy luận"
 msgid "Show what is running"
 msgstr "Xem những gì đang chạy"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "Xem hoàn tác đến tin nhắn cuối sẽ bỏ những gì"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Đang hiển thị {shown} trên {total}"
@@ -3982,8 +4023,8 @@ msgstr "Kích thước"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "Kỹ năng · {0}"
+msgid "Skill loaded · {0}"
+msgstr "Đã nạp kỹ năng · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Giao diện được công bố tại muqun.dev. Không tải gì cho đến khi bạn mở một giao diện"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "Không có thao tác hoàn tác nào đang chờ áp dụng"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Đang suy nghĩ…"
 
@@ -4778,10 +4823,23 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Hoàn tác"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "Hoàn tác {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "Hoàn tác về tin nhắn đã chuẩn bị"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "Hoàn tác đến đây"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

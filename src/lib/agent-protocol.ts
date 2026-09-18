@@ -200,7 +200,58 @@ export interface AgentSessionRevert {
   message_id?: string;
   part_id?: string;
   snapshot?: string;
-  files?: string[];
+  /**
+   * The file changes the rollback would undo, when OpenCode worked them out.
+   *
+   * `POST …/revert/stage {files: true}` asks for them, and they arrive as
+   * `FileDiff.Info[]` -- the same shape `…/vcs/diff` answers with, so the
+   * confirmation draws them with the components that already exist. It was
+   * parsed as a list of paths, which is not what any version of this route has
+   * ever sent; a list of strings is still read, because a parser that throws
+   * away what it does not recognise is how a preview ends up empty.
+   */
+  files?: FileDiffItem[];
+}
+
+/**
+ * A staged rollback: the boundary, and what undoing it would change.
+ *
+ * `null` when there is nothing staged, which is what `agent.revert.changed`
+ * says on `committed` and `cleared`.
+ */
+export function parseAgentSessionRevert(value: unknown): AgentSessionRevert | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  // The stage route wraps it; the session's own `info.revert` does not.
+  const body = asRecord(rec.revert) ?? rec;
+  const staged: AgentSessionRevert = {};
+  const messageId = pickString(body, ['message_id', 'messageID']);
+  if (messageId) staged.message_id = messageId;
+  const partId = pickString(body, ['part_id', 'partID']);
+  if (partId) staged.part_id = partId;
+  const snapshot = pickString(body, ['snapshot']);
+  if (snapshot) staged.snapshot = snapshot;
+  const files = parseRevertFiles(body.files);
+  if (files.length > 0) staged.files = files;
+  // A boundary with no message id is not a boundary. `files` alone cannot say
+  // what a rollback would roll back to.
+  return staged.message_id ? staged : null;
+}
+
+/** `FileDiff.Info[]`, or a bare list of paths from a gateway that sent one. */
+function parseRevertFiles(value: unknown): FileDiffItem[] {
+  if (!Array.isArray(value)) return [];
+  const out: FileDiffItem[] = [];
+  for (const entry of value) {
+    const path = asString(entry);
+    if (path) {
+      out.push({ path, patch: '', additions: 0, deletions: 0 });
+      continue;
+    }
+    const item = parseFileDiffItem(entry);
+    if (item) out.push(item);
+  }
+  return out;
 }
 
 export interface AgentSessionFork {
@@ -273,19 +324,8 @@ export function parseAgentSessionInfo(value: unknown): AgentSessionInfo | null {
   const error = parseAgentError(rec.error);
   if (error) info.error = error;
 
-  const revert = asRecord(rec.revert);
-  if (revert) {
-    const staged: AgentSessionRevert = {};
-    const messageId = pickString(revert, ['message_id', 'messageID']);
-    if (messageId) staged.message_id = messageId;
-    const partId = pickString(revert, ['part_id', 'partID']);
-    if (partId) staged.part_id = partId;
-    const snapshot = pickString(revert, ['snapshot']);
-    if (snapshot) staged.snapshot = snapshot;
-    const files = asStringArray(revert.files);
-    if (files.length > 0) staged.files = files;
-    info.revert = staged;
-  }
+  const revert = parseAgentSessionRevert(rec.revert);
+  if (revert) info.revert = revert;
 
   const fork = asRecord(rec.fork);
   if (fork) {
@@ -1820,7 +1860,23 @@ export type AgentDomainEvent =
       delta?: string;
     }
   | { type: 'agent.inbox.changed'; asid: string; seq: number; items: InboxItem[] }
+  | {
+      type: 'agent.revert.changed';
+      asid: string;
+      seq: number;
+      /** `staged` carries the boundary; the other two carry `null`. */
+      state: RevertState;
+      revert: AgentSessionRevert | null;
+    }
   | { type: 'agent.resync'; asid: string; seq: number; reason?: string };
+
+/** Where a rollback is: staged and previewable, applied, or withdrawn. */
+export type RevertState = 'staged' | 'committed' | 'cleared';
+
+export function parseRevertState(value: unknown): RevertState | null {
+  const raw = asString(value);
+  return raw === 'staged' || raw === 'committed' || raw === 'cleared' ? raw : null;
+}
 
 /**
  * One SSE frame, as an event this app understands, or `null`.
@@ -1896,6 +1952,19 @@ export function parseAgentDomainEvent(eventName: string, data: unknown): AgentDo
     }
     case 'agent.inbox.changed':
       return { type, asid, seq, items: parseInboxItems(rec.items) };
+    case 'agent.revert.changed': {
+      const state = parseRevertState(rec.state);
+      if (!state) return null;
+      // Only a staged rollback has a boundary; the other two say so by sending
+      // `null`, and a `revert` that arrived with them anyway is not a staging.
+      return {
+        type,
+        asid,
+        seq,
+        state,
+        revert: state === 'staged' ? parseAgentSessionRevert(rec.revert) : null,
+      };
+    }
     case 'agent.resync': {
       const reason = pickString(rec, ['reason']);
       return { type, asid, seq, ...(reason ? { reason } : {}) };

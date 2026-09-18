@@ -52,6 +52,11 @@ msgstr "{0, plural, other {#일}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {파일 #개 변경됨}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {파일 #개}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "{language} 코드를 클립보드에 복사했습니다"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {메시지 #개}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt 위쪽 화살표"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "항상 허용"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "외 {rest}개"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "카메라 접근 권한 필요"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "취소"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "준비된 롤백을 취소"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 msgid "Copy"
 msgstr "복사"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "메시지 복사"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "공개 키 복사"
@@ -1324,6 +1336,10 @@ msgstr "앱 잠금을 켜지 못했습니다"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "키를 생성할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "유지할 수 없습니다"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "터미널을 읽지 못했습니다"
 msgid "Could not read this file."
 msgstr "이 파일을 읽을 수 없습니다"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "다시 실행하지 못했습니다"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "호스트를 제거할 수 없습니다"
@@ -1474,6 +1486,10 @@ msgstr "키를 보내지 못했습니다"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "단축 명령을 보내지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "롤백을 준비할 수 없습니다"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "최신 출력으로 이동"
 msgid "just now"
 msgstr "방금"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "유지"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "{label} 유지"
@@ -2211,6 +2231,15 @@ msgstr "{label} 유지"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "캐시 파일 유지"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "모두 유지하고 준비된 롤백을 버리기"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "모두 유지하고 준비된 롤백을 버리기"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "아직 아무것도 없습니다. 세션이 쓴 파일은 저절로 나�
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "백그라운드에서 실행 중인 것이 없습니다. 도구 카드에서 긴 명령을 분리하면 여기에 나타납니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "준비된 것이 없습니다"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "해제 중…"
 msgid "Right arrow"
 msgstr "오른쪽 화살표"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "마지막 메시지 이전 상태로 되돌리기"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "{summary}을(를) 되돌립니다"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "여기까지 되돌립니다"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "추론 과정 표시"
 msgid "Show what is running"
 msgstr "실행 중인 것 보기"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "마지막 메시지까지 되돌리면 무엇이 취소되는지 보기"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "{total}개 중 {shown}개 표시 중"
@@ -3982,8 +4023,8 @@ msgstr "크기"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "스킬 · {0}"
+msgid "Skill loaded · {0}"
+msgstr "스킬 불러옴 · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "muqun.dev에 공개된 테마입니다. 열기 전까지는 아무것도 내려받지 않습니다"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "적용을 기다리는 롤백이 없습니다"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "생각 중…"
 
@@ -4778,10 +4823,23 @@ msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요"
 msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "실행 취소"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "{summary} 되돌리기"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "준비된 메시지까지 되돌리기"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "여기까지 되돌리기"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

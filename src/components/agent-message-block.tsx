@@ -6,6 +6,7 @@ import {
   Bot,
   ChevronDown,
   Clock,
+  Copy,
   Cpu,
   Edit3,
   FileDiff,
@@ -16,6 +17,7 @@ import {
   Layers,
   Sparkles,
   Trash2,
+  Undo2,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
@@ -32,6 +34,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
 import { AgentTodoBlock } from '@/components/agent-todo-block';
@@ -206,7 +209,9 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
       case 'location_switched':
         return { Icon: FolderGit2, text: t`Directory · ${part.directory}` };
       case 'skill':
-        return { Icon: Sparkles, text: t`Skill · ${part.name ?? part.skill}` };
+        // "Skill · report" reads as a label on a thing; what the row is
+        // announcing is that the agent has just picked the skill up.
+        return { Icon: Sparkles, text: t`Skill loaded · ${part.name ?? part.skill}` };
       case 'synthetic':
       case 'system': {
         const text = part.text ?? part.description ?? '';
@@ -822,6 +827,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage,
   onEditQueued,
   onCancelQueued,
+  onUndoToHere,
   actions = NO_TOOL_ACTIONS,
 }: {
   group: TimelineRenderGroup;
@@ -830,6 +836,13 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onPreviewImage: (uri: string) => void;
   onEditQueued: (itemId: string, text: string) => void;
   onCancelQueued: (itemId: string) => void;
+  /**
+   * Stage a rollback to this message: everything from here on would go.
+   *
+   * It stages and previews; it never applies. The plate above the composer is
+   * where it is confirmed.
+   */
+  onUndoToHere?: (messageId: string) => void;
   actions?: AgentToolActions;
 }) {
   const { t } = useLingui();
@@ -859,19 +872,59 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   const entries = useMemo(() => buildTimelineEntries(group.items), [group.items]);
   const stamp = first?.updated_ms ? relativeTime(first.updated_ms) : '';
 
+  /**
+   * The message's own actions.
+   *
+   * A long press used to copy, silently and immediately. It opens the actions
+   * instead, and copy is the first of them -- because there is now a second
+   * thing a message can do, and a gesture that performs one of two possible
+   * actions without asking is a gesture that will perform the wrong one.
+   */
+  const [menuOpen, setMenuOpen] = useState(false);
+  const messageId = first?.message_id;
+  const menuItems = useMemo<AgentActionMenuItem[]>(() => {
+    const items: AgentActionMenuItem[] = [];
+    if (text) {
+      items.push({
+        id: 'copy',
+        label: t`Copy message`,
+        Icon: Copy,
+        onPress: () => {
+          setMenuOpen(false);
+          void Clipboard.setStringAsync(text).then(() =>
+            showToast({
+              variant: 'info',
+              title: t`Copied`,
+              message: t`Message copied to clipboard`,
+            })
+          );
+        },
+        testID: `user-message-copy-${first?.id ?? group.key}`,
+      });
+    }
+    if (onUndoToHere && messageId) {
+      items.push({
+        id: 'undo',
+        label: t`Undo to here`,
+        Icon: Undo2,
+        onPress: () => {
+          setMenuOpen(false);
+          onUndoToHere(messageId);
+        },
+        testID: `user-message-undo-${first?.id ?? group.key}`,
+      });
+    }
+    return items;
+  }, [text, onUndoToHere, messageId, first?.id, group.key, showToast, t]);
+
   return (
     <Pressable
       testID={`user-message-${first?.id ?? group.key}`}
       accessibilityLabel={t`Your message`}
-      onLongPress={async () => {
-        if (!text) return;
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        await Clipboard.setStringAsync(text);
-        showToast({
-          variant: 'info',
-          title: t`Copied`,
-          message: t`Message copied to clipboard`,
-        });
+      onLongPress={() => {
+        if (menuItems.length === 0) return;
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setMenuOpen((open) => !open);
       }}
       delayLongPress={260}
       style={[
@@ -945,6 +998,14 @@ export const AgentUserMessage = memo(function AgentUserMessage({
 
       {attachments.length > 0 ? (
         <MessageAttachments attachments={attachments} onPreviewImage={onPreviewImage} />
+      ) : null}
+
+      {menuOpen ? (
+        <AgentActionMenu
+          testID={`user-message-menu-${first?.id ?? group.key}`}
+          surface="ground"
+          items={menuItems}
+        />
       ) : null}
     </Pressable>
   );

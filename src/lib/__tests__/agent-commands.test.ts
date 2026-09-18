@@ -157,7 +157,7 @@ describe('readSlashCommand', () => {
       '/models',
       '/agents',
       '/undo',
-      '/redo',
+      '/keep',
       '/compact',
       '/clear',
       '/export',

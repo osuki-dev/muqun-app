@@ -52,6 +52,11 @@ msgstr "{0, plural, one {# jour} other {# jours}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, one {# fichier modifié} other {# fichiers modifiés}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, one {# fichier} other {# fichiers}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label} : accès temporairement verrouillé. Utilisez la solution de s
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "Code {language} copié dans le presse-papiers"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, one {# message} other {# messages}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt Flèche haut"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "Toujours autoriser"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "et {rest} de plus"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "Accès à la caméra requis"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Annuler"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "Annuler un retour en arrière préparé"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "La copie, prête à coller dans un terminal"
 msgid "Copy"
 msgstr "Copier"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "Copier le message"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "Copier la clé publique"
@@ -1324,6 +1336,10 @@ msgstr "Impossible d’activer le verrouillage de l’app"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Impossible de générer une clé"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "Impossible de conserver"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "Impossible de lire le terminal"
 msgid "Could not read this file."
 msgstr "Impossible de lire ce fichier"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "Impossible de rétablir"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Impossible de supprimer l’hôte"
@@ -1474,6 +1486,10 @@ msgstr "Impossible d’envoyer la touche"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Impossible d’envoyer le raccourci"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "Impossible de préparer le retour en arrière"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "Aller à la dernière sortie"
 msgid "just now"
 msgstr "à l’instant"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "Conserver"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Conserver {label}"
@@ -2211,6 +2231,15 @@ msgstr "Conserver {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "Conserver les fichiers en cache"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "Tout conserver et abandonner le retour en arrière préparé"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "Tout conserver et abandonner le retour en arrière préparé"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "Rien ici pour l’instant. Les fichiers écrits par la session apparaiss
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "Rien ne tourne en arrière-plan. Détachez une commande longue depuis sa carte d'outil et elle apparaîtra ici"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "Rien de préparé"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "Révocation…"
 msgid "Right arrow"
 msgstr "Flèche droite"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "Revenir à l'état d'avant le dernier message"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "Retour en arrière sur {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "Retour en arrière jusqu’ici"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "Afficher le raisonnement"
 msgid "Show what is running"
 msgstr "Voir ce qui tourne"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "Montrer ce qu’annulerait un retour jusqu’au dernier message"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Affichage de {shown} sur {total}"
@@ -3982,8 +4023,8 @@ msgstr "Taille"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "Compétence · {0}"
+msgid "Skill loaded · {0}"
+msgstr "Compétence chargée · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Thèmes publiés sur muqun.dev. Rien n’est téléchargé tant que vous n’en ouvrez pas un"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "Aucun retour en arrière n’attend d’être appliqué"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Réflexion en cours…"
 
@@ -4778,10 +4823,23 @@ msgstr "Saisissez-le, ou utilisez la touche de dictée de votre clavier"
 msgid "Type on the simulator"
 msgstr "Saisir sur le simulateur"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Annuler"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "Annuler {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "Annuler jusqu’au message préparé"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "Annuler jusqu’ici"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

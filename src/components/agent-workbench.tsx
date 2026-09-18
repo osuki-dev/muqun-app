@@ -64,8 +64,9 @@ import {
   cancelAgentInboxItem,
   setAgentInboxDelivery,
   clearAgentRevert,
+  commitAgentRevert,
+  stageAgentRevert,
   exportAgentSession,
-  revertAgentSession,
   sendAgentCommand,
   orderKeyAfter,
   sortTimeline,
@@ -76,7 +77,9 @@ import {
   type AgentDomainEvent,
   type AgentRunStatus,
   type AgentSessionInfo,
+  type AgentSessionRevert,
   type CommandInfo,
+  type FileDiffItem,
   type ShellInfo,
   type CompactionReason,
   type InboxItem,
@@ -91,6 +94,7 @@ import {
   type AgentProject,
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
+import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
 import { classifyTool, capText } from '@/lib/agent-tool-output';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
 import {
@@ -382,6 +386,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [forms, setForms] = useState<FormRequest[]>([]);
   // What is waiting behind the current turn, as the gateway last stated it.
   const [inbox, setInbox] = useState<InboxItem[]>([]);
+  /**
+   * A rollback that is staged and not yet applied.
+   *
+   * `info.revert` on a cold open, `agent.revert.changed` while the screen is
+   * live. It is the plate above the composer, and it is the whole of what makes
+   * `/undo` answerable: the one-shot route it used to call rolled back on the
+   * spot, with no statement of what it had taken.
+   */
+  const [stagedRevert, setStagedRevert] = useState<AgentSessionRevert | null>(null);
+  const [revertBusy, setRevertBusy] = useState(false);
   // A compaction in flight, which is a pill above the composer rather than a
   // row: the row lands in the timeline when the boundary is reached.
   const [compaction, setCompaction] = useState<{
@@ -778,6 +792,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           }
         }
         setInbox(snap.inbox);
+        // A rollback staged before the app was opened is still staged.
+        setStagedRevert(info?.revert ?? null);
 
         if (mode === 'enter') {
           setTimeline(snap.timeline);
@@ -975,11 +991,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // stream tick and fight the reader's own gesture.
           break;
 
-        case 'agent.timeline.removed': {
-          const removedIds = new Set(event.ids);
-          setTimeline((prev) => prev.filter((it) => !removedIds.has(it.id)));
+        case 'agent.timeline.removed':
+          /**
+           * Rows the gateway says are gone. A committed rollback is the one
+           * that sends many at once: OpenCode deletes the boundary message and
+           * everything after it and has no event of its own for that.
+           *
+           * Nothing is scrolled and nothing is re-anchored. The rows leave from
+           * under the reader's eyes, which is what they asked for, and every
+           * group above them keeps its identity -- see `agent-revert.ts`.
+           */
+          setTimeline((prev) => removeTimelineItems(prev, event.ids));
           break;
-        }
 
         case 'agent.status.changed': {
           // The roots list and the subagent tree take every status, whoever it
@@ -1045,6 +1068,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             setSessionInfo((prev) =>
               prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
             );
+            // A session update states the staged boundary when there is one.
+            // It never states its absence -- a field an event did not mention
+            // keeps its previous value -- so clearing is the revert event's job.
+            if (info.revert) setStagedRevert(info.revert);
           }
           setSessions((prev) =>
             prev.some((s) => s.asid === info.asid)
@@ -1081,6 +1108,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
         case 'agent.form.resolved':
           setForms((prev) => prev.filter((f) => f.id !== event.form_id));
+          break;
+
+        case 'agent.revert.changed':
+          // A subagent's own rollback is not the plate above this composer.
+          if (!forActiveSession) break;
+          setStagedRevert(event.state === 'staged' ? event.revert : null);
           break;
 
         case 'agent.inbox.changed':
@@ -1890,11 +1923,83 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, []);
 
   /**
+   * Stage a rollback to one message, and show what it would do.
+   *
+   * Never commit: `POST …/revert` is stage-and-apply in one call, which is what
+   * `/undo` used to be -- four characters typed and a turn's work gone, with no
+   * statement of what had been taken. This asks for the boundary *and the files
+   * it would put back*, and the plate above the composer is where the reader
+   * decides.
+   */
+  const handleStageRevert = useCallback(
+    (messageId: string) => {
+      if (!activeAsid || !messageId) return;
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      stageAgentRevert(activeAsid, messageId)
+        .then((staged) => {
+          // The stream says the same thing a moment later; this is so the plate
+          // is up before it does.
+          if (staged) setStagedRevert(staged);
+        })
+        .catch((err) => {
+          console.warn('Failed to stage revert:', err);
+          showScreenNotice(
+            t`Could not stage the rollback`,
+            formatAgentErrorMessage(err, t`OpenCode service is offline`)
+          );
+        });
+    },
+    [activeAsid, showScreenNotice, t]
+  );
+
+  /** Apply what is staged. The rows it deletes arrive as `agent.timeline.removed`. */
+  const handleCommitRevert = useCallback(() => {
+    if (!activeAsid) return;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setRevertBusy(true);
+    commitAgentRevert(activeAsid)
+      .then(() => {
+        // `agent.revert.changed: committed` takes the plate down; clearing it
+        // here as well keeps the two from disagreeing on a slow stream.
+        setStagedRevert(null);
+      })
+      .catch((err) => {
+        console.warn('Failed to apply revert:', err);
+        showScreenNotice(
+          t`Could not undo`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      })
+      .finally(() => setRevertBusy(false));
+  }, [activeAsid, showScreenNotice, t]);
+
+  /**
+   * Withdraw it and keep everything.
+   *
+   * This is what `/redo` was misnamed for: there has never been a redo in v2,
+   * only a staging that can be cleared.
+   */
+  const handleKeepRevert = useCallback(() => {
+    if (!activeAsid) return;
+    const previous = stagedRevert;
+    setStagedRevert(null);
+    clearAgentRevert(activeAsid).catch((err) => {
+      console.warn('Failed to clear revert:', err);
+      setStagedRevert(previous);
+      showScreenNotice(
+        t`Could not keep it`,
+        formatAgentErrorMessage(err, t`OpenCode service is offline`)
+      );
+    });
+  }, [activeAsid, stagedRevert, showScreenNotice, t]);
+
+  /**
    * The app's own commands, dispatched where the routes and the session live.
    *
-   * `/undo` is `POST …/revert` to the last thing the reader said, and `/redo`
-   * clears the staged rollback -- which is what redo *is* in v2. Neither was
-   * reachable before: the client functions existed with no caller.
+   * `/undo` stages a rollback to the last thing the reader said and shows what
+   * it would take; `/keep` withdraws it. Neither was reachable before: the
+   * client functions existed with no caller, and the one `/undo` would have
+   * called applied the rollback without asking.
    */
   const handleClientCommand = useCallback(
     (name: AgentClientCommandId) => {
@@ -1928,26 +2033,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             });
             return;
           }
-          revertAgentSession(sessionId, activeAsid, lastUser.message_id).catch((err) => {
-            console.warn('Failed to revert:', err);
-            showToast({
-              variant: 'danger',
-              title: t`Could not undo`,
-              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
-            });
-          });
+          handleStageRevert(lastUser.message_id);
           return;
         }
-        case 'redo': {
-          if (!activeAsid) return;
-          clearAgentRevert(activeAsid).catch((err) => {
-            console.warn('Failed to clear revert:', err);
+        case 'keep': {
+          if (!stagedRevert) {
             showToast({
-              variant: 'danger',
-              title: t`Could not redo`,
-              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+              variant: 'info',
+              title: t`Nothing staged`,
+              message: t`There is no rollback waiting to be applied.`,
             });
-          });
+            return;
+          }
+          handleKeepRevert();
           return;
         }
         case 'export': {
@@ -1967,7 +2065,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
       }
     },
-    [activeAsid, sessionId, timeline, handleCompactContext, handleClearContext, showToast, t]
+    [
+      activeAsid,
+      timeline,
+      stagedRevert,
+      handleStageRevert,
+      handleKeepRevert,
+      handleCompactContext,
+      handleClearContext,
+      showToast,
+      t,
+    ]
   );
 
   const handleEditQueuedItem = useCallback((itemId: string, text: string) => {
@@ -2113,6 +2221,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             onPreviewImage={setPreviewImageUri}
             onEditQueued={handleEditQueuedItem}
             onCancelQueued={handleCancelQueuedItem}
+            onUndoToHere={handleStageRevert}
             actions={toolActions}
           />
         );
@@ -2127,7 +2236,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         />
       );
     },
-    [showReasoning, markdownStyle, handleEditQueuedItem, handleCancelQueuedItem, toolActions]
+    [
+      showReasoning,
+      markdownStyle,
+      handleEditQueuedItem,
+      handleCancelQueuedItem,
+      handleStageRevert,
+      toolActions,
+    ]
   );
 
   const isRunning = isBusyStatus(sessionInfo?.status);
@@ -2507,6 +2623,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
     return runningShellCount(shells) + detachedTools;
   }, [shells, timeline]);
+
+  /**
+   * What the plate says: the messages counted off the transcript on screen, and
+   * the files the gateway worked out. Memoised so a stream tick that changes
+   * neither does not re-render the composer.
+   */
+  const revertPreview = useMemo(() => {
+    if (!stagedRevert) return null;
+    return {
+      messages: revertedMessageCount(timeline, stagedRevert.message_id),
+      files: stagedRevert.files ?? EMPTY_REVERT_FILES,
+    };
+  }, [stagedRevert, timeline]);
 
   const activeTodos = useMemo(() => {
     for (let i = timeline.length - 1; i >= 0; i--) {
@@ -2986,6 +3115,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         contextUsage={contextUsage}
         contextLimit={contextLimit}
         modelName={activeModelName}
+        revert={revertPreview}
+        onCommitRevert={handleCommitRevert}
+        onKeepRevert={handleKeepRevert}
+        revertBusy={revertBusy}
         compaction={compaction}
         onDismissCompaction={dismissCompaction}
         cost={sessionInfo?.cost}
@@ -3163,6 +3296,8 @@ function groupTypeOf(group: TimelineRenderGroup): string {
 function groupsAreEqual(previous: TimelineRenderGroup, next: TimelineRenderGroup): boolean {
   return previous === next;
 }
+
+const EMPTY_REVERT_FILES: readonly FileDiffItem[] = Object.freeze([]);
 
 /** Anchor on a change of data, not only on rows changing size. */
 const MAINTAIN_TIMELINE_POSITION = { data: true, size: true } as const;

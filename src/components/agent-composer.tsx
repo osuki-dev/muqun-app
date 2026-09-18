@@ -41,6 +41,7 @@ import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-k
 
 import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
+import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
@@ -90,6 +91,7 @@ import {
   type AgentProject,
   type AgentSessionInfo,
   type CompactionReason,
+  type FileDiffItem,
   type ModelRef,
   type SkillInfo,
   type TodoItem,
@@ -256,6 +258,17 @@ export interface AgentComposerProps {
    * Free" in the picker the reader chose it from.
    */
   modelName?: string;
+  /**
+   * A rollback that is staged and waiting to be confirmed.
+   *
+   * The plate above the dock is the whole of the preview: how many messages,
+   * which files, and the two words that decide it. `null` when nothing is
+   * staged, which is most of the time.
+   */
+  revert?: { messages: number; files: readonly FileDiffItem[] } | null;
+  onCommitRevert?: () => void;
+  onKeepRevert?: () => void;
+  revertBusy?: boolean;
   /** A compaction in flight, or one that failed and has not been read yet. */
   compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
   onDismissCompaction?: () => void;
@@ -335,6 +348,10 @@ export const AgentComposer = memo(function AgentComposer({
   contextUsage,
   contextLimit,
   modelName,
+  revert,
+  onCommitRevert,
+  onKeepRevert,
+  revertBusy = false,
   compaction,
   onDismissCompaction,
   cost,
@@ -986,6 +1003,18 @@ export const AgentComposer = memo(function AgentComposer({
             testIDPrefix="slash-command"
           />
         </View>
+      ) : null}
+
+      {/* What a staged rollback would take, and the two words that decide it.
+          Above the dock, where the reader's hands already are. */}
+      {revert && onCommitRevert && onKeepRevert ? (
+        <AgentRevertPlate
+          messages={revert.messages}
+          files={revert.files}
+          onCommit={onCommitRevert}
+          onKeep={onKeepRevert}
+          busy={revertBusy}
+        />
       ) : null}
 
       {/* A compaction in flight. Transient, above the dock, and gone the

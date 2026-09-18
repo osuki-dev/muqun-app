@@ -52,6 +52,11 @@ msgstr "{0, plural, other {# 日}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# 件のファイルが変更されました}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {# 件のファイル}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label} は一時的にロックされています。システムの代�
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "{language} のコードをクリップボードにコピーしました"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {# 件のメッセージ}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt 上矢印"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "常に許可"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "ほか {rest} 件"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "カメラへのアクセスが必要です"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "キャンセル"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "予約したロールバックを取り消す"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "コピーします。ターミナルにそのまま貼り付けられま
 msgid "Copy"
 msgstr "コピー"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "メッセージをコピー"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "公開鍵をコピー"
@@ -1324,6 +1336,10 @@ msgstr "アプリロックを有効にできませんでした"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "鍵を生成できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "保持できませんでした"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "ターミナルを読み取れませんでした"
 msgid "Could not read this file."
 msgstr "このファイルを読み込めませんでした"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "やり直せませんでした"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ホストを削除できませんでした"
@@ -1474,6 +1486,10 @@ msgstr "キーを送信できませんでした"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "ショートカットを送信できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "ロールバックを準備できませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "最新の出力へ移動"
 msgid "just now"
 msgstr "たった今"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "そのまま"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "{label} を残す"
@@ -2211,6 +2231,15 @@ msgstr "{label} を残す"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "キャッシュを残す"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "すべて残して、準備中のロールバックを破棄"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "すべて残して、準備中のロールバックを破棄"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "まだ何もありません。セッションが書き出したファイ
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "バックグラウンドでは何も動いていません。長いコマンドをツールカードから切り離すと、ここに表示されます"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "準備中のものはありません"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "取り消し中…"
 msgid "Right arrow"
 msgstr "右矢印"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "直前のメッセージより前の状態に戻す"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "{summary} を取り消します"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "ここまで取り消します"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "思考を表示"
 msgid "Show what is running"
 msgstr "実行中のものを表示"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "直前のメッセージまで戻すと何が取り消されるかを表示"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "{total} 件中 {shown} 件を表示"
@@ -3982,8 +4023,8 @@ msgstr "サイズ"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "スキル · {0}"
+msgid "Skill loaded · {0}"
+msgstr "スキル読み込み · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "muqun.dev で公開されているテーマです。開くまで何もダウンロードしません"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "適用待ちのロールバックはありません"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "思考中…"
 
@@ -4778,10 +4823,23 @@ msgstr "入力するか、キーボードの音声入力キーを使ってくだ
 msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "取り消し"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "{summary} を取り消す"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "準備済みのメッセージまで取り消す"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "ここまで取り消す"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

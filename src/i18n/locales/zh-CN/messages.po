@@ -52,6 +52,11 @@ msgstr "{0, plural, other {# 天}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# 个文件有改动}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {# 个文件}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label} 已暂时锁定。请改用系统备用方式，或稍后再试"
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "已复制 {language} 代码到剪贴板"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {# 条消息}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt 上箭头"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "始终允许"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "还有 {rest} 个"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "需要相机访问权限"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "取消已暂存的回滚"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "复制命令，可直接粘贴到终端"
 msgid "Copy"
 msgstr "复制"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "复制消息"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "复制公钥"
@@ -1324,6 +1336,10 @@ msgstr "无法启用应用锁"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "无法生成密钥"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "无法保留"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "无法读取终端"
 msgid "Could not read this file."
 msgstr "无法读取此文件"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "无法重做"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "无法移除主机"
@@ -1474,6 +1486,10 @@ msgstr "无法发送按键"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "无法发送快捷命令"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "无法准备回滚"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "跳到最新输出"
 msgid "just now"
 msgstr "刚刚"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "保留"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "保留 {label}"
@@ -2211,6 +2231,15 @@ msgstr "保留 {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "保留缓存文件"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "保留全部内容，放弃已准备的回滚"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "保留全部内容，放弃已准备的回滚"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "这里还是空的。会话写出的文件会自动出现"
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "后台没有任何任务。从工具卡片里把长命令转入后台，它就会出现在这里"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "没有待处理的回滚"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "吊销中…"
 msgid "Right arrow"
 msgstr "向右键"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "回滚到上一条消息之前"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "将回滚 {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "将回滚到这里"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "显示思考过程"
 msgid "Show what is running"
 msgstr "查看正在运行的项目"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "查看回滚到上一条消息会撤销什么"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "已显示 {shown} / {total}"
@@ -3982,8 +4023,8 @@ msgstr "大小"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "技能 · {0}"
+msgid "Skill loaded · {0}"
+msgstr "已加载技能 · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "来自 muqun.dev 的已发布主题。打开某个主题前不会下载任何内容"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "没有等待应用的回滚"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "正在思考…"
 
@@ -4778,10 +4823,23 @@ msgstr "可以直接打字，或使用键盘上的语音输入键"
 msgid "Type on the simulator"
 msgstr "在模拟器上输入"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "撤销"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "撤销 {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "撤销到已准备的消息"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "撤销到这里"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

@@ -52,6 +52,11 @@ msgstr "{0, plural, other {# วัน}}"
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {เปลี่ยนแปลง # ไฟล์}}"
 
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {# ไฟล์}}"
+
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
@@ -200,6 +205,10 @@ msgstr "{label} ถูกล็อกชั่วคราว ใช้วิธ
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "คัดลอกโค้ด {language} ไปยังคลิปบอร์ดแล้ว"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {# ข้อความ}}"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -425,6 +434,10 @@ msgstr "Alt ลูกศรขึ้น"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "อนุญาตเสมอ"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "และอีก {rest}"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -724,11 +737,6 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "ยกเลิก"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "ยกเลิกการย้อนกลับที่เตรียมไว้"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1259,6 +1267,10 @@ msgstr "คัดลอกให้พร้อมวางในเทอร์
 msgid "Copy"
 msgstr "คัดลอก"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "คัดลอกข้อความ"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "คัดลอกคีย์สาธารณะ"
@@ -1324,6 +1336,10 @@ msgstr "เปิดใช้การล็อกแอปไม่ได้"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "สร้างคีย์ไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "เก็บไว้ไม่ได้"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1411,10 +1427,6 @@ msgstr "อ่านเทอร์มินัลไม่ได้"
 msgid "Could not read this file."
 msgstr "อ่านไฟล์นี้ไม่ได้"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "ทำซ้ำไม่ได้"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ลบโฮสต์ไม่ได้"
@@ -1474,6 +1486,10 @@ msgstr "ส่งปุ่มไม่ได้"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "ส่งปุ่มลัดไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "เตรียมการย้อนกลับไม่ได้"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -2204,6 +2220,10 @@ msgstr "ข้ามไปยังเอาต์พุตล่าสุด"
 msgid "just now"
 msgstr "เมื่อสักครู่"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "เก็บไว้"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "เก็บ {label} ไว้"
@@ -2211,6 +2231,15 @@ msgstr "เก็บ {label} ไว้"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "เก็บไฟล์แคชไว้"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "เก็บทุกอย่างไว้และทิ้งการย้อนกลับที่เตรียมไว้"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "เก็บทุกอย่างไว้และทิ้งการย้อนกลับที่เตรียมไว้"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2754,6 +2783,10 @@ msgstr "ยังไม่มีอะไรที่นี่ ไฟล์ท�
 #: src/components/agent-background-tray.tsx
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "ยังไม่มีอะไรทำงานเบื้องหลัง แยกคำสั่งที่ใช้เวลานานออกจากการ์ดเครื่องมือ แล้วมันจะมาอยู่ที่นี่"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "ไม่มีอะไรที่เตรียมไว้"
 
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
@@ -3514,10 +3547,13 @@ msgstr "กำลังเพิกถอน…"
 msgid "Right arrow"
 msgstr "ลูกศรขวา"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "ย้อนกลับไปก่อนข้อความล่าสุด"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "กำลังย้อนกลับ {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "ย้อนกลับถึงตรงนี้"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3934,6 +3970,11 @@ msgstr "แสดงกระบวนการคิด"
 msgid "Show what is running"
 msgstr "แสดงสิ่งที่กำลังทำงาน"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "แสดงว่าการย้อนกลับถึงข้อความล่าสุดจะยกเลิกอะไรบ้าง"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "แสดง {shown} จาก {total}"
@@ -3982,8 +4023,8 @@ msgstr "ขนาด"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "ทักษะ · {0}"
+msgid "Skill loaded · {0}"
+msgstr "โหลดสกิลแล้ว · {0}"
 
 #: src/components/agent-workbench.tsx
 msgid "Skill started"
@@ -4545,6 +4586,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "ธีมที่เผยแพร่บน muqun.dev จะไม่มีการดาวน์โหลดจนกว่าคุณจะเปิดธีม"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "ไม่มีการย้อนกลับที่รอนำไปใช้"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "กำลังคิด…"
 
@@ -4778,10 +4823,23 @@ msgstr "พิมพ์หรือใช้ปุ่มป้อนตามค
 msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "เลิกทำ"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "เลิกทำ {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "เลิกทำถึงข้อความที่เตรียมไว้"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "เลิกทำถึงตรงนี้"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

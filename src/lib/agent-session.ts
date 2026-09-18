@@ -28,6 +28,7 @@ import {
   parseAgentEngineInfo,
   parseAgentSessionInfo,
   parseAgentSessionList,
+  parseAgentSessionRevert,
   parseAgentSessionSnapshot,
   parseFileDiffItems,
   parseInboxItems,
@@ -42,6 +43,7 @@ import {
   type AgentEngineInfo,
   type AgentRunStatus,
   type AgentSessionInfo,
+  type AgentSessionRevert,
   type AgentSessionSnapshot,
   type FileDiffItem,
   type InboxItem,
@@ -424,6 +426,32 @@ export async function switchAgentMode(asid: string, agent: string): Promise<void
   await writeJson(sessionRoute(asid, '/agent'), 'Failed to switch agent', {
     agent: agent.toLowerCase(),
   });
+}
+
+/**
+ * Stage a rollback, and answer with what committing it would do.
+ *
+ * Two steps rather than one, because a rollback that cannot be previewed cannot
+ * be confirmed: `files: true` asks OpenCode to work out the file changes the
+ * rollback would undo, which is what the plate above the composer draws. The
+ * one-shot `POST …/revert` below still exists and still stages-and-commits in
+ * one call; nothing new should use it.
+ */
+export async function stageAgentRevert(
+  asid: string,
+  messageId: string,
+  files = true
+): Promise<AgentSessionRevert | null> {
+  const data = await writeJson(sessionRoute(asid, '/revert/stage'), 'Failed to stage revert', {
+    message_id: messageId,
+    files,
+  });
+  return parseAgentSessionRevert(data);
+}
+
+/** Apply what is staged. With nothing staged this is a no-op, not an error. */
+export async function commitAgentRevert(asid: string): Promise<void> {
+  await writeJson(sessionRoute(asid, '/revert/commit'), 'Failed to apply revert');
 }
 
 export async function revertAgentSession(
