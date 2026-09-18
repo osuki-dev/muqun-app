@@ -3,6 +3,7 @@ import { Input } from '@/components/themed-input';
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { SheetFrame } from '@/components/sheet-ground';
+import { useSheetDetentOvershoot } from '@/hooks/use-sheet-detent-overshoot';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
   SheetSceneGroupHeading,
@@ -580,13 +581,22 @@ export default function QuickCommandsScreen() {
     }
   }
 
+  const overshoot = useSheetDetentOvershoot();
+
   return (
     // One ground and one layout column preserve native sheet measurement.
     // Frosted, like every sheet: the wallpaper is texture under a reading
     // surface, which is what lets the rows below be plain text on it.
     <SheetFrame tint="background" frosted>
-      {/* Keep the fixed header and scroller in one native layout column. */}
-      <View collapsable={false} style={styles.sheet}>
+      {/* Keep the fixed header and scroller in one native layout column. This
+          sheet builds its own scene rather than using `SheetScene`, so it pays
+          the Android detent overshoot itself -- same hook, same column, same
+          reason: the scroller below is `flex: 1`, so this box's bottom padding
+          is what keeps its viewport on the sheet's visible edge. */}
+      <Animated.View
+        collapsable={false}
+        onLayout={overshoot.onLayout}
+        style={[styles.sheet, overshoot.style]}>
         <View style={[styles.fixedTop, isPadLayout && styles.padContent]}>
           <SheetHandle />
 
@@ -1073,7 +1083,7 @@ export default function QuickCommandsScreen() {
             </Animated.View>
           ) : null}
         </KeyboardAwareScrollView>
-      </View>
+      </Animated.View>
     </SheetFrame>
   );
 }
