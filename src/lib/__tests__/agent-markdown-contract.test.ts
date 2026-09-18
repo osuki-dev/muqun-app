@@ -40,6 +40,10 @@ const ALLOWED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     command: 'the shell command as it was run, monospace and in the accent ink',
     'match.text': 'one matched line from grep, monospace and never re-wrapped',
     calls: 'the names of the tools some executed code called, joined into one line',
+    'option.label':
+      'one answer a question offered, drawn inside the pill it labels, so it stays one line with its markdown syntax stripped',
+    'option.description':
+      "an option's own one-line gloss, clipped to one line beside the label it explains",
   },
   'agent-permission-card.tsx': {
     subject: 'the path or command the permission is about, monospace',

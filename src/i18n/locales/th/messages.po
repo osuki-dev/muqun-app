@@ -452,10 +452,6 @@ msgstr "คำตอบ"
 msgid "Answer: {0}"
 msgstr "คำตอบ: {0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "ตอบแล้ว"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "ไอคอนแอป"
@@ -3910,6 +3906,10 @@ msgstr "ตั้งค่าบนโฮสต์"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "การตั้งค่า"
+
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "หลายคำตอบ"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

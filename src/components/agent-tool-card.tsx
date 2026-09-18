@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { FileText, GitFork, Play } from 'lucide-react-native';
+import { Check, FileText, GitFork, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
@@ -20,7 +20,8 @@ import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-c
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { isDeclinedByUser } from '@/lib/agent-engine-text';
-import { hasMarkdownMarks } from '@/lib/markdown-text';
+import { hasMarkdownMarks, plainFromMarkdown } from '@/lib/markdown-text';
+import { withAlpha } from '@/lib/color';
 import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { TOOL_BODY_MAX_LINES, capToolBody } from '@/lib/markdown-cap';
 import { diffRowsForFence, diffRowsFromPatches, diffTotals } from '@/lib/agent-diff-rows';
@@ -39,7 +40,11 @@ import {
   groupGrepMatches,
   parsePatchSections,
   parseToolOutput,
+  parseToolQuestions,
   prettyJson,
+  questionAnswersFromMetadata,
+  QUESTION_MAX,
+  QUESTION_OPTION_MAX,
   resultCountFromMetadata,
   shellExitFromMetadata,
   stripReadLineNumbers,
@@ -48,6 +53,7 @@ import {
   textFromContent,
   toolInputRecord,
   type ToolKind,
+  type ToolQuestion,
 } from '@/lib/agent-tool-output';
 import {
   isBusyStatus,
@@ -369,6 +375,14 @@ export const AgentToolCard = memo(function AgentToolCard({
     () => (kind === 'subagent' ? stripSubagentEnvelope(outputText) : null),
     [kind, outputText]
   );
+  const questions = useMemo(
+    () => (kind === 'question' ? parseToolQuestions(part.input) : []),
+    [kind, part.input]
+  );
+  const answers = useMemo(
+    () => (kind === 'question' ? questionAnswersFromMetadata(part.metadata) : []),
+    [kind, part.metadata]
+  );
 
   const writeContent = typeof input?.content === 'string' ? input.content : undefined;
   const oldString =
@@ -561,6 +575,8 @@ export const AgentToolCard = memo(function AgentToolCard({
         editFiles,
         patchSections,
         grepGroups,
+        questions,
+        answers,
         subagentText: subagent?.text ?? '',
         writeContent,
         oldString,
@@ -580,6 +596,8 @@ export const AgentToolCard = memo(function AgentToolCard({
       editFiles,
       patchSections,
       grepGroups,
+      questions,
+      answers,
       subagent,
       writeContent,
       oldString,
@@ -683,6 +701,8 @@ interface ToolBodyArgs {
   editFiles: ReturnType<typeof editFilesFromMetadata>;
   patchSections: ReturnType<typeof parsePatchSections>;
   grepGroups: ReturnType<typeof groupGrepMatches>;
+  questions: readonly ToolQuestion[];
+  answers: readonly string[][];
   subagentText: string;
   writeContent?: string;
   oldString?: string;
@@ -815,8 +835,10 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       // answered -- a second copy of it in the timeline would be two places to
       // answer the same thing. What is left once it has been answered is a row
       // naming a question with no way to see what was asked or what was said,
-      // so the card keeps a body: the question, and the answer under it.
-      return <QuestionBody input={input} answer={outputText} />;
+      // so the card keeps a body: the questions, and what was picked in each.
+      return (
+        <QuestionBody questions={args.questions} answers={args.answers} fallback={outputText} />
+      );
 
     case 'execute':
       return (
@@ -961,40 +983,129 @@ const WebResult = memo(function WebResult({
   return <BoundedMarkdown markdown={markdown} markdownStyle={markdownStyle} flavor="github" />;
 });
 
-/** What was asked, and what was answered. */
+/**
+ * What was asked, and which of the offered answers came back.
+ *
+ * The tool asks with `input.questions[]` -- a short `header`, the question
+ * itself, and the options it will accept -- and answers in
+ * `metadata.answers[i]`, one list per question. The card used to read
+ * `input.question` and `input.prompt`, keys this tool has never sent, so a
+ * question row in the transcript said nothing at all.
+ *
+ * The interactive form card is where a live question is answered; this is the
+ * record of one that was.
+ */
 const QuestionBody = memo(function QuestionBody({
-  input,
-  answer,
+  questions,
+  answers,
+  fallback,
 }: {
-  input: Record<string, unknown> | null;
-  answer: string;
+  questions: readonly ToolQuestion[];
+  answers: readonly string[][];
+  /** The engine's own sentence about what was answered, for a card with no `questions[]`. */
+  fallback: string;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  // The question is the agent's own words and is content; the answer is what
-  // was said back to it, and reads as the quieter of the two.
+  const colors = usePaneChatColors();
+  // The question is the agent's own words and is content; everything else here
+  // is a label naming a choice.
   const askedStyle = useCompactMarkdownStyle('body');
   const answeredStyle = useCompactMarkdownStyle('muted');
-  const question =
-    typeof input?.question === 'string'
-      ? input.question
-      : typeof input?.prompt === 'string'
-        ? input.prompt
-        : '';
-  if (!question && !answer) return null;
+
+  if (questions.length === 0) {
+    return fallback ? (
+      <BoundedMarkdown markdown={fallback} markdownStyle={answeredStyle} openLinks={false} />
+    ) : null;
+  }
+
   return (
     <View style={styles.stretch}>
-      {question ? (
-        <BoundedMarkdown markdown={question} markdownStyle={askedStyle} openLinks={false} />
-      ) : null}
-      {answer ? (
-        <>
-          <Text variant="caption" color={theme.colors.textSubtle} style={styles.answerLabel}>
-            {t`Answered`}
-          </Text>
-          <BoundedMarkdown markdown={answer} markdownStyle={answeredStyle} openLinks={false} />
-        </>
-      ) : null}
+      {questions.slice(0, QUESTION_MAX).map((question, index) => {
+        const picked = answers[index] ?? [];
+        // An answer the option list does not hold: a free-text reply, or an
+        // engine that answered with something it never offered.
+        const offered = new Set(question.options.map((option) => option.label));
+        const unlisted = picked.filter((answer) => !offered.has(answer)).join(' · ');
+        return (
+          <View key={`${index}:${question.header || question.question}`} style={styles.questionRow}>
+            {question.header || question.multiple ? (
+              <View style={styles.questionHeaderLine}>
+                {question.header ? (
+                  <Text
+                    variant="caption"
+                    weight="semibold"
+                    color={theme.colors.text}
+                    style={styles.questionHeader}>
+                    {question.header}
+                  </Text>
+                ) : null}
+                {/* Whether the reader was allowed to pick more than one, which
+                    is what makes several marked options a single answer. */}
+                {question.multiple ? (
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textSubtle}
+                    style={styles.questionHeader}>
+                    {t`Several answers`}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+            {question.question ? (
+              <BoundedMarkdown
+                markdown={question.question}
+                markdownStyle={askedStyle}
+                openLinks={false}
+              />
+            ) : null}
+            <View style={styles.optionsWrap}>
+              {question.options.slice(0, QUESTION_OPTION_MAX).map((option) => {
+                // An answered question marks what was chosen rather than
+                // repeating it underneath: the options are already the list.
+                const chosen = picked.includes(option.label);
+                return (
+                  <View
+                    key={option.label}
+                    style={[
+                      styles.optionPill,
+                      {
+                        borderColor: chosen ? colors.accent : colors.border,
+                        backgroundColor: chosen ? withAlpha(colors.accent, 0.12) : 'transparent',
+                      },
+                    ]}>
+                    {chosen ? <Check size={11} color={colors.accent} /> : null}
+                    <Text
+                      variant="caption"
+                      weight={chosen ? 'semibold' : 'regular'}
+                      color={chosen ? colors.accent : theme.colors.text}
+                      style={styles.optionLabel}>
+                      {plainFromMarkdown(option.label)}
+                    </Text>
+                    {option.description ? (
+                      <Text
+                        variant="caption"
+                        numberOfLines={1}
+                        color={theme.colors.textSubtle}
+                        style={styles.optionDescription}>
+                        {plainFromMarkdown(option.description)}
+                      </Text>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
+            {unlisted ? (
+              <Text
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={styles.questionExtraAnswer}>
+                {unlisted}
+              </Text>
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 });
@@ -1155,7 +1266,46 @@ const styles = StyleSheet.create({
   grepMore: {
     fontSize: AGENT_TYPE.micro.size,
   },
-  answerLabel: {
+  questionRow: {
+    alignSelf: 'stretch',
+    gap: 3,
+    marginBottom: 6,
+  },
+  questionHeaderLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  questionHeader: {
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.meta.lineHeight,
+  },
+  optionsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  /** The same pill the form card offers, with nothing left to press. */
+  optionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    maxWidth: '100%',
+  },
+  optionLabel: {
+    fontSize: AGENT_TYPE.micro.size,
+    flexShrink: 1,
+  },
+  optionDescription: {
+    fontSize: AGENT_TYPE.micro.size,
+    flexShrink: 1,
+  },
+  questionExtraAnswer: {
     fontSize: AGENT_TYPE.micro.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },

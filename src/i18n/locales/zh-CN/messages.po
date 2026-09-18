@@ -452,10 +452,6 @@ msgstr "回答"
 msgid "Answer: {0}"
 msgstr "回答：{0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "已回答"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "应用图标"
@@ -3910,6 +3906,10 @@ msgstr "请在主机上配置"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "设置"
+
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "可多选"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

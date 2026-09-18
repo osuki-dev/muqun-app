@@ -15,7 +15,9 @@ import {
   groupGrepMatches,
   parsePatchSections,
   parseToolOutput,
+  parseToolQuestions,
   prettyJson,
+  questionAnswersFromMetadata,
   resultCountFromMetadata,
   shellExitFromMetadata,
   stripReadLineNumbers,
@@ -428,5 +430,68 @@ describe('stripReadLineNumbers', () => {
 
   test('nothing is nothing', () => {
     expect(stripReadLineNumbers('')).toBe('');
+  });
+});
+
+describe('the question tool', () => {
+  // The shape 2.0.1 actually sends: `questions[]`, each with its own short
+  // header, and the answers back as one list per question.
+  const INPUT = {
+    questions: [
+      {
+        question: 'Which approach should I take for the tool cards?',
+        header: 'Approach',
+        options: [
+          { label: 'Rewrite', description: 'Start the renderer from scratch' },
+          { label: 'Patch', description: 'Keep the shell, change the bodies' },
+        ],
+        multiple: false,
+      },
+      {
+        question: 'Which surfaces should it cover?',
+        header: 'Scope',
+        options: [{ label: 'Timeline' }, { label: 'Permission card' }],
+        multiple: true,
+      },
+    ],
+  };
+
+  test('every question, with its header, its options and their descriptions', () => {
+    const questions = parseToolQuestions(INPUT);
+    expect(questions).toHaveLength(2);
+    expect(questions[0]).toEqual({
+      header: 'Approach',
+      question: 'Which approach should I take for the tool cards?',
+      options: [
+        { label: 'Rewrite', description: 'Start the renderer from scratch' },
+        { label: 'Patch', description: 'Keep the shell, change the bodies' },
+      ],
+      multiple: false,
+    });
+    expect(questions[1].multiple).toBe(true);
+    expect(questions[1].options).toEqual([{ label: 'Timeline' }, { label: 'Permission card' }]);
+  });
+
+  test('the header is the header, and a headerless question names itself', () => {
+    expect(extractTarget('question', INPUT)).toBe('Approach');
+    expect(extractTarget('question', { questions: [{ question: 'Ready?' }] })).toBe('Ready?');
+    expect(extractTarget('question', { question: 'the key that does not exist' })).toBe('');
+    expect(extractTarget('question', '{"questions": [{"header": "App')).toBe('');
+  });
+
+  test('answers arrive as one list per question', () => {
+    expect(
+      questionAnswersFromMetadata({ answers: [['Patch'], ['Timeline', 'Permission card']] })
+    ).toEqual([['Patch'], ['Timeline', 'Permission card']]);
+    // A payload that answered with a bare string per question still reads.
+    expect(questionAnswersFromMetadata({ answers: ['Patch'] })).toEqual([['Patch']]);
+    expect(questionAnswersFromMetadata({})).toEqual([]);
+  });
+
+  test('nothing here throws on a shape it has never seen', () => {
+    expect(parseToolQuestions(null)).toEqual([]);
+    expect(parseToolQuestions({ questions: 'soon' })).toEqual([]);
+    expect(parseToolQuestions({ questions: [null, 7, {}, { options: 'no' }] })).toEqual([]);
+    expect(questionAnswersFromMetadata({ answers: [null, 7, ['a', 3]] })).toEqual([[], [], ['a']]);
   });
 });

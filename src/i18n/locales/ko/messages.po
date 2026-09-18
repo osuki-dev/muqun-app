@@ -452,10 +452,6 @@ msgstr "답변"
 msgid "Answer: {0}"
 msgstr "응답: {0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "답변함"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "앱 아이콘"
@@ -3910,6 +3906,10 @@ msgstr "호스트에서 설정하세요"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "설정"
+
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "복수 응답"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

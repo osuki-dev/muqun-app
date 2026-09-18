@@ -187,6 +187,13 @@ export function extractTarget(kind: ToolKind, input: unknown): string {
       );
     case 'skill':
       return pickString(rec, ['id', 'skillID', 'skill_id', 'skillId', 'skill']) ?? '';
+    case 'question': {
+      // The tool asks with `questions[]`, and each entry carries its own short
+      // `header` -- "Approach", "Scope" -- which is exactly the one line a
+      // header wants. The question itself is prose and belongs in the body.
+      const first = parseToolQuestions(rec)[0];
+      return first ? first.header || first.question : '';
+    }
     case 'execute':
       return firstLineOf(pickString(rec, ['code']) ?? '');
     case 'browser':
@@ -480,6 +487,84 @@ function safeStringify(value: unknown, maxDepth: number): string {
     // a tool card is not the place to find out about it.
     return String(value);
   }
+}
+
+// ---------------------------------------------------------------------------
+// `question`
+// ---------------------------------------------------------------------------
+
+/** One choice offered for a question, as OpenCode words it. */
+export interface ToolQuestionOption {
+  label: string;
+  /** The line under the label, when the agent wrote one. */
+  description?: string;
+}
+
+/**
+ * One question of a `question` call.
+ *
+ * The input is `{questions: [{question, header, options, multiple?}]}` -- the
+ * plural is the whole shape, and the card used to read `input.question` and
+ * `input.prompt`, neither of which the tool has ever sent. `header` is the
+ * short label the agent puts above the question; `question` is the prose.
+ */
+export interface ToolQuestion {
+  header: string;
+  question: string;
+  options: ToolQuestionOption[];
+  /** More than one option may be picked; the answer is then a list. */
+  multiple: boolean;
+}
+
+/** How many questions and options a card draws before it stops. */
+export const QUESTION_MAX = 6;
+export const QUESTION_OPTION_MAX = 8;
+
+export function parseToolQuestions(input: unknown): ToolQuestion[] {
+  const rec = toolInputRecord(input);
+  if (!rec || !Array.isArray(rec.questions)) return [];
+  const out: ToolQuestion[] = [];
+  for (const entry of rec.questions) {
+    const question = asRecord(entry);
+    if (!question) continue;
+    const text = pickString(question, ['question', 'prompt', 'text']) ?? '';
+    const header = pickString(question, ['header', 'title', 'label']) ?? '';
+    if (!text && !header) continue;
+    const options: ToolQuestionOption[] = [];
+    if (Array.isArray(question.options)) {
+      for (const raw of question.options) {
+        if (typeof raw === 'string') {
+          if (raw) options.push({ label: raw });
+          continue;
+        }
+        const option = asRecord(raw);
+        if (!option) continue;
+        const label = pickString(option, ['label', 'value', 'title']);
+        if (!label) continue;
+        const description = pickString(option, ['description', 'detail', 'hint']);
+        options.push({ label, ...(description ? { description } : {}) });
+      }
+    }
+    out.push({ header, question: text, options, multiple: question.multiple === true });
+  }
+  return out;
+}
+
+/**
+ * What was answered, per question, as `metadata.answers` states it.
+ *
+ * `string[][]`: one list per question, because a `multiple` question is
+ * answered with several of its options. A payload that sent one string per
+ * question rather than a list is read as a list of one.
+ */
+export function questionAnswersFromMetadata(metadata: Record<string, unknown>): string[][] {
+  const raw = metadata.answers;
+  if (!Array.isArray(raw)) return [];
+  return raw.map((entry) => {
+    if (typeof entry === 'string') return entry ? [entry] : [];
+    if (!Array.isArray(entry)) return [];
+    return entry.filter((value): value is string => typeof value === 'string' && value.length > 0);
+  });
 }
 
 // ---------------------------------------------------------------------------

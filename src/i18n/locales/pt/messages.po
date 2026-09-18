@@ -452,10 +452,6 @@ msgstr "Resposta"
 msgid "Answer: {0}"
 msgstr "Resposta: {0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "Respondido"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Ícone do app"
@@ -3910,6 +3906,10 @@ msgstr "Configure no host"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Definições"
+
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "Várias respostas"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"

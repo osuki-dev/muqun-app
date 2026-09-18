@@ -452,10 +452,6 @@ msgstr "Trả lời"
 msgid "Answer: {0}"
 msgstr "Trả lời: {0}"
 
-#: src/components/agent-tool-card.tsx
-msgid "Answered"
-msgstr "Đã trả lời"
-
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Biểu tượng ứng dụng"
@@ -3910,6 +3906,10 @@ msgstr "Thiết lập trên máy chủ"
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "Cài đặt"
+
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "Nhiều câu trả lời"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
