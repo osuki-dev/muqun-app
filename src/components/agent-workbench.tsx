@@ -297,7 +297,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * Not a toast and not on a timer -- it is not news about something that
    * happened, it is the state of the ground under this session, true until the
    * reader moves it somewhere that exists. It carries the one action that
-   * changes that. See `workspaceMissing` below for what it stops.
+   * changes that. See `badgeLoads` below for what it also stops.
    */
   const [workspaceMissing, setWorkspaceMissing] = useState<WorkspaceMissingState | null>(null);
   const screenNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -611,8 +611,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeDirectory]);
 
   /**
-   * The workspace folder the session is in, when the host does not have it any
-   * more -- a worktree that was removed, a throwaway clone that was deleted.
+   * Whether the badge reads may run: context, diff, shells, worktrees.
+   *
+   * They are all about the session's workspace folder, and the host does not
+   * always still have it -- a worktree removed, a throwaway clone deleted.
    *
    * OpenCode answers every directory-scoped read about it with a `500`, which
    * reached the device as a `502` and read like a passing fault: the badge
@@ -637,7 +639,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * a session whose folder is gone to another one and returns, and the screen
    * -- having cleared the notice for the session in between -- asks the four
    * reads a second time and collects four more `404`s. A session's own answer
-   * is remembered for as long as the screen is up, and it is dropped the
+   * is remembered for as long as the screen is up, and it stops applying the
    * moment that session is somewhere else.
    */
   const workspaceMissingRef = useRef(new Map<string, WorkspaceMissingState>());
