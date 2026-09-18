@@ -232,6 +232,10 @@ msgstr "{0} 件中 {running} 件が実行中"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 離れている間に完了しました"
 
+#: src/components/in-app-notification-host.tsx
+msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
+msgstr "{waiting, plural, other {ほか # 件の通知}}"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
@@ -908,10 +912,6 @@ msgstr "キャッシュを削除しています"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "削除しています…"
-
-#: src/components/in-app-notification-host.tsx
-msgid "Close"
-msgstr "閉じる"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1716,6 +1716,10 @@ msgstr "切断 · {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected."
 msgstr "切断しました"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Dismiss"
+msgstr "閉じる"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"

@@ -253,10 +253,24 @@ export const SETTLE: WithSpringConfig = {
  * A worklet, because the only place it is ever called from is a pan gesture's
  * `onEnd` -- see the note on `timing` for what happens to a plain function
  * captured by one.
+ *
+ * `onRest` is for the throw that ends in something other than a rest: the
+ * notification banner flung off the top of the screen is gone once it lands,
+ * and the store only hears about it when the flight is over. It runs on the UI
+ * runtime with the spring, so a caller that needs the JS side wraps its own
+ * work in `runOnJS`. `finished` is false when something interrupted the
+ * spring -- a second drag, an unmount -- and a caller that removes the thing
+ * being animated must check it, or a cancelled flight dismisses a notice the
+ * reader caught and put back.
  */
-export function settleTo(value: SharedValue<number>, to: number, velocity = 0) {
+export function settleTo(
+  value: SharedValue<number>,
+  to: number,
+  velocity = 0,
+  onRest?: (finished?: boolean) => void
+) {
   'worklet';
-  value.value = withSpring(to, { ...SETTLE, velocity });
+  value.value = withSpring(to, { ...SETTLE, velocity }, onRest);
 }
 
 /** Compatibility with @osuki-dev/ui 1.0.1 Button, not a general spring preset. */

@@ -232,6 +232,10 @@ msgstr "{running} trong {0} đang chạy"
 msgid "{title} — finished while you were away"
 msgstr "{title} — đã xong khi bạn đi vắng"
 
+#: src/components/in-app-notification-host.tsx
+msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
+msgstr "{waiting, plural, other {# thông báo nữa}}"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
@@ -908,10 +912,6 @@ msgstr "Đang xóa bộ nhớ đệm"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Đang xóa…"
-
-#: src/components/in-app-notification-host.tsx
-msgid "Close"
-msgstr "Đóng"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1716,6 +1716,10 @@ msgstr "Đã ngắt kết nối · {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected."
 msgstr "Đã ngắt kết nối"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Dismiss"
+msgstr "Bỏ qua"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"

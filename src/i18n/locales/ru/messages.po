@@ -232,6 +232,10 @@ msgstr "{running} из {0} выполняется"
 msgid "{title} — finished while you were away"
 msgstr "{title} — завершилось, пока вас не было"
 
+#: src/components/in-app-notification-host.tsx
+msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
+msgstr "{waiting, plural, one {ещё # уведомление} few {ещё # уведомления} many {ещё # уведомлений} other {ещё # уведомления}}"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "Ещё {overflow}"
@@ -908,10 +912,6 @@ msgstr "Очищаем кэш"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Очищаем…"
-
-#: src/components/in-app-notification-host.tsx
-msgid "Close"
-msgstr "Закрыть"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1716,6 +1716,10 @@ msgstr "Отключено · {0}"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Disconnected."
 msgstr "Отключено"
+
+#: src/components/in-app-notification-host.tsx
+msgid "Dismiss"
+msgstr "Скрыть"
 
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
