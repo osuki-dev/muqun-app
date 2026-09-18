@@ -52,6 +52,23 @@ export function SettingsAppearance({ title }: { title: string }) {
   // language list that is translated. Every language is written in itself.
   const languageName = language ? LOCALE_LABELS[language] : t`System`;
 
+  /**
+   * What the Font row says it is set to.
+   *
+   * Two slots, one row. Naming both where they differ is the only honest
+   * summary -- a reader who set a Han face for the app and left the terminal
+   * alone should not read one name and wonder why their terminal looks the
+   * same -- and where they are the same, or both untouched, one name says it.
+   * `System` is translated for the reason it is in the language list: it is a
+   * description rather than a name.
+   */
+  const interfaceFont = useAppSettings((state) => state.interfaceFont);
+  const monoFont = useAppSettings((state) => state.monoFont);
+  const system = t`System`;
+  const interfaceName = interfaceFont.kind === 'file' ? interfaceFont.label : system;
+  const monoName = monoFont.kind === 'file' ? monoFont.label : system;
+  const fontValue = interfaceName === monoName ? interfaceName : interfaceName + ' / ' + monoName;
+
   return (
     <SettingsSection title={title}>
       <SettingsChoiceRow
@@ -61,6 +78,23 @@ export function SettingsAppearance({ title }: { title: string }) {
         accessibilityLabel={t`Theme, ${pack.label}`}
         testID="settings-theme-row"
         onPress={() => router.push('/settings-theme')}
+      />
+
+      {/*
+          Directly under Theme and above Colour mode, because it is the same
+          kind of decision one rung down: the pack decides what the app is
+          coloured with, this decides what it is set in, and the mode only
+          decides which half of the pack is showing. The value is the family
+          the reader installed, so the row answers "what am I reading in"
+          without being opened.
+      */}
+      <SettingsChoiceRow
+        label={t`Font`}
+        value={fontValue}
+        detail={t`Use your own font for the app and the terminal.`}
+        accessibilityLabel={t`Font, ${fontValue}`}
+        testID="settings-font-row"
+        onPress={() => router.push('/settings-font')}
       />
 
       <SettingsBlock label={t`Colour mode`}>

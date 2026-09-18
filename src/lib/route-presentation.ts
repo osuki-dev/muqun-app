@@ -41,6 +41,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'settings-language': 'sheet',
   'web-service': 'sheet',
   'settings-theme': 'sheet',
+  'settings-font': 'sheet',
   'settings-theme-browse': 'sheet',
   explore: 'sheet',
   // A whole app screen wearing the theme being judged -- its floor, its

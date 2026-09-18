@@ -71,8 +71,18 @@ export type InstalledFontSlot = Extract<FontSlot, { kind: 'file' }>;
  */
 const PROBE_FONT_SIZE = 100;
 
-/** How much of a download has arrived, as a fraction, or `null` when unknown. */
-export type FontDownloadProgress = { fraction: number | null; bytesWritten: number };
+/**
+ * How much of a download has arrived.
+ *
+ * `fraction` is `null` where the server sent no `Content-Length`, which is the
+ * difference between a bar and a spinner and is not something a row should have
+ * to work out from a `-1`. `totalBytes` is `null` for the same case.
+ */
+export type FontDownloadProgress = {
+  fraction: number | null;
+  bytesWritten: number;
+  totalBytes: number | null;
+};
 
 /** The fonts directory, created if this is the first font the reader has added. */
 function fontsDirectory(): Directory {
@@ -248,6 +258,7 @@ export async function downloadUserFont({
             onProgress({
               fraction: totalBytes > 0 ? Math.min(1, bytesWritten / totalBytes) : null,
               bytesWritten,
+              totalBytes: totalBytes > 0 ? totalBytes : null,
             })
         : undefined,
     });
@@ -369,6 +380,33 @@ export async function registerUserFonts(
     })
   );
   return problems;
+}
+
+/**
+ * Register one slot's face now, whether or not the alias is already bound.
+ *
+ * The launch path skips a slot whose alias `Font.isLoaded` already answers to,
+ * because re-registering is not free and on a cold start nothing can have been
+ * registered twice. Installing a *second* font into the same slot in one
+ * session is exactly the case that fast path gets wrong: the alias is loaded,
+ * the bytes behind it are the old ones, and skipping would leave the reader
+ * looking at the font they just replaced.
+ *
+ * Both platforms rebind cleanly -- Android's `ReactFontManager.setTypeface`
+ * overwrites its entry, iOS re-registers the URL and resets the family alias.
+ *
+ * One thing this cannot reach, and it is worth naming: on Android
+ * `enriched-markdown` keeps its own `typefaceCache` keyed by family name with
+ * no invalidation, so markdown already painted in this process keeps the face
+ * it first resolved. The terminal updates (it loads the file into Skia
+ * directly, not through the alias) and so does every kit `Text`. Markdown
+ * catches up on the next launch, which is where the registration this mirrors
+ * runs before anything paints.
+ */
+export async function loadUserFont(id: FontSlotId, slot: FontSlot): Promise<void> {
+  const uri = userFontUri(slot);
+  if (!uri) return;
+  await Font.loadAsync({ [USER_FONT_ALIAS[id]]: { uri } });
 }
 
 /**

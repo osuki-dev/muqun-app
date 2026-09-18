@@ -191,6 +191,15 @@ msgstr "{count, plural, other {# kết quả}}"
 msgid "{done} of {0} done"
 msgstr "Xong {done} trên {0}"
 
+#. placeholder {0}: installed.label
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, {0}"
+msgstr "{heading}, {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, system font"
+msgstr "{heading}, phông hệ thống"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB không hiển thị"
@@ -240,6 +249,11 @@ msgstr "{waiting, plural, other {# thông báo nữa}}"
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
 
+#. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
+#: src/components/settings-font-sheet.tsx
+msgid "A .ttf or .otf up to {0} MB."
+msgstr "Tệp .ttf hoặc .otf tối đa {0} MB"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A branch or tag this repository already has."
 msgstr "Một nhánh hoặc tag mà kho mã này đã có"
@@ -247,6 +261,10 @@ msgstr "Một nhánh hoặc tag mà kho mã này đã có"
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "một mô hình mặc định"
+
+#: src/components/settings-font-sheet.tsx
+msgid "A direct link to a .ttf or .otf file."
+msgstr "Liên kết trực tiếp tới tệp .ttf hoặc .otf"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -424,6 +442,10 @@ msgstr "Cho phép camera"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "Cho phép camera, hoặc nhập địa chỉ thay thế"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Already on"
+msgstr "Đang dùng"
 
 #. placeholder {0}: request.save.join(' · ')
 #: src/components/agent-permission-card.tsx
@@ -1355,6 +1377,15 @@ msgstr "Không thể xóa"
 msgid "Could not detach"
 msgstr "Không thể tách ra"
 
+#. placeholder {0}: problem.status
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download: {0}"
+msgstr "Không tải được: {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download. Check the link and your connection."
+msgstr "Không tải được. Kiểm tra liên kết và kết nối của bạn"
+
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Không thể bật Khóa ứng dụng"
@@ -1759,9 +1790,17 @@ msgstr "Xong chỉnh sửa lệnh tắt"
 msgid "Down arrow"
 msgstr "Mũi tên xuống"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Download"
+msgstr "Tải xuống"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Tải xuống và xem trước"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Downloading"
+msgstr "Đang tải"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
@@ -1863,6 +1902,10 @@ msgstr "Escape hai lần"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "Chi phí ước tính"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Every screen in the app."
+msgstr "Mọi màn hình trong ứng dụng"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1979,6 +2022,19 @@ msgstr "Theo ngôn ngữ của điện thoại"
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
 msgstr "Theo điện thoại"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-font-sheet.tsx
+msgid "Font"
+msgstr "Phông chữ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Font file address"
+msgstr "Địa chỉ tệp phông chữ"
+
+#: src/components/settings-appearance.tsx
+msgid "Font, {fontValue}"
+msgstr "Phông chữ, {fontValue}"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2180,6 +2236,10 @@ msgstr "Nguồn tải hình ảnh"
 msgid "Import"
 msgstr "Nhập"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Import a file…"
+msgstr "Nhập từ tệp…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "Nhập tệp"
@@ -2223,6 +2283,10 @@ msgstr "Đã cài đặt"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Đang cài đặt hình ảnh"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Interface"
+msgstr "Giao diện"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
@@ -2532,6 +2596,10 @@ msgctxt "git file status"
 msgid "Modified"
 msgstr "Đã sửa"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Monospace"
+msgstr "Đơn cách"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "Thao tác khác"
@@ -2573,6 +2641,10 @@ msgstr "Muqun không thể xác minh danh tính của bạn. Hãy thử lại"
 #: src/components/settings-appearance.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun theo ngôn ngữ mà điện thoại của bạn đang đặt"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
+msgstr "Muqun không có phông chữ riêng. Phông bạn thêm sẽ được giữ trên máy này"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
@@ -2845,6 +2917,10 @@ msgstr "CHƯA KẾT NỐI"
 #: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Không tìm thấy"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Not monospace — the terminal may look uneven"
+msgstr "Không phải đơn cách — terminal có thể trông không đều"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -3203,6 +3279,10 @@ msgstr "Dán"
 #: src/components/theme-link-import.tsx
 msgid "Paste a public theme link or GitHub repository"
 msgstr "Dán liên kết giao diện công khai hoặc URL kho mã GitHub"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Paste a URL…"
+msgstr "Dán một URL…"
 
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
@@ -4430,6 +4510,10 @@ msgstr "Ký hiệu"
 msgid "System"
 msgstr "Hệ thống"
 
+#: src/components/settings-font-sheet.tsx
+msgid "System font"
+msgstr "Phông hệ thống"
+
 #: src/i18n/labels.ts
 msgid "Tab"
 msgstr "Tab"
@@ -4603,6 +4687,10 @@ msgstr "Kết nối đến trình giả lập đã dừng"
 msgid "The default agent. Executes tools."
 msgstr "Agent mặc định. Thực thi các công cụ"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The font file is missing. Add it again."
+msgstr "Không tìm thấy tệp phông chữ. Hãy thêm lại"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "Host đã tạo worktree nhưng không cho biết ở đâu"
@@ -4688,6 +4776,10 @@ msgstr "Trình giả lập không tắt kịp thời"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The terminal, and code in a reply."
+msgstr "Terminal và mã trong câu trả lời"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
@@ -4749,8 +4841,13 @@ msgid "This device has no camera available."
 msgstr "Thiết bị này không có camera khả dụng"
 
 #: src/components/asset-viewer.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "Tệp này trống"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is not a TrueType or OpenType font."
+msgstr "Tệp này không phải phông TrueType hay OpenType"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
@@ -4759,6 +4856,14 @@ msgstr "Tệp này không nằm trong các sản phẩm của phiên"
 #: src/components/asset-viewer.tsx
 msgid "This file is too large to display. Copy it to read it elsewhere."
 msgstr "Tệp này quá lớn để hiển thị. Hãy sao chép để đọc ở nơi khác"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is too large."
+msgstr "Tệp này quá lớn"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This font could not be read."
+msgstr "Không đọc được phông này"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -4787,6 +4892,14 @@ msgstr "Không thể tải hình ảnh này"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "Đây là bản ghi đi kèm, không phải máy chủ thật"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a font collection. Muqun needs a single font file."
+msgstr "Đây là một bộ sưu tập phông. Muqun cần một tệp phông duy nhất"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a web font. Muqun needs a .ttf or .otf file."
+msgstr "Đây là phông web. Muqun cần tệp .ttf hoặc .otf"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -5127,6 +5240,10 @@ msgstr "Dùng {0}"
 msgid "Use device passcode"
 msgstr "Dùng mật mã thiết bị"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Use system font"
+msgstr "Dùng phông hệ thống"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Dùng URL kho mã, rồi nhập nhánh và tệp giao diện bên dưới"
@@ -5142,6 +5259,10 @@ msgstr "Dùng thiết lập mặc định của giao diện"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "Dùng máy chủ này"
+
+#: src/components/settings-appearance.tsx
+msgid "Use your own font for the app and the terminal."
+msgstr "Dùng phông chữ của riêng bạn cho ứng dụng và terminal"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"

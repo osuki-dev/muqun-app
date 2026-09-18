@@ -191,6 +191,15 @@ msgstr "{count, plural, other {결과 #개}}"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
+#. placeholder {0}: installed.label
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, {0}"
+msgstr "{heading}, {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, system font"
+msgstr "{heading}, 시스템 글꼴"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB 표시되지 않음"
@@ -240,6 +249,11 @@ msgstr "{waiting, plural, other {알림 #개 더}}"
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
 
+#. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
+#: src/components/settings-font-sheet.tsx
+msgid "A .ttf or .otf up to {0} MB."
+msgstr "{0} MB 이하의 .ttf 또는 .otf"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A branch or tag this repository already has."
 msgstr "이 저장소에 이미 있는 브랜치나 태그"
@@ -247,6 +261,10 @@ msgstr "이 저장소에 이미 있는 브랜치나 태그"
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "기본 모델"
+
+#: src/components/settings-font-sheet.tsx
+msgid "A direct link to a .ttf or .otf file."
+msgstr ".ttf 또는 .otf 파일의 직접 링크"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -424,6 +442,10 @@ msgstr "카메라 허용"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "카메라를 허용하거나 주소를 입력하세요"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Already on"
+msgstr "사용 중"
 
 #. placeholder {0}: request.save.join(' · ')
 #: src/components/agent-permission-card.tsx
@@ -1355,6 +1377,15 @@ msgstr "삭제할 수 없습니다"
 msgid "Could not detach"
 msgstr "분리하지 못했습니다"
 
+#. placeholder {0}: problem.status
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download: {0}"
+msgstr "다운로드하지 못했습니다: {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download. Check the link and your connection."
+msgstr "다운로드하지 못했습니다. 링크와 연결을 확인하세요"
+
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "앱 잠금을 켜지 못했습니다"
@@ -1759,9 +1790,17 @@ msgstr "단축 명령 편집 마치기"
 msgid "Down arrow"
 msgstr "아래쪽 화살표"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Download"
+msgstr "다운로드"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "다운로드 후 미리 보기"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Downloading"
+msgstr "다운로드 중"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
@@ -1863,6 +1902,10 @@ msgstr "Escape 두 번"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "예상 비용"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Every screen in the app."
+msgstr "앱의 모든 화면"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1979,6 +2022,19 @@ msgstr "휴대폰 언어를 따르기"
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
 msgstr "휴대폰을 따름"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-font-sheet.tsx
+msgid "Font"
+msgstr "글꼴"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Font file address"
+msgstr "글꼴 파일 주소"
+
+#: src/components/settings-appearance.tsx
+msgid "Font, {fontValue}"
+msgstr "글꼴, {fontValue}"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2180,6 +2236,10 @@ msgstr "이미지 다운로드 출처"
 msgid "Import"
 msgstr "가져오기"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Import a file…"
+msgstr "파일에서 가져오기…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "파일 가져오기"
@@ -2223,6 +2283,10 @@ msgstr "설치됨"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "이미지 설치 중"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Interface"
+msgstr "인터페이스"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
@@ -2532,6 +2596,10 @@ msgctxt "git file status"
 msgid "Modified"
 msgstr "수정됨"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Monospace"
+msgstr "고정폭"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "추가 작업"
@@ -2573,6 +2641,10 @@ msgstr "Muqun이 본인 확인에 실패했습니다. 다시 시도하세요"
 #: src/components/settings-appearance.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun이 휴대폰에 설정된 언어를 따릅니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
+msgstr "Muqun에는 자체 글꼴이 없습니다. 추가하면 이 기기에 보관됩니다"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
@@ -2845,6 +2917,10 @@ msgstr "연결 안 됨"
 #: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "찾을 수 없음"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Not monospace — the terminal may look uneven"
+msgstr "고정폭이 아닙니다 — 터미널이 고르지 않게 보일 수 있습니다"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -3203,6 +3279,10 @@ msgstr "붙여넣기"
 #: src/components/theme-link-import.tsx
 msgid "Paste a public theme link or GitHub repository"
 msgstr "공개 테마 링크 또는 GitHub 저장소 URL을 붙여넣으세요"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Paste a URL…"
+msgstr "URL 붙여넣기…"
 
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
@@ -4430,6 +4510,10 @@ msgstr "기호"
 msgid "System"
 msgstr "시스템"
 
+#: src/components/settings-font-sheet.tsx
+msgid "System font"
+msgstr "시스템 글꼴"
+
 #: src/i18n/labels.ts
 msgid "Tab"
 msgstr "탭"
@@ -4603,6 +4687,10 @@ msgstr "시뮬레이터 연결이 끊겼습니다"
 msgid "The default agent. Executes tools."
 msgstr "기본 에이전트. 도구를 실행합니다"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The font file is missing. Add it again."
+msgstr "글꼴 파일이 없습니다. 다시 추가하세요"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "호스트가 워크트리를 만들었지만 위치를 알려주지 않았습니다"
@@ -4688,6 +4776,10 @@ msgstr "시뮬레이터가 제때 종료되지 않았습니다"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 터널은 게이트웨이의 포트 하나만 전달하고 다른 포트는 전달하지 않아, 여기서는 시뮬레이터와 브라우저에 닿을 수 없습니다. 로컬 네트워크나 Tailscale로 연결하세요"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The terminal, and code in a reply."
+msgstr "터미널과 답변 속 코드"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "이 기기에서 테마가 삭제됩니다"
@@ -4749,8 +4841,13 @@ msgid "This device has no camera available."
 msgstr "이 기기에는 사용할 수 있는 카메라가 없습니다"
 
 #: src/components/asset-viewer.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "이 파일은 비어 있습니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is not a TrueType or OpenType font."
+msgstr "이 파일은 TrueType이나 OpenType 글꼴이 아닙니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
@@ -4759,6 +4856,14 @@ msgstr "이 파일은 세션 산출물에 없습니다"
 #: src/components/asset-viewer.tsx
 msgid "This file is too large to display. Copy it to read it elsewhere."
 msgstr "이 파일은 너무 커서 표시할 수 없습니다. 복사해서 다른 곳에서 읽어 보세요"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is too large."
+msgstr "이 파일은 너무 큽니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This font could not be read."
+msgstr "이 글꼴을 읽을 수 없습니다"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -4787,6 +4892,14 @@ msgstr "이 이미지를 불러오지 못했습니다"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "이것은 번들된 기록이며 실제 서버가 아닙니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a font collection. Muqun needs a single font file."
+msgstr "글꼴 모음입니다. Muqun에는 하나의 글꼴 파일이 필요합니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a web font. Muqun needs a .ttf or .otf file."
+msgstr "웹 글꼴입니다. Muqun에는 .ttf 또는 .otf 파일이 필요합니다"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -5127,6 +5240,10 @@ msgstr "{0} 사용"
 msgid "Use device passcode"
 msgstr "기기 암호 사용"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Use system font"
+msgstr "시스템 글꼴 사용"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "저장소 URL을 사용하고 아래에 브랜치와 테마 파일을 입력하세요"
@@ -5142,6 +5259,10 @@ msgstr "테마 기본값 사용"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "이 서버 사용"
+
+#: src/components/settings-appearance.tsx
+msgid "Use your own font for the app and the terminal."
+msgstr "앱과 터미널에 원하는 글꼴을 사용하세요"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"

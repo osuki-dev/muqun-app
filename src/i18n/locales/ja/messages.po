@@ -191,6 +191,15 @@ msgstr "{count, plural, other {# 件の結果}}"
 msgid "{done} of {0} done"
 msgstr "{0} 件中 {done} 件完了"
 
+#. placeholder {0}: installed.label
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, {0}"
+msgstr "{heading}、{0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, system font"
+msgstr "{heading}、システムフォント"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB は非表示"
@@ -240,6 +249,11 @@ msgstr "{waiting, plural, other {ほか # 件の通知}}"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
+#. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
+#: src/components/settings-font-sheet.tsx
+msgid "A .ttf or .otf up to {0} MB."
+msgstr "{0} MB までの .ttf または .otf"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A branch or tag this repository already has."
 msgstr "このリポジトリにすでにあるブランチまたはタグ"
@@ -247,6 +261,10 @@ msgstr "このリポジトリにすでにあるブランチまたはタグ"
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "既定のモデル"
+
+#: src/components/settings-font-sheet.tsx
+msgid "A direct link to a .ttf or .otf file."
+msgstr ".ttf または .otf ファイルへの直接リンク"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -424,6 +442,10 @@ msgstr "カメラを許可"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "カメラを許可するか、アドレスを入力してください"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Already on"
+msgstr "使用中"
 
 #. placeholder {0}: request.save.join(' · ')
 #: src/components/agent-permission-card.tsx
@@ -1355,6 +1377,15 @@ msgstr "削除できませんでした"
 msgid "Could not detach"
 msgstr "バックグラウンドに移せませんでした"
 
+#. placeholder {0}: problem.status
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download: {0}"
+msgstr "ダウンロードできませんでした: {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download. Check the link and your connection."
+msgstr "ダウンロードできませんでした。リンクと接続を確認してください"
+
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "アプリロックを有効にできませんでした"
@@ -1759,9 +1790,17 @@ msgstr "ショートカットの編集を終了"
 msgid "Down arrow"
 msgstr "下矢印"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Download"
+msgstr "ダウンロード"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "ダウンロードしてプレビュー"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Downloading"
+msgstr "ダウンロード中"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
@@ -1863,6 +1902,10 @@ msgstr "Escape を2回"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "推定コスト"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Every screen in the app."
+msgstr "アプリのすべての画面"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1979,6 +2022,19 @@ msgstr "端末の言語に従う"
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
 msgstr "端末に従う"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-font-sheet.tsx
+msgid "Font"
+msgstr "フォント"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Font file address"
+msgstr "フォントファイルのアドレス"
+
+#: src/components/settings-appearance.tsx
+msgid "Font, {fontValue}"
+msgstr "フォント、{fontValue}"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2180,6 +2236,10 @@ msgstr "画像のダウンロード元"
 msgid "Import"
 msgstr "インポート"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Import a file…"
+msgstr "ファイルからインポート…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "ファイルをインポート"
@@ -2223,6 +2283,10 @@ msgstr "インストール済み"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "画像をインストールしています"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Interface"
+msgstr "インターフェース"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
@@ -2532,6 +2596,10 @@ msgctxt "git file status"
 msgid "Modified"
 msgstr "変更"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Monospace"
+msgstr "等幅"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "その他の操作"
@@ -2573,6 +2641,10 @@ msgstr "牧群が本人確認できませんでした。もう一度お試しく
 #: src/components/settings-appearance.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "牧群（ぼくぐん）は端末の言語設定に従います"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
+msgstr "Muqun 自体はフォントを持ちません。追加するとこのデバイスに保存されます"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
@@ -2845,6 +2917,10 @@ msgstr "未接続"
 #: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "見つかりません"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Not monospace — the terminal may look uneven"
+msgstr "等幅ではありません — ターミナルの表示が乱れることがあります"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -3203,6 +3279,10 @@ msgstr "ペースト"
 #: src/components/theme-link-import.tsx
 msgid "Paste a public theme link or GitHub repository"
 msgstr "公開テーマのリンクまたは GitHub リポジトリの URL を貼り付けてください"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Paste a URL…"
+msgstr "URL を貼り付け…"
 
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
@@ -4430,6 +4510,10 @@ msgstr "記号"
 msgid "System"
 msgstr "システム設定"
 
+#: src/components/settings-font-sheet.tsx
+msgid "System font"
+msgstr "システムフォント"
+
 #: src/i18n/labels.ts
 msgid "Tab"
 msgstr "タブ"
@@ -4603,6 +4687,10 @@ msgstr "シミュレータとの接続が切れました"
 msgid "The default agent. Executes tools."
 msgstr "デフォルトのエージェント。ツールを実行します"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The font file is missing. Add it again."
+msgstr "フォントファイルが見つかりません。もう一度追加してください"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "ホストはワークツリーを作成しましたが、場所を伝えませんでした"
@@ -4688,6 +4776,10 @@ msgstr "シミュレータが時間内にシャットダウンしませんでし
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The terminal, and code in a reply."
+msgstr "ターミナルと返信内のコード"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "このデバイスからテーマが削除されます"
@@ -4749,8 +4841,13 @@ msgid "This device has no camera available."
 msgstr "このデバイスには使用できるカメラがありません"
 
 #: src/components/asset-viewer.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "このファイルは空です"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is not a TrueType or OpenType font."
+msgstr "このファイルは TrueType または OpenType フォントではありません"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
@@ -4759,6 +4856,14 @@ msgstr "このファイルはセッションの成果物に含まれていませ
 #: src/components/asset-viewer.tsx
 msgid "This file is too large to display. Copy it to read it elsewhere."
 msgstr "このファイルは大きすぎて表示できません。コピーして別の場所で読んでください"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is too large."
+msgstr "このファイルは大きすぎます"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This font could not be read."
+msgstr "このフォントを読み込めませんでした"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -4787,6 +4892,14 @@ msgstr "この画像を読み込めませんでした"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "これは同梱された記録で、本物のサーバーではありません"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a font collection. Muqun needs a single font file."
+msgstr "これはフォントコレクションです。Muqun には単一のフォントファイルが必要です"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a web font. Muqun needs a .ttf or .otf file."
+msgstr "これはウェブフォントです。Muqun には .ttf または .otf ファイルが必要です"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -5127,6 +5240,10 @@ msgstr "{0} を使用"
 msgid "Use device passcode"
 msgstr "デバイスのパスコードを使用"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Use system font"
+msgstr "システムフォントを使う"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "リポジトリの URL を使い、そのブランチとテーマファイルを下に入力してください"
@@ -5142,6 +5259,10 @@ msgstr "テーマの初期設定を使用"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "このサーバーを使用"
+
+#: src/components/settings-appearance.tsx
+msgid "Use your own font for the app and the terminal."
+msgstr "アプリとターミナルに自分のフォントを使えます"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"

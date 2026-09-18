@@ -191,6 +191,15 @@ msgstr "{count, plural, other {# รายการ}}"
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
 
+#. placeholder {0}: installed.label
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, {0}"
+msgstr "{heading}, {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, system font"
+msgstr "{heading}, ฟอนต์ระบบ"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "ไม่ได้แสดง {hiddenKb} KB"
@@ -240,6 +249,11 @@ msgstr "{waiting, plural, other {การแจ้งเตือนอีก #
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
 
+#. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
+#: src/components/settings-font-sheet.tsx
+msgid "A .ttf or .otf up to {0} MB."
+msgstr "ไฟล์ .ttf หรือ .otf ไม่เกิน {0} MB"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A branch or tag this repository already has."
 msgstr "สาขาหรือแท็กที่ที่เก็บโค้ดนี้มีอยู่แล้ว"
@@ -247,6 +261,10 @@ msgstr "สาขาหรือแท็กที่ที่เก็บโค
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "โมเดลเริ่มต้น"
+
+#: src/components/settings-font-sheet.tsx
+msgid "A direct link to a .ttf or .otf file."
+msgstr "ลิงก์ตรงไปยังไฟล์ .ttf หรือ .otf"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -424,6 +442,10 @@ msgstr "อนุญาตกล้อง"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "อนุญาตให้ใช้กล้อง หรือป้อนที่อยู่แทน"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Already on"
+msgstr "ใช้อยู่แล้ว"
 
 #. placeholder {0}: request.save.join(' · ')
 #: src/components/agent-permission-card.tsx
@@ -1355,6 +1377,15 @@ msgstr "ลบไม่ได้"
 msgid "Could not detach"
 msgstr "ย้ายไปเบื้องหลังไม่สำเร็จ"
 
+#. placeholder {0}: problem.status
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download: {0}"
+msgstr "ดาวน์โหลดไม่สำเร็จ: {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download. Check the link and your connection."
+msgstr "ดาวน์โหลดไม่สำเร็จ ตรวจสอบลิงก์และการเชื่อมต่อของคุณ"
+
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "เปิดใช้การล็อกแอปไม่ได้"
@@ -1759,9 +1790,17 @@ msgstr "แก้ไขปุ่มลัดเสร็จแล้ว"
 msgid "Down arrow"
 msgstr "ลูกศรลง"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Download"
+msgstr "ดาวน์โหลด"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "ดาวน์โหลดและดูตัวอย่าง"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Downloading"
+msgstr "กำลังดาวน์โหลด"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
@@ -1863,6 +1902,10 @@ msgstr "Escape สองครั้ง"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "ค่าใช้จ่ายโดยประมาณ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Every screen in the app."
+msgstr "ทุกหน้าจอในแอป"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1979,6 +2022,19 @@ msgstr "ตามภาษาของเครื่อง"
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
 msgstr "ตามเครื่อง"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-font-sheet.tsx
+msgid "Font"
+msgstr "ฟอนต์"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Font file address"
+msgstr "ที่อยู่ไฟล์ฟอนต์"
+
+#: src/components/settings-appearance.tsx
+msgid "Font, {fontValue}"
+msgstr "ฟอนต์, {fontValue}"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2180,6 +2236,10 @@ msgstr "ดาวน์โหลดรูปภาพจาก"
 msgid "Import"
 msgstr "นำเข้า"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Import a file…"
+msgstr "นำเข้าจากไฟล์…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "นำเข้าไฟล์"
@@ -2223,6 +2283,10 @@ msgstr "ติดตั้งแล้ว"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "กำลังติดตั้งรูปภาพ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Interface"
+msgstr "ส่วนติดต่อผู้ใช้"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
@@ -2532,6 +2596,10 @@ msgctxt "git file status"
 msgid "Modified"
 msgstr "แก้ไขแล้ว"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Monospace"
+msgstr "ความกว้างคงที่"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "การทำงานเพิ่มเติม"
@@ -2573,6 +2641,10 @@ msgstr "Muqun ยืนยันตัวตนของคุณไม่ได
 #: src/components/settings-appearance.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun ใช้ภาษาตามการตั้งค่าโทรศัพท์ของคุณ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
+msgstr "Muqun ไม่มีฟอนต์ของตัวเอง ฟอนต์ที่คุณเพิ่มจะถูกเก็บไว้ในเครื่องนี้"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
@@ -2845,6 +2917,10 @@ msgstr "ไม่ได้เชื่อมต่อ"
 #: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "ไม่พบ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Not monospace — the terminal may look uneven"
+msgstr "ไม่ใช่ฟอนต์ความกว้างคงที่ — เทอร์มินัลอาจดูไม่เรียบร้อย"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -3203,6 +3279,10 @@ msgstr "วาง"
 #: src/components/theme-link-import.tsx
 msgid "Paste a public theme link or GitHub repository"
 msgstr "วางลิงก์ธีมสาธารณะหรือที่เก็บโค้ด GitHub"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Paste a URL…"
+msgstr "วางลิงก์…"
 
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
@@ -4430,6 +4510,10 @@ msgstr "สัญลักษณ์"
 msgid "System"
 msgstr "ระบบ"
 
+#: src/components/settings-font-sheet.tsx
+msgid "System font"
+msgstr "ฟอนต์ระบบ"
+
 #: src/i18n/labels.ts
 msgid "Tab"
 msgstr "Tab"
@@ -4603,6 +4687,10 @@ msgstr "การเชื่อมต่อกับเครื่องจำ
 msgid "The default agent. Executes tools."
 msgstr "เอเจนต์เริ่มต้น ทำงานตามเครื่องมือ"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The font file is missing. Add it again."
+msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "โฮสต์สร้างเวิร์กทรีแล้วแต่ไม่ได้บอกว่าอยู่ที่ไหน"
@@ -4688,6 +4776,10 @@ msgstr "เครื่องจำลองไม่ปิดภายในเ
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The terminal, and code in a reply."
+msgstr "เทอร์มินัล และโค้ดในคำตอบ"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "ธีมจะถูกลบจากอุปกรณ์นี้"
@@ -4749,8 +4841,13 @@ msgid "This device has no camera available."
 msgstr "อุปกรณ์นี้ไม่มีกล้องที่พร้อมใช้งาน"
 
 #: src/components/asset-viewer.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "ไฟล์นี้ว่างเปล่า"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is not a TrueType or OpenType font."
+msgstr "ไฟล์นี้ไม่ใช่ฟอนต์ TrueType หรือ OpenType"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
@@ -4759,6 +4856,14 @@ msgstr "ไฟล์นี้ไม่อยู่ในไฟล์ผลงา
 #: src/components/asset-viewer.tsx
 msgid "This file is too large to display. Copy it to read it elsewhere."
 msgstr "ไฟล์นี้ใหญ่เกินกว่าจะแสดงได้ คัดลอกไปอ่านที่อื่น"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is too large."
+msgstr "ไฟล์นี้ใหญ่เกินไป"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This font could not be read."
+msgstr "อ่านฟอนต์นี้ไม่ได้"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -4787,6 +4892,14 @@ msgstr "โหลดรูปภาพนี้ไม่ได้"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "นี่คือบันทึกการสนทนาที่มีมาในแอป ไม่ใช่เซิร์ฟเวอร์จริง"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a font collection. Muqun needs a single font file."
+msgstr "นี่คือชุดฟอนต์ Muqun ต้องการไฟล์ฟอนต์เดียว"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a web font. Muqun needs a .ttf or .otf file."
+msgstr "นี่คือเว็บฟอนต์ Muqun ต้องการไฟล์ .ttf หรือ .otf"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -5127,6 +5240,10 @@ msgstr "ใช้ {0}"
 msgid "Use device passcode"
 msgstr "ใช้รหัสผ่านอุปกรณ์"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Use system font"
+msgstr "ใช้ฟอนต์ระบบ"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "ใช้ URL ที่เก็บโค้ด แล้วป้อนสาขาและไฟล์ธีมด้านล่าง"
@@ -5142,6 +5259,10 @@ msgstr "ใช้ค่าเริ่มต้นของธีม"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "ใช้เซิร์ฟเวอร์นี้"
+
+#: src/components/settings-appearance.tsx
+msgid "Use your own font for the app and the terminal."
+msgstr "ใช้ฟอนต์ของคุณเองในแอปและเทอร์มินัล"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"

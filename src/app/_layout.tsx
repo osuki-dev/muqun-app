@@ -386,6 +386,16 @@ function RootContent() {
                 'expandable'
               )}
             />
+            {/* Two groups of four rows, with a URL field that opens inside one
+                of them and a keyboard over it. Expandable, so the field has
+                somewhere to come up to. */}
+            <Stack.Screen
+              name="settings-font"
+              options={sheetPresentationOptions(
+                sheetRoutePresentations['settings-font'],
+                'expandable'
+              )}
+            />
             {/*
               The one route that is a whole screen wearing a theme rather than a
               panel over one. See `sheetRoutePresentations` for why it stays

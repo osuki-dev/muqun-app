@@ -191,6 +191,15 @@ msgstr "{count, plural, other {# 個結果}}"
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
 
+#. placeholder {0}: installed.label
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, {0}"
+msgstr "{heading}，{0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "{heading}, system font"
+msgstr "{heading}，系統字型"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "未顯示 {hiddenKb} KB"
@@ -240,6 +249,11 @@ msgstr "{waiting, plural, other {還有 # 則通知}}"
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
 
+#. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
+#: src/components/settings-font-sheet.tsx
+msgid "A .ttf or .otf up to {0} MB."
+msgstr "最大 {0} MB 的 .ttf 或 .otf"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A branch or tag this repository already has."
 msgstr "此儲存庫已有的分支或標籤"
@@ -247,6 +261,10 @@ msgstr "此儲存庫已有的分支或標籤"
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "預設模型"
+
+#: src/components/settings-font-sheet.tsx
+msgid "A direct link to a .ttf or .otf file."
+msgstr "指向 .ttf 或 .otf 檔案的直接連結"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -424,6 +442,10 @@ msgstr "允許相機"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "允許使用相機，或改為輸入位址"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Already on"
+msgstr "已在使用"
 
 #. placeholder {0}: request.save.join(' · ')
 #: src/components/agent-permission-card.tsx
@@ -1355,6 +1377,15 @@ msgstr "無法刪除"
 msgid "Could not detach"
 msgstr "無法轉入背景"
 
+#. placeholder {0}: problem.status
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download: {0}"
+msgstr "無法下載：{0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download. Check the link and your connection."
+msgstr "無法下載。請檢查連結和網路連線"
+
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "無法啟用 App 鎖定"
@@ -1759,9 +1790,17 @@ msgstr "結束編輯快捷指令"
 msgid "Down arrow"
 msgstr "向下鍵"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Download"
+msgstr "下載"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "下載並預覽"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Downloading"
+msgstr "正在下載"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
@@ -1863,6 +1902,10 @@ msgstr "按兩次 Escape"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "預估費用"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Every screen in the app."
+msgstr "App 的每一個畫面"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1979,6 +2022,19 @@ msgstr "跟隨手機的語言"
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
 msgstr "跟隨手機"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-font-sheet.tsx
+msgid "Font"
+msgstr "字型"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Font file address"
+msgstr "字型檔案位址"
+
+#: src/components/settings-appearance.tsx
+msgid "Font, {fontValue}"
+msgstr "字型，{fontValue}"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2180,6 +2236,10 @@ msgstr "圖片下載來源"
 msgid "Import"
 msgstr "匯入"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Import a file…"
+msgstr "從檔案匯入…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "匯入檔案"
@@ -2223,6 +2283,10 @@ msgstr "已安裝"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "正在安裝圖片"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Interface"
+msgstr "介面"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
@@ -2532,6 +2596,10 @@ msgctxt "git file status"
 msgid "Modified"
 msgstr "修改"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Monospace"
+msgstr "等寬"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "更多操作"
@@ -2573,6 +2641,10 @@ msgstr "牧群無法驗證你的身分。請再試一次"
 #: src/components/settings-appearance.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "牧群會跟隨手機設定的語言"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
+msgstr "Muqun 自己不提供字型。加入後會保存在本機"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
@@ -2845,6 +2917,10 @@ msgstr "未連線"
 #: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "找不到"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Not monospace — the terminal may look uneven"
+msgstr "不是等寬字型 — 終端機可能顯示不齊"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -3203,6 +3279,10 @@ msgstr "貼上"
 #: src/components/theme-link-import.tsx
 msgid "Paste a public theme link or GitHub repository"
 msgstr "貼上公開的主題連結或 GitHub 儲存庫網址"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Paste a URL…"
+msgstr "貼上連結…"
 
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
@@ -4430,6 +4510,10 @@ msgstr "符號"
 msgid "System"
 msgstr "系統"
 
+#: src/components/settings-font-sheet.tsx
+msgid "System font"
+msgstr "系統字型"
+
 #: src/i18n/labels.ts
 msgid "Tab"
 msgstr "Tab 鍵"
@@ -4603,6 +4687,10 @@ msgstr "與模擬器的連線中斷了"
 msgid "The default agent. Executes tools."
 msgstr "預設智慧體，執行工具"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The font file is missing. Add it again."
+msgstr "找不到字型檔案。請重新加入"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "主機建立了工作樹，卻沒有說它在哪裡"
@@ -4688,6 +4776,10 @@ msgstr "模擬器未在時間內關閉"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 通道只帶 Gateway 這一個連接埠，不含其他，所以從這裡碰不到模擬器和瀏覽器。改用區域網路或 Tailscale 連線"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The terminal, and code in a reply."
+msgstr "終端機，以及回覆裡的程式碼"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "此主題將從目前裝置移除"
@@ -4749,8 +4841,13 @@ msgid "This device has no camera available."
 msgstr "這台裝置沒有可用的相機"
 
 #: src/components/asset-viewer.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "這個檔案是空的"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is not a TrueType or OpenType font."
+msgstr "這個檔案不是 TrueType 或 OpenType 字型"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
@@ -4759,6 +4856,14 @@ msgstr "這個檔案不在工作階段的產出裡"
 #: src/components/asset-viewer.tsx
 msgid "This file is too large to display. Copy it to read it elsewhere."
 msgstr "這個檔案太大，無法顯示。請複製後在其他地方閱讀"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is too large."
+msgstr "這個檔案太大了"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This font could not be read."
+msgstr "無法讀取這個字型"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -4787,6 +4892,14 @@ msgstr "這張圖片載入失敗"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "這是內建的紀錄，不是真正的伺服器"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a font collection. Muqun needs a single font file."
+msgstr "這是一個字型集合。Muqun 需要單一字型檔案"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a web font. Muqun needs a .ttf or .otf file."
+msgstr "這是一個網頁字型。Muqun 需要 .ttf 或 .otf 檔案"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -5127,6 +5240,10 @@ msgstr "使用 {0}"
 msgid "Use device passcode"
 msgstr "使用裝置密碼"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Use system font"
+msgstr "使用系統字型"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "請使用儲存庫網址，並在下方填寫分支和主題檔案"
@@ -5142,6 +5259,10 @@ msgstr "使用主題預設值"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "使用這台伺服器"
+
+#: src/components/settings-appearance.tsx
+msgid "Use your own font for the app and the terminal."
+msgstr "在 App 和終端機裡使用你自己的字型"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"
