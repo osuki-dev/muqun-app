@@ -7,8 +7,8 @@ import {
   useImage,
   Image as SkiaImage,
 } from '@shopify/react-native-skia';
-import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -18,6 +18,7 @@ import Animated, {
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { heroFeatherGeometry } from '@/lib/hero-feather';
+import { publishLaunchHeroRect } from '@/lib/launch-hero-rect';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { homeHeroMaxHeight, THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveHomeHero } from '@/theme/home-hero';
@@ -141,6 +142,12 @@ function HomeHeroImage({
 
   const onError = useCallback(() => setFailed(source ?? null), [source]);
   const image = useImage(source, onError);
+  // The band in window coordinates, for the launch opening to land in. The
+  // layout event carries the box in the scroll content's coordinates, which is
+  // not where the overlay draws -- it sits above the router with the whole
+  // window to itself -- so the position has to be measured against the window
+  // rather than derived from a header height the overlay cannot see.
+  const view = useRef<View | null>(null);
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width: measuredWidth, height: measuredHeight } = event.nativeEvent.layout;
     setBox((previous) =>
@@ -148,6 +155,14 @@ function HomeHeroImage({
         ? previous
         : { width: measuredWidth, height: measuredHeight }
     );
+    view.current?.measureInWindow((x, y, measuredInWindowWidth, measuredInWindowHeight) => {
+      publishLaunchHeroRect({
+        x,
+        y,
+        width: measuredInWindowWidth,
+        height: measuredInWindowHeight,
+      });
+    });
   }, []);
 
   const geometry = useMemo(() => {
@@ -174,6 +189,7 @@ function HomeHeroImage({
       entering={fadeIn('medium')}
       layout={listLayout('medium')}
       onLayout={onLayout}
+      ref={view}
       style={[styles.hero, { height: band }]}>
       {/*
         The scroll fade is a node inside the animated one, never the same node.
