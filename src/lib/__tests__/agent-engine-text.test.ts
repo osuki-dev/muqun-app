@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isDeclinedByUser, permissionSubject, readApprovalBody } from '../agent-engine-text';
+import {
+  engineFailureAction,
+  isDeclinedByUser,
+  isUnsupportedModelFailure,
+  permissionSubject,
+  readApprovalBody,
+} from '../agent-engine-text';
 
 describe('permissionSubject', () => {
   test('takes the rule key off the front of the prompt', () => {
@@ -81,5 +87,30 @@ describe('readApprovalBody', () => {
 
   test('a body with no key at all is all subject', () => {
     expect(readApprovalBody('  /etc/hosts  ')).toEqual({ action: '', subject: '/etc/hosts' });
+  });
+});
+
+describe('a failure the picker can answer', () => {
+  test('the sentence a host with no configured default produces', () => {
+    // Verbatim from the live 2.0.1 service: `/api/model/default` answered
+    // `null`, OpenCode ran the first entry of its own list, and refused it.
+    expect(isUnsupportedModelFailure('Model jev-latest is not supported')).toBe(true);
+    expect(engineFailureAction('Model jev-latest is not supported')).toBe('choose-model');
+  });
+
+  test('however the engine words it', () => {
+    expect(engineFailureAction('model opencode/jev-latest not supported')).toBe('choose-model');
+    expect(engineFailureAction('AI_APICallError: The model is not supported.')).toBe(
+      'choose-model'
+    );
+  });
+
+  test('a failure about something else is left alone', () => {
+    // The plate offers the picker only where the picker is the fix; anything
+    // else keeps the engine's own sentence and no action at all.
+    expect(engineFailureAction('ENOENT: no such file or directory')).toBeNull();
+    expect(engineFailureAction('This tool is not supported on Windows')).toBeNull();
+    expect(engineFailureAction('rate limit exceeded')).toBeNull();
+    expect(engineFailureAction('')).toBeNull();
   });
 });

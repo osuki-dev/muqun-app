@@ -106,12 +106,14 @@ import {
   type ModelRef,
   type PermissionDecision,
   type AgentInfo,
+  type CatalogDefaults,
   type ModelInfo,
   type SkillInfo,
   type AgentProject,
 } from '@/lib/agent-session';
 import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
 import { resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
+import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
 import { classifyTool, capText } from '@/lib/agent-tool-output';
@@ -203,6 +205,9 @@ const SCREEN_NOTICE_DWELL_MS = 4200;
  * little higher than the first message without ever reaching the pills.
  */
 const SCREEN_NOTICE_HEADER_GAP = 14;
+
+/** A catalog that has not answered yet, as one object rather than a new `{}`. */
+const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
 
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
@@ -332,6 +337,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const wasWaitingRef = useRef(false);
 
   const [sessions, setSessions] = useState<AgentSessionInfo[]>([]);
+  /**
+   * The same list, for the callbacks that only read it.
+   *
+   * What a new session should run is partly a question about the sessions this
+   * host already has (`resolveNewSessionDefaults`), and that question is asked
+   * when the reader presses something -- never during a render. A ref answers
+   * it without making every session refresh rebuild the screen's handlers.
+   */
+  const sessionsRef = useRef<readonly AgentSessionInfo[]>(sessions);
+  useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
   /**
    * Every model the host publishes, kept for the two things a `ModelRef`
@@ -340,6 +357,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * context window, for a session the gateway stated no `limit` for.
    */
   const [catalogModels, setCatalogModels] = useState<readonly ModelInfo[]>([]);
+  /**
+   * What the host says it prefers, kept rather than read once and dropped.
+   *
+   * It was applied to the chips and then forgotten, so the create path could
+   * not use it -- and a host with a real default configured deserves to have
+   * it sent rather than guessed at.
+   */
+  const [catalogDefaults, setCatalogDefaults] = useState<CatalogDefaults>(NO_CATALOG_DEFAULTS);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
@@ -496,11 +521,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    *
    * "Chose" used to mean "chose since this app was launched", which made a
    * relaunch forget the model the reader had been working on all week. It now
-   * reaches the store as well: this run's pick, then what this workspace
-   * remembers, then what this server remembers, then nothing. The catalog on
-   * screen is what a remembered value is checked against, so a model the host
-   * no longer lists is dropped here rather than refused there. See
-   * `lib/agent-session-defaults.ts`.
+   * reaches the store, the sessions already on this host, the catalog's
+   * defaults and -- last -- the catalog's first free model, because omitting
+   * `model` is only safe on a host that has a default configured. See
+   * `lib/agent-session-defaults.ts` for the whole ladder and why its bottom
+   * rung is not "send nothing".
+   *
+   * `sessionsRef` rather than `sessions`: the list is refreshed on every turn
+   * boundary, and this callback is a dependency of most of the screen's
+   * handlers. Reading it through a ref keeps a session list arriving from
+   * rebuilding them all.
    */
   const newSessionParams = useCallback(
     (directory?: string) => ({
@@ -510,12 +540,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
         },
         ...loadRememberedAgentDefaults(sessionId, directory),
+        sessions: sessionsRef.current,
+        ...(directory ? { directory } : {}),
+        catalogDefaults,
         models: catalogModels,
         agents: availableAgents,
       }),
       ...(directory ? { directory } : {}),
     }),
-    [selectedAgent, selectedModel, sessionId, catalogModels, availableAgents]
+    [selectedAgent, selectedModel, sessionId, catalogDefaults, catalogModels, availableAgents]
   );
   const [showReasoning, setShowReasoning] = useState<boolean>(true);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
@@ -568,6 +601,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
         setCommands(catalog?.commands ?? []);
         setCatalogModels(catalog?.models ?? []);
+        setCatalogDefaults(catalog?.defaults ?? NO_CATALOG_DEFAULTS);
         // The host's own defaults, shown as the current selection. What was
         // here before was a guess -- the first model whose id contained "free"
         // or "spark" -- and it was then *sent* on every session create, so a
@@ -605,15 +639,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     if (activeAsid) return;
     if (pickedModelRef.current && pickedAgentRef.current) return;
-    const remembered = resolveNewSessionDefaults({
+    const resolved = resolveNewSessionDefaults({
       picked: {},
       ...loadRememberedAgentDefaults(sessionId, activeDirectory),
+      sessions: sessionsRef.current,
+      ...(activeDirectory ? { directory: activeDirectory } : {}),
+      catalogDefaults,
       models: catalogModels,
       agents: availableAgents,
     });
-    if (!pickedModelRef.current && remembered.model) applySelectedModel(remembered.model);
-    if (!pickedAgentRef.current && remembered.agent) setSelectedAgent(remembered.agent);
-  }, [sessionId, activeAsid, activeDirectory, catalogModels, availableAgents, applySelectedModel]);
+    if (!pickedModelRef.current && resolved.model) applySelectedModel(resolved.model);
+    if (!pickedAgentRef.current && resolved.agent) setSelectedAgent(resolved.agent);
+  }, [
+    sessionId,
+    activeAsid,
+    activeDirectory,
+    catalogDefaults,
+    catalogModels,
+    availableAgents,
+    sessions,
+    applySelectedModel,
+  ]);
 
   const initialCheckDoneRef = useRef(Boolean(initialAsid));
 
@@ -2510,10 +2556,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const statusNotice = useMemo(() => {
     const status = sessionInfo?.status;
     if (status === 'failed') {
+      const detail = sessionInfo?.error?.message ?? '';
       return {
         tone: theme.colors.danger,
         label: t`The turn failed`,
-        detail: sessionInfo?.error?.message ?? '',
+        detail,
+        /**
+         * A failure the picker can answer says so.
+         *
+         * "Model jev-latest is not supported" is the host having no configured
+         * default, so OpenCode ran the first entry of its own list and then
+         * refused it. The reader did not choose that model and cannot tell
+         * from the sentence that choosing one is the whole fix -- so the plate
+         * offers the picker rather than leaving them to find it.
+         */
+        action: engineFailureAction(detail),
       };
     }
     if (status === 'interrupted') {
@@ -2651,6 +2708,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   {statusNotice.detail}
                 </Text>
               ) : null}
+              {statusNotice.action === 'choose-model' ? (
+                <Animated.View entering={riseIn()} style={styles.statusNoticeAction}>
+                  <PressableScale
+                    testID="agent-status-notice-choose-model"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Choose a model`}
+                    onPress={openModelSheet}
+                    style={[
+                      styles.statusNoticeButton,
+                      {
+                        backgroundColor: withAlpha(theme.colors.danger, 0.14),
+                        borderColor: withAlpha(theme.colors.danger, 0.4),
+                      },
+                    ]}>
+                    <Text variant="caption" weight="semibold" color={theme.colors.danger}>
+                      <Trans>Choose a model</Trans>
+                    </Text>
+                  </PressableScale>
+                </Animated.View>
+              ) : null}
             </View>
           </PressableScale>
         ) : null}
@@ -2678,10 +2755,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     isRunning,
     statusNotice,
     loadSnapshot,
+    openModelSheet,
     handlePermissionDecision,
     handleFormSubmit,
     scrollFooterAboveKeyboard,
     surfaceBackground,
+    t,
     theme.colors,
   ]);
 
@@ -3678,6 +3757,16 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  statusNoticeAction: {
+    alignSelf: 'flex-start',
+    paddingTop: 6,
+  },
+  statusNoticeButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   footerContainer: {
     gap: 10,

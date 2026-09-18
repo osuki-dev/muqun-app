@@ -812,6 +812,7 @@ msgid "Checking…"
 msgstr "Vérification…"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "Choisir un modèle"
 
