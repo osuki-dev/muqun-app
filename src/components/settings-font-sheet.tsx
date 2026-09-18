@@ -359,10 +359,19 @@ function FontSlotGroup({
         caption={installed ? installed.source : description}
         captionKind={installed ? 'path' : 'text'}
         selected
-        accessibilityLabel={
-          installed ? t`${heading}, ${installed.label}` : t`${heading}, system font`
-        }
-        accessibilityValue={busy ? { text: t`Downloading` } : undefined}
+        // The slot is the label and whatever is in it is the value, which is
+        // the one arrangement that reads correctly in every state: "Interface,
+        // SerifInterface", "Monospace, System font", "Monospace, Downloading".
+        //
+        // The value is always present and never `undefined`, because Android
+        // does not clear an accessibility value that is set and then removed --
+        // the view keeps the last description it was given, so a row that had
+        // finished downloading went on announcing "Downloading" for the rest of
+        // the session. Found on device.
+        accessibilityLabel={heading}
+        accessibilityValue={{
+          text: busy ? t`Downloading` : installed ? installed.label : t`System font`,
+        }}
         testID={`font-current-${id}`}
         selectedTestID={`font-current-${id}-selected`}
         trailing={

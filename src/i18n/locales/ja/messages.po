@@ -191,15 +191,6 @@ msgstr "{count, plural, other {# 件の結果}}"
 msgid "{done} of {0} done"
 msgstr "{0} 件中 {done} 件完了"
 
-#. placeholder {0}: installed.label
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, {0}"
-msgstr "{heading}、{0}"
-
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, system font"
-msgstr "{heading}、システムフォント"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB は非表示"

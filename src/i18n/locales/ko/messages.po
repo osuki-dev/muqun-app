@@ -191,15 +191,6 @@ msgstr "{count, plural, other {결과 #개}}"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
-#. placeholder {0}: installed.label
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, {0}"
-msgstr "{heading}, {0}"
-
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, system font"
-msgstr "{heading}, 시스템 글꼴"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB 표시되지 않음"

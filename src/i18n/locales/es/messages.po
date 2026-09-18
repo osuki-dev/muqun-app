@@ -191,15 +191,6 @@ msgstr "{count, plural, one {# resultado} other {# resultados}}"
 msgid "{done} of {0} done"
 msgstr "{done} de {0} hechas"
 
-#. placeholder {0}: installed.label
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, {0}"
-msgstr "{heading}, {0}"
-
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, system font"
-msgstr "{heading}, fuente del sistema"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB no mostrados"

@@ -191,15 +191,6 @@ msgstr "{count, plural, one {# результат} few {# результата} 
 msgid "{done} of {0} done"
 msgstr "{done} из {0} готово"
 
-#. placeholder {0}: installed.label
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, {0}"
-msgstr "{heading}, {0}"
-
-#: src/components/settings-font-sheet.tsx
-msgid "{heading}, system font"
-msgstr "{heading}, системный шрифт"
-
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} КБ не показано"
