@@ -1079,6 +1079,7 @@ msgstr "{address} に接続中"
 
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
@@ -1095,10 +1096,6 @@ msgstr "SSH 経由で接続しています…"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "{address} に接続しています"
-
-#: src/components/agent-workbench.tsx
-msgid "Connecting to agent engine…"
-msgstr "エージェントエンジンに接続中…"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
