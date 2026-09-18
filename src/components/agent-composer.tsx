@@ -15,17 +15,14 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import {
   AlertCircle,
   ArrowLeft,
-  Bot,
   CheckSquare,
   ChevronDown,
   Cpu,
   GitCompare,
-  GitFork,
   Inbox,
   Layers,
   Loader,
   Paperclip,
-  Sparkles,
   Terminal,
   Square,
   Zap,
@@ -42,7 +39,6 @@ import Animated, {
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { StatusDot } from '@/components/status-dot';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
@@ -80,7 +76,6 @@ import {
   contextTokenTotal,
   formatModelName,
   hasRealSessionTitle,
-  isBusyStatus,
   listAgentFiles,
   inboxItemText,
   type AgentContextUsage,
@@ -136,13 +131,6 @@ const SessionChip = memo(function SessionChip({
   // the name a chip stands under.
   const title = titled ? session.title : t`Untitled session`;
 
-  const dotColor =
-    session.status === 'failed'
-      ? theme.colors.danger
-      : isBusyStatus(session.status)
-        ? theme.colors.warning
-        : theme.colors.success;
-
   return (
     <View
       style={styles.chipRow}
@@ -176,12 +164,6 @@ const SessionChip = memo(function SessionChip({
                 borderWidth: StyleSheet.hairlineWidth,
               },
         ]}>
-        <StatusDot size={6} filled pulse={isBusyStatus(session.status)} color={dotColor} />
-        {child ? (
-          <GitFork size={12} color={active ? theme.colors.onPrimary : theme.colors.primary} />
-        ) : (
-          <Bot size={13} color={active ? theme.colors.onPrimary : theme.colors.primary} />
-        )}
         <Text
           variant="caption"
           weight="bold"
@@ -949,7 +931,6 @@ export const AgentComposer = memo(function AgentComposer({
                     modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
                     { backgroundColor: surfaceBackground(chromeGlass) },
                   ]}>
-                  <Sparkles size={14} color={theme.colors.primary} />
                   <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
                     {selectedAgent ?? 'build'}
                   </Text>

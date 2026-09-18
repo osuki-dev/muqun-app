@@ -165,6 +165,15 @@ const SCREEN_NOTICE_HEADER_GAP = 14;
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
 
+/** The session with the newest activity, or null when there is none. */
+function latestSession(list: readonly AgentSessionInfo[]): AgentSessionInfo | null {
+  let best: AgentSessionInfo | null = null;
+  for (const item of list) {
+    if (!best || (item.updated_ms ?? 0) > (best.updated_ms ?? 0)) best = item;
+  }
+  return best;
+}
+
 function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
   const str = err instanceof Error ? err.message : String(err);
@@ -493,13 +502,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setIsOffline(false);
       if (list) {
         setSessions(list);
-        if (list.length > 0 && !activeAsid) {
-          setActiveAsid(list[0].asid);
-          setSessionInfo(list[0]);
-          if (list[0].model) {
-            applySelectedModel(list[0].model);
+        // Coming in from Home lands on the session the reader last worked in,
+        // not on whatever the engine listed first: newest activity wins.
+        const latest = latestSession(list);
+        if (latest && !activeAsid) {
+          setActiveAsid(latest.asid);
+          setSessionInfo(latest);
+          if (latest.model) {
+            applySelectedModel(latest.model);
           }
-          if (list[0].agent) setSelectedAgent(list[0].agent);
+          if (latest.agent) setSelectedAgent(latest.agent);
         } else if (list.length === 0) {
           setLoading(false);
         }
@@ -1457,9 +1469,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     async (directory: string, project?: AgentProject) => {
       setActiveDirectory(directory);
       try {
-        const created = await createAgentSession(sessionId, newSessionParams(directory));
-        setActiveAsid(created.asid);
-        setSessionInfo(created);
+        // A workspace that already has sessions opens on its most recent one;
+        // only an empty workspace gets a new session made for it.
+        const existing = await listAgentSessions(sessionId, { roots: true, directory });
+        const latest = existing ? latestSession(existing) : null;
+        const target = latest ?? (await createAgentSession(sessionId, newSessionParams(directory)));
+        setActiveAsid(target.asid);
+        setSessionInfo(target);
         setTimeline([]);
         setWindowStart(0);
         setPermissions([]);

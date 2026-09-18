@@ -1,63 +1,105 @@
 import { useEffect } from 'react';
-import { Sparkles } from 'lucide-react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withDelay,
   withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
 import { useAppActive } from '@/hooks/use-app-active';
-import { timing } from '@/lib/motion';
+import { STAGGER, timing } from '@/lib/motion';
+
+/** How many squares the snake has, and how far apart their beats are. */
+const SQUARES = 4;
+const BEAT_MS = STAGGER.card * 4;
 
 /**
- * OpenCode-style thinking mark: the spark breathes — a slow scale and opacity
- * pulse, for as long as the parent keeps it mounted.
+ * The thinking mark: a short snake of squares. While the model is thinking a
+ * pulse runs along the row, square by square, the way a cursor walks a line
+ * of a terminal; when it is done the row stands still at rest.
  *
- * The three lines that matter are the ones about stopping.
+ * Only `active` animates. A settled Thought block, a finished tool card and
+ * a footer that waits on the reader all mount this with `active={false}`, and
+ * a still mark is the signal that nothing is happening -- the old spark
+ * breathed forever, which read as work that never ended.
  *
- * An endless `withRepeat` is not stopped by unmounting the view it drives.
- * Every tool card in a transcript mounts one of these while it runs and drops
- * it when it finishes, and each dropped one went on animating a view whose
- * surface had gone -- `Reanimated: synchronouslyUpdateUIProps failed … Unable
- * to find SurfaceMountingManager`, 3,429 times in one dogfood session, one per
- * frame per abandoned mark. `cancelAnimation` on the way out is the whole fix.
- *
- * And, like every other repeating animation in this app, it is off under
- * reduce motion and while the app is in the background -- checked with the
- * hooks rather than with `ReduceMotion.System`, because a repeating animation
- * whose duration the system has collapsed to zero is a busy loop, not a
- * stilled one.
+ * An endless `withRepeat` is not stopped by unmounting the view it drives;
+ * every one is cancelled on the way out, and none runs under reduce motion
+ * or while the app is in the background.
  */
-export function ThinkingIndicator({ size = 13, color }: { size?: number; color: string }) {
+export function ThinkingIndicator({
+  size = 13,
+  color,
+  active = true,
+}: {
+  size?: number;
+  color: string;
+  active?: boolean;
+}) {
   const reduceMotion = useReducedMotion();
   const appActive = useAppActive();
-  const pulse = useSharedValue(0);
-
-  useEffect(() => {
-    if (reduceMotion || !appActive) {
-      cancelAnimation(pulse);
-      pulse.value = 1;
-      return;
-    }
-    pulse.value = withRepeat(
-      withSequence(withTiming(1, timing('long')), withTiming(0, timing('long'))),
-      -1
-    );
-    return () => cancelAnimation(pulse);
-  }, [appActive, pulse, reduceMotion]);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    opacity: 0.5 + 0.5 * pulse.value,
-    transform: [{ scale: 0.82 + 0.22 * pulse.value }],
-  }));
-
+  const run = active && appActive && !reduceMotion;
+  const square = Math.max(3, Math.round(size / 4));
+  const gap = Math.max(1, Math.round(square / 2));
   return (
-    <Animated.View style={pulseStyle}>
-      <Sparkles size={size} color={color} />
-    </Animated.View>
+    <View style={[styles.row, { gap }]} accessible={false}>
+      {Array.from({ length: SQUARES }, (_, index) => (
+        <Square key={index} index={index} size={square} color={color} run={run} />
+      ))}
+    </View>
   );
 }
+
+function Square({
+  index,
+  size,
+  color,
+  run,
+}: {
+  index: number;
+  size: number;
+  color: string;
+  run: boolean;
+}) {
+  const glow = useSharedValue(run ? 0 : 1);
+  useEffect(() => {
+    if (!run) {
+      cancelAnimation(glow);
+      glow.value = withTiming(0.55, timing('micro'));
+      return;
+    }
+    glow.value = withDelay(
+      index * BEAT_MS,
+      withRepeat(
+        withSequence(
+          withTiming(1, timing('short')),
+          withTiming(0.2, timing('medium')),
+          withTiming(0.2, timing('long'))
+        ),
+        -1
+      )
+    );
+    return () => cancelAnimation(glow);
+  }, [glow, index, run]);
+  const style = useAnimatedStyle(() => ({
+    opacity: 0.2 + 0.8 * glow.value,
+    transform: [{ scale: 0.8 + 0.2 * glow.value }],
+  }));
+  return (
+    <Animated.View
+      style={[
+        style,
+        { width: size, height: size, borderRadius: Math.max(1, size / 4), backgroundColor: color },
+      ]}
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+});

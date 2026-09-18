@@ -99,7 +99,7 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
         ]}>
         {/* The same breathing mark the assistant thinks with, so a block that
             is still counting reads as work rather than as a stalled pill. */}
-        <ThinkingIndicator size={12} color={theme.colors.primary} />
+        <ThinkingIndicator size={12} color={theme.colors.primary} active={pending} />
         {/* Keyed on the label so the settled duration fades in where the live
             count was, rather than replacing it between two frames. */}
         <Animated.View key={label} entering={fadeIn('micro')}>
