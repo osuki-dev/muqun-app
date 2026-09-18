@@ -16,6 +16,37 @@ import type { MarkdownStyle } from 'react-native-enriched-markdown';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
+ * The two faces a markdown block can be set in, where the reader supplied them.
+ *
+ * `null` or absent in either is the system font, which is what this file did
+ * before there was anything to choose: prose in whatever the platform draws
+ * text in, code in `'monospace'`.
+ *
+ * Aliases, never a face's own family name -- `MuqunUserInterface` and
+ * `MuqunUserMono` are what `expo-font` registered the reader's files under, so
+ * the style below never changes when the file behind one of them does. See
+ * `theme/user-font-file.ts`.
+ */
+export interface MarkdownFonts {
+  /** Prose: paragraphs, headings, lists, quotes, tables. */
+  prose?: string | null;
+  /** Code: an inline span, and a fenced block. */
+  mono?: string | null;
+}
+
+/**
+ * The monospace family a style's code is set in.
+ *
+ * `'monospace'` is the floor and is never given up. It is Android's generic
+ * family name and the system's own answer to "draw this as code"; on iOS the
+ * renderer resolves it to the system monospace face the same way. A reader with
+ * no font in the mono slot gets exactly what this file has always drawn.
+ */
+function codeFamily(fonts: MarkdownFonts | undefined): string {
+  return fonts?.mono ?? 'monospace';
+}
+
+/**
  * The code palette, from the app's palette.
  *
  * `react-native-enriched-markdown` highlights a fenced code block natively, via
@@ -69,8 +100,12 @@ function syntaxColors(colors: Colors): NonNullable<MarkdownStyle['codeBlock']>['
  * fragment legible. There is no thematic break: a rule drawn across a card is
  * the card's own edge again.
  */
-export function createCompactMarkdownStyle(colors: Colors, ink: string): MarkdownStyle {
-  const base = createMarkdownStyle(colors);
+export function createCompactMarkdownStyle(
+  colors: Colors,
+  ink: string,
+  fonts?: MarkdownFonts
+): MarkdownStyle {
+  const base = createMarkdownStyle(colors, fonts);
   const size = AGENT_TYPE.meta.size;
   const lineHeight = AGENT_TYPE.mono.lineHeight;
   const quiet = { color: ink, fontSize: size, lineHeight, marginBottom: 6 };
@@ -108,19 +143,33 @@ export function createCompactMarkdownStyle(colors: Colors, ink: string): Markdow
  * because `agent-reasoning-block.tsx` asks for the thought's ink rather than
  * for a colour.
  */
-export function createThoughtMarkdownStyle(colors: Colors): MarkdownStyle {
-  return createCompactMarkdownStyle(colors, colors.textMuted);
+export function createThoughtMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): MarkdownStyle {
+  return createCompactMarkdownStyle(colors, colors.textMuted, fonts);
 }
 
-export function createMarkdownStyle(colors: Colors): MarkdownStyle {
+export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): MarkdownStyle {
   const text = colors.text;
   const muted = colors.textMuted;
   const border = colors.border;
   const codeBackground = colors.surfaceRaised;
   const quoteBackground = colors.primarySubtle;
   const link = colors.info;
+  const mono = codeFamily(fonts);
+  /**
+   * Every prose block is built from this, which is why the family goes on it
+   * and nowhere else.
+   *
+   * Paragraphs, all six headings, lists, quotes and tables spread `base`, so
+   * one line here sets the face for the whole of the reading -- and the three
+   * inline styles (`strong`, `em`, `link`) are deliberately left without one:
+   * `enriched-markdown` inherits a span's family from the block it is in, and
+   * naming it again on each of them would be three more places for the app to
+   * disagree with itself. `undefined` where the reader has chosen nothing,
+   * which is the same object this produced before the slot existed.
+   */
   const base = {
     color: text,
+    ...(fonts?.prose ? { fontFamily: fonts.prose } : {}),
     fontSize: AGENT_TYPE.prose.size,
     lineHeight: AGENT_TYPE.prose.lineHeight,
     marginTop: 0,
@@ -175,7 +224,7 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
     // nouns, and a tinted box behind every one of them turned a paragraph
     // into confetti.
     code: {
-      fontFamily: 'monospace',
+      fontFamily: mono,
       fontSize: AGENT_TYPE.mono.size,
       color: text,
       backgroundColor: 'transparent',
@@ -183,7 +232,7 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
     },
     codeBlock: {
       color: text,
-      fontFamily: 'monospace',
+      fontFamily: mono,
       fontSize: AGENT_TYPE.mono.size,
       lineHeight: AGENT_TYPE.mono.lineHeight,
       backgroundColor: codeBackground,

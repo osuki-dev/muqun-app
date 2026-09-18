@@ -234,6 +234,11 @@ msgstr "{waiting, plural, one {# more notification} other {# more notifications}
 msgid "+{overflow} more"
 msgstr "+{overflow} more"
 
+#. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
+#: src/components/settings-font-sheet.tsx
+msgid "A .ttf or .otf up to {0} MB."
+msgstr "A .ttf or .otf up to {0} MB"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A branch or tag this repository already has."
 msgstr "A branch or tag this repository already has"
@@ -241,6 +246,10 @@ msgstr "A branch or tag this repository already has"
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "a default model"
+
+#: src/components/settings-font-sheet.tsx
+msgid "A direct link to a .ttf or .otf file."
+msgstr "A direct link to a .ttf or .otf file"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -418,6 +427,10 @@ msgstr "Allow camera"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "Allow the camera, or enter the address instead"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Already on"
+msgstr "Already on"
 
 #. placeholder {0}: request.save.join(' · ')
 #: src/components/agent-permission-card.tsx
@@ -1345,6 +1358,15 @@ msgstr "Could not delete"
 msgid "Could not detach"
 msgstr "Could not detach"
 
+#. placeholder {0}: problem.status
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download: {0}"
+msgstr "Could not download: {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download. Check the link and your connection."
+msgstr "Could not download. Check the link and your connection"
+
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
 msgstr "Could not enable App Lock"
@@ -1749,9 +1771,17 @@ msgstr "Done editing shortcuts"
 msgid "Down arrow"
 msgstr "Down arrow"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Download"
+msgstr "Download"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "Download and preview"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Downloading"
+msgstr "Downloading"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
@@ -1853,6 +1883,10 @@ msgstr "Escape twice"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "Estimated cost"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Every screen in the app."
+msgstr "Every screen in the app"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -1969,6 +2003,19 @@ msgstr "Follow the language your phone is set to"
 #: src/components/settings-language-sheet.tsx
 msgid "Following your phone"
 msgstr "Following your phone"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-font-sheet.tsx
+msgid "Font"
+msgstr "Font"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Font file address"
+msgstr "Font file address"
+
+#: src/components/settings-appearance.tsx
+msgid "Font, {fontValue}"
+msgstr "Font, {fontValue}"
 
 #: src/i18n/labels.ts
 msgid "Forward one word"
@@ -2170,6 +2217,10 @@ msgstr "Images download from"
 msgid "Import"
 msgstr "Import"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Import a file…"
+msgstr "Import a file…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "Import file"
@@ -2213,6 +2264,10 @@ msgstr "Installed"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Installing images"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Interface"
+msgstr "Interface"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
@@ -2522,6 +2577,10 @@ msgctxt "git file status"
 msgid "Modified"
 msgstr "Modified"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Monospace"
+msgstr "Monospace"
+
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "More actions"
@@ -2563,6 +2622,10 @@ msgstr "Muqun could not verify your identity. Try again"
 #: src/components/settings-appearance.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun follows the language your phone is set to"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
+msgstr "Muqun has no fonts of its own. Add one and it is kept on this device"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
@@ -2839,6 +2902,10 @@ msgstr "NOT CONNECTED"
 #: src/app/custom-theme.tsx
 msgid "Not found"
 msgstr "Not found"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Not monospace — the terminal may look uneven"
+msgstr "Not monospace — the terminal may look uneven"
 
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
@@ -3196,6 +3263,10 @@ msgstr "Paste"
 #: src/components/theme-link-import.tsx
 msgid "Paste a public theme link or GitHub repository"
 msgstr "Paste a public theme link or GitHub repository"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Paste a URL…"
+msgstr "Paste a URL…"
 
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
@@ -4424,6 +4495,10 @@ msgstr "Symbols"
 msgid "System"
 msgstr "System"
 
+#: src/components/settings-font-sheet.tsx
+msgid "System font"
+msgstr "System font"
+
 #: src/i18n/labels.ts
 msgid "Tab"
 msgstr "Tab"
@@ -4601,6 +4676,10 @@ msgstr "The connection to the simulator stopped"
 msgid "The default agent. Executes tools."
 msgstr "The default agent. Executes tools"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The font file is missing. Add it again."
+msgstr "The font file is missing. Add it again"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "The host made a worktree but did not say where"
@@ -4686,6 +4765,10 @@ msgstr "The simulator did not shut down in time"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The terminal, and code in a reply."
+msgstr "The terminal, and code in a reply"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "The theme will be removed from this device"
@@ -4747,8 +4830,13 @@ msgid "This device has no camera available."
 msgstr "This device has no camera available"
 
 #: src/components/asset-viewer.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "This file is empty"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is not a TrueType or OpenType font."
+msgstr "This file is not a TrueType or OpenType font"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
@@ -4757,6 +4845,14 @@ msgstr "This file is not among the session artifacts"
 #: src/components/asset-viewer.tsx
 msgid "This file is too large to display. Copy it to read it elsewhere."
 msgstr "This file is too large to display. Copy it to read it elsewhere"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is too large."
+msgstr "This file is too large"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This font could not be read."
+msgstr "This font could not be read"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -4785,6 +4881,14 @@ msgstr "This image could not be loaded"
 #: src/lib/demo-ssh.ts
 msgid "This is a bundled transcript, not a real server."
 msgstr "This is a bundled transcript, not a real server"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a font collection. Muqun needs a single font file."
+msgstr "This is a font collection. Muqun needs a single font file"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a web font. Muqun needs a .ttf or .otf file."
+msgstr "This is a web font. Muqun needs a .ttf or .otf file"
 
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
@@ -5125,6 +5229,10 @@ msgstr "Use {0}"
 msgid "Use device passcode"
 msgstr "Use device passcode"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Use system font"
+msgstr "Use system font"
+
 #: src/components/session-map.tsx
 msgid "Use the {name} session, {kind}"
 msgstr "Use the {name} session, {kind}"
@@ -5144,6 +5252,10 @@ msgstr "Use theme defaults"
 #: src/components/settings-servers.tsx
 msgid "Use this server"
 msgstr "Use this server"
+
+#: src/components/settings-appearance.tsx
+msgid "Use your own font for the app and the terminal."
+msgstr "Use your own font for the app and the terminal"
 
 #: src/components/ssh-host-form.tsx
 msgid "Username"

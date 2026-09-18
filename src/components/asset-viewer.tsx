@@ -12,6 +12,7 @@ import Animated from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { SheetFrame } from '@/components/sheet-ground';
@@ -198,7 +199,11 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const markdownStyle = useMemo(() => createMarkdownStyle(theme.colors), [theme.colors]);
+  const markdownFonts = useMarkdownFonts();
+  const markdownStyle = useMemo(
+    () => createMarkdownStyle(theme.colors, markdownFonts),
+    [theme.colors, markdownFonts]
+  );
   const readable = asset.previewable && (asset.kind === 'markdown' || asset.kind === 'text');
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

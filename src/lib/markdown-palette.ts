@@ -16,9 +16,23 @@ import type { MarkdownStyle } from 'react-native-enriched-markdown';
  * Passing this as the element's `key` remounts the native view when, and only
  * when, the palette changes, which is the one thing that repaints it. Themes
  * change by hand, so the remount costs nothing in practice.
+ *
+ * The two font families are in the key for the same reason the two colours
+ * are, and the symptom is worse. A reader who installs a font while a
+ * transcript is on screen would otherwise get a *split* rendering: every block
+ * already painted stays in the old face and every block that arrives after is
+ * in the new one, in one scroller, with no way back but killing the app. The
+ * family is also the thing a reader changes deliberately and then looks
+ * straight at, so a remount that lags it is the first thing they see.
+ *
+ * Both families, not just the prose one: a transcript is mostly prose with
+ * code in it, and swapping only the mono slot changes nothing the paragraph
+ * colour can see.
  */
 export function markdownPaletteKey(style: MarkdownStyle): string {
   const ink = style.paragraph?.color ?? '';
   const code = style.codeBlock?.backgroundColor ?? '';
-  return `${String(ink)}|${String(code)}`;
+  const prose = style.paragraph?.fontFamily ?? '';
+  const mono = style.codeBlock?.fontFamily ?? '';
+  return `${String(ink)}|${String(code)}|${String(prose)}|${String(mono)}`;
 }

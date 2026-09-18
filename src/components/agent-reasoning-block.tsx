@@ -10,6 +10,7 @@ import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { formatThoughtDuration } from '@/lib/agent-reasoning';
 import { withAlpha } from '@/lib/color';
+import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createThoughtMarkdownStyle } from '@/lib/markdown-style';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
@@ -43,7 +44,11 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const plate = useTranscriptPlate();
-  const markdownStyle = useMemo(() => createThoughtMarkdownStyle(theme.colors), [theme.colors]);
+  const markdownFonts = useMarkdownFonts();
+  const markdownStyle = useMemo(
+    () => createThoughtMarkdownStyle(theme.colors, markdownFonts),
+    [theme.colors, markdownFonts]
+  );
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   /**

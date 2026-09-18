@@ -22,6 +22,7 @@ import {
   resolveThemePack,
   type ThemeAppearance,
 } from '@/constants/theme-packs';
+import { slotFontFamily, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
 /**
  * The shape of the app, independent of its colours: density, corner radius and
@@ -29,7 +30,23 @@ import {
  * with, never how tightly it is packed -- otherwise picking Tokyo Night would
  * silently re-lay-out every screen.
  */
-export function buildTheme(pack: ThemeAppearance): ThemeOverride {
+export function buildTheme(
+  pack: ThemeAppearance,
+  /**
+   * The face the app's own text is set in, where the reader has supplied one.
+   *
+   * A second argument rather than a second lookup inside this function, because
+   * this is also what the theme preview route builds its nested provider with:
+   * a preview is the app wearing another palette, and it has to be wearing the
+   * reader's font while it does it or it is previewing a different app.
+   *
+   * Independent of the pack on purpose. A pack is colour -- `theme/schema.ts`
+   * has no font field and the authoring skill forbids one -- so a font survives
+   * every theme change, which is the only behaviour that makes sense for a
+   * reader who chose a face because they can read it.
+   */
+  interfaceFont: FontSlot = SYSTEM_FONT_SLOT
+): ThemeOverride {
   const preset = createThemePreset({
     name: `muqun-${pack.id}`,
     tone: 'commerce',
@@ -39,9 +56,35 @@ export function buildTheme(pack: ThemeAppearance): ThemeOverride {
     dark: pack.dark.colors,
   });
 
+  /**
+   * `display` and `body`, and deliberately not `label`.
+   *
+   * Those two are the app's *reading*: a title, a row, a caption, a message.
+   * `label` is the 11pt all-caps instrument style the section headings are set
+   * in -- SERVERS, APPEARANCE, TERMINAL -- and it is chrome rather than
+   * content. A reader's face at 11pt, tracked out and uppercased, is the one
+   * place a custom font reliably stops being legible, and those seven words are
+   * not what anybody installed a font to read.
+   *
+   * One family for every weight, with no per-weight entry. The reader gave us
+   * one file; `resolveFontStyle` falls through the weight ladder, finds
+   * nothing, and lands on `family` while still setting the native `fontWeight`
+   * -- so bold is the platform's synthetic bold rather than a weight the app
+   * pretends to have.
+   */
+  const interfaceFamily = slotFontFamily(interfaceFont, 'interface');
+  const fonts = interfaceFamily
+    ? {
+        ...preset.fonts,
+        display: { family: interfaceFamily },
+        body: { family: interfaceFamily },
+      }
+    : preset.fonts;
+
   return {
     ...preset,
     ...appThemeAppearanceOverride,
+    ...(fonts ? { fonts } : {}),
     components: {
       ...preset.components,
       Input: {

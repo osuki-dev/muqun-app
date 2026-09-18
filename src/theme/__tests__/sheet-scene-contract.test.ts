@@ -50,6 +50,7 @@ const SHEET_FRAMES = [
   'src/components/agent-background-tray.tsx',
   'src/components/opencode-guide-sheet.tsx',
   'src/components/settings-theme-sheet.tsx',
+  'src/components/settings-font-sheet.tsx',
   'src/app/explore.tsx',
 ];
 

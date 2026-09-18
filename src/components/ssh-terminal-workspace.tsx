@@ -85,6 +85,8 @@ import {
 } from '@/lib/terminal-keys';
 import { terminalFontSize } from '@/lib/terminal-text-size';
 import { useAppSettings } from '@/stores/app-settings';
+import { TERMINAL_ADVANCE_RATIO } from '@/terminal/text-scale';
+import { slotAdvanceRatio } from '@/theme/user-fonts';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import type { TerminalFrame } from '@/terminal/types';
 
@@ -472,6 +474,10 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     a line while a command is typed into it.
   */
   const permanentChrome = editorPane ? insets.bottom : steadyDockHeight;
+  // The advance measured when the reader installed their monospace face, or the
+  // bundled font's own 0.6 where there is none. See `advanceRatio` below.
+  const monoFontSlot = useAppSettings((state) => state.monoFont);
+  const monoAdvanceRatio = slotAdvanceRatio(monoFontSlot, TERMINAL_ADVANCE_RATIO);
   // The canvas's own cell size, once it has measured its font. Until then the
   // advance ratio stands in; the first report re-sizes the grid once.
   const grid = useMemo(
@@ -484,9 +490,17 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
             cellWidth: cellMetrics?.cellWidth,
             lineHeight: cellMetrics?.lineHeight,
             pixelRatio: PixelRatio.get(),
+            // Only read until the canvas reports a measured cell, and only
+            // ever an estimate -- but it is the estimate the shell draws its
+            // first prompt into, so it has to be about the font that is
+            // actually loaded. The bundled face advances 0.6; a reader's may
+            // advance 0.5 or 1.0, and opening the PTY at 0.6 against a
+            // full-width Han mono is nearly twice the columns that fit, with
+            // everything printed before the resize already wrapped wrong.
+            advanceRatio: monoAdvanceRatio,
           })
         : TERMINAL_GRID_DEFAULT,
-    [permanentChrome, cellMetrics, fontSize, viewport.height, viewport.width]
+    [permanentChrome, cellMetrics, fontSize, monoAdvanceRatio, viewport.height, viewport.width]
   );
   const gridRef = useLatestRef(grid);
 
