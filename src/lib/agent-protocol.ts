@@ -1646,11 +1646,24 @@ export function sessionWorktreeName(
  * because `writeJson` throws the gateway's body as an `Error` message rather
  * than a parsed object, and it is the only thing separating "ask the reader
  * whether they meant it" from "this failed and the answer is no".
+ *
+ * The backslashes come off before the test, and that is the whole reason this
+ * is not a one-line regex. OpenCode's refusal is a JSON document, which the
+ * gateway puts inside a *message string*, which is then encoded as JSON again
+ * -- so the flag reaches the device already escaped twice, as
+ * `\\"forceRequired\\":true` rather than `"forceRequired":true`, and a pattern
+ * written for the second one does not match the first. The device found that:
+ * the sheet printed the whole 502 body on the row instead of asking "Remove
+ * anyway?", on the one refusal the reader is supposed to be able to answer.
+ * Stripping the escapes matches at any depth of nesting, and this is a boolean
+ * probe rather than a parse -- nothing is read back out of the flattened text.
  */
 export function isWorktreeForceRequired(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (value instanceof Error) return isWorktreeForceRequired(value.message);
-  if (typeof value === 'string') return /["']?force_?required["']?\s*[:=]\s*true/i.test(value);
+  if (typeof value === 'string') {
+    return /["']?force_?required["']?\s*[:=]\s*true/i.test(value.replace(/\\/g, ''));
+  }
   const rec = asRecord(value);
   if (!rec) return false;
   if (rec.forceRequired === true || rec.force_required === true) return true;

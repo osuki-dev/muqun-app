@@ -97,11 +97,16 @@ export interface AgentSessionsSheetProps {
   /**
    * Open the worktree sheet on one session.
    *
-   * Offered on the session the workbench has open and on no other: the move
-   * route names a session, but the sheet behind it lists the *open* session's
-   * project and marks the *open* session's directory as current. Offering it
-   * on a row that is not the current one would show an inventory that has
-   * nothing to do with the row it was opened from.
+   * The row makes its session the open one first, and that ordering is the
+   * whole of the contract: the worktree sheet moves whatever session the
+   * workbench has open, so opening it from a row that is *not* open would
+   * list one session's project and move a different session into it.
+   *
+   * It was a condition before -- the item was offered only on the row that was
+   * already current -- and the device showed why that is the wrong shape: a
+   * menu whose contents depend on a comparison the reader cannot see is a menu
+   * that is sometimes mysteriously missing the thing they came for. Selecting
+   * first is the same guarantee with nothing hidden.
    */
   onMoveSession?: (asid: string) => void;
   onClose: () => void;
@@ -410,13 +415,17 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         testID: `agent-session-open-parent-${session.asid}`,
       });
     }
-    if (onMoveSession && session.asid === activeAsid) {
+    if (onMoveSession) {
       items.push({
         id: 'worktree',
         label: t`Move to worktree…`,
         Icon: GitBranch,
         onPress: () => {
           setMenuAsid(null);
+          // Selected first, then the sheet: the worktree sheet reads and moves
+          // the *open* session, so this is what makes the row it was opened
+          // from and the session it moves the same one.
+          if (session.asid !== activeAsid) onSelectSession(session.asid);
           onMoveSession(session.asid);
         },
         testID: `agent-session-worktree-${session.asid}`,

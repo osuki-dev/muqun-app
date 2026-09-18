@@ -147,6 +147,21 @@ describe('isWorktreeForceRequired', () => {
     ).toBe(true);
   });
 
+  test('recognises it through the two layers of escaping the device receives', () => {
+    // Verbatim from emulator-5556 against the gateway on 2026-09-18: OpenCode's
+    // refusal is JSON, the gateway carries it inside a message string, and that
+    // is encoded as JSON again -- so the flag arrives escaped twice. A pattern
+    // written for `"forceRequired":true` misses this, and the sheet printed the
+    // whole line on the row instead of asking.
+    const body =
+      'Failed to remove worktree: 502 {"error":{"code":"agent_engine_error",' +
+      '"message":"Agent request failed: HTTP 400 Bad Request: ' +
+      '{\\"name\\":\\"WorktreeError\\",\\"data\\":{\\"message\\":\\"fatal: ' +
+      "'/home/ryu/.local/share/opencode/worktree/fcb725/probe' contains modified " +
+      'or untracked files, use --force to delete it\\",\\"forceRequired\\":true}}"}}';
+    expect(isWorktreeForceRequired(new Error(body))).toBe(true);
+  });
+
   test('recognises it on a parsed object, nested or not, either spelling', () => {
     expect(isWorktreeForceRequired({ forceRequired: true })).toBe(true);
     expect(isWorktreeForceRequired({ force_required: true })).toBe(true);
