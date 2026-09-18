@@ -44,8 +44,8 @@ import type { InkBloomEdge } from './ink-bloom-shader';
  * further: what is left is detail a function of angle alone cannot hold, like
  * the gap between an arm and a body.
  *
- * A rectangle is kept as a rectangle instead: eight harmonics of a square are
- * a wavy square, and a pack whose hero is an opaque banner would get a visibly
+ * A rectangle is kept as a rectangle instead: ten harmonics of a square are a
+ * wavy square, and a pack whose hero is an opaque banner would get a visibly
  * rippling rim along an edge the reader can see is straight. The shader solves
  * the rounded box exactly, which is cheaper than the series as well as better.
  *

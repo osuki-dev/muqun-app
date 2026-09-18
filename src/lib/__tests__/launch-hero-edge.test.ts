@@ -464,7 +464,12 @@ describe('the shape the shader is given', () => {
     // different expression that happens to agree: the re-skin transition draws
     // through this same program and must not move by a pixel.
     expect(source).toContain('if (uEdgeAmount <= 0.0) return 0.0;');
-    expect(source).toContain('float dr = r - edgeRadius(dir) - front;');
+    expect(source).toContain('float edge = edgeRadius(dir);');
+    expect(source).toContain('float dr = r - edge - front;');
     expect(source).toContain('if (dr0 > uSlack + uEdgeSlack) return half4(coverAt(p));');
+    // And the exact second early-out is skipped entirely when there is no
+    // shape, so a caller opening from a point pays one comparison for all of
+    // this and not a line more.
+    expect(source).toContain('if (edge > 0.0) {');
   });
 });
