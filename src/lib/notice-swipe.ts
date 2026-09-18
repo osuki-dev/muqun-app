@@ -27,23 +27,25 @@ export const NOTICE_DRAG_FOLLOW = 0.88;
 /**
  * How far up the plate travels before the lift throws it away, in points.
  *
- * Roughly a third of the plate's own height: far enough that a stray upward
- * flick while scrolling the screen underneath cannot take a notice the reader
- * had not read, close enough that the dismissal is one short stroke.
+ * A short stroke. It was a third of the plate's height, and the owner's
+ * verdict on a device was that the banner had to be dragged away rather than
+ * brushed away. The gesture only claims touches that start on the plate and
+ * have already cleared its activation slop, so a small distance here cannot be
+ * a scroll of the screen underneath.
  */
-export const NOTICE_DISMISS_RISE = 52;
+export const NOTICE_DISMISS_RISE = 18;
 
 /**
  * How far sideways, as a fraction of the plate's width.
  *
  * A fraction rather than a number of points because the plate is as wide as
- * the screen less its margins, and "a third of the way across" is the same
+ * the screen less its margins, and "a tenth of the way across" is the same
  * gesture on a phone and on a tablet.
  */
-export const NOTICE_DISMISS_SWEEP_RATIO = 0.32;
+export const NOTICE_DISMISS_SWEEP_RATIO = 0.1;
 
 /** The narrowest the sideways threshold may become on a small screen. */
-export const NOTICE_DISMISS_SWEEP_MIN = 72;
+export const NOTICE_DISMISS_SWEEP_MIN = 28;
 
 /**
  * The speed, in points per second, at which a stroke is a throw.
@@ -53,10 +55,10 @@ export const NOTICE_DISMISS_SWEEP_MIN = 72;
  * noticed. `MOVED` is the floor that keeps a tap with a trembling finger from
  * registering as a throw of its own.
  */
-export const NOTICE_DISMISS_VELOCITY = 820;
+export const NOTICE_DISMISS_VELOCITY = 350;
 
 /** Travel below which a stroke is not a stroke at all, in points. */
-export const NOTICE_DISMISS_MOVED = 10;
+export const NOTICE_DISMISS_MOVED = 6;
 
 /** How far past the edge a dismissed plate is sent, in points. */
 export const NOTICE_DISMISS_OVERSHOOT = 64;

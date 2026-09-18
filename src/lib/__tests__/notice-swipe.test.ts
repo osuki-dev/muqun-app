@@ -41,12 +41,14 @@ describe('notice drag offset', () => {
 describe('notice swipe end', () => {
   test('a still finger and a short stroke spring back', () => {
     expect(noticeSwipeEnd(still, plate)).toEqual({ dismissed: false });
-    expect(noticeSwipeEnd(swipe({ translationY: -toOffset(20) }), plate)).toEqual({
-      dismissed: false,
-    });
-    expect(noticeSwipeEnd(swipe({ translationX: toOffset(40) }), plate)).toEqual({
-      dismissed: false,
-    });
+    // "Short" is relative to the thresholds, which are small on purpose: a
+    // brush dismisses, a twitch does not.
+    expect(
+      noticeSwipeEnd(swipe({ translationY: -toOffset(NOTICE_DISMISS_RISE - 6) }), plate)
+    ).toEqual({ dismissed: false });
+    expect(
+      noticeSwipeEnd(swipe({ translationX: toOffset(NOTICE_DISMISS_SWEEP_MIN - 8) }), plate)
+    ).toEqual({ dismissed: false });
   });
 
   test('a downward stroke never dismisses, however fast', () => {

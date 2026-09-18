@@ -245,7 +245,8 @@ export function InAppNotificationHost() {
               style={[
                 styles.backPage,
                 {
-                  backgroundColor: surfaceBackground(colors.surfaceRaised),
+                  // Solid, like the plate in front of it: see the card's fill.
+                  backgroundColor: colors.surfaceRaised,
                   borderColor: colors.border,
                   transform: [{ translateY: depth * 6 }, { scaleX: 1 - depth * 0.035 }],
                 },
@@ -264,7 +265,12 @@ export function InAppNotificationHost() {
                 plateWidth.value = event.nativeEvent.layout.width;
                 plateHeight.value = event.nativeEvent.layout.height;
               }}
-              style={[styles.card, { backgroundColor: surfaceBackground(colors.surfaceRaised) }]}
+              // Solid, not the theme's translucent surface. A notice floats over
+              // whatever screen is up -- header buttons, a transcript, the pages
+              // waiting behind it -- and a see-through plate let all of that
+              // show through its text. It is read for two seconds; it has to be
+              // readable for all of them.
+              style={[styles.card, { backgroundColor: colors.surfaceRaised }]}
               testID="in-app-notification">
               {/* The glyph alone. A tinted circle around it is a second
                   surface on a plate that is already one surface. */}
