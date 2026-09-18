@@ -78,6 +78,11 @@ export function buildTheme(
         ...preset.fonts,
         display: { family: interfaceFamily },
         body: { family: interfaceFamily },
+        // The kit draws every caption through the `label` role, so a row
+        // whose title changed face while its caption stayed on the system's
+        // read as two fonts in one line. The instrument style (size, tracking)
+        // is the role's; the face follows the reader's choice like the rest.
+        label: { family: interfaceFamily },
       }
     : preset.fonts;
 
