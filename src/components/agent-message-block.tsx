@@ -409,9 +409,13 @@ export const AgentCompactionRow = memo(function AgentCompactionRow({
       </PressableScale>
 
       {failed && part.error?.message ? (
-        <Text variant="caption" selectable color={theme.colors.danger} style={styles.noticeText}>
-          {part.error.message}
-        </Text>
+        // The engine's reason sits on a plate like every other paragraph; red
+        // ink straight on the wallpaper was the one line without one.
+        <View style={[styles.messageBlock, plate]}>
+          <Text variant="caption" selectable color={theme.colors.danger} style={styles.noticeText}>
+            {part.error.message}
+          </Text>
+        </View>
       ) : null}
 
       {expanded && part.summary ? (
