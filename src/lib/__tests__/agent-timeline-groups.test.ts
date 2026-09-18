@@ -216,3 +216,43 @@ describe('reconcileShellParts', () => {
     expect(reconcileShellParts(items, [])).toBe(items);
   });
 });
+
+describe('row keys across the optimistic send', () => {
+  test('a row with a `row_key` is keyed by it, not by its id', () => {
+    const groups = buildTimelineGroups([
+      item('msg_real_9', 'msg_real_9', { role: 'user', row_key: 'temp_usr_1' }),
+    ]);
+    expect(groups[0].key).toBe('grp_temp_usr_1');
+  });
+
+  test('the key survives the engine acknowledging the message', () => {
+    // What the reader sees is one row, drawn once. The list caches its
+    // measured height against this key, so a key that changed when the
+    // acknowledgement landed threw that measurement away and remounted the row
+    // mid-send.
+    const optimistic = item('temp_usr_1', 'msg_local', {
+      role: 'user',
+      row_key: 'temp_usr_1',
+    });
+    const acknowledged = item('msg_real_9', 'msg_real_9', {
+      role: 'user',
+      row_key: 'temp_usr_1',
+    });
+    const before = buildTimelineGroups([optimistic]);
+    const after = buildTimelineGroups([acknowledged]);
+    expect(after[0].key).toBe(before[0].key);
+  });
+
+  test('rows the reader never sent optimistically are still keyed by id', () => {
+    const groups = buildTimelineGroups([item('msg_7:t0', 'msg_7')]);
+    expect(groups[0].key).toBe('grp_msg_7:t0');
+  });
+
+  test('two optimistic rows in flight keep distinct keys', () => {
+    const groups = buildTimelineGroups([
+      item('temp_usr_1', 'msg_a', { role: 'user', row_key: 'temp_usr_1' }),
+      item('temp_usr_2', 'msg_b', { role: 'user', row_key: 'temp_usr_2' }),
+    ]);
+    expect(new Set(groups.map((group) => group.key)).size).toBe(2);
+  });
+});
