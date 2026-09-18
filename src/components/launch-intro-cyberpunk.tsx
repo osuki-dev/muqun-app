@@ -77,8 +77,18 @@ import { DURATION, NAVIGATION_MOTION, timing } from '@/lib/motion';
 /** The mascot at rest, in points, by width class. Shared rule with the lock screen. */
 const MARK_SIZE = { compact: 176, regular: 236 } as const;
 
-/** How far the displaced copies sit from the picture before they collapse onto it, in points. */
-const LOCK_OFFSET = 10;
+/**
+ * How far the displaced copies sit from the picture before they collapse onto
+ * it, as a fraction of the picture's width, with a floor and a ceiling in
+ * points.
+ *
+ * A fraction rather than a flat number because the two things this draws over
+ * differ by a factor of four: a pack's hero is most of the screen wide, a
+ * bundled mark is 176 points. Ten points is a visible displacement on the mark
+ * and invisible on the hero, which is how the beat went missing the first time
+ * it ran on a device.
+ */
+const LOCK_OFFSET = { fraction: 0.04, min: 10, max: 30 } as const;
 
 /** The corner brackets: arm length, how far outside the picture they sit, and their weight. */
 const BRACKET = { arm: 22, inset: 14, weight: 2 } as const;
@@ -136,6 +146,10 @@ export function LaunchIntroCyberpunk({
     width: box.width + BRACKET.inset * 2,
     height: box.height + BRACKET.inset * 2,
   };
+  const lockOffset = Math.min(
+    LOCK_OFFSET.max,
+    Math.max(LOCK_OFFSET.min, box.width * LOCK_OFFSET.fraction)
+  );
   // The same file native is drawing, so the displaced copies are the picture
   // rather than a tinted silhouette of it -- which is what keeps the effect
   // legible on a watercolour as well as on a logo.
@@ -221,22 +235,25 @@ export function LaunchIntroCyberpunk({
   const ghostLeadStyle = useAnimatedStyle(() => ({
     opacity: interpolate(lock.value, [0, 0.6, 1], [0.5, 0.22, 0], Extrapolation.CLAMP),
     transform: [
-      { translateX: interpolate(lock.value, [0, 1], [-LOCK_OFFSET, 0]) },
+      { translateX: interpolate(lock.value, [0, 1], [-lockOffset, 0]) },
       { translateY: interpolate(lock.value, [0, 1], [-2, 0]) },
     ],
   }));
   const ghostTrailStyle = useAnimatedStyle(() => ({
     opacity: interpolate(lock.value, [0, 0.6, 1], [0.5, 0.22, 0], Extrapolation.CLAMP),
     transform: [
-      { translateX: interpolate(lock.value, [0, 1], [LOCK_OFFSET, 0]) },
+      { translateX: interpolate(lock.value, [0, 1], [lockOffset, 0]) },
       { translateY: interpolate(lock.value, [0, 1], [2, 0]) },
     ],
   }));
   const scanStyle = useAnimatedStyle(() => {
     const band = box.height * SCAN_BAND;
     return {
+      // Light enough to read through. At full strength the band stops being a
+      // beam passing over the picture and becomes a bar hiding it, and the
+      // picture is the thing the reader chose.
       opacity:
-        interpolate(scan.value, [0, 0.12, 0.85, 1], [0, 0.55, 0.55, 0], Extrapolation.CLAMP) *
+        interpolate(scan.value, [0, 0.12, 0.85, 1], [0, 0.3, 0.3, 0], Extrapolation.CLAMP) *
         (1 - exit.value),
       // Enters above the picture and leaves below it, so the pass is one
       // uninterrupted travel across the whole box rather than a wipe that
