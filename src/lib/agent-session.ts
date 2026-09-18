@@ -38,6 +38,8 @@ import {
   parseShellOutputPage,
   parseTimelineItems,
   parseRunStatus,
+  parseCreatedWorktree,
+  parseWorktreeList,
   sortTimeline,
   type AgentCatalog,
   type AgentContextUsage,
@@ -56,6 +58,7 @@ import {
   type ShellOutputPage,
   type TimelineItem,
   type VcsDiffMode,
+  type WorktreeDirectory,
 } from './agent-protocol';
 
 export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheKey };
@@ -800,6 +803,122 @@ export async function killAgentShell(shellId: string): Promise<void> {
     'Failed to stop shell',
     undefined,
     'DELETE'
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Worktrees
+// ---------------------------------------------------------------------------
+
+/**
+ * A project's checkouts: its own root, and every worktree OpenCode manages.
+ *
+ * `directory` is the **project** on all four routes here and never a
+ * worktree's own -- the one thing easiest to get wrong about them, because the
+ * remove route takes both and they are not the same argument.
+ */
+export async function listAgentWorktrees(directory?: string): Promise<WorktreeDirectory[]> {
+  const q = directory ? `?directory=${encodeURIComponent(directory)}` : '';
+  return readJson(`/api/agent-worktrees${q}`, parseWorktreeList, []);
+}
+
+/**
+ * What a create may say, and every field of it optional.
+ *
+ * `{}` is a valid create: OpenCode names the worktree itself. A field the
+ * caller did not set is left out of the body entirely rather than sent as
+ * `null`, because `Worktree.CreateInput` declares `additionalProperties:
+ * false` and refuses an explicit one.
+ */
+export interface CreateAgentWorktreeInput {
+  /** The project to create it in. */
+  directory?: string;
+  /** What the worktree's own directory is called. */
+  name?: string;
+  /**
+   * An **existing** ref to branch from -- not a name to create.
+   *
+   * A ref the repository does not have is `fatal: invalid reference: …` as a
+   * `502`, so the field is offered as "Branch from" and validated no further
+   * here: which refs exist is the repository's answer, not the app's.
+   */
+  branch?: string;
+  /** A directory to branch from, rather than a ref. */
+  from?: string;
+  strategy?: string;
+}
+
+/**
+ * Create one, and answer with the directory it landed in.
+ *
+ * Synchronous: the route answers when the worktree exists, so there is no
+ * `creating` to wait for on the stream and the caller's own request is the
+ * span the spinner covers.
+ */
+export async function createAgentWorktree(
+  input: CreateAgentWorktreeInput
+): Promise<string | undefined> {
+  const body: Record<string, string> = {};
+  for (const key of ['directory', 'name', 'branch', 'from', 'strategy'] as const) {
+    const value = input[key]?.trim();
+    if (value) body[key] = value;
+  }
+  return parseCreatedWorktree(
+    await writeJson('/api/agent-worktrees', 'Failed to create worktree', body)
+  );
+}
+
+/**
+ * Remove one. **Two directories, and they are not the same one.**
+ *
+ * `worktree` is the checkout going away; `directory` is the project it belongs
+ * to. `force` is always sent -- OpenCode's own input makes it required -- and
+ * a refusal for want of it carries `forceRequired`, which
+ * `isWorktreeForceRequired` is what turns into the second ask.
+ */
+export async function removeAgentWorktree(
+  worktree: string,
+  options?: { directory?: string; force?: boolean }
+): Promise<void> {
+  await writeJson(
+    '/api/agent-worktrees',
+    'Failed to remove worktree',
+    {
+      ...(options?.directory ? { directory: options.directory } : {}),
+      worktree,
+      force: options?.force === true,
+    },
+    'DELETE'
+  );
+}
+
+/** Rediscover worktrees on disk, for when something changed outside OpenCode. */
+export async function refreshAgentWorktrees(directory?: string): Promise<void> {
+  await writeJson(
+    '/api/agent-worktrees/refresh',
+    'Failed to refresh worktrees',
+    directory ? { directory } : {}
+  );
+}
+
+/**
+ * Point a session at another directory, and answer with the session afterwards.
+ *
+ * The reply is read back rather than assembled from the request, because a
+ * move can change more than the directory: 2.0.1 accepts any directory that
+ * exists and the session joins that directory's project, `project_id` and all.
+ * There is no scope rule to enforce here -- keeping a session inside its own
+ * project is done by offering only that project's worktrees as targets.
+ *
+ * `agent.session.updated` follows on the stream with the same new `directory`,
+ * so the header and the strip do not wait on this answer.
+ */
+export async function moveAgentSession(
+  asid: string,
+  directory: string
+): Promise<AgentSessionInfo | null> {
+  return parseAgentSessionInfo(
+    await writeJson(sessionRoute(asid, '/move'), 'Failed to move session', { directory })
   );
 }
 
