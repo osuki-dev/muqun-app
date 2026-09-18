@@ -1641,11 +1641,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, showToast, t]
   );
 
+  /**
+   * How many "Always allow" replies have landed.
+   *
+   * `allow_always` is the one answer whose consequence outlives the prompt, so
+   * the context sheet's list of saved rules has to be told that it has changed.
+   * The count rather than the list: the sheet is the only thing that reads the
+   * rules, and it reads them from the gateway.
+   */
+  const [savedPermissionsRevision, setSavedPermissionsRevision] = useState(0);
+
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
       if (!activeAsid) return;
       try {
         await replyAgentPermission(sessionId, activeAsid, permId, decision);
+        if (decision === 'allow_always') setSavedPermissionsRevision((count) => count + 1);
       } catch (err) {
         console.warn('Failed to reply permission:', err);
         showToast({
@@ -2679,6 +2690,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       compaction,
       contextUsage,
       commands,
+      savedPermissionsRevision,
       models: catalogModels,
     };
     useAgentSheetBridge.getState().publish(snapshot);
@@ -2702,6 +2714,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     compaction,
     contextUsage,
     commands,
+    savedPermissionsRevision,
     catalogModels,
   ]);
 

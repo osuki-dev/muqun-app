@@ -435,6 +435,10 @@ msgstr "Alt Seta para cima"
 msgid "Always allow"
 msgstr "Permitir sempre"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "Sempre permitido"
+
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "e mais {rest}"
@@ -1438,6 +1442,10 @@ msgstr "Não foi possível renomear"
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "Não foi possível responder"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "Não foi possível revogar"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -2800,6 +2808,10 @@ msgstr "Nada para desfazer"
 msgid "Nothing uncommitted in this workspace."
 msgstr "Não há nada por confirmar neste espaço de trabalho"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "Nada ainda — uma resposta “Permitir sempre” aparece aqui, para este projeto"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Desativado"
@@ -3114,6 +3126,10 @@ msgstr "Cole um link de tema público ou a URL de um repositório do GitHub"
 msgid "Path"
 msgstr "Caminho"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "Permissão"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "Permissão necessária"
@@ -3274,6 +3290,10 @@ msgstr "Ler fora do espaço de trabalho"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "Apenas leitura: procura de símbolos, descoberta de ficheiros e rastreio de dependências"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "Lendo as regras no host…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3529,11 +3549,14 @@ msgstr "Vê o teste que está a falhar e corrige-o"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "Revisando alterações e verificando testes…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Revogar"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "Revogar {0}"
@@ -4660,6 +4683,10 @@ msgstr "Este código QR não é válido"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "Esta pergunta exige uma versão mais recente do app"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "esta regra"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."

@@ -435,6 +435,10 @@ msgstr "Alt Mũi tên lên"
 msgid "Always allow"
 msgstr "Luôn cho phép"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "Luôn cho phép"
+
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "và {rest} nữa"
@@ -1438,6 +1442,10 @@ msgstr "Không thể đổi tên"
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "Không thể trả lời"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "Không thể thu hồi"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -2800,6 +2808,10 @@ msgstr "Không có gì để hoàn tác"
 msgid "Nothing uncommitted in this workspace."
 msgstr "Không có thay đổi chưa commit trong không gian làm việc này"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "Chưa có gì — câu trả lời “Luôn cho phép” sẽ nằm ở đây, cho dự án này"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Tắt"
@@ -3114,6 +3126,10 @@ msgstr "Dán liên kết giao diện công khai hoặc URL kho mã GitHub"
 msgid "Path"
 msgstr "Đường dẫn"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "Quyền"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "Cần có quyền"
@@ -3274,6 +3290,10 @@ msgstr "Đọc bên ngoài không gian làm việc"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "Chỉ đọc: tìm ký hiệu, khám phá tệp, lần theo phụ thuộc"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "Đang đọc các quy tắc trên máy chủ…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3529,11 +3549,14 @@ msgstr "Xem bài kiểm thử đang lỗi và sửa nó"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "Đang rà soát thay đổi và kiểm tra kiểm thử…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Thu hồi"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "Thu hồi {0}"
@@ -4660,6 +4683,10 @@ msgstr "Mã QR này không hợp lệ"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "Câu hỏi này cần phiên bản ứng dụng mới hơn để trả lời"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "quy tắc này"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."

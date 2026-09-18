@@ -435,6 +435,10 @@ msgstr "Alt 上箭頭"
 msgid "Always allow"
 msgstr "一律允許"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "一律允許"
+
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "還有 {rest} 個"
@@ -1438,6 +1442,10 @@ msgstr "無法重新命名"
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "無法回覆"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "無法撤銷授權"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -2800,6 +2808,10 @@ msgstr "沒有可復原的內容"
 msgid "Nothing uncommitted in this workspace."
 msgstr "此工作區沒有未提交的變更"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "還沒有內容——選擇「一律允許」後，規則會出現在這裡，屬於本專案"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "關閉"
@@ -3114,6 +3126,10 @@ msgstr "貼上公開的主題連結或 GitHub 儲存庫網址"
 msgid "Path"
 msgstr "路徑"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "權限"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "需要權限"
@@ -3274,6 +3290,10 @@ msgstr "讀取工作區之外的內容"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "唯讀：符號搜尋、檔案探索、相依追蹤"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "正在讀取主機上的規則…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3529,11 +3549,14 @@ msgstr "看一下失敗的測試，然後修好它"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "正在審查改動並檢查測試…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "撤銷"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "撤銷 {0}"
@@ -4660,6 +4683,10 @@ msgstr "這個 QR code 無效"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "回答這個問題需要更新版本的應用程式"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "這條規則"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."

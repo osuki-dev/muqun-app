@@ -465,6 +465,46 @@ export function parsePermissionRequest(value: unknown): PermissionRequest | null
   return request;
 }
 
+/**
+ * What an `allow_always` left behind.
+ *
+ * A project's list, not a session's: the session names the project and the
+ * gateway reads it off OpenCode on every call. `action` and `resource` are the
+ * pair the permission prompt showed as `save`, which is why they are shown
+ * back in the same order.
+ */
+export interface SavedPermission {
+  id: string;
+  project_id?: string;
+  action: string;
+  resource: string;
+}
+
+export function parseSavedPermission(value: unknown): SavedPermission | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const id = pickString(rec, ['id']);
+  if (!id) return null;
+  const projectId = pickString(rec, ['project_id', 'projectID']);
+  return {
+    id,
+    ...(projectId ? { project_id: projectId } : {}),
+    action: pickString(rec, ['action']) ?? '',
+    resource: pickString(rec, ['resource']) ?? '',
+  };
+}
+
+export function parseSavedPermissions(value: unknown): SavedPermission[] {
+  const list = Array.isArray(value) ? value : (asRecord(value)?.items as unknown[] | undefined);
+  if (!Array.isArray(list)) return [];
+  const out: SavedPermission[] = [];
+  for (const entry of list) {
+    const item = parseSavedPermission(entry);
+    if (item) out.push(item);
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Forms
 // ---------------------------------------------------------------------------

@@ -435,6 +435,10 @@ msgstr "Alt ลูกศรขึ้น"
 msgid "Always allow"
 msgstr "อนุญาตเสมอ"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "อนุญาตเสมอ"
+
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "และอีก {rest}"
@@ -1438,6 +1442,10 @@ msgstr "เปลี่ยนชื่อไม่ได้"
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "ไม่สามารถตอบกลับได้"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "เพิกถอนไม่ได้"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -2800,6 +2808,10 @@ msgstr "ไม่มีอะไรให้ย้อนกลับ"
 msgid "Nothing uncommitted in this workspace."
 msgstr "ไม่มีอะไรที่ยังไม่ได้คอมมิตในเวิร์กสเปซนี้"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "ยังไม่มี — คำตอบ “อนุญาตเสมอ” จะมาอยู่ที่นี่ สำหรับโปรเจกต์นี้"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "ปิด"
@@ -3114,6 +3126,10 @@ msgstr "วางลิงก์ธีมสาธารณะหรือที
 msgid "Path"
 msgstr "พาธ"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "สิทธิ์"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "ต้องการสิทธิ์อนุญาต"
@@ -3274,6 +3290,10 @@ msgstr "อ่านนอกพื้นที่ทำงาน"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "อ่านอย่างเดียว: ค้นหาสัญลักษณ์ สำรวจไฟล์ และไล่การพึ่งพา"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "กำลังอ่านกฎบนโฮสต์…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3529,11 +3549,14 @@ msgstr "ตรวจสอบการทดสอบที่ล้มเหล
 msgid "Reviewing the changes and checking the tests…"
 msgstr "กำลังตรวจทานการเปลี่ยนแปลงและตรวจสอบการทดสอบ…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "เพิกถอน"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "เพิกถอน {0}"
@@ -4660,6 +4683,10 @@ msgstr "QR นี้ไม่ถูกต้อง"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "คำถามนี้ต้องใช้แอปเวอร์ชันใหม่กว่าจึงจะตอบได้"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "กฎนี้"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."

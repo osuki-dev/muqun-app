@@ -435,6 +435,10 @@ msgstr "Alt 上矢印"
 msgid "Always allow"
 msgstr "常に許可"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "常に許可"
+
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "ほか {rest} 件"
@@ -1438,6 +1442,10 @@ msgstr "名前を変更できませんでした"
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "返信できませんでした"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "取り消せませんでした"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -2800,6 +2808,10 @@ msgstr "元に戻せるものがありません"
 msgid "Nothing uncommitted in this workspace."
 msgstr "このワークスペースに未コミットの変更はありません"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "まだありません。「常に許可」の回答は、このプロジェクトのものとしてここに入ります"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "オフ"
@@ -3114,6 +3126,10 @@ msgstr "公開テーマのリンクまたは GitHub リポジトリの URL を�
 msgid "Path"
 msgstr "パス"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "権限"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "権限が必要です"
@@ -3274,6 +3290,10 @@ msgstr "ワークスペースの外を読む"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "読み取り専用。シンボル検索、ファイル探索、依存関係の追跡"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "ホスト上のルールを読み込み中…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3529,11 +3549,14 @@ msgstr "失敗しているテストを調べて直して"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "変更とテストを確認中…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "取り消す"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "{0} を取り消す"
@@ -4660,6 +4683,10 @@ msgstr "この QR コードは正しくありません"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "この質問に答えるには新しいバージョンのアプリが必要です"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "このルール"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."

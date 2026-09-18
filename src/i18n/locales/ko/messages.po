@@ -435,6 +435,10 @@ msgstr "Alt 위쪽 화살표"
 msgid "Always allow"
 msgstr "항상 허용"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "항상 허용"
+
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "외 {rest}개"
@@ -1438,6 +1442,10 @@ msgstr "이름을 바꿀 수 없습니다"
 #: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "응답할 수 없습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "해제할 수 없습니다"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -2800,6 +2808,10 @@ msgstr "실행 취소할 것이 없습니다"
 msgid "Nothing uncommitted in this workspace."
 msgstr "이 작업 공간에 커밋되지 않은 변경이 없습니다"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "아직 없습니다 — “항상 허용” 응답이 이 프로젝트의 규칙으로 여기에 쌓입니다"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "꺼짐"
@@ -3114,6 +3126,10 @@ msgstr "공개 테마 링크 또는 GitHub 저장소 URL을 붙여넣으세요"
 msgid "Path"
 msgstr "경로"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "권한"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "권한 필요"
@@ -3274,6 +3290,10 @@ msgstr "워크스페이스 밖의 파일 읽기"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "읽기 전용: 심볼 검색, 파일 탐색, 의존성 추적"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "호스트의 규칙을 읽는 중…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3529,11 +3549,14 @@ msgstr "실패한 테스트를 살펴보고 고쳐 줘"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "변경 사항과 테스트를 확인하는 중…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "해제"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "{0} 해제"
@@ -4660,6 +4683,10 @@ msgstr "이 QR 코드는 올바르지 않습니다"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "이 질문에 답하려면 더 새로운 앱이 필요합니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "이 규칙"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."

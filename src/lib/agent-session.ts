@@ -32,6 +32,7 @@ import {
   parseAgentSessionSnapshot,
   parseFileDiffItems,
   parseInboxItems,
+  parseSavedPermissions,
   parseShellList,
   parseShellOutputPage,
   parseTimelineItems,
@@ -49,6 +50,7 @@ import {
   type InboxItem,
   type ModelRef,
   type PermissionDecision,
+  type SavedPermission,
   type ShellInfo,
   type ShellOutputPage,
   type TimelineItem,
@@ -539,6 +541,28 @@ export async function replyAgentPermission(
     sessionRoute(asid, `/permissions/${encodeURIComponent(permissionId)}/reply`, sessionId, true),
     'Failed to reply permission',
     message ? { decision, message } : { decision }
+  );
+}
+
+/**
+ * The rules an "Always allow" left behind, for this session's project.
+ *
+ * `allow_always` is the one permission answer with a consequence that outlives
+ * the prompt, and there was nowhere in the app to see what had been agreed to,
+ * let alone take it back.
+ */
+export async function listSavedPermissions(asid: string): Promise<SavedPermission[]> {
+  if (!asid) return [];
+  return readJson(sessionRoute(asid, '/permissions/saved'), parseSavedPermissions, []);
+}
+
+/** Take one back: the agent asks again next time. */
+export async function revokeSavedPermission(asid: string, id: string): Promise<void> {
+  await writeJson(
+    sessionRoute(asid, `/permissions/saved/${encodeURIComponent(id)}`),
+    'Failed to revoke the rule',
+    undefined,
+    'DELETE'
   );
 }
 
