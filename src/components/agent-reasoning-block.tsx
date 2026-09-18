@@ -123,16 +123,18 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
       {/* The body brings its own ground: the pill sits on the wallpaper, and
           only the paragraph it opens onto needs a surface to be read on. */}
       {expanded && text ? (
-        <Animated.View
-          entering={fadeIn('micro')}
-          style={[styles.body, plate, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
-          <Text
-            selectable
-            variant="caption"
-            color={theme.colors.textMuted}
-            style={styles.reasoningText}>
-            {text}
-          </Text>
+        <Animated.View entering={fadeIn('micro')} style={[styles.body, plate]}>
+          {/* The quote rule stands inside the plate, inset like a blockquote's,
+              not on the plate's edge where it reads as a border. */}
+          <View style={[styles.quote, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
+            <Text
+              selectable
+              variant="caption"
+              color={theme.colors.textMuted}
+              style={styles.reasoningText}>
+              {text}
+            </Text>
+          </View>
         </Animated.View>
       ) : null}
     </View>
@@ -166,6 +168,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     paddingVertical: 10,
     paddingHorizontal: 12,
+  },
+  quote: {
+    paddingLeft: 12,
     borderLeftWidth: 1.5,
   },
   reasoningText: {
