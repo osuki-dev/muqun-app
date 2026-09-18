@@ -173,8 +173,8 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
    *
    * The alias is rebound here rather than left to the next launch, because a
    * reader who has just installed a font is looking straight at the app and
-   * "restart to see it" is not an answer. See `loadUserFont` for the one
-   * surface this cannot reach in-process.
+   * "restart to see it" is not an answer. Every surface follows at once; see
+   * `slotFontFamily` for why a per-file family name is what makes that true.
    */
   async function apply(id: FontSlotId, slot: FontSlot) {
     await loadUserFont(id, slot);

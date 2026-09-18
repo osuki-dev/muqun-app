@@ -513,5 +513,26 @@ export function slotAdvanceRatio(slot: FontSlot, fallback: number): number {
  * the kit theme and the terminal all ask here.
  */
 export function slotFontFamily(slot: FontSlot, id: FontSlotId): string | null {
-  return slot.kind === 'file' ? USER_FONT_ALIAS[id] : null;
+  if (slot.kind !== 'file') return null;
+  return `${USER_FONT_ALIAS[id]}_${fontFileToken(slot.file)}`;
+}
+
+/**
+ * The part of a stored font's name that is its own: `fonts/mono-1a2b3c.ttf` ->
+ * `1a2b3c`.
+ *
+ * The family a file is registered under carries it, so every installed file
+ * has a family name no other file ever had. One fixed alias per slot looked
+ * simpler and was the reason a newly installed font "needed a restart": both
+ * platforms and the markdown renderer cache a resolved typeface BY FAMILY
+ * NAME (React Native's font manager per weight, enriched-markdown per family
+ * with no invalidation at all), so rebinding the same name to new bytes left
+ * every one of those caches answering with the old face until the process
+ * died. A new name has no cache entry to be stale.
+ */
+export function fontFileToken(file: string): string {
+  const name = file.slice(file.lastIndexOf('/') + 1);
+  const stem = name.includes('.') ? name.slice(0, name.lastIndexOf('.')) : name;
+  const token = stem.includes('-') ? stem.slice(stem.indexOf('-') + 1) : stem;
+  return token.replace(/[^A-Za-z0-9]/g, '') || 'font';
 }

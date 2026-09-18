@@ -245,9 +245,17 @@ test('a slot resolves to an alias and a ratio, and the system slot to neither', 
     label: 'Iosevka',
     advanceRatio: 0.5,
   };
-  // The alias, never the face's own family name: that is what makes a swap a
-  // swap rather than a rewrite of every style in the app.
-  expect(slotFontFamily(mono, 'mono')).toBe(USER_FONT_ALIAS.mono);
+  // The slot's alias plus the FILE's own token, never the face's internal
+  // family name: every consumer still asks one function, and a newly installed
+  // file gets a name no cache has ever resolved -- which is what makes it show
+  // without a restart.
+  expect(slotFontFamily(mono, 'mono')).toBe(`${USER_FONT_ALIAS.mono}_1`);
+  expect(slotFontFamily({ ...mono, file: 'fonts/mono-c7e5d9a28de9.ttf' }, 'mono')).toBe(
+    'MuqunUserMono_c7e5d9a28de9'
+  );
+  expect(slotFontFamily({ ...mono, file: 'fonts/mono-aaaa.ttf' }, 'mono')).not.toBe(
+    slotFontFamily({ ...mono, file: 'fonts/mono-bbbb.ttf' }, 'mono')
+  );
   expect(slotFontFamily(SYSTEM_FONT_SLOT, 'mono')).toBeNull();
   expect(slotFontFamily(SYSTEM_FONT_SLOT, 'interface')).toBeNull();
   expect(USER_FONT_ALIAS.interface).toBe('MuqunUserInterface');

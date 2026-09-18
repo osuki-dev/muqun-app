@@ -45,6 +45,7 @@ import {
   joinDocumentUri,
   isSupportedFontFormat,
   MONO_PROBE_CHARACTERS,
+  slotFontFamily,
   sniffFontFormat,
   USER_FONT_ALIAS,
   USER_FONT_DIRECTORY,
@@ -413,7 +414,9 @@ export async function registerUserFonts(
     (Object.keys(USER_FONT_ALIAS) as FontSlotId[]).map(async (id) => {
       const slot = slots[id];
       if (slot.kind !== 'file') return;
-      const alias = USER_FONT_ALIAS[id];
+      // The family this FILE is registered under; see `slotFontFamily`.
+      const alias = slotFontFamily(slot, id);
+      if (!alias) return;
       // Already registered by an earlier call in this process. `isLoaded` is
       // synchronous, and re-registering is not free on either platform.
       if (Font.isLoaded(alias)) return;
@@ -445,18 +448,21 @@ export async function registerUserFonts(
  * Both platforms rebind cleanly -- Android's `ReactFontManager.setTypeface`
  * overwrites its entry, iOS re-registers the URL and resets the family alias.
  *
- * One thing this cannot reach, and it is worth naming: on Android
- * `enriched-markdown` keeps its own `typefaceCache` keyed by family name with
- * no invalidation, so markdown already painted in this process keeps the face
- * it first resolved. The terminal updates (it loads the file into Skia
- * directly, not through the alias) and so does every kit `Text`. Markdown
- * catches up on the next launch, which is where the registration this mirrors
- * runs before anything paints.
+ * Nothing is left for the next launch. Each installed file is registered
+ * under a family name of its own (`slotFontFamily`), so the caches that key a
+ * resolved typeface by family name -- React Native's per weight, and
+ * enriched-markdown's, which never invalidates -- have no stale entry to
+ * answer with: kit text, markdown and the terminal all change at once.
  */
 export async function loadUserFont(id: FontSlotId, slot: FontSlot): Promise<void> {
   const uri = userFontUri(slot);
-  if (!uri) return;
-  await Font.loadAsync({ [USER_FONT_ALIAS[id]]: { uri } });
+  const family = slotFontFamily(slot, id);
+  if (!uri || !family) return;
+  // A family name of the file's own, so nothing that cached the previous
+  // face by name can answer for this one: the change shows at once, in kit
+  // text, in markdown and in the terminal, with no restart.
+  if (Font.isLoaded(family)) return;
+  await Font.loadAsync({ [family]: { uri } });
 }
 
 /**
