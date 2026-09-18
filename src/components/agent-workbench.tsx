@@ -2675,6 +2675,44 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   /**
+   * The strip's order, the selection and the strip's own switch handler, put
+   * where the header pill can read them.
+   *
+   * The pill swipes between sessions, and to do that it has to know what is
+   * either side of the current one *before* the finger lands: whether the
+   * gesture is live at all, and which edges get a mark. That is the strip's
+   * order and nothing else, so it is published rather than recomputed -- a
+   * second answer to "what is next" is a second answer that can be wrong.
+   *
+   * `setActiveAsid` travels with it for the same reason the sheet bridge
+   * carries it: a committed swipe must be the same act as tapping a chip, not
+   * a parallel route into the same state.
+   */
+  const sessionOrder = useMemo(() => sessionStrip.map((node) => node.session), [sessionStrip]);
+  useEffect(() => {
+    useAgentSessionState.getState().setSessionRouting({
+      sessionOrder,
+      activeAsid,
+      switching: loading,
+      switchSession: setActiveAsid,
+    });
+  }, [sessionOrder, activeAsid, loading]);
+  // Leaving the screen takes the order with it, so a header mounted over a
+  // different session cannot draw a mark for a neighbour that is no longer on
+  // the other side of it.
+  useEffect(
+    () => () => {
+      useAgentSessionState.getState().setSessionRouting({
+        sessionOrder: [],
+        activeAsid: undefined,
+        switching: false,
+        switchSession: () => {},
+      });
+    },
+    []
+  );
+
+  /**
    * Every session in hand, for the surfaces that want one list.
    *
    * The list route is asked for roots only now, so the sessions sheet -- which
