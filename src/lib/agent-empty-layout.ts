@@ -24,19 +24,23 @@
 export const COMPOSER_RESERVE_FALLBACK = 185;
 
 /**
- * The card's own top padding, given the room the transcript already gave a
+ * The card's own top margin, given the room the transcript already gave a
  * notice.
  *
- * The empty card sits inside the transcript area, and that area already
- * carries the notice's reserve as padding. Adding the header inset on top of
- * it counts the header twice -- which is exactly how the card ended up in the
- * lower half of the screen whenever a notice was up. Taking the difference
- * instead means the content starts below whichever of the two reaches further
- * down, and the card moves only when the notice would otherwise reach it.
+ * The empty card sits inside the transcript area, and that area carries the
+ * notice's reserve as padding so a transcript never scrolls under a notice.
+ * The card is not a transcript: it is one centred plate in an otherwise empty
+ * screen, and a notice floating over the top of that screen has no business
+ * moving it -- the owner watched the card drop a full notice's height the
+ * moment one appeared. So the card takes the header inset and *gives back*
+ * the notice's reserve, as a margin that goes negative when the notice is
+ * taller than the inset. The centre stays between the header and the dock
+ * whatever floats above it, and the notice overlaps nothing, since the card
+ * never reaches that high.
  */
 export function emptyCardTopReserve(topInset: number, noticeReserve: number): number {
   'worklet';
-  return Math.max(0, topInset - noticeReserve);
+  return topInset - noticeReserve;
 }
 
 /**

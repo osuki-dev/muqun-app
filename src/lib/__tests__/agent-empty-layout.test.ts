@@ -30,18 +30,20 @@ describe('emptyCardTopReserve', () => {
     expect(emptyCardTopReserve(132, 0)).toBe(132);
   });
 
-  test('is what the notice reserve has not already given', () => {
+  test('gives the notice reserve back, so a notice never moves the card', () => {
     expect(emptyCardTopReserve(132, 40)).toBe(92);
+    // A notice taller than the header inset: the margin goes negative and the
+    // card's band still starts at the header.
+    expect(emptyCardTopReserve(132, 180)).toBe(-48);
   });
 
-  test('never counts the header twice: a notice past the inset takes over', () => {
-    // The bug: 132 + 181 of padding for a notice whose bottom edge is at 181,
-    // which is what put the card in the lower half of the screen.
-    expect(emptyCardTopReserve(132, 181)).toBe(0);
-  });
-
-  test('never returns a negative padding', () => {
-    expect(emptyCardTopReserve(0, 400)).toBe(0);
+  test('never counts the header twice: the notice reserve is taken back in full', () => {
+    // The old bug was 132 + 181 of padding for a notice whose bottom edge is
+    // at 181, which put the card in the lower half of the screen. The reserve
+    // is subtracted in full, so the transcript area's own padding plus this
+    // margin always comes to the header inset.
+    expect(181 + emptyCardTopReserve(132, 181)).toBe(132);
+    expect(400 + emptyCardTopReserve(0, 400)).toBe(0);
   });
 });
 
@@ -82,7 +84,7 @@ describe('the card centres between the header and the composer', () => {
       expect(centre).toBeCloseTo((topInset + (phone.height - dockHeight)) / 2, 5);
     });
 
-    test(`${phone.name}: a notice past the inset moves the card by its overhang`, () => {
+    test(`${phone.name}: a notice, even one past the inset, does not move the card`, () => {
       const topInset = 132;
       const dockHeight = 176;
       const noticeReserve = 181;
@@ -93,7 +95,7 @@ describe('the card centres between the header and the composer', () => {
         dockHeight,
         bottomInset: 0,
       });
-      expect(centre).toBeCloseTo((noticeReserve + (phone.height - dockHeight)) / 2, 5);
+      expect(centre).toBeCloseTo((topInset + (phone.height - dockHeight)) / 2, 5);
     });
 
     test(`${phone.name}: a taller composer lowers the top of the card by half its growth`, () => {

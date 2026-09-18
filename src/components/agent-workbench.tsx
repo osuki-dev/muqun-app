@@ -351,7 +351,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     while a notice opens and closes rather than jumping the difference.
   */
   const emptyReserveStyle = useAnimatedStyle(() => ({
-    paddingTop: emptyCardTopReserve(topInset, noticeReserve.value),
+    marginTop: emptyCardTopReserve(topInset, noticeReserve.value),
   }));
 
   /**
