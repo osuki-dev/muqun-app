@@ -15,6 +15,7 @@ import {
   selectGateway,
   updateGateway,
   type GatewayRecord,
+  persistSelectedGateway,
 } from '@/lib/gateway-storage';
 
 interface GatewayConnectionState {
@@ -25,6 +26,16 @@ interface GatewayConnectionState {
   hydrate: () => Promise<void>;
   setRecord: (record: GatewayRecord | null) => void;
   selectRecord: (serverId: string) => Promise<boolean>;
+  /**
+   * Select a record that is already in memory, this tick.
+   *
+   * Home has every record loaded when it draws its cards, so a card's action
+   * has nothing to wait for: the gateway client is configured from that
+   * record before this returns, and the choice is written to storage in the
+   * background. `false` when the id is not among the loaded records (a stale
+   * card), in which case the caller falls back to `selectRecord`.
+   */
+  selectRecordNow: (serverId: string) => boolean;
   /** Enter the offline demo. The demo record is never persisted. */
   enterDemo: () => void;
   renameRecord: (serverId: string, label: string) => Promise<void>;
@@ -131,6 +142,21 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     selectionRequestId += 1;
     configureGateway(demoRecord);
     set({ record: demoRecord, loading: false, hydrationError: null });
+  },
+
+  selectRecordNow(serverId) {
+    const record = get().records.find((item) => item.serverId === serverId);
+    if (!record) return false;
+    // Bumping the counter makes any select still in the queue give way to
+    // this one, the same rule the async path applies to itself.
+    selectionRequestId += 1;
+    configureGateway(record);
+    set({ record, loading: false, hydrationError: null });
+    void enqueue(() => persistSelectedGateway(record.serverId)).catch(() => {
+      // The selection is live in memory; a storage hiccup only costs the next
+      // launch its memory of it, which hydrate() then resolves as it always has.
+    });
+    return true;
   },
 
   async selectRecord(serverId) {

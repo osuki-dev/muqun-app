@@ -45,7 +45,7 @@ export function NewTaskAction({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
-  const { selectRecord } = useGatewayRecord();
+  const { selectRecord, selectRecordNow } = useGatewayRecord();
   const capabilities = useServerCapabilities((s) => s.byServer[serverId]);
 
   const endpointUrl = server ? effectiveGatewayBaseUrl(server) : undefined;
@@ -162,12 +162,21 @@ export function NewTaskAction({
   // second server's OpenCode. The switch is awaited, and the route carries the
   // server id so the screen can refuse to mount on any other.
   const handlePress = useCallback(() => {
+    // The card only exists once this server's OpenCode answered, so its record
+    // is already in memory: the switch is made in this tick and the screen
+    // opens on it in the same one. The awaited path is for a record that is
+    // somehow not loaded any more, and a screen that never opens is the
+    // right outcome when even that fails.
+    if (selectRecordNow(serverId)) {
+      router.push({ pathname: '/agent', params: { server: serverId } });
+      return;
+    }
     void (async () => {
       const selected = await selectRecord(serverId);
       if (!selected) return;
       router.push({ pathname: '/agent', params: { server: serverId } });
     })();
-  }, [selectRecord, serverId, router]);
+  }, [selectRecordNow, selectRecord, serverId, router]);
 
   /**
    * The setup sheet is a route now, so "check again" runs over there and this

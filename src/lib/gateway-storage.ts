@@ -256,6 +256,16 @@ export async function loadGateway(): Promise<GatewayRecord | null> {
   return records.find((record) => record.serverId === selectedServerId) ?? records[0];
 }
 
+/**
+ * Remember which record is selected, and nothing else.
+ *
+ * The selection itself can be made from the records already in memory; this
+ * is the write that makes it survive a relaunch, done after the fact.
+ */
+export async function persistSelectedGateway(serverId: string): Promise<void> {
+  await SecureStore.setItemAsync(SELECTED_RECORD_ID, serverId, STORAGE_OPTIONS);
+}
+
 export async function selectGateway(serverId: string): Promise<GatewayRecord | null> {
   const records = await loadGateways();
   const record = records.find((item) => item.serverId === serverId) ?? null;
