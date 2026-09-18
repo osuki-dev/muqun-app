@@ -15,6 +15,7 @@ import {
   heroRectEdge,
   heroSilhouetteEdge,
   heroSilhouetteRadii,
+  isMeasurableHeroUri,
   HERO_EDGE_HARMONICS,
   HERO_EDGE_MODE,
   HERO_EDGE_OVERSHOOT_ALLOWANCE,
@@ -316,6 +317,23 @@ describe('heroEdgeAmount', () => {
         previous = reach;
       }
     }
+  });
+});
+
+describe('isMeasurableHeroUri', () => {
+  test('a themed launch draws a file the app owns, and that can be read', () => {
+    expect(isMeasurableHeroUri('file:///data/user/0/dev.osuki.muqun/files/a.webp')).toBe(true);
+    expect(isMeasurableHeroUri('https://example.test/hero.png')).toBe(true);
+    expect(isMeasurableHeroUri('content://media/external/images/1')).toBe(true);
+  });
+
+  test('an unthemed one draws a compiled resource, whose name opens nothing', () => {
+    // And so keeps the opening it has always had, rather than a rim around a
+    // box that may be mostly margin.
+    expect(isMeasurableHeroUri('splashscreen_logo')).toBe(false);
+    expect(isMeasurableHeroUri(undefined)).toBe(false);
+    expect(isMeasurableHeroUri(null)).toBe(false);
+    expect(isMeasurableHeroUri('')).toBe(false);
   });
 });
 

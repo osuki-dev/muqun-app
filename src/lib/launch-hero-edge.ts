@@ -450,6 +450,25 @@ export function heroEdgeAmount(front: number, max: number, scale: number): numbe
 }
 
 /**
+ * Whether the picture behind this URI is one the app can actually read.
+ *
+ * A themed launch draws a file the app downloaded and owns. An unthemed one
+ * draws a compiled drawable, and what the splash mirror hands over for that is
+ * the resource's *name* -- nothing can open it, so nothing can measure it.
+ *
+ * The distinction is not only about the measurement. It decides the fallback
+ * too: a picture that could be measured and has not been yet is known to fill
+ * the box it is drawn in, because every launch image is contained in a box
+ * built for it, so the box is a fair stand-in. A compiled mark is not -- it
+ * may be a small badge with a wide margin, and drawing a rim around the margin
+ * would be a worse guess than the circle the opening used to draw. So the
+ * unreadable case keeps the old behaviour exactly.
+ */
+export function isMeasurableHeroUri(uri: string | undefined | null): uri is string {
+  return typeof uri === 'string' && /^(file|content|https?|asset|data):/.test(uri);
+}
+
+/**
  * Which edge the opening draws, given what it knows so far.
  *
  * Three rules, and the last is the one that matters:
