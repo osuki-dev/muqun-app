@@ -1,7 +1,19 @@
 import { useRouter } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AgentSessionsSheet } from '@/components/agent-sessions-sheet';
+import { listAgentSessions, type AgentSessionInfo } from '@/lib/agent-session';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
+
+/**
+ * How many of the host's root sessions the sheet asks for.
+ *
+ * The workbench's own list is scoped to the workspace on screen and capped at
+ * what a chip strip can draw. This is the other question -- "everything on
+ * this host" -- and a cap that small would cut a busy host's older workspaces
+ * out of the one place they can be found.
+ */
+const HOST_SESSION_LIMIT = 200;
 
 /**
  * The all-sessions sheet route: the state, and nothing else.
@@ -23,10 +35,43 @@ export default function AgentSessionsScreen() {
   const activeProject = useAgentSheetBridge((state) => state.activeProject);
   const models = useAgentSheetBridge((state) => state.models);
   const actions = useAgentSheetBridge((state) => state.actions);
+  const sessionId = useAgentSheetBridge((state) => state.sessionId);
+
+  // The bridge carries the workbench's list, which is one workspace's. "All
+  // workspaces" showed exactly that list and so never showed another
+  // workspace at all. The host-wide listing is read here, once per opening;
+  // it is ETag-cached, so a second opening costs a 304.
+  const [hostSessions, setHostSessions] = useState<readonly AgentSessionInfo[]>([]);
+  useEffect(() => {
+    let live = true;
+    void listAgentSessions(sessionId || undefined, {
+      roots: true,
+      limit: HOST_SESSION_LIMIT,
+      order: 'desc',
+    }).then((list) => {
+      if (live) setHostSessions(list);
+    });
+    return () => {
+      live = false;
+    };
+  }, [sessionId]);
+
+  // The workbench's rows first: they are live (renames, deletes and streamed
+  // titles land there), and the sheet keeps the first row it sees per session.
+  // A session the workbench has just deleted must not come back from the
+  // host listing taken a moment earlier, so rows of the workspace on screen
+  // are taken from the workbench alone.
+  const merged = useMemo(() => {
+    if (hostSessions.length === 0) return sessions;
+    const others = hostSessions.filter(
+      (session) => !activeDirectory || session.directory !== activeDirectory
+    );
+    return [...sessions, ...others];
+  }, [activeDirectory, hostSessions, sessions]);
 
   return (
     <AgentSessionsSheet
-      sessions={sessions}
+      sessions={merged}
       activeAsid={activeAsid}
       knownProjects={knownProjects}
       activeDirectory={activeDirectory}
