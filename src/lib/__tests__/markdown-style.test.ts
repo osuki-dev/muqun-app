@@ -26,7 +26,7 @@ mockModule('react-native', () => ({
   StyleSheet: { hairlineWidth: 0.5 },
 }));
 
-const { createMarkdownStyle } = await import('../markdown-style');
+const { createMarkdownStyle, createThoughtMarkdownStyle } = await import('../markdown-style');
 
 const MODES = ['light', 'dark'] as const;
 
@@ -52,6 +52,46 @@ describe('createMarkdownStyle', () => {
         // renderer's defaults for the rest, and this keeps it that way.
         expect(Object.keys(style.math ?? {}).sort()).toEqual(['backgroundColor', 'color']);
         expect(Object.keys(style.inlineMath ?? {})).toEqual(['color']);
+      });
+    }
+  }
+});
+
+// A thought reads the same markdown as the answer, in the muted ink: every
+// block that carries its own colour goes muted with the paragraph, while the
+// fills a fragment needs to be legible on -- code, quote -- stay the answer's.
+describe('createThoughtMarkdownStyle', () => {
+  for (const pack of THEME_PACKS) {
+    for (const mode of MODES) {
+      const colors = pack[mode].colors;
+      const prose = createMarkdownStyle(colors);
+      const thought = createThoughtMarkdownStyle(colors);
+
+      test(`${pack.id} ${mode}: every ink is the muted colour`, () => {
+        for (const key of [
+          'paragraph',
+          'h1',
+          'h2',
+          'h3',
+          'list',
+          'blockquote',
+          'code',
+          'codeBlock',
+          'strong',
+          'em',
+        ] as const) {
+          expect((thought[key] as { color?: string } | undefined)?.color).toBe(colors.textMuted);
+        }
+      });
+
+      test(`${pack.id} ${mode}: the fills are the answer's`, () => {
+        expect(thought.codeBlock?.backgroundColor).toBe(prose.codeBlock?.backgroundColor);
+        expect(thought.blockquote?.backgroundColor).toBe(prose.blockquote?.backgroundColor);
+      });
+
+      test(`${pack.id} ${mode}: it is set smaller than the answer`, () => {
+        expect(thought.paragraph?.fontSize).toBeLessThan(prose.paragraph?.fontSize ?? 0);
+        expect(thought.h1?.fontSize).toBeLessThan(prose.h1?.fontSize ?? 0);
       });
     }
   }

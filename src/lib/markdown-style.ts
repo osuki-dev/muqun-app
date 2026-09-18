@@ -52,6 +52,48 @@ function syntaxColors(colors: Colors): NonNullable<MarkdownStyle['codeBlock']>['
  * The app's one markdown theme. Shared with the asset viewer so a document read
  * from a file looks the same as the transcript it was mentioned in.
  */
+/**
+ * The style a thought block reads its reasoning in.
+ *
+ * The same markdown as the answer -- a model numbers its plans and backticks
+ * its identifiers while it thinks, and a flat run of those was the complaint --
+ * but in the muted ink and at the meta size, so it stays a note beside the
+ * answer rather than a second answer. Every block that carries its own colour
+ * goes muted with the paragraph; code and quote fills stay, they are what make
+ * a fragment legible.
+ */
+export function createThoughtMarkdownStyle(colors: Colors): MarkdownStyle {
+  const base = createMarkdownStyle(colors);
+  const muted = colors.textMuted;
+  const size = AGENT_TYPE.meta.size;
+  const lineHeight = AGENT_TYPE.mono.lineHeight;
+  const quiet = { color: muted, fontSize: size, lineHeight, marginBottom: 6 };
+  return {
+    ...base,
+    paragraph: { ...base.paragraph, ...quiet },
+    h1: { ...base.h1, ...quiet, fontSize: size + 1, lineHeight: lineHeight + 1 },
+    h2: { ...base.h2, ...quiet },
+    h3: { ...base.h3, ...quiet },
+    h4: { ...base.h4, ...quiet },
+    h5: { ...base.h5, ...quiet },
+    h6: { ...base.h6, ...quiet },
+    strong: { color: muted },
+    em: { color: muted },
+    list: { ...base.list, ...quiet },
+    blockquote: { ...base.blockquote, ...quiet },
+    code: { ...base.code, color: muted, fontSize: AGENT_TYPE.micro.size },
+    codeBlock: {
+      ...base.codeBlock,
+      color: muted,
+      fontSize: AGENT_TYPE.micro.size,
+      lineHeight: AGENT_TYPE.micro.lineHeight,
+      marginBottom: 8,
+    },
+    table: { ...base.table, ...quiet, headerTextColor: muted },
+    thematicBreak: { color: 'transparent', height: 0, marginTop: 0, marginBottom: 0 },
+  };
+}
+
 export function createMarkdownStyle(colors: Colors): MarkdownStyle {
   const text = colors.text;
   const muted = colors.textMuted;

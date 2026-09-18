@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState, memo } from 'react';
+import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { ChevronDown } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
+import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { formatThoughtDuration } from '@/lib/agent-reasoning';
 import { withAlpha } from '@/lib/color';
+import { createThoughtMarkdownStyle } from '@/lib/markdown-style';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /** How often a live count updates. A tenth of a second reads as a stopwatch. */
@@ -41,6 +43,7 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const plate = useTranscriptPlate();
+  const markdownStyle = useMemo(() => createThoughtMarkdownStyle(theme.colors), [theme.colors]);
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   /**
@@ -127,13 +130,14 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
           {/* The quote rule stands inside the plate, inset like a blockquote's,
               not on the plate's edge where it reads as a border. */}
           <View style={[styles.quote, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
-            <Text
-              selectable
-              variant="caption"
-              color={theme.colors.textMuted}
-              style={styles.reasoningText}>
-              {text}
-            </Text>
+            {/* Reasoning is markdown like the answer: numbered plans, backticked
+                names, the odd heading. It read as one flat italic run before. */}
+            <BoundedMarkdown
+              markdown={text}
+              markdownStyle={markdownStyle}
+              containerStyle={styles.reasoningBody}
+              openLinks={false}
+            />
           </View>
         </Animated.View>
       ) : null}
@@ -173,9 +177,8 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     borderLeftWidth: 1.5,
   },
-  reasoningText: {
-    fontSize: AGENT_TYPE.meta.size,
-    lineHeight: AGENT_TYPE.mono.lineHeight,
-    fontStyle: 'italic',
+  reasoningBody: {
+    // The last paragraph's margin is the plate's bottom padding.
+    marginBottom: -6,
   },
 });
