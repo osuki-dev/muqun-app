@@ -8,6 +8,7 @@ import {
   MAX_SEEN_NOTICES,
   noticeFromPush,
   noticePresentation,
+  noticeTitleParts,
   type InAppNotice,
   type NoticeQueue,
 } from '../in-app-notifications';
@@ -229,5 +230,37 @@ describe('approval notices', () => {
       seen: ['b'],
     };
     expect(dismissNoticeKind(queue, 'approval')).toBe(queue);
+  });
+});
+
+describe('notice title', () => {
+  test("the gateway's middle dot separates the event from where it happened", () => {
+    expect(noticeTitleParts('Agent done \u00b7 osk')).toEqual({
+      lead: 'Agent done',
+      suffix: 'osk',
+    });
+  });
+
+  test('only the first separator counts, so a suffix keeps its own dots', () => {
+    expect(noticeTitleParts('Agent done \u00b7 osk \u00b7 claude')).toEqual({
+      lead: 'Agent done',
+      suffix: 'osk \u00b7 claude',
+    });
+  });
+
+  test('a title with no separator is drawn whole, in one weight', () => {
+    expect(noticeTitleParts('Approval required')).toEqual({
+      lead: 'Approval required',
+      suffix: '',
+    });
+    expect(noticeTitleParts('')).toEqual({ lead: '', suffix: '' });
+  });
+
+  test('a separator with nothing on one side of it is not a split', () => {
+    expect(noticeTitleParts('Agent done \u00b7 ')).toEqual({
+      lead: 'Agent done \u00b7',
+      suffix: '',
+    });
+    expect(noticeTitleParts(' \u00b7 osk')).toEqual({ lead: '\u00b7 osk', suffix: '' });
   });
 });

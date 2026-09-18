@@ -94,3 +94,38 @@ export function noticeFromPush(
 export function noticePresentation(enabled: boolean, active: boolean) {
   return { inApp: enabled && active, system: enabled && !active };
 }
+
+/**
+ * The separator the gateway puts between what happened and where.
+ *
+ * A push arrives titled "Agent done · osk": one sentence of subject and one
+ * word of provenance, joined by a middle dot. The banner draws them as two
+ * weights on one line rather than as one string, so the eye reaches the event
+ * first and the machine second.
+ */
+const TITLE_SEPARATOR = ' · ';
+
+export interface NoticeTitleParts {
+  /** What happened. Always the whole title when there is nothing to split. */
+  lead: string;
+  /** Where it happened, if the sender said. Empty otherwise. */
+  suffix: string;
+}
+
+/**
+ * Splits a notice title into the event and its quiet suffix.
+ *
+ * Only the first separator counts: a title with two dots in it is an event
+ * whose own name contains one, and breaking it at the second would put half a
+ * sentence in the muted face. Nothing is invented -- a title with no separator
+ * comes back whole, with no suffix, and the banner draws one weight.
+ */
+export function noticeTitleParts(title: string): NoticeTitleParts {
+  const at = title.indexOf(TITLE_SEPARATOR);
+  const whole = { lead: title.trim(), suffix: '' };
+  if (at < 0) return whole;
+  const lead = title.slice(0, at).trim();
+  const suffix = title.slice(at + TITLE_SEPARATOR.length).trim();
+  if (!lead || !suffix) return whole;
+  return { lead, suffix };
+}
