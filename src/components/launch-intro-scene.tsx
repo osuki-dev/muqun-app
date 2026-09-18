@@ -1,22 +1,14 @@
 import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import {
-  Canvas,
-  ColorShader,
-  Fill,
-  ImageShader,
-  Shader,
-  Skia,
-  useClock,
-  useImage,
-} from '@shopify/react-native-skia';
+import { Canvas, Fill, Shader, Skia } from '@shopify/react-native-skia';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
   StyleSheet,
+  Text,
   useWindowDimensions,
   View,
   type LayoutChangeEvent,
@@ -44,21 +36,18 @@ import { useThemePack } from '@/hooks/use-theme-pack';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import {
   BLOOM_CHROMA,
+  BLOOM_DRIFT,
   BLOOM_GLOW_IN,
   BLOOM_GLOW_OUT,
+  BLOOM_GLOW_STRENGTH,
   BLOOM_MODE,
   BLOOM_RIM_WIDTH,
+  bloomSlack,
   BLOOM_WOBBLE,
   LAUNCH_BLOOM_EFFECT,
 } from '@/lib/launch-bloom-shader';
 import { subscribeLaunchHeroRect, type LaunchHeroRect } from '@/lib/launch-hero-rect';
-import {
-  characterOpacity,
-  cursorOpacity,
-  launchPromptLine,
-  scrimWidth,
-  typedCount,
-} from '@/lib/launch-intro-prompt';
+import { cursorOpacity, launchPromptLine, scrimWidth, typedCount } from '@/lib/launch-intro-prompt';
 import {
   BLOOM_OVERSHOOT,
   canSkipLaunchIntro,
@@ -66,7 +55,7 @@ import {
   reducedLaunchIntroTimeline,
   WORLD_ARRIVAL_ZOOM,
 } from '@/lib/launch-intro-timeline';
-import { bloomRadius, chooseLaunchWorld, worldFit } from '@/lib/launch-intro-world';
+import { bloomRadius, chooseLaunchWorld } from '@/lib/launch-intro-world';
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveThemeImage } from '@/theme/resolve';
@@ -153,14 +142,30 @@ import { resolveThemeImage } from '@/theme/resolve';
  * file is the drawing.
  */
 
-/** The two trailing copies of the hero, as a fraction of the travel they lag by. */
-const GHOST_LAG = [0.1, 0.19] as const;
+/**
+ * The two trailing copies of the hero, as a fraction of the travel they lag by.
+ *
+ * Further behind than the first cut of this, where the lag was re-normalised
+ * over the remaining travel and the ghosts ended up six percent behind the
+ * hero -- thirty points on a six-hundred-point journey, which at a quarter
+ * opacity is invisible. A smear has to be far enough behind to be a second
+ * image and near enough to be the same one.
+ */
+const GHOST_LAG = [0.16, 0.3] as const;
 
 /** And how solid each is at its most visible. Falling, so the trail has a direction. */
 const GHOST_OPACITY = [0.26, 0.12] as const;
 
-/** Where the front rests before it takes off, as a fraction of the picture's box. */
-const REST_RADIUS_FRACTION = 0.54;
+/**
+ * Where the front rests before it takes off, as a fraction of the picture's box.
+ *
+ * It has to read as a ring *around the hero*, which means it has to sit just
+ * outside the drawn artwork and nowhere near the edges of the screen. The
+ * launch box is `contain`, so the picture fills rather less of it than its
+ * width suggests, and half the box was far too big -- the opening began with a
+ * ring a third of the screen across, which is a shape rather than a halo.
+ */
+const REST_RADIUS_FRACTION = 0.34;
 
 /** How far the resting ring swells and shrinks while it waits for the painting. */
 const BREATH = { low: 0.0, high: 0.055 } as const;
@@ -177,8 +182,12 @@ const MONO_ADVANCE = 0.6;
 /** The scrim's padding around the line, in points. */
 const PROMPT_SCRIM_PADDING = 10;
 
-/** How opaque the scrim under the line is. Enough to read on a painting, not a plate. */
-const PROMPT_SCRIM_OPACITY = 0.44;
+/**
+ * How opaque the scrim under the line is. Enough to read on a painting, not a
+ * plate -- and a pack's lower third can be anything, so this is set for the
+ * worst case rather than the pack it was tuned on.
+ */
+const PROMPT_SCRIM_OPACITY = 0.55;
 
 /** The block cursor's height, as a fraction of the type size. */
 const CURSOR_HEIGHT = 1.18;
@@ -230,11 +239,27 @@ export function LaunchSceneIntro({
 
   // The picture's box on the launch screen the OS drew. The mirror centres it
   // in the window, so this is a size rather than a rectangle.
+  const launchBoxFallback = Math.min(width * LAUNCH_HERO_WIDTH_FRACTION, LAUNCH_HERO_MAX_WIDTH);
   const launchBox = Math.min(
-    points(mirror.logo.style.width, width * LAUNCH_HERO_WIDTH_FRACTION),
-    points(mirror.logo.style.height, LAUNCH_HERO_MAX_WIDTH)
+    points(mirror.logo.style.width, launchBoxFallback),
+    points(mirror.logo.style.height, launchBoxFallback)
   );
   const launchCentre = { x: width / 2, y: height / 2 };
+  // The picture's box on screen, which the mirror centres in the window. Given
+  // explicitly rather than by a full-bleed centring layer: three of those --
+  // the hero and its two ghosts, two of them carrying an opacity -- are three
+  // screen-sized things for the compositor to blend on every frame of the
+  // opening, and the picture is a fifth of the screen.
+  const heroBox = {
+    width: points(mirror.logo.style.width, launchBoxFallback),
+    height: points(mirror.logo.style.height, launchBoxFallback),
+  };
+  const heroFrame = {
+    left: launchCentre.x - heroBox.width / 2,
+    top: launchCentre.y - heroBox.height / 2,
+    width: heroBox.width,
+    height: heroBox.height,
+  };
   const landingCentre = homeRect
     ? { x: homeRect.x + homeRect.width / 2, y: homeRect.y + homeRect.height / 2 }
     : launchCentre;
@@ -261,10 +286,13 @@ export function LaunchSceneIntro({
   const wallpaperUri = wallpaper ? assets?.[wallpaper.asset] : undefined;
   const hasArtwork = Boolean(wallpaperUri?.startsWith('file:///'));
 
-  // Skia's own decode. `useImage` takes the same `file:///` path `HomeHero`
-  // gives it, and hands back the decoded `SkImage` a commit later.
-  const skiaSource = hasArtwork && LAUNCH_BLOOM_EFFECT ? wallpaperUri : undefined;
-  const image = useImage(skiaSource);
+  // The painting is an ordinary image layer under the canvas, not something
+  // the shader samples -- see the note atop `launch-bloom-shader.ts`. That is
+  // why readiness is `expo-image`'s `onLoad` rather than a second decode of
+  // our own: Home is about to draw this exact file through the same loader, so
+  // a cold start now decodes the pack's wallpaper once instead of twice.
+  const [imageReady, setImageReady] = useState(false);
+  const onImageSettled = useCallback(() => setImageReady(true), []);
 
   // The front will not wait past the budget. Armed on the handover rather than
   // on mount, because the handover is when the reader starts counting.
@@ -279,22 +307,9 @@ export function LaunchSceneIntro({
   const world = chooseLaunchWorld({
     hasArtwork,
     shaderCompiled: LAUNCH_BLOOM_EFFECT !== null,
-    imageReady: image !== null,
+    imageReady,
     deadlinePassed,
   });
-
-  // How the painting sits on this screen. Unchanging for the whole opening, so
-  // it is computed here rather than per frame in the worklet.
-  const fit = useMemo(
-    () =>
-      worldFit(
-        { width, height },
-        { width: image?.width() ?? 1, height: image?.height() ?? 1 },
-        wallpaper?.fit,
-        wallpaper?.focalPoint
-      ),
-    [width, height, image, wallpaper?.fit, wallpaper?.focalPoint]
-  );
 
   // The far corner from wherever the hero is, taken over both ends of its
   // travel: the front has to have covered the screen at the end of the beat no
@@ -330,7 +345,6 @@ export function LaunchSceneIntro({
   const blink = useSharedValue(0);
   const hold = useSharedValue(0);
   const exit = useSharedValue(0);
-  const clock = useClock();
 
   // When the handover happened, for the skip gate. A ref rather than state:
   // reading it must not re-render the sheet mid-sequence.
@@ -346,6 +360,18 @@ export function LaunchSceneIntro({
   // late, and only a painting makes the front wait.
   const revealReady = world.kind !== 'painted' || world.ready;
 
+  // Once the front has passed the far corner the cover has nothing left to
+  // cover, and a full-screen layer the compositor blends for no reason is not
+  // free -- least of all on a device without a GPU. So the canvas leaves, and
+  // what is left is the image layer it was uncovering. One state change at the
+  // end of one animation, not a per-frame read.
+  //
+  // Only for a painted world: for a palette pack the canvas *is* the world and
+  // has to stay, which costs nothing because nothing is animating by then and
+  // Skia does not redraw a canvas whose uniforms have stopped changing.
+  const [frontGone, setFrontGone] = useState(false);
+  const onFrontGone = useCallback(() => setFrontGone(true), []);
+
   useEffect(() => {
     if (phase === 'visible') {
       startedAt.current = Date.now();
@@ -355,6 +381,7 @@ export function LaunchSceneIntro({
         ignite.value = 1;
         bloom.value = 1;
         settle.value = 1;
+        setFrontGone(true);
         hero.value = 1;
         type.value = 1;
         blink.value = 1;
@@ -411,7 +438,12 @@ export function LaunchSceneIntro({
       DURATION.short,
       beats.bloom.at + beats.bloom.ms - Math.max(elapsed, beats.bloom.at)
     );
-    bloom.value = withDelay(delay, withTiming(1, timing(remaining)));
+    bloom.value = withDelay(
+      delay,
+      withTiming(1, timing(remaining), (finished) => {
+        if (finished) scheduleOnRN(onFrontGone);
+      })
+    );
     settle.value = withDelay(delay, withTiming(1, timing(beats.settle.ms)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, revealReady, reduced]);
@@ -426,36 +458,36 @@ export function LaunchSceneIntro({
         ? BLOOM_MODE.painted
         : BLOOM_MODE.waiting;
   const worldAlpha = wallpaper?.opacity ?? 1;
-  const fitScale = fit.scale;
-  const fitX = fit.x;
-  const fitY = fit.y;
 
   // Every uniform, once per frame, on the UI thread. JavaScript does nothing
   // here at all: the shared values below are the only things that change.
-  const uniforms = useDerivedValue(() => ({
-    uResolution: [width, height],
-    uCentre: [
-      launchCentre.x + (landingCentre.x - launchCentre.x) * hero.value,
-      launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value,
-    ],
-    uWorldOrigin: [fitX, fitY],
-    uWorldScale: fitScale,
-    uZoom: WORLD_ARRIVAL_ZOOM + (1 - WORLD_ARRIVAL_ZOOM) * settle.value,
-    uFront: restRadius + (maxRadius * BLOOM_OVERSHOOT - restRadius) * bloom.value,
-    uWobble: BLOOM_WOBBLE,
-    uTime: clock.value / 1000,
-    uRimWidth: BLOOM_RIM_WIDTH,
-    uGlowIn: BLOOM_GLOW_IN,
-    uGlowOut: BLOOM_GLOW_OUT,
-    uChroma: BLOOM_CHROMA * ignite.value,
-    uMode: mode,
-    uWorldAlpha: worldAlpha,
-    uDrift: 1 - settle.value,
-    uPaper: paperVector,
-    uPrimary: primaryVector,
-    uRimColor: [rimVector[0] ?? 1, rimVector[1] ?? 1, rimVector[2] ?? 1, ignite.value],
-    uSurface: rimVector,
-  }));
+  const uniforms = useDerivedValue(() => {
+    const front = restRadius + (maxRadius * BLOOM_OVERSHOOT - restRadius) * bloom.value;
+    return {
+      uResolution: [width, height],
+      uCentre: [
+        launchCentre.x + (landingCentre.x - launchCentre.x) * hero.value,
+        launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value,
+      ],
+      uFront: front,
+      uWobble: BLOOM_WOBBLE,
+      uSlack: bloomSlack(front),
+      // The drift rides the bloom rather than a clock, so the canvas stops
+      // redrawing the moment the animation stops rather than at unmount.
+      uTime: bloom.value * BLOOM_DRIFT,
+      uRimWidth: BLOOM_RIM_WIDTH,
+      uGlowIn: BLOOM_GLOW_IN,
+      uGlowOut: BLOOM_GLOW_OUT,
+      uGlowStrength: BLOOM_GLOW_STRENGTH,
+      uChroma: BLOOM_CHROMA * ignite.value,
+      uMode: mode,
+      uDrift: 1 - settle.value,
+      uPaper: paperVector,
+      uPrimary: primaryVector,
+      uRimColor: [rimVector[0] ?? 1, rimVector[1] ?? 1, rimVector[2] ?? 1, ignite.value],
+      uSurface: rimVector,
+    };
+  });
 
   const sheetStyle = useAnimatedStyle(() => ({ opacity: 1 - exit.value }));
   const heroStyle = useAnimatedStyle(() => ({
@@ -466,30 +498,60 @@ export function LaunchSceneIntro({
     ],
   }));
 
-  const showCanvas = world.kind === 'painted' || world.kind === 'palette';
+  // The arrival zoom is a transform on the image layer now, not a matrix
+  // inside a sampler: one composited scale instead of per-pixel arithmetic.
+  const worldStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: WORLD_ARRIVAL_ZOOM + (1 - WORLD_ARRIVAL_ZOOM) * settle.value }],
+  }));
+
+  const showWorldImage = world.kind === 'painted' && Boolean(wallpaperUri);
+  const showCanvas = world.kind === 'palette' || (world.kind === 'painted' && !frontGone);
 
   return (
     <Animated.View style={[mirror.container.style, sheetStyle]}>
       {/* The paper, which is the pack's own and is under everything. */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: paper }]} />
 
+      {/*
+        The world itself, drawn the way Home draws it. It is under the cover
+        from the first frame, so it is loading and decoding while the rim is
+        still breathing, and the front does not reveal it until `onLoad` says
+        there is something to reveal.
+      */}
+      {showWorldImage && wallpaperUri ? (
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, worldStyle]}>
+          <Image
+            accessible={false}
+            autoplay={false}
+            cachePolicy="memory"
+            contentFit={wallpaper?.fit === 'tile' ? 'contain' : (wallpaper?.fit ?? 'cover')}
+            contentPosition={
+              wallpaper?.focalPoint
+                ? {
+                    left: `${wallpaper.focalPoint.x * 100}%`,
+                    top: `${wallpaper.focalPoint.y * 100}%`,
+                  }
+                : 'center'
+            }
+            onError={onImageSettled}
+            onLoad={onImageSettled}
+            source={{ uri: wallpaperUri }}
+            style={[StyleSheet.absoluteFill, { opacity: worldAlpha }]}
+          />
+        </Animated.View>
+      ) : null}
+
+      {/*
+        The cover, with the hole in it. `androidWarmup` pays the GL context
+        cost while the native splash is still up rather than on the first frame
+        anybody sees; the canvas itself has been drawing (invisibly, under that
+        splash) since the first commit, so the SkSL program is compiled and
+        warm long before the front starts to move.
+      */}
       {showCanvas && LAUNCH_BLOOM_EFFECT ? (
-        // Opaque on purpose: the shader paints the paper outside the front
-        // itself, so there is nothing for the compositor to blend and the
-        // surface can be promoted. `androidWarmup` pays the context cost while
-        // the native splash is still up rather than on the first drawn frame.
-        <Canvas androidWarmup opaque style={StyleSheet.absoluteFill}>
+        <Canvas androidWarmup style={StyleSheet.absoluteFill}>
           <Fill>
-            <Shader source={LAUNCH_BLOOM_EFFECT} uniforms={uniforms}>
-              {image ? (
-                // No rect and no fit, so the local matrix is identity and the
-                // shader samples the painting in its own pixels -- which is
-                // what `worldFit`'s scale and origin are expressed in.
-                <ImageShader image={image} />
-              ) : (
-                <ColorShader color={paper} />
-              )}
-            </Shader>
+            <Shader source={LAUNCH_BLOOM_EFFECT} uniforms={uniforms} />
           </Fill>
         </Canvas>
       ) : null}
@@ -513,11 +575,12 @@ export function LaunchSceneIntro({
       <LaunchPrompt
         blink={blink}
         bottom={height * PROMPT_BOTTOM_FRACTION}
-        characters={characters}
         characterWidth={characterWidth}
         exit={exit}
         fontFamily={fonts.mono ?? FALLBACK_MONO}
         fontSize={promptSize}
+        line={line}
+        lineWidth={characterWidth * characters.length}
         onLineLayout={onLineLayout}
         scrimColor={paper}
         scrimFullWidth={scrimFullWidth}
@@ -540,6 +603,7 @@ export function LaunchSceneIntro({
           {GHOST_LAG.map((lag, index) => (
             <HeroGhost
               key={lag}
+              frame={heroFrame}
               hero={hero}
               lag={lag}
               landingCentre={landingCentre}
@@ -549,9 +613,7 @@ export function LaunchSceneIntro({
               peak={GHOST_OPACITY[index] ?? 0}
             />
           ))}
-          <Animated.View
-            pointerEvents="none"
-            style={[StyleSheet.absoluteFill, styles.centre, heroStyle]}>
+          <Animated.View pointerEvents="none" style={[styles.hero, heroFrame, heroStyle]}>
             <Animated.Image {...mirror.logo} style={mirror.logo.style} />
           </Animated.View>
         </>
@@ -593,6 +655,7 @@ export function LaunchSceneIntro({
  * settles into Home's band is one picture and not three.
  */
 function HeroGhost({
+  frame,
   hero,
   lag,
   landingCentre,
@@ -601,6 +664,7 @@ function HeroGhost({
   logo,
   peak,
 }: {
+  frame: { left: number; top: number; width: number; height: number };
   hero: SharedValue<number>;
   lag: number;
   landingCentre: { x: number; y: number };
@@ -610,9 +674,12 @@ function HeroGhost({
   peak: number;
 }) {
   const style = useAnimatedStyle(() => {
-    const behind = Math.max(0, hero.value - lag) / Math.max(0.001, 1 - lag);
+    // The same journey, started later -- not the same journey compressed,
+    // which is what re-normalising the remainder would do and is why the
+    // first version of this had no visible trail at all.
+    const behind = Math.max(0, hero.value - lag);
     return {
-      opacity: interpolate(hero.value, [0, 0.12, 0.62, 1], [0, peak, peak, 0], Extrapolation.CLAMP),
+      opacity: interpolate(hero.value, [0, 0.14, 0.62, 1], [0, peak, peak, 0], Extrapolation.CLAMP),
       transform: [
         { translateX: (landingCentre.x - launchCentre.x) * behind },
         { translateY: (landingCentre.y - launchCentre.y) * behind },
@@ -621,7 +688,7 @@ function HeroGhost({
     };
   });
   return (
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.centre, style]}>
+    <Animated.View pointerEvents="none" style={[styles.hero, frame, style]}>
       <Animated.Image {...logo} style={logo.style} />
     </Animated.View>
   );
@@ -631,21 +698,34 @@ function HeroGhost({
  * The terminal signature: a prompt in the lower third spelling out the world
  * being loaded.
  *
- * Every character is rendered from the first frame and only its opacity moves,
- * so the line's layout never changes while it types -- a line that reflowed per
- * character would be a layout pass per frame on the thread the app is starting
- * on, and it would jitter. The cursor steps a whole cell at a time because the
- * characters do; the scrim grows with it because a full-width plate arriving
- * before the text is the thing that makes a caption look like a caption.
+ * The reveal is two transforms and no layout at all. The line is one `Text`,
+ * laid out once; a clip view is translated left by everything not yet typed,
+ * and the line is translated right by the same amount inside it, so the line
+ * ends up exactly where it was laid out while the clip's own edge cuts it at
+ * the cursor. Clipping happens in a view's own coordinates and its transform
+ * is applied afterwards, which is the whole trick: clip-then-move reveals,
+ * where move-then-clip would only squash.
+ *
+ * It was twenty-six animated nodes before this -- one opacity per character --
+ * which worked and was honest but meant twenty-six property writes on every
+ * frame of a launch whose whole point is that it does not stutter. Four nodes
+ * do the same job: the clip, the line, the cursor and the scrim.
+ *
+ * The cursor steps a whole cell at a time, which is what makes the hard edge
+ * of the reveal read as typing rather than as a wipe: the block is always
+ * sitting on the character that just arrived. The scrim grows with it, because
+ * a full-width plate arriving before the text is the thing that makes a
+ * caption look like a caption.
  */
 function LaunchPrompt({
   blink,
   bottom,
-  characters,
   characterWidth,
   exit,
   fontFamily,
   fontSize,
+  line,
+  lineWidth,
   onLineLayout,
   scrimColor,
   scrimFullWidth,
@@ -655,11 +735,12 @@ function LaunchPrompt({
 }: {
   blink: SharedValue<number>;
   bottom: number;
-  characters: string[];
   characterWidth: number;
   exit: SharedValue<number>;
   fontFamily: string;
   fontSize: number;
+  line: string;
+  lineWidth: number;
   onLineLayout: (event: LayoutChangeEvent) => void;
   scrimColor: string;
   scrimFullWidth: number;
@@ -667,7 +748,7 @@ function LaunchPrompt({
   textColor: string;
   type: SharedValue<number>;
 }) {
-  const length = characters.length;
+  const length = Array.from(line).length;
   // The dissolve: the line goes as Home's first card rises through where it
   // was. It rides the exit rather than a beat of its own, so the two are the
   // same moment by construction and cannot drift apart.
@@ -684,6 +765,12 @@ function LaunchPrompt({
       transform: [{ translateX: ((scale - 1) * scrimFullWidth) / 2 }, { scaleX: scale }],
     };
   });
+  const clipStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: -(lineWidth - typedCount(type.value, length) * characterWidth) }],
+  }));
+  const lineStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: lineWidth - typedCount(type.value, length) * characterWidth }],
+  }));
   const cursorStyle = useAnimatedStyle(() => ({
     opacity: type.value <= 0 ? 0 : cursorOpacity(blink.value),
     transform: [{ translateX: typedCount(type.value, length) * characterWidth }],
@@ -706,22 +793,20 @@ function LaunchPrompt({
             scrimStyle,
           ]}
         />
-        <View onLayout={onLineLayout} style={styles.line}>
-          {characters.map((character, index) => (
-            <PromptCharacter
-              // The line is a fixed string for the life of this sheet, so the
-              // index is the identity: character 3 is character 3.
-              key={`${index}:${character}`}
-              character={character}
-              color={index === 0 ? sigilColor : textColor}
-              fontFamily={fontFamily}
-              fontSize={fontSize}
-              index={index}
-              length={length}
-              type={type}
-            />
-          ))}
-        </View>
+        <Animated.View style={[styles.clip, clipStyle]}>
+          <Animated.View style={lineStyle}>
+            <Text
+              allowFontScaling={false}
+              numberOfLines={1}
+              onLayout={onLineLayout}
+              style={[styles.line, { color: textColor, fontFamily, fontSize }]}>
+              {/* The sigil is the pack's `primary`; the name is its text. One
+                  `Text` with one nested span, so it is still one layout. */}
+              <Text style={{ color: sigilColor }}>{line.slice(0, 1)}</Text>
+              {line.slice(1)}
+            </Text>
+          </Animated.View>
+        </Animated.View>
         <Animated.View
           style={[
             styles.cursor,
@@ -735,35 +820,6 @@ function LaunchPrompt({
         />
       </Animated.View>
     </View>
-  );
-}
-
-function PromptCharacter({
-  character,
-  color,
-  fontFamily,
-  fontSize,
-  index,
-  length,
-  type,
-}: {
-  character: string;
-  color: string;
-  fontFamily: string;
-  fontSize: number;
-  index: number;
-  length: number;
-  type: SharedValue<number>;
-}) {
-  const style = useAnimatedStyle(() => ({
-    opacity: characterOpacity(type.value, length, index),
-  }));
-  return (
-    <Animated.Text
-      allowFontScaling={false}
-      style={[styles.character, { color, fontFamily, fontSize }, style]}>
-      {character}
-    </Animated.Text>
   );
 }
 
@@ -869,12 +925,13 @@ function IrisReveal({
 }
 
 const styles = StyleSheet.create({
-  centre: {
+  hero: {
+    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  character: {
-    includeFontPadding: false,
+  clip: {
+    overflow: 'hidden',
   },
   cursor: {
     position: 'absolute',
@@ -889,7 +946,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   line: {
-    flexDirection: 'row',
+    includeFontPadding: false,
   },
   prompt: {
     position: 'absolute',

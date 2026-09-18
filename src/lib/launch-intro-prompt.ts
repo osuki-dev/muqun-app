@@ -28,17 +28,6 @@ export const PROMPT_SIGIL = '›';
 export const PROMPT_NAME_LIMIT = 32;
 
 /**
- * How sharply a character arrives, as a multiple of one character's share of
- * the beat.
- *
- * `3` means a character goes from invisible to solid in a third of the time
- * the next one takes to arrive. Typing is a key being struck, so it wants to
- * be nearly a step -- but exactly a step strobes on a 120 Hz panel, and a
- * sixtieth of a second of ramp is the difference.
- */
-export const TYPE_SHARPNESS = 3;
-
-/**
  * The prompt's line for a pack: the sigil, a space, and the pack's name.
  *
  * Whitespace is collapsed because a name comes out of an author's JSON and may
@@ -60,31 +49,19 @@ export function launchPromptLine(name: string | null | undefined): string {
 /**
  * How many characters have been struck at this point in the typing beat.
  *
- * The cursor sits at this index, so it steps a whole cell at a time. A cursor
- * that slid continuously while the characters appeared in steps would be a
- * cursor that is usually in the wrong place, and the one that is wrong is the
- * one the eye is on.
+ * This is the whole schedule. The line is drawn once and revealed by a clip
+ * that is moved to exactly this many cells, and the cursor sits on the same
+ * number, so the block is always on the character that just arrived -- which
+ * is what makes a hard-edged reveal read as typing rather than as a wipe.
+ * A cursor that slid continuously while the characters appeared in steps
+ * would be a cursor that is usually in the wrong place, and the one that is
+ * wrong is the one the eye is on.
  */
 export function typedCount(progress: number, length: number): number {
   'worklet';
   if (!(length > 0)) return 0;
   if (!Number.isFinite(progress)) return length;
   return Math.max(0, Math.min(length, Math.floor(progress * length)));
-}
-
-/**
- * A character's opacity at this point in the beat.
- *
- * Continuous rather than stepped, by {@link TYPE_SHARPNESS}, so the line does
- * not strobe. Index 0 is the sigil, which is why the sigil is part of the line
- * rather than a separate element: it should be struck like everything else.
- */
-export function characterOpacity(progress: number, length: number, index: number): number {
-  'worklet';
-  if (!(length > 0)) return 0;
-  if (!Number.isFinite(progress)) return 1;
-  const struck = progress * length - index;
-  return Math.max(0, Math.min(1, struck * TYPE_SHARPNESS));
 }
 
 /**

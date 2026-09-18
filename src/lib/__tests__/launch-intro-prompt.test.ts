@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  characterOpacity,
   cursorOpacity,
   launchPromptLine,
   PROMPT_NAME_LIMIT,
@@ -50,33 +49,19 @@ describe('typedCount', () => {
     expect(typedCount(1, 10)).toBe(10);
   });
 
+  test('the reveal is whole characters, never a half-drawn glyph', () => {
+    // The clip is moved to `typedCount * characterWidth`, so anything other
+    // than an integer here would cut a letter down the middle.
+    for (const progress of [0.03, 0.31, 0.77, 0.99]) {
+      expect(Number.isInteger(typedCount(progress, 27))).toBe(true);
+    }
+  });
+
   test('it never runs off either end of the line', () => {
     expect(typedCount(-3, 10)).toBe(0);
     expect(typedCount(4, 10)).toBe(10);
     expect(typedCount(0.5, 0)).toBe(0);
     expect(typedCount(Number.NaN, 10)).toBe(10);
-  });
-});
-
-describe('characterOpacity', () => {
-  test('a character arrives nearly as a step, but not quite', () => {
-    // Exactly a step strobes on a 120 Hz panel; a sixtieth of a second of ramp
-    // is the whole difference.
-    expect(characterOpacity(0, 10, 0)).toBe(0);
-    expect(characterOpacity(0.1, 10, 0)).toBe(1);
-    expect(characterOpacity(0.02, 10, 0)).toBeGreaterThan(0);
-    expect(characterOpacity(0.02, 10, 0)).toBeLessThan(1);
-  });
-
-  test('characters to the right of the cursor have not been struck', () => {
-    expect(characterOpacity(0.3, 10, 5)).toBe(0);
-    expect(characterOpacity(0.3, 10, 2)).toBe(1);
-  });
-
-  test('the whole line is solid when the beat is over', () => {
-    for (let index = 0; index < 10; index += 1) {
-      expect(characterOpacity(1, 10, index)).toBe(1);
-    }
   });
 });
 
