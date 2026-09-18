@@ -356,7 +356,10 @@ export function LaunchSceneIntro({
   const heroEdge = useLaunchHeroEdge({
     uri: mirror.logo.source?.uri,
     box: mirror.hasLogo ? heroBox : null,
-    started: phase === 'visible',
+    // Anything past the handover counts as started, `'exiting'` included: the
+    // latch is one-way, and `phase === 'visible'` would quietly let it go
+    // again for the length of the cross-fade.
+    started: phase !== 'native',
   });
   // Where the front rests before it takes off. With an outline to start from
   // that is a short distance *outside the drawing*, not a radius: the rim has
