@@ -554,6 +554,7 @@ export function SessionArtifacts({
         }>
         <LegendList
           testID="artifacts-list"
+          showsVerticalScrollIndicator={false}
           data={listRows}
           keyExtractor={keyOfRow}
           renderItem={renderRow}

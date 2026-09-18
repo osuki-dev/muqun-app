@@ -3125,6 +3125,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             maintainScrollAtEnd={true}
             maintainScrollAtEndThreshold={0.1}
             onScroll={handleTimelineScroll}
+            /*
+            The transcript says where the reader is with the jump-to-latest
+            pill and the pull indicator, and with nothing else. A scrollbar
+            over the artwork is a third answer to the same question, drawn in
+            a colour the theme pack does not choose.
+          */
+            showsVerticalScrollIndicator={false}
             refreshControl={timelineRefresh}
             ListFooterComponent={listFooter}
             style={styles.timelineScroll}

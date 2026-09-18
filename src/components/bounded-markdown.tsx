@@ -132,7 +132,10 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   if (plain) {
     return (
       <View style={[styles.stretch, containerStyle]} testID={testID}>
-        <ScrollView style={styles.plainScroll} nestedScrollEnabled showsVerticalScrollIndicator>
+        <ScrollView
+          style={styles.plainScroll}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}>
           <Text selectable style={[styles.plainText, { color: theme.colors.text }]}>
             {capped.text}
           </Text>

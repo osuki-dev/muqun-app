@@ -610,6 +610,7 @@ export function DiffRowList({
             recycleItems
             // Expanding a file inserts rows; the reader's viewport must not
             // move because of it.
+            showsVerticalScrollIndicator={false}
             maintainVisibleContentPosition={MAINTAIN_POSITION}
             // The file being read is always named, however deep into its patch
             // the reader has scrolled. Sticky headers need the list's Reanimated
