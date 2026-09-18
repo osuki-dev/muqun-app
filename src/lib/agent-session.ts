@@ -1,12 +1,14 @@
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
 import {
+  encryptedEventStreamRequest,
   gatewayAuthHeaders,
   gatewayFetch,
   gatewayUrl,
   isGatewayConfigured,
 } from './gateway-client';
-import { pumpAgentStream } from './agent-stream';
+import { streamRecordCrypto } from './gateway-transport';
+import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
 import type { FileMentionHit } from './file-mentions';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 import {
@@ -1054,6 +1056,15 @@ export async function getAgentTimelineDelta(
  * `connect()` resolved, and nothing told the caller. The reconnect backoff
  * never armed and the session sat there looking current while the engine moved
  * on without it, until the reader left the screen and came back.
+ *
+ * On an encrypted pairing this goes through the sealed event-stream path, the
+ * same one `use-pane-events` opens `/api/sessions/{id}/events` on. It used not
+ * to: it opened the stream with a bare `Authorization` header, which on a
+ * gateway configured `transport_encryption: required` put the device token and
+ * every agent event -- prompts, tool calls, file contents, diffs -- on the wire
+ * in the clear, on the one route that carries the most of them. The token
+ * travels inside the request envelope now and every event arrives as a sealed
+ * record. A cleartext pairing sends exactly the request it always did.
  */
 export function openAgentSessionStream(options: {
   asid: string;
@@ -1076,29 +1087,27 @@ export function openAgentSessionStream(options: {
         return;
       }
       const url = gatewayUrl(sessionRoute(options.asid, '/stream', options.sessionId, true));
-      const headers = gatewayAuthHeaders();
-
-      const response = await nitroFetch(url, {
-        headers: {
-          ...headers,
-          Accept: 'text/event-stream',
-          'Cache-Control': 'no-cache',
-        },
+      // Sealed fresh for this connection, and for every reconnect after it: the
+      // gateway replay-caches the request envelope's nonce and binds the
+      // per-stream key to it, so a recording of an earlier stream can never
+      // answer a later one. Null on a cleartext pairing, which is every pairing
+      // whose gateway does not encrypt the transport.
+      const sealed = encryptedEventStreamRequest(url);
+      const ending = await connectAgentStream({
+        url,
+        seal: sealed ? { ...sealed, crypto: streamRecordCrypto } : null,
+        plainHeaders: gatewayAuthHeaders(),
+        outerHeaders: activeLocaleHeaders(),
+        // Structurally what the stream needs of a `Response`; the nominal type
+        // is nitro-fetch's, and it is not exported in a form this can name.
+        fetch: (target, init) =>
+          nitroFetch(target, init) as unknown as Promise<AgentStreamResponse>,
+        newDecoder: () => new TextDecoder(),
         signal: controller.signal,
-        stream: true,
-      });
-
-      if (!response.ok) throw new Error(`Agent stream HTTP ${response.status}`);
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('Agent stream body not readable');
-
-      options.onConnected?.();
-
-      const ending = await pumpAgentStream({
-        reader,
-        decoder: new TextDecoder(),
-        onEvent: options.onEvent,
+        abort: () => controller.abort(),
         isCancelled: () => cancelled,
+        onEvent: options.onEvent,
+        ...(options.onConnected ? { onConnected: options.onConnected } : {}),
       });
 
       // The one line this whole split exists for.
