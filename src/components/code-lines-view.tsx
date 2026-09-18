@@ -11,7 +11,6 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { clampLine, gutterDigits, lineContentWidth } from '@/lib/text-preview';
 
 /**
@@ -121,7 +120,6 @@ export interface CodeLinesViewProps {
 
 export function CodeLinesView({ lines, longest, markdownStyle, note, testID }: CodeLinesViewProps) {
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
 
   const code = markdownStyle.codeBlock;
   // The reader's mono font travels through the markdown theme, which is where
@@ -164,7 +162,24 @@ export function CodeLinesView({ lines, longest, markdownStyle, note, testID }: C
     viewport: viewportWidth,
   });
 
-  const gutterFill = surfaceBackground(codeFill);
+  /**
+   * The pane's own ground, and why it has one.
+   *
+   * A theme pack paints the sheet with artwork, and a row of monospaced text
+   * over a picture is unreadable -- the wallpaper runs straight between the
+   * glyphs. The markdown renderer never has this problem because a fenced block
+   * draws its own fill, so this draws the same one: `markdownStyle.codeBlock`'s
+   * background, which is the theme's own code fill.
+   *
+   * Opaque, and not through `useSurfaceBackground`. That hook applies the
+   * reader's artwork-opacity slider, which is right for a surface sitting on a
+   * wallpaper and wrong for the one surface whose whole job is to be read
+   * through: the fence does not go through it either. Measured on the device
+   * against the One Piece pack, where the slider left code legible for about
+   * twenty lines and then it became sea.
+   */
+  const paneFill = codeFill;
+  const gutterFill = paneFill;
 
   /**
    * Every style a row wears, in one object that changes only when the geometry
@@ -219,7 +234,7 @@ export function CodeLinesView({ lines, longest, markdownStyle, note, testID }: C
   );
 
   return (
-    <View style={baseStyles.body} testID={testID}>
+    <View style={[baseStyles.body, { backgroundColor: paneFill }]} testID={testID}>
       {note ? (
         <View style={baseStyles.note}>
           <Text variant="caption" color={theme.colors.textMuted}>
@@ -296,6 +311,9 @@ const baseStyles = StyleSheet.create({
   },
   // Every row is laid out at the full content width so its fill spans the
   // panned area; only the gutter is held at the viewport's left edge.
+  // The gutter wears the pane's own fill, so a panned line slides under it
+  // rather than out beside it. It reads as a column by the hairline and by the
+  // number's colour, not by a second background the artwork would fight.
   gutter: {
     position: 'absolute',
     left: 0,
