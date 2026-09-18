@@ -36,7 +36,8 @@ import {
   parseAgentSessionList,
   parseAgentSessionRevert,
   parseAgentSessionSnapshot,
-  parseFileDiffItems,
+  parseAgentVcsDiff,
+  parseWorkspaceMissing,
   parseInboxItems,
   parseSavedPermissions,
   parseShellList,
@@ -54,7 +55,8 @@ import {
   type AgentSessionInfo,
   type AgentSessionRevert,
   type AgentSessionSnapshot,
-  type FileDiffItem,
+  type AgentVcsDiff,
+  type AgentWorktreeListing,
   type InboxItem,
   type ModelRef,
   type PermissionDecision,
@@ -63,6 +65,7 @@ import {
   type ShellOutputPage,
   type TimelineItem,
   type VcsDiffMode,
+  type WorkspaceMissing,
   type WorktreeDirectory,
 } from './agent-protocol';
 
@@ -126,17 +129,23 @@ function envelopeData(json: unknown): unknown {
 }
 
 /**
- * A read that answers with a value, or with `fallback`.
+ * A read that answers with a value, or with `fallback` -- and with the one
+ * refusal that is worth repeating to the reader.
  *
  * Reads never throw: a picker with nothing in it is a worse answer than a
  * stale one, and both are better than a red screen on a phone.
+ *
+ * `workspace_missing` is the only status the transport reads: it is not a
+ * fault, it is the ground being gone, and the screen has something to say
+ * about it exactly once. Everything else keeps the rule above -- the fallback,
+ * and silence.
  */
-async function readJson<T>(
+async function readScoped<T>(
   path: string,
   parse: (value: unknown) => T,
   fallback: T,
   init?: { headers?: Record<string, string>; signal?: AbortSignal }
-): Promise<T> {
+): Promise<{ value: T; missing?: WorkspaceMissing }> {
   const url = gatewayUrl(path);
   /**
    * One request per path in flight, and everyone waits on the same answer.
@@ -152,21 +161,43 @@ async function readJson<T>(
    * A request with a caller's own `signal` stays its own: sharing one promise
    * would let one caller's abort cancel another's read.
    */
-  const run = async (): Promise<T> => {
+  const run = async (): Promise<{ value: T; missing?: WorkspaceMissing }> => {
     try {
-      if (!isGatewayConfigured()) return fallback;
+      if (!isGatewayConfigured()) return { value: fallback };
       const res = await gatewayFetch(url, {
         method: 'GET',
         headers: init?.headers ?? gatewayAuthHeaders(),
         ...(init?.signal ? { signal: init.signal } : {}),
       });
-      if (!res.ok) return fallback;
-      return parse(envelopeData(await res.json()));
+      if (!res.ok) {
+        const missing = res.status === 404 ? parseWorkspaceMissing(await readBody(res)) : null;
+        return missing ? { value: fallback, missing } : { value: fallback };
+      }
+      return { value: parse(envelopeData(await res.json())) };
     } catch {
-      return fallback;
+      return { value: fallback };
     }
   };
   return init?.signal ? run() : dedupeInFlight(`GET ${url}`, run);
+}
+
+/** The body as JSON, or nothing: a refusal is allowed to be unreadable. */
+async function readBody(res: { json: () => Promise<unknown> }): Promise<unknown> {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+/** `readScoped` for the reads that have nothing to say about a missing folder. */
+async function readJson<T>(
+  path: string,
+  parse: (value: unknown) => T,
+  fallback: T,
+  init?: { headers?: Record<string, string>; signal?: AbortSignal }
+): Promise<T> {
+  return (await readScoped(path, parse, fallback, init)).value;
 }
 
 /**
@@ -638,13 +669,16 @@ export async function getAgentVcsDiff(
   sessionId: string | undefined,
   asid: string,
   mode: VcsDiffMode = 'working'
-): Promise<FileDiffItem[]> {
-  if (!asid) return [];
-  return readJson(
+): Promise<AgentVcsDiff> {
+  if (!asid) return { files: [] };
+  const read = await readScoped<AgentVcsDiff>(
     `${sessionRoute(asid, '/vcs/diff', sessionId, true)}?mode=${mode}`,
-    parseFileDiffItems,
-    []
+    parseAgentVcsDiff,
+    { files: [] }
   );
+  return read.missing
+    ? { files: [], reason: 'workspace_missing', missing: read.missing }
+    : read.value;
 }
 
 /**
@@ -838,9 +872,14 @@ export async function killAgentShell(shellId: string): Promise<void> {
  * worktree's own -- the one thing easiest to get wrong about them, because the
  * remove route takes both and they are not the same argument.
  */
-export async function listAgentWorktrees(directory?: string): Promise<WorktreeDirectory[]> {
+export async function listAgentWorktrees(directory?: string): Promise<AgentWorktreeListing> {
   const q = directory ? `?directory=${encodeURIComponent(directory)}` : '';
-  return readJson(`/api/agent-worktrees${q}`, parseWorktreeList, []);
+  const read = await readScoped(
+    `/api/agent-worktrees${q}`,
+    parseWorktreeList,
+    [] as WorktreeDirectory[]
+  );
+  return read.missing ? { entries: [], missing: read.missing } : { entries: read.value };
 }
 
 /**

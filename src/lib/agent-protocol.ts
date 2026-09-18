@@ -1674,6 +1674,71 @@ export function isWorktreeForceRequired(value: unknown): boolean {
   );
 }
 
+// ---------------------------------------------------------------------------
+// A workspace that is not there any more
+// ---------------------------------------------------------------------------
+
+/**
+ * The gateway's answer when the folder a read names is gone from the host.
+ *
+ * A session outlives its directory: a worktree is removed, a throwaway clone
+ * is deleted, and every directory-scoped read afterwards is about a path that
+ * no longer exists. OpenCode answers those with a `500`, which the gateway
+ * relayed as a `502` -- the same shape it uses for "the engine is offline", so
+ * the app read it as a passing fault and went on asking, once per entry and
+ * once per focus. The gateway now answers
+ * `404 {"error":{"code":"workspace_missing","message":...,"directory":...}}`
+ * for every directory-scoped read, which is a fact rather than a fault: the
+ * app says it once and stops asking until the directory changes.
+ */
+export interface WorkspaceMissing {
+  code: 'workspace_missing';
+  /** The gateway's own sentence, kept for a log rather than for the screen. */
+  message: string;
+  /** The folder that is gone. The screen names this, not `message`. */
+  directory: string;
+}
+
+/**
+ * Read a `workspace_missing` refusal out of whatever the body turned out to be.
+ *
+ * Tolerant in the three directions the envelope varies: the refusal may be the
+ * body (`{"error":{...}}`), or inside the gateway's `data`, or -- for a caller
+ * that already unwrapped it -- the error object itself. Anything else is
+ * `null`, which is every other refusal, and every other refusal stays quiet.
+ *
+ * A refusal with no `directory` is not one of these: the whole point of the
+ * answer is the path it names, and a notice that cannot say which folder is
+ * gone is worse than the silence it replaces.
+ */
+export function parseWorkspaceMissing(value: unknown): WorkspaceMissing | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  for (const nested of [rec.error, rec.data]) {
+    const found = asRecord(nested) ? parseWorkspaceMissing(nested) : null;
+    if (found) return found;
+  }
+  if (asString(rec.code) !== 'workspace_missing') return null;
+  const directory = pickString(rec, ['directory', 'path']);
+  if (!directory) return null;
+  return {
+    code: 'workspace_missing',
+    message: pickString(rec, ['message']) ?? '',
+    directory,
+  };
+}
+
+/**
+ * The worktree inventory, and the refusal when the folder it named is gone.
+ *
+ * The list alone cannot carry this: an empty array is "this project has no
+ * worktrees", which is an ordinary answer with a sentence of its own.
+ */
+export interface AgentWorktreeListing {
+  entries: WorktreeDirectory[];
+  missing?: WorkspaceMissing;
+}
+
 export interface AgentEngineInfo {
   available: boolean;
   origin: 'adopted' | 'spawned' | 'none';
@@ -1741,6 +1806,55 @@ export function parseFileDiffItems(value: unknown): FileDiffItem[] {
     if (item) out.push(item);
   }
   return out;
+}
+
+/**
+ * What `…/vcs/diff` answered: the files, and why there were none.
+ *
+ * A bare list cannot tell "nothing has changed" from "this folder is not a
+ * repository" from "this folder is gone", and the three want three different
+ * sentences on the screen -- the last of them wants the badge loads stopped as
+ * well. The gateway says which: a non-git folder is
+ * `200 {"files":[],"vcs":null,"reason":"not_a_repository"}` and a missing one
+ * is the `404` above. So `reason` is carried, never inferred from emptiness.
+ */
+export interface AgentVcsDiff {
+  files: FileDiffItem[];
+  /**
+   * `'git'` when the directory is inside a working tree, `null` when it is not.
+   *
+   * Absent from an older gateway's answer, and absent from a read that never
+   * got one; both are `undefined` rather than `null`, because "not a
+   * repository" is a claim about the host and neither of those is evidence
+   * for it.
+   */
+  vcs?: 'git' | null;
+  reason?: 'not_a_repository' | 'workspace_missing';
+  /** The refusal itself, when `reason` is `workspace_missing`. */
+  missing?: WorkspaceMissing;
+}
+
+/**
+ * The `200` shape, old and new.
+ *
+ * The route answered a bare array until gateway `d53e8d0` and answers
+ * `{files, vcs, reason}` after it, and a phone talks to whichever gateway the
+ * host is running -- so both are read, and the old one is taken at its word:
+ * an array is a repository's answer, which is what the app assumed for as long
+ * as that was the only shape.
+ *
+ * `reason` is only believed about an answer that is actually empty: a body
+ * carrying both files and a reason not to have any is a contradiction, and the
+ * files are the half of it that can be shown.
+ */
+export function parseAgentVcsDiff(value: unknown): AgentVcsDiff {
+  const files = parseFileDiffItems(value);
+  const rec = Array.isArray(value) ? null : asRecord(value);
+  const vcs: 'git' | null = !rec || !('vcs' in rec) || asString(rec.vcs) === 'git' ? 'git' : null;
+  if (files.length > 0) return { files, vcs };
+  return rec && asString(rec.reason) === 'not_a_repository'
+    ? { files, vcs, reason: 'not_a_repository' }
+    : { files, vcs };
 }
 
 /** Which comparison `…/vcs/diff` is asked for; OpenCode requires one. */

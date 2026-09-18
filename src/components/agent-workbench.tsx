@@ -52,6 +52,11 @@ import {
   timing,
 } from '@/lib/motion';
 import { StatusDot } from '@/components/status-dot';
+import {
+  badgeLoadsAllowed,
+  workspaceMissingState,
+  type WorkspaceMissingState,
+} from '@/lib/agent-workspace-missing';
 import { AgentTranscriptSkeleton } from '@/components/agent-transcript-skeleton';
 import {
   getAgentSessionSnapshot,
@@ -59,6 +64,7 @@ import {
   sessionWorktreeName,
   listAgentWorktrees,
   listAgentSessions,
+  sameDirectory,
   createAgentSession,
   sendAgentPrompt,
   abortAgentSession,
@@ -93,6 +99,7 @@ import {
   formatModelName,
   isBusyStatus,
   inboxItemText,
+  type WorkspaceMissing,
   type WorktreeDirectory,
   type AgentContextUsage,
   type AgentDomainEvent,
@@ -284,6 +291,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     title: string;
     body: string;
   } | null>(null);
+  /**
+   * The screen's other notice: the workspace folder is gone, and it stays.
+   *
+   * Not a toast and not on a timer -- it is not news about something that
+   * happened, it is the state of the ground under this session, true until the
+   * reader moves it somewhere that exists. It carries the one action that
+   * changes that. See `workspaceMissing` below for what it stops.
+   */
+  const [workspaceMissing, setWorkspaceMissing] = useState<WorkspaceMissingState | null>(null);
   const screenNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showScreenNotice = useCallback((title: string, body: string) => {
     if (screenNoticeTimerRef.current) clearTimeout(screenNoticeTimerRef.current);
@@ -320,7 +336,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // How far down the screen a notice reaches, not how tall it is: each one
   // starts below the chrome, and the room to leave is the bottom edge.
   const reserved = Math.max(
-    screenNotice ? Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) + screenNoticeHeight : 0,
+    screenNotice || workspaceMissing
+      ? Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) + screenNoticeHeight
+      : 0,
     inAppNoticeHeight
   );
   const reservedWithGap = reserved > 0 ? reserved + NOTICE_RESERVE_GAP : 0;
@@ -593,6 +611,47 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeDirectory]);
 
   /**
+   * The workspace folder the session is in, when the host does not have it any
+   * more -- a worktree that was removed, a throwaway clone that was deleted.
+   *
+   * OpenCode answers every directory-scoped read about it with a `500`, which
+   * reached the device as a `502` and read like a passing fault: the badge
+   * loads asked again on every entry and every focus, four `404`s at a time,
+   * and the reader was told nothing. The gateway now names it --
+   * `404 workspace_missing`, with the path -- so the screen says the one
+   * sentence there is to say and stops asking until the ground changes.
+   *
+   * Bound to the session and to the directory, so a move to a worktree or a
+   * switch to another workspace clears it by arithmetic. `badgeLoadsAllowed`
+   * is that arithmetic, kept pure in `agent-workspace-missing.ts`.
+   */
+  const badgeLoads = badgeLoadsAllowed({
+    asid: activeAsid,
+    directory: activeDirectory,
+    missing: workspaceMissing,
+  });
+  const noteWorkspaceMissing = useCallback(
+    (missing: WorkspaceMissing | undefined, asid: string | undefined) => {
+      const next = workspaceMissingState(missing, asid);
+      if (!next) return;
+      setWorkspaceMissing((prev) =>
+        prev && prev.asid === next.asid && sameDirectory(prev.directory, next.directory)
+          ? prev
+          : next
+      );
+    },
+    []
+  );
+  useEffect(() => {
+    // The ground moved: whatever was said about the old one no longer applies.
+    setWorkspaceMissing((prev) =>
+      prev && badgeLoadsAllowed({ asid: activeAsid, directory: activeDirectory, missing: prev })
+        ? null
+        : prev
+    );
+  }, [activeAsid, activeDirectory]);
+
+  /**
    * The catalog for the workspace on screen: agents, skills, commands, models.
    *
    * Read *with* the active directory, because OpenCode scopes agents, commands
@@ -850,8 +909,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, []);
 
   const refreshShells = useCallback(async () => {
+    if (!badgeLoads) {
+      setShells([]);
+      return;
+    }
     setShells(await listAgentShells(activeDirectory));
-  }, [activeDirectory]);
+  }, [activeDirectory, badgeLoads]);
 
   /**
    * Whether there is anything to open the changes sheet on.
@@ -862,16 +925,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * had written something.
    */
   const refreshDiffs = useCallback(async () => {
-    if (!activeAsid) {
+    if (!activeAsid || !badgeLoads) {
       setHasDiffs(false);
       return;
     }
     try {
-      setHasDiffs((await getAgentVcsDiff(sessionId, activeAsid)).length > 0);
+      const answer = await getAgentVcsDiff(sessionId, activeAsid);
+      noteWorkspaceMissing(answer.missing, activeAsid);
+      setHasDiffs(answer.files.length > 0);
     } catch {
       setHasDiffs(false);
     }
-  }, [sessionId, activeAsid]);
+  }, [sessionId, activeAsid, badgeLoads, noteWorkspaceMissing]);
 
   const refreshInbox = useCallback(async () => {
     if (!activeAsid) {
@@ -890,10 +955,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * the token.
    */
   const refreshContext = useCallback(async () => {
-    if (!activeAsid) return;
+    if (!activeAsid || !badgeLoads) return;
     const usage = await getAgentContext(activeAsid);
     setContextUsage(usage);
-  }, [activeAsid]);
+  }, [activeAsid, badgeLoads]);
 
   /**
    * The four reads that feed the composer's chips, reachable without being
@@ -2140,9 +2205,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         refreshSessions();
       } catch (err) {
         console.warn('Failed to move session:', err);
+        // A target that is not there any more is named, not spelled as a
+        // status -- the same sentence the screen and both sheets use. Nothing
+        // is latched: the session has not moved, so this is about the folder
+        // that was picked and not the one it is still standing in.
+        const detail = err instanceof Error ? err.message : String(err);
+        const gone = detail.includes('workspace_missing') ? { directory } : null;
         showScreenNotice(
           t`Could not move this session`,
-          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+          gone
+            ? t`Workspace folder is missing: ${gone.directory}`
+            : formatAgentErrorMessage(err, t`OpenCode service is offline`)
         );
       }
     },
@@ -2593,14 +2666,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const [worktreeEntries, setWorktreeEntries] = useState<readonly WorktreeDirectory[]>([]);
   useEffect(() => {
-    if (!activeDirectory) {
+    if (!activeDirectory || !badgeLoads) {
       setWorktreeEntries([]);
       return;
     }
     let active = true;
     void listAgentWorktrees(activeDirectory)
-      .then((entries) => {
-        if (active) setWorktreeEntries(entries);
+      .then((listing) => {
+        if (!active) return;
+        setWorktreeEntries(listing.entries);
+        // The one refusal that speaks. Everything else about this read stays
+        // quiet, below.
+        noteWorkspaceMissing(listing.missing, activeAsidRef.current);
       })
       .catch(() => {
         // Quiet: with no inventory the header says nothing, which is the same
@@ -2610,7 +2687,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       active = false;
     };
-  }, [activeDirectory, worktreeRevision]);
+  }, [activeDirectory, worktreeRevision, badgeLoads, noteWorkspaceMissing]);
 
   const activeWorktree = useMemo(() => {
     const root = worktreeEntries.find((entry) => !entry.strategy)?.directory;
@@ -3497,41 +3574,88 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         )}
       </Animated.View>
 
-      {/* The screen's own notice: under the header, never over it */}
-      {screenNotice ? (
-        <Animated.View
-          key={screenNotice.id}
-          entering={fadeInDown('short')}
-          exiting={fadeOutUp('short')}
+      {/*
+        The screen's own notices: under the header, never over it.
+
+        Two of them, in one column and measured as one, because the room the
+        transcript gives up is the room they actually take. The standing one is
+        first: a folder that is gone outlives whatever the transient one has to
+        say about a single action.
+      */}
+      {screenNotice || workspaceMissing ? (
+        <View
+          pointerEvents="box-none"
           onLayout={(event) => setScreenNoticeHeight(Math.round(event.nativeEvent.layout.height))}
           style={[
             styles.screenNoticeWrap,
             { top: Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) },
           ]}>
-          <PressableScale
-            testID="agent-screen-notice"
-            accessibilityRole="button"
-            accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
-            onPress={() => setScreenNotice(null)}
-            style={[
-              styles.screenNotice,
-              {
-                backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                borderColor: theme.colors.border,
-              },
-            ]}>
-            <StatusDot color={theme.colors.primary} filled size={7} />
-            <View style={styles.screenNoticeText}>
-              <Text variant="caption" weight="bold" color={theme.colors.text}>
-                {screenNotice.title}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-                {screenNotice.body}
-              </Text>
-            </View>
-            <X size={14} color={theme.colors.textMuted} />
-          </PressableScale>
-        </Animated.View>
+          {workspaceMissing ? (
+            <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
+              <View
+                testID="agent-workspace-missing-notice"
+                style={[
+                  styles.screenNotice,
+                  {
+                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                    borderColor: theme.colors.border,
+                  },
+                ]}>
+                <StatusDot color={theme.colors.warning} filled size={7} />
+                <View style={styles.screenNoticeText}>
+                  <Text variant="caption" weight="bold" color={theme.colors.text} numberOfLines={2}>
+                    {t`Workspace folder is missing: ${workspaceMissing.directory}`}
+                  </Text>
+                </View>
+                {/*
+                  The one action that changes the fact. Not a dismiss: there is
+                  nothing to dismiss -- the folder is still gone afterwards --
+                  and not a retry either, because nothing failed.
+                */}
+                <PressableScale
+                  testID="agent-workspace-missing-choose"
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Choose workspace`}
+                  onPress={openWorkspaceSheet}
+                  style={styles.screenNoticeAction}>
+                  <Text variant="caption" weight="bold" color={theme.colors.primary}>
+                    {t`Choose workspace`}
+                  </Text>
+                </PressableScale>
+              </View>
+            </Animated.View>
+          ) : null}
+          {screenNotice ? (
+            <Animated.View
+              key={screenNotice.id}
+              entering={fadeInDown('short')}
+              exiting={fadeOutUp('short')}>
+              <PressableScale
+                testID="agent-screen-notice"
+                accessibilityRole="button"
+                accessibilityLabel={t`Dismiss the notice: ${screenNotice.title}`}
+                onPress={() => setScreenNotice(null)}
+                style={[
+                  styles.screenNotice,
+                  {
+                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                    borderColor: theme.colors.border,
+                  },
+                ]}>
+                <StatusDot color={theme.colors.primary} filled size={7} />
+                <View style={styles.screenNoticeText}>
+                  <Text variant="caption" weight="bold" color={theme.colors.text}>
+                    {screenNotice.title}
+                  </Text>
+                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
+                    {screenNotice.body}
+                  </Text>
+                </View>
+                <X size={14} color={theme.colors.textMuted} />
+              </PressableScale>
+            </Animated.View>
+          ) : null}
+        </View>
       ) : null}
 
       {/*
@@ -3977,6 +4101,7 @@ const styles = StyleSheet.create({
     right: 14,
     zIndex: 6,
     alignItems: 'center',
+    gap: 8,
   },
   screenNotice: {
     flexDirection: 'row',
@@ -3994,6 +4119,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: 2,
+  },
+  screenNoticeAction: {
+    paddingVertical: 2,
+    paddingLeft: 4,
   },
   jumpToLatestWrap: {
     position: 'absolute',
