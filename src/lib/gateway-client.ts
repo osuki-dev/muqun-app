@@ -151,6 +151,7 @@ import { dedupeKey, withRequestDedupe } from '@/lib/request-dedupe';
 import {
   endpointIsAbsent,
   sessionSnapshotFromAnswer,
+  snapshotServesAgents,
   type SessionSnapshot,
 } from '@/lib/session-snapshot';
 import { assertSupportedHerdr } from './herdr-compatibility';
@@ -628,7 +629,10 @@ export interface PaneOutputResponse {
 export interface GatewayTransport {
   loadHealth: () => Promise<HealthResponse>;
   loadSessions: () => Promise<SessionsResponse>;
-  loadSessionSnapshot: (sessionId: string) => Promise<SessionSnapshot | null>;
+  loadSessionSnapshot: (
+    sessionId: string,
+    health: HealthResponse | null | undefined
+  ) => Promise<SessionSnapshot | null>;
   loadWorkspaces: (sessionId: string) => Promise<HerdrEntity[]>;
   loadTabs: (sessionId: string) => Promise<HerdrEntity[]>;
   loadPanes: (sessionId: string) => Promise<HerdrEntity[]>;
@@ -2216,34 +2220,49 @@ const snapshotEndpointMissing = new Set<string>();
  * most of the cost. The gateway has answered all three at once since the
  * batched route landed, and nothing in the app was calling it.
  *
- * ## Why the agents in that answer are not used
+ * ## Whether the agents in that answer are used
  *
- * The endpoint returns an `agents` array too, and it is not the array `/agents`
- * returns. The gateway derives it from the panes (`agent_from_pane` in
- * `backend/compat.rs`), so it carries `pane_id`, `workspace_id`, `tab_id`,
- * `agent`, `display_agent` and `agent_status` -- and not `instance_id` or
- * `target`, which the backend agent list does carry.
+ * That depends on the gateway, and it asks rather than guesses --
+ * `snapshotServesAgents` on the `/health` this call is handed. A gateway
+ * announcing `session_snapshot` returns the same agent array `/agents` returns,
+ * so the answer is complete and the entity load is one request. One that does
+ * not announce it derives its agents from the panes and omits `instance_id` and
+ * `target`, both of which are read straight off this array, so its agents come
+ * back null and the caller asks `/agents` beside this. `lib/session-snapshot`
+ * has the full reasoning.
  *
- * Both of those are read off this very array. `instance_id` is the opaque agent
- * instance identity a collaboration assignment is bound to, bound that way
- * precisely so it is not bound to a reusable pane id
- * (`components/server-terminal-workspace`, `lib/agent-collaboration`); an
- * assignment built from a derived agent would carry an empty one and be dropped
- * on the floor. `target` is the opaque send address the commands screen is
- * handed. So the agents call stays, and this turns four requests into two
- * rather than into one.
+ * ## Asking versus probing for the route itself
  *
- * (`state_change_seq` is the third field the derived shape omits, and it is
- * read nowhere in the app, so it costs nothing either way.)
+ * A gateway that announces the capability has the route by definition, so the
+ * "have we 404'd here before" memory is neither consulted nor needed for it.
+ * The probe is what is left for a gateway whose `/health` says nothing: those
+ * are tried once, and a 404 is remembered per base URL so the three-call path
+ * costs nothing extra afterwards.
+ *
+ * An announcement that does not hold -- a 404 from a gateway that claimed the
+ * route, which means a proxy in front of it rather than the gateway itself --
+ * is still remembered and still degrades to the old path, because the reader
+ * losing their head start is not an acceptable answer to somebody's reverse
+ * proxy.
  *
  * Null means the gateway has no such route -- not that it failed. Any other
  * failure is raised, because a session that genuinely cannot be read is not
  * something to paper over with three more requests.
  */
-export async function loadSessionSnapshot(sessionId: string): Promise<SessionSnapshot | null> {
-  if (isDemoActive()) return { workspaces: demoWorkspaces(), tabs: demoTabs(), panes: demoPanes() };
+export async function loadSessionSnapshot(
+  sessionId: string,
+  health: HealthResponse | null | undefined
+): Promise<SessionSnapshot | null> {
+  const servesAgents = snapshotServesAgents(health);
+  if (isDemoActive())
+    return {
+      workspaces: demoWorkspaces(),
+      tabs: demoTabs(),
+      panes: demoPanes(),
+      agents: servesAgents ? demoAgents() : null,
+    };
   const base = currentBaseUrl;
-  if (snapshotEndpointMissing.has(base)) return null;
+  if (!servesAgents && snapshotEndpointMissing.has(base)) return null;
   let answer: unknown;
   try {
     answer = await getApiSessionsBySessionIdSnapshot({ sessionId });
@@ -2255,7 +2274,7 @@ export async function loadSessionSnapshot(sessionId: string): Promise<SessionSna
   // The panes in this answer have been through the gateway's scrollback
   // observe/amend pass exactly as `/panes` has, so a pane's `scroll` says the
   // same thing here as there and pull-for-earlier is unaffected.
-  return sessionSnapshotFromAnswer(answer);
+  return sessionSnapshotFromAnswer(answer, servesAgents);
 }
 
 /** Test seam: the miss set is process-wide, so suites must be able to reset it. */
