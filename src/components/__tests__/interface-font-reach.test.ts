@@ -106,3 +106,79 @@ test('the settings segmented control draws its labels with the kit', () => {
   expect(styles).not.toContain('fontFamily');
   expect(styles).not.toContain('fontWeight');
 });
+
+/**
+ * The files allowed to name a font family literally, and what each one is.
+ *
+ * Every other family in the app comes out of the reader's slots. These four
+ * name a string because there is no slot that could answer:
+ */
+const LITERAL_FAMILY_ALLOWED: Record<string, string> = {
+  // The web terminal's fallback. There is no React Native font registry on
+  // web and no reader slot reaches this file; CSS's own generic family is the
+  // only name available.
+  'src/components/skia-terminal.web.tsx': "the web fallback terminal's CSS generic family",
+  // Key caps that are pictures of keys rather than characters being typed --
+  // the arrow cluster and Return. On Android a Typeface built from one
+  // reader-supplied file has no fallback chain, so U+2190-2193 and U+21B5
+  // would draw as tofu. A key in the wrong font is still a key; a boxed arrow
+  // is not.
+  'src/components/virtual-keyboard.tsx': 'arrow and Return key caps, for glyph coverage',
+};
+
+test('no style outside a mono surface pins a font family', () => {
+  const offenders: string[] = [];
+  for (const file of FILES) {
+    if (MONO_SURFACES.has(file)) continue;
+    const source = code(readFileSync(file, 'utf8'));
+    for (const match of source.matchAll(/fontFamily:\s*([^,\n]+)/gu)) {
+      const value = (match[1] ?? '').trim();
+      // A family read back out of the app's own font plumbing is the point of
+      // the plumbing, not an escape from it.
+      if (
+        /useMonoFontFamily|useInterfaceFontFamily|resolveFontStyle|SYSTEM_MONO_FAMILY/u.test(value)
+      ) {
+        continue;
+      }
+      if (/^mono\b|^fonts\.|slotFontFamily|FontFamily\b|^chromeFontFamily/u.test(value)) continue;
+      // A type annotation in an interface or a props type is not a style.
+      if (value.includes('string')) continue;
+      if (LITERAL_FAMILY_ALLOWED[file]) continue;
+      offenders.push(`${file}: fontFamily: ${value}`);
+    }
+  }
+  expect(offenders).toEqual([]);
+});
+
+test('nothing asks the reader\u2019s font for a weight Android cannot serve', () => {
+  /*
+   * 700 is where the reader's font disappears on Android.
+   *
+   * `expo-font` registers a loaded face under `Typeface.NORMAL` and nothing
+   * else (FontLoaderModule.kt:59). `ReactFontManager.getTypeface` rounds any
+   * weight of 700 or more to `Typeface.BOLD`, finds no entry under it, looks
+   * for a `<family>_bold.ttf` among the app's assets, and ends on
+   * `Typeface.create(familyName, style)` -- a *system* lookup that has never
+   * heard of the family and answers with the platform's own bold face.
+   *
+   * The registry already caps the kit's `weight` prop at 600
+   * (theme/interface-font-registry.ts). This closes the other door: the kit
+   * applies a caller's `style` after its own resolved font style
+   * (text.tsx:239-243), so a 700 in a StyleSheet overrides the cap and
+   * re-opens the bug. Use `weight="semibold"` on the element instead.
+   *
+   * A terminal payload is exempt for the same reason it is exempt above: it
+   * is drawn in the mono slot, or by Skia, which does not go through
+   * `ReactFontManager` at all.
+   */
+  const offenders: string[] = [];
+  for (const file of FILES) {
+    if (MONO_SURFACES.has(file)) continue;
+    const source = code(readFileSync(file, 'utf8'));
+    for (const match of source.matchAll(/fontWeight:\s*'(\d{3}|bold)'/gu)) {
+      const value = match[1] ?? '';
+      if (value === 'bold' || Number(value) >= 700) offenders.push(`${file}: ${match[0]}`);
+    }
+  }
+  expect(offenders).toEqual([]);
+});

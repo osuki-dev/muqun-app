@@ -3898,9 +3898,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
   },
-  /** See `emptyText` for why the family is not stated here. */
+  /**
+   * See `emptyText` for why the family is not stated here.
+   *
+   * 600 rather than 700, and the reason is the same one that moved every
+   * other weight in the app down a step. This pill draws in
+   * `chromeFontFamily`, which is `MuqunUserMono` once the reader has
+   * installed a monospace face -- and `expo-font` registers a loaded face
+   * under `Typeface.NORMAL` only. `ReactFontManager.getTypeface` rounds 700
+   * up to `Typeface.BOLD`, finds no entry, and falls through to
+   * `Typeface.create(familyName, style)`, a system lookup that has never
+   * heard of this family. So at 700 the one pill that is supposed to be in
+   * the reader's terminal face was the one drawn in the platform's.
+   */
   latestButtonText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

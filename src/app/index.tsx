@@ -740,16 +740,30 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
                         baseColor={theme.colors.background}
                       />
                     ) : null}
+                    {/* The one place on the screen that spends type, with the tracking
+                        pulled in hard so the name reads as a mark rather than as a
+                        heading. Size and tracking travel with `homeBrandWeight`; the
+                        weight does not, because a wordmark that changes stroke weight
+                        stops being the same wordmark.
+
+                        That weight is the kit's prop rather than a `fontWeight: '700'`
+                        in the stylesheet, and the difference is an Android one.
+                        `expo-font` files a loaded face under Typeface.NORMAL alone, so
+                        `ReactFontManager` rounds any request of 700 or more up to BOLD,
+                        finds nothing filed there, and ends on a system lookup that has
+                        never heard of the reader's family -- handing back the
+                        platform's bold in a different typeface. The kit's registry caps
+                        the prop at semibold, which stays under that threshold; a style
+                        `fontWeight` is applied after the resolved family and would put
+                        the wordmark straight back into the platform's face. */}
                     <Text
-                      style={[
-                        styles.brandTitle,
-                        {
-                          color: theme.colors.text,
-                          fontSize: metrics.brand.titleSize,
-                          lineHeight: metrics.brand.titleLineHeight,
-                          letterSpacing: metrics.brand.titleTracking,
-                        },
-                      ]}>
+                      weight="semibold"
+                      style={{
+                        color: theme.colors.text,
+                        fontSize: metrics.brand.titleSize,
+                        lineHeight: metrics.brand.titleLineHeight,
+                        letterSpacing: metrics.brand.titleTracking,
+                      }}>
                       {identity.name}
                     </Text>
                     {/* Only where it is the whole message. On a screen already showing
@@ -1501,13 +1515,6 @@ const styles = StyleSheet.create({
   titleCopy: {
     flex: 1,
     gap: 2,
-  },
-  // The one place on the screen that spends type, with the tracking pulled in
-  // hard so the name reads as a mark rather than as a heading. The size and the
-  // tracking travel together in `homeBrandWeight`; the weight does not, because
-  // a wordmark that changes stroke weight stops being the same wordmark.
-  brandTitle: {
-    fontWeight: '700',
   },
   emptyCard: {
     padding: 24,

@@ -62,6 +62,7 @@ import {
   type FileMentionTrigger,
 } from '@/lib/file-mentions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
@@ -188,7 +189,7 @@ const SessionChip = memo(function SessionChip({
         ) : null}
         <Text
           variant="caption"
-          weight="bold"
+          weight="semibold"
           color={active ? theme.colors.onPrimary : theme.colors.primary}
           style={styles.sessionChipAgentBadge}>
           {agentName}
@@ -395,6 +396,29 @@ export const AgentComposer = memo(function AgentComposer({
   const theme = useThemeTokens();
   const { showToast } = useToast();
   const surfaceBackground = useSurfaceBackground();
+  /**
+   * The message field is prose, so it follows the reader's interface font --
+   * and it has to say so, because the field it is borrowing does not.
+   *
+   * `TerminalComposer` is the terminal's line field and it puts the reader's
+   * monospace slot on its own `TextInput`, correctly: a shell line is a
+   * literal and its alignment is part of what it says. This composer reuses
+   * the same component for something else entirely. "Send a message, type /
+   * for commands, @ for files…" is a sentence, and it was being drawn in a
+   * typewriter face beside a transcript set in the reader's own. The
+   * placeholder is where a reader meets that first, for the ordinary reason
+   * that an empty field is nothing but its placeholder.
+   *
+   * The composer merges its family ahead of `inputProps.style` precisely so a
+   * caller can say otherwise, and this is the caller that has to. A family and
+   * nothing else: the size, the line height and the top-aligned multiline
+   * behaviour are the composer's own and are not ours to restate. `null`
+   * becomes `undefined` because that is React Native's way of naming the
+   * platform's UI face, which is the right answer for a reader who has chosen
+   * no font -- and it still has to be written, because leaving the property
+   * out would let the mono family underneath stand.
+   */
+  const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
@@ -1464,6 +1488,7 @@ export const AgentComposer = memo(function AgentComposer({
                   onSelectionChange: handleSelectionChange,
                   onKeyPress: slashPopup.inputProps.onKeyPress,
                   onSubmitEditing: handleSend,
+                  style: { fontFamily: interfaceFontFamily },
                 }}
                 send={{
                   accessibilityLabel: running
@@ -1686,9 +1711,15 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
+  // No `fontWeight` here: the badge asks for its weight through the kit's prop,
+  // which the app's font registry caps at semibold. `expo-font` files a reader's
+  // face under Typeface.NORMAL alone, so Android rounds 700 and over up to BOLD,
+  // finds nothing filed there, and falls back to a system lookup that does not
+  // know the family -- the badge would be the one run on the chip set in the
+  // platform's face. A style `fontWeight` is applied after the kit's resolved
+  // font style, so putting the 700 back here would defeat the cap.
   sessionChipAgentBadge: {
     fontSize: AGENT_TYPE.meta.size,
-    fontWeight: '700',
   },
   sessionChipDot: {
     fontSize: AGENT_TYPE.micro.size,

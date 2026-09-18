@@ -3412,7 +3412,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               {isOffline ? (
                 <>
                   <Bot size={44} color={theme.colors.textMuted} />
-                  <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
+                  <Text
+                    variant="subheading"
+                    weight="semibold"
+                    color={theme.colors.text}
+                    style={styles.emptyTitle}>
                     <Trans>OpenCode service offline</Trans>
                   </Text>
                   <Text
@@ -3452,7 +3456,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               ) : (
                 <>
                   <Bot size={44} color={theme.colors.primary} />
-                  <Text variant="subheading" color={theme.colors.text} style={styles.emptyTitle}>
+                  <Text
+                    variant="subheading"
+                    weight="semibold"
+                    color={theme.colors.text}
+                    style={styles.emptyTitle}>
                     <Trans>Welcome to OpenCode Agent</Trans>
                   </Text>
                   <Text
@@ -4033,8 +4041,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     gap: 10,
   },
+  // Size only; the weight is the kit's prop on both titles that wear this.
+  // `expo-font` registers a reader's interface face under Typeface.NORMAL and
+  // nothing else, so Android rounds a 700 request up to BOLD, misses, and ends
+  // on a system family that does not contain theirs. This card is the surface
+  // that made it visible: "Welcome to OpenCode Agent" stayed in the platform's
+  // bold while its own subtitle, one line below, followed the reader. A style
+  // `fontWeight` wins over the kit's capped prop, so this key stays weightless.
   emptyTitle: {
-    fontWeight: '700',
     fontSize: 16,
   },
   emptySubtitle: {
