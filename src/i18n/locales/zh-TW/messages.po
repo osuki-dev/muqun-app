@@ -1805,6 +1805,10 @@ msgstr "請輸入該主機上 Gateway 的連接埠"
 msgid "Enter URL manually"
 msgstr "手動輸入網址"
 
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "出錯"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Escape"

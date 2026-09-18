@@ -7,6 +7,7 @@ import {
   classifyTool,
   diffFilesFromMetadata,
   editFilesFromMetadata,
+  executeErrored,
   executeToolCalls,
   extractCaption,
   extractTarget,
@@ -326,13 +327,41 @@ describe('metadata readings', () => {
     expect(resultCountFromMetadata({ truncated: false })).toBeUndefined();
   });
 
-  test("Code Mode's own calls", () => {
+  test("Code Mode's own calls, with how each one went", () => {
+    // The real shape: `{tool, status, input}`, not `{name}`. The fixture said
+    // `name` and so the app only ever read a name.
+    expect(
+      executeToolCalls({
+        toolCalls: [
+          { tool: 'read', status: 'completed', input: { path: '/a/b.ts' } },
+          { tool: 'grep', status: 'error', input: { pattern: 'x' } },
+          { tool: 'glob', status: 'running' },
+        ],
+      })
+    ).toEqual([
+      { name: 'read', status: 'completed', input: 'path /a/b.ts' },
+      { name: 'grep', status: 'error', input: 'pattern x' },
+      { name: 'glob', status: 'running' },
+    ]);
+    // A status this build has never heard of is a call that finished, not a
+    // call with no row.
+    expect(executeToolCalls({ toolCalls: [{ tool: 'read', status: 'weird' }] })).toEqual([
+      { name: 'read', status: 'completed' },
+    ]);
+    // Older spellings, and entries that are not calls at all.
     expect(executeToolCalls({ toolCalls: [{ name: 'read' }, 'grep', { id: 'glob' }, 3] })).toEqual([
-      'read',
-      'grep',
-      'glob',
+      { name: 'read', status: 'completed' },
+      { name: 'grep', status: 'completed' },
+      { name: 'glob', status: 'completed' },
     ]);
     expect(executeToolCalls({})).toEqual([]);
+    expect(executeToolCalls({ toolCalls: 'soon' })).toEqual([]);
+  });
+
+  test('the sandboxed code throwing is a fact about the code, not the tool', () => {
+    expect(executeErrored({ error: true })).toBe(true);
+    expect(executeErrored({ error: 'yes' })).toBe(false);
+    expect(executeErrored({ toolCalls: [] })).toBe(false);
   });
 });
 

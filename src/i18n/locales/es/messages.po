@@ -1805,6 +1805,10 @@ msgstr "Introduce el puerto del gateway en ese host"
 msgid "Enter URL manually"
 msgstr "Introducir URL manualmente"
 
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "error"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Escape"

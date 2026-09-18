@@ -1805,6 +1805,10 @@ msgstr "ป้อนพอร์ตของ Gateway บนโฮสต์นั
 msgid "Enter URL manually"
 msgstr "ป้อน URL ด้วยตนเอง"
 
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "ข้อผิดพลาด"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Escape"

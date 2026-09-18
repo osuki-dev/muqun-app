@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import {
   classifyTool,
   diffFilesFromMetadata,
+  executeErrored,
+  executeToolCalls,
   extractCaption,
   extractTarget,
   parsePatchSections,
@@ -171,6 +173,45 @@ describe('the pending card', () => {
       expect(() => toolArgumentLine(toolInputRecord(prefix))).not.toThrow();
       expect(() => extractCaption('shell', prefix)).not.toThrow();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// execute (Code Mode)
+// ---------------------------------------------------------------------------
+
+describe('the Code Mode card', () => {
+  const METADATA = {
+    toolCalls: [
+      { tool: 'read', status: 'completed', input: { path: '/a/b.ts' } },
+      { tool: 'grep', status: 'error', input: { pattern: 'needle' } },
+      { tool: 'glob', status: 'running' },
+    ],
+    error: true,
+  };
+
+  test('a row per call, each with the status the sandbox reported', () => {
+    expect(executeToolCalls(METADATA)).toEqual([
+      { name: 'read', status: 'completed', input: 'path /a/b.ts' },
+      { name: 'grep', status: 'error', input: 'pattern needle' },
+      { name: 'glob', status: 'running' },
+    ]);
+  });
+
+  test('the code throwing is its own chip, not a failed tool call', () => {
+    expect(executeErrored(METADATA)).toBe(true);
+    // The real captured success: Code Mode ran, called nothing, threw nothing.
+    expect(executeErrored({ toolCalls: [], truncated: false })).toBe(false);
+    expect(executeToolCalls({ toolCalls: [], truncated: false })).toEqual([]);
+  });
+
+  test('the card draws the dot, the name and the error chip', () => {
+    expect(CARD).toContain('executeToolCalls(metadata)');
+    expect(CARD).toContain("call.status === 'running'");
+    expect(CARD).toContain("call.status === 'error'");
+    expect(CARD).toContain("kind === 'execute' && executeErrored(part.metadata)");
+    // Bounded: a Code Mode run can call a tool in a loop.
+    expect(CARD).toContain('calls.slice(0, EXECUTE_CALL_MAX)');
   });
 });
 

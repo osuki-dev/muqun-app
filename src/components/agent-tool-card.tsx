@@ -32,6 +32,7 @@ import {
   diffFilesFromMetadata,
   dirname,
   editFilesFromMetadata,
+  executeErrored,
   executeToolCalls,
   extractCaption,
   extractTarget,
@@ -474,6 +475,11 @@ export const AgentToolCard = memo(function AgentToolCard({
           color={theme.colors.textMuted}
         />
       );
+    }
+    // The sandboxed code threw. The tool call itself succeeded -- it ran the
+    // code and reported what happened -- so nothing else on the card says so.
+    if (kind === 'execute' && executeErrored(part.metadata)) {
+      nodes.push(<Chip key="err" text={t`error`} color={colors.removed} />);
     }
     if (kind === 'subagent') {
       const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;
@@ -1192,21 +1198,68 @@ const SkillBody = memo(function SkillBody({ description }: { description: string
   return <BoundedMarkdown markdown={description} markdownStyle={markdownStyle} openLinks={false} />;
 });
 
+/**
+ * What the sandboxed code called, and how each call went.
+ *
+ * `metadata.toolCalls` carries `{tool, status, input}` per entry and the card
+ * kept only the names, joined into one grey line: a `read` that failed inside
+ * the sandbox and a `read` that worked read identically. A row each, with the
+ * same status dot the rest of the transcript uses -- the progress event
+ * streams this list while the code runs, so `running` is a state the reader
+ * actually sees.
+ */
 const ExecuteCalls = memo(function ExecuteCalls({
   metadata,
 }: {
   metadata: Record<string, unknown>;
 }) {
+  const theme = useThemeTokens();
   const colors = usePaneChatColors();
   const calls = useMemo(() => executeToolCalls(metadata), [metadata]);
   if (calls.length === 0) return null;
   return (
-    // Tool names, not prose: a one-line list of what the code called.
-    <Text variant="caption" color={colors.subtle} style={styles.callList}>
-      {calls.join(' · ')}
-    </Text>
+    <View style={styles.stretch}>
+      {calls.slice(0, EXECUTE_CALL_MAX).map((call, index) => (
+        <View key={`${index}:${call.name}`} style={styles.callRow}>
+          <StatusDot
+            size={6}
+            filled
+            pulse={call.status === 'running'}
+            color={
+              call.status === 'error'
+                ? theme.colors.danger
+                : call.status === 'running'
+                  ? theme.colors.warning
+                  : theme.colors.success
+            }
+          />
+          <Text
+            variant="caption"
+            weight="semibold"
+            color={call.status === 'error' ? theme.colors.danger : theme.colors.text}
+            style={styles.callName}>
+            {call.name}
+          </Text>
+          {call.input ? (
+            <Text
+              numberOfLines={1}
+              style={[styles.mono, styles.callInput, { color: colors.subtle }]}>
+              {call.input}
+            </Text>
+          ) : null}
+        </View>
+      ))}
+      {calls.length > EXECUTE_CALL_MAX ? (
+        <Text variant="caption" color={colors.subtle} style={styles.callMore}>
+          {`… ${calls.length - EXECUTE_CALL_MAX}`}
+        </Text>
+      ) : null}
+    </View>
   );
 });
+
+/** Calls a card draws before it says how many more there were. */
+const EXECUTE_CALL_MAX = 12;
 
 /**
  * A tool nothing in this build recognises.
@@ -1380,7 +1433,20 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.micro.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },
-  callList: {
+  callRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    minHeight: 18,
+  },
+  callName: {
+    fontSize: AGENT_TYPE.micro.size,
+  },
+  callInput: {
+    fontSize: AGENT_TYPE.micro.size,
+    flexShrink: 1,
+  },
+  callMore: {
     fontSize: AGENT_TYPE.micro.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },

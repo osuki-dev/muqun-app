@@ -1805,6 +1805,10 @@ msgstr "그 호스트의 Gateway 포트를 입력하세요"
 msgid "Enter URL manually"
 msgstr "URL 직접 입력"
 
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "오류"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Escape"

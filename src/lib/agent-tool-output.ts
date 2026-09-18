@@ -766,21 +766,68 @@ export function resultCountFromMetadata(metadata: Record<string, unknown>): numb
   return undefined;
 }
 
-/** The calls Code Mode made, for the one-line summary under an `execute`. */
-export function executeToolCalls(metadata: Record<string, unknown>): string[] {
+/** How a call Code Mode made ended, as OpenCode reports it. */
+export type ExecuteCallStatus = 'running' | 'completed' | 'error';
+
+/** One call the sandboxed code made, from `metadata.toolCalls`. */
+export interface ExecuteToolCall {
+  name: string;
+  status: ExecuteCallStatus;
+  /** What it was called with, when the payload said; a header line, not a body. */
+  input?: string;
+}
+
+function parseExecuteCallStatus(value: unknown): ExecuteCallStatus {
+  const raw = typeof value === 'string' ? value.toLowerCase() : '';
+  if (raw === 'error' || raw === 'failed' || raw === 'rejected') return 'error';
+  if (raw === 'running' || raw === 'pending' || raw === 'started') return 'running';
+  return 'completed';
+}
+
+/**
+ * The calls Code Mode made, with how each one went.
+ *
+ * `metadata.toolCalls` is `{tool, status, input?}` per entry and the app kept
+ * only the names, joined into one grey line -- so a `read` that failed inside
+ * the sandbox and a `read` that worked were the same three letters. The
+ * progress event streams this list live, which is why `running` is a status a
+ * card has to be able to draw rather than an impossible one.
+ */
+export function executeToolCalls(metadata: Record<string, unknown>): ExecuteToolCall[] {
   const raw = metadata.toolCalls ?? metadata.tool_calls;
   if (!Array.isArray(raw)) return [];
-  const out: string[] = [];
+  const out: ExecuteToolCall[] = [];
   for (const entry of raw) {
     if (typeof entry === 'string') {
-      out.push(entry);
+      if (entry) out.push({ name: entry, status: 'completed' });
       continue;
     }
     const rec = asRecord(entry);
-    const name = rec ? pickString(rec, ['name', 'tool', 'id']) : undefined;
-    if (name) out.push(name);
+    if (!rec) continue;
+    const name = pickString(rec, ['tool', 'name', 'id']);
+    if (!name) continue;
+    const input = executeCallInput(rec.input);
+    out.push({
+      name,
+      status: parseExecuteCallStatus(rec.status),
+      ...(input ? { input } : {}),
+    });
   }
   return out;
+}
+
+/** A call's argument as one line: the string it is, or the shape it has. */
+function executeCallInput(value: unknown): string {
+  if (typeof value === 'string') return firstLineOf(value).slice(0, 120);
+  const rec = asRecord(value);
+  if (!rec) return '';
+  const line = toolArgumentLine(rec);
+  return line.slice(0, 120);
+}
+
+/** Whether the sandboxed code itself threw, which is not the tool failing. */
+export function executeErrored(metadata: Record<string, unknown>): boolean {
+  return metadata.error === true;
 }
 
 // ---------------------------------------------------------------------------

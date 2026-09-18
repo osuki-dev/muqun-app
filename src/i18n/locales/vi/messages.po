@@ -1805,6 +1805,10 @@ msgstr "Nhập cổng của gateway trên host đó"
 msgid "Enter URL manually"
 msgstr "Nhập URL thủ công"
 
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "lỗi"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Escape"
