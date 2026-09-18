@@ -1916,7 +1916,7 @@ export function gatewayUsesEncryptedTransport(token: string | null): boolean {
   );
 }
 
-/** Everything `use-pane-events` needs to open an encrypted event stream. */
+/** Everything a caller needs to open an encrypted event stream and read it. */
 export interface EncryptedStreamRequest {
   /** Sent instead of Authorization: the token travels inside the envelope. */
   headers: Record<string, string>;
@@ -1929,8 +1929,14 @@ export interface EncryptedStreamRequest {
 }
 
 /**
- * Seal the request that opens `/api/sessions/{id}/events` for an encrypted
- * record, and hand back what the stream decryptor needs to open its records.
+ * Seal the request that opens an event stream for an encrypted record, and
+ * hand back what the stream decryptor needs to open its records.
+ *
+ * Both streams go through here: the device-wide `/api/sessions/{id}/events`
+ * that `use-pane-events` opens, and the per-session
+ * `/api/agent-sessions/{asid}/stream` that `openAgentSessionStream` does. The
+ * AAD is built from the path, so the two are sealed under different keys
+ * without this needing to know which is which.
  *
  * The gateway authenticates this exactly like any other encrypted GET -- the
  * envelope rides `X-Muqun-Envelope`, replay-cached and clock-checked -- but
