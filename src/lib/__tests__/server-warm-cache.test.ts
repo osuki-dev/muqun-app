@@ -8,6 +8,7 @@ import {
   warmWorkspaceCount,
   type WarmWorkspace,
 } from '@/lib/server-warm-cache';
+import { REACHABILITY_FRESH_MS, REACHABILITY_RECHECK_MS } from '@/lib/server-reachability';
 
 const snapshot = (sessionId = 'default'): WarmWorkspace => ({
   // Only its presence is read; `hasLoadedData` is `Boolean(data.health)`.
@@ -82,4 +83,15 @@ test('forgetting everything clears the cache', () => {
   rememberWarmWorkspace('s2', snapshot(), 1_000);
   forgetWarmWorkspace();
   expect(warmWorkspaceCount()).toBe(0);
+});
+
+test('the warm expires on the probe clock, never on one of its own', () => {
+  // The warm is gated on a reachability probe and builds on the `/health` body
+  // that probe brought back, so a snapshot is only ever as current as the probe
+  // that allowed it. Expiring on a different clock would mean painting a
+  // workspace from a health answer the home list had already stopped believing.
+  expect(WARM_WORKSPACE_TTL_MS).toBe(REACHABILITY_FRESH_MS);
+  // And the ordering that keeps the screen cheap: the expensive path must not
+  // come due more often than the cheap one that gates it.
+  expect(WARM_WORKSPACE_TTL_MS).toBeGreaterThanOrEqual(REACHABILITY_RECHECK_MS);
 });

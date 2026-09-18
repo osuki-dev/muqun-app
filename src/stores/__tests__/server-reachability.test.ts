@@ -85,3 +85,25 @@ test('the home screen asks through the bounded list, never the raw records', () 
   for (const call of home.match(/refreshReachabilityMany\([^)]*\)/g) ?? [])
     expect(call).toContain('probeTargets');
 });
+
+test('the home screen warms behind the probe, and not at all when it says offline', () => {
+  // The expensive path is gated on the cheap one, in both directions: it waits
+  // for the probe so the two share one `/health`, and it does not run at all
+  // against a server that has just failed to answer -- six requests, each
+  // sitting out the full timeout, for a card the list has already drawn as
+  // down. The rule itself is pure and tested in
+  // `lib/__tests__/server-reachability.test.ts`; this is the wiring.
+  const home = readFileSync('src/app/index.tsx', 'utf8');
+  const warm =
+    home.match(/await useServerSession\.getState\(\)\.hydrate\(\);[\s\S]*?\n {6}\}\)\(\);/)?.[0] ??
+    '';
+  expect(warm).toContain('await refreshReachability(record,');
+  expect(warm).toContain('serverPrewarmGate(record.serverId)');
+  expect(warm).toContain('if (!gate.warm) return;');
+  // And the health it carries is the probe's, not a second round trip.
+  expect(warm).toContain('gate.health');
+  const probeAt = warm.indexOf('refreshReachability(');
+  const warmAt = warm.indexOf('warmConfiguredWorkspace(');
+  expect(probeAt).toBeGreaterThan(-1);
+  expect(warmAt).toBeGreaterThan(probeAt);
+});
