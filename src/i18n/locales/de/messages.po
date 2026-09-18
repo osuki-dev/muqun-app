@@ -142,12 +142,6 @@ msgstr "{0} Tokens, die das Modell zuletzt gelesen hat"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, nicht im PATH dieses Servers gefunden"
 
-#. placeholder {0}: machine.label
-#. placeholder {1}: session.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "{0}, session {1}"
-msgstr "{0}, Sitzung {1}"
-
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
@@ -317,7 +311,7 @@ msgstr "Anhang hinzufügen"
 msgid "Add commands and custom key combinations."
 msgstr "Befehle und eigene Tastenkombinationen hinzufügen"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Add machine"
 msgstr "Rechner hinzufügen"
 
@@ -1079,14 +1073,9 @@ msgstr "Konflikt"
 msgid "Connect"
 msgstr "Verbinden"
 
-#. placeholder {0}: machine.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "Connect to {0}"
-msgstr "Mit {0} verbinden"
-
 #: src/app/explore.tsx
-#: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 msgid "Connected"
 msgstr "Verbunden"
 
@@ -1102,6 +1091,7 @@ msgstr "Verbunden mit {address}"
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "Verbindungsaufbau"
@@ -1331,7 +1321,7 @@ msgstr "Verdichtung nicht möglich"
 msgid "Could not connect"
 msgstr "Verbindung fehlgeschlagen"
 
-#: src/app/sessions.tsx
+#: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "Verbindung fehlgeschlagen — zum Wiederholen tippen"
 
@@ -1586,7 +1576,7 @@ msgstr "Aktuell"
 msgid "Current agent"
 msgstr "Aktueller Agent"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Current machine"
 msgstr "Aktueller Rechner"
 
@@ -2473,15 +2463,15 @@ msgstr "Simulator wird gesucht"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Büro"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Machines and sessions"
-msgstr "Rechner und Sitzungen"
+#: src/components/session-map.tsx
+msgid "Machines"
+msgstr "Rechner"
 
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "Verwalten"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "Rechner verwalten"
 
@@ -3044,10 +3034,9 @@ msgid "Open this path"
 msgstr "Diesen Pfad öffnen"
 
 #. placeholder {0}: workspace.title
-#. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "Arbeitsbereich {0} öffnen, {1, plural, one {# aktiv} other {# aktiv}}. Lange drücken zum Schließen"
+msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
+msgstr "Arbeitsbereich {0} öffnen, {panelCount, plural, one {# aktiv} other {# aktiv}}. Lange drücken zum Schließen"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/launch-intro.tsx
@@ -3952,6 +3941,7 @@ msgid "Session Tokens"
 msgstr "Sitzungs-Tokens"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Sitzungen"
 
@@ -4395,14 +4385,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "Sprachmodell wechseln"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Switch machine or session"
-msgstr "Rechner oder Sitzung wechseln"
-
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
 msgstr "Zu {0} wechseln"
+
+#: src/components/session-map.tsx
+msgid "Switch to {name}, {state}"
+msgstr "Zu {name} wechseln, {state}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
@@ -4442,7 +4432,7 @@ msgstr "Foto aufnehmen"
 msgid "Tap again to remove"
 msgstr "Zum Entfernen erneut tippen"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "Zum Verbinden tippen"
 
@@ -4453,6 +4443,10 @@ msgstr "Zum Ansehen und Anpassen tippen"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "Tippen, um diese Sitzung neu zu laden"
+
+#: src/components/session-map.tsx
+msgid "Tap to retry"
+msgstr "Zum Wiederholen tippen"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5127,6 +5121,10 @@ msgstr "{0} verwenden"
 msgid "Use device passcode"
 msgstr "Gerätecode verwenden"
 
+#: src/components/session-map.tsx
+msgid "Use the {name} session, {kind}"
+msgstr "Sitzung {name} verwenden, {kind}"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Verwende die Repository-URL und gib unten den Branch und die Theme-Datei ein"
@@ -5225,6 +5223,10 @@ msgstr "Arbeitsverzeichnis"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Workspace"
+
+#: src/components/session-map.tsx
+msgid "Workspaces"
+msgstr "Workspaces"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

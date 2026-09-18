@@ -5,7 +5,12 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { agentStatusWord } from '@/i18n/labels';
@@ -20,13 +25,14 @@ import {
   SheetSceneFooter,
   SheetSceneGroupHeading,
   SheetSceneGroupRule,
+  SheetSceneQuietAction,
   SheetSceneQuietControl,
   SheetSceneRow,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { Skeleton } from '@/components/themed-skeleton';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, listLayout, PULSE_PERIOD, riseIn, STAGGER, timing } from '@/lib/motion';
 import {
   createTab,
   createWorkspace,
@@ -39,9 +45,14 @@ import {
   renameWorkspace,
   type HerdrEntity,
 } from '@/lib/gateway-client';
-import { field, panelTitle, statusColor } from '@/lib/herdr-entity';
+import { field, statusColor } from '@/lib/herdr-entity';
 import { describeGatewayFailure } from '@/lib/network-error';
-import { EMPTY_WORKSPACE_INVENTORY, workspaceInventories } from '@/lib/workspace-inventory';
+import {
+  switcherRails,
+  type MachineChoice,
+  type MachineReach,
+  type SessionRailItem,
+} from '@/lib/switcher-rails';
 
 /**
  * The session map: every panel in the current workspace, grouped under the tab
@@ -106,19 +117,69 @@ import { EMPTY_WORKSPACE_INVENTORY, workspaceInventories } from '@/lib/workspace
  * sit against, and two columns of them gave the rule two left edges. The tab is
  * a `SheetSceneGroupHeading` now, and the hairline between groups is the only
  * divider left.
+ *
+ * ## What the machines sheet brought with it
+ *
+ * The header used to carry two buttons in the same corner. The monitor glyph
+ * opened "Machines and sessions", which knew every machine this phone is paired
+ * with and every backend on them and nothing about what was running inside one;
+ * this sheet knew the workspaces, the groups and the panels of whichever
+ * session that sheet had already picked. One address -- machine, backend,
+ * workspace, panel -- cut in half, so a reader hunting for a terminal had to
+ * know which half it was in before they could start looking.
+ *
+ * There is one button now and one sheet, and it is laid out as the address it
+ * is: a rail of machines, the backends on the one that was tapped, the
+ * workspaces in the one being read, and then the groups and panels as before.
+ * Each rail is what the next rung down can be chosen from, and all four come
+ * out of one pass of `switcherRails`, so they cannot disagree with each other.
+ *
+ * The rails are named. The WORKSPACE eyebrow card #830 removed was an all-caps
+ * sign carrying a redundant count, over the only rail on the sheet; three
+ * unlabelled rails of similar-looking chips is a different problem, and a
+ * sentence-case `SheetSceneGroupHeading` is the furniture the groups below
+ * already use. The sessions rail takes its machine's name as the heading's
+ * meta, because that is the one thing about those chips a reader cannot get
+ * from the chips: they can be the backends of a machine that is not this one.
+ *
+ * Add and manage leave the list and become the two quiet actions at the end.
+ * They are the only things here that are not a pick, and a row with a `+` in
+ * the middle of a rail of machines reads as another machine.
  */
 export function SessionMap({
   sessionId,
   label,
   activePaneId,
   onChoosePane,
+  machines,
+  serverId,
+  pendingId,
+  onConnectMachine,
+  onChooseSession,
+  onAddMachine,
+  onManageMachines,
 }: {
   sessionId: string;
-  /** The server's name, for the line under the title. */
+  /** The machine's name, for the line under the title. */
   label: string;
   /** The panel the terminal is showing, so the sheet opens on "where am I". */
   activePaneId?: string;
   onChoosePane: (paneId: string) => void;
+  /** Every machine this phone is paired with, the current one included. */
+  machines: readonly MachineChoice[];
+  /** The machine the terminal underneath the sheet is on. */
+  serverId: string;
+  /** The machine being connected to, or null. It freezes the machines rail. */
+  pendingId: string | null;
+  /**
+   * Tapping a machine: connect to it, and switch to it when there is one
+   * backend on it or a remembered one to land in. A machine with a genuine
+   * choice of backend answers by filling the sessions rail instead.
+   */
+  onConnectMachine: (serverId: string) => void;
+  onChooseSession: (serverId: string, sessionId: string) => void;
+  onAddMachine: () => void;
+  onManageMachines: () => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
   const insets = useSafeAreaInsets();
@@ -162,11 +223,68 @@ export function SessionMap({
 
   const theme = useThemeTokens();
 
+  /**
+   * How far this phone has got with a machine, as a sentence.
+   *
+   * Four whole strings and not a stem with a state appended, for the same
+   * reason `renameFieldLabel` is four whole strings, and declared inside the
+   * component closing over the hook's `t` for the same reason again: the macro
+   * only rewrites a tagged template it can walk back to the very `useLingui()`
+   * that produced the binding.
+   */
+  function machineCaption(reach: MachineReach, busy: boolean): string {
+    if (busy) return t`Connecting`;
+    switch (reach) {
+      case 'current':
+        return t`Current machine`;
+      case 'connected':
+        return t`Connected`;
+      case 'unreachable':
+        return t`Tap to retry`;
+      default:
+        return t`Tap to connect`;
+    }
+  }
+
+  /**
+   * The dot, which is the only part of a machine chip that is not its name.
+   *
+   * The same four status colours the panel rows and the workspace dots use, so
+   * one green means one thing on the whole sheet. `primary` while a machine is
+   * being reached: it is the one state that is about the reader's own tap
+   * rather than about the machine, and it is the state the breath is on.
+   */
+  function reachColor(reach: MachineReach, busy: boolean): string {
+    if (busy) return theme.colors.primary;
+    switch (reach) {
+      case 'current':
+      case 'connected':
+        return theme.colors.success;
+      case 'unreachable':
+        return theme.colors.danger;
+      default:
+        return theme.colors.textSubtle;
+    }
+  }
+
   const [workspaces, setWorkspaces] = useState<HerdrEntity[]>([]);
   const [tabs, setTabs] = useState<HerdrEntity[]>([]);
   const [panes, setPanes] = useState<HerdrEntity[]>([]);
   const [agents, setAgents] = useState<HerdrEntity[]>([]);
   const [workspaceId, setWorkspaceId] = useState('');
+  /**
+   * The machine whose backends the sessions rail is about.
+   *
+   * Undefined until the reader taps one, and then the model falls back to the
+   * machine they are on -- which is the right answer for the whole of the
+   * common case, where the sheet opens on where you already are.
+   *
+   * It exists because tapping a machine with two backends cannot switch on its
+   * own: there is no way to know which of them was meant. The old sheet
+   * answered by revealing that machine's sessions as rows underneath it, and
+   * this is the same answer in the rail.
+   */
+  const [focusedId, setFocusedId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -226,50 +344,54 @@ export function SessionMap({
     void load();
   }, [load, t]);
 
-  const orderedWorkspaces = useMemo(
-    () => [
-      ...workspaces.filter((workspace) => workspace.id === workspaceId),
-      ...workspaces.filter((workspace) => workspace.id !== workspaceId),
-    ],
-    [workspaceId, workspaces]
-  );
-
   /**
-   * The workspace's tabs, each carrying its own panels and its address.
+   * All four rails, in one pass, from `switcherRails`.
    *
-   * Indices are positions in these lists rather than anything the gateway
-   * sends, which is exactly what a tmux index is: where the thing sits in the
-   * list in front of you.
+   * It used to be three memos in this file -- the workspaces ordered, the tabs
+   * grouped, the inventory counted -- and the numbers on the chips came from a
+   * different walk of the pane list than the rows they were counting. One
+   * function means "the number on that chip is the number of rows tapping it
+   * gives you" is true by construction, and it is the only way the machines and
+   * the panels can be made to agree about which session is on screen.
+   *
+   * What is in each workspace is counted rather than read off the workspace
+   * record: `pane_count` and `agent_status` are both optional on the wire and
+   * the tmux backend sends neither -- `tmux list-sessions` has no per-session
+   * pane count to report -- so the rail's number was `0` and its dot grey on
+   * every chip, forever, however much was running. Everything needed to answer
+   * is already here: `load` fetches the whole session before the sheet draws.
    */
-  const groups = useMemo(
+  const rails = useMemo(
     () =>
-      tabs
-        .filter((tab) => field(tab, 'workspace_id') === workspaceId)
-        .map((tab, tabIndex) => ({
-          tab,
-          address: tabIndex + 1,
-          panes: panes.filter((pane) => field(pane, 'tab_id') === tab.id),
-        })),
-    [panes, tabs, workspaceId]
+      switcherRails({
+        machines,
+        serverId,
+        sessionId,
+        focusedId,
+        pendingId,
+        workspaces,
+        workspaceId,
+        tabs,
+        panes,
+        agents,
+        activePaneId,
+      }),
+    [
+      activePaneId,
+      agents,
+      focusedId,
+      machines,
+      panes,
+      pendingId,
+      serverId,
+      sessionId,
+      tabs,
+      workspaceId,
+      workspaces,
+    ]
   );
 
   const activeWorkspace = workspaces.find((workspace) => workspace.id === workspaceId);
-
-  /**
-   * What is in each workspace, counted here rather than read off the workspace
-   * record.
-   *
-   * The record's `pane_count` and `agent_status` are both optional on the wire
-   * and the tmux backend sends neither -- `tmux list-sessions` has no
-   * per-session pane count to report -- so the rail's number was `0` and its
-   * dot was grey on every chip, forever, however much was running. Everything
-   * needed to answer is already loaded: `load` fetches the whole session's
-   * tabs, panes and agents before the sheet draws.
-   */
-  const inventories = useMemo(
-    () => workspaceInventories(tabs, panes, agents),
-    [agents, panes, tabs]
-  );
 
   /**
    * Creating workspaces, tabs and panels is Herdr's, not any agent's: it runs
@@ -435,21 +557,119 @@ export function SessionMap({
         ) : null}
 
         {/*
+          The top of the address. A machine is the only rung whose chips cannot
+          all be tapped straight through to a result: reaching one is a request
+          over the network, and one with two backends on it has to ask which.
+          So the chip reports where this phone has got to with that machine --
+          the dot -- and the rail below it is the question, when there is one.
+        */}
+        <SheetSceneGroupHeading title={t`Machines`} first />
+        <View testID="machines-rail" style={styles.rail}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.railList}>
+            {rails.machines.map((machine) => {
+              // Spelled into the chip's own label as well as drawn, because a
+              // Pressable that carries a label is one accessibility element and
+              // the caption inside it stops existing -- the same trap the
+              // workspace count fell into on iOS.
+              const name = machine.label;
+              const state = machineCaption(machine.reach, machine.busy);
+              return (
+                <RailChip
+                  key={machine.id}
+                  testID={`machine-chip-${machine.id}`}
+                  title={name}
+                  caption={state}
+                  accessibilityLabel={t`Switch to ${name}, ${state}`}
+                  selected={machine.current}
+                  disabled={machine.disabled}
+                  busy={machine.busy}
+                  statusColor={reachColor(machine.reach, machine.busy)}
+                  onPress={() => {
+                    setFocusedId(machine.id);
+                    onConnectMachine(machine.id);
+                  }}
+                />
+              );
+            })}
+          </ScrollView>
+          {/* The whole sentence, under the rail rather than clipped into a
+              chip's caption: what went wrong with a machine is the one thing
+              here a reader has to read rather than scan. */}
+          {rails.machines
+            .filter((machine) => machine.error)
+            .map((machine) => (
+              <Text
+                key={machine.id}
+                selectable
+                variant="caption"
+                color={theme.colors.textMuted}
+                style={styles.machineError}>
+                {machine.label} {'·'} {machine.error}
+              </Text>
+            ))}
+        </View>
+
+        {/* Only when there is genuinely a choice, and never for a machine with
+            one backend: a rail of a single chip asks the reader to decide
+            something already decided, and costs the sheet a row of its height
+            to do it. Quieter than the rail above -- one line, no dot -- because
+            a backend has no state of its own to report; whether it answers at
+            all is the machine's news, and the machine's chip carries it. */}
+        {rails.sessions.length > 0 ? (
+          <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
+            <SheetSceneGroupHeading
+              title={t`Sessions`}
+              meta={
+                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                  {rails.sessionsOn}
+                </Text>
+              }
+            />
+            <View testID="sessions-rail" style={styles.rail}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.railList}>
+                {rails.sessions.map((session) => {
+                  // Named placeholders, which the macro only writes for a plain
+                  // identifier: `{label}` and `{kind}` tell a translator which
+                  // slot is which, and `{0}` and `{1}` do not.
+                  const { label: name, kind } = session;
+                  return (
+                    <SessionChip
+                      key={session.id}
+                      testID={`session-chip-${session.id}`}
+                      session={session}
+                      accessibilityLabel={t`Use the ${name} session, ${kind}`}
+                      onPress={() => onChooseSession(focusedId ?? serverId, session.id)}
+                    />
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/*
           The workspace rail is the sheet's scope, not a peer of the groups
           below it: the title pill's swipe already switches workspaces, so what
           this adds is the inventory -- how many there are, which one you are
           in, and the only way to make another. Chips, which is one of the three
           rounded things a scene allows: a control, not a card.
         */}
-        <View style={styles.rail}>
+        <SheetSceneGroupHeading title={t`Workspaces`} />
+        <View testID="workspaces-rail" style={styles.rail}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.railList}>
-            {orderedWorkspaces.map((workspace) => {
-              const inventory = inventories.get(workspace.id) ?? EMPTY_WORKSPACE_INVENTORY;
+            {rails.workspaces.map((workspace) => {
+              const panelCount = workspace.panels;
               return (
-                <WorkspaceChip
+                <RailChip
                   key={workspace.id}
                   title={workspace.title}
                   // The count is spelled into the label rather than left to the
@@ -459,10 +679,13 @@ export function SessionMap({
                   // far as VoiceOver, or a test, is concerned. Android happens to
                   // expose the children anyway, which is why the count read as
                   // present until this ran on a phone that does not.
-                  accessibilityLabel={t`Open workspace ${workspace.title}, ${plural(inventory.panels, { one: '# running', other: '# running' })}. Long press to close.`}
-                  panelCount={inventory.panels}
-                  selected={workspace.id === workspaceId}
-                  statusColor={statusColor(inventory.status)}
+                  accessibilityLabel={t`Open workspace ${workspace.title}, ${plural(panelCount, { one: '# running', other: '# running' })}. Long press to close.`}
+                  /* One ICU message rather than a ternary over two strings: which
+                   forms a language needs is the language's business, and Chinese
+                   needs one where English needs two. */
+                  caption={<Plural value={panelCount} one="# running" other="# running" />}
+                  selected={workspace.selected}
+                  statusColor={statusColor(workspace.status)}
                   onPress={() => setWorkspaceId(workspace.id)}
                   onLongPress={() =>
                     setMenuFor({ kind: 'workspace', id: workspace.id, label: workspace.title })
@@ -506,7 +729,7 @@ export function SessionMap({
 
         {showSkeleton ? <SessionMapSkeleton /> : null}
 
-        {groups.map((group, groupIndex) => (
+        {rails.groups.map((group, groupIndex) => (
           // A tab created or closed used to pop a whole group in, or snap every
           // group below it up into the space. `riseIn` staggers the groups on a
           // first load so the sheet arrives as a list rather than all at once,
@@ -536,25 +759,21 @@ export function SessionMap({
                   naming the tab. */}
               <SheetSceneGroupHeading
                 title={group.tab.title}
-                first={groupIndex === 0}
                 meta={actionMenu('tab', group.tab.id)}
               />
             </PressableScale>
 
-            {group.panes.map((pane) => {
-              const agent = agents.find((item) => field(item, 'pane_id') === pane.id);
-              const title = panelTitle(pane, agent);
-              const status = agent?.status ?? pane.status;
+            {group.panes.map(({ pane, agent, title, detail, status, selected }) => {
               const armed = menuFor?.kind === 'panel' && menuFor.id === pane.id;
               return (
                 <PanelRow
                   key={pane.id}
                   accessibilityLabel={t`Open ${title}. Long press to close.`}
                   title={title}
-                  detail={pane.cwd ?? pane.id}
+                  detail={detail}
                   status={status}
                   hasAgent={Boolean(agent)}
-                  selected={pane.id === activePaneId}
+                  selected={selected}
                   trailing={armed ? actionMenu('panel', pane.id) : null}
                   onPress={() => onChoosePane(pane.id)}
                   onLongPress={() => setMenuFor({ kind: 'panel', id: pane.id, label: title })}
@@ -575,7 +794,7 @@ export function SessionMap({
           </Animated.View>
         ))}
 
-        {!loading && groups.length === 0 ? (
+        {!loading && rails.groups.length === 0 ? (
           <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
             <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyGroup}>
               <Trans>This workspace has no groups yet.</Trans>
@@ -600,6 +819,25 @@ export function SessionMap({
             )
           }
         />
+
+        {/* What the machines sheet could do that is not a pick. Two lines of
+            text side by side at the very end, not two buttons and not two rows:
+            a sheet with one primary action has decided what it is for, and this
+            one is for choosing a terminal. Both of them leave the sheet. */}
+        <View style={styles.machineActions}>
+          <SheetSceneQuietAction
+            testID="add-machine"
+            label={t`Add machine`}
+            onPress={onAddMachine}
+            disabled={pendingId !== null}
+          />
+          <SheetSceneQuietAction
+            testID="manage-machines"
+            label={t`Manage machines`}
+            onPress={onManageMachines}
+            disabled={pendingId !== null}
+          />
+        </View>
         {/* The rename field can be anywhere in this column, so the keyboard's
             own strip goes at the end of the scroller rather than under it. */}
         <SheetSceneFooter bottomInset={insets.bottom} />
@@ -609,7 +847,12 @@ export function SessionMap({
 }
 
 /**
- * One workspace in the rail: a name, what is inside it, and how urgent that is.
+ * One chip in a rail: a name, a dot for how it stands, and one line saying so.
+ *
+ * Written once for the machines and for the workspaces, because they are the
+ * same object seen at two scales -- a name, a round status mark, and a line of
+ * detail under it -- and drawing them twice is how two rails on one sheet end
+ * up disagreeing about what selection looks like.
  *
  * The chip is the only place in the sheet that describes somewhere the reader
  * is not currently looking, which is why it is the only place left with a
@@ -634,22 +877,30 @@ export function SessionMap({
  * is not `interpolateColor` is written up on `PaneChip` in the server screen:
  * the same rule, the same trap.
  */
-function WorkspaceChip({
+function RailChip({
+  testID,
   title,
+  caption,
   accessibilityLabel,
-  panelCount,
   selected,
+  disabled = false,
+  busy = false,
   statusColor: dotColor,
   onPress,
   onLongPress,
 }: {
+  testID?: string;
   title: string;
+  /** The line under the name: a count, or where this phone has got to. */
+  caption: ReactNode;
   accessibilityLabel: string;
-  panelCount: number;
   selected: boolean;
+  disabled?: boolean;
+  /** This chip is waiting on the network, so its dot breathes. */
+  busy?: boolean;
   statusColor: string;
   onPress: () => void;
-  onLongPress: () => void;
+  onLongPress?: () => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
@@ -658,8 +909,21 @@ function WorkspaceChip({
     chosen.value = withTiming(selected ? 1 : 0, timing('toggle'));
   }, [chosen, selected]);
 
+  // A breath, not a spinner. A spinner in the dot's place is 20pt where 7pt
+  // was, so every chip to its right moves while a machine is being reached --
+  // and the one thing a reader is doing at that moment is looking at the rail.
+  // `PULSE_PERIOD` is the app's "answering right now" period, the same one the
+  // live status dot and the pairing screen breathe on.
+  const breath = useSharedValue(1);
+  useEffect(() => {
+    breath.value = busy
+      ? withRepeat(withTiming(0.25, timing(PULSE_PERIOD)), -1, true)
+      : withTiming(1, timing('short'));
+  }, [breath, busy]);
+
   const restingStyle = useAnimatedStyle(() => ({ opacity: 1 - chosen.value }));
   const selectedStyle = useAnimatedStyle(() => ({ opacity: chosen.value }));
+  const breathStyle = useAnimatedStyle(() => ({ opacity: breath.value }));
 
   return (
     <Animated.View
@@ -667,14 +931,18 @@ function WorkspaceChip({
       exiting={fadeOut('micro')}
       layout={listLayout('short')}>
       <PressableScale
+        testID={testID}
         accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ selected, disabled, busy }}
+        disabled={disabled}
         onPress={onPress}
         onLongPress={onLongPress}
         style={[
-          styles.workspaceChip,
+          styles.railChip,
           {
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           },
+          disabled ? { opacity: appChrome.opacity.disabled } : null,
         ]}>
         <Animated.View
           pointerEvents="none"
@@ -687,10 +955,17 @@ function WorkspaceChip({
         />
         {/* The dot keeps its own colour when the chip is selected rather than
             going mono like the lettering: it is the one thing on the chip that
-            is not about the workspace's identity but about whether something in
-            there wants you, and that stays true after you have tapped it. */}
+            is not about the thing's identity but about whether it wants you,
+            and that stays true after you have tapped it. */}
         <View style={styles.statusDot}>
-          <View style={[StyleSheet.absoluteFill, styles.dotFill, { backgroundColor: dotColor }]} />
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.dotFill,
+              { backgroundColor: dotColor },
+              breathStyle,
+            ]}
+          />
         </View>
         <View style={styles.flexOne}>
           {/* `bodySmall`, not `label`. The `label` style is uppercased, and a
@@ -703,10 +978,7 @@ function WorkspaceChip({
               {title}
             </Text>
             <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {/* One ICU message rather than a ternary over two strings: which
-                  forms a language needs is the language's business, and Chinese
-                  needs one where English needs two. */}
-              <Plural value={panelCount} one="# running" other="# running" />
+              {caption}
             </Text>
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, selectedStyle]}>
@@ -714,10 +986,100 @@ function WorkspaceChip({
               {title}
             </Text>
             <Text variant="caption" color={theme.colors.surface} numberOfLines={1}>
-              <Plural value={panelCount} one="# running" other="# running" />
+              {caption}
             </Text>
           </Animated.View>
         </View>
+      </PressableScale>
+    </Animated.View>
+  );
+}
+
+/**
+ * One backend on one machine: the quiet rail.
+ *
+ * A backend has no state of its own to report -- whether the machine answers at
+ * all is the machine's news, and the chip above this rail is already carrying
+ * it -- so this one has no dot and one line, and it is shorter than the rails
+ * either side of it. That is the whole of what "quieter" means here: less to
+ * read, not greyer. The rail only exists when there are two or more of them.
+ *
+ * The kind (`herdr`, `tmux`) rides after the label, and only when it is not
+ * simply the label again: a gateway that labels its tmux socket "tmux" would
+ * otherwise draw "tmux tmux". Same rule, same reason, as `panelTitle`.
+ *
+ * Selection is the rail's own device -- ink and surface swapped -- rather than
+ * the accent, which this sheet spends once, on the panel you are in.
+ */
+function SessionChip({
+  testID,
+  session,
+  accessibilityLabel,
+  onPress,
+}: {
+  testID?: string;
+  session: SessionRailItem;
+  accessibilityLabel: string;
+  onPress: () => void;
+}) {
+  const surfaceBackground = useSurfaceBackground();
+  const theme = useThemeTokens();
+  const chosen = useSharedValue(session.selected ? 1 : 0);
+  useEffect(() => {
+    chosen.value = withTiming(session.selected ? 1 : 0, timing('toggle'));
+  }, [chosen, session.selected]);
+
+  const restingStyle = useAnimatedStyle(() => ({ opacity: 1 - chosen.value }));
+  const selectedStyle = useAnimatedStyle(() => ({ opacity: chosen.value }));
+  const kind = session.kind.toLowerCase() === session.label.toLowerCase() ? '' : session.kind;
+
+  return (
+    <Animated.View
+      entering={fadeIn('micro')}
+      exiting={fadeOut('micro')}
+      layout={listLayout('short')}>
+      <PressableScale
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ selected: session.selected, disabled: session.disabled }}
+        disabled={session.disabled}
+        onPress={onPress}
+        style={[
+          styles.sessionChip,
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          session.disabled ? { opacity: appChrome.opacity.disabled } : null,
+        ]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            styles.chipFill,
+            { backgroundColor: surfaceBackground(theme.colors.text) },
+            selectedStyle,
+          ]}
+        />
+        <Animated.View style={[styles.sessionChipCopy, restingStyle]}>
+          <Text variant="caption" color={theme.colors.text} numberOfLines={1}>
+            {session.label}
+          </Text>
+          {kind ? (
+            <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
+              {kind}
+            </Text>
+          ) : null}
+        </Animated.View>
+        <Animated.View
+          style={[StyleSheet.absoluteFill, styles.sessionChipCopy, selectedStyle]}
+          pointerEvents="none">
+          <Text variant="caption" color={theme.colors.surface} numberOfLines={1}>
+            {session.label}
+          </Text>
+          {kind ? (
+            <Text variant="caption" color={theme.colors.surface} numberOfLines={1}>
+              {kind}
+            </Text>
+          ) : null}
+        </Animated.View>
       </PressableScale>
     </Animated.View>
   );
@@ -900,7 +1262,7 @@ const styles = StyleSheet.create({
    * one height makes the rail and the list read as one system seen twice rather
    * than as two components that happen to share a sheet.
    */
-  workspaceChip: {
+  railChip: {
     minWidth: 118,
     minHeight: 50,
     flexDirection: 'row',
@@ -910,6 +1272,39 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 6,
+  },
+  /**
+   * The sessions rail: one line of caption, so about two thirds the height of
+   * the chips either side of it. The rail reads as a footnote to the machine
+   * above it rather than as a third peer, which is what it is.
+   */
+  sessionChip: {
+    minHeight: 34,
+    justifyContent: 'center',
+    borderRadius: appChrome.radius.control,
+    borderCurve: 'continuous',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  sessionChipCopy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  // The whole failure, under the rail it belongs to.
+  machineError: {
+    lineHeight: 17,
+    paddingTop: SHEET_LADDER.tight,
+  },
+  // Two lines of text sharing one line of the sheet, centred together rather
+  // than pushed to the two edges: they are a pair, not opposites.
+  machineActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SHEET_LADDER.section,
+    paddingTop: SHEET_LADDER.gap,
   },
   // The selected fill is one layer, so selection fades in rather than changing
   // several inline colours on the same frame.

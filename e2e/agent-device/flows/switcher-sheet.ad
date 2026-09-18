@@ -1,0 +1,54 @@
+# One button in the header, and the whole address behind it.
+
+# section s1
+wait "role=button text=\"Open quick actions\"" 15000
+
+# section s2
+# The monitor that opened "Machines and sessions" is gone. Asserted by the id
+# it used to carry, so bringing the second button back fails here.
+is hidden "id=\"machine-session-switcher\""
+
+# section s3
+press "text=\"Show what is running\""
+
+# section s4
+wait "text=\"What is running\"" 15000
+
+# section s5
+# The rails, in the order the address is read: machine, then backend, then
+# workspace. Asserted by id rather than by heading text so the flow survives a
+# language change.
+is visible "id=\"machines-rail\""
+
+# section s6
+# A single live backend on one machine has nothing to switch to, so the
+# sessions rail is not drawn at all. This is the assertion the old
+# machine-switcher flow made about the header's second button.
+is hidden "id=\"sessions-rail\""
+
+# section s7
+is visible "id=\"workspaces-rail\""
+
+# section s8
+screenshot "shots/switcher-sheet-rails.png"
+
+# section s9
+# Everything the machines sheet could do that is not a pick, at the end of the
+# one column.
+scroll down --pixels 600
+
+# section s10
+is visible "id=\"add-machine\""
+
+# section s11
+is visible "id=\"manage-machines\""
+
+# section s12
+screenshot "shots/switcher-sheet-actions.png"
+
+# section s13
+# A form sheet has no X circle: the grabber and the swipe are the close.
+back --system
+
+# section s14
+wait stable 400 5000

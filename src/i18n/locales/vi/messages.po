@@ -142,12 +142,6 @@ msgstr "{0} token mà mô hình đã đọc lần gần nhất"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, không có trong PATH của máy chủ này"
 
-#. placeholder {0}: machine.label
-#. placeholder {1}: session.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "{0}, session {1}"
-msgstr "{0}, phiên {1}"
-
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
@@ -317,7 +311,7 @@ msgstr "Thêm tệp đính kèm"
 msgid "Add commands and custom key combinations."
 msgstr "Thêm lệnh và tổ hợp phím tùy chỉnh"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Add machine"
 msgstr "Thêm máy"
 
@@ -1079,14 +1073,9 @@ msgstr "Xung đột"
 msgid "Connect"
 msgstr "Kết nối"
 
-#. placeholder {0}: machine.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "Connect to {0}"
-msgstr "Kết nối với {0}"
-
 #: src/app/explore.tsx
-#: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 msgid "Connected"
 msgstr "Đã kết nối"
 
@@ -1102,6 +1091,7 @@ msgstr "Đã kết nối đến {address}"
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "Đang kết nối"
@@ -1331,7 +1321,7 @@ msgstr "Không thể nén"
 msgid "Could not connect"
 msgstr "Không thể kết nối"
 
-#: src/app/sessions.tsx
+#: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "Không thể kết nối với máy này — nhấn để thử lại"
 
@@ -1586,7 +1576,7 @@ msgstr "Đang dùng"
 msgid "Current agent"
 msgstr "Agent hiện tại"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Current machine"
 msgstr "Máy hiện tại"
 
@@ -2473,15 +2463,15 @@ msgstr "Đang tìm trình giả lập"
 msgid "Mac mini · Office"
 msgstr "Mac mini · Văn phòng"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Machines and sessions"
-msgstr "Máy và phiên"
+#: src/components/session-map.tsx
+msgid "Machines"
+msgstr "Máy"
 
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "Quản lý"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "Quản lý máy"
 
@@ -3044,10 +3034,9 @@ msgid "Open this path"
 msgstr "Mở đường dẫn này"
 
 #. placeholder {0}: workspace.title
-#. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "Mở không gian làm việc {0}, {1, plural, other {# đang chạy}}. Nhấn giữ để đóng"
+msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
+msgstr "Mở không gian làm việc {0}, {panelCount, plural, other {# đang chạy}}. Nhấn giữ để đóng"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/launch-intro.tsx
@@ -3952,6 +3941,7 @@ msgid "Session Tokens"
 msgstr "Token phiên"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Phiên"
 
@@ -4395,14 +4385,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "Đổi mô hình ngôn ngữ"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Switch machine or session"
-msgstr "Chuyển máy hoặc phiên"
-
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
 msgstr "Chuyển sang {0}"
+
+#: src/components/session-map.tsx
+msgid "Switch to {name}, {state}"
+msgstr "Chuyển sang {name}, {state}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
@@ -4442,7 +4432,7 @@ msgstr "Chụp ảnh"
 msgid "Tap again to remove"
 msgstr "Chạm lần nữa để gỡ"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "Nhấn để kết nối"
 
@@ -4453,6 +4443,10 @@ msgstr "Chạm để xem trước và điều chỉnh"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "Chạm để làm mới phiên này"
+
+#: src/components/session-map.tsx
+msgid "Tap to retry"
+msgstr "Nhấn để thử lại"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5127,6 +5121,10 @@ msgstr "Dùng {0}"
 msgid "Use device passcode"
 msgstr "Dùng mật mã thiết bị"
 
+#: src/components/session-map.tsx
+msgid "Use the {name} session, {kind}"
+msgstr "Dùng phiên {name}, {kind}"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Dùng URL kho mã, rồi nhập nhánh và tệp giao diện bên dưới"
@@ -5224,6 +5222,10 @@ msgstr "Thư mục làm việc"
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
+msgstr "Không gian làm việc"
+
+#: src/components/session-map.tsx
+msgid "Workspaces"
 msgstr "Không gian làm việc"
 
 #: src/components/agent-worktree-sheet.tsx
