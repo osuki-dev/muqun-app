@@ -139,7 +139,6 @@ import {
   sessionsInWorkspace,
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
-import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { useAgentPermissionStore } from '@/stores/agent-permissions';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
@@ -2762,9 +2761,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     useAgentSessionState.getState().setWorkspace(activeDirectory, activeProject, activeWorktree);
   }, [activeDirectory, activeProject, activeWorktree]);
 
-  const displayWorkspaceName = workspaceDisplayName(activeProject, activeDirectory, t`Workspace`);
-  const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
-
   // Rendered window over the full timeline: entering a session shows the
   // latest page; earlier pages are prepended on demand.
   //
@@ -3413,35 +3409,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   borderColor: theme.colors.border,
                 },
               ]}>
-              <PressableScale
-                testID="agent-empty-workspace-pill"
-                onPress={openWorkspaceSheet}
-                accessibilityLabel={t`Switch workspace: ${displayWorkspaceName}`}
-                style={[
-                  styles.workspacePill,
-                  {
-                    backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.08)),
-                    borderColor: withAlpha(theme.colors.primary, 0.25),
-                    marginBottom: 6,
-                  },
-                ]}>
-                <FolderGit2 size={13} color={theme.colors.primary} />
-                <Text
-                  variant="caption"
-                  weight="bold"
-                  color={theme.colors.primary}
-                  numberOfLines={1}>
-                  {displayWorkspaceName}
-                </Text>
-                <Text
-                  variant="caption"
-                  color={theme.colors.textMuted}
-                  numberOfLines={1}
-                  style={styles.workspacePillPath}>
-                  {displayWorkspacePath}
-                </Text>
-                <ChevronDown size={12} color={theme.colors.primary} />
-              </PressableScale>
               {isOffline ? (
                 <>
                   <Bot size={44} color={theme.colors.textMuted} />

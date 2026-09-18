@@ -4517,7 +4517,6 @@ msgid "Switch workspace"
 msgstr "Mudar de espaço de trabalho"
 
 #: src/app/agent.tsx
-#: src/components/agent-workbench.tsx
 msgid "Switch workspace: {displayWorkspaceName}"
 msgstr "Alternar espaço de trabalho: {displayWorkspaceName}"
 
@@ -5377,7 +5376,6 @@ msgid "Working directory"
 msgstr "Diretório de trabalho"
 
 #: src/app/agent.tsx
-#: src/components/agent-workbench.tsx
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
