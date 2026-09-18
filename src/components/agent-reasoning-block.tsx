@@ -5,6 +5,7 @@ import { useLingui } from '@lingui/react/macro';
 import { ChevronDown } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
+import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import { formatThoughtDuration } from '@/lib/agent-reasoning';
 import { withAlpha } from '@/lib/color';
@@ -39,6 +40,7 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
 }: AgentReasoningBlockProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const plate = useTranscriptPlate();
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   /**
@@ -118,10 +120,12 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
         ) : null}
       </Pressable>
 
+      {/* The body brings its own ground: the pill sits on the wallpaper, and
+          only the paragraph it opens onto needs a surface to be read on. */}
       {expanded && text ? (
         <Animated.View
           entering={fadeIn('micro')}
-          style={[styles.body, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
+          style={[styles.body, plate, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
           <Text
             selectable
             variant="caption"
@@ -158,10 +162,10 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   body: {
-    marginLeft: 10,
     marginTop: 6,
     marginBottom: 4,
-    paddingLeft: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderLeftWidth: 1.5,
   },
   reasoningText: {
