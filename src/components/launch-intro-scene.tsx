@@ -31,6 +31,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchBackground } from '@/hooks/use-launch-artwork';
+import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
 import { LAUNCH_HERO_MAX_WIDTH, LAUNCH_HERO_WIDTH_FRACTION } from '@/hooks/use-launch-image-sync';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
@@ -40,6 +41,7 @@ import {
   inkBloomUniforms,
   type InkBloomHole,
 } from '@/lib/ink-bloom-shader';
+import { heroEdgeAmount, HERO_EDGE_REST_FRACTION } from '@/lib/launch-hero-edge';
 import { subscribeLaunchHeroRect, type LaunchHeroRect } from '@/lib/launch-hero-rect';
 import { cursorOpacity, launchPromptLine, scrimWidth, typedCount } from '@/lib/launch-intro-prompt';
 import {
@@ -76,14 +78,18 @@ import { resolveThemeImage } from '@/theme/resolve';
  * Everything that happens, happens *around* it:
  *
  * 1. **The rim wakes.** A thin line in the pack's `primary` closes around the
- *    picture. It is the only thing that moves for a sixth of a second, and it
- *    is attached to the picture, so what comes next has somewhere to come from.
- * 2. **The world blooms.** A front spreads from the hero's centre to past the
- *    far corner, and behind it is the pack's wallpaper. The front is not a
- *    circle: its radius is displaced by noise, so it reads as ink soaking
- *    outward. The edge carries a bank of `primary`, a thin bright rim in the
- *    pack's lightest tone, and a two-pixel chromatic split. The wallpaper
- *    arrives a touch zoomed and settles, so the world has depth as it comes.
+ *    picture -- around *the picture*, tracing its own outline rather than a
+ *    circle near it. It is the only thing that moves for a sixth of a second,
+ *    and it is attached to the picture, so what comes next has somewhere to
+ *    come from.
+ * 2. **The world blooms.** A front spreads from that outline to past the far
+ *    corner, and behind it is the pack's wallpaper. The front is not a circle:
+ *    it begins as the picture's own edge, its radius is displaced by noise, so
+ *    it reads as ink soaking outward from the drawing, and it relaxes to a
+ *    plain radial front as it leaves the picture behind. The edge carries a
+ *    bank of `primary`, a thin bright rim in the pack's lightest tone, and a
+ *    two-pixel chromatic split. The wallpaper arrives a touch zoomed and
+ *    settles, so the world has depth as it comes.
  * 3. **The hero travels.** It lifts out of the middle of the launch frame into
  *    the exact band Home keeps it in, with two ghost copies trailing a beat
  *    behind it at falling opacity -- an anime-register smear, not a particle.
@@ -130,6 +136,22 @@ import { resolveThemeImage } from '@/theme/resolve';
  * documented fallback, not a failure; the world still blooms, because the world
  * arriving is true of every first screen.
  *
+ * ## The picture's edge
+ *
+ * A pack ships whatever it likes in `home.hero`: a character on a transparent
+ * ground, a wide banner, a square logo. The opening used to begin from a
+ * circle a third of the launch box across, which meant the rim closed around
+ * empty paper for one pack and cut across the drawing for the next, and the
+ * bloom visibly started as a disc.
+ *
+ * It now starts from the picture's own edge -- the alpha silhouette where
+ * there is one, the drawn rectangle where there is not -- measured by
+ * `use-launch-hero-edge.ts` and fitted by `launch-hero-edge.ts`. The shape is
+ * a handful of uniforms, so nothing per frame changes; it is latched the
+ * moment the opening starts, so a decode landing late cannot reshape a rim
+ * already on screen; and a picture that has not been measured yet opens from
+ * its rectangle, which is a fallback rather than a wait.
+ *
  * Timing is entirely `launch-intro-timeline.ts`'s, the reveal's fallbacks are
  * `launch-intro-world.ts`'s and the prompt's schedule is
  * `launch-intro-prompt.ts`'s -- which is where all three can be tested. This
@@ -159,7 +181,13 @@ const GHOST_LAG = [0.16, 0.3] as const;
 const GHOST_OPACITY = [0.26, 0.12] as const;
 
 /**
- * Where the front rests before it takes off, as a fraction of the picture's box.
+ * Where the front rests before it takes off, as a fraction of the picture's
+ * box, **when there is no picture to start from**.
+ *
+ * A launch frame with a picture starts from that picture's outline instead
+ * (see the note above, and `HERO_EDGE_REST_FRACTION`); this is what is left
+ * for a compiled launch screen that is paper alone, and for the circular iris
+ * fallback, which has no outline to trace.
  *
  * It has to read as a ring *around the hero*, which means it has to sit just
  * outside the drawn artwork and nowhere near the edges of the screen. The
@@ -321,6 +349,24 @@ export function LaunchSceneIntro({
   );
   const restRadius = launchBox * REST_RADIUS_FRACTION;
 
+  // The picture's own outline, which is what the front and the rim start from.
+  // Latched on the handover: see `use-launch-hero-edge.ts`. Null when the
+  // launch frame drew no picture, and then everything below is what it was --
+  // a circle a third of the box across, around a centre with nothing in it.
+  const heroEdge = useLaunchHeroEdge({
+    uri: mirror.logo.source?.uri,
+    box: mirror.hasLogo ? heroBox : null,
+    // Anything past the handover counts as started, `'exiting'` included: the
+    // latch is one-way, and `phase === 'visible'` would quietly let it go
+    // again for the length of the cross-fade.
+    started: phase !== 'native',
+  });
+  // Where the front rests before it takes off. With an outline to start from
+  // that is a short distance *outside the drawing*, not a radius: the rim has
+  // to sit just off the artwork's own antialiased border, and how far that is
+  // has nothing to do with how big the picture happens to be in its box.
+  const restFront = heroEdge ? launchBox * HERO_EDGE_REST_FRACTION : restRadius;
+
   const line = launchPromptLine(packLabel);
   const characters = useMemo(() => Array.from(line), [line]);
   const promptSize = Math.max(
@@ -474,8 +520,9 @@ export function LaunchSceneIntro({
 
   // Every uniform, once per frame, on the UI thread. JavaScript does nothing
   // here at all: the shared values below are the only things that change.
-  const uniforms = useDerivedValue(() =>
-    inkBloomUniforms({
+  const uniforms = useDerivedValue(() => {
+    const front = restFront + (maxRadius * BLOOM_OVERSHOOT - restFront) * bloom.value;
+    return inkBloomUniforms({
       resolution: { width, height },
       // The hole follows the picture rather than staying where the picture
       // started: the world came out of the hero, so it goes on coming out of
@@ -484,11 +531,20 @@ export function LaunchSceneIntro({
         x: launchCentre.x + (landingCentre.x - launchCentre.x) * hero.value,
         y: launchCentre.y + (landingCentre.y - launchCentre.y) * hero.value,
       },
-      front: restRadius + (maxRadius * BLOOM_OVERSHOOT - restRadius) * bloom.value,
+      front,
       // The drift rides the bloom rather than a clock, so the canvas stops
       // redrawing the moment the animation stops rather than at unmount.
       drift: bloom.value * BLOOM_DRIFT,
       settle: settle.value,
+      // The picture's outline, and how much of it the front still carries.
+      // The shape scales with the hero as it flies into Home's band and
+      // relaxes out of the front as the front leaves the picture behind, so
+      // that what crosses the far corner is the plain radial front it always
+      // was. One uniform does both -- see `heroEdgeAmount`.
+      edge: heroEdge,
+      edgeAmount: heroEdge
+        ? heroEdgeAmount(front, heroEdge.max, 1 + (landingScale - 1) * hero.value)
+        : 0,
       hole,
       cover: 'paper',
       paper: paperVector,
@@ -499,8 +555,8 @@ export function LaunchSceneIntro({
       // first frame, which is what makes it read as the picture catching light.
       rimOpacity: ignite.value,
       chroma: ignite.value,
-    })
-  );
+    });
+  });
 
   const sheetStyle = useAnimatedStyle(() => ({ opacity: 1 - exit.value }));
   const heroStyle = useAnimatedStyle(() => ({
