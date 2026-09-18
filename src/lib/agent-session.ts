@@ -21,6 +21,7 @@ import {
   touchCacheEntryTimestamp,
 } from './agent-cache';
 import {
+  asFiniteNumber,
   asRecord,
   EMPTY_CATALOG,
   parseAgentCatalog,
@@ -323,13 +324,27 @@ export async function renameAgentSession(asid: string, title: string): Promise<v
   await writeJson(sessionRoute(asid, '/rename'), 'Failed to rename session', { title });
 }
 
-/** Marks the session read. Unread is `time_idle > time_viewed`. */
-export async function markAgentSessionViewed(asid: string, idle?: number): Promise<void> {
-  await writeJson(
+/**
+ * Marks the session read, and answers with the moment it was marked at.
+ *
+ * Unread is `time_idle > time_viewed`, and both numbers are the gateway's. The
+ * answer is handed back so the caller can put `time_viewed` where it belongs
+ * without waiting for `agent.session.updated` to come round: a mark that takes
+ * a second to show is a dot that blinks on after a turn the reader watched end.
+ * `undefined` when the gateway answered without one -- and then the event is
+ * the only thing that clears it, which is the behaviour this replaces.
+ */
+export async function markAgentSessionViewed(
+  asid: string,
+  idle?: number
+): Promise<number | undefined> {
+  const data = await writeJson(
     sessionRoute(asid, '/view'),
     'Failed to mark session viewed',
     idle === undefined ? {} : { idle }
   );
+  const rec = asRecord(data);
+  return rec ? asFiniteNumber(rec.viewed) : undefined;
 }
 
 /** The exported transcript, for a share sheet. There is no sharing in v2. */

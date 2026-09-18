@@ -432,7 +432,21 @@ export function SheetSceneRow({
         style={styles.row}>
         {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
         <View style={styles.rowCopy}>
-          <Animated.View {...(crossfadeTitle ? { key: title, entering: fadeIn('short') } : {})}>
+          {/* Keyed on the title, so a rename fades in where the old name was.
+              Written as two branches rather than one spread: `key` is React's
+              own, and spreading an object that carries it is a warning. */}
+          {crossfadeTitle ? (
+            <Animated.View key={title} entering={fadeIn('short')}>
+              <Text
+                variant="bodySmall"
+                weight={selected ? 'semibold' : 'regular'}
+                color={titleColor}
+                numberOfLines={1}
+                style={styles.rowTitle}>
+                {title}
+              </Text>
+            </Animated.View>
+          ) : (
             <Text
               variant="bodySmall"
               weight={selected ? 'semibold' : 'regular'}
@@ -441,7 +455,7 @@ export function SheetSceneRow({
               style={styles.rowTitle}>
               {title}
             </Text>
-          </Animated.View>
+          )}
           {caption ? (
             <Text variant="caption" color={colors.textMuted} numberOfLines={2}>
               {caption}

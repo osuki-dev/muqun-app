@@ -681,6 +681,37 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionId, showToast, t]
   );
 
+  /**
+   * "Read, at this moment" -- the gateway's own answer, put where the dot is
+   * drawn from.
+   *
+   * Not a local guess: `…/view` answers with the millisecond it marked, and
+   * that is what goes into `time_viewed`. Without it the mark waits for
+   * `agent.session.updated` to come round, which is long enough for the dot to
+   * blink on after a turn the reader sat and watched end.
+   */
+  const applyViewed = useCallback((asid: string, viewed: number | undefined) => {
+    if (!viewed) return;
+    const stamp = (session: AgentSessionInfo): AgentSessionInfo =>
+      session.asid === asid && (session.time_viewed ?? 0) < viewed
+        ? { ...session, time_viewed: viewed }
+        : session;
+    setSessions((prev) => prev.map(stamp));
+    setChildrenByParent((prev) => {
+      let changed = false;
+      const next: Record<string, AgentSessionInfo[]> = {};
+      for (const [parent, children] of Object.entries(prev)) {
+        next[parent] = children.map((child) => {
+          const marked = stamp(child);
+          if (marked !== child) changed = true;
+          return marked;
+        });
+      }
+      return changed ? next : prev;
+    });
+    setSessionInfo((prev) => (prev ? stamp(prev) : prev));
+  }, []);
+
   const refreshShells = useCallback(async () => {
     setShells(await listAgentShells(activeDirectory));
   }, [activeDirectory]);
@@ -854,11 +885,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
          */
         if (info) {
           const idle = info.time_idle;
+          const viewedAsid = info.asid;
           void (
             idle === undefined
-              ? markAgentSessionViewed(info.asid)
-              : markAgentSessionViewed(info.asid, idle)
-          ).catch(() => {});
+              ? markAgentSessionViewed(viewedAsid)
+              : markAgentSessionViewed(viewedAsid, idle)
+          )
+            .then((viewed) => applyViewed(viewedAsid, viewed))
+            .catch(() => {});
         }
 
         /**
@@ -891,9 +925,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setForms([]);
           return;
         }
-        // Anything else is a session that exists and could not be read. This
-        // is also what pull-to-refresh lands on, and a pull that answers with
-        // nothing at all is a pull the reader will make again.
+        // Anything else is a session that exists and could not be read. The
+        // entry guard is released so this session can be opened again: a
+        // snapshot that failed once -- the gateway's address not hydrated yet,
+        // a dropped request -- must not leave the screen permanently empty.
+        openedAsidRef.current = undefined;
         showToast({
           variant: 'danger',
           title: t`Could not load the session`,
@@ -903,7 +939,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (mode === 'enter') setLoading(false);
       }
     },
-    [sessionId, activeAsid, applySelectedModel, handleAutoPermission, showToast, t]
+    [sessionId, activeAsid, applySelectedModel, applyViewed, handleAutoPermission, showToast, t]
   );
 
   /**
@@ -1028,7 +1064,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             // A turn that ended under the reader's eyes has been read. The
             // dot is for the sessions they were not looking at.
             if (appActiveRef.current && event.asid) {
-              void markAgentSessionViewed(event.asid).catch(() => {});
+              const viewedAsid = event.asid;
+              void markAgentSessionViewed(viewedAsid)
+                .then((viewed) => applyViewed(viewedAsid, viewed))
+                .catch(() => {});
             }
             void refreshSessions();
             void refreshContext();
@@ -1153,6 +1192,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       refreshContext,
       refreshShells,
       refreshDiffs,
+      applyViewed,
       handleAutoPermission,
     ]
   );
@@ -1180,7 +1220,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // remembers, and `openSession` pays it the moment the snapshot lands.
     const asked = askCatchUp(syncRef.current);
     syncRef.current = asked.state;
-    if (asked.from === null) return;
+    if (asked.from === null) {
+      // Nothing to catch up *from*, and no snapshot has landed for this
+      // session either -- the first one failed. A stream connect is a good
+      // moment to try again, and the reconnect backoff bounds how often.
+      if (openedAsidRef.current !== asid) void loadSnapshot('silent').catch(() => {});
+      return;
+    }
     void getAgentTimelineDelta(sessionId, asid, asked.from)
       .then((delta) => {
         if (asid !== activeAsidRef.current) return;
@@ -1218,14 +1264,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * Coming back to a session that is already open is reading it again.
    *
    * The snapshot's own `…/view` covers arriving; this covers the app being
-   * brought forward onto a session that finished a turn in the background.
-   * No `idle` on this one: the reader is looking at it now, and "now" is what
-   * the route defaults to.
+   * brought *forward* onto a session that finished a turn in the background --
+   * the transition, not the state, or entering the screen would post it twice
+   * for the one arrival. No `idle` on this one: the reader is looking at it
+   * now, and "now" is what the route defaults to.
    */
+  const wasForegroundRef = useRef(true);
   useEffect(() => {
-    if (!appActive || !activeAsid) return;
-    void markAgentSessionViewed(activeAsid).catch(() => {});
-  }, [appActive, activeAsid]);
+    const returned = appActive && !wasForegroundRef.current;
+    wasForegroundRef.current = appActive;
+    if (!returned || !activeAsid) return;
+    const viewedAsid = activeAsid;
+    void markAgentSessionViewed(viewedAsid)
+      .then((viewed) => applyViewed(viewedAsid, viewed))
+      .catch(() => {});
+  }, [appActive, activeAsid, applyViewed]);
 
   /**
    * The stream handler, behind a ref for the same reason the sequence is.

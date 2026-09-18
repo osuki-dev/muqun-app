@@ -39,6 +39,19 @@ export function dedupeInFlight<T>(key: string, fn: () => Promise<T>): Promise<T>
   return promise;
 }
 
+/**
+ * What this app's parsers understand, stamped into every cache key.
+ *
+ * The cache holds *parsed* objects, and the conditional request that refreshes
+ * it is the host's ETag -- which says whether the catalog changed on the host,
+ * not whether this app has learned to read more of it. So a build whose parser
+ * grew a field (`skills[].slash`, say) asked with the old ETag, was told `304`,
+ * and went on handing out an object parsed by the previous version: the new
+ * field was missing until something changed on the host. Bumping this number
+ * retires every entry written by an older parser in one line.
+ */
+export const AGENT_CACHE_SCHEMA = 2;
+
 export function buildAgentCacheKey(
   type: 'catalog' | 'projects' | 'sessions',
   endpointKey?: string | null,
@@ -55,7 +68,8 @@ export function buildAgentCacheKey(
 ): string {
   const ep = endpointKey ? endpointKey.replace(/\/$/, '') : 'default_gateway';
   const sid = sessionId || 'global';
-  return variant ? `${type}:${ep}:${sid}:${variant}` : `${type}:${ep}:${sid}`;
+  const base = `${type}@${AGENT_CACHE_SCHEMA}:${ep}:${sid}`;
+  return variant ? `${base}:${variant}` : base;
 }
 
 export function getCachedEntry<T>(key: string): AgentCacheEntry<T> | null {

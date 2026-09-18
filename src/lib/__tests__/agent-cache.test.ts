@@ -7,6 +7,7 @@ mock.module('react-native-mmkv', () => ({
 }));
 
 const {
+  AGENT_CACHE_SCHEMA,
   buildAgentCacheKey,
   clearAgentCache,
   dedupeInFlight,
@@ -22,11 +23,27 @@ beforeEach(() => {
 });
 
 describe('buildAgentCacheKey', () => {
-  test('generates normalized keys', () => {
+  test('generates normalized keys, stamped with the parser schema', () => {
     expect(buildAgentCacheKey('catalog', 'http://127.0.0.1:8080/', 'sess-1')).toBe(
-      'catalog:http://127.0.0.1:8080:sess-1'
+      `catalog@${AGENT_CACHE_SCHEMA}:http://127.0.0.1:8080:sess-1`
     );
-    expect(buildAgentCacheKey('projects', undefined, null)).toBe('projects:default_gateway:global');
+    expect(buildAgentCacheKey('projects', undefined, null)).toBe(
+      `projects@${AGENT_CACHE_SCHEMA}:default_gateway:global`
+    );
+  });
+
+  test('a variant is part of the key, so two listings cannot share an ETag', () => {
+    const all = buildAgentCacheKey('sessions', null, 'sess-1', 'all');
+    const scoped = buildAgentCacheKey('sessions', null, 'sess-1', '?directory=/tmp/x');
+    expect(all).not.toBe(scoped);
+    expect(scoped.endsWith(':?directory=/tmp/x')).toBe(true);
+  });
+
+  test('the schema stamp retires what an older parser wrote', () => {
+    // The cache holds parsed objects and is refreshed against the *host's*
+    // ETag, which says nothing about what this app has learned to read.
+    expect(buildAgentCacheKey('catalog', null, null)).toContain(`@${AGENT_CACHE_SCHEMA}`);
+    expect(AGENT_CACHE_SCHEMA).toBeGreaterThan(1);
   });
 });
 
