@@ -44,8 +44,8 @@ import type { InkBloomEdge } from './ink-bloom-shader';
  * further: what is left is detail a function of angle alone cannot hold, like
  * the gap between an arm and a body.
  *
- * A rectangle is kept as a rectangle instead: eight harmonics of a square are
- * a wavy square, and a pack whose hero is an opaque banner would get a visibly
+ * A rectangle is kept as a rectangle instead: ten harmonics of a square are a
+ * wavy square, and a pack whose hero is an opaque banner would get a visibly
  * rippling rim along an edge the reader can see is straight. The shader solves
  * the rounded box exactly, which is cheaper than the series as well as better.
  *
@@ -447,6 +447,25 @@ export function heroEdgeAmount(front: number, max: number, scale: number): numbe
   const span = max * scale * HERO_EDGE_RELAX_SPAN;
   const t = Math.min(1, Math.max(0, front / span));
   return scale * (1 - t * t * (3 - 2 * t));
+}
+
+/**
+ * Whether the picture behind this URI is one the app can actually read.
+ *
+ * A themed launch draws a file the app downloaded and owns. An unthemed one
+ * draws a compiled drawable, and what the splash mirror hands over for that is
+ * the resource's *name* -- nothing can open it, so nothing can measure it.
+ *
+ * The distinction is not only about the measurement. It decides the fallback
+ * too: a picture that could be measured and has not been yet is known to fill
+ * the box it is drawn in, because every launch image is contained in a box
+ * built for it, so the box is a fair stand-in. A compiled mark is not -- it
+ * may be a small badge with a wide margin, and drawing a rim around the margin
+ * would be a worse guess than the circle the opening used to draw. So the
+ * unreadable case keeps the old behaviour exactly.
+ */
+export function isMeasurableHeroUri(uri: string | undefined | null): uri is string {
+  return typeof uri === 'string' && /^(file|content|https?|asset|data):/.test(uri);
 }
 
 /**

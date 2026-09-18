@@ -10,6 +10,7 @@ import {
   encodeHeroEdge,
   heroAlphaEdge,
   heroRectEdge,
+  isMeasurableHeroUri,
   type HeroAlphaGrid,
 } from '@/lib/launch-hero-edge';
 
@@ -29,7 +30,9 @@ import {
  *  - **The first frame always has an answer.** Before anything is measured the
  *    edge is the rectangle the picture is drawn in, which is already the right
  *    size in the right place. An opening that starts before the measurement
- *    lands simply opens from that rectangle.
+ *    lands simply opens from that rectangle. A picture nothing can open at all
+ *    -- a compiled drawable on an unthemed install -- gets no shape and the
+ *    opening it always had; see `isMeasurableHeroUri`.
  *  - **The answer is latched when the opening starts.** A decode that finishes
  *    a frame after the rim is on screen must not change the shape of a rim
  *    that is on screen. {@link chooseHeroEdge} is that rule.
@@ -125,11 +128,6 @@ function remember(uri: string, edge: InkBloomEdge, scale: number): void {
 /** Test seam, and the reason the store is not a module constant. */
 export function resetLaunchHeroEdgeStoreForTesting(): void {
   storageInstance = null;
-}
-
-/** Only a URI something can actually be read from. A compiled resource name is not one. */
-function readable(uri: string | undefined): uri is string {
-  return typeof uri === 'string' && /^(file|content|https?|asset|data):/.test(uri);
 }
 
 type Alpha = { data: ArrayLike<number>; stride: number; offset: number; scale: number };
@@ -234,12 +232,23 @@ export function useLaunchHeroEdge({
   // The remembered edge, read synchronously so that the first frame of every
   // launch after the first already has the real outline rather than the box.
   const [measured, setMeasured] = useState<InkBloomEdge | null>(() =>
-    readable(uri) && width > 0 ? remembered(uri, width) : null
+    isMeasurableHeroUri(uri) && width > 0 ? remembered(uri, width) : null
   );
 
   useEffect(() => {
-    if (!readable(uri) || !(width > 0) || !(height > 0)) return;
-    if (remembered(uri, width)) return;
+    if (!isMeasurableHeroUri(uri) || !(width > 0) || !(height > 0)) return;
+    const stored = remembered(uri, width);
+    if (stored) {
+      // Re-read rather than kept, because the read above was at whatever box
+      // the first render reported and the box can still change under it -- a
+      // rotation, or Android settling its insets a frame in. The stored shape
+      // is normalised, so the answer at the new box is a multiplication; what
+      // must not happen is the old box's points being used at the new one.
+      // Same box means the same reach, and then the object in hand is kept so
+      // the latch below does not see a new shape where there is none.
+      setMeasured((current) => (current && current.max === stored.max ? current : stored));
+      return;
+    }
     let cancelled = false;
     // Deliberately not awaited on any render path, and deliberately not
     // deferred either: it is racing the handover, and the launch it cannot
@@ -259,10 +268,13 @@ export function useLaunchHeroEdge({
   }, [uri, width, height]);
 
   // The fallback, memoised rather than rebuilt: it is what the chosen edge is
-  // most of the time, and the latch below compares edges by identity.
+  // most of the time, and the latch below compares edges by identity. Only for
+  // a picture that could be measured -- see `isMeasurableHeroUri`, which is
+  // also the reason an unthemed launch is untouched by any of this.
   const fallback = useMemo(
-    () => (width > 0 && height > 0 ? heroRectEdge({ width, height }) : null),
-    [width, height]
+    () =>
+      isMeasurableHeroUri(uri) && width > 0 && height > 0 ? heroRectEdge({ width, height }) : null,
+    [uri, width, height]
   );
   // What the opening is holding on to. Recorded while the opening has not
   // started, and once more if it somehow started before anything was recorded

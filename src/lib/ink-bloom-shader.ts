@@ -193,9 +193,10 @@ float2 edgeStep(float2 w, float2 dir) {
 
 // The fitted outline, with no trigonometry in it.
 //
-// dir is already (cos t, sin t), so the whole series is ten complex
-// multiplies and ten dot products -- and it is only ever evaluated inside the
-// edge band, which is the same handful of pixels that pay for the noise.
+// dir is already (cos t, sin t), so the whole series is ten complex multiplies
+// and ten dot products -- and it is only evaluated for a pixel the cheap
+// early-out above could not decide, which is a ring around the picture rather
+// than a screen.
 float edgeSeriesRadius(float2 dir) {
   float radius = uEdgeMean;
   float2 w = dir;
@@ -241,6 +242,21 @@ half4 main(float2 p) {
   if (dr0 < -uSlack) return half4(holeAt(p));
 
   float2 dir = r > 0.5 ? d / r : float2(1.0, 0.0);
+
+  // The same question again, now that the direction is known, and this time
+  // exactly. The test above had to assume the shape reaches as far this way as
+  // it does anywhere -- which for a figure with an outstretched arm is most of
+  // the way round the picture -- so without this the band that pays for the
+  // noise would be as wide as the shape is long. Twenty-odd instructions of
+  // outline in exchange for not running the noise, and the noise is an order
+  // of magnitude more than that.
+  float edge = edgeRadius(dir);
+  if (edge > 0.0) {
+    float drEdge = dr0 - edge;
+    if (drEdge > uSlack) return half4(coverAt(p));
+    if (drEdge < -uSlack) return half4(holeAt(p));
+  }
+
   // One noise field, indexed by direction and by depth at once: the direction
   // gives the front its lobes and the depth breaks those lobes apart, which is
   // what two separate fbms were doing at twice the price.
@@ -250,7 +266,7 @@ half4 main(float2 p) {
   // is a radius in this direction, so it comes straight off the radius -- and
   // it is a literal zero for a caller that gave no shape, which is what keeps
   // the circular case exactly the arithmetic it was.
-  float dr = r - edgeRadius(dir) - front;
+  float dr = r - edge - front;
 
   // Cover outside the front, hole inside it, one pixel of anti-aliasing between.
   float covered = smoothstep(-1.5, 1.5, dr);

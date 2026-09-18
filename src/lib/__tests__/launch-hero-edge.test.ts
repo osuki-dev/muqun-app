@@ -15,6 +15,7 @@ import {
   heroRectEdge,
   heroSilhouetteEdge,
   heroSilhouetteRadii,
+  isMeasurableHeroUri,
   HERO_EDGE_HARMONICS,
   HERO_EDGE_MODE,
   HERO_EDGE_OVERSHOOT_ALLOWANCE,
@@ -319,6 +320,23 @@ describe('heroEdgeAmount', () => {
   });
 });
 
+describe('isMeasurableHeroUri', () => {
+  test('a themed launch draws a file the app owns, and that can be read', () => {
+    expect(isMeasurableHeroUri('file:///data/user/0/dev.osuki.muqun/files/a.webp')).toBe(true);
+    expect(isMeasurableHeroUri('https://example.test/hero.png')).toBe(true);
+    expect(isMeasurableHeroUri('content://media/external/images/1')).toBe(true);
+  });
+
+  test('an unthemed one draws a compiled resource, whose name opens nothing', () => {
+    // And so keeps the opening it has always had, rather than a rim around a
+    // box that may be mostly margin.
+    expect(isMeasurableHeroUri('splashscreen_logo')).toBe(false);
+    expect(isMeasurableHeroUri(undefined)).toBe(false);
+    expect(isMeasurableHeroUri(null)).toBe(false);
+    expect(isMeasurableHeroUri('')).toBe(false);
+  });
+});
+
 describe('chooseHeroEdge', () => {
   const measured = heroSilhouetteEdge(new Array<number>(HERO_EDGE_RAYS).fill(60));
   const fallback = heroRectEdge({ width: 280, height: 280 });
@@ -464,7 +482,12 @@ describe('the shape the shader is given', () => {
     // different expression that happens to agree: the re-skin transition draws
     // through this same program and must not move by a pixel.
     expect(source).toContain('if (uEdgeAmount <= 0.0) return 0.0;');
-    expect(source).toContain('float dr = r - edgeRadius(dir) - front;');
+    expect(source).toContain('float edge = edgeRadius(dir);');
+    expect(source).toContain('float dr = r - edge - front;');
     expect(source).toContain('if (dr0 > uSlack + uEdgeSlack) return half4(coverAt(p));');
+    // And the exact second early-out is skipped entirely when there is no
+    // shape, so a caller opening from a point pays one comparison for all of
+    // this and not a line more.
+    expect(source).toContain('if (edge > 0.0) {');
   });
 });
