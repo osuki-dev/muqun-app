@@ -4791,6 +4791,10 @@ msgstr "Suy nghĩ · {durationStr}"
 msgid "Through {host}"
 msgstr "Qua {host}"
 
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "hết thời gian"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Hôm nay"

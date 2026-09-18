@@ -4791,6 +4791,10 @@ msgstr "ความคิด · {durationStr}"
 msgid "Through {host}"
 msgstr "ผ่าน {host}"
 
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "หมดเวลา"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "วันนี้"

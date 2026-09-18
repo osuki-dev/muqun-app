@@ -13,6 +13,8 @@ import {
   parseToolQuestions,
   questionAnswersFromMetadata,
   searchProviderFromMetadata,
+  shellIdFromMetadata,
+  shellTimedOutFromMetadata,
   splitUrl,
   toolArgumentLine,
   toolInputRecord,
@@ -265,6 +267,44 @@ describe('the background badge', () => {
     expect(CARD).toContain("kind === 'shell' && pending && !detached && onRunInBackground");
     // And the tray, which lists what is running, is offered for either way in.
     expect(CARD).toContain('detached && pending && onOpenBackgroundTray');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// shell
+// ---------------------------------------------------------------------------
+
+describe('the shell card', () => {
+  // The real captured success, and the progress event that precedes it.
+  const SUCCESS = { status: 'completed', truncated: false, exit: 0 };
+  const PROGRESS = { shellID: 'sh_0aeeaccf2001FlthyZRn63eKUV' };
+
+  test('a command that was cut off says so, beside its exit code', () => {
+    expect(shellTimedOutFromMetadata({ ...SUCCESS, exit: 143, timeout: true })).toBe(true);
+    expect(shellTimedOutFromMetadata({ status: 'timeout' })).toBe(true);
+    expect(shellTimedOutFromMetadata(SUCCESS)).toBe(false);
+    // A number is the configured limit, not the event: a command given two
+    // minutes and finished in one has not timed out.
+    expect(shellTimedOutFromMetadata({ ...SUCCESS, timeout: 120000 })).toBe(false);
+  });
+
+  test('the shell it runs in is named from the first progress event', () => {
+    expect(shellIdFromMetadata(PROGRESS)).toBe('sh_0aeeaccf2001FlthyZRn63eKUV');
+    expect(shellIdFromMetadata(SUCCESS)).toBe('');
+  });
+
+  test('the tray action carries that shell, and the chip is drawn', () => {
+    expect(CARD).toContain('shellIdFromMetadata(part.metadata)');
+    expect(CARD).toContain('onOpenBackgroundTray?.(shellId || undefined)');
+    expect(CARD).toContain("kind === 'shell' && shellTimedOutFromMetadata(part.metadata)");
+  });
+
+  test('the tray opens on the shell it was given', () => {
+    const tray = readFileSync('src/components/agent-background-tray.tsx', 'utf8');
+    expect(tray).toContain('initialShellId?: string;');
+    expect(tray).toContain('useState<string | null>(initialShellId ?? null)');
+    const route = readFileSync('src/app/agent-shells.tsx', 'utf8');
+    expect(route).toContain('initialShellId: params.shell');
   });
 });
 

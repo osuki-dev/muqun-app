@@ -789,6 +789,30 @@ export function shellExitFromMetadata(metadata: Record<string, unknown>): number
   return typeof metadata.exit === 'number' ? metadata.exit : undefined;
 }
 
+/**
+ * Whether the command was killed for taking too long.
+ *
+ * `metadata.timeout === true` is the event; `metadata.status === 'timeout'` is
+ * the same fact under `Shell.Info`'s own vocabulary. A *number* is deliberately
+ * not read as one: `timeout` is also the spelling of the configured limit that
+ * a call is given, and `timeout: 120000` on a command that finished in a second
+ * would light a chip saying it had been killed.
+ */
+export function shellTimedOutFromMetadata(metadata: Record<string, unknown>): boolean {
+  return metadata.timeout === true || metadata.status === 'timeout';
+}
+
+/**
+ * The shell a `shell` call is running in.
+ *
+ * It arrives on the progress event before the command has finished, which is
+ * exactly when the reader wants to open it: the tray reads a shell's output by
+ * this id, and without it "Background tasks" could only offer the whole list.
+ */
+export function shellIdFromMetadata(metadata: Record<string, unknown>): string {
+  return pickString(metadata, ['shellID', 'shell_id', 'shellId']) ?? '';
+}
+
 /** A subagent's own progress, which runs independently of the tool's state. */
 export function subagentStatusFromMetadata(metadata: Record<string, unknown>): string | undefined {
   return typeof metadata.status === 'string' ? metadata.status : undefined;

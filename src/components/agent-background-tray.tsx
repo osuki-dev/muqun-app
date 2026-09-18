@@ -65,6 +65,15 @@ const STAGGERED_ROWS = 8;
 export interface AgentBackgroundTrayProps {
   /** Scopes the listing to the workspace the reader is in. */
   directory?: string;
+  /**
+   * The shell to open on arrival.
+   *
+   * A `shell` tool card knows the shell it is running in -- `metadata.shellID`,
+   * which arrives on the progress event while the command is still going -- so
+   * "Background tasks" on that card can land on that command's output instead
+   * of on a list for the reader to find it in again.
+   */
+  initialShellId?: string;
   onClose: () => void;
 }
 
@@ -75,6 +84,7 @@ function statusTone(status: ShellStatus, colors: { running: string; ok: string; 
 
 export const AgentBackgroundTray = memo(function AgentBackgroundTray({
   directory,
+  initialShellId,
   onClose: _onClose,
 }: AgentBackgroundTrayProps) {
   const { t } = useLingui();
@@ -86,7 +96,11 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
 
   const [shells, setShells] = useState<readonly ShellInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openShellId, setOpenShellId] = useState<string | null>(null);
+  // The shell the sheet was opened on, if it was opened on one. Initial state
+  // rather than an effect: the output reader below keys off this id, and a
+  // sheet that opened closed and then opened itself would be a frame of the
+  // wrong thing.
+  const [openShellId, setOpenShellId] = useState<string | null>(initialShellId ?? null);
   const [output, setOutput] = useState('');
   const [killing, setKilling] = useState<string | null>(null);
   /** Where the last page ended, so the next one asks for what came after it. */

@@ -4791,6 +4791,10 @@ msgstr "Réflexion · {durationStr}"
 msgid "Through {host}"
 msgstr "Via {host}"
 
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "délai dépassé"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Aujourd’hui"

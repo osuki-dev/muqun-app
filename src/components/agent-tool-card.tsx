@@ -51,6 +51,8 @@ import {
   resultCountFromMetadata,
   searchProviderFromMetadata,
   shellExitFromMetadata,
+  shellIdFromMetadata,
+  shellTimedOutFromMetadata,
   skillDirectoryFromMetadata,
   skillNameFromMetadata,
   splitUrl,
@@ -97,7 +99,11 @@ export interface AgentToolCardProps {
   onOpenChildSession?: (asid: string) => void;
   /** `POST …/background`, offered while a foreground tool is still running. */
   onRunInBackground?: () => void;
-  onOpenBackgroundTray?: () => void;
+  /**
+   * The background tray. A `shell` names the shell it is running in, so the
+   * tray can open that one rather than the list it belongs to.
+   */
+  onOpenBackgroundTray?: (shellId?: string) => void;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
@@ -389,6 +395,12 @@ export const AgentToolCard = memo(function AgentToolCard({
   const durationMs = toolDurationMs(part.time);
   const truncated = part.truncated === true || parsed.truncated;
 
+  /** The tray, opened on this call's own shell when the engine named one. */
+  const handleOpenTray = useCallback(() => {
+    const shellId = shellIdFromMetadata(part.metadata);
+    onOpenBackgroundTray?.(shellId || undefined);
+  }, [part.metadata, onOpenBackgroundTray]);
+
   const handleOpenChild = useCallback(() => {
     const childId = part.child_session_id;
     if (childId) onOpenChildSession?.(childId);
@@ -460,6 +472,12 @@ export const AgentToolCard = memo(function AgentToolCard({
         <Chip key="exit" text={`exit ${exit}`} color={exit === 0 ? colors.added : colors.removed} />
       );
     }
+    // Killed for taking too long, which an exit code alone does not say: a
+    // command that was cut off and one that failed on its own both end
+    // non-zero, and only one of them is worth running again.
+    if (kind === 'shell' && shellTimedOutFromMetadata(part.metadata)) {
+      nodes.push(<Chip key="timeout" text={t`timed out`} color={theme.colors.warning} />);
+    }
     if (kind === 'edit' || kind === 'patch') {
       // The tool's own count when it made one -- `metadata.files` for both
       // families -- and the before/after lengths only when it did not. A patch
@@ -523,6 +541,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     part.metadata,
     parsed.exitCode,
     colors,
+    theme.colors.warning,
     editFiles,
     patchFiles,
     newString,
@@ -565,7 +584,7 @@ export const AgentToolCard = memo(function AgentToolCard({
           testID="agent-tool-open-tray"
           accessibilityRole="button"
           accessibilityLabel={t`Open background tasks`}
-          onPress={onOpenBackgroundTray}
+          onPress={handleOpenTray}
           style={[styles.action, { borderColor: colors.border }]}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Background tasks</Trans>
@@ -612,6 +631,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     onRunInBackground,
     onOpenBackgroundTray,
     onOpenChildSession,
+    handleOpenTray,
     handleOpenChild,
     childStatus,
     colors,

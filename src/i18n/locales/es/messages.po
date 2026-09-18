@@ -4791,6 +4791,10 @@ msgstr "Pensamiento · {durationStr}"
 msgid "Through {host}"
 msgstr "A través de {host}"
 
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "tiempo agotado"
+
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "Hoy"
