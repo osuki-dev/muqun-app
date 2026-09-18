@@ -142,12 +142,6 @@ msgstr "模型上次读取了 {0} 个 token"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}，在这台服务器的 PATH 中找不到"
 
-#. placeholder {0}: machine.label
-#. placeholder {1}: session.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "{0}, session {1}"
-msgstr "{0}，会话 {1}"
-
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
@@ -313,7 +307,7 @@ msgstr "添加附件"
 msgid "Add commands and custom key combinations."
 msgstr "添加命令和自定义组合键"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Add machine"
 msgstr "添加机器"
 
@@ -1079,14 +1073,9 @@ msgstr "冲突"
 msgid "Connect"
 msgstr "连接"
 
-#. placeholder {0}: machine.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "Connect to {0}"
-msgstr "连接到 {0}"
-
 #: src/app/explore.tsx
-#: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 msgid "Connected"
 msgstr "已连接"
 
@@ -1102,6 +1091,7 @@ msgstr "已连接到 {address}"
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "连接中"
@@ -1331,7 +1321,7 @@ msgstr "无法压缩"
 msgid "Could not connect"
 msgstr "无法连接"
 
-#: src/app/sessions.tsx
+#: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "无法连接这台机器，点按重试"
 
@@ -1586,7 +1576,7 @@ msgstr "当前"
 msgid "Current agent"
 msgstr "当前 Agent"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Current machine"
 msgstr "当前机器"
 
@@ -2469,15 +2459,15 @@ msgstr "正在查找模拟器"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 办公室"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Machines and sessions"
-msgstr "机器与会话"
+#: src/components/session-map.tsx
+msgid "Machines"
+msgstr "机器"
 
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "管理"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "管理机器"
 
@@ -3040,10 +3030,9 @@ msgid "Open this path"
 msgstr "打开此路径"
 
 #. placeholder {0}: workspace.title
-#. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "打开工作区 {0}，{1, plural, one {# 个运行中} other {# 个运行中}}。长按可关闭"
+msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
+msgstr "打开工作区 {0}，{panelCount, plural, one {# 个运行中} other {# 个运行中}}。长按可关闭"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/launch-intro.tsx
@@ -3948,6 +3937,7 @@ msgid "Session Tokens"
 msgstr "会话 Token"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "会话"
 
@@ -4391,14 +4381,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "切换语言模型"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Switch machine or session"
-msgstr "切换机器或会话"
-
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
 msgstr "切换到 {0}"
+
+#: src/components/session-map.tsx
+msgid "Switch to {name}, {state}"
+msgstr "切换到 {name}，{state}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
@@ -4438,7 +4428,7 @@ msgstr "拍照"
 msgid "Tap again to remove"
 msgstr "再点一次以移除"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "点按连接"
 
@@ -4449,6 +4439,10 @@ msgstr "点击预览并调整"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "点按以刷新这个会话"
+
+#: src/components/session-map.tsx
+msgid "Tap to retry"
+msgstr "点按重试"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5123,6 +5117,10 @@ msgstr "使用 {0}"
 msgid "Use device passcode"
 msgstr "使用设备密码"
 
+#: src/components/session-map.tsx
+msgid "Use the {name} session, {kind}"
+msgstr "使用会话 {name}，{kind}"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "请使用仓库链接，并在下方填写分支和主题文件"
@@ -5220,6 +5218,10 @@ msgstr "工作目录"
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
+msgstr "工作区"
+
+#: src/components/session-map.tsx
+msgid "Workspaces"
 msgstr "工作区"
 
 #: src/components/agent-worktree-sheet.tsx

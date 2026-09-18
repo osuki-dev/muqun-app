@@ -35,6 +35,9 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
   commands: 'sheet',
   panels: 'sheet',
+  // The machines sheet's old address. It renders the same screen as `panels`
+  // now -- machines, backends, workspaces and panels are one column -- and
+  // stays only so the deep link keeps landing on the sheet it always meant.
   sessions: 'sheet',
   artifacts: 'sheet',
   'git-diff': 'sheet',

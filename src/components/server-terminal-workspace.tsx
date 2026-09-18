@@ -17,7 +17,6 @@ import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
   Keyboard as KeyboardIcon,
-  Monitor,
   Paperclip,
   PenLine,
   SquareTerminal,
@@ -245,7 +244,6 @@ import {
   resolveSessionId,
   sameSessionChoices,
   type SessionChoice,
-  shouldShowSessionSwitcher,
 } from '@/lib/session-switcher';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
@@ -3656,25 +3654,21 @@ export function ServerTerminalWorkspace({
     [openMatchingAsset]
   );
 
-  function openSessionSwitcher() {
-    Keyboard.dismiss();
-    useServerSession.getState().rememberPane(serverId, data.sessionId, selection.paneId);
-    router.push({
-      pathname: '/sessions',
-      params: {
-        serverId,
-        sessionId: data.sessionId,
-        embedded: providedServerId === undefined ? '0' : '1',
-        // The list the header just decided from, rather than a second read the
-        // sheet makes for itself: a sheet sized to its contents that grows a
-        // row while it opens is a worse answer than one that is right at once.
-        sessions: encodeSessionChoices(sessions),
-      },
-    } as Href);
-  }
-
+  /**
+   * The header's one button: everything that is running, and everywhere it
+   * could be running instead.
+   *
+   * It used to be two buttons in this corner -- a monitor for the machines and
+   * their backends, a panels glyph for the workspaces and panes inside one of
+   * them -- which is one address asked in two places. The machines are a rail
+   * at the top of this sheet now, so the monitor has gone and what it knew
+   * travels here: the pane the reader is leaving, so returning to this machine
+   * lands where they were, and the backend list the header has already decided
+   * from, so the rail does not grow a chip while the sheet is opening.
+   */
   function openPanelPicker() {
     Keyboard.dismiss();
+    useServerSession.getState().rememberPane(serverId, data.sessionId, selection.paneId);
     router.push({
       pathname: '/panels',
       params: {
@@ -3682,6 +3676,8 @@ export function ServerTerminalWorkspace({
         sessionId: data.sessionId,
         paneId: selection.paneId,
         label: routeRecord?.label ?? record?.label ?? t`Server`,
+        embedded: providedServerId === undefined ? '0' : '1',
+        sessions: encodeSessionChoices(sessions),
       },
     } as Href);
   }
@@ -4208,19 +4204,11 @@ export function ServerTerminalWorkspace({
         close and nothing else the header could mean by it.
       */
       detailAccessory={[
-        // Only actual alternatives justify a switch button; stopped backends
-        // remain configured without appearing here as live choices.
-        shouldShowSessionSwitcher(sessions, railServers.length) ? (
-          <PressableScale
-            key="session"
-            accessibilityLabel={t`Switch machine or session`}
-            testID="machine-session-switcher"
-            onPress={openSessionSwitcher}
-            style={navHeaderButtonStyle}>
-            <Monitor size={18} color={theme.colors.text} strokeWidth={2} />
-          </PressableScale>
-        ) : null,
-
+        // No machine button beside the panels one. Two glyphs in this corner
+        // were two halves of one question -- which machine, which backend,
+        // which workspace, which panel -- and a reader had to know which half
+        // theirs was in before they could press anything. `onDetailAction`
+        // above is the one button, and the whole address is inside it.
         simfarmSplit.previewWidth > 0 ? (
           <PressableScale
             key="simulator"

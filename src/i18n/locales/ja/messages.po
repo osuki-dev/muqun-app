@@ -142,12 +142,6 @@ msgstr "モデルが最後に読んだトークン {0}"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}、このサーバーの PATH に見つかりません"
 
-#. placeholder {0}: machine.label
-#. placeholder {1}: session.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "{0}, session {1}"
-msgstr "{0}、セッション {1}"
-
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
@@ -313,7 +307,7 @@ msgstr "添付ファイルを追加"
 msgid "Add commands and custom key combinations."
 msgstr "コマンドやカスタムのキー組み合わせを追加します"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Add machine"
 msgstr "マシンを追加"
 
@@ -1079,14 +1073,9 @@ msgstr "コンフリクト"
 msgid "Connect"
 msgstr "接続"
 
-#. placeholder {0}: machine.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "Connect to {0}"
-msgstr "{0} に接続"
-
 #: src/app/explore.tsx
-#: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 msgid "Connected"
 msgstr "接続済み"
 
@@ -1102,6 +1091,7 @@ msgstr "{address} に接続中"
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "接続中"
@@ -1331,7 +1321,7 @@ msgstr "圧縮できませんでした"
 msgid "Could not connect"
 msgstr "接続できませんでした"
 
-#: src/app/sessions.tsx
+#: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "このマシンに接続できません — タップして再試行"
 
@@ -1586,7 +1576,7 @@ msgstr "使用中"
 msgid "Current agent"
 msgstr "現在のエージェント"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Current machine"
 msgstr "現在のマシン"
 
@@ -2469,15 +2459,15 @@ msgstr "シミュレータを探しています"
 msgid "Mac mini · Office"
 msgstr "Mac mini · オフィス"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Machines and sessions"
-msgstr "マシンとセッション"
+#: src/components/session-map.tsx
+msgid "Machines"
+msgstr "マシン"
 
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "管理"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "マシンを管理"
 
@@ -3040,10 +3030,9 @@ msgid "Open this path"
 msgstr "このパスを開く"
 
 #. placeholder {0}: workspace.title
-#. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "ワークスペース {0} を開く（{1, plural, one {# 実行中} other {# 実行中}}）。長押しで閉じる"
+msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
+msgstr "ワークスペース {0} を開く（{panelCount, plural, one {# 実行中} other {# 実行中}}）。長押しで閉じる"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/launch-intro.tsx
@@ -3948,6 +3937,7 @@ msgid "Session Tokens"
 msgstr "セッショントークン"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "セッション"
 
@@ -4391,14 +4381,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "言語モデルを切り替える"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Switch machine or session"
-msgstr "マシンまたはセッションを切り替え"
-
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
 msgstr "{0} に切り替える"
+
+#: src/components/session-map.tsx
+msgid "Switch to {name}, {state}"
+msgstr "{name} に切り替え、{state}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
@@ -4438,7 +4428,7 @@ msgstr "写真を撮る"
 msgid "Tap again to remove"
 msgstr "もう一度タップで削除"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "タップして接続"
 
@@ -4449,6 +4439,10 @@ msgstr "タップしてプレビューと調整"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "タップしてこのセッションを更新します"
+
+#: src/components/session-map.tsx
+msgid "Tap to retry"
+msgstr "タップして再試行"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5123,6 +5117,10 @@ msgstr "{0} を使用"
 msgid "Use device passcode"
 msgstr "デバイスのパスコードを使用"
 
+#: src/components/session-map.tsx
+msgid "Use the {name} session, {kind}"
+msgstr "セッション {name} を使用、{kind}"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "リポジトリの URL を使い、そのブランチとテーマファイルを下に入力してください"
@@ -5220,6 +5218,10 @@ msgstr "作業ディレクトリ"
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
+msgstr "ワークスペース"
+
+#: src/components/session-map.tsx
+msgid "Workspaces"
 msgstr "ワークスペース"
 
 #: src/components/agent-worktree-sheet.tsx

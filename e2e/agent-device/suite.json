@@ -153,8 +153,8 @@
       "platforms": ["ios", "android"]
     },
     {
-      "name": "machine-switcher",
-      "program": "flows/machine-switcher",
+      "name": "switcher-sheet",
+      "program": "flows/switcher-sheet",
       "tags": ["full"],
       "platforms": ["ios", "android"]
     },
@@ -6792,12 +6792,12 @@
         "run": "flows/agent-shortcuts.ad"
       }
     ],
-    "flows/machine-switcher": [
+    "flows/switcher-sheet": [
       {
         "include": "subflows/open-demo"
       },
       {
-        "run": "flows/machine-switcher.ad"
+        "run": "flows/switcher-sheet.ad"
       }
     ],
     "flows/soft-keyboard": [

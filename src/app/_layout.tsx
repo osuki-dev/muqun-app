@@ -334,11 +334,12 @@ function RootContent() {
               name="panels"
               options={sheetPresentationOptions(sheetRoutePresentations['panels'], 'expandable')}
             />
-            {/* Machine/session results can grow asynchronously. Give the scroll
-                root a bounded viewport instead of circular fit-to-content sizing. */}
+            {/* The machines sheet's old deep link, rendering the same screen as
+                `panels` -- so it takes the same window, rather than the pair of
+                detents it chose when it was a list of its own. */}
             <Stack.Screen
               name="sessions"
-              options={sheetPresentationOptions('sheet', [0.65, 0.9])}
+              options={sheetPresentationOptions(sheetRoutePresentations['sessions'], 'expandable')}
             />
             <Stack.Screen
               name="artifacts"

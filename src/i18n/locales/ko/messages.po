@@ -142,12 +142,6 @@ msgstr "모델이 마지막으로 읽은 토큰 {0}개"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, 이 서버의 PATH에서 찾을 수 없음"
 
-#. placeholder {0}: machine.label
-#. placeholder {1}: session.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "{0}, session {1}"
-msgstr "{0}, 세션 {1}"
-
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
@@ -313,7 +307,7 @@ msgstr "첨부 파일 추가"
 msgid "Add commands and custom key combinations."
 msgstr "명령과 사용자 지정 조합 키를 추가합니다"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Add machine"
 msgstr "머신 추가"
 
@@ -1079,14 +1073,9 @@ msgstr "충돌"
 msgid "Connect"
 msgstr "연결"
 
-#. placeholder {0}: machine.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "Connect to {0}"
-msgstr "{0}에 연결"
-
 #: src/app/explore.tsx
-#: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 msgid "Connected"
 msgstr "연결됨"
 
@@ -1102,6 +1091,7 @@ msgstr "{address}에 연결됨"
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "연결 중"
@@ -1331,7 +1321,7 @@ msgstr "압축하지 못했습니다"
 msgid "Could not connect"
 msgstr "연결할 수 없습니다"
 
-#: src/app/sessions.tsx
+#: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "이 머신에 연결할 수 없음 — 눌러서 다시 시도"
 
@@ -1586,7 +1576,7 @@ msgstr "사용 중"
 msgid "Current agent"
 msgstr "현재 에이전트"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Current machine"
 msgstr "현재 머신"
 
@@ -2469,15 +2459,15 @@ msgstr "시뮬레이터를 찾는 중"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 사무실"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Machines and sessions"
-msgstr "머신 및 세션"
+#: src/components/session-map.tsx
+msgid "Machines"
+msgstr "머신"
 
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "관리"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "머신 관리"
 
@@ -3040,10 +3030,9 @@ msgid "Open this path"
 msgstr "이 경로 열기"
 
 #. placeholder {0}: workspace.title
-#. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "작업 공간 {0} 열기, {1, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기"
+msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
+msgstr "작업 공간 {0} 열기, {panelCount, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/launch-intro.tsx
@@ -3948,6 +3937,7 @@ msgid "Session Tokens"
 msgstr "세션 토큰"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "세션"
 
@@ -4391,14 +4381,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "언어 모델 전환"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Switch machine or session"
-msgstr "머신 또는 세션 전환"
-
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
 msgstr "{0}(으)로 전환"
+
+#: src/components/session-map.tsx
+msgid "Switch to {name}, {state}"
+msgstr "{name}(으)로 전환, {state}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
@@ -4438,7 +4428,7 @@ msgstr "사진 찍기"
 msgid "Tap again to remove"
 msgstr "한 번 더 탭하면 제거"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "눌러서 연결"
 
@@ -4449,6 +4439,10 @@ msgstr "미리보기 및 조정하려면 탭하세요"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "탭하여 이 세션을 새로 고칩니다"
+
+#: src/components/session-map.tsx
+msgid "Tap to retry"
+msgstr "눌러서 다시 시도"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5123,6 +5117,10 @@ msgstr "{0} 사용"
 msgid "Use device passcode"
 msgstr "기기 암호 사용"
 
+#: src/components/session-map.tsx
+msgid "Use the {name} session, {kind}"
+msgstr "{name} 세션 사용, {kind}"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "저장소 URL을 사용하고 아래에 브랜치와 테마 파일을 입력하세요"
@@ -5220,6 +5218,10 @@ msgstr "작업 디렉터리"
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
+msgstr "워크스페이스"
+
+#: src/components/session-map.tsx
+msgid "Workspaces"
 msgstr "워크스페이스"
 
 #: src/components/agent-worktree-sheet.tsx

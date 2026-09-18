@@ -16,10 +16,24 @@ import {
   resolveSessionId,
   sameSessionChoices,
   sessionChoices,
-  shouldShowSessionSwitcher,
   withSessionAvailability,
   type ServerSessionIndex,
 } from '../session-switcher';
+import { switcherRails } from '../switcher-rails';
+
+/** The sessions rail one machine's backends produce, by id. */
+function rail(sessions: ReturnType<typeof sessionChoices>): string[] {
+  return switcherRails({
+    machines: [{ id: 'osk', label: 'osk', sessions }],
+    serverId: 'osk',
+    sessionId: sessions[0]?.id ?? '',
+    workspaces: [],
+    workspaceId: '',
+    tabs: [],
+    panes: [],
+    agents: [],
+  }).sessions.map((session) => session.id);
+}
 
 const two = [
   { id: 'default', label: 'Alpha tmux', socket_path: '/tmp/a.sock', backend: 'tmux' },
@@ -33,16 +47,18 @@ describe('running backends, not configured backends', () => {
       { ...two[1], backend: 'herdr', connected: true },
     ]);
     expect(choices.map((choice) => choice.id)).toEqual(['bravo']);
-    expect(shouldShowSessionSwitcher(choices)).toBe(false);
+    // And therefore nothing to switch between. The question used to be
+    // `shouldShowSessionSwitcher`, answered by a button in the header that
+    // appeared and disappeared; there is one button now and the sessions rail
+    // inside the sheet is what is there or not.
+    expect(rail(choices)).toEqual([]);
   });
   test('starting the second backend makes the switch available on the next read', () => {
-    expect(
-      shouldShowSessionSwitcher(
-        sessionChoices(two.map((session) => ({ ...session, connected: true })))
-      )
-    ).toBe(true);
-    expect(shouldShowSessionSwitcher([])).toBe(false);
-    expect(shouldShowSessionSwitcher(sessionChoices([two[0]]), 2)).toBe(true);
+    expect(rail(sessionChoices(two.map((session) => ({ ...session, connected: true }))))).toEqual([
+      'default',
+      'bravo',
+    ]);
+    expect(rail([])).toEqual([]);
   });
   test('older gateway health identifies stopped sessions by ID, not backend kind', () => {
     const result = withSessionAvailability(

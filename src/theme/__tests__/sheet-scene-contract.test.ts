@@ -25,6 +25,11 @@ import { surfaceBackgroundFill } from '../surface-background';
  * with no way out at all once the X went. They are sheets now, and
  * `SettingsSheet` -- the shared full-screen/form-sheet frame two of them wore
  * -- is gone with them.
+ *
+ * One entry used to be missing: `machine-switcher-sheet.tsx`, the second sheet
+ * in the terminal header, built on the scene and never listed here. That is how
+ * a sheet drifts -- not by breaking a rule, but by not being asked. It is gone
+ * now, folded into `session-map.tsx`, and the test below is what keeps it gone.
  */
 const SHEET_FRAMES = [
   'src/components/theme-browse-sheet.tsx',
@@ -47,6 +52,49 @@ const SHEET_FRAMES = [
   'src/components/settings-theme-sheet.tsx',
   'src/app/explore.tsx',
 ];
+
+/**
+ * Two buttons in one corner, two sheets, one address.
+ *
+ * The terminal header used to carry a monitor glyph for "Machines and sessions"
+ * and a panels glyph for "What is running", which is one question -- which
+ * machine, which backend, which workspace, which panel -- asked in two places,
+ * with neither sheet able to see the other's half. They are one column on one
+ * sheet now. This is a list of the places a second one could grow back.
+ */
+test('the machines sheet is the panels sheet, reached by one button', () => {
+  // The frame is gone. It was a `SheetScene` that never appeared in
+  // SHEET_FRAMES, so none of the rules above was ever asked of it.
+  expect(existsSync('src/components/machine-switcher-sheet.tsx')).toBe(false);
+
+  // Its route stays, because a route in `src/app` is also a deep link and
+  // `muqun://sessions` has been handed out. It renders the very same screen
+  // rather than redirecting, so the link lands on the sheet directly.
+  expect(readFileSync('src/app/sessions.tsx', 'utf8')).toContain(
+    "export { default } from './panels';"
+  );
+  for (const route of ['sessions', 'panels']) {
+    expect({ route, presentation: sheetRoutePresentations[route] }).toEqual({
+      route,
+      presentation: 'sheet',
+    });
+  }
+
+  // And the header has one button. Named by the id the second one carried, so
+  // a revert that brings it back fails here and says which.
+  const header = code(readFileSync('src/components/server-terminal-workspace.tsx', 'utf8'));
+  expect({ second: header.includes('machine-session-switcher') }).toEqual({ second: false });
+  expect(header).toContain("pathname: '/panels'");
+  expect({ machinesRoute: header.includes("pathname: '/sessions'") }).toEqual({
+    machinesRoute: false,
+  });
+
+  // The machines live on the one sheet, under a heading of their own.
+  const sheet = readFileSync('src/components/session-map.tsx', 'utf8');
+  expect(sheet).toContain('testID="machines-rail"');
+  expect(sheet).toContain('testID="sessions-rail"');
+  expect(sheet).toContain('testID="workspaces-rail"');
+});
 
 /**
  * A sheet is a route, and a route is not a `<Modal>`.

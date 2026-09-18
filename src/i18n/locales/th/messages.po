@@ -142,12 +142,6 @@ msgstr "{0} โทเค็นที่โมเดลอ่านครั้�
 msgid "{0}, not found on this server's PATH"
 msgstr "{0} ไม่พบใน PATH ของเซิร์ฟเวอร์นี้"
 
-#. placeholder {0}: machine.label
-#. placeholder {1}: session.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "{0}, session {1}"
-msgstr "{0} เซสชัน {1}"
-
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
@@ -313,7 +307,7 @@ msgstr "เพิ่มไฟล์แนบ"
 msgid "Add commands and custom key combinations."
 msgstr "เพิ่มคำสั่งและชุดปุ่มลัดที่กำหนดเอง"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Add machine"
 msgstr "เพิ่มเครื่อง"
 
@@ -1079,14 +1073,9 @@ msgstr "มีข้อขัดแย้ง"
 msgid "Connect"
 msgstr "เชื่อมต่อ"
 
-#. placeholder {0}: machine.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "Connect to {0}"
-msgstr "เชื่อมต่อกับ {0}"
-
 #: src/app/explore.tsx
-#: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 msgid "Connected"
 msgstr "เชื่อมต่อแล้ว"
 
@@ -1102,6 +1091,7 @@ msgstr "เชื่อมต่อกับ {address} แล้ว"
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "กำลังเชื่อมต่อ"
@@ -1331,7 +1321,7 @@ msgstr "บีบอัดไม่ได้"
 msgid "Could not connect"
 msgstr "เชื่อมต่อไม่ได้"
 
-#: src/app/sessions.tsx
+#: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "เชื่อมต่อเครื่องนี้ไม่ได้ แตะเพื่อลองอีกครั้ง"
 
@@ -1586,7 +1576,7 @@ msgstr "ปัจจุบัน"
 msgid "Current agent"
 msgstr "เอเจนต์ปัจจุบัน"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Current machine"
 msgstr "เครื่องปัจจุบัน"
 
@@ -2469,15 +2459,15 @@ msgstr "กำลังค้นหาเครื่องจำลอง"
 msgid "Mac mini · Office"
 msgstr "Mac mini · สำนักงาน"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Machines and sessions"
-msgstr "เครื่องและเซสชัน"
+#: src/components/session-map.tsx
+msgid "Machines"
+msgstr "เครื่อง"
 
 #: src/app/index.tsx
 msgid "Manage"
 msgstr "จัดการ"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "จัดการเครื่อง"
 
@@ -3040,10 +3030,9 @@ msgid "Open this path"
 msgstr "เปิดพาธนี้"
 
 #. placeholder {0}: workspace.title
-#. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "เปิดพื้นที่ทำงาน {0} {1, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
+msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
+msgstr "เปิดพื้นที่ทำงาน {0} {panelCount, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/launch-intro.tsx
@@ -3948,6 +3937,7 @@ msgid "Session Tokens"
 msgstr "โทเค็นเซสชัน"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "เซสชัน"
 
@@ -4391,14 +4381,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "สลับโมเดลภาษา"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Switch machine or session"
-msgstr "สลับเครื่องหรือเซสชัน"
-
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
 msgstr "สลับไปยัง {0}"
+
+#: src/components/session-map.tsx
+msgid "Switch to {name}, {state}"
+msgstr "สลับไปที่ {name} {state}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
@@ -4438,7 +4428,7 @@ msgstr "ถ่ายรูป"
 msgid "Tap again to remove"
 msgstr "แตะอีกครั้งเพื่อลบ"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "แตะเพื่อเชื่อมต่อ"
 
@@ -4449,6 +4439,10 @@ msgstr "แตะเพื่อดูตัวอย่างและปรั
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "แตะเพื่อรีเฟรชเซสชันนี้"
+
+#: src/components/session-map.tsx
+msgid "Tap to retry"
+msgstr "แตะเพื่อลองใหม่"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -5123,6 +5117,10 @@ msgstr "ใช้ {0}"
 msgid "Use device passcode"
 msgstr "ใช้รหัสผ่านอุปกรณ์"
 
+#: src/components/session-map.tsx
+msgid "Use the {name} session, {kind}"
+msgstr "ใช้เซสชัน {name} {kind}"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "ใช้ URL ที่เก็บโค้ด แล้วป้อนสาขาและไฟล์ธีมด้านล่าง"
@@ -5220,6 +5218,10 @@ msgstr "ไดเรกทอรีทำงาน"
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
+msgstr "พื้นที่ทำงาน"
+
+#: src/components/session-map.tsx
+msgid "Workspaces"
 msgstr "พื้นที่ทำงาน"
 
 #: src/components/agent-worktree-sheet.tsx
