@@ -1694,23 +1694,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     /**
-     * A cap, without which the `numberOfLines={1}` on the title below does
-     * nothing at all.
+     * No width cap, by the owner's call: a chip is as wide as its title.
      *
-     * The chip is a direct child of a horizontal `ScrollView`, which offers
-     * its children unbounded width. A single line that is never offered a
-     * constraint never reaches one, so it never ellipsises -- it just makes
-     * the chip wider. With a real session title in a wide face ("Fix the
-     * authentication redirect loop on iOS" at 0.61em) one chip measures wider
-     * than the phone, and since the strip scrolls the active chip into view,
-     * the reader sees exactly one session and no evidence the others exist.
-     * The row silently stops being a strip.
-     *
-     * 220 is not a new number: it is what `agent-assignment-bar.tsx` already
-     * caps the same kind of chip at. A measure cap on a pill, not a width
-     * fitted to the system font.
+     * The strip is a horizontal `ScrollView`, so a long title costs a swipe.
+     * An ellipsis cost the reader the end of the title, which is usually the
+     * part that tells two sessions apart.
      */
-    maxWidth: 220,
     /**
      * `minHeight`, not `height`.
      *

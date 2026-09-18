@@ -161,15 +161,12 @@ function style(source: string, name: string): string {
   throw new Error(`unbalanced style ${name}`);
 }
 
-test('a session chip is bounded, so its one-line title can actually ellipsise', () => {
+test('a session chip follows its title and never clips a taller face', () => {
   const source = read('src/components/agent-composer.tsx');
   const chip = style(source, 'sessionChip');
-  // A horizontal ScrollView offers its children unbounded width. Without a
-  // cap the title is never handed a constraint, so `numberOfLines={1}` never
-  // fires and the chip simply grows past the phone -- and because the strip
-  // scrolls the active chip into view, the reader sees one session and no
-  // sign of the rest.
-  expect(chip).toContain('maxWidth:');
+  // The owner's rule: no ellipsis in a session strip. The strip scrolls, so
+  // the chip takes the width of its title rather than a cap.
+  expect(chip).not.toContain('maxWidth:');
   // A fixed height around vertically centred text clips a taller face.
   expect(chip).toContain('minHeight:');
   // `minHeight` does not match: its `h` is preceded by `min`, not by space.
