@@ -107,6 +107,9 @@ const CUT_ROTATION = '-18deg';
 /** The bright leading edge of the cut, in points. */
 const CUT_EDGE = 10;
 
+/** How far the plane creeps while it waits for the painting, in wipe progress. */
+const WIPE_STALL_DRIFT = 0.08;
+
 /** How far past its final size the hero starts, when Home never reported a rect. */
 const HERO_FALLBACK_SCALE = 1.08;
 
@@ -186,7 +189,6 @@ export function LaunchSceneIntro({
   // has nothing to wait for and is ready by definition.
   const [worldReady, setWorldReady] = useState(!hasWallpaper);
   const onWorldReady = useCallback(() => setWorldReady(true), []);
-  const covered = useRef(false);
 
   const wipe = useSharedValue(0);
   const hero = useSharedValue(0);
@@ -213,13 +215,16 @@ export function LaunchSceneIntro({
     if (phase !== 'visible' || reduced || !worldReady) return;
     const elapsed = Date.now() - startedAt.current;
     const remaining = Math.max(0, coverMs - elapsed);
-    // Cover the rest of the way at the speed it was going, then clear. Not a
-    // delay: a delay would freeze the plane mid-crossing while it waited.
-    wipe.value = withSequence(
-      withTiming(WIPE_COVERED_AT, timing(remaining)),
-      withTiming(1, timing(clearMs))
-    );
-    covered.current = true;
+    // Already covering: just clear, from wherever the drift has reached.
+    // Otherwise finish the crossing first, at the speed it was going, and
+    // clear straight after. Never a delay -- a delay freezes the plane.
+    wipe.value =
+      remaining > 0
+        ? withSequence(
+            withTiming(WIPE_COVERED_AT, timing(remaining)),
+            withTiming(1, timing(clearMs))
+          )
+        : withTiming(1, timing(clearMs));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, worldReady, reduced]);
 
@@ -230,7 +235,12 @@ export function LaunchSceneIntro({
         // Cover, wait for the world up to the cap, then clear regardless.
         wipe.value = withSequence(
           withTiming(WIPE_COVERED_AT, timing(coverMs)),
-          withDelay(beats.wipeStallCapMs, withTiming(1, timing(clearMs)))
+          // Waiting, but never parked: the plane keeps creeping across while
+          // the painting decodes, because a plane holding perfectly still for
+          // half a second stops reading as a wipe and starts reading as a
+          // colour card the launch got stuck on.
+          withTiming(WIPE_COVERED_AT + WIPE_STALL_DRIFT, timing(beats.wipeStallCapMs)),
+          withTiming(1, timing(clearMs))
         );
         hero.value = withDelay(beats.hero.at, withTiming(1, timing(beats.hero.ms)));
         rise.value = withDelay(beats.rise.at, withTiming(1, timing(beats.rise.ms)));
